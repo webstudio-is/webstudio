@@ -72,11 +72,13 @@ export const AssetQueryForm = ({
   resource,
   scope,
   aliases,
+  sourceContainer,
   fetchDescription = builderFetch,
 }: {
   resource?: Resource;
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
+  sourceContainer?: Element | null;
   fetchDescription?: typeof globalThis.fetch;
 }) => {
   const assets = useStore($assets);
@@ -187,6 +189,7 @@ export const AssetQueryForm = ({
           capabilities={definition}
           scope={scope}
           aliases={aliases}
+          sourceContainer={sourceContainer}
           sectionPaddingInline={theme.panel.paddingInline}
           onChange={(value) => {
             setConfiguration(value);

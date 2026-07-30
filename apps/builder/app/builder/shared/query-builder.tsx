@@ -1,5 +1,6 @@
 import { isLiteralExpression } from "@webstudio-is/expression";
-import { InputField } from "@webstudio-is/design-system";
+import { Grid, InputField } from "@webstudio-is/design-system";
+import { createPortal } from "react-dom";
 import {
   StructuredQueryBuilder,
   type QueryValueEditorProps,
@@ -125,6 +126,7 @@ export const BindableQueryBuilder = <
   capabilities,
   scope,
   aliases,
+  sourceContainer,
   sectionPaddingInline,
   onChange,
 }: {
@@ -132,6 +134,7 @@ export const BindableQueryBuilder = <
   capabilities: QueryDefinition<FieldType, Operator>;
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
+  sourceContainer?: Element | null;
   sectionPaddingInline?: string;
   onChange: (value: Query) => void;
 }) => (
@@ -144,9 +147,34 @@ export const BindableQueryBuilder = <
         <BoundExpression {...props} scope={scope} aliases={aliases} />
       ),
       source: (props) => (
-        <ExpressionEditor {...props} scope={scope} aliases={aliases} />
+        <ExpressionEditor
+          {...props}
+          scope={scope}
+          aliases={aliases}
+          size={sourceContainer === undefined ? "default" : "full"}
+          chromeless={sourceContainer !== undefined}
+        />
       ),
     }}
+    renderSource={
+      sourceContainer === undefined
+        ? undefined
+        : (source) =>
+            sourceContainer === null
+              ? null
+              : createPortal(
+                  <Grid
+                    css={{
+                      height: "100%",
+                      minHeight: 0,
+                      gridTemplateRows: "minmax(0, 1fr) auto",
+                    }}
+                  >
+                    {source}
+                  </Grid>,
+                  sourceContainer
+                )
+    }
     onChange={onChange}
   />
 );

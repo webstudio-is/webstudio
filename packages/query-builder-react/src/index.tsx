@@ -85,6 +85,7 @@ type BuilderProps<
   value: Query;
   capabilities: QueryDefinition<FieldType, Operator>;
   editors?: Partial<QueryBuilderEditors>;
+  renderSource?: (source: ReactNode) => ReactNode;
   sectionPaddingInline?: string;
   onChange: (value: Query) => void;
 };
@@ -1013,6 +1014,7 @@ export const StructuredQueryBuilder = <
   value,
   capabilities,
   editors,
+  renderSource,
   sectionPaddingInline,
   onChange,
 }: BuilderProps<FieldType, Operator, Query>) => {
@@ -1063,6 +1065,19 @@ export const StructuredQueryBuilder = <
   };
   const renderExpressionEditor = editors?.expression ?? defaultExpressionEditor;
   const renderSourceEditor = editors?.source ?? defaultSourceEditor;
+  const sourceEditor = (
+    <>
+      {renderSourceEditor({
+        "aria-label": "Query",
+        value: source,
+        onChange: setSource,
+        onChangeComplete: commitSource,
+      })}
+      {sourceError !== undefined && (
+        <Text color="destructive">{sourceError}</Text>
+      )}
+    </>
+  );
   return (
     <Grid css={{ gap: theme.spacing[7] }}>
       {capabilities.description === undefined ? null : (
@@ -1190,18 +1205,14 @@ export const StructuredQueryBuilder = <
           </Grid>
         );
       })}
-      <Grid gap={1} css={{ paddingInline: sectionPaddingInline }}>
-        <Label>Query expression</Label>
-        {renderSourceEditor({
-          "aria-label": "Query expression",
-          value: source,
-          onChange: setSource,
-          onChangeComplete: commitSource,
-        })}
-        {sourceError !== undefined && (
-          <Text color="destructive">{sourceError}</Text>
-        )}
-      </Grid>
+      {renderSource === undefined ? (
+        <Grid gap={1} css={{ paddingInline: sectionPaddingInline }}>
+          <Label>Query</Label>
+          {sourceEditor}
+        </Grid>
+      ) : (
+        renderSource(sourceEditor)
+      )}
     </Grid>
   );
 };

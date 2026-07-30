@@ -539,10 +539,20 @@ const VariablePanelForm = forwardRef<
     onVariableTypeChange: (variableType: VariableType) => void;
     value: unknown;
     onValueChange: (value: unknown) => void;
+    querySourceContainer: Element | null;
+    onQueryActiveChange: (active: boolean) => void;
   }
 >(
   (
-    { variable, variableType, onVariableTypeChange, value, onValueChange },
+    {
+      variable,
+      variableType,
+      onVariableTypeChange,
+      value,
+      onValueChange,
+      querySourceContainer,
+      onQueryActiveChange,
+    },
     ref
   ) => {
     const { allowDynamicData } = useStore($permissions);
@@ -638,7 +648,12 @@ const VariablePanelForm = forwardRef<
             <GraphqlResourceForm ref={ref} variable={variable} />
           )}
           {variableType === "system-resource" && (
-            <SystemResourceForm ref={ref} variable={variable} />
+            <SystemResourceForm
+              ref={ref}
+              variable={variable}
+              querySourceContainer={querySourceContainer}
+              onQueryActiveChange={onQueryActiveChange}
+            />
           )}
         </Flex>
       </>
@@ -659,11 +674,15 @@ const VariablePreview = ({
   variableType,
   variableValue,
   onLoadData,
+  queryActive,
+  queryContainerRef,
 }: {
   variable?: DataSource;
   variableType: VariableType;
   variableValue: unknown;
   onLoadData: () => void;
+  queryActive: boolean;
+  queryContainerRef: (element: HTMLDivElement | null) => void;
 }) => {
   const isResource =
     variableType === "resource" ||
@@ -754,6 +773,7 @@ const VariablePreview = ({
   const requestErrorDiagnostics = getRequestErrorDiagnostics(computedValue);
   return (
     <RequestInspector
+      queryContainerRef={queryActive ? queryContainerRef : undefined}
       preview={preview}
       diagnostics={
         requestErrorDiagnostics !== undefined ? (
@@ -777,6 +797,13 @@ const VariablePopoverContent = ({
 }) => {
   const hasPendingResources = useStore($hasPendingResources);
   const panelRef = useRef<undefined | PanelApi>(undefined);
+  const [queryActive, setQueryActive] = useState(false);
+  const [querySourceContainer, setQuerySourceContainer] =
+    useState<HTMLDivElement | null>(null);
+  const queryContainerRef = useCallback(
+    (element: HTMLDivElement | null) => setQuerySourceContainer(element),
+    []
+  );
   const isSystemVariable = variable?.id === SYSTEM_VARIABLE_ID;
   const [value, setValue] = useState<unknown>(() => {
     if (variable?.type === "variable") {
@@ -915,6 +942,8 @@ const VariablePopoverContent = ({
                   onVariableTypeChange={updateVariableType}
                   value={value}
                   onValueChange={setValue}
+                  querySourceContainer={querySourceContainer}
+                  onQueryActiveChange={setQueryActive}
                 />
               </fieldset>
             </form>
@@ -926,6 +955,8 @@ const VariablePopoverContent = ({
             variableType={variableType}
             variableValue={value}
             onLoadData={reloadData}
+            queryActive={queryActive}
+            queryContainerRef={queryContainerRef}
           />
         }
       />

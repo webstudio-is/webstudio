@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps, ReactNode, Ref } from "react";
 import {
   Flex,
   Grid,
@@ -80,14 +80,17 @@ export const RequestDiagnosticsRow = ({
 );
 
 export const RequestInspector = ({
+  queryContainerRef,
   preview,
   diagnostics,
 }: {
+  queryContainerRef?: Ref<HTMLDivElement>;
   preview: ReactNode;
   diagnostics?: ReactNode;
 }) => (
   <PanelTabs
-    defaultValue="preview"
+    key={queryContainerRef === undefined ? "preview" : "query"}
+    defaultValue={queryContainerRef === undefined ? "preview" : "query"}
     css={{ height: "100%", minWidth: 0, overflow: "hidden" }}
   >
     <PanelTabsList
@@ -97,9 +100,20 @@ export const RequestInspector = ({
         borderBottom: `1px solid ${theme.colors.borderMain}`,
       }}
     >
+      {queryContainerRef !== undefined && (
+        <PanelTabsTrigger value="query">Query</PanelTabsTrigger>
+      )}
       <PanelTabsTrigger value="preview">Preview</PanelTabsTrigger>
       <PanelTabsTrigger value="diagnostics">Diagnostics</PanelTabsTrigger>
     </PanelTabsList>
+    {queryContainerRef !== undefined && (
+      <PanelTabsContent
+        value="query"
+        css={{ flex: 1, position: "relative", overflow: "hidden" }}
+      >
+        <div ref={queryContainerRef} style={{ height: "100%" }} />
+      </PanelTabsContent>
+    )}
     <PanelTabsContent
       value="preview"
       css={{ flex: 1, position: "relative", overflow: "hidden" }}

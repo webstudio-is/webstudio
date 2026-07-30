@@ -840,8 +840,12 @@ ResourceForm.displayName = "ResourceForm";
 
 export const SystemResourceForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource }
->(({ variable }, ref) => {
+  {
+    variable?: DataSource;
+    querySourceContainer?: Element | null;
+    onQueryActiveChange?: (active: boolean) => void;
+  }
+>(({ variable, querySourceContainer, onQueryActiveChange }, ref) => {
   const { scope, aliases } = useResourceScope({ variable });
   const resources = useStore($resources);
   const { allowDynamicData } = useStore($permissions);
@@ -886,6 +890,10 @@ export const SystemResourceForm = forwardRef<
   });
   const isAssetsResource =
     localResource.value === JSON.stringify(assetsResourceUrl);
+  useEffect(() => {
+    onQueryActiveChange?.(isAssetsResource);
+    return () => onQueryActiveChange?.(false);
+  }, [isAssetsResource, onQueryActiveChange]);
   useImperativeHandle(ref, () => ({
     save: (formData) => {
       if (formData.get("asset-query-valid") === "false") {
@@ -955,7 +963,12 @@ export const SystemResourceForm = forwardRef<
             <CenteredPanelMessage>Loading query editor…</CenteredPanelMessage>
           }
         >
-          <AssetQueryForm resource={resource} scope={scope} aliases={aliases} />
+          <AssetQueryForm
+            resource={resource}
+            scope={scope}
+            aliases={aliases}
+            sourceContainer={querySourceContainer}
+          />
         </Suspense>
       )}
     </>

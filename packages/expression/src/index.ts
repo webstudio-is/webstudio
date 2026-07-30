@@ -13,17 +13,25 @@ const parseCompleteExpression = (
   expression: string,
   options: { preserveParens?: boolean } = {}
 ) => {
-  const node = parseExpressionAt(expression, 0, {
+  const completeNode = parseExpressionAt(expression, 0, {
     ecmaVersion: "latest",
-    preserveParens: options.preserveParens,
+    preserveParens: true,
   });
-  const trailingToken = tokenizer(expression.slice(node.end), {
+  const trailingToken = tokenizer(expression.slice(completeNode.end), {
     ecmaVersion: "latest",
   }).getToken();
   if (trailingToken.type.label !== "eof") {
     throw new SyntaxError("Unexpected content after expression");
   }
-  return node;
+  if (
+    options.preserveParens ||
+    completeNode.type !== "ParenthesizedExpression"
+  ) {
+    return completeNode;
+  }
+  return parseExpressionAt(expression, 0, {
+    ecmaVersion: "latest",
+  });
 };
 
 export type Diagnostic = {

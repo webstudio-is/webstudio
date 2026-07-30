@@ -50,7 +50,7 @@ const renderQueryBuilder = <Query extends Record<string, unknown>>({
   return container;
 };
 
-test("shows an evaluated filter value without changing the stored expression", () => {
+test("shows public variable names without changing the stored expression", () => {
   const value = {
     where: {
       all: [
@@ -95,8 +95,11 @@ test("shows an evaluated filter value without changing the stored expression", (
 
   const container = renderQueryBuilder({ value, capabilities });
   const editor = container.querySelector(".cm-content");
+  const source = Array.from(container.querySelectorAll(".cm-content")).at(-1);
 
   expect(editor?.textContent).toBe('"/blog/article"');
+  expect(source?.textContent).toContain("system.pathname");
+  expect(source?.textContent).not.toContain("$ws$system.pathname");
   expect(value.where.all[0].value).toBe("$ws$system.pathname");
 });
 

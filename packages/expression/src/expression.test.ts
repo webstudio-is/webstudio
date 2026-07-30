@@ -784,6 +784,16 @@ describe("transpile expression", () => {
     ).toEqual(`{ ...name }`);
   });
 
+  test("transpiles a parenthesized object expression", () => {
+    expect(
+      transpileExpression({
+        expression: "({ value: $ws$system.origin })",
+        replaceVariable: (identifier) =>
+          identifier === "$ws$system" ? "system" : identifier,
+      })
+    ).toEqual("({ value: system.origin })");
+  });
+
   test("output more readable syntax error", () => {
     let errorString = "";
     try {

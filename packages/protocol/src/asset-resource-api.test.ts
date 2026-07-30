@@ -143,6 +143,24 @@ describe("Assets OpenAPI description", () => {
     });
   });
 
+  test("uses lowercase labels for standard filter fields and operators", async () => {
+    const configuration = await loadConfiguration();
+    const standardFields = configuration.fields.filter(
+      ({ path }) => path[0] !== "properties"
+    );
+
+    expect(standardFields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: ["size"], label: "size" }),
+        expect.objectContaining({ path: ["width"], label: "width" }),
+        expect.objectContaining({ path: ["height"], label: "height" }),
+      ])
+    );
+    for (const item of [...standardFields, ...configuration.operators]) {
+      expect(item.label).toBe(item.label.toLowerCase());
+    }
+  });
+
   test("describes callable REST paths and stable share-token authentication", () => {
     const document = createDocument();
 
