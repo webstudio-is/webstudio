@@ -27,6 +27,7 @@ import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "../config";
 import { HandledCliError } from "../errors";
 import {
   getPreviewUrl,
+  getNpmInvocation,
   previewBuildCacheMarker,
   runPreviewBuild,
   startPreviewServer,
@@ -177,6 +178,8 @@ type PreviewDependencyOperations = {
     type: "dir" | "junction"
   ) => Promise<void>;
   writeFile: (path: string, data: string) => Promise<void>;
+  nodeExecPath: string;
+  npmExecPath?: string;
   platform: NodeJS.Platform;
 };
 
@@ -195,6 +198,8 @@ export const ensurePreviewDependencies = async (
     rm,
     symlink,
     writeFile,
+    nodeExecPath: process.execPath,
+    npmExecPath: process.env.npm_execpath,
     platform: process.platform,
     ...dependencies,
   };
@@ -260,19 +265,20 @@ export const ensurePreviewDependencies = async (
     }
   }
 
+  const installArgs = [
+    "install",
+    "--legacy-peer-deps",
+    "--no-audit",
+    "--no-fund",
+    "--package-lock=false",
+    "--loglevel=error",
+  ];
+  const invocation = getNpmInvocation(installArgs, operations);
+
   try {
-    await operations.execFile(
-      operations.platform === "win32" ? "npm.cmd" : "npm",
-      [
-        "install",
-        "--legacy-peer-deps",
-        "--no-audit",
-        "--no-fund",
-        "--package-lock=false",
-        "--loglevel=error",
-      ],
-      { cwd: previewProjectDir }
-    );
+    await operations.execFile(invocation.command, invocation.args, {
+      cwd: previewProjectDir,
+    });
   } catch (error) {
     throw new Error(
       "PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies. Check the npm/network configuration, then reinstall or update webstudio if the problem persists.",

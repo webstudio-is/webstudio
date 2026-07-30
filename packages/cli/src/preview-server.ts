@@ -5,7 +5,7 @@ import {
 } from "node:child_process";
 import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { createServer as createTcpServer } from "node:net";
-import { delimiter, dirname, join, parse } from "node:path";
+import { basename, delimiter, dirname, join, parse, win32 } from "node:path";
 import { parse as parseHtml, type DefaultTreeAdapterMap } from "parse5";
 import type { ProjectPreviewMode } from "@webstudio-is/project-build/visual";
 
@@ -33,6 +33,8 @@ export type PreviewServerDependencies = {
   readFile: typeof readFile;
   writeFile: typeof writeFile;
   sleep: (ms: number) => Promise<void>;
+  nodeExecPath: string;
+  npmExecPath?: string;
   platform: typeof process.platform;
 };
 
@@ -45,6 +47,8 @@ export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   readFile,
   writeFile,
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  nodeExecPath: process.execPath,
+  npmExecPath: process.env.npm_execpath,
   platform: process.platform,
 };
 
@@ -132,23 +136,44 @@ export const getPreviewCommand = (
   platform: typeof process.platform = process.platform
 ) => (platform === "win32" ? "npm.cmd" : "npm");
 
+export const getNpmInvocation = (
+  args: string[],
+  {
+    nodeExecPath = process.execPath,
+    npmExecPath = process.env.npm_execpath,
+    platform = process.platform,
+  }: {
+    nodeExecPath?: string;
+    npmExecPath?: string;
+    platform?: typeof process.platform;
+  } = {}
+) => {
+  const npmCliName =
+    npmExecPath === undefined
+      ? undefined
+      : platform === "win32"
+        ? win32.basename(npmExecPath)
+        : basename(npmExecPath);
+  if (npmExecPath !== undefined && npmCliName === "npm-cli.js") {
+    return { command: nodeExecPath, args: [npmExecPath, ...args] };
+  }
+  return { command: getPreviewCommand(platform), args };
+};
+
 export const runPreviewBuild = async (
   dependencies = defaultPreviewServerDependencies,
   cwd?: string,
   stdio: StdioOptions = "inherit"
 ) => {
-  const buildProcess = dependencies.spawn(
-    getPreviewCommand(dependencies.platform),
-    getPreviewBuildArgs(),
-    {
-      cwd,
-      stdio,
-      env: getPreviewEnv(cwd, {
-        ...processEnv(),
-        NODE_ENV: "production",
-      }),
-    }
-  );
+  const invocation = getNpmInvocation(getPreviewBuildArgs(), dependencies);
+  const buildProcess = dependencies.spawn(invocation.command, invocation.args, {
+    cwd,
+    stdio,
+    env: getPreviewEnv(cwd, {
+      ...processEnv(),
+      NODE_ENV: "production",
+    }),
+  });
   let output = "";
   const appendOutput = (chunk: unknown) => {
     output = `${output}${String(chunk)}`.slice(-4000);
@@ -196,9 +221,13 @@ export const startPreviewServer = (
   options: PreviewServerOptions & { stdio?: StdioOptions },
   dependencies = defaultPreviewServerDependencies
 ): PreviewServerResult => {
-  const previewProcess = dependencies.spawn(
-    getPreviewCommand(dependencies.platform),
+  const invocation = getNpmInvocation(
     getPreviewStartArgs(options),
+    dependencies
+  );
+  const previewProcess = dependencies.spawn(
+    invocation.command,
+    invocation.args,
     {
       cwd: options.cwd,
       stdio: options.stdio ?? "inherit",

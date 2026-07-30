@@ -458,6 +458,42 @@ test("installs isolated generated dependencies when the cli does not ship them",
   );
 });
 
+test("reuses the npm cli that launched webstudio on windows", async () => {
+  let installed = false;
+  const execFile = vi.fn(async () => {
+    installed = true;
+    return { stdout: "", stderr: "" };
+  });
+
+  await ensurePreviewDependencies("/tmp/project/.webstudio/preview", {
+    access: vi.fn(async (path) => {
+      if (installed && path.startsWith("/tmp/project/.webstudio/preview")) {
+        return;
+      }
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    execFile,
+    lstat: vi.fn(async () => {
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+    nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+    npmExecPath:
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+    platform: "win32",
+    writeFile: vi.fn(async () => undefined),
+  });
+
+  expect(execFile).toHaveBeenCalledWith(
+    "C:\\Program Files\\nodejs\\node.exe",
+    expect.arrayContaining([
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "install",
+    ]),
+    { cwd: "/tmp/project/.webstudio/preview" }
+  );
+});
+
 test("reports an actionable error when generated dependencies cannot install", async () => {
   const access = vi.fn(async () => {
     throw Object.assign(new Error("missing"), { code: "ENOENT" });
