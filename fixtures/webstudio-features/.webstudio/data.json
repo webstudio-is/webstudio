@@ -7341,11 +7341,15 @@
       {
         "_id": "7cf5892080fa66b5e6175ffd2d27c304ee6b09ce1f21847a95000225ad1afa59"
       },
-      { "_id": "9a8bc926-7804-4d3f-af81-69196b1d2ed8" },
+      {
+        "_id": "9a8bc926-7804-4d3f-af81-69196b1d2ed8"
+      },
       {
         "_id": "cbf6b1b052e52b256cef54a032a546bf43bf3f5441be4d1c5eeaabce26903d78"
       },
-      { "_id": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da" }
+      {
+        "_id": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da"
+      }
     ],
     "fieldCatalog": {
       "format": "webstudio-builder-asset-field-catalog",
