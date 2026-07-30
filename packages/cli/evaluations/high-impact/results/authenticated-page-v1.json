@@ -6,28 +6,28 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "0ff3f3b187cc5983c0900b4c363a762bb9b1033a3c128538fac14dfcacac320e",
+  "commandSha256": "422cf918a4aaa11f31fa7756989235bf273a27f64bafaa1c89fd968ba301de1b",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 75899,
+    "durationMs": 101133,
     "tokens": {
-      "input": 428056,
-      "cachedInput": 399360,
-      "uncachedInput": 28696,
+      "input": 460642,
+      "cachedInput": 398336,
+      "uncachedInput": 62306,
       "cacheWriteInput": 0,
-      "output": 2028,
-      "reasoningOutput": 473,
-      "total": 430084,
-      "cachedInputRate": 0.933
+      "output": 1716,
+      "reasoningOutput": 266,
+      "total": 462358,
+      "cachedInputRate": 0.8647
     },
     "mcpCatalog": {
       "responses": 1,
-      "totalResponseBytes": 68333,
-      "maxResponseBytes": 68333,
+      "totalResponseBytes": 58148,
+      "maxResponseBytes": 58148,
       "latestToolCount": 171,
-      "latestResponseBytes": 68333,
+      "latestResponseBytes": 58148,
       "latestInputSchemaBytes": 31190,
-      "latestDescriptionBytes": 12708
+      "latestDescriptionBytes": 4762
     },
     "toolCalls": {
       "total": 14,
@@ -39,75 +39,75 @@
       "durationsByTool": {
         "audit": {
           "count": 1,
-          "totalMs": 11,
-          "p95Ms": 11,
-          "maxMs": 11
+          "totalMs": 14,
+          "p95Ms": 14,
+          "maxMs": 14
         },
         "create-page": {
           "count": 1,
-          "totalMs": 26,
-          "p95Ms": 26,
-          "maxMs": 26
+          "totalMs": 25,
+          "p95Ms": 25,
+          "maxMs": 25
         },
         "create-resource": {
+          "count": 1,
+          "totalMs": 20,
+          "p95Ms": 20,
+          "maxMs": 20
+        },
+        "create-variable": {
+          "count": 1,
+          "totalMs": 19,
+          "p95Ms": 19,
+          "maxMs": 19
+        },
+        "get-project-settings": {
+          "count": 1,
+          "totalMs": 23,
+          "p95Ms": 23,
+          "maxMs": 23
+        },
+        "insert-fragment": {
+          "count": 1,
+          "totalMs": 81,
+          "p95Ms": 81,
+          "maxMs": 81
+        },
+        "list-pages": {
+          "count": 1,
+          "totalMs": 20,
+          "p95Ms": 20,
+          "maxMs": 20
+        },
+        "list-resources": {
+          "count": 1,
+          "totalMs": 20,
+          "p95Ms": 20,
+          "maxMs": 20
+        },
+        "list-variables": {
           "count": 1,
           "totalMs": 22,
           "p95Ms": 22,
           "maxMs": 22
         },
-        "create-variable": {
-          "count": 1,
-          "totalMs": 16,
-          "p95Ms": 16,
-          "maxMs": 16
-        },
-        "get-project-settings": {
-          "count": 1,
-          "totalMs": 47,
-          "p95Ms": 47,
-          "maxMs": 47
-        },
-        "insert-fragment": {
-          "count": 1,
-          "totalMs": 78,
-          "p95Ms": 78,
-          "maxMs": 78
-        },
-        "list-pages": {
-          "count": 1,
-          "totalMs": 42,
-          "p95Ms": 42,
-          "maxMs": 42
-        },
-        "list-resources": {
-          "count": 1,
-          "totalMs": 43,
-          "p95Ms": 43,
-          "maxMs": 43
-        },
-        "list-variables": {
-          "count": 1,
-          "totalMs": 39,
-          "p95Ms": 39,
-          "maxMs": 39
-        },
         "meta.guide": {
           "count": 1,
-          "totalMs": 10,
-          "p95Ms": 10,
-          "maxMs": 10
+          "totalMs": 13,
+          "p95Ms": 13,
+          "maxMs": 13
         },
         "preview.start": {
           "count": 1,
-          "totalMs": 1230,
-          "p95Ms": 1230,
-          "maxMs": 1230
+          "totalMs": 1245,
+          "p95Ms": 1245,
+          "maxMs": 1245
         },
         "screenshot": {
           "count": 2,
-          "totalMs": 8992,
-          "p95Ms": 7815,
-          "maxMs": 7815
+          "totalMs": 10564,
+          "p95Ms": 9371,
+          "maxMs": 9371
         },
         "verify-bindings": {
           "count": 1,
@@ -123,18 +123,18 @@
       "plannedMutations": 0,
       "committedMutations": 4,
       "verifications": 4,
-      "totalDurationMs": 10561,
-      "p50DurationMs": 39,
-      "p95DurationMs": 7815,
-      "timeToFirstMutationMs": 25293,
-      "timeToFirstVerificationMs": 46235
+      "totalDurationMs": 12071,
+      "p50DurationMs": 20,
+      "p95DurationMs": 9371,
+      "timeToFirstMutationMs": 48017,
+      "timeToFirstVerificationMs": 66470
     }
   },
   "callSequence": [
     "meta.guide",
-    "list-variables",
     "list-pages",
     "list-resources",
+    "list-variables",
     "get-project-settings",
     "create-page",
     "create-variable",

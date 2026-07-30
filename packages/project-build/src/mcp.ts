@@ -1083,12 +1083,27 @@ const normalizeOperationInputValues = (command: string, input: unknown) => {
   return {
     ...input,
     updates: input.updates.map((update) => {
-      if (isPlainRecord(update) === false || typeof update.value !== "string") {
+      if (isPlainRecord(update) === false) {
+        return update;
+      }
+      const value = update.value;
+      if (
+        isPlainRecord(value) &&
+        typeof value.value === "string" &&
+        ["unit", "length", "color"].includes(String(value.type)) &&
+        (value.type !== "color" || "colorSpace" in value === false)
+      ) {
+        return {
+          ...update,
+          value: { type: "keyword", value: value.value },
+        };
+      }
+      if (typeof value !== "string") {
         return update;
       }
       return {
         ...update,
-        value: { type: "keyword", value: update.value },
+        value: { type: "keyword", value },
       };
     }),
   };
@@ -2882,7 +2897,7 @@ export type ProjectSessionMcpResource = {
 
 type SdkTool = {
   name: string;
-  description: string;
+  description?: string;
   inputSchema: ProjectSessionMcpInputSchema;
   annotations: {
     readOnlyHint: boolean;
@@ -5062,6 +5077,7 @@ const metaGoalGuides = [
       /authenticated?\s+(?:page|route|screen)|(?:supabase|firebase)\s+auth|sign(?:ed)?[- ]?(?:in|out)|login\s+(?:page|flow)|user\s+session/i,
     tools: [
       "get-project-settings",
+      "list-pages",
       "list-resources",
       "list-variables",
       "list-instances",
@@ -5101,6 +5117,7 @@ const metaGoalGuides = [
       "update-asset",
       "refresh",
       "get-asset",
+      "audit",
     ],
     workflow: [
       "The guide and MCP handshake already provide the required tool schemas. Do not call meta.index or meta.get_more_tools for this workflow.",
@@ -5123,6 +5140,7 @@ const metaGoalGuides = [
       "components.search",
       "create-page",
       "insert-fragment",
+      "verify-bindings",
       "update-styles",
       "upload-asset",
       "preview.start",
@@ -5594,12 +5612,24 @@ const getSdkInputSchema = (
   };
 };
 
+const sdkDescribedToolNames = new Set([
+  "meta.index",
+  "meta.guide",
+  "meta.get_more_tools",
+  "workflow.next",
+  ...metaGoalGuides.flatMap(({ tools }) => tools),
+]);
+
 // Keep output contracts, complete input guidance, and Webstudio operation
 // metadata for local validation, generated documentation, and focused
-// discovery. Do not resend those optional details in every MCP handshake.
+// discovery. The startup instructions and described discovery tools route
+// models to meta.guide, which returns descriptions for the relevant operation
+// set. Do not resend descriptions for every operation in every MCP handshake.
 const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
   name: tool.name,
-  description: tool.description,
+  ...(sdkDescribedToolNames.has(tool.name)
+    ? { description: tool.description }
+    : {}),
   inputSchema: getSdkInputSchema(tool.inputSchema),
   annotations: {
     readOnlyHint: isReadOnlyProjectSessionMcpTool(tool),

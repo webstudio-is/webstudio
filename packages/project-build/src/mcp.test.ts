@@ -2839,6 +2839,60 @@ describe("project session mcp adapter", () => {
     });
   });
 
+  test("normalizes malformed typed CSS literals to keyword values", async () => {
+    const updates = [
+      {
+        instanceId: "spacing-instance",
+        property: "padding",
+        value: { type: "unit", value: "48px" },
+      },
+      {
+        instanceId: "gap-instance",
+        property: "gap",
+        value: { type: "length", value: "2rem" },
+      },
+      {
+        instanceId: "color-instance",
+        property: "color",
+        value: { type: "color", value: "#fff" },
+      },
+      {
+        instanceId: "structured-color-instance",
+        property: "color",
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          components: [1, 1, 1],
+          alpha: 1,
+          value: "#fff",
+        },
+      },
+    ];
+    const { adapter, executeOperation } = createTestMcpCore({
+      operationId: "styles.updateDeclarations",
+      result: { styleKeys: [] },
+    });
+
+    await adapter.callTool({
+      name: "update-styles",
+      input: { updates },
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith({
+      command: "update-styles",
+      input: {
+        updates: [
+          ...updates.slice(0, 3).map((update) => ({
+            ...update,
+            value: { type: "keyword", value: update.value.value },
+          })),
+          updates[3],
+        ],
+      },
+      dryRun: false,
+    });
+  });
+
   test("resolves discriminated input branches before parsing JSON-looking strings", async () => {
     const operation = publicOperation({
       command: "update-discriminated-value",
@@ -6675,6 +6729,15 @@ describe("project session mcp adapter", () => {
       expect(
         listedTools.tools.find(({ name }) => name === "list-pages")
       ).not.toHaveProperty("_meta");
+      expect(
+        listedTools.tools.find(({ name }) => name === "delete-instance")
+      ).not.toHaveProperty("description");
+      expect(
+        listedTools.tools.find(({ name }) => name === "meta.guide")?.description
+      ).toBeTypeOf("string");
+      expect(
+        listedTools.tools.find(({ name }) => name === "list-pages")?.description
+      ).toBeTypeOf("string");
       expect(
         JSON.stringify(
           listedTools.tools.find(({ name }) => name === "list-pages")

@@ -6,28 +6,28 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "8419187bd575ba84c30d6ca4d57a2176f2d9bda17d08b12136205e0669c6d535",
+  "commandSha256": "e25248c24d6bda90c290f2c7ed16abf9794e50f4460aa7cfc4b934ad21b943a4",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 55987,
+    "durationMs": 58194,
     "tokens": {
-      "input": 250672,
-      "cachedInput": 227584,
-      "uncachedInput": 23088,
+      "input": 262504,
+      "cachedInput": 224768,
+      "uncachedInput": 37736,
       "cacheWriteInput": 0,
-      "output": 1289,
-      "reasoningOutput": 120,
-      "total": 251961,
-      "cachedInputRate": 0.9079
+      "output": 1203,
+      "reasoningOutput": 191,
+      "total": 263707,
+      "cachedInputRate": 0.8562
     },
     "mcpCatalog": {
       "responses": 1,
-      "totalResponseBytes": 68333,
-      "maxResponseBytes": 68333,
+      "totalResponseBytes": 58148,
+      "maxResponseBytes": 58148,
       "latestToolCount": 171,
-      "latestResponseBytes": 68333,
+      "latestResponseBytes": 58148,
       "latestInputSchemaBytes": 31190,
-      "latestDescriptionBytes": 12708
+      "latestDescriptionBytes": 4762
     },
     "toolCalls": {
       "total": 8,
@@ -45,9 +45,9 @@
         },
         "get-asset": {
           "count": 2,
-          "totalMs": 7,
-          "p95Ms": 4,
-          "maxMs": 4
+          "totalMs": 4,
+          "p95Ms": 2,
+          "maxMs": 2
         },
         "meta.guide": {
           "count": 1,
@@ -57,15 +57,15 @@
         },
         "refresh": {
           "count": 1,
-          "totalMs": 5,
-          "p95Ms": 5,
-          "maxMs": 5
+          "totalMs": 6,
+          "p95Ms": 6,
+          "maxMs": 6
         },
         "update-asset": {
           "count": 2,
-          "totalMs": 25,
-          "p95Ms": 17,
-          "maxMs": 17
+          "totalMs": 24,
+          "p95Ms": 15,
+          "maxMs": 15
         },
         "upload-assets": {
           "count": 1,
@@ -81,11 +81,11 @@
       "plannedMutations": 0,
       "committedMutations": 3,
       "verifications": 1,
-      "totalDurationMs": 80,
-      "p50DurationMs": 8,
+      "totalDurationMs": 77,
+      "p50DurationMs": 9,
       "p95DurationMs": 19,
-      "timeToFirstMutationMs": 35344,
-      "timeToFirstVerificationMs": 52049
+      "timeToFirstMutationMs": 33516,
+      "timeToFirstVerificationMs": 53415
     }
   },
   "callSequence": [
