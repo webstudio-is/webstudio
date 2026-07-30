@@ -412,7 +412,7 @@ describe("PostgresAssetRepository", () => {
       })
     ).rejects.toThrow("access to view");
     await expect(repository.synchronize()).rejects.toThrow("access to edit");
-    await expect(repository.prepareIndex()).rejects.toThrow("access to build");
+    await expect(repository.prepareIndex()).rejects.toThrow("access to view");
     expect(dependencies.loadAssetsByProjectWithClient).not.toHaveBeenCalled();
     expect(dependencies.loadCanonicalAssetFileEntries).not.toHaveBeenCalled();
     expect(dependencies.synchronizeCanonicalAssets).not.toHaveBeenCalled();
@@ -480,7 +480,7 @@ describe("PostgresAssetRepository", () => {
 
     await expect(repository.prepareIndex()).resolves.toBe(index);
     expect(dependencies.hasProjectPermit).toHaveBeenCalledWith(
-      { projectId: "project-1", permit: "build" },
+      { projectId: "project-1", permit: "view" },
       context
     );
     expect(dependencies.synchronizeCanonicalAssets).toHaveBeenCalledWith({

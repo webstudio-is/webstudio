@@ -263,14 +263,13 @@ export class PostgresAssetRepository implements AssetRepository {
   }
 
   private async assertCanBuild() {
-    // The publisher loads an immutable production build with service
-    // credentials and prepares its derived Assets index as part of that build.
-    // Keep this exception scoped to index preparation: service credentials do
-    // not bypass the edit checks used by asset mutations.
+    // Index preparation only reads asset data and produces a derived artifact.
+    // Callers that perform an actual build or publish enforce the stronger
+    // build permit before invoking this method.
     if (this.context.authorization?.type === "service") {
       return;
     }
-    await this.assertPermit("build", "build this project assets index");
+    await this.assertCanView();
   }
 
   private getWritableStore(): AssetObjectStore {
