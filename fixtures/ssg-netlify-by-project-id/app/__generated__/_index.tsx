@@ -1,51 +1,52 @@
 /* eslint-disable */
-/* This is a auto generated file for building the project */
+      /* This is a auto generated file for building the project */ 
 
-import { Fragment, useState } from "react";
-import {
-  renderText,
-  useResource,
-  useVariableState,
-} from "@webstudio-is/react-sdk/runtime";
-import {
-  Body as Body,
-  Heading as Heading,
-} from "@webstudio-is/sdk-components-react/components";
 
-export const projectId = "8a7358b1-7de3-459d-b7b1-56dddfb6ce1e";
+      import { Fragment, useState } from "react";
+      import { renderText, useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
+      import { Body as Body, Heading as Heading } from "@webstudio-is/sdk-components-react/components";
 
-export const projectVersion = 7;
 
-export const projectDomain = "fixture-client-do-not-touch-wsmel";
+      export const projectId = "8a7358b1-7de3-459d-b7b1-56dddfb6ce1e";
 
-export const lastPublished = "2026-01-04T10:46:48.415Z";
+      export const projectVersion = 7;
 
-export const siteName = undefined;
+      export const projectDomain = "fixture-client-do-not-touch-wsmel";
 
-export const breakpoints = [
-  { id: "pTyOZEX5PG52onfyt3-Vg" },
-  { id: "GzBytedsc258Pp7rh1hiD", maxWidth: 991 },
-  { id: "ugRM71O_Lm78kMKjkrtyz", maxWidth: 767 },
-  { id: "NKdYAYw-oxmW8laNbpiwK", maxWidth: 479 },
-];
+      export const lastPublished = "2026-01-04T10:46:48.415Z";
 
-export const favIconAsset: string | undefined = undefined;
+      export const siteName = undefined;
 
-// Font assets on current page (can be preloaded)
-export const pageFontAssets: string[] = [];
+      export const breakpoints = [{"id":"pTyOZEX5PG52onfyt3-Vg"},{"id":"GzBytedsc258Pp7rh1hiD","maxWidth":991},{"id":"ugRM71O_Lm78kMKjkrtyz","maxWidth":767},{"id":"NKdYAYw-oxmW8laNbpiwK","maxWidth":479}];
 
-export const pageBackgroundImageAssets: string[] = [];
+      export const favIconAsset: string | undefined =
+        undefined;
 
-export const CustomCode = () => {
-  return <></>;
-};
+      // Font assets on current page (can be preloaded)
+      export const pageFontAssets: string[] =
+        []
 
-const Page = (_props: { system: any }) => {
-  return (
-    <Body className={`w-body`}>
-      <Heading className={`w-heading`}>{"FIXTURE-CLIENT-DO-NOT-TOUCH"}</Heading>
-    </Body>
-  );
-};
+      export const pageBackgroundImageAssets: string[] =
+        []
 
-export { Page };
+      
+            
+
+            export const CustomCode = () => {
+              return (<></>);
+            }
+          
+
+      const Page = (_props: { system: any; }) => {
+return <Body
+className={`w-body`}>
+<Heading
+className={`w-heading`}>
+{"FIXTURE-CLIENT-DO-NOT-TOUCH"}
+</Heading>
+</Body>
+}
+
+
+      export { Page }
+    

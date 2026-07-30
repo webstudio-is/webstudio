@@ -8,49 +8,49 @@
     font-size: 16px;
     line-height: 1.2;
     white-space: pre-wrap;
-    white-space-collapse: preserve;
+    white-space-collapse: preserve
   }
   body.w-body {
     box-sizing: border-box;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    margin: 0;
+    margin: 0
   }
   h1.w-heading {
-    box-sizing: border-box;
+    box-sizing: border-box
   }
   div.w-text {
     box-sizing: border-box;
-    min-height: 1em;
+    min-height: 1em
   }
   a.w-link {
     box-sizing: border-box;
-    display: inline-block;
+    display: inline-block
   }
   img.w-image {
     box-sizing: border-box;
     max-width: 100%;
     display: block;
-    height: auto;
+    height: auto
   }
 }
 @media all {
   .c1jaw2zx {
-    display: flex;
+    display: flex
   }
   .cbipm55 {
-    align-items: center;
+    align-items: center
   }
   .ctniqj4 {
-    justify-content: center;
+    justify-content: center
   }
   .ctgx88l {
-    flex-direction: column;
+    flex-direction: column
   }
   .cn3rfux {
-    margin-bottom: 1em;
+    margin-bottom: 1em
   }
   .c161qeci {
-    width: 400px;
+    width: 400px
   }
 }

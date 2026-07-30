@@ -9,7 +9,7 @@ var Li=Object.defineProperty;var Mi=(e,t)=>{for(var r in t)Li(e,r,{get:t[r],enum
             })));
           }
         }
-
+        
         if (${Z}.value === undefined) {
           if (${O} in input) {
             newResult[${O}] = undefined;
@@ -17,7 +17,7 @@ var Li=Object.defineProperty;var Mi=(e,t)=>{for(var r in t)Li(e,r,{get:t[r],enum
         } else {
           newResult[${O}] = ${Z}.value;
         }
-
+        
       `):er?d.write(`
         if (${Z}.issues.length) {
           payload.issues = payload.issues.concat(${Z}.issues.map(iss => ({
@@ -25,7 +25,7 @@ var Li=Object.defineProperty;var Mi=(e,t)=>{for(var r in t)Li(e,r,{get:t[r],enum
             path: iss.path ? [${O}, ...iss.path] : [${O}]
           })));
         }
-
+        
         if (${Z}.value === undefined) {
           if (${O} in input) {
             newResult[${O}] = undefined;
@@ -33,7 +33,7 @@ var Li=Object.defineProperty;var Mi=(e,t)=>{for(var r in t)Li(e,r,{get:t[r],enum
         } else {
           newResult[${O}] = ${Z}.value;
         }
-
+        
       `):d.write(`
         const ${Z}_present = ${O} in input;
         if (${Z}.issues.length) {
