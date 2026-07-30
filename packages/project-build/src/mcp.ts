@@ -2160,6 +2160,16 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       source: "session",
     },
   ],
+  "verify-page-responsive": [
+    {
+      path: "/pricing",
+      viewports: [
+        { width: 1440, height: 900 },
+        { width: 390, height: 844 },
+      ],
+      source: "session",
+    },
+  ],
   "screenshot.diff": [
     {
       baselinePath: "baseline.png",
@@ -2947,6 +2957,34 @@ const responsiveScreenshotTool = createProjectSessionMcpTool({
   },
 });
 
+const createResponsivePageVerificationTool = (
+  operations: readonly PublicMcpOperation[]
+) => {
+  const audit = operations.find((operation) => operation.command === "audit");
+  if (audit === undefined) {
+    throw new Error("verify-page-responsive requires the audit operation.");
+  }
+  return createProjectSessionMcpTool({
+    name: "verify-page-responsive",
+    description:
+      "Capture one generated route at multiple viewport sizes and immediately run its static audit in one terminal verification call.",
+    inputSchema: responsiveScreenshotInputSchema,
+    mcpExamples: getMcpExamples("verify-page-responsive"),
+    annotations: {
+      command: "verify-page-responsive",
+      operationId: "workflow.verify-page-responsive",
+      method: "session",
+      permit: audit.permit,
+      localCapable: false,
+      serverOnly: true,
+      readNamespaces: audit.readNamespaces,
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  });
+};
+
 const screenshotDiffTool = createProjectSessionMcpTool({
   name: "screenshot.diff",
   description:
@@ -3259,6 +3297,10 @@ export const listProjectSessionMcpTools = (
   ...(options.includeDownloadAsset ? [downloadAssetTool] : []),
   ...(options.includeScreenshot ? [screenshotTool] : []),
   ...(options.includeResponsiveScreenshot ? [responsiveScreenshotTool] : []),
+  ...(options.includeResponsiveScreenshot &&
+  operations.some((operation) => operation.command === "audit")
+    ? [createResponsivePageVerificationTool(operations)]
+    : []),
   ...(options.includeScreenshotDiff ? [screenshotDiffTool] : []),
   ...(options.includeInstallOcr ? [installOcrTool] : []),
   ...(options.includePreview ? previewTools : []),
@@ -3315,6 +3357,7 @@ const capabilityAreas = [
       "preview.status",
       "preview.stop",
       "screenshot",
+      "verify-page-responsive",
       "screenshot.diff",
       "vision.install-ocr",
     ],
@@ -5364,8 +5407,7 @@ const metaGoalGuides = [
       "create-variable",
       "insert-fragment-verified",
       "update-page",
-      "screenshot.responsive",
-      "audit",
+      "verify-page-responsive",
     ],
     workflow: [
       "Inspect the project's existing auth resources, variables, page settings, and agent instructions before choosing a provider workflow. Call inspect-auth-context exactly once instead of calling get-project-settings, list-pages, list-resources, or list-variables separately; use at most one focused search-project call only when that bundle does not identify the auth convention. Treat its pages section as authoritative for route existence. Do not call get-page-by-path to confirm that /account is absent. Reuse that convention; do not add a second auth system implicitly.",
@@ -5379,7 +5421,7 @@ const metaGoalGuides = [
       'Insert signed-out, loading, signed-in, and failed-auth panels together as one expression-free semantic fragment that acts as a state gallery. Keep all four panels visible together for local visual verification; do not add conditional visibility bindings or mutate fixture state solely to capture more screenshots. Use that exact fragment verbatim without adding styles, props, expressions, components, or changing its nesting: <ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-out</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Loading</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-in</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Failed-auth</ws.element></ws.element></ws.element>.',
       "Do not call selector-based structural tools such as wrap-instance unless a focused list-instances result supplied the complete non-empty selector from the target through its page root. Prefer direct style, prop, or binding corrections when the structure is already sound.",
       'Insert the complete account fragment with insert-fragment-verified and {"pagePath":"/account"} so persisted bindings are checked in the same call. Resolve every returned validity, scope, and reference finding before previewing. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /account. Updating only a fixture variable\'s literal state does not require another binding verification.',
-      'Call screenshot.responsive once with path "/account" and the required desktop and mobile viewports; it starts or refreshes the session preview and captures both viewports in one browser session. Do not call preview.start or screenshot separately. Do not run discovery, inspect-instance, mutate, or repeat binding verification after visual verification starts. The screenshots are the rendered evidence. After they succeed, run a static audit with {"pagePath":"/account"}; do not set rendered:true and duplicate the same captures. A successful final audit is terminal: do not mutate, verify, restart preview, or capture more screenshots afterward. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
+      'Call verify-page-responsive once with path "/account" and the required desktop and mobile viewports; it starts or refreshes the session preview, captures both viewports in one browser session, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately. Do not run discovery, inspect-instance, mutate, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
     ],
   },
   {
@@ -5413,9 +5455,8 @@ const metaGoalGuides = [
       "insert-fragment-verified",
       "update-styles",
       "upload-asset",
-      "screenshot.responsive",
+      "verify-page-responsive",
       "screenshot.diff",
-      "audit",
     ],
     workflow: [
       "The guide and MCP handshake already provide the required tool schemas. Do not call meta.index or meta.get_more_tools for this workflow.",
@@ -5427,7 +5468,7 @@ const metaGoalGuides = [
       "Implement responsive behavior inside the project's actual breakpoint ranges.",
       'Represent literal CSS values as {"type":"keyword","value":"..."}, including lengths such as "48px" and colors such as "#fff". Do not invent value types such as "length"; use {"type":"unit","value":48,"unit":"px"} only when numeric structure is specifically needed.',
       "Each update-styles updates item is flat: include instanceId, property, value, and optional breakpoint directly on every item. Do not group properties under styles or declarations.",
-      'Call insert-fragment-verified exactly once with {"pagePath":"/summer"} so insertion and persisted binding verification share one bounded call; do not guess a page id or alternate input shape. Treat its verification result as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /summer. Later fixed-value mutations do not require another binding verification. Finish them before visual verification, then call screenshot.responsive once with path "/summer" and exactly the two supplied viewports, 1440x900 and 390x844. It starts or refreshes preview automatically; do not call preview.start or screenshot separately, and do not add exploratory or intermediate captures. Do not mutate, rediscover, or repeat binding verification after screenshots begin. The screenshots are the rendered evidence. Run a static audit with {"pagePath":"/summer"} immediately afterward; do not set rendered:true and duplicate the same captures. A successful final audit is terminal. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
+      'Call insert-fragment-verified exactly once with {"pagePath":"/summer"} so insertion and persisted binding verification share one bounded call; do not guess a page id or alternate input shape. Treat its verification result as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /summer. Later fixed-value mutations do not require another binding verification. Finish them before visual verification, then call verify-page-responsive once with path "/summer" and exactly the two supplied viewports, 1440x900 and 390x844. It starts or refreshes preview automatically, captures both viewports, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately, and do not add exploratory or intermediate captures. Do not mutate, rediscover, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
     ],
   },
   {
@@ -7198,6 +7239,39 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
             },
           })
         );
+      }
+      if (
+        name === "verify-page-responsive" &&
+        capturePageScreenshots !== undefined
+      ) {
+        const auditOperation = operationByCommand.get("audit" as Command);
+        if (auditOperation === undefined) {
+          throw new Error(
+            "verify-page-responsive requires the audit operation."
+          );
+        }
+        const screenshotInputs = getResponsiveScreenshotInputs(input);
+        const pagePath = screenshotInputs[0]?.path;
+        if (typeof pagePath !== "string" || pagePath.length === 0) {
+          throw new Error(
+            "verify-page-responsive requires a generated route path."
+          );
+        }
+        const screenshots = await capturePageScreenshots(screenshotInputs, {
+          report: (message) => {
+            reportToolProgress?.(message);
+          },
+        });
+        const auditEnvelope = await executeOperation({
+          command: "audit" as Command,
+          input: getNormalizedOperationInput(auditOperation, { pagePath }),
+          dryRun: false,
+        });
+        return toCallResult({
+          ...auditEnvelope,
+          operationId: "workflow.verify-page-responsive",
+          result: { screenshots, audit: auditEnvelope.result },
+        });
       }
       if (
         name === "screenshot.responsive" &&

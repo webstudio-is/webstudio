@@ -76,11 +76,11 @@ describe("evaluation metrics", () => {
     );
   });
 
-  test("counts responsive screenshot batches as early verification", () => {
+  test("counts responsive page verification as early evidence", () => {
     expect(
       getMcpEvaluationMetrics([
         {
-          name: "screenshot.responsive",
+          name: "verify-page-responsive",
           startedAtMs: 25,
           durationMs: 100,
           responseBytes: 2_000,

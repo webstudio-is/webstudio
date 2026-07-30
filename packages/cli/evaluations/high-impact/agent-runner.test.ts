@@ -31,8 +31,8 @@ describe("high-impact agent runner", () => {
         expect.stringContaining("Never use broad project reads"),
         expect.any(String),
         expect.stringContaining("meta.next"),
-        expect.stringContaining("successful final audit"),
-        expect.stringContaining("Use one screenshot.responsive call"),
+        expect.stringContaining("terminal static audit"),
+        expect.stringContaining("Use one verify-page-responsive call"),
         expect.stringContaining("Do not call list-breakpoints"),
       ]),
     });
@@ -42,9 +42,8 @@ describe("high-impact agent runner", () => {
     expect(authConstraints).toContain(
       "Create exactly one scoped non-secret fixture variable"
     );
-    expect(authConstraints).toContain("do not call list-variables again");
+    expect(authConstraints).toContain("Do not call list-variables again");
     expect(authConstraints).toContain("static audit");
-    expect(authConstraints).toContain("do not set rendered:true");
     expect(authConstraints).toContain(
       "copy the objective field verbatim into brief"
     );
@@ -62,10 +61,10 @@ describe("high-impact agent runner", () => {
       "Do not call insert-fragment or verify-bindings separately"
     );
     expect(authConstraints).toContain(
-      "call screenshot.responsive exactly once"
+      "call verify-page-responsive exactly once"
     );
     expect(authConstraints).toContain(
-      "Do not call preview.start or screenshot separately"
+      "Do not call preview.start, screenshot, screenshot.responsive, or audit separately"
     );
     expect(
       createMinimalAgentTask(designInputFixture, {
@@ -222,8 +221,8 @@ describe("high-impact agent runner", () => {
         fixtureId: "authenticated-page-v1",
         mcp: { args: ["mcp"] },
         constraints: expect.arrayContaining([
-          expect.stringContaining("successful final audit"),
-          expect.stringContaining("Use one screenshot.responsive call"),
+          expect.stringContaining("terminal static audit"),
+          expect.stringContaining("Use one verify-page-responsive call"),
         ]),
       });
     } finally {

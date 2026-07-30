@@ -3765,6 +3765,7 @@ describe("project session mcp adapter", () => {
       ],
       createProjectSession: createSessionFactory(session),
       executeOperation: createExecuteOperation(),
+      capturePageScreenshots: vi.fn(async () => []),
     });
 
     const index = await adapter.callTool({ name: "meta.index" });
@@ -4504,20 +4505,16 @@ describe("project session mcp adapter", () => {
             "Do not bind that server-only resource into local preview rendering"
           ),
           expect.stringContaining("insert-fragment-verified"),
-          expect.stringContaining("Call screenshot.responsive once"),
+          expect.stringContaining("Call verify-page-responsive once"),
           expect.stringContaining(
-            "Do not call preview.start or screenshot separately"
+            "Do not call preview.start, screenshot, screenshot.responsive, or audit separately"
           ),
-          expect.stringContaining(
-            'run a static audit with {"pagePath":"/account"}'
-          ),
-          expect.stringContaining("do not set rendered:true"),
-          expect.stringContaining("A successful final audit is terminal"),
+          expect.stringContaining("bundled audit is the static evidence"),
         ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "list-instances" }),
           expect.objectContaining({ name: "insert-fragment-verified" }),
-          expect.objectContaining({ name: "audit" }),
+          expect.objectContaining({ name: "verify-page-responsive" }),
         ]),
       })
     );
@@ -4562,11 +4559,11 @@ describe("project session mcp adapter", () => {
             "Do not call list-instances after the first mutation"
           ),
           expect.stringContaining("Do not call get-styles"),
-          expect.stringContaining("call screenshot.responsive once"),
+          expect.stringContaining("call verify-page-responsive once"),
           expect.stringContaining("Call insert-fragment-verified exactly once"),
           expect.stringContaining('{"pagePath":"/summer"}'),
           expect.stringContaining("exactly the two supplied viewports"),
-          expect.stringContaining("A successful final audit is terminal"),
+          expect.stringContaining("bundled audit is the static evidence"),
           expect.stringContaining("parallel design system"),
           expect.stringContaining("semantic editable structure"),
           expect.stringContaining("actual breakpoint ranges"),
@@ -4574,15 +4571,15 @@ describe("project session mcp adapter", () => {
             'Represent literal CSS values as {"type":"keyword","value":"..."}'
           ),
           expect.stringContaining(
-            'Run a static audit with {"pagePath":"/summer"}'
+            "Do not call preview.start, screenshot, screenshot.responsive, or audit separately"
           ),
-          expect.stringContaining("do not set rendered:true"),
         ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "inspect-design-context" }),
           expect.objectContaining({ name: "components.search" }),
           expect.objectContaining({ name: "insert-fragment-verified" }),
           expect.objectContaining({ name: "attach-design-token" }),
+          expect.objectContaining({ name: "verify-page-responsive" }),
           expect.objectContaining({
             name: "update-styles",
             inputSchema: expect.objectContaining({
@@ -5895,6 +5892,9 @@ describe("project session mcp adapter", () => {
     expect(
       adapterWithResponsiveScreenshot.listTools().map((tool) => tool.name)
     ).toContain("screenshot.responsive");
+    expect(
+      adapterWithResponsiveScreenshot.listTools().map((tool) => tool.name)
+    ).toContain("verify-page-responsive");
 
     const result = await adapterWithScreenshot.callTool({
       name: "screenshot",
@@ -5985,6 +5985,26 @@ describe("project session mcp adapter", () => {
         expect.objectContaining({ viewport: { width: 1440, height: 900 } }),
         expect.objectContaining({ viewport: { width: 390, height: 844 } }),
       ],
+    });
+
+    const verificationResult = await adapterWithResponsiveScreenshot.callTool({
+      name: "verify-page-responsive",
+      input: {
+        path: "/pricing",
+        viewports: [
+          { width: 1440, height: 900 },
+          { width: 390, height: 844 },
+        ],
+        source: "session",
+      },
+    });
+
+    expect(verificationResult.structuredContent.data).toEqual({
+      screenshots: [
+        expect.objectContaining({ viewport: { width: 1440, height: 900 } }),
+        expect.objectContaining({ viewport: { width: 390, height: 844 } }),
+      ],
+      audit: undefined,
     });
   });
 

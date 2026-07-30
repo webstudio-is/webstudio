@@ -273,14 +273,16 @@ describe("design-input evaluation", () => {
     expect(result).toMatchObject({ passed: true, failures: [] });
   });
 
-  test("accepts one responsive screenshot call as both viewport evidence", () => {
+  test("accepts one responsive page verification as audit and viewport evidence", () => {
     const result = evaluateHighImpactOutcome({
       fixture: designInputFixture,
       project: addDesignPage(),
       toolCalls: [
-        ...designCalls.filter((call) => call.name !== "screenshot"),
+        ...designCalls.filter(
+          (call) => call.name !== "screenshot" && call.name !== "audit"
+        ),
         {
-          name: "screenshot.responsive",
+          name: "verify-page-responsive",
           arguments: {
             viewports: [
               { width: 1440, height: 900 },

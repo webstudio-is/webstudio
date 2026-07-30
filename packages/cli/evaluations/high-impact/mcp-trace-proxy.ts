@@ -119,7 +119,8 @@ export const getMcpTraceRequest = (
     }
     const viewports = params.arguments.viewports;
     if (
-      params.name === "screenshot.responsive" &&
+      (params.name === "screenshot.responsive" ||
+        params.name === "verify-page-responsive") &&
       Array.isArray(viewports) &&
       viewports.length > 0 &&
       viewports.length <= 8 &&

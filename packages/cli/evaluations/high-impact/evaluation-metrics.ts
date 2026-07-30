@@ -170,6 +170,7 @@ const verificationNames = new Set([
   "audit",
   "screenshot",
   "screenshot.responsive",
+  "verify-page-responsive",
   "screenshot.diff",
   "verify-bindings",
   "insert-fragment-verified",
