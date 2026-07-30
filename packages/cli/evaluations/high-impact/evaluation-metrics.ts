@@ -171,6 +171,7 @@ const verificationNames = new Set([
   "screenshot",
   "screenshot.diff",
   "verify-bindings",
+  "insert-fragment-verified",
 ]);
 
 export const isFocusedRead = (name: string) =>

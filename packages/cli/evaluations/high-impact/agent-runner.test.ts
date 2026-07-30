@@ -57,6 +57,12 @@ describe("high-impact agent runner", () => {
     expect(authConstraints).toContain(
       "call create-page exactly once, then create-variable"
     );
+    expect(authConstraints).toContain(
+      "Call insert-fragment-verified only after all three succeed"
+    );
+    expect(authConstraints).toContain(
+      "Do not call insert-fragment or verify-bindings separately"
+    );
     expect(
       createMinimalAgentTask(designInputFixture, {
         kind: "source",
@@ -80,9 +86,8 @@ describe("high-impact agent runner", () => {
         expect.stringContaining("one parallel tool-call batch"),
         expect.stringContaining("Attach all three tokens in one parallel"),
         expect.stringContaining("Do not call get-page-by-path"),
-        expect.stringContaining(
-          "verify-bindings immediately after insert-fragment"
-        ),
+        expect.stringContaining("call insert-fragment-verified once"),
+        expect.stringContaining("pagePath /summer"),
         expect.stringContaining("do not call list-instances"),
         expect.stringContaining("Do not call meta.index"),
       ]),

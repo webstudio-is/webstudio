@@ -251,7 +251,8 @@ const validateAuth = (
     checks,
     failures,
     "bindingVerification",
-    hasSuccessfulCall(input.toolCalls, "verify-bindings"),
+    hasSuccessfulCall(input.toolCalls, "verify-bindings") ||
+      hasSuccessfulCall(input.toolCalls, "insert-fragment-verified"),
     "The agent did not verify the persisted authentication bindings."
   );
   recordCheck(

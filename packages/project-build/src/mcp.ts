@@ -577,6 +577,21 @@ const insertFragmentMcpInputSchema = {
   required: ["parentInstanceId", "fragment"],
 } as const satisfies ProjectSessionMcpInputSchema;
 
+const insertFragmentVerifiedMcpInputSchema = {
+  ...insertFragmentMcpInputSchema,
+  description:
+    "Insert a Webstudio fragment and immediately verify its persisted bindings in one call.",
+  properties: {
+    ...insertFragmentMcpInputSchema.properties,
+    pagePath: {
+      type: "string",
+      description:
+        "Concrete page path used for post-commit binding verification, for example /account.",
+    },
+  },
+  required: ["parentInstanceId", "fragment", "pagePath"],
+} as const satisfies ProjectSessionMcpInputSchema;
+
 const insertCollectionMcpInput = insertCollectionInput
   .omit({ itemFragment: true })
   .extend({
@@ -1819,6 +1834,14 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
         '<ws.element ws:tag="section"><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>',
     },
   ],
+  "insert-fragment-verified": [
+    {
+      parentInstanceId: "parent-id",
+      pagePath: "/pricing",
+      fragment:
+        '<ws.element ws:tag="section"><ws.element ws:tag="h2">Pricing</ws.element></ws.element>',
+    },
+  ],
   "update-text": [
     {
       instanceId: "instance-id",
@@ -2733,6 +2756,49 @@ const inspectAuthContextTool = createProjectSessionMcpTool({
   },
 });
 
+const insertFragmentVerifiedOperationCommands = [
+  "insert-fragment",
+  "verify-bindings",
+] as const;
+
+const createInsertFragmentVerifiedTool = (
+  operations: readonly PublicMcpOperation[]
+) => {
+  const insertion = operations.find(
+    (operation) => operation.command === "insert-fragment"
+  );
+  const verification = operations.find(
+    (operation) => operation.command === "verify-bindings"
+  );
+  if (insertion === undefined || verification === undefined) {
+    throw new Error(
+      "insert-fragment-verified requires insert-fragment and verify-bindings operations."
+    );
+  }
+  const mergeNamespaces = (
+    key: "readNamespaces" | "writeNamespaces" | "invalidatesNamespaces"
+  ) => [...new Set([...insertion[key], ...verification[key]])];
+  return createProjectSessionMcpTool({
+    name: "insert-fragment-verified",
+    description:
+      "Insert an authored Webstudio JSX fragment and immediately verify persisted bindings on its page. Prefer this when binding verification is required directly after insertion.",
+    inputSchema: insertFragmentVerifiedMcpInputSchema,
+    mcpExamples: getMcpExamples("insert-fragment-verified"),
+    annotations: {
+      command: "insert-fragment-verified",
+      operationId: "workflow.insert-fragment-verified",
+      method: "mutation",
+      permit: insertion.permit,
+      localCapable: insertion.localCapable && verification.localCapable,
+      serverOnly: insertion.serverOnly || verification.serverOnly,
+      readNamespaces: mergeNamespaces("readNamespaces"),
+      writeNamespaces: mergeNamespaces("writeNamespaces"),
+      invalidatesNamespaces: mergeNamespaces("invalidatesNamespaces"),
+      retryOnConflict: insertion.retryOnConflict,
+    },
+  });
+};
+
 const screenshotTool = createProjectSessionMcpTool({
   name: "screenshot",
   description:
@@ -3046,6 +3112,11 @@ export const listProjectSessionMcpTools = (
   )
     ? [inspectAuthContextTool]
     : []),
+  ...(insertFragmentVerifiedOperationCommands.every((command) =>
+    operations.some((operation) => operation.command === command)
+  )
+    ? [createInsertFragmentVerifiedTool(operations)]
+    : []),
   ...(options.includeRestorePoints ? restorePointTools : []),
   ...(options.includeImport ? [importTool] : []),
   ...(options.includeDownloadAsset ? [downloadAssetTool] : []),
@@ -3173,6 +3244,7 @@ const capabilityAreas = [
       "list-instances",
       "inspect-instance",
       "insert-fragment",
+      "insert-fragment-verified",
       "insert-component",
       "move-instance",
       "clone-instance",
@@ -5150,8 +5222,7 @@ const metaGoalGuides = [
       "create-page",
       "create-resource",
       "create-variable",
-      "insert-fragment",
-      "verify-bindings",
+      "insert-fragment-verified",
       "update-page",
       "preview.start",
       "screenshot",
@@ -5168,8 +5239,8 @@ const metaGoalGuides = [
       "Keep the server-mediated session resource as provider-convention evidence, but use only non-secret scoped fixture variables to drive local auth-state visibility. Do not bind that server-only resource into local preview rendering: its endpoint is intentionally absent locally and can recurse through the generated route.",
       'Insert signed-out, loading, signed-in, and failed-auth panels together as one expression-free semantic fragment that acts as a state gallery. Keep all four panels visible together for local visual verification; do not add conditional visibility bindings or mutate fixture state solely to capture more screenshots. Use that exact fragment verbatim without adding styles, props, expressions, components, or changing its nesting: <ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-out</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Loading</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-in</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Failed-auth</ws.element></ws.element></ws.element>.',
       "Do not call selector-based structural tools such as wrap-instance unless a focused list-instances result supplied the complete non-empty selector from the target through its page root. Prefer direct style, prop, or binding corrections when the structure is already sound.",
-      "After all authentication expressions are created or changed, call verify-bindings once for the account page and resolve every validity, scope, and reference finding before previewing. Updating only a fixture variable's literal state does not require another binding verification.",
-      'Call preview.start once, then capture the required desktop and mobile path screenshots back-to-back: path screenshots refresh the current session automatically. Do not run discovery or inspect-instance after visual verification starts. Do not restart preview or re-run verify-bindings between non-secret fixture-state updates. The screenshots are the rendered evidence. After they succeed, run a static audit with {"pagePath":"/account"}; do not set rendered:true and duplicate the same captures. A successful final audit is terminal: do not mutate, verify, restart preview, or capture more screenshots afterward. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
+      'Insert the complete account fragment with insert-fragment-verified and {"pagePath":"/account"} so persisted bindings are checked in the same call. Resolve every returned validity, scope, and reference finding before previewing. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /account. Updating only a fixture variable\'s literal state does not require another binding verification.',
+      'Call preview.start once, then capture the required desktop and mobile path screenshots back-to-back: path screenshots refresh the current session automatically. Do not run discovery or inspect-instance after visual verification starts. Do not restart preview or re-run binding verification between non-secret fixture-state updates. The screenshots are the rendered evidence. After they succeed, run a static audit with {"pagePath":"/account"}; do not set rendered:true and duplicate the same captures. A successful final audit is terminal: do not mutate, verify, restart preview, or capture more screenshots afterward. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
     ],
   },
   {
@@ -5205,8 +5276,7 @@ const metaGoalGuides = [
       "list-assets",
       "components.search",
       "create-page",
-      "insert-fragment",
-      "verify-bindings",
+      "insert-fragment-verified",
       "update-styles",
       "upload-asset",
       "preview.start",
@@ -5220,11 +5290,11 @@ const metaGoalGuides = [
       "Before the first mutation, call list-breakpoints and list-design-tokens once as part of one bounded discovery pass. Also call list-pages, list-assets, and list-variables once; use one list-instances call only when needed to inspect a representative existing page pattern. Call each discovery tool at most once. Do not call get-styles: the focused token and instance results provide the reusable design-system evidence needed here without risking an oversized style dump. Reuse exact existing values, breakpoint ids, and patterns; do not create a parallel design system from approximate screenshot colors or spacing.",
       "Call create-page exactly once and use its returned rootInstanceId as the insertion parent. Insert the complete semantic page in one fragment when practical, and use the insertion result's instanceIds for follow-up token attachments. Do not call list-instances after the first mutation to rediscover ids already returned by mutations.",
       "Attach existing design tokens to the new page's instances when they represent the intended typography, color, or other shared style. Reusing only the token's current raw value creates a disconnected local copy.",
-      "Create semantic editable structure with insert-fragment using ws.element and literal text first; apply fixed CSS only through ws:style={css`...`}. Do not improvise component names, expression syntax, or object-valued style expressions in the fragment. Use assets for real imagery and text/controls for real content; do not flatten the design into one image or absolute-position every element.",
+      "Create semantic editable structure with insert-fragment-verified using ws.element and literal text first; apply fixed CSS only through ws:style={css`...`}. Do not improvise component names, expression syntax, or object-valued style expressions in the fragment. Use assets for real imagery and text/controls for real content; do not flatten the design into one image or absolute-position every element.",
       "Implement responsive behavior inside the project's actual breakpoint ranges.",
       'Represent literal CSS values as {"type":"keyword","value":"..."}, including lengths such as "48px" and colors such as "#fff". Do not invent value types such as "length"; use {"type":"unit","value":48,"unit":"px"} only when numeric structure is specifically needed.',
       "Each update-styles updates item is flat: include instanceId, property, value, and optional breakpoint directly on every item. Do not group properties under styles or declarations.",
-      'Immediately after insert-fragment, call verify-bindings exactly once with {"pagePath":"/summer"}; do not guess a page id or alternate input shape. Treat this as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. Those later fixed-value mutations do not require another binding verification. Finish them before visual verification, then start preview once. Capture the desktop and mobile screenshots back-to-back. Capture exactly the two supplied viewports, 1440x900 and 390x844; do not add exploratory or intermediate screenshots. Do not mutate, rediscover, or repeat binding verification after screenshots begin. The screenshots are the rendered evidence. Run a static audit with {"pagePath":"/summer"} immediately afterward; do not set rendered:true and duplicate the same captures. A successful final audit is terminal. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
+      'Call insert-fragment-verified exactly once with {"pagePath":"/summer"} so insertion and persisted binding verification share one bounded call; do not guess a page id or alternate input shape. Treat its verification result as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /summer. Later fixed-value mutations do not require another binding verification. Finish them before visual verification, then start preview once. Capture the desktop and mobile screenshots back-to-back. Capture exactly the two supplied viewports, 1440x900 and 390x844; do not add exploratory or intermediate screenshots. Do not mutate, rediscover, or repeat binding verification after screenshots begin. The screenshots are the rendered evidence. Run a static audit with {"pagePath":"/summer"} immediately afterward; do not set rendered:true and duplicate the same captures. A successful final audit is terminal. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
     ],
   },
   {
@@ -6906,6 +6976,137 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       }
       if (name === "preview.stop" && stopPreview !== undefined) {
         return toMetaResult(await stopPreview());
+      }
+      if (name === "insert-fragment-verified") {
+        const insertionOperation = operationByCommand.get(
+          "insert-fragment" as Command
+        );
+        const verificationOperation = operationByCommand.get(
+          "verify-bindings" as Command
+        );
+        if (
+          insertionOperation === undefined ||
+          verificationOperation === undefined
+        ) {
+          throw new Error(
+            "insert-fragment-verified requires insert-fragment and verify-bindings operations."
+          );
+        }
+        const transportInput = getToolCallInput(input);
+        if (
+          isPlainRecord(transportInput.input) === false ||
+          typeof transportInput.input.pagePath !== "string"
+        ) {
+          throw new Error(
+            "insert-fragment-verified requires a pagePath for persisted binding verification."
+          );
+        }
+        const insertionInput = getNormalizedOperationInput(
+          insertionOperation,
+          await getInsertFragmentInput(transportInput.input)
+        );
+        const verificationInput = getNormalizedOperationInput(
+          verificationOperation,
+          { pagePath: transportInput.input.pagePath, limit: 200 }
+        );
+        const compositeDryRun = dryRun || transportInput.dryRun;
+        const insertionEnvelope = await executeOperation({
+          command: "insert-fragment" as Command,
+          input: insertionInput,
+          dryRun: compositeDryRun,
+        });
+        if (compositeDryRun) {
+          return toCallResult(
+            {
+              ...insertionEnvelope,
+              operationId: "workflow.insert-fragment-verified",
+              result: {
+                insertion: insertionEnvelope.result,
+                verification: {
+                  status: "skipped",
+                  reason: "Verification runs only after a committed insertion.",
+                },
+              },
+            },
+            {
+              next: [
+                "Review the planned insertion. Commit it with the same input and dryRun omitted before relying on binding verification.",
+              ],
+            }
+          );
+        }
+        let verificationEnvelope: ProjectSessionEnvelope;
+        try {
+          verificationEnvelope = await executeOperation({
+            command: "verify-bindings" as Command,
+            input: verificationInput,
+            dryRun: false,
+          });
+        } catch {
+          return toCallResult(
+            {
+              ...insertionEnvelope,
+              operationId: "workflow.insert-fragment-verified",
+              result: {
+                insertion: insertionEnvelope.result,
+                verification: { status: "failed-after-commit" },
+              },
+            },
+            {
+              error: {
+                code: "POST_COMMIT_VERIFICATION_FAILED",
+                message:
+                  "The fragment was committed, but binding verification could not run. Do not retry the insertion; call verify-bindings separately for the same pagePath.",
+              },
+              next: [
+                "Do not retry insert-fragment-verified. Call verify-bindings separately for the same pagePath and resolve every finding.",
+              ],
+            }
+          );
+        }
+        const mergeNamespaces = (
+          key: keyof ProjectSessionEnvelope["namespaces"]
+        ) => [
+          ...new Set([
+            ...insertionEnvelope.namespaces[key],
+            ...verificationEnvelope.namespaces[key],
+          ]),
+        ];
+        return toCallResult(
+          {
+            ...verificationEnvelope,
+            operationId: "workflow.insert-fragment-verified",
+            result: {
+              insertion: insertionEnvelope.result,
+              verification: verificationEnvelope.result,
+            },
+            state: {
+              ...verificationEnvelope.state,
+              committed: insertionEnvelope.state.committed,
+            },
+            namespaces: {
+              read: mergeNamespaces("read"),
+              write: mergeNamespaces("write"),
+              invalidated: mergeNamespaces("invalidated"),
+              missing: mergeNamespaces("missing"),
+            },
+            diagnostics: [
+              ...insertionEnvelope.diagnostics,
+              ...verificationEnvelope.diagnostics,
+            ],
+          },
+          {
+            next: [
+              "Resolve every binding verification finding before previewing.",
+              "Before reporting completion, run audit for the changed page or project.",
+              ...(startPreview !== undefined && captureScreenshot !== undefined
+                ? [
+                    "For visual changes, start a session preview and capture desktop and mobile screenshots before reporting completion.",
+                  ]
+                : []),
+            ],
+          }
+        );
       }
       const operation = operationByCommand.get(name as Command);
       if (operation === undefined) {

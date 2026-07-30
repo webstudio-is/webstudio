@@ -780,6 +780,7 @@ describe("project session mcp adapter", () => {
       "status",
       "refresh",
       "reset-session",
+      "insert-fragment-verified",
     ]);
     expect(toolNames).toContain("insert-fragment");
     const assetOperationTools = listProjectSessionMcpTools(
@@ -1002,6 +1003,10 @@ describe("project session mcp adapter", () => {
     ]);
     const fragmentSchema = insertFragmentTool?.inputSchema.properties?.fragment;
     expect(fragmentSchema).toEqual(expect.objectContaining({ type: "string" }));
+    expect(
+      tools.find((tool) => tool.name === "insert-fragment-verified")
+        ?.inputSchema.required
+    ).toEqual(["parentInstanceId", "fragment", "pagePath"]);
     const jsxDescription =
       typeof fragmentSchema === "object" &&
       "description" in fragmentSchema &&
@@ -2120,6 +2125,7 @@ describe("project session mcp adapter", () => {
         },
       },
     });
+
   });
 
   test("plans and confirms destructive mutations without blind retries", async () => {
@@ -2275,6 +2281,114 @@ describe("project session mcp adapter", () => {
       dryRun: false,
     });
     expect(call?.input).not.toHaveProperty("source");
+  });
+
+  test("inserts a fragment and verifies persisted bindings in one call", async () => {
+    const executeOperation = createExecuteOperation(async ({ command }) =>
+      command === "insert-fragment"
+        ? createEnvelope({
+            operationId: "instances.insertFragment",
+            result: { instanceIds: ["section-id"] },
+            state: { committed: true, freshness: {} },
+          })
+        : createEnvelope({
+            operationId: "project.verifyBindings",
+            result: {
+              summary: { bindingsChecked: 2, findings: 0 },
+              findings: [],
+            },
+          })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    expect(adapter.listTools().map(({ name }) => name)).toContain(
+      "insert-fragment-verified"
+    );
+    const result = await adapter.callTool({
+      name: "insert-fragment-verified",
+      input: {
+        parentInstanceId: "root-id",
+        pagePath: "/account",
+        fragment: '<ws.element ws:tag="section" />',
+      },
+    });
+
+    expect(executeOperation).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        command: "insert-fragment",
+        dryRun: false,
+      })
+    );
+    expect(executeOperation).toHaveBeenNthCalledWith(2, {
+      command: "verify-bindings",
+      input: { pagePath: "/account", limit: 200 },
+      dryRun: false,
+    });
+    expect(result.structuredContent).toMatchObject({
+      ok: true,
+      data: {
+        insertion: { instanceIds: ["section-id"] },
+        verification: {
+          summary: { bindingsChecked: 2, findings: 0 },
+          findings: [],
+        },
+      },
+      meta: {
+        session: {
+          operationId: "workflow.insert-fragment-verified",
+          committed: true,
+        },
+      },
+    });
+
+    const failingVerification = createExecuteOperation(async ({ command }) => {
+      if (command === "verify-bindings") {
+        throw new Error("verification unavailable");
+      }
+      return createEnvelope({
+        operationId: "instances.insertFragment",
+        result: { instanceIds: ["committed-section-id"] },
+        state: { committed: true, freshness: {} },
+      });
+    });
+    const failureAdapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: failingVerification,
+    });
+    const failedVerificationResult = await failureAdapter.callTool({
+      name: "insert-fragment-verified",
+      input: {
+        parentInstanceId: "root-id",
+        pagePath: "/account",
+        fragment: '<ws.element ws:tag="section" />',
+      },
+    });
+
+    expect(failedVerificationResult).toMatchObject({
+      isError: true,
+      structuredContent: {
+        ok: false,
+        data: {
+          insertion: { instanceIds: ["committed-section-id"] },
+          verification: { status: "failed-after-commit" },
+        },
+        error: { code: "POST_COMMIT_VERIFICATION_FAILED" },
+        meta: { session: { committed: true } },
+      },
+    });
+    if (failedVerificationResult.structuredContent.ok !== false) {
+      throw new Error("Expected post-commit verification to fail");
+    }
+    expect(failedVerificationResult.structuredContent.error.message).toContain(
+      "Do not retry the insertion"
+    );
+    expect(failingVerification).toHaveBeenCalledTimes(2);
   });
 
   test("converts semantic Collection item jsx before executing one atomic operation", async () => {
@@ -4346,9 +4460,9 @@ describe("project session mcp adapter", () => {
           expect.stringContaining(
             "Do not bind that server-only resource into local preview rendering"
           ),
-          expect.stringContaining("call verify-bindings"),
+          expect.stringContaining("insert-fragment-verified"),
           expect.stringContaining(
-            "Do not restart preview or re-run verify-bindings"
+            "Do not restart preview or re-run binding verification"
           ),
           expect.stringContaining(
             "Do not run discovery or inspect-instance after visual verification starts"
@@ -4361,8 +4475,7 @@ describe("project session mcp adapter", () => {
         ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "list-instances" }),
-          expect.objectContaining({ name: "insert-fragment" }),
-          expect.objectContaining({ name: "verify-bindings" }),
+          expect.objectContaining({ name: "insert-fragment-verified" }),
           expect.objectContaining({ name: "audit" }),
         ]),
       })
@@ -4409,10 +4522,8 @@ describe("project session mcp adapter", () => {
           expect.stringContaining(
             "Capture the desktop and mobile screenshots back-to-back"
           ),
-          expect.stringContaining(
-            'call verify-bindings exactly once with {"pagePath":"/summer"}'
-          ),
-          expect.stringContaining("Immediately after insert-fragment"),
+          expect.stringContaining("Call insert-fragment-verified exactly once"),
+          expect.stringContaining('{"pagePath":"/summer"}'),
           expect.stringContaining("Capture exactly the two supplied viewports"),
           expect.stringContaining("A successful final audit is terminal"),
           expect.stringContaining("parallel design system"),
@@ -4429,7 +4540,7 @@ describe("project session mcp adapter", () => {
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "list-breakpoints" }),
           expect.objectContaining({ name: "components.search" }),
-          expect.objectContaining({ name: "insert-fragment" }),
+          expect.objectContaining({ name: "insert-fragment-verified" }),
           expect.objectContaining({ name: "attach-design-token" }),
           expect.objectContaining({
             name: "update-styles",
