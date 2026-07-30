@@ -13,6 +13,7 @@ import {
   PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { getContentArtifactRuntimeAssetIds } from "@webstudio-is/content-engine";
 import {
   findPageByIdOrPath,
   createReachableAssetContentCompilationPlan,
@@ -194,8 +195,16 @@ const addProjectMetadata = async (
         throw new Error("Assets changed while preparing publication; retry");
       }
       assetIndex = preparedIndex;
+      const retainedRuntimeAssetIds = new Set(retainedFontIds);
+      for (const assetId of getContentArtifactRuntimeAssetIds({
+        artifact: preparedIndex,
+        includeDocuments: true,
+      })) {
+        retainedRuntimeAssetIds.add(assetId);
+      }
       publishedAssets = assetDataAfter.assets.filter(
-        (asset) => asset.type !== "font" || retainedFontIds.has(asset.id)
+        (asset) =>
+          asset.type !== "font" || retainedRuntimeAssetIds.has(asset.id)
       );
       publishedAssetFolders = assetDataAfter.assetFolders;
       break;
