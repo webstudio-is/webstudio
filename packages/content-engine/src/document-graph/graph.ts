@@ -1,9 +1,10 @@
-import { enum as zEnum, strictObject, string } from "zod";
+import { compareStrings } from "../canonical-json";
+import { createDocumentReference, type DocumentReference } from "./reference";
 import {
-  createDocumentReference,
-  documentReference,
-  type DocumentReference,
-} from "./reference";
+  documentGraphEdgeSchema,
+  documentGraphNodeSchema,
+} from "./graph-schema";
+import { getDocumentGraphEdgesBySourceId } from "./graph-utils";
 
 export type DocumentGraphNode = Readonly<{
   id: string;
@@ -53,22 +54,6 @@ export class DocumentGraphError extends Error {
   }
 }
 
-const nodeSchema = strictObject({
-  id: string().min(1),
-  revision: string().min(1),
-  contentRef: string().min(1),
-  format: zEnum(["json", "markdown"]).optional(),
-});
-
-const edgeSchema = strictObject({
-  sourceId: string().min(1),
-  referenceId: string().min(1),
-  reference: documentReference,
-});
-
-const compareStrings = (left: string, right: string) =>
-  left < right ? -1 : left > right ? 1 : 0;
-
 const compareEdges = (left: DocumentGraphEdge, right: DocumentGraphEdge) =>
   compareStrings(left.sourceId, right.sourceId) ||
   compareStrings(left.referenceId, right.referenceId);
@@ -81,7 +66,7 @@ export const createDocumentGraph = ({
   edges: readonly unknown[];
 }): DocumentGraph => {
   const nodes = nodeInputs
-    .map((input) => Object.freeze(nodeSchema.parse(input)))
+    .map((input) => Object.freeze(documentGraphNodeSchema.parse(input)))
     .sort((left, right) => compareStrings(left.id, right.id));
   const nodesById = new Map<string, DocumentGraphNode>();
   const nodesByContentRef = new Map<string, DocumentGraphNode>();
@@ -111,7 +96,7 @@ export const createDocumentGraph = ({
 
   const edges = edgeInputs
     .map((input) => {
-      const edge = edgeSchema.parse(input);
+      const edge = documentGraphEdgeSchema.parse(input);
       return Object.freeze({
         ...edge,
         reference: createDocumentReference(edge.reference),
@@ -163,16 +148,6 @@ export const createDocumentGraph = ({
 const getNodesById = (graph: DocumentGraph) =>
   new Map(graph.nodes.map((node) => [node.id, node]));
 
-const getEdgesBySourceId = (graph: DocumentGraph) => {
-  const result = new Map<string, DocumentGraphEdge[]>();
-  for (const edge of graph.edges) {
-    const sourceEdges = result.get(edge.sourceId) ?? [];
-    sourceEdges.push(edge);
-    result.set(edge.sourceId, sourceEdges);
-  }
-  return result;
-};
-
 export const getDocumentGraphDependencies = (
   graph: DocumentGraph,
   documentId: string
@@ -206,7 +181,7 @@ export const getDocumentGraphClosure = ({
   rootIds: readonly string[];
 }): readonly DocumentGraphNode[] => {
   const nodesById = getNodesById(graph);
-  const edgesBySourceId = getEdgesBySourceId(graph);
+  const edgesBySourceId = getDocumentGraphEdgesBySourceId(graph.edges);
   const state = new Map<string, "visiting" | "visited">();
   const stack: string[] = [];
   const ordered: DocumentGraphNode[] = [];

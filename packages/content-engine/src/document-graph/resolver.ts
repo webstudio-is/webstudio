@@ -2,9 +2,9 @@ import { mapBounded } from "../async-utils";
 import {
   getDocumentGraphClosure,
   type DocumentGraph,
-  type DocumentGraphEdge,
   type DocumentGraphNode,
 } from "./graph";
+import { getDocumentGraphEdgesBySourceId } from "./graph-utils";
 import type { DocumentReference } from "./reference";
 
 export type DocumentGraphResolutionErrorCode =
@@ -53,16 +53,6 @@ const assertActive = (signal: AbortSignal | undefined) => {
       cause: signal.reason,
     });
   }
-};
-
-const getEdgesBySourceId = (edges: readonly DocumentGraphEdge[]) => {
-  const result = new Map<string, DocumentGraphEdge[]>();
-  for (const edge of edges) {
-    const sourceEdges = result.get(edge.sourceId) ?? [];
-    sourceEdges.push(edge);
-    result.set(edge.sourceId, sourceEdges);
-  }
-  return result;
 };
 
 /**
@@ -135,7 +125,7 @@ export const resolveDocumentGraph = async <Source, Value>({
     }
   });
 
-  const edgesBySourceId = getEdgesBySourceId(graph.edges);
+  const edgesBySourceId = getDocumentGraphEdgesBySourceId(graph.edges);
   const values = new Map<string, Value>();
   for (const node of closure) {
     assertActive(signal);

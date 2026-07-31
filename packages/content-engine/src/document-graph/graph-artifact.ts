@@ -1,4 +1,4 @@
-import { array, enum as zEnum, literal, strictObject, string } from "zod";
+import { array, literal, strictObject, string } from "zod";
 import { serializeJsonDeterministically, sha256 } from "../canonical-json";
 import {
   createDocumentGraph,
@@ -6,28 +6,18 @@ import {
   type DocumentGraphEdge,
   type DocumentGraphNode,
 } from "./graph";
-import { documentReference } from "./reference";
+import {
+  documentGraphEdgeSchema,
+  documentGraphNodeSchema,
+} from "./graph-schema";
 
 const sha256Revision = string().regex(/^sha256:[a-f0-9]{64}$/);
-
-const documentGraphNode = strictObject({
-  id: string().min(1),
-  revision: string().min(1),
-  contentRef: string().min(1),
-  format: zEnum(["json", "markdown"]).optional(),
-});
-
-const documentGraphEdge = strictObject({
-  sourceId: string().min(1),
-  referenceId: string().min(1),
-  reference: documentReference,
-});
 
 export const documentGraphArtifactV1 = strictObject({
   format: literal("webstudio-document-graph"),
   version: literal(1),
-  nodes: array(documentGraphNode),
-  edges: array(documentGraphEdge),
+  nodes: array(documentGraphNodeSchema),
+  edges: array(documentGraphEdgeSchema),
   integrity: strictObject({
     algorithm: literal("sha256"),
     checksum: sha256Revision,

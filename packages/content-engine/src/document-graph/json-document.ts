@@ -9,6 +9,7 @@ import {
 import { normalizeJsonValue, type JsonValue } from "../canonical-json";
 import { contentEngineLimits } from "../limits";
 import type { DocumentRepresentation } from "./reference";
+import { isJsonObject } from "./document-utils";
 import {
   DocumentReferenceSyntaxError,
   parseSourceDocumentReference,
@@ -48,11 +49,6 @@ export class JsonDocumentError extends Error {
     this.referenceId = referenceId;
   }
 }
-
-const isJsonObject = (
-  value: JsonValue
-): value is { readonly [key: string]: JsonValue } =>
-  typeof value === "object" && value !== null && Array.isArray(value) === false;
 
 const getReferenceMarker = (
   value: JsonValue,

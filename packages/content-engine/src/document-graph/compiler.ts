@@ -1,3 +1,4 @@
+import { compareStrings } from "../canonical-json";
 import {
   createDocumentGraph,
   DocumentGraphError,
@@ -57,9 +58,6 @@ export class DocumentGraphCompilationError extends Error {
     this.documentIds = Object.freeze([...documentIds]);
   }
 }
-
-const compareStrings = (left: string, right: string) =>
-  left < right ? -1 : left > right ? 1 : 0;
 
 const getCanonicalDocumentUrl = ({
   documentUrl,

@@ -16,6 +16,7 @@ import {
 } from "./markdown-document";
 import type { DocumentRepresentation } from "./reference";
 import type { SourceReferenceOccurrence } from "./reference-codec";
+import { isJsonObject } from "./document-utils";
 
 export type DocumentFormat = "json" | "markdown";
 
@@ -35,11 +36,6 @@ export type AnalyzedDocument =
       references: readonly SourceReferenceOccurrence[];
     }>;
 
-const isJsonObject = (
-  value: JsonValue
-): value is { readonly [key: string]: JsonValue } =>
-  typeof value === "object" && value !== null && Array.isArray(value) === false;
-
 export const getAdaptedDocumentProperties = (document: AdaptedDocument) => {
   const value =
     document.format === "markdown"
@@ -48,11 +44,7 @@ export const getAdaptedDocumentProperties = (document: AdaptedDocument) => {
   return isJsonObject(value) ? value : undefined;
 };
 
-const createAdaptedDocument = <Document extends AdaptedDocument>(
-  document: Document
-) => Object.freeze(document);
-
-const createAnalyzedDocument = <Document extends AnalyzedDocument>(
+const freezeDocument = <Document extends AdaptedDocument | AnalyzedDocument>(
   document: Document
 ) => Object.freeze(document);
 
@@ -67,12 +59,12 @@ export const parseDocumentSource = async ({
   maximumBytes?: number;
 }): Promise<AdaptedDocument> => {
   if (format === "json") {
-    return createAdaptedDocument({
+    return freezeDocument({
       format,
       value: await parseJsonDocumentSource({ source, maximumBytes }),
     });
   }
-  return createAdaptedDocument({
+  return freezeDocument({
     format,
     value: await parseMarkdownDocumentSource({ source, maximumBytes }),
   });
@@ -99,7 +91,7 @@ export const analyzeDocumentSource = async ({
       documentUrl,
       maximumBytes,
     });
-    return createAnalyzedDocument({
+    return freezeDocument({
       format,
       value: analyzed.document,
       references: analyzed.references,
@@ -111,7 +103,7 @@ export const analyzeDocumentSource = async ({
     documentUrl,
     maximumBytes,
   });
-  return createAnalyzedDocument({
+  return freezeDocument({
     format,
     value: analyzed.document,
     references: analyzed.references,
@@ -126,7 +118,7 @@ export const assembleDocument = ({
   references: ReadonlyMap<string, unknown>;
 }): AdaptedDocument => {
   if (document.format === "json") {
-    return createAdaptedDocument({
+    return freezeDocument({
       format: document.format,
       value: assembleJsonDocument({
         document: document.value,
@@ -134,7 +126,7 @@ export const assembleDocument = ({
       }),
     });
   }
-  return createAdaptedDocument({
+  return freezeDocument({
     format: document.format,
     value: assembleMarkdownDocument({
       document: document.value,
