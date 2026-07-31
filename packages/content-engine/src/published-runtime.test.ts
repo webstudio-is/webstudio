@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { assetQuery, type AssetFileDocument } from "./schema";
 import { compileContentArtifact, createAssetIndex } from "./asset-index";
 import { createCanonicalAssetFileEntry } from "./canonical";
+import { createContentDatabase } from "./content-database";
 import {
   createContentCompilationPlan,
   createLiteralContentCompilationQuery,
@@ -138,7 +139,7 @@ describe("published asset resource runtime", () => {
     expect(networkFetch).not.toHaveBeenCalled();
   });
 
-  test("fetches and assembles CDN-backed document graph roots", async () => {
+  test("assembles equivalent graph results in local, SSG, SSR, and published runtimes", async () => {
     const post = {
       ...document,
       _id: "post",
@@ -209,6 +210,31 @@ describe("published asset resource runtime", () => {
           : "---\nname: Ada\nrole: Writer\n---\nBio\n"
       );
     });
+    const graphQuery = assetQuery.parse({
+      where: { all: [{ field: ["id"], operator: "eq", value: "post" }] },
+      limit: 1,
+      output: {
+        mode: "fields",
+        includeMetadata: false,
+        fields: [
+          ["properties", "title"],
+          ["properties", "author"],
+        ],
+      },
+    });
+    const localResult = await createContentDatabase({
+      artifact,
+    }).queryWithDocumentGraph({
+      request: { query: graphQuery },
+      load: async (node) => ({
+        format: node.format as "json" | "markdown",
+        revision: node.revision,
+        source:
+          node.id === "post"
+            ? '{"title":"Hello","author":{"$ref":"./author.md#frontmatter"}}'
+            : "---\nname: Ada\nrole: Writer\n---\nBio\n",
+      }),
+    });
     const events: unknown[] = [];
     const runtimeFetch = createPublishedAssetResourceFetch({
       baseUrl: "https://site.example",
@@ -224,25 +250,23 @@ describe("published asset resource runtime", () => {
 
     const requestInit = () => ({
       method: "POST",
-      body: JSON.stringify({
-        query: {
-          where: { all: [{ field: ["id"], operator: "eq", value: "post" }] },
-          limit: 1,
-          output: {
-            mode: "fields",
-            includeMetadata: false,
-            fields: [
-              ["properties", "title"],
-              ["properties", "author"],
-            ],
-          },
-        },
-      }),
+      body: JSON.stringify({ query: graphQuery }),
     });
     const request = () => runtimeFetch("/$resources/assets", requestInit());
 
     const response = await request();
 
+    expect(localResult).toMatchObject({
+      items: [
+        {
+          id: "post",
+          properties: {
+            title: "Hello",
+            author: { name: "Ada", role: "Writer" },
+          },
+        },
+      ],
+    });
     await expect(response?.json()).resolves.toMatchObject({
       items: [
         {
@@ -277,6 +301,20 @@ describe("published asset resource runtime", () => {
       ])
     );
 
+    const ssgFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://webstudio.local",
+      deploymentId: "graph-ssg-build",
+      artifact,
+      runtimeAssets: {
+        post: { url: "/assets/post.json" },
+        author: { url: "/assets/author.md" },
+      },
+      fetchDocument,
+    });
+    const ssgResponse = await ssgFetch("/$resources/assets", requestInit());
+    await expect(ssgResponse?.json()).resolves.toMatchObject(localResult);
+    expect(fetchDocument).toHaveBeenCalledTimes(4);
+
     const createGeneratedFetch = createGeneratedAssetResourceRuntime({
       deploymentId: "graph-build",
       artifact,
@@ -301,7 +339,7 @@ describe("published asset resource runtime", () => {
         },
       ],
     });
-    expect(fetchDocument).toHaveBeenCalledTimes(4);
+    expect(fetchDocument).toHaveBeenCalledTimes(6);
     expect(() =>
       createPublishedAssetResourceFetch({
         baseUrl: "https://site.example",
