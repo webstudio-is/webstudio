@@ -11,6 +11,7 @@ export * from "./folder-persistence";
 export * from "./revision";
 export * from "./field-catalog";
 export * from "./query-preview";
+export * from "./publication";
 export * from "./clients/fs/fs";
 export * from "./clients/s3/s3";
 export { assetDataOverride } from "./utils/get-asset-data";

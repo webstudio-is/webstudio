@@ -36,12 +36,10 @@ import {
   getAssetQueryWhereMetrics,
   validateAssetQueryAgainstCatalog,
 } from "@webstudio-is/content-engine";
-import { createAssetQueryPreviewDatabasePlan } from "./content-database.server";
 import {
   loadBuilderAssetFieldCatalog,
   loadAssetDataByProject,
   loadAssetFoldersByProject,
-  previewAssetResourceQuery,
 } from "@webstudio-is/asset-uploader/server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
@@ -85,7 +83,7 @@ import {
   executeApiRuntimeOperation,
 } from "./api-runtime.server";
 import { createAssetClient } from "../shared/asset-client";
-import { getContentDatabaseMaxBytes } from "./content-database.server";
+import { previewProjectAssetQuery } from "./asset-query-preview.server";
 
 const assertApiPublishDomains = ({
   auth,
@@ -798,17 +796,10 @@ export const apiRouter = router({
       async ({ ctx, input }) => {
         try {
           const { projectId, ...request } = input;
-          const build = await loadDevBuildByProjectId(ctx, projectId);
-          return await previewAssetResourceQuery({
+          return await previewProjectAssetQuery({
             projectId,
             request,
             context: ctx,
-            assetClient: createAssetClient(),
-            contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
-            databasePlan: createAssetQueryPreviewDatabasePlan({
-              build,
-              query: request.query,
-            }),
           });
         } catch (error) {
           return throwAssetQueryApiError(error);

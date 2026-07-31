@@ -1,30 +1,27 @@
-import { toast } from "@webstudio-is/design-system";
-import type { Project } from "@webstudio-is/project";
-import type { ContentDatabasePublishWarning } from "~/services/content-database.server";
-import { $publishDialog } from "../../shared/nano-states";
-import { nativeClient } from "~/shared/trpc/trpc-client";
-import { shouldShowContentDatabasePublishWarningToast } from "./content-database-publish-warning";
+import type { ContentDatabasePublishDiagnostics } from "~/services/content-database.server";
 
-const ContentDatabasePublishWarningMessage = ({
-  warning,
+export const ContentDatabasePublishWarning = ({
+  diagnostics,
 }: {
-  warning: ContentDatabasePublishWarning;
+  diagnostics: ContentDatabasePublishDiagnostics;
 }) => {
-  const omittedFileLabel =
-    warning.omittedDocumentCount === 1 ? "file" : "files";
-  const dynamicResourceNames = warning.affectedResources.flatMap(
+  const { stats } = diagnostics;
+  const totalDocumentCount =
+    stats.includedDocumentCount + stats.omittedDocumentCount;
+  const omittedFileLabel = stats.omittedDocumentCount === 1 ? "file" : "files";
+  const dynamicResourceNames = diagnostics.affectedResources.flatMap(
     ({ name, kind }) => (kind === "dynamic" ? [name] : [])
   );
-  const staticResourceNames = warning.affectedResources.flatMap(
+  const staticResourceNames = diagnostics.affectedResources.flatMap(
     ({ name, kind }) => (kind === "static" ? [name] : [])
   );
   return (
     <>
       The merged published content database will include{" "}
-      {warning.includedDocumentCount} of {warning.totalDocumentCount} files (
-      {warning.usedKiB} of {warning.maxKiB} KiB). {warning.omittedDocumentCount}{" "}
-      {omittedFileLabel} will be omitted{" "}
-      {warning.omissionReason === "size"
+      {stats.includedDocumentCount} of {totalDocumentCount} files (
+      {Math.ceil(stats.usedBytes / 1024)} of {Math.ceil(stats.maxBytes / 1024)}{" "}
+      KiB). {stats.omittedDocumentCount} {omittedFileLabel} will be omitted{" "}
+      {stats.omissionReason === "size"
         ? "because the complete database exceeds the size limit"
         : "because the required content could not be embedded"}
       .
@@ -45,29 +42,4 @@ const ContentDatabasePublishWarningMessage = ({
       )}
     </>
   );
-};
-
-export const showContentDatabasePublishWarning = async ({
-  projectId,
-  setWarning,
-}: {
-  projectId: Project["id"];
-  setWarning: (warning: JSX.Element) => void;
-}) => {
-  const warning =
-    await nativeClient.build.contentDatabasePublishDiagnostics.query({
-      projectId,
-    });
-  if (warning === undefined) {
-    return;
-  }
-  const message = <ContentDatabasePublishWarningMessage warning={warning} />;
-  if (
-    shouldShowContentDatabasePublishWarningToast(
-      $publishDialog.get() !== "none"
-    )
-  ) {
-    toast.warn(message);
-  }
-  setWarning(message);
 };

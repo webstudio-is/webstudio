@@ -6,9 +6,9 @@ import {
   createAssetIndex,
   createCanonicalAssetFileEntry,
 } from "@webstudio-is/content-engine/compiler";
-import { getContentDatabasePublishWarning } from "./content-database.server";
+import { getContentDatabasePublishDiagnostics } from "./content-database.server";
 
-describe("content database publish warning", () => {
+describe("content database publish diagnostics", () => {
   test("classifies affected dynamic and static resources individually", async () => {
     const resourceId = "blog-posts";
     const overviewResourceId = "blog-overview";
@@ -102,13 +102,14 @@ describe("content database publish warning", () => {
       assetIndex,
     });
 
-    expect(getContentDatabasePublishWarning(bundle)).toEqual({
-      includedDocumentCount: 1,
-      totalDocumentCount: 2,
-      omittedDocumentCount: 1,
-      usedKiB: 2,
-      maxKiB: 5,
-      omissionReason: "size",
+    expect(getContentDatabasePublishDiagnostics(bundle)).toMatchObject({
+      stats: {
+        includedDocumentCount: 1,
+        omittedDocumentCount: 1,
+        maxBytes: 5_000,
+        omissionReason: "size",
+        truncated: true,
+      },
       affectedResources: [
         { name: "Blog posts", kind: "dynamic" },
         { name: "Blog overview", kind: "static" },
@@ -118,7 +119,9 @@ describe("content database publish warning", () => {
 
   test("does nothing when the build has no content query", () => {
     expect(
-      getContentDatabasePublishWarning(createPublishedProjectBundleFixture())
+      getContentDatabasePublishDiagnostics(
+        createPublishedProjectBundleFixture()
+      )
     ).toBeUndefined();
   });
 
@@ -188,8 +191,8 @@ describe("content database publish warning", () => {
       assetIndex,
     });
 
-    expect(getContentDatabasePublishWarning(bundle)).toMatchObject({
-      omissionReason: "unavailable",
+    expect(getContentDatabasePublishDiagnostics(bundle)).toMatchObject({
+      stats: { omissionReason: "unavailable", truncated: true },
       affectedResources: [{ name: "Blog overview", kind: "static" }],
     });
   });

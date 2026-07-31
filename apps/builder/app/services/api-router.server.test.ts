@@ -21,6 +21,7 @@ import { blockComponent } from "@webstudio-is/sdk";
 import { AssetIndexRevisionError } from "@webstudio-is/content-engine";
 import * as assetUploader from "@webstudio-is/asset-uploader/server";
 import { apiRouter, __testing__ } from "./api-router.server";
+import * as assetQueryPreview from "./asset-query-preview.server";
 import {
   getApiRouterProcedures,
   getProcedureInputSchemaMetadata,
@@ -130,7 +131,7 @@ describe("api router build operation adapters", () => {
       dataSources: [],
       resources: [],
     } as never);
-    vi.spyOn(assetUploader, "previewAssetResourceQuery").mockResolvedValue({
+    vi.spyOn(assetQueryPreview, "previewProjectAssetQuery").mockResolvedValue({
       data: {
         items: [{ id: "post" }],
         totalCount: 1,
@@ -227,17 +228,14 @@ describe("api router build operation adapters", () => {
         database: { truncated: false },
       },
     });
-    expect(assetUploader.previewAssetResourceQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        contentDatabaseMaxBytes: 512_000,
-        databasePlan: expect.objectContaining({
-          queries: expect.arrayContaining([
-            expect.objectContaining({ id: "__query-preview__" }),
-          ]),
-        }),
-      })
-    );
-    vi.mocked(assetUploader.previewAssetResourceQuery).mockRejectedValueOnce(
+    expect(assetQueryPreview.previewProjectAssetQuery).toHaveBeenCalledWith({
+      projectId: "project-1",
+      request: expect.objectContaining({
+        query: expect.objectContaining({ limit: 10 }),
+      }),
+      context: expect.anything(),
+    });
+    vi.mocked(assetQueryPreview.previewProjectAssetQuery).mockRejectedValueOnce(
       new AssetIndexRevisionError()
     );
     await expect(

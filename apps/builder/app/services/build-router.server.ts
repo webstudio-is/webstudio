@@ -50,7 +50,7 @@ import {
   commitBuildTransactions,
 } from "./api-build.server";
 import { assertApiProjectPermit } from "./api-permits.server";
-import { getContentDatabasePublishWarning } from "./content-database.server";
+import { getContentDatabasePublishDiagnostics } from "./content-database.server";
 
 const projectBundleInput = z.object({
   projectId: z.string(),
@@ -298,7 +298,7 @@ export const buildRouter = router({
           "You don't have permission to edit this project."
         );
       }
-      return getContentDatabasePublishWarning(
+      return getContentDatabasePublishDiagnostics(
         await loadProjectBundleByProjectId(input.projectId, ctx)
       );
     }),

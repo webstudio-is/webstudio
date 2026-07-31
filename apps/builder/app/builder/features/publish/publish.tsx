@@ -102,7 +102,7 @@ import {
   runPrePublishAudit,
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
-import { showContentDatabasePublishWarning } from "./content-database-publish-warning-view";
+import { showContentDatabasePublishWarning } from "./content-database-publish-warning";
 
 const PrePublishAuditMessage = ({
   finding,
