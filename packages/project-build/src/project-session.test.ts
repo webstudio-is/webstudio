@@ -433,6 +433,36 @@ describe("project session", () => {
     ]);
   });
 
+  test("creates marketplace metadata from an unconfigured session", async () => {
+    const remote = createSnapshot();
+    remote.state.marketplaceProduct = undefined;
+    const transport = createMutableTransport(remote);
+    const session = createSession({ storage: createStorage(), transport });
+    const marketplaceProduct = {
+      category: "pageTemplates" as const,
+      name: "Acme Template",
+      thumbnailAssetId: "asset-id",
+      author: "Acme Studio",
+      email: "hello@example.com",
+      website: "https://example.com",
+      issues: "",
+      description: "Reusable template project for Acme landing pages.",
+    };
+
+    const update = await session.mutate(
+      "projectSettings.updateMarketplaceProduct",
+      marketplaceProduct
+    );
+    expect(update.state.committed).toBe(true);
+
+    await session.refresh(["marketplaceProduct"]);
+    const product = await session.read(
+      "projectSettings.getMarketplaceProduct",
+      {}
+    );
+    expect(product.result).toEqual({ marketplaceProduct });
+  });
+
   test("duplicates a page from a cold session with assets hydrated", async () => {
     const remote = createSnapshot({
       state: createBuilderStateFromSnapshot({

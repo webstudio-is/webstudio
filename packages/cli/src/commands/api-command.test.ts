@@ -984,6 +984,17 @@ test("updates marketplace product from input file", async () => {
   });
 });
 
+test("submits marketplace product for review", async () => {
+  await expectCommandCall({
+    options: {
+      command: "submit-marketplace-product",
+      confirm: true,
+    },
+    call: apiCalls.submitMarketplaceProduct,
+    connection: { acknowledgePublicSubmission: true },
+  });
+});
+
 test("lists redirects with shared output detail options", async () => {
   await expectCommandCall({
     options: {

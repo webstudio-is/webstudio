@@ -234,6 +234,20 @@ Commands:
 
 - MCP tool: update-marketplace-product {"category":"pageTemplates","name":"Acme Template","thumbnailAssetId":"asset-id","author":"Acme Studio","email":"hello@example.com","website":"https://example.com","issues":"","description":"Reusable template project for Acme landing pages."}
 
+## Submit marketplace product
+
+Commands:
+
+- MCP tool: upload-asset {"path":"./marketplace-thumbnail.png"}
+- MCP tool: update-marketplace-product {"category":"pageTemplates","name":"Acme Template","thumbnailAssetId":"<uploadedAssetId>","author":"Acme Studio","email":"hello@example.com","website":"https://example.com","issues":"","description":"Reusable template project for Acme landing pages."}
+- MCP tool: publish {"target":"production"}
+- MCP tool: submit-marketplace-product {"acknowledgePublicSubmission":true}
+
+Notes:
+
+- Wait for the production publish to complete before submitting the product for review.
+- Submission requires complete, valid marketplace metadata.
+
 ## List redirects
 
 Commands:
@@ -975,6 +989,7 @@ Commands:
 
 - MCP tool: get-marketplace-product {}
 - MCP tool: update-marketplace-product {"category":"pageTemplates","name":"Acme Template","thumbnailAssetId":"asset-id","author":"Acme Studio","email":"hello@example.com","website":"https://example.com","issues":"","description":"Reusable template project for Acme landing pages."}
+- MCP tool: submit-marketplace-product {"acknowledgePublicSubmission":true}
 
 Patch namespaces:
 

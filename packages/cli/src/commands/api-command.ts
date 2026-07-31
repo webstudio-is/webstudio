@@ -290,6 +290,14 @@ export const updateMarketplaceProductCommandOptions = (
     "Required JSON file with marketplace product metadata."
   );
 
+export const submitMarketplaceProductCommandOptions = (
+  yargs: CommonYargsArgv
+) =>
+  confirmOption(
+    apiCommandOptions(yargs),
+    "Required. Confirm submitting the marketplace product for public review"
+  );
+
 export const createRedirectCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs)
     .option("old", {
@@ -2098,6 +2106,13 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
+  "submit-marketplace-product": async (_options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "submit-marketplace-product",
+      { acknowledgePublicSubmission: true },
+      connection,
+      dependencies
+    ),
   "list-redirects": async (options, connection, dependencies) =>
     runProjectSessionCommand(
       "list-redirects",

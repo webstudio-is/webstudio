@@ -157,6 +157,7 @@ const taskRecipeUseCases = {
     "Read project settings",
     "Update project settings",
     "Update marketplace product",
+    "Submit marketplace product",
     "List redirects",
     "Create redirect",
     "Update redirect",
@@ -486,6 +487,7 @@ const apiCommandsByArea = {
       [
         "get-marketplace-product",
         "update-marketplace-product",
+        "submit-marketplace-product",
         "set-redirects",
       ].includes(cliCommand)
     )

@@ -75,6 +75,53 @@ const createCaller = (context: AppContext) =>
   apiRouter.createCaller(context) as ApiRouterCaller & RuntimeApiCaller;
 
 describe("api router build operation adapters", () => {
+  test("submits only configured marketplace products for review", async () => {
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    const loadBuild = vi
+      .spyOn(projectBuild, "loadDevBuildByProjectId")
+      .mockResolvedValueOnce({ marketplaceProduct: undefined } as never)
+      .mockResolvedValueOnce({
+        marketplaceProduct: {
+          category: "pageTemplates",
+          name: "Acme Template",
+          thumbnailAssetId: "asset-id",
+          author: "Acme Studio",
+          email: "hello@example.com",
+          website: "https://example.com",
+          issues: "",
+          description: "Reusable template project for Acme landing pages.",
+        },
+      } as never);
+    const setApprovalStatus = vi
+      .spyOn(projectApi, "setMarketplaceApprovalStatus")
+      .mockResolvedValue({ marketplaceApprovalStatus: "PENDING" } as never);
+    const caller = createCaller(createContext(true));
+
+    await expect(
+      caller.projects.submitMarketplaceProduct({
+        projectId: "project-1",
+        acknowledgePublicSubmission: true,
+      })
+    ).rejects.toThrow("Complete the marketplace product metadata");
+    expect(setApprovalStatus).not.toHaveBeenCalled();
+
+    await expect(
+      caller.projects.submitMarketplaceProduct({
+        projectId: "project-1",
+        acknowledgePublicSubmission: true,
+      })
+    ).resolves.toEqual({ marketplaceApprovalStatus: "PENDING" });
+    expect(loadBuild).toHaveBeenCalledTimes(2);
+    expect(setApprovalStatus).toHaveBeenCalledWith(
+      {
+        projectId: "project-1",
+        marketplaceApprovalStatus: "PENDING",
+      },
+      expect.anything()
+    );
+  });
+
   test("exposes query validation and persisted asset query reads to API clients", async () => {
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);

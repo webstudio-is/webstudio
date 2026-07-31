@@ -522,7 +522,7 @@ export const builderRuntimeOperations = [
   runtimeOperation(
     "projectSettings.getMarketplaceProduct",
     api("get-marketplace-product", "getMarketplaceProduct"),
-    readContract(["marketplaceProduct"]),
+    readContract([]),
     emptyInput,
     ({ state }) => projectSettings.getMarketplaceProduct(state)
   ),
@@ -530,7 +530,7 @@ export const builderRuntimeOperations = [
     "projectSettings.updateMarketplaceProduct",
     api("update-marketplace-product", "updateMarketplaceProduct"),
     mutationContract({
-      readNamespaces: ["marketplaceProduct"],
+      readNamespaces: [],
       writeNamespaces: ["marketplaceProduct"],
       retryOnConflict: true,
     }),

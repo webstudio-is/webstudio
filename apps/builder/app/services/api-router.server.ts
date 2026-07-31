@@ -7,7 +7,10 @@ import {
   type AppContext,
   type AuthPermit,
 } from "@webstudio-is/trpc-interface/index.server";
-import { loadById } from "@webstudio-is/project/index.server";
+import {
+  loadById,
+  setMarketplaceApprovalStatus,
+} from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import {
   createProjectDomain,
@@ -651,6 +654,40 @@ export const apiRouter = router({
         };
       },
       { command: "inspect", client: "getProjectInfo" }
+    ),
+
+    submitMarketplaceProduct: projectMutation(
+      projectIdInput.extend({
+        acknowledgePublicSubmission: z
+          .literal(true)
+          .describe(
+            "Acknowledge that submission starts public marketplace review"
+          ),
+      }),
+      "edit",
+      async ({ ctx, input }) => {
+        const build = await loadDevBuildByProjectId(ctx, input.projectId);
+        if (build.marketplaceProduct === undefined) {
+          return throwApiError(
+            "BAD_REQUEST",
+            "Complete the marketplace product metadata before submitting it for review"
+          );
+        }
+        const project = await setMarketplaceApprovalStatus(
+          {
+            projectId: input.projectId,
+            marketplaceApprovalStatus: "PENDING",
+          },
+          ctx
+        );
+        return {
+          marketplaceApprovalStatus: project.marketplaceApprovalStatus,
+        };
+      },
+      {
+        command: "submit-marketplace-product",
+        client: "submitMarketplaceProduct",
+      }
     ),
   }),
 

@@ -168,6 +168,7 @@ describe("registerCommands", () => {
     for (const command of [
       "get-marketplace-product",
       "update-marketplace-product",
+      "submit-marketplace-product",
       "set-redirects",
     ]) {
       expect(
@@ -180,6 +181,7 @@ describe("registerCommands", () => {
   test.each([
     "get-marketplace-product",
     "update-marketplace-product",
+    "submit-marketplace-product",
     "set-redirects",
   ])("shows registered top-level help for %s", async (command) => {
     const output = await getHelpOutput([command, "--help"]);

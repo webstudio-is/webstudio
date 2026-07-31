@@ -1402,91 +1402,98 @@ export const runtimeOperationContractData = [
       type: "object",
       properties: {
         marketplaceProduct: {
-          type: "object",
-          properties: {
-            category: {
-              anyOf: [
-                {
-                  type: "string",
-                  const: "sectionTemplates",
+          anyOf: [
+            {
+              type: "object",
+              properties: {
+                category: {
+                  anyOf: [
+                    {
+                      type: "string",
+                      const: "sectionTemplates",
+                    },
+                    {
+                      type: "string",
+                      const: "pageTemplates",
+                    },
+                    {
+                      type: "string",
+                      const: "integrationTemplates",
+                    },
+                  ],
                 },
-                {
+                name: {
                   type: "string",
-                  const: "pageTemplates",
+                  minLength: 2,
+                  maxLength: 200,
                 },
-                {
+                thumbnailAssetId: {
                   type: "string",
-                  const: "integrationTemplates",
                 },
-              ],
-            },
-            name: {
-              type: "string",
-              minLength: 2,
-              maxLength: 200,
-            },
-            thumbnailAssetId: {
-              type: "string",
-            },
-            author: {
-              type: "string",
-              minLength: 2,
-              maxLength: 200,
-            },
-            email: {
-              type: "string",
-              maxLength: 200,
-              format: "email",
-              pattern:
-                "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
-            },
-            website: {
-              anyOf: [
-                {
+                author: {
+                  type: "string",
+                  minLength: 2,
+                  maxLength: 200,
+                },
+                email: {
                   type: "string",
                   maxLength: 200,
-                  format: "uri",
+                  format: "email",
+                  pattern:
+                    "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
                 },
-                {
+                website: {
+                  anyOf: [
+                    {
+                      type: "string",
+                      maxLength: 200,
+                      format: "uri",
+                    },
+                    {
+                      type: "string",
+                      const: "",
+                    },
+                  ],
+                },
+                issues: {
+                  anyOf: [
+                    {
+                      type: "string",
+                      maxLength: 200,
+                      format: "uri",
+                    },
+                    {
+                      type: "string",
+                      const: "",
+                    },
+                  ],
+                },
+                description: {
                   type: "string",
-                  const: "",
+                  minLength: 10,
+                  maxLength: 1000,
                 },
+              },
+              required: [
+                "category",
+                "name",
+                "thumbnailAssetId",
+                "author",
+                "email",
+                "description",
               ],
+              additionalProperties: {},
             },
-            issues: {
-              anyOf: [
-                {
-                  type: "string",
-                  maxLength: 200,
-                  format: "uri",
-                },
-                {
-                  type: "string",
-                  const: "",
-                },
-              ],
+            {
+              type: "null",
             },
-            description: {
-              type: "string",
-              minLength: 10,
-              maxLength: 1000,
-            },
-          },
-          required: [
-            "category",
-            "name",
-            "thumbnailAssetId",
-            "author",
-            "email",
-            "description",
           ],
-          additionalProperties: {},
         },
       },
       required: ["marketplaceProduct"],
       additionalProperties: {},
     },
-    readNamespaces: ["marketplaceProduct"],
+    readNamespaces: [],
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,
@@ -1586,7 +1593,7 @@ export const runtimeOperationContractData = [
       required: ["updated"],
       additionalProperties: {},
     },
-    readNamespaces: ["marketplaceProduct"],
+    readNamespaces: [],
     writeNamespaces: ["marketplaceProduct"],
     invalidatesNamespaces: ["marketplaceProduct"],
     retryOnConflict: true,

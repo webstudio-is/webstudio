@@ -104,6 +104,13 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "submit-marketplace-product",
+    description:
+      "Submit the configured marketplace product for review after updating its metadata and publishing the project",
+    requiredOptions: ["confirm", "json"],
+    examples: ["webstudio submit-marketplace-product --confirm --json"],
+  },
+  {
     command: "list-redirects",
     description: "List project redirects",
     examples: ["webstudio list-redirects --json"],
