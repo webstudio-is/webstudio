@@ -1,19 +1,16 @@
-import type { ByteSource } from "../byte-stream";
 import { contentEngineLimits } from "../limits";
 import {
   assembleDocument,
   parseDocumentSource,
   selectDocumentRepresentation,
   type AdaptedDocument,
-  type DocumentFormat,
 } from "./document-adapter";
 import type { DocumentGraph, DocumentGraphNode } from "./graph";
+import {
+  assertDocumentSourceRevision,
+  type DocumentSource,
+} from "./document-source";
 import { resolveDocumentGraph, type ResolvedDocumentGraph } from "./resolver";
-
-export type AdaptedDocumentSource = Readonly<{
-  format: DocumentFormat;
-  source: ByteSource;
-}>;
 
 /** Resolves parsed JSON and Markdown values without depending on storage. */
 export const resolveAdaptedDocumentGraph = async ({
@@ -32,7 +29,7 @@ export const resolveAdaptedDocumentGraph = async ({
   load: (
     node: DocumentGraphNode,
     options: { signal?: AbortSignal }
-  ) => Promise<AdaptedDocumentSource>;
+  ) => Promise<DocumentSource>;
 }): Promise<ResolvedDocumentGraph<AdaptedDocument>> =>
   await resolveDocumentGraph<AdaptedDocument, AdaptedDocument>({
     graph,
@@ -40,7 +37,10 @@ export const resolveAdaptedDocumentGraph = async ({
     concurrency,
     signal,
     load: async (node, options) => {
-      const loaded = await load(node, options);
+      const loaded = assertDocumentSourceRevision({
+        node,
+        source: await load(node, options),
+      });
       return await parseDocumentSource({
         format: loaded.format,
         source: loaded.source,

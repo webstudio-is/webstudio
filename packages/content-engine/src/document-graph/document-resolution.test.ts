@@ -46,6 +46,7 @@ describe("adapted document graph resolution", () => {
         "content:post",
         {
           format: "json" as const,
+          revision: "post-r1",
           source:
             '{"title":"Hello","author":{"$ref":"./author.md#frontmatter"},"bio":{"$ref":"./author.md#body"}}',
         },
@@ -54,6 +55,7 @@ describe("adapted document graph resolution", () => {
         "content:author",
         {
           format: "markdown" as const,
+          revision: "author-r1",
           source:
             "---\nname: Ada\navatar:\n  $ref: ./avatar.json#/url\n---\nWrites about the web.\n",
         },
@@ -62,6 +64,7 @@ describe("adapted document graph resolution", () => {
         "content:avatar",
         {
           format: "json" as const,
+          revision: "avatar-r1",
           source: '{"url":"/ada.png"}',
         },
       ],
@@ -111,12 +114,44 @@ describe("adapted document graph resolution", () => {
         rootIds: ["post"],
         concurrency: 1,
         maximumBytes: 4,
-        load: async () => ({ format: "json", source: '{"title":"Hello"}' }),
+        load: async () => ({
+          format: "json",
+          revision: "post-r1",
+          source: '{"title":"Hello"}',
+        }),
       })
     ).rejects.toMatchObject({
       code: "DOCUMENT_LOAD_FAILED",
       documentId: "post",
       cause: expect.objectContaining({ code: "CONTENT_LIMIT_EXCEEDED" }),
+    });
+  });
+
+  test("rejects a loaded revision before parsing stale document bytes", async () => {
+    await expect(
+      resolveAdaptedDocumentGraph({
+        graph: createDocumentGraph({
+          nodes: [
+            { id: "post", revision: "post-r1", contentRef: "content:post" },
+          ],
+          edges: [],
+        }),
+        rootIds: ["post"],
+        concurrency: 1,
+        load: async () => ({
+          format: "json",
+          revision: "stale-r1",
+          source: "not valid JSON",
+        }),
+      })
+    ).rejects.toMatchObject({
+      code: "DOCUMENT_LOAD_FAILED",
+      documentId: "post",
+      cause: expect.objectContaining({
+        code: "REVISION_MISMATCH",
+        expectedRevision: "post-r1",
+        actualRevision: "stale-r1",
+      }),
     });
   });
 });
