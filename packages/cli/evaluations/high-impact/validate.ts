@@ -11,6 +11,7 @@ import {
   designInputFixture,
   fontAssetsFixture,
   markdownBlogFixture,
+  markdownReferencesDiscoveryFixture,
   type EvaluationInstance,
   type EvaluationProject,
   type HighImpactFixture,
@@ -560,16 +561,83 @@ const getAssetResourceConfigurations = (project: EvaluationProject) =>
     return configuration === undefined ? [] : [{ resource, configuration }];
   });
 
-const hasQueryFragment = (value: unknown, fragments: string[]) => {
-  const source = JSON.stringify(value);
-  return fragments.every((fragment) => source.includes(fragment));
+const pathsEqual = (left: unknown, right: readonly string[]) =>
+  Array.isArray(left) &&
+  left.length === right.length &&
+  left.every((segment, index) => segment === right[index]);
+
+const getWhereConditions = (
+  value: unknown
+): Array<{ field: unknown; operator: unknown; value: unknown }> => {
+  if (typeof value !== "object" || value === null) {
+    return [];
+  }
+  if ("field" in value && "operator" in value && "value" in value) {
+    return [value];
+  }
+  const group = "all" in value ? value.all : "any" in value ? value.any : [];
+  return Array.isArray(group) ? group.flatMap(getWhereConditions) : [];
 };
+
+const hasWhereCondition = ({
+  where,
+  field,
+  operator,
+  value,
+}: {
+  where: unknown;
+  field: readonly string[];
+  operator: string;
+  value: string;
+}) =>
+  getWhereConditions(where).some(
+    (condition) =>
+      pathsEqual(condition.field, field) &&
+      condition.operator === operator &&
+      condition.value === value
+  );
+
+const hasOutputField = (output: unknown, field: string[]) =>
+  typeof output === "object" &&
+  output !== null &&
+  "fields" in output &&
+  Array.isArray(output.fields) &&
+  output.fields.some((candidate) => pathsEqual(candidate, field));
+
+const hasSort = (
+  sort: unknown,
+  expected: Array<{ field: string[]; direction: string }>
+) =>
+  Array.isArray(sort) &&
+  sort.length === expected.length &&
+  expected.every(
+    (item, index) =>
+      typeof sort[index] === "object" &&
+      sort[index] !== null &&
+      pathsEqual(sort[index].field, item.field) &&
+      sort[index].direction === item.direction
+  );
 
 const validateMarkdownBlog = (
   input: HighImpactEvaluationInput,
   checks: Record<string, "passed" | "failed">,
   failures: string[]
 ) => {
+  if (input.fixture.id === markdownReferencesDiscoveryFixture.id) {
+    const guidanceIndex = input.toolCalls.findIndex(
+      (call) => call.name === "meta.guide" && call.isError !== true
+    );
+    const toolDiscoveryIndex = input.toolCalls.findIndex(
+      (call) => call.name === "meta.get_more_tools" && call.isError !== true
+    );
+    recordCheck(
+      checks,
+      failures,
+      "referenceDocumentationDiscovery",
+      guidanceIndex !== -1 && toolDiscoveryIndex > guidanceIndex,
+      "The reference workflow was not discovered through MCP guidance before authoring."
+    );
+  }
   const expectedNames = new Set<string>(
     markdownBlogFixtureArticles.map((article) => article.name)
   );
@@ -668,22 +736,27 @@ const validateMarkdownBlog = (
     failures,
     "listingQuery",
     listing !== undefined &&
-      hasQueryFragment(listing.where, [
-        "extension",
-        "md",
-        "draft",
-        "ne",
-        "true",
+      hasWhereCondition({
+        where: listing.where,
+        field: ["extension"],
+        operator: "eq",
+        value: '"md"',
+      }) &&
+      hasWhereCondition({
+        where: listing.where,
+        field: ["properties", "draft"],
+        operator: "ne",
+        value: '"true"',
+      }) &&
+      hasSort(listing.sort, [
+        { field: ["properties", "publishedAt"], direction: "desc" },
+        { field: ["id"], direction: "asc" },
       ]) &&
-      hasQueryFragment(listing.sort, ["publishedAt", "desc", "id", "asc"]) &&
-      hasQueryFragment(listing.limit, ["20"]) &&
-      hasQueryFragment(listing.output, [
-        "fields",
-        "title",
-        "slug",
-        "publishedAt",
-        "excerpt",
-      ]) &&
+      listing.limit === "20" &&
+      ["title", "slug", "publishedAt"].every((field) =>
+        hasOutputField(listing.output, ["properties", field])
+      ) &&
+      hasOutputField(listing.output, ["excerpt"]) &&
       listing.output.includeMetadata === false,
     "The overview Assets resource is not a bounded metadata-only published-post query."
   );
@@ -693,13 +766,19 @@ const validateMarkdownBlog = (
     "detailQuery",
     article !== undefined &&
       article.content.mode === "markdown-body" &&
-      hasQueryFragment(article.where, [
-        "extension",
-        "md",
-        "slug",
-        "system.params.slug",
-      ]) &&
-      hasQueryFragment(article.limit, ["1"]) &&
+      hasWhereCondition({
+        where: article.where,
+        field: ["extension"],
+        operator: "eq",
+        value: '"md"',
+      }) &&
+      hasWhereCondition({
+        where: article.where,
+        field: ["properties", "slug"],
+        operator: "eq",
+        value: "system.params.slug",
+      }) &&
+      article.limit === "1" &&
       article.output.includeMetadata === false &&
       article.content.maxBytes === 1_048_576,
     "The detail Assets resource does not select one Markdown body by the dynamic slug parameter."
@@ -710,34 +789,50 @@ const validateMarkdownBlog = (
     "documentGraphQueries",
     listing !== undefined &&
       article !== undefined &&
-      hasQueryFragment(listing.output, ["properties", "author"]) &&
-      hasQueryFragment(article.output, ["properties", "author"]),
+      hasOutputField(listing.output, ["properties", "author"]) &&
+      hasOutputField(article.output, ["properties", "author"]),
     "Both blog Assets resources must select the resolved author document."
   );
 
-  const overviewSource = JSON.stringify({
-    instances: overview.instances,
-    props: input.project.props.filter((prop) =>
-      overview.instances.some((instance) => instance.id === prop.instanceId)
-    ),
-  });
-  const detailSource = JSON.stringify({
-    instances: detail.instances,
-    props: input.project.props.filter((prop) =>
-      detail.instances.some((instance) => instance.id === prop.instanceId)
-    ),
-  });
+  const getPageExpressions = (instances: EvaluationInstance[]) => {
+    const instanceIds = new Set(instances.map((instance) => instance.id));
+    return new Set([
+      ...instances.flatMap((instance) =>
+        instance.children.flatMap((child) =>
+          child.type === "expression" ? [child.value] : []
+        )
+      ),
+      ...input.project.props.flatMap((prop) =>
+        instanceIds.has(prop.instanceId) && prop.type === "expression"
+          ? [String(prop.value)]
+          : []
+      ),
+    ]);
+  };
+  const overviewExpressions = getPageExpressions(overview.instances);
+  const detailExpressions = getPageExpressions(detail.instances);
   recordCheck(
     checks,
     failures,
     "editableBlogBindings",
-    /Collection/i.test(overviewSource) &&
-      ["title", "excerpt", "publishedAt", "slug", "author", "name"].every(
-        (field) => overviewSource.includes(field)
+    overview.instances.some((instance) =>
+      instance.component.toLowerCase().endsWith("collection")
+    ) &&
+      [
+        "collectionItem.properties.title",
+        "collectionItem.excerpt",
+        "collectionItem.properties.publishedAt",
+        "collectionItem.properties.slug",
+        "collectionItem.properties.author.name",
+      ].every((expression) => overviewExpressions.has(expression)) &&
+      detail.instances.some((instance) =>
+        instance.component.toLowerCase().endsWith("collection")
       ) &&
-      /Collection/i.test(detailSource) &&
-      /MarkdownEmbed/i.test(detailSource) &&
-      hasQueryFragment(detailSource, ["content", "text", "author", "name"]),
+      detail.instances.some((instance) =>
+        instance.component.toLowerCase().endsWith("markdownembed")
+      ) &&
+      detailExpressions.has("collectionItem.content.text") &&
+      detailExpressions.has("collectionItem.properties.author.name"),
     "The blog is not rendered through editable Collections, resolved author bindings, and a Markdown Embed."
   );
   recordCheck(
@@ -797,7 +892,10 @@ export const evaluateHighImpactOutcome = (
     validateAuth(input, checks, failures);
   } else if (input.fixture.id === fontAssetsFixture.id) {
     validateFontAssets(input, checks, failures);
-  } else if (input.fixture.id === markdownBlogFixture.id) {
+  } else if (
+    input.fixture.id === markdownBlogFixture.id ||
+    input.fixture.id === markdownReferencesDiscoveryFixture.id
+  ) {
     validateMarkdownBlog(input, checks, failures);
   } else {
     validateDesign(input, checks, failures);

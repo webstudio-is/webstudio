@@ -65,7 +65,8 @@ export type HighImpactFixture = {
     | "authenticated-page-v1"
     | "design-input-v1"
     | "font-assets-v1"
-    | "markdown-blog-v1";
+    | "markdown-blog-v1"
+    | "markdown-references-discovery-v1";
   objective: string;
   project: EvaluationProject;
 };
@@ -226,11 +227,18 @@ export const markdownBlogFixture: HighImpactFixture = {
   project: emptyProject(),
 };
 
+export const markdownReferencesDiscoveryFixture: HighImpactFixture = {
+  id: "markdown-references-discovery-v1",
+  objective: `Upload the ${markdownBlogFixtureArticles.length} supplied Markdown articles and the supplied JSON author profile from .webstudio/assets. Build an editable blog overview at /blog and one dynamic article page at /blog/:slug. Use Assets resources so draft articles are excluded, posts are ordered newest first, each post displays its referenced author, and only the selected article loads and renders its Markdown body. Verify the overview and /blog/aurora-trails at desktop and mobile sizes. Discover the supported workflow and data shapes from Webstudio MCP guidance.`,
+  project: emptyProject(),
+};
+
 export const highImpactFixtures = [
   authenticatedPageFixture,
   designInputFixture,
   fontAssetsFixture,
   markdownBlogFixture,
+  markdownReferencesDiscoveryFixture,
 ] as const;
 
 export const validateHighImpactFixture = (fixture: HighImpactFixture) => {

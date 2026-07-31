@@ -11,6 +11,7 @@ import {
   fontAssetsFixture,
   highImpactFixtures,
   markdownBlogFixture,
+  markdownReferencesDiscoveryFixture,
   type HighImpactFixture,
 } from "./fixtures";
 import { startHighImpactFixtureApi } from "./fixture-api";
@@ -91,7 +92,10 @@ const runFixture = async ({
   await mkdir(projectDirectory, { recursive: true });
   if (fixture.id === fontAssetsFixture.id) {
     await writeFontAssetFixtureFiles(projectDirectory);
-  } else if (fixture.id === markdownBlogFixture.id) {
+  } else if (
+    fixture.id === markdownBlogFixture.id ||
+    fixture.id === markdownReferencesDiscoveryFixture.id
+  ) {
     await writeMarkdownBlogFixtureFiles(projectDirectory);
   }
   const env = { ...process.env, WEBSTUDIO_CONFIG_DIR: configDirectory };

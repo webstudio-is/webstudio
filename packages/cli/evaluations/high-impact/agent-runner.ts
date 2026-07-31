@@ -80,6 +80,16 @@ const fixtureToolNames = {
     "insert-collection",
     "verify-page-responsive",
   ],
+  "markdown-references-discovery-v1": [
+    "meta.guide",
+    "meta.get_more_tools",
+    "create-asset-folder",
+    "upload-assets",
+    "create-page",
+    "create-assets-resource",
+    "insert-collection",
+    "verify-page-responsive",
+  ],
 } as const satisfies Record<HighImpactFixture["id"], readonly string[]>;
 
 const markdownBlogUploadInput = JSON.stringify({

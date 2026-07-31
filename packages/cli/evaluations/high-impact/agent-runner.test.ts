@@ -4,7 +4,11 @@ import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { authenticatedPageFixture } from "./fixtures";
 import { designInputFixture } from "./fixtures";
-import { fontAssetsFixture, markdownBlogFixture } from "./fixtures";
+import {
+  fontAssetsFixture,
+  markdownBlogFixture,
+  markdownReferencesDiscoveryFixture,
+} from "./fixtures";
 import {
   createMinimalAgentTask,
   getFixtureToolNames,
@@ -161,6 +165,29 @@ describe("high-impact agent runner", () => {
     expect(getFixtureToolNames(markdownBlogFixture)).not.toContain(
       "update-assets-resource"
     );
+
+    const discoveryTask = createMinimalAgentTask(
+      markdownReferencesDiscoveryFixture,
+      {
+        kind: "source",
+        repositoryRoot: root,
+      }
+    );
+    const discoveryPrompt = JSON.stringify(discoveryTask);
+    expect(discoveryPrompt).not.toContain("$ref");
+    expect(discoveryPrompt).not.toContain('"where"');
+    expect(discoveryPrompt).not.toContain("markdown-body");
+    expect(discoveryPrompt).not.toContain("collectionItem");
+    expect(getFixtureToolNames(markdownReferencesDiscoveryFixture)).toEqual([
+      "meta.guide",
+      "meta.get_more_tools",
+      "create-asset-folder",
+      "upload-assets",
+      "create-page",
+      "create-assets-resource",
+      "insert-collection",
+      "verify-page-responsive",
+    ]);
   });
 
   test("retains only a bounded privacy-safe result from a real process", async () => {

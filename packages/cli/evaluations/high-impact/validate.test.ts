@@ -7,6 +7,7 @@ import {
   fontAssetsFixture,
   highImpactFixtures,
   markdownBlogFixture,
+  markdownReferencesDiscoveryFixture,
   validateHighImpactFixture,
   type EvaluationProject,
 } from "./fixtures";
@@ -348,6 +349,7 @@ describe("high-impact fixture validation", () => {
       { valid: true, failures: [] },
       { valid: true, failures: [] },
       { valid: true, failures: [] },
+      { valid: true, failures: [] },
     ]);
     expect(JSON.stringify(highImpactFixtures)).toBe(
       JSON.stringify(highImpactFixtures)
@@ -448,6 +450,22 @@ describe("Markdown blog evaluation", () => {
     expect(result.checks.documentGraphQueries).toBe("failed");
   });
 
+  test("matches required query fields structurally instead of by substring", () => {
+    const project = addMarkdownBlog();
+    project.resources[0] = {
+      ...project.resources[0],
+      body: String(project.resources[0]?.body)
+        .replace('["properties", "title"]', '["properties", "title-slug"]')
+        .replace('["properties", "slug"]', '["properties", "excerpt-slug"]'),
+    };
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project,
+      toolCalls: successfulCalls,
+    });
+    expect(result.checks.listingQuery).toBe("failed");
+  });
+
   test("rejects missing detail content and route evidence", () => {
     const project = addMarkdownBlog();
     project.resources = project.resources.slice(0, 1);
@@ -460,6 +478,30 @@ describe("Markdown blog evaluation", () => {
       detailQuery: "failed",
       blogRouteEvidence: "failed",
     });
+  });
+
+  test("requires documentation discovery for the unprompted reference workflow", () => {
+    const project = addMarkdownBlog();
+    const withoutDiscovery = evaluateHighImpactOutcome({
+      fixture: markdownReferencesDiscoveryFixture,
+      project,
+      toolCalls: successfulCalls,
+    });
+    expect(withoutDiscovery.checks.referenceDocumentationDiscovery).toBe(
+      "failed"
+    );
+
+    const withDiscovery = evaluateHighImpactOutcome({
+      fixture: markdownReferencesDiscoveryFixture,
+      project,
+      toolCalls: [
+        { name: "meta.guide" },
+        { name: "meta.get_more_tools" },
+        ...successfulCalls.slice(1),
+      ],
+    });
+    expect(withDiscovery).toMatchObject({ passed: true, failures: [] });
+    expect(withDiscovery.checks.referenceDocumentationDiscovery).toBe("passed");
   });
 });
 
