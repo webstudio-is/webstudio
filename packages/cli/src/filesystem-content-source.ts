@@ -11,6 +11,7 @@ import {
   type ContentSource,
 } from "@webstudio-is/content-engine/compiler";
 import {
+  getDocumentFormatByContentType,
   isContentDocumentCandidate,
   prepareContentCompilerEntries,
   requiresStructuredProperties,
@@ -216,10 +217,10 @@ export const createFileSystemContentSource = ({
       files: captured.map(({ entry }) => createContentSourceFile(entry)),
       loadDocumentSources: async () =>
         captured
-          .filter(({ entry }) =>
-            ["application/json", "text/markdown"].includes(
-              entry.document.mimeType.split(";", 1)[0].trim().toLowerCase()
-            )
+          .filter(
+            ({ entry }) =>
+              getDocumentFormatByContentType(entry.document.mimeType) !==
+              undefined
           )
           .map(({ entry, filePath, identity }) => ({
             id: entry.assetId,

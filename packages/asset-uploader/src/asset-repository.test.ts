@@ -1441,7 +1441,9 @@ describe("PostgresAssetRepository", () => {
         path: `content/${name}`,
         key: name.slice(0, name.lastIndexOf(".")),
         extension: name.endsWith(".json") ? "json" : "md",
-        mimeType: name.endsWith(".json") ? "application/json" : "text/markdown",
+        mimeType: name.endsWith(".json")
+          ? "application/json"
+          : "text/markdown; charset=utf-8",
         size: new TextEncoder().encode(source).byteLength,
         revision: `${id}-r1`,
         contentRef: `storage:${id}`,

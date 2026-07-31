@@ -5,6 +5,7 @@ import {
   createContentFieldCatalogCompilationPlan,
   createLiteralContentCompilationQuery,
   getContentArtifactRuntimeAssetIds,
+  getDocumentFormatByContentType,
   isContentDocumentCandidate,
   prepareContentCompilerEntries,
   requiresRuntimeDocumentData,
@@ -622,8 +623,8 @@ export class PostgresAssetRepository implements AssetRepository {
           loadDocumentSources: async () =>
             baseEntries.flatMap((entry) => {
               if (
-                entry.document.mimeType !== "application/json" &&
-                entry.document.mimeType !== "text/markdown"
+                getDocumentFormatByContentType(entry.document.mimeType) ===
+                undefined
               ) {
                 return [];
               }

@@ -17,7 +17,7 @@ import { extractMarkdownBody } from "./markdown-body";
 import { contentEngineLimits } from "./limits";
 import {
   compileDocumentSourceGraph,
-  type DocumentFormat,
+  getDocumentFormatByContentType,
   type DocumentGraph,
 } from "./document-graph";
 
@@ -173,18 +173,6 @@ const discoverSnapshotAssetReferences = async ({
 
 const documentUrlBase = "https://content.webstudio.local/";
 
-const getDocumentFormat = (
-  file: ContentSourceFile
-): DocumentFormat | undefined => {
-  const contentType = file.contentType.split(";", 1)[0].trim().toLowerCase();
-  if (contentType === "application/json") {
-    return "json";
-  }
-  if (contentType === "text/markdown") {
-    return "markdown";
-  }
-};
-
 const queryCanReturnStructuredProperties = (
   query: ContentCompilationPlan["queries"][number]
 ) =>
@@ -215,20 +203,23 @@ const discoverSnapshotDocumentGraph = async (
       throw new Error("Content source returned duplicate document sources");
     }
     const file = filesById.get(document.id);
-    if (file === undefined || getDocumentFormat(file) === undefined) {
+    if (
+      file === undefined ||
+      getDocumentFormatByContentType(file.contentType) === undefined
+    ) {
       throw new Error("Content source returned an unsupported document source");
     }
     sourcesById.set(document.id, document.source);
   }
   const supportedFiles = snapshot.files.filter(
-    (file) => getDocumentFormat(file) !== undefined
+    (file) => getDocumentFormatByContentType(file.contentType) !== undefined
   );
   if (supportedFiles.some((file) => sourcesById.has(file.id) === false)) {
     throw new Error("Content source omitted a supported document source");
   }
   const graph = await compileDocumentSourceGraph({
     documents: supportedFiles.map((file) => {
-      const format = getDocumentFormat(file);
+      const format = getDocumentFormatByContentType(file.contentType);
       const source = sourcesById.get(file.id);
       if (format === undefined || source === undefined) {
         throw new Error("Content source document catalog is incomplete");
