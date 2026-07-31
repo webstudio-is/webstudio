@@ -197,6 +197,7 @@ const queryCanReturnStructuredProperties = (
 
 const discoverSnapshotDocumentGraph = async (
   snapshot: ContentSourceSnapshot,
+  entries: readonly ContentCompilerInput[],
   plan?: ContentCompilationPlan
 ): Promise<DocumentGraph | undefined> => {
   if (
@@ -225,7 +226,7 @@ const discoverSnapshotDocumentGraph = async (
   if (supportedFiles.some((file) => sourcesById.has(file.id) === false)) {
     throw new Error("Content source omitted a supported document source");
   }
-  return await compileDocumentSourceGraph({
+  const graph = await compileDocumentSourceGraph({
     documents: supportedFiles.map((file) => {
       const format = getDocumentFormat(file);
       const source = sourcesById.get(file.id);
@@ -241,7 +242,15 @@ const discoverSnapshotDocumentGraph = async (
         source,
       };
     }),
+    ...(plan === undefined
+      ? {}
+      : {
+          rootIds: entries.flatMap(({ assetId }) =>
+            sourcesById.has(assetId) ? [assetId] : []
+          ),
+        }),
   });
+  return graph.edges.length === 0 ? undefined : graph;
 };
 
 export const materializeContentSnapshot = async ({
@@ -255,11 +264,13 @@ export const materializeContentSnapshot = async ({
 }) => {
   validateSnapshot(snapshot);
   try {
-    const [entries, documentGraph] = await Promise.all([
-      snapshot.loadEntries(plan, { maximumContentBytes }),
-      discoverSnapshotDocumentGraph(snapshot, plan),
-    ]);
+    const entries = await snapshot.loadEntries(plan, { maximumContentBytes });
     validateEntries({ snapshot, entries });
+    const documentGraph = await discoverSnapshotDocumentGraph(
+      snapshot,
+      entries,
+      plan
+    );
     const assetReferences = await discoverSnapshotAssetReferences({
       snapshot,
       entries,

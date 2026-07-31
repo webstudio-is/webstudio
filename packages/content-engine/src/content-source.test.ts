@@ -119,6 +119,77 @@ const createDocumentSource = ({
 });
 
 describe("content source snapshots", () => {
+  test("analyzes only query roots and their reachable document targets", async () => {
+    const post = createFile({ id: "post", path: "blog/post.md" });
+    const author = createFile({
+      id: "author",
+      path: "blog/author.json",
+      contentType: "application/json",
+    });
+    const unrelated = createFile({
+      id: "unrelated",
+      path: "other/broken.json",
+      contentType: "application/json",
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [post, author, unrelated],
+          async loadEntries() {
+            return [post].map(createEntry);
+          },
+          async loadDocumentSources() {
+            return [
+              {
+                id: "post",
+                source:
+                  "---\nauthor:\n  $ref: ./author.json#/profile\n---\nPost\n",
+              },
+              { id: "author", source: '{"profile":{"name":"Ada"}}' },
+              { id: "unrelated", source: "{invalid" },
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({
+      source,
+      projectId,
+      plan: {
+        standardFields: [],
+        structuredPropertyPaths: [["properties", "author"]],
+        excerpt: false,
+        metadataError: false,
+        queries: [
+          {
+            id: "posts",
+            where: { all: [] },
+            sort: [],
+            limit: { type: "literal", value: 1 },
+            offset: { type: "literal", value: 0 },
+            output: {
+              mode: "fields",
+              includeMetadata: false,
+              fields: [["properties", "author"]],
+            },
+            content: { mode: "none" },
+          },
+        ],
+      },
+    });
+
+    expect(result.documentGraph?.nodes.map(({ id }) => id)).toEqual([
+      "author",
+      "post",
+    ]);
+    expect(result.documentGraph?.edges).toHaveLength(1);
+  });
+
   test("discovers document references without embedding source payloads", async () => {
     const post = createFile({
       id: "post",
