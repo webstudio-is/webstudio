@@ -62,23 +62,30 @@ At build time, the content engine:
 4. Stores the validated dependency graph with searchable metadata while source
    payloads remain in Asset storage.
 
-At runtime, the server selects the roots returned by the Assets query and
-computes their complete dependency closure before loading source data. It then
-loads independent documents concurrently, loads shared storage content once,
-validates revisions and payload limits, and assembles dependencies before their
-consumers. A resolved value replaces its exact `{ "$ref": "..." }` marker.
+At runtime, the server compares the query's filter, sort, and output property
+paths with the graph's reference locations. If a reference can affect the
+query, the server resolves the relevant source documents before executing the
+query; otherwise it uses the normal query path without loading graph sources.
+It computes the selected sources' complete dependency closure, loads
+independent documents concurrently, loads shared storage content once,
+validates storage identities, revisions, formats, and payload limits, and
+assembles dependencies before their consumers. A resolved value replaces its
+exact `{ "$ref": "..." }` marker.
 
-Only properties selected by the Assets query are returned. Resolution cannot
-expose an unselected property merely because it exists in a fetched document.
+Filtering, sorting, pagination, and projection therefore operate on resolved
+values when their property paths intersect a reference. Only properties
+selected by the Assets query are returned. Resolution cannot expose an
+unselected property merely because it exists in a fetched document.
 Whole-document and Markdown-body content selection continue to use the query's
 content options.
 
-Document source caches are revision-keyed, so content from one revision cannot
-be combined silently with graph metadata from another revision. Resolution is
-also bounded by document-count, per-document byte, aggregate-byte, and
-concurrency limits. A missing document, invalid representation, stale revision,
-limit violation, or cancellation fails the query instead of returning a
-partially assembled graph.
+Document source caches are keyed by storage reference, revision, and format, so
+content from one identity cannot be combined silently with different graph
+metadata. Published runtime assets must also point at the graph node's exact
+storage reference before the source is fetched. Resolution is bounded by
+document-count, per-document byte, aggregate-byte, and concurrency limits. A
+missing document, invalid representation, stale identity, limit violation, or
+cancellation fails the query instead of returning a partially assembled graph.
 
 Assets without a document graph keep the existing embedded-content behavior
 and do not require migration.
