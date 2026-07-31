@@ -259,7 +259,7 @@ const addMarkdownBlog = (): EvaluationProject => {
             {
               field: ["properties", "draft"],
               operator: "ne",
-              value: '"true"',
+              value: "true",
             },
           ],
         },
@@ -436,6 +436,59 @@ describe("Markdown blog evaluation", () => {
     });
   });
 
+  test("accepts persisted MCP expressions and boolean query operands", () => {
+    const project = addMarkdownBlog();
+    project.dataSources.push({
+      id: "collection-item",
+      type: "parameter",
+      name: "collectionItem",
+      scopeInstanceId: "blog-collection",
+    });
+    project.resources = project.resources.map((resource, index) => ({
+      ...resource,
+      body:
+        index === 0
+          ? resource.body
+          : String(resource.body).replace(
+              "value: system.params.slug",
+              "value: $ws$system.params.slug"
+            ),
+    }));
+    project.instances = project.instances.map((instance) => ({
+      ...instance,
+      children: instance.children.map((child) =>
+        child.type === "expression"
+          ? {
+              ...child,
+              value: child.value.replace(
+                "collectionItem",
+                "$ws$dataSource$collection__DASH__item?"
+              ),
+            }
+          : child
+      ),
+    }));
+    project.props = project.props.map((prop) =>
+      prop.type === "expression"
+        ? {
+            ...prop,
+            value: String(prop.value).replace(
+              "collectionItem",
+              "$ws$dataSource$collection__DASH__item?"
+            ),
+          }
+        : prop
+    );
+
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project,
+      toolCalls: successfulCalls,
+    });
+
+    expect(result).toMatchObject({ passed: true, failures: [] });
+  });
+
   test("rejects blog resources that do not select the referenced author", () => {
     const project = addMarkdownBlog();
     project.resources = project.resources.map((resource) => ({
@@ -502,6 +555,22 @@ describe("Markdown blog evaluation", () => {
     });
     expect(withDiscovery).toMatchObject({ passed: true, failures: [] });
     expect(withDiscovery.checks.referenceDocumentationDiscovery).toBe("passed");
+  });
+
+  test("rejects a document-reference workflow that retries a failed tool", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownReferencesDiscoveryFixture,
+      project: addMarkdownBlog(),
+      toolCalls: [
+        { name: "meta.guide" },
+        { name: "meta.get_more_tools" },
+        { name: "upload-assets", isError: true },
+        { name: "upload-assets" },
+        ...successfulCalls.slice(1),
+      ],
+    });
+
+    expect(result.checks.retryFreeExecution).toBe("failed");
   });
 });
 

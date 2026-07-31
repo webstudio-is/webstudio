@@ -229,7 +229,7 @@ export const markdownBlogFixture: HighImpactFixture = {
 
 export const markdownReferencesDiscoveryFixture: HighImpactFixture = {
   id: "markdown-references-discovery-v1",
-  objective: `Upload the ${markdownBlogFixtureArticles.length} supplied Markdown articles and the supplied JSON author profile from .webstudio/assets. Build an editable blog overview at /blog and one dynamic article page at /blog/:slug. Use Assets resources so draft articles are excluded, posts are ordered newest first, each post displays its referenced author, and only the selected article loads and renders its Markdown body. Verify the overview and /blog/aurora-trails at desktop and mobile sizes. Discover the supported workflow and data shapes from Webstudio MCP guidance.`,
+  objective: `Upload the supplied ${markdownBlogFixtureArticles.map(({ name }) => name).join(", ")} Markdown articles and ${markdownBlogFixtureAuthor.name} JSON author profile from .webstudio/assets. Build an editable blog overview at /blog and one dynamic article page at /blog/:slug. Use Assets resources so draft articles are excluded, posts are ordered newest first, each post displays its referenced author, and only the selected article loads and renders its Markdown body. Verify the overview and /blog/aurora-trails at desktop and mobile sizes. Discover the supported workflow and data shapes from Webstudio MCP guidance.`,
   project: emptyProject(),
 };
 

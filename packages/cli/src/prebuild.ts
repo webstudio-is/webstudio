@@ -792,6 +792,8 @@ export const prebuild = async (options: {
   preserveRouteTemplates?: boolean;
   /** Emit a public identity marker used only by the local preview controller. */
   previewIdentity?: boolean;
+  /** Read already-synced assets from this directory before downloading them. */
+  sourceAssetsDirectory?: string;
 }) => {
   const buildRoot = cwd();
   const feedback = options.silent
@@ -1476,7 +1478,8 @@ export const prebuild = async (options: {
       assets: siteData.assets,
       continueOnError: true,
       origin: siteData.origin || "",
-      sourceAssetsDirectory: join(buildRoot, LOCAL_ASSETS_DIR),
+      sourceAssetsDirectory:
+        options.sourceAssetsDirectory ?? join(buildRoot, LOCAL_ASSETS_DIR),
       targetAssetsDirectory: join(buildRoot, "public", assetBaseUrl),
     });
     downloading.stop("Downloaded assets");

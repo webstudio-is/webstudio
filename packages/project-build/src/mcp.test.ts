@@ -4511,17 +4511,45 @@ describe("project session mcp adapter", () => {
     );
     expect(markdownBlogGuide.structuredContent.data).toEqual(
       expect.objectContaining({
+        recipe: expect.objectContaining({
+          overviewResource: expect.objectContaining({
+            dataSourceName: "posts",
+            query: expect.objectContaining({ limit: "20" }),
+          }),
+          detailResource: expect.objectContaining({
+            dataSourceName: "post",
+            query: expect.objectContaining({
+              content: { mode: "markdown-body", maxBytes: 1_048_576 },
+            }),
+          }),
+          overviewCollection: expect.objectContaining({
+            itemFragment: expect.stringContaining(
+              "collectionItem.properties.author.name"
+            ),
+          }),
+          detailCollection: expect.objectContaining({
+            itemFragment: expect.stringContaining("<$.MarkdownEmbed"),
+          }),
+        }),
         workflow: expect.arrayContaining([
+          expect.stringContaining(
+            'meta.get_more_tools with {"tools":["create-assets-resource"]}'
+          ),
+          expect.stringContaining(
+            "Upload all Markdown and JSON documents together in one upload-assets call"
+          ),
+          expect.stringContaining('"format":"md"'),
+          expect.stringContaining('"format":"json"'),
           expect.stringContaining("exactly two Builder pages"),
           expect.stringContaining('fixed path "/blog"'),
           expect.stringContaining('dynamic path "/blog/:slug"'),
           expect.stringContaining("Do not create one page per post"),
           expect.stringContaining('content.mode:"none"'),
           expect.stringContaining('field:["extension"]'),
-          expect.stringContaining("system.params.slug"),
           expect.stringContaining("both pages load their content from Assets"),
         ]),
         tools: expect.arrayContaining([
+          expect.objectContaining({ name: "upload-assets" }),
           expect.objectContaining({ name: "list-pages" }),
           expect.objectContaining({ name: "list-assets" }),
           expect.objectContaining({ name: "insert-collection" }),

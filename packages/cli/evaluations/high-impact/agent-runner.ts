@@ -157,6 +157,13 @@ export const createMinimalAgentTask = (
             'Then call verify-page-responsive exactly once with {"path":"/account","viewports":[{"width":1440,"height":900},{"width":390,"height":844}],"source":"session"}. It captures both required screenshots and runs the terminal static audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately.',
           ]
         : []),
+      ...(fixture.id === "markdown-references-discovery-v1"
+        ? [
+            "Follow the structured recipe returned by meta.guide. Call meta.get_more_tools at most once, with the exact tool name listed by the guide; do not search by brief or rediscover tools later.",
+            "Call each mutation in the documented workflow once. If any tool fails, stop immediately and report the failure; never retry it, repair it with repeated mutations, or continue to verification.",
+            "Do not call verify-page-responsive until both Collections succeed. Then call it exactly once for /blog and exactly once for /blog/aurora-trails. Stop without retrying if either verification fails.",
+          ]
+        : []),
       ...(fixture.id === "design-input-v1"
         ? [
             "For this fixture, do not call list-instances because the project has no representative existing page pattern. Do not call meta.index, meta.get_more_tools, or any other tool discovery operation because meta.guide and the MCP handshake already provide the required schemas.",

@@ -969,6 +969,9 @@ describe("prebuild", () => {
     await expect(readFile("vite.config.ts", "utf8")).resolves.toContain(
       '["webstudio"]'
     );
+    await expect(readFile("vite.config.ts", "utf8")).resolves.toContain(
+      'noExternal: ["nanoid"]'
+    );
     await expect(
       readFile("app/__generated__/$resources.redirects.ts", "utf8")
     ).resolves.toContain("/dl.php?filename=file.pdf");

@@ -542,6 +542,7 @@ export const preparePreviewProject = async ({
           assets,
           template: getPreviewTemplates(template),
           previewIdentity: true,
+          sourceAssetsDirectory: join(projectDir, LOCAL_ASSETS_DIR),
           ...(silent ? { silent: true } : {}),
           ...(includeDraftPages ? { includeDraftPages: true } : {}),
           ...(reuseGeneratedProject ? { incremental: true } : {}),

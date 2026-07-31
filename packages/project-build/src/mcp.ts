@@ -5487,6 +5487,8 @@ const metaGoalGuides = [
     pattern:
       /markdown(?:-|\s)*(?:based|backed)?\s*blog|blog.*markdown|assets?(?:-|\s)*backed\s*blog/i,
     tools: [
+      "create-asset-folder",
+      "upload-assets",
       "list-pages",
       "list-assets",
       "get-asset-field-catalog",
@@ -5499,13 +5501,98 @@ const metaGoalGuides = [
       "verify-page-responsive",
     ],
     workflow: [
+      'Call meta.get_more_tools with {"tools":["create-assets-resource"]} once for the complete nested query contract. Use exact tool names, not brief search, and do not repeat discovery for this workflow.',
+      'Create one Blog asset folder. Upload all Markdown and JSON documents together in one upload-assets call with assetsDir ".webstudio/assets". Every .md descriptor must use {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}} and every .json descriptor must use {"name":"<filename>.json","type":"file","format":"json","folderId":"<blog-folder-id>","meta":{}}. Do not use a combined format value, upload documents individually, or retry a failed mutation; report its actionable error instead.',
       'Ensure the blog has exactly two Builder pages: an overview at the fixed path "/blog" and one detail page at the dynamic path "/blog/:slug". Both pages load their content from Assets resources. Do not create one page per post or copy Markdown content into page-specific static structures.',
-      'For both queries, add static Markdown and blog-folder constraints before any dynamic condition. Include a filter shaped like field:["extension"], operator:"eq", value:"md", plus the narrowest folder or path filter supported by the asset field catalog. This prevents images and unrelated files from consuming the published content-database budget.',
-      'Create the overview Assets resource under the /blog page root. Request only the fields rendered by the listing, use content.mode:"none", and bind one Collection to the complete posts.data map. The overview route is fixed, but its listing remains data-driven through Assets.',
-      'Create the detail Assets resource under the /blog/:slug page root with the same static Markdown/folder constraints, a slug or alternate-ID condition whose value is system.params.slug, limit:1, and content.mode:"markdown-body". Bind the selected item metadata and item.content.text; do not materialize a separate Builder page for each query result.',
+      'Field paths are arrays of segments, for example field:["extension"]. Literal query values use {"type":"literal","value":"..."}; raw strings are runtime expressions. Query limit is an expression string. For both queries, add static Markdown and blog-folder constraints before any dynamic condition. Use content.mode:"none" when the route does not render file content. This prevents images and unrelated files from consuming the published content-database budget.',
+      "Call create-assets-resource exactly once with recipe.overviewResource after substituting only the returned /blog root id. Then call it exactly once with recipe.detailResource after substituting only the returned /blog/:slug root id.",
+      "Call insert-collection exactly once with recipe.overviewCollection and exactly once with recipe.detailCollection, substituting only their returned root ids. The recipe values are structured tool inputs, not JSON text to re-escape. Do not improvise another fragment or call meta.get_more_tools again.",
       "Validate both queries and preview the detail query with one concrete slug before saving dynamic expressions. Query-preview diagnostics report this query separately from the merged published database; use the merged database measurement when checking the deployment limit.",
-      "Verify that exactly the two intended page definitions exist and that both pages load their content from Assets. Preview /blog and one concrete detail route, including empty/not-found behavior, before finishing.",
+      "Verify only after both Collections succeed and confirm that both pages load their content from Assets. Call verify-page-responsive once for /blog and once for one concrete detail route, including empty/not-found behavior, before finishing. If any call fails, stop and report it without retrying.",
     ],
+    recipe: {
+      overviewResource: {
+        name: "Published posts",
+        scopeInstanceId: "<overview-root-id>",
+        dataSourceName: "posts",
+        query: {
+          where: {
+            all: [
+              {
+                field: ["extension"],
+                operator: "eq",
+                value: { type: "literal", value: "md" },
+              },
+              {
+                field: ["properties", "draft"],
+                operator: "ne",
+                value: "true",
+              },
+            ],
+          },
+          sort: [
+            { field: ["properties", "publishedAt"], direction: "desc" },
+            { field: ["id"], direction: "asc" },
+          ],
+          limit: "20",
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [
+              ["properties", "title"],
+              ["properties", "slug"],
+              ["properties", "publishedAt"],
+              ["properties", "author"],
+              ["excerpt"],
+            ],
+          },
+          content: { mode: "none" },
+        },
+      },
+      detailResource: {
+        name: "Post by slug",
+        scopeInstanceId: "<detail-root-id>",
+        dataSourceName: "post",
+        query: {
+          where: {
+            all: [
+              {
+                field: ["extension"],
+                operator: "eq",
+                value: { type: "literal", value: "md" },
+              },
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "system.params.slug",
+              },
+            ],
+          },
+          limit: "1",
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [
+              ["properties", "title"],
+              ["properties", "author"],
+            ],
+          },
+          content: { mode: "markdown-body", maxBytes: 1_048_576 },
+        },
+      },
+      overviewCollection: {
+        parentInstanceId: "<overview-root-id>",
+        data: { type: "expression", value: "posts.data" },
+        itemFragment:
+          '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">{expression`collectionItem.excerpt ?? ""`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><ws.element ws:tag="time">{expression`collectionItem.properties.publishedAt ?? ""`}</ws.element><ws.element ws:tag="a" href={expression`"/blog/" + collectionItem.properties.slug`}>Read article</ws.element></ws.element>',
+      },
+      detailCollection: {
+        parentInstanceId: "<detail-root-id>",
+        data: { type: "expression", value: "post.data" },
+        itemFragment:
+          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><$.MarkdownEmbed code={expression`collectionItem.content.text`} /></ws.element>',
+      },
+    },
   },
   {
     pattern: /json\s*-?\s*ld|structured\s+data/i,
@@ -5722,6 +5809,9 @@ const getMetaGuide = (
     tools: matches.map((tool) =>
       serializeMetaGuideTool(tool, goalGuide === undefined)
     ),
+    ...(goalGuide !== undefined && "recipe" in goalGuide
+      ? { recipe: goalGuide.recipe }
+      : {}),
     more:
       goalGuide === undefined
         ? "The MCP handshake provides top-level argument contracts and required fields, while this guide includes exact examples plus complete schemas for selected complex tools. Call meta.get_more_tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover."

@@ -171,6 +171,7 @@ test("prepares preview by syncing missing data and generating the app template",
     assets: true,
     template: ["react-router"],
     previewIdentity: true,
+    sourceAssetsDirectory: join(cwd(), ".webstudio", "assets"),
   });
   expect(result.cwd).toBe(getPreviewProjectDir());
 });
@@ -201,6 +202,7 @@ test("prepares local verification previews with draft routes", async () => {
     template: ["react-router"],
     includeDraftPages: true,
     previewIdentity: true,
+    sourceAssetsDirectory: join(cwd(), ".webstudio", "assets"),
   });
 });
 
@@ -263,6 +265,7 @@ test("generates preview project in isolated directory", async () => {
     assets: true,
     template: ["react-router"],
     previewIdentity: true,
+    sourceAssetsDirectory: join(expectedPreviewProjectDir, "..", "assets"),
   });
   expect(ensureDependencies).toHaveBeenCalledOnce();
 });
@@ -319,6 +322,7 @@ test("regenerates a production cache before using it for iterative preview", asy
     "cache-key"
   );
   chdir(projectDir);
+  const sourceAssetsDirectory = join(cwd(), ".webstudio", "assets");
   try {
     const result = await preparePreviewProject({
       assets: true,
@@ -341,6 +345,7 @@ test("regenerates a production cache before using it for iterative preview", asy
     template: ["react-router"],
     preserveRouteTemplates: true,
     previewIdentity: true,
+    sourceAssetsDirectory,
   });
 });
 
@@ -576,6 +581,7 @@ test("materializes session data before previewing from session source", async ()
     assets: true,
     template: ["react-router"],
     previewIdentity: true,
+    sourceAssetsDirectory: join(expectedPreviewProjectDir, "..", "assets"),
   });
 });
 
@@ -657,6 +663,7 @@ test("keeps the standalone React Router preview template", async () => {
     assets: true,
     template: ["react-router"],
     previewIdentity: true,
+    sourceAssetsDirectory: join(cwd(), ".webstudio", "assets"),
   });
 });
 

@@ -1,6 +1,8 @@
 import { parseExpressionAt } from "acorn";
+import { transpileExpression } from "@webstudio-is/expression";
 import { getFontFaces } from "@webstudio-is/fonts";
 import {
+  decodeDataSourceVariable,
   isAssetsResource,
   parseStructuredAssetQueryResourceBody,
   type FontAsset,
@@ -26,7 +28,7 @@ import {
   markdownBlogFixtureAuthor,
   markdownBlogFixtureDocuments,
 } from "./markdown-blog-fixture";
-import { isBroadRead } from "./evaluation-metrics";
+import { hasMcpToolCallRetries, isBroadRead } from "./evaluation-metrics";
 
 export type EvaluationToolCall = {
   name: string;
@@ -584,18 +586,90 @@ const hasWhereCondition = ({
   field,
   operator,
   value,
+  normalizeExpression = (expression: string) => expression,
 }: {
   where: unknown;
   field: readonly string[];
   operator: string;
   value: string;
+  normalizeExpression?: (expression: string) => string;
 }) =>
   getWhereConditions(where).some(
     (condition) =>
       pathsEqual(condition.field, field) &&
       condition.operator === operator &&
-      condition.value === value
+      typeof condition.value === "string" &&
+      normalizeExpression(condition.value) === normalizeExpression(value)
   );
+
+const getMemberPath = (value: unknown): string[] | undefined => {
+  if (typeof value !== "object" || value === null || !("type" in value)) {
+    return;
+  }
+  if (value.type === "ChainExpression" && "expression" in value) {
+    return getMemberPath(value.expression);
+  }
+  if (
+    value.type === "Identifier" &&
+    "name" in value &&
+    typeof value.name === "string"
+  ) {
+    return [value.name];
+  }
+  if (
+    value.type !== "MemberExpression" ||
+    !("object" in value) ||
+    !("property" in value)
+  ) {
+    return;
+  }
+  const objectPath = getMemberPath(value.object);
+  if (objectPath === undefined) {
+    return;
+  }
+  const property = value.property;
+  if (
+    typeof property !== "object" ||
+    property === null ||
+    !("type" in property)
+  ) {
+    return;
+  }
+  if (
+    property.type === "Identifier" &&
+    "name" in property &&
+    typeof property.name === "string"
+  ) {
+    return [...objectPath, property.name];
+  }
+  if (
+    property.type === "Literal" &&
+    "value" in property &&
+    (typeof property.value === "string" || typeof property.value === "number")
+  ) {
+    return [...objectPath, String(property.value)];
+  }
+};
+
+const getExpressionMemberPaths = (expression: string) => {
+  const paths = new Set<string>();
+  const visit = (value: unknown): void => {
+    if (typeof value !== "object" || value === null) {
+      return;
+    }
+    const path = getMemberPath(value);
+    if (path !== undefined) {
+      paths.add(path.join("."));
+    }
+    for (const child of Object.values(value)) {
+      visit(child);
+    }
+  };
+  try {
+    visit(parseExpressionAt(expression, 0, { ecmaVersion: "latest" }));
+  } catch {}
+  return paths;
+};
 
 const hasOutputField = (output: unknown, field: string[]) =>
   typeof output === "object" &&
@@ -636,6 +710,13 @@ const validateMarkdownBlog = (
       "referenceDocumentationDiscovery",
       guidanceIndex !== -1 && toolDiscoveryIndex > guidanceIndex,
       "The reference workflow was not discovered through MCP guidance before authoring."
+    );
+    recordCheck(
+      checks,
+      failures,
+      "retryFreeExecution",
+      hasMcpToolCallRetries(input.toolCalls) === false,
+      "The document-reference workflow retried a tool after it failed."
     );
   }
   const expectedNames = new Set<string>(
@@ -696,6 +777,31 @@ const validateMarkdownBlog = (
   );
 
   const configurations = getAssetResourceConfigurations(input.project);
+  const dataSourceNameById = new Map(
+    input.project.dataSources.map((dataSource) => [
+      String(dataSource.id),
+      String(dataSource.name),
+    ])
+  );
+  const normalizeExpression = (expression: string) => {
+    try {
+      return transpileExpression({
+        expression,
+        replaceVariable: (identifier) => {
+          const dataSourceId = decodeDataSourceVariable(identifier);
+          if (dataSourceId === undefined) {
+            return identifier;
+          }
+          if (dataSourceId === ":system") {
+            return "system";
+          }
+          return dataSourceNameById.get(dataSourceId) ?? identifier;
+        },
+      });
+    } catch {
+      return expression;
+    }
+  };
   const findConfigurationByDataSourceName = (name: string) => {
     const resourceId = input.project.dataSources.find(
       (dataSource) => dataSource.type === "resource" && dataSource.name === name
@@ -746,7 +852,8 @@ const validateMarkdownBlog = (
         where: listing.where,
         field: ["properties", "draft"],
         operator: "ne",
-        value: '"true"',
+        value: "true",
+        normalizeExpression,
       }) &&
       hasSort(listing.sort, [
         { field: ["properties", "publishedAt"], direction: "desc" },
@@ -777,6 +884,7 @@ const validateMarkdownBlog = (
         field: ["properties", "slug"],
         operator: "eq",
         value: "system.params.slug",
+        normalizeExpression,
       }) &&
       article.limit === "1" &&
       article.output.includeMetadata === false &&
@@ -794,9 +902,9 @@ const validateMarkdownBlog = (
     "Both blog Assets resources must select the resolved author document."
   );
 
-  const getPageExpressions = (instances: EvaluationInstance[]) => {
+  const getPageExpressionPaths = (instances: EvaluationInstance[]) => {
     const instanceIds = new Set(instances.map((instance) => instance.id));
-    return new Set([
+    const expressions = [
       ...instances.flatMap((instance) =>
         instance.children.flatMap((child) =>
           child.type === "expression" ? [child.value] : []
@@ -807,10 +915,15 @@ const validateMarkdownBlog = (
           ? [String(prop.value)]
           : []
       ),
-    ]);
+    ];
+    return new Set(
+      expressions.flatMap((expression) => [
+        ...getExpressionMemberPaths(normalizeExpression(expression)),
+      ])
+    );
   };
-  const overviewExpressions = getPageExpressions(overview.instances);
-  const detailExpressions = getPageExpressions(detail.instances);
+  const overviewExpressionPaths = getPageExpressionPaths(overview.instances);
+  const detailExpressionPaths = getPageExpressionPaths(detail.instances);
   recordCheck(
     checks,
     failures,
@@ -824,15 +937,15 @@ const validateMarkdownBlog = (
         "collectionItem.properties.publishedAt",
         "collectionItem.properties.slug",
         "collectionItem.properties.author.name",
-      ].every((expression) => overviewExpressions.has(expression)) &&
+      ].every((expression) => overviewExpressionPaths.has(expression)) &&
       detail.instances.some((instance) =>
         instance.component.toLowerCase().endsWith("collection")
       ) &&
       detail.instances.some((instance) =>
         instance.component.toLowerCase().endsWith("markdownembed")
       ) &&
-      detailExpressions.has("collectionItem.content.text") &&
-      detailExpressions.has("collectionItem.properties.author.name"),
+      detailExpressionPaths.has("collectionItem.content.text") &&
+      detailExpressionPaths.has("collectionItem.properties.author.name"),
     "The blog is not rendered through editable Collections, resolved author bindings, and a Markdown Embed."
   );
   recordCheck(
