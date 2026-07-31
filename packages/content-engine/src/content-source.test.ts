@@ -148,6 +148,16 @@ describe("content source snapshots", () => {
         },
       },
     ]);
+    expect(result.artifact.documentGraph).toMatchObject({
+      format: "webstudio-document-graph",
+      version: 1,
+      nodes: result.documentGraph?.nodes,
+      edges: result.documentGraph?.edges,
+      integrity: {
+        algorithm: "sha256",
+        checksum: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+      },
+    });
   });
 
   test("describes a compiler entry with the snapshot contract", () => {

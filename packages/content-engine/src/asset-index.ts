@@ -28,6 +28,11 @@ import {
   canMaterializeContentCompilationQuery,
   materializeContentCompilationQueries,
 } from "./materialized-query";
+import {
+  createDocumentGraphArtifact,
+  type DocumentGraph,
+  type DocumentGraphArtifactV1,
+} from "./document-graph";
 
 export type ContentCompilerDiagnostics = {
   maxBytes: number;
@@ -137,6 +142,7 @@ const buildAssetIndex = async ({
   maxBytes,
   unboundedBytes,
   assetReferences,
+  documentGraph,
   plan,
   finalize = true,
 }: {
@@ -145,6 +151,7 @@ const buildAssetIndex = async ({
   maxBytes: number;
   unboundedBytes: number;
   assetReferences?: MarkdownAssetReferences;
+  documentGraph?: DocumentGraphArtifactV1;
   plan?: ContentCompilationPlan;
   finalize?: boolean;
 }) => {
@@ -243,6 +250,7 @@ const buildAssetIndex = async ({
     version: 1,
     assetRevision,
     documents,
+    ...(documentGraph === undefined ? {} : { documentGraph }),
     ...(Object.keys(contents).length === 0 ? {} : { contents }),
     ...(Object.keys(includedAssetReferences).length === 0
       ? {}
@@ -281,12 +289,14 @@ export const compileContentArtifact = async ({
   entries,
   maxBytes = contentEngineLimits.databaseBytes,
   assetReferences,
+  documentGraph,
   plan,
 }: {
   projectId: string;
   entries: readonly ContentCompilerInput[];
   maxBytes?: number;
   assetReferences?: MarkdownAssetReferences;
+  documentGraph?: DocumentGraph;
   plan?: ContentCompilationPlan;
 }): Promise<{
   artifact: ContentArtifactV1;
@@ -296,6 +306,10 @@ export const compileContentArtifact = async ({
     throw new Error("Content database byte limit must be a positive integer");
   }
   validateEntries({ projectId, entries });
+  const documentGraphArtifact =
+    documentGraph === undefined
+      ? undefined
+      : await createDocumentGraphArtifact(documentGraph);
   const sourceDocumentCount = entries.length;
   const hasMaterializableQueries =
     plan?.queries.some(canMaterializeContentCompilationQuery) === true;
@@ -318,6 +332,7 @@ export const compileContentArtifact = async ({
       maxBytes,
       unboundedBytes,
       assetReferences,
+      documentGraph: documentGraphArtifact,
       plan,
       finalize: false,
     });
@@ -344,6 +359,7 @@ export const compileContentArtifact = async ({
       maxBytes,
       unboundedBytes,
       assetReferences,
+      documentGraph: documentGraphArtifact,
       plan,
       finalize: false,
     });
@@ -375,6 +391,7 @@ export const compileContentArtifact = async ({
           maxBytes,
           unboundedBytes,
           assetReferences,
+          documentGraph: documentGraphArtifact,
           plan,
           finalize: false,
         });
@@ -407,6 +424,7 @@ export const compileContentArtifact = async ({
     maxBytes,
     unboundedBytes,
     assetReferences,
+    documentGraph: documentGraphArtifact,
     plan,
   });
   const boundedBytes = getUtf8ByteLength(serializeContentArtifact(artifact));
@@ -457,6 +475,7 @@ export const createAssetIndex = async (input: {
   entries: readonly ContentCompilerInput[];
   maxBytes?: number;
   assetReferences?: MarkdownAssetReferences;
+  documentGraph?: DocumentGraph;
   plan?: ContentCompilationPlan;
 }): Promise<ContentArtifactV1> =>
   (await compileContentArtifact(input)).artifact;

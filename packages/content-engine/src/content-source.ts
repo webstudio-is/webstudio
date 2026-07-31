@@ -292,6 +292,7 @@ export const compileContentSource = async ({
     projectId,
     entries,
     assetReferences,
+    documentGraph,
     ...(plan === undefined ? {} : { plan }),
     ...(maxBytes === undefined ? {} : { maxBytes }),
   });

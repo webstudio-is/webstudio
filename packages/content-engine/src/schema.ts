@@ -21,6 +21,7 @@ import {
   type QueryWhereTree,
 } from "@webstudio-is/query-builder/runtime";
 import { contentEngineLimits } from "./limits";
+import { documentGraphArtifactV1 } from "./document-graph/graph-artifact";
 
 const relativeAssetPath = string()
   .min(1)
@@ -176,6 +177,7 @@ export const contentArtifactV1 = strictObject({
   version: literal(1),
   assetRevision: sha256Revision,
   documents: array(contentDatabaseDocument),
+  documentGraph: documentGraphArtifactV1.optional(),
   contents: record(string().min(1), string()).optional(),
   assetReferences: record(
     string().min(1),
