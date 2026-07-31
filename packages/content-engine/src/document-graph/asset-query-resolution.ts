@@ -17,6 +17,19 @@ const isReferenceMarker = (value: JsonValue) =>
   Object.keys(value).length === 1 &&
   typeof value.$ref === "string";
 
+const containsReferenceMarker = (value: JsonValue): boolean => {
+  if (isReferenceMarker(value)) {
+    return true;
+  }
+  if (Array.isArray(value)) {
+    return value.some(containsReferenceMarker);
+  }
+  if (isJsonObject(value)) {
+    return Object.values(value).some(containsReferenceMarker);
+  }
+  return false;
+};
+
 const projectResolvedValue = ({
   selected,
   resolved,
@@ -81,7 +94,9 @@ export const resolveAssetQueryDocumentGraph = async ({
 }): Promise<AssetQueryResult> => {
   const selectedRootIds = new Set(rootIds);
   const resolvableRootIds = result.items.flatMap((item) =>
-    selectedRootIds.has(item.id) && item.properties !== undefined
+    selectedRootIds.has(item.id) &&
+    item.properties !== undefined &&
+    containsReferenceMarker(item.properties)
       ? [item.id]
       : []
   );

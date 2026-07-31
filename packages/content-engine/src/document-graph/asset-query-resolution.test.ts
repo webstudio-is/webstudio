@@ -98,9 +98,34 @@ describe("Assets query document graph resolution", () => {
     expect(load).not.toHaveBeenCalled();
   });
 
-  test("reports graph resolution completion and failures without exposing source data", async () => {
+  test("does not load selected roots when projected properties contain no references", async () => {
     const result: AssetQueryResult = {
       items: [{ id: "post", properties: { title: "Hello" } }],
+      totalCount: 1,
+      hasMore: false,
+    };
+    const load = vi.fn();
+
+    await expect(
+      resolveAssetQueryDocumentGraph({
+        graph,
+        rootIds: ["post"],
+        result,
+        load,
+        concurrency: 2,
+      })
+    ).resolves.toBe(result);
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  test("reports graph resolution completion and failures without exposing source data", async () => {
+    const result: AssetQueryResult = {
+      items: [
+        {
+          id: "post",
+          properties: { author: { $ref: "./author.md#frontmatter" } },
+        },
+      ],
       totalCount: 1,
       hasMore: false,
     };

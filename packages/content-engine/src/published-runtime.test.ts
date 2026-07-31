@@ -489,7 +489,7 @@ describe("published asset resource runtime", () => {
       mimeType: "application/json",
       revision: "graph-post-r1",
       contentRef: "storage:graph-post",
-      properties: { title: "Post" },
+      properties: { author: { $ref: "./author.json" } },
     };
     const { artifact } = await compileContentArtifact({
       projectId: "project-1",
@@ -507,8 +507,24 @@ describe("published asset resource runtime", () => {
             contentRef: graphDocument.contentRef,
             format: "json",
           },
+          {
+            id: "graph-author",
+            revision: "graph-author-r1",
+            contentRef: "storage:graph-author",
+            format: "json",
+          },
         ],
-        edges: [],
+        edges: [
+          {
+            sourceId: graphDocument._id,
+            referenceId: "#/author",
+            reference: {
+              documentId: "graph-author",
+              revision: "graph-author-r1",
+              representation: { type: "document" },
+            },
+          },
+        ],
       }),
     });
     const request = (signal?: AbortSignal) =>
@@ -524,21 +540,26 @@ describe("published asset resource runtime", () => {
             output: {
               mode: "fields",
               includeMetadata: false,
-              fields: [["properties", "title"]],
+              fields: [["properties", "author"]],
             },
           },
         }),
       });
     const runtimeAssets = {
       "graph-post": { url: "/assets/graph-post.json" },
+      "graph-author": { url: "/assets/graph-author.json" },
     };
     const oversizedRuntime = createPublishedAssetResourceFetch({
       baseUrl: "https://site.example",
       deploymentId: "graph-limit-build",
       artifact,
       runtimeAssets,
-      fetchDocument: async () =>
-        new Response(`{"value":"${"a".repeat(1024 * 1024)}"}`),
+      fetchDocument: async (input) =>
+        new Response(
+          String(input).endsWith("graph-post.json")
+            ? '{"author":{"$ref":"./author.json"}}'
+            : `{"value":"${"a".repeat(1024 * 1024)}"}`
+        ),
     });
 
     const oversized = await oversizedRuntime(request());
@@ -547,7 +568,7 @@ describe("published asset resource runtime", () => {
       error: {
         code: "CONTENT_LIMIT_EXCEEDED",
         details: {
-          assetId: "graph-post",
+          assetId: "graph-author",
           contentByteLimit: 1024 * 1024,
         },
       },
@@ -570,7 +591,7 @@ describe("published asset resource runtime", () => {
     });
     const controller = new AbortController();
     const cancelledPromise = cancelledRuntime(request(controller.signal));
-    await vi.waitFor(() => expect(fetchDocument).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(fetchDocument).toHaveBeenCalled());
     controller.abort("test cancellation");
 
     const cancelled = await cancelledPromise;
