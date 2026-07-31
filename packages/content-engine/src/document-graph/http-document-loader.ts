@@ -1,6 +1,6 @@
 import { enum as zEnum, strictObject, string } from "zod";
 import type { DocumentGraphNode } from "./graph";
-import type { DocumentSource } from "./document-source";
+import type { DocumentSourceLoader } from "./document-source";
 
 const documentSourceMetadata = strictObject({
   format: zEnum(["json", "markdown"]),
@@ -67,11 +67,6 @@ const streamResponseBody = (
   },
 });
 
-export type HttpDocumentSourceLoader = (
-  node: DocumentGraphNode,
-  options: { signal?: AbortSignal }
-) => Promise<DocumentSource>;
-
 /** Adapts an injected HTTP/CDN transport to the revisioned source contract. */
 export const createHttpDocumentSourceLoader =
   ({
@@ -85,7 +80,7 @@ export const createHttpDocumentSourceLoader =
       node: DocumentGraphNode;
       response: Response;
     }) => unknown;
-  }): HttpDocumentSourceLoader =>
+  }): DocumentSourceLoader =>
   async (node, { signal }) => {
     let response: Response;
     try {

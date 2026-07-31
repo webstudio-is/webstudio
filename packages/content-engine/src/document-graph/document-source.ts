@@ -8,6 +8,11 @@ export type DocumentSource = Readonly<{
   source: ByteSource;
 }>;
 
+export type DocumentSourceLoader = (
+  node: DocumentGraphNode,
+  options: { signal?: AbortSignal }
+) => Promise<DocumentSource>;
+
 export class DocumentSourceError extends Error {
   readonly code = "REVISION_MISMATCH";
   readonly documentId: string;
