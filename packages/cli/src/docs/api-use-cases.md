@@ -238,7 +238,7 @@ Commands:
 
 Commands:
 
-- MCP tool: upload-asset {"path":"./marketplace-thumbnail.png"}
+- MCP tool: upload-asset {"asset":{"name":"marketplace-thumbnail.png","type":"image","format":"png","meta":{"width":1200,"height":630}},"assetsDir":".webstudio/assets"}
 - MCP tool: update-marketplace-product {"category":"pageTemplates","name":"Acme Template","thumbnailAssetId":"<uploadedAssetId>","author":"Acme Studio","email":"hello@example.com","website":"https://example.com","issues":"","description":"Reusable template project for Acme landing pages."}
 - MCP tool: publish {"target":"production"}
 - MCP tool: submit-marketplace-product {"acknowledgePublicSubmission":true}
