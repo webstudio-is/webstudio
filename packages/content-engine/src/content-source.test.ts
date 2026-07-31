@@ -95,6 +95,61 @@ const createMutableSource = ({
 };
 
 describe("content source snapshots", () => {
+  test("discovers document references without embedding source payloads", async () => {
+    const post = createFile({
+      id: "post",
+      path: "posts/hello.json",
+      contentType: "application/json",
+      contentRef: "revisions/post.json",
+    });
+    const author = createFile({
+      id: "author",
+      path: "authors/ada.md",
+      contentRef: "revisions/author.md",
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [post, author],
+          async loadEntries() {
+            return [post, author].map(createEntry);
+          },
+          async loadDocumentSources() {
+            return [
+              {
+                id: "post",
+                source: '{"author":{"$ref":"../authors/ada.md#frontmatter"}}',
+              },
+              {
+                id: "author",
+                source: "---\nname: Ada\n---\nWriter.\n",
+              },
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+
+    expect(result.artifact.contents).toBeUndefined();
+    expect(result.documentGraph?.edges).toEqual([
+      {
+        sourceId: "post",
+        referenceId: "#/author",
+        reference: {
+          documentId: "author",
+          revision: "revision-author",
+          representation: { type: "markdown-frontmatter" },
+        },
+      },
+    ]);
+  });
+
   test("describes a compiler entry with the snapshot contract", () => {
     const file = createFile({ id: "post" });
     expect(createContentSourceFile(createEntry(file))).toEqual(file);

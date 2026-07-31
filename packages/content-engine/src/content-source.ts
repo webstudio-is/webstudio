@@ -12,9 +12,14 @@ import {
 } from "./markdown-assets";
 import type { MarkdownAssetReferences } from "./markdown-references";
 import { compareStrings } from "./canonical-json";
-import { encodeUtf8 } from "./byte-stream";
+import { encodeUtf8, type ByteSource } from "./byte-stream";
 import { extractMarkdownBody } from "./markdown-body";
 import { contentEngineLimits } from "./limits";
+import {
+  compileDocumentSourceGraph,
+  type DocumentFormat,
+  type DocumentGraph,
+} from "./document-graph";
 
 export type ContentSourceFile = {
   id: string;
@@ -33,8 +38,14 @@ export interface ContentSourceSnapshot {
     plan?: ContentCompilationPlan,
     options?: { maximumContentBytes: number }
   ): Promise<readonly ContentCompilerInput[]>;
+  loadDocumentSources?(): Promise<readonly ContentSourceDocument[]>;
   isCurrent(): Promise<boolean>;
 }
+
+export type ContentSourceDocument = Readonly<{
+  id: string;
+  source: ByteSource;
+}>;
 
 export interface ContentSource {
   openSnapshot(): Promise<ContentSourceSnapshot>;
@@ -160,6 +171,64 @@ const discoverSnapshotAssetReferences = async ({
   return references;
 };
 
+const documentUrlBase = "https://content.webstudio.local/";
+
+const getDocumentFormat = (
+  file: ContentSourceFile
+): DocumentFormat | undefined => {
+  const contentType = file.contentType.split(";", 1)[0].trim().toLowerCase();
+  if (contentType === "application/json") {
+    return "json";
+  }
+  if (contentType === "text/markdown") {
+    return "markdown";
+  }
+};
+
+const discoverSnapshotDocumentGraph = async (
+  snapshot: ContentSourceSnapshot
+): Promise<DocumentGraph | undefined> => {
+  if (snapshot.loadDocumentSources === undefined) {
+    return;
+  }
+  const sourceDocuments = await snapshot.loadDocumentSources();
+  const filesById = new Map(snapshot.files.map((file) => [file.id, file]));
+  const sourcesById = new Map<string, ByteSource>();
+  for (const document of sourceDocuments) {
+    if (sourcesById.has(document.id)) {
+      throw new Error("Content source returned duplicate document sources");
+    }
+    const file = filesById.get(document.id);
+    if (file === undefined || getDocumentFormat(file) === undefined) {
+      throw new Error("Content source returned an unsupported document source");
+    }
+    sourcesById.set(document.id, document.source);
+  }
+  const supportedFiles = snapshot.files.filter(
+    (file) => getDocumentFormat(file) !== undefined
+  );
+  if (supportedFiles.some((file) => sourcesById.has(file.id) === false)) {
+    throw new Error("Content source omitted a supported document source");
+  }
+  return await compileDocumentSourceGraph({
+    documents: supportedFiles.map((file) => {
+      const format = getDocumentFormat(file);
+      const source = sourcesById.get(file.id);
+      if (format === undefined || source === undefined) {
+        throw new Error("Content source document catalog is incomplete");
+      }
+      return {
+        id: file.id,
+        documentUrl: new URL(file.path, documentUrlBase).href,
+        revision: file.revision,
+        contentRef: file.contentRef,
+        format,
+        source,
+      };
+    }),
+  });
+};
+
 export const materializeContentSnapshot = async ({
   snapshot,
   plan,
@@ -171,7 +240,10 @@ export const materializeContentSnapshot = async ({
 }) => {
   validateSnapshot(snapshot);
   try {
-    const entries = await snapshot.loadEntries(plan, { maximumContentBytes });
+    const [entries, documentGraph] = await Promise.all([
+      snapshot.loadEntries(plan, { maximumContentBytes }),
+      discoverSnapshotDocumentGraph(snapshot),
+    ]);
     validateEntries({ snapshot, entries });
     const assetReferences = await discoverSnapshotAssetReferences({
       snapshot,
@@ -179,7 +251,12 @@ export const materializeContentSnapshot = async ({
       plan,
     });
     if (await snapshot.isCurrent()) {
-      return { sourceRevision: snapshot.revision, entries, assetReferences };
+      return {
+        sourceRevision: snapshot.revision,
+        entries,
+        assetReferences,
+        documentGraph,
+      };
     }
   } catch (error) {
     if (await snapshot.isCurrent()) {
@@ -201,10 +278,11 @@ export const compileContentSource = async ({
   maxBytes?: number;
 }): Promise<{
   sourceRevision: string;
+  documentGraph?: DocumentGraph;
   artifact: ContentArtifactV1;
   diagnostics: ContentCompilerDiagnostics;
 }> => {
-  const { sourceRevision, entries, assetReferences } =
+  const { sourceRevision, entries, assetReferences, documentGraph } =
     await materializeContentSource({
       source,
       plan,
@@ -217,7 +295,7 @@ export const compileContentSource = async ({
     ...(plan === undefined ? {} : { plan }),
     ...(maxBytes === undefined ? {} : { maxBytes }),
   });
-  return { sourceRevision, ...compiled };
+  return { sourceRevision, documentGraph, ...compiled };
 };
 
 export const materializeContentSource = async ({
@@ -232,6 +310,7 @@ export const materializeContentSource = async ({
   sourceRevision: string;
   entries: readonly ContentCompilerInput[];
   assetReferences: MarkdownAssetReferences;
+  documentGraph?: DocumentGraph;
 }> => {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const snapshot = await source.openSnapshot();

@@ -214,6 +214,29 @@ export const createFileSystemContentSource = ({
     return {
       revision,
       files: captured.map(({ entry }) => createContentSourceFile(entry)),
+      loadDocumentSources: async () =>
+        captured
+          .filter(({ entry }) =>
+            ["application/json", "text/markdown"].includes(
+              entry.document.mimeType.split(";", 1)[0].trim().toLowerCase()
+            )
+          )
+          .map(({ entry, filePath, identity }) => ({
+            id: entry.assetId,
+            source: {
+              async *[Symbol.asyncIterator]() {
+                const bytes = await readSnapshotFile({
+                  path: filePath,
+                  identity,
+                  maximumBytes: entry.document.size,
+                });
+                if (bytes.byteLength !== entry.document.size) {
+                  throw new Error("Content source file size changed");
+                }
+                yield bytes;
+              },
+            },
+          })),
       loadEntries: async (
         plan?: ContentCompilationPlan,
         options?: { maximumContentBytes: number }
