@@ -1493,7 +1493,7 @@ export const runtimeOperationContractData = [
       required: ["marketplaceProduct"],
       additionalProperties: {},
     },
-    readNamespaces: [],
+    readNamespaces: ["marketplaceProduct"],
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,

@@ -522,7 +522,7 @@ export const builderRuntimeOperations = [
   runtimeOperation(
     "projectSettings.getMarketplaceProduct",
     api("get-marketplace-product", "getMarketplaceProduct"),
-    readContract([]),
+    readContract(["marketplaceProduct"]),
     emptyInput,
     ({ state }) => projectSettings.getMarketplaceProduct(state)
   ),

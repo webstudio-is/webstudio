@@ -321,6 +321,7 @@ describe("shared asset index", () => {
     ).toMatchObject({
       includedDocumentCount: 5,
       omittedDocumentCount: 0,
+      omissionReason: undefined,
       truncated: false,
     });
     await expect(verifyContentArtifact(materialized.artifact)).resolves.toEqual(
@@ -571,6 +572,7 @@ describe("shared asset index", () => {
       maxBytes: 5_000,
       includedDocumentCount: 2,
       omittedDocumentCount: 1,
+      omissionReason: "size",
       truncated: true,
     });
     expect(contentEngineLimits.databaseBytes).toBe(500 * 1024);
@@ -663,6 +665,12 @@ describe("shared asset index", () => {
     expect(diagnostics.unboundedBytes).toBeGreaterThan(
       diagnostics.boundedBytes
     );
+    expect(createContentDatabase({ artifact }).getStats()).toMatchObject({
+      includedDocumentCount: 1,
+      omittedDocumentCount: 1,
+      omissionReason: "unavailable",
+      truncated: true,
+    });
   });
 
   test("bounds a thousand oversized documents without rebuilding per document", async () => {

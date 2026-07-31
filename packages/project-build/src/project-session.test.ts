@@ -463,6 +463,22 @@ describe("project session", () => {
     expect(product.result).toEqual({ marketplaceProduct });
   });
 
+  test("loads configured marketplace metadata in a cold session", async () => {
+    const remote = createSnapshot();
+    const transport = createTransport(remote);
+    const session = createSession({ storage: createStorage(), transport });
+
+    const product = await session.read(
+      "projectSettings.getMarketplaceProduct",
+      {}
+    );
+
+    expect(product.result).toEqual({
+      marketplaceProduct: remote.state.marketplaceProduct,
+    });
+    expect(transport.loadedNamespaces).toEqual([["marketplaceProduct"]]);
+  });
+
   test("duplicates a page from a cold session with assets hydrated", async () => {
     const remote = createSnapshot({
       state: createBuilderStateFromSnapshot({

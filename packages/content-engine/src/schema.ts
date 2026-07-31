@@ -601,6 +601,7 @@ export const contentDatabaseStats = strictObject({
   unboundedBytes: number().int().nonnegative(),
   includedDocumentCount: number().int().nonnegative(),
   omittedDocumentCount: number().int().nonnegative(),
+  omissionReason: zEnum(["size", "unavailable"]).optional(),
   truncated: boolean(),
 });
 
@@ -612,6 +613,7 @@ const contentDatabaseCapacityStats = contentDatabaseStats.pick({
   unboundedBytes: true,
   includedDocumentCount: true,
   omittedDocumentCount: true,
+  omissionReason: true,
   truncated: true,
 });
 

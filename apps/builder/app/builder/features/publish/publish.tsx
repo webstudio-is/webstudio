@@ -75,10 +75,7 @@ import {
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
-import {
-  createReachableAssetContentCompilationPlan,
-  type Templates,
-} from "@webstudio-is/sdk";
+import type { Templates } from "@webstudio-is/sdk";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
@@ -105,10 +102,7 @@ import {
   runPrePublishAudit,
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
-import {
-  getContentDatabasePublishWarning,
-  type ContentDatabasePublishWarning,
-} from "./content-database-publish-warning";
+import { showContentDatabasePublishWarning } from "./content-database-publish-warning-view";
 
 const PrePublishAuditMessage = ({
   finding,
@@ -188,74 +182,6 @@ const getPrePublishAuditMessages = () => {
     error: getMessage("error"),
     warning: getMessage("warning"),
   };
-};
-
-const loadContentDatabasePublishWarning = async (projectId: string) => {
-  const plan = createReachableAssetContentCompilationPlan({
-    props: [...$props.get().values()],
-    dataSources: [...$dataSources.get().values()],
-    resources: [...$resources.get().values()],
-  });
-  if (plan === undefined) {
-    return;
-  }
-  return getContentDatabasePublishWarning(
-    await nativeClient.build.contentDatabasePublishDiagnostics.query({
-      projectId,
-    })
-  );
-};
-
-const ContentDatabasePublishWarningMessage = ({
-  warning,
-}: {
-  warning: ContentDatabasePublishWarning;
-}) => {
-  const omittedFileLabel =
-    warning.omittedDocumentCount === 1 ? "file" : "files";
-  return (
-    <>
-      The merged published content database will include{" "}
-      {warning.includedDocumentCount} of {warning.totalDocumentCount} files (
-      {warning.usedKiB} of {warning.maxKiB} KiB). {warning.omittedDocumentCount}{" "}
-      {omittedFileLabel} will be omitted{" "}
-      {warning.omissionKind === "size"
-        ? "because the complete database exceeds the size limit"
-        : "because the required content could not be embedded"}
-      .
-      {warning.affectedResourceKind === "dynamic" && (
-        <>
-          {" "}
-          Assets resources with route or variable values cannot be checked
-          exactly and may return incomplete results:{" "}
-          {warning.affectedResourceNames.join(", ")}.
-        </>
-      )}
-      {warning.affectedResourceKind === "static" && (
-        <>
-          {" "}
-          Potentially affected Assets resources:{" "}
-          {warning.affectedResourceNames.join(", ")}.
-        </>
-      )}
-    </>
-  );
-};
-
-const showContentDatabasePublishWarning = async ({
-  projectId,
-  setWarning,
-}: {
-  projectId: Project["id"];
-  setWarning: (warning: JSX.Element) => void;
-}) => {
-  const warning = await loadContentDatabasePublishWarning(projectId);
-  if (warning === undefined) {
-    return;
-  }
-  const message = <ContentDatabasePublishWarningMessage warning={warning} />;
-  toast.warn(message);
-  setWarning(message);
 };
 
 type ChangeProjectDomainProps = {
