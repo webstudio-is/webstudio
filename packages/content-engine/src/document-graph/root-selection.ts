@@ -37,7 +37,7 @@ export const selectAssetQueryDocumentGraphRoots = ({
 }): readonly string[] => {
   const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
   const documentsById = new Map(
-    documents.map((document) => [document._id, document]),
+    documents.map((document) => [document._id, document])
   );
   const rootIds = new Set<string>();
   for (const item of result.items) {
