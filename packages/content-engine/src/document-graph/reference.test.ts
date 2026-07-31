@@ -38,6 +38,11 @@ describe("document reference", () => {
       revision: "sha256:author",
       representation: { type: "json", path: ["profile", 0] },
     },
+    {
+      documentId: "author",
+      revision: "sha256:author",
+      representation: { type: "json", path: [] },
+    },
   ])("rejects an invalid normalized reference", (reference) => {
     expect(() => createDocumentReference(reference)).toThrow();
   });

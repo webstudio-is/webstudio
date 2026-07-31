@@ -4,7 +4,7 @@ export const documentRepresentation = discriminatedUnion("type", [
   strictObject({ type: literal("document") }),
   strictObject({
     type: literal("json"),
-    path: array(string()),
+    path: array(string()).min(1),
   }),
   strictObject({ type: literal("markdown-body") }),
   strictObject({ type: literal("markdown-frontmatter") }),
@@ -28,9 +28,10 @@ export type DocumentReference = Readonly<{
   representation: DocumentRepresentation;
 }>;
 
-const freezeRepresentation = (
-  representation: DocumentRepresentation
+export const createDocumentRepresentation = (
+  input: unknown
 ): DocumentRepresentation => {
+  const representation = documentRepresentation.parse(input);
   if (representation.type === "json") {
     return Object.freeze({
       ...representation,
@@ -45,6 +46,6 @@ export const createDocumentReference = (input: unknown): DocumentReference => {
   const reference = documentReference.parse(input);
   return Object.freeze({
     ...reference,
-    representation: freezeRepresentation(reference.representation),
+    representation: createDocumentRepresentation(reference.representation),
   });
 };

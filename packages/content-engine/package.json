@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hyperjump/json-pointer": "1.1.2",
     "@webstudio-is/expression": "workspace:*",
     "@webstudio-is/query-builder": "workspace:*",
     "canonicalize": "3.0.0",
