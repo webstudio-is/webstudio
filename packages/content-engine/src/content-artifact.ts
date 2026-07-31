@@ -64,7 +64,20 @@ export const verifyContentArtifact = async (value: unknown) => {
     throw new Error("Content artifact checksum is invalid");
   }
   if (index.documentGraph !== undefined) {
-    await verifyDocumentGraphArtifact(index.documentGraph);
+    const { graph } = await verifyDocumentGraphArtifact(index.documentGraph);
+    const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
+    for (const document of index.documents) {
+      const node = nodesById.get(document._id);
+      if (
+        node !== undefined &&
+        (node.revision !== document.revision ||
+          node.contentRef !== document.contentRef)
+      ) {
+        throw new Error(
+          `Content artifact document identity does not match graph node ${document._id}`
+        );
+      }
+    }
   }
   return index;
 };

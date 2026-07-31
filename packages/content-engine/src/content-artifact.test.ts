@@ -1,12 +1,16 @@
 import { describe, expect, test } from "vitest";
 import { compileContentArtifact } from "./asset-index";
 import { createCanonicalAssetFileEntry } from "./canonical";
+import { contentArtifactV1 } from "./schema";
 import {
   checksumContentArtifact,
   getContentArtifactRuntimeAssetIds,
   verifyContentArtifact,
 } from "./content-artifact";
-import { createDocumentGraph } from "./document-graph";
+import {
+  createDocumentGraph,
+  createDocumentGraphArtifact,
+} from "./document-graph";
 
 const entry = createCanonicalAssetFileEntry({
   projectId: "project",
@@ -69,6 +73,37 @@ describe("content artifact document graph", () => {
         integrity: { algorithm: "sha256", checksum: outerChecksum },
       })
     ).rejects.toMatchObject({ code: "CHECKSUM_MISMATCH" });
+  });
+
+  test("rejects a graph identity that differs from its query document", async () => {
+    const { artifact } = await compileContentArtifact({
+      projectId: "project",
+      entries: [entry],
+      documentGraph: graph,
+    });
+    const documentGraph = await createDocumentGraphArtifact(
+      createDocumentGraph({
+        nodes: [
+          {
+            id: "post",
+            revision: "post-r2",
+            contentRef: "content:post-r2",
+          },
+        ],
+        edges: [],
+      })
+    );
+    const tampered = contentArtifactV1.parse({ ...artifact, documentGraph });
+
+    await expect(
+      verifyContentArtifact({
+        ...tampered,
+        integrity: {
+          algorithm: "sha256",
+          checksum: await checksumContentArtifact(tampered),
+        },
+      })
+    ).rejects.toThrow("document identity");
   });
 
   test("counts persisted graph bytes against the artifact limit", async () => {
