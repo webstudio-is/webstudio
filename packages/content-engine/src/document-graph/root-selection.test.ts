@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { AssetQueryResult, ContentDatabaseDocument } from "../schema";
 import { createDocumentGraph } from "./graph";
 import { compileContentArtifact } from "../asset-index";
@@ -48,7 +48,7 @@ describe("Assets query document graph root selection", () => {
         graph,
         documents,
         result: result(["second", "first"]),
-      }),
+      })
     ).toEqual(["second", "first"]);
 
     expect(
@@ -56,7 +56,7 @@ describe("Assets query document graph root selection", () => {
         graph,
         documents,
         result: result(["first"]),
-      }),
+      })
     ).toEqual(["first"]);
   });
 
@@ -66,7 +66,7 @@ describe("Assets query document graph root selection", () => {
         graph,
         documents,
         result: result(["image", "first"]),
-      }),
+      })
     ).toEqual(["first"]);
   });
 
@@ -81,7 +81,7 @@ describe("Assets query document graph root selection", () => {
           graph,
           documents: selectedDocuments,
           result: result(["first"]),
-        }),
+        })
       ).toThrow(DocumentGraphRootSelectionError);
     }
   });
@@ -103,7 +103,7 @@ describe("Assets query document graph root selection", () => {
           contentRef: document.contentRef as string,
           properties: {},
         },
-      }),
+      })
     );
     const query = {
       where: { all: [] },
@@ -133,5 +133,59 @@ describe("Assets query document graph root selection", () => {
 
     expect(selected.result.items).toEqual([{ id: "second" }, { id: "first" }]);
     expect(selected.rootIds).toEqual(["second", "first"]);
+  });
+
+  test("preserves embedded query behavior when an artifact has no graph", async () => {
+    const content = "# Embedded post\n";
+    const embeddedEntry = {
+      ...createCanonicalAssetFileEntry({
+        projectId: "project",
+        document: {
+          _id: "post",
+          _type: "asset.file" as const,
+          name: "post.md",
+          path: "blog/post.md",
+          key: "post",
+          extension: "md",
+          mimeType: "text/markdown",
+          size: new TextEncoder().encode(content).byteLength,
+          revision: "post-r1",
+          contentRef: "content:post",
+          properties: {},
+        },
+      }),
+      content,
+    };
+    const { artifact } = await compileContentArtifact({
+      projectId: "project",
+      entries: [embeddedEntry],
+    });
+    const load = vi.fn();
+
+    const result = await createContentDatabase({
+      artifact,
+    }).queryWithDocumentGraph({
+      request: {
+        query: {
+          where: { all: [{ field: ["id"], operator: "eq", value: "post" }] },
+          limit: 1,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "full" },
+        },
+      },
+      load,
+    });
+
+    expect(result.items).toEqual([
+      {
+        id: "post",
+        content: { encoding: "utf-8", text: content },
+      },
+    ]);
+    expect(load).not.toHaveBeenCalled();
   });
 });
