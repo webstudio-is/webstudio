@@ -1049,6 +1049,41 @@ describe("prebuild", () => {
     await expectGeneratedRedirectFallback("app/routes/$.tsx");
   });
 
+  test("ignores the catch-all fallback when generating an SSG site", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "not-found",
+            name: "Not found",
+            title: "Not found",
+            path: "/*",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+      })
+    );
+
+    await expect(
+      prebuild({ assets: false, template: ["ssg"] })
+    ).resolves.toBeUndefined();
+    await expect(readFile("pages/index/+Page.tsx", "utf8")).resolves.toContain(
+      "Page"
+    );
+    await expect(readFile("pages/*/+Page.tsx", "utf8")).rejects.toThrow(
+      "ENOENT"
+    );
+  });
+
   test("generates one dynamic SSR blog route with an embedded content database", async () => {
     const source = "# Published post\n";
     const index = await createTestAssetIndex(
