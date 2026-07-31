@@ -112,15 +112,18 @@ describe("published asset resource runtime", () => {
       ],
     });
     const networkFetch = vi.fn();
+    const fallback = vi.fn(async () => new Response("fallback"));
+    const onDocumentGraphEvent = vi.fn();
     vi.stubGlobal("fetch", networkFetch);
     const createGeneratedFetch = createGeneratedAssetResourceRuntime({
       deploymentId: "build-same-origin",
       artifact: index,
       runtimeAssets,
+      onDocumentGraphEvent,
     });
     const generatedFetch = await createGeneratedFetch({
       request: new Request("https://site.example/blog"),
-      fallback: vi.fn(async () => new Response("fallback")),
+      fallback,
     });
 
     const overview = await generatedFetch(queryRequest());
@@ -129,7 +132,7 @@ describe("published asset resource runtime", () => {
     expect(overview.status).toBe(200);
     const overviewData = await overview.json();
     expect(overviewData).toMatchObject({
-      items: [{ id: "post-1" }],
+      items: [{ id: "post-1", properties: { title: "Post" } }],
     });
     expect(overviewData).not.toHaveProperty("database");
     expect(overviewData).not.toHaveProperty("__diagnostics__");
@@ -137,6 +140,8 @@ describe("published asset resource runtime", () => {
       items: [{ id: "post-1", content: { text: "Post" } }],
     });
     expect(networkFetch).not.toHaveBeenCalled();
+    expect(fallback).not.toHaveBeenCalled();
+    expect(onDocumentGraphEvent).not.toHaveBeenCalled();
   });
 
   test("assembles equivalent graph results in local, SSG, SSR, and published runtimes", async () => {
