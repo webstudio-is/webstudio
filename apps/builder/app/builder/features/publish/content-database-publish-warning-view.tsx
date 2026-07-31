@@ -15,29 +15,36 @@ export const ContentDatabasePublishWarning = ({
   const staticResourceNames = diagnostics.affectedResources.flatMap(
     ({ name, kind }) => (kind === "static" ? [name] : [])
   );
+  const includedSize = `${Math.ceil(stats.usedBytes / 1024)} KiB`;
+  const fullSize = `${Math.ceil(stats.unboundedBytes / 1024)} KiB`;
+  const sizeLimit = `${Math.ceil(stats.maxBytes / 1024)} KiB`;
   return (
     <>
-      The merged published content database will include{" "}
-      {stats.includedDocumentCount} of {totalDocumentCount} files (
-      {Math.ceil(stats.usedBytes / 1024)} of {Math.ceil(stats.maxBytes / 1024)}{" "}
-      KiB). {stats.omittedDocumentCount} {omittedFileLabel} will be omitted{" "}
-      {stats.omissionReason === "size"
-        ? "because the complete database exceeds the size limit"
-        : "because the required content could not be embedded"}
-      .
-      {dynamicResourceNames.length > 0 && (
+      {stats.omissionReason === "size" && (
         <>
-          {" "}
-          Assets resources with route or variable values cannot be checked
-          exactly and may return incomplete results:{" "}
-          {dynamicResourceNames.join(", ")}.
+          The complete content database is {fullSize}, exceeding the {sizeLimit}{" "}
+          publish limit.{" "}
         </>
       )}
+      Publishing will include {stats.includedDocumentCount} of{" "}
+      {totalDocumentCount} files ({includedSize}) and omit{" "}
+      {stats.omittedDocumentCount} {omittedFileLabel}
+      {stats.omissionReason === "unavailable"
+        ? ` because ${stats.omittedDocumentCount === 1 ? "its" : "their"} required content is unavailable.`
+        : "."}
       {staticResourceNames.length > 0 && (
         <>
           {" "}
-          Potentially affected Assets resources:{" "}
-          {staticResourceNames.join(", ")}.
+          {staticResourceNames.length === 1 ? "Resource" : "Resources"} that may
+          return incomplete results: {staticResourceNames.join(", ")}.
+        </>
+      )}
+      {dynamicResourceNames.length > 0 && (
+        <>
+          {" "}
+          {dynamicResourceNames.length === 1 ? "Resource" : "Resources"} with
+          route or variable values cannot be checked in advance and may also
+          return incomplete results: {dynamicResourceNames.join(", ")}.
         </>
       )}
     </>
