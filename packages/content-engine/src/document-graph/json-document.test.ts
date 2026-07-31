@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   analyzeJsonDocument,
+  analyzeJsonDocumentSource,
   assembleJsonDocument,
   JsonDocumentError,
   selectJsonDocumentRepresentation,
@@ -9,6 +10,42 @@ import {
 const documentUrl = "https://content.webstudio.test/posts/hello.json";
 
 describe("JSON document adapter", () => {
+  test("parses bounded UTF-8 JSON source before analyzing references", async () => {
+    const analyzed = await analyzeJsonDocumentSource({
+      source: '\uFEFF{"author":{"$ref":"../authors/ada.json"}}',
+      sourceDocumentId: "post",
+      documentUrl,
+    });
+
+    expect(analyzed.document).toEqual({
+      author: { $ref: "../authors/ada.json" },
+    });
+    expect(analyzed.references).toHaveLength(1);
+
+    await expect(
+      analyzeJsonDocumentSource({
+        source: '{"title":"too large"}',
+        sourceDocumentId: "post",
+        documentUrl,
+        maximumBytes: 5,
+      })
+    ).rejects.toMatchObject({ code: "CONTENT_LIMIT_EXCEEDED" });
+    await expect(
+      analyzeJsonDocumentSource({
+        source: new Uint8Array([0xff]),
+        sourceDocumentId: "post",
+        documentUrl,
+      })
+    ).rejects.toMatchObject({ code: "CONTENT_DECODING_FAILED" });
+    await expect(
+      analyzeJsonDocumentSource({
+        source: "{",
+        sourceDocumentId: "post",
+        documentUrl,
+      })
+    ).rejects.toMatchObject({ code: "INVALID_DOCUMENT" });
+  });
+
   test("finds exact reference markers with stable JSON Pointer IDs", () => {
     const value = {
       title: "Hello",

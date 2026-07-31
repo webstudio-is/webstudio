@@ -1,5 +1,13 @@
 import { append as appendJsonPointerSegment } from "@hyperjump/json-pointer";
+import {
+  ByteLimitExceededError,
+  decodeUtf8,
+  readBoundedBytes,
+  stripUtf8ByteOrderMark,
+  type ByteSource,
+} from "../byte-stream";
 import { normalizeJsonValue, type JsonValue } from "../canonical-json";
+import { contentEngineLimits } from "../limits";
 import type { DocumentRepresentation } from "./reference";
 import {
   DocumentReferenceSyntaxError,
@@ -8,6 +16,9 @@ import {
 } from "./reference-codec";
 
 export type JsonDocumentErrorCode =
+  | "CONTENT_LIMIT_EXCEEDED"
+  | "CONTENT_DECODING_FAILED"
+  | "INVALID_DOCUMENT"
   | "INVALID_REFERENCE_MARKER"
   | "INVALID_REFERENCE"
   | "JSON_PATH_NOT_FOUND"
@@ -127,6 +138,65 @@ export const analyzeJsonDocument = ({
     document,
     references: Object.freeze(references),
   });
+};
+
+/** Reads one bounded JSON source before normalizing it and discovering references. */
+export const analyzeJsonDocumentSource = async ({
+  source,
+  sourceDocumentId,
+  documentUrl,
+  maximumBytes = contentEngineLimits.hydratedFileBytes,
+}: {
+  source: ByteSource;
+  sourceDocumentId: string;
+  documentUrl: string | URL;
+  maximumBytes?: number;
+}): Promise<ReturnType<typeof analyzeJsonDocument>> => {
+  let bytes: Uint8Array;
+  try {
+    bytes = await readBoundedBytes(source, maximumBytes);
+  } catch (cause) {
+    if (cause instanceof ByteLimitExceededError) {
+      throw new JsonDocumentError({
+        code: "CONTENT_LIMIT_EXCEEDED",
+        message: "JSON document exceeds the byte limit",
+        cause,
+      });
+    }
+    throw cause;
+  }
+  let sourceText: string;
+  try {
+    sourceText = stripUtf8ByteOrderMark(decodeUtf8(bytes));
+  } catch (cause) {
+    throw new JsonDocumentError({
+      code: "CONTENT_DECODING_FAILED",
+      message: "JSON document is not valid UTF-8",
+      cause,
+    });
+  }
+  let value: unknown;
+  try {
+    value = JSON.parse(sourceText);
+  } catch (cause) {
+    throw new JsonDocumentError({
+      code: "INVALID_DOCUMENT",
+      message: "JSON document is invalid",
+      cause,
+    });
+  }
+  try {
+    return analyzeJsonDocument({ value, sourceDocumentId, documentUrl });
+  } catch (cause) {
+    if (cause instanceof JsonDocumentError) {
+      throw cause;
+    }
+    throw new JsonDocumentError({
+      code: "INVALID_DOCUMENT",
+      message: "JSON document is invalid",
+      cause,
+    });
+  }
 };
 
 const getJsonPathValue = (
