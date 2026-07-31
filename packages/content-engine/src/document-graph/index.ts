@@ -12,6 +12,5 @@ export * from "./http-document-loader";
 export * from "./cached-document-loader";
 export * from "./resolver";
 export * from "./document-resolution";
-export * from "./root-selection";
-export * from "./asset-query-resolution";
+export * from "./query-references";
 export * from "./observability";

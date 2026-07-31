@@ -30,6 +30,7 @@ import {
 } from "./materialized-query";
 import {
   createDocumentGraphArtifact,
+  getDocumentGraphQueryRootIds,
   type DocumentGraph,
   type DocumentGraphArtifactV1,
 } from "./document-graph";
@@ -159,6 +160,13 @@ const buildAssetIndex = async ({
   const sourceCatalog = await createAssetFieldCatalog(entries);
   const assetRevision = sourceCatalog.canonicalRevision;
   const completeSourceFieldCatalog = toBuilderAssetFieldCatalog(sourceCatalog);
+  const materializableQueries =
+    plan?.queries.filter(
+      (query) =>
+        documentGraph === undefined ||
+        getDocumentGraphQueryRootIds({ graph: documentGraph, query }).length ===
+          0
+    ) ?? [];
   const materialized =
     plan === undefined
       ? {
@@ -168,7 +176,7 @@ const buildAssetIndex = async ({
           >(),
         }
       : await materializeContentCompilationQueries({
-          queries: plan.queries,
+          queries: materializableQueries,
           catalog: completeSourceFieldCatalog,
           documents: sourceDocuments,
         });
@@ -312,7 +320,13 @@ export const compileContentArtifact = async ({
       : await createDocumentGraphArtifact(documentGraph);
   const sourceDocumentCount = entries.length;
   const hasMaterializableQueries =
-    plan?.queries.some(canMaterializeContentCompilationQuery) === true;
+    plan?.queries.some(
+      (query) =>
+        canMaterializeContentCompilationQuery(query) &&
+        (documentGraph === undefined ||
+          getDocumentGraphQueryRootIds({ graph: documentGraph, query })
+            .length === 0)
+    ) === true;
   const unavailable = entries.filter(
     (entry) => entry.contentRequired === true && entry.content === undefined
   );

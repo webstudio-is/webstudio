@@ -4,7 +4,9 @@ import type {
   AssetQueryResult,
   BuilderAssetFieldCatalog,
   ContentDatabaseStats,
+  ContentDatabaseDocument,
 } from "./schema";
+import { assetQuery, contentDatabaseDocument } from "./schema";
 import { serializeContentArtifact } from "./content-artifact";
 import {
   AssetIndexRevisionError,
@@ -16,8 +18,9 @@ import type { AssetResourceContentReader } from "./hydration";
 import { getMaterializedAssetQueryResult } from "./materialized-query";
 import {
   createDocumentGraph,
-  resolveAssetQueryDocumentGraph,
-  selectAssetQueryDocumentGraphRoots,
+  getAdaptedDocumentProperties,
+  getDocumentGraphQueryRootIds,
+  resolveAdaptedDocumentGraph,
   type DocumentSourceLoader,
   emitDocumentGraphRuntimeEvent,
   type DocumentGraphRuntimeObserver,
@@ -30,16 +33,8 @@ type ContentDatabaseQueryArguments = [
   runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>,
 ];
 
-export type ContentDatabaseDocumentGraphSelection = Readonly<{
-  result: AssetQueryResult;
-  rootIds: readonly string[];
-}>;
-
 export type ContentDatabase = {
   query(...args: ContentDatabaseQueryArguments): Promise<AssetQueryResult>;
-  queryWithDocumentGraphRoots(
-    ...args: ContentDatabaseQueryArguments
-  ): Promise<ContentDatabaseDocumentGraphSelection>;
   queryWithDocumentGraph(input: {
     request: AssetQueryRequestInput;
     load: DocumentSourceLoader;
@@ -94,7 +89,11 @@ export const createContentDatabase = ({
   const executeQuery = async (
     request: AssetQueryRequestInput,
     queryContentReader?: AssetResourceContentReader,
-    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>
+    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>,
+    options?: {
+      documents?: readonly ContentDatabaseDocument[];
+      skipMaterialized?: boolean;
+    }
   ) => {
     if (
       request.indexRevision !== undefined &&
@@ -102,10 +101,13 @@ export const createContentDatabase = ({
     ) {
       throw new AssetIndexRevisionError();
     }
-    const materialized = await getMaterializedAssetQueryResult({
-      queries: artifact.queries,
-      query: request.query,
-    });
+    const materialized =
+      options?.skipMaterialized === true
+        ? undefined
+        : await getMaterializedAssetQueryResult({
+            queries: artifact.queries,
+            query: request.query,
+          });
     if (materialized !== undefined) {
       return materialized;
     }
@@ -136,7 +138,7 @@ export const createContentDatabase = ({
     const result = await executeAssetQuery({
       query: request.query,
       catalog: artifact.fieldCatalog,
-      documents: artifact.documents,
+      documents: options?.documents ?? artifact.documents,
       read: readEmbeddedContent,
       runtimeAssets,
       assetReferences: artifact.assetReferences,
@@ -145,29 +147,8 @@ export const createContentDatabase = ({
   };
   const query = async (...args: ContentDatabaseQueryArguments) =>
     await executeQuery(...args);
-  const selectDocumentGraphRoots = async (
-    ...args: ContentDatabaseQueryArguments
-  ) => {
-    const result = await executeQuery(...args);
-    return {
-      result,
-      rootIds:
-        documentGraph === undefined
-          ? []
-          : selectAssetQueryDocumentGraphRoots({
-              graph: documentGraph,
-              documents: documentGraph.nodes.map((node) => ({
-                _id: node.id,
-                revision: node.revision,
-                contentRef: node.contentRef,
-              })),
-              result,
-            }),
-    };
-  };
   return {
     query,
-    queryWithDocumentGraphRoots: selectDocumentGraphRoots,
     queryWithDocumentGraph: async ({
       request,
       load,
@@ -176,25 +157,49 @@ export const createContentDatabase = ({
       signal,
       onEvent,
     }) => {
-      const selection = await selectDocumentGraphRoots(
-        request,
-        queryContentReader,
-        runtimeAssets
-      );
       if (documentGraph === undefined) {
-        return selection.result;
+        return await executeQuery(request, queryContentReader, runtimeAssets);
+      }
+      const query = assetQuery.parse(request.query);
+      const documentIds = new Set(artifact.documents.map(({ _id }) => _id));
+      const rootIds = getDocumentGraphQueryRootIds({
+        graph: documentGraph,
+        query,
+      }).filter((rootId) => documentIds.has(rootId));
+      if (rootIds.length === 0) {
+        return await executeQuery(request, queryContentReader, runtimeAssets);
       }
       emitDocumentGraphRuntimeEvent(onEvent, {
         type: "roots-selected",
-        rootCount: selection.rootIds.length,
+        rootCount: rootIds.length,
       });
-      return await resolveAssetQueryDocumentGraph({
+      const resolved = await resolveAdaptedDocumentGraph({
         graph: documentGraph,
-        ...selection,
+        rootIds,
         load,
         concurrency: contentEngineLimits.concurrentContentReads,
         signal,
         onEvent,
+      });
+      const propertiesById = new Map(
+        rootIds.flatMap((rootId, index) => {
+          const properties = getAdaptedDocumentProperties(
+            resolved.roots[index]
+          );
+          return properties === undefined
+            ? []
+            : [[rootId, properties] as const];
+        })
+      );
+      const documents = artifact.documents.map((document) => {
+        const properties = propertiesById.get(document._id);
+        return properties === undefined
+          ? document
+          : contentDatabaseDocument.parse({ ...document, properties });
+      });
+      return await executeQuery(request, queryContentReader, runtimeAssets, {
+        documents,
+        skipMaterialized: true,
       });
     },
     getFieldCatalog: () => artifact.fieldCatalog,

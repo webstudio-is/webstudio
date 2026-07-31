@@ -35,6 +35,19 @@ export type AnalyzedDocument =
       references: readonly SourceReferenceOccurrence[];
     }>;
 
+const isJsonObject = (
+  value: JsonValue
+): value is { readonly [key: string]: JsonValue } =>
+  typeof value === "object" && value !== null && Array.isArray(value) === false;
+
+export const getAdaptedDocumentProperties = (document: AdaptedDocument) => {
+  const value =
+    document.format === "markdown"
+      ? document.value.frontmatter
+      : document.value;
+  return isJsonObject(value) ? value : undefined;
+};
+
 const createAdaptedDocument = <Document extends AdaptedDocument>(
   document: Document
 ) => Object.freeze(document);
