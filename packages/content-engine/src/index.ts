@@ -9,3 +9,4 @@ export * from "./content-database";
 export * from "./request";
 export * from "./query-source";
 export * from "./query-error";
+export * from "./document-graph";
