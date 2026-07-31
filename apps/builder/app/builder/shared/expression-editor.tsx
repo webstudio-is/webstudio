@@ -558,6 +558,12 @@ const linterTooltipTheme = EditorView.theme({
   },
 });
 
+const fullSizeEditorTheme = EditorView.theme({
+  ".cm-scroller": {
+    overflow: "auto",
+  },
+});
+
 const expressionLinter = linter((view) => {
   const [{ scope }] = view.state.facet(VariablesData);
   return lintExpression({
@@ -657,8 +663,9 @@ export const ExpressionEditor = ({
       keymap.of([...closeBracketsKeymap, ...completionKeymap]),
       expressionLinter,
       linterTooltipTheme,
+      ...(size === "full" ? [fullSizeEditorTheme] : []),
     ],
-    [scopeWithUnsetVariables, aliasesWithUnsetVariables]
+    [scopeWithUnsetVariables, aliasesWithUnsetVariables, size]
   );
 
   // prevent clicking on autocomplete options propagating to body

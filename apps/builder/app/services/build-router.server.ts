@@ -24,11 +24,6 @@ import { parseWebstudioJsxFragment } from "@webstudio-is/project-build/transfer/
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadAssetDataByProject } from "@webstudio-is/asset-uploader/server";
 import {
-  createContentDatabase,
-  hasDynamicContentCompilationValues,
-} from "@webstudio-is/content-engine";
-import { createReachableAssetContentCompilationPlan } from "@webstudio-is/sdk";
-import {
   checkProjectBuildPermissionInput,
   importProjectBundleInput,
   bundleVersion,
@@ -55,6 +50,7 @@ import {
   commitBuildTransactions,
 } from "./api-build.server";
 import { assertApiProjectPermit } from "./api-permits.server";
+import { getContentDatabasePublishDiagnostics } from "./content-database.server";
 
 const projectBundleInput = z.object({
   projectId: z.string(),
@@ -65,36 +61,6 @@ const buildBundleInput = z.object({
   buildId: z.string(),
   bundleVersion: z.union([z.string(), z.number()]).optional(),
 });
-
-const getContentDatabasePublishDiagnostics = (
-  bundle: z.infer<typeof publishedProjectBundle>
-) => {
-  if (bundle.assetIndex === undefined) {
-    return;
-  }
-  const plan = createReachableAssetContentCompilationPlan({
-    props: bundle.build.props.map(([, prop]) => prop),
-    dataSources: bundle.build.dataSources.map(([, dataSource]) => dataSource),
-    resources: bundle.build.resources.map(([, resource]) => resource),
-  });
-  if (plan === undefined) {
-    return;
-  }
-  const resourceNameById = new Map(
-    bundle.build.resources.map(([, resource]) => [resource.id, resource.name])
-  );
-  const stats = createContentDatabase({
-    artifact: bundle.assetIndex,
-  }).getStats();
-  return {
-    stats,
-    potentiallyAffectedResources: plan.queries.map(({ id }) => ({
-      id,
-      name: resourceNameById.get(id) ?? id,
-    })),
-    hasDynamicValues: hasDynamicContentCompilationValues(plan),
-  };
-};
 
 const assertCliBundleVersion = (
   ctx: AppContext,
@@ -323,7 +289,15 @@ export const buildRouter = router({
   contentDatabasePublishDiagnostics: procedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
-      await assertProjectBuildPermit({ ctx, projectId: input.projectId });
+      const canEdit = await authorizeProject.hasProjectPermit(
+        { projectId: input.projectId, permit: "edit" },
+        ctx
+      );
+      if (canEdit === false) {
+        throw new AuthorizationError(
+          "You don't have permission to edit this project."
+        );
+      }
       return getContentDatabasePublishDiagnostics(
         await loadProjectBundleByProjectId(input.projectId, ctx)
       );
@@ -457,5 +431,4 @@ export const __testing__ = {
   createImportProjectBundleHandler,
   assertCliBundleVersion,
   prepareProjectBundleForClient,
-  getContentDatabasePublishDiagnostics,
 };

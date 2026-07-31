@@ -530,7 +530,7 @@ export const builderRuntimeOperations = [
     "projectSettings.updateMarketplaceProduct",
     api("update-marketplace-product", "updateMarketplaceProduct"),
     mutationContract({
-      readNamespaces: ["marketplaceProduct"],
+      readNamespaces: [],
       writeNamespaces: ["marketplaceProduct"],
       retryOnConflict: true,
     }),

@@ -144,6 +144,8 @@ const apiCommandOptionsByCommand: Partial<
   "get-marketplace-product": apiCommand.projectSettingsCommandOptions,
   "update-marketplace-product":
     apiCommand.updateMarketplaceProductCommandOptions,
+  "submit-marketplace-product":
+    apiCommand.submitMarketplaceProductCommandOptions,
   "list-redirects": apiCommand.paginatedListCommandOptions,
   "create-redirect": apiCommand.createRedirectCommandOptions,
   "update-redirect": apiCommand.updateRedirectCommandOptions,
@@ -255,6 +257,10 @@ export const highLevelCliCommands = [
   {
     command: "update-marketplace-product",
     operation: "update-marketplace-product",
+  },
+  {
+    command: "submit-marketplace-product",
+    operation: "submit-marketplace-product",
   },
   { command: "set-redirects", operation: "set-redirects" },
   { command: "publish deploy", operation: "publish" },

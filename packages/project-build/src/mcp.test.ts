@@ -4409,6 +4409,13 @@ describe("project session mcp adapter", () => {
       name: "meta.guide",
       input: { brief: "Render an array of blog posts as repeated cards" },
     });
+    const markdownBlogGuide = await adapter.callTool({
+      name: "meta.guide",
+      input: {
+        brief:
+          "Create a Markdown-based blog with overview and post pages from Assets",
+      },
+    });
     const expressionGuide = await adapter.callTool({
       name: "meta.guide",
       input: { brief: "Bind a dynamic expression to a prop" },
@@ -4498,6 +4505,25 @@ describe("project session mcp adapter", () => {
           expect.stringContaining("stable unique id or slug"),
         ]),
         tools: expect.arrayContaining([
+          expect.objectContaining({ name: "insert-collection" }),
+        ]),
+      })
+    );
+    expect(markdownBlogGuide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        workflow: expect.arrayContaining([
+          expect.stringContaining("exactly two Builder pages"),
+          expect.stringContaining('fixed path "/blog"'),
+          expect.stringContaining('dynamic path "/blog/:slug"'),
+          expect.stringContaining("Do not create one page per post"),
+          expect.stringContaining('content.mode:"none"'),
+          expect.stringContaining('field:["extension"]'),
+          expect.stringContaining("system.params.slug"),
+          expect.stringContaining("both pages load their content from Assets"),
+        ]),
+        tools: expect.arrayContaining([
+          expect.objectContaining({ name: "list-pages" }),
+          expect.objectContaining({ name: "list-assets" }),
           expect.objectContaining({ name: "insert-collection" }),
         ]),
       })

@@ -144,6 +144,32 @@ export type BuilderAssetFieldCatalog = Infer<typeof builderAssetFieldCatalog>;
 
 const sha256Revision = string().regex(/^sha256:[a-f0-9]{64}$/);
 
+export const materializedAssetQuery = strictObject({
+  fields: array(
+    array(string().min(1)).min(1).max(contentEngineLimits.fieldPathDepth)
+  )
+    .min(1)
+    .max(contentEngineLimits.outputFieldCount + 1),
+  rows: array(array(json())).max(contentEngineLimits.resultCount),
+  totalCount: number()
+    .int()
+    .nonnegative()
+    .max(contentEngineLimits.candidateDocuments),
+  hasMore: boolean(),
+}).superRefine(({ fields, rows }, context) => {
+  for (const [index, row] of rows.entries()) {
+    if (row.length !== fields.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["rows", index],
+        message: "Materialized query rows must match the field count",
+      });
+    }
+  }
+});
+
+export type MaterializedAssetQuery = Infer<typeof materializedAssetQuery>;
+
 /** One compiled runtime database shared by all reachable Assets queries. */
 export const contentArtifactV1 = strictObject({
   format: literal("webstudio-content-database"),
@@ -165,10 +191,12 @@ export const contentArtifactV1 = strictObject({
     )
   ).optional(),
   fieldCatalog: builderAssetFieldCatalog,
+  queries: record(sha256Revision, materializedAssetQuery).optional(),
   database: strictObject({
     maxBytes: number().int().positive(),
     unboundedBytes: number().int().nonnegative(),
     sourceDocumentCount: number().int().nonnegative(),
+    includedDocumentCount: number().int().nonnegative().optional(),
   }).optional(),
   integrity: strictObject({
     algorithm: literal("sha256"),
@@ -200,6 +228,17 @@ export const contentArtifactV1 = strictObject({
       code: "custom",
       path: ["database", "sourceDocumentCount"],
       message: "Source document count cannot be smaller than the database",
+    });
+  }
+  if (
+    index.database?.includedDocumentCount !== undefined &&
+    (index.database.includedDocumentCount < index.documents.length ||
+      index.database.includedDocumentCount > index.database.sourceDocumentCount)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["database", "includedDocumentCount"],
+      message: "Included document count must match the database bounds",
     });
   }
   let previousId: string | undefined;
@@ -562,21 +601,27 @@ export const contentDatabaseStats = strictObject({
   unboundedBytes: number().int().nonnegative(),
   includedDocumentCount: number().int().nonnegative(),
   omittedDocumentCount: number().int().nonnegative(),
+  omissionReason: zEnum(["size", "unavailable"]).optional(),
   truncated: boolean(),
 });
 
 export type ContentDatabaseStats = Infer<typeof contentDatabaseStats>;
 
-export const assetQueryPreviewDiagnostics = contentDatabaseStats
-  .pick({
-    usedBytes: true,
-    maxBytes: true,
-    unboundedBytes: true,
-    includedDocumentCount: true,
-    omittedDocumentCount: true,
-    truncated: true,
-  })
-  .extend({ scope: literal("query-preview") });
+const contentDatabaseCapacityStats = contentDatabaseStats.pick({
+  usedBytes: true,
+  maxBytes: true,
+  unboundedBytes: true,
+  includedDocumentCount: true,
+  omittedDocumentCount: true,
+  omissionReason: true,
+  truncated: true,
+});
+
+export const assetQueryPreviewDiagnostics = strictObject({
+  scope: literal("query-preview"),
+  query: contentDatabaseCapacityStats,
+  database: contentDatabaseCapacityStats,
+});
 
 export type AssetQueryPreviewDiagnostics = Infer<
   typeof assetQueryPreviewDiagnostics

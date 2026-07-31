@@ -234,6 +234,20 @@ Commands:
 
 - MCP tool: update-marketplace-product {"category":"pageTemplates","name":"Acme Template","thumbnailAssetId":"asset-id","author":"Acme Studio","email":"hello@example.com","website":"https://example.com","issues":"","description":"Reusable template project for Acme landing pages."}
 
+## Submit marketplace product
+
+Commands:
+
+- MCP tool: upload-asset {"asset":{"name":"marketplace-thumbnail.png","type":"image","format":"png","meta":{"width":1200,"height":630}},"assetsDir":".webstudio/assets"}
+- MCP tool: update-marketplace-product {"category":"pageTemplates","name":"Acme Template","thumbnailAssetId":"<uploadedAssetId>","author":"Acme Studio","email":"hello@example.com","website":"https://example.com","issues":"","description":"Reusable template project for Acme landing pages."}
+- MCP tool: publish {"target":"production"}
+- MCP tool: submit-marketplace-product {"acknowledgePublicSubmission":true}
+
+Notes:
+
+- Wait for the production publish to complete before submitting the product for review.
+- Submission requires complete, valid marketplace metadata.
+
 ## List redirects
 
 Commands:
@@ -722,7 +736,7 @@ Commands:
 - MCP tool: validate-asset-query {"query":{"where":{"all":[{"field":["extension"],"operator":"eq","value":"md"},{"field":["properties","draft"],"operator":"ne","value":true}]},"limit":20}}
 - MCP tool: create-assets-resource {"name":"All assets","scopeInstanceId":"<instanceId>","dataSourceName":"assets"}
 - MCP tool: create-assets-resource {"name":"Published posts","scopeInstanceId":"<instanceId>","dataSourceName":"posts","query":{"where":{"all":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"field":["properties","draft"],"operator":"ne","value":{"type":"literal","value":true}}]},"sort":[{"field":["properties","publishedAt"],"direction":"desc"}],"limit":{"type":"literal","value":20},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","slug"],["properties","publishedAt"],["excerpt"]]},"content":{"mode":"none"}}}
-- MCP tool: create-assets-resource {"name":"Post by slug or ID","scopeInstanceId":"<instanceId>","dataSourceName":"post","query":{"where":{"any":[{"field":["properties","slug"],"operator":"eq","value":"system.params.slug"},{"field":["id"],"operator":"eq","value":"system.params.slug"}]},"limit":{"type":"literal","value":1},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","publishedAt"]]},"content":{"mode":"markdown-body","maxBytes":1048576}}}
+- MCP tool: create-assets-resource {"name":"Post by slug or ID","scopeInstanceId":"<instanceId>","dataSourceName":"post","query":{"where":{"all":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"any":[{"field":["properties","slug"],"operator":"eq","value":"system.params.slug"},{"field":["id"],"operator":"eq","value":"system.params.slug"}]}]},"limit":{"type":"literal","value":1},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","publishedAt"]]},"content":{"mode":"markdown-body","maxBytes":1048576}}}
 - MCP tool: list-assets-resources {}
 - MCP tool: get-assets-resource {"resourceId":"<resourceId>"}
 - MCP tool: update-assets-resource {"resourceId":"<resourceId>","values":{"query":null}}
@@ -736,7 +750,7 @@ Notes:
 - Use `content.mode:"none"` for listings. Request `markdown-body`, `full`, or a bounded `range` only after filtering to the intended files, normally with `limit:1` for a slug detail route.
 - In Markdown, reference sibling Assets with conventional relative URLs such as `../images/hero.png`. When `markdown-body` is requested, the content engine resolves matching files against the Markdown file's folder and emits the correct Builder or published Asset URL. Keep external URLs absolute.
 - Markdown Embed renders sanitized authored HTML for figures, captions, audio, video, and iframes. Scripts, inline event handlers, `srcdoc`, and unsafe URL protocols are removed. Executable component composition remains separate future MDX work.
-- Preview each query with concrete values before saving it. Inspect `__diagnostics__.usedBytes`, `maxBytes`, `unboundedBytes`, and `truncated`; when usage approaches the limit, remove unused output fields, narrow candidate files, and reduce embedded content in that order.
+- Preview each query with concrete values before saving it. Inspect `__diagnostics__.query` for the temporary query-only footprint and `__diagnostics__.database` for the merged database built from all reachable Assets queries. Only `database.usedBytes` counts toward `database.maxBytes`; query sizes must not be summed and are not separate allowances. Compare `usedBytes`, `unboundedBytes`, and `truncated` within both scopes. When merged usage approaches the limit, remove unused output fields, narrow candidate files, and reduce embedded content in that order.
 - Read Assets from the ID-keyed map at `<dataSourceName>.data`, with collection information such as `totalCount` and `hasMore` at `<dataSourceName>.meta`. Bind a listing Collection to `posts.data` and a one-result detail Collection to `post.data`. On each value, selected file fields such as `id`, `name`, and `extension` are top-level; Markdown frontmatter and JSON fields are under `properties`; the derived `excerpt` is top-level; and requested Markdown is at `content.text`.
 - Assets has one response shape and always executes a structured query. Omit `query` to use the default query, which selects URL and optional image dimensions. Provide query configuration to control filtering, sorting, pagination, selected fields, or file content. Set `values.query:null` to restore the default query.
 - `create-assets-resource` and `update-assets-resource` are the semantic authoring path. Do not construct the internal query URL, headers, or body expression manually.
@@ -975,6 +989,7 @@ Commands:
 
 - MCP tool: get-marketplace-product {}
 - MCP tool: update-marketplace-product {"category":"pageTemplates","name":"Acme Template","thumbnailAssetId":"asset-id","author":"Acme Studio","email":"hello@example.com","website":"https://example.com","issues":"","description":"Reusable template project for Acme landing pages."}
+- MCP tool: submit-marketplace-product {"acknowledgePublicSubmission":true}
 
 Patch namespaces:
 

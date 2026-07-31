@@ -952,7 +952,7 @@ const pageStatusExpressionInput = z
   .describe(pageStatusFieldHint);
 
 export const pagePathFieldHint =
-  'Plain page path. For a new non-home page, start with "/", for example "/pricing". The home page path is the empty string ""; do not use an empty path when creating a new page.';
+  'Plain page path. For a new non-home page, start with "/", for example "/pricing". Use colon-prefixed dynamic segments such as "/blog/:slug" when one page definition must render many concrete routes; do not create a separate page for every route value. The home page path is the empty string ""; do not use an empty path when creating a new page.';
 
 export const pageDraftFieldHint =
   "Set true to mark the page as draft. Draft pages remain editable and previewable in Builder but are omitted from every publish target, including staging, and from sitemap output. Set false to stage the page for a future publish; this does not deploy the site. The home page and /* catch-all page cannot be drafts.";

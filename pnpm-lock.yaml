@@ -240,7 +240,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/authorization-token
       '@webstudio-is/content-engine':
-        specifier: workspace:0.0.0-webstudio-version
+        specifier: workspace:*
         version: link:../../packages/content-engine
       '@webstudio-is/css-data':
         specifier: workspace:*

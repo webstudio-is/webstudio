@@ -1208,10 +1208,29 @@ describe("PostgresAssetRepository", () => {
         properties: { title: "New post" },
       },
     };
+    const otherEntry = {
+      ...entry,
+      assetId: "asset-2",
+      revision: "revision-2",
+      document: {
+        ...entry.document,
+        _id: "asset-2",
+        name: "other.md",
+        path: "other.md",
+        key: "other.md",
+        revision: "revision-2",
+        contentRef: "other.md",
+        properties: { title: "Other post" },
+      },
+    };
     dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
       { ...entry, document: { ...entry.document, properties: {} } },
+      { ...otherEntry, document: { ...otherEntry.document, properties: {} } },
     ]);
-    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([
+      entry,
+      otherEntry,
+    ]);
     dependencies.createAssetIndex.mockImplementation(createAssetIndex);
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
@@ -1225,26 +1244,36 @@ describe("PostgresAssetRepository", () => {
       data: new Blob(["post"]).stream(),
       assetInfoFallback: undefined,
     });
-    const result = await repository.query({
-      query: {
-        where: {
-          all: [
-            {
-              field: ["properties", "title"],
-              operator: "eq",
-              value: "New post",
-            },
-          ],
+    const result = await repository.query(
+      {
+        query: {
+          where: {
+            all: [
+              {
+                field: ["properties", "title"],
+                operator: "eq",
+                value: "New post",
+              },
+            ],
+          },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"], ["name"]],
+          },
         },
-        output: { mode: "base", includeMetadata: true },
       },
-    });
+      createCompilationPlan({
+        where: { all: [] },
+        output: { mode: "all", includeMetadata: true },
+      })
+    );
 
     expect(dependencies.synchronizeCanonicalAssets).toHaveBeenCalledWith({
       client: context.postgrest.client,
       assetClient,
       projectId: "project-1",
-      assetIds: ["asset-1"],
+      assetIds: ["asset-1", "asset-2"],
       requirements: { structuredProperties: true, excerpt: false },
     });
     expect(result.data.items).toEqual([
@@ -1254,11 +1283,25 @@ describe("PostgresAssetRepository", () => {
     ]);
     expect(result.__diagnostics__).toMatchObject({
       scope: "query-preview",
-      includedDocumentCount: 1,
-      omittedDocumentCount: 0,
-      truncated: false,
+      query: {
+        includedDocumentCount: 1,
+        omittedDocumentCount: 0,
+        truncated: false,
+      },
+      database: {
+        includedDocumentCount: 2,
+        omittedDocumentCount: 0,
+        truncated: false,
+      },
     });
+    expect(result.__diagnostics__.database.usedBytes).toBeGreaterThan(
+      result.__diagnostics__.query.usedBytes
+    );
     expect(dependencies.loadAssetsByProjectWithClient).not.toHaveBeenCalled();
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
+      { ...entry, document: { ...entry.document, properties: {} } },
+    ]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
 
     const urlResult = await repository.query({
       query: {
@@ -1298,8 +1341,8 @@ describe("PostgresAssetRepository", () => {
         },
       },
     });
-    expect(idOnlyResult.__diagnostics__.usedBytes).toBeLessThan(
-      result.__diagnostics__.usedBytes
+    expect(idOnlyResult.__diagnostics__.query.usedBytes).toBeLessThan(
+      result.__diagnostics__.query.usedBytes
     );
     expect(dependencies.loadAssetsByProjectWithClient).not.toHaveBeenCalled();
 

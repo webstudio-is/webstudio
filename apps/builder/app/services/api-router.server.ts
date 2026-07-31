@@ -7,7 +7,10 @@ import {
   type AppContext,
   type AuthPermit,
 } from "@webstudio-is/trpc-interface/index.server";
-import { loadById } from "@webstudio-is/project/index.server";
+import {
+  loadById,
+  setMarketplaceApprovalStatus,
+} from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import {
   createProjectDomain,
@@ -37,7 +40,6 @@ import {
   loadBuilderAssetFieldCatalog,
   loadAssetDataByProject,
   loadAssetFoldersByProject,
-  previewAssetResourceQuery,
 } from "@webstudio-is/asset-uploader/server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
@@ -81,7 +83,7 @@ import {
   executeApiRuntimeOperation,
 } from "./api-runtime.server";
 import { createAssetClient } from "../shared/asset-client";
-import { getContentDatabaseMaxBytes } from "./content-database.server";
+import { previewProjectAssetQuery } from "./asset-query-preview.server";
 
 const assertApiPublishDomains = ({
   auth,
@@ -652,6 +654,40 @@ export const apiRouter = router({
       },
       { command: "inspect", client: "getProjectInfo" }
     ),
+
+    submitMarketplaceProduct: projectMutation(
+      projectIdInput.extend({
+        acknowledgePublicSubmission: z
+          .literal(true)
+          .describe(
+            "Acknowledge that submission starts public marketplace review"
+          ),
+      }),
+      "edit",
+      async ({ ctx, input }) => {
+        const build = await loadDevBuildByProjectId(ctx, input.projectId);
+        if (build.marketplaceProduct === undefined) {
+          return throwApiError(
+            "BAD_REQUEST",
+            "Complete the marketplace product metadata before submitting it for review"
+          );
+        }
+        const project = await setMarketplaceApprovalStatus(
+          {
+            projectId: input.projectId,
+            marketplaceApprovalStatus: "PENDING",
+          },
+          ctx
+        );
+        return {
+          marketplaceApprovalStatus: project.marketplaceApprovalStatus,
+        };
+      },
+      {
+        command: "submit-marketplace-product",
+        client: "submitMarketplaceProduct",
+      }
+    ),
   }),
 
   build: router({
@@ -760,12 +796,10 @@ export const apiRouter = router({
       async ({ ctx, input }) => {
         try {
           const { projectId, ...request } = input;
-          return await previewAssetResourceQuery({
+          return await previewProjectAssetQuery({
             projectId,
             request,
             context: ctx,
-            assetClient: createAssetClient(),
-            contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
           });
         } catch (error) {
           return throwAssetQueryApiError(error);

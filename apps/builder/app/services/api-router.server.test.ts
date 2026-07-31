@@ -21,6 +21,7 @@ import { blockComponent } from "@webstudio-is/sdk";
 import { AssetIndexRevisionError } from "@webstudio-is/content-engine";
 import * as assetUploader from "@webstudio-is/asset-uploader/server";
 import { apiRouter, __testing__ } from "./api-router.server";
+import * as assetQueryPreview from "./asset-query-preview.server";
 import {
   getApiRouterProcedures,
   getProcedureInputSchemaMetadata,
@@ -75,10 +76,62 @@ const createCaller = (context: AppContext) =>
   apiRouter.createCaller(context) as ApiRouterCaller & RuntimeApiCaller;
 
 describe("api router build operation adapters", () => {
+  test("submits only configured marketplace products for review", async () => {
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    const loadBuild = vi
+      .spyOn(projectBuild, "loadDevBuildByProjectId")
+      .mockResolvedValueOnce({ marketplaceProduct: undefined } as never)
+      .mockResolvedValueOnce({
+        marketplaceProduct: {
+          category: "pageTemplates",
+          name: "Acme Template",
+          thumbnailAssetId: "asset-id",
+          author: "Acme Studio",
+          email: "hello@example.com",
+          website: "https://example.com",
+          issues: "",
+          description: "Reusable template project for Acme landing pages.",
+        },
+      } as never);
+    const setApprovalStatus = vi
+      .spyOn(projectApi, "setMarketplaceApprovalStatus")
+      .mockResolvedValue({ marketplaceApprovalStatus: "PENDING" } as never);
+    const caller = createCaller(createContext(true));
+
+    await expect(
+      caller.projects.submitMarketplaceProduct({
+        projectId: "project-1",
+        acknowledgePublicSubmission: true,
+      })
+    ).rejects.toThrow("Complete the marketplace product metadata");
+    expect(setApprovalStatus).not.toHaveBeenCalled();
+
+    await expect(
+      caller.projects.submitMarketplaceProduct({
+        projectId: "project-1",
+        acknowledgePublicSubmission: true,
+      })
+    ).resolves.toEqual({ marketplaceApprovalStatus: "PENDING" });
+    expect(loadBuild).toHaveBeenCalledTimes(2);
+    expect(setApprovalStatus).toHaveBeenCalledWith(
+      {
+        projectId: "project-1",
+        marketplaceApprovalStatus: "PENDING",
+      },
+      expect.anything()
+    );
+  });
+
   test("exposes query validation and persisted asset query reads to API clients", async () => {
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
-    vi.spyOn(assetUploader, "previewAssetResourceQuery").mockResolvedValue({
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue({
+      props: [],
+      dataSources: [],
+      resources: [],
+    } as never);
+    vi.spyOn(assetQueryPreview, "previewProjectAssetQuery").mockResolvedValue({
       data: {
         items: [{ id: "post" }],
         totalCount: 1,
@@ -86,12 +139,22 @@ describe("api router build operation adapters", () => {
       },
       __diagnostics__: {
         scope: "query-preview",
-        usedBytes: 100,
-        maxBytes: 512_000,
-        unboundedBytes: 100,
-        includedDocumentCount: 1,
-        omittedDocumentCount: 0,
-        truncated: false,
+        query: {
+          usedBytes: 100,
+          maxBytes: 512_000,
+          unboundedBytes: 100,
+          includedDocumentCount: 1,
+          omittedDocumentCount: 0,
+          truncated: false,
+        },
+        database: {
+          usedBytes: 200,
+          maxBytes: 512_000,
+          unboundedBytes: 200,
+          includedDocumentCount: 2,
+          omittedDocumentCount: 0,
+          truncated: false,
+        },
       },
     } as never);
     vi.spyOn(assetUploader, "loadBuilderAssetFieldCatalog").mockResolvedValue({
@@ -159,12 +222,20 @@ describe("api router build operation adapters", () => {
         items: [{ id: "post" }],
         totalCount: 1,
       },
-      __diagnostics__: { scope: "query-preview", truncated: false },
+      __diagnostics__: {
+        scope: "query-preview",
+        query: { truncated: false },
+        database: { truncated: false },
+      },
     });
-    expect(assetUploader.previewAssetResourceQuery).toHaveBeenCalledWith(
-      expect.objectContaining({ contentDatabaseMaxBytes: 512_000 })
-    );
-    vi.mocked(assetUploader.previewAssetResourceQuery).mockRejectedValueOnce(
+    expect(assetQueryPreview.previewProjectAssetQuery).toHaveBeenCalledWith({
+      projectId: "project-1",
+      request: expect.objectContaining({
+        query: expect.objectContaining({ limit: 10 }),
+      }),
+      context: expect.anything(),
+    });
+    vi.mocked(assetQueryPreview.previewProjectAssetQuery).mockRejectedValueOnce(
       new AssetIndexRevisionError()
     );
     await expect(

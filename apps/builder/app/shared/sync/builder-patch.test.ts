@@ -1,7 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { Instance, WebstudioData } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import type { ProjectSettings } from "@webstudio-is/project-build";
+import type {
+  MarketplaceProduct,
+  ProjectSettings,
+} from "@webstudio-is/project-build";
 import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import {
   createSyncChangesFromBuilderPatchPayload,
@@ -13,6 +16,7 @@ import {
   $breakpoints,
   $dataSources,
   $instances,
+  $marketplaceProduct,
   $pages,
   $projectSettings,
   $props,
@@ -35,7 +39,10 @@ const createInstance = (
   children,
 });
 
-type TestData = WebstudioData & { projectSettings: ProjectSettings };
+type TestData = WebstudioData & {
+  marketplaceProduct?: MarketplaceProduct;
+  projectSettings: ProjectSettings;
+};
 
 const createData = (): TestData => ({
   pages: createDefaultPages({ rootInstanceId: "body" }),
@@ -69,6 +76,7 @@ const setupStores = (data: TestData) => {
   $styleSources.set(data.styleSources);
   $styles.set(data.styles);
   $assets.set(data.assets);
+  $marketplaceProduct.set(data.marketplaceProduct);
   $projectSettings.set(data.projectSettings);
 };
 
@@ -299,6 +307,37 @@ describe("builder patch sync adapter", () => {
 
     serverSyncStore.redo();
     expect($projectSettings.get()?.meta.siteName).toBe("After");
+  });
+
+  test("creates marketplace metadata through sync undo and redo", () => {
+    const data = createData();
+    const marketplaceProduct = {
+      category: "pageTemplates" as const,
+      name: "Acme Template",
+      thumbnailAssetId: "asset-id",
+      author: "Acme Studio",
+      email: "hello@example.com",
+      website: "https://example.com",
+      issues: "",
+      description: "Reusable template project for Acme landing pages.",
+    };
+    setupStores(data);
+
+    createTransactionFromBuilderPatchPayload({
+      data,
+      payload: [
+        {
+          namespace: "marketplaceProduct",
+          patches: [{ op: "replace", path: [], value: marketplaceProduct }],
+        },
+      ],
+    });
+
+    expect($marketplaceProduct.get()).toEqual(marketplaceProduct);
+    serverSyncStore.undo();
+    expect($marketplaceProduct.get()).toBeUndefined();
+    serverSyncStore.redo();
+    expect($marketplaceProduct.get()).toEqual(marketplaceProduct);
   });
 
   test("commits style source selection removals through sync undo and redo", () => {
