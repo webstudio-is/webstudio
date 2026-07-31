@@ -8,5 +8,6 @@ export * from "./json-document";
 export * from "./markdown-document";
 export * from "./document-adapter";
 export * from "./document-source";
+export * from "./http-document-loader";
 export * from "./resolver";
 export * from "./document-resolution";
