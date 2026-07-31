@@ -29,9 +29,11 @@ afterEach(() => {
 const renderQueryBuilder = <Query extends Record<string, unknown>>({
   value,
   capabilities,
+  sourceContainer,
 }: {
   value: Query;
   capabilities: QueryDefinition<string, string>;
+  sourceContainer?: Element | null;
 }) => {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -43,6 +45,7 @@ const renderQueryBuilder = <Query extends Record<string, unknown>>({
         capabilities={capabilities}
         scope={scope}
         aliases={aliases}
+        sourceContainer={sourceContainer}
         onChange={() => {}}
       />
     );
@@ -138,4 +141,32 @@ test("shows an evaluated value for a bound number input", () => {
   expect(input?.value).toBe("20");
   expect(input?.step).toBe("1");
   expect(input?.disabled).toBe(true);
+});
+
+test("allows the full-size query source to scroll in both directions", () => {
+  const sourceContainer = document.createElement("div");
+  document.body.appendChild(sourceContainer);
+  const capabilities = {
+    version: 1,
+    fields: [],
+    operators: [],
+    source: {
+      fieldPathSchema: {
+        type: "array",
+        items: { type: "string" },
+        minItems: 1,
+      },
+      controls: [],
+    },
+  } as const satisfies QueryDefinition<string, string>;
+
+  renderQueryBuilder({
+    value: {},
+    capabilities,
+    sourceContainer,
+  });
+
+  const scroller = sourceContainer.querySelector(".cm-scroller");
+  expect(scroller).not.toBeNull();
+  expect(getComputedStyle(scroller as Element).overflow).toBe("auto");
 });
