@@ -13,6 +13,7 @@ import {
 } from "./structured-query";
 import { encodeUtf8, getUtf8ByteLength } from "./byte-stream";
 import type { AssetResourceContentReader } from "./hydration";
+import { getMaterializedAssetQueryResult } from "./materialized-query";
 
 export type ContentDatabase = {
   query(
@@ -31,7 +32,8 @@ export const createContentDatabase = ({
   artifact: ContentArtifactV1;
   readContent?: AssetResourceContentReader;
 }): ContentDatabase => {
-  const includedDocumentCount = artifact.documents.length;
+  const includedDocumentCount =
+    artifact.database?.includedDocumentCount ?? artifact.documents.length;
   const sourceDocumentCount =
     artifact.database?.sourceDocumentCount ?? includedDocumentCount;
   const omittedDocumentCount = sourceDocumentCount - includedDocumentCount;
@@ -54,6 +56,13 @@ export const createContentDatabase = ({
         request.indexRevision !== artifact.integrity.checksum
       ) {
         throw new AssetIndexRevisionError();
+      }
+      const materialized = await getMaterializedAssetQueryResult({
+        queries: artifact.queries,
+        query: request.query,
+      });
+      if (materialized !== undefined) {
+        return materialized;
       }
       const readEmbeddedContent: AssetResourceContentReader = async (
         contentRef,

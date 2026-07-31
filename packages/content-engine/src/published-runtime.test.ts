@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import type { AssetFileDocument } from "./schema";
+import { assetQuery, type AssetFileDocument } from "./schema";
 import { createAssetIndex } from "./asset-index";
 import { createCanonicalAssetFileEntry } from "./canonical";
+import {
+  createContentCompilationPlan,
+  createLiteralContentCompilationQuery,
+} from "./compilation-plan";
 import {
   createGeneratedAssetResourceRuntime,
   createPublishedAssetResourceFetch,
@@ -131,6 +135,66 @@ describe("published asset resource runtime", () => {
       items: [{ id: "post-1", content: { text: "Post" } }],
     });
     expect(networkFetch).not.toHaveBeenCalled();
+  });
+
+  test("serves a materialized static query without candidate documents", async () => {
+    const query = assetQuery.parse({
+      where: {
+        all: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "post",
+          },
+        ],
+      },
+      sort: [],
+      limit: 1,
+      offset: 0,
+      output: {
+        mode: "fields",
+        includeMetadata: false,
+        fields: [
+          ["properties", "slug"],
+          ["properties", "title"],
+        ],
+      },
+      content: { mode: "none" },
+    });
+    const index = await createAssetIndex({
+      projectId: "project-1",
+      entries: [
+        createCanonicalAssetFileEntry({
+          projectId: "project-1",
+          document,
+        }),
+      ],
+      plan: createContentCompilationPlan([
+        createLiteralContentCompilationQuery({ id: "posts", query }),
+      ]),
+    });
+    const runtimeFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
+      deploymentId: "build-materialized",
+      artifact: index,
+      runtimeAssets: {},
+    });
+
+    expect(index.documents).toEqual([]);
+    const response = await runtimeFetch("/$resources/assets", {
+      method: "POST",
+      body: JSON.stringify({ query }),
+    });
+    await expect(response?.json()).resolves.toEqual({
+      items: [
+        {
+          id: "post-1",
+          properties: { slug: "post", title: "Post" },
+        },
+      ],
+      totalCount: 1,
+      hasMore: false,
+    });
   });
 
   test("reuses one initialized runtime across deployment origins", async () => {
