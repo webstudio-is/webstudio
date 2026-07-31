@@ -357,7 +357,7 @@ export const runtimeOutputSchemas = {
   }),
   "projectSettings.update": looseObject({ updated: z.boolean() }),
   "projectSettings.getMarketplaceProduct": looseObject({
-    marketplaceProduct: looseObject(marketplaceProduct.shape),
+    marketplaceProduct: looseObject(marketplaceProduct.shape).nullable(),
   }),
   "projectSettings.updateMarketplaceProduct": looseObject({
     updated: z.boolean(),

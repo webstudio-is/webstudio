@@ -16,12 +16,18 @@ import { contentEngineLimits } from "./limits";
 import {
   getContentDocumentCandidateQueryIds,
   compareContentEntryPriority,
+  createContentCompilationPlan,
+  isContentDocumentCandidate,
   isContentCompilationFieldRequired,
   projectContentDatabaseDocument,
   type ContentCompilationPlan,
 } from "./compilation-plan";
 import { getUtf8ByteLength } from "./byte-stream";
 import type { MarkdownAssetReferences } from "./markdown-references";
+import {
+  canMaterializeContentCompilationQuery,
+  materializeContentCompilationQueries,
+} from "./materialized-query";
 
 export type ContentCompilerDiagnostics = {
   maxBytes: number;
@@ -142,11 +148,56 @@ const buildAssetIndex = async ({
   plan?: ContentCompilationPlan;
   finalize?: boolean;
 }) => {
-  const documents = entries
-    .map(({ document }) => projectContentDatabaseDocument({ document, plan }))
+  const sourceDocuments = entries.map(({ document }) => document);
+  const sourceCatalog = await createAssetFieldCatalog(entries);
+  const assetRevision = sourceCatalog.canonicalRevision;
+  const completeSourceFieldCatalog = toBuilderAssetFieldCatalog(sourceCatalog);
+  const materialized =
+    plan === undefined
+      ? {
+          values: {},
+          materializedQueries: new Set<
+            ContentCompilationPlan["queries"][number]
+          >(),
+        }
+      : await materializeContentCompilationQueries({
+          queries: plan.queries,
+          catalog: completeSourceFieldCatalog,
+          documents: sourceDocuments,
+        });
+  const runtimeQueries =
+    plan?.queries.filter(
+      (query) => materialized.materializedQueries.has(query) === false
+    ) ?? [];
+  const runtimePlan =
+    plan === undefined
+      ? undefined
+      : (createContentCompilationPlan(runtimeQueries) ?? {
+          standardFields: [],
+          structuredPropertyPaths: [],
+          excerpt: false,
+          metadataError: false,
+          queries: [],
+        });
+  const runtimeEntries =
+    runtimePlan === undefined
+      ? entries
+      : runtimePlan.queries.length === 0
+        ? []
+        : entries.filter(({ document }) =>
+            isContentDocumentCandidate({
+              document,
+              plan: runtimePlan,
+              available: "all",
+            })
+          );
+  const documents = runtimeEntries
+    .map(({ document }) =>
+      projectContentDatabaseDocument({ document, plan: runtimePlan })
+    )
     .sort((left, right) => compareStrings(left._id, right._id));
   const contents = Object.fromEntries(
-    entries
+    runtimeEntries
       .filter(
         (entry): entry is ContentCompilerInput & { content: string } =>
           entry.content !== undefined
@@ -157,16 +208,21 @@ const buildAssetIndex = async ({
       .map((entry) => [entry.document.contentRef, entry.content])
   );
   const includedContentRefs = new Set(
-    entries.map(({ document }) => document.contentRef)
+    runtimeEntries.map(({ document }) => document.contentRef)
   );
   const includedAssetReferences = Object.fromEntries(
     Object.entries(assetReferences ?? {}).filter(([contentRef]) =>
       includedContentRefs.has(contentRef)
     )
   );
-  const catalog = await createAssetFieldCatalog(entries);
-  const assetRevision = catalog.canonicalRevision;
-  const completeFieldCatalog = toBuilderAssetFieldCatalog(catalog);
+  const runtimeCatalog =
+    runtimeEntries === entries
+      ? sourceCatalog
+      : await createAssetFieldCatalog(runtimeEntries);
+  const completeFieldCatalog = {
+    ...toBuilderAssetFieldCatalog(runtimeCatalog),
+    canonicalRevision: assetRevision,
+  };
   const fieldCatalog = {
     ...completeFieldCatalog,
     fields: Object.fromEntries(
@@ -174,7 +230,10 @@ const buildAssetIndex = async ({
         const queryPath = field.queryPath;
         return (
           queryPath !== undefined &&
-          isContentCompilationFieldRequired({ plan, field: queryPath })
+          isContentCompilationFieldRequired({
+            plan: runtimePlan,
+            field: queryPath,
+          })
         );
       })
     ),
@@ -189,7 +248,17 @@ const buildAssetIndex = async ({
       ? {}
       : { assetReferences: includedAssetReferences }),
     fieldCatalog,
-    database: { maxBytes, unboundedBytes, sourceDocumentCount },
+    ...(Object.keys(materialized.values).length === 0
+      ? {}
+      : { queries: materialized.values }),
+    database: {
+      maxBytes,
+      unboundedBytes,
+      sourceDocumentCount,
+      ...(runtimeEntries.length === entries.length
+        ? {}
+        : { includedDocumentCount: entries.length }),
+    },
     integrity: {
       algorithm: "sha256",
       checksum: `sha256:${"0".repeat(64)}`,
@@ -228,6 +297,8 @@ export const compileContentArtifact = async ({
   }
   validateEntries({ projectId, entries });
   const sourceDocumentCount = entries.length;
+  const hasMaterializableQueries =
+    plan?.queries.some(canMaterializeContentCompilationQuery) === true;
   const unavailable = entries.filter(
     (entry) => entry.contentRequired === true && entry.content === undefined
   );
@@ -294,7 +365,10 @@ export const compileContentArtifact = async ({
         selectedContentRefs,
         plan,
       });
-      if (minimumAdditionalBytes <= maxBytes - selectedBytes) {
+      if (
+        hasMaterializableQueries ||
+        minimumAdditionalBytes <= maxBytes - selectedBytes
+      ) {
         const trial = await buildAssetIndex({
           entries: [...selected, ...candidates],
           sourceDocumentCount,

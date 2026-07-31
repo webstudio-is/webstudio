@@ -13,6 +13,7 @@ import {
 } from "./structured-query";
 import { encodeUtf8, getUtf8ByteLength } from "./byte-stream";
 import type { AssetResourceContentReader } from "./hydration";
+import { getMaterializedAssetQueryResult } from "./materialized-query";
 
 export type ContentDatabase = {
   query(
@@ -31,20 +32,29 @@ export const createContentDatabase = ({
   artifact: ContentArtifactV1;
   readContent?: AssetResourceContentReader;
 }): ContentDatabase => {
-  const includedDocumentCount = artifact.documents.length;
+  const includedDocumentCount =
+    artifact.database?.includedDocumentCount ?? artifact.documents.length;
   const sourceDocumentCount =
     artifact.database?.sourceDocumentCount ?? includedDocumentCount;
   const omittedDocumentCount = sourceDocumentCount - includedDocumentCount;
   const usedBytes = getUtf8ByteLength(serializeContentArtifact(artifact));
+  const maxBytes = artifact.database?.maxBytes ?? Number.MAX_SAFE_INTEGER;
+  const unboundedBytes = artifact.database?.unboundedBytes ?? usedBytes;
   const stats: ContentDatabaseStats = {
     format: artifact.format,
     version: artifact.version,
     revision: artifact.integrity.checksum,
     usedBytes,
-    maxBytes: artifact.database?.maxBytes ?? Number.MAX_SAFE_INTEGER,
-    unboundedBytes: artifact.database?.unboundedBytes ?? usedBytes,
+    maxBytes,
+    unboundedBytes,
     includedDocumentCount,
     omittedDocumentCount,
+    omissionReason:
+      omittedDocumentCount === 0
+        ? undefined
+        : unboundedBytes > maxBytes
+          ? "size"
+          : "unavailable",
     truncated: omittedDocumentCount > 0,
   };
   return {
@@ -54,6 +64,13 @@ export const createContentDatabase = ({
         request.indexRevision !== artifact.integrity.checksum
       ) {
         throw new AssetIndexRevisionError();
+      }
+      const materialized = await getMaterializedAssetQueryResult({
+        queries: artifact.queries,
+        query: request.query,
+      });
+      if (materialized !== undefined) {
+        return materialized;
       }
       const readEmbeddedContent: AssetResourceContentReader = async (
         contentRef,

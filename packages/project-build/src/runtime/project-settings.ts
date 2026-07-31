@@ -241,15 +241,9 @@ export const updateProjectSettings = (
 };
 
 export const updateMarketplaceProduct = (
-  state: Pick<BuilderState, "marketplaceProduct">,
+  _state: Pick<BuilderState, "marketplaceProduct">,
   input: MarketplaceProduct
 ) => {
-  if (state.marketplaceProduct === undefined) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Marketplace product namespace is missing"
-    );
-  }
   return createRuntimeMutation({
     payload: compactBuilderPatchPayload([
       {
@@ -265,13 +259,7 @@ export const updateMarketplaceProduct = (
 export const getMarketplaceProduct = (
   state: Pick<BuilderState, "marketplaceProduct">
 ) => {
-  if (state.marketplaceProduct === undefined) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Marketplace product namespace is missing"
-    );
-  }
-  return { marketplaceProduct: state.marketplaceProduct };
+  return { marketplaceProduct: state.marketplaceProduct ?? null };
 };
 
 const paginateProjectSettingItems = <Item>(

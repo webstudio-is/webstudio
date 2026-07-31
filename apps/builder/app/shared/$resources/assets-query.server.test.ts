@@ -10,8 +10,7 @@ import { executeAssetQuery } from "./assets-query.server";
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const dependencies = {
   authorizeApiProject: vi.fn(),
-  createAssetClient: vi.fn(() => ({ readFile: vi.fn() })),
-  previewAssetResourceQuery: vi.fn(),
+  previewProjectAssetQuery: vi.fn(),
   preventCrossOriginCookie: vi.fn(),
 };
 const outerRequest = () =>
@@ -25,7 +24,7 @@ const innerRequest = (body: unknown) =>
 describe("configured Assets system resource", () => {
   beforeEach(() => {
     dependencies.authorizeApiProject.mockResolvedValue({} as never);
-    dependencies.previewAssetResourceQuery.mockReset();
+    dependencies.previewProjectAssetQuery.mockReset();
   });
 
   test("uses the outer authentication context and typed inner request", async () => {
@@ -37,15 +36,25 @@ describe("configured Assets system resource", () => {
       },
       __diagnostics__: {
         scope: "query-preview",
-        usedBytes: 100,
-        maxBytes: 512_000,
-        unboundedBytes: 100,
-        includedDocumentCount: 1,
-        omittedDocumentCount: 0,
-        truncated: false,
+        query: {
+          usedBytes: 100,
+          maxBytes: 512_000,
+          unboundedBytes: 100,
+          includedDocumentCount: 1,
+          omittedDocumentCount: 0,
+          truncated: false,
+        },
+        database: {
+          usedBytes: 200,
+          maxBytes: 512_000,
+          unboundedBytes: 200,
+          includedDocumentCount: 2,
+          omittedDocumentCount: 0,
+          truncated: false,
+        },
       },
     };
-    dependencies.previewAssetResourceQuery.mockResolvedValue(responseBody);
+    dependencies.previewProjectAssetQuery.mockResolvedValue(responseBody);
     const query = {
       where: {
         all: [
@@ -71,7 +80,7 @@ describe("configured Assets system resource", () => {
       projectId,
       "view"
     );
-    expect(dependencies.previewAssetResourceQuery).toHaveBeenCalledWith({
+    expect(dependencies.previewProjectAssetQuery).toHaveBeenCalledWith({
       projectId,
       request: {
         query: expect.objectContaining({
@@ -82,22 +91,30 @@ describe("configured Assets system resource", () => {
         }),
       },
       context: expect.anything(),
-      assetClient: expect.objectContaining({ readFile: expect.any(Function) }),
-      contentDatabaseMaxBytes: 512_000,
     });
   });
 
   test("supports the public REST URL with an explicit project", async () => {
-    dependencies.previewAssetResourceQuery.mockResolvedValue({
+    dependencies.previewProjectAssetQuery.mockResolvedValue({
       data: { items: [], totalCount: 0, hasMore: false },
       __diagnostics__: {
         scope: "query-preview",
-        usedBytes: 100,
-        maxBytes: 512_000,
-        unboundedBytes: 100,
-        includedDocumentCount: 0,
-        omittedDocumentCount: 0,
-        truncated: false,
+        query: {
+          usedBytes: 100,
+          maxBytes: 512_000,
+          unboundedBytes: 100,
+          includedDocumentCount: 0,
+          omittedDocumentCount: 0,
+          truncated: false,
+        },
+        database: {
+          usedBytes: 100,
+          maxBytes: 512_000,
+          unboundedBytes: 100,
+          includedDocumentCount: 0,
+          omittedDocumentCount: 0,
+          truncated: false,
+        },
       },
     });
     const request = new Request(
@@ -132,7 +149,7 @@ describe("configured Assets system resource", () => {
       error: { code: "INVALID_REQUEST" },
     });
 
-    dependencies.previewAssetResourceQuery.mockRejectedValue(
+    dependencies.previewProjectAssetQuery.mockRejectedValue(
       new AuthorizationError("denied")
     );
     const forbidden = await executeAssetQuery(
@@ -187,7 +204,7 @@ describe("configured Assets system resource", () => {
     );
     expect(malformed.status).toBe(400);
 
-    dependencies.previewAssetResourceQuery.mockRejectedValueOnce(
+    dependencies.previewProjectAssetQuery.mockRejectedValueOnce(
       new AssetQueryExecutionError("Invalid pagination")
     );
     const invalid = await executeAssetQuery(
@@ -201,7 +218,7 @@ describe("configured Assets system resource", () => {
   });
 
   test("maps stale revisions to conflict responses", async () => {
-    dependencies.previewAssetResourceQuery.mockRejectedValue(
+    dependencies.previewProjectAssetQuery.mockRejectedValue(
       new AssetIndexRevisionError()
     );
 

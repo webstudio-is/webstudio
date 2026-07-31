@@ -410,10 +410,44 @@ describe("project settings runtime", () => {
     });
   });
 
+  test("creates marketplace product when it is not configured", () => {
+    const state = createState();
+    state.marketplaceProduct = undefined;
+    const nextMarketplaceProduct = {
+      category: "sectionTemplates" as const,
+      name: "New Marketplace Product",
+      thumbnailAssetId: "new-asset-id",
+      author: "Webstudio",
+      email: "hello@webstudio.is",
+      website: "",
+      issues: "",
+      description: "A reusable section template for marketplace testing.",
+    };
+
+    expect(updateMarketplaceProduct(state, nextMarketplaceProduct)).toEqual(
+      expect.objectContaining({
+        payload: [
+          {
+            namespace: "marketplaceProduct",
+            patches: [
+              { op: "replace", path: [], value: nextMarketplaceProduct },
+            ],
+          },
+        ],
+      })
+    );
+  });
+
   test("gets marketplace product", () => {
     const state = createState();
     expect(getMarketplaceProduct(state)).toEqual({
       marketplaceProduct: state.marketplaceProduct,
+    });
+  });
+
+  test("reports an unconfigured marketplace product", () => {
+    expect(getMarketplaceProduct({ marketplaceProduct: undefined })).toEqual({
+      marketplaceProduct: null,
     });
   });
 });

@@ -3,7 +3,6 @@ import {
   getAssetResourceQueryError,
   readAssetQueryRequest,
 } from "@webstudio-is/content-engine";
-import { previewAssetResourceQuery } from "@webstudio-is/asset-uploader/server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import {
   authorizeApiProject,
@@ -11,24 +10,18 @@ import {
 } from "~/services/api-auth.server";
 import { getAssetRestProjectId } from "~/services/asset-rest.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
-import { getContentDatabaseMaxBytes } from "~/services/content-database.server";
-import { createAssetClient } from "../asset-client";
+import { previewProjectAssetQuery } from "~/services/asset-query-preview.server";
 import { createAssetResourceFailureResponse } from "./assets-response.server";
 
 type Dependencies = {
   authorizeApiProject: typeof authorizeApiProject;
-  createAssetClient: () => Pick<
-    ReturnType<typeof createAssetClient>,
-    "readFile"
-  >;
-  previewAssetResourceQuery: typeof previewAssetResourceQuery;
+  previewProjectAssetQuery: typeof previewProjectAssetQuery;
   preventCrossOriginCookie: typeof preventCrossOriginCookie;
 };
 
 const defaultDependencies: Dependencies = {
   authorizeApiProject,
-  createAssetClient,
-  previewAssetResourceQuery,
+  previewProjectAssetQuery,
   preventCrossOriginCookie,
 };
 
@@ -70,12 +63,10 @@ export const executeAssetQuery = async (
       projectId,
       "view"
     );
-    const result = await dependencies.previewAssetResourceQuery({
+    const result = await dependencies.previewProjectAssetQuery({
       projectId,
       request: parsed,
       context,
-      assetClient: dependencies.createAssetClient(),
-      contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
     });
     return json(result, { headers: privateNoStoreResponseHeaders });
   } catch (error) {

@@ -59,6 +59,9 @@ export const createFramework = async (
       a: `${baseComponentImportSource}:Link`,
     },
     html: ({ pagePath, prerenderPaths = [] }) => {
+      if (pagePath === "/*") {
+        return [];
+      }
       const dynamic = isPathnamePattern(pagePath);
       if (dynamic && prerenderPaths.length === 0) {
         throw new Error(

@@ -7,16 +7,15 @@ import {
   loadBuildById,
   loadDevBuildByProjectId,
 } from "@webstudio-is/project-build/server";
+import { createBuildContentCompilationPlan } from "@webstudio-is/project-build";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
   loadAssetDataByProject,
-  PostgresAssetRepository,
+  preparePublishedAssetData,
 } from "@webstudio-is/asset-uploader/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { getContentArtifactRuntimeAssetIds } from "@webstudio-is/content-engine";
 import {
   findPageByIdOrPath,
-  createReachableAssetContentCompilationPlan,
   getAllPages,
   getStyleDeclKey,
   type Asset,
@@ -160,58 +159,24 @@ const addProjectMetadata = async (
       ? undefined
       : await getUserById(context, project.userId);
 
-  const assetRequirements = createReachableAssetContentCompilationPlan({
-    props: data.build.props.map(([, prop]) => prop),
-    dataSources: data.build.dataSources.map(([, dataSource]) => dataSource),
-    resources: data.build.resources.map(([, resource]) => resource),
-  });
+  const assetRequirements = createBuildContentCompilationPlan(data.build);
   let assetIndex: PublishedProjectBundle["assetIndex"];
   let publishedAssets = data.assets;
   let publishedAssetFolders = data.assetFolders;
   if (assetRequirements !== undefined) {
-    const assetClient = createAssetClient();
-    const assetRepository = new PostgresAssetRepository({
+    const publishedAssetData = await preparePublishedAssetData({
       projectId: project.id,
       context,
-      assetStore: assetClient,
+      assetStore: createAssetClient(),
       contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
-    });
-    const retainedFontIds = new Set(
-      data.assets
+      plan: assetRequirements,
+      retainedAssetIds: data.assets
         .filter((asset) => asset.type === "font")
-        .map((asset) => asset.id)
-    );
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      const assetDataBefore = await loadAssetDataByProject(project.id, context);
-      const preparedIndex =
-        await assetRepository.prepareIndex(assetRequirements);
-      const assetDataAfter = await loadAssetDataByProject(project.id, context);
-      const assetsStayedStable =
-        JSON.stringify(assetDataBefore) === JSON.stringify(assetDataAfter);
-      if (assetsStayedStable === false) {
-        if (attempt === 0) {
-          continue;
-        }
-        throw new Error("Assets changed while preparing publication; retry");
-      }
-      assetIndex = preparedIndex;
-      const retainedRuntimeAssetIds = new Set(retainedFontIds);
-      for (const assetId of getContentArtifactRuntimeAssetIds({
-        artifact: preparedIndex,
-        includeDocuments: true,
-      })) {
-        retainedRuntimeAssetIds.add(assetId);
-      }
-      publishedAssets = assetDataAfter.assets.filter(
-        (asset) =>
-          asset.type !== "font" || retainedRuntimeAssetIds.has(asset.id)
-      );
-      publishedAssetFolders = assetDataAfter.assetFolders;
-      break;
-    }
-    if (assetIndex === undefined) {
-      throw new Error("Asset index was not prepared");
-    }
+        .map((asset) => asset.id),
+    });
+    assetIndex = publishedAssetData.artifact;
+    publishedAssets = publishedAssetData.assets;
+    publishedAssetFolders = publishedAssetData.assetFolders;
   }
 
   return {

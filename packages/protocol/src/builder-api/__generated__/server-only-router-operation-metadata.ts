@@ -50,6 +50,26 @@ export const serverOnlyRouterOperationMetadata = {
       additionalProperties: true,
     },
   },
+  "projects.submitMarketplaceProduct": {
+    id: "projects.submitMarketplaceProduct",
+    command: "submit-marketplace-product",
+    method: "mutation",
+    path: "api.projects.submitMarketplaceProduct",
+    client: "submitMarketplaceProduct",
+    permit: "edit",
+    inputSchema: {
+      type: "object",
+      properties: {
+        acknowledgePublicSubmission: {
+          type: "boolean",
+          const: true,
+          description:
+            "Acknowledge that submission starts public marketplace review",
+        },
+      },
+      required: ["acknowledgePublicSubmission"],
+    },
+  },
   "build.get": {
     id: "build.get",
     command: "snapshot",

@@ -1191,6 +1191,11 @@ export const getMarketplaceProduct = projectQueryInput<AuthProjectParams>(
   "get-marketplace-product"
 );
 
+export const submitMarketplaceProduct = projectMutationInput<
+  AuthProjectParams & { acknowledgePublicSubmission: true },
+  { marketplaceApprovalStatus: "PENDING" }
+>("submit-marketplace-product");
+
 export const setRedirects = runtimeProjectMutation("set-redirects");
 
 export const copyPage = runtimeProjectMutation("copy-page");

@@ -2,7 +2,11 @@ import { describe, expect, test } from "vitest";
 import { contentEngineLimits, parseContentDatabaseMaxBytes } from "./limits";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import { createContentDatabase } from "./content-database";
-import { assetQueryResult, type AssetResourceOutputSelection } from "./schema";
+import {
+  assetQuery,
+  assetQueryResult,
+  type AssetResourceOutputSelection,
+} from "./schema";
 import {
   createContentCompilationPlan,
   createLiteralContentCompilationQuery,
@@ -92,7 +96,15 @@ describe("shared asset index", () => {
       fields: [["id"]],
     });
 
-    expect(idOnly.artifact.documents).toEqual([{ _id: "alpha" }]);
+    expect(idOnly.artifact.documents).toEqual([]);
+    expect(Object.values(idOnly.artifact.queries ?? {})).toEqual([
+      {
+        fields: [["id"]],
+        rows: [["alpha"]],
+        totalCount: 1,
+        hasMore: false,
+      },
+    ]);
     expect(idOnly.diagnostics.boundedBytes).toBeLessThan(
       metadata.diagnostics.boundedBytes
     );
@@ -107,6 +119,304 @@ describe("shared asset index", () => {
         },
       })
     ).resolves.toMatchObject({ items: [{ id: "alpha" }] });
+  });
+
+  test("materializes a static overview query without storing candidate documents", async () => {
+    const posts = [
+      {
+        id: "newest",
+        slug: "newest",
+        title: "Newest",
+        excerpt: "Newest excerpt",
+        category: "Updates",
+        publishedAt: "2026-07-05",
+        readTime: "3 min read",
+      },
+      {
+        id: "first",
+        slug: "first",
+        title: "First",
+        excerpt: "First excerpt",
+        category: "Guides",
+        publishedAt: "2026-07-04",
+        readTime: "4 min read",
+      },
+      {
+        id: "second",
+        slug: "second",
+        title: "Second",
+        excerpt: "Second excerpt",
+        category: "Strategy",
+        publishedAt: "2026-07-03",
+        readTime: "5 min read",
+      },
+      {
+        id: "third",
+        slug: "third",
+        title: "Third",
+        excerpt: "Third excerpt",
+        category: "Updates",
+        publishedAt: "2026-07-02",
+        readTime: "6 min read",
+      },
+      {
+        id: "fourth",
+        slug: "fourth",
+        title: "Fourth",
+        excerpt: "Fourth excerpt",
+        category: "Guides",
+        publishedAt: "2026-07-01",
+        readTime: "7 min read",
+      },
+    ].map(({ id, ...properties }) =>
+      createCanonicalAssetFileEntry({
+        projectId: "project",
+        document: {
+          ...entry({ id }).document,
+          properties,
+        },
+      })
+    );
+    const query = assetQuery.parse({
+      where: {
+        all: [{ field: ["extension"], operator: "eq", value: "md" }],
+      },
+      sort: [{ field: ["properties", "publishedAt"], direction: "desc" }],
+      limit: 4,
+      offset: 1,
+      output: {
+        mode: "fields",
+        includeMetadata: false,
+        fields: [
+          ["properties", "slug"],
+          ["properties", "title"],
+          ["properties", "excerpt"],
+          ["properties", "category"],
+          ["properties", "publishedAt"],
+          ["properties", "readTime"],
+        ],
+      },
+      content: { mode: "none" },
+    });
+    const staticPlan = createContentCompilationPlan([
+      createLiteralContentCompilationQuery({ id: "posts", query }),
+    ]);
+    const runtimePlan = createContentCompilationPlan([
+      {
+        ...createLiteralContentCompilationQuery({ id: "posts", query }),
+        limit: { type: "dynamic" },
+      },
+    ]);
+    const materialized = await compileContentArtifact({
+      projectId: "project",
+      entries: posts,
+      plan: staticPlan,
+    });
+    const runtime = await compileContentArtifact({
+      projectId: "project",
+      entries: posts,
+      plan: runtimePlan,
+    });
+    const bounded = await compileContentArtifact({
+      projectId: "project",
+      entries: posts,
+      plan: staticPlan,
+      maxBytes: materialized.diagnostics.boundedBytes - 200,
+    });
+
+    expect(materialized.artifact.documents).toEqual([]);
+    expect(materialized.artifact.fieldCatalog.fields).toEqual({});
+    expect(materialized.artifact.database).toMatchObject({
+      sourceDocumentCount: 5,
+      includedDocumentCount: 5,
+    });
+    expect(Object.values(materialized.artifact.queries ?? {})).toEqual([
+      {
+        fields: [
+          ["id"],
+          ["properties", "slug"],
+          ["properties", "title"],
+          ["properties", "excerpt"],
+          ["properties", "category"],
+          ["properties", "publishedAt"],
+          ["properties", "readTime"],
+        ],
+        rows: [
+          [
+            "first",
+            "first",
+            "First",
+            "First excerpt",
+            "Guides",
+            "2026-07-04",
+            "4 min read",
+          ],
+          [
+            "second",
+            "second",
+            "Second",
+            "Second excerpt",
+            "Strategy",
+            "2026-07-03",
+            "5 min read",
+          ],
+          [
+            "third",
+            "third",
+            "Third",
+            "Third excerpt",
+            "Updates",
+            "2026-07-02",
+            "6 min read",
+          ],
+          [
+            "fourth",
+            "fourth",
+            "Fourth",
+            "Fourth excerpt",
+            "Guides",
+            "2026-07-01",
+            "7 min read",
+          ],
+        ],
+        totalCount: 5,
+        hasMore: false,
+      },
+    ]);
+    expect(materialized.diagnostics.boundedBytes).toBeLessThan(
+      runtime.diagnostics.boundedBytes * 0.7
+    );
+    expect(bounded.diagnostics.boundedBytes).toBeLessThanOrEqual(
+      materialized.diagnostics.boundedBytes - 200
+    );
+    expect(bounded.diagnostics.omittedDocumentCount).toBeGreaterThan(0);
+    expect(
+      createContentDatabase({ artifact: bounded.artifact }).getStats().truncated
+    ).toBe(true);
+    const result = await createContentDatabase({
+      artifact: materialized.artifact,
+    }).query({ query });
+    expect(result.items.map(({ id }) => id)).toEqual([
+      "first",
+      "second",
+      "third",
+      "fourth",
+    ]);
+    expect(result.items[0]).toMatchObject({
+      id: "first",
+      properties: {
+        slug: "first",
+        title: "First",
+        excerpt: "First excerpt",
+      },
+    });
+    expect(result).toMatchObject({
+      totalCount: 5,
+      hasMore: false,
+    });
+    expect(
+      createContentDatabase({
+        artifact: materialized.artifact,
+      }).getStats()
+    ).toMatchObject({
+      includedDocumentCount: 5,
+      omittedDocumentCount: 0,
+      omissionReason: undefined,
+      truncated: false,
+    });
+    await expect(verifyContentArtifact(materialized.artifact)).resolves.toEqual(
+      materialized.artifact
+    );
+  });
+
+  test("stores overview-only fields outside dynamic detail documents", async () => {
+    const sourceEntries = ["alpha", "beta"].map((id) =>
+      createCanonicalAssetFileEntry({
+        projectId: "project",
+        document: {
+          ...entry({ id }).document,
+          properties: {
+            slug: id,
+            title: `${id} title`,
+            excerpt: `${id} overview excerpt`,
+          },
+        },
+      })
+    );
+    const overview = createLiteralContentCompilationQuery({
+      id: "overview",
+      query: {
+        where: {
+          all: [{ field: ["extension"], operator: "eq", value: "md" }],
+        },
+        sort: [],
+        limit: 20,
+        offset: 0,
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [
+            ["properties", "slug"],
+            ["properties", "title"],
+            ["properties", "excerpt"],
+          ],
+        },
+        content: { mode: "none" },
+      },
+    });
+    const detail = {
+      ...createLiteralContentCompilationQuery({
+        id: "detail",
+        query: {
+          where: {
+            all: [
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "alpha",
+              },
+            ],
+          },
+          sort: [],
+          limit: 1,
+          offset: 0,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["properties", "title"]],
+          },
+          content: { mode: "none" },
+        },
+      }),
+      where: {
+        field: ["properties", "slug"] as [string, string],
+        operator: "eq" as const,
+        value: { type: "dynamic" as const },
+      },
+    };
+    const { artifact } = await compileContentArtifact({
+      projectId: "project",
+      entries: sourceEntries,
+      plan: createContentCompilationPlan([overview, detail]),
+    });
+
+    expect(artifact.documents).toEqual([
+      {
+        _id: "alpha",
+        properties: { slug: "alpha", title: "alpha title" },
+      },
+      {
+        _id: "beta",
+        properties: { slug: "beta", title: "beta title" },
+      },
+    ]);
+    expect(artifact.fieldCatalog.fields).not.toHaveProperty(
+      "properties.excerpt"
+    );
+    expect(Object.values(artifact.queries ?? {})[0]?.rows).toEqual([
+      ["alpha", "alpha", "alpha title", "alpha overview excerpt"],
+      ["beta", "beta", "beta title", "beta overview excerpt"],
+    ]);
   });
 
   test("creates one deterministic complete index and field catalog", async () => {
@@ -262,6 +572,7 @@ describe("shared asset index", () => {
       maxBytes: 5_000,
       includedDocumentCount: 2,
       omittedDocumentCount: 1,
+      omissionReason: "size",
       truncated: true,
     });
     expect(contentEngineLimits.databaseBytes).toBe(500 * 1024);
@@ -354,6 +665,12 @@ describe("shared asset index", () => {
     expect(diagnostics.unboundedBytes).toBeGreaterThan(
       diagnostics.boundedBytes
     );
+    expect(createContentDatabase({ artifact }).getStats()).toMatchObject({
+      includedDocumentCount: 1,
+      omittedDocumentCount: 1,
+      omissionReason: "unavailable",
+      truncated: true,
+    });
   });
 
   test("bounds a thousand oversized documents without rebuilding per document", async () => {
