@@ -3,6 +3,7 @@ export * from "./reference-codec";
 export * from "./graph";
 export * from "./graph-artifact";
 export * from "./compiler";
+export * from "./source-compiler";
 export * from "./json-document";
 export * from "./markdown-document";
 export * from "./document-adapter";
