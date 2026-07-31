@@ -354,6 +354,24 @@ describe("published asset resource runtime", () => {
         fetchDocument,
       })
     ).toThrow("Published document URL is unavailable for author");
+    expect(() =>
+      createPublishedAssetResourceFetch({
+        baseUrl: "https://site.example",
+        deploymentId: "stale-graph-build",
+        artifact,
+        runtimeAssets: {
+          post: {
+            url: "/assets/stale-post.json",
+            contentRef: "storage:stale-post",
+          },
+          author: {
+            url: "/assets/author.md",
+            contentRef: "storage:author",
+          },
+        },
+        fetchDocument,
+      })
+    ).toThrow("Published document identity does not match graph node post");
   });
 
   test("hydrates parallel CDN roots with one cached shared dependency", async () => {

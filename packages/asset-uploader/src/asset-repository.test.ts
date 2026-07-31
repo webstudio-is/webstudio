@@ -513,17 +513,7 @@ describe("PostgresAssetRepository", () => {
       projectId: "project-1",
       entries,
       assetReferences: {},
-      documentGraph: {
-        nodes: [
-          {
-            id: "asset-1",
-            revision: entries[0].revision,
-            contentRef: entries[0].document.contentRef,
-            format: "markdown",
-          },
-        ],
-        edges: [],
-      },
+      documentGraph: undefined,
       maxBytes: 500 * 1024,
     });
   });

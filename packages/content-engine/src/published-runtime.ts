@@ -203,6 +203,19 @@ const validateRuntimeAssets = ({
       `Published document URL is unavailable for ${missingDocumentId}`
     );
   }
+  const staleDocumentId = artifact.documentGraph?.nodes.find(
+    ({ id, contentRef }) => {
+      const runtimeContentRef = runtimeAssets[id]?.contentRef;
+      return (
+        runtimeContentRef !== undefined && runtimeContentRef !== contentRef
+      );
+    }
+  )?.id;
+  if (staleDocumentId !== undefined) {
+    throw new Error(
+      `Published document identity does not match graph node ${staleDocumentId}`
+    );
+  }
 };
 
 const createPublishedAssetResourceHandler = ({

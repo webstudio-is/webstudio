@@ -35,6 +35,8 @@ import type { MarkdownAssetReferences } from "./markdown-references";
 
 export type AssetRuntimeData = {
   url: string;
+  /** Immutable storage identity for graph-backed document URLs. */
+  contentRef?: string;
   width?: number;
   height?: number;
 };

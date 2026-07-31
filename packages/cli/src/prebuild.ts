@@ -506,7 +506,7 @@ const generateAssetQueryRuntimeModule = ({
 }: {
   deploymentId: string;
   index: PublishedProjectBundle["assetIndex"];
-  runtimeAssets: Readonly<Record<string, ReturnType<typeof toRuntimeAsset>>>;
+  runtimeAssets: Readonly<Record<string, ContentRuntimeAsset>>;
 }) => {
   const inputType = `{
     request: Request;
@@ -532,6 +532,10 @@ export const createGeneratedAssetResourceFetch = ({ request, fallback }: ${input
 `;
 };
 
+type ContentRuntimeAsset = ReturnType<typeof toRuntimeAsset> & {
+  contentRef?: string;
+};
+
 export const materializeAssetIndex = async ({
   index,
   runtimeAssets,
@@ -540,7 +544,7 @@ export const materializeAssetIndex = async ({
   deploymentId,
 }: {
   index: PublishedProjectBundle["assetIndex"];
-  runtimeAssets: Readonly<Record<string, ReturnType<typeof toRuntimeAsset>>>;
+  runtimeAssets: Readonly<Record<string, ContentRuntimeAsset>>;
   includeDocumentRuntimeAssets: boolean;
   generatedDirectory: string;
   deploymentId: string;
@@ -563,6 +567,9 @@ export const materializeAssetIndex = async ({
       ? []
       : getContentArtifactReferencedAssetIds(verifiedIndex)
   );
+  const documentIds = new Set(
+    verifiedIndex?.documentGraph?.nodes.map(({ id }) => id) ?? []
+  );
   const selectedRuntimeAssets = Object.fromEntries(
     runtimeAssetIds.map((assetId) => {
       const asset = runtimeAssets[assetId];
@@ -573,7 +580,11 @@ export const materializeAssetIndex = async ({
             : `Published asset runtime data is unavailable for ${assetId}`
         );
       }
-      return [assetId, asset];
+      if (documentIds.has(assetId)) {
+        return [assetId, asset];
+      }
+      const { contentRef: _contentRef, ...runtimeAsset } = asset;
+      return [assetId, runtimeAsset];
     })
   );
   const runtimePath = join(generatedDirectory, contentRuntimeFile);
@@ -1393,6 +1404,7 @@ export const prebuild = async (options: {
       asset.id,
       {
         ...toRuntimeAsset(asset, "https://placeholder.local"),
+        contentRef: asset.name,
         // Generated projects serve materialized assets from the template's
         // asset base; the /cgi routes only exist in the live builder.
         url: `${assetBaseUrl}${asset.name}`,
