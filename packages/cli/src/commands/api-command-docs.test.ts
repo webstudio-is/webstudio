@@ -214,7 +214,9 @@ test("documents storage-efficient Assets queries for agents", () => {
     expect(contents).toContain('output.mode:"fields"');
     expect(contents).toContain("only fields");
     expect(contents).toContain("includeMetadata:false");
-    expect(contents).toContain("__diagnostics__.usedBytes");
+    expect(contents).toContain("__diagnostics__.query");
+    expect(contents).toContain("__diagnostics__.database");
+    expect(contents).toContain("must not be summed");
     expect(contents).toContain("truncated");
   }
 });

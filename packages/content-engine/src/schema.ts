@@ -567,16 +567,20 @@ export const contentDatabaseStats = strictObject({
 
 export type ContentDatabaseStats = Infer<typeof contentDatabaseStats>;
 
-export const assetQueryPreviewDiagnostics = contentDatabaseStats
-  .pick({
-    usedBytes: true,
-    maxBytes: true,
-    unboundedBytes: true,
-    includedDocumentCount: true,
-    omittedDocumentCount: true,
-    truncated: true,
-  })
-  .extend({ scope: literal("query-preview") });
+const contentDatabaseCapacityStats = contentDatabaseStats.pick({
+  usedBytes: true,
+  maxBytes: true,
+  unboundedBytes: true,
+  includedDocumentCount: true,
+  omittedDocumentCount: true,
+  truncated: true,
+});
+
+export const assetQueryPreviewDiagnostics = strictObject({
+  scope: literal("query-preview"),
+  query: contentDatabaseCapacityStats,
+  database: contentDatabaseCapacityStats,
+});
 
 export type AssetQueryPreviewDiagnostics = Infer<
   typeof assetQueryPreviewDiagnostics

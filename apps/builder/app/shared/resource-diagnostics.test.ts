@@ -20,12 +20,22 @@ describe("resource diagnostics", () => {
         meta: { totalCount: 1, hasMore: false },
         __diagnostics__: {
           scope: "query-preview",
-          usedBytes: 100,
-          maxBytes: 500,
-          unboundedBytes: 700,
-          includedDocumentCount: 80,
-          omittedDocumentCount: 20,
-          truncated: true,
+          query: {
+            usedBytes: 100,
+            maxBytes: 500,
+            unboundedBytes: 100,
+            includedDocumentCount: 1,
+            omittedDocumentCount: 0,
+            truncated: false,
+          },
+          database: {
+            usedBytes: 500,
+            maxBytes: 500,
+            unboundedBytes: 700,
+            includedDocumentCount: 80,
+            omittedDocumentCount: 20,
+            truncated: true,
+          },
         },
       },
     });
@@ -37,9 +47,12 @@ describe("resource diagnostics", () => {
     });
     expect(separated.result).not.toHaveProperty("__diagnostics__");
     expect(separated.diagnostics).toMatchObject({
-      includedDocumentCount: 80,
-      omittedDocumentCount: 20,
-      truncated: true,
+      query: { includedDocumentCount: 1, truncated: false },
+      database: {
+        includedDocumentCount: 80,
+        omittedDocumentCount: 20,
+        truncated: true,
+      },
     });
   });
 

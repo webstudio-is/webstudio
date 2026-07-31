@@ -2,6 +2,7 @@ type ContentDatabasePublishDiagnostics = {
   stats: {
     usedBytes: number;
     maxBytes: number;
+    unboundedBytes: number;
     includedDocumentCount: number;
     omittedDocumentCount: number;
     truncated: boolean;
@@ -16,6 +17,7 @@ export type ContentDatabasePublishWarning = {
   omittedDocumentCount: number;
   usedKiB: number;
   maxKiB: number;
+  omissionKind: "size" | "unavailable";
   affectedResourceNames: string[];
   affectedResourceKind: "dynamic" | "static" | undefined;
 };
@@ -37,6 +39,8 @@ export const getContentDatabasePublishWarning = (
     omittedDocumentCount: stats.omittedDocumentCount,
     usedKiB: Math.ceil(stats.usedBytes / 1024),
     maxKiB: Math.ceil(stats.maxBytes / 1024),
+    omissionKind:
+      stats.unboundedBytes > stats.maxBytes ? "size" : "unavailable",
     affectedResourceNames,
     affectedResourceKind:
       affectedResourceNames.length === 0

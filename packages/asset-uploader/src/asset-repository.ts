@@ -170,7 +170,10 @@ export interface AssetRepository {
   ): Promise<AssetFolder>;
   deleteFolder(folderId: string): Promise<void>;
   readFieldCatalog(): Promise<BuilderAssetFieldCatalog>;
-  query(request: AssetQueryRequestInput): Promise<AssetQueryPreviewResult>;
+  query(
+    request: AssetQueryRequestInput,
+    databasePlan?: ContentCompilationPlan
+  ): Promise<AssetQueryPreviewResult>;
 }
 
 /**
@@ -709,7 +712,8 @@ export class PostgresAssetRepository implements AssetRepository {
   }
 
   async query(
-    request: AssetQueryRequestInput
+    request: AssetQueryRequestInput,
+    databasePlan?: ContentCompilationPlan
   ): Promise<AssetQueryPreviewResult> {
     await this.assertCanView();
     const query = assetQuery.parse(request.query);
@@ -718,6 +722,12 @@ export class PostgresAssetRepository implements AssetRepository {
     ]);
     const index = await this.prepareIndexAfterAuthorization(plan, false);
     const database = getContentDatabaseForArtifact(index);
+    const publishedDatabase =
+      databasePlan === undefined
+        ? database
+        : getContentDatabaseForArtifact(
+            await this.prepareIndexAfterAuthorization(databasePlan, false)
+          );
     const runtimeAssetIds = getContentArtifactRuntimeAssetIds({
       artifact: index,
       includeDocuments: plan !== undefined && requiresRuntimeDocumentData(plan),
@@ -742,24 +752,27 @@ export class PostgresAssetRepository implements AssetRepository {
       this.assetStore.readFile,
       runtimeAssets
     );
-    const {
+    const toCapacityStats = ({
       usedBytes,
       maxBytes,
       unboundedBytes,
       includedDocumentCount,
       omittedDocumentCount,
       truncated,
-    } = database.getStats();
+    }: ReturnType<typeof database.getStats>) => ({
+      usedBytes,
+      maxBytes,
+      unboundedBytes,
+      includedDocumentCount,
+      omittedDocumentCount,
+      truncated,
+    });
     return {
       data,
       __diagnostics__: {
         scope: "query-preview",
-        usedBytes,
-        maxBytes,
-        unboundedBytes,
-        includedDocumentCount,
-        omittedDocumentCount,
-        truncated,
+        query: toCapacityStats(database.getStats()),
+        database: toCapacityStats(publishedDatabase.getStats()),
       },
     };
   }

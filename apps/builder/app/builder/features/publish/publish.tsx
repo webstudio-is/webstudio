@@ -210,27 +210,37 @@ const ContentDatabasePublishWarningMessage = ({
   warning,
 }: {
   warning: ContentDatabasePublishWarning;
-}) => (
-  <>
-    The published content database will include {warning.includedDocumentCount}{" "}
-    of {warning.totalDocumentCount} files ({warning.usedKiB} of {warning.maxKiB}{" "}
-    KiB). {warning.omittedDocumentCount} files will be omitted.
-    {warning.affectedResourceKind === "dynamic" && (
-      <>
-        {" "}
-        Queries with route or variable values may be incomplete in:{" "}
-        {warning.affectedResourceNames.join(", ")}.
-      </>
-    )}
-    {warning.affectedResourceKind === "static" && (
-      <>
-        {" "}
-        Potentially affected Assets resources:{" "}
-        {warning.affectedResourceNames.join(", ")}.
-      </>
-    )}
-  </>
-);
+}) => {
+  const omittedFileLabel =
+    warning.omittedDocumentCount === 1 ? "file" : "files";
+  return (
+    <>
+      The merged published content database will include{" "}
+      {warning.includedDocumentCount} of {warning.totalDocumentCount} files (
+      {warning.usedKiB} of {warning.maxKiB} KiB). {warning.omittedDocumentCount}{" "}
+      {omittedFileLabel} will be omitted{" "}
+      {warning.omissionKind === "size"
+        ? "because the complete database exceeds the size limit"
+        : "because the required content could not be embedded"}
+      .
+      {warning.affectedResourceKind === "dynamic" && (
+        <>
+          {" "}
+          Assets resources with route or variable values cannot be checked
+          exactly and may return incomplete results:{" "}
+          {warning.affectedResourceNames.join(", ")}.
+        </>
+      )}
+      {warning.affectedResourceKind === "static" && (
+        <>
+          {" "}
+          Potentially affected Assets resources:{" "}
+          {warning.affectedResourceNames.join(", ")}.
+        </>
+      )}
+    </>
+  );
+};
 
 const showContentDatabasePublishWarning = async ({
   projectId,

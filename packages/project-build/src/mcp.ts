@@ -5484,6 +5484,30 @@ const getMetaIndex = (
 
 const metaGoalGuides = [
   {
+    pattern:
+      /markdown(?:-|\s)*(?:based|backed)?\s*blog|blog.*markdown|assets?(?:-|\s)*backed\s*blog/i,
+    tools: [
+      "list-pages",
+      "list-assets",
+      "get-asset-field-catalog",
+      "validate-asset-query",
+      "preview-asset-query",
+      "create-page",
+      "create-assets-resource",
+      "insert-fragment-verified",
+      "insert-collection",
+      "verify-page-responsive",
+    ],
+    workflow: [
+      'Ensure the blog has exactly two Builder pages: an overview at the fixed path "/blog" and one detail page at the dynamic path "/blog/:slug". Both pages load their content from Assets resources. Do not create one page per post or copy Markdown content into page-specific static structures.',
+      'For both queries, add static Markdown and blog-folder constraints before any dynamic condition. Include a filter shaped like field:["extension"], operator:"eq", value:"md", plus the narrowest folder or path filter supported by the asset field catalog. This prevents images and unrelated files from consuming the published content-database budget.',
+      'Create the overview Assets resource under the /blog page root. Request only the fields rendered by the listing, use content.mode:"none", and bind one Collection to the complete posts.data map. The overview route is fixed, but its listing remains data-driven through Assets.',
+      'Create the detail Assets resource under the /blog/:slug page root with the same static Markdown/folder constraints, a slug or alternate-ID condition whose value is system.params.slug, limit:1, and content.mode:"markdown-body". Bind the selected item metadata and item.content.text; do not materialize a separate Builder page for each query result.',
+      "Validate both queries and preview the detail query with one concrete slug before saving dynamic expressions. Query-preview diagnostics report this query separately from the merged published database; use the merged database measurement when checking the deployment limit.",
+      "Verify that exactly the two intended page definitions exist and that both pages load their content from Assets. Preview /blog and one concrete detail route, including empty/not-found behavior, before finishing.",
+    ],
+  },
+  {
     pattern: /json\s*-?\s*ld|structured\s+data/i,
     tools: [
       "components.get",

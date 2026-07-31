@@ -36,6 +36,7 @@ import {
   getAssetQueryWhereMetrics,
   validateAssetQueryAgainstCatalog,
 } from "@webstudio-is/content-engine";
+import { createAssetQueryPreviewDatabasePlan } from "./content-database.server";
 import {
   loadBuilderAssetFieldCatalog,
   loadAssetDataByProject,
@@ -797,12 +798,17 @@ export const apiRouter = router({
       async ({ ctx, input }) => {
         try {
           const { projectId, ...request } = input;
+          const build = await loadDevBuildByProjectId(ctx, projectId);
           return await previewAssetResourceQuery({
             projectId,
             request,
             context: ctx,
             assetClient: createAssetClient(),
             contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
+            databasePlan: createAssetQueryPreviewDatabasePlan({
+              build,
+              query: request.query,
+            }),
           });
         } catch (error) {
           return throwAssetQueryApiError(error);

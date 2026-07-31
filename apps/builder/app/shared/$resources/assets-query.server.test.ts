@@ -11,6 +11,7 @@ const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const dependencies = {
   authorizeApiProject: vi.fn(),
   createAssetClient: vi.fn(() => ({ readFile: vi.fn() })),
+  loadDevBuildByProjectId: vi.fn(),
   previewAssetResourceQuery: vi.fn(),
   preventCrossOriginCookie: vi.fn(),
 };
@@ -25,6 +26,11 @@ const innerRequest = (body: unknown) =>
 describe("configured Assets system resource", () => {
   beforeEach(() => {
     dependencies.authorizeApiProject.mockResolvedValue({} as never);
+    dependencies.loadDevBuildByProjectId.mockResolvedValue({
+      props: [],
+      dataSources: [],
+      resources: [],
+    } as never);
     dependencies.previewAssetResourceQuery.mockReset();
   });
 
@@ -37,12 +43,22 @@ describe("configured Assets system resource", () => {
       },
       __diagnostics__: {
         scope: "query-preview",
-        usedBytes: 100,
-        maxBytes: 512_000,
-        unboundedBytes: 100,
-        includedDocumentCount: 1,
-        omittedDocumentCount: 0,
-        truncated: false,
+        query: {
+          usedBytes: 100,
+          maxBytes: 512_000,
+          unboundedBytes: 100,
+          includedDocumentCount: 1,
+          omittedDocumentCount: 0,
+          truncated: false,
+        },
+        database: {
+          usedBytes: 200,
+          maxBytes: 512_000,
+          unboundedBytes: 200,
+          includedDocumentCount: 2,
+          omittedDocumentCount: 0,
+          truncated: false,
+        },
       },
     };
     dependencies.previewAssetResourceQuery.mockResolvedValue(responseBody);
@@ -84,6 +100,11 @@ describe("configured Assets system resource", () => {
       context: expect.anything(),
       assetClient: expect.objectContaining({ readFile: expect.any(Function) }),
       contentDatabaseMaxBytes: 512_000,
+      databasePlan: expect.objectContaining({
+        queries: expect.arrayContaining([
+          expect.objectContaining({ id: "__query-preview__" }),
+        ]),
+      }),
     });
   });
 
@@ -92,12 +113,22 @@ describe("configured Assets system resource", () => {
       data: { items: [], totalCount: 0, hasMore: false },
       __diagnostics__: {
         scope: "query-preview",
-        usedBytes: 100,
-        maxBytes: 512_000,
-        unboundedBytes: 100,
-        includedDocumentCount: 0,
-        omittedDocumentCount: 0,
-        truncated: false,
+        query: {
+          usedBytes: 100,
+          maxBytes: 512_000,
+          unboundedBytes: 100,
+          includedDocumentCount: 0,
+          omittedDocumentCount: 0,
+          truncated: false,
+        },
+        database: {
+          usedBytes: 100,
+          maxBytes: 512_000,
+          unboundedBytes: 100,
+          includedDocumentCount: 0,
+          omittedDocumentCount: 0,
+          truncated: false,
+        },
       },
     });
     const request = new Request(

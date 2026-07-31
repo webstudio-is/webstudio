@@ -8,6 +8,7 @@ describe("content database publish warning", () => {
         stats: {
           usedBytes: 500 * 1024,
           maxBytes: 500 * 1024,
+          unboundedBytes: 700 * 1024,
           includedDocumentCount: 80,
           omittedDocumentCount: 20,
           truncated: true,
@@ -24,6 +25,7 @@ describe("content database publish warning", () => {
       omittedDocumentCount: 20,
       usedKiB: 500,
       maxKiB: 500,
+      omissionKind: "size",
       affectedResourceNames: ["Blog overview", "Blog article"],
       affectedResourceKind: "dynamic",
     });
@@ -35,6 +37,7 @@ describe("content database publish warning", () => {
         stats: {
           usedBytes: 100,
           maxBytes: 500 * 1024,
+          unboundedBytes: 100,
           includedDocumentCount: 5,
           omittedDocumentCount: 0,
           truncated: false,
@@ -51,6 +54,7 @@ describe("content database publish warning", () => {
         stats: {
           usedBytes: 1025,
           maxBytes: 2048,
+          unboundedBytes: 1500,
           includedDocumentCount: 1,
           omittedDocumentCount: 1,
           truncated: true,
@@ -60,6 +64,7 @@ describe("content database publish warning", () => {
       })
     ).toMatchObject({
       usedKiB: 2,
+      omissionKind: "unavailable",
       affectedResourceNames: ["Overview"],
       affectedResourceKind: "static",
     });
