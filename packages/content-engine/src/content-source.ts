@@ -1,3 +1,4 @@
+import { getQueryConditions } from "@webstudio-is/query-builder/runtime";
 import type { ContentCompilationPlan } from "./compilation-plan";
 import {
   compileContentArtifact,
@@ -173,7 +174,7 @@ const discoverSnapshotAssetReferences = async ({
 
 const documentUrlBase = "https://content.webstudio.local/";
 
-const queryCanReturnStructuredProperties = (
+const queryCanUseStructuredProperties = (
   query: ContentCompilationPlan["queries"][number]
 ) =>
   (query.limit.type !== "literal" ||
@@ -181,7 +182,11 @@ const queryCanReturnStructuredProperties = (
     query.limit.value > 0) &&
   (query.output.mode === "all" ||
     (query.output.mode === "fields" &&
-      query.output.fields.some(([field]) => field === "properties")));
+      query.output.fields.some(([field]) => field === "properties")) ||
+    getQueryConditions(query.where).some(
+      ({ field }) => field[0] === "properties"
+    ) ||
+    query.sort.some(({ field }) => field[0] === "properties"));
 
 const discoverSnapshotDocumentGraph = async (
   snapshot: ContentSourceSnapshot,
@@ -191,7 +196,7 @@ const discoverSnapshotDocumentGraph = async (
   if (
     snapshot.loadDocumentSources === undefined ||
     (plan !== undefined &&
-      plan.queries.some(queryCanReturnStructuredProperties) === false)
+      plan.queries.some(queryCanUseStructuredProperties) === false)
   ) {
     return;
   }

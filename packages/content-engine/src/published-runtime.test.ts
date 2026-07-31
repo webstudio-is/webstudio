@@ -246,8 +246,8 @@ describe("published asset resource runtime", () => {
       deploymentId: "graph-build",
       artifact,
       runtimeAssets: {
-        post: { url: "/assets/post.json" },
-        author: { url: "/assets/author.md" },
+        post: { url: "/assets/post.json", contentRef: "storage:post" },
+        author: { url: "/assets/author.md", contentRef: "storage:author" },
       },
       fetchDocument,
       onDocumentGraphEvent: (event) => events.push(event),
@@ -311,8 +311,8 @@ describe("published asset resource runtime", () => {
       deploymentId: "graph-ssg-build",
       artifact,
       runtimeAssets: {
-        post: { url: "/assets/post.json" },
-        author: { url: "/assets/author.md" },
+        post: { url: "/assets/post.json", contentRef: "storage:post" },
+        author: { url: "/assets/author.md", contentRef: "storage:author" },
       },
       fetchDocument,
     });
@@ -324,8 +324,8 @@ describe("published asset resource runtime", () => {
       deploymentId: "graph-build",
       artifact,
       runtimeAssets: {
-        post: { url: "/assets/post.json" },
-        author: { url: "/assets/author.md" },
+        post: { url: "/assets/post.json", contentRef: "storage:post" },
+        author: { url: "/assets/author.md", contentRef: "storage:author" },
       },
       onDocumentGraphEvent: (event) => events.push(event),
     });
@@ -364,6 +364,21 @@ describe("published asset resource runtime", () => {
             url: "/assets/stale-post.json",
             contentRef: "storage:stale-post",
           },
+          author: {
+            url: "/assets/author.md",
+            contentRef: "storage:author",
+          },
+        },
+        fetchDocument,
+      })
+    ).toThrow("Published document identity does not match graph node post");
+    expect(() =>
+      createPublishedAssetResourceFetch({
+        baseUrl: "https://site.example",
+        deploymentId: "missing-document-identity-build",
+        artifact,
+        runtimeAssets: {
+          post: { url: "/assets/post.json" },
           author: {
             url: "/assets/author.md",
             contentRef: "storage:author",
@@ -435,9 +450,18 @@ describe("published asset resource runtime", () => {
       deploymentId: "parallel-graph-build",
       artifact,
       runtimeAssets: {
-        "post-a": { url: "/assets/post-a.json" },
-        "post-b": { url: "/assets/post-b.json" },
-        author: { url: "/assets/author.json" },
+        "post-a": {
+          url: "/assets/post-a.json",
+          contentRef: "storage:post-a",
+        },
+        "post-b": {
+          url: "/assets/post-b.json",
+          contentRef: "storage:post-b",
+        },
+        author: {
+          url: "/assets/author.json",
+          contentRef: "storage:author",
+        },
       },
       fetchDocument,
     });
@@ -564,8 +588,14 @@ describe("published asset resource runtime", () => {
         }),
       });
     const runtimeAssets = {
-      "graph-post": { url: "/assets/graph-post.json" },
-      "graph-author": { url: "/assets/graph-author.json" },
+      "graph-post": {
+        url: "/assets/graph-post.json",
+        contentRef: "storage:graph-post",
+      },
+      "graph-author": {
+        url: "/assets/graph-author.json",
+        contentRef: "storage:graph-author",
+      },
     };
     const oversizedRuntime = createPublishedAssetResourceFetch({
       baseUrl: "https://site.example",

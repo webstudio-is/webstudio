@@ -13,6 +13,7 @@ export default defineConfig({
     conditions: [...sourceConditions, "browser", "development|production"],
   },
   ssr: {
+    noExternal: ["nanoid"],
     resolve: {
       conditions: [...sourceConditions, "node", "development|production"],
     },

@@ -221,6 +221,26 @@ test("documents storage-efficient Assets queries for agents", () => {
   }
 });
 
+test("directs agents to document references instead of embedded Markdown", () => {
+  for (const document of ["api-use-cases", "manual-llm"] as const) {
+    const contents = readCliDoc(document);
+    expect(contents.replaceAll("**", "").toLowerCase()).toContain(
+      "do not embed"
+    );
+    expect(contents).toContain("$ref");
+    expect(contents).toContain("#body");
+    expect(contents).toContain('content.mode:"none"');
+    expect(contents).toContain("properties.body");
+  }
+
+  const tools = createMetadataOnlyMcpAdapter().listTools();
+  for (const name of ["create-assets-resource", "update-assets-resource"]) {
+    const description = tools.find((tool) => tool.name === name)?.description;
+    expect(description).toContain("Do not embed Markdown");
+    expect(description).toContain("$ref");
+  }
+});
+
 test("documents MCP examples with current tool input fields", () => {
   const adapter = createMetadataOnlyMcpAdapter();
   const toolInputFields = new Map(

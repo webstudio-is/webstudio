@@ -70,8 +70,10 @@ export const verifyContentArtifact = async (value: unknown) => {
       const node = nodesById.get(document._id);
       if (
         node !== undefined &&
-        (node.revision !== document.revision ||
-          node.contentRef !== document.contentRef)
+        ((document.revision !== undefined &&
+          node.revision !== document.revision) ||
+          (document.contentRef !== undefined &&
+            node.contentRef !== document.contentRef))
       ) {
         throw new Error(
           `Content artifact document identity does not match graph node ${document._id}`

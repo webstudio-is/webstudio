@@ -48,10 +48,22 @@ export const markdownBlogFixtureAuthor = {
   },
 };
 
+export const markdownBlogFixtureDescriptors = markdownBlogFixtureArticles.map(
+  (article) => ({
+    ...article,
+    name: `${article.slug}.json`,
+    markdownName: article.name,
+  })
+);
+
 export const markdownBlogFixtureDocuments = [
   ...markdownBlogFixtureArticles.map(({ name }) => ({
     name,
     format: "md" as const,
+  })),
+  ...markdownBlogFixtureDescriptors.map(({ name }) => ({
+    name,
+    format: "json" as const,
   })),
   {
     name: markdownBlogFixtureAuthor.name,
@@ -79,6 +91,24 @@ This article is part of the Northstar field journal. It provides enough body
 content to verify that the detail route reads and renders Markdown content.
 `;
 
+const descriptorSource = (
+  descriptor: (typeof markdownBlogFixtureDescriptors)[number]
+) =>
+  `${JSON.stringify(
+    {
+      kind: "post",
+      title: descriptor.title,
+      slug: descriptor.slug,
+      publishedAt: descriptor.publishedAt,
+      draft: false,
+      excerpt: descriptor.excerpt,
+      author: { $ref: `./${markdownBlogFixtureAuthor.name}#/profile` },
+      body: { $ref: `./${descriptor.markdownName}#body` },
+    },
+    undefined,
+    2
+  )}\n`;
+
 export const writeMarkdownBlogFixtureFiles = async (
   projectDirectory: string
 ) => {
@@ -87,6 +117,12 @@ export const writeMarkdownBlogFixtureFiles = async (
   await Promise.all([
     ...markdownBlogFixtureArticles.map((article) =>
       writeFile(join(assetsDirectory, article.name), articleSource(article))
+    ),
+    ...markdownBlogFixtureDescriptors.map((descriptor) =>
+      writeFile(
+        join(assetsDirectory, descriptor.name),
+        descriptorSource(descriptor)
+      )
     ),
     writeFile(
       join(assetsDirectory, markdownBlogFixtureAuthor.name),

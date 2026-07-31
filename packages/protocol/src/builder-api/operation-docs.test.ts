@@ -80,6 +80,11 @@ test("guides agents to keep Assets content databases small", () => {
   expect(getDescription("update-assets-resource")).toContain(
     "only rendered fields"
   );
+  for (const command of ["create-assets-resource", "update-assets-resource"]) {
+    expect(getDescription(command)).toContain("$ref");
+    expect(getDescription(command)).toContain("#body");
+    expect(getDescription(command)).toContain("content mode none");
+  }
   expect(getDescription("preview-asset-query")).toContain("usedBytes");
   expect(getDescription("preview-asset-query")).toContain("truncated");
 });

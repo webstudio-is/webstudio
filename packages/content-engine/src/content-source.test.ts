@@ -190,6 +190,80 @@ describe("content source snapshots", () => {
     expect(result.documentGraph?.edges).toHaveLength(1);
   });
 
+  test.each(["filter", "sort"] as const)(
+    "discovers references used only by a query %s",
+    async (usage) => {
+      const post = createFile({
+        id: "post",
+        path: "posts/post.json",
+        contentType: "application/json",
+      });
+      const author = createFile({
+        id: "author",
+        path: "authors/author.json",
+        contentType: "application/json",
+      });
+      const source = createDocumentSource({
+        files: [post, author],
+        sources: {
+          post: '{"author":{"$ref":"../authors/author.json"}}',
+          author: '{"name":"Ada"}',
+        },
+      });
+      const authorField: ["properties", "author", "name"] = [
+        "properties",
+        "author",
+        "name",
+      ];
+
+      const result = await compileContentSource({
+        source,
+        projectId,
+        plan: {
+          standardFields: [["id"]],
+          structuredPropertyPaths: [authorField],
+          excerpt: false,
+          metadataError: false,
+          queries: [
+            {
+              id: usage,
+              where:
+                usage === "filter"
+                  ? {
+                      all: [
+                        {
+                          field: authorField,
+                          operator: "eq",
+                          value: { type: "literal", value: "Ada" },
+                        },
+                      ],
+                    }
+                  : { all: [] },
+              sort:
+                usage === "sort"
+                  ? [{ field: authorField, direction: "asc" }]
+                  : [],
+              limit: { type: "literal", value: 1 },
+              offset: { type: "literal", value: 0 },
+              output: {
+                mode: "fields",
+                includeMetadata: false,
+                fields: [["id"]],
+              },
+              content: { mode: "none" },
+            },
+          ],
+        },
+      });
+
+      expect(result.documentGraph?.edges).toHaveLength(1);
+      expect(result.documentGraph?.edges[0]).toMatchObject({
+        sourceId: "post",
+        referenceId: "#/author",
+      });
+    }
+  );
+
   test("discovers document references without embedding source payloads", async () => {
     const post = createFile({
       id: "post",

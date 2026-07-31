@@ -268,9 +268,11 @@ const defineJsonProperty = (
 export const assembleJsonDocument = ({
   document: input,
   references,
+  allowUnresolvedReferences = false,
 }: {
   document: unknown;
   references: ReadonlyMap<string, unknown>;
+  allowUnresolvedReferences?: boolean;
 }): JsonValue => {
   const document = normalizeJsonValue(input);
   const usedReferences = new Set<string>();
@@ -279,6 +281,9 @@ export const assembleJsonDocument = ({
     const marker = getReferenceMarker(current, referenceId);
     if (marker !== undefined) {
       if (references.has(referenceId) === false) {
+        if (allowUnresolvedReferences) {
+          return current;
+        }
         throw new JsonDocumentError({
           code: "REFERENCE_NOT_FOUND",
           message: `Resolved JSON reference ${referenceId} is unavailable`,

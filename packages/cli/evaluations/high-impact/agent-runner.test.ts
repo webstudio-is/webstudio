@@ -130,6 +130,7 @@ describe("high-impact agent runner", () => {
     expect(blogConstraints).toContain("one upload-assets call");
     expect(blogConstraints).toContain("aurora-trails.md");
     expect(blogConstraints).toContain("city-walks.md");
+    expect(blogConstraints).toContain("aurora-trails.json");
     expect(blogConstraints).toContain("northstar-author.json");
     expect(blogConstraints).toContain('"format":"json"');
     expect(blogConstraints).toContain("/blog/:slug");
@@ -141,9 +142,12 @@ describe("high-impact agent runner", () => {
     expect(blogConstraints).toContain(
       '"fields":[["properties","title"],["properties","slug"]'
     );
-    expect(blogConstraints).toContain('"mode":"markdown-body"');
+    expect(blogConstraints).toContain('"mode":"none"');
+    expect(blogConstraints).not.toContain('"mode":"markdown-body"');
+    expect(blogConstraints).toContain('["properties","body"]');
     expect(blogConstraints).toContain('["properties","author"]');
     expect(blogConstraints).toContain("collectionItem.properties.author.name");
+    expect(blogConstraints).toContain("collectionItem.properties.body");
     expect(blogConstraints).toContain("$.MarkdownEmbed");
     expect(blogConstraints).toContain(
       "call verify-page-responsive exactly twice"

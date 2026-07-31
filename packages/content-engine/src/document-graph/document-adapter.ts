@@ -125,9 +125,11 @@ export const analyzeDocumentSource = async ({
 export const assembleDocument = ({
   document,
   references,
+  allowUnresolvedReferences,
 }: {
   document: AdaptedDocument;
   references: ReadonlyMap<string, unknown>;
+  allowUnresolvedReferences?: boolean;
 }): AdaptedDocument => {
   if (document.format === "json") {
     return freezeDocument({
@@ -135,6 +137,7 @@ export const assembleDocument = ({
       value: assembleJsonDocument({
         document: document.value,
         references,
+        allowUnresolvedReferences,
       }),
     });
   }
@@ -143,6 +146,7 @@ export const assembleDocument = ({
     value: assembleMarkdownDocument({
       document: document.value,
       references,
+      allowUnresolvedReferences,
     }),
   });
 };

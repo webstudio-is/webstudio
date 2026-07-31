@@ -66,11 +66,13 @@ At runtime, the server compares the query's filter, sort, and output property
 paths with the graph's reference locations. If a reference can affect the
 query, the server resolves the relevant source documents before executing the
 query; otherwise it uses the normal query path without loading graph sources.
-It computes the selected sources' complete dependency closure, loads
-independent documents concurrently, loads shared storage content once,
-validates storage identities, revisions, formats, and payload limits, and
-assembles dependencies before their consumers. A resolved value replaces its
-exact `{ "$ref": "..." }` marker.
+Non-reference filters first narrow the candidate sources. The server follows
+only root references that intersect the query, preserves unselected sibling
+markers, and computes the selected references' complete downstream dependency
+closure. It loads independent documents concurrently, loads shared storage
+content once, validates storage identities, revisions, formats, and payload
+limits, and assembles dependencies before their consumers. A resolved value
+replaces its exact `{ "$ref": "..." }` marker.
 
 Filtering, sorting, pagination, and projection therefore operate on resolved
 values when their property paths intersect a reference. Only properties

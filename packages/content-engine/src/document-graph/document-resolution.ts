@@ -80,6 +80,7 @@ export const resolveAdaptedDocumentGraph = async ({
   signal,
   load,
   onEvent,
+  allowUnresolvedReferences = false,
 }: {
   graph: DocumentGraph;
   rootIds: readonly string[];
@@ -93,6 +94,7 @@ export const resolveAdaptedDocumentGraph = async ({
     options: { signal?: AbortSignal }
   ) => Promise<DocumentSource>;
   onEvent?: DocumentGraphRuntimeObserver;
+  allowUnresolvedReferences?: boolean;
 }): Promise<ResolvedDocumentGraph<AdaptedDocument>> => {
   const documentCount = getDocumentGraphClosure({ graph, rootIds }).length;
   const resolutionEvent = { rootCount: rootIds.length, documentCount };
@@ -161,7 +163,11 @@ export const resolveAdaptedDocumentGraph = async ({
           representation: reference.representation,
         }),
       assemble: ({ source, references }) =>
-        assembleDocument({ document: source, references }),
+        assembleDocument({
+          document: source,
+          references,
+          allowUnresolvedReferences,
+        }),
     });
     emitDocumentGraphRuntimeEvent(onEvent, {
       type: "resolution-completed",

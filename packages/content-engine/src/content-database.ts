@@ -1,3 +1,4 @@
+import { evaluateQueryWhere } from "@webstudio-is/query-builder/runtime";
 import type {
   ContentArtifactV1,
   AssetQueryRequestInput,
@@ -11,6 +12,7 @@ import { serializeContentArtifact } from "./content-artifact";
 import {
   AssetIndexRevisionError,
   executeAssetQuery,
+  matchesAssetQueryFilter,
   type AssetRuntimeData,
 } from "./structured-query";
 import { encodeUtf8, getUtf8ByteLength } from "./byte-stream";
@@ -19,8 +21,10 @@ import { getMaterializedAssetQueryResult } from "./materialized-query";
 import {
   createDocumentGraph,
   getAdaptedDocumentProperties,
+  isDocumentGraphFieldAffected,
   getDocumentGraphQueryRootIds,
   resolveAdaptedDocumentGraph,
+  selectDocumentGraphForQuery,
   type DocumentSourceLoader,
   emitDocumentGraphRuntimeEvent,
   type DocumentGraphRuntimeObserver,
@@ -161,25 +165,56 @@ export const createContentDatabase = ({
         return await executeQuery(request, queryContentReader, runtimeAssets);
       }
       const query = assetQuery.parse(request.query);
-      const documentIds = new Set(artifact.documents.map(({ _id }) => _id));
+      const documentsById = new Map(
+        artifact.documents.map((document) => [document._id, document])
+      );
       const rootIds = getDocumentGraphQueryRootIds({
         graph: documentGraph,
         query,
-      }).filter((rootId) => documentIds.has(rootId));
+      }).filter((rootId) => {
+        const document = documentsById.get(rootId);
+        if (document === undefined) {
+          return false;
+        }
+        return (
+          evaluateQueryWhere(query.where, (filter) => {
+            if (
+              isDocumentGraphFieldAffected({
+                graph: documentGraph,
+                sourceId: rootId,
+                field: filter.field,
+              })
+            ) {
+              return;
+            }
+            return matchesAssetQueryFilter(
+              document,
+              filter,
+              runtimeAssets?.[rootId]
+            );
+          }) !== false
+        );
+      });
       if (rootIds.length === 0) {
         return await executeQuery(request, queryContentReader, runtimeAssets);
       }
+      const queryGraph = selectDocumentGraphForQuery({
+        graph: documentGraph,
+        query,
+        rootIds,
+      });
       emitDocumentGraphRuntimeEvent(onEvent, {
         type: "roots-selected",
         rootCount: rootIds.length,
       });
       const resolved = await resolveAdaptedDocumentGraph({
-        graph: documentGraph,
+        graph: queryGraph,
         rootIds,
         load,
         concurrency: contentEngineLimits.concurrentContentReads,
         signal,
         onEvent,
+        allowUnresolvedReferences: true,
       });
       const propertiesById = new Map(
         rootIds.flatMap((rootId, index) => {

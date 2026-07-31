@@ -1175,8 +1175,9 @@ describe("project session mcp adapter", () => {
       expect(tool.description).toContain("<dataSourceName>.data");
       expect(tool.description).toContain("<dataSourceName>.meta");
       expect(tool.description).toContain(".properties");
-      expect(tool.description).toContain(".excerpt");
-      expect(tool.description).toContain(".content.text");
+      expect(tool.description).toContain("Do not embed Markdown");
+      expect(tool.description).toContain("$ref");
+      expect(tool.description).toContain("#body");
       expect(getSchemaProperties(tool.inputSchema)).not.toEqual({});
     }
   });
@@ -4519,7 +4520,10 @@ describe("project session mcp adapter", () => {
           detailResource: expect.objectContaining({
             dataSourceName: "post",
             query: expect.objectContaining({
-              content: { mode: "markdown-body", maxBytes: 1_048_576 },
+              content: { mode: "none" },
+              output: expect.objectContaining({
+                fields: expect.arrayContaining([["properties", "body"]]),
+              }),
             }),
           }),
           overviewCollection: expect.objectContaining({
@@ -4528,7 +4532,9 @@ describe("project session mcp adapter", () => {
             ),
           }),
           detailCollection: expect.objectContaining({
-            itemFragment: expect.stringContaining("<$.MarkdownEmbed"),
+            itemFragment: expect.stringContaining(
+              "collectionItem.properties.body"
+            ),
           }),
         }),
         workflow: expect.arrayContaining([
@@ -4536,7 +4542,7 @@ describe("project session mcp adapter", () => {
             'meta.get_more_tools with {"tools":["create-assets-resource"]}'
           ),
           expect.stringContaining(
-            "Upload all Markdown and JSON documents together in one upload-assets call"
+            "Upload all Markdown source files and JSON descriptors together in one upload-assets call"
           ),
           expect.stringContaining('"format":"md"'),
           expect.stringContaining('"format":"json"'),
@@ -4545,6 +4551,7 @@ describe("project session mcp adapter", () => {
           expect.stringContaining('dynamic path "/blog/:slug"'),
           expect.stringContaining("Do not create one page per post"),
           expect.stringContaining('content.mode:"none"'),
+          expect.stringContaining("Do not use markdown-body"),
           expect.stringContaining('field:["extension"]'),
           expect.stringContaining("both pages load their content from Assets"),
         ]),

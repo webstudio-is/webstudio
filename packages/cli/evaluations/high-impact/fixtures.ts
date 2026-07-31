@@ -3,6 +3,7 @@ import { fontAssetFixtureFiles } from "./font-assets-fixture";
 import {
   markdownBlogFixtureArticles,
   markdownBlogFixtureAuthor,
+  markdownBlogFixtureDescriptors,
 } from "./markdown-blog-fixture";
 
 export type EvaluationPage = {
@@ -223,13 +224,13 @@ export const fontAssetsFixture: HighImpactFixture = {
 
 export const markdownBlogFixture: HighImpactFixture = {
   id: "markdown-blog-v1",
-  objective: `Upload the ${markdownBlogFixtureArticles.length} provided Markdown articles and ${markdownBlogFixtureAuthor.name} from .webstudio/assets into one Blog asset folder. Each article references the JSON author profile from its frontmatter. Build an editable blog overview at /blog and a dynamic detail page at /blog/:slug using exactly one fully configured scoped Assets resource per page, Collections, and Markdown Embed. Include the complete structured query in each initial resource creation; never create a default or placeholder resource and never repair one by creating another. The overview query must exclude drafts, sort newest first, select the article title, slug, excerpt, publication date, and resolved author, and avoid loading file content. The detail query must select one article from system.params.slug, select its resolved author, and load its Markdown body. Render the resolved author name on both pages. Verify both /blog and /blog/aurora-trails at desktop and mobile sizes.`,
+  objective: `Upload the ${markdownBlogFixtureArticles.length} provided Markdown articles, their ${markdownBlogFixtureDescriptors.length} JSON descriptors, and ${markdownBlogFixtureAuthor.name} from .webstudio/assets into one Blog asset folder. Each descriptor references its Markdown body and the JSON author profile. Build an editable blog overview at /blog and a dynamic detail page at /blog/:slug using exactly one fully configured scoped Assets resource per page, Collections, and Markdown Embed. Include the complete structured query in each initial resource creation; never create a default or placeholder resource and never repair one by creating another. Both queries must read the JSON descriptors with content mode none. The overview query must exclude drafts, sort newest first, and select the article title, slug, excerpt, publication date, and resolved author. The detail query must select one descriptor from system.params.slug and select its referenced Markdown body and author without embedding file content in the query. Render the resolved author name on both pages. Verify both /blog and /blog/aurora-trails at desktop and mobile sizes.`,
   project: emptyProject(),
 };
 
 export const markdownReferencesDiscoveryFixture: HighImpactFixture = {
   id: "markdown-references-discovery-v1",
-  objective: `Upload the supplied ${markdownBlogFixtureArticles.map(({ name }) => name).join(", ")} Markdown articles and ${markdownBlogFixtureAuthor.name} JSON author profile from .webstudio/assets. Build an editable blog overview at /blog and one dynamic article page at /blog/:slug. Use Assets resources so draft articles are excluded, posts are ordered newest first, each post displays its referenced author, and only the selected article loads and renders its Markdown body. Verify the overview and /blog/aurora-trails at desktop and mobile sizes. Discover the supported workflow and data shapes from Webstudio MCP guidance.`,
+  objective: `Upload the supplied ${markdownBlogFixtureArticles.map(({ name }) => name).join(", ")} Markdown articles, their JSON descriptors, and ${markdownBlogFixtureAuthor.name} author profile from .webstudio/assets. Build an editable blog overview at /blog and one dynamic article page at /blog/:slug. Use Assets resources so draft articles are excluded, posts are ordered newest first, each post displays its referenced author, and only the selected descriptor resolves and renders its referenced Markdown body without embedding file content in the query. Verify the overview and /blog/aurora-trails at desktop and mobile sizes. Discover the supported workflow and data shapes from Webstudio MCP guidance.`,
   project: emptyProject(),
 };
 

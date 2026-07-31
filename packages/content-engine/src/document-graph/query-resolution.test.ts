@@ -186,4 +186,151 @@ describe("document graph query resolution", () => {
     expect(planned.artifact.queries).toBeUndefined();
     expect(planned.artifact.documents).toHaveLength(2);
   });
+
+  test("narrows graph roots with static filters and skips unselected sibling references", async () => {
+    const postCount = 12;
+    const entries = Array.from({ length: postCount }, (_, index) => {
+      const id = `post-${String(index).padStart(2, "0")}`;
+      return createCanonicalAssetFileEntry({
+        projectId: "project",
+        document: {
+          _id: id,
+          _type: "asset.file",
+          name: `${id}.json`,
+          path: `posts/${id}.json`,
+          key: id,
+          extension: "json",
+          mimeType: "application/json",
+          size: 1,
+          revision: `${id}-r1`,
+          contentRef: `content:${id}`,
+          properties: {
+            slug: id,
+            author: { $ref: "../author.json" },
+            body: { $ref: `./${id}.md#body` },
+          },
+        },
+      });
+    });
+    const graph = createDocumentGraph({
+      nodes: [
+        ...entries.map(({ assetId, revision, document }) => ({
+          id: assetId,
+          revision,
+          contentRef: document.contentRef,
+          format: "json" as const,
+        })),
+        ...entries.map(({ assetId }) => ({
+          id: `${assetId}-body`,
+          revision: `${assetId}-body-r1`,
+          contentRef: `content:${assetId}-body`,
+          format: "markdown" as const,
+        })),
+        {
+          id: "author",
+          revision: "author-r1",
+          contentRef: "content:author",
+          format: "json" as const,
+        },
+      ],
+      edges: entries.flatMap(({ assetId }) => [
+        {
+          sourceId: assetId,
+          referenceId: "#/author",
+          reference: {
+            documentId: "author",
+            revision: "author-r1",
+            representation: { type: "document" as const },
+          },
+        },
+        {
+          sourceId: assetId,
+          referenceId: "#/body",
+          reference: {
+            documentId: `${assetId}-body`,
+            revision: `${assetId}-body-r1`,
+            representation: { type: "markdown-body" as const },
+          },
+        },
+      ]),
+    });
+    const { artifact } = await compileContentArtifact({
+      projectId: "project",
+      entries,
+      documentGraph: graph,
+    });
+    const sources = Object.fromEntries([
+      ...entries.map(({ assetId }) => [
+        assetId,
+        JSON.stringify({
+          slug: assetId,
+          author: { $ref: "../author.json" },
+          body: { $ref: `./${assetId}.md#body` },
+        }),
+      ]),
+      ...entries.map(({ assetId }) => [`${assetId}-body`, `# ${assetId}`]),
+      ["author", '{"name":"Ada"}'],
+    ]);
+    const load = vi.fn(async (node: (typeof graph.nodes)[number]) => ({
+      format: node.format as "json" | "markdown",
+      revision: node.revision,
+      source: sources[node.id],
+    }));
+    const database = createContentDatabase({ artifact });
+
+    const detail = await database.queryWithDocumentGraph({
+      request: {
+        query: {
+          where: {
+            all: [
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "post-07",
+              },
+            ],
+          },
+          limit: 1,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["properties", "body"]],
+          },
+          content: { mode: "none" },
+        },
+      },
+      load,
+    });
+
+    expect(detail.items).toEqual([
+      { id: "post-07", properties: { body: "# post-07" } },
+    ]);
+    expect(load.mock.calls.map(([node]) => node.id).sort()).toEqual([
+      "post-07",
+      "post-07-body",
+    ]);
+
+    load.mockClear();
+    const overview = await database.queryWithDocumentGraph({
+      request: {
+        query: {
+          where: { all: [] },
+          limit: postCount,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["properties", "author"]],
+          },
+          content: { mode: "none" },
+        },
+      },
+      load,
+    });
+
+    expect(overview.items).toHaveLength(postCount);
+    expect(load.mock.calls.map(([node]) => node.id).sort()).toEqual([
+      "author",
+      ...entries.map(({ assetId }) => assetId),
+    ]);
+  });
 });

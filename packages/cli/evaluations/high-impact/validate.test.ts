@@ -187,7 +187,7 @@ const addMarkdownBlog = (): EvaluationProject => {
       component: "Box",
       children: [
         { type: "expression", value: "collectionItem.properties.title" },
-        { type: "expression", value: "collectionItem.excerpt" },
+        { type: "expression", value: "collectionItem.properties.excerpt" },
         {
           type: "expression",
           value: "collectionItem.properties.publishedAt",
@@ -233,7 +233,7 @@ const addMarkdownBlog = (): EvaluationProject => {
     instanceId: "markdown",
     name: "content",
     type: "expression",
-    value: "collectionItem.content.text",
+    value: "collectionItem.properties.body",
   });
   const resource = (
     id: string,
@@ -255,7 +255,13 @@ const addMarkdownBlog = (): EvaluationProject => {
       createStructuredAssetQueryResourceBody({
         where: {
           all: [
-            { field: ["extension"], operator: "eq", value: '"md"' },
+            { field: ["extension"], operator: "eq", value: '"json"' },
+            {
+              field: ["properties", "kind"],
+              operator: "eq",
+              value: '"post"',
+            },
+            { field: ["folderId"], operator: "eq", value: '"blog-folder"' },
             {
               field: ["properties", "draft"],
               operator: "ne",
@@ -277,7 +283,7 @@ const addMarkdownBlog = (): EvaluationProject => {
             ["properties", "slug"],
             ["properties", "publishedAt"],
             ["properties", "author"],
-            ["excerpt"],
+            ["properties", "excerpt"],
           ],
         },
         content: { mode: "none" },
@@ -289,7 +295,13 @@ const addMarkdownBlog = (): EvaluationProject => {
       createStructuredAssetQueryResourceBody({
         where: {
           all: [
-            { field: ["extension"], operator: "eq", value: '"md"' },
+            { field: ["extension"], operator: "eq", value: '"json"' },
+            {
+              field: ["properties", "kind"],
+              operator: "eq",
+              value: '"post"',
+            },
+            { field: ["folderId"], operator: "eq", value: '"blog-folder"' },
             {
               field: ["properties", "slug"],
               operator: "eq",
@@ -306,9 +318,10 @@ const addMarkdownBlog = (): EvaluationProject => {
           fields: [
             ["properties", "title"],
             ["properties", "author"],
+            ["properties", "body"],
           ],
         },
-        content: { mode: "markdown-body", maxBytes: 1_048_576 },
+        content: { mode: "none" },
       })
     )
   );

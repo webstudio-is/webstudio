@@ -106,6 +106,32 @@ describe("content artifact document graph", () => {
     ).rejects.toThrow("document identity");
   });
 
+  test("accepts graph identity fields omitted by query projection", async () => {
+    const { artifact } = await compileContentArtifact({
+      projectId: "project",
+      entries: [entry],
+      documentGraph: graph,
+    });
+    const projected = contentArtifactV1.parse({
+      ...artifact,
+      documents: artifact.documents.map(
+        ({ revision: _revision, contentRef: _contentRef, ...document }) =>
+          document
+      ),
+    });
+    const projectedWithChecksum = {
+      ...projected,
+      integrity: {
+        algorithm: "sha256" as const,
+        checksum: await checksumContentArtifact(projected),
+      },
+    };
+
+    await expect(verifyContentArtifact(projectedWithChecksum)).resolves.toEqual(
+      projectedWithChecksum
+    );
+  });
+
   test("counts persisted graph bytes against the artifact limit", async () => {
     const withoutGraph = await compileContentArtifact({
       projectId: "project",

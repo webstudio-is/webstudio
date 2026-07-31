@@ -204,12 +204,7 @@ const validateRuntimeAssets = ({
     );
   }
   const staleDocumentId = artifact.documentGraph?.nodes.find(
-    ({ id, contentRef }) => {
-      const runtimeContentRef = runtimeAssets[id]?.contentRef;
-      return (
-        runtimeContentRef !== undefined && runtimeContentRef !== contentRef
-      );
-    }
+    ({ id, contentRef }) => runtimeAssets[id]?.contentRef !== contentRef
   )?.id;
   if (staleDocumentId !== undefined) {
     throw new Error(

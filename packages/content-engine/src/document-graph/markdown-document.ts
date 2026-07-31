@@ -220,9 +220,11 @@ export const analyzeMarkdownDocument = async ({
 export const assembleMarkdownDocument = ({
   document: input,
   references,
+  allowUnresolvedReferences = false,
 }: {
   document: unknown;
   references: ReadonlyMap<string, unknown>;
+  allowUnresolvedReferences?: boolean;
 }): MarkdownDocument => {
   const document = normalizeMarkdownDocument(input);
   const jsonReferences = new Map<string, unknown>();
@@ -234,6 +236,7 @@ export const assembleMarkdownDocument = ({
     frontmatter = assembleJsonDocument({
       document: document.frontmatter,
       references: jsonReferences,
+      allowUnresolvedReferences,
     });
   } catch (cause) {
     if (cause instanceof JsonDocumentError) {
