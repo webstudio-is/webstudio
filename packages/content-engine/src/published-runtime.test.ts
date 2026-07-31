@@ -435,6 +435,108 @@ describe("published asset resource runtime", () => {
     ).toHaveLength(1);
   });
 
+  test("maps CDN document limits and in-flight cancellation to query failures", async () => {
+    const graphDocument: AssetFileDocument = {
+      ...document,
+      _id: "graph-post",
+      name: "graph-post.json",
+      path: "content/graph-post.json",
+      key: "graph-post",
+      extension: "json",
+      mimeType: "application/json",
+      revision: "graph-post-r1",
+      contentRef: "storage:graph-post",
+      properties: { title: "Post" },
+    };
+    const { artifact } = await compileContentArtifact({
+      projectId: "project-1",
+      entries: [
+        createCanonicalAssetFileEntry({
+          projectId: "project-1",
+          document: graphDocument,
+        }),
+      ],
+      documentGraph: createDocumentGraph({
+        nodes: [
+          {
+            id: graphDocument._id,
+            revision: graphDocument.revision,
+            contentRef: graphDocument.contentRef,
+            format: "json",
+          },
+        ],
+        edges: [],
+      }),
+    });
+    const request = (signal?: AbortSignal) =>
+      new Request("https://site.example/$resources/assets", {
+        method: "POST",
+        signal,
+        body: JSON.stringify({
+          query: {
+            where: {
+              all: [{ field: ["id"], operator: "eq", value: "graph-post" }],
+            },
+            limit: 1,
+            output: {
+              mode: "fields",
+              includeMetadata: false,
+              fields: [["properties", "title"]],
+            },
+          },
+        }),
+      });
+    const runtimeAssets = {
+      "graph-post": { url: "/assets/graph-post.json" },
+    };
+    const oversizedRuntime = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
+      deploymentId: "graph-limit-build",
+      artifact,
+      runtimeAssets,
+      fetchDocument: async () =>
+        new Response(`{"value":"${"a".repeat(1024 * 1024)}"}`),
+    });
+
+    const oversized = await oversizedRuntime(request());
+    expect(oversized?.status).toBe(400);
+    await expect(oversized?.json()).resolves.toMatchObject({
+      error: {
+        code: "CONTENT_LIMIT_EXCEEDED",
+        details: {
+          assetId: "graph-post",
+          contentByteLimit: 1024 * 1024,
+        },
+      },
+    });
+
+    const fetchDocument = vi.fn(
+      (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(init.signal?.reason)
+          );
+        })
+    );
+    const cancelledRuntime = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
+      deploymentId: "graph-cancel-build",
+      artifact,
+      runtimeAssets,
+      fetchDocument,
+    });
+    const controller = new AbortController();
+    const cancelledPromise = cancelledRuntime(request(controller.signal));
+    await vi.waitFor(() => expect(fetchDocument).toHaveBeenCalledOnce());
+    controller.abort("test cancellation");
+
+    const cancelled = await cancelledPromise;
+    expect(cancelled?.status).toBe(499);
+    await expect(cancelled?.json()).resolves.toMatchObject({
+      error: { code: "REQUEST_CANCELLED" },
+    });
+  });
+
   test("serves a materialized static query without candidate documents", async () => {
     const query = assetQuery.parse({
       where: {

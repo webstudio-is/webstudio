@@ -5,6 +5,7 @@ import {
   AssetQueryExecutionError,
 } from "./structured-query";
 import { DocumentResolutionLimitError } from "./document-graph/document-resolution";
+import { CachedDocumentLoaderError } from "./document-graph/cached-document-loader";
 
 export type AssetResourceQueryError = Omit<
   AssetResourceQueryFailure["error"],
@@ -65,6 +66,18 @@ export const getAssetResourceQueryError = (
         message: cause.message,
         retryable: false,
         details,
+        status: 400,
+      };
+    }
+    if (cause instanceof CachedDocumentLoaderError) {
+      return {
+        code: "CONTENT_LIMIT_EXCEEDED",
+        message: cause.message,
+        retryable: false,
+        details: {
+          assetId: cause.documentId,
+          contentByteLimit: cause.contentByteLimit,
+        },
         status: 400,
       };
     }

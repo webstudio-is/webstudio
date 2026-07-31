@@ -28,19 +28,23 @@ export interface DocumentSourceCache {
 export class CachedDocumentLoaderError extends Error {
   readonly code = "CONTENT_LIMIT_EXCEEDED";
   readonly documentId: string;
+  readonly contentByteLimit: number;
 
   constructor({
     message,
     documentId,
+    contentByteLimit,
     cause,
   }: {
     message: string;
     documentId: string;
+    contentByteLimit: number;
     cause?: unknown;
   }) {
     super(message, { cause });
     this.name = "CachedDocumentLoaderError";
     this.documentId = documentId;
+    this.contentByteLimit = contentByteLimit;
   }
 }
 
@@ -136,6 +140,7 @@ export const createCachedDocumentSourceLoader = ({
           throw new CachedDocumentLoaderError({
             message: `Document ${node.id} exceeds the cache byte limit`,
             documentId: node.id,
+            contentByteLimit: maximumBytes,
             cause,
           });
         }

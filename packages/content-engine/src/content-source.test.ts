@@ -94,6 +94,30 @@ const createMutableSource = ({
   };
 };
 
+const createDocumentSource = ({
+  files,
+  sources,
+}: {
+  files: readonly ContentSourceFile[];
+  sources: Readonly<Partial<Record<string, string>>>;
+}): ContentSource => ({
+  async openSnapshot() {
+    return {
+      revision: getRevision(files),
+      files,
+      async loadEntries() {
+        return files.map(createEntry);
+      },
+      async loadDocumentSources() {
+        return files.map(({ id }) => ({ id, source: sources[id] ?? "" }));
+      },
+      async isCurrent() {
+        return true;
+      },
+    };
+  },
+});
+
 describe("content source snapshots", () => {
   test("discovers document references without embedding source payloads", async () => {
     const post = createFile({
@@ -158,6 +182,83 @@ describe("content source snapshots", () => {
         checksum: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
       },
     });
+  });
+
+  test.each([
+    {
+      name: "a missing target",
+      files: [
+        createFile({
+          id: "post",
+          path: "content/post.json",
+          contentType: "application/json",
+        }),
+      ],
+      sources: { post: '{"author":{"$ref":"./missing.json"}}' },
+      code: "TARGET_NOT_FOUND",
+    },
+    {
+      name: "a dependency cycle",
+      files: [
+        createFile({
+          id: "post",
+          path: "content/post.json",
+          contentType: "application/json",
+        }),
+        createFile({
+          id: "author",
+          path: "content/author.json",
+          contentType: "application/json",
+        }),
+      ],
+      sources: {
+        post: '{"author":{"$ref":"./author.json"}}',
+        author: '{"post":{"$ref":"./post.json"}}',
+      },
+      code: "CYCLE",
+    },
+  ])("rejects $name while compiling stored document sources", async (input) => {
+    await expect(
+      compileContentSource({
+        projectId,
+        source: createDocumentSource(input),
+      })
+    ).rejects.toMatchObject({ code: input.code });
+  });
+
+  test("propagates changed target revisions into graph edges and artifact integrity", async () => {
+    const compile = async (authorRevision: string) => {
+      const post = createFile({
+        id: "post",
+        path: "content/post.json",
+        contentType: "application/json",
+      });
+      const author = createFile({
+        id: "author",
+        path: "content/author.json",
+        contentType: "application/json",
+        revision: authorRevision,
+      });
+      return await compileContentSource({
+        projectId,
+        source: createDocumentSource({
+          files: [post, author],
+          sources: {
+            post: '{"author":{"$ref":"./author.json"}}',
+            author: '{"name":"Ada"}',
+          },
+        }),
+      });
+    };
+
+    const first = await compile("author-r1");
+    const second = await compile("author-r2");
+
+    expect(first.documentGraph?.edges[0].reference.revision).toBe("author-r1");
+    expect(second.documentGraph?.edges[0].reference.revision).toBe("author-r2");
+    expect(first.artifact.integrity.checksum).not.toBe(
+      second.artifact.integrity.checksum
+    );
   });
 
   test("describes a compiler entry with the snapshot contract", () => {
