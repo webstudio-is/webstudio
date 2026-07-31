@@ -4,19 +4,13 @@ import {
   getDocumentGraphClosure,
   type DocumentGraph,
 } from "./graph";
-import type { SourceDocumentReference } from "./reference-codec";
+import type { SourceReferenceOccurrence } from "./reference-codec";
 
 export type DocumentDescriptor = Readonly<{
   id: string;
   documentUrl: string;
   revision: string;
   contentRef: string;
-}>;
-
-export type SourceReferenceOccurrence = Readonly<{
-  sourceDocumentId: string;
-  referenceId: string;
-  reference: SourceDocumentReference;
 }>;
 
 export type DocumentGraphCompilationErrorCode =

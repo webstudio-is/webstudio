@@ -13,6 +13,12 @@ export type SourceDocumentReference = Readonly<{
   representation: DocumentRepresentation;
 }>;
 
+export type SourceReferenceOccurrence = Readonly<{
+  sourceDocumentId: string;
+  referenceId: string;
+  reference: SourceDocumentReference;
+}>;
+
 export type DocumentReferenceSyntaxErrorCode =
   | "INVALID_BASE_URL"
   | "INVALID_REFERENCE_URL"
