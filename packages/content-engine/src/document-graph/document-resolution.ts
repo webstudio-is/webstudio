@@ -16,6 +16,11 @@ import {
   type DocumentSource,
 } from "./document-source";
 import { resolveDocumentGraph, type ResolvedDocumentGraph } from "./resolver";
+import {
+  emitDocumentGraphRuntimeEvent,
+  getDocumentGraphErrorCode,
+  type DocumentGraphRuntimeObserver,
+} from "./observability";
 
 export type DocumentResolutionLimitErrorCode =
   | "DOCUMENT_COUNT_EXCEEDED"
@@ -74,6 +79,7 @@ export const resolveAdaptedDocumentGraph = async ({
   maximumDocuments = contentEngineLimits.hydratedFileCount,
   signal,
   load,
+  onEvent,
 }: {
   graph: DocumentGraph;
   rootIds: readonly string[];
@@ -86,65 +92,88 @@ export const resolveAdaptedDocumentGraph = async ({
     node: DocumentGraphNode,
     options: { signal?: AbortSignal }
   ) => Promise<DocumentSource>;
+  onEvent?: DocumentGraphRuntimeObserver;
 }): Promise<ResolvedDocumentGraph<AdaptedDocument>> => {
   const documentCount = getDocumentGraphClosure({ graph, rootIds }).length;
-  if (documentCount > maximumDocuments) {
-    throw new DocumentResolutionLimitError({
-      code: "DOCUMENT_COUNT_EXCEEDED",
-      message: "Document graph resolution exceeds the document limit",
-      documentCount,
-      documentLimit: maximumDocuments,
-    });
-  }
-  let totalBytes = 0;
-  return await resolveDocumentGraph<AdaptedDocument, AdaptedDocument>({
-    graph,
-    rootIds,
-    concurrency,
-    signal,
-    load: async (node, options) => {
-      const loaded = assertDocumentSourceRevision({
-        node,
-        source: await load(node, options),
+  const resolutionEvent = { rootCount: rootIds.length, documentCount };
+  emitDocumentGraphRuntimeEvent(onEvent, {
+    type: "resolution-started",
+    ...resolutionEvent,
+  });
+  try {
+    if (documentCount > maximumDocuments) {
+      throw new DocumentResolutionLimitError({
+        code: "DOCUMENT_COUNT_EXCEEDED",
+        message: "Document graph resolution exceeds the document limit",
+        documentCount,
+        documentLimit: maximumDocuments,
       });
-      let bytes: Uint8Array;
-      try {
-        bytes = await readBoundedBytes(loaded.source, maximumBytes);
-      } catch (cause) {
-        if (cause instanceof ByteLimitExceededError) {
+    }
+    let totalBytes = 0;
+    const resolved = await resolveDocumentGraph<
+      AdaptedDocument,
+      AdaptedDocument
+    >({
+      graph,
+      rootIds,
+      concurrency,
+      signal,
+      load: async (node, options) => {
+        const loaded = assertDocumentSourceRevision({
+          node,
+          source: await load(node, options),
+        });
+        let bytes: Uint8Array;
+        try {
+          bytes = await readBoundedBytes(loaded.source, maximumBytes);
+        } catch (cause) {
+          if (cause instanceof ByteLimitExceededError) {
+            throw new DocumentResolutionLimitError({
+              code: "CONTENT_LIMIT_EXCEEDED",
+              message: `Document ${node.id} exceeds the byte limit`,
+              documentId: node.id,
+              contentByteLimit: maximumBytes,
+              cause,
+            });
+          }
+          throw cause;
+        }
+        const nextTotalBytes = totalBytes + bytes.byteLength;
+        if (nextTotalBytes > maximumTotalBytes) {
           throw new DocumentResolutionLimitError({
-            code: "CONTENT_LIMIT_EXCEEDED",
-            message: `Document ${node.id} exceeds the byte limit`,
+            code: "TOTAL_BYTES_EXCEEDED",
+            message: "Document graph resolution exceeds the total byte limit",
             documentId: node.id,
-            contentByteLimit: maximumBytes,
-            cause,
+            totalBytes: nextTotalBytes,
+            totalByteLimit: maximumTotalBytes,
           });
         }
-        throw cause;
-      }
-      const nextTotalBytes = totalBytes + bytes.byteLength;
-      if (nextTotalBytes > maximumTotalBytes) {
-        throw new DocumentResolutionLimitError({
-          code: "TOTAL_BYTES_EXCEEDED",
-          message: "Document graph resolution exceeds the total byte limit",
-          documentId: node.id,
-          totalBytes: nextTotalBytes,
-          totalByteLimit: maximumTotalBytes,
+        totalBytes = nextTotalBytes;
+        return await parseDocumentSource({
+          format: loaded.format,
+          source: bytes,
+          maximumBytes,
         });
-      }
-      totalBytes = nextTotalBytes;
-      return await parseDocumentSource({
-        format: loaded.format,
-        source: bytes,
-        maximumBytes,
-      });
-    },
-    select: ({ reference, value }) =>
-      selectDocumentRepresentation({
-        document: value,
-        representation: reference.representation,
-      }),
-    assemble: ({ source, references }) =>
-      assembleDocument({ document: source, references }),
-  });
+      },
+      select: ({ reference, value }) =>
+        selectDocumentRepresentation({
+          document: value,
+          representation: reference.representation,
+        }),
+      assemble: ({ source, references }) =>
+        assembleDocument({ document: source, references }),
+    });
+    emitDocumentGraphRuntimeEvent(onEvent, {
+      type: "resolution-completed",
+      ...resolutionEvent,
+    });
+    return resolved;
+  } catch (error) {
+    emitDocumentGraphRuntimeEvent(onEvent, {
+      type: "resolution-failed",
+      ...resolutionEvent,
+      errorCode: getDocumentGraphErrorCode(error),
+    });
+    throw error;
+  }
 };

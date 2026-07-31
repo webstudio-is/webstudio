@@ -5,6 +5,7 @@ import { resolveAdaptedDocumentGraph } from "./document-resolution";
 import type { AdaptedDocument } from "./document-adapter";
 import type { DocumentSourceLoader } from "./document-source";
 import type { DocumentGraph } from "./graph";
+import type { DocumentGraphRuntimeObserver } from "./observability";
 
 const isJsonObject = (
   value: JsonValue
@@ -68,6 +69,7 @@ export const resolveAssetQueryDocumentGraph = async ({
   load,
   concurrency,
   signal,
+  onEvent,
 }: {
   graph: DocumentGraph;
   rootIds: readonly string[];
@@ -75,6 +77,7 @@ export const resolveAssetQueryDocumentGraph = async ({
   load: DocumentSourceLoader;
   concurrency: number;
   signal?: AbortSignal;
+  onEvent?: DocumentGraphRuntimeObserver;
 }): Promise<AssetQueryResult> => {
   const selectedRootIds = new Set(rootIds);
   const resolvableRootIds = result.items.flatMap((item) =>
@@ -91,6 +94,7 @@ export const resolveAssetQueryDocumentGraph = async ({
     concurrency,
     signal,
     load,
+    onEvent,
   });
   const rootsById = new Map(
     resolvableRootIds.map((rootId, index) => [rootId, resolved.roots[index]])

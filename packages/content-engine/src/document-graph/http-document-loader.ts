@@ -1,6 +1,10 @@
 import { enum as zEnum, strictObject, string } from "zod";
 import type { DocumentGraphNode } from "./graph";
 import type { DocumentSourceLoader } from "./document-source";
+import {
+  emitDocumentGraphRuntimeEvent,
+  type DocumentGraphRuntimeObserver,
+} from "./observability";
 
 const documentSourceMetadata = strictObject({
   format: zEnum(["json", "markdown"]),
@@ -73,6 +77,7 @@ export const createHttpDocumentSourceLoader =
     fetch: fetchResponse,
     getRequest,
     getMetadata,
+    onEvent,
   }: {
     fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
     getRequest: (node: DocumentGraphNode) => RequestInfo | URL;
@@ -80,46 +85,80 @@ export const createHttpDocumentSourceLoader =
       node: DocumentGraphNode;
       response: Response;
     }) => unknown;
+    onEvent?: DocumentGraphRuntimeObserver;
   }): DocumentSourceLoader =>
   async (node, { signal }) => {
+    const event = { documentId: node.id, revision: node.revision };
+    emitDocumentGraphRuntimeEvent(onEvent, {
+      type: "document-fetch-started",
+      ...event,
+    });
     let response: Response;
     try {
       response = await fetchResponse(getRequest(node), { signal });
     } catch (cause) {
-      throw new HttpDocumentLoaderError({
+      const error = new HttpDocumentLoaderError({
         code: "REQUEST_FAILED",
         message: `Document ${node.id} request failed`,
         documentId: node.id,
         cause,
       });
+      emitDocumentGraphRuntimeEvent(onEvent, {
+        type: "document-fetch-failed",
+        ...event,
+        errorCode: error.code,
+      });
+      throw error;
     }
     if (response.ok === false) {
-      throw new HttpDocumentLoaderError({
+      const error = new HttpDocumentLoaderError({
         code: "HTTP_STATUS",
         message: `Document ${node.id} request returned status ${response.status}`,
         documentId: node.id,
         status: response.status,
       });
+      emitDocumentGraphRuntimeEvent(onEvent, {
+        type: "document-fetch-failed",
+        ...event,
+        errorCode: error.code,
+      });
+      throw error;
     }
     let metadata;
     try {
       metadata = documentSourceMetadata.parse(getMetadata({ node, response }));
     } catch (cause) {
-      throw new HttpDocumentLoaderError({
+      const error = new HttpDocumentLoaderError({
         code: "INVALID_METADATA",
         message: `Document ${node.id} response metadata is invalid`,
         documentId: node.id,
         cause,
       });
+      emitDocumentGraphRuntimeEvent(onEvent, {
+        type: "document-fetch-failed",
+        ...event,
+        errorCode: error.code,
+      });
+      throw error;
     }
     const body = response.body;
     if (body === null) {
-      throw new HttpDocumentLoaderError({
+      const error = new HttpDocumentLoaderError({
         code: "BODY_MISSING",
         message: `Document ${node.id} response body is unavailable`,
         documentId: node.id,
       });
+      emitDocumentGraphRuntimeEvent(onEvent, {
+        type: "document-fetch-failed",
+        ...event,
+        errorCode: error.code,
+      });
+      throw error;
     }
+    emitDocumentGraphRuntimeEvent(onEvent, {
+      type: "document-fetch-completed",
+      ...event,
+    });
     return Object.freeze({
       ...metadata,
       source: streamResponseBody(body),

@@ -15,6 +15,7 @@ import {
   createHttpDocumentSourceLoader,
   type CachedDocumentSource,
   type DocumentSourceCache,
+  type DocumentGraphRuntimeObserver,
 } from "./document-graph";
 
 const assetsResourceUrl = "/$resources/assets";
@@ -83,6 +84,7 @@ export const createPublishedAssetResourceFetch = ({
   cache,
   baseUrl,
   fetchDocument = globalThis.fetch,
+  onDocumentGraphEvent,
 }: {
   deploymentId: string;
   artifact: ContentArtifactV1;
@@ -90,6 +92,7 @@ export const createPublishedAssetResourceFetch = ({
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
   fetchDocument?: typeof fetch;
+  onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 }) => {
   validateRuntimeAssets({ artifact, runtimeAssets });
   const documentCache = createMemoryDocumentSourceCache();
@@ -102,6 +105,7 @@ export const createPublishedAssetResourceFetch = ({
     database: createContentDatabase({ artifact }),
     fetchDocument,
     documentCache,
+    onDocumentGraphEvent,
   });
 };
 
@@ -146,14 +150,17 @@ const createPublishedDocumentLoader = ({
   runtimeAssets,
   fetchDocument,
   cache,
+  onEvent,
 }: {
   baseUrl: string | URL;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   fetchDocument: typeof fetch;
   cache: DocumentSourceCache;
+  onEvent?: DocumentGraphRuntimeObserver;
 }) =>
   createCachedDocumentSourceLoader({
     cache,
+    onEvent,
     load: createHttpDocumentSourceLoader({
       fetch: fetchDocument,
       getRequest: (node) => {
@@ -169,6 +176,7 @@ const createPublishedDocumentLoader = ({
         format: node.format,
         revision: node.revision,
       }),
+      onEvent,
     }),
   });
 
@@ -206,6 +214,7 @@ const createPublishedAssetResourceHandler = ({
   database,
   fetchDocument,
   documentCache,
+  onDocumentGraphEvent,
 }: {
   deploymentId: string;
   artifact: ContentArtifactV1;
@@ -215,6 +224,7 @@ const createPublishedAssetResourceHandler = ({
   database: ReturnType<typeof createContentDatabase>;
   fetchDocument: typeof fetch;
   documentCache: DocumentSourceCache;
+  onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 }) => {
   const baseOrigin = new URL(baseUrl).origin;
   const loadDocument = createPublishedDocumentLoader({
@@ -222,6 +232,7 @@ const createPublishedAssetResourceHandler = ({
     runtimeAssets,
     fetchDocument,
     cache: documentCache,
+    onEvent: onDocumentGraphEvent,
   });
   return async (
     input: RequestInfo | URL,
@@ -270,6 +281,7 @@ const createPublishedAssetResourceHandler = ({
           load: loadDocument,
           runtimeAssets,
           signal: request.signal,
+          onEvent: onDocumentGraphEvent,
         })
       );
       if (
@@ -310,10 +322,12 @@ export const createGeneratedAssetResourceRuntime = ({
   deploymentId,
   artifact,
   runtimeAssets,
+  onDocumentGraphEvent,
 }: {
   deploymentId: string;
   artifact: ContentArtifactV1;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
+  onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 }) => {
   const cacheStorage = globalThis.caches;
   let cachePromise: Promise<Cache> | undefined;
@@ -349,6 +363,7 @@ export const createGeneratedAssetResourceRuntime = ({
       database,
       fetchDocument: fallback,
       documentCache,
+      onDocumentGraphEvent,
     });
     return async (input, init) =>
       (await fetchResource(input, init)) ?? fallback(input, init);

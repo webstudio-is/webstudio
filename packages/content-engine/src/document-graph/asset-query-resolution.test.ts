@@ -97,4 +97,59 @@ describe("Assets query document graph resolution", () => {
     ).resolves.toBe(result);
     expect(load).not.toHaveBeenCalled();
   });
+
+  test("reports graph resolution completion and failures without exposing source data", async () => {
+    const result: AssetQueryResult = {
+      items: [{ id: "post", properties: { title: "Hello" } }],
+      totalCount: 1,
+      hasMore: false,
+    };
+    const events: unknown[] = [];
+    const load = vi.fn(async (node: (typeof graph.nodes)[number]) => ({
+      format: node.format as "json" | "markdown",
+      revision: node.revision,
+      source:
+        node.id === "post"
+          ? '{"title":"Hello","secret":"must not be observed","author":{"$ref":"./author.md#frontmatter"}}'
+          : "---\nname: Ada\n---\nBio\n",
+    }));
+
+    await resolveAssetQueryDocumentGraph({
+      graph,
+      rootIds: ["post"],
+      result,
+      load,
+      concurrency: 2,
+      onEvent: (event) => events.push(event),
+    });
+
+    expect(events).toEqual([
+      { type: "resolution-started", rootCount: 1, documentCount: 2 },
+      { type: "resolution-completed", rootCount: 1, documentCount: 2 },
+    ]);
+    expect(JSON.stringify(events)).not.toContain("secret");
+
+    const failedEvents: unknown[] = [];
+    await expect(
+      resolveAssetQueryDocumentGraph({
+        graph,
+        rootIds: ["post"],
+        result,
+        load: async () => {
+          throw new Error("private source failure");
+        },
+        concurrency: 2,
+        onEvent: (event) => failedEvents.push(event),
+      })
+    ).rejects.toThrow("could not be loaded");
+    expect(failedEvents).toEqual([
+      { type: "resolution-started", rootCount: 1, documentCount: 2 },
+      {
+        type: "resolution-failed",
+        rootCount: 1,
+        documentCount: 2,
+        errorCode: "DOCUMENT_LOAD_FAILED",
+      },
+    ]);
+  });
 });

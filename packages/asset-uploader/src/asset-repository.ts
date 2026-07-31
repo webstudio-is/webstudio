@@ -13,6 +13,8 @@ import {
   type AssetQueryPreviewResult,
   type BuilderAssetFieldCatalog,
   type ContentCompilationPlan,
+  type DocumentGraphRuntimeObserver,
+  observeDocumentSourceLoader,
 } from "@webstudio-is/content-engine";
 import {
   createAssetIndex,
@@ -192,6 +194,9 @@ export class PostgresAssetRepository implements AssetRepository {
   private readonly dependencies: AssetRepositoryDependencies;
   private readonly contentDatabaseMaxBytes: number;
   private readonly compilationCache: ContentCompilationCache | undefined;
+  private readonly onDocumentGraphEvent:
+    | DocumentGraphRuntimeObserver
+    | undefined;
 
   constructor({
     projectId,
@@ -200,6 +205,7 @@ export class PostgresAssetRepository implements AssetRepository {
     dependencies,
     contentDatabaseMaxBytes = contentEngineLimits.databaseBytes,
     compilationCache,
+    onDocumentGraphEvent,
   }: {
     projectId: string;
     context: AppContext;
@@ -207,6 +213,7 @@ export class PostgresAssetRepository implements AssetRepository {
     dependencies?: Partial<AssetRepositoryDependencies>;
     contentDatabaseMaxBytes?: number;
     compilationCache?: ContentCompilationCache;
+    onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
   }) {
     this.projectId = projectId;
     this.context = context;
@@ -216,6 +223,7 @@ export class PostgresAssetRepository implements AssetRepository {
     this.compilationCache =
       compilationCache ??
       (dependencies === undefined ? sharedContentCompilationCache : undefined);
+    this.onDocumentGraphEvent = onDocumentGraphEvent;
   }
 
   static async forUpload({
@@ -791,17 +799,21 @@ export class PostgresAssetRepository implements AssetRepository {
       request,
       readContent: this.assetStore.readFile,
       runtimeAssets,
-      load: async (node) => {
-        if (node.format === undefined) {
-          throw new Error(`Document ${node.id} format is unavailable`);
-        }
-        const response = await this.assetStore.readFile(node.contentRef);
-        return {
-          format: node.format,
-          revision: node.revision,
-          source: response.data,
-        };
-      },
+      load: observeDocumentSourceLoader({
+        onEvent: this.onDocumentGraphEvent,
+        load: async (node) => {
+          if (node.format === undefined) {
+            throw new Error(`Document ${node.id} format is unavailable`);
+          }
+          const response = await this.assetStore.readFile(node.contentRef);
+          return {
+            format: node.format,
+            revision: node.revision,
+            source: response.data,
+          };
+        },
+      }),
+      onEvent: this.onDocumentGraphEvent,
     });
     const toCapacityStats = ({
       usedBytes,

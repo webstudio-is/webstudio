@@ -1485,11 +1485,13 @@ describe("PostgresAssetRepository", () => {
         contentLength: new TextEncoder().encode(source).byteLength,
       };
     });
+    const events: unknown[] = [];
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
       assetStore: { readFile },
       dependencies,
+      onDocumentGraphEvent: (event) => events.push(event),
     });
 
     const result = await repository.query({
@@ -1516,5 +1518,22 @@ describe("PostgresAssetRepository", () => {
         },
       },
     ]);
+    expect(events).toEqual(
+      expect.arrayContaining([
+        { type: "roots-selected", rootCount: 1 },
+        { type: "resolution-started", rootCount: 1, documentCount: 2 },
+        {
+          type: "document-fetch-started",
+          documentId: "post",
+          revision: "post-r1",
+        },
+        {
+          type: "document-fetch-completed",
+          documentId: "author",
+          revision: "author-r1",
+        },
+        { type: "resolution-completed", rootCount: 1, documentCount: 2 },
+      ])
+    );
   });
 });

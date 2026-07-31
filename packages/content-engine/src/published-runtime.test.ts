@@ -209,6 +209,7 @@ describe("published asset resource runtime", () => {
           : "---\nname: Ada\nrole: Writer\n---\nBio\n"
       );
     });
+    const events: unknown[] = [];
     const runtimeFetch = createPublishedAssetResourceFetch({
       baseUrl: "https://site.example",
       deploymentId: "graph-build",
@@ -218,6 +219,7 @@ describe("published asset resource runtime", () => {
         author: { url: "/assets/author.md" },
       },
       fetchDocument,
+      onDocumentGraphEvent: (event) => events.push(event),
     });
 
     const requestInit = () => ({
@@ -256,6 +258,24 @@ describe("published asset resource runtime", () => {
       items: [{ id: "post" }],
     });
     expect(fetchDocument).toHaveBeenCalledTimes(2);
+    expect(events).toEqual(
+      expect.arrayContaining([
+        { type: "roots-selected", rootCount: 1 },
+        { type: "resolution-started", rootCount: 1, documentCount: 2 },
+        {
+          type: "document-cache-miss",
+          documentId: "post",
+          revision: "post-r1",
+        },
+        {
+          type: "document-fetch-completed",
+          documentId: "author",
+          revision: "author-r1",
+        },
+        { type: "document-cache-hit", documentId: "post", revision: "post-r1" },
+        { type: "resolution-completed", rootCount: 1, documentCount: 2 },
+      ])
+    );
 
     const createGeneratedFetch = createGeneratedAssetResourceRuntime({
       deploymentId: "graph-build",
@@ -264,6 +284,7 @@ describe("published asset resource runtime", () => {
         post: { url: "/assets/post.json" },
         author: { url: "/assets/author.md" },
       },
+      onDocumentGraphEvent: (event) => events.push(event),
     });
     const generatedFetch = await createGeneratedFetch({
       request: new Request("https://site.example/blog/post"),

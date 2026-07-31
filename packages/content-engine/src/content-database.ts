@@ -19,6 +19,8 @@ import {
   resolveAssetQueryDocumentGraph,
   selectAssetQueryDocumentGraphRoots,
   type DocumentSourceLoader,
+  emitDocumentGraphRuntimeEvent,
+  type DocumentGraphRuntimeObserver,
 } from "./document-graph";
 import { contentEngineLimits } from "./limits";
 
@@ -44,6 +46,7 @@ export type ContentDatabase = {
     readContent?: AssetResourceContentReader;
     runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
     signal?: AbortSignal;
+    onEvent?: DocumentGraphRuntimeObserver;
   }): Promise<AssetQueryResult>;
   getFieldCatalog(): BuilderAssetFieldCatalog;
   getStats(): ContentDatabaseStats;
@@ -171,6 +174,7 @@ export const createContentDatabase = ({
       readContent: queryContentReader,
       runtimeAssets,
       signal,
+      onEvent,
     }) => {
       const selection = await selectDocumentGraphRoots(
         request,
@@ -180,12 +184,17 @@ export const createContentDatabase = ({
       if (documentGraph === undefined) {
         return selection.result;
       }
+      emitDocumentGraphRuntimeEvent(onEvent, {
+        type: "roots-selected",
+        rootCount: selection.rootIds.length,
+      });
       return await resolveAssetQueryDocumentGraph({
         graph: documentGraph,
         ...selection,
         load,
         concurrency: contentEngineLimits.concurrentContentReads,
         signal,
+        onEvent,
       });
     },
     getFieldCatalog: () => artifact.fieldCatalog,

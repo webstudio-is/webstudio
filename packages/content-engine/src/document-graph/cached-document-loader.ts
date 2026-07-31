@@ -8,6 +8,11 @@ import {
   type DocumentSource,
   type DocumentSourceLoader,
 } from "./document-source";
+import {
+  emitDocumentGraphRuntimeEvent,
+  getDocumentGraphErrorCode,
+  type DocumentGraphRuntimeObserver,
+} from "./observability";
 
 export type CachedDocumentSource = Readonly<{
   format: DocumentFormat;
@@ -72,10 +77,12 @@ export const createCachedDocumentSourceLoader = ({
   load,
   cache,
   maximumBytes = contentEngineLimits.hydratedFileBytes,
+  onEvent,
 }: {
   load: DocumentSourceLoader;
   cache: DocumentSourceCache;
   maximumBytes?: number;
+  onEvent?: DocumentGraphRuntimeObserver;
 }): DocumentSourceLoader => {
   const pending = new Map<
     string,
@@ -94,12 +101,28 @@ export const createCachedDocumentSourceLoader = ({
       let cached: CachedDocumentSource | undefined;
       try {
         cached = await cache.get(key);
-      } catch {
+      } catch (error) {
+        emitDocumentGraphRuntimeEvent(onEvent, {
+          type: "document-cache-read-failed",
+          documentId: node.id,
+          revision: node.revision,
+          errorCode: getDocumentGraphErrorCode(error),
+        });
         // Cache availability must not prevent an origin read.
       }
       if (isCachedDocumentSource(cached) && cached.revision === node.revision) {
+        emitDocumentGraphRuntimeEvent(onEvent, {
+          type: "document-cache-hit",
+          documentId: node.id,
+          revision: node.revision,
+        });
         return toDocumentSource(cached);
       }
+      emitDocumentGraphRuntimeEvent(onEvent, {
+        type: "document-cache-miss",
+        documentId: node.id,
+        revision: node.revision,
+      });
 
       const loaded = assertDocumentSourceRevision({
         node,
@@ -123,7 +146,21 @@ export const createCachedDocumentSourceLoader = ({
         revision: loaded.revision,
         bytes,
       });
-      await cache.set(key, entry).catch(() => undefined);
+      try {
+        await cache.set(key, entry);
+        emitDocumentGraphRuntimeEvent(onEvent, {
+          type: "document-cache-stored",
+          documentId: node.id,
+          revision: node.revision,
+        });
+      } catch (error) {
+        emitDocumentGraphRuntimeEvent(onEvent, {
+          type: "document-cache-write-failed",
+          documentId: node.id,
+          revision: node.revision,
+          errorCode: getDocumentGraphErrorCode(error),
+        });
+      }
       return toDocumentSource(entry);
     })();
     pendingBySignal.set(options.signal, request);

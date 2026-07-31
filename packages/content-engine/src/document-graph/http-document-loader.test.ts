@@ -79,4 +79,56 @@ describe("HTTP document loader", () => {
       signal: controller.signal,
     });
   });
+
+  test("reports document fetch completion and sanitized failures", async () => {
+    const events: unknown[] = [];
+    const load = createHttpDocumentSourceLoader({
+      fetch: async () => new Response("{}"),
+      getRequest: () =>
+        "https://cdn.webstudio.test/private-path.json?token=secret",
+      getMetadata: () => ({ format: "json", revision: "post-r1" }),
+      onEvent: (event) => events.push(event),
+    });
+
+    await load(node, {});
+    expect(events).toEqual([
+      {
+        type: "document-fetch-started",
+        documentId: "post",
+        revision: "post-r1",
+      },
+      {
+        type: "document-fetch-completed",
+        documentId: "post",
+        revision: "post-r1",
+      },
+    ]);
+
+    const failedEvents: unknown[] = [];
+    const failedLoad = createHttpDocumentSourceLoader({
+      fetch: async () => {
+        throw new Error("https://private.example/?token=secret");
+      },
+      getRequest: () => "https://cdn.webstudio.test/private.json",
+      getMetadata: () => ({ format: "json", revision: "post-r1" }),
+      onEvent: (event) => failedEvents.push(event),
+    });
+    await expect(failedLoad(node, {})).rejects.toMatchObject({
+      code: "REQUEST_FAILED",
+    });
+    expect(failedEvents).toEqual([
+      {
+        type: "document-fetch-started",
+        documentId: "post",
+        revision: "post-r1",
+      },
+      {
+        type: "document-fetch-failed",
+        documentId: "post",
+        revision: "post-r1",
+        errorCode: "REQUEST_FAILED",
+      },
+    ]);
+    expect(JSON.stringify(failedEvents)).not.toContain("secret");
+  });
 });

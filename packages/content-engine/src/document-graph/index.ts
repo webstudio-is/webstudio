@@ -14,3 +14,4 @@ export * from "./resolver";
 export * from "./document-resolution";
 export * from "./root-selection";
 export * from "./asset-query-resolution";
+export * from "./observability";

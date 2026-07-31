@@ -116,4 +116,40 @@ describe("cached document source loader", () => {
     });
     expect(cache.set).not.toHaveBeenCalled();
   });
+
+  test("reports cache hits, misses, and stores", async () => {
+    const events: unknown[] = [];
+    const cached: CachedDocumentSource = {
+      format: "json",
+      revision: "post-r1",
+      bytes: new TextEncoder().encode("{}"),
+    };
+    const load = vi.fn(async () => ({
+      format: "json" as const,
+      revision: "post-r1",
+      source: "{}",
+    }));
+    const cache = {
+      get: vi.fn().mockResolvedValueOnce(undefined).mockResolvedValue(cached),
+      set: vi.fn(async () => undefined),
+    };
+    const cachedLoad = createCachedDocumentSourceLoader({
+      cache,
+      load,
+      onEvent: (event) => events.push(event),
+    });
+
+    await cachedLoad(node, {});
+    await cachedLoad(node, {});
+
+    expect(events).toEqual([
+      { type: "document-cache-miss", documentId: "post", revision: "post-r1" },
+      {
+        type: "document-cache-stored",
+        documentId: "post",
+        revision: "post-r1",
+      },
+      { type: "document-cache-hit", documentId: "post", revision: "post-r1" },
+    ]);
+  });
 });
