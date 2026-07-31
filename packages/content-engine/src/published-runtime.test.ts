@@ -313,6 +313,128 @@ describe("published asset resource runtime", () => {
     ).toThrow("Published document URL is unavailable for author");
   });
 
+  test("hydrates parallel CDN roots with one cached shared dependency", async () => {
+    const createJsonDocument = (id: string): AssetFileDocument => ({
+      ...document,
+      _id: id,
+      name: `${id}.json`,
+      path: `content/${id}.json`,
+      key: id,
+      extension: "json",
+      mimeType: "application/json",
+      revision: `${id}-r1`,
+      contentRef: `storage:${id}`,
+      properties: {
+        title: id,
+        author: { $ref: "./author.json#/profile" },
+      },
+    });
+    const postA = createJsonDocument("post-a");
+    const postB = createJsonDocument("post-b");
+    const author: AssetFileDocument = {
+      ...createJsonDocument("author"),
+      properties: { profile: { name: "Ada" } },
+    };
+    const graph = createDocumentGraph({
+      nodes: [postA, postB, author].map((value) => ({
+        id: value._id,
+        revision: value.revision,
+        contentRef: value.contentRef,
+        format: "json" as const,
+      })),
+      edges: [postA, postB].map((value) => ({
+        sourceId: value._id,
+        referenceId: "#/author",
+        reference: {
+          documentId: "author",
+          revision: "author-r1",
+          representation: { type: "json" as const, path: ["profile"] },
+        },
+      })),
+    });
+    const { artifact } = await compileContentArtifact({
+      projectId: "project-1",
+      entries: [postA, postB, author].map((value) =>
+        createCanonicalAssetFileEntry({
+          projectId: "project-1",
+          document: value,
+        })
+      ),
+      documentGraph: graph,
+    });
+    const pending = new Map<string, (response: Response) => void>();
+    const fetchDocument = vi.fn(
+      (input: RequestInfo | URL) =>
+        new Promise<Response>((resolve) => {
+          pending.set(new URL(String(input)).pathname, resolve);
+        })
+    );
+    const runtimeFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
+      deploymentId: "parallel-graph-build",
+      artifact,
+      runtimeAssets: {
+        "post-a": { url: "/assets/post-a.json" },
+        "post-b": { url: "/assets/post-b.json" },
+        author: { url: "/assets/author.json" },
+      },
+      fetchDocument,
+    });
+    const request = () =>
+      runtimeFetch("/$resources/assets", {
+        method: "POST",
+        body: JSON.stringify({
+          query: {
+            where: {
+              all: [{ field: ["id"], operator: "ne", value: "author" }],
+            },
+            sort: [{ field: ["id"], direction: "asc" }],
+            limit: 2,
+            output: {
+              mode: "fields",
+              includeMetadata: false,
+              fields: [
+                ["properties", "title"],
+                ["properties", "author"],
+              ],
+            },
+          },
+        }),
+      });
+
+    const responsePromise = request();
+    await vi.waitFor(() => expect(fetchDocument).toHaveBeenCalledTimes(3));
+    pending.get("/assets/post-a.json")?.(
+      new Response(
+        '{"title":"post-a","author":{"$ref":"./author.json#/profile"}}'
+      )
+    );
+    pending.get("/assets/post-b.json")?.(
+      new Response(
+        '{"title":"post-b","author":{"$ref":"./author.json#/profile"}}'
+      )
+    );
+    pending.get("/assets/author.json")?.(
+      new Response('{"profile":{"name":"Ada"}}')
+    );
+
+    await expect((await responsePromise)?.json()).resolves.toMatchObject({
+      items: [
+        { id: "post-a", properties: { author: { name: "Ada" } } },
+        { id: "post-b", properties: { author: { name: "Ada" } } },
+      ],
+    });
+    await expect((await request())?.json()).resolves.toMatchObject({
+      items: [{ id: "post-a" }, { id: "post-b" }],
+    });
+    expect(fetchDocument).toHaveBeenCalledTimes(3);
+    expect(
+      fetchDocument.mock.calls.filter(([input]) =>
+        String(input).includes("/assets/author.json")
+      )
+    ).toHaveLength(1);
+  });
+
   test("serves a materialized static query without candidate documents", async () => {
     const query = assetQuery.parse({
       where: {
