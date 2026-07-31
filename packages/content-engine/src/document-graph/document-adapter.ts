@@ -4,11 +4,13 @@ import { contentEngineLimits } from "../limits";
 import {
   analyzeJsonDocumentSource,
   assembleJsonDocument,
+  parseJsonDocumentSource,
   selectJsonDocumentRepresentation,
 } from "./json-document";
 import {
   analyzeMarkdownDocument,
   assembleMarkdownDocument,
+  parseMarkdownDocumentSource,
   selectMarkdownDocumentRepresentation,
   type MarkdownDocument,
 } from "./markdown-document";
@@ -40,6 +42,28 @@ const createAdaptedDocument = <Document extends AdaptedDocument>(
 const createAnalyzedDocument = <Document extends AnalyzedDocument>(
   document: Document
 ) => Object.freeze(document);
+
+/** Parses a bounded source without resolving its reference syntax. */
+export const parseDocumentSource = async ({
+  format,
+  source,
+  maximumBytes = contentEngineLimits.hydratedFileBytes,
+}: {
+  format: DocumentFormat;
+  source: ByteSource;
+  maximumBytes?: number;
+}): Promise<AdaptedDocument> => {
+  if (format === "json") {
+    return createAdaptedDocument({
+      format,
+      value: await parseJsonDocumentSource({ source, maximumBytes }),
+    });
+  }
+  return createAdaptedDocument({
+    format,
+    value: await parseMarkdownDocumentSource({ source, maximumBytes }),
+  });
+};
 
 /** Parses a bounded source through its format-specific adapter. */
 export const analyzeDocumentSource = async ({

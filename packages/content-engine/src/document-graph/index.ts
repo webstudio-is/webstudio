@@ -7,3 +7,4 @@ export * from "./json-document";
 export * from "./markdown-document";
 export * from "./document-adapter";
 export * from "./resolver";
+export * from "./document-resolution";

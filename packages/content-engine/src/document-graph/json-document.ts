@@ -140,18 +140,14 @@ export const analyzeJsonDocument = ({
   });
 };
 
-/** Reads one bounded JSON source before normalizing it and discovering references. */
-export const analyzeJsonDocumentSource = async ({
+/** Reads and normalizes one bounded JSON source. */
+export const parseJsonDocumentSource = async ({
   source,
-  sourceDocumentId,
-  documentUrl,
   maximumBytes = contentEngineLimits.hydratedFileBytes,
 }: {
   source: ByteSource;
-  sourceDocumentId: string;
-  documentUrl: string | URL;
   maximumBytes?: number;
-}): Promise<ReturnType<typeof analyzeJsonDocument>> => {
+}): Promise<JsonValue> => {
   let bytes: Uint8Array;
   try {
     bytes = await readBoundedBytes(source, maximumBytes);
@@ -175,22 +171,9 @@ export const analyzeJsonDocumentSource = async ({
       cause,
     });
   }
-  let value: unknown;
   try {
-    value = JSON.parse(sourceText);
+    return normalizeJsonValue(JSON.parse(sourceText));
   } catch (cause) {
-    throw new JsonDocumentError({
-      code: "INVALID_DOCUMENT",
-      message: "JSON document is invalid",
-      cause,
-    });
-  }
-  try {
-    return analyzeJsonDocument({ value, sourceDocumentId, documentUrl });
-  } catch (cause) {
-    if (cause instanceof JsonDocumentError) {
-      throw cause;
-    }
     throw new JsonDocumentError({
       code: "INVALID_DOCUMENT",
       message: "JSON document is invalid",
@@ -198,6 +181,24 @@ export const analyzeJsonDocumentSource = async ({
     });
   }
 };
+
+/** Reads one bounded JSON source before discovering references. */
+export const analyzeJsonDocumentSource = async ({
+  source,
+  sourceDocumentId,
+  documentUrl,
+  maximumBytes = contentEngineLimits.hydratedFileBytes,
+}: {
+  source: ByteSource;
+  sourceDocumentId: string;
+  documentUrl: string | URL;
+  maximumBytes?: number;
+}): Promise<ReturnType<typeof analyzeJsonDocument>> =>
+  analyzeJsonDocument({
+    value: await parseJsonDocumentSource({ source, maximumBytes }),
+    sourceDocumentId,
+    documentUrl,
+  });
 
 const getJsonPathValue = (
   document: JsonValue,

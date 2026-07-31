@@ -125,23 +125,14 @@ const throwMarkdownJsonError = (error: JsonDocumentError): never => {
   });
 };
 
-/** Reads one bounded Markdown source and discovers references in frontmatter. */
-export const analyzeMarkdownDocument = async ({
+/** Reads and normalizes one bounded Markdown source. */
+export const parseMarkdownDocumentSource = async ({
   source,
-  sourceDocumentId,
-  documentUrl,
   maximumBytes = contentEngineLimits.hydratedFileBytes,
 }: {
   source: ByteSource;
-  sourceDocumentId: string;
-  documentUrl: string | URL;
   maximumBytes?: number;
-}): Promise<
-  Readonly<{
-    document: MarkdownDocument;
-    references: readonly SourceReferenceOccurrence[];
-  }>
-> => {
+}): Promise<MarkdownDocument> => {
   let bytes: Uint8Array;
   try {
     bytes = await readBoundedBytes(source, maximumBytes);
@@ -169,10 +160,35 @@ export const analyzeMarkdownDocument = async ({
     extractMarkdownBody(bytes, maximumBytes),
     extractMarkdownFrontmatter(bytes),
   ]);
+  return normalizeMarkdownDocument({
+    source: sourceText,
+    body: body.body,
+    frontmatter: frontmatter.properties,
+  });
+};
+
+/** Reads one bounded Markdown source and discovers references in frontmatter. */
+export const analyzeMarkdownDocument = async ({
+  source,
+  sourceDocumentId,
+  documentUrl,
+  maximumBytes = contentEngineLimits.hydratedFileBytes,
+}: {
+  source: ByteSource;
+  sourceDocumentId: string;
+  documentUrl: string | URL;
+  maximumBytes?: number;
+}): Promise<
+  Readonly<{
+    document: MarkdownDocument;
+    references: readonly SourceReferenceOccurrence[];
+  }>
+> => {
+  const parsed = await parseMarkdownDocumentSource({ source, maximumBytes });
   let analyzedFrontmatter;
   try {
     analyzedFrontmatter = analyzeJsonDocument({
-      value: frontmatter.properties,
+      value: parsed.frontmatter,
       sourceDocumentId,
       documentUrl,
     });
@@ -183,8 +199,8 @@ export const analyzeMarkdownDocument = async ({
     throw cause;
   }
   const document = normalizeMarkdownDocument({
-    source: sourceText,
-    body: body.body,
+    source: parsed.source,
+    body: parsed.body,
     frontmatter: analyzedFrontmatter.document,
   });
   return Object.freeze({
