@@ -185,10 +185,25 @@ const getDocumentFormat = (
   }
 };
 
+const queryCanReturnStructuredProperties = (
+  query: ContentCompilationPlan["queries"][number]
+) =>
+  (query.limit.type !== "literal" ||
+    typeof query.limit.value !== "number" ||
+    query.limit.value > 0) &&
+  (query.output.mode === "all" ||
+    (query.output.mode === "fields" &&
+      query.output.fields.some(([field]) => field === "properties")));
+
 const discoverSnapshotDocumentGraph = async (
-  snapshot: ContentSourceSnapshot
+  snapshot: ContentSourceSnapshot,
+  plan?: ContentCompilationPlan
 ): Promise<DocumentGraph | undefined> => {
-  if (snapshot.loadDocumentSources === undefined) {
+  if (
+    snapshot.loadDocumentSources === undefined ||
+    (plan !== undefined &&
+      plan.queries.some(queryCanReturnStructuredProperties) === false)
+  ) {
     return;
   }
   const sourceDocuments = await snapshot.loadDocumentSources();
@@ -242,7 +257,7 @@ export const materializeContentSnapshot = async ({
   try {
     const [entries, documentGraph] = await Promise.all([
       snapshot.loadEntries(plan, { maximumContentBytes }),
-      discoverSnapshotDocumentGraph(snapshot),
+      discoverSnapshotDocumentGraph(snapshot, plan),
     ]);
     validateEntries({ snapshot, entries });
     const assetReferences = await discoverSnapshotAssetReferences({

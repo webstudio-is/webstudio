@@ -1,4 +1,4 @@
-import { strictObject, string } from "zod";
+import { enum as zEnum, strictObject, string } from "zod";
 import {
   createDocumentReference,
   documentReference,
@@ -9,6 +9,7 @@ export type DocumentGraphNode = Readonly<{
   id: string;
   revision: string;
   contentRef: string;
+  format?: "json" | "markdown";
 }>;
 
 export type DocumentGraphEdge = Readonly<{
@@ -24,6 +25,7 @@ export type DocumentGraph = Readonly<{
 
 export type DocumentGraphErrorCode =
   | "DUPLICATE_NODE"
+  | "CONTENT_IDENTITY_CONFLICT"
   | "DUPLICATE_REFERENCE"
   | "SOURCE_NOT_FOUND"
   | "TARGET_NOT_FOUND"
@@ -55,6 +57,7 @@ const nodeSchema = strictObject({
   id: string().min(1),
   revision: string().min(1),
   contentRef: string().min(1),
+  format: zEnum(["json", "markdown"]).optional(),
 });
 
 const edgeSchema = strictObject({
@@ -81,6 +84,7 @@ export const createDocumentGraph = ({
     .map((input) => Object.freeze(nodeSchema.parse(input)))
     .sort((left, right) => compareStrings(left.id, right.id));
   const nodesById = new Map<string, DocumentGraphNode>();
+  const nodesByContentRef = new Map<string, DocumentGraphNode>();
   for (const node of nodes) {
     if (nodesById.has(node.id)) {
       throw new DocumentGraphError({
@@ -90,6 +94,18 @@ export const createDocumentGraph = ({
       });
     }
     nodesById.set(node.id, node);
+    const previousContent = nodesByContentRef.get(node.contentRef);
+    if (
+      previousContent !== undefined &&
+      previousContent.format !== node.format
+    ) {
+      throw new DocumentGraphError({
+        code: "CONTENT_IDENTITY_CONFLICT",
+        message: `Document graph content reference ${node.contentRef} has conflicting identities`,
+        documentIds: [previousContent.id, node.id],
+      });
+    }
+    nodesByContentRef.set(node.contentRef, node);
   }
 
   const edges = edgeInputs

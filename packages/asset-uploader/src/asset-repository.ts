@@ -547,22 +547,27 @@ export class PostgresAssetRepository implements AssetRepository {
     const source = this.createContentSource(strict);
     const compile = async (
       entries: Parameters<typeof createAssetIndex>[0]["entries"],
-      assetReferences: Parameters<typeof createAssetIndex>[0]["assetReferences"]
+      assetReferences: Parameters<
+        typeof createAssetIndex
+      >[0]["assetReferences"],
+      documentGraph: Parameters<typeof createAssetIndex>[0]["documentGraph"]
     ) =>
       await this.dependencies.createAssetIndex({
         projectId: this.projectId,
         entries,
         assetReferences,
+        documentGraph,
         maxBytes: this.contentDatabaseMaxBytes,
         ...(requirements === undefined ? {} : { plan: requirements }),
       });
     if (this.compilationCache === undefined) {
-      const { entries, assetReferences } = await materializeContentSource({
-        source,
-        plan: requirements,
-        maximumContentBytes: this.contentDatabaseMaxBytes,
-      });
-      return await compile(entries, assetReferences);
+      const { entries, assetReferences, documentGraph } =
+        await materializeContentSource({
+          source,
+          plan: requirements,
+          maximumContentBytes: this.contentDatabaseMaxBytes,
+        });
+      return await compile(entries, assetReferences, documentGraph);
     }
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const snapshot = await source.openSnapshot();
@@ -575,14 +580,13 @@ export class PostgresAssetRepository implements AssetRepository {
       });
       try {
         return await this.compilationCache.getOrCreate(key, async () => {
-          const { entries, assetReferences } = await materializeContentSnapshot(
-            {
+          const { entries, assetReferences, documentGraph } =
+            await materializeContentSnapshot({
               snapshot,
               plan: requirements,
               maximumContentBytes: this.contentDatabaseMaxBytes,
-            }
-          );
-          return await compile(entries, assetReferences);
+            });
+          return await compile(entries, assetReferences, documentGraph);
         });
       } catch (error) {
         if (error instanceof ContentSourceChangedError === false) {
@@ -594,6 +598,7 @@ export class PostgresAssetRepository implements AssetRepository {
   }
 
   private createContentSource(strict: boolean): ContentSource {
+    const readFile = this.assetStore.readFile;
     const loadBaseEntries = () =>
       this.dependencies.loadCanonicalAssetBaseEntries({
         client: this.context.postgrest.client,
@@ -606,6 +611,40 @@ export class PostgresAssetRepository implements AssetRepository {
         return {
           revision,
           files: baseEntries.map(createContentSourceFile),
+          loadDocumentSources: async () =>
+            baseEntries.flatMap((entry) => {
+              if (
+                entry.document.mimeType !== "application/json" &&
+                entry.document.mimeType !== "text/markdown"
+              ) {
+                return [];
+              }
+              return [
+                {
+                  id: entry.assetId,
+                  source: {
+                    [Symbol.asyncIterator]: async function* () {
+                      const response = await readFile(
+                        entry.document.contentRef,
+                        entry.document.size === 0
+                          ? undefined
+                          : { offset: 0, length: entry.document.size }
+                      );
+                      let readBytes = 0;
+                      for await (const chunk of response.data) {
+                        readBytes += chunk.byteLength;
+                        yield chunk;
+                      }
+                      if (readBytes !== entry.document.size) {
+                        throw new Error(
+                          "Asset content does not match its canonical size"
+                        );
+                      }
+                    },
+                  },
+                },
+              ];
+            }),
           loadEntries: (plan, options) =>
             this.loadCompilerEntries({
               baseEntries,
@@ -731,6 +770,7 @@ export class PostgresAssetRepository implements AssetRepository {
     const runtimeAssetIds = getContentArtifactRuntimeAssetIds({
       artifact: index,
       includeDocuments: plan !== undefined && requiresRuntimeDocumentData(plan),
+      includeDocumentGraph: false,
     });
     const runtimeAssets =
       runtimeAssetIds.length > 0
@@ -747,11 +787,22 @@ export class PostgresAssetRepository implements AssetRepository {
             ])
           )
         : undefined;
-    const data = await database.query(
+    const data = await database.queryWithDocumentGraph({
       request,
-      this.assetStore.readFile,
-      runtimeAssets
-    );
+      readContent: this.assetStore.readFile,
+      runtimeAssets,
+      load: async (node) => {
+        if (node.format === undefined) {
+          throw new Error(`Document ${node.id} format is unavailable`);
+        }
+        const response = await this.assetStore.readFile(node.contentRef);
+        return {
+          format: node.format,
+          revision: node.revision,
+          source: response.data,
+        };
+      },
+    });
     const toCapacityStats = ({
       usedBytes,
       maxBytes,

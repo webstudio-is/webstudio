@@ -393,7 +393,7 @@ const toQueryItem = (
   };
 };
 
-const assertResultSize = (result: AssetQueryResult) => {
+export const assertAssetQueryResultSize = (result: AssetQueryResult) => {
   if (
     getUtf8ByteLength(serializeJsonDeterministically(result)) >
     contentEngineLimits.resultBytes
@@ -494,6 +494,6 @@ export const executeAssetQuery = async ({
     totalCount: matched.length,
     hasMore: query.offset + selected.length < matched.length,
   } satisfies AssetQueryResult;
-  assertResultSize(result);
+  assertAssetQueryResultSize(result);
   return result;
 };

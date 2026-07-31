@@ -9,6 +9,13 @@ import { createContentDatabase } from "./content-database";
 import { readAssetQueryRequest } from "./request";
 import type { AssetRuntimeData } from "./structured-query";
 import { getAssetResourceQueryError } from "./query-error";
+import { contentEngineLimits } from "./limits";
+import {
+  createCachedDocumentSourceLoader,
+  createHttpDocumentSourceLoader,
+  type CachedDocumentSource,
+  type DocumentSourceCache,
+} from "./document-graph";
 
 const assetsResourceUrl = "/$resources/assets";
 
@@ -75,14 +82,17 @@ export const createPublishedAssetResourceFetch = ({
   runtimeAssets,
   cache,
   baseUrl,
+  fetchDocument = globalThis.fetch,
 }: {
   deploymentId: string;
   artifact: ContentArtifactV1;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
+  fetchDocument?: typeof fetch;
 }) => {
   validateRuntimeAssets({ artifact, runtimeAssets });
+  const documentCache = createMemoryDocumentSourceCache();
   return createPublishedAssetResourceHandler({
     deploymentId,
     artifact,
@@ -90,8 +100,77 @@ export const createPublishedAssetResourceFetch = ({
     cache,
     baseUrl,
     database: createContentDatabase({ artifact }),
+    fetchDocument,
+    documentCache,
   });
 };
+
+const createMemoryDocumentSourceCache = (): DocumentSourceCache => {
+  const values = new Map<string, CachedDocumentSource>();
+  const maximumBytes = contentEngineLimits.hydratedTotalBytes * 4;
+  let usedBytes = 0;
+  return {
+    get: async (key) => {
+      const value = values.get(key);
+      if (value !== undefined) {
+        values.delete(key);
+        values.set(key, value);
+      }
+      return value;
+    },
+    set: async (key, source) => {
+      if (source.bytes.byteLength > maximumBytes) {
+        return;
+      }
+      const previous = values.get(key);
+      if (previous !== undefined) {
+        usedBytes -= previous.bytes.byteLength;
+        values.delete(key);
+      }
+      values.set(key, source);
+      usedBytes += source.bytes.byteLength;
+      while (usedBytes > maximumBytes) {
+        const oldest = values.entries().next().value;
+        if (oldest === undefined) {
+          break;
+        }
+        values.delete(oldest[0]);
+        usedBytes -= oldest[1].bytes.byteLength;
+      }
+    },
+  };
+};
+
+const createPublishedDocumentLoader = ({
+  baseUrl,
+  runtimeAssets,
+  fetchDocument,
+  cache,
+}: {
+  baseUrl: string | URL;
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
+  fetchDocument: typeof fetch;
+  cache: DocumentSourceCache;
+}) =>
+  createCachedDocumentSourceLoader({
+    cache,
+    load: createHttpDocumentSourceLoader({
+      fetch: fetchDocument,
+      getRequest: (node) => {
+        const asset = runtimeAssets[node.id];
+        if (asset === undefined) {
+          throw new Error(
+            `Published document URL is unavailable for ${node.id}`
+          );
+        }
+        return new URL(asset.url, baseUrl);
+      },
+      getMetadata: ({ node }) => ({
+        format: node.format,
+        revision: node.revision,
+      }),
+    }),
+  });
 
 const validateRuntimeAssets = ({
   artifact,
@@ -108,6 +187,14 @@ const validateRuntimeAssets = ({
       `Published referenced asset URL is unavailable for ${missingReferencedAssetId}`
     );
   }
+  const missingDocumentId = artifact.documentGraph?.nodes.find(
+    ({ id }) => runtimeAssets[id] === undefined
+  )?.id;
+  if (missingDocumentId !== undefined) {
+    throw new Error(
+      `Published document URL is unavailable for ${missingDocumentId}`
+    );
+  }
 };
 
 const createPublishedAssetResourceHandler = ({
@@ -117,6 +204,8 @@ const createPublishedAssetResourceHandler = ({
   cache,
   baseUrl,
   database,
+  fetchDocument,
+  documentCache,
 }: {
   deploymentId: string;
   artifact: ContentArtifactV1;
@@ -124,8 +213,16 @@ const createPublishedAssetResourceHandler = ({
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
   database: ReturnType<typeof createContentDatabase>;
+  fetchDocument: typeof fetch;
+  documentCache: DocumentSourceCache;
 }) => {
   const baseOrigin = new URL(baseUrl).origin;
+  const loadDocument = createPublishedDocumentLoader({
+    baseUrl,
+    runtimeAssets,
+    fetchDocument,
+    cache: documentCache,
+  });
   return async (
     input: RequestInfo | URL,
     init?: RequestInit
@@ -168,7 +265,12 @@ const createPublishedAssetResourceHandler = ({
         });
       }
       const response = jsonResponse(
-        await database.query(parsedRequest, undefined, runtimeAssets)
+        await database.queryWithDocumentGraph({
+          request: parsedRequest,
+          load: loadDocument,
+          runtimeAssets,
+          signal: request.signal,
+        })
       );
       if (
         cacheKey !== undefined &&
@@ -229,6 +331,7 @@ export const createGeneratedAssetResourceRuntime = ({
         };
   validateRuntimeAssets({ artifact, runtimeAssets });
   const database = createContentDatabase({ artifact });
+  const documentCache = createMemoryDocumentSourceCache();
   return async ({
     request,
     fallback,
@@ -244,6 +347,8 @@ export const createGeneratedAssetResourceRuntime = ({
       cache,
       baseUrl: origin,
       database,
+      fetchDocument: fallback,
+      documentCache,
     });
     return async (input, init) =>
       (await fetchResource(input, init)) ?? fallback(input, init);

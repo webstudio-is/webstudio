@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { assetQuery, type AssetFileDocument } from "./schema";
-import { createAssetIndex } from "./asset-index";
+import { compileContentArtifact, createAssetIndex } from "./asset-index";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import {
   createContentCompilationPlan,
@@ -10,6 +10,7 @@ import {
   createGeneratedAssetResourceRuntime,
   createPublishedAssetResourceFetch,
 } from "./published-runtime";
+import { createDocumentGraph } from "./document-graph";
 
 const revision = `sha256:${"a".repeat(64)}`;
 const document: AssetFileDocument = {
@@ -135,6 +136,160 @@ describe("published asset resource runtime", () => {
       items: [{ id: "post-1", content: { text: "Post" } }],
     });
     expect(networkFetch).not.toHaveBeenCalled();
+  });
+
+  test("fetches and assembles CDN-backed document graph roots", async () => {
+    const post = {
+      ...document,
+      _id: "post",
+      name: "post.json",
+      path: "content/post.json",
+      key: "post",
+      extension: "json",
+      mimeType: "application/json",
+      revision: "post-r1",
+      contentRef: "storage:post",
+      properties: {
+        title: "Hello",
+        author: { $ref: "./author.md#frontmatter" },
+      },
+    };
+    const author = {
+      ...document,
+      _id: "author",
+      name: "author.md",
+      path: "content/author.md",
+      key: "author",
+      revision: "author-r1",
+      contentRef: "storage:author",
+      properties: { name: "Ada" },
+    };
+    const graph = createDocumentGraph({
+      nodes: [
+        {
+          id: "post",
+          revision: "post-r1",
+          contentRef: "storage:post",
+          format: "json",
+        },
+        {
+          id: "author",
+          revision: "author-r1",
+          contentRef: "storage:author",
+          format: "markdown",
+        },
+      ],
+      edges: [
+        {
+          sourceId: "post",
+          referenceId: "#/author",
+          reference: {
+            documentId: "author",
+            revision: "author-r1",
+            representation: { type: "markdown-frontmatter" },
+          },
+        },
+      ],
+    });
+    const { artifact } = await compileContentArtifact({
+      projectId: "project-1",
+      entries: [post, author].map((value) =>
+        createCanonicalAssetFileEntry({
+          projectId: "project-1",
+          document: value,
+        })
+      ),
+      documentGraph: graph,
+    });
+    const fetchDocument = vi.fn(async (input: RequestInfo | URL) => {
+      const pathname = new URL(String(input), "https://site.example").pathname;
+      return new Response(
+        pathname.endsWith("post.json")
+          ? '{"title":"Hello","author":{"$ref":"./author.md#frontmatter"}}'
+          : "---\nname: Ada\nrole: Writer\n---\nBio\n"
+      );
+    });
+    const runtimeFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
+      deploymentId: "graph-build",
+      artifact,
+      runtimeAssets: {
+        post: { url: "/assets/post.json" },
+        author: { url: "/assets/author.md" },
+      },
+      fetchDocument,
+    });
+
+    const requestInit = () => ({
+      method: "POST",
+      body: JSON.stringify({
+        query: {
+          where: { all: [{ field: ["id"], operator: "eq", value: "post" }] },
+          limit: 1,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [
+              ["properties", "title"],
+              ["properties", "author"],
+            ],
+          },
+        },
+      }),
+    });
+    const request = () => runtimeFetch("/$resources/assets", requestInit());
+
+    const response = await request();
+
+    await expect(response?.json()).resolves.toMatchObject({
+      items: [
+        {
+          id: "post",
+          properties: {
+            title: "Hello",
+            author: { name: "Ada", role: "Writer" },
+          },
+        },
+      ],
+    });
+    await expect((await request())?.json()).resolves.toMatchObject({
+      items: [{ id: "post" }],
+    });
+    expect(fetchDocument).toHaveBeenCalledTimes(2);
+
+    const createGeneratedFetch = createGeneratedAssetResourceRuntime({
+      deploymentId: "graph-build",
+      artifact,
+      runtimeAssets: {
+        post: { url: "/assets/post.json" },
+        author: { url: "/assets/author.md" },
+      },
+    });
+    const generatedFetch = await createGeneratedFetch({
+      request: new Request("https://site.example/blog/post"),
+      fallback: fetchDocument,
+    });
+    const generatedResponse = await generatedFetch(
+      new Request("https://site.example/$resources/assets", requestInit())
+    );
+    await expect(generatedResponse.json()).resolves.toMatchObject({
+      items: [
+        {
+          id: "post",
+          properties: { author: { name: "Ada", role: "Writer" } },
+        },
+      ],
+    });
+    expect(fetchDocument).toHaveBeenCalledTimes(4);
+    expect(() =>
+      createPublishedAssetResourceFetch({
+        baseUrl: "https://site.example",
+        deploymentId: "incomplete-graph-build",
+        artifact,
+        runtimeAssets: { post: { url: "/assets/post.json" } },
+        fetchDocument,
+      })
+    ).toThrow("Published document URL is unavailable for author");
   });
 
   test("serves a materialized static query without candidate documents", async () => {

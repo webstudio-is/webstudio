@@ -11,6 +11,7 @@ export type DocumentDescriptor = Readonly<{
   documentUrl: string;
   revision: string;
   contentRef: string;
+  format?: "json" | "markdown";
 }>;
 
 export type DocumentGraphCompilationErrorCode =
@@ -203,10 +204,11 @@ export const compileDocumentGraph = ({
   let graph: DocumentGraph;
   try {
     graph = createDocumentGraph({
-      nodes: documents.map(({ id, revision, contentRef }) => ({
+      nodes: documents.map(({ id, revision, contentRef, format }) => ({
         id,
         revision,
         contentRef,
+        ...(format === undefined ? {} : { format }),
       })),
       edges,
     });

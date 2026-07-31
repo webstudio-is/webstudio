@@ -26,16 +26,24 @@ export const getContentArtifactReferencedAssetIds = (
 export const getContentArtifactRuntimeAssetIds = ({
   artifact,
   includeDocuments,
+  includeDocumentGraph = true,
 }: {
   artifact: Pick<ContentArtifactV1, "assetReferences"> & {
     documents: readonly { _id: string }[];
+    documentGraph?: { readonly nodes: readonly { id: string }[] };
   };
   includeDocuments: boolean;
+  includeDocumentGraph?: boolean;
 }) => {
   const ids = new Set(getContentArtifactReferencedAssetIds(artifact));
   if (includeDocuments) {
     for (const { _id } of artifact.documents) {
       ids.add(_id);
+    }
+  }
+  if (includeDocumentGraph) {
+    for (const { id } of artifact.documentGraph?.nodes ?? []) {
+      ids.add(id);
     }
   }
   return [...ids].sort();

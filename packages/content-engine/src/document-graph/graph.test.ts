@@ -90,6 +90,28 @@ describe("document graph", () => {
     ).toThrow("reference ID");
   });
 
+  test("rejects conflicting formats for one shared content reference", () => {
+    expect(() =>
+      createDocumentGraph({
+        nodes: [
+          {
+            id: "first",
+            revision: "r1",
+            contentRef: "shared",
+            format: "json",
+          },
+          {
+            id: "second",
+            revision: "r1",
+            contentRef: "shared",
+            format: "markdown",
+          },
+        ],
+        edges: [],
+      })
+    ).toThrow("content reference");
+  });
+
   test("reports the reachable cycle", () => {
     const graph = createDocumentGraph({
       nodes,

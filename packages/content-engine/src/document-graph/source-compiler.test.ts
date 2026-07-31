@@ -45,6 +45,11 @@ describe("document source graph compiler", () => {
       "avatar",
       "post",
     ]);
+    expect(graph.nodes.map(({ id, format }) => [id, format])).toEqual([
+      ["author", "markdown"],
+      ["avatar", "json"],
+      ["post", "json"],
+    ]);
     expect(graph.edges).toEqual([
       {
         sourceId: "author",

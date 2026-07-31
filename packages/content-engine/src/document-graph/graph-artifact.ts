@@ -1,4 +1,4 @@
-import { array, literal, strictObject, string } from "zod";
+import { array, enum as zEnum, literal, strictObject, string } from "zod";
 import { serializeJsonDeterministically, sha256 } from "../canonical-json";
 import {
   createDocumentGraph,
@@ -14,6 +14,7 @@ const documentGraphNode = strictObject({
   id: string().min(1),
   revision: string().min(1),
   contentRef: string().min(1),
+  format: zEnum(["json", "markdown"]).optional(),
 });
 
 const documentGraphEdge = strictObject({

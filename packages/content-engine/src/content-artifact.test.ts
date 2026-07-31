@@ -3,6 +3,7 @@ import { compileContentArtifact } from "./asset-index";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import {
   checksumContentArtifact,
+  getContentArtifactRuntimeAssetIds,
   verifyContentArtifact,
 } from "./content-artifact";
 import { createDocumentGraph } from "./document-graph";
@@ -30,6 +31,20 @@ const graph = createDocumentGraph({
 });
 
 describe("content artifact document graph", () => {
+  test("retains runtime URLs for graph documents even when query documents are materialized", () => {
+    expect(
+      getContentArtifactRuntimeAssetIds({
+        artifact: {
+          documents: [],
+          documentGraph: {
+            nodes: graph.nodes,
+          },
+        },
+        includeDocuments: false,
+      })
+    ).toEqual(["post"]);
+  });
+
   test("verifies nested graph integrity independently of the outer checksum", async () => {
     const { artifact } = await compileContentArtifact({
       projectId: "project",

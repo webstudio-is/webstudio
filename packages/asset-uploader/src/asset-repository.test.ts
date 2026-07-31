@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { AssetObjectStore } from "./client";
 import { createUploadTicket, uploadFile } from "./upload";
@@ -43,6 +43,23 @@ const assetClient: AssetObjectStore = {
   readFile: vi.fn(),
   uploadFile: vi.fn(),
 };
+
+beforeEach(() => {
+  vi.mocked(assetClient.readFile)
+    .mockReset()
+    .mockImplementation(async (name, range) => {
+      const length = range?.length ?? 2;
+      const content = name.endsWith(".json")
+        ? length === 1
+          ? "0"
+          : "{}".padEnd(length)
+        : " ".repeat(length);
+      return {
+        data: new Blob([content]).stream(),
+        contentLength: length,
+      };
+    });
+});
 
 const createCompilationPlan = (query: AssetQueryInput) => {
   const plan = createContentCompilationPlan([
@@ -496,6 +513,17 @@ describe("PostgresAssetRepository", () => {
       projectId: "project-1",
       entries,
       assetReferences: {},
+      documentGraph: {
+        nodes: [
+          {
+            id: "asset-1",
+            revision: entries[0].revision,
+            contentRef: entries[0].document.contentRef,
+            format: "markdown",
+          },
+        ],
+        edges: [],
+      },
       maxBytes: 500 * 1024,
     });
   });
@@ -1346,10 +1374,10 @@ describe("PostgresAssetRepository", () => {
     );
     expect(dependencies.loadAssetsByProjectWithClient).not.toHaveBeenCalled();
 
-    vi.mocked(assetClient.readFile).mockResolvedValue({
+    vi.mocked(assetClient.readFile).mockImplementation(async () => ({
       data: new Blob(["# New post"]).stream(),
       contentLength: 10,
-    });
+    }));
     const publishedIndex = await repository.prepareIndex(
       createCompilationPlan({
         where: {
@@ -1395,5 +1423,98 @@ describe("PostgresAssetRepository", () => {
         },
       ],
     });
+  });
+
+  test("assembles document graph references in local query preview", async () => {
+    const dependencies = createDependencies();
+    const postSource =
+      '{"title":"Hello","author":{"$ref":"./author.md#frontmatter"}}';
+    const authorSource = "---\nname: Ada\nrole: Writer\n---\nBio\n";
+    const createEntry = ({
+      id,
+      name,
+      source,
+      properties,
+    }: {
+      id: string;
+      name: string;
+      source: string;
+      properties: AssetFileDocument["properties"];
+    }): CanonicalAssetFileEntry => ({
+      projectId: "project-1",
+      assetId: id,
+      revision: `${id}-r1`,
+      document: {
+        _id: id,
+        _type: "asset.file",
+        name,
+        path: `content/${name}`,
+        key: name.slice(0, name.lastIndexOf(".")),
+        extension: name.endsWith(".json") ? "json" : "md",
+        mimeType: name.endsWith(".json") ? "application/json" : "text/markdown",
+        size: new TextEncoder().encode(source).byteLength,
+        revision: `${id}-r1`,
+        contentRef: `storage:${id}`,
+        properties,
+      },
+    });
+    const entries = [
+      createEntry({
+        id: "post",
+        name: "post.json",
+        source: postSource,
+        properties: {
+          title: "Hello",
+          author: { $ref: "./author.md#frontmatter" },
+        },
+      }),
+      createEntry({
+        id: "author",
+        name: "author.md",
+        source: authorSource,
+        properties: { name: "Ada", role: "Writer" },
+      }),
+    ];
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const readFile = vi.fn(async (contentRef: string) => {
+      const source = contentRef === "storage:post" ? postSource : authorSource;
+      return {
+        data: new Blob([source]).stream(),
+        contentLength: new TextEncoder().encode(source).byteLength,
+      };
+    });
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { readFile },
+      dependencies,
+    });
+
+    const result = await repository.query({
+      query: {
+        where: { all: [{ field: ["id"], operator: "eq", value: "post" }] },
+        limit: 1,
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [
+            ["properties", "title"],
+            ["properties", "author"],
+          ],
+        },
+      },
+    });
+
+    expect(result.data.items).toEqual([
+      {
+        id: "post",
+        properties: {
+          title: "Hello",
+          author: { name: "Ada", role: "Writer" },
+        },
+      },
+    ]);
   });
 });

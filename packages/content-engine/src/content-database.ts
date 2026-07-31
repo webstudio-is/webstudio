@@ -16,8 +16,11 @@ import type { AssetResourceContentReader } from "./hydration";
 import { getMaterializedAssetQueryResult } from "./materialized-query";
 import {
   createDocumentGraph,
+  resolveAssetQueryDocumentGraph,
   selectAssetQueryDocumentGraphRoots,
+  type DocumentSourceLoader,
 } from "./document-graph";
+import { contentEngineLimits } from "./limits";
 
 type ContentDatabaseQueryArguments = [
   request: AssetQueryRequestInput,
@@ -35,6 +38,13 @@ export type ContentDatabase = {
   queryWithDocumentGraphRoots(
     ...args: ContentDatabaseQueryArguments
   ): Promise<ContentDatabaseDocumentGraphSelection>;
+  queryWithDocumentGraph(input: {
+    request: AssetQueryRequestInput;
+    load: DocumentSourceLoader;
+    readContent?: AssetResourceContentReader;
+    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+    signal?: AbortSignal;
+  }): Promise<AssetQueryResult>;
   getFieldCatalog(): BuilderAssetFieldCatalog;
   getStats(): ContentDatabaseStats;
 };
@@ -81,7 +91,7 @@ export const createContentDatabase = ({
   const executeQuery = async (
     request: AssetQueryRequestInput,
     queryContentReader?: AssetResourceContentReader,
-    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>,
+    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>
   ) => {
     if (
       request.indexRevision !== undefined &&
@@ -94,11 +104,11 @@ export const createContentDatabase = ({
       query: request.query,
     });
     if (materialized !== undefined) {
-      return { result: materialized, materialized: true } as const;
+      return materialized;
     }
     const readEmbeddedContent: AssetResourceContentReader = async (
       contentRef,
-      range,
+      range
     ) => {
       const content = artifact.contents?.[contentRef];
       if (content === undefined) {
@@ -128,31 +138,55 @@ export const createContentDatabase = ({
       runtimeAssets,
       assetReferences: artifact.assetReferences,
     });
-    return { result, materialized: false } as const;
+    return result;
   };
   const query = async (...args: ContentDatabaseQueryArguments) =>
-    (await executeQuery(...args)).result;
+    await executeQuery(...args);
+  const selectDocumentGraphRoots = async (
+    ...args: ContentDatabaseQueryArguments
+  ) => {
+    const result = await executeQuery(...args);
+    return {
+      result,
+      rootIds:
+        documentGraph === undefined
+          ? []
+          : selectAssetQueryDocumentGraphRoots({
+              graph: documentGraph,
+              documents: documentGraph.nodes.map((node) => ({
+                _id: node.id,
+                revision: node.revision,
+                contentRef: node.contentRef,
+              })),
+              result,
+            }),
+    };
+  };
   return {
     query,
-    queryWithDocumentGraphRoots: async (...args) => {
-      const executed = await executeQuery(...args);
-      return {
-        result: executed.result,
-        rootIds:
-          documentGraph === undefined
-            ? []
-            : selectAssetQueryDocumentGraphRoots({
-                graph: documentGraph,
-                documents: executed.materialized
-                  ? documentGraph.nodes.map((node) => ({
-                      _id: node.id,
-                      revision: node.revision,
-                      contentRef: node.contentRef,
-                    }))
-                  : artifact.documents,
-                result: executed.result,
-              }),
-      };
+    queryWithDocumentGraphRoots: selectDocumentGraphRoots,
+    queryWithDocumentGraph: async ({
+      request,
+      load,
+      readContent: queryContentReader,
+      runtimeAssets,
+      signal,
+    }) => {
+      const selection = await selectDocumentGraphRoots(
+        request,
+        queryContentReader,
+        runtimeAssets
+      );
+      if (documentGraph === undefined) {
+        return selection.result;
+      }
+      return await resolveAssetQueryDocumentGraph({
+        graph: documentGraph,
+        ...selection,
+        load,
+        concurrency: contentEngineLimits.concurrentContentReads,
+        signal,
+      });
     },
     getFieldCatalog: () => artifact.fieldCatalog,
     getStats: () => stats,
