@@ -154,4 +154,56 @@ describe("adapted document graph resolution", () => {
       }),
     });
   });
+
+  test("limits the reachable document count before loading", async () => {
+    const load = async () => ({
+      format: "json" as const,
+      revision: "unused",
+      source: "{}",
+    });
+
+    await expect(
+      resolveAdaptedDocumentGraph({
+        graph,
+        rootIds: ["post"],
+        concurrency: 3,
+        maximumDocuments: 2,
+        load,
+      })
+    ).rejects.toMatchObject({
+      code: "DOCUMENT_COUNT_EXCEEDED",
+      documentCount: 3,
+      documentLimit: 2,
+    });
+  });
+
+  test("limits aggregate source bytes before parsing", async () => {
+    await expect(
+      resolveAdaptedDocumentGraph({
+        graph: createDocumentGraph({
+          nodes: [
+            { id: "post", revision: "post-r1", contentRef: "content:post" },
+          ],
+          edges: [],
+        }),
+        rootIds: ["post"],
+        concurrency: 1,
+        maximumBytes: 10,
+        maximumTotalBytes: 2,
+        load: async () => ({
+          format: "json",
+          revision: "post-r1",
+          source: "{}\n",
+        }),
+      })
+    ).rejects.toMatchObject({
+      code: "DOCUMENT_LOAD_FAILED",
+      documentId: "post",
+      cause: expect.objectContaining({
+        code: "TOTAL_BYTES_EXCEEDED",
+        totalBytes: 3,
+        totalByteLimit: 2,
+      }),
+    });
+  });
 });
