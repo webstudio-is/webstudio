@@ -1,0 +1,92 @@
+import { describe, expect, test } from "vitest";
+import { compileContentArtifact } from "./asset-index";
+import { createCanonicalAssetFileEntry } from "./canonical";
+import {
+  checksumContentArtifact,
+  verifyContentArtifact,
+} from "./content-artifact";
+import { createDocumentGraph } from "./document-graph";
+
+const entry = createCanonicalAssetFileEntry({
+  projectId: "project",
+  document: {
+    _id: "post",
+    _type: "asset.file",
+    name: "post.json",
+    path: "posts/post.json",
+    key: "post",
+    extension: "json",
+    mimeType: "application/json",
+    size: 2,
+    revision: "post-r1",
+    contentRef: "content:post",
+    properties: {},
+  },
+});
+
+const graph = createDocumentGraph({
+  nodes: [{ id: "post", revision: "post-r1", contentRef: "content:post" }],
+  edges: [],
+});
+
+describe("content artifact document graph", () => {
+  test("verifies nested graph integrity independently of the outer checksum", async () => {
+    const { artifact } = await compileContentArtifact({
+      projectId: "project",
+      entries: [entry],
+      documentGraph: graph,
+    });
+    const tampered = {
+      ...artifact,
+      documentGraph: {
+        ...artifact.documentGraph!,
+        nodes: artifact.documentGraph!.nodes.map((node) => ({
+          ...node,
+          contentRef: "content:tampered",
+        })),
+      },
+    };
+    const outerChecksum = await checksumContentArtifact(tampered);
+
+    await expect(
+      verifyContentArtifact({
+        ...tampered,
+        integrity: { algorithm: "sha256", checksum: outerChecksum },
+      })
+    ).rejects.toMatchObject({ code: "CHECKSUM_MISMATCH" });
+  });
+
+  test("counts persisted graph bytes against the artifact limit", async () => {
+    const withoutGraph = await compileContentArtifact({
+      projectId: "project",
+      entries: [entry],
+    });
+    const withGraph = await compileContentArtifact({
+      projectId: "project",
+      entries: [entry],
+      documentGraph: graph,
+    });
+
+    expect(withGraph.diagnostics.boundedBytes).toBeGreaterThan(
+      withoutGraph.diagnostics.boundedBytes
+    );
+    const constrained = await compileContentArtifact({
+      projectId: "project",
+      entries: [entry],
+      documentGraph: graph,
+      maxBytes: withoutGraph.diagnostics.boundedBytes,
+    });
+    expect(constrained.artifact.documents).toEqual([]);
+    expect(constrained.diagnostics.boundedBytes).toBeLessThanOrEqual(
+      withoutGraph.diagnostics.boundedBytes
+    );
+    await expect(
+      compileContentArtifact({
+        projectId: "project",
+        entries: [entry],
+        documentGraph: graph,
+        maxBytes: Math.floor(constrained.diagnostics.boundedBytes / 2),
+      })
+    ).rejects.toThrow("Content database byte limit is too small");
+  });
+});

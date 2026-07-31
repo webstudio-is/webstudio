@@ -2,6 +2,7 @@ import { contentArtifactV1, type ContentArtifactV1 } from "./schema";
 import { contentEngineLimits } from "./limits";
 import { serializeJsonDeterministically, sha256 } from "./canonical-json";
 import { getUtf8ByteLength } from "./byte-stream";
+import { verifyDocumentGraphArtifact } from "./document-graph";
 
 export const checksumContentArtifact = async (index: ContentArtifactV1) => {
   const { integrity: _integrity, ...payload } = index;
@@ -53,6 +54,9 @@ export const verifyContentArtifact = async (value: unknown) => {
   assertContentArtifactSize(index);
   if (index.integrity.checksum !== (await checksumContentArtifact(index))) {
     throw new Error("Content artifact checksum is invalid");
+  }
+  if (index.documentGraph !== undefined) {
+    await verifyDocumentGraphArtifact(index.documentGraph);
   }
   return index;
 };
