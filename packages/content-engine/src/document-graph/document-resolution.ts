@@ -12,7 +12,7 @@ import {
   type DocumentGraphNode,
 } from "./graph";
 import {
-  assertDocumentSourceRevision,
+  assertDocumentSourceIdentity,
   type DocumentSource,
 } from "./document-source";
 import { resolveDocumentGraph, type ResolvedDocumentGraph } from "./resolver";
@@ -119,7 +119,7 @@ export const resolveAdaptedDocumentGraph = async ({
       concurrency,
       signal,
       load: async (node, options) => {
-        const loaded = assertDocumentSourceRevision({
+        const loaded = assertDocumentSourceIdentity({
           node,
           source: await load(node, options),
         });

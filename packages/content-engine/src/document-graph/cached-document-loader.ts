@@ -4,7 +4,7 @@ import { contentEngineLimits } from "../limits";
 import type { DocumentFormat } from "./document-adapter";
 import type { DocumentGraphNode } from "./graph";
 import {
-  assertDocumentSourceRevision,
+  assertDocumentSourceIdentity,
   type DocumentSource,
   type DocumentSourceLoader,
 } from "./document-source";
@@ -51,8 +51,9 @@ export class CachedDocumentLoaderError extends Error {
 export const getDocumentSourceCacheKey = ({
   contentRef,
   revision,
-}: Pick<DocumentGraphNode, "contentRef" | "revision">) =>
-  serializeJsonDeterministically([contentRef, revision]);
+  format,
+}: Pick<DocumentGraphNode, "contentRef" | "revision" | "format">) =>
+  serializeJsonDeterministically([contentRef, revision, format]);
 
 const isCachedDocumentSource = (
   input: unknown
@@ -114,7 +115,11 @@ export const createCachedDocumentSourceLoader = ({
         });
         // Cache availability must not prevent an origin read.
       }
-      if (isCachedDocumentSource(cached) && cached.revision === node.revision) {
+      if (
+        isCachedDocumentSource(cached) &&
+        cached.revision === node.revision &&
+        (node.format === undefined || cached.format === node.format)
+      ) {
         emitDocumentGraphRuntimeEvent(onEvent, {
           type: "document-cache-hit",
           documentId: node.id,
@@ -128,7 +133,7 @@ export const createCachedDocumentSourceLoader = ({
         revision: node.revision,
       });
 
-      const loaded = assertDocumentSourceRevision({
+      const loaded = assertDocumentSourceIdentity({
         node,
         source: await load(node, options),
       });

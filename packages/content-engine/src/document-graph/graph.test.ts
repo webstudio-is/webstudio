@@ -34,6 +34,30 @@ const edges = [
 ];
 
 describe("document graph", () => {
+  test("rejects conflicting revisions for one content reference", () => {
+    expect(() =>
+      createDocumentGraph({
+        nodes: [
+          {
+            id: "first",
+            revision: "first-r1",
+            contentRef: "content:shared",
+            format: "json",
+          },
+          {
+            id: "second",
+            revision: "second-r1",
+            contentRef: "content:shared",
+            format: "json",
+          },
+        ],
+        edges: [],
+      })
+    ).toThrowError(
+      expect.objectContaining({ code: "CONTENT_IDENTITY_CONFLICT" })
+    );
+  });
+
   test("normalizes nodes and edges deterministically", () => {
     const graph = createDocumentGraph({
       nodes: [...nodes].reverse(),

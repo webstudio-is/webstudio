@@ -117,8 +117,8 @@ describe("document graph resolver", () => {
   test("loads a shared content reference once for multiple document identities", async () => {
     const aliasGraph = createDocumentGraph({
       nodes: [
-        { id: "first", revision: "first-r1", contentRef: "content:shared" },
-        { id: "second", revision: "second-r1", contentRef: "content:shared" },
+        { id: "first", revision: "shared-r1", contentRef: "content:shared" },
+        { id: "second", revision: "shared-r1", contentRef: "content:shared" },
       ],
       edges: [],
     });

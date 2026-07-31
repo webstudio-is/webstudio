@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { assertDocumentSourceRevision } from "./document-source";
+import { assertDocumentSourceIdentity } from "./document-source";
 
 describe("document source", () => {
   test("accepts matching revisions and reports stale source identity", () => {
@@ -7,6 +7,7 @@ describe("document source", () => {
       id: "post",
       revision: "post-r1",
       contentRef: "content:post",
+      format: "json" as const,
     };
     const source = {
       format: "json" as const,
@@ -14,9 +15,9 @@ describe("document source", () => {
       source: '{"title":"Hello"}',
     };
 
-    expect(assertDocumentSourceRevision({ node, source })).toBe(source);
+    expect(assertDocumentSourceIdentity({ node, source })).toBe(source);
     expect(() =>
-      assertDocumentSourceRevision({
+      assertDocumentSourceIdentity({
         node,
         source: { ...source, revision: "stale-r1" },
       })
@@ -26,6 +27,19 @@ describe("document source", () => {
         documentId: "post",
         expectedRevision: "post-r1",
         actualRevision: "stale-r1",
+      })
+    );
+    expect(() =>
+      assertDocumentSourceIdentity({
+        node,
+        source: { ...source, format: "markdown" },
+      })
+    ).toThrowError(
+      expect.objectContaining({
+        code: "FORMAT_MISMATCH",
+        documentId: "post",
+        expectedFormat: "json",
+        actualFormat: "markdown",
       })
     );
   });

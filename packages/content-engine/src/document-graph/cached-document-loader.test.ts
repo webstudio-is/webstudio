@@ -10,6 +10,7 @@ const node = {
   id: "post",
   revision: "post-r1",
   contentRef: "content:post",
+  format: "json" as const,
 };
 
 describe("cached document source loader", () => {
@@ -33,12 +34,40 @@ describe("cached document source loader", () => {
       getDocumentSourceCacheKey({
         contentRef: "content:post",
         revision: "post-r1",
+        format: "json",
       })
     );
     expect(load).not.toHaveBeenCalled();
     await expect(parseDocumentSource(result)).resolves.toEqual({
       format: "json",
       value: { title: "Cached" },
+    });
+  });
+
+  test("does not reuse a cached source with a different format", async () => {
+    const load = vi.fn(async () => ({
+      format: "json" as const,
+      revision: "post-r1",
+      source: "{}",
+    }));
+    const cache = {
+      get: vi.fn(async () => ({
+        format: "markdown" as const,
+        revision: "post-r1",
+        bytes: new TextEncoder().encode("# stale"),
+      })),
+      set: vi.fn(async () => undefined),
+    };
+
+    const result = await createCachedDocumentSourceLoader({ cache, load })(
+      node,
+      {}
+    );
+
+    expect(load).toHaveBeenCalledOnce();
+    await expect(parseDocumentSource(result)).resolves.toEqual({
+      format: "json",
+      value: {},
     });
   });
 

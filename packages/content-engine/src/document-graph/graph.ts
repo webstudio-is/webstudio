@@ -97,7 +97,8 @@ export const createDocumentGraph = ({
     const previousContent = nodesByContentRef.get(node.contentRef);
     if (
       previousContent !== undefined &&
-      previousContent.format !== node.format
+      (previousContent.revision !== node.revision ||
+        previousContent.format !== node.format)
     ) {
       throw new DocumentGraphError({
         code: "CONTENT_IDENTITY_CONFLICT",
