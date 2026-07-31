@@ -39,6 +39,26 @@ export const markdownBlogFixtureArticles = [
   },
 ] as const;
 
+export const markdownBlogFixtureAuthor = {
+  name: "northstar-author.json",
+  format: "json" as const,
+  profile: {
+    name: "Mira Chen",
+    role: "Northstar editor",
+  },
+};
+
+export const markdownBlogFixtureDocuments = [
+  ...markdownBlogFixtureArticles.map(({ name }) => ({
+    name,
+    format: "md" as const,
+  })),
+  {
+    name: markdownBlogFixtureAuthor.name,
+    format: markdownBlogFixtureAuthor.format,
+  },
+] as const;
+
 const articleSource = (
   article: (typeof markdownBlogFixtureArticles)[number]
 ) => `---
@@ -47,6 +67,8 @@ slug: ${article.slug}
 publishedAt: ${article.publishedAt}
 draft: false
 excerpt: ${article.excerpt}
+author:
+  $ref: ./northstar-author.json#/profile
 ---
 
 # ${article.title}
@@ -62,9 +84,13 @@ export const writeMarkdownBlogFixtureFiles = async (
 ) => {
   const assetsDirectory = join(projectDirectory, ".webstudio/assets");
   await mkdir(assetsDirectory, { recursive: true });
-  await Promise.all(
-    markdownBlogFixtureArticles.map((article) =>
+  await Promise.all([
+    ...markdownBlogFixtureArticles.map((article) =>
       writeFile(join(assetsDirectory, article.name), articleSource(article))
-    )
-  );
+    ),
+    writeFile(
+      join(assetsDirectory, markdownBlogFixtureAuthor.name),
+      `${JSON.stringify({ profile: markdownBlogFixtureAuthor.profile }, undefined, 2)}\n`
+    ),
+  ]);
 };

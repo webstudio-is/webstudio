@@ -1,6 +1,9 @@
 import type { Asset, AssetFolder } from "@webstudio-is/sdk";
 import { fontAssetFixtureFiles } from "./font-assets-fixture";
-import { markdownBlogFixtureArticles } from "./markdown-blog-fixture";
+import {
+  markdownBlogFixtureArticles,
+  markdownBlogFixtureAuthor,
+} from "./markdown-blog-fixture";
 
 export type EvaluationPage = {
   id: string;
@@ -219,7 +222,7 @@ export const fontAssetsFixture: HighImpactFixture = {
 
 export const markdownBlogFixture: HighImpactFixture = {
   id: "markdown-blog-v1",
-  objective: `Upload the ${markdownBlogFixtureArticles.length} provided Markdown articles from .webstudio/assets into one Blog asset folder. Build an editable blog overview at /blog and a dynamic detail page at /blog/:slug using exactly one fully configured scoped Assets resource per page, Collections, and Markdown Embed. Include the complete structured query in each initial resource creation; never create a default or placeholder resource and never repair one by creating another. The overview query must exclude drafts, sort newest first, select the article title, slug, excerpt, and publication date, and avoid loading file content. The detail query must select one article from system.params.slug and load its Markdown body. Verify both /blog and /blog/aurora-trails at desktop and mobile sizes.`,
+  objective: `Upload the ${markdownBlogFixtureArticles.length} provided Markdown articles and ${markdownBlogFixtureAuthor.name} from .webstudio/assets into one Blog asset folder. Each article references the JSON author profile from its frontmatter. Build an editable blog overview at /blog and a dynamic detail page at /blog/:slug using exactly one fully configured scoped Assets resource per page, Collections, and Markdown Embed. Include the complete structured query in each initial resource creation; never create a default or placeholder resource and never repair one by creating another. The overview query must exclude drafts, sort newest first, select the article title, slug, excerpt, publication date, and resolved author, and avoid loading file content. The detail query must select one article from system.params.slug, select its resolved author, and load its Markdown body. Render the resolved author name on both pages. Verify both /blog and /blog/aurora-trails at desktop and mobile sizes.`,
   project: emptyProject(),
 };
 

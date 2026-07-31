@@ -14,7 +14,7 @@ import {
   fontAssetFixtureFiles,
   fontAssetFixtureMeta,
 } from "./font-assets-fixture";
-import { markdownBlogFixtureArticles } from "./markdown-blog-fixture";
+import { markdownBlogFixtureDocuments } from "./markdown-blog-fixture";
 import { evaluateHighImpactOutcome, type EvaluationToolCall } from "./validate";
 
 const clone = <Value>(value: Value): Value => structuredClone(value);
@@ -142,7 +142,7 @@ const addMarkdownBlog = (): EvaluationProject => {
     createdAt: "2026-01-01T00:00:00.000Z",
   });
   project.assets.push(
-    ...markdownBlogFixtureArticles.map(({ name }) => ({
+    ...markdownBlogFixtureDocuments.map(({ name, format }) => ({
       id: name,
       projectId: "project",
       name,
@@ -151,7 +151,7 @@ const addMarkdownBlog = (): EvaluationProject => {
       folderId: "blog-folder",
       size: 100,
       type: "file" as const,
-      format: "md",
+      format,
       meta: {},
       createdAt: "2026-01-01T00:00:00.000Z",
     }))
@@ -192,6 +192,10 @@ const addMarkdownBlog = (): EvaluationProject => {
           value: "collectionItem.properties.publishedAt",
         },
         { type: "expression", value: "collectionItem.properties.slug" },
+        {
+          type: "expression",
+          value: "collectionItem.properties.author.name",
+        },
       ],
     },
     {
@@ -202,7 +206,20 @@ const addMarkdownBlog = (): EvaluationProject => {
     {
       id: "detail-collection",
       component: "Collection",
-      children: [{ type: "id", value: "markdown" }],
+      children: [
+        { type: "id", value: "detail-author" },
+        { type: "id", value: "markdown" },
+      ],
+    },
+    {
+      id: "detail-author",
+      component: "Text",
+      children: [
+        {
+          type: "expression",
+          value: "collectionItem.properties.author.name",
+        },
+      ],
     },
     {
       id: "markdown",
@@ -258,6 +275,7 @@ const addMarkdownBlog = (): EvaluationProject => {
             ["properties", "title"],
             ["properties", "slug"],
             ["properties", "publishedAt"],
+            ["properties", "author"],
             ["excerpt"],
           ],
         },
@@ -284,7 +302,10 @@ const addMarkdownBlog = (): EvaluationProject => {
         output: {
           mode: "fields",
           includeMetadata: false,
-          fields: [["properties", "title"]],
+          fields: [
+            ["properties", "title"],
+            ["properties", "author"],
+          ],
         },
         content: { mode: "markdown-body", maxBytes: 1_048_576 },
       })
@@ -400,14 +421,31 @@ describe("Markdown blog evaluation", () => {
     },
   ];
 
-  test("accepts a bounded two-route Markdown blog", () => {
-    expect(
-      evaluateHighImpactOutcome({
-        fixture: markdownBlogFixture,
-        project: addMarkdownBlog(),
-        toolCalls: successfulCalls,
-      })
-    ).toMatchObject({ passed: true, failures: [] });
+  test("accepts a bounded two-route Markdown blog with a resolved JSON author", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project: addMarkdownBlog(),
+      toolCalls: successfulCalls,
+    });
+    expect(result).toMatchObject({ passed: true, failures: [] });
+    expect(result.checks).toMatchObject({
+      documentGraphSources: "passed",
+      documentGraphQueries: "passed",
+    });
+  });
+
+  test("rejects blog resources that do not select the referenced author", () => {
+    const project = addMarkdownBlog();
+    project.resources = project.resources.map((resource) => ({
+      ...resource,
+      body: String(resource.body).replaceAll("author", "omitted"),
+    }));
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project,
+      toolCalls: successfulCalls,
+    });
+    expect(result.checks.documentGraphQueries).toBe("failed");
   });
 
   test("rejects missing detail content and route evidence", () => {

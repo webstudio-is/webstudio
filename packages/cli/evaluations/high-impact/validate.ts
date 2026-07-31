@@ -20,7 +20,11 @@ import {
   fontAssetFixtureMeta,
   fontAssetFixtureSource,
 } from "./font-assets-fixture";
-import { markdownBlogFixtureArticles } from "./markdown-blog-fixture";
+import {
+  markdownBlogFixtureArticles,
+  markdownBlogFixtureAuthor,
+  markdownBlogFixtureDocuments,
+} from "./markdown-blog-fixture";
 import { isBroadRead } from "./evaluation-metrics";
 
 export type EvaluationToolCall = {
@@ -569,10 +573,16 @@ const validateMarkdownBlog = (
   const expectedNames = new Set<string>(
     markdownBlogFixtureArticles.map((article) => article.name)
   );
+  const expectedDocumentNames = new Set<string>(
+    markdownBlogFixtureDocuments.map((document) => document.name)
+  );
+  const documentAssets = input.project.assets.filter(
+    (asset) => asset.type === "file"
+  );
   const markdownAssets = input.project.assets.filter(
     (asset) => asset.type === "file" && asset.format === "md"
   );
-  const folderIds = new Set(markdownAssets.map((asset) => asset.folderId));
+  const folderIds = new Set(documentAssets.map((asset) => asset.folderId));
   const blogFolder = input.project.assetFolders.find(
     (folder) => folder.name === "Blog"
   );
@@ -587,11 +597,24 @@ const validateMarkdownBlog = (
   recordCheck(
     checks,
     failures,
+    "documentGraphSources",
+    documentAssets.length === expectedDocumentNames.size &&
+      documentAssets.every((asset) => expectedDocumentNames.has(asset.name)) &&
+      documentAssets.some(
+        (asset) =>
+          asset.name === markdownBlogFixtureAuthor.name &&
+          asset.format === markdownBlogFixtureAuthor.format
+      ),
+    "The referenced JSON author and Markdown source documents were not uploaded together."
+  );
+  recordCheck(
+    checks,
+    failures,
     "blogAssetFolder",
     blogFolder !== undefined &&
       folderIds.size === 1 &&
       folderIds.has(blogFolder.id),
-    "The Markdown articles are not all stored in one Blog asset folder."
+    "The Markdown articles and referenced JSON author are not all stored in one Blog asset folder."
   );
 
   const overview = getPageEvaluationContext(input.project, "/blog");
@@ -681,6 +704,16 @@ const validateMarkdownBlog = (
       article.content.maxBytes === 1_048_576,
     "The detail Assets resource does not select one Markdown body by the dynamic slug parameter."
   );
+  recordCheck(
+    checks,
+    failures,
+    "documentGraphQueries",
+    listing !== undefined &&
+      article !== undefined &&
+      hasQueryFragment(listing.output, ["properties", "author"]) &&
+      hasQueryFragment(article.output, ["properties", "author"]),
+    "Both blog Assets resources must select the resolved author document."
+  );
 
   const overviewSource = JSON.stringify({
     instances: overview.instances,
@@ -699,13 +732,13 @@ const validateMarkdownBlog = (
     failures,
     "editableBlogBindings",
     /Collection/i.test(overviewSource) &&
-      ["title", "excerpt", "publishedAt", "slug"].every((field) =>
-        overviewSource.includes(field)
+      ["title", "excerpt", "publishedAt", "slug", "author", "name"].every(
+        (field) => overviewSource.includes(field)
       ) &&
       /Collection/i.test(detailSource) &&
       /MarkdownEmbed/i.test(detailSource) &&
-      hasQueryFragment(detailSource, ["content", "text"]),
-    "The blog is not rendered through editable Collections and a Markdown Embed with the required bindings."
+      hasQueryFragment(detailSource, ["content", "text", "author", "name"]),
+    "The blog is not rendered through editable Collections, resolved author bindings, and a Markdown Embed."
   );
   recordCheck(
     checks,

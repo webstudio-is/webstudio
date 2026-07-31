@@ -112,6 +112,9 @@ describe("high-impact agent runner", () => {
         expect.stringContaining("exactly one upload-assets call"),
         expect.stringContaining("parallel tool-call batch"),
         expect.stringContaining("verify-font-assets exactly once"),
+        expect.stringContaining(
+          'audit exactly once with {"scopes":["assets"],"limit":10}'
+        ),
         expect.stringContaining("Do not call refresh or get-asset separately"),
       ])
     );
@@ -123,6 +126,8 @@ describe("high-impact agent runner", () => {
     expect(blogConstraints).toContain("one upload-assets call");
     expect(blogConstraints).toContain("aurora-trails.md");
     expect(blogConstraints).toContain("city-walks.md");
+    expect(blogConstraints).toContain("northstar-author.json");
+    expect(blogConstraints).toContain('"format":"json"');
     expect(blogConstraints).toContain("/blog/:slug");
     expect(blogConstraints).toContain(
       '"field":["properties","draft"],"operator":"ne"'
@@ -133,6 +138,8 @@ describe("high-impact agent runner", () => {
       '"fields":[["properties","title"],["properties","slug"]'
     );
     expect(blogConstraints).toContain('"mode":"markdown-body"');
+    expect(blogConstraints).toContain('["properties","author"]');
+    expect(blogConstraints).toContain("collectionItem.properties.author.name");
     expect(blogConstraints).toContain("$.MarkdownEmbed");
     expect(blogConstraints).toContain(
       "call verify-page-responsive exactly twice"
