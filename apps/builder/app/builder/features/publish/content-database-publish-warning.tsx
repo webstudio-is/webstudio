@@ -1,12 +1,7 @@
-import { toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { $publishDialog } from "../../shared/nano-states";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import { ContentDatabasePublishWarning } from "./content-database-publish-warning-view";
-
-export const shouldShowContentDatabasePublishWarningToast = (
-  isPublishPopoverOpen: boolean
-) => isPublishPopoverOpen === false;
+import { showPublishWarning } from "./publish-warning";
 
 export const showContentDatabasePublishWarning = async ({
   projectId,
@@ -27,12 +22,5 @@ export const showContentDatabasePublishWarning = async ({
     return;
   }
   const message = <ContentDatabasePublishWarning diagnostics={diagnostics} />;
-  if (
-    shouldShowContentDatabasePublishWarningToast(
-      $publishDialog.get() !== "none"
-    )
-  ) {
-    toast.warn(message);
-  }
-  setWarning(message);
+  showPublishWarning({ message, setWarning });
 };

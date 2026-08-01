@@ -103,6 +103,7 @@ import {
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
 import { showContentDatabasePublishWarning } from "./content-database-publish-warning";
+import { showPublishWarning } from "./publish-warning";
 
 const PrePublishAuditMessage = ({
   finding,
@@ -638,8 +639,10 @@ const Publish = ({
       return;
     }
     if (auditWarning !== undefined) {
-      toast.warn(auditWarning);
-      setPublishWarning(auditWarning);
+      showPublishWarning({
+        message: auditWarning,
+        setWarning: setPublishWarning,
+      });
     }
 
     // Custom domain checkboxes are disabled on free plan so they are never
@@ -810,8 +813,10 @@ const PublishStatic = ({
               return;
             }
             if (auditWarning !== undefined) {
-              toast.warn(auditWarning);
-              setPublishWarning(auditWarning);
+              showPublishWarning({
+                message: auditWarning,
+                setWarning: setPublishWarning,
+              });
             }
 
             startTransition(async () => {
