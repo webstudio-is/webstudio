@@ -111,7 +111,16 @@ export const RequestInspector = ({
         value="query"
         css={{ flex: 1, position: "relative", overflow: "hidden" }}
       >
-        <div ref={queryContainerRef} style={{ height: "100%" }} />
+        <div
+          ref={queryContainerRef}
+          style={{
+            height: "100%",
+            minHeight: 0,
+            minWidth: 0,
+            overflow: "hidden",
+            position: "relative",
+          }}
+        />
       </PanelTabsContent>
     )}
     <PanelTabsContent
