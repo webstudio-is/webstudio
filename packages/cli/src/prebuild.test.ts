@@ -17,7 +17,10 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { bundleVersion } from "@webstudio-is/protocol";
 import type { Asset } from "@webstudio-is/sdk";
-import type { AssetFileDocument } from "@webstudio-is/content-engine";
+import {
+  createDocumentGraph,
+  type AssetFileDocument,
+} from "@webstudio-is/content-engine";
 import {
   createAssetIndex,
   createCanonicalAssetFileEntry,
@@ -384,7 +387,9 @@ const createTestAssetIndex = (
     ),
   });
 
-const createQueryResource = (content: "none" | "full" = "none"): Resource => ({
+const createQueryResource = (
+  content: "none" | "full" | "markdown-body" = "none"
+): Resource => ({
   id: "posts",
   name: "Posts",
   control: "system",
@@ -1268,6 +1273,76 @@ describe("prebuild", () => {
     await expect(
       stat("app/__generated__/$resources.asset-query-vendor.js")
     ).rejects.toThrow("ENOENT");
+  });
+
+  test("loads deferred SaaS document content from the asset proxy", async () => {
+    const index = await createAssetIndex({
+      projectId: "project-1",
+      entries: [
+        createCanonicalAssetFileEntry({
+          projectId: "project-1",
+          document: indexedDocument,
+        }),
+      ],
+      documentGraph: createDocumentGraph({
+        nodes: [
+          {
+            id: indexedDocument._id,
+            revision: indexedDocument.revision,
+            contentRef: indexedDocument.contentRef,
+            format: "markdown",
+          },
+        ],
+        edges: [],
+      }),
+    });
+    const baseSiteData = createSiteData({
+      assets: [createAssetForIndexedDocument(indexedDocument)],
+    });
+    const siteData = {
+      ...baseSiteData,
+      assetIndex: index,
+      build: {
+        ...baseSiteData.build,
+        deployment: {
+          destination: "saas" as const,
+          domains: ["example"],
+          assetsDomain: "example",
+          excludeWstdDomainFromSearch: false,
+        },
+        resources: [["posts", createQueryResource("markdown-body")]],
+        dataSources: [
+          [
+            "posts-data",
+            {
+              id: "posts-data",
+              type: "resource" as const,
+              name: "posts",
+              resourceId: "posts",
+              scopeInstanceId: "root",
+            },
+          ],
+        ],
+      },
+    };
+    await writeSiteData(
+      siteData as unknown as ReturnType<typeof createSiteData>
+    );
+
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
+
+    const runtimeModule = await readFile(
+      "app/__generated__/$resources.asset-query-runtime.ts",
+      "utf8"
+    );
+    expect(runtimeModule).toContain(
+      '"url":"https://assets.example/cgi/asset/post.md?format=raw"'
+    );
+    expect(runtimeModule).not.toContain('"url":"/assets/post.md"');
   });
 
   test("uses pass-through images in the base react-router template", async () => {

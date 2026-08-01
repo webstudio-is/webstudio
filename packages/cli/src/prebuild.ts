@@ -1408,16 +1408,22 @@ export const prebuild = async (options: {
   // Use a placeholder origin to preserve runtime metadata before overriding the
   // builder-only URL with the generated project's local asset URL.
   const assetsById = Object.fromEntries(
-    siteData.assets.map((asset) => [
-      asset.id,
-      {
-        ...toRuntimeAsset(asset, "https://placeholder.local"),
-        contentRef: asset.name,
-        // Generated projects serve materialized assets from the template's
-        // asset base; the /cgi routes only exist in the live builder.
-        url: `${assetBaseUrl}${asset.name}`,
-      },
-    ])
+    siteData.assets.map((asset) => {
+      const runtimeAsset = toRuntimeAsset(asset, "https://placeholder.local");
+      return [
+        asset.id,
+        {
+          ...runtimeAsset,
+          contentRef: asset.name,
+          // SaaS serves project assets through its storage-backed proxy.
+          // Other generated projects materialize them under the asset base.
+          url:
+            siteData.build.deployment?.destination === "saas"
+              ? new URL(runtimeAsset.url, siteData.origin).href
+              : `${assetBaseUrl}${asset.name}`,
+        },
+      ];
+    })
   );
   const assetCompilationPlan = createReachableAssetContentCompilationPlan({
     props: siteData.build.props.map(([, prop]) => prop),
