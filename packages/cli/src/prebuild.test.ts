@@ -1343,6 +1343,23 @@ describe("prebuild", () => {
       '"url":"https://assets.example/cgi/asset/post.md?format=raw"'
     );
     expect(runtimeModule).not.toContain('"url":"/assets/post.md"');
+
+    await mkdir(".webstudio/assets", { recursive: true });
+    await writeFile(".webstudio/assets/post.md", "# Post\n", "utf8");
+    await prebuild({
+      assets: true,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
+
+    const materializedRuntimeModule = await readFile(
+      "app/__generated__/$resources.asset-query-runtime.ts",
+      "utf8"
+    );
+    expect(materializedRuntimeModule).toContain('"url":"/assets/post.md"');
+    expect(materializedRuntimeModule).not.toContain(
+      '"url":"https://assets.example/cgi/asset/post.md?format=raw"'
+    );
   });
 
   test("uses pass-through images in the base react-router template", async () => {

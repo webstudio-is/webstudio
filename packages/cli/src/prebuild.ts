@@ -1416,9 +1416,10 @@ export const prebuild = async (options: {
           ...runtimeAsset,
           contentRef: asset.name,
           // SaaS serves project assets through its storage-backed proxy.
-          // Other generated projects materialize them under the asset base.
+          // Generated projects with downloaded assets serve them locally.
           url:
-            siteData.build.deployment?.destination === "saas"
+            siteData.build.deployment?.destination === "saas" &&
+            options.assets === false
               ? new URL(runtimeAsset.url, siteData.origin).href
               : `${assetBaseUrl}${asset.name}`,
         },
