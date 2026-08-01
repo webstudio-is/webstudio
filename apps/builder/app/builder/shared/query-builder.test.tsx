@@ -168,5 +168,7 @@ test("allows the full-size query source to scroll in both directions", () => {
 
   const scroller = sourceContainer.querySelector(".cm-scroller");
   expect(scroller).not.toBeNull();
-  expect(getComputedStyle(scroller as Element).overflow).toBe("auto");
+  const style = getComputedStyle(scroller as Element);
+  expect(style.minHeight).toBe("0");
+  expect(style.overflow).toBe("auto");
 });

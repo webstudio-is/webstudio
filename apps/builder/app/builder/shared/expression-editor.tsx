@@ -560,6 +560,7 @@ const linterTooltipTheme = EditorView.theme({
 
 const fullSizeEditorTheme = EditorView.theme({
   ".cm-scroller": {
+    minHeight: 0,
     overflow: "auto",
   },
 });
