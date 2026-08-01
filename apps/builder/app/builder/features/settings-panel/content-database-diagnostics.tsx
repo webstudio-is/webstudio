@@ -15,15 +15,15 @@ export const getContentDatabaseDiagnosticRows = (
   value: AssetQueryPreviewDiagnostics
 ) => [
   {
-    label: "This query full size",
+    label: "Query size",
     value: prettyBytes(value.query.unboundedBytes),
-    valueColor: "destructive" as const,
+    valueColor: value.query.truncated ? ("destructive" as const) : undefined,
     description: `Temporary query-only footprint before the database limit is applied. It is not added to the published database size. ${runtimeContentNote}`,
   },
   {
-    label: "Published database full size",
+    label: "Database size",
     value: prettyBytes(value.database.unboundedBytes),
-    valueColor: "destructive" as const,
+    valueColor: value.database.truncated ? ("destructive" as const) : undefined,
     description: `Merged footprint of all reachable Assets queries before the database limit is applied. ${runtimeContentNote}`,
   },
 ];
