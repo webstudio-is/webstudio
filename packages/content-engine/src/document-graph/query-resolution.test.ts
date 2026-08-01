@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import { compileContentArtifact } from "../asset-index";
 import { createCanonicalAssetFileEntry } from "../canonical";
 import { createContentDatabase } from "../content-database";
+import type { AssetQuery } from "../schema";
 import {
   createContentCompilationPlan,
   createLiteralContentCompilationQuery,
@@ -160,18 +161,26 @@ describe("document graph query resolution", () => {
     ]);
     expect(load).toHaveBeenCalledTimes(8);
 
-    const materializableQuery = {
-      where: { all: [] },
+    const graphQuery = {
+      where: {
+        all: [
+          {
+            field: ["properties", "author", "name"],
+            operator: "eq",
+            value: "Ada",
+          },
+        ],
+      },
       sort: [],
       limit: 20,
       offset: 0,
       output: {
-        mode: "fields" as const,
+        mode: "fields",
         includeMetadata: false,
-        fields: [["properties", "author"] as ["properties", "author"]],
+        fields: [["properties", "author"]],
       },
-      content: { mode: "none" as const },
-    };
+      content: { mode: "none" },
+    } satisfies AssetQuery;
     const planned = await compileContentArtifact({
       projectId: "project",
       entries,
@@ -179,7 +188,7 @@ describe("document graph query resolution", () => {
       plan: createContentCompilationPlan([
         createLiteralContentCompilationQuery({
           id: "authors",
-          query: materializableQuery,
+          query: graphQuery,
         }),
       ]),
     });

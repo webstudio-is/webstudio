@@ -9,7 +9,7 @@ import {
 import { normalizeJsonValue, type JsonValue } from "../canonical-json";
 import { contentEngineLimits } from "../limits";
 import type { DocumentRepresentation } from "./reference";
-import { isJsonObject } from "./document-utils";
+import { getJsonReferenceMarkerValue, isJsonObject } from "./document-utils";
 import {
   DocumentReferenceSyntaxError,
   parseSourceDocumentReference,
@@ -54,14 +54,10 @@ const getReferenceMarker = (
   value: JsonValue,
   referenceId: string
 ): string | undefined => {
-  if (isJsonObject(value) === false) {
+  const reference = getJsonReferenceMarkerValue(value);
+  if (reference === undefined) {
     return;
   }
-  const keys = Object.keys(value);
-  if (keys.length !== 1 || keys[0] !== "$ref") {
-    return;
-  }
-  const reference = value.$ref;
   if (typeof reference !== "string") {
     throw new JsonDocumentError({
       code: "INVALID_REFERENCE_MARKER",

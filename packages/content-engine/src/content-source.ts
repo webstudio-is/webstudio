@@ -1,12 +1,15 @@
-import { getQueryConditions } from "@webstudio-is/query-builder/runtime";
-import type { ContentCompilationPlan } from "./compilation-plan";
+import {
+  createContentCompilationPlan,
+  requiresStructuredProperties,
+  selectContentHydrationCandidates,
+  type ContentCompilationPlan,
+} from "./compilation-plan";
 import {
   compileContentArtifact,
   type ContentCompilerDiagnostics,
   type ContentCompilerInput,
 } from "./asset-index";
 import type { ContentArtifactV1 } from "./schema";
-import { selectContentHydrationCandidates } from "./compilation-plan";
 import {
   createUniqueAssetIdsByPath,
   discoverMarkdownAssetReferenceRanges,
@@ -178,19 +181,19 @@ const getDocumentUrl = (path: string) =>
   new URL(path.split("/").map(encodeURIComponent).join("/"), documentUrlBase)
     .href;
 
-const queryCanUseStructuredProperties = (
+const queryNeedsDocumentGraph = (
   query: ContentCompilationPlan["queries"][number]
-) =>
-  (query.limit.type !== "literal" ||
-    typeof query.limit.value !== "number" ||
-    query.limit.value > 0) &&
-  (query.output.mode === "all" ||
-    (query.output.mode === "fields" &&
-      query.output.fields.some(([field]) => field === "properties")) ||
-    getQueryConditions(query.where).some(
-      ({ field }) => field[0] === "properties"
-    ) ||
-    query.sort.some(({ field }) => field[0] === "properties"));
+) => {
+  if (
+    query.limit.type === "literal" &&
+    typeof query.limit.value === "number" &&
+    query.limit.value <= 0
+  ) {
+    return false;
+  }
+  const queryPlan = createContentCompilationPlan([query]);
+  return queryPlan !== undefined && requiresStructuredProperties(queryPlan);
+};
 
 const discoverSnapshotDocumentGraph = async (
   snapshot: ContentSourceSnapshot,
@@ -199,8 +202,7 @@ const discoverSnapshotDocumentGraph = async (
 ): Promise<DocumentGraph | undefined> => {
   if (
     snapshot.loadDocumentSources === undefined ||
-    (plan !== undefined &&
-      plan.queries.some(queryCanUseStructuredProperties) === false)
+    (plan !== undefined && plan.queries.some(queryNeedsDocumentGraph) === false)
   ) {
     return;
   }
