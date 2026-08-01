@@ -27,8 +27,6 @@ import {
 } from "./font-assets-fixture";
 import {
   markdownBlogFixtureArticles,
-  markdownBlogFixtureAuthor,
-  markdownBlogFixtureDescriptors,
   markdownBlogFixtureDocuments,
 } from "./markdown-blog-fixture";
 import { hasMcpToolCallRetries, isBroadRead } from "./evaluation-metrics";
@@ -714,9 +712,6 @@ const validateMarkdownBlog = (
   const expectedNames = new Set<string>(
     markdownBlogFixtureArticles.map((article) => article.name)
   );
-  const expectedDescriptorNames = new Set<string>(
-    markdownBlogFixtureDescriptors.map((descriptor) => descriptor.name)
-  );
   const expectedDocumentNames = new Set<string>(
     markdownBlogFixtureDocuments.map((document) => document.name)
   );
@@ -725,12 +720,6 @@ const validateMarkdownBlog = (
   );
   const markdownAssets = input.project.assets.filter(
     (asset) => asset.type === "file" && asset.format === "md"
-  );
-  const descriptorAssets = input.project.assets.filter(
-    (asset) =>
-      asset.type === "file" &&
-      asset.format === "json" &&
-      expectedDescriptorNames.has(asset.name)
   );
   const folderIds = new Set(documentAssets.map((asset) => asset.folderId));
   const blogFolder = input.project.assetFolders.find(
@@ -747,22 +736,13 @@ const validateMarkdownBlog = (
   recordCheck(
     checks,
     failures,
-    "markdownDescriptors",
-    descriptorAssets.length === expectedDescriptorNames.size,
-    "Each Markdown article requires one uploaded JSON descriptor."
-  );
-  recordCheck(
-    checks,
-    failures,
     "documentGraphSources",
     documentAssets.length === expectedDocumentNames.size &&
-      documentAssets.every((asset) => expectedDocumentNames.has(asset.name)) &&
-      documentAssets.some(
+      documentAssets.every(
         (asset) =>
-          asset.name === markdownBlogFixtureAuthor.name &&
-          asset.format === markdownBlogFixtureAuthor.format
+          expectedDocumentNames.has(asset.name) && asset.format === "md"
       ),
-    "The JSON descriptors, referenced author, and Markdown source documents were not uploaded together."
+    "Only the supplied Markdown source documents should be uploaded."
   );
   recordCheck(
     checks,
@@ -771,7 +751,7 @@ const validateMarkdownBlog = (
     blogFolder !== undefined &&
       folderIds.size === 1 &&
       folderIds.has(blogFolder.id),
-    "The Markdown articles, descriptors, and referenced JSON author are not all stored in one Blog asset folder."
+    "The Markdown articles are not all stored in one Blog asset folder."
   );
 
   const overview = getPageEvaluationContext(input.project, "/blog");
@@ -855,13 +835,7 @@ const validateMarkdownBlog = (
         where: listing.where,
         field: ["extension"],
         operator: "eq",
-        value: '"json"',
-      }) &&
-      hasWhereCondition({
-        where: listing.where,
-        field: ["properties", "kind"],
-        operator: "eq",
-        value: '"post"',
+        value: '"md"',
       }) &&
       hasWhereCondition({
         where: listing.where,
@@ -894,18 +868,12 @@ const validateMarkdownBlog = (
     "detailQuery",
     article !== undefined &&
       blogFolder !== undefined &&
-      article.content.mode === "none" &&
+      article.content.mode === "markdown-body" &&
       hasWhereCondition({
         where: article.where,
         field: ["extension"],
         operator: "eq",
-        value: '"json"',
-      }) &&
-      hasWhereCondition({
-        where: article.where,
-        field: ["properties", "kind"],
-        operator: "eq",
-        value: '"post"',
+        value: '"md"',
       }) &&
       hasWhereCondition({
         where: article.where,
@@ -922,8 +890,8 @@ const validateMarkdownBlog = (
       }) &&
       article.limit === "1" &&
       article.output.includeMetadata === false &&
-      hasOutputField(article.output, ["properties", "body"]),
-    "The detail Assets resource does not select one referenced Markdown body by the dynamic slug parameter with content mode none."
+      hasOutputField(article.output, ["properties", "body"]) === false,
+    "The detail Assets resource does not defer one Markdown body selected by the dynamic slug parameter."
   );
   recordCheck(
     checks,
@@ -933,7 +901,7 @@ const validateMarkdownBlog = (
       article !== undefined &&
       hasOutputField(listing.output, ["properties", "author"]) &&
       hasOutputField(article.output, ["properties", "author"]),
-    "Both blog Assets resources must select the resolved author document."
+    "Both blog Assets resources must select the frontmatter author."
   );
 
   const getPageExpressionPaths = (instances: EvaluationInstance[]) => {
@@ -978,9 +946,9 @@ const validateMarkdownBlog = (
       detail.instances.some((instance) =>
         instance.component.toLowerCase().endsWith("markdownembed")
       ) &&
-      detailExpressionPaths.has("collectionItem.properties.body") &&
+      detailExpressionPaths.has("collectionItem.content.text") &&
       detailExpressionPaths.has("collectionItem.properties.author.name"),
-    "The blog is not rendered through editable Collections, resolved author bindings, and a Markdown Embed."
+    "The blog is not rendered through editable Collections, author bindings, and a Markdown Embed."
   );
   recordCheck(
     checks,

@@ -824,7 +824,7 @@ const insertCollectionMcpInputSchema = getOperationInputSchema({
 });
 
 const assetsResourceResultDescription =
-  'Pass query as structured tool input rather than a JSON-stringified expression or manually authored resource body. Dynamic query values use readable Webstudio JavaScript expression syntax. Use content mode none by default. Do not embed Markdown with markdown-body when a JSON document can select it through { "$ref": "./article.md#body" }; query the JSON reference field and bind the resolved value from .properties instead. Embed file content only when references cannot represent the source. Assets expose an ID-keyed map at <dataSourceName>.data and collection information at <dataSourceName>.meta.';
+  "Pass query as structured tool input rather than a JSON-stringified expression or manually authored resource body. Dynamic query values use readable Webstudio JavaScript expression syntax. Use content mode none when file content is not rendered. For a Markdown detail page, query the Markdown asset directly and use content mode markdown-body; compilation keeps only its document reference in the bundle and fetches the selected body from Asset storage at runtime. Bind the resolved body from item.content.text. Assets expose an ID-keyed map at <dataSourceName>.data and collection information at <dataSourceName>.meta.";
 
 const mcpOperationOverrides = new Map<
   string,
@@ -5517,9 +5517,9 @@ const metaGoalGuides = [
     ],
     workflow: [
       'Call meta.get_more_tools with {"tools":["create-assets-resource"]} once for the complete nested query contract. Use exact tool names, not brief search, and do not repeat discovery for this workflow.',
-      'Create one Blog asset folder. Upload all Markdown source files and JSON descriptors together in one upload-assets call with assetsDir ".webstudio/assets". Each post descriptor should contain its queryable metadata plus a body marker shaped exactly {"$ref":"./article.md#body"}. Every .md file must use {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}} and every .json descriptor must use {"name":"<filename>.json","type":"file","format":"json","folderId":"<blog-folder-id>","meta":{}}. List each document separately in that one batch. Do not use a combined format value or retry a failed mutation; report its actionable error instead.',
+      'Create one Blog asset folder. Upload all Markdown source files together in one upload-assets call with assetsDir ".webstudio/assets". Put queryable metadata such as slug, title, author, publishedAt, excerpt, and draft in each file\'s frontmatter. Every file must use {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}. Do not create companion JSON descriptors, use a combined format value, or retry a failed mutation; report its actionable error instead.',
       'Ensure the blog has exactly two Builder pages: an overview at the fixed path "/blog" and one detail page at the dynamic path "/blog/:slug". Both pages load their content from Assets resources. Do not create one page per post or copy Markdown content into page-specific static structures.',
-      'Field paths are arrays of segments, for example field:["extension"]. Literal query values use {"type":"literal","value":"..."}; raw strings are runtime expressions. Query limit is an expression string. Query JSON post descriptors with static extension, kind, and blog-folder constraints before any dynamic condition. Keep content.mode:"none" on both routes and select properties.body on the detail route so the document graph fetches the referenced Markdown from Asset storage. Do not use markdown-body unless a descriptor cannot be authored or embedded bytes are explicitly required.',
+      'Field paths are arrays of segments, for example field:["extension"]. Literal query values use {"type":"literal","value":"..."}; raw strings are runtime expressions. Query limit is an expression string. Query Markdown posts with static extension and blog-folder constraints before any dynamic condition. Keep content.mode:"none" on the overview and use content.mode:"markdown-body" on the detail route. The published database retains only the Markdown document reference and fetches the selected body from Asset storage at runtime.',
       "Call create-assets-resource exactly once with recipe.overviewResource after substituting the returned /blog root id and Blog folder id. Then call it exactly once with recipe.detailResource after substituting the returned /blog/:slug root id and the same Blog folder id.",
       "Call insert-collection exactly once with recipe.overviewCollection and exactly once with recipe.detailCollection, substituting only their returned root ids. The recipe values are structured tool inputs, not JSON text to re-escape. Do not improvise another fragment or call meta.get_more_tools again.",
       "Validate both queries and preview the detail query with one concrete slug before saving dynamic expressions. Query-preview diagnostics report this query separately from the merged published database; use the merged database measurement when checking the deployment limit.",
@@ -5536,12 +5536,7 @@ const metaGoalGuides = [
               {
                 field: ["extension"],
                 operator: "eq",
-                value: { type: "literal", value: "json" },
-              },
-              {
-                field: ["properties", "kind"],
-                operator: "eq",
-                value: { type: "literal", value: "post" },
+                value: { type: "literal", value: "md" },
               },
               {
                 field: ["folderId"],
@@ -5584,12 +5579,7 @@ const metaGoalGuides = [
               {
                 field: ["extension"],
                 operator: "eq",
-                value: { type: "literal", value: "json" },
-              },
-              {
-                field: ["properties", "kind"],
-                operator: "eq",
-                value: { type: "literal", value: "post" },
+                value: { type: "literal", value: "md" },
               },
               {
                 field: ["folderId"],
@@ -5610,10 +5600,9 @@ const metaGoalGuides = [
             fields: [
               ["properties", "title"],
               ["properties", "author"],
-              ["properties", "body"],
             ],
           },
-          content: { mode: "none" },
+          content: { mode: "markdown-body" },
         },
       },
       overviewCollection: {
@@ -5626,7 +5615,7 @@ const metaGoalGuides = [
         parentInstanceId: "<detail-root-id>",
         data: { type: "expression", value: "post.data" },
         itemFragment:
-          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><$.MarkdownEmbed code={expression`collectionItem.properties.body`} /></ws.element>',
+          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><$.MarkdownEmbed code={expression`collectionItem.content.text`} /></ws.element>',
       },
     },
   },

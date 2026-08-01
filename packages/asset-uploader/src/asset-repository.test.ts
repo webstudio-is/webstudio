@@ -1565,4 +1565,79 @@ describe("PostgresAssetRepository", () => {
       ])
     );
   });
+
+  test("keeps deferred Markdown out of unresolved query diagnostics", async () => {
+    const dependencies = createDependencies();
+    const source = "---\nslug: post\ntitle: Post\n---\nStored body\n";
+    const entry: CanonicalAssetFileEntry = {
+      projectId: "project-1",
+      assetId: "post",
+      revision: "post-r1",
+      document: {
+        _id: "post",
+        _type: "asset.file",
+        name: "post.md",
+        path: "content/post.md",
+        key: "post",
+        extension: "md",
+        mimeType: "text/markdown; charset=utf-8",
+        size: new TextEncoder().encode(source).byteLength,
+        revision: "post-r1",
+        contentRef: "storage:post",
+        properties: { slug: "post", title: "Post" },
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const readFile = vi.fn(async () => ({
+      data: new Blob([source]).stream(),
+      contentLength: entry.document.size,
+    }));
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { readFile },
+      dependencies,
+    });
+
+    const result = await repository.query(
+      {
+        query: {
+          where: {
+            all: [
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "post",
+              },
+            ],
+          },
+          limit: 1,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["properties", "title"]],
+          },
+          content: { mode: "markdown-body" },
+        },
+      },
+      { includeUnresolvedDiagnostics: true }
+    );
+
+    expect(result.data.items).toEqual([
+      {
+        id: "post",
+        properties: { title: "Post" },
+        content: { encoding: "utf-8", text: "Stored body\n" },
+      },
+    ]);
+    expect(result.__diagnostics__.unresolved?.items).toEqual([
+      { id: "post", properties: { title: "Post" } },
+    ]);
+    expect(result.__diagnostics__.artifacts?.query.contents).toBeUndefined();
+    expect(result.__diagnostics__.artifacts?.query.documentGraph).toMatchObject(
+      { nodes: [{ id: "post", format: "markdown" }], edges: [] }
+    );
+  });
 });

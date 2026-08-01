@@ -205,13 +205,7 @@ describe("high-impact fixture API", () => {
           join(projectDirectory, ".webstudio/assets/aurora-trails.md"),
           "utf8"
         )
-      ).resolves.toContain("$ref: ./northstar-author.json#/profile");
-      await expect(
-        readFile(
-          join(projectDirectory, ".webstudio/assets/northstar-author.json"),
-          "utf8"
-        )
-      ).resolves.toContain('"name": "Mira Chen"');
+      ).resolves.toContain("name: Mira Chen");
     } finally {
       await fixtureApi.close();
       await rm(directory, { recursive: true, force: true });

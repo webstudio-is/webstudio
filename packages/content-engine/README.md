@@ -78,8 +78,11 @@ Filtering, sorting, pagination, and projection therefore operate on resolved
 values when their property paths intersect a reference. Only properties
 selected by the Assets query are returned. Resolution cannot expose an
 unselected property merely because it exists in a fetched document.
-Whole-document and Markdown-body content selection continue to use the query's
-content options.
+`markdown-body` content selection is also graph-backed. Compilation retains the
+Markdown document identity instead of its source bytes, and runtime hydration
+fetches only the documents selected after filtering, sorting, and pagination.
+The resolved query result continues to expose the body at `content.text`.
+Whole-document and range content modes retain their embedded-content behavior.
 
 Document source caches are keyed by storage reference, revision, and format, so
 content from one identity cannot be combined silently with different graph

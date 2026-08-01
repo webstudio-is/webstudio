@@ -18,6 +18,7 @@ import {
   serializeContentArtifact,
   verifyContentArtifact,
 } from "./content-artifact";
+import { createDocumentGraph } from "./document-graph";
 
 const entry = ({
   projectId = "project",
@@ -616,6 +617,67 @@ describe("shared asset index", () => {
         })
       ).diagnostics.omittedDocumentCount
     ).toBeGreaterThan(0);
+  });
+
+  test("keeps Markdown bodies embedded when no document graph is available", async () => {
+    const plan = createContentCompilationPlan([
+      createLiteralContentCompilationQuery({
+        id: "detail",
+        query: {
+          where: { all: [] },
+          sort: [],
+          limit: 1,
+          offset: 0,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "markdown-body" },
+        },
+      }),
+    ]);
+
+    const { artifact } = await compileContentArtifact({
+      projectId: "project",
+      entries: [{ ...entry({ id: "post" }), content: "Post body" }],
+      plan,
+    });
+
+    expect(artifact.contents).toEqual({
+      "files/post.md": "Post body",
+    });
+  });
+
+  test("keeps Markdown bodies embedded when their graph node is unavailable", async () => {
+    const plan = createContentCompilationPlan([
+      createLiteralContentCompilationQuery({
+        id: "detail",
+        query: {
+          where: { all: [] },
+          sort: [],
+          limit: 1,
+          offset: 0,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "markdown-body" },
+        },
+      }),
+    ]);
+
+    const { artifact } = await compileContentArtifact({
+      projectId: "project",
+      entries: [{ ...entry({ id: "post" }), content: "Post body" }],
+      plan,
+      documentGraph: createDocumentGraph({ nodes: [], edges: [] }),
+    });
+
+    expect(artifact.contents).toEqual({
+      "files/post.md": "Post body",
+    });
   });
 
   test("omits documents when their requested content was not materialized", async () => {

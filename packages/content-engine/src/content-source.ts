@@ -191,9 +191,16 @@ const queryNeedsDocumentGraph = (
   ) {
     return false;
   }
+  if (query.content.mode === "markdown-body") {
+    return true;
+  }
   const queryPlan = createContentCompilationPlan([query]);
   return queryPlan !== undefined && requiresStructuredProperties(queryPlan);
 };
+
+const planDefersMarkdownBodies = (plan?: ContentCompilationPlan) =>
+  plan?.queries.some(({ content }) => content.mode === "markdown-body") ===
+  true;
 
 const discoverSnapshotDocumentGraph = async (
   snapshot: ContentSourceSnapshot,
@@ -252,7 +259,9 @@ const discoverSnapshotDocumentGraph = async (
           ),
         }),
   });
-  return graph.edges.length === 0 ? undefined : graph;
+  return graph.edges.length === 0 && planDefersMarkdownBodies(plan) === false
+    ? undefined
+    : graph;
 };
 
 export const materializeContentSnapshot = async ({

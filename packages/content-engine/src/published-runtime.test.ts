@@ -389,6 +389,127 @@ describe("published asset resource runtime", () => {
     ).not.toThrow();
   });
 
+  test("fetches a selected Markdown body from the CDN without bundling it", async () => {
+    const sources = {
+      first: "---\nslug: first\n---\nFirst stored body\n",
+      second: "---\nslug: second\n---\nSecond stored body\n",
+    };
+    const markdownDocuments = (["first", "second"] as const).map(
+      (id): AssetFileDocument => ({
+        ...document,
+        _id: id,
+        name: `${id}.md`,
+        path: `posts/${id}.md`,
+        key: id,
+        size: new TextEncoder().encode(sources[id]).byteLength,
+        revision: `${id}-r1`,
+        contentRef: `storage:${id}`,
+        properties: {
+          slug: id,
+          title: id === "first" ? "First" : "Second",
+        },
+      })
+    );
+    const plan = createContentCompilationPlan([
+      {
+        id: "post",
+        where: {
+          all: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: { type: "dynamic" },
+            },
+          ],
+        },
+        sort: [],
+        limit: { type: "literal", value: 1 },
+        offset: { type: "literal", value: 0 },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
+        content: { mode: "markdown-body" },
+      },
+    ]);
+    expect(plan).toBeDefined();
+    const { artifact } = await compileContentArtifact({
+      projectId: "project-1",
+      entries: markdownDocuments.map((value) => ({
+        ...createCanonicalAssetFileEntry({
+          projectId: "project-1",
+          document: value,
+        }),
+        content: sources[value._id as keyof typeof sources],
+        contentRequired: true,
+      })),
+      plan,
+      documentGraph: createDocumentGraph({
+        nodes: markdownDocuments.map((value) => ({
+          id: value._id,
+          revision: value.revision,
+          contentRef: value.contentRef,
+          format: "markdown" as const,
+        })),
+        edges: [],
+      }),
+    });
+    const runtimeArtifact = createContentRuntimeArtifact(artifact);
+    const fetchDocument = vi.fn(async (input: RequestInfo | URL) => {
+      const id = String(input).includes("second.md") ? "second" : "first";
+      return new Response(sources[id]);
+    });
+    const runtimeFetch = createPublishedRuntime({
+      baseUrl: "https://site.example",
+      deploymentId: "markdown-body-reference",
+      artifact: runtimeArtifact,
+      runtimeAssets: {
+        first: { url: "/assets/first.md", contentRef: "storage:first" },
+        second: { url: "/assets/second.md", contentRef: "storage:second" },
+      },
+      fetchDocument,
+    });
+
+    expect(runtimeArtifact.contents).toBeUndefined();
+    expect(JSON.stringify(runtimeArtifact)).not.toContain("stored body");
+    const response = await runtimeFetch("/$resources/assets", {
+      method: "POST",
+      body: JSON.stringify({
+        query: {
+          where: {
+            all: [
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "second",
+              },
+            ],
+          },
+          limit: 1,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["properties", "title"]],
+          },
+          content: { mode: "markdown-body" },
+        },
+      }),
+    });
+
+    await expect(response?.json()).resolves.toMatchObject({
+      items: [
+        {
+          id: "second",
+          properties: { title: "Second" },
+          content: { text: "Second stored body\n" },
+        },
+      ],
+    });
+    expect(fetchDocument).toHaveBeenCalledOnce();
+    expect(String(fetchDocument.mock.calls[0][0])).toContain("second.md");
+  });
+
   test("hydrates parallel CDN roots with one cached shared dependency", async () => {
     const createJsonDocument = (id: string): AssetFileDocument => ({
       ...document,

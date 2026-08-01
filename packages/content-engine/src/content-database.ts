@@ -19,7 +19,7 @@ import {
   matchesAssetQueryFilter,
   type AssetRuntimeData,
 } from "./structured-query";
-import { encodeUtf8, getUtf8ByteLength } from "./byte-stream";
+import { encodeUtf8, getUtf8ByteLength, toByteChunks } from "./byte-stream";
 import type { AssetResourceContentReader } from "./hydration";
 import { getMaterializedAssetQueryResult } from "./materialized-query";
 import {
@@ -32,6 +32,7 @@ import {
   type DocumentSourceLoader,
   emitDocumentGraphRuntimeEvent,
   type DocumentGraphRuntimeObserver,
+  assertDocumentSourceIdentity,
 } from "./document-graph";
 import { contentEngineLimits } from "./limits";
 
@@ -59,6 +60,70 @@ export type RuntimeContentDatabase = Pick<
   ContentDatabase,
   "query" | "queryWithDocumentGraph"
 >;
+
+const selectByteRange = (
+  source: Parameters<typeof toByteChunks>[0],
+  range?: { offset: number; length: number }
+): AsyncIterable<Uint8Array> => {
+  if (range === undefined) {
+    return toByteChunks(source);
+  }
+  return {
+    async *[Symbol.asyncIterator]() {
+      let skipped = 0;
+      let emitted = 0;
+      for await (const chunk of toByteChunks(source)) {
+        if (emitted === range.length) {
+          return;
+        }
+        if (skipped + chunk.byteLength <= range.offset) {
+          skipped += chunk.byteLength;
+          continue;
+        }
+        const start = Math.max(0, range.offset - skipped);
+        const length = Math.min(
+          chunk.byteLength - start,
+          range.length - emitted
+        );
+        if (length > 0) {
+          yield chunk.subarray(start, start + length);
+          emitted += length;
+        }
+        skipped += chunk.byteLength;
+      }
+    },
+  };
+};
+
+const createDocumentContentReader = ({
+  graph,
+  load,
+  signal,
+}: {
+  graph: ReturnType<typeof createDocumentGraph>;
+  load: DocumentSourceLoader;
+  signal?: AbortSignal;
+}): AssetResourceContentReader => {
+  const nodesByContentRef = new Map(
+    graph.nodes.map((node) => [node.contentRef, node])
+  );
+  return async (contentRef, range) => {
+    const node = nodesByContentRef.get(contentRef);
+    if (node === undefined) {
+      throw new Error(
+        `Document content reference ${contentRef} is unavailable`
+      );
+    }
+    const loaded = assertDocumentSourceIdentity({
+      node,
+      source: await load(node, { signal }),
+    });
+    return {
+      data: selectByteRange(loaded.source, range),
+      ...(range === undefined ? {} : { contentLength: range.length }),
+    };
+  };
+};
 
 const createQueryableContentDatabase = ({
   artifact,
@@ -152,6 +217,9 @@ const createQueryableContentDatabase = ({
       if (documentGraph === undefined) {
         return await executeQuery(request, queryContentReader, runtimeAssets);
       }
+      const contentReader =
+        queryContentReader ??
+        createDocumentContentReader({ graph: documentGraph, load, signal });
       const query = assetQuery.parse(request.query);
       const documentsById = new Map(
         artifact.documents.map((document) => [document._id, document])
@@ -184,7 +252,7 @@ const createQueryableContentDatabase = ({
         );
       });
       if (rootIds.length === 0) {
-        return await executeQuery(request, queryContentReader, runtimeAssets);
+        return await executeQuery(request, contentReader, runtimeAssets);
       }
       const queryGraph = selectDocumentGraphForQuery({
         graph: documentGraph,
@@ -230,7 +298,7 @@ const createQueryableContentDatabase = ({
           ? document
           : contentDatabaseDocument.parse({ ...document, properties });
       });
-      return await executeQuery(request, queryContentReader, runtimeAssets, {
+      return await executeQuery(request, contentReader, runtimeAssets, {
         documents,
         skipMaterialized: true,
       });

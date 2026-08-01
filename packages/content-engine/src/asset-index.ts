@@ -20,6 +20,7 @@ import {
   isContentDocumentCandidate,
   isContentCompilationFieldRequired,
   projectContentDatabaseDocument,
+  selectContentHydrationCandidates,
   type ContentCompilationPlan,
 } from "./compilation-plan";
 import { getUtf8ByteLength } from "./byte-stream";
@@ -64,6 +65,45 @@ const getDocumentBytes = (
 export type ContentCompilerInput = CanonicalAssetFileEntry & {
   content?: string;
   contentRequired?: true;
+};
+
+const excludeDeferredMarkdownBodies = ({
+  entries,
+  documentGraph,
+  plan,
+}: {
+  entries: readonly ContentCompilerInput[];
+  documentGraph: DocumentGraph;
+  plan?: ContentCompilationPlan;
+}) => {
+  if (plan === undefined) {
+    return entries;
+  }
+  const embeddedQueryPlan = {
+    ...plan,
+    queries: plan.queries.filter(
+      ({ content }) => content.mode !== "markdown-body"
+    ),
+  };
+  const embeddedIds = selectContentHydrationCandidates({
+    documents: entries.map(({ document }) => document),
+    plan: embeddedQueryPlan,
+  });
+  const graphNodeIds = new Set(documentGraph.nodes.map(({ id }) => id));
+  return entries.map((entry) => {
+    if (
+      embeddedIds.has(entry.assetId) ||
+      graphNodeIds.has(entry.assetId) === false
+    ) {
+      return entry;
+    }
+    const {
+      content: _content,
+      contentRequired: _contentRequired,
+      ...rest
+    } = entry;
+    return rest;
+  });
 };
 
 const getEntryBytes = (
@@ -312,6 +352,9 @@ export const compileContentArtifact = async ({
 }> => {
   if (Number.isSafeInteger(maxBytes) === false || maxBytes <= 0) {
     throw new Error("Content database byte limit must be a positive integer");
+  }
+  if (documentGraph !== undefined) {
+    entries = excludeDeferredMarkdownBodies({ entries, documentGraph, plan });
   }
   validateEntries({ projectId, entries });
   const documentGraphArtifact =

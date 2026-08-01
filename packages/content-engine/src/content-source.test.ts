@@ -634,6 +634,78 @@ describe("content source snapshots", () => {
     ).toEqual({ "revisions/post.md": ["hero"] });
   });
 
+  test("keeps Markdown body content in storage for graph-backed queries", async () => {
+    const markdown = "---\ntitle: Post\nslug: post\n---\nStored body\n";
+    const post = createFile({
+      id: "post",
+      path: "blog/post.md",
+      size: new TextEncoder().encode(markdown).byteLength,
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [post],
+          async loadEntries() {
+            return [{ ...createEntry(post), content: markdown }];
+          },
+          async loadDocumentSources() {
+            return [{ id: post.id, source: markdown }];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({
+      source,
+      projectId,
+      plan: {
+        standardFields: [["extension"], ["mimeType"], ["revision"], ["size"]],
+        structuredPropertyPaths: [["properties", "slug"]],
+        excerpt: false,
+        metadataError: false,
+        queries: [
+          {
+            id: "post",
+            where: {
+              all: [
+                {
+                  field: ["properties", "slug"],
+                  operator: "eq",
+                  value: { type: "dynamic" },
+                },
+              ],
+            },
+            sort: [],
+            limit: { type: "literal", value: 1 },
+            offset: { type: "literal", value: 0 },
+            output: {
+              mode: "fields",
+              includeMetadata: false,
+              fields: [["properties", "slug"]],
+            },
+            content: { mode: "markdown-body" },
+          },
+        ],
+      },
+    });
+
+    expect(result.artifact.contents).toBeUndefined();
+    expect(result.artifact.documentGraph).toMatchObject({
+      nodes: [
+        {
+          id: "post",
+          contentRef: "revisions/post.md",
+          format: "markdown",
+        },
+      ],
+      edges: [],
+    });
+  });
+
   test("does not resolve an ambiguous Asset path", async () => {
     const post = createFile({ id: "post", path: "blog/post.md" });
     const firstImage = createFile({

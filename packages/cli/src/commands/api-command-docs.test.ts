@@ -221,23 +221,21 @@ test("documents storage-efficient Assets queries for agents", () => {
   }
 });
 
-test("directs agents to document references instead of embedded Markdown", () => {
+test("directs agents to deferred Markdown bodies", () => {
   for (const document of ["api-use-cases", "manual-llm"] as const) {
     const contents = readCliDoc(document);
-    expect(contents.replaceAll("**", "").toLowerCase()).toContain(
-      "do not embed"
-    );
-    expect(contents).toContain("$ref");
-    expect(contents).toContain("#body");
-    expect(contents).toContain('content.mode:"none"');
-    expect(contents).toContain("properties.body");
+    expect(contents).toContain('content.mode:"markdown-body"');
+    expect(contents).toContain("document reference");
+    expect(contents).toContain("selected Markdown");
+    expect(contents).toContain("content.text");
   }
 
   const tools = createMetadataOnlyMcpAdapter().listTools();
   for (const name of ["create-assets-resource", "update-assets-resource"]) {
     const description = tools.find((tool) => tool.name === name)?.description;
-    expect(description).toContain("Do not embed Markdown");
-    expect(description).toContain("$ref");
+    expect(description).toContain("markdown-body");
+    expect(description).toContain("document reference");
+    expect(description).toContain("item.content.text");
   }
 });
 

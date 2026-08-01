@@ -233,7 +233,7 @@ const addMarkdownBlog = (): EvaluationProject => {
     instanceId: "markdown",
     name: "content",
     type: "expression",
-    value: "collectionItem.properties.body",
+    value: "collectionItem.content.text",
   });
   const resource = (
     id: string,
@@ -255,12 +255,7 @@ const addMarkdownBlog = (): EvaluationProject => {
       createStructuredAssetQueryResourceBody({
         where: {
           all: [
-            { field: ["extension"], operator: "eq", value: '"json"' },
-            {
-              field: ["properties", "kind"],
-              operator: "eq",
-              value: '"post"',
-            },
+            { field: ["extension"], operator: "eq", value: '"md"' },
             { field: ["folderId"], operator: "eq", value: '"blog-folder"' },
             {
               field: ["properties", "draft"],
@@ -295,12 +290,7 @@ const addMarkdownBlog = (): EvaluationProject => {
       createStructuredAssetQueryResourceBody({
         where: {
           all: [
-            { field: ["extension"], operator: "eq", value: '"json"' },
-            {
-              field: ["properties", "kind"],
-              operator: "eq",
-              value: '"post"',
-            },
+            { field: ["extension"], operator: "eq", value: '"md"' },
             { field: ["folderId"], operator: "eq", value: '"blog-folder"' },
             {
               field: ["properties", "slug"],
@@ -318,10 +308,9 @@ const addMarkdownBlog = (): EvaluationProject => {
           fields: [
             ["properties", "title"],
             ["properties", "author"],
-            ["properties", "body"],
           ],
         },
-        content: { mode: "none" },
+        content: { mode: "markdown-body" },
       })
     )
   );

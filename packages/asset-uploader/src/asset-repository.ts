@@ -802,7 +802,13 @@ export class PostgresAssetRepository implements AssetRepository {
           )
         : undefined;
     const unresolved = includeUnresolvedDiagnostics
-      ? await database.query(request, undefined, runtimeAssets)
+      ? await database.query(
+          query.content.mode === "none"
+            ? request
+            : { ...request, query: { ...query, content: { mode: "none" } } },
+          undefined,
+          runtimeAssets
+        )
       : undefined;
     const data = await database.queryWithDocumentGraph({
       request,
