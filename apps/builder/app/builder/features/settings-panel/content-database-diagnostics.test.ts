@@ -1,23 +1,8 @@
 import { describe, expect, test } from "vitest";
-import {
-  getContentDatabaseDiagnosticRows,
-  isDatabaseSizeNearLimit,
-} from "./content-database-diagnostics";
+import { getContentDatabaseDiagnosticRows } from "./content-database-diagnostics";
 
 describe("content database diagnostics", () => {
-  test("warns when the database reaches 90% of its limit", () => {
-    expect(isDatabaseSizeNearLimit({ usedBytes: 899, maxBytes: 1_000 })).toBe(
-      false
-    );
-    expect(isDatabaseSizeNearLimit({ usedBytes: 900, maxBytes: 1_000 })).toBe(
-      true
-    );
-    expect(isDatabaseSizeNearLimit({ usedBytes: 1_000, maxBytes: 1_000 })).toBe(
-      true
-    );
-  });
-
-  test("shows query and merged published database sizes separately", () => {
+  test("shows only unbounded sizes with an explanation", () => {
     expect(
       getContentDatabaseDiagnosticRows({
         scope: "query-preview",
@@ -38,21 +23,19 @@ describe("content database diagnostics", () => {
           truncated: true,
         },
       })
-    ).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          label: "This query",
-          value: "20 kB",
-        }),
-        expect.objectContaining({
-          label: "Published database",
-          value: "35 kB",
-        }),
-        expect.objectContaining({
-          label: "Published database full size",
-          value: "600 kB",
-        }),
-      ])
-    );
+    ).toEqual([
+      {
+        label: "This query full size",
+        value: "20 kB",
+        valueColor: "destructive",
+        description: expect.stringContaining("before the database limit"),
+      },
+      {
+        label: "Published database full size",
+        value: "600 kB",
+        valueColor: "destructive",
+        description: expect.stringContaining("before the database limit"),
+      },
+    ]);
   });
 });

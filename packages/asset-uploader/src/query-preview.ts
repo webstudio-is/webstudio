@@ -14,6 +14,7 @@ export const previewAssetResourceQuery = async ({
   assetClient,
   contentDatabaseMaxBytes,
   databasePlan,
+  includeUnresolvedDiagnostics,
   onDocumentGraphEvent,
 }: {
   projectId: string;
@@ -22,6 +23,7 @@ export const previewAssetResourceQuery = async ({
   assetClient: Pick<AssetObjectStore, "readFile">;
   contentDatabaseMaxBytes?: number;
   databasePlan?: ContentCompilationPlan;
+  includeUnresolvedDiagnostics?: boolean;
   onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 }) => {
   const repository = new PostgresAssetRepository({
@@ -31,5 +33,8 @@ export const previewAssetResourceQuery = async ({
     contentDatabaseMaxBytes,
     onDocumentGraphEvent,
   });
-  return await repository.query(request, databasePlan);
+  return await repository.query(request, {
+    databasePlan,
+    includeUnresolvedDiagnostics,
+  });
 };

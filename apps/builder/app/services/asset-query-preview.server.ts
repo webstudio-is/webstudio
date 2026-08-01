@@ -17,10 +17,12 @@ export const previewProjectAssetQuery = async (
     projectId,
     request,
     context,
+    includeUnresolvedDiagnostics,
   }: {
     projectId: string;
     request: AssetQueryRequestInput;
     context: AppContext;
+    includeUnresolvedDiagnostics?: boolean;
   },
   dependencies = defaultDependencies
 ) => {
@@ -35,5 +37,8 @@ export const previewProjectAssetQuery = async (
       build,
       query: request.query,
     }),
+    ...(includeUnresolvedDiagnostics === true
+      ? { includeUnresolvedDiagnostics: true }
+      : {}),
   });
 };

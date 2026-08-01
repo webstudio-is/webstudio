@@ -67,6 +67,7 @@ export const executeAssetQuery = async (
       projectId,
       request: parsed,
       context,
+      includeUnresolvedDiagnostics: true,
     });
     return json(result, { headers: privateNoStoreResponseHeaders });
   } catch (error) {

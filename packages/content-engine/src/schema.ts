@@ -619,16 +619,6 @@ const contentDatabaseCapacityStats = contentDatabaseStats.pick({
   truncated: true,
 });
 
-export const assetQueryPreviewDiagnostics = strictObject({
-  scope: literal("query-preview"),
-  query: contentDatabaseCapacityStats,
-  database: contentDatabaseCapacityStats,
-});
-
-export type AssetQueryPreviewDiagnostics = Infer<
-  typeof assetQueryPreviewDiagnostics
->;
-
 export const assetQueryResult = strictObject({
   items: array(assetQueryItem),
   totalCount: number().int().nonnegative(),
@@ -636,6 +626,17 @@ export const assetQueryResult = strictObject({
 });
 
 export type AssetQueryResult = Infer<typeof assetQueryResult>;
+
+export const assetQueryPreviewDiagnostics = strictObject({
+  scope: literal("query-preview"),
+  query: contentDatabaseCapacityStats,
+  database: contentDatabaseCapacityStats,
+  unresolved: assetQueryResult.optional(),
+});
+
+export type AssetQueryPreviewDiagnostics = Infer<
+  typeof assetQueryPreviewDiagnostics
+>;
 
 export const assetQueryPreviewResult = strictObject({
   data: assetQueryResult,

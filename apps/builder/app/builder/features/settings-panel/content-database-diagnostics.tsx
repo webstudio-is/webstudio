@@ -1,42 +1,30 @@
 import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
-import { PanelBanner, Text } from "@webstudio-is/design-system";
+import { Grid, PanelBanner, Text } from "@webstudio-is/design-system";
 import prettyBytes from "pretty-bytes";
+import { CodeEditor } from "~/shared/code-editor";
 import {
   RequestDiagnosticsContent,
   RequestDiagnosticsRow,
   RequestDiagnosticsTable,
 } from "./request-inspector";
 
-const databaseSizeWarningRatio = 0.9;
-
-export const isDatabaseSizeNearLimit = ({
-  usedBytes,
-  maxBytes,
-}: Pick<AssetQueryPreviewDiagnostics["database"], "usedBytes" | "maxBytes">) =>
-  usedBytes >= maxBytes * databaseSizeWarningRatio;
+const runtimeContentNote =
+  "Referenced documents fetched from storage at runtime are not included.";
 
 export const getContentDatabaseDiagnosticRows = (
   value: AssetQueryPreviewDiagnostics
 ) => [
   {
-    label: "This query",
-    value: prettyBytes(value.query.usedBytes),
-    description:
-      "Temporary query-only footprint. It is not a separate allowance and is not added to the published database size.",
-  },
-  {
     label: "This query full size",
     value: prettyBytes(value.query.unboundedBytes),
-  },
-  {
-    label: "Published database",
-    value: prettyBytes(value.database.usedBytes),
-    description:
-      "Merged footprint of all reachable Assets queries. This is the size that counts toward the database limit.",
+    valueColor: "destructive" as const,
+    description: `Temporary query-only footprint before the database limit is applied. It is not added to the published database size. ${runtimeContentNote}`,
   },
   {
     label: "Published database full size",
     value: prettyBytes(value.database.unboundedBytes),
+    valueColor: "destructive" as const,
+    description: `Merged footprint of all reachable Assets queries before the database limit is applied. ${runtimeContentNote}`,
   },
 ];
 
@@ -49,7 +37,6 @@ export const ContentDatabaseDiagnostics = ({
     value.database.includedDocumentCount + value.database.omittedDocumentCount;
   const candidateFilesLabel = `${totalDocumentCount} candidate ${totalDocumentCount === 1 ? "file" : "files"}`;
   const omittedFilesLabel = `${value.database.omittedDocumentCount} ${value.database.omittedDocumentCount === 1 ? "file" : "files"}`;
-  const isNearLimit = isDatabaseSizeNearLimit(value.database);
   const rows = getContentDatabaseDiagnosticRows(value);
   return (
     <RequestDiagnosticsContent>
@@ -69,15 +56,7 @@ export const ContentDatabaseDiagnostics = ({
           value={value.database.truncated ? "Truncated" : "Complete"}
         />
         {rows.map((row) => (
-          <RequestDiagnosticsRow
-            key={row.label}
-            {...row}
-            valueColor={
-              row.label === "Published database" && isNearLimit
-                ? "destructive"
-                : undefined
-            }
-          />
+          <RequestDiagnosticsRow key={row.label} {...row} />
         ))}
         <RequestDiagnosticsRow
           label="Database limit"
@@ -92,6 +71,18 @@ export const ContentDatabaseDiagnostics = ({
           value={value.database.omittedDocumentCount}
         />
       </RequestDiagnosticsTable>
+      {value.unresolved !== undefined && (
+        <Grid gap={1}>
+          <Text variant="titles">Unresolved query result</Text>
+          <CodeEditor
+            lang="json"
+            readOnly
+            value={JSON.stringify(value.unresolved, undefined, 2)}
+            onChange={() => {}}
+            onChangeComplete={() => {}}
+          />
+        </Grid>
+      )}
     </RequestDiagnosticsContent>
   );
 };

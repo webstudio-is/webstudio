@@ -1281,10 +1281,13 @@ describe("PostgresAssetRepository", () => {
           },
         },
       },
-      createCompilationPlan({
-        where: { all: [] },
-        output: { mode: "all", includeMetadata: true },
-      })
+      {
+        databasePlan: createCompilationPlan({
+          where: { all: [] },
+          output: { mode: "all", includeMetadata: true },
+        }),
+        includeUnresolvedDiagnostics: true,
+      }
     );
 
     expect(dependencies.synchronizeCanonicalAssets).toHaveBeenCalledWith({
@@ -1301,6 +1304,7 @@ describe("PostgresAssetRepository", () => {
     ]);
     expect(result.__diagnostics__).toMatchObject({
       scope: "query-preview",
+      unresolved: result.data,
       query: {
         includedDocumentCount: 1,
         omittedDocumentCount: 0,
@@ -1334,6 +1338,7 @@ describe("PostgresAssetRepository", () => {
     expect(urlResult.data.items).toEqual([
       { id: "asset-1", url: "/cgi/asset/post.md?format=raw" },
     ]);
+    expect(urlResult.__diagnostics__.unresolved).toBeUndefined();
     expect(dependencies.loadAssetsByProjectWithClient).toHaveBeenCalledWith(
       "project-1",
       context.postgrest.client,
@@ -1486,20 +1491,23 @@ describe("PostgresAssetRepository", () => {
       onDocumentGraphEvent: (event) => events.push(event),
     });
 
-    const result = await repository.query({
-      query: {
-        where: { all: [{ field: ["id"], operator: "eq", value: "post" }] },
-        limit: 1,
-        output: {
-          mode: "fields",
-          includeMetadata: false,
-          fields: [
-            ["properties", "title"],
-            ["properties", "author"],
-          ],
+    const result = await repository.query(
+      {
+        query: {
+          where: { all: [{ field: ["id"], operator: "eq", value: "post" }] },
+          limit: 1,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [
+              ["properties", "title"],
+              ["properties", "author"],
+            ],
+          },
         },
       },
-    });
+      { includeUnresolvedDiagnostics: true }
+    );
 
     expect(result.data.items).toEqual([
       {
@@ -1507,6 +1515,15 @@ describe("PostgresAssetRepository", () => {
         properties: {
           title: "Hello",
           author: { name: "Ada", role: "Writer" },
+        },
+      },
+    ]);
+    expect(result.__diagnostics__.unresolved?.items).toEqual([
+      {
+        id: "post",
+        properties: {
+          title: "Hello",
+          author: { $ref: "./author.md#frontmatter" },
         },
       },
     ]);

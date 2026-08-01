@@ -132,6 +132,11 @@ export type AssetContentRead = {
   contentLength?: number;
 };
 
+type AssetQueryPreviewOptions = {
+  databasePlan?: ContentCompilationPlan;
+  includeUnresolvedDiagnostics?: boolean;
+};
+
 export interface AssetRepository {
   list(): Promise<Asset[]>;
   get(assetId: Asset["id"]): Promise<Asset>;
@@ -175,7 +180,7 @@ export interface AssetRepository {
   readFieldCatalog(): Promise<BuilderAssetFieldCatalog>;
   query(
     request: AssetQueryRequestInput,
-    databasePlan?: ContentCompilationPlan
+    options?: AssetQueryPreviewOptions
   ): Promise<AssetQueryPreviewResult>;
 }
 
@@ -759,7 +764,10 @@ export class PostgresAssetRepository implements AssetRepository {
 
   async query(
     request: AssetQueryRequestInput,
-    databasePlan?: ContentCompilationPlan
+    {
+      databasePlan,
+      includeUnresolvedDiagnostics = false,
+    }: AssetQueryPreviewOptions = {}
   ): Promise<AssetQueryPreviewResult> {
     await this.assertCanView();
     const query = assetQuery.parse(request.query);
@@ -794,6 +802,9 @@ export class PostgresAssetRepository implements AssetRepository {
             ])
           )
         : undefined;
+    const unresolved = includeUnresolvedDiagnostics
+      ? await database.query(request, undefined, runtimeAssets)
+      : undefined;
     const data = await database.queryWithDocumentGraph({
       request,
       readContent: this.assetStore.readFile,
@@ -835,6 +846,7 @@ export class PostgresAssetRepository implements AssetRepository {
         scope: "query-preview",
         query: toCapacityStats(database.getStats()),
         database: toCapacityStats(publishedDatabase.getStats()),
+        ...(unresolved === undefined ? {} : { unresolved }),
       },
     };
   }
