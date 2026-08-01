@@ -53,7 +53,7 @@ export const getDocumentSourceCacheKey = ({
   revision,
   format,
 }: Pick<DocumentGraphNode, "contentRef" | "revision" | "format">) =>
-  serializeJsonDeterministically([contentRef, revision, format]);
+  serializeJsonDeterministically([contentRef, revision, format ?? null]);
 
 const isCachedDocumentSource = (
   input: unknown

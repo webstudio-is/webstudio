@@ -14,6 +14,32 @@ const node = {
 };
 
 describe("cached document source loader", () => {
+  test("supports loader-defined formats", async () => {
+    const cache = {
+      get: vi.fn(async () => undefined),
+      set: vi.fn(async () => undefined),
+    };
+    const load = vi.fn(async () => ({
+      format: "json" as const,
+      revision: "post-r1",
+      source: "{}",
+    }));
+    const cachedLoad = createCachedDocumentSourceLoader({ cache, load });
+
+    await expect(
+      cachedLoad(
+        {
+          id: "post",
+          revision: "post-r1",
+          contentRef: "content:post",
+        },
+        {}
+      )
+    ).resolves.toMatchObject({ format: "json", revision: "post-r1" });
+    expect(load).toHaveBeenCalledOnce();
+    expect(cache.set).toHaveBeenCalledOnce();
+  });
+
   test("returns replayable bytes from a revision-keyed cache hit", async () => {
     const cached: CachedDocumentSource = {
       format: "json",

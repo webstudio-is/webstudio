@@ -174,6 +174,10 @@ const discoverSnapshotAssetReferences = async ({
 
 const documentUrlBase = "https://content.webstudio.local/";
 
+const getDocumentUrl = (path: string) =>
+  new URL(path.split("/").map(encodeURIComponent).join("/"), documentUrlBase)
+    .href;
+
 const queryCanUseStructuredProperties = (
   query: ContentCompilationPlan["queries"][number]
 ) =>
@@ -231,7 +235,7 @@ const discoverSnapshotDocumentGraph = async (
       }
       return {
         id: file.id,
-        documentUrl: new URL(file.path, documentUrlBase).href,
+        documentUrl: getDocumentUrl(file.path),
         revision: file.revision,
         contentRef: file.contentRef,
         format,

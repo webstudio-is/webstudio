@@ -532,6 +532,43 @@ describe("Markdown blog evaluation", () => {
     expect(result.checks.listingQuery).toBe("failed");
   });
 
+  test("does not treat dynamic computed members as static bindings", () => {
+    const project = addMarkdownBlog();
+    project.instances = project.instances.map((instance) => ({
+      ...instance,
+      children: instance.children.map((child) =>
+        child.type === "expression"
+          ? {
+              ...child,
+              value: child.value.replace(
+                "collectionItem.properties",
+                "collectionItem[properties]"
+              ),
+            }
+          : child
+      ),
+    }));
+    project.props = project.props.map((prop) =>
+      prop.type === "expression"
+        ? {
+            ...prop,
+            value: String(prop.value).replace(
+              "collectionItem.properties",
+              "collectionItem[properties]"
+            ),
+          }
+        : prop
+    );
+
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project,
+      toolCalls: successfulCalls,
+    });
+
+    expect(result.checks.editableBlogBindings).toBe("failed");
+  });
+
   test("rejects missing detail content and route evidence", () => {
     const project = addMarkdownBlog();
     project.resources = project.resources.slice(0, 1);

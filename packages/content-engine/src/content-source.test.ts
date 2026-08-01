@@ -329,6 +329,37 @@ describe("content source snapshots", () => {
     });
   });
 
+  test("resolves encoded references to asset paths containing URL delimiters", async () => {
+    const post = createFile({
+      id: "post",
+      path: "content/post.json",
+      contentType: "application/json",
+    });
+    const author = createFile({
+      id: "author",
+      path: "content/author#draft?50%.json",
+      contentType: "application/json",
+    });
+
+    const result = await compileContentSource({
+      projectId,
+      source: createDocumentSource({
+        files: [post, author],
+        sources: {
+          post: '{"author":{"$ref":"./author%23draft%3F50%25.json"}}',
+          author: '{"name":"Ada"}',
+        },
+      }),
+    });
+
+    expect(result.documentGraph?.edges).toMatchObject([
+      {
+        sourceId: "post",
+        reference: { documentId: "author" },
+      },
+    ]);
+  });
+
   test.each([
     {
       name: "a missing target",

@@ -1,12 +1,14 @@
 import { parseExpressionAt } from "acorn";
 import { transpileExpression } from "@webstudio-is/expression";
 import { getFontFaces } from "@webstudio-is/fonts";
+import { getQueryConditions } from "@webstudio-is/query-builder/runtime";
 import {
   decodeDataSourceVariable,
   isAssetsResource,
   parseStructuredAssetQueryResourceBody,
   type FontAsset,
   type Resource,
+  type StructuredAssetQueryWhereBinding,
 } from "@webstudio-is/sdk";
 import {
   authenticatedPageFixture,
@@ -569,19 +571,6 @@ const pathsEqual = (left: unknown, right: readonly string[]) =>
   left.length === right.length &&
   left.every((segment, index) => segment === right[index]);
 
-const getWhereConditions = (
-  value: unknown
-): Array<{ field: unknown; operator: unknown; value: unknown }> => {
-  if (typeof value !== "object" || value === null) {
-    return [];
-  }
-  if ("field" in value && "operator" in value && "value" in value) {
-    return [value];
-  }
-  const group = "all" in value ? value.all : "any" in value ? value.any : [];
-  return Array.isArray(group) ? group.flatMap(getWhereConditions) : [];
-};
-
 const hasWhereCondition = ({
   where,
   field,
@@ -589,13 +578,13 @@ const hasWhereCondition = ({
   value,
   normalizeExpression = (expression: string) => expression,
 }: {
-  where: unknown;
+  where: StructuredAssetQueryWhereBinding;
   field: readonly string[];
   operator: string;
   value: string;
   normalizeExpression?: (expression: string) => string;
 }) =>
-  getWhereConditions(where).some(
+  getQueryConditions(where).some(
     (condition) =>
       pathsEqual(condition.field, field) &&
       condition.operator === operator &&
@@ -636,7 +625,9 @@ const getMemberPath = (value: unknown): string[] | undefined => {
   ) {
     return;
   }
+  const computed = "computed" in value && value.computed === true;
   if (
+    computed === false &&
     property.type === "Identifier" &&
     "name" in property &&
     typeof property.name === "string"

@@ -195,9 +195,7 @@ export class PostgresAssetRepository implements AssetRepository {
   private readonly dependencies: AssetRepositoryDependencies;
   private readonly contentDatabaseMaxBytes: number;
   private readonly compilationCache: ContentCompilationCache | undefined;
-  private readonly onDocumentGraphEvent:
-    | DocumentGraphRuntimeObserver
-    | undefined;
+  private readonly onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 
   constructor({
     projectId,

@@ -330,7 +330,8 @@ export const createGeneratedAssetResourceRuntime = ({
   deploymentId,
   artifact,
   runtimeAssets,
-  onDocumentGraphEvent,
+  // Generated projects infer this API from bundled JavaScript.
+  onDocumentGraphEvent = undefined,
 }: {
   deploymentId: string;
   artifact: ContentArtifactV1;
