@@ -9,6 +9,7 @@ import {
 import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import {
   createContentCompilationPlan,
+  createContentRuntimeArtifact,
   createLiteralContentCompilationQuery,
   assetQuery,
   serializeContentArtifact,
@@ -1391,7 +1392,7 @@ describe("PostgresAssetRepository", () => {
     const publishedFetch = createPublishedAssetResourceFetch({
       baseUrl: "https://blog.example",
       deploymentId: "deployment-1",
-      artifact: publishedIndex,
+      artifact: createContentRuntimeArtifact(publishedIndex),
       runtimeAssets: { "asset-1": { url: "/assets/post.md" } },
     });
     const publishedResponse = await publishedFetch("/$resources/assets", {

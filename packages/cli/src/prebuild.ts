@@ -60,13 +60,15 @@ import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/r
 import {
   assetQueryFilter,
   type AssetQueryFilter,
+  type ContentRuntimeArtifact,
   type ContentDatabaseDocument,
+  createContentRuntimeArtifact,
   getAssetQueryFieldValue,
   getContentArtifactReferencedAssetIds,
-  getContentArtifactRuntimeAssetIds,
+  getContentRuntimeArtifactRuntimeAssetIds,
   matchesAssetQueryFilter,
   requiresRuntimeDocumentData,
-  serializeContentArtifact,
+  serializeContentRuntimeArtifact,
   verifyContentArtifact,
 } from "@webstudio-is/content-engine";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
@@ -505,7 +507,7 @@ const generateAssetQueryRuntimeModule = ({
   runtimeAssets,
 }: {
   deploymentId: string;
-  index: PublishedProjectBundle["assetIndex"];
+  index: ContentRuntimeArtifact | undefined;
   runtimeAssets: Readonly<Record<string, ContentRuntimeAsset>>;
 }) => {
   const inputType = `{
@@ -551,15 +553,19 @@ export const materializeAssetIndex = async ({
 }) => {
   const verifiedIndex =
     index === undefined ? undefined : await verifyContentArtifact(index);
-  const serializedIndex =
+  const runtimeIndex =
     verifiedIndex === undefined
       ? undefined
-      : serializeContentArtifact(verifiedIndex);
+      : createContentRuntimeArtifact(verifiedIndex);
+  const serializedIndex =
+    runtimeIndex === undefined
+      ? undefined
+      : serializeContentRuntimeArtifact(runtimeIndex);
   const runtimeAssetIds =
-    verifiedIndex === undefined
+    runtimeIndex === undefined
       ? []
-      : getContentArtifactRuntimeAssetIds({
-          artifact: verifiedIndex,
+      : getContentRuntimeArtifactRuntimeAssetIds({
+          artifact: runtimeIndex,
           includeDocuments: includeDocumentRuntimeAssets,
         });
   const referencedAssetIds = new Set(
@@ -568,7 +574,7 @@ export const materializeAssetIndex = async ({
       : getContentArtifactReferencedAssetIds(verifiedIndex)
   );
   const documentIds = new Set(
-    verifiedIndex?.documentGraph?.nodes.map(({ id }) => id) ?? []
+    runtimeIndex?.documentGraph?.nodes.map(({ id }) => id) ?? []
   );
   const selectedRuntimeAssets = Object.fromEntries(
     runtimeAssetIds.map((assetId) => {
@@ -608,7 +614,7 @@ export const assetQueryDatabase = ${serializedIndex};
     join(generatedDirectory, "$resources.asset-query-runtime.ts"),
     generateAssetQueryRuntimeModule({
       deploymentId,
-      index: verifiedIndex,
+      index: runtimeIndex,
       runtimeAssets: selectedRuntimeAssets,
     }),
     "utf8"

@@ -5,6 +5,7 @@ export * from "./hydration";
 export * from "./structured-query";
 export * from "./projection";
 export * from "./content-artifact";
+export * from "./content-runtime-artifact";
 export * from "./content-database";
 export * from "./request";
 export * from "./query-source";

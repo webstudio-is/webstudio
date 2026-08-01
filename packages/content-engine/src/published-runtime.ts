@@ -1,11 +1,9 @@
 import {
   createAssetResourceQueryFailure,
-  type ContentArtifactV1,
   type AssetResourceQueryFailure,
 } from "./schema";
 import { sha256Hex } from "./canonical-json";
-import { getContentArtifactReferencedAssetIds } from "./content-artifact";
-import { createContentDatabase } from "./content-database";
+import { createRuntimeContentDatabase } from "./content-database";
 import { readAssetQueryRequest } from "./request";
 import type { AssetRuntimeData } from "./structured-query";
 import { getAssetResourceQueryError } from "./query-error";
@@ -17,6 +15,7 @@ import {
   type DocumentSourceCache,
   type DocumentGraphRuntimeObserver,
 } from "./document-graph";
+import type { ContentRuntimeArtifact } from "./content-runtime-artifact";
 
 const assetsResourceUrl = "/$resources/assets";
 
@@ -59,18 +58,13 @@ const getCacheKey = async ({
   request,
 }: {
   deploymentId: string;
-  artifact: ContentArtifactV1;
+  artifact: ContentRuntimeArtifact;
   request: Request;
 }) => {
   const body = await request.clone().text();
   const cacheControl = request.headers.get("cache-control");
   const hash = await sha256Hex(
-    JSON.stringify([
-      deploymentId,
-      artifact.integrity.checksum,
-      body,
-      cacheControl,
-    ])
+    JSON.stringify([deploymentId, artifact.revision, body, cacheControl])
   );
   const url = new URL(request.url);
   url.searchParams.set("ws-asset-resource", hash);
@@ -87,7 +81,7 @@ export const createPublishedAssetResourceFetch = ({
   onDocumentGraphEvent,
 }: {
   deploymentId: string;
-  artifact: ContentArtifactV1;
+  artifact: ContentRuntimeArtifact;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
@@ -102,7 +96,7 @@ export const createPublishedAssetResourceFetch = ({
     runtimeAssets,
     cache,
     baseUrl,
-    database: createContentDatabase({ artifact }),
+    database: createRuntimeContentDatabase({ artifact }),
     fetchDocument,
     documentCache,
     onDocumentGraphEvent,
@@ -184,12 +178,13 @@ const validateRuntimeAssets = ({
   artifact,
   runtimeAssets,
 }: {
-  artifact: ContentArtifactV1;
+  artifact: ContentRuntimeArtifact;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
 }) => {
-  const missingReferencedAssetId = getContentArtifactReferencedAssetIds(
-    artifact
-  ).find((assetId) => runtimeAssets[assetId] === undefined);
+  const missingReferencedAssetId = Object.values(artifact.assetReferences ?? {})
+    .flat()
+    .map(({ assetId }) => assetId)
+    .find((assetId) => runtimeAssets[assetId] === undefined);
   if (missingReferencedAssetId !== undefined) {
     throw new Error(
       `Published referenced asset URL is unavailable for ${missingReferencedAssetId}`
@@ -225,11 +220,11 @@ const createPublishedAssetResourceHandler = ({
   onDocumentGraphEvent,
 }: {
   deploymentId: string;
-  artifact: ContentArtifactV1;
+  artifact: ContentRuntimeArtifact;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
-  database: ReturnType<typeof createContentDatabase>;
+  database: ReturnType<typeof createRuntimeContentDatabase>;
   fetchDocument: typeof fetch;
   documentCache: DocumentSourceCache;
   onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
@@ -334,7 +329,7 @@ export const createGeneratedAssetResourceRuntime = ({
   onDocumentGraphEvent = undefined,
 }: {
   deploymentId: string;
-  artifact: ContentArtifactV1;
+  artifact: ContentRuntimeArtifact;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 }) => {
@@ -353,7 +348,7 @@ export const createGeneratedAssetResourceRuntime = ({
             (await getCache()).put(key, response),
         };
   validateRuntimeAssets({ artifact, runtimeAssets });
-  const database = createContentDatabase({ artifact });
+  const database = createRuntimeContentDatabase({ artifact });
   const documentCache = createMemoryDocumentSourceCache();
   return async ({
     request,

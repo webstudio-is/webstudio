@@ -10,6 +10,10 @@ import type {
 import { assetQuery, contentDatabaseDocument } from "./schema";
 import { serializeContentArtifact } from "./content-artifact";
 import {
+  restoreContentRuntimeDocumentGraph,
+  type ContentRuntimeArtifact,
+} from "./content-runtime-artifact";
+import {
   AssetIndexRevisionError,
   executeAssetQuery,
   matchesAssetQueryFilter,
@@ -51,45 +55,29 @@ export type ContentDatabase = {
   getStats(): ContentDatabaseStats;
 };
 
-export const createContentDatabase = ({
+export type RuntimeContentDatabase = Pick<
+  ContentDatabase,
+  "query" | "queryWithDocumentGraph"
+>;
+
+const createQueryableContentDatabase = ({
   artifact,
+  revision,
+  catalog,
+  documentGraph,
+  inlineDocuments,
   readContent,
 }: {
-  artifact: ContentArtifactV1;
+  artifact: Pick<
+    ContentRuntimeArtifact,
+    "documents" | "contents" | "assetReferences" | "queries"
+  >;
+  revision: string;
+  catalog?: BuilderAssetFieldCatalog;
+  documentGraph?: ReturnType<typeof createDocumentGraph>;
+  inlineDocuments?: ReadonlyMap<string, ContentDatabaseDocument>;
   readContent?: AssetResourceContentReader;
-}): ContentDatabase => {
-  const includedDocumentCount =
-    artifact.database?.includedDocumentCount ?? artifact.documents.length;
-  const sourceDocumentCount =
-    artifact.database?.sourceDocumentCount ?? includedDocumentCount;
-  const omittedDocumentCount = sourceDocumentCount - includedDocumentCount;
-  const usedBytes = getUtf8ByteLength(serializeContentArtifact(artifact));
-  const maxBytes = artifact.database?.maxBytes ?? Number.MAX_SAFE_INTEGER;
-  const unboundedBytes = artifact.database?.unboundedBytes ?? usedBytes;
-  const stats: ContentDatabaseStats = {
-    format: artifact.format,
-    version: artifact.version,
-    revision: artifact.integrity.checksum,
-    usedBytes,
-    maxBytes,
-    unboundedBytes,
-    includedDocumentCount,
-    omittedDocumentCount,
-    omissionReason:
-      omittedDocumentCount === 0
-        ? undefined
-        : unboundedBytes > maxBytes
-          ? "size"
-          : "unavailable",
-    truncated: omittedDocumentCount > 0,
-  };
-  const documentGraph =
-    artifact.documentGraph === undefined
-      ? undefined
-      : createDocumentGraph({
-          nodes: artifact.documentGraph.nodes,
-          edges: artifact.documentGraph.edges,
-        });
+}): RuntimeContentDatabase => {
   const executeQuery = async (
     request: AssetQueryRequestInput,
     queryContentReader?: AssetResourceContentReader,
@@ -101,7 +89,7 @@ export const createContentDatabase = ({
   ) => {
     if (
       request.indexRevision !== undefined &&
-      request.indexRevision !== artifact.integrity.checksum
+      request.indexRevision !== revision
     ) {
       throw new AssetIndexRevisionError();
     }
@@ -141,7 +129,7 @@ export const createContentDatabase = ({
     };
     const result = await executeAssetQuery({
       query: request.query,
-      catalog: artifact.fieldCatalog,
+      catalog,
       documents: options?.documents ?? artifact.documents,
       read: readEmbeddedContent,
       runtimeAssets,
@@ -210,7 +198,17 @@ export const createContentDatabase = ({
       const resolved = await resolveAdaptedDocumentGraph({
         graph: queryGraph,
         rootIds,
-        load,
+        load: async (node, options) => {
+          const inlineDocument = inlineDocuments?.get(node.id);
+          if (inlineDocument !== undefined) {
+            return {
+              format: "json",
+              revision: node.revision,
+              source: JSON.stringify(inlineDocument.properties),
+            };
+          }
+          return await load(node, options);
+        },
         concurrency: contentEngineLimits.concurrentContentReads,
         signal,
         onEvent,
@@ -237,7 +235,74 @@ export const createContentDatabase = ({
         skipMaterialized: true,
       });
     },
-    getFieldCatalog: () => artifact.fieldCatalog,
-    getStats: () => stats,
   };
+};
+
+export const createContentDatabase = ({
+  artifact,
+  readContent,
+}: {
+  artifact: ContentArtifactV1;
+  readContent?: AssetResourceContentReader;
+}): ContentDatabase => {
+  const includedDocumentCount =
+    artifact.database?.includedDocumentCount ?? artifact.documents.length;
+  const sourceDocumentCount =
+    artifact.database?.sourceDocumentCount ?? includedDocumentCount;
+  const omittedDocumentCount = sourceDocumentCount - includedDocumentCount;
+  const usedBytes = getUtf8ByteLength(serializeContentArtifact(artifact));
+  const maxBytes = artifact.database?.maxBytes ?? Number.MAX_SAFE_INTEGER;
+  const unboundedBytes = artifact.database?.unboundedBytes ?? usedBytes;
+  const documentGraph =
+    artifact.documentGraph === undefined
+      ? undefined
+      : createDocumentGraph({
+          nodes: artifact.documentGraph.nodes,
+          edges: artifact.documentGraph.edges,
+        });
+  const database = createQueryableContentDatabase({
+    artifact,
+    revision: artifact.integrity.checksum,
+    catalog: artifact.fieldCatalog,
+    documentGraph,
+    readContent,
+  });
+  return {
+    ...database,
+    getFieldCatalog: () => artifact.fieldCatalog,
+    getStats: () => ({
+      format: artifact.format,
+      version: artifact.version,
+      revision: artifact.integrity.checksum,
+      usedBytes,
+      maxBytes,
+      unboundedBytes,
+      includedDocumentCount,
+      omittedDocumentCount,
+      omissionReason:
+        omittedDocumentCount === 0
+          ? undefined
+          : unboundedBytes > maxBytes
+            ? "size"
+            : "unavailable",
+      truncated: omittedDocumentCount > 0,
+    }),
+  };
+};
+
+export const createRuntimeContentDatabase = ({
+  artifact,
+  readContent,
+}: {
+  artifact: ContentRuntimeArtifact;
+  readContent?: AssetResourceContentReader;
+}): RuntimeContentDatabase => {
+  const restored = restoreContentRuntimeDocumentGraph({ artifact });
+  return createQueryableContentDatabase({
+    artifact,
+    revision: artifact.revision,
+    documentGraph: restored?.graph,
+    inlineDocuments: restored?.inlineDocuments,
+    readContent,
+  });
 };

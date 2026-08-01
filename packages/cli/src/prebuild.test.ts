@@ -21,6 +21,7 @@ import type { AssetFileDocument } from "@webstudio-is/content-engine";
 import {
   createAssetIndex,
   createCanonicalAssetFileEntry,
+  createContentRuntimeArtifact,
 } from "@webstudio-is/content-engine/compiler";
 import { createPublishedAssetResourceFetch } from "@webstudio-is/content-engine/runtime";
 import {
@@ -36,13 +37,14 @@ import {
 
 const createSsgAssetResourceFetch = (options: {
   deploymentId: string;
-  artifact: Parameters<typeof createPublishedAssetResourceFetch>[0]["artifact"];
+  artifact: Parameters<typeof createContentRuntimeArtifact>[0];
   runtimeAssets: Parameters<
     typeof createPublishedAssetResourceFetch
   >[0]["runtimeAssets"];
 }) =>
   createPublishedAssetResourceFetch({
     ...options,
+    artifact: createContentRuntimeArtifact(options.artifact),
     baseUrl: "https://webstudio.local",
   });
 
@@ -422,6 +424,9 @@ test("embeds one shared content database in a server module", async () => {
   expect(manifestModule).toContain('assetQueryDeploymentId = "build-1"');
   expect(manifestModule).toContain('"documents"');
   expect(manifestModule).toContain('"properties"');
+  expect(manifestModule).not.toContain('"fieldCatalog"');
+  expect(manifestModule).not.toContain('"database"');
+  expect(manifestModule).not.toContain('"integrity"');
   const runtimeModule = await readFile(
     "app/__generated__/$resources.asset-query-runtime.ts",
     "utf8"

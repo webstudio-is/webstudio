@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { AssetFileDocument } from "./schema";
 import { createAssetIndex } from "./asset-index";
 import { createCanonicalAssetFileEntry } from "./canonical";
+import { createContentRuntimeArtifact } from "./content-runtime-artifact";
 import { createPublishedAssetResourceFetch } from "./published-runtime";
 import { discoverMarkdownAssetReferenceRanges } from "./markdown-assets";
 
@@ -51,7 +52,7 @@ describe("published Markdown blog end-to-end", () => {
     const runtimeFetch = createPublishedAssetResourceFetch({
       baseUrl: "https://blog.example",
       deploymentId: "blog-deployment",
-      artifact: index,
+      artifact: createContentRuntimeArtifact(index),
       runtimeAssets: {
         "post-1": { url: "/assets/hello.md" },
         "hero-image": { url: "/assets/hero.png", width: 1200, height: 630 },

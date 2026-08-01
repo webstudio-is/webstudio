@@ -3,13 +3,14 @@ import { assetQuery, type AssetFileDocument } from "./schema";
 import { compileContentArtifact, createAssetIndex } from "./asset-index";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import { createContentDatabase } from "./content-database";
+import { createContentRuntimeArtifact } from "./content-runtime-artifact";
 import {
   createContentCompilationPlan,
   createLiteralContentCompilationQuery,
 } from "./compilation-plan";
 import {
-  createGeneratedAssetResourceRuntime,
-  createPublishedAssetResourceFetch,
+  createGeneratedAssetResourceRuntime as createGeneratedRuntime,
+  createPublishedAssetResourceFetch as createPublishedRuntime,
 } from "./published-runtime";
 import { createDocumentGraph } from "./document-graph";
 
@@ -28,6 +29,26 @@ const document: AssetFileDocument = {
   properties: { slug: "post", title: "Post" },
 };
 const runtimeAssets = { "post-1": { url: "/assets/post.md" } };
+
+const createPublishedAssetResourceFetch = (
+  options: Omit<Parameters<typeof createPublishedRuntime>[0], "artifact"> & {
+    artifact: Parameters<typeof createContentRuntimeArtifact>[0];
+  }
+) =>
+  createPublishedRuntime({
+    ...options,
+    artifact: createContentRuntimeArtifact(options.artifact),
+  });
+
+const createGeneratedAssetResourceRuntime = (
+  options: Omit<Parameters<typeof createGeneratedRuntime>[0], "artifact"> & {
+    artifact: Parameters<typeof createContentRuntimeArtifact>[0];
+  }
+) =>
+  createGeneratedRuntime({
+    ...options,
+    artifact: createContentRuntimeArtifact(options.artifact),
+  });
 
 const createRuntime = async () => {
   const index = await createAssetIndex({
@@ -286,22 +307,20 @@ describe("published asset resource runtime", () => {
     await expect((await request())?.json()).resolves.toMatchObject({
       items: [{ id: "post" }],
     });
-    expect(fetchDocument).toHaveBeenCalledTimes(2);
+    expect(fetchDocument).toHaveBeenCalledTimes(1);
+    expect(fetchDocument).toHaveBeenCalledWith(
+      new URL("https://site.example/assets/author.md"),
+      expect.anything()
+    );
     expect(events).toEqual(
       expect.arrayContaining([
         { type: "roots-selected", rootCount: 1 },
         { type: "resolution-started", rootCount: 1, documentCount: 2 },
         {
-          type: "document-cache-miss",
-          documentId: "post",
-          revision: "post-r1",
-        },
-        {
           type: "document-fetch-completed",
           documentId: "author",
           revision: "author-r1",
         },
-        { type: "document-cache-hit", documentId: "post", revision: "post-r1" },
         { type: "resolution-completed", rootCount: 1, documentCount: 2 },
       ])
     );
@@ -318,7 +337,7 @@ describe("published asset resource runtime", () => {
     });
     const ssgResponse = await ssgFetch("/$resources/assets", requestInit());
     await expect(ssgResponse?.json()).resolves.toMatchObject(localResult);
-    expect(fetchDocument).toHaveBeenCalledTimes(4);
+    expect(fetchDocument).toHaveBeenCalledTimes(2);
 
     const createGeneratedFetch = createGeneratedAssetResourceRuntime({
       deploymentId: "graph-build",
@@ -344,7 +363,7 @@ describe("published asset resource runtime", () => {
         },
       ],
     });
-    expect(fetchDocument).toHaveBeenCalledTimes(6);
+    expect(fetchDocument).toHaveBeenCalledTimes(3);
     expect(() =>
       createPublishedAssetResourceFetch({
         baseUrl: "https://site.example",
@@ -357,13 +376,9 @@ describe("published asset resource runtime", () => {
     expect(() =>
       createPublishedAssetResourceFetch({
         baseUrl: "https://site.example",
-        deploymentId: "stale-graph-build",
+        deploymentId: "inline-graph-source-build",
         artifact,
         runtimeAssets: {
-          post: {
-            url: "/assets/stale-post.json",
-            contentRef: "storage:stale-post",
-          },
           author: {
             url: "/assets/author.md",
             contentRef: "storage:author",
@@ -371,22 +386,7 @@ describe("published asset resource runtime", () => {
         },
         fetchDocument,
       })
-    ).toThrow("Published document identity does not match graph node post");
-    expect(() =>
-      createPublishedAssetResourceFetch({
-        baseUrl: "https://site.example",
-        deploymentId: "missing-document-identity-build",
-        artifact,
-        runtimeAssets: {
-          post: { url: "/assets/post.json" },
-          author: {
-            url: "/assets/author.md",
-            contentRef: "storage:author",
-          },
-        },
-        fetchDocument,
-      })
-    ).toThrow("Published document identity does not match graph node post");
+    ).not.toThrow();
   });
 
   test("hydrates parallel CDN roots with one cached shared dependency", async () => {
@@ -488,17 +488,7 @@ describe("published asset resource runtime", () => {
       });
 
     const responsePromise = request();
-    await vi.waitFor(() => expect(fetchDocument).toHaveBeenCalledTimes(3));
-    pending.get("/assets/post-a.json")?.(
-      new Response(
-        '{"title":"post-a","author":{"$ref":"./author.json#/profile"}}'
-      )
-    );
-    pending.get("/assets/post-b.json")?.(
-      new Response(
-        '{"title":"post-b","author":{"$ref":"./author.json#/profile"}}'
-      )
-    );
+    await vi.waitFor(() => expect(fetchDocument).toHaveBeenCalledOnce());
     pending.get("/assets/author.json")?.(
       new Response('{"profile":{"name":"Ada"}}')
     );
@@ -512,7 +502,7 @@ describe("published asset resource runtime", () => {
     await expect((await request())?.json()).resolves.toMatchObject({
       items: [{ id: "post-a" }, { id: "post-b" }],
     });
-    expect(fetchDocument).toHaveBeenCalledTimes(3);
+    expect(fetchDocument).toHaveBeenCalledTimes(1);
     expect(
       fetchDocument.mock.calls.filter(([input]) =>
         String(input).includes("/assets/author.json")
