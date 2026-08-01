@@ -97,6 +97,35 @@ describe("cached document source loader", () => {
     });
   });
 
+  test("does not reuse a cached source above the active byte limit", async () => {
+    const load = vi.fn(async () => ({
+      format: "json" as const,
+      revision: "post-r1",
+      source: "{}",
+    }));
+    const cache = {
+      get: vi.fn(async () => ({
+        format: "json" as const,
+        revision: "post-r1",
+        bytes: new TextEncoder().encode("{}\n"),
+      })),
+      set: vi.fn(async () => undefined),
+    };
+
+    const result = await createCachedDocumentSourceLoader({
+      cache,
+      load,
+      maximumBytes: 2,
+    })(node, {});
+
+    expect(load).toHaveBeenCalledOnce();
+    expect(cache.set).toHaveBeenCalledOnce();
+    await expect(parseDocumentSource(result)).resolves.toEqual({
+      format: "json",
+      value: {},
+    });
+  });
+
   test("materializes and stores one bounded miss for concurrent callers", async () => {
     const cache = {
       get: vi.fn(async () => undefined),

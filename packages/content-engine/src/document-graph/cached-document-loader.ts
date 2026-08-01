@@ -118,6 +118,7 @@ export const createCachedDocumentSourceLoader = ({
       if (
         isCachedDocumentSource(cached) &&
         cached.revision === node.revision &&
+        cached.bytes.byteLength <= maximumBytes &&
         (node.format === undefined || cached.format === node.format)
       ) {
         emitDocumentGraphRuntimeEvent(onEvent, {

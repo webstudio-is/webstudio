@@ -49,7 +49,11 @@ const getReferencePropertyPath = (
   } else {
     return;
   }
-  return ["properties", ...pointerSegments(pointer)];
+  try {
+    return ["properties", ...pointerSegments(pointer)];
+  } catch {
+    return;
+  }
 };
 
 const pathsOverlap = (
