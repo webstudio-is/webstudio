@@ -11,6 +11,7 @@ import {
   createContentCompilationPlan,
   createLiteralContentCompilationQuery,
   assetQuery,
+  serializeContentArtifact,
   type AssetQueryInput,
   type AssetFileDocument,
 } from "@webstudio-is/content-engine";
@@ -1527,6 +1528,24 @@ describe("PostgresAssetRepository", () => {
         },
       },
     ]);
+    expect(result.__diagnostics__.artifacts).toEqual({
+      query: expect.objectContaining({ format: "webstudio-content-database" }),
+      database: expect.objectContaining({
+        format: "webstudio-content-database",
+      }),
+    });
+    const artifacts = result.__diagnostics__.artifacts;
+    if (artifacts === undefined) {
+      throw new Error("Expected database artifacts in diagnostics");
+    }
+    expect(
+      new TextEncoder().encode(serializeContentArtifact(artifacts.query))
+        .byteLength
+    ).toBe(result.__diagnostics__.query.unboundedBytes);
+    expect(
+      new TextEncoder().encode(serializeContentArtifact(artifacts.database))
+        .byteLength
+    ).toBe(result.__diagnostics__.database.unboundedBytes);
     expect(events).toEqual(
       expect.arrayContaining([
         { type: "roots-selected", rootCount: 1 },

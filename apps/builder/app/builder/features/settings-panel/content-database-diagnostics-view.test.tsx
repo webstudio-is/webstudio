@@ -5,6 +5,7 @@ import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
+import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
 import { ContentDatabaseDiagnostics } from "./content-database-diagnostics";
 
 (
@@ -12,6 +13,27 @@ import { ContentDatabaseDiagnostics } from "./content-database-diagnostics";
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 let root: Root | undefined;
+
+const revision = `sha256:${"a".repeat(64)}`;
+const artifact: ContentArtifactV1 = {
+  format: "webstudio-content-database",
+  version: 1,
+  assetRevision: revision,
+  documents: [
+    {
+      _id: "post",
+      properties: { body: { $ref: "./post.md#body" } },
+    },
+  ],
+  fieldCatalog: {
+    format: "webstudio-builder-asset-field-catalog",
+    version: 1,
+    canonicalRevision: revision,
+    documentCount: 1,
+    fields: {},
+  },
+  integrity: { algorithm: "sha256", checksum: revision },
+};
 
 afterEach(() => {
   act(() => root?.unmount());
@@ -38,6 +60,10 @@ test("shows the unresolved query result in a read-only JSON editor", () => {
               ],
               totalCount: 1,
               hasMore: false,
+            },
+            artifacts: {
+              query: artifact,
+              database: artifact,
             },
             query: {
               usedBytes: 1_000,
@@ -66,4 +92,6 @@ test("shows the unresolved query result in a read-only JSON editor", () => {
   expect(editor?.getAttribute("aria-readonly")).toBe("true");
   expect(container.textContent).toContain("Unresolved query result");
   expect(container.textContent).toContain('"$ref": "./post.md#body"');
+  expect(container.textContent).toContain("Query database");
+  expect(container.textContent).toContain("Published database");
 });

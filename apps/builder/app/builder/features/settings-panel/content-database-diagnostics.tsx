@@ -11,6 +11,25 @@ import {
 const runtimeContentNote =
   "Referenced documents fetched from storage at runtime are not included.";
 
+const ReadonlyJsonEditor = ({
+  title,
+  value,
+}: {
+  title: string;
+  value: unknown;
+}) => (
+  <Grid gap={1}>
+    <Text variant="titles">{title}</Text>
+    <CodeEditor
+      lang="json"
+      readOnly
+      value={JSON.stringify(value, undefined, 2)}
+      onChange={() => {}}
+      onChangeComplete={() => {}}
+    />
+  </Grid>
+);
+
 export const getContentDatabaseDiagnosticRows = (
   value: AssetQueryPreviewDiagnostics
 ) => [
@@ -71,17 +90,31 @@ export const ContentDatabaseDiagnostics = ({
           value={value.database.omittedDocumentCount}
         />
       </RequestDiagnosticsTable>
-      {value.unresolved !== undefined && (
-        <Grid gap={1}>
-          <Text variant="titles">Unresolved query result</Text>
-          <CodeEditor
-            lang="json"
-            readOnly
-            value={JSON.stringify(value.unresolved, undefined, 2)}
-            onChange={() => {}}
-            onChangeComplete={() => {}}
+      {value.artifacts !== undefined && (
+        <>
+          <ReadonlyJsonEditor
+            title={
+              value.query.truncated
+                ? "Included query database"
+                : "Query database"
+            }
+            value={value.artifacts.query}
           />
-        </Grid>
+          <ReadonlyJsonEditor
+            title={
+              value.database.truncated
+                ? "Included published database"
+                : "Published database"
+            }
+            value={value.artifacts.database}
+          />
+        </>
+      )}
+      {value.unresolved !== undefined && (
+        <ReadonlyJsonEditor
+          title="Unresolved query result"
+          value={value.unresolved}
+        />
       )}
     </RequestDiagnosticsContent>
   );

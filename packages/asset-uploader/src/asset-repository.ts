@@ -776,12 +776,11 @@ export class PostgresAssetRepository implements AssetRepository {
     ]);
     const index = await this.prepareIndexAfterAuthorization(plan, false);
     const database = getContentDatabaseForArtifact(index);
-    const publishedDatabase =
+    const publishedIndex =
       databasePlan === undefined
-        ? database
-        : getContentDatabaseForArtifact(
-            await this.prepareIndexAfterAuthorization(databasePlan, false)
-          );
+        ? index
+        : await this.prepareIndexAfterAuthorization(databasePlan, false);
+    const publishedDatabase = getContentDatabaseForArtifact(publishedIndex);
     const runtimeAssetIds = getContentArtifactRuntimeAssetIds({
       artifact: index,
       includeDocuments: plan !== undefined && requiresRuntimeDocumentData(plan),
@@ -846,6 +845,9 @@ export class PostgresAssetRepository implements AssetRepository {
         scope: "query-preview",
         query: toCapacityStats(database.getStats()),
         database: toCapacityStats(publishedDatabase.getStats()),
+        ...(includeUnresolvedDiagnostics
+          ? { artifacts: { query: index, database: publishedIndex } }
+          : {}),
         ...(unresolved === undefined ? {} : { unresolved }),
       },
     };

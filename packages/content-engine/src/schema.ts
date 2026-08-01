@@ -631,6 +631,10 @@ export const assetQueryPreviewDiagnostics = strictObject({
   scope: literal("query-preview"),
   query: contentDatabaseCapacityStats,
   database: contentDatabaseCapacityStats,
+  artifacts: strictObject({
+    query: contentArtifactV1,
+    database: contentArtifactV1,
+  }).optional(),
   unresolved: assetQueryResult.optional(),
 });
 
