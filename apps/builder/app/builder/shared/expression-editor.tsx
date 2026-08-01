@@ -714,6 +714,10 @@ export const ExpressionEditor = ({
     />
   );
 
+  if (chromeless && size === "full") {
+    return content;
+  }
+
   if (chromeless) {
     return <div className={wrapperStyle({ size })}>{content}</div>;
   }

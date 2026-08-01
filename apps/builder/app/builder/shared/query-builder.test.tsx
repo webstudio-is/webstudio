@@ -143,7 +143,7 @@ test("shows an evaluated value for a bound number input", () => {
   expect(input?.disabled).toBe(true);
 });
 
-test("allows the full-size query source to scroll in both directions", () => {
+test("renders the query source as the constrained grid item", () => {
   const sourceContainer = document.createElement("div");
   document.body.appendChild(sourceContainer);
   const capabilities = {
@@ -166,9 +166,16 @@ test("allows the full-size query source to scroll in both directions", () => {
     sourceContainer,
   });
 
-  const scroller = sourceContainer.querySelector(".cm-scroller");
-  expect(scroller).not.toBeNull();
-  const style = getComputedStyle(scroller as Element);
-  expect(style.minHeight).toBe("0");
-  expect(style.overflow).toBe("auto");
+  const sourceLayout = sourceContainer.firstElementChild;
+  const editorContent = sourceContainer.querySelector(
+    '[data-chromeless="true"]'
+  );
+  expect(sourceLayout).not.toBeNull();
+  expect(editorContent).not.toBeNull();
+  expect(sourceLayout?.firstElementChild).toBe(editorContent);
+  const scrollerStyle = getComputedStyle(
+    sourceContainer.querySelector(".cm-scroller") as Element
+  );
+  expect(scrollerStyle.minHeight).toBe("0");
+  expect(scrollerStyle.overflow).toBe("auto");
 });
