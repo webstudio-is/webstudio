@@ -143,7 +143,7 @@ test("shows an evaluated value for a bound number input", () => {
   expect(input?.disabled).toBe(true);
 });
 
-test("renders the query source as the constrained grid item", () => {
+test("renders the query source inside a constrained full-size editor", () => {
   const sourceContainer = document.createElement("div");
   document.body.appendChild(sourceContainer);
   const capabilities = {
@@ -170,9 +170,11 @@ test("renders the query source as the constrained grid item", () => {
   const editorContent = sourceContainer.querySelector(
     '[data-chromeless="true"]'
   );
+  const editorLayout = sourceLayout?.firstElementChild;
   expect(sourceLayout).not.toBeNull();
+  expect(editorLayout).not.toBeNull();
   expect(editorContent).not.toBeNull();
-  expect(sourceLayout?.firstElementChild).toBe(editorContent);
+  expect(editorLayout?.firstElementChild).toBe(editorContent);
   const scrollerStyle = getComputedStyle(
     sourceContainer.querySelector(".cm-scroller") as Element
   );
