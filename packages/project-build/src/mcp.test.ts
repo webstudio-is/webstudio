@@ -1177,6 +1177,13 @@ describe("project session mcp adapter", () => {
       expect(tool.description).toContain("markdown-body");
       expect(tool.description).toContain("document reference");
       expect(tool.description).toContain("item.content.text");
+      expect(tool.description).toContain(
+        "one final resource per rendered query"
+      );
+      expect(tool.description).toContain(
+        "static filters, limits, and offsets literal"
+      );
+      expect(tool.description).toContain("remove obsolete duplicates");
       expect(getSchemaProperties(tool.inputSchema)).not.toEqual({});
     }
   });
@@ -4514,11 +4521,16 @@ describe("project session mcp adapter", () => {
         recipe: expect.objectContaining({
           overviewResource: expect.objectContaining({
             dataSourceName: "posts",
-            query: expect.objectContaining({ limit: "20" }),
+            query: expect.objectContaining({
+              limit: { type: "literal", value: 20 },
+              offset: { type: "literal", value: 0 },
+            }),
           }),
           detailResource: expect.objectContaining({
             dataSourceName: "post",
             query: expect.objectContaining({
+              limit: { type: "literal", value: 1 },
+              offset: { type: "literal", value: 0 },
               content: { mode: "markdown-body" },
             }),
           }),
@@ -4543,10 +4555,18 @@ describe("project session mcp adapter", () => {
           expect.stringContaining('"format":"md"'),
           expect.stringContaining("Do not create companion JSON descriptors"),
           expect.stringContaining("exactly two Builder pages"),
+          expect.stringContaining("do not dry-run it"),
           expect.stringContaining('fixed path "/blog"'),
           expect.stringContaining('dynamic path "/blog/:slug"'),
           expect.stringContaining("Do not create one page per post"),
+          expect.stringContaining("exactly one final Assets resource"),
+          expect.stringContaining(
+            "bounded metadata-only result can be materialized"
+          ),
+          expect.stringContaining("only one materialized overview query"),
           expect.stringContaining('content.mode:"markdown-body"'),
+          expect.stringContaining("Do not reshape or stringify any field"),
+          expect.stringContaining('"value":"posts.data"'),
           expect.stringContaining("only the Markdown document reference"),
           expect.stringContaining('field:["extension"]'),
           expect.stringContaining("both pages load their content from Assets"),

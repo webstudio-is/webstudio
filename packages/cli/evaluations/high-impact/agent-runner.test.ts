@@ -136,8 +136,18 @@ describe("high-impact agent runner", () => {
     expect(blogConstraints).toContain(
       '"field":["properties","draft"],"operator":"ne"'
     );
-    expect(blogConstraints).toContain('"value":"true"');
+    expect(blogConstraints).toContain(
+      '"value":{"type":"literal","value":true}'
+    );
+    expect(blogConstraints).toContain('"limit":{"type":"literal","value":20}');
+    expect(blogConstraints).toContain('"offset":{"type":"literal","value":0}');
     expect(blogConstraints).toContain("Never call update-assets-resource");
+    expect(blogConstraints).toContain(
+      "Database size is part of the evaluated outcome"
+    );
+    expect(blogConstraints).toContain("one materialized overview");
+    expect(blogConstraints).toContain("zero embedded Markdown body bytes");
+    expect(blogConstraints).toContain("stale resource");
     expect(blogConstraints).toContain(
       '"fields":[["properties","title"],["properties","slug"]'
     );
@@ -181,6 +191,11 @@ describe("high-impact agent runner", () => {
     expect(discoveryPrompt).not.toContain('"where"');
     expect(discoveryPrompt).not.toContain("markdown-body");
     expect(discoveryPrompt).not.toContain("collectionItem");
+    expect(discoveryPrompt).toContain("Do not dry-run or plan mutations");
+    expect(discoveryPrompt).toContain("without reshaping its fields");
+    expect(discoveryPrompt).toContain(
+      'exactly once with {\\"tools\\":[\\"create-assets-resource\\"]}'
+    );
     expect(getFixtureToolNames(markdownReferencesDiscoveryFixture)).toEqual([
       "meta.guide",
       "meta.get_more_tools",

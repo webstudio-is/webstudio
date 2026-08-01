@@ -56,6 +56,18 @@ export type HighImpactEvaluationInput = {
   project: EvaluationProject;
   toolCalls: EvaluationToolCall[];
   artifacts?: EvaluationArtifact[];
+  contentDatabase?: {
+    usedBytes: number;
+    maxBytes: number;
+    unboundedBytes: number;
+    sourceDocumentCount: number;
+    includedDocumentCount: number;
+    omittedDocumentCount: number;
+    materializedQueryCount: number;
+    documentGraphNodeCount: number;
+    documentGraphEdgeCount: number;
+    embeddedContentBytes: number;
+  };
 };
 
 export type HighImpactEvaluationResult = {
@@ -694,19 +706,25 @@ const validateMarkdownBlog = (
     const toolDiscoveryIndex = input.toolCalls.findIndex(
       (call) => call.name === "meta.get_more_tools" && call.isError !== true
     );
+    const toolDiscoveryCount = input.toolCalls.filter(
+      (call) => call.name === "meta.get_more_tools"
+    ).length;
     recordCheck(
       checks,
       failures,
       "referenceDocumentationDiscovery",
-      guidanceIndex !== -1 && toolDiscoveryIndex > guidanceIndex,
-      "The reference workflow was not discovered through MCP guidance before authoring."
+      guidanceIndex !== -1 &&
+        toolDiscoveryIndex > guidanceIndex &&
+        toolDiscoveryCount === 1,
+      "The reference workflow must use guidance followed by exactly one focused tool discovery call."
     );
     recordCheck(
       checks,
       failures,
       "retryFreeExecution",
-      hasMcpToolCallRetries(input.toolCalls) === false,
-      "The document-reference workflow retried a tool after it failed."
+      hasMcpToolCallRetries(input.toolCalls) === false &&
+        input.toolCalls.every((call) => call.planned !== true),
+      "The document-reference workflow retried or dry-ran a mutation."
     );
   }
   const expectedNames = new Set<string>(
@@ -902,6 +920,28 @@ const validateMarkdownBlog = (
       hasOutputField(listing.output, ["properties", "author"]) &&
       hasOutputField(article.output, ["properties", "author"]),
     "Both blog Assets resources must select the frontmatter author."
+  );
+  const contentDatabase = input.contentDatabase;
+  const maximumOptimalBytes = markdownBlogFixtureDocuments.length * 1_300;
+  recordCheck(
+    checks,
+    failures,
+    "optimalBlogDatabase",
+    contentDatabase !== undefined &&
+      contentDatabase.usedBytes <= maximumOptimalBytes &&
+      contentDatabase.usedBytes === contentDatabase.unboundedBytes &&
+      contentDatabase.maxBytes === 500 * 1024 &&
+      contentDatabase.sourceDocumentCount ===
+        markdownBlogFixtureDocuments.length &&
+      contentDatabase.includedDocumentCount ===
+        markdownBlogFixtureDocuments.length &&
+      contentDatabase.omittedDocumentCount === 0 &&
+      contentDatabase.materializedQueryCount === 1 &&
+      contentDatabase.documentGraphNodeCount <=
+        markdownBlogFixtureDocuments.length &&
+      contentDatabase.documentGraphEdgeCount === 0 &&
+      contentDatabase.embeddedContentBytes === 0,
+    "The compiled blog database is duplicated, truncated, embeds Markdown bodies, or exceeds the optimized size budget."
   );
 
   const getPageExpressionPaths = (instances: EvaluationInstance[]) => {

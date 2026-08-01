@@ -406,6 +406,18 @@ describe("font-assets evaluation", () => {
 });
 
 describe("Markdown blog evaluation", () => {
+  const optimalContentDatabase = {
+    usedBytes: 6_000,
+    maxBytes: 500 * 1024,
+    unboundedBytes: 6_000,
+    sourceDocumentCount: markdownBlogFixtureDocuments.length,
+    includedDocumentCount: markdownBlogFixtureDocuments.length,
+    omittedDocumentCount: 0,
+    materializedQueryCount: 1,
+    documentGraphNodeCount: markdownBlogFixtureDocuments.length,
+    documentGraphEdgeCount: 0,
+    embeddedContentBytes: 0,
+  };
   const successfulCalls: EvaluationToolCall[] = [
     { name: "meta.guide" },
     { name: "verify-bindings" },
@@ -430,11 +442,13 @@ describe("Markdown blog evaluation", () => {
       fixture: markdownBlogFixture,
       project: addMarkdownBlog(),
       toolCalls: successfulCalls,
+      contentDatabase: optimalContentDatabase,
     });
     expect(result).toMatchObject({ passed: true, failures: [] });
     expect(result.checks).toMatchObject({
       documentGraphSources: "passed",
       documentGraphQueries: "passed",
+      optimalBlogDatabase: "passed",
     });
   });
 
@@ -486,6 +500,7 @@ describe("Markdown blog evaluation", () => {
       fixture: markdownBlogFixture,
       project,
       toolCalls: successfulCalls,
+      contentDatabase: optimalContentDatabase,
     });
 
     expect(result).toMatchObject({ passed: true, failures: [] });
@@ -586,6 +601,7 @@ describe("Markdown blog evaluation", () => {
     const withDiscovery = evaluateHighImpactOutcome({
       fixture: markdownReferencesDiscoveryFixture,
       project,
+      contentDatabase: optimalContentDatabase,
       toolCalls: [
         { name: "meta.guide" },
         { name: "meta.get_more_tools" },
@@ -594,6 +610,22 @@ describe("Markdown blog evaluation", () => {
     });
     expect(withDiscovery).toMatchObject({ passed: true, failures: [] });
     expect(withDiscovery.checks.referenceDocumentationDiscovery).toBe("passed");
+  });
+
+  test("rejects a duplicated or oversized compiled blog database", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project: addMarkdownBlog(),
+      toolCalls: successfulCalls,
+      contentDatabase: {
+        ...optimalContentDatabase,
+        usedBytes: 6_501,
+        unboundedBytes: 6_501,
+        materializedQueryCount: 2,
+      },
+    });
+
+    expect(result.checks.optimalBlogDatabase).toBe("failed");
   });
 
   test("rejects a document-reference workflow that retries a failed tool", () => {
@@ -610,6 +642,36 @@ describe("Markdown blog evaluation", () => {
     });
 
     expect(result.checks.retryFreeExecution).toBe("failed");
+  });
+
+  test("rejects a document-reference workflow that plans mutations", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownReferencesDiscoveryFixture,
+      project: addMarkdownBlog(),
+      toolCalls: [
+        { name: "meta.guide" },
+        { name: "meta.get_more_tools" },
+        { name: "create-page", planned: true },
+        ...successfulCalls,
+      ],
+    });
+
+    expect(result.checks.retryFreeExecution).toBe("failed");
+  });
+
+  test("rejects repeated document-reference tool discovery", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownReferencesDiscoveryFixture,
+      project: addMarkdownBlog(),
+      toolCalls: [
+        { name: "meta.guide" },
+        { name: "meta.get_more_tools" },
+        { name: "meta.get_more_tools" },
+        ...successfulCalls,
+      ],
+    });
+
+    expect(result.checks.referenceDocumentationDiscovery).toBe("failed");
   });
 });
 

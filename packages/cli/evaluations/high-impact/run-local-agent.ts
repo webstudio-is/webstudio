@@ -7,6 +7,9 @@ import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+import { createContentDatabase } from "@webstudio-is/content-engine";
+import { compileContentSource } from "@webstudio-is/content-engine/compiler";
+import { createReachableAssetContentCompilationPlan } from "@webstudio-is/sdk";
 import {
   fontAssetsFixture,
   highImpactFixtures,
@@ -26,6 +29,11 @@ import type { EvaluationToolCall } from "./validate";
 import type { McpCatalogObservation } from "./evaluation-metrics";
 import { writeFontAssetFixtureFiles } from "./font-assets-fixture";
 import { writeMarkdownBlogFixtureFiles } from "./markdown-blog-fixture";
+import {
+  createCliProjectSessionStorage,
+  getCliProjectSessionFile,
+} from "../../src/project-session";
+import { createFileSystemContentSource } from "../../src/filesystem-content-source";
 import {
   compareEvaluationResult,
   isAggregateTokenBaselineNonRegressed,
@@ -64,6 +72,50 @@ const selectFixtures = (fixtureId: string | undefined) => {
     throw new Error(`Unknown evaluation fixture: ${fixtureId}`);
   }
   return [fixture];
+};
+
+const compileEvaluationContentDatabase = async (projectDirectory: string) => {
+  const snapshot = await createCliProjectSessionStorage(
+    getCliProjectSessionFile(projectDirectory)
+  ).load();
+  if (snapshot === undefined) {
+    throw new Error("Evaluation project session is unavailable");
+  }
+  const plan = createReachableAssetContentCompilationPlan({
+    props: snapshot.state.props?.values() ?? [],
+    dataSources: snapshot.state.dataSources?.values() ?? [],
+    resources: snapshot.state.resources?.values() ?? [],
+  });
+  if (plan === undefined) {
+    throw new Error("Evaluation blog has no reachable Assets resources");
+  }
+  const { artifact } = await compileContentSource({
+    source: createFileSystemContentSource({
+      projectId: snapshot.projectId,
+      assets: Array.from(snapshot.state.assets?.values() ?? []),
+      folders: snapshot.state.assetFolders ?? new Map(),
+      assetsDirectory: join(projectDirectory, ".webstudio/assets"),
+    }),
+    projectId: snapshot.projectId,
+    plan,
+  });
+  const stats = createContentDatabase({ artifact }).getStats();
+  return {
+    usedBytes: stats.usedBytes,
+    maxBytes: stats.maxBytes,
+    unboundedBytes: stats.unboundedBytes,
+    sourceDocumentCount:
+      stats.includedDocumentCount + stats.omittedDocumentCount,
+    includedDocumentCount: stats.includedDocumentCount,
+    omittedDocumentCount: stats.omittedDocumentCount,
+    materializedQueryCount: Object.keys(artifact.queries ?? {}).length,
+    documentGraphNodeCount: artifact.documentGraph?.nodes.length ?? 0,
+    documentGraphEdgeCount: artifact.documentGraph?.edges.length ?? 0,
+    embeddedContentBytes: Object.values(artifact.contents ?? {}).reduce(
+      (total, content) => total + Buffer.byteLength(content),
+      0
+    ),
+  };
 };
 
 const runFixture = async ({
@@ -167,6 +219,13 @@ const runFixture = async ({
           project: fixtureApi.getProject(),
           toolCalls,
           artifacts: await collectHighImpactArtifacts(projectDirectory),
+          ...(fixture.id === markdownBlogFixture.id ||
+          fixture.id === markdownReferencesDiscoveryFixture.id
+            ? {
+                contentDatabase:
+                  await compileEvaluationContentDatabase(projectDirectory),
+              }
+            : {}),
         });
       },
     });
