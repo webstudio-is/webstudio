@@ -5819,7 +5819,7 @@ const getMetaGuide = (
   const matches =
     goalGuide === undefined
       ? getMatchingTools(brief, tools).slice(0, 12)
-      : getExactTools(goalGuide.tools, tools);
+      : getExactToolSelection(goalGuide.tools, tools).tools;
   const canVerifyVisually =
     tools.some((tool) => tool.name === "preview.start") &&
     tools.some((tool) => tool.name === "screenshot");
@@ -6034,15 +6034,28 @@ const getWorkflowNext = (input: unknown) => {
   };
 };
 
-const getExactTools = (
+const getExactToolSelection = (
   toolNames: readonly string[],
   tools: readonly ProjectSessionMcpTool[]
 ) => {
   const toolByName = new Map(tools.map((tool) => [tool.name, tool]));
-  return toolNames.flatMap((name) => {
-    const tool = toolByName.get(resolveToolName(name));
-    return tool === undefined ? [] : [tool];
-  });
+  const selectedTools: ProjectSessionMcpTool[] = [];
+  const missingTools: string[] = [];
+  const includedToolNames = new Set<string>();
+  for (const requestedName of toolNames) {
+    const resolvedName = resolveToolName(requestedName);
+    const tool = toolByName.get(resolvedName);
+    if (tool === undefined) {
+      missingTools.push(requestedName);
+      continue;
+    }
+    if (includedToolNames.has(resolvedName)) {
+      continue;
+    }
+    includedToolNames.add(resolvedName);
+    selectedTools.push(tool);
+  }
+  return { tools: selectedTools, missingTools };
 };
 
 const serializeToolDetails = (tool: ProjectSessionMcpTool) => ({
@@ -6127,7 +6140,10 @@ const getMoreTools = (
   toolNames: readonly string[],
   tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const exactTools = getExactTools(toolNames, tools);
+  const { tools: exactTools, missingTools } = getExactToolSelection(
+    toolNames,
+    tools
+  );
   const matchedTools =
     toolNames.length > 0 ? exactTools : getMatchingTools(brief, tools);
   const limitedTools = matchedTools.slice(0, 12);
@@ -6136,10 +6152,7 @@ const getMoreTools = (
       'Prefer { tools: ["exact-tool-name"] } for precise details. Brief search is capped to avoid oversized responses; refine the brief or pass exact tool names when omittedCount is greater than 0.',
     brief,
     requestedTools: toolNames,
-    missingTools: toolNames.filter(
-      (name) =>
-        exactTools.some((tool) => tool.name === resolveToolName(name)) === false
-    ),
+    missingTools,
     count: matchedTools.length,
     omittedCount: Math.max(0, matchedTools.length - limitedTools.length),
     tools: limitedTools.map(serializeToolDetails),

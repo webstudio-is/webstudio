@@ -3870,7 +3870,7 @@ describe("project session mcp adapter", () => {
     });
     const legacyDetails = await adapter.callTool({
       name: "meta.get_more_tools",
-      input: { tools: ["meta.get_more_tools"] },
+      input: { tools: ["meta.get_more_tools", "meta.get-more-tools"] },
     });
     const insertFragmentDetails = await adapter.callTool({
       name: "meta.get-more-tools",
@@ -4084,7 +4084,7 @@ describe("project session mcp adapter", () => {
     );
     expect(legacyDetails.structuredContent.data).toEqual(
       expect.objectContaining({
-        requestedTools: ["meta.get_more_tools"],
+        requestedTools: ["meta.get_more_tools", "meta.get-more-tools"],
         missingTools: [],
         tools: [expect.objectContaining({ name: "meta.get-more-tools" })],
       })

@@ -16,7 +16,7 @@ import {
   Box,
 } from "@webstudio-is/design-system";
 import { showAttribute } from "@webstudio-is/react-sdk";
-import { emitCommand } from "./commands";
+import { emitCommand, instanceMoveCommandMetas } from "./commands";
 import {
   $allSelectedInstanceSelectors,
   $selectedInstancePath,
@@ -221,62 +221,23 @@ export const MenuItems = () => {
           Move
         </ContextMenuSubTrigger>
         <ContextMenuSubContent>
-          <ContextMenuItem
-            disabled={!permissions.canMove}
-            onSelect={() => {
-              emitCommand("moveInstanceUp");
-            }}
-          >
-            Move up
-            <ContextMenuItemRightSlot>
-              <Kbd
-                value={["meta", "arrowup"]}
-                color={shortcutColor(permissions.canMove)}
-              />
-            </ContextMenuItemRightSlot>
-          </ContextMenuItem>
-          <ContextMenuItem
-            disabled={!permissions.canMove}
-            onSelect={() => {
-              emitCommand("moveInstanceDown");
-            }}
-          >
-            Move down
-            <ContextMenuItemRightSlot>
-              <Kbd
-                value={["meta", "arrowdown"]}
-                color={shortcutColor(permissions.canMove)}
-              />
-            </ContextMenuItemRightSlot>
-          </ContextMenuItem>
-          <ContextMenuItem
-            disabled={!permissions.canMove}
-            onSelect={() => {
-              emitCommand("moveInstanceOut");
-            }}
-          >
-            Move out
-            <ContextMenuItemRightSlot>
-              <Kbd
-                value={["meta", "arrowleft"]}
-                color={shortcutColor(permissions.canMove)}
-              />
-            </ContextMenuItemRightSlot>
-          </ContextMenuItem>
-          <ContextMenuItem
-            disabled={!permissions.canMove}
-            onSelect={() => {
-              emitCommand("moveInstanceIntoPreviousSibling");
-            }}
-          >
-            Move in
-            <ContextMenuItemRightSlot>
-              <Kbd
-                value={["meta", "arrowright"]}
-                color={shortcutColor(permissions.canMove)}
-              />
-            </ContextMenuItemRightSlot>
-          </ContextMenuItem>
+          {instanceMoveCommandMetas.map(({ name, label, shortcut }) => (
+            <ContextMenuItem
+              key={name}
+              disabled={!permissions.canMove}
+              onSelect={() => {
+                emitCommand(name);
+              }}
+            >
+              {label}
+              <ContextMenuItemRightSlot>
+                <Kbd
+                  value={["meta", shortcut]}
+                  color={shortcutColor(permissions.canMove)}
+                />
+              </ContextMenuItemRightSlot>
+            </ContextMenuItem>
+          ))}
         </ContextMenuSubContent>
       </ContextMenuSub>
       <ContextMenuSeparator />

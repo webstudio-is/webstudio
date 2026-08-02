@@ -243,7 +243,10 @@ describe("registerCommands", () => {
     expect(output).toContain(
       "webstudio mcp single-op-call meta.get-more-tools"
     );
-    expect(output).toContain("insert-fragment");
+    expect(output).toContain(
+      "webstudio insert-fragment --input-file .temp/insert-fragment.json --dry-run"
+    );
+    expect(output).not.toContain("<$.Box");
     expect(output).toContain("node packages/cli/local.js");
   });
 
