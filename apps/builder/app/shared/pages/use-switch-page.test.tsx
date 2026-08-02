@@ -70,6 +70,39 @@ test("resolves a deep-linked instance to its page and full selector", () => {
   });
 });
 
+test("resolves shared slot content through a deterministic slot instance", () => {
+  const pages = createDefaultPages({
+    homePageId: "home-page",
+    rootInstanceId: "body",
+  });
+  const { instances } = renderData(
+    <$.Body ws:id="body">
+      <$.Slot ws:id="slot-one">
+        <$.Fragment ws:id="fragment">
+          <$.Box ws:id="box"></$.Box>
+        </$.Fragment>
+      </$.Slot>
+      <$.Slot ws:id="slot-two">
+        <$.Fragment ws:id="fragment">
+          <$.Box ws:id="box"></$.Box>
+        </$.Fragment>
+      </$.Slot>
+    </$.Body>
+  );
+
+  expect(
+    getDeepLinkedInstanceSelection({
+      instanceId: "box",
+      canOpenPageTemplates: true,
+      pages,
+      instances,
+    })
+  ).toEqual({
+    pageId: "home-page",
+    instanceSelector: ["box", "fragment", "slot-two", "body"],
+  });
+});
+
 test("ignores missing deep-linked instances", () => {
   const pages = createDefaultPages({
     homePageId: "home-page",
