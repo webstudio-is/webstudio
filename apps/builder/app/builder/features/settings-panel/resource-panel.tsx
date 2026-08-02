@@ -69,6 +69,8 @@ import {
   EditorDialogControl,
 } from "~/shared/code-editor-base";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { invalidateAssets } from "~/shared/resources";
+import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import {
   createResourceFieldsFromFormData,
   validateResourceBodyExpression,
@@ -909,7 +911,7 @@ export const SystemResourceForm = forwardRef<
         control: "system",
         formData,
       });
-      executeRuntimeMutation({
+      const result = executeRuntimeMutation({
         id: "resources.upsert",
         input: {
           resourceId: resource?.id,
@@ -919,6 +921,11 @@ export const SystemResourceForm = forwardRef<
           dataSourceName: resourceFields.name,
         },
       });
+      if (isAssetsResource && result !== undefined) {
+        // The initial preview can finish before the updated build reaches the
+        // server. Refresh again once merged-database planning sees the save.
+        onNextTransactionComplete(invalidateAssets);
+      }
     },
   }));
 
