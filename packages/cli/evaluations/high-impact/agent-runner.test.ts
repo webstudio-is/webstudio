@@ -45,7 +45,7 @@ describe("high-impact agent runner", () => {
     });
     const authConstraints = task.constraints.join("\n");
     expect(authConstraints).toContain("Do not call list-breakpoints");
-    expect(authConstraints).toContain("do not call meta.get_more_tools");
+    expect(authConstraints).toContain("do not call meta.get-more-tools");
     expect(authConstraints).toContain(
       "Create exactly one scoped non-secret fixture variable"
     );
@@ -111,7 +111,7 @@ describe("high-impact agent runner", () => {
       }).constraints
     ).toEqual(
       expect.arrayContaining([
-        expect.stringContaining("Do not call meta.index, meta.get_more_tools"),
+        expect.stringContaining("Do not call meta.index, meta.get-more-tools"),
         expect.stringContaining("Call meta.guide exactly once"),
         expect.stringContaining("exactly one upload-assets call"),
         expect.stringContaining("parallel tool-call batch"),
@@ -167,7 +167,7 @@ describe("high-impact agent runner", () => {
     );
     expect(getFixtureToolNames(markdownBlogFixture)).toEqual([
       "meta.guide",
-      "meta.get_more_tools",
+      "meta.get-more-tools",
       "create-asset-folder",
       "upload-assets",
       "create-page",
@@ -198,7 +198,7 @@ describe("high-impact agent runner", () => {
     );
     expect(getFixtureToolNames(markdownReferencesDiscoveryFixture)).toEqual([
       "meta.guide",
-      "meta.get_more_tools",
+      "meta.get-more-tools",
       "create-asset-folder",
       "upload-assets",
       "create-page",

@@ -374,16 +374,17 @@ const inputFileShapes = {
   ],
 };
 
+const formatJsonCodeBlock = (value: unknown) =>
+  ["```json", JSON.stringify(value, undefined, 2), "```"].join("\n");
+
 const inputFileShapeIndex = Object.entries(inputFileShapes)
-  .map(([name, value]) => `${name}:\n\n${JSON.stringify(value, undefined, 2)}`)
+  .map(([name, value]) => `${name}:\n\n${formatJsonCodeBlock(value)}`)
   .join("\n\n");
 
 const mcpArgumentExampleIndex = Object.entries(mcpArgumentExamples)
   .map(
     ([name, examples]) =>
-      `### ${name}\n\n${examples
-        .map((example) => JSON.stringify(example, undefined, 2))
-        .join("\n\n")}`
+      `### ${name}\n\n${examples.map(formatJsonCodeBlock).join("\n\n")}`
   )
   .join("\n\n");
 
@@ -593,7 +594,7 @@ const allManual = [
   "- `resources/list`",
   "- `meta.index`",
   "- `meta.guide`",
-  "- `meta.get_more_tools`",
+  "- `meta.get-more-tools`",
   "- `webstudio://project/tools`",
   "- `webstudio://project/components`",
   "",
@@ -692,7 +693,7 @@ const topics = {
             "resources/list",
             "meta.index",
             "meta.guide",
-            "meta.get_more_tools",
+            "meta.get-more-tools",
           ],
           resources: [
             "webstudio://project/status",
@@ -775,7 +776,7 @@ const topics = {
           "resources/list",
           "meta.index",
           "meta.guide",
-          "meta.get_more_tools",
+          "meta.get-more-tools",
         ],
         resources: [
           "webstudio://project/status",

@@ -82,6 +82,7 @@ describe("getMenuPermissions", () => {
       canPaste: true,
       canCut: true,
       canDuplicate: true,
+      canMove: true,
       canHide: true,
       canRename: true,
       canWrap: true,
@@ -115,6 +116,7 @@ describe("getMenuPermissions", () => {
       canPaste: false,
       canCut: false,
       canDuplicate: false,
+      canMove: false,
       canDelete: false,
     });
     expect(
@@ -129,6 +131,7 @@ describe("getMenuPermissions", () => {
       canPaste: true,
       canCut: false,
       canDuplicate: false,
+      canMove: false,
       canDelete: false,
     });
   });
@@ -166,6 +169,7 @@ describe("getMenuPermissions", () => {
       canCut: true,
       canDuplicate: true,
       canDelete: true,
+      canMove: false,
       canHide: false,
       canRename: false,
       canWrap: false,
@@ -215,6 +219,7 @@ describe("getMenuPermissions", () => {
       canCut: false,
       canDuplicate: false,
       canDelete: false,
+      canMove: false,
       canOpenSettings: false,
     });
 
@@ -239,6 +244,7 @@ describe("getMenuPermissions", () => {
       canCut: false,
       canDuplicate: false,
       canDelete: false,
+      canMove: false,
     });
   });
 
@@ -304,6 +310,7 @@ describe("getMenuPermissions", () => {
       canAddToken: false,
       canOpenSettings: true,
       canDelete: false,
+      canMove: false,
     });
   });
 
@@ -479,6 +486,7 @@ describe("getMenuPermissions", () => {
       canAddToken: false,
       canOpenSettings: false,
       canDelete: false,
+      canMove: false,
     });
   });
 });

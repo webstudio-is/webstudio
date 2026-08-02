@@ -3631,7 +3631,7 @@ export const inspectInstance = (
   }
   const depths = getInstanceDepths(instances, [input.instanceId]);
   const parents = getInstanceParents(instances);
-  const include = new Set(input.include ?? []);
+  const include = new Set(input.include ?? ["props"]);
   const details: InstanceInspection = serializeInstanceSummary(
     instance,
     depths.get(instance.id) ?? 0,

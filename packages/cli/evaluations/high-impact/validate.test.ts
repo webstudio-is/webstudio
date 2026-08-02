@@ -604,7 +604,7 @@ describe("Markdown blog evaluation", () => {
       contentDatabase: optimalContentDatabase,
       toolCalls: [
         { name: "meta.guide" },
-        { name: "meta.get_more_tools" },
+        { name: "meta.get-more-tools" },
         ...successfulCalls.slice(1),
       ],
     });
@@ -634,7 +634,7 @@ describe("Markdown blog evaluation", () => {
       project: addMarkdownBlog(),
       toolCalls: [
         { name: "meta.guide" },
-        { name: "meta.get_more_tools" },
+        { name: "meta.get-more-tools" },
         { name: "upload-assets", isError: true },
         { name: "upload-assets" },
         ...successfulCalls.slice(1),
@@ -650,7 +650,7 @@ describe("Markdown blog evaluation", () => {
       project: addMarkdownBlog(),
       toolCalls: [
         { name: "meta.guide" },
-        { name: "meta.get_more_tools" },
+        { name: "meta.get-more-tools" },
         { name: "create-page", planned: true },
         ...successfulCalls,
       ],
@@ -665,8 +665,8 @@ describe("Markdown blog evaluation", () => {
       project: addMarkdownBlog(),
       toolCalls: [
         { name: "meta.guide" },
-        { name: "meta.get_more_tools" },
-        { name: "meta.get_more_tools" },
+        { name: "meta.get-more-tools" },
+        { name: "meta.get-more-tools" },
         ...successfulCalls,
       ],
     });

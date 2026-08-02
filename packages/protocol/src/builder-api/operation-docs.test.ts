@@ -57,6 +57,26 @@ test("documents update-text mode without suggesting replace", () => {
   );
 });
 
+test("documents default instance props and opt-in details", () => {
+  const docs = publicApiOperationDocumentation.find(
+    ({ command }) => command === "inspect-instance"
+  );
+  const text = `${docs?.description}\n${docs?.examples.join("\n")}`;
+
+  expect(text).toContain("classes and custom attributes by default");
+  expect(text).toContain("styles,children,ancestors");
+});
+
+test("documents set-text-content discriminators", () => {
+  const docs = publicApiOperationDocumentation.find(
+    ({ command }) => command === "set-text-content"
+  );
+  const text = `${docs?.description}\n${docs?.examples.join("\n")}`;
+
+  expect(text).toContain('"operation":"set"');
+  expect(text).toContain('"operation":"reset"');
+});
+
 test("documents direct string props for update-props", () => {
   const docs = publicApiOperationDocumentation.find(
     ({ command }) => command === "update-props"
@@ -97,7 +117,7 @@ test("documents JSX insertion through the fragment field", () => {
 
   expect(text).toContain("Webstudio JSX");
   expect(text).toContain("CLI converts the JSX string");
-  expect(text).toContain('"fragment":"<ws.element ws:tag=\\"section\\" />"');
+  expect(text).toContain('"fragment":"<ws.element ws:tag=\'section\' />"');
   expect(text).not.toContain("Internal low-level");
   expect(text).not.toContain("structured Webstudio fragment");
   expect(text).not.toContain('"jsx"');

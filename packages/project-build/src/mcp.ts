@@ -382,7 +382,7 @@ type ProjectSessionMcpInputSchema = InputJsonSchema & {
 const emptyInputSchema = {
   type: "object",
   description:
-    "Pass this MCP tool's JSON arguments. Use meta.get_more_tools for examples and required fields. For authored content with styles, prefer insert-fragment so the CLI converts JSX into Webstudio data.",
+    "Pass this MCP tool's JSON arguments. Use meta.get-more-tools for examples and required fields. For authored content with styles, prefer insert-fragment so the CLI converts JSX into Webstudio data.",
   additionalProperties: false,
 } as const satisfies ProjectSessionMcpInputSchema;
 
@@ -762,7 +762,7 @@ const getCompactSchemaProperty = (schema: InputJsonSchema): InputJsonSchema => {
   }
   return {
     description:
-      "Complex structured value. Use meta.get_more_tools with this exact tool name for its complete schema.",
+      "Complex structured value. Use meta.get-more-tools with this exact tool name for its complete schema.",
   };
 };
 
@@ -796,7 +796,7 @@ const getHandshakeInputSchema = (
       ),
       required: schema.required,
       description:
-        "Compact handshake schema. Use meta.get_more_tools with this exact tool name for the complete input schema.",
+        "Compact handshake schema. Use meta.get-more-tools with this exact tool name for the complete input schema.",
     },
     detailedInputSchema: schema,
   };
@@ -1012,6 +1012,9 @@ const getUnsupportedInputFieldHint = ({
     (command === "get-page" || command === "get-page-by-path")
   ) {
     return " Use get-page/get-page-by-path for page metadata, list-instances to inspect page root contents, and inspect-instance for props, styles, children, bindings, or sources.";
+  }
+  if (command === "list-instances" && field === "instanceId") {
+    return " Use rootInstanceId to list a subtree, or inspect-instance to inspect one element.";
   }
   return "";
 };
@@ -1710,7 +1713,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     { goal: "design-system-page" },
     { goal: "design-system-page", phase: "dry-run-section" },
   ],
-  "meta.get_more_tools": [
+  "meta.get-more-tools": [
     { tools: ["insert-fragment"] },
     { tools: ["insert-component"] },
     { brief: "update-styles" },
@@ -1856,7 +1859,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       parentInstanceId: "parent-id",
       data: { type: "expression", value: "Posts.data.items" },
       itemFragment:
-        '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.title ?? "Untitled"`}</ws.element></ws.element>',
+        "<ws.element ws:tag='article'><ws.element ws:tag='h2'>{expression`collectionItem.title ?? 'Untitled'`}</ws.element></ws.element>",
     },
     {
       parentInstanceId: "parent-id",
@@ -1865,29 +1868,29 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
         value: [{ name: "Starter" }, { name: "Pro" }],
       },
       itemFragment:
-        '<ws.element ws:tag="div">{expression`collectionItem.name`}</ws.element>',
+        "<ws.element ws:tag='div'>{expression`collectionItem.name`}</ws.element>",
     },
   ],
   "insert-fragment": [
     {
       parentInstanceId: "parent-id",
       fragment:
-        '<ws.element ws:tag="section" ws:style={css`padding: 32px; display: grid; gap: 16px;`}><ws.element ws:tag="h2">Northstar Product OS</ws.element><ws.element ws:tag="p">Reusable patterns for teams.</ws.element></ws.element>',
+        "<ws.element ws:tag='section' ws:style={css`padding: 32px; display: grid; gap: 16px;`}><ws.element ws:tag='h2'>Northstar Product OS</ws.element><ws.element ws:tag='p'>Reusable patterns for teams.</ws.element></ws.element>",
     },
     {
       parentInstanceId: "parent-id",
       fragment:
-        '<ws.element ws:tag="section" style={{ padding: 32, borderRadius: 16 }}><ws.element ws:tag="h2">Operations Console</ws.element><ws.element ws:tag="p">Semantic section with React-style object styles converted into editable Webstudio styles.</ws.element></ws.element>',
+        "<ws.element ws:tag='section' style={{ padding: 32, borderRadius: 16 }}><ws.element ws:tag='h2'>Operations Console</ws.element><ws.element ws:tag='p'>Semantic section with React-style object styles converted into editable Webstudio styles.</ws.element></ws.element>",
     },
     {
       parentInstanceId: "parent-id",
       fragment:
-        '<ws.element ws:tag="section" ws:tokens={[token("accent", css`color: #0f766e;`)]} ws:style={css`display: grid; gap: 12px;`}><ws.element ws:tag="h2">Token Example</ws.element><ws.element ws:tag="button" onClick={new ActionValue(["event"], expression`console.log(event)`)}>Track launch</ws.element></ws.element>',
+        "<ws.element ws:tag='section' ws:tokens={[token('accent', css`color: #0f766e;`)]} ws:style={css`display: grid; gap: 12px;`}><ws.element ws:tag='h2'>Token Example</ws.element><ws.element ws:tag='button' onClick={new ActionValue(['event'], expression`console.log(event)`)}>Track launch</ws.element></ws.element>",
     },
     {
       parentInstanceId: "parent-id",
       fragment:
-        '<ws.element ws:tag="section"><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>',
+        "<ws.element ws:tag='section'><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>",
     },
   ],
   "insert-fragment-verified": [
@@ -1895,7 +1898,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       parentInstanceId: "parent-id",
       pagePath: "/pricing",
       fragment:
-        '<ws.element ws:tag="section"><ws.element ws:tag="h2">Pricing</ws.element></ws.element>',
+        "<ws.element ws:tag='section'><ws.element ws:tag='h2'>Pricing</ws.element></ws.element>",
     },
   ],
   "update-text": [
@@ -2583,13 +2586,13 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
     },
   }),
   createProjectSessionMcpTool({
-    name: "meta.get_more_tools",
+    name: "meta.get-more-tools",
     description:
       'Return detailed tool metadata and examples. Prefer exact tool names, for example {"tools":["insert-fragment"]}. To search, pass a string brief such as {"brief":"style updates"}.',
     inputSchema: toolDetailsInputSchema,
     annotations: {
-      command: "meta.get_more_tools",
-      operationId: "meta.get_more_tools",
+      command: "meta.get-more-tools",
+      operationId: "meta.get-more-tools",
       method: "session",
       permit: "api",
       localCapable: true,
@@ -3523,7 +3526,7 @@ const capabilityAreas = [
     tools: [
       "meta.index",
       "meta.guide",
-      "meta.get_more_tools",
+      "meta.get-more-tools",
       "workflow.next",
       "inspect-auth-context",
       "inspect-design-context",
@@ -3589,6 +3592,7 @@ const capabilityAreas = [
       "delete-instance",
       "list-texts",
       "update-text",
+      "set-text-content",
       "replace-text",
       "replace-prop-text",
       "update-props",
@@ -3721,13 +3725,13 @@ const getToolNamesInput = (input: unknown) => {
   const value = input.tools;
   if (Array.isArray(value) === false) {
     throw new Error(
-      `meta.get_more_tools input.tools must be an array of strings when provided. Received ${typeof value}.`
+      `meta.get-more-tools input.tools must be an array of strings when provided. Received ${typeof value}.`
     );
   }
   return value.map((tool, index) => {
     if (typeof tool !== "string" || tool === "") {
       throw new Error(
-        `meta.get_more_tools input.tools[${index}] must be a non-empty string.`
+        `meta.get-more-tools input.tools[${index}] must be a non-empty string.`
       );
     }
     return tool;
@@ -3793,7 +3797,7 @@ const getTemplateInput = (input: unknown) => {
 const getInsertFragmentInput = async (input: unknown) => {
   if (isPlainRecord(input) === false) {
     throw new Error(
-      'insert-fragment requires {"parentInstanceId":"...","fragment":"<ws.element ws:tag=\\"section\\" />"}.'
+      'insert-fragment requires {"parentInstanceId":"...","fragment":"<ws.element ws:tag=\'section\' />"}.'
     );
   }
   if ("parentId" in input && "parentInstanceId" in input === false) {
@@ -3816,7 +3820,7 @@ const getInsertFragmentInput = async (input: unknown) => {
   }
   if (typeof input.fragment !== "string") {
     throw new Error(
-      'insert-fragment requires fragment as a Webstudio JSX string, for example {"fragment":"<ws.element ws:tag=\\"section\\" />"}.'
+      'insert-fragment requires fragment as a Webstudio JSX string, for example {"fragment":"<ws.element ws:tag=\'section\' />"}.'
     );
   }
   const fragment = await parseWebstudioJsxFragment(input.fragment);
@@ -5425,9 +5429,16 @@ const getComponentDetails = (component: string) => {
   };
 };
 
+const insertFragmentInputFilePath = ".temp/insert-fragment.json";
+const insertFragmentInputFileExample = {
+  parentInstanceId: "parent-id",
+  fragment:
+    "<ws.element ws:tag='section' ws:style={css`padding: 32px; display: grid; gap: 12px;`}><ws.element ws:tag='h2'>Section title</ws.element><ws.element ws:tag='p'>Section copy.</ws.element></ws.element>",
+};
+
 const getToolCatalogOverview = (tools: readonly ProjectSessionMcpTool[]) => ({
   usage:
-    'Short tool overview. Do one small discovery step, then act. Start with meta.index or meta.guide({"brief":"Create a pricing page"}). Use meta.get_more_tools({"tools":["insert-fragment"]}) for exact details, or read the bounded webstudio://project/tools catalog.',
+    'Short tool overview. Do one small discovery step, then act. Start with meta.index or meta.guide({"brief":"Create a pricing page"}). Use meta.get-more-tools({"tools":["insert-fragment"]}) for exact details, or read the bounded webstudio://project/tools catalog.',
   count: tools.length,
   capabilities: filterCapabilities(tools).map((capability) => ({
     area: capability.area,
@@ -5459,9 +5470,8 @@ const getMetaIndex = (
       overview:
         "Do not call every discovery tool up front. Use this meta.index response for orientation, then call at most one focused discovery tool before acting.",
       tools:
-        'Use meta.get_more_tools({"tools":["insert-fragment"]}) for the primary authored/styled insertion tool. Use {"brief":"style updates"} only for search. Page through webstudio://project/tools only when broader operation discovery is necessary.',
-      insertFragment:
-        'Primary authored/styled insertion command shape: node packages/cli/local.js insert-fragment \'{"parentInstanceId":"parent-id","fragment":"<ws.element ws:tag=\\"section\\" ws:style={css`padding: 32px; display: grid; gap: 12px;`}><ws.element ws:tag="h2">Section title</ws.element><ws.element ws:tag="p">Section copy.</ws.element></ws.element>"}\' --dry-run. Use parentInstanceId, not parentId. Use Webstudio components/helpers such as ws.element, radix.*, css, token, expression, and ActionValue. Use ws:style={css`...`} for Webstudio-native CSS, or style={{ padding: 24 }} for React-style object syntax converted into editable Webstudio styles. Use node packages/cli/local.js mcp single-op-call insert-fragment only when you need the explicit MCP form.',
+        'Use meta.get-more-tools({"tools":["insert-fragment"]}) for the primary authored/styled insertion tool. Use {"brief":"style updates"} only for search. Page through webstudio://project/tools only when broader operation discovery is necessary.',
+      insertFragment: `Primary authored/styled insertion command shape: save ${JSON.stringify(insertFragmentInputFileExample)} as ${insertFragmentInputFilePath}, then run node packages/cli/local.js insert-fragment --input-file ${insertFragmentInputFilePath} --dry-run. Use parentInstanceId, not parentId. Use Webstudio components/helpers such as ws.element, radix.*, css, token, expression, and ActionValue. Use ws:style={css\`...\`} for Webstudio-native CSS, or style={{ padding: 24 }} for React-style object syntax converted into editable Webstudio styles. Use node packages/cli/local.js mcp single-op-call insert-fragment only when you need the explicit MCP form.`,
       resources:
         "Use MCP resources/list to discover overview and full resources.",
       components:
@@ -5475,7 +5485,7 @@ const getMetaIndex = (
       workflow:
         'Use workflow.next({"goal":"design-system-page"}) for one bounded phase when delegated/non-streaming agents must return progress instead of silently running a broad task.',
       details:
-        'Use meta.get_more_tools({"tools":["insert-fragment"]}) for matching params and examples.',
+        'Use meta.get-more-tools({"tools":["insert-fragment"]}) for matching params and examples.',
     },
     delegatedAgentRule:
       "If your parent cannot see live command output, treat each checkpoint as the unit of work. If the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
@@ -5516,14 +5526,14 @@ const metaGoalGuides = [
       "verify-page-responsive",
     ],
     workflow: [
-      'Call meta.get_more_tools with {"tools":["create-assets-resource"]} once for the complete nested query contract. Use exact tool names, not brief search, and do not repeat discovery for this workflow.',
+      'Call meta.get-more-tools with {"tools":["create-assets-resource"]} once for the complete nested query contract. Use exact tool names, not brief search, and do not repeat discovery for this workflow.',
       'Create one Blog asset folder. Upload all Markdown source files together in one upload-assets call with assetsDir ".webstudio/assets". Put queryable metadata such as slug, title, author, publishedAt, excerpt, and draft in each file\'s frontmatter. Every file must use {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}. Do not create companion JSON descriptors, use a combined format value, or retry a failed mutation; report its actionable error instead.',
       'Ensure the blog has exactly two Builder pages: an overview at the fixed path "/blog" and one detail page at the dynamic path "/blog/:slug". Create each page once with a committed call; do not dry-run it. Both pages load their content from Assets resources. Do not create one page per post or copy Markdown content into page-specific static structures.',
       "Every reachable Assets data source contributes its query to one shared published database. Keep exactly one final Assets resource for the overview and one for the detail page. Never create a placeholder, preview copy, or repair replacement; update the existing scoped resource when requirements change and remove obsolete duplicates.",
       'Field paths are arrays of segments, for example field:["extension"]. Literal query values use {"type":"literal","value":"..."}; raw strings are runtime expressions. Keep every overview filter value, limit, and offset literal so the bounded metadata-only result can be materialized instead of retaining its fields across every article. Use a deterministic secondary ID sort. Query Markdown posts with static extension and blog-folder constraints before any dynamic condition. Use output.mode:"fields", includeMetadata:false, and only fields rendered by that route.',
       'Keep content.mode:"none" on the overview and use content.mode:"markdown-body-ref" only on the detail route. The detail query should have exactly one dynamic value, system.params.slug, a literal limit of 1, and only the title and author metadata rendered above Markdown Embed. The published database keeps only the Markdown document reference and fetches the selected body from Asset storage at runtime.',
       "Call create-assets-resource exactly once with recipe.overviewResource after substituting the returned /blog root id and Blog folder id. Then call it exactly once with recipe.detailResource after substituting the returned /blog/:slug root id and the same Blog folder id.",
-      'Call insert-collection exactly once with the entire recipe.overviewCollection object and exactly once with the entire recipe.detailCollection object, changing only parentInstanceId to the returned root id. Do not reshape or stringify any field: data must remain the recipe object {"type":"expression","value":"posts.data"} or {"type":"expression","value":"post.data"}. Do not improvise another fragment or call meta.get_more_tools again.',
+      'Call insert-collection exactly once with the entire recipe.overviewCollection object and exactly once with the entire recipe.detailCollection object, changing only parentInstanceId to the returned root id. Do not reshape or stringify any field: data must remain the recipe object {"type":"expression","value":"posts.data"} or {"type":"expression","value":"post.data"}. Do not improvise another fragment or call meta.get-more-tools again.',
       "Validate both queries and preview the detail query with one concrete slug before saving dynamic expressions. Query-preview diagnostics report this query separately from the merged published database; use the merged database measurement when checking the deployment limit. The merged database must contain every source document without truncation, no embedded Markdown contents, and only one materialized overview query.",
       "Verify only after both Collections succeed and confirm that both pages load their content from Assets. Call verify-page-responsive once for /blog and once for one concrete detail route, including empty/not-found behavior, before finishing. If any call fails, stop and report it without retrying.",
     ],
@@ -5691,7 +5701,7 @@ const metaGoalGuides = [
     ],
     workflow: [
       "Inspect the project's existing auth resources, variables, page settings, and agent instructions before choosing a provider workflow. Call inspect-auth-context exactly once instead of calling get-project-settings, list-pages, list-resources, or list-variables separately; use at most one focused search-project call only when that bundle does not identify the auth convention. Treat its pages section as authoritative for route existence. Do not call get-page-by-path to confirm that /account is absent. Reuse that convention; do not add a second auth system implicitly.",
-      "Do not call meta.index after this guide. If an exact mutation schema is still needed, make at most one meta.get_more_tools call listing all immediately required authoring tools rather than rediscovering them one at a time.",
+      "Do not call meta.index after this guide. If an exact mutation schema is still needed, make at most one meta.get-more-tools call listing all immediately required authoring tools rather than rediscovering them one at a time.",
       "Never place credentials, service-role keys, refresh tokens, private session values, or authenticated response bodies in project data, command output, screenshots, agent instructions, or error reports. Ask the user to configure secrets in the provider/server environment.",
       "Keep all four auth states in the editable component structure even when bindings select only one at runtime. Give each state a visible label using the exact terms signed-out, loading, signed-in, and failed-auth so authors can inspect and verify every state. Use page basic auth only when the user asks for Webstudio's fixed login/password gate; it is not Supabase or Firebase authentication.",
       "Use focused resources and variables for public client configuration and session-shaped data. Keep authorization enforcement and privileged provider calls server-side; a hidden Builder element is not an authorization boundary.",
@@ -5717,7 +5727,7 @@ const metaGoalGuides = [
       "audit",
     ],
     workflow: [
-      "The guide and MCP handshake already provide the required tool schemas. Do not call meta.index or meta.get_more_tools for this workflow.",
+      "The guide and MCP handshake already provide the required tool schemas. Do not call meta.index or meta.get-more-tools for this workflow.",
       "Use upload-asset or upload-assets with the local filename, detected format, and complete family, style, and weight metadata. Use the returned asset ids directly; do not read a project snapshot to rediscover uploaded assets.",
       "Use update-asset to correct font metadata without re-uploading the binary.",
       "After font mutations, call verify-font-assets exactly once with every changed asset id. It refreshes the asset namespace and returns the persisted metadata in one bounded verification call; do not call refresh or get-asset separately.",
@@ -5739,7 +5749,7 @@ const metaGoalGuides = [
       "screenshot.diff",
     ],
     workflow: [
-      "The guide and MCP handshake already provide the required tool schemas. Do not call meta.index or meta.get_more_tools for this workflow.",
+      "The guide and MCP handshake already provide the required tool schemas. Do not call meta.index or meta.get-more-tools for this workflow.",
       "Interpret the supplied design before mutating: identify page sections, responsive behavior, reusable patterns, assets, typography, color, spacing, and interaction states. Ask for missing source assets rather than inventing brand-critical content.",
       "Before the first mutation, call inspect-design-context exactly once instead of calling list-pages, list-breakpoints, list-design-tokens, list-assets, or list-variables separately. Use one list-instances call only when needed to inspect a representative existing page pattern. Do not call get-styles: the bounded design context and optional focused instance result provide the reusable design-system evidence needed here without risking an oversized style dump. Reuse exact existing values, breakpoint ids, and patterns; do not create a parallel design system from approximate screenshot colors or spacing.",
       "Call create-page exactly once and use its returned rootInstanceId as the insertion parent. Insert the complete semantic page in one fragment when practical, and use the insertion result's instanceIds for follow-up token attachments. Do not call list-instances after the first mutation to rediscover ids already returned by mutations.",
@@ -5809,7 +5819,7 @@ const getMetaGuide = (
   const matches =
     goalGuide === undefined
       ? getMatchingTools(brief, tools).slice(0, 12)
-      : getExactTools(goalGuide.tools, tools);
+      : getExactToolSelection(goalGuide.tools, tools).tools;
   const canVerifyVisually =
     tools.some((tool) => tool.name === "preview.start") &&
     tools.some((tool) => tool.name === "screenshot");
@@ -5843,8 +5853,8 @@ const getMetaGuide = (
       : {}),
     more:
       goalGuide === undefined
-        ? "The MCP handshake provides top-level argument contracts and required fields, while this guide includes exact examples plus complete schemas for selected complex tools. Call meta.get_more_tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover."
-        : "The MCP client loads each named tool's exact argument contract before calling it. This guide includes a complete schema only for selected complex inputs. Call meta.get_more_tools once with all needed tool names only when the client does not expose a nested input shape or when you need server/local behavior that the guide does not cover.",
+        ? "The MCP handshake provides top-level argument contracts and required fields, while this guide includes exact examples plus complete schemas for selected complex tools. Call meta.get-more-tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover."
+        : "The MCP client loads each named tool's exact argument contract before calling it. This guide includes a complete schema only for selected complex inputs. Call meta.get-more-tools once with all needed tool names only when the client does not expose a nested input shape or when you need server/local behavior that the guide does not cover.",
   };
 };
 
@@ -5878,6 +5888,13 @@ const designSystemWorkflowPhases: Record<
     allowedTools: readonly string[];
     commandPattern: string;
     fallbackCommandPattern?: string;
+    inputFile?: {
+      path: string;
+      contents: {
+        parentInstanceId: string;
+        fragment: string;
+      };
+    };
     constraints?: readonly string[];
     expectedReturn: readonly string[];
     nextPhase?: WorkflowPhaseName;
@@ -5914,11 +5931,19 @@ const designSystemWorkflowPhases: Record<
   "dry-run-section": {
     purpose:
       "Validate one tiny authored/styled JSX smoke fragment without committing.",
-    allowedTools: ["meta.get_more_tools", "components.get", "insert-fragment"],
+    allowedTools: ["meta.get-more-tools", "components.get", "insert-fragment"],
     commandPattern:
-      'node packages/cli/local.js insert-fragment \'{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\\"section\\" ws:style={css`padding: 24px;`}><ws.element ws:tag=\\"h2\\">Design System</ws.element></ws.element>"}\' --dry-run',
+      "node packages/cli/local.js insert-fragment --input-file .temp/design-system-section.json --dry-run",
+    inputFile: {
+      path: ".temp/design-system-section.json",
+      contents: {
+        parentInstanceId: "root-id",
+        fragment:
+          "<ws.element ws:tag='section' ws:style={css`padding: 24px;`}><ws.element ws:tag='h2'>Design System</ws.element></ws.element>",
+      },
+    },
     constraints: [
-      "Use the commandPattern shape as-is, replacing only root-id.",
+      "Save inputFile.contents at inputFile.path, replacing only root-id, then use the commandPattern as-is.",
       "Keep the dry-run fragment tiny, ideally under 500 characters.",
       "Do not design the real page in this phase.",
       "Use ws.element tags or components confirmed by components.get; do not use deprecated $.Box, $.Heading, $.Paragraph, or $.Button.",
@@ -5936,7 +5961,7 @@ const designSystemWorkflowPhases: Record<
       "Commit exactly one previously validated authored/styled JSX section or one template root.",
     allowedTools: ["insert-fragment", "insert-component"],
     commandPattern:
-      'node packages/cli/local.js insert-fragment \'{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\\"section\\">...</ws.element>"}\'',
+      "node packages/cli/local.js insert-fragment --input-file .temp/design-system-section.json",
     expectedReturn: ["committed version", "inserted root instance id"],
     nextPhase: "coverage-batch",
   },
@@ -6009,15 +6034,28 @@ const getWorkflowNext = (input: unknown) => {
   };
 };
 
-const getExactTools = (
+const getExactToolSelection = (
   toolNames: readonly string[],
   tools: readonly ProjectSessionMcpTool[]
 ) => {
   const toolByName = new Map(tools.map((tool) => [tool.name, tool]));
-  return toolNames.flatMap((name) => {
-    const tool = toolByName.get(name);
-    return tool === undefined ? [] : [tool];
-  });
+  const selectedTools: ProjectSessionMcpTool[] = [];
+  const missingTools: string[] = [];
+  const includedToolNames = new Set<string>();
+  for (const requestedName of toolNames) {
+    const resolvedName = resolveToolName(requestedName);
+    const tool = toolByName.get(resolvedName);
+    if (tool === undefined) {
+      missingTools.push(requestedName);
+      continue;
+    }
+    if (includedToolNames.has(resolvedName)) {
+      continue;
+    }
+    includedToolNames.add(resolvedName);
+    selectedTools.push(tool);
+  }
+  return { tools: selectedTools, missingTools };
 };
 
 const serializeToolDetails = (tool: ProjectSessionMcpTool) => ({
@@ -6102,7 +6140,10 @@ const getMoreTools = (
   toolNames: readonly string[],
   tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const exactTools = getExactTools(toolNames, tools);
+  const { tools: exactTools, missingTools } = getExactToolSelection(
+    toolNames,
+    tools
+  );
   const matchedTools =
     toolNames.length > 0 ? exactTools : getMatchingTools(brief, tools);
   const limitedTools = matchedTools.slice(0, 12);
@@ -6111,9 +6152,7 @@ const getMoreTools = (
       'Prefer { tools: ["exact-tool-name"] } for precise details. Brief search is capped to avoid oversized responses; refine the brief or pass exact tool names when omittedCount is greater than 0.',
     brief,
     requestedTools: toolNames,
-    missingTools: toolNames.filter(
-      (name) => exactTools.some((tool) => tool.name === name) === false
-    ),
+    missingTools,
     count: matchedTools.length,
     omittedCount: Math.max(0, matchedTools.length - limitedTools.length),
     tools: limitedTools.map(serializeToolDetails),
@@ -6123,7 +6162,7 @@ const getMoreTools = (
 const readOnlySessionTools = new Set([
   "meta.index",
   "meta.guide",
-  "meta.get_more_tools",
+  "meta.get-more-tools",
   "status",
   "components.summary",
   "components.list",
@@ -6139,6 +6178,7 @@ const readOnlySessionTools = new Set([
 
 const toolAliases = new Map([
   ["get-component-coverage-plan", "components.coverage-plan"],
+  ["meta.get_more_tools", "meta.get-more-tools"],
 ]);
 
 const resolveToolName = (name: string) => toolAliases.get(name) ?? name;
@@ -6185,7 +6225,8 @@ const sdkDetailedOptionalSchemaProperties = new Set([
 ]);
 
 const getSdkSchemaProperty = (
-  value: InputJsonSchemaValue
+  value: InputJsonSchemaValue,
+  preserveRequiredShape = false
 ): InputJsonSchemaValue => {
   if (typeof value === "boolean") {
     return value;
@@ -6194,12 +6235,32 @@ const getSdkSchemaProperty = (
     Object.entries(value).filter(([key]) => sdkScalarSchemaKeys.has(key))
   );
   if (value.items !== undefined) {
-    result.items = getSdkSchemaProperty(value.items);
+    result.items = getSdkSchemaProperty(value.items, preserveRequiredShape);
+  }
+  if (
+    preserveRequiredShape &&
+    Array.isArray(value.required) &&
+    value.required.length > 0
+  ) {
+    result.required = value.required;
+    const required = new Set(value.required);
+    const properties = Object.fromEntries(
+      Object.entries(value.properties ?? {}).flatMap(([name, property]) =>
+        required.has(name)
+          ? [[name, getSdkSchemaProperty(property)] as const]
+          : []
+      )
+    );
+    if (Object.keys(properties).length > 0) {
+      result.properties = properties;
+    }
   }
   for (const key of ["allOf", "anyOf", "oneOf", "prefixItems"] as const) {
     const branches = value[key];
     if (Array.isArray(branches)) {
-      result[key] = branches.map(getSdkSchemaProperty);
+      result[key] = branches.map((branch) =>
+        getSdkSchemaProperty(branch, preserveRequiredShape)
+      );
     }
   }
   return result;
@@ -6235,13 +6296,26 @@ const getSdkInputSchema = (
         : getSdkSchemaProperty(schema.additionalProperties),
     ...(Object.keys(properties).length === 0 ? {} : { properties }),
     ...(required.size === 0 ? {} : { required: [...required] }),
+    ...Object.fromEntries(
+      (["allOf", "anyOf", "oneOf"] as const).flatMap((key) => {
+        const branches = schema[key];
+        return Array.isArray(branches)
+          ? [
+              [
+                key,
+                branches.map((branch) => getSdkSchemaProperty(branch, true)),
+              ] as const,
+            ]
+          : [];
+      })
+    ),
   };
 };
 
 const sdkDescribedToolNames = new Set([
   "meta.index",
   "meta.guide",
-  "meta.get_more_tools",
+  "meta.get-more-tools",
   "workflow.next",
   ...metaGoalGuides.flatMap(({ tools }) => tools),
 ]);
@@ -7395,10 +7469,10 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (name === "workflow.next") {
         return toCheckpointedMetaResult(name, getWorkflowNext(input));
       }
-      if (name === "meta.get_more_tools") {
+      if (name === "meta.get-more-tools") {
         return toMetaResult(
           getMoreTools(
-            getBrief(input, "meta.get_more_tools"),
+            getBrief(input, "meta.get-more-tools"),
             getToolNamesInput(input),
             listTools()
           )

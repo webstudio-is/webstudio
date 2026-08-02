@@ -81,11 +81,11 @@ const mcpOnlyToolNames = new Set(
     .filter((name) => topLevelCommandNames.has(name) === false)
 );
 
+const namespacedMcpToolPattern = /^[a-z][a-z0-9_-]*(\.[a-z][a-z0-9_-]*)+$/i;
+
 export const getTopLevelMcpToolHint = (args: readonly string[]) => {
   const tool = args.find(
-    (arg) =>
-      /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$/i.test(arg) ||
-      mcpOnlyToolNames.has(arg)
+    (arg) => namespacedMcpToolPattern.test(arg) || mcpOnlyToolNames.has(arg)
   );
   if (tool === undefined) {
     return;
@@ -143,10 +143,7 @@ export const getTopLevelMcpToolForwardArgs = (args: readonly string[]) => {
   if (tool === "screenshot" && rest[0]?.trimStart().startsWith("{")) {
     return ["mcp", "single-op-call", tool, ...rest];
   }
-  if (
-    /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$/i.test(tool) ||
-    mcpOnlyToolNames.has(tool)
-  ) {
+  if (namespacedMcpToolPattern.test(tool) || mcpOnlyToolNames.has(tool)) {
     return [
       "mcp",
       "single-op-call",
@@ -160,13 +157,13 @@ export const rootCliEpilogue = [
   "Project editing / LLM quick start:",
   "  webstudio man project-editing",
   "  webstudio meta.index",
-  '  webstudio meta.get_more_tools \'{"tools":["insert-fragment"]}\'',
-  '  webstudio insert-fragment \'{"parentInstanceId":"parent-id","fragment":"<$.Box ws:style={css`padding: 32px;`}><$.Heading>Title</$.Heading></$.Box>"}\' --dry-run',
+  '  webstudio meta.get-more-tools \'{"tools":["insert-fragment"]}\'',
+  "  webstudio insert-fragment --input-file .temp/insert-fragment.json --dry-run",
   "",
   "Equivalent explicit MCP form:",
   "  webstudio mcp single-op-call meta.index",
-  '  webstudio mcp single-op-call meta.get_more_tools \'{"tools":["insert-fragment"]}\'',
-  '  webstudio mcp single-op-call insert-fragment \'{"parentInstanceId":"parent-id","fragment":"<$.Box ws:style={css`padding: 32px;`}><$.Heading>Title</$.Heading></$.Box>"}\' --dry-run',
+  '  webstudio mcp single-op-call meta.get-more-tools \'{"tools":["insert-fragment"]}\'',
+  "  webstudio mcp single-op-call insert-fragment --input-file .temp/insert-fragment.json --dry-run",
   "",
   "Inside the Webstudio monorepo, use: node packages/cli/local.js ...",
   "MCP tool shortcuts are forwarded to mcp single-op-call for shell-driven agents.",

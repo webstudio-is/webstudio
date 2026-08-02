@@ -246,6 +246,43 @@ const requestSelectedPageItemDelete = () => {
 
 type InstanceMoveDirection = "up" | "down" | "intoPreviousSibling" | "out";
 
+export const instanceMoveCommandMetas = [
+  {
+    name: "moveInstanceUp",
+    label: "Move up",
+    description: "Move selected instance above the previous sibling",
+    direction: "up",
+    shortcut: "arrowup",
+  },
+  {
+    name: "moveInstanceDown",
+    label: "Move down",
+    description: "Move selected instance below the next sibling",
+    direction: "down",
+    shortcut: "arrowdown",
+  },
+  {
+    name: "moveInstanceOut",
+    label: "Move out",
+    description: "Move selected instance out of its parent",
+    direction: "out",
+    shortcut: "arrowleft",
+  },
+  {
+    name: "moveInstanceIntoPreviousSibling",
+    label: "Move in",
+    description: "Move selected instance into the previous sibling",
+    direction: "intoPreviousSibling",
+    shortcut: "arrowright",
+  },
+] as const satisfies readonly {
+  name: string;
+  label: string;
+  description: string;
+  direction: InstanceMoveDirection;
+  shortcut: string;
+}[];
+
 type SelectedInstancePath = {
   index: number;
   instancePath: InstancePath;
@@ -876,42 +913,15 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         }
       },
     },
-    {
-      name: "moveInstanceUp",
-      label: "Move up",
-      description: "Move selected instance above the previous sibling",
-      category: "Navigator",
-      defaultHotkeys: ["meta+arrowup", "ctrl+arrowup"],
-      disableOnInputLikeControls: true,
-      handler: () => moveSelectedInstance("up"),
-    },
-    {
-      name: "moveInstanceDown",
-      label: "Move down",
-      description: "Move selected instance below the next sibling",
-      category: "Navigator",
-      defaultHotkeys: ["meta+arrowdown", "ctrl+arrowdown"],
-      disableOnInputLikeControls: true,
-      handler: () => moveSelectedInstance("down"),
-    },
-    {
-      name: "moveInstanceOut",
-      label: "Move out",
-      description: "Move selected instance out of its parent",
-      category: "Navigator",
-      defaultHotkeys: ["meta+arrowleft", "ctrl+arrowleft"],
-      disableOnInputLikeControls: true,
-      handler: () => moveSelectedInstance("out"),
-    },
-    {
-      name: "moveInstanceIntoPreviousSibling",
-      label: "Move in",
-      description: "Move selected instance into the previous sibling",
-      category: "Navigator",
-      defaultHotkeys: ["meta+arrowright", "ctrl+arrowright"],
-      disableOnInputLikeControls: true,
-      handler: () => moveSelectedInstance("intoPreviousSibling"),
-    },
+    ...instanceMoveCommandMetas.map(
+      ({ direction, shortcut, ...commandMeta }) => ({
+        ...commandMeta,
+        category: "Navigator" as const,
+        defaultHotkeys: [`meta+${shortcut}`, `ctrl+${shortcut}`],
+        disableOnInputLikeControls: true,
+        handler: () => moveSelectedInstance(direction),
+      })
+    ),
     {
       name: "selectPreviousSibling",
       hidden: true,
