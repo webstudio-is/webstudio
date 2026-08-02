@@ -2995,26 +2995,26 @@ describe("resource patch helpers", () => {
     ).toEqual({ resourceId: "resource-id", dataSourceId: "resource-id" });
   });
 
-  test("upserts resource and binds instance prop atomically", () => {
+  test("upserts a prop resource without exposing it as render-time data", () => {
     const body: Instance = {
       type: "instance",
       id: "body",
       component: "Body",
       children: [{ type: "id", value: "box" }],
     };
-    const box: Instance = {
+    const form: Instance = {
       type: "instance",
-      id: "box",
-      component: "Box",
+      id: "form",
+      component: "Form",
       children: [],
     };
-    const ids = ["resource-id", "prop-id", "data-source-id"];
+    const ids = ["resource-id", "prop-id"];
     const result = upsertResourceProp(
       {
         pages: createDefaultPages({ rootInstanceId: "body" }),
         instances: new Map([
           [body.id, body],
-          [box.id, box],
+          [form.id, form],
         ]),
         props: new Map(),
         dataSources: new Map(),
@@ -3025,12 +3025,12 @@ describe("resource patch helpers", () => {
         styles: new Map(),
       },
       {
-        instanceId: "box",
-        propName: "data",
+        instanceId: "form",
+        propName: "action",
         resource: resourceFieldsInput.parse({
-          name: "Users",
-          method: "get",
-          url: "https://example.com/users",
+          name: "Submit",
+          method: "post",
+          url: "https://example.com/submit",
           headers: [],
         }),
       },
@@ -3039,9 +3039,12 @@ describe("resource patch helpers", () => {
 
     expect(result.result).toEqual({
       resourceId: "resource-id",
-      dataSourceId: "data-source-id",
+      dataSourceId: undefined,
       propIds: ["prop-id"],
     });
+    expect(result.payload).not.toContainEqual(
+      expect.objectContaining({ namespace: "dataSources" })
+    );
     expect(result.payload).toContainEqual({
       namespace: "props",
       patches: [
@@ -3050,8 +3053,8 @@ describe("resource patch helpers", () => {
           path: ["prop-id"],
           value: {
             id: "prop-id",
-            instanceId: "box",
-            name: "data",
+            instanceId: "form",
+            name: "action",
             type: "resource",
             value: "resource-id",
             required: undefined,
@@ -3067,10 +3070,10 @@ describe("resource patch helpers", () => {
           path: ["resource-id"],
           value: {
             id: "resource-id",
-            name: "Users",
+            name: "Submit",
             control: undefined,
-            method: "get",
-            url: '"https://example.com/users"',
+            method: "post",
+            url: '"https://example.com/submit"',
             searchParams: undefined,
             headers: [],
             body: undefined,

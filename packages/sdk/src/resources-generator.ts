@@ -103,11 +103,19 @@ export const generateResources = ({
   generated += generatedVariables;
   generated += generatedRequests;
 
+  const actionResourceIds = new Set<string>();
+  for (const prop of props.values()) {
+    if (prop.type === "resource" && generatedResourceIds.has(prop.value)) {
+      actionResourceIds.add(prop.value);
+    }
+  }
+
   generated += `  const _data = new Map<string, ResourceRequest>([\n`;
   for (const dataSource of dataSources.values()) {
     if (
       dataSource.type === "resource" &&
-      generatedResourceIds.has(dataSource.resourceId)
+      generatedResourceIds.has(dataSource.resourceId) &&
+      actionResourceIds.has(dataSource.resourceId) === false
     ) {
       const name = scope.getName(dataSource.resourceId, dataSource.name);
       generated += `    ["${name}", ${name}],\n`;

@@ -1,3 +1,4 @@
+import { createServer } from "node:http";
 import type { Page } from "playwright";
 import { loadDevBuild } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
@@ -13,6 +14,7 @@ import {
   waitForSyncStatus,
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { withGeneratedPreview } from "../flows/generated-app";
 import { newIsolatedPage, test } from "../harness";
 import { measure } from "../perf";
 
@@ -93,7 +95,7 @@ const updateResourceActionUrl = async ({
   await input.waitFor({ state: "visible", timeout: 10_000 });
   await input.fill(url);
   const save = waitForChangeToBeSaved({ page });
-  await input.blur();
+  await input.press("Enter");
   await save;
   await waitForSyncStatus({ page, status: "idle" });
 };
@@ -174,6 +176,10 @@ const expectPersistedActionResource = async ({
     method: string;
     url: string;
   }>;
+  const dataSources = JSON.parse(build.dataSources) as Array<{
+    type: string;
+    resourceId?: string;
+  }>;
   const resource = resources.find(
     (resource) =>
       resource.name === "action" &&
@@ -192,6 +198,51 @@ const expectPersistedActionResource = async ({
       `Expected Webhook Form action prop to persist resource "${url}". Props: ${JSON.stringify(props)} Resources: ${JSON.stringify(resources)}`
     );
   }
+  if (
+    dataSources.some(
+      (dataSource) =>
+        dataSource.type === "resource" && dataSource.resourceId === resource.id
+    )
+  ) {
+    throw new Error(
+      `Expected Webhook Form action resource "${url}" not to load during rendering. Data sources: ${JSON.stringify(dataSources)}`
+    );
+  }
+};
+
+const startWebhookServer = async () => {
+  const requests: Array<{ method: string | undefined; body: unknown }> = [];
+  const server = createServer(async (request, response) => {
+    const chunks: Buffer[] = [];
+    for await (const chunk of request) {
+      chunks.push(Buffer.from(chunk));
+    }
+    const bodyText = Buffer.concat(chunks).toString("utf8");
+    requests.push({
+      method: request.method,
+      body: bodyText === "" ? undefined : JSON.parse(bodyText),
+    });
+    response.writeHead(200, {
+      "Access-Control-Allow-Origin": "*",
+      "Content-Type": "application/json",
+    });
+    response.end(JSON.stringify({ success: true }));
+  });
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  if (address === null || typeof address === "string") {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    throw new Error("Expected a numeric webhook server port.");
+  }
+  return {
+    requests,
+    url: `http://127.0.0.1:${address.port}/submit`,
+    close: async () =>
+      await new Promise<void>((resolve) => server.close(() => resolve())),
+  };
 };
 
 const expectPersistedExpressionProp = async ({
@@ -336,7 +387,7 @@ const expectBooleanPropDeleted = async ({
   }
 };
 
-test("Props panel resource action persists after reload", async () => {
+test("Webhook Form action submits once and persists after reload", async () => {
   const fixture = await createContentModeProject({
     email: "props-runtime@webstudio.test",
     title: "Props Runtime",
@@ -345,8 +396,9 @@ test("Props panel resource action persists after reload", async () => {
     builderToken: "props-runtime-builder-token",
   });
   const { page, close } = await newIsolatedPage();
+  const webhook = await startWebhookServer();
   const text = "Initial content";
-  const actionUrl = "/$resources/current-date";
+  const actionUrl = webhook.url;
 
   try {
     await measure("props runtime open builder", async () => {
@@ -387,7 +439,41 @@ test("Props panel resource action persists after reload", async () => {
       projectId: fixture.projectId,
       url: actionUrl,
     });
+
+    await measure("props runtime submit generated webhook form", async () => {
+      await withGeneratedPreview({
+        projectId: fixture.projectId,
+        callback: async ({ url }) => {
+          await page.goto(url);
+          if (webhook.requests.length !== 0) {
+            throw new Error(
+              `Expected no webhook requests before submission, received ${JSON.stringify(webhook.requests)}`
+            );
+          }
+          await page.locator('input[name="name"]').fill("Ada");
+          await page.locator('input[name="email"]').fill("ada@example.com");
+          await page.getByRole("button", { name: "Submit" }).click();
+          await page
+            .getByText("Thank you for getting in touch!", { exact: true })
+            .waitFor();
+        },
+      });
+    });
+    if (
+      JSON.stringify(webhook.requests) !==
+      JSON.stringify([
+        {
+          method: "POST",
+          body: { name: "Ada", email: "ada@example.com" },
+        },
+      ])
+    ) {
+      throw new Error(
+        `Expected one populated webhook submission, received ${JSON.stringify(webhook.requests)}`
+      );
+    }
   } finally {
+    await webhook.close();
     await close();
   }
 });

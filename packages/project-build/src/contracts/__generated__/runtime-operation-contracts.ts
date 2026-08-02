@@ -69773,7 +69773,7 @@ export const runtimeOperationContractData = [
           },
         },
       },
-      required: ["resourceId", "dataSourceId", "propIds"],
+      required: ["resourceId", "propIds"],
       additionalProperties: {},
     },
     readNamespaces: [

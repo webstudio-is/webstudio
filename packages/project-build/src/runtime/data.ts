@@ -2943,10 +2943,6 @@ export const upsertResourceProp = (
     headers: resourceInput.headers,
     body: resourceInput.body,
   });
-  const dataSource = build.dataSources.find(
-    (dataSource) =>
-      dataSource.type === "resource" && dataSource.resourceId === resourceId
-  );
   const existingProp = findProp(build.props, input.instanceId, input.propName);
   const nextProp = createValidatedPropValueFromInput(
     {
@@ -2965,19 +2961,16 @@ export const upsertResourceProp = (
     props: build.props,
     nextProps: [nextProp.prop],
   });
-  const dataSourceId = dataSource?.id ?? context.createId();
   return createRuntimeMutation({
     payload: compactBuilderPatchPayload([
       ...createResourceUpsertPatchPayload({
         build,
         resource,
-        dataSourceId,
-        scopeInstanceId: input.scopeInstanceId ?? input.instanceId,
-        dataSourceName: input.dataSourceName ?? resource.name,
+        exposeAsDataSource: false,
       }),
       ...propPayload,
     ]),
-    result: { resourceId, dataSourceId, propIds },
+    result: { resourceId, dataSourceId: undefined, propIds },
     invalidatesNamespaces: [
       "pages",
       "instances",
