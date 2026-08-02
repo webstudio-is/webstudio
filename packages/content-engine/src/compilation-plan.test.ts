@@ -362,6 +362,69 @@ describe("content compilation plan", () => {
     }
   });
 
+  test("does not hydrate non-Markdown assets for Markdown body queries", async () => {
+    const plan = createContentCompilationPlan([
+      {
+        ...compilationQuery("detail", {
+          ...query,
+          content: { mode: "markdown-body" },
+        }),
+        where: {
+          field: ["properties", "slug"],
+          operator: "eq",
+          value: { type: "dynamic" },
+        },
+      },
+    ]);
+    expect(plan).toBeDefined();
+    if (plan === undefined) {
+      return;
+    }
+    const image = {
+      ...document,
+      _id: "social-image",
+      name: "social.png",
+      path: "social.png",
+      key: "social",
+      extension: "png",
+      mimeType: "image/png",
+      revision: "image-revision",
+      contentRef: "social.png",
+      properties: {},
+    };
+
+    expect(
+      selectContentHydrationCandidates({
+        documents: [document, image],
+        plan,
+      })
+    ).toEqual(new Set(["post"]));
+
+    const entries = [document, image].map((value) =>
+      createCanonicalAssetFileEntry({
+        projectId: "project",
+        document: value,
+      })
+    );
+    const loadContent = vi.fn(async () => "# Post");
+    const prepared = await prepareContentCompilerEntries({
+      entries,
+      plan,
+      loadContent,
+    });
+
+    expect(loadContent).toHaveBeenCalledOnce();
+    expect(loadContent).toHaveBeenCalledWith(
+      expect.objectContaining({ assetId: "post" })
+    );
+    expect(prepared).toEqual([
+      expect.objectContaining({ assetId: "post", contentRequired: true }),
+      expect.objectContaining({ assetId: "social-image" }),
+    ]);
+    expect(prepared[1]).not.toHaveProperty("content");
+    expect(prepared[1]).not.toHaveProperty("contentRequired");
+  });
+
   test("reports dynamic filter and window values", () => {
     const plan = createContentCompilationPlan([
       {
