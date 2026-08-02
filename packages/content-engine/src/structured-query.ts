@@ -16,6 +16,7 @@ import {
   type AssetQueryFilter,
   type AssetQueryResult,
   type AssetQueryWhere,
+  type AssetResourceContentOptions,
   type AssetResourceOutputSelection,
   type BuilderAssetFieldCatalog,
 } from "./schema";
@@ -277,6 +278,17 @@ const matchesAssetQueryWhere = (
     matchesAssetQueryFilter(document, filter, runtimeAsset)
   ) === true;
 
+export const supportsAssetQueryContent = ({
+  document,
+  content,
+}: {
+  document: ContentDatabaseDocument;
+  content: AssetResourceContentOptions;
+}) =>
+  content.mode !== "markdown-body-ref" ||
+  document.mimeType === "text/markdown" ||
+  document.extension === "md";
+
 const compareAssetQuerySortValues = (left: unknown, right: unknown) => {
   const leftMissing = left === undefined || left === null;
   const rightMissing = right === undefined || right === null;
@@ -436,7 +448,11 @@ export const executeAssetQuery = async ({
   }
   const matched = documents.flatMap((document) => {
     const runtimeAsset = runtimeAssets?.[document._id];
-    if (matchesAssetQueryWhere(document, query.where, runtimeAsset) === false) {
+    if (
+      supportsAssetQueryContent({ document, content: query.content }) ===
+        false ||
+      matchesAssetQueryWhere(document, query.where, runtimeAsset) === false
+    ) {
       return [];
     }
     const item = toQueryItem(document, query.output, runtimeAsset);

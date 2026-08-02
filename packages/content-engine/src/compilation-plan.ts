@@ -19,6 +19,7 @@ import {
 import {
   compareAssetQueryDocuments,
   matchesAssetQueryFilter,
+  supportsAssetQueryContent,
 } from "./structured-query";
 import { contentEngineLimits } from "./limits";
 import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
@@ -173,14 +174,6 @@ const evaluateWhere = ({
   });
 };
 
-const supportsQueryContent = (
-  document: AssetFileDocument,
-  query: ContentCompilationPlan["queries"][number]
-) =>
-  query.content.mode !== "markdown-body-ref" ||
-  document.mimeType === "text/markdown" ||
-  document.extension === "md";
-
 export const getContentDocumentCandidateQueryIds = ({
   document,
   plan,
@@ -192,7 +185,12 @@ export const getContentDocumentCandidateQueryIds = ({
 }) =>
   plan.queries
     .filter(
-      ({ where }) => evaluateWhere({ document, where, available }) !== false
+      (query) =>
+        supportsAssetQueryContent({
+          document,
+          content: query.content,
+        }) &&
+        evaluateWhere({ document, where: query.where, available }) !== false
     )
     .map(({ id }) => id);
 
@@ -234,7 +232,7 @@ export const selectContentHydrationCandidates = ({
     }
     const matched = documents.filter(
       (document) =>
-        supportsQueryContent(document, query) &&
+        supportsAssetQueryContent({ document, content: query.content }) &&
         evaluateWhere({ document, where: query.where, available: "all" }) !==
           false
     );
@@ -430,6 +428,9 @@ const getStandardFieldPaths = (query: ContentCompilationQuery) => {
     for (const field of ["mimeType", "size", "revision"] as const) {
       addField(fields, [field]);
     }
+  }
+  if (query.content.mode === "markdown-body-ref") {
+    addField(fields, ["extension"]);
   }
   return sortFields(fields.values());
 };

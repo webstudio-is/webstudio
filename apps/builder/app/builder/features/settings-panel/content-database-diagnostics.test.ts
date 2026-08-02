@@ -5,9 +5,13 @@ import { getContentDatabaseDiagnosticRows } from "./content-database-diagnostics
 const createDiagnostics = ({
   queryTruncated,
   databaseTruncated,
+  queryOmissionReason = queryTruncated ? "size" : undefined,
+  databaseOmissionReason = databaseTruncated ? "size" : undefined,
 }: {
   queryTruncated: boolean;
   databaseTruncated: boolean;
+  queryOmissionReason?: "size" | "unavailable";
+  databaseOmissionReason?: "size" | "unavailable";
 }): AssetQueryPreviewDiagnostics => ({
   scope: "query-preview",
   query: {
@@ -16,6 +20,9 @@ const createDiagnostics = ({
     unboundedBytes: 30_000,
     includedDocumentCount: 5,
     omittedDocumentCount: 0,
+    ...(queryOmissionReason === undefined
+      ? {}
+      : { omissionReason: queryOmissionReason }),
     truncated: queryTruncated,
   },
   database: {
@@ -24,6 +31,9 @@ const createDiagnostics = ({
     unboundedBytes: 600_000,
     includedDocumentCount: 5,
     omittedDocumentCount: 1,
+    ...(databaseOmissionReason === undefined
+      ? {}
+      : { omissionReason: databaseOmissionReason }),
     truncated: databaseTruncated,
   },
 });
@@ -62,6 +72,20 @@ describe("content database diagnostics", () => {
     );
 
     expect(queryRow.valueColor).toBe("destructive");
+    expect(databaseRow.valueColor).toBeUndefined();
+  });
+
+  test("does not highlight omissions unrelated to the size limit", () => {
+    const [queryRow, databaseRow] = getContentDatabaseDiagnosticRows(
+      createDiagnostics({
+        queryTruncated: true,
+        databaseTruncated: true,
+        queryOmissionReason: "unavailable",
+        databaseOmissionReason: "unavailable",
+      })
+    );
+
+    expect(queryRow.valueColor).toBeUndefined();
     expect(databaseRow.valueColor).toBeUndefined();
   });
 });

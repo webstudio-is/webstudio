@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   assetQuery,
   type AssetFileDocument,
@@ -361,6 +361,59 @@ describe("structured asset query", () => {
       text: "# Alpha body\n",
     });
     expect(result.items[0].content).not.toHaveProperty("contentRef");
+  });
+
+  test("excludes non-Markdown files from Markdown body queries", async () => {
+    const markdown = new TextEncoder().encode("# Alpha body\n");
+    const image = {
+      ...documents[0],
+      _id: "social-image",
+      name: "social.png",
+      path: "blog/social.png",
+      key: "social-image",
+      extension: "png",
+      mimeType: "image/png",
+      size: 100,
+      revision: "social-image-revision",
+      contentRef: "files/social.png",
+    };
+    const read = vi.fn(async () => ({
+      data: {
+        async *[Symbol.asyncIterator]() {
+          yield markdown;
+        },
+      },
+      contentLength: markdown.byteLength,
+    }));
+
+    const result = await executeAssetQuery({
+      documents: [{ ...documents[0], size: markdown.byteLength }, image],
+      query: {
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["id"]],
+        },
+        content: { mode: "markdown-body-ref" },
+      },
+      read,
+    });
+
+    expect(result).toMatchObject({
+      items: [
+        {
+          id: "alpha",
+          content: { encoding: "utf-8", text: "# Alpha body\n" },
+        },
+      ],
+      totalCount: 1,
+      hasMore: false,
+    });
+    expect(read).toHaveBeenCalledOnce();
+    expect(read).toHaveBeenCalledWith("files/alpha.md", {
+      offset: 0,
+      length: markdown.byteLength,
+    });
   });
 
   test("projects explicit output fields while retaining base file metadata", async () => {

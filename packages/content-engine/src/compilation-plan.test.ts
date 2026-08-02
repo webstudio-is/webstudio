@@ -362,7 +362,7 @@ describe("content compilation plan", () => {
     }
   });
 
-  test("does not hydrate non-Markdown assets for Markdown body queries", async () => {
+  test("excludes non-Markdown assets from Markdown body queries", async () => {
     const plan = createContentCompilationPlan([
       {
         ...compilationQuery("detail", {
@@ -419,10 +419,7 @@ describe("content compilation plan", () => {
     );
     expect(prepared).toEqual([
       expect.objectContaining({ assetId: "post", contentRequired: true }),
-      expect.objectContaining({ assetId: "social-image" }),
     ]);
-    expect(prepared[1]).not.toHaveProperty("content");
-    expect(prepared[1]).not.toHaveProperty("contentRequired");
   });
 
   test("reports dynamic filter and window values", () => {
