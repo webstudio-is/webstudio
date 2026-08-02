@@ -21,6 +21,7 @@ import {
   pageCopyTesting,
   pageDuplicateInput,
   createPageTemplate,
+  createPageCopyData,
   createPageFromTemplate,
   createPageDuplicatePayload,
   createTemplateCopyData,
@@ -29,6 +30,7 @@ import {
   duplicatePage,
   duplicatePageTemplate,
   insertPageCopyMutable,
+  insertPageTransferItem,
   insertPageFromTemplateMutable,
   insertTemplateCopyFromFragmentsMutable,
   listPageTemplates,
@@ -37,6 +39,7 @@ import {
 } from "./page-copy";
 import {
   $,
+  css,
   expression,
   Parameter,
   renderData,
@@ -55,6 +58,60 @@ const getCopiedPages = (data: WebstudioData) =>
   Array.from(data.pages.pages.values()).filter(
     (page) => page.id !== data.pages.homePageId
   );
+
+test("requires an explicit resolution for conflicting transferred root styles", () => {
+  const sourcePages = createDefaultPages({
+    homePageId: "source-page",
+    rootInstanceId: "source-body",
+  });
+  const source = getWebstudioDataStub({
+    ...renderData(
+      <ws.root
+        ws:id={ROOT_INSTANCE_ID}
+        ws:style={css`
+          color: red;
+        `}
+      >
+        <$.Body ws:id="source-body"></$.Body>
+      </ws.root>
+    ),
+    pages: sourcePages,
+  });
+  const target = getWebstudioDataStub({
+    ...renderData(
+      <ws.root
+        ws:id={ROOT_INSTANCE_ID}
+        ws:style={css`
+          color: blue;
+        `}
+      >
+        <$.Body ws:id="target-body"></$.Body>
+      </ws.root>
+    ),
+    pages: createDefaultPages({
+      homePageId: "target-page",
+      rootInstanceId: "target-body",
+    }),
+  });
+
+  expect(() =>
+    insertPageTransferItem(
+      target,
+      {
+        projectId: "target-project",
+        targetFolderId: ROOT_FOLDER_ID,
+        item: {
+          type: "page",
+          ...createPageCopyData({
+            data: source,
+            page: getHomePage(sourcePages),
+          }),
+        },
+      },
+      { createId: nanoid }
+    )
+  ).toThrow(/root style conflicts require an explicit/i);
+});
 
 test("validates duplicate page substitutions", () => {
   expect(

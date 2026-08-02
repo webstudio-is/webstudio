@@ -1,5 +1,4 @@
 import { nanoid } from "nanoid";
-import deepEqual from "fast-deep-equal";
 import { toValue } from "@webstudio-is/css-engine";
 import {
   getStyleDeclKey,
@@ -96,7 +95,7 @@ export const detectRootStyleConflicts = ({
     );
     if (
       existingStyle !== undefined &&
-      deepEqual(existingStyle.value, incomingStyle.value) === false
+      toValue(existingStyle.value) !== toValue(incomingStyle.value)
     ) {
       conflicts.push({ existingStyle, incomingStyle });
     }
@@ -569,7 +568,6 @@ type InsertLocalStyleSourcesWithNewIdsOptions = {
   styleSourceSelections: StyleSourceSelections;
   styles: Styles;
   createId?: () => string;
-  rootStyleConflictResolution?: RootStyleConflictResolution;
 } & (
   | {
       contentMode: true;
@@ -605,7 +603,6 @@ export const insertLocalStyleSourcesWithNewIds = ({
   breakpoints,
   styleSourceIdMap = new Map(),
   mergedBreakpointIds = new Map(),
-  rootStyleConflictResolution = "theirs",
 }: InsertLocalStyleSourcesWithNewIdsOptions): void => {
   const newLocalStyleSources = new Map<StyleSource["id"], StyleSource>();
   for (const styleSource of fragmentStyleSources) {
@@ -613,14 +610,6 @@ export const insertLocalStyleSourcesWithNewIds = ({
       newLocalStyleSources.set(styleSource.id, styleSource);
     }
   }
-  const rootLocalStyleSourceIds = new Set(
-    findLocalStyleSourceIds({
-      instanceId: ROOT_INSTANCE_ID,
-      styleSourceSelections: fragmentStyleSourceSelections,
-      styleSources: fragmentStyleSources,
-    })
-  );
-
   const newLocalStyleSourceIds = new Map<
     StyleSource["id"],
     StyleSource["id"]
@@ -727,14 +716,6 @@ export const insertLocalStyleSourcesWithNewIds = ({
       if (
         contentMode &&
         breakpoints?.has(newStyleDecl.breakpointId) === false
-      ) {
-        continue;
-      }
-      if (
-        contentMode === false &&
-        rootStyleConflictResolution === "ours" &&
-        rootLocalStyleSourceIds.has(styleSourceId) &&
-        styles.has(getStyleDeclKey(newStyleDecl))
       ) {
         continue;
       }

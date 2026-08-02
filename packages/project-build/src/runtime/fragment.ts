@@ -500,7 +500,7 @@ const insertFragmentBreakpointsMutable = ({
   createId,
   onBreakpointLimitMerge,
 }: {
-  fragment: WebstudioFragment;
+  fragment: Pick<WebstudioFragment, "breakpoints">;
   breakpoints: Breakpoints;
   createId: () => string;
   onBreakpointLimitMerge?: () => void;
@@ -537,6 +537,21 @@ const insertFragmentBreakpointsMutable = ({
   return { mergedBreakpointIds, didMergeBreakpointsDueToLimit };
 };
 
+const buildFragmentInsertionBreakpointIds = ({
+  fragmentBreakpoints,
+  targetBreakpoints,
+}: {
+  fragmentBreakpoints: WebstudioFragment["breakpoints"];
+  targetBreakpoints: Breakpoints;
+}) => {
+  let generatedIdIndex = 0;
+  return insertFragmentBreakpointsMutable({
+    fragment: { breakpoints: fragmentBreakpoints },
+    breakpoints: new Map(targetBreakpoints),
+    createId: () => `conflict-detection-breakpoint-${generatedIdIndex++}`,
+  }).mergedBreakpointIds;
+};
+
 export const fragmentTesting = {
   getFragmentInstancesData,
   insertFragmentAssetsMutable,
@@ -549,7 +564,6 @@ export const insertWebstudioFragmentCopy = ({
   availableVariables,
   projectId,
   conflictResolution = "theirs",
-  rootStyleConflictResolution = "theirs",
   onBreakpointLimitMerge,
   metas,
   contentModeCopyableProp,
@@ -563,7 +577,6 @@ export const insertWebstudioFragmentCopy = ({
   availableVariables: DataSource[];
   projectId: string;
   conflictResolution?: ConflictResolution;
-  rootStyleConflictResolution?: RootStyleConflictResolution;
   onBreakpointLimitMerge?: () => void;
   metas?: Map<string, WsComponentMeta>;
   contentModeCopyableProp?: ContentModeCopyableProp;
@@ -916,7 +929,6 @@ export const insertWebstudioFragmentCopy = ({
       contentMode: false,
       styleSourceIdMap,
       mergedBreakpointIds,
-      rootStyleConflictResolution,
       breakpoints,
       createId,
     });
@@ -1003,11 +1015,10 @@ export const detectFragmentRootStyleConflicts = ({
   fragment: WebstudioFragment;
   targetData: WebstudioData;
 }) => {
-  const mergedBreakpointIds = buildMergedBreakpointIds(
-    fragment.breakpoints,
-    targetData.breakpoints,
-    { maxBreakpointCount: maxBreakpoints }
-  );
+  const mergedBreakpointIds = buildFragmentInsertionBreakpointIds({
+    fragmentBreakpoints: fragment.breakpoints,
+    targetBreakpoints: targetData.breakpoints,
+  });
 
   return detectRootStyleConflicts({
     fragmentStyleSources: fragment.styleSources,
@@ -1018,6 +1029,34 @@ export const detectFragmentRootStyleConflicts = ({
     existingStyles: targetData.styles,
     mergedBreakpointIds,
   });
+};
+
+export const resolveFragmentRootStyleConflicts = ({
+  fragment,
+  targetData,
+  resolution,
+}: {
+  fragment: WebstudioFragment;
+  targetData: WebstudioData;
+  resolution: RootStyleConflictResolution | undefined;
+}): WebstudioFragment => {
+  if (resolution !== "ours") {
+    return fragment;
+  }
+  const conflictingStyles = new Set(
+    detectFragmentRootStyleConflicts({ fragment, targetData }).map(
+      (conflict) => conflict.incomingStyle
+    )
+  );
+  if (conflictingStyles.size === 0) {
+    return fragment;
+  }
+  return {
+    ...fragment,
+    styles: fragment.styles.filter(
+      (style) => conflictingStyles.has(style) === false
+    ),
+  };
 };
 
 /**

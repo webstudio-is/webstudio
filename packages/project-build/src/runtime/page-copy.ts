@@ -3,6 +3,7 @@ import {
   detectFragmentRootStyleConflicts,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
+  resolveFragmentRootStyleConflicts,
 } from "./fragment";
 import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
 import { nanoid } from "nanoid";
@@ -58,9 +59,9 @@ import { unwrap } from "./unwrap";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
   pageTransferItemInput,
+  collectPageTransferItems,
   type FolderCopyData,
   type PageCopyData,
-  type PageTransferItem,
   type TemplateCopyData,
 } from "./data-formats/page-transfer";
 
@@ -349,7 +350,11 @@ const copyPageFragmentsMutable = ({
   if (contentMode === false && rootFragment !== undefined) {
     insertWebstudioFragmentCopy({
       data: target,
-      fragment: rootFragment,
+      fragment: resolveFragmentRootStyleConflicts({
+        fragment: rootFragment,
+        targetData: target,
+        resolution: rootStyleConflictResolution,
+      }),
       availableVariables: findAvailableVariables({
         ...target,
         startingInstanceId: ROOT_INSTANCE_ID,
@@ -357,7 +362,6 @@ const copyPageFragmentsMutable = ({
       projectId,
       metas,
       conflictResolution,
-      rootStyleConflictResolution,
       contentModeCopyableProp,
       onBreakpointLimitMerge,
       createId,
@@ -1378,20 +1382,6 @@ export const pageTransferInsertInput = z.object({
   rootStyleConflictResolution: z.enum(["ours", "theirs"]).optional(),
 });
 
-const findFirstTransferRootFragment = (
-  item: PageTransferItem
-): WebstudioFragment | undefined => {
-  if (item.type === "page" || item.type === "template") {
-    return item.rootFragment;
-  }
-  for (const child of item.children) {
-    const rootFragment = findFirstTransferRootFragment(child);
-    if (rootFragment !== undefined) {
-      return rootFragment;
-    }
-  }
-};
-
 export const createPageCopyData = ({
   data,
   page,
@@ -1563,7 +1553,7 @@ export const insertPageTransferItem = (
     build: data,
     assets: Array.from(data.assets.values()),
   });
-  const rootFragment = findFirstTransferRootFragment(input.item);
+  const rootFragment = collectPageTransferItems(input.item)[0]?.rootFragment;
   if (
     input.rootStyleConflictResolution === undefined &&
     rootFragment !== undefined &&

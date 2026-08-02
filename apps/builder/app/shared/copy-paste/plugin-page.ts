@@ -26,6 +26,7 @@ import {
 import {
   pageTransferDataVersion,
   parsePageTransferData,
+  collectPageTransferItems,
   type FolderTransferData,
   type PageTransferData,
   type PageTransferItem,
@@ -125,15 +126,6 @@ const handleCopyPage = () => {
   }
 };
 
-const collectPageLikeItems = (
-  item: PageTransferItem
-): Array<PageTransferData | TemplateTransferData> => {
-  if (item.type === "page" || item.type === "template") {
-    return [item];
-  }
-  return item.children.flatMap(collectPageLikeItems);
-};
-
 export const copyPageData = (pageId: Page["id"]) => {
   const data = getWebstudioData();
   const pageData = getPageCopyData(data, pageId);
@@ -190,7 +182,8 @@ export const handlePastePage = async (
     if (projectId === undefined) {
       return pasteHandled;
     }
-    const conflicts = collectPageLikeItems(item).flatMap((item) =>
+    const pageItems = collectPageTransferItems(item);
+    const conflicts = pageItems.flatMap((item) =>
       detectFragmentTokenConflicts({
         fragment: mergeWebstudioFragments(item.rootFragment, item.bodyFragment),
         targetData,
@@ -200,7 +193,7 @@ export const handlePastePage = async (
     if (conflictResolution === "cancel") {
       return pasteHandled;
     }
-    const firstPageLikeItem = collectPageLikeItems(item)[0];
+    const firstPageLikeItem = pageItems[0];
     const rootStyleConflicts =
       firstPageLikeItem === undefined
         ? []
@@ -211,7 +204,14 @@ export const handlePastePage = async (
     const rootStyleConflictResolution =
       rootStyleConflicts.length === 0
         ? "theirs"
-        : await builderApi.showRootStyleConflictDialog(rootStyleConflicts);
+        : await builderApi.showRootStyleConflictDialog(
+            rootStyleConflicts.map((conflict) => ({
+              ...conflict,
+              breakpointLabel:
+                targetData.breakpoints.get(conflict.existingStyle.breakpointId)
+                  ?.label ?? conflict.existingStyle.breakpointId,
+            }))
+          );
     if (rootStyleConflictResolution === "cancel") {
       return pasteHandled;
     }

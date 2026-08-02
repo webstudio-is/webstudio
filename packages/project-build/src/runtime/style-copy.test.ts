@@ -89,7 +89,10 @@ describe("root style conflict helpers", () => {
         { instanceId: ROOT_INSTANCE_ID, values: ["incoming-local"] },
       ],
       fragmentStyles: [
-        style("incoming-local", "base", "color", blue),
+        style("incoming-local", "base", "color", {
+          type: "unparsed",
+          value: "blue",
+        }),
         style("incoming-local", "base", "backgroundColor", red),
       ],
       existingStyleSources: toMap([local("existing-local")]),

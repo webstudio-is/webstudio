@@ -312,6 +312,12 @@ test.each([
       styleSourceId: "source-local",
       color: "red",
     });
+    $styles.get().set("source-local:base:fontSize:", {
+      styleSourceId: "source-local",
+      breakpointId: "base",
+      property: "fontSize",
+      value: { type: "keyword", value: "medium" },
+    });
     const clipboardData = copyPageData("source-page");
 
     setupProjectWithRootStyle({
@@ -338,6 +344,10 @@ test.each([
     expect($styles.get().get("target-local:base:color:")?.value).toEqual({
       type: "keyword",
       value: expectedColor,
+    });
+    expect($styles.get().get("target-local:base:fontSize:")?.value).toEqual({
+      type: "keyword",
+      value: "medium",
     });
   }
 );
@@ -659,6 +669,7 @@ test("copies template data as a template", async () => {
       ])
     )
   );
+  setRootLocalStyle({ styleSourceId: "source-local", value: "red" });
 
   const clipboardData = copyTemplateData("template-id");
   expect(clipboardData).toBeDefined();
@@ -684,9 +695,18 @@ test("copies template data as a template", async () => {
       ],
     ])
   );
+  setRootLocalStyle({ styleSourceId: "target-local", value: "blue" });
+  const conflictDialog = vi
+    .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+    .mockResolvedValue("theirs");
 
   await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
 
+  expect(conflictDialog).toHaveBeenCalledOnce();
+  expect($styles.get().get("target-local:base:color:")?.value).toEqual({
+    type: "keyword",
+    value: "red",
+  });
   const pastedTemplate = Array.from(
     $pages.get()?.pageTemplates?.values() ?? []
   ).find((template) => template.name === "Landing Template");

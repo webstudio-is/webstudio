@@ -38,19 +38,28 @@ const renderDialog = () => {
 };
 
 const conflict = {
+  existingStyle: {
+    styleSourceId: "existing-local",
+    breakpointId: "base",
+    property: "backgroundColor",
+    value: { type: "keyword", value: "blue" },
+  },
   incomingStyle: {
     styleSourceId: "incoming-local",
     breakpointId: "base",
     property: "backgroundColor",
     value: { type: "keyword", value: "red" },
   },
+  breakpointLabel: "Base",
 } as const;
 
 test("keeps existing global styles by default", async () => {
   const result = showRootStyleConflictDialog([conflict]);
   renderDialog();
 
-  expect(document.body.textContent).toContain("background-color");
+  expect(document.body.textContent).toContain(
+    "background-color (Base): blue → red"
+  );
   const continueButton = Array.from(document.querySelectorAll("button")).find(
     (button) => button.textContent === "Continue"
   );
