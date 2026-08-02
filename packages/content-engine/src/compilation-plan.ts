@@ -23,7 +23,11 @@ import {
 import { contentEngineLimits } from "./limits";
 import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
 import type { CanonicalAssetFileEntry } from "./canonical";
-import { compareStrings } from "./canonical-json";
+import { compareStrings, type JsonValue } from "./canonical-json";
+import {
+  getJsonReferenceMarkerValue,
+  isJsonObject,
+} from "./document-graph/document-utils";
 
 export const compareContentEntryPriority = (
   left: CanonicalAssetFileEntry,
@@ -91,6 +95,51 @@ export const requiresStructuredProperties = (plan: ContentCompilationPlan) =>
 export const requiresHydratedContent = (plan: ContentCompilationPlan) =>
   plan.queries.some(({ content }) => content.mode !== "none");
 
+const containsDocumentReference = (value: JsonValue): boolean => {
+  if (typeof getJsonReferenceMarkerValue(value) === "string") {
+    return true;
+  }
+  if (Array.isArray(value)) {
+    return value.some(containsDocumentReference);
+  }
+  if (typeof value === "object" && value !== null) {
+    return Object.values(value).some(containsDocumentReference);
+  }
+  return false;
+};
+
+const isFieldAffectedByDocumentReference = (
+  document: AssetFileDocument,
+  field: AssetQueryFieldPath
+) => {
+  if (field[0] !== "properties") {
+    return false;
+  }
+  let value: JsonValue = document.properties;
+  for (const segment of field.slice(1)) {
+    if (typeof getJsonReferenceMarkerValue(value) === "string") {
+      return true;
+    }
+    if (
+      typeof value !== "object" ||
+      value === null ||
+      Object.hasOwn(value, segment) === false
+    ) {
+      return false;
+    }
+    if (isJsonObject(value)) {
+      value = value[segment];
+    } else {
+      const index = Number(segment);
+      if (Number.isSafeInteger(index) === false) {
+        return false;
+      }
+      value = value[index];
+    }
+  }
+  return containsDocumentReference(value);
+};
+
 const evaluateWhere = ({
   document,
   where,
@@ -108,6 +157,9 @@ const evaluateWhere = ({
         (condition.field[0] === "properties" ||
           condition.field[0] === "excerpt"))
     ) {
+      return;
+    }
+    if (isFieldAffectedByDocumentReference(document, condition.field)) {
       return;
     }
     const filter = assetQueryFilter.safeParse({

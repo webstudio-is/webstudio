@@ -91,6 +91,7 @@ describe("configured Assets system resource", () => {
         }),
       },
       context: expect.anything(),
+      includeUnresolvedDiagnostics: true,
     });
   });
 

@@ -1174,9 +1174,16 @@ describe("project session mcp adapter", () => {
       expect(tool.description).toContain("Webstudio JavaScript expression");
       expect(tool.description).toContain("<dataSourceName>.data");
       expect(tool.description).toContain("<dataSourceName>.meta");
-      expect(tool.description).toContain(".properties");
-      expect(tool.description).toContain(".excerpt");
-      expect(tool.description).toContain(".content.text");
+      expect(tool.description).toContain("markdown-body");
+      expect(tool.description).toContain("document reference");
+      expect(tool.description).toContain("item.content.text");
+      expect(tool.description).toContain(
+        "one final resource per rendered query"
+      );
+      expect(tool.description).toContain(
+        "static filters, limits, and offsets literal"
+      );
+      expect(tool.description).toContain("remove obsolete duplicates");
       expect(getSchemaProperties(tool.inputSchema)).not.toEqual({});
     }
   });
@@ -4511,17 +4518,61 @@ describe("project session mcp adapter", () => {
     );
     expect(markdownBlogGuide.structuredContent.data).toEqual(
       expect.objectContaining({
+        recipe: expect.objectContaining({
+          overviewResource: expect.objectContaining({
+            dataSourceName: "posts",
+            query: expect.objectContaining({
+              limit: { type: "literal", value: 20 },
+              offset: { type: "literal", value: 0 },
+            }),
+          }),
+          detailResource: expect.objectContaining({
+            dataSourceName: "post",
+            query: expect.objectContaining({
+              limit: { type: "literal", value: 1 },
+              offset: { type: "literal", value: 0 },
+              content: { mode: "markdown-body" },
+            }),
+          }),
+          overviewCollection: expect.objectContaining({
+            itemFragment: expect.stringContaining(
+              "collectionItem.properties.author.name"
+            ),
+          }),
+          detailCollection: expect.objectContaining({
+            itemFragment: expect.stringContaining(
+              "collectionItem.content.text"
+            ),
+          }),
+        }),
         workflow: expect.arrayContaining([
+          expect.stringContaining(
+            'meta.get_more_tools with {"tools":["create-assets-resource"]}'
+          ),
+          expect.stringContaining(
+            "Upload all Markdown source files together in one upload-assets call"
+          ),
+          expect.stringContaining('"format":"md"'),
+          expect.stringContaining("Do not create companion JSON descriptors"),
           expect.stringContaining("exactly two Builder pages"),
+          expect.stringContaining("do not dry-run it"),
           expect.stringContaining('fixed path "/blog"'),
           expect.stringContaining('dynamic path "/blog/:slug"'),
           expect.stringContaining("Do not create one page per post"),
-          expect.stringContaining('content.mode:"none"'),
+          expect.stringContaining("exactly one final Assets resource"),
+          expect.stringContaining(
+            "bounded metadata-only result can be materialized"
+          ),
+          expect.stringContaining("only one materialized overview query"),
+          expect.stringContaining('content.mode:"markdown-body"'),
+          expect.stringContaining("Do not reshape or stringify any field"),
+          expect.stringContaining('"value":"posts.data"'),
+          expect.stringContaining("only the Markdown document reference"),
           expect.stringContaining('field:["extension"]'),
-          expect.stringContaining("system.params.slug"),
           expect.stringContaining("both pages load their content from Assets"),
         ]),
         tools: expect.arrayContaining([
+          expect.objectContaining({ name: "upload-assets" }),
           expect.objectContaining({ name: "list-pages" }),
           expect.objectContaining({ name: "list-assets" }),
           expect.objectContaining({ name: "insert-collection" }),

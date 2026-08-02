@@ -164,9 +164,12 @@ export const BindableQueryBuilder = <
               ? null
               : createPortal(
                   <Grid
+                    align="stretch"
                     css={{
                       height: "100%",
-                      minHeight: 0,
+                      overflow: "hidden",
+                      boxSizing: "content-box",
+                      position: "relative",
                       gridTemplateRows: "minmax(0, 1fr) auto",
                     }}
                   >

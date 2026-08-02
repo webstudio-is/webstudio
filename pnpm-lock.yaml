@@ -1406,6 +1406,9 @@ importers:
 
   packages/content-engine:
     dependencies:
+      '@hyperjump/json-pointer':
+        specifier: 1.1.2
+        version: 1.1.2
       '@webstudio-is/expression':
         specifier: workspace:*
         version: link:../expression
@@ -4309,6 +4312,9 @@ packages:
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
+
+  '@hyperjump/json-pointer@1.1.2':
+    resolution: {integrity: sha512-zPNgu1zdhtjQHFNLGzvEsLDsLOEvhRj6u6ktIQmlz7YPESv5uF8SnAe3Dq0oL6gZ6OGWSLq2n7pphRNF6Hpg6w==}
 
   '@iarna/toml@2.2.5':
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
@@ -12886,6 +12892,8 @@ snapshots:
   '@hono/node-server@1.19.14(hono@4.12.27)':
     dependencies:
       hono: 4.12.27
+
+  '@hyperjump/json-pointer@1.1.2': {}
 
   '@iarna/toml@2.2.5': {}
 

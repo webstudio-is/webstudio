@@ -35,6 +35,8 @@ import type { MarkdownAssetReferences } from "./markdown-references";
 
 export type AssetRuntimeData = {
   url: string;
+  /** Immutable storage identity for graph-backed document URLs. */
+  contentRef?: string;
   width?: number;
   height?: number;
 };
@@ -72,15 +74,20 @@ const isFilterOperatorCompatible = ({
   fieldTypes: readonly AssetObservedFieldType[];
 }) => getAssetQueryOperatorsForFieldTypes(fieldTypes).includes(filter.operator);
 
-const getCatalogField = (catalog: BuilderAssetFieldCatalog, path: string) =>
-  Object.hasOwn(catalog.fields, path) ? catalog.fields[path] : undefined;
+const getCatalogField = (
+  catalog: BuilderAssetFieldCatalog | undefined,
+  path: string
+) =>
+  catalog !== undefined && Object.hasOwn(catalog.fields, path)
+    ? catalog.fields[path]
+    : undefined;
 
 export const validateAssetQueryAgainstCatalog = ({
   query: input,
   catalog,
 }: {
   query: AssetQueryInput;
-  catalog: BuilderAssetFieldCatalog;
+  catalog?: BuilderAssetFieldCatalog;
 }) => {
   const query = assetQuery.parse(input);
   const referencedFieldPaths = new Map<string, AssetQueryFieldPath>();
@@ -93,11 +100,12 @@ export const validateAssetQueryAgainstCatalog = ({
       // Dynamic fields are schemaless. The catalog describes the currently
       // observed documents for authoring assistance, but deleting the last
       // matching file must not invalidate an otherwise valid saved query.
-      if (field === undefined) {
+      if (catalog !== undefined && field === undefined) {
         warnings.push(`Asset field ${catalogPath} is not currently observed`);
       } else if (
+        field !== undefined &&
         isFilterOperatorCompatible({ filter, fieldTypes: field.types }) ===
-        false
+          false
       ) {
         warnings.push(
           `Operator ${filter.operator} is not compatible with the currently observed types of ${catalogPath}`
@@ -127,9 +135,10 @@ export const validateAssetQueryAgainstCatalog = ({
     // previously valid schemaless query fail at runtime.
     if (order.field[0] === "properties") {
       const field = getCatalogField(catalog, catalogPath);
-      if (field === undefined) {
+      if (catalog !== undefined && field === undefined) {
         warnings.push(`Asset field ${catalogPath} is not currently observed`);
       } else if (
+        field !== undefined &&
         field.types.some((type) => type === "object" || type === "array")
       ) {
         warnings.push(
@@ -393,7 +402,7 @@ const toQueryItem = (
   };
 };
 
-const assertResultSize = (result: AssetQueryResult) => {
+export const assertAssetQueryResultSize = (result: AssetQueryResult) => {
   if (
     getUtf8ByteLength(serializeJsonDeterministically(result)) >
     contentEngineLimits.resultBytes
@@ -413,7 +422,7 @@ export const executeAssetQuery = async ({
   assetReferences,
 }: {
   query: AssetQueryInput;
-  catalog: BuilderAssetFieldCatalog;
+  catalog?: BuilderAssetFieldCatalog;
   documents: readonly ContentDatabaseDocument[];
   read?: AssetResourceContentReader;
   runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
@@ -494,6 +503,6 @@ export const executeAssetQuery = async ({
     totalCount: matched.length,
     hasMore: query.offset + selected.length < matched.length,
   } satisfies AssetQueryResult;
-  assertResultSize(result);
+  assertAssetQueryResultSize(result);
   return result;
 };

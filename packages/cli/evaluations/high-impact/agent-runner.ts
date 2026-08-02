@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import type { HighImpactFixture } from "./fixtures";
-import { markdownBlogFixtureArticles } from "./markdown-blog-fixture";
+import { markdownBlogFixtureDocuments } from "./markdown-blog-fixture";
 import type {
   EvaluationToolCall,
   HighImpactEvaluationResult,
@@ -80,13 +80,23 @@ const fixtureToolNames = {
     "insert-collection",
     "verify-page-responsive",
   ],
+  "markdown-references-discovery-v1": [
+    "meta.guide",
+    "meta.get_more_tools",
+    "create-asset-folder",
+    "upload-assets",
+    "create-page",
+    "create-assets-resource",
+    "insert-collection",
+    "verify-page-responsive",
+  ],
 } as const satisfies Record<HighImpactFixture["id"], readonly string[]>;
 
 const markdownBlogUploadInput = JSON.stringify({
-  assets: markdownBlogFixtureArticles.map(({ name }) => ({
+  assets: markdownBlogFixtureDocuments.map(({ name, format }) => ({
     name,
     type: "file",
-    format: "md",
+    format,
     folderId: "<blog-folder-id>",
     meta: {},
   })),
@@ -147,6 +157,13 @@ export const createMinimalAgentTask = (
             'Then call verify-page-responsive exactly once with {"path":"/account","viewports":[{"width":1440,"height":900},{"width":390,"height":844}],"source":"session"}. It captures both required screenshots and runs the terminal static audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately.',
           ]
         : []),
+      ...(fixture.id === "markdown-references-discovery-v1"
+        ? [
+            'Follow the structured recipe returned by meta.guide. Pass each complete recipe object without reshaping its fields, changing only documented id placeholders. Call meta.get_more_tools exactly once with {"tools":["create-assets-resource"]}; do not search by brief or rediscover tools later.',
+            "Call each mutation in the documented workflow once as a committed mutation. Do not dry-run or plan mutations. If any tool fails, stop immediately and report the failure; never retry it, repair it with repeated mutations, or continue to verification.",
+            "Do not call verify-page-responsive until both Collections succeed. Then call it exactly once for /blog and exactly once for /blog/aurora-trails. Stop without retrying if either verification fails.",
+          ]
+        : []),
       ...(fixture.id === "design-input-v1"
         ? [
             "For this fixture, do not call list-instances because the project has no representative existing page pattern. Do not call meta.index, meta.get_more_tools, or any other tool discovery operation because meta.guide and the MCP handshake already provide the required schemas.",
@@ -162,19 +179,20 @@ export const createMinimalAgentTask = (
         ? [
             "Do not call meta.index, meta.get_more_tools, or any other tool discovery operation because meta.guide and the MCP handshake already provide the required schemas. Upload both supplied fonts together with exactly one upload-assets call; do not use upload-asset.",
             'After upload, update both font assets together in one parallel tool-call batch. For each returned asset id, use exactly {"assetId":"<returned-asset-id>","values":{"meta":{"family":"Rajdhani","style":"normal","weight":600}}}. Keep family, style, and weight inside values.meta; do not send an empty values object. Make exactly two update-asset calls total and stop instead of retrying if either fails.',
-            "After both updates, call verify-font-assets exactly once with both returned asset ids, then audit. Do not call refresh or get-asset separately.",
+            'After both updates, call verify-font-assets exactly once with both returned asset ids, then call audit exactly once with {"scopes":["assets"],"limit":10}. Do not call refresh or get-asset separately.',
           ]
         : []),
       ...(fixture.id === "markdown-blog-v1"
         ? [
-            'For this fixture, call meta.get_more_tools exactly once immediately after meta.guide with {"brief":"create-assets-resource"} to load the complete schema for its complex query input. Do not call meta.index, list/get/preview asset tools, list pages, or any other discovery operation. Then create one asset folder named Blog and upload all five supplied .md files together with exactly one upload-assets call using type file, format md, that returned folder id, empty metadata, and assetsDir .webstudio/assets.',
+            'For this fixture, call meta.get_more_tools exactly once immediately after meta.guide with {"brief":"create-assets-resource"} to load the complete schema for its complex query input. Do not call meta.index, list/get/preview asset tools, list pages, or any other discovery operation. Then create one asset folder named Blog and upload all supplied Markdown files together with exactly one upload-assets call using type file, format md, that returned folder id, empty metadata, and assetsDir .webstudio/assets. Do not create or upload companion JSON descriptors.',
             `Use this exact upload-assets input, substituting only the returned Blog folder id for <blog-folder-id>: ${markdownBlogUploadInput}.`,
             "For this fixture, the exact sequence below supersedes every workflow and mutation meta.next suggestion. After a listed call succeeds, continue immediately to the next listed call without inspecting, repairing, updating, or repeating its result. If any call fails, stop immediately; retries and repair mutations fail this evaluation. Never call update-assets-resource or any tool not explicitly listed in these fixture constraints.",
             "Create exactly two pages: first /blog, then /blog/:slug. Do not call create-assets-resource while creating either page. Never call create-assets-resource without a query. After both page calls succeed, make exactly two create-assets-resource calls total using the complete inputs below; any omitted query or additional resource fails this evaluation.",
-            'First call create-assets-resource exactly once with this complete overview input, substituting only the returned overview root id for scopeInstanceId: {"name":"Published posts","scopeInstanceId":"<overview-root-id>","dataSourceName":"posts","query":{"where":{"all":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"field":["properties","draft"],"operator":"ne","value":"true"}]},"sort":[{"field":["properties","publishedAt"],"direction":"desc"},{"field":["id"],"direction":"asc"}],"limit":"20","output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","slug"],["properties","publishedAt"],["excerpt"]]},"content":{"mode":"none"}}}. Do not convert expression strings to booleans or field paths to dotted strings.',
-            'Then call create-assets-resource exactly once with this complete detail input, substituting only the returned detail root id for scopeInstanceId: {"name":"Post by slug","scopeInstanceId":"<detail-root-id>","dataSourceName":"post","query":{"where":{"all":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"field":["properties","slug"],"operator":"eq","value":"system.params.slug"}]},"limit":"1","output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"]]},"content":{"mode":"markdown-body","maxBytes":1048576}}}. Do not call create-assets-resource again.',
-            'After both resources succeed, call insert-collection exactly once on the overview root with {"parentInstanceId":"<overview-root-id>","data":{"type":"expression","value":"posts.data"},"itemFragment":"<ws.element ws:tag=\"article\"><ws.element ws:tag=\"h2\">{expression`collectionItem.properties.title ?? \\"Untitled\\"`}</ws.element><ws.element ws:tag=\"p\">{expression`collectionItem.excerpt ?? \\"\\"`}</ws.element><ws.element ws:tag=\"time\">{expression`collectionItem.properties.publishedAt ?? \\"\\"`}</ws.element><ws.element ws:tag=\"a\" href={expression`\\"/blog/\\" + collectionItem.properties.slug`}>Read article</ws.element></ws.element>"}, substituting only the returned overview root id.',
-            'Then call insert-collection exactly once on the detail root with {"parentInstanceId":"<detail-root-id>","data":{"type":"expression","value":"post.data"},"itemFragment":"<ws.element ws:tag=\"article\"><ws.element ws:tag=\"h1\">{expression`collectionItem.properties.title ?? \\"Untitled\\"`}</ws.element><$.MarkdownEmbed code={expression`collectionItem.content.text`} /></ws.element>"}, substituting only the returned detail root id. insert-collection validates and persists its bindings atomically, so do not call verify-bindings or perform any repair afterward.',
+            "Database size is part of the evaluated outcome. The final project must have exactly the two intended reachable Assets queries, one materialized overview, all five source documents included without truncation, and zero embedded Markdown body bytes. Do not leave a placeholder, preview copy, stale resource, or replacement data source in the project.",
+            'First call create-assets-resource exactly once with this complete overview input, substituting the returned overview root id and Blog folder id: {"name":"Published posts","scopeInstanceId":"<overview-root-id>","dataSourceName":"posts","query":{"where":{"all":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"field":["folderId"],"operator":"eq","value":{"type":"literal","value":"<blog-folder-id>"}},{"field":["properties","draft"],"operator":"ne","value":{"type":"literal","value":true}}]},"sort":[{"field":["properties","publishedAt"],"direction":"desc"},{"field":["id"],"direction":"asc"}],"limit":{"type":"literal","value":20},"offset":{"type":"literal","value":0},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","slug"],["properties","publishedAt"],["properties","author"],["properties","excerpt"]]},"content":{"mode":"none"}}}. Keep literal wrappers and field-path arrays unchanged.',
+            'Then call create-assets-resource exactly once with this complete detail input, substituting the returned detail root id and the same Blog folder id: {"name":"Post by slug","scopeInstanceId":"<detail-root-id>","dataSourceName":"post","query":{"where":{"all":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"field":["folderId"],"operator":"eq","value":{"type":"literal","value":"<blog-folder-id>"}},{"field":["properties","slug"],"operator":"eq","value":"system.params.slug"}]},"limit":{"type":"literal","value":1},"offset":{"type":"literal","value":0},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","author"]]},"content":{"mode":"markdown-body"}}}. Do not call create-assets-resource again.',
+            'After both resources succeed, call insert-collection exactly once on the overview root with {"parentInstanceId":"<overview-root-id>","data":{"type":"expression","value":"posts.data"},"itemFragment":"<ws.element ws:tag=\"article\"><ws.element ws:tag=\"h2\">{expression`collectionItem.properties.title ?? \\"Untitled\\"`}</ws.element><ws.element ws:tag=\"p\">{expression`collectionItem.properties.excerpt ?? \\"\\"`}</ws.element><ws.element ws:tag=\"p\">By {expression`collectionItem.properties.author.name`}</ws.element><ws.element ws:tag=\"time\">{expression`collectionItem.properties.publishedAt ?? \\"\\"`}</ws.element><ws.element ws:tag=\"a\" href={expression`\\"/blog/\\" + collectionItem.properties.slug`}>Read article</ws.element></ws.element>"}, substituting only the returned overview root id.',
+            'Then call insert-collection exactly once on the detail root with {"parentInstanceId":"<detail-root-id>","data":{"type":"expression","value":"post.data"},"itemFragment":"<ws.element ws:tag=\"article\"><ws.element ws:tag=\"h1\">{expression`collectionItem.properties.title ?? \\"Untitled\\"`}</ws.element><ws.element ws:tag=\"p\">By {expression`collectionItem.properties.author.name`}</ws.element><$.MarkdownEmbed code={expression`collectionItem.content.text`} /></ws.element>"}, substituting only the returned detail root id. insert-collection validates and persists its bindings atomically, so do not call verify-bindings or perform any repair afterward.',
             'After both Collections succeed, call verify-page-responsive exactly twice: first with {"path":"/blog","viewports":[{"width":1440,"height":900},{"width":390,"height":844}],"source":"session"}, then with {"path":"/blog/aurora-trails","viewports":[{"width":1440,"height":900},{"width":390,"height":844}],"source":"session"}. Do not mutate, rediscover, restart preview, or capture separate screenshots or audits after verification begins. If either verification fails, stop immediately without retrying or changing the project.',
           ]
         : []),

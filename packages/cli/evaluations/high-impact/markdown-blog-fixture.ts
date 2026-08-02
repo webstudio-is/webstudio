@@ -39,6 +39,10 @@ export const markdownBlogFixtureArticles = [
   },
 ] as const;
 
+export const markdownBlogFixtureDocuments = markdownBlogFixtureArticles.map(
+  ({ name }) => ({ name, format: "md" as const })
+);
+
 const articleSource = (
   article: (typeof markdownBlogFixtureArticles)[number]
 ) => `---
@@ -47,6 +51,9 @@ slug: ${article.slug}
 publishedAt: ${article.publishedAt}
 draft: false
 excerpt: ${article.excerpt}
+author:
+  name: Mira Chen
+  role: Northstar editor
 ---
 
 # ${article.title}
@@ -62,9 +69,9 @@ export const writeMarkdownBlogFixtureFiles = async (
 ) => {
   const assetsDirectory = join(projectDirectory, ".webstudio/assets");
   await mkdir(assetsDirectory, { recursive: true });
-  await Promise.all(
-    markdownBlogFixtureArticles.map((article) =>
+  await Promise.all([
+    ...markdownBlogFixtureArticles.map((article) =>
       writeFile(join(assetsDirectory, article.name), articleSource(article))
-    )
-  );
+    ),
+  ]);
 };

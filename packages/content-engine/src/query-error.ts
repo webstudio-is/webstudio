@@ -4,6 +4,8 @@ import {
   AssetIndexRevisionError,
   AssetQueryExecutionError,
 } from "./structured-query";
+import { DocumentResolutionLimitError } from "./document-graph/document-resolution";
+import { CachedDocumentLoaderError } from "./document-graph/cached-document-loader";
 
 export type AssetResourceQueryError = Omit<
   AssetResourceQueryFailure["error"],
@@ -41,5 +43,45 @@ export const getAssetResourceQueryError = (
       details: error.details,
       status: 400,
     };
+  }
+  const visited = new Set<unknown>();
+  let cause = error;
+  while (cause !== undefined && visited.has(cause) === false) {
+    if (cause instanceof DocumentResolutionLimitError) {
+      const details: Record<string, string | number> = {};
+      for (const [key, value] of Object.entries({
+        assetId: cause.documentId,
+        documentCount: cause.documentCount,
+        documentLimit: cause.documentLimit,
+        contentByteLimit: cause.contentByteLimit,
+        totalBytes: cause.totalBytes,
+        totalByteLimit: cause.totalByteLimit,
+      })) {
+        if (value !== undefined) {
+          details[key] = value;
+        }
+      }
+      return {
+        code: "CONTENT_LIMIT_EXCEEDED",
+        message: cause.message,
+        retryable: false,
+        details,
+        status: 400,
+      };
+    }
+    if (cause instanceof CachedDocumentLoaderError) {
+      return {
+        code: "CONTENT_LIMIT_EXCEEDED",
+        message: cause.message,
+        retryable: false,
+        details: {
+          assetId: cause.documentId,
+          contentByteLimit: cause.contentByteLimit,
+        },
+        status: 400,
+      };
+    }
+    visited.add(cause);
+    cause = cause instanceof Error ? cause.cause : undefined;
   }
 };

@@ -94,7 +94,349 @@ const createMutableSource = ({
   };
 };
 
+const createDocumentSource = ({
+  files,
+  sources,
+}: {
+  files: readonly ContentSourceFile[];
+  sources: Readonly<Partial<Record<string, string>>>;
+}): ContentSource => ({
+  async openSnapshot() {
+    return {
+      revision: getRevision(files),
+      files,
+      async loadEntries() {
+        return files.map(createEntry);
+      },
+      async loadDocumentSources() {
+        return files.map(({ id }) => ({ id, source: sources[id] ?? "" }));
+      },
+      async isCurrent() {
+        return true;
+      },
+    };
+  },
+});
+
 describe("content source snapshots", () => {
+  test("analyzes only query roots and their reachable document targets", async () => {
+    const post = createFile({ id: "post", path: "blog/post.md" });
+    const author = createFile({
+      id: "author",
+      path: "blog/author.json",
+      contentType: "application/json",
+    });
+    const unrelated = createFile({
+      id: "unrelated",
+      path: "other/broken.json",
+      contentType: "application/json",
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [post, author, unrelated],
+          async loadEntries() {
+            return [post].map(createEntry);
+          },
+          async loadDocumentSources() {
+            return [
+              {
+                id: "post",
+                source:
+                  "---\nauthor:\n  $ref: ./author.json#/profile\n---\nPost\n",
+              },
+              { id: "author", source: '{"profile":{"name":"Ada"}}' },
+              { id: "unrelated", source: "{invalid" },
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({
+      source,
+      projectId,
+      plan: {
+        standardFields: [],
+        structuredPropertyPaths: [["properties", "author"]],
+        excerpt: false,
+        metadataError: false,
+        queries: [
+          {
+            id: "posts",
+            where: { all: [] },
+            sort: [],
+            limit: { type: "literal", value: 1 },
+            offset: { type: "literal", value: 0 },
+            output: {
+              mode: "fields",
+              includeMetadata: false,
+              fields: [["properties", "author"]],
+            },
+            content: { mode: "none" },
+          },
+        ],
+      },
+    });
+
+    expect(result.documentGraph?.nodes.map(({ id }) => id)).toEqual([
+      "author",
+      "post",
+    ]);
+    expect(result.documentGraph?.edges).toHaveLength(1);
+  });
+
+  test.each(["filter", "sort"] as const)(
+    "discovers references used only by a query %s",
+    async (usage) => {
+      const post = createFile({
+        id: "post",
+        path: "posts/post.json",
+        contentType: "application/json",
+      });
+      const author = createFile({
+        id: "author",
+        path: "authors/author.json",
+        contentType: "application/json",
+      });
+      const source = createDocumentSource({
+        files: [post, author],
+        sources: {
+          post: '{"author":{"$ref":"../authors/author.json"}}',
+          author: '{"name":"Ada"}',
+        },
+      });
+      const authorField: ["properties", "author", "name"] = [
+        "properties",
+        "author",
+        "name",
+      ];
+
+      const result = await compileContentSource({
+        source,
+        projectId,
+        plan: {
+          standardFields: [["id"]],
+          structuredPropertyPaths: [authorField],
+          excerpt: false,
+          metadataError: false,
+          queries: [
+            {
+              id: usage,
+              where:
+                usage === "filter"
+                  ? {
+                      all: [
+                        {
+                          field: authorField,
+                          operator: "eq",
+                          value: { type: "literal", value: "Ada" },
+                        },
+                      ],
+                    }
+                  : { all: [] },
+              sort:
+                usage === "sort"
+                  ? [{ field: authorField, direction: "asc" }]
+                  : [],
+              limit: { type: "literal", value: 1 },
+              offset: { type: "literal", value: 0 },
+              output: {
+                mode: "fields",
+                includeMetadata: false,
+                fields: [["id"]],
+              },
+              content: { mode: "none" },
+            },
+          ],
+        },
+      });
+
+      expect(result.documentGraph?.edges).toHaveLength(1);
+      expect(result.documentGraph?.edges[0]).toMatchObject({
+        sourceId: "post",
+        referenceId: "#/author",
+      });
+    }
+  );
+
+  test("discovers document references without embedding source payloads", async () => {
+    const post = createFile({
+      id: "post",
+      path: "posts/hello.json",
+      contentType: "application/json",
+      contentRef: "revisions/post.json",
+    });
+    const author = createFile({
+      id: "author",
+      path: "authors/ada.md",
+      contentRef: "revisions/author.md",
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [post, author],
+          async loadEntries() {
+            return [post, author].map(createEntry);
+          },
+          async loadDocumentSources() {
+            return [
+              {
+                id: "post",
+                source: '{"author":{"$ref":"../authors/ada.md#frontmatter"}}',
+              },
+              {
+                id: "author",
+                source: "---\nname: Ada\n---\nWriter.\n",
+              },
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+
+    expect(result.artifact.contents).toBeUndefined();
+    expect(result.documentGraph?.edges).toEqual([
+      {
+        sourceId: "post",
+        referenceId: "#/author",
+        reference: {
+          documentId: "author",
+          revision: "revision-author",
+          representation: { type: "markdown-frontmatter" },
+        },
+      },
+    ]);
+    expect(result.artifact.documentGraph).toMatchObject({
+      format: "webstudio-document-graph",
+      version: 1,
+      nodes: result.documentGraph?.nodes,
+      edges: result.documentGraph?.edges,
+      integrity: {
+        algorithm: "sha256",
+        checksum: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+      },
+    });
+  });
+
+  test("resolves encoded references to asset paths containing URL delimiters", async () => {
+    const post = createFile({
+      id: "post",
+      path: "content/post.json",
+      contentType: "application/json",
+    });
+    const author = createFile({
+      id: "author",
+      path: "content/author#draft?50%.json",
+      contentType: "application/json",
+    });
+
+    const result = await compileContentSource({
+      projectId,
+      source: createDocumentSource({
+        files: [post, author],
+        sources: {
+          post: '{"author":{"$ref":"./author%23draft%3F50%25.json"}}',
+          author: '{"name":"Ada"}',
+        },
+      }),
+    });
+
+    expect(result.documentGraph?.edges).toMatchObject([
+      {
+        sourceId: "post",
+        reference: { documentId: "author" },
+      },
+    ]);
+  });
+
+  test.each([
+    {
+      name: "a missing target",
+      files: [
+        createFile({
+          id: "post",
+          path: "content/post.json",
+          contentType: "application/json",
+        }),
+      ],
+      sources: { post: '{"author":{"$ref":"./missing.json"}}' },
+      code: "TARGET_NOT_FOUND",
+    },
+    {
+      name: "a dependency cycle",
+      files: [
+        createFile({
+          id: "post",
+          path: "content/post.json",
+          contentType: "application/json",
+        }),
+        createFile({
+          id: "author",
+          path: "content/author.json",
+          contentType: "application/json",
+        }),
+      ],
+      sources: {
+        post: '{"author":{"$ref":"./author.json"}}',
+        author: '{"post":{"$ref":"./post.json"}}',
+      },
+      code: "CYCLE",
+    },
+  ])("rejects $name while compiling stored document sources", async (input) => {
+    await expect(
+      compileContentSource({
+        projectId,
+        source: createDocumentSource(input),
+      })
+    ).rejects.toMatchObject({ code: input.code });
+  });
+
+  test("propagates changed target revisions into graph edges and artifact integrity", async () => {
+    const compile = async (authorRevision: string) => {
+      const post = createFile({
+        id: "post",
+        path: "content/post.json",
+        contentType: "application/json",
+      });
+      const author = createFile({
+        id: "author",
+        path: "content/author.json",
+        contentType: "application/json",
+        revision: authorRevision,
+      });
+      return await compileContentSource({
+        projectId,
+        source: createDocumentSource({
+          files: [post, author],
+          sources: {
+            post: '{"author":{"$ref":"./author.json"}}',
+            author: '{"name":"Ada"}',
+          },
+        }),
+      });
+    };
+
+    const first = await compile("author-r1");
+    const second = await compile("author-r2");
+
+    expect(first.documentGraph?.edges[0].reference.revision).toBe("author-r1");
+    expect(second.documentGraph?.edges[0].reference.revision).toBe("author-r2");
+    expect(first.artifact.integrity.checksum).not.toBe(
+      second.artifact.integrity.checksum
+    );
+  });
+
   test("describes a compiler entry with the snapshot contract", () => {
     const file = createFile({ id: "post" });
     expect(createContentSourceFile(createEntry(file))).toEqual(file);
@@ -290,6 +632,78 @@ describe("content source snapshots", () => {
         (await compile("markdown-body")).artifact.assetReferences
       )
     ).toEqual({ "revisions/post.md": ["hero"] });
+  });
+
+  test("keeps Markdown body content in storage for graph-backed queries", async () => {
+    const markdown = "---\ntitle: Post\nslug: post\n---\nStored body\n";
+    const post = createFile({
+      id: "post",
+      path: "blog/post.md",
+      size: new TextEncoder().encode(markdown).byteLength,
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [post],
+          async loadEntries() {
+            return [{ ...createEntry(post), content: markdown }];
+          },
+          async loadDocumentSources() {
+            return [{ id: post.id, source: markdown }];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({
+      source,
+      projectId,
+      plan: {
+        standardFields: [["extension"], ["mimeType"], ["revision"], ["size"]],
+        structuredPropertyPaths: [["properties", "slug"]],
+        excerpt: false,
+        metadataError: false,
+        queries: [
+          {
+            id: "post",
+            where: {
+              all: [
+                {
+                  field: ["properties", "slug"],
+                  operator: "eq",
+                  value: { type: "dynamic" },
+                },
+              ],
+            },
+            sort: [],
+            limit: { type: "literal", value: 1 },
+            offset: { type: "literal", value: 0 },
+            output: {
+              mode: "fields",
+              includeMetadata: false,
+              fields: [["properties", "slug"]],
+            },
+            content: { mode: "markdown-body" },
+          },
+        ],
+      },
+    });
+
+    expect(result.artifact.contents).toBeUndefined();
+    expect(result.artifact.documentGraph).toMatchObject({
+      nodes: [
+        {
+          id: "post",
+          contentRef: "revisions/post.md",
+          format: "markdown",
+        },
+      ],
+      edges: [],
+    });
   });
 
   test("does not resolve an ambiguous Asset path", async () => {

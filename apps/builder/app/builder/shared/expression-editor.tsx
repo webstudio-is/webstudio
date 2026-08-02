@@ -529,6 +529,8 @@ const wrapperStyle = css({
       full: {
         ...getCodeEditorCssVars({ minHeight: "100%", maxHeight: "100%" }),
         height: "100%",
+        minHeight: 0,
+        overflow: "hidden",
         "& > div, & .cm-editor, & .cm-scroller": { height: "100%" },
       },
     },
@@ -560,6 +562,7 @@ const linterTooltipTheme = EditorView.theme({
 
 const fullSizeEditorTheme = EditorView.theme({
   ".cm-scroller": {
+    minHeight: 0,
     overflow: "auto",
   },
 });

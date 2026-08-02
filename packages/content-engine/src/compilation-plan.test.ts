@@ -241,6 +241,62 @@ describe("content compilation plan", () => {
     }
   });
 
+  test("keeps candidates whose filter depends on a document reference", () => {
+    const plan = createContentCompilationPlan([
+      compilationQuery("referenced-author", {
+        ...query,
+        where: {
+          all: [
+            {
+              field: ["properties", "kind"],
+              operator: "eq",
+              value: "post",
+            },
+            {
+              field: ["properties", "author", "name"],
+              operator: "eq",
+              value: "Ada",
+            },
+            {
+              field: ["properties", "author"],
+              operator: "eq",
+              value: { name: "Ada" },
+            },
+          ],
+        },
+      }),
+    ]);
+    expect(plan).toBeDefined();
+    if (plan === undefined) {
+      return;
+    }
+    const referencedDocument = {
+      ...document,
+      properties: {
+        kind: "post",
+        author: { $ref: "../authors/ada.json" },
+      },
+    };
+
+    expect(
+      isContentDocumentCandidate({
+        document: referencedDocument,
+        plan,
+        available: "all",
+      })
+    ).toBe(true);
+    expect(
+      isContentDocumentCandidate({
+        document: {
+          ...referencedDocument,
+          properties: { ...referencedDocument.properties, kind: "page" },
+        },
+        plan,
+        available: "all",
+      })
+    ).toBe(false);
+  });
+
   test("hydrates only the statically selected window and keeps dynamic windows conservative", () => {
     const documents = ["alpha", "beta", "gamma"].map((id, index) => ({
       ...document,

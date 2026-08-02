@@ -48,4 +48,28 @@ describe("project asset query preview", () => {
       }),
     });
   });
+
+  test("includes unresolved diagnostics only when requested", async () => {
+    const context = {} as never;
+    const build = { props: [], dataSources: [], resources: [] } as never;
+    const previewAssetResourceQuery = vi.fn().mockResolvedValue({});
+
+    await previewProjectAssetQuery(
+      {
+        projectId: "project-1",
+        request: { query: { limit: 1 } },
+        context,
+        includeUnresolvedDiagnostics: true,
+      },
+      {
+        createAssetClient: vi.fn(() => ({}) as never),
+        loadDevBuildByProjectId: vi.fn().mockResolvedValue(build),
+        previewAssetResourceQuery,
+      }
+    );
+
+    expect(previewAssetResourceQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ includeUnresolvedDiagnostics: true })
+    );
+  });
 });

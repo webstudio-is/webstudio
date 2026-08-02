@@ -9,7 +9,10 @@ export const createSsgAssetResourceFetch = ({
 }: {
   deploymentId: string;
   artifact: unknown;
-  runtimeAssets: Record<string, { url: string; width?: number; height?: number }>;
+  runtimeAssets: Record<
+    string,
+    { url: string; contentRef?: string; width?: number; height?: number }
+  >;
 }) =>
   createPublishedAssetResourceFetch({
     baseUrl: "https://webstudio.local",

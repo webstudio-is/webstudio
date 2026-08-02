@@ -7,6 +7,7 @@ import {
   fontAssetsFixture,
   highImpactFixtures,
   markdownBlogFixture,
+  markdownReferencesDiscoveryFixture,
   validateHighImpactFixture,
   type EvaluationProject,
 } from "./fixtures";
@@ -14,7 +15,7 @@ import {
   fontAssetFixtureFiles,
   fontAssetFixtureMeta,
 } from "./font-assets-fixture";
-import { markdownBlogFixtureArticles } from "./markdown-blog-fixture";
+import { markdownBlogFixtureDocuments } from "./markdown-blog-fixture";
 import { evaluateHighImpactOutcome, type EvaluationToolCall } from "./validate";
 
 const clone = <Value>(value: Value): Value => structuredClone(value);
@@ -142,7 +143,7 @@ const addMarkdownBlog = (): EvaluationProject => {
     createdAt: "2026-01-01T00:00:00.000Z",
   });
   project.assets.push(
-    ...markdownBlogFixtureArticles.map(({ name }) => ({
+    ...markdownBlogFixtureDocuments.map(({ name, format }) => ({
       id: name,
       projectId: "project",
       name,
@@ -151,7 +152,7 @@ const addMarkdownBlog = (): EvaluationProject => {
       folderId: "blog-folder",
       size: 100,
       type: "file" as const,
-      format: "md",
+      format,
       meta: {},
       createdAt: "2026-01-01T00:00:00.000Z",
     }))
@@ -186,12 +187,16 @@ const addMarkdownBlog = (): EvaluationProject => {
       component: "Box",
       children: [
         { type: "expression", value: "collectionItem.properties.title" },
-        { type: "expression", value: "collectionItem.excerpt" },
+        { type: "expression", value: "collectionItem.properties.excerpt" },
         {
           type: "expression",
           value: "collectionItem.properties.publishedAt",
         },
         { type: "expression", value: "collectionItem.properties.slug" },
+        {
+          type: "expression",
+          value: "collectionItem.properties.author.name",
+        },
       ],
     },
     {
@@ -202,7 +207,20 @@ const addMarkdownBlog = (): EvaluationProject => {
     {
       id: "detail-collection",
       component: "Collection",
-      children: [{ type: "id", value: "markdown" }],
+      children: [
+        { type: "id", value: "detail-author" },
+        { type: "id", value: "markdown" },
+      ],
+    },
+    {
+      id: "detail-author",
+      component: "Text",
+      children: [
+        {
+          type: "expression",
+          value: "collectionItem.properties.author.name",
+        },
+      ],
     },
     {
       id: "markdown",
@@ -238,10 +256,11 @@ const addMarkdownBlog = (): EvaluationProject => {
         where: {
           all: [
             { field: ["extension"], operator: "eq", value: '"md"' },
+            { field: ["folderId"], operator: "eq", value: '"blog-folder"' },
             {
               field: ["properties", "draft"],
               operator: "ne",
-              value: '"true"',
+              value: "true",
             },
           ],
         },
@@ -258,7 +277,8 @@ const addMarkdownBlog = (): EvaluationProject => {
             ["properties", "title"],
             ["properties", "slug"],
             ["properties", "publishedAt"],
-            ["excerpt"],
+            ["properties", "author"],
+            ["properties", "excerpt"],
           ],
         },
         content: { mode: "none" },
@@ -271,6 +291,7 @@ const addMarkdownBlog = (): EvaluationProject => {
         where: {
           all: [
             { field: ["extension"], operator: "eq", value: '"md"' },
+            { field: ["folderId"], operator: "eq", value: '"blog-folder"' },
             {
               field: ["properties", "slug"],
               operator: "eq",
@@ -284,9 +305,12 @@ const addMarkdownBlog = (): EvaluationProject => {
         output: {
           mode: "fields",
           includeMetadata: false,
-          fields: [["properties", "title"]],
+          fields: [
+            ["properties", "title"],
+            ["properties", "author"],
+          ],
         },
-        content: { mode: "markdown-body", maxBytes: 1_048_576 },
+        content: { mode: "markdown-body" },
       })
     )
   );
@@ -323,6 +347,7 @@ const designCalls: EvaluationToolCall[] = [
 describe("high-impact fixture validation", () => {
   test("keeps both fixtures complete and deterministic", () => {
     expect(highImpactFixtures.map(validateHighImpactFixture)).toEqual([
+      { valid: true, failures: [] },
       { valid: true, failures: [] },
       { valid: true, failures: [] },
       { valid: true, failures: [] },
@@ -381,6 +406,18 @@ describe("font-assets evaluation", () => {
 });
 
 describe("Markdown blog evaluation", () => {
+  const optimalContentDatabase = {
+    usedBytes: 6_000,
+    maxBytes: 500 * 1024,
+    unboundedBytes: 6_000,
+    sourceDocumentCount: markdownBlogFixtureDocuments.length,
+    includedDocumentCount: markdownBlogFixtureDocuments.length,
+    omittedDocumentCount: 0,
+    materializedQueryCount: 1,
+    documentGraphNodeCount: markdownBlogFixtureDocuments.length,
+    documentGraphEdgeCount: 0,
+    embeddedContentBytes: 0,
+  };
   const successfulCalls: EvaluationToolCall[] = [
     { name: "meta.guide" },
     { name: "verify-bindings" },
@@ -400,14 +437,140 @@ describe("Markdown blog evaluation", () => {
     },
   ];
 
-  test("accepts a bounded two-route Markdown blog", () => {
-    expect(
-      evaluateHighImpactOutcome({
-        fixture: markdownBlogFixture,
-        project: addMarkdownBlog(),
-        toolCalls: successfulCalls,
-      })
-    ).toMatchObject({ passed: true, failures: [] });
+  test("accepts a bounded two-route Markdown blog with a resolved JSON author", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project: addMarkdownBlog(),
+      toolCalls: successfulCalls,
+      contentDatabase: optimalContentDatabase,
+    });
+    expect(result).toMatchObject({ passed: true, failures: [] });
+    expect(result.checks).toMatchObject({
+      documentGraphSources: "passed",
+      documentGraphQueries: "passed",
+      optimalBlogDatabase: "passed",
+    });
+  });
+
+  test("accepts persisted MCP expressions and boolean query operands", () => {
+    const project = addMarkdownBlog();
+    project.dataSources.push({
+      id: "collection-item",
+      type: "parameter",
+      name: "collectionItem",
+      scopeInstanceId: "blog-collection",
+    });
+    project.resources = project.resources.map((resource, index) => ({
+      ...resource,
+      body:
+        index === 0
+          ? resource.body
+          : String(resource.body).replace(
+              "value: system.params.slug",
+              "value: $ws$system.params.slug"
+            ),
+    }));
+    project.instances = project.instances.map((instance) => ({
+      ...instance,
+      children: instance.children.map((child) =>
+        child.type === "expression"
+          ? {
+              ...child,
+              value: child.value.replace(
+                "collectionItem",
+                "$ws$dataSource$collection__DASH__item?"
+              ),
+            }
+          : child
+      ),
+    }));
+    project.props = project.props.map((prop) =>
+      prop.type === "expression"
+        ? {
+            ...prop,
+            value: String(prop.value).replace(
+              "collectionItem",
+              "$ws$dataSource$collection__DASH__item?"
+            ),
+          }
+        : prop
+    );
+
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project,
+      toolCalls: successfulCalls,
+      contentDatabase: optimalContentDatabase,
+    });
+
+    expect(result).toMatchObject({ passed: true, failures: [] });
+  });
+
+  test("rejects blog resources that do not select the referenced author", () => {
+    const project = addMarkdownBlog();
+    project.resources = project.resources.map((resource) => ({
+      ...resource,
+      body: String(resource.body).replaceAll("author", "omitted"),
+    }));
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project,
+      toolCalls: successfulCalls,
+    });
+    expect(result.checks.documentGraphQueries).toBe("failed");
+  });
+
+  test("matches required query fields structurally instead of by substring", () => {
+    const project = addMarkdownBlog();
+    project.resources[0] = {
+      ...project.resources[0],
+      body: String(project.resources[0]?.body)
+        .replace('["properties", "title"]', '["properties", "title-slug"]')
+        .replace('["properties", "slug"]', '["properties", "excerpt-slug"]'),
+    };
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project,
+      toolCalls: successfulCalls,
+    });
+    expect(result.checks.listingQuery).toBe("failed");
+  });
+
+  test("does not treat dynamic computed members as static bindings", () => {
+    const project = addMarkdownBlog();
+    project.instances = project.instances.map((instance) => ({
+      ...instance,
+      children: instance.children.map((child) =>
+        child.type === "expression"
+          ? {
+              ...child,
+              value: child.value.replace(
+                "collectionItem.properties",
+                "collectionItem[properties]"
+              ),
+            }
+          : child
+      ),
+    }));
+    project.props = project.props.map((prop) =>
+      prop.type === "expression"
+        ? {
+            ...prop,
+            value: String(prop.value).replace(
+              "collectionItem.properties",
+              "collectionItem[properties]"
+            ),
+          }
+        : prop
+    );
+
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project,
+      toolCalls: successfulCalls,
+    });
+
+    expect(result.checks.editableBlogBindings).toBe("failed");
   });
 
   test("rejects missing detail content and route evidence", () => {
@@ -422,6 +585,93 @@ describe("Markdown blog evaluation", () => {
       detailQuery: "failed",
       blogRouteEvidence: "failed",
     });
+  });
+
+  test("requires documentation discovery for the unprompted reference workflow", () => {
+    const project = addMarkdownBlog();
+    const withoutDiscovery = evaluateHighImpactOutcome({
+      fixture: markdownReferencesDiscoveryFixture,
+      project,
+      toolCalls: successfulCalls,
+    });
+    expect(withoutDiscovery.checks.referenceDocumentationDiscovery).toBe(
+      "failed"
+    );
+
+    const withDiscovery = evaluateHighImpactOutcome({
+      fixture: markdownReferencesDiscoveryFixture,
+      project,
+      contentDatabase: optimalContentDatabase,
+      toolCalls: [
+        { name: "meta.guide" },
+        { name: "meta.get_more_tools" },
+        ...successfulCalls.slice(1),
+      ],
+    });
+    expect(withDiscovery).toMatchObject({ passed: true, failures: [] });
+    expect(withDiscovery.checks.referenceDocumentationDiscovery).toBe("passed");
+  });
+
+  test("rejects a duplicated or oversized compiled blog database", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project: addMarkdownBlog(),
+      toolCalls: successfulCalls,
+      contentDatabase: {
+        ...optimalContentDatabase,
+        usedBytes: 6_501,
+        unboundedBytes: 6_501,
+        materializedQueryCount: 2,
+      },
+    });
+
+    expect(result.checks.optimalBlogDatabase).toBe("failed");
+  });
+
+  test("rejects a document-reference workflow that retries a failed tool", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownReferencesDiscoveryFixture,
+      project: addMarkdownBlog(),
+      toolCalls: [
+        { name: "meta.guide" },
+        { name: "meta.get_more_tools" },
+        { name: "upload-assets", isError: true },
+        { name: "upload-assets" },
+        ...successfulCalls.slice(1),
+      ],
+    });
+
+    expect(result.checks.retryFreeExecution).toBe("failed");
+  });
+
+  test("rejects a document-reference workflow that plans mutations", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownReferencesDiscoveryFixture,
+      project: addMarkdownBlog(),
+      toolCalls: [
+        { name: "meta.guide" },
+        { name: "meta.get_more_tools" },
+        { name: "create-page", planned: true },
+        ...successfulCalls,
+      ],
+    });
+
+    expect(result.checks.retryFreeExecution).toBe("failed");
+  });
+
+  test("rejects repeated document-reference tool discovery", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownReferencesDiscoveryFixture,
+      project: addMarkdownBlog(),
+      toolCalls: [
+        { name: "meta.guide" },
+        { name: "meta.get_more_tools" },
+        { name: "meta.get_more_tools" },
+        ...successfulCalls,
+      ],
+    });
+
+    expect(result.checks.referenceDocumentationDiscovery).toBe("failed");
   });
 });
 

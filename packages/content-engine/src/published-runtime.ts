@@ -1,14 +1,21 @@
 import {
   createAssetResourceQueryFailure,
-  type ContentArtifactV1,
   type AssetResourceQueryFailure,
 } from "./schema";
 import { sha256Hex } from "./canonical-json";
-import { getContentArtifactReferencedAssetIds } from "./content-artifact";
-import { createContentDatabase } from "./content-database";
+import { createRuntimeContentDatabase } from "./content-database";
 import { readAssetQueryRequest } from "./request";
 import type { AssetRuntimeData } from "./structured-query";
 import { getAssetResourceQueryError } from "./query-error";
+import { contentEngineLimits } from "./limits";
+import {
+  createCachedDocumentSourceLoader,
+  createHttpDocumentSourceLoader,
+  type CachedDocumentSource,
+  type DocumentSourceCache,
+  type DocumentGraphRuntimeObserver,
+} from "./document-graph";
+import type { ContentRuntimeArtifact } from "./content-runtime-artifact";
 
 const assetsResourceUrl = "/$resources/assets";
 
@@ -51,18 +58,13 @@ const getCacheKey = async ({
   request,
 }: {
   deploymentId: string;
-  artifact: ContentArtifactV1;
+  artifact: ContentRuntimeArtifact;
   request: Request;
 }) => {
   const body = await request.clone().text();
   const cacheControl = request.headers.get("cache-control");
   const hash = await sha256Hex(
-    JSON.stringify([
-      deploymentId,
-      artifact.integrity.checksum,
-      body,
-      cacheControl,
-    ])
+    JSON.stringify([deploymentId, artifact.revision, body, cacheControl])
   );
   const url = new URL(request.url);
   url.searchParams.set("ws-asset-resource", hash);
@@ -75,37 +77,133 @@ export const createPublishedAssetResourceFetch = ({
   runtimeAssets,
   cache,
   baseUrl,
+  fetchDocument = globalThis.fetch,
+  onDocumentGraphEvent,
 }: {
   deploymentId: string;
-  artifact: ContentArtifactV1;
+  artifact: ContentRuntimeArtifact;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
+  fetchDocument?: typeof fetch;
+  onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 }) => {
   validateRuntimeAssets({ artifact, runtimeAssets });
+  const documentCache = createMemoryDocumentSourceCache();
   return createPublishedAssetResourceHandler({
     deploymentId,
     artifact,
     runtimeAssets,
     cache,
     baseUrl,
-    database: createContentDatabase({ artifact }),
+    database: createRuntimeContentDatabase({ artifact }),
+    fetchDocument,
+    documentCache,
+    onDocumentGraphEvent,
   });
 };
+
+const createMemoryDocumentSourceCache = (): DocumentSourceCache => {
+  const values = new Map<string, CachedDocumentSource>();
+  const maximumBytes = contentEngineLimits.hydratedTotalBytes * 4;
+  let usedBytes = 0;
+  return {
+    get: async (key) => {
+      const value = values.get(key);
+      if (value !== undefined) {
+        values.delete(key);
+        values.set(key, value);
+      }
+      return value;
+    },
+    set: async (key, source) => {
+      if (source.bytes.byteLength > maximumBytes) {
+        return;
+      }
+      const previous = values.get(key);
+      if (previous !== undefined) {
+        usedBytes -= previous.bytes.byteLength;
+        values.delete(key);
+      }
+      values.set(key, source);
+      usedBytes += source.bytes.byteLength;
+      while (usedBytes > maximumBytes) {
+        const oldest = values.entries().next().value;
+        if (oldest === undefined) {
+          break;
+        }
+        values.delete(oldest[0]);
+        usedBytes -= oldest[1].bytes.byteLength;
+      }
+    },
+  };
+};
+
+const createPublishedDocumentLoader = ({
+  baseUrl,
+  runtimeAssets,
+  fetchDocument,
+  cache,
+  onEvent,
+}: {
+  baseUrl: string | URL;
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
+  fetchDocument: typeof fetch;
+  cache: DocumentSourceCache;
+  onEvent?: DocumentGraphRuntimeObserver;
+}) =>
+  createCachedDocumentSourceLoader({
+    cache,
+    onEvent,
+    load: createHttpDocumentSourceLoader({
+      fetch: fetchDocument,
+      getRequest: (node) => {
+        const asset = runtimeAssets[node.id];
+        if (asset === undefined) {
+          throw new Error(
+            `Published document URL is unavailable for ${node.id}`
+          );
+        }
+        return new URL(asset.url, baseUrl);
+      },
+      getMetadata: ({ node }) => ({
+        format: node.format,
+        revision: node.revision,
+      }),
+      onEvent,
+    }),
+  });
 
 const validateRuntimeAssets = ({
   artifact,
   runtimeAssets,
 }: {
-  artifact: ContentArtifactV1;
+  artifact: ContentRuntimeArtifact;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
 }) => {
-  const missingReferencedAssetId = getContentArtifactReferencedAssetIds(
-    artifact
-  ).find((assetId) => runtimeAssets[assetId] === undefined);
+  const missingReferencedAssetId = Object.values(artifact.assetReferences ?? {})
+    .flat()
+    .map(({ assetId }) => assetId)
+    .find((assetId) => runtimeAssets[assetId] === undefined);
   if (missingReferencedAssetId !== undefined) {
     throw new Error(
       `Published referenced asset URL is unavailable for ${missingReferencedAssetId}`
+    );
+  }
+  const missingDocumentId = artifact.documentGraph?.nodes.find(
+    ({ id }) => runtimeAssets[id] === undefined
+  )?.id;
+  if (missingDocumentId !== undefined) {
+    throw new Error(
+      `Published document URL is unavailable for ${missingDocumentId}`
+    );
+  }
+  const staleDocumentId = artifact.documentGraph?.nodes.find(
+    ({ id, contentRef }) => runtimeAssets[id]?.contentRef !== contentRef
+  )?.id;
+  if (staleDocumentId !== undefined) {
+    throw new Error(
+      `Published document identity does not match graph node ${staleDocumentId}`
     );
   }
 };
@@ -117,15 +215,28 @@ const createPublishedAssetResourceHandler = ({
   cache,
   baseUrl,
   database,
+  fetchDocument,
+  documentCache,
+  onDocumentGraphEvent,
 }: {
   deploymentId: string;
-  artifact: ContentArtifactV1;
+  artifact: ContentRuntimeArtifact;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
-  database: ReturnType<typeof createContentDatabase>;
+  database: ReturnType<typeof createRuntimeContentDatabase>;
+  fetchDocument: typeof fetch;
+  documentCache: DocumentSourceCache;
+  onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 }) => {
   const baseOrigin = new URL(baseUrl).origin;
+  const loadDocument = createPublishedDocumentLoader({
+    baseUrl,
+    runtimeAssets,
+    fetchDocument,
+    cache: documentCache,
+    onEvent: onDocumentGraphEvent,
+  });
   return async (
     input: RequestInfo | URL,
     init?: RequestInit
@@ -168,7 +279,13 @@ const createPublishedAssetResourceHandler = ({
         });
       }
       const response = jsonResponse(
-        await database.query(parsedRequest, undefined, runtimeAssets)
+        await database.queryWithDocumentGraph({
+          request: parsedRequest,
+          load: loadDocument,
+          runtimeAssets,
+          signal: request.signal,
+          onEvent: onDocumentGraphEvent,
+        })
       );
       if (
         cacheKey !== undefined &&
@@ -208,10 +325,13 @@ export const createGeneratedAssetResourceRuntime = ({
   deploymentId,
   artifact,
   runtimeAssets,
+  // Generated projects infer this API from bundled JavaScript.
+  onDocumentGraphEvent = undefined,
 }: {
   deploymentId: string;
-  artifact: ContentArtifactV1;
+  artifact: ContentRuntimeArtifact;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
+  onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 }) => {
   const cacheStorage = globalThis.caches;
   let cachePromise: Promise<Cache> | undefined;
@@ -228,7 +348,8 @@ export const createGeneratedAssetResourceRuntime = ({
             (await getCache()).put(key, response),
         };
   validateRuntimeAssets({ artifact, runtimeAssets });
-  const database = createContentDatabase({ artifact });
+  const database = createRuntimeContentDatabase({ artifact });
+  const documentCache = createMemoryDocumentSourceCache();
   return async ({
     request,
     fallback,
@@ -244,6 +365,9 @@ export const createGeneratedAssetResourceRuntime = ({
       cache,
       baseUrl: origin,
       database,
+      fetchDocument: fallback,
+      documentCache,
+      onDocumentGraphEvent,
     });
     return async (input, init) =>
       (await fetchResource(input, init)) ?? fallback(input, init);

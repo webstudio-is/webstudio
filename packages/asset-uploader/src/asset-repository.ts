@@ -5,6 +5,7 @@ import {
   createContentFieldCatalogCompilationPlan,
   createLiteralContentCompilationQuery,
   getContentArtifactRuntimeAssetIds,
+  getDocumentFormatByContentType,
   isContentDocumentCandidate,
   prepareContentCompilerEntries,
   requiresRuntimeDocumentData,
@@ -13,6 +14,8 @@ import {
   type AssetQueryPreviewResult,
   type BuilderAssetFieldCatalog,
   type ContentCompilationPlan,
+  type DocumentGraphRuntimeObserver,
+  observeDocumentSourceLoader,
 } from "@webstudio-is/content-engine";
 import {
   createAssetIndex,
@@ -129,6 +132,11 @@ export type AssetContentRead = {
   contentLength?: number;
 };
 
+type AssetQueryPreviewOptions = {
+  databasePlan?: ContentCompilationPlan;
+  includeUnresolvedDiagnostics?: boolean;
+};
+
 export interface AssetRepository {
   list(): Promise<Asset[]>;
   get(assetId: Asset["id"]): Promise<Asset>;
@@ -172,7 +180,7 @@ export interface AssetRepository {
   readFieldCatalog(): Promise<BuilderAssetFieldCatalog>;
   query(
     request: AssetQueryRequestInput,
-    databasePlan?: ContentCompilationPlan
+    options?: AssetQueryPreviewOptions
   ): Promise<AssetQueryPreviewResult>;
 }
 
@@ -192,6 +200,7 @@ export class PostgresAssetRepository implements AssetRepository {
   private readonly dependencies: AssetRepositoryDependencies;
   private readonly contentDatabaseMaxBytes: number;
   private readonly compilationCache: ContentCompilationCache | undefined;
+  private readonly onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 
   constructor({
     projectId,
@@ -200,6 +209,7 @@ export class PostgresAssetRepository implements AssetRepository {
     dependencies,
     contentDatabaseMaxBytes = contentEngineLimits.databaseBytes,
     compilationCache,
+    onDocumentGraphEvent,
   }: {
     projectId: string;
     context: AppContext;
@@ -207,6 +217,7 @@ export class PostgresAssetRepository implements AssetRepository {
     dependencies?: Partial<AssetRepositoryDependencies>;
     contentDatabaseMaxBytes?: number;
     compilationCache?: ContentCompilationCache;
+    onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
   }) {
     this.projectId = projectId;
     this.context = context;
@@ -216,6 +227,7 @@ export class PostgresAssetRepository implements AssetRepository {
     this.compilationCache =
       compilationCache ??
       (dependencies === undefined ? sharedContentCompilationCache : undefined);
+    this.onDocumentGraphEvent = onDocumentGraphEvent;
   }
 
   static async forUpload({
@@ -547,22 +559,27 @@ export class PostgresAssetRepository implements AssetRepository {
     const source = this.createContentSource(strict);
     const compile = async (
       entries: Parameters<typeof createAssetIndex>[0]["entries"],
-      assetReferences: Parameters<typeof createAssetIndex>[0]["assetReferences"]
+      assetReferences: Parameters<
+        typeof createAssetIndex
+      >[0]["assetReferences"],
+      documentGraph: Parameters<typeof createAssetIndex>[0]["documentGraph"]
     ) =>
       await this.dependencies.createAssetIndex({
         projectId: this.projectId,
         entries,
         assetReferences,
+        documentGraph,
         maxBytes: this.contentDatabaseMaxBytes,
         ...(requirements === undefined ? {} : { plan: requirements }),
       });
     if (this.compilationCache === undefined) {
-      const { entries, assetReferences } = await materializeContentSource({
-        source,
-        plan: requirements,
-        maximumContentBytes: this.contentDatabaseMaxBytes,
-      });
-      return await compile(entries, assetReferences);
+      const { entries, assetReferences, documentGraph } =
+        await materializeContentSource({
+          source,
+          plan: requirements,
+          maximumContentBytes: this.contentDatabaseMaxBytes,
+        });
+      return await compile(entries, assetReferences, documentGraph);
     }
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const snapshot = await source.openSnapshot();
@@ -575,14 +592,13 @@ export class PostgresAssetRepository implements AssetRepository {
       });
       try {
         return await this.compilationCache.getOrCreate(key, async () => {
-          const { entries, assetReferences } = await materializeContentSnapshot(
-            {
+          const { entries, assetReferences, documentGraph } =
+            await materializeContentSnapshot({
               snapshot,
               plan: requirements,
               maximumContentBytes: this.contentDatabaseMaxBytes,
-            }
-          );
-          return await compile(entries, assetReferences);
+            });
+          return await compile(entries, assetReferences, documentGraph);
         });
       } catch (error) {
         if (error instanceof ContentSourceChangedError === false) {
@@ -594,6 +610,7 @@ export class PostgresAssetRepository implements AssetRepository {
   }
 
   private createContentSource(strict: boolean): ContentSource {
+    const readFile = this.assetStore.readFile;
     const loadBaseEntries = () =>
       this.dependencies.loadCanonicalAssetBaseEntries({
         client: this.context.postgrest.client,
@@ -606,6 +623,40 @@ export class PostgresAssetRepository implements AssetRepository {
         return {
           revision,
           files: baseEntries.map(createContentSourceFile),
+          loadDocumentSources: async () =>
+            baseEntries.flatMap((entry) => {
+              if (
+                getDocumentFormatByContentType(entry.document.mimeType) ===
+                undefined
+              ) {
+                return [];
+              }
+              return [
+                {
+                  id: entry.assetId,
+                  source: {
+                    [Symbol.asyncIterator]: async function* () {
+                      const response = await readFile(
+                        entry.document.contentRef,
+                        entry.document.size === 0
+                          ? undefined
+                          : { offset: 0, length: entry.document.size }
+                      );
+                      let readBytes = 0;
+                      for await (const chunk of response.data) {
+                        readBytes += chunk.byteLength;
+                        yield chunk;
+                      }
+                      if (readBytes !== entry.document.size) {
+                        throw new Error(
+                          "Asset content does not match its canonical size"
+                        );
+                      }
+                    },
+                  },
+                },
+              ];
+            }),
           loadEntries: (plan, options) =>
             this.loadCompilerEntries({
               baseEntries,
@@ -713,7 +764,10 @@ export class PostgresAssetRepository implements AssetRepository {
 
   async query(
     request: AssetQueryRequestInput,
-    databasePlan?: ContentCompilationPlan
+    {
+      databasePlan,
+      includeUnresolvedDiagnostics = false,
+    }: AssetQueryPreviewOptions = {}
   ): Promise<AssetQueryPreviewResult> {
     await this.assertCanView();
     const query = assetQuery.parse(request.query);
@@ -722,15 +776,15 @@ export class PostgresAssetRepository implements AssetRepository {
     ]);
     const index = await this.prepareIndexAfterAuthorization(plan, false);
     const database = getContentDatabaseForArtifact(index);
-    const publishedDatabase =
+    const publishedIndex =
       databasePlan === undefined
-        ? database
-        : getContentDatabaseForArtifact(
-            await this.prepareIndexAfterAuthorization(databasePlan, false)
-          );
+        ? index
+        : await this.prepareIndexAfterAuthorization(databasePlan, false);
+    const publishedDatabase = getContentDatabaseForArtifact(publishedIndex);
     const runtimeAssetIds = getContentArtifactRuntimeAssetIds({
       artifact: index,
       includeDocuments: plan !== undefined && requiresRuntimeDocumentData(plan),
+      includeDocumentGraph: false,
     });
     const runtimeAssets =
       runtimeAssetIds.length > 0
@@ -747,11 +801,35 @@ export class PostgresAssetRepository implements AssetRepository {
             ])
           )
         : undefined;
-    const data = await database.query(
+    const unresolved = includeUnresolvedDiagnostics
+      ? await database.query(
+          query.content.mode === "none"
+            ? request
+            : { ...request, query: { ...query, content: { mode: "none" } } },
+          undefined,
+          runtimeAssets
+        )
+      : undefined;
+    const data = await database.queryWithDocumentGraph({
       request,
-      this.assetStore.readFile,
-      runtimeAssets
-    );
+      readContent: this.assetStore.readFile,
+      runtimeAssets,
+      load: observeDocumentSourceLoader({
+        onEvent: this.onDocumentGraphEvent,
+        load: async (node) => {
+          if (node.format === undefined) {
+            throw new Error(`Document ${node.id} format is unavailable`);
+          }
+          const response = await this.assetStore.readFile(node.contentRef);
+          return {
+            format: node.format,
+            revision: node.revision,
+            source: response.data,
+          };
+        },
+      }),
+      onEvent: this.onDocumentGraphEvent,
+    });
     const toCapacityStats = ({
       usedBytes,
       maxBytes,
@@ -773,6 +851,10 @@ export class PostgresAssetRepository implements AssetRepository {
         scope: "query-preview",
         query: toCapacityStats(database.getStats()),
         database: toCapacityStats(publishedDatabase.getStats()),
+        ...(includeUnresolvedDiagnostics
+          ? { artifacts: { query: index, database: publishedIndex } }
+          : {}),
+        ...(unresolved === undefined ? {} : { unresolved }),
       },
     };
   }

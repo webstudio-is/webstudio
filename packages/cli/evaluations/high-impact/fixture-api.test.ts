@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
@@ -20,7 +20,7 @@ import {
   writeFontAssetFixtureFiles,
 } from "./font-assets-fixture";
 import {
-  markdownBlogFixtureArticles,
+  markdownBlogFixtureDocuments,
   writeMarkdownBlogFixtureFiles,
 } from "./markdown-blog-fixture";
 
@@ -178,10 +178,10 @@ describe("high-impact fixture API", () => {
       expect(folder.ok).toBe(true);
       const folderId = String(folder.data.folderId);
       const upload = await run("upload-assets", {
-        assets: markdownBlogFixtureArticles.map(({ name }) => ({
+        assets: markdownBlogFixtureDocuments.map(({ name, format }) => ({
           name,
           type: "file",
-          format: "md",
+          format,
           folderId,
           meta: {},
         })),
@@ -190,15 +190,22 @@ describe("high-impact fixture API", () => {
       expect(upload.ok).toBe(true);
       expect(fixtureApi.getProject()).toMatchObject({
         assetFolders: [expect.objectContaining({ id: folderId, name: "Blog" })],
-        assets: markdownBlogFixtureArticles.map(({ name }) =>
+        assets: markdownBlogFixtureDocuments.map(({ name, format }) =>
           expect.objectContaining({
             name,
+            filename: name.slice(0, name.lastIndexOf(".")),
             type: "file",
-            format: "md",
+            format,
             folderId,
           })
         ),
       });
+      await expect(
+        readFile(
+          join(projectDirectory, ".webstudio/assets/aurora-trails.md"),
+          "utf8"
+        )
+      ).resolves.toContain("name: Mira Chen");
     } finally {
       await fixtureApi.close();
       await rm(directory, { recursive: true, force: true });

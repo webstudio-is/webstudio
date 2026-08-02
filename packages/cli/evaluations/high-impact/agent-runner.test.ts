@@ -4,7 +4,11 @@ import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { authenticatedPageFixture } from "./fixtures";
 import { designInputFixture } from "./fixtures";
-import { fontAssetsFixture, markdownBlogFixture } from "./fixtures";
+import {
+  fontAssetsFixture,
+  markdownBlogFixture,
+  markdownReferencesDiscoveryFixture,
+} from "./fixtures";
 import {
   createMinimalAgentTask,
   getFixtureToolNames,
@@ -112,6 +116,9 @@ describe("high-impact agent runner", () => {
         expect.stringContaining("exactly one upload-assets call"),
         expect.stringContaining("parallel tool-call batch"),
         expect.stringContaining("verify-font-assets exactly once"),
+        expect.stringContaining(
+          'audit exactly once with {"scopes":["assets"],"limit":10}'
+        ),
         expect.stringContaining("Do not call refresh or get-asset separately"),
       ])
     );
@@ -123,16 +130,33 @@ describe("high-impact agent runner", () => {
     expect(blogConstraints).toContain("one upload-assets call");
     expect(blogConstraints).toContain("aurora-trails.md");
     expect(blogConstraints).toContain("city-walks.md");
+    expect(blogConstraints).toContain("Do not create or upload companion JSON");
+    expect(blogConstraints).toContain('"format":"md"');
     expect(blogConstraints).toContain("/blog/:slug");
     expect(blogConstraints).toContain(
       '"field":["properties","draft"],"operator":"ne"'
     );
-    expect(blogConstraints).toContain('"value":"true"');
+    expect(blogConstraints).toContain(
+      '"value":{"type":"literal","value":true}'
+    );
+    expect(blogConstraints).toContain('"limit":{"type":"literal","value":20}');
+    expect(blogConstraints).toContain('"offset":{"type":"literal","value":0}');
     expect(blogConstraints).toContain("Never call update-assets-resource");
+    expect(blogConstraints).toContain(
+      "Database size is part of the evaluated outcome"
+    );
+    expect(blogConstraints).toContain("one materialized overview");
+    expect(blogConstraints).toContain("zero embedded Markdown body bytes");
+    expect(blogConstraints).toContain("stale resource");
     expect(blogConstraints).toContain(
       '"fields":[["properties","title"],["properties","slug"]'
     );
+    expect(blogConstraints).toContain('"mode":"none"');
     expect(blogConstraints).toContain('"mode":"markdown-body"');
+    expect(blogConstraints).not.toContain('["properties","body"]');
+    expect(blogConstraints).toContain('["properties","author"]');
+    expect(blogConstraints).toContain("collectionItem.properties.author.name");
+    expect(blogConstraints).toContain("collectionItem.content.text");
     expect(blogConstraints).toContain("$.MarkdownEmbed");
     expect(blogConstraints).toContain(
       "call verify-page-responsive exactly twice"
@@ -154,6 +178,34 @@ describe("high-impact agent runner", () => {
     expect(getFixtureToolNames(markdownBlogFixture)).not.toContain(
       "update-assets-resource"
     );
+
+    const discoveryTask = createMinimalAgentTask(
+      markdownReferencesDiscoveryFixture,
+      {
+        kind: "source",
+        repositoryRoot: root,
+      }
+    );
+    const discoveryPrompt = JSON.stringify(discoveryTask);
+    expect(discoveryPrompt).not.toContain("$ref");
+    expect(discoveryPrompt).not.toContain('"where"');
+    expect(discoveryPrompt).not.toContain("markdown-body");
+    expect(discoveryPrompt).not.toContain("collectionItem");
+    expect(discoveryPrompt).toContain("Do not dry-run or plan mutations");
+    expect(discoveryPrompt).toContain("without reshaping its fields");
+    expect(discoveryPrompt).toContain(
+      'exactly once with {\\"tools\\":[\\"create-assets-resource\\"]}'
+    );
+    expect(getFixtureToolNames(markdownReferencesDiscoveryFixture)).toEqual([
+      "meta.guide",
+      "meta.get_more_tools",
+      "create-asset-folder",
+      "upload-assets",
+      "create-page",
+      "create-assets-resource",
+      "insert-collection",
+      "verify-page-responsive",
+    ]);
   });
 
   test("retains only a bounded privacy-safe result from a real process", async () => {

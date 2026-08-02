@@ -824,7 +824,7 @@ const insertCollectionMcpInputSchema = getOperationInputSchema({
 });
 
 const assetsResourceResultDescription =
-  "Pass query as structured tool input rather than a JSON-stringified expression or manually authored resource body. Dynamic query values use readable Webstudio JavaScript expression syntax. Assets expose an ID-keyed map at <dataSourceName>.data and collection information at <dataSourceName>.meta. Each value has selected file fields at the top level, frontmatter or JSON fields in .properties, a derived .excerpt at the top level, and requested file content in .content.text.";
+  "Pass query as structured tool input using Webstudio JavaScript expressions rather than a JSON-stringified expression or manually authored resource body. Every reachable Assets resource contributes to one shared published database, so create only one final resource per rendered query; update an existing resource instead of creating a replacement, and remove obsolete duplicates. Keep static filters, limits, and offsets literal so bounded overview queries can be materialized. Use output mode fields, select only rendered fields, keep includeMetadata false, and use content mode none when file content is not rendered. For a Markdown detail page, query the Markdown asset directly and use content mode markdown-body; compilation keeps only its document reference in the bundle and fetches the selected body from Asset storage at runtime. Bind the resolved body from item.content.text. Assets expose an ID-keyed map at <dataSourceName>.data and collection information at <dataSourceName>.meta.";
 
 const mcpOperationOverrides = new Map<
   string,
@@ -2086,7 +2086,12 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
             {
               field: ["extension"],
               operator: "eq",
-              value: { type: "literal", value: "md" },
+              value: { type: "literal", value: "json" },
+            },
+            {
+              field: ["properties", "kind"],
+              operator: "eq",
+              value: { type: "literal", value: "post" },
             },
             {
               field: ["properties", "draft"],
@@ -2112,7 +2117,12 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
             {
               field: ["extension"],
               operator: "eq",
-              value: { type: "literal", value: "md" },
+              value: { type: "literal", value: "json" },
+            },
+            {
+              field: ["properties", "kind"],
+              operator: "eq",
+              value: { type: "literal", value: "post" },
             },
             {
               any: [
@@ -2131,7 +2141,12 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
           ],
         },
         limit: "1",
-        content: { mode: "markdown-body", maxBytes: 1_048_576 },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "body"]],
+        },
+        content: { mode: "none" },
       },
     },
   ],
@@ -5487,6 +5502,8 @@ const metaGoalGuides = [
     pattern:
       /markdown(?:-|\s)*(?:based|backed)?\s*blog|blog.*markdown|assets?(?:-|\s)*backed\s*blog/i,
     tools: [
+      "create-asset-folder",
+      "upload-assets",
       "list-pages",
       "list-assets",
       "get-asset-field-catalog",
@@ -5499,13 +5516,112 @@ const metaGoalGuides = [
       "verify-page-responsive",
     ],
     workflow: [
-      'Ensure the blog has exactly two Builder pages: an overview at the fixed path "/blog" and one detail page at the dynamic path "/blog/:slug". Both pages load their content from Assets resources. Do not create one page per post or copy Markdown content into page-specific static structures.',
-      'For both queries, add static Markdown and blog-folder constraints before any dynamic condition. Include a filter shaped like field:["extension"], operator:"eq", value:"md", plus the narrowest folder or path filter supported by the asset field catalog. This prevents images and unrelated files from consuming the published content-database budget.',
-      'Create the overview Assets resource under the /blog page root. Request only the fields rendered by the listing, use content.mode:"none", and bind one Collection to the complete posts.data map. The overview route is fixed, but its listing remains data-driven through Assets.',
-      'Create the detail Assets resource under the /blog/:slug page root with the same static Markdown/folder constraints, a slug or alternate-ID condition whose value is system.params.slug, limit:1, and content.mode:"markdown-body". Bind the selected item metadata and item.content.text; do not materialize a separate Builder page for each query result.',
-      "Validate both queries and preview the detail query with one concrete slug before saving dynamic expressions. Query-preview diagnostics report this query separately from the merged published database; use the merged database measurement when checking the deployment limit.",
-      "Verify that exactly the two intended page definitions exist and that both pages load their content from Assets. Preview /blog and one concrete detail route, including empty/not-found behavior, before finishing.",
+      'Call meta.get_more_tools with {"tools":["create-assets-resource"]} once for the complete nested query contract. Use exact tool names, not brief search, and do not repeat discovery for this workflow.',
+      'Create one Blog asset folder. Upload all Markdown source files together in one upload-assets call with assetsDir ".webstudio/assets". Put queryable metadata such as slug, title, author, publishedAt, excerpt, and draft in each file\'s frontmatter. Every file must use {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}. Do not create companion JSON descriptors, use a combined format value, or retry a failed mutation; report its actionable error instead.',
+      'Ensure the blog has exactly two Builder pages: an overview at the fixed path "/blog" and one detail page at the dynamic path "/blog/:slug". Create each page once with a committed call; do not dry-run it. Both pages load their content from Assets resources. Do not create one page per post or copy Markdown content into page-specific static structures.',
+      "Every reachable Assets data source contributes its query to one shared published database. Keep exactly one final Assets resource for the overview and one for the detail page. Never create a placeholder, preview copy, or repair replacement; update the existing scoped resource when requirements change and remove obsolete duplicates.",
+      'Field paths are arrays of segments, for example field:["extension"]. Literal query values use {"type":"literal","value":"..."}; raw strings are runtime expressions. Keep every overview filter value, limit, and offset literal so the bounded metadata-only result can be materialized instead of retaining its fields across every article. Use a deterministic secondary ID sort. Query Markdown posts with static extension and blog-folder constraints before any dynamic condition. Use output.mode:"fields", includeMetadata:false, and only fields rendered by that route.',
+      'Keep content.mode:"none" on the overview and use content.mode:"markdown-body" only on the detail route. The detail query should have exactly one dynamic value, system.params.slug, a literal limit of 1, and only the title and author metadata rendered above Markdown Embed. The published database keeps only the Markdown document reference and fetches the selected body from Asset storage at runtime.',
+      "Call create-assets-resource exactly once with recipe.overviewResource after substituting the returned /blog root id and Blog folder id. Then call it exactly once with recipe.detailResource after substituting the returned /blog/:slug root id and the same Blog folder id.",
+      'Call insert-collection exactly once with the entire recipe.overviewCollection object and exactly once with the entire recipe.detailCollection object, changing only parentInstanceId to the returned root id. Do not reshape or stringify any field: data must remain the recipe object {"type":"expression","value":"posts.data"} or {"type":"expression","value":"post.data"}. Do not improvise another fragment or call meta.get_more_tools again.',
+      "Validate both queries and preview the detail query with one concrete slug before saving dynamic expressions. Query-preview diagnostics report this query separately from the merged published database; use the merged database measurement when checking the deployment limit. The merged database must contain every source document without truncation, no embedded Markdown contents, and only one materialized overview query.",
+      "Verify only after both Collections succeed and confirm that both pages load their content from Assets. Call verify-page-responsive once for /blog and once for one concrete detail route, including empty/not-found behavior, before finishing. If any call fails, stop and report it without retrying.",
     ],
+    recipe: {
+      overviewResource: {
+        name: "Published posts",
+        scopeInstanceId: "<overview-root-id>",
+        dataSourceName: "posts",
+        query: {
+          where: {
+            all: [
+              {
+                field: ["extension"],
+                operator: "eq",
+                value: { type: "literal", value: "md" },
+              },
+              {
+                field: ["folderId"],
+                operator: "eq",
+                value: { type: "literal", value: "<blog-folder-id>" },
+              },
+              {
+                field: ["properties", "draft"],
+                operator: "ne",
+                value: { type: "literal", value: true },
+              },
+            ],
+          },
+          sort: [
+            { field: ["properties", "publishedAt"], direction: "desc" },
+            { field: ["id"], direction: "asc" },
+          ],
+          limit: { type: "literal", value: 20 },
+          offset: { type: "literal", value: 0 },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [
+              ["properties", "title"],
+              ["properties", "slug"],
+              ["properties", "publishedAt"],
+              ["properties", "author"],
+              ["properties", "excerpt"],
+            ],
+          },
+          content: { mode: "none" },
+        },
+      },
+      detailResource: {
+        name: "Post by slug",
+        scopeInstanceId: "<detail-root-id>",
+        dataSourceName: "post",
+        query: {
+          where: {
+            all: [
+              {
+                field: ["extension"],
+                operator: "eq",
+                value: { type: "literal", value: "md" },
+              },
+              {
+                field: ["folderId"],
+                operator: "eq",
+                value: { type: "literal", value: "<blog-folder-id>" },
+              },
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "system.params.slug",
+              },
+            ],
+          },
+          limit: { type: "literal", value: 1 },
+          offset: { type: "literal", value: 0 },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [
+              ["properties", "title"],
+              ["properties", "author"],
+            ],
+          },
+          content: { mode: "markdown-body" },
+        },
+      },
+      overviewCollection: {
+        parentInstanceId: "<overview-root-id>",
+        data: { type: "expression", value: "posts.data" },
+        itemFragment:
+          '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">{expression`collectionItem.properties.excerpt ?? ""`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><ws.element ws:tag="time">{expression`collectionItem.properties.publishedAt ?? ""`}</ws.element><ws.element ws:tag="a" href={expression`"/blog/" + collectionItem.properties.slug`}>Read article</ws.element></ws.element>',
+      },
+      detailCollection: {
+        parentInstanceId: "<detail-root-id>",
+        data: { type: "expression", value: "post.data" },
+        itemFragment:
+          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><$.MarkdownEmbed code={expression`collectionItem.content.text`} /></ws.element>',
+      },
+    },
   },
   {
     pattern: /json\s*-?\s*ld|structured\s+data/i,
@@ -5722,6 +5838,9 @@ const getMetaGuide = (
     tools: matches.map((tool) =>
       serializeMetaGuideTool(tool, goalGuide === undefined)
     ),
+    ...(goalGuide !== undefined && "recipe" in goalGuide
+      ? { recipe: goalGuide.recipe }
+      : {}),
     more:
       goalGuide === undefined
         ? "The MCP handshake provides top-level argument contracts and required fields, while this guide includes exact examples plus complete schemas for selected complex tools. Call meta.get_more_tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover."

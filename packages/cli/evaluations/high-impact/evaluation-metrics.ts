@@ -256,6 +256,9 @@ const countRetries = (calls: readonly EvaluationToolCall[]) => {
   return retries;
 };
 
+export const hasMcpToolCallRetries = (calls: readonly EvaluationToolCall[]) =>
+  countRetries(calls) > 0;
+
 const countValues = (values: readonly string[]) =>
   Object.fromEntries(
     [...new Set(values)]

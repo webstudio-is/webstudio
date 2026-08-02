@@ -20,6 +20,7 @@ import {
   isContentDocumentCandidate,
   isContentCompilationFieldRequired,
   projectContentDatabaseDocument,
+  selectContentHydrationCandidates,
   type ContentCompilationPlan,
 } from "./compilation-plan";
 import { getUtf8ByteLength } from "./byte-stream";
@@ -28,6 +29,12 @@ import {
   canMaterializeContentCompilationQuery,
   materializeContentCompilationQueries,
 } from "./materialized-query";
+import {
+  createDocumentGraphArtifact,
+  getDocumentGraphQueryRootIds,
+  type DocumentGraph,
+  type DocumentGraphArtifactV1,
+} from "./document-graph";
 
 export type ContentCompilerDiagnostics = {
   maxBytes: number;
@@ -58,6 +65,45 @@ const getDocumentBytes = (
 export type ContentCompilerInput = CanonicalAssetFileEntry & {
   content?: string;
   contentRequired?: true;
+};
+
+const excludeDeferredMarkdownBodies = ({
+  entries,
+  documentGraph,
+  plan,
+}: {
+  entries: readonly ContentCompilerInput[];
+  documentGraph: DocumentGraph;
+  plan?: ContentCompilationPlan;
+}) => {
+  if (plan === undefined) {
+    return entries;
+  }
+  const embeddedQueryPlan = {
+    ...plan,
+    queries: plan.queries.filter(
+      ({ content }) => content.mode !== "markdown-body"
+    ),
+  };
+  const embeddedIds = selectContentHydrationCandidates({
+    documents: entries.map(({ document }) => document),
+    plan: embeddedQueryPlan,
+  });
+  const graphNodeIds = new Set(documentGraph.nodes.map(({ id }) => id));
+  return entries.map((entry) => {
+    if (
+      embeddedIds.has(entry.assetId) ||
+      graphNodeIds.has(entry.assetId) === false
+    ) {
+      return entry;
+    }
+    const {
+      content: _content,
+      contentRequired: _contentRequired,
+      ...rest
+    } = entry;
+    return rest;
+  });
 };
 
 const getEntryBytes = (
@@ -137,6 +183,7 @@ const buildAssetIndex = async ({
   maxBytes,
   unboundedBytes,
   assetReferences,
+  documentGraph,
   plan,
   finalize = true,
 }: {
@@ -145,6 +192,7 @@ const buildAssetIndex = async ({
   maxBytes: number;
   unboundedBytes: number;
   assetReferences?: MarkdownAssetReferences;
+  documentGraph?: DocumentGraphArtifactV1;
   plan?: ContentCompilationPlan;
   finalize?: boolean;
 }) => {
@@ -152,6 +200,13 @@ const buildAssetIndex = async ({
   const sourceCatalog = await createAssetFieldCatalog(entries);
   const assetRevision = sourceCatalog.canonicalRevision;
   const completeSourceFieldCatalog = toBuilderAssetFieldCatalog(sourceCatalog);
+  const materializableQueries =
+    plan?.queries.filter(
+      (query) =>
+        documentGraph === undefined ||
+        getDocumentGraphQueryRootIds({ graph: documentGraph, query }).length ===
+          0
+    ) ?? [];
   const materialized =
     plan === undefined
       ? {
@@ -161,7 +216,7 @@ const buildAssetIndex = async ({
           >(),
         }
       : await materializeContentCompilationQueries({
-          queries: plan.queries,
+          queries: materializableQueries,
           catalog: completeSourceFieldCatalog,
           documents: sourceDocuments,
         });
@@ -243,6 +298,7 @@ const buildAssetIndex = async ({
     version: 1,
     assetRevision,
     documents,
+    ...(documentGraph === undefined ? {} : { documentGraph }),
     ...(Object.keys(contents).length === 0 ? {} : { contents }),
     ...(Object.keys(includedAssetReferences).length === 0
       ? {}
@@ -281,12 +337,14 @@ export const compileContentArtifact = async ({
   entries,
   maxBytes = contentEngineLimits.databaseBytes,
   assetReferences,
+  documentGraph,
   plan,
 }: {
   projectId: string;
   entries: readonly ContentCompilerInput[];
   maxBytes?: number;
   assetReferences?: MarkdownAssetReferences;
+  documentGraph?: DocumentGraph;
   plan?: ContentCompilationPlan;
 }): Promise<{
   artifact: ContentArtifactV1;
@@ -295,10 +353,23 @@ export const compileContentArtifact = async ({
   if (Number.isSafeInteger(maxBytes) === false || maxBytes <= 0) {
     throw new Error("Content database byte limit must be a positive integer");
   }
+  if (documentGraph !== undefined) {
+    entries = excludeDeferredMarkdownBodies({ entries, documentGraph, plan });
+  }
   validateEntries({ projectId, entries });
+  const documentGraphArtifact =
+    documentGraph === undefined
+      ? undefined
+      : await createDocumentGraphArtifact(documentGraph);
   const sourceDocumentCount = entries.length;
   const hasMaterializableQueries =
-    plan?.queries.some(canMaterializeContentCompilationQuery) === true;
+    plan?.queries.some(
+      (query) =>
+        canMaterializeContentCompilationQuery(query) &&
+        (documentGraph === undefined ||
+          getDocumentGraphQueryRootIds({ graph: documentGraph, query })
+            .length === 0)
+    ) === true;
   const unavailable = entries.filter(
     (entry) => entry.contentRequired === true && entry.content === undefined
   );
@@ -318,6 +389,7 @@ export const compileContentArtifact = async ({
       maxBytes,
       unboundedBytes,
       assetReferences,
+      documentGraph: documentGraphArtifact,
       plan,
       finalize: false,
     });
@@ -344,6 +416,7 @@ export const compileContentArtifact = async ({
       maxBytes,
       unboundedBytes,
       assetReferences,
+      documentGraph: documentGraphArtifact,
       plan,
       finalize: false,
     });
@@ -375,6 +448,7 @@ export const compileContentArtifact = async ({
           maxBytes,
           unboundedBytes,
           assetReferences,
+          documentGraph: documentGraphArtifact,
           plan,
           finalize: false,
         });
@@ -407,6 +481,7 @@ export const compileContentArtifact = async ({
     maxBytes,
     unboundedBytes,
     assetReferences,
+    documentGraph: documentGraphArtifact,
     plan,
   });
   const boundedBytes = getUtf8ByteLength(serializeContentArtifact(artifact));
@@ -457,6 +532,7 @@ export const createAssetIndex = async (input: {
   entries: readonly ContentCompilerInput[];
   maxBytes?: number;
   assetReferences?: MarkdownAssetReferences;
+  documentGraph?: DocumentGraph;
   plan?: ContentCompilationPlan;
 }): Promise<ContentArtifactV1> =>
   (await compileContentArtifact(input)).artifact;

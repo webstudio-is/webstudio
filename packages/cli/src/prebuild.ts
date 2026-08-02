@@ -60,13 +60,15 @@ import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/r
 import {
   assetQueryFilter,
   type AssetQueryFilter,
+  type ContentRuntimeArtifact,
   type ContentDatabaseDocument,
+  createContentRuntimeArtifact,
   getAssetQueryFieldValue,
   getContentArtifactReferencedAssetIds,
-  getContentArtifactRuntimeAssetIds,
+  getContentRuntimeArtifactRuntimeAssetIds,
   matchesAssetQueryFilter,
   requiresRuntimeDocumentData,
-  serializeContentArtifact,
+  serializeContentRuntimeArtifact,
   verifyContentArtifact,
 } from "@webstudio-is/content-engine";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
@@ -505,8 +507,8 @@ const generateAssetQueryRuntimeModule = ({
   runtimeAssets,
 }: {
   deploymentId: string;
-  index: PublishedProjectBundle["assetIndex"];
-  runtimeAssets: Readonly<Record<string, ReturnType<typeof toRuntimeAsset>>>;
+  index: ContentRuntimeArtifact | undefined;
+  runtimeAssets: Readonly<Record<string, ContentRuntimeAsset>>;
 }) => {
   const inputType = `{
     request: Request;
@@ -532,6 +534,10 @@ export const createGeneratedAssetResourceFetch = ({ request, fallback }: ${input
 `;
 };
 
+type ContentRuntimeAsset = ReturnType<typeof toRuntimeAsset> & {
+  contentRef?: string;
+};
+
 export const materializeAssetIndex = async ({
   index,
   runtimeAssets,
@@ -540,28 +546,35 @@ export const materializeAssetIndex = async ({
   deploymentId,
 }: {
   index: PublishedProjectBundle["assetIndex"];
-  runtimeAssets: Readonly<Record<string, ReturnType<typeof toRuntimeAsset>>>;
+  runtimeAssets: Readonly<Record<string, ContentRuntimeAsset>>;
   includeDocumentRuntimeAssets: boolean;
   generatedDirectory: string;
   deploymentId: string;
 }) => {
   const verifiedIndex =
     index === undefined ? undefined : await verifyContentArtifact(index);
-  const serializedIndex =
+  const runtimeIndex =
     verifiedIndex === undefined
       ? undefined
-      : serializeContentArtifact(verifiedIndex);
+      : createContentRuntimeArtifact(verifiedIndex);
+  const serializedIndex =
+    runtimeIndex === undefined
+      ? undefined
+      : serializeContentRuntimeArtifact(runtimeIndex);
   const runtimeAssetIds =
-    verifiedIndex === undefined
+    runtimeIndex === undefined
       ? []
-      : getContentArtifactRuntimeAssetIds({
-          artifact: verifiedIndex,
+      : getContentRuntimeArtifactRuntimeAssetIds({
+          artifact: runtimeIndex,
           includeDocuments: includeDocumentRuntimeAssets,
         });
   const referencedAssetIds = new Set(
     verifiedIndex === undefined
       ? []
       : getContentArtifactReferencedAssetIds(verifiedIndex)
+  );
+  const documentIds = new Set(
+    runtimeIndex?.documentGraph?.nodes.map(({ id }) => id) ?? []
   );
   const selectedRuntimeAssets = Object.fromEntries(
     runtimeAssetIds.map((assetId) => {
@@ -573,7 +586,11 @@ export const materializeAssetIndex = async ({
             : `Published asset runtime data is unavailable for ${assetId}`
         );
       }
-      return [assetId, asset];
+      if (documentIds.has(assetId)) {
+        return [assetId, asset];
+      }
+      const { contentRef: _contentRef, ...runtimeAsset } = asset;
+      return [assetId, runtimeAsset];
     })
   );
   const runtimePath = join(generatedDirectory, contentRuntimeFile);
@@ -597,7 +614,7 @@ export const assetQueryDatabase = ${serializedIndex};
     join(generatedDirectory, "$resources.asset-query-runtime.ts"),
     generateAssetQueryRuntimeModule({
       deploymentId,
-      index: verifiedIndex,
+      index: runtimeIndex,
       runtimeAssets: selectedRuntimeAssets,
     }),
     "utf8"
@@ -781,6 +798,8 @@ export const prebuild = async (options: {
   preserveRouteTemplates?: boolean;
   /** Emit a public identity marker used only by the local preview controller. */
   previewIdentity?: boolean;
+  /** Read already-synced assets from this directory before downloading them. */
+  sourceAssetsDirectory?: string;
 }) => {
   const buildRoot = cwd();
   const feedback = options.silent
@@ -1389,15 +1408,23 @@ export const prebuild = async (options: {
   // Use a placeholder origin to preserve runtime metadata before overriding the
   // builder-only URL with the generated project's local asset URL.
   const assetsById = Object.fromEntries(
-    siteData.assets.map((asset) => [
-      asset.id,
-      {
-        ...toRuntimeAsset(asset, "https://placeholder.local"),
-        // Generated projects serve materialized assets from the template's
-        // asset base; the /cgi routes only exist in the live builder.
-        url: `${assetBaseUrl}${asset.name}`,
-      },
-    ])
+    siteData.assets.map((asset) => {
+      const runtimeAsset = toRuntimeAsset(asset, "https://placeholder.local");
+      return [
+        asset.id,
+        {
+          ...runtimeAsset,
+          contentRef: asset.name,
+          // SaaS serves project assets through its storage-backed proxy.
+          // Generated projects with downloaded assets serve them locally.
+          url:
+            siteData.build.deployment?.destination === "saas" &&
+            options.assets === false
+              ? new URL(runtimeAsset.url, siteData.origin).href
+              : `${assetBaseUrl}${asset.name}`,
+        },
+      ];
+    })
   );
   const assetCompilationPlan = createReachableAssetContentCompilationPlan({
     props: siteData.build.props.map(([, prop]) => prop),
@@ -1464,7 +1491,8 @@ export const prebuild = async (options: {
       assets: siteData.assets,
       continueOnError: true,
       origin: siteData.origin || "",
-      sourceAssetsDirectory: join(buildRoot, LOCAL_ASSETS_DIR),
+      sourceAssetsDirectory:
+        options.sourceAssetsDirectory ?? join(buildRoot, LOCAL_ASSETS_DIR),
       targetAssetsDirectory: join(buildRoot, "public", assetBaseUrl),
     });
     downloading.stop("Downloaded assets");

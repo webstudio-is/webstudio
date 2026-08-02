@@ -1,6 +1,6 @@
 import type { Server } from "node:http";
 import { fontFormat, fontMeta } from "@webstudio-is/fonts";
-import type { Asset } from "@webstudio-is/sdk";
+import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
 import { assetsUploadsApiUrl } from "@webstudio-is/sdk/runtime";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import React from "react";
@@ -154,7 +154,7 @@ export const startHighImpactFixtureApi = async (
           id: `evaluation-asset-${generatedId++}`,
           projectId,
           name,
-          filename: name,
+          filename: getFileNameParts(name).basename,
           description: typeof description === "string" ? description : null,
           size: body.byteLength,
           ...(folderId === undefined ? {} : { folderId }),

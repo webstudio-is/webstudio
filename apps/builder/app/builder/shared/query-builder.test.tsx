@@ -143,7 +143,7 @@ test("shows an evaluated value for a bound number input", () => {
   expect(input?.disabled).toBe(true);
 });
 
-test("allows the full-size query source to scroll in both directions", () => {
+test("renders the query source inside a constrained full-size editor", () => {
   const sourceContainer = document.createElement("div");
   document.body.appendChild(sourceContainer);
   const capabilities = {
@@ -166,7 +166,18 @@ test("allows the full-size query source to scroll in both directions", () => {
     sourceContainer,
   });
 
-  const scroller = sourceContainer.querySelector(".cm-scroller");
-  expect(scroller).not.toBeNull();
-  expect(getComputedStyle(scroller as Element).overflow).toBe("auto");
+  const sourceLayout = sourceContainer.firstElementChild;
+  const editorContent = sourceContainer.querySelector(
+    '[data-chromeless="true"]'
+  );
+  const editorLayout = sourceLayout?.firstElementChild;
+  expect(sourceLayout).not.toBeNull();
+  expect(editorLayout).not.toBeNull();
+  expect(editorContent).not.toBeNull();
+  expect(editorLayout?.firstElementChild).toBe(editorContent);
+  const scrollerStyle = getComputedStyle(
+    sourceContainer.querySelector(".cm-scroller") as Element
+  );
+  expect(scrollerStyle.minHeight).toBe("0");
+  expect(scrollerStyle.overflow).toBe("auto");
 });

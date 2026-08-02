@@ -62,7 +62,8 @@ export type HighImpactFixture = {
     | "authenticated-page-v1"
     | "design-input-v1"
     | "font-assets-v1"
-    | "markdown-blog-v1";
+    | "markdown-blog-v1"
+    | "markdown-references-discovery-v1";
   objective: string;
   project: EvaluationProject;
 };
@@ -219,7 +220,13 @@ export const fontAssetsFixture: HighImpactFixture = {
 
 export const markdownBlogFixture: HighImpactFixture = {
   id: "markdown-blog-v1",
-  objective: `Upload the ${markdownBlogFixtureArticles.length} provided Markdown articles from .webstudio/assets into one Blog asset folder. Build an editable blog overview at /blog and a dynamic detail page at /blog/:slug using exactly one fully configured scoped Assets resource per page, Collections, and Markdown Embed. Include the complete structured query in each initial resource creation; never create a default or placeholder resource and never repair one by creating another. The overview query must exclude drafts, sort newest first, select the article title, slug, excerpt, and publication date, and avoid loading file content. The detail query must select one article from system.params.slug and load its Markdown body. Verify both /blog and /blog/aurora-trails at desktop and mobile sizes.`,
+  objective: `Upload the ${markdownBlogFixtureArticles.length} provided Markdown articles from .webstudio/assets into one Blog asset folder. Build an editable, size-optimal blog overview at /blog and a dynamic detail page at /blog/:slug using exactly one fully configured scoped Assets resource per page, Collections, and Markdown Embed. Include the complete structured query in each initial resource creation; never create a default, placeholder, duplicate, preview copy, or repair replacement. Both queries must read the Markdown files directly. The overview query must be fully static and bounded, exclude drafts, sort newest first with a deterministic ID tie-breaker, select only the rendered title, slug, excerpt, publication date, and author frontmatter, and load no bodies so it can be materialized. The detail query must use only the dynamic slug, select only rendered metadata, and return one Markdown body without embedding it in the published database. The compiled database must include all articles without truncation, no embedded bodies, and only the intended materialized overview. Render the author name on both pages. Verify both /blog and /blog/aurora-trails at desktop and mobile sizes.`,
+  project: emptyProject(),
+};
+
+export const markdownReferencesDiscoveryFixture: HighImpactFixture = {
+  id: "markdown-references-discovery-v1",
+  objective: `Upload the supplied ${markdownBlogFixtureArticles.map(({ name }) => name).join(", ")} Markdown articles from .webstudio/assets. Build an editable blog overview at /blog and one dynamic article page at /blog/:slug. Query the Markdown files directly so draft articles are excluded, posts are ordered newest first, each post displays its frontmatter author, and only the selected Markdown body is fetched from Asset storage without being embedded in the published database. Verify the overview and /blog/aurora-trails at desktop and mobile sizes. Discover the supported workflow and data shapes from Webstudio MCP guidance.`,
   project: emptyProject(),
 };
 
@@ -228,6 +235,7 @@ export const highImpactFixtures = [
   designInputFixture,
   fontAssetsFixture,
   markdownBlogFixture,
+  markdownReferencesDiscoveryFixture,
 ] as const;
 
 export const validateHighImpactFixture = (fixture: HighImpactFixture) => {

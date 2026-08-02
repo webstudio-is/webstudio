@@ -18,14 +18,17 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-const renderInspector = (query: boolean) => {
+const renderInspector = (
+  query: boolean,
+  queryContainerRef: (element: HTMLDivElement | null) => void = () => {}
+) => {
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
   act(() => {
     root?.render(
       <RequestInspector
-        queryContainerRef={query ? () => {} : undefined}
+        queryContainerRef={query ? queryContainerRef : undefined}
         preview={<div>Preview content</div>}
         diagnostics={<div>Diagnostics content</div>}
       />
@@ -35,7 +38,10 @@ const renderInspector = (query: boolean) => {
 };
 
 test("places an available query editor in the first selected tab", () => {
-  const container = renderInspector(true);
+  const queryContainer: { current: HTMLDivElement | null } = { current: null };
+  const container = renderInspector(true, (element) => {
+    queryContainer.current = element;
+  });
   const tabs = Array.from(container.querySelectorAll('[role="tab"]'));
 
   expect(tabs.map(({ textContent }) => textContent)).toEqual([
@@ -44,6 +50,9 @@ test("places an available query editor in the first selected tab", () => {
     "Diagnostics",
   ]);
   expect(tabs[0].getAttribute("data-state")).toBe("active");
+  expect(queryContainer.current?.style.minHeight).toBe("0");
+  expect(queryContainer.current?.style.minWidth).toBe("0");
+  expect(queryContainer.current?.style.overflow).toBe("hidden");
 });
 
 test("keeps preview first when no query editor is available", () => {

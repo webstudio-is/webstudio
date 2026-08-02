@@ -1,0 +1,96 @@
+# Content engine
+
+The content engine compiles file-based Assets into a portable query database.
+JSON and Markdown documents can reference other Assets without embedding their
+complete source in that database.
+
+## Document references
+
+A reference is an object with exactly one `$ref` property whose value is a URI
+reference:
+
+```json
+{
+  "author": { "$ref": "./authors/ada.json" }
+}
+```
+
+References can appear at any depth in a JSON document. In Markdown, references
+can appear at any depth in YAML frontmatter:
+
+```markdown
+---
+title: Building with Markdown
+author:
+  $ref: ./authors/ada.json
+---
+
+Article body.
+```
+
+An object with additional properties is ordinary content, not a reference.
+The `$ref` spelling is familiar from JSON Schema, but this syntax does not
+implement JSON Schema resolution, identifiers, anchors, or schema evaluation.
+
+Reference paths use standard URI-reference resolution relative to the source
+document. The fragment selects which representation of the target to insert:
+
+| Reference                     | Selected target value                           |
+| ----------------------------- | ----------------------------------------------- |
+| `./author.json`               | Complete JSON value                             |
+| `./author.json#/profile/name` | Value at the JSON Pointer `/profile/name`       |
+| `./article.md`                | Original Markdown source, including frontmatter |
+| `./article.md#body`           | Markdown body without frontmatter               |
+| `./article.md#frontmatter`    | Markdown frontmatter as an object               |
+
+JSON Pointer escaping follows RFC 6901. For example, `#/a~1b` selects the
+property named `a/b`. JSON Pointer fragments apply only to JSON documents;
+`#body` and `#frontmatter` apply only to Markdown documents.
+
+Authored URLs identify Assets during compilation. They do not permit arbitrary
+runtime network requests. Every target must match a document in the compiled
+Asset catalog.
+
+## Resolution behavior
+
+At build time, the content engine:
+
+1. Parses bounded JSON sources and Markdown frontmatter.
+2. Resolves each static URI reference to a document identity and revision.
+3. Rejects missing targets, duplicate identities, revision conflicts, and
+   dependency cycles.
+4. Stores the validated dependency graph with searchable metadata while source
+   payloads remain in Asset storage.
+
+At runtime, the server compares the query's filter, sort, and output property
+paths with the graph's reference locations. If a reference can affect the
+query, the server resolves the relevant source documents before executing the
+query; otherwise it uses the normal query path without loading graph sources.
+Non-reference filters first narrow the candidate sources. The server follows
+only root references that intersect the query, preserves unselected sibling
+markers, and computes the selected references' complete downstream dependency
+closure. It loads independent documents concurrently, loads shared storage
+content once, validates storage identities, revisions, formats, and payload
+limits, and assembles dependencies before their consumers. A resolved value
+replaces its exact `{ "$ref": "..." }` marker.
+
+Filtering, sorting, pagination, and projection therefore operate on resolved
+values when their property paths intersect a reference. Only properties
+selected by the Assets query are returned. Resolution cannot expose an
+unselected property merely because it exists in a fetched document.
+`markdown-body` content selection is also graph-backed. Compilation retains the
+Markdown document identity instead of its source bytes, and runtime hydration
+fetches only the documents selected after filtering, sorting, and pagination.
+The resolved query result continues to expose the body at `content.text`.
+Whole-document and range content modes retain their embedded-content behavior.
+
+Document source caches are keyed by storage reference, revision, and format, so
+content from one identity cannot be combined silently with different graph
+metadata. Published runtime assets must also point at the graph node's exact
+storage reference before the source is fetched. Resolution is bounded by
+document-count, per-document byte, aggregate-byte, and concurrency limits. A
+missing document, invalid representation, stale identity, limit violation, or
+cancellation fails the query instead of returning a partially assembled graph.
+
+Assets without a document graph keep the existing embedded-content behavior
+and do not require migration.

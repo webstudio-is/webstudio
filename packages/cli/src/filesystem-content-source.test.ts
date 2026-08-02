@@ -5,6 +5,7 @@ import {
   createContentCompilationPlan,
   createLiteralContentCompilationQuery,
 } from "@webstudio-is/content-engine";
+import { readBoundedBytes } from "@webstudio-is/content-engine/compiler";
 import type { Asset, AssetFolders } from "@webstudio-is/sdk";
 import { afterEach, describe, expect, test } from "vitest";
 import { createFileSystemContentSource } from "./filesystem-content-source";
@@ -104,6 +105,12 @@ describe("filesystem content source", () => {
         },
       },
     ]);
+    const [documentSource] = (await snapshot.loadDocumentSources?.()) ?? [];
+    expect(documentSource?.id).toBe("post");
+    const documentText = new TextDecoder().decode(
+      await readBoundedBytes(documentSource?.source ?? "", content.length)
+    );
+    expect(documentText).toBe(content);
     await expect(snapshot.isCurrent()).resolves.toBe(true);
   });
 

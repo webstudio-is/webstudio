@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { AssetObjectStore } from "./client";
 import { createUploadTicket, uploadFile } from "./upload";
@@ -9,8 +9,10 @@ import {
 import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import {
   createContentCompilationPlan,
+  createContentRuntimeArtifact,
   createLiteralContentCompilationQuery,
   assetQuery,
+  serializeContentArtifact,
   type AssetQueryInput,
   type AssetFileDocument,
 } from "@webstudio-is/content-engine";
@@ -43,6 +45,23 @@ const assetClient: AssetObjectStore = {
   readFile: vi.fn(),
   uploadFile: vi.fn(),
 };
+
+beforeEach(() => {
+  vi.mocked(assetClient.readFile)
+    .mockReset()
+    .mockImplementation(async (name, range) => {
+      const length = range?.length ?? 2;
+      const content = name.endsWith(".json")
+        ? length === 1
+          ? "0"
+          : "{}".padEnd(length)
+        : " ".repeat(length);
+      return {
+        data: new Blob([content]).stream(),
+        contentLength: length,
+      };
+    });
+});
 
 const createCompilationPlan = (query: AssetQueryInput) => {
   const plan = createContentCompilationPlan([
@@ -496,6 +515,7 @@ describe("PostgresAssetRepository", () => {
       projectId: "project-1",
       entries,
       assetReferences: {},
+      documentGraph: undefined,
       maxBytes: 500 * 1024,
     });
   });
@@ -1263,10 +1283,13 @@ describe("PostgresAssetRepository", () => {
           },
         },
       },
-      createCompilationPlan({
-        where: { all: [] },
-        output: { mode: "all", includeMetadata: true },
-      })
+      {
+        databasePlan: createCompilationPlan({
+          where: { all: [] },
+          output: { mode: "all", includeMetadata: true },
+        }),
+        includeUnresolvedDiagnostics: true,
+      }
     );
 
     expect(dependencies.synchronizeCanonicalAssets).toHaveBeenCalledWith({
@@ -1283,6 +1306,7 @@ describe("PostgresAssetRepository", () => {
     ]);
     expect(result.__diagnostics__).toMatchObject({
       scope: "query-preview",
+      unresolved: result.data,
       query: {
         includedDocumentCount: 1,
         omittedDocumentCount: 0,
@@ -1316,6 +1340,7 @@ describe("PostgresAssetRepository", () => {
     expect(urlResult.data.items).toEqual([
       { id: "asset-1", url: "/cgi/asset/post.md?format=raw" },
     ]);
+    expect(urlResult.__diagnostics__.unresolved).toBeUndefined();
     expect(dependencies.loadAssetsByProjectWithClient).toHaveBeenCalledWith(
       "project-1",
       context.postgrest.client,
@@ -1346,10 +1371,10 @@ describe("PostgresAssetRepository", () => {
     );
     expect(dependencies.loadAssetsByProjectWithClient).not.toHaveBeenCalled();
 
-    vi.mocked(assetClient.readFile).mockResolvedValue({
+    vi.mocked(assetClient.readFile).mockImplementation(async () => ({
       data: new Blob(["# New post"]).stream(),
       contentLength: 10,
-    });
+    }));
     const publishedIndex = await repository.prepareIndex(
       createCompilationPlan({
         where: {
@@ -1367,7 +1392,7 @@ describe("PostgresAssetRepository", () => {
     const publishedFetch = createPublishedAssetResourceFetch({
       baseUrl: "https://blog.example",
       deploymentId: "deployment-1",
-      artifact: publishedIndex,
+      artifact: createContentRuntimeArtifact(publishedIndex),
       runtimeAssets: { "asset-1": { url: "/assets/post.md" } },
     });
     const publishedResponse = await publishedFetch("/$resources/assets", {
@@ -1395,5 +1420,224 @@ describe("PostgresAssetRepository", () => {
         },
       ],
     });
+  });
+
+  test("assembles document graph references in local query preview", async () => {
+    const dependencies = createDependencies();
+    const postSource =
+      '{"title":"Hello","author":{"$ref":"./author.md#frontmatter"}}';
+    const authorSource = "---\nname: Ada\nrole: Writer\n---\nBio\n";
+    const createEntry = ({
+      id,
+      name,
+      source,
+      properties,
+    }: {
+      id: string;
+      name: string;
+      source: string;
+      properties: AssetFileDocument["properties"];
+    }): CanonicalAssetFileEntry => ({
+      projectId: "project-1",
+      assetId: id,
+      revision: `${id}-r1`,
+      document: {
+        _id: id,
+        _type: "asset.file",
+        name,
+        path: `content/${name}`,
+        key: name.slice(0, name.lastIndexOf(".")),
+        extension: name.endsWith(".json") ? "json" : "md",
+        mimeType: name.endsWith(".json")
+          ? "application/json"
+          : "text/markdown; charset=utf-8",
+        size: new TextEncoder().encode(source).byteLength,
+        revision: `${id}-r1`,
+        contentRef: `storage:${id}`,
+        properties,
+      },
+    });
+    const entries = [
+      createEntry({
+        id: "post",
+        name: "post.json",
+        source: postSource,
+        properties: {
+          title: "Hello",
+          author: { $ref: "./author.md#frontmatter" },
+        },
+      }),
+      createEntry({
+        id: "author",
+        name: "author.md",
+        source: authorSource,
+        properties: { name: "Ada", role: "Writer" },
+      }),
+    ];
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const readFile = vi.fn(async (contentRef: string) => {
+      const source = contentRef === "storage:post" ? postSource : authorSource;
+      return {
+        data: new Blob([source]).stream(),
+        contentLength: new TextEncoder().encode(source).byteLength,
+      };
+    });
+    const events: unknown[] = [];
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { readFile },
+      dependencies,
+      onDocumentGraphEvent: (event) => events.push(event),
+    });
+
+    const result = await repository.query(
+      {
+        query: {
+          where: { all: [{ field: ["id"], operator: "eq", value: "post" }] },
+          limit: 1,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [
+              ["properties", "title"],
+              ["properties", "author"],
+            ],
+          },
+        },
+      },
+      { includeUnresolvedDiagnostics: true }
+    );
+
+    expect(result.data.items).toEqual([
+      {
+        id: "post",
+        properties: {
+          title: "Hello",
+          author: { name: "Ada", role: "Writer" },
+        },
+      },
+    ]);
+    expect(result.__diagnostics__.unresolved?.items).toEqual([
+      {
+        id: "post",
+        properties: {
+          title: "Hello",
+          author: { $ref: "./author.md#frontmatter" },
+        },
+      },
+    ]);
+    expect(result.__diagnostics__.artifacts).toEqual({
+      query: expect.objectContaining({ format: "webstudio-content-database" }),
+      database: expect.objectContaining({
+        format: "webstudio-content-database",
+      }),
+    });
+    const artifacts = result.__diagnostics__.artifacts;
+    if (artifacts === undefined) {
+      throw new Error("Expected database artifacts in diagnostics");
+    }
+    expect(
+      new TextEncoder().encode(serializeContentArtifact(artifacts.query))
+        .byteLength
+    ).toBe(result.__diagnostics__.query.unboundedBytes);
+    expect(
+      new TextEncoder().encode(serializeContentArtifact(artifacts.database))
+        .byteLength
+    ).toBe(result.__diagnostics__.database.unboundedBytes);
+    expect(events).toEqual(
+      expect.arrayContaining([
+        { type: "roots-selected", rootCount: 1 },
+        { type: "resolution-started", rootCount: 1, documentCount: 2 },
+        {
+          type: "document-fetch-started",
+          documentId: "post",
+          revision: "post-r1",
+        },
+        {
+          type: "document-fetch-completed",
+          documentId: "author",
+          revision: "author-r1",
+        },
+        { type: "resolution-completed", rootCount: 1, documentCount: 2 },
+      ])
+    );
+  });
+
+  test("keeps deferred Markdown out of unresolved query diagnostics", async () => {
+    const dependencies = createDependencies();
+    const source = "---\nslug: post\ntitle: Post\n---\nStored body\n";
+    const entry: CanonicalAssetFileEntry = {
+      projectId: "project-1",
+      assetId: "post",
+      revision: "post-r1",
+      document: {
+        _id: "post",
+        _type: "asset.file",
+        name: "post.md",
+        path: "content/post.md",
+        key: "post",
+        extension: "md",
+        mimeType: "text/markdown; charset=utf-8",
+        size: new TextEncoder().encode(source).byteLength,
+        revision: "post-r1",
+        contentRef: "storage:post",
+        properties: { slug: "post", title: "Post" },
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const readFile = vi.fn(async () => ({
+      data: new Blob([source]).stream(),
+      contentLength: entry.document.size,
+    }));
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { readFile },
+      dependencies,
+    });
+
+    const result = await repository.query(
+      {
+        query: {
+          where: {
+            all: [
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "post",
+              },
+            ],
+          },
+          limit: 1,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["properties", "title"]],
+          },
+          content: { mode: "markdown-body" },
+        },
+      },
+      { includeUnresolvedDiagnostics: true }
+    );
+
+    expect(result.data.items).toEqual([
+      {
+        id: "post",
+        properties: { title: "Post" },
+        content: { encoding: "utf-8", text: "Stored body\n" },
+      },
+    ]);
+    expect(result.__diagnostics__.unresolved?.items).toEqual([
+      { id: "post", properties: { title: "Post" } },
+    ]);
+    expect(result.__diagnostics__.artifacts?.query.contents).toBeUndefined();
+    expect(result.__diagnostics__.artifacts?.query.documentGraph).toMatchObject(
+      { nodes: [{ id: "post", format: "markdown" }], edges: [] }
+    );
   });
 });

@@ -612,7 +612,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "create-assets-resource",
     description:
-      "Create a scoped Assets resource. Omit query to use the minimal default query. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false unless required, and using content mode none unless file content is rendered. Preview concrete queries and inspect size diagnostics before saving.",
+      'Create a scoped Assets resource. Omit query to use the minimal default query. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false, and using content mode none. Do not embed Markdown with markdown-body when a JSON document can reference it as { "$ref": "./article.md#body" }; select that reference field instead. Embed file content only when document references cannot represent the source. Preview concrete queries and inspect size diagnostics before saving.',
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio create-assets-resource --input assets-resource.json --json",
@@ -621,7 +621,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-assets-resource",
     description:
-      "Update an Assets resource. Set query to null to restore the minimal default query. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false unless required, and loading only the necessary file content after narrow filtering.",
+      'Update an Assets resource. Set query to null to restore the minimal default query. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false, and using content mode none. Prefer a JSON document field such as { "$ref": "./article.md#body" } over embedding Markdown with markdown-body; embed file content only when references cannot represent the source.',
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio update-assets-resource --input assets-resource-update.json --json",

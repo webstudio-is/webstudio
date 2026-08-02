@@ -2,6 +2,7 @@ import { contentArtifactV1, type ContentArtifactV1 } from "./schema";
 import { contentEngineLimits } from "./limits";
 import { serializeJsonDeterministically, sha256 } from "./canonical-json";
 import { getUtf8ByteLength } from "./byte-stream";
+import { verifyDocumentGraphArtifact } from "./document-graph";
 
 export const checksumContentArtifact = async (index: ContentArtifactV1) => {
   const { integrity: _integrity, ...payload } = index;
@@ -25,16 +26,24 @@ export const getContentArtifactReferencedAssetIds = (
 export const getContentArtifactRuntimeAssetIds = ({
   artifact,
   includeDocuments,
+  includeDocumentGraph = true,
 }: {
   artifact: Pick<ContentArtifactV1, "assetReferences"> & {
     documents: readonly { _id: string }[];
+    documentGraph?: { readonly nodes: readonly { id: string }[] };
   };
   includeDocuments: boolean;
+  includeDocumentGraph?: boolean;
 }) => {
   const ids = new Set(getContentArtifactReferencedAssetIds(artifact));
   if (includeDocuments) {
     for (const { _id } of artifact.documents) {
       ids.add(_id);
+    }
+  }
+  if (includeDocumentGraph) {
+    for (const { id } of artifact.documentGraph?.nodes ?? []) {
+      ids.add(id);
     }
   }
   return [...ids].sort();
@@ -53,6 +62,24 @@ export const verifyContentArtifact = async (value: unknown) => {
   assertContentArtifactSize(index);
   if (index.integrity.checksum !== (await checksumContentArtifact(index))) {
     throw new Error("Content artifact checksum is invalid");
+  }
+  if (index.documentGraph !== undefined) {
+    const { graph } = await verifyDocumentGraphArtifact(index.documentGraph);
+    const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
+    for (const document of index.documents) {
+      const node = nodesById.get(document._id);
+      if (
+        node !== undefined &&
+        ((document.revision !== undefined &&
+          node.revision !== document.revision) ||
+          (document.contentRef !== undefined &&
+            node.contentRef !== document.contentRef))
+      ) {
+        throw new Error(
+          `Content artifact document identity does not match graph node ${document._id}`
+        );
+      }
+    }
   }
   return index;
 };
