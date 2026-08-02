@@ -143,7 +143,7 @@ const discoverSnapshotAssetReferences = async ({
           plan: {
             ...plan,
             queries: plan.queries.filter(
-              ({ content }) => content.mode === "markdown-body"
+              ({ content }) => content.mode === "markdown-body-ref"
             ),
           },
         });
@@ -191,15 +191,15 @@ const queryNeedsDocumentGraph = (
   ) {
     return false;
   }
-  if (query.content.mode === "markdown-body") {
+  if (query.content.mode === "markdown-body-ref") {
     return true;
   }
   const queryPlan = createContentCompilationPlan([query]);
   return queryPlan !== undefined && requiresStructuredProperties(queryPlan);
 };
 
-const planDefersMarkdownBodies = (plan?: ContentCompilationPlan) =>
-  plan?.queries.some(({ content }) => content.mode === "markdown-body") ===
+const planReferencesMarkdownBodies = (plan?: ContentCompilationPlan) =>
+  plan?.queries.some(({ content }) => content.mode === "markdown-body-ref") ===
   true;
 
 const discoverSnapshotDocumentGraph = async (
@@ -259,7 +259,8 @@ const discoverSnapshotDocumentGraph = async (
           ),
         }),
   });
-  return graph.edges.length === 0 && planDefersMarkdownBodies(plan) === false
+  return graph.edges.length === 0 &&
+    planReferencesMarkdownBodies(plan) === false
     ? undefined
     : graph;
 };

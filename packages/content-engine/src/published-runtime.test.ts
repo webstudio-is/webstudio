@@ -430,7 +430,7 @@ describe("published asset resource runtime", () => {
           includeMetadata: false,
           fields: [["properties", "title"]],
         },
-        content: { mode: "markdown-body" },
+        content: { mode: "markdown-body-ref" },
       },
     ]);
     expect(plan).toBeDefined();
@@ -462,7 +462,7 @@ describe("published asset resource runtime", () => {
     });
     const runtimeFetch = createPublishedRuntime({
       baseUrl: "https://site.example",
-      deploymentId: "markdown-body-reference",
+      deploymentId: "markdown-body-ref-reference",
       artifact: runtimeArtifact,
       runtimeAssets: {
         first: { url: "/assets/first.md", contentRef: "storage:first" },
@@ -492,7 +492,7 @@ describe("published asset resource runtime", () => {
             includeMetadata: false,
             fields: [["properties", "title"]],
           },
-          content: { mode: "markdown-body" },
+          content: { mode: "markdown-body-ref" },
         },
       }),
     });

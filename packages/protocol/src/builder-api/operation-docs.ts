@@ -612,7 +612,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "create-assets-resource",
     description:
-      'Create a scoped Assets resource. Omit query to use the minimal default query. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false, and using content mode none. Do not embed Markdown with markdown-body when a JSON document can reference it as { "$ref": "./article.md#body" }; select that reference field instead. Embed file content only when document references cannot represent the source. Preview concrete queries and inspect size diagnostics before saving.',
+      'Create a scoped Assets resource. Omit query to use the minimal default query. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false, and using content mode none. Use markdown-body-ref when querying a Markdown body directly; it requires storage-backed document resolution and never embeds the body in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }. Preview concrete queries and inspect size diagnostics before saving.',
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio create-assets-resource --input assets-resource.json --json",
@@ -621,7 +621,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-assets-resource",
     description:
-      'Update an Assets resource. Set query to null to restore the minimal default query. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false, and using content mode none. Prefer a JSON document field such as { "$ref": "./article.md#body" } over embedding Markdown with markdown-body; embed file content only when references cannot represent the source.',
+      'Update an Assets resource. Set query to null to restore the minimal default query. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false, and using content mode none. Use markdown-body-ref for a directly queried Markdown body; it requires storage-backed document resolution and never embeds the body in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }.',
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio update-assets-resource --input assets-resource-update.json --json",

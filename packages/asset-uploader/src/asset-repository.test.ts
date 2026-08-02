@@ -1619,7 +1619,7 @@ describe("PostgresAssetRepository", () => {
             includeMetadata: false,
             fields: [["properties", "title"]],
           },
-          content: { mode: "markdown-body" },
+          content: { mode: "markdown-body-ref" },
         },
       },
       { includeUnresolvedDiagnostics: true }

@@ -284,7 +284,7 @@ export const hydrateAssetResourceResult = async ({
         });
       }
       let text: string;
-      if (options.mode === "markdown-body") {
+      if (options.mode === "markdown-body-ref") {
         try {
           text = (await extractMarkdownBody(bytes, item.readLength || 1)).body;
           const references = assetReferences?.[item.identity.contentRef];

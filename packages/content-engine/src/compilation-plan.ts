@@ -19,6 +19,7 @@ import {
 import {
   compareAssetQueryDocuments,
   matchesAssetQueryFilter,
+  supportsAssetQueryContent,
 } from "./structured-query";
 import { contentEngineLimits } from "./limits";
 import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
@@ -184,7 +185,12 @@ export const getContentDocumentCandidateQueryIds = ({
 }) =>
   plan.queries
     .filter(
-      ({ where }) => evaluateWhere({ document, where, available }) !== false
+      (query) =>
+        supportsAssetQueryContent({
+          document,
+          content: query.content,
+        }) &&
+        evaluateWhere({ document, where: query.where, available }) !== false
     )
     .map(({ id }) => id);
 
@@ -226,8 +232,9 @@ export const selectContentHydrationCandidates = ({
     }
     const matched = documents.filter(
       (document) =>
+        supportsAssetQueryContent({ document, content: query.content }) &&
         evaluateWhere({ document, where: query.where, available: "all" }) !==
-        false
+          false
     );
     if (
       hasDynamicWhere(query.where) ||
@@ -421,6 +428,9 @@ const getStandardFieldPaths = (query: ContentCompilationQuery) => {
     for (const field of ["mimeType", "size", "revision"] as const) {
       addField(fields, [field]);
     }
+  }
+  if (query.content.mode === "markdown-body-ref") {
+    addField(fields, ["extension"]);
   }
   return sortFields(fields.values());
 };

@@ -341,7 +341,7 @@ const queryModeLabels: Record<string, string> = {
   "output:base": "File metadata only",
   "output:fields": "Selected fields",
   "content:none": "Metadata only",
-  "content:markdown-body": "Markdown body",
+  "content:markdown-body-ref": "Markdown body reference",
   "content:full": "Full file",
   "content:range": "Byte range",
 };
