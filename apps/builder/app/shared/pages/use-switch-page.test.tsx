@@ -3,27 +3,8 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import { $, renderData } from "@webstudio-is/template";
 import { __testing__ } from "./use-switch-page";
 
-const {
-  getDeepLinkedInstanceSelection,
-  shouldInitializePageState,
-  shouldNavigateToPageState,
-} = __testing__;
-
-test("waits for complete Builder data before initializing URL state", () => {
-  expect(
-    shouldInitializePageState({
-      isDataLoaded: false,
-      isUrlStateInitialized: false,
-    })
-  ).toBe(false);
-
-  expect(
-    shouldInitializePageState({
-      isDataLoaded: true,
-      isUrlStateInitialized: false,
-    })
-  ).toBe(true);
-});
+const { getDeepLinkedInstanceSelection, shouldNavigateToPageState } =
+  __testing__;
 
 test("preserves an instance deep link until URL state is initialized", () => {
   expect(

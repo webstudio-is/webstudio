@@ -86,17 +86,8 @@ const shouldNavigateToPageState = ({
           instanceSelector
         ) === false));
 
-const shouldInitializePageState = ({
-  isDataLoaded,
-  isUrlStateInitialized,
-}: {
-  isDataLoaded: boolean;
-  isUrlStateInitialized: boolean;
-}) => isDataLoaded && isUrlStateInitialized === false;
-
 export const __testing__ = {
   getDeepLinkedInstanceSelection,
-  shouldInitializePageState,
   shouldNavigateToPageState,
 };
 
@@ -167,10 +158,8 @@ export const useSyncPageUrl = ({ isDataLoaded }: { isDataLoaded: boolean }) => {
   // Individual stores can contain intermediate data before then.
   useEffect(() => {
     if (
-      shouldInitializePageState({
-        isDataLoaded,
-        isUrlStateInitialized,
-      }) &&
+      isDataLoaded &&
+      isUrlStateInitialized === false &&
       setPageStateFromUrl()
     ) {
       setIsUrlStateInitialized(true);
