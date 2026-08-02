@@ -9,7 +9,7 @@ test("includes an instance deep link in builder paths", () => {
       mode: "content",
     })
   ).toBe(
-    "/?pageId=page-id&instanceSelector=instance-id&instanceSelector=slot-id&instanceSelector=body-id&mode=content"
+    "/?pageId=page-id&instance=instance-id%2Cslot-id%2Cbody-id&mode=content"
   );
 });
 
@@ -22,7 +22,7 @@ test("includes an instance deep link in builder urls", () => {
       origin: "https://wstd.dev",
     })
   ).toBe(
-    "https://p-project-id.wstd.dev/?pageId=page-id&instanceSelector=instance-id&instanceSelector=body-id"
+    "https://p-project-id.wstd.dev/?pageId=page-id&instance=instance-id%2Cbody-id"
   );
 });
 

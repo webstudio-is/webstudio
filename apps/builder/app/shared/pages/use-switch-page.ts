@@ -100,6 +100,9 @@ export const __testing__ = {
   shouldNavigateToPageState,
 };
 
+const getInstanceSelectorFromUrl = (searchParams: URLSearchParams) =>
+  searchParams.get("instance")?.split(",");
+
 const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const pages = $pages.get();
@@ -126,12 +129,9 @@ const setPageStateFromUrl = () => {
     )?.id ?? pages.homePageId;
 
   $selectedPageHash.set({ hash: searchParams.get("pageHash") ?? "" });
-  const requestedInstanceSelector = searchParams.getAll("instanceSelector");
+  const requestedInstanceSelector = getInstanceSelectorFromUrl(searchParams);
   const instanceSelection = getDeepLinkedInstanceSelection({
-    instanceSelector:
-      requestedInstanceSelector.length === 0
-        ? undefined
-        : requestedInstanceSelector,
+    instanceSelector: requestedInstanceSelector,
     canOpenPageTemplates: $canOpenPageTemplates.get(),
     pages,
     instances: $instances.get(),
@@ -197,7 +197,7 @@ export const useSyncPageUrl = ({ isDataLoaded }: { isDataLoaded: boolean }) => {
     const searchParamsPageId = searchParams.get("pageId") ?? pages.homePageId;
     const searchParamsPageHash = searchParams.get("pageHash") ?? "";
     const searchParamsInstanceSelector =
-      searchParams.getAll("instanceSelector");
+      getInstanceSelectorFromUrl(searchParams);
     const searchParamsModeRaw = searchParams.get("mode");
     const searchParamsMode = isBuilderMode(searchParamsModeRaw)
       ? searchParamsModeRaw
@@ -223,10 +223,7 @@ export const useSyncPageUrl = ({ isDataLoaded }: { isDataLoaded: boolean }) => {
       shouldNavigateToPageState({
         isUrlStateInitialized,
         isSamePageState,
-        searchParamsInstanceSelector:
-          searchParamsInstanceSelector.length === 0
-            ? undefined
-            : searchParamsInstanceSelector,
+        searchParamsInstanceSelector,
         instanceSelector,
       }) === false
     ) {

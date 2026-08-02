@@ -3,17 +3,9 @@ import { getAssetUploadApiUrl } from "@webstudio-is/sdk/runtime";
 import { getAuthorizationServerOrigin } from "./origins";
 import type { BuilderMode } from "../nano-states/misc";
 
-const searchParams = (
-  params: Record<string, string | readonly string[] | undefined | null>
-) => {
+const searchParams = (params: Record<string, string | undefined | null>) => {
   const searchParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        searchParams.append(key, item);
-      }
-      continue;
-    }
     if (typeof value === "string") {
       searchParams.set(key, value);
     }
@@ -41,7 +33,7 @@ export const builderPath = ({
 }: BuilderLinkParams = {}) => {
   return `/${searchParams({
     pageId,
-    instanceSelector,
+    instance: instanceSelector?.join(","),
     authToken,
     pageHash,
     mode,
