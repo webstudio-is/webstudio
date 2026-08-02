@@ -35,15 +35,15 @@ export const getContentDatabaseDiagnosticRows = (
 ) => [
   {
     label: "Query size",
-    value: prettyBytes(value.query.unboundedBytes),
+    value: prettyBytes(value.query.usedBytes),
     valueColor: value.query.truncated ? ("destructive" as const) : undefined,
-    description: `Temporary query-only footprint before the database limit is applied. It is not added to the published database size. ${runtimeContentNote}`,
+    description: `Serialized temporary query-only footprint after the database limit is applied. It is not added to the published database size. ${runtimeContentNote}`,
   },
   {
     label: "Database size",
-    value: prettyBytes(value.database.unboundedBytes),
+    value: prettyBytes(value.database.usedBytes),
     valueColor: value.database.truncated ? ("destructive" as const) : undefined,
-    description: `Merged footprint of all reachable Assets queries before the database limit is applied. ${runtimeContentNote}`,
+    description: `Serialized merged footprint of all reachable Assets queries included in the published bundle. ${runtimeContentNote}`,
   },
 ];
 

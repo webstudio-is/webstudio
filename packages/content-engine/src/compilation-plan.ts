@@ -173,6 +173,14 @@ const evaluateWhere = ({
   });
 };
 
+const supportsQueryContent = (
+  document: AssetFileDocument,
+  query: ContentCompilationPlan["queries"][number]
+) =>
+  query.content.mode !== "markdown-body" ||
+  document.mimeType === "text/markdown" ||
+  document.extension === "md";
+
 export const getContentDocumentCandidateQueryIds = ({
   document,
   plan,
@@ -226,8 +234,9 @@ export const selectContentHydrationCandidates = ({
     }
     const matched = documents.filter(
       (document) =>
+        supportsQueryContent(document, query) &&
         evaluateWhere({ document, where: query.where, available: "all" }) !==
-        false
+          false
     );
     if (
       hasDynamicWhere(query.where) ||

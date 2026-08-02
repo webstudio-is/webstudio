@@ -13,7 +13,7 @@ const createDiagnostics = ({
   query: {
     usedBytes: 20_000,
     maxBytes: 500_000,
-    unboundedBytes: 20_000,
+    unboundedBytes: 30_000,
     includedDocumentCount: 5,
     omittedDocumentCount: 0,
     truncated: queryTruncated,
@@ -42,13 +42,13 @@ describe("content database diagnostics", () => {
         label: "Query size",
         value: "20 kB",
         valueColor: undefined,
-        description: expect.stringContaining("before the database limit"),
+        description: expect.stringContaining("after the database limit"),
       },
       {
         label: "Database size",
-        value: "600 kB",
+        value: "35 kB",
         valueColor: "destructive",
-        description: expect.stringContaining("before the database limit"),
+        description: expect.stringContaining("published bundle"),
       },
     ]);
   });
