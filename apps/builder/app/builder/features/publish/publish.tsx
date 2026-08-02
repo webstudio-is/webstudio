@@ -531,8 +531,6 @@ const Publish = ({
   }, [project.domain]);
 
   const publish = async (domains: string[]) => {
-    setIsPublishing(true);
-
     const publishResult = await nativeClient.domain.publish.mutate({
       projectId: project.id,
       domains,
@@ -657,6 +655,8 @@ const Publish = ({
     }
 
     startTransition(async () => {
+      setIsPublishing(true);
+
       try {
         await showContentDatabasePublishWarning({
           projectId: project.id,
