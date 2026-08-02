@@ -22,6 +22,7 @@ import {
 } from "./schema";
 import { contentEngineLimits } from "./limits";
 import {
+  areJsonValuesEqual,
   compareStrings,
   serializeJsonDeterministically,
 } from "./canonical-json";
@@ -179,16 +180,6 @@ export const getAssetQueryFieldValue = (
   return value;
 };
 
-const equalJson = (left: unknown, right: unknown) => {
-  if (left === undefined || right === undefined) {
-    return left === right;
-  }
-  return (
-    serializeJsonDeterministically(left) ===
-    serializeJsonDeterministically(right)
-  );
-};
-
 const isEmpty = (value: unknown) => {
   if (typeof value === "string" || Array.isArray(value)) {
     return value.length === 0;
@@ -222,13 +213,15 @@ export const matchesAssetQueryFilter = (
     return isEmpty(value) === filter.value;
   }
   if (filter.operator === "eq") {
-    return equalJson(value, filter.value);
+    return areJsonValuesEqual(value, filter.value);
   }
   if (filter.operator === "ne") {
-    return equalJson(value, filter.value) === false;
+    return areJsonValuesEqual(value, filter.value) === false;
   }
   if (filter.operator === "in") {
-    return filter.value.some((candidate) => equalJson(value, candidate));
+    return filter.value.some((candidate) =>
+      areJsonValuesEqual(value, candidate)
+    );
   }
   if (filter.operator === "contains") {
     if (typeof value === "string" && typeof filter.value === "string") {
@@ -236,7 +229,7 @@ export const matchesAssetQueryFilter = (
     }
     return (
       Array.isArray(value) &&
-      value.some((candidate) => equalJson(candidate, filter.value))
+      value.some((candidate) => areJsonValuesEqual(candidate, filter.value))
     );
   }
   if (filter.operator === "startsWith") {

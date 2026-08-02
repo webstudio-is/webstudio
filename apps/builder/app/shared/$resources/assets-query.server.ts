@@ -29,9 +29,11 @@ export const executeAssetQuery = async (
   {
     request,
     resourceRequest,
+    includeDiagnostics = true,
   }: {
     request: Request;
     resourceRequest: Request;
+    includeDiagnostics?: boolean;
   },
   dependencies = defaultDependencies
 ) => {
@@ -67,7 +69,8 @@ export const executeAssetQuery = async (
       projectId,
       request: parsed,
       context,
-      includeUnresolvedDiagnostics: true,
+      includeDiagnostics,
+      includeUnresolvedDiagnostics: includeDiagnostics,
     });
     return json(result, { headers: privateNoStoreResponseHeaders });
   } catch (error) {

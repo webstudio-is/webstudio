@@ -69,7 +69,11 @@ describe("configured Assets system resource", () => {
     };
 
     const response = await executeAssetQuery(
-      { request: outerRequest(), resourceRequest: innerRequest({ query }) },
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({ query }),
+        includeDiagnostics: false,
+      },
       dependencies
     );
 
@@ -91,8 +95,30 @@ describe("configured Assets system resource", () => {
         }),
       },
       context: expect.anything(),
-      includeUnresolvedDiagnostics: true,
+      includeDiagnostics: false,
+      includeUnresolvedDiagnostics: false,
     });
+  });
+
+  test("includes detailed diagnostics when explicitly requested", async () => {
+    dependencies.previewProjectAssetQuery.mockResolvedValue({
+      data: { items: [], totalCount: 0, hasMore: false },
+    });
+    await executeAssetQuery(
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({ query: {} }),
+        includeDiagnostics: true,
+      },
+      dependencies
+    );
+
+    expect(dependencies.previewProjectAssetQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        includeDiagnostics: true,
+        includeUnresolvedDiagnostics: true,
+      })
+    );
   });
 
   test("supports the public REST URL with an explicit project", async () => {
@@ -133,6 +159,12 @@ describe("configured Assets system resource", () => {
       request,
       projectId,
       "view"
+    );
+    expect(dependencies.previewProjectAssetQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        includeDiagnostics: true,
+        includeUnresolvedDiagnostics: true,
+      })
     );
   });
 

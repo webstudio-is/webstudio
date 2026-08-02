@@ -83,10 +83,12 @@ export const RequestInspector = ({
   queryContainerRef,
   preview,
   diagnostics,
+  onDiagnosticsOpen,
 }: {
   queryContainerRef?: Ref<HTMLDivElement>;
   preview: ReactNode;
   diagnostics?: ReactNode;
+  onDiagnosticsOpen?: () => void;
 }) => (
   <PanelTabs
     key={queryContainerRef === undefined ? "preview" : "query"}
@@ -104,7 +106,9 @@ export const RequestInspector = ({
         <PanelTabsTrigger value="query">Query</PanelTabsTrigger>
       )}
       <PanelTabsTrigger value="preview">Preview</PanelTabsTrigger>
-      <PanelTabsTrigger value="diagnostics">Diagnostics</PanelTabsTrigger>
+      <PanelTabsTrigger value="diagnostics" onClick={onDiagnosticsOpen}>
+        Diagnostics
+      </PanelTabsTrigger>
     </PanelTabsList>
     {queryContainerRef !== undefined && (
       <PanelTabsContent

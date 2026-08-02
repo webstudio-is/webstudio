@@ -4,6 +4,7 @@ import {
   hasDynamicContentCompilationValues,
   createContentFieldCatalogCompilationPlan,
   createLiteralContentCompilationQuery,
+  isAssetQueryCoveredByCompilationPlan,
   isContentDocumentCandidate,
   prepareContentCompilerEntries,
   requiresHydratedContent,
@@ -37,6 +38,80 @@ const compilationQuery = (id: string, value: AssetQuery = query) =>
     id,
     query: value,
   });
+
+test("recognizes runtime instances of a compiled dynamic query", () => {
+  const output = {
+    mode: "fields" as const,
+    includeMetadata: false,
+    fields: [["properties", "title"]],
+  };
+  const plan = createContentCompilationPlan([
+    {
+      id: "post",
+      where: {
+        all: [
+          {
+            field: ["extension"],
+            operator: "eq",
+            value: { type: "literal", value: "md" },
+          },
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: { type: "dynamic" },
+          },
+        ],
+      },
+      sort: [],
+      limit: { type: "dynamic" },
+      offset: { type: "dynamic" },
+      output,
+      content: { mode: "markdown-body-ref" },
+    },
+  ]);
+  expect(plan).toBeDefined();
+  if (plan === undefined) {
+    return;
+  }
+  const runtimeQuery = assetQuery.parse({
+    where: {
+      all: [
+        { field: ["extension"], operator: "eq", value: "md" },
+        {
+          field: ["properties", "slug"],
+          operator: "eq",
+          value: "welcome",
+        },
+      ],
+    },
+    limit: 1,
+    offset: 20,
+    output,
+    content: { mode: "markdown-body-ref" },
+  });
+
+  expect(
+    isAssetQueryCoveredByCompilationPlan({ plan, query: runtimeQuery })
+  ).toBe(true);
+  expect(
+    isAssetQueryCoveredByCompilationPlan({
+      plan,
+      query: {
+        ...runtimeQuery,
+        where: {
+          all: [
+            { field: ["extension"], operator: "eq", value: "json" },
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "welcome",
+            },
+          ],
+        },
+      },
+    })
+  ).toBe(false);
+});
 
 const document: AssetFileDocument = {
   _id: "post",

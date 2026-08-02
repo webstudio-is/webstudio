@@ -6,12 +6,14 @@ import {
   createLiteralContentCompilationQuery,
   getContentArtifactRuntimeAssetIds,
   getDocumentFormatByContentType,
+  isAssetQueryCoveredByCompilationPlan,
   isContentDocumentCandidate,
   prepareContentCompilerEntries,
   requiresRuntimeDocumentData,
   requiresStructuredProperties,
   type AssetQueryRequestInput,
   type AssetQueryPreviewResult,
+  type AssetQueryResult,
   type BuilderAssetFieldCatalog,
   type ContentCompilationPlan,
   type DocumentGraphRuntimeObserver,
@@ -134,7 +136,17 @@ export type AssetContentRead = {
 
 type AssetQueryPreviewOptions = {
   databasePlan?: ContentCompilationPlan;
+  diagnosticsPlan?: ContentCompilationPlan;
+  includeDiagnostics?: boolean;
   includeUnresolvedDiagnostics?: boolean;
+};
+
+type AssetQueryResultOnly = { data: AssetQueryResult };
+type AssetQueryOptionsWithoutDiagnostics = AssetQueryPreviewOptions & {
+  includeDiagnostics: false;
+};
+type AssetQueryOptionsWithDiagnostics = AssetQueryPreviewOptions & {
+  includeDiagnostics?: true;
 };
 
 export interface AssetRepository {
@@ -180,7 +192,11 @@ export interface AssetRepository {
   readFieldCatalog(): Promise<BuilderAssetFieldCatalog>;
   query(
     request: AssetQueryRequestInput,
-    options?: AssetQueryPreviewOptions
+    options: AssetQueryOptionsWithoutDiagnostics
+  ): Promise<AssetQueryResultOnly>;
+  query(
+    request: AssetQueryRequestInput,
+    options?: AssetQueryOptionsWithDiagnostics
   ): Promise<AssetQueryPreviewResult>;
 }
 
@@ -762,25 +778,51 @@ export class PostgresAssetRepository implements AssetRepository {
     return toBuilderAssetFieldCatalog(await createAssetFieldCatalog(entries));
   }
 
+  query(
+    request: AssetQueryRequestInput,
+    options: AssetQueryOptionsWithoutDiagnostics
+  ): Promise<AssetQueryResultOnly>;
+  query(
+    request: AssetQueryRequestInput,
+    options?: AssetQueryOptionsWithDiagnostics
+  ): Promise<AssetQueryPreviewResult>;
   async query(
     request: AssetQueryRequestInput,
     {
       databasePlan,
+      diagnosticsPlan,
+      includeDiagnostics = true,
       includeUnresolvedDiagnostics = false,
     }: AssetQueryPreviewOptions = {}
-  ): Promise<AssetQueryPreviewResult> {
+  ): Promise<AssetQueryPreviewResult | AssetQueryResultOnly> {
     await this.assertCanView();
     const query = assetQuery.parse(request.query);
     const plan = createContentCompilationPlan([
       createLiteralContentCompilationQuery({ id: "preview", query }),
     ]);
-    const index = await this.prepareIndexAfterAuthorization(plan, false);
+    // Public REST queries are not necessarily represented by the Builder's
+    // saved compilation plan. Reuse that database only when one of its queries
+    // structurally covers the current runtime values.
+    const coveredByDatabasePlan =
+      databasePlan !== undefined &&
+      isAssetQueryCoveredByCompilationPlan({ plan: databasePlan, query });
+    const index = await this.prepareIndexAfterAuthorization(
+      coveredByDatabasePlan ? databasePlan : plan,
+      false
+    );
     const database = getContentDatabaseForArtifact(index);
-    const publishedIndex =
-      databasePlan === undefined
-        ? index
-        : await this.prepareIndexAfterAuthorization(databasePlan, false);
-    const publishedDatabase = getContentDatabaseForArtifact(publishedIndex);
+    const queryIndex =
+      includeDiagnostics && coveredByDatabasePlan
+        ? await this.prepareIndexAfterAuthorization(plan, false)
+        : index;
+    let publishedIndex: typeof index | undefined;
+    if (includeDiagnostics) {
+      const publishedPlan = diagnosticsPlan ?? databasePlan;
+      publishedIndex =
+        publishedPlan === undefined
+          ? queryIndex
+          : await this.prepareIndexAfterAuthorization(publishedPlan, false);
+    }
     const runtimeAssetIds = getContentArtifactRuntimeAssetIds({
       artifact: index,
       includeDocuments: plan !== undefined && requiresRuntimeDocumentData(plan),
@@ -802,7 +844,7 @@ export class PostgresAssetRepository implements AssetRepository {
           )
         : undefined;
     const unresolved = includeUnresolvedDiagnostics
-      ? await database.query(
+      ? await getContentDatabaseForArtifact(queryIndex).query(
           query.content.mode === "none"
             ? request
             : { ...request, query: { ...query, content: { mode: "none" } } },
@@ -847,14 +889,22 @@ export class PostgresAssetRepository implements AssetRepository {
       ...(omissionReason === undefined ? {} : { omissionReason }),
       truncated,
     });
+    if (includeDiagnostics === false) {
+      return { data };
+    }
+    if (publishedIndex === undefined) {
+      throw new Error("Diagnostics index was not prepared");
+    }
+    const queryDatabase = getContentDatabaseForArtifact(queryIndex);
+    const publishedDatabase = getContentDatabaseForArtifact(publishedIndex);
     return {
       data,
       __diagnostics__: {
         scope: "query-preview",
-        query: toCapacityStats(database.getStats()),
+        query: toCapacityStats(queryDatabase.getStats()),
         database: toCapacityStats(publishedDatabase.getStats()),
         ...(includeUnresolvedDiagnostics
-          ? { artifacts: { query: index, database: publishedIndex } }
+          ? { artifacts: { query: queryIndex, database: publishedIndex } }
           : {}),
         ...(unresolved === undefined ? {} : { unresolved }),
       },

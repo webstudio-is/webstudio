@@ -16,6 +16,8 @@ import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
   await checkCsrf(request);
+  const includeDiagnostics =
+    new URL(request.url).searchParams.get("diagnostics") === "true";
 
   // Hope Remix will have customFetch by default, see https://kit.svelte.dev/docs/load#making-fetch-requests
   const customFetch: typeof fetch = (input, init) => {
@@ -33,7 +35,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (isLocalResource(input, "assets")) {
       const resourceRequest = new Request(new URL(input, request.url), init);
-      return executeAssetQuery({ request, resourceRequest });
+      return executeAssetQuery({
+        request,
+        resourceRequest,
+        includeDiagnostics,
+      });
     }
 
     if (isLocalResource(input, "assets/field-catalog")) {

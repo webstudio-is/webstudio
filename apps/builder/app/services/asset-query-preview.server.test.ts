@@ -38,7 +38,8 @@ describe("project asset query preview", () => {
       context,
       assetClient,
       contentDatabaseMaxBytes: 512_000,
-      databasePlan: expect.objectContaining({
+      databasePlan: undefined,
+      diagnosticsPlan: expect.objectContaining({
         queries: expect.arrayContaining([
           expect.objectContaining({
             id: "__query-preview__",

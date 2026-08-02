@@ -5,6 +5,7 @@ import {
   createLiteralContentCompilationQuery,
   hasDynamicContentCompilationValues,
   type AssetQueryInput,
+  type ContentCompilationPlan,
   type ContentArtifactV1,
 } from "@webstudio-is/content-engine";
 import {
@@ -36,21 +37,19 @@ export const createBuildContentCompilationPlan = (
   });
 
 export const createAssetQueryPreviewCompilationPlan = ({
-  build,
+  databasePlan,
   query,
 }: {
-  build: ContentDatabaseBuild;
+  databasePlan: ContentCompilationPlan | undefined;
   query: AssetQueryInput;
-}) => {
-  const savedPlan = createBuildContentCompilationPlan(build);
-  return createContentCompilationPlan([
-    ...(savedPlan?.queries ?? []),
+}) =>
+  createContentCompilationPlan([
+    ...(databasePlan?.queries ?? []),
     createLiteralContentCompilationQuery({
       id: "__query-preview__",
       query: assetQuery.parse(query),
     }),
   ]);
-};
 
 export const getContentDatabasePublishDiagnostics = ({
   build,

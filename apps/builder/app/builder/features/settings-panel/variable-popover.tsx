@@ -44,9 +44,11 @@ import {
 } from "@webstudio-is/design-system";
 import {
   type DataSource,
+  type ResourceRequest,
   SYSTEM_VARIABLE_ID,
   resourceRequest,
 } from "@webstudio-is/sdk";
+import { isAssetsResourceRequest } from "@webstudio-is/sdk/runtime";
 import {
   ExpressionEditor,
   formatValue,
@@ -92,6 +94,7 @@ import {
   computeResourceRequest,
   getResourceKey,
   invalidateResource,
+  loadResourceDiagnostics,
 } from "~/shared/resources";
 import { Row } from "./shared";
 import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
@@ -696,6 +699,7 @@ const VariablePreview = ({
   const resourceScope = useResourceScope({ variable });
   let computedValue: unknown;
   let resourceDiagnostics: AssetQueryPreviewDiagnostics | undefined;
+  let computedResourceRequest: ResourceRequest | undefined;
   if (variableType === "string" || variableType === "boolean") {
     computedValue = variableValue;
   } else if (variableType === "json") {
@@ -720,6 +724,7 @@ const VariablePreview = ({
       }
     }
     if (parsedResourceRequest) {
+      computedResourceRequest = parsedResourceRequest;
       const resourceKey = getResourceKey(parsedResourceRequest);
       computedValue = resourcesCache.get(resourceKey);
       resourceDiagnostics = resourceDiagnosticsCache.get(resourceKey);
@@ -775,6 +780,15 @@ const VariablePreview = ({
     <RequestInspector
       queryContainerRef={queryActive ? queryContainerRef : undefined}
       preview={preview}
+      onDiagnosticsOpen={
+        computedResourceRequest !== undefined &&
+        isAssetsResourceRequest(computedResourceRequest) &&
+        resourceDiagnostics?.artifacts === undefined
+          ? () => {
+              void loadResourceDiagnostics(computedResourceRequest);
+            }
+          : undefined
+      }
       diagnostics={
         requestErrorDiagnostics !== undefined ? (
           <RequestErrorDiagnostics value={requestErrorDiagnostics} />
