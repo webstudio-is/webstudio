@@ -35,10 +35,13 @@ export const loader: LoaderFunction = async ({ request }) => {
         const response = new Response(noStoreResponse.body, noStoreResponse);
 
         const url = new URL(request.url);
-        let returnTo = url.searchParams.get("returnTo");
+        const isAuthRoute = url.pathname === "/auth/ws";
+        let returnTo = isAuthRoute
+          ? url.searchParams.get("returnTo")
+          : `${url.pathname}${url.search}`;
 
         if (returnTo !== null) {
-          if (comparePathnames(returnTo, request.url)) {
+          if (isAuthRoute && comparePathnames(returnTo, request.url)) {
             // avoid loops
             returnTo = "/";
           }

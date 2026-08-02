@@ -16,7 +16,7 @@ const searchParams = (params: Record<string, string | undefined | null>) => {
 
 export type BuilderLinkParams = {
   pageId?: string;
-  instanceId?: string;
+  instanceSelector?: readonly string[];
   authToken?: string;
   pageHash?: string;
   mode?: BuilderMode;
@@ -25,7 +25,7 @@ export type BuilderLinkParams = {
 
 export const builderPath = ({
   pageId,
-  instanceId,
+  instanceSelector,
   authToken,
   pageHash,
   mode,
@@ -33,7 +33,7 @@ export const builderPath = ({
 }: BuilderLinkParams = {}) => {
   return `/${searchParams({
     pageId,
-    instanceId,
+    instance: instanceSelector?.join(","),
     authToken,
     pageHash,
     mode,

@@ -88,7 +88,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
   }
 
   if (context.authorization.type === "anonymous") {
-    throw await authWsLoader(loaderArgs); // redirect("/auth/ws");
+    throw await authWsLoader(loaderArgs);
   }
 
   if (
@@ -106,7 +106,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
       Date.now() - context.authorization.sessionCreatedAt >
       RELOAD_ON_NAVIGATE_TIMEOUT
     ) {
-      throw await authWsLoader(loaderArgs); // start immediately instead of redirect("/auth/ws");
+      throw await authWsLoader(loaderArgs);
     }
   }
 
@@ -276,7 +276,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
   } catch (error) {
     if (error instanceof AuthorizationError) {
       // try to re-login user if he has no access to the project
-      throw redirect(`/auth/ws`);
+      throw await authWsLoader(loaderArgs);
     }
 
     throw error;
