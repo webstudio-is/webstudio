@@ -67,8 +67,17 @@ const shouldNavigateToPageState = ({
   isUrlStateInitialized &&
   (isSamePageState === false || searchParamsInstanceId !== instanceId);
 
+const shouldInitializePageState = ({
+  isDataLoaded,
+  isUrlStateInitialized,
+}: {
+  isDataLoaded: boolean;
+  isUrlStateInitialized: boolean;
+}) => isDataLoaded && isUrlStateInitialized === false;
+
 export const __testing__ = {
   getDeepLinkedInstanceSelection,
+  shouldInitializePageState,
   shouldNavigateToPageState,
 };
 
@@ -76,7 +85,7 @@ const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const pages = $pages.get();
   if (pages === undefined) {
-    return;
+    return false;
   }
 
   let mode = searchParams.get("mode");
@@ -107,9 +116,10 @@ const setPageStateFromUrl = () => {
   if (instanceSelection !== undefined) {
     $selectedPageId.set(instanceSelection.pageId);
     selectInstance(instanceSelection.instanceSelector);
-    return;
+    return true;
   }
   selectPage(pageId);
+  return true;
 };
 
 /**
@@ -121,7 +131,7 @@ const setPageStateFromUrl = () => {
  *  - atoms to searchParams
  *    - on atom change
  */
-export const useSyncPageUrl = () => {
+export const useSyncPageUrl = ({ isDataLoaded }: { isDataLoaded: boolean }) => {
   const navigate = useNavigate();
   const [isUrlStateInitialized, setIsUrlStateInitialized] = useState(false);
   const page = useStore($selectedPage);
@@ -130,33 +140,19 @@ export const useSyncPageUrl = () => {
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const canOpenPageTemplate = useStore($canOpenPageTemplates);
 
-  // Get page and instance state from the URL once both stores are loaded.
-  // Pages are populated before instances, so initializing from the pages
-  // notification can reject a valid instance deep link as missing.
+  // Apply initial URL state only after the sync client has finished loading.
+  // Individual stores can contain intermediate data before then.
   useEffect(() => {
-    let didInitialize = false;
-    const initialize = () => {
-      if (
-        didInitialize ||
-        $pages.get() === undefined ||
-        $instances.get().size === 0
-      ) {
-        return;
-      }
-
-      didInitialize = true;
-      setPageStateFromUrl();
+    if (
+      shouldInitializePageState({
+        isDataLoaded,
+        isUrlStateInitialized,
+      }) &&
+      setPageStateFromUrl()
+    ) {
       setIsUrlStateInitialized(true);
-    };
-    const unsubscribePages = $pages.listen(initialize);
-    const unsubscribeInstances = $instances.listen(initialize);
-    initialize();
-
-    return () => {
-      unsubscribePages();
-      unsubscribeInstances();
-    };
-  }, []);
+    }
+  }, [isDataLoaded, isUrlStateInitialized]);
 
   useEffect(() => {
     window.addEventListener("popstate", setPageStateFromUrl);

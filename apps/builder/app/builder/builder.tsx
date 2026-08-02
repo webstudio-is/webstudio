@@ -326,7 +326,8 @@ export const Builder = (props: BuilderProps) => {
     $pages.set(undefined);
   });
 
-  useSyncPageUrl();
+  const dataLoadingState = useStore($dataLoadingState);
+  useSyncPageUrl({ isDataLoaded: dataLoadingState === "loaded" });
 
   const [publish, publishRef] = usePublish();
   useEffect(() => {
@@ -361,7 +362,6 @@ export const Builder = (props: BuilderProps) => {
   );
 
   const { navigatorLayout } = useStore($settings);
-  const dataLoadingState = useStore($dataLoadingState);
   const [loadingState, setLoadingState] = useState(() => $loadingState.get());
 
   useEffect(() => {
