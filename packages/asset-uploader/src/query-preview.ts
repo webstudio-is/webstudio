@@ -37,10 +37,19 @@ export const previewAssetResourceQuery = async ({
     contentDatabaseMaxBytes,
     onDocumentGraphEvent,
   });
-  return await repository.query(request, {
+  const options = {
     databasePlan,
     diagnosticsPlan,
-    includeDiagnostics,
     includeUnresolvedDiagnostics,
+  };
+  if (includeDiagnostics === false) {
+    return await repository.query(request, {
+      ...options,
+      includeDiagnostics: false,
+    });
+  }
+  return await repository.query(request, {
+    ...options,
+    includeDiagnostics: true,
   });
 };

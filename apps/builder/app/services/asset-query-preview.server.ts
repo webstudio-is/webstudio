@@ -32,18 +32,19 @@ export const previewProjectAssetQuery = async (
   dependencies = defaultDependencies
 ) => {
   const build = await dependencies.loadDevBuildByProjectId(context, projectId);
+  const databasePlan = createBuildContentCompilationPlan(build);
   return await dependencies.previewAssetResourceQuery({
     projectId,
     request,
     context,
     assetClient: dependencies.createAssetClient(),
     contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
-    databasePlan: createBuildContentCompilationPlan(build),
+    databasePlan,
     ...(includeDiagnostics === false
       ? {}
       : {
           diagnosticsPlan: createAssetQueryPreviewCompilationPlan({
-            build,
+            databasePlan,
             query: request.query,
           }),
         }),

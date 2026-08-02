@@ -69,7 +69,11 @@ describe("configured Assets system resource", () => {
     };
 
     const response = await executeAssetQuery(
-      { request: outerRequest(), resourceRequest: innerRequest({ query }) },
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({ query }),
+        includeDiagnostics: false,
+      },
       dependencies
     );
 
@@ -100,10 +104,12 @@ describe("configured Assets system resource", () => {
     dependencies.previewProjectAssetQuery.mockResolvedValue({
       data: { items: [], totalCount: 0, hasMore: false },
     });
-    const request = new Request(`${outerRequest().url}?diagnostics=true`);
-
     await executeAssetQuery(
-      { request, resourceRequest: innerRequest({ query: {} }) },
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({ query: {} }),
+        includeDiagnostics: true,
+      },
       dependencies
     );
 

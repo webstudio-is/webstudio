@@ -29,9 +29,11 @@ export const executeAssetQuery = async (
   {
     request,
     resourceRequest,
+    includeDiagnostics = true,
   }: {
     request: Request;
     resourceRequest: Request;
+    includeDiagnostics?: boolean;
   },
   dependencies = defaultDependencies
 ) => {
@@ -58,10 +60,6 @@ export const executeAssetQuery = async (
     });
   }
   try {
-    const outerUrl = new URL(request.url);
-    const includeDiagnostics =
-      outerUrl.pathname !== "/rest/resources-loader" ||
-      outerUrl.searchParams.get("diagnostics") === "true";
     const context = await dependencies.authorizeApiProject(
       request,
       projectId,

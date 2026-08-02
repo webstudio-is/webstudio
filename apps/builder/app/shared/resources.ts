@@ -18,6 +18,7 @@ const cache = new Map<string, unknown>();
 const diagnosticsCache = new Map<string, AssetQueryPreviewDiagnostics>();
 const pendingDiagnostics = new Map<string, Promise<void>>();
 const knownRequests = new Map<string, ResourceRequest>();
+const resourceVersions = new Map<string, number>();
 
 export const $resourcesCache = atom(cache);
 export const $resourceDiagnosticsCache = atom(diagnosticsCache);
@@ -41,11 +42,13 @@ export const $hasPendingResources = computed(
 const loadResources = async (requestFetch: typeof fetch = fetch) => {
   const list = Array.from(queue.values()).slice(0, MAX_PENDING_RESOURCES);
   const dispatched = new Map<string, ResourceRequest>();
+  const dispatchedVersions = new Map<string, number>();
   for (const resource of list) {
     const key = getResourceKey(resource);
     queue.delete(key);
     pending.set(key, resource);
     dispatched.set(key, resource);
+    dispatchedVersions.set(key, resourceVersions.get(key) ?? 0);
   }
   updatePending();
 
@@ -60,7 +63,11 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
     const results = new Map<string, unknown>(await response.json());
     for (const [key, result] of results) {
       const request = dispatched.get(key);
-      if (request === undefined || knownRequests.has(key) === false) {
+      if (
+        request === undefined ||
+        knownRequests.has(key) === false ||
+        resourceVersions.get(key) !== dispatchedVersions.get(key)
+      ) {
         continue;
       }
       const separated = separateResourceDiagnostics({ request, result });
@@ -102,6 +109,9 @@ const scheduleLoading = () => {
 const preloadResource = (resource: ResourceRequest) => {
   const key = getResourceKey(resource);
   knownRequests.set(key, resource);
+  if (resourceVersions.has(key) === false) {
+    resourceVersions.set(key, 0);
+  }
   if (queue.has(key) || pending.has(key) || cache.has(key)) {
     return;
   }
@@ -110,14 +120,26 @@ const preloadResource = (resource: ResourceRequest) => {
   updatePending();
 };
 
+const invalidateRequestState = (key: string) => {
+  diagnosticsCache.delete(key);
+  pendingDiagnostics.delete(key);
+  resourceVersions.set(key, (resourceVersions.get(key) ?? 0) + 1);
+};
+
 export const preloadResources = (resources: readonly ResourceRequest[]) => {
   const currentKeys = new Set(resources.map(getResourceKey));
   let pendingChanged = false;
+  let diagnosticsChanged = false;
   for (const key of knownRequests.keys()) {
     if (currentKeys.has(key) === false) {
       knownRequests.delete(key);
+      invalidateRequestState(key);
+      diagnosticsChanged = true;
       pendingChanged = queue.delete(key) || pendingChanged;
     }
+  }
+  if (diagnosticsChanged) {
+    updateCache();
   }
   if (pendingChanged) {
     updatePending();
@@ -131,8 +153,11 @@ export const preloadResources = (resources: readonly ResourceRequest[]) => {
 export const invalidateResource = (resource: ResourceRequest) => {
   const key = getResourceKey(resource);
   cache.delete(key);
-  diagnosticsCache.delete(key);
-  preloadResource(resource);
+  invalidateRequestState(key);
+  knownRequests.set(key, resource);
+  queue.set(key, resource);
+  updateCache();
+  updatePending();
   scheduleLoading();
 };
 
@@ -145,6 +170,7 @@ export const loadResourceDiagnostics = (
   if (existing !== undefined) {
     return existing;
   }
+  const version = resourceVersions.get(key) ?? 0;
   const promise = (async () => {
     try {
       const response = await requestFetch(
@@ -162,6 +188,9 @@ export const loadResourceDiagnostics = (
         request: resource,
         result,
       });
+      if ((resourceVersions.get(key) ?? 0) !== version) {
+        return;
+      }
       if (diagnostics === undefined) {
         diagnosticsCache.delete(key);
       } else {
@@ -171,7 +200,9 @@ export const loadResourceDiagnostics = (
     } catch {
       console.error("Resource diagnostics request failed");
     } finally {
-      pendingDiagnostics.delete(key);
+      if ((resourceVersions.get(key) ?? 0) === version) {
+        pendingDiagnostics.delete(key);
+      }
     }
   })();
   pendingDiagnostics.set(key, promise);
@@ -188,7 +219,7 @@ export const invalidateAssets = () => {
       continue;
     }
     cache.delete(key);
-    diagnosticsCache.delete(key);
+    invalidateRequestState(key);
     // Queue another load even when the previous request is still pending. The
     // pending load may contain the asset state from before this mutation.
     queue.set(key, request);
@@ -230,6 +261,7 @@ const reset = () => {
   diagnosticsCache.clear();
   pendingDiagnostics.clear();
   knownRequests.clear();
+  resourceVersions.clear();
   updateCache();
   updatePending();
 };

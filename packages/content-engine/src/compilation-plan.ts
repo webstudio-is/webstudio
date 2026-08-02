@@ -25,8 +25,8 @@ import { contentEngineLimits } from "./limits";
 import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
 import type { CanonicalAssetFileEntry } from "./canonical";
 import {
+  areJsonValuesEqual,
   compareStrings,
-  serializeJsonDeterministically,
   type JsonValue,
 } from "./canonical-json";
 import {
@@ -217,14 +217,10 @@ export const hasDynamicContentCompilationValues = (
       offset.type === "dynamic"
   );
 
-const equalJson = (left: unknown, right: unknown) =>
-  serializeJsonDeterministically(left) ===
-  serializeJsonDeterministically(right);
-
 const matchesCompilationValue = (
   compiled: ContentCompilationValue,
   value: unknown
-) => compiled.type === "dynamic" || equalJson(compiled.value, value);
+) => compiled.type === "dynamic" || areJsonValuesEqual(compiled.value, value);
 
 const matchesCompilationWhere = (
   compiled: ContentCompilationWhere,
@@ -234,7 +230,7 @@ const matchesCompilationWhere = (
     return (
       "field" in compiled &&
       "field" in where &&
-      equalJson(compiled.field, where.field) &&
+      areJsonValuesEqual(compiled.field, where.field) &&
       compiled.operator === where.operator &&
       matchesCompilationValue(compiled.value, where.value)
     );
@@ -267,11 +263,11 @@ export const isAssetQueryCoveredByCompilationPlan = ({
   plan.queries.some(
     (compiled) =>
       matchesCompilationWhere(compiled.where, query.where) &&
-      equalJson(compiled.sort, query.sort) &&
+      areJsonValuesEqual(compiled.sort, query.sort) &&
       matchesCompilationValue(compiled.limit, query.limit) &&
       matchesCompilationValue(compiled.offset, query.offset) &&
-      equalJson(compiled.output, query.output) &&
-      equalJson(compiled.content, query.content)
+      areJsonValuesEqual(compiled.output, query.output) &&
+      areJsonValuesEqual(compiled.content, query.content)
   );
 
 const usesRuntimeWhere = (where: ContentCompilationWhere) =>

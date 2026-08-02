@@ -128,6 +128,39 @@ test("reloads an invalidated cached request", async () => {
   expect($resourcesCache.get().get(key)).toEqual({ data: "second" });
 });
 
+test("replaces an invalidated in-flight request without caching stale data", async () => {
+  vi.useFakeTimers();
+  const request: ResourceRequest = {
+    name: "Posts",
+    method: "get",
+    url: "https://example.com/in-flight-posts",
+    searchParams: [],
+    headers: [],
+  };
+  const key = getResourceKey(request);
+  let resolveFirst: (response: Response) => void = () => {};
+  const firstResponse = new Promise<Response>((resolve) => {
+    resolveFirst = resolve;
+  });
+  const firstFetch = vi.fn<typeof globalThis.fetch>(() => firstResponse);
+
+  preloadResources([request]);
+  const firstLoad = loadResources(firstFetch as typeof globalThis.fetch);
+  invalidateResource(request);
+  resolveFirst(Response.json([[key, { data: "stale" }]]));
+  await firstLoad;
+  expect($resourcesCache.get().has(key)).toBe(false);
+
+  const secondFetch = vi.fn<typeof globalThis.fetch>(async () =>
+    Response.json([])
+  );
+  await loadResources(secondFetch as typeof globalThis.fetch);
+
+  expect(JSON.parse(String(secondFetch.mock.calls[0][1]?.body))).toEqual([
+    request,
+  ]);
+});
+
 test("drains bounded batches without an additional delay", async () => {
   vi.useFakeTimers();
   const requests: ResourceRequest[] = Array.from({ length: 6 }, (_, index) => ({
@@ -193,6 +226,59 @@ test("loads detailed Assets diagnostics only on demand", async () => {
   );
   expect(fetch).toHaveBeenCalledOnce();
   expect($resourceDiagnosticsCache.get().get(key)).toEqual(diagnostics);
+});
+
+test("discards stale diagnostics after invalidation", async () => {
+  vi.useFakeTimers();
+  const request: ResourceRequest = {
+    name: "assets",
+    method: "post",
+    url: "/$resources/assets",
+    searchParams: [],
+    headers: [{ name: "content-type", value: "application/json" }],
+    body: { query: {} },
+  };
+  const key = getResourceKey(request);
+  let resolveFirst: (response: Response) => void = () => {};
+  const firstResponse = new Promise<Response>((resolve) => {
+    resolveFirst = resolve;
+  });
+  const firstFetch = vi.fn<typeof globalThis.fetch>(() => firstResponse);
+  const first = loadResourceDiagnostics(request, firstFetch);
+
+  invalidateResource(request);
+  const freshDiagnostics = {
+    scope: "query-preview",
+    query: {
+      usedBytes: 1,
+      maxBytes: 512_000,
+      unboundedBytes: 1,
+      includedDocumentCount: 1,
+      omittedDocumentCount: 0,
+      truncated: false,
+    },
+    database: {
+      usedBytes: 2,
+      maxBytes: 512_000,
+      unboundedBytes: 2,
+      includedDocumentCount: 1,
+      omittedDocumentCount: 0,
+      truncated: false,
+    },
+  };
+  const secondFetch = vi.fn<typeof globalThis.fetch>(async () =>
+    Response.json([[key, { data: {}, __diagnostics__: freshDiagnostics }]])
+  );
+  const second = loadResourceDiagnostics(request, secondFetch);
+
+  expect(second).not.toBe(first);
+  resolveFirst(
+    Response.json([[key, { data: {}, __diagnostics__: { stale: true } }]])
+  );
+  await first;
+  await second;
+
+  expect($resourceDiagnosticsCache.get().get(key)).toEqual(freshDiagnostics);
 });
 
 test("keeps loading distinct from a confirmed empty Assets result", async () => {

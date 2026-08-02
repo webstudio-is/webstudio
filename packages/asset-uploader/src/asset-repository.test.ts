@@ -762,7 +762,7 @@ describe("PostgresAssetRepository", () => {
     expect(first).toMatchObject({
       data: { items: [{ properties: { title: "first post" } }] },
     });
-    expect(first.__diagnostics__.artifacts).toBeUndefined();
+    expect(first).not.toHaveProperty("__diagnostics__");
     const second = await repository.query(query("second"), {
       databasePlan,
       includeDiagnostics: false,
@@ -770,7 +770,7 @@ describe("PostgresAssetRepository", () => {
     expect(second).toMatchObject({
       data: { items: [{ properties: { title: "second post" } }] },
     });
-    expect(second.__diagnostics__.artifacts).toBeUndefined();
+    expect(second).not.toHaveProperty("__diagnostics__");
     await expect(
       repository.query(overviewQuery(0), {
         databasePlan,

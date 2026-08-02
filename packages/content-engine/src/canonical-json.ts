@@ -119,6 +119,16 @@ export const serializeJsonDeterministically = (value: unknown): string => {
   return result;
 };
 
+export const areJsonValuesEqual = (left: unknown, right: unknown) => {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return (
+    serializeJsonDeterministically(left) ===
+    serializeJsonDeterministically(right)
+  );
+};
+
 export const compareStrings = (left: string, right: string) => {
   if (left < right) {
     return -1;
