@@ -3,9 +3,11 @@ import type { ResourceRequest } from "@webstudio-is/sdk";
 import {
   __testing__,
   $hasPendingResources,
+  $resourceDiagnosticsCache,
   $resourcesCache,
   getResourceKey,
   invalidateResource,
+  loadResourceDiagnostics,
   preloadResources,
 } from "./resources";
 
@@ -74,7 +76,7 @@ test("batches all resources from one computation", async () => {
       headers: [],
     },
   ];
-  const fetch = vi.fn(async () => Response.json([]));
+  const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json([]));
 
   preloadResources(requests);
   await loadResources(fetch as typeof globalThis.fetch);
@@ -91,7 +93,7 @@ test("deduplicates identical requests", async () => {
     searchParams: [],
     headers: [],
   };
-  const fetch = vi.fn(async () => Response.json([]));
+  const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json([]));
 
   preloadResources([request, request]);
   await loadResources(fetch as typeof globalThis.fetch);
@@ -109,14 +111,14 @@ test("reloads an invalidated cached request", async () => {
     headers: [],
   };
   const key = getResourceKey(request);
-  const firstFetch = vi.fn(async () =>
+  const firstFetch = vi.fn<typeof globalThis.fetch>(async () =>
     Response.json([[key, { data: "first" }]])
   );
   preloadResources([request]);
   await loadResources(firstFetch as typeof globalThis.fetch);
   expect($resourcesCache.get().get(key)).toEqual({ data: "first" });
 
-  const secondFetch = vi.fn(async () =>
+  const secondFetch = vi.fn<typeof globalThis.fetch>(async () =>
     Response.json([[key, { data: "second" }]])
   );
   invalidateResource(request);
@@ -135,7 +137,7 @@ test("drains bounded batches without an additional delay", async () => {
     searchParams: [],
     headers: [],
   }));
-  const fetch = vi.fn(async () => Response.json([]));
+  const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json([]));
 
   preloadResources(requests);
   await loadResources(fetch as typeof globalThis.fetch);
@@ -144,6 +146,89 @@ test("drains bounded batches without an additional delay", async () => {
   expect(fetch).toHaveBeenCalledTimes(2);
   expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toHaveLength(5);
   expect(JSON.parse(String(fetch.mock.calls[1][1]?.body))).toHaveLength(1);
+});
+
+test("loads detailed Assets diagnostics only on demand", async () => {
+  const request: ResourceRequest = {
+    name: "assets",
+    method: "post",
+    url: "/$resources/assets",
+    searchParams: [],
+    headers: [{ name: "content-type", value: "application/json" }],
+    body: { query: {} },
+  };
+  const key = getResourceKey(request);
+  const diagnostics = {
+    scope: "query-preview",
+    query: {
+      usedBytes: 100,
+      maxBytes: 512_000,
+      unboundedBytes: 100,
+      includedDocumentCount: 1,
+      omittedDocumentCount: 0,
+      truncated: false,
+    },
+    database: {
+      usedBytes: 200,
+      maxBytes: 512_000,
+      unboundedBytes: 200,
+      includedDocumentCount: 2,
+      omittedDocumentCount: 0,
+      truncated: false,
+    },
+    unresolved: { items: [], totalCount: 0, hasMore: false },
+  };
+  const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+    Response.json([[key, { data: {}, __diagnostics__: diagnostics }]])
+  );
+
+  const first = loadResourceDiagnostics(request, fetch);
+  const second = loadResourceDiagnostics(request, fetch);
+  expect(first).toBe(second);
+  await first;
+
+  expect(fetch).toHaveBeenCalledWith(
+    "/rest/resources-loader?diagnostics=true",
+    expect.objectContaining({ method: "POST" })
+  );
+  expect(fetch).toHaveBeenCalledOnce();
+  expect($resourceDiagnosticsCache.get().get(key)).toEqual(diagnostics);
+});
+
+test("keeps loading distinct from a confirmed empty Assets result", async () => {
+  vi.useFakeTimers();
+  const request: ResourceRequest = {
+    name: "assets",
+    method: "post",
+    url: "/$resources/assets",
+    searchParams: [],
+    headers: [{ name: "content-type", value: "application/json" }],
+    body: { query: {} },
+  };
+  const key = getResourceKey(request);
+  const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+    Response.json([
+      [
+        key,
+        {
+          ok: true,
+          data: {},
+          meta: { totalCount: 0, hasMore: false },
+        },
+      ],
+    ])
+  );
+
+  preloadResources([request]);
+  expect($resourcesCache.get().get(key)).toBeUndefined();
+  expect($hasPendingResources.get()).toBe(true);
+
+  await loadResources(fetch);
+
+  expect($resourcesCache.get().get(key)).toMatchObject({
+    meta: { totalCount: 0, hasMore: false },
+  });
+  expect($hasPendingResources.get()).toBe(false);
 });
 
 test.each([

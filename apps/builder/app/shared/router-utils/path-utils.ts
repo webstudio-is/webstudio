@@ -153,7 +153,8 @@ export const getCanvasUrl = () => {
   return `/canvas`;
 };
 
-export const restResourcesLoader = () => `/rest/resources-loader`;
+export const restResourcesLoader = ({ diagnostics = false } = {}) =>
+  `/rest/resources-loader${diagnostics ? "?diagnostics=true" : ""}`;
 
 export const marketplacePath = (method: string) =>
   `/builder/marketplace/${method}`;

@@ -14,6 +14,8 @@ export const previewAssetResourceQuery = async ({
   assetClient,
   contentDatabaseMaxBytes,
   databasePlan,
+  diagnosticsPlan,
+  includeDiagnostics,
   includeUnresolvedDiagnostics,
   onDocumentGraphEvent,
 }: {
@@ -23,6 +25,8 @@ export const previewAssetResourceQuery = async ({
   assetClient: Pick<AssetObjectStore, "readFile">;
   contentDatabaseMaxBytes?: number;
   databasePlan?: ContentCompilationPlan;
+  diagnosticsPlan?: ContentCompilationPlan;
+  includeDiagnostics?: boolean;
   includeUnresolvedDiagnostics?: boolean;
   onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 }) => {
@@ -35,6 +39,8 @@ export const previewAssetResourceQuery = async ({
   });
   return await repository.query(request, {
     databasePlan,
+    diagnosticsPlan,
+    includeDiagnostics,
     includeUnresolvedDiagnostics,
   });
 };

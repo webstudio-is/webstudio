@@ -58,6 +58,10 @@ export const executeAssetQuery = async (
     });
   }
   try {
+    const outerUrl = new URL(request.url);
+    const includeDiagnostics =
+      outerUrl.pathname !== "/rest/resources-loader" ||
+      outerUrl.searchParams.get("diagnostics") === "true";
     const context = await dependencies.authorizeApiProject(
       request,
       projectId,
@@ -67,7 +71,8 @@ export const executeAssetQuery = async (
       projectId,
       request: parsed,
       context,
-      includeUnresolvedDiagnostics: true,
+      includeDiagnostics,
+      includeUnresolvedDiagnostics: includeDiagnostics,
     });
     return json(result, { headers: privateNoStoreResponseHeaders });
   } catch (error) {

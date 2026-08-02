@@ -24,7 +24,11 @@ import {
 import { contentEngineLimits } from "./limits";
 import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
 import type { CanonicalAssetFileEntry } from "./canonical";
-import { compareStrings, type JsonValue } from "./canonical-json";
+import {
+  compareStrings,
+  serializeJsonDeterministically,
+  type JsonValue,
+} from "./canonical-json";
 import {
   getJsonReferenceMarkerValue,
   isJsonObject,
@@ -211,6 +215,63 @@ export const hasDynamicContentCompilationValues = (
       hasDynamicWhere(where) ||
       limit.type === "dynamic" ||
       offset.type === "dynamic"
+  );
+
+const equalJson = (left: unknown, right: unknown) =>
+  serializeJsonDeterministically(left) ===
+  serializeJsonDeterministically(right);
+
+const matchesCompilationValue = (
+  compiled: ContentCompilationValue,
+  value: unknown
+) => compiled.type === "dynamic" || equalJson(compiled.value, value);
+
+const matchesCompilationWhere = (
+  compiled: ContentCompilationWhere,
+  where: AssetQuery["where"]
+): boolean => {
+  if ("field" in compiled || "field" in where) {
+    return (
+      "field" in compiled &&
+      "field" in where &&
+      equalJson(compiled.field, where.field) &&
+      compiled.operator === where.operator &&
+      matchesCompilationValue(compiled.value, where.value)
+    );
+  }
+  if ("all" in compiled || "all" in where) {
+    return (
+      "all" in compiled &&
+      "all" in where &&
+      compiled.all.length === where.all.length &&
+      compiled.all.every((child, index) =>
+        matchesCompilationWhere(child, where.all[index])
+      )
+    );
+  }
+  return (
+    compiled.any.length === where.any.length &&
+    compiled.any.every((child, index) =>
+      matchesCompilationWhere(child, where.any[index])
+    )
+  );
+};
+
+export const isAssetQueryCoveredByCompilationPlan = ({
+  plan,
+  query,
+}: {
+  plan: ContentCompilationPlan;
+  query: AssetQuery;
+}) =>
+  plan.queries.some(
+    (compiled) =>
+      matchesCompilationWhere(compiled.where, query.where) &&
+      equalJson(compiled.sort, query.sort) &&
+      matchesCompilationValue(compiled.limit, query.limit) &&
+      matchesCompilationValue(compiled.offset, query.offset) &&
+      equalJson(compiled.output, query.output) &&
+      equalJson(compiled.content, query.content)
   );
 
 const usesRuntimeWhere = (where: ContentCompilationWhere) =>

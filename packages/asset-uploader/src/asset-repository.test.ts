@@ -651,6 +651,146 @@ describe("PostgresAssetRepository", () => {
     expect(readFile).not.toHaveBeenCalled();
   });
 
+  test("reuses one compiled database across dynamic query values", async () => {
+    const dependencies = createDependencies();
+    const entries = ["first", "second"].map((slug) => ({
+      projectId: "project-1",
+      assetId: slug,
+      revision: `revision-${slug}`,
+      document: {
+        _id: slug,
+        _type: "asset.file" as const,
+        name: `${slug}.md`,
+        path: `${slug}.md`,
+        key: slug,
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 10,
+        revision: `revision-${slug}`,
+        contentRef: `${slug}.md`,
+        properties: { slug, title: `${slug} post` },
+      },
+    }));
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(
+      entries.map((entry) => ({
+        ...entry,
+        document: { ...entry.document, properties: {} },
+      }))
+    );
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const databasePlan = createContentCompilationPlan([
+      {
+        id: "post",
+        where: {
+          field: ["properties", "slug"],
+          operator: "eq",
+          value: { type: "dynamic" },
+        },
+        sort: [],
+        limit: { type: "literal", value: 1 },
+        offset: { type: "literal", value: 0 },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
+        content: { mode: "none" },
+      },
+      {
+        id: "posts",
+        where: {
+          field: ["extension"],
+          operator: "eq",
+          value: { type: "literal", value: "md" },
+        },
+        sort: [{ field: ["id"], direction: "asc" }],
+        limit: { type: "literal", value: 1 },
+        offset: { type: "dynamic" },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
+        content: { mode: "none" },
+      },
+    ]);
+    expect(databasePlan).toBeDefined();
+    if (databasePlan === undefined) {
+      return;
+    }
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: assetClient,
+      dependencies,
+      compilationCache: createContentCompilationCache(),
+    });
+    const query = (slug: string) => ({
+      query: {
+        where: {
+          field: ["properties", "slug"] as [string, string],
+          operator: "eq" as const,
+          value: slug,
+        },
+        limit: 1,
+        output: {
+          mode: "fields" as const,
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
+      },
+    });
+    const overviewQuery = (offset: number) => ({
+      query: {
+        where: { field: ["extension"], operator: "eq" as const, value: "md" },
+        sort: [{ field: ["id"], direction: "asc" as const }],
+        limit: 1,
+        offset,
+        output: {
+          mode: "fields" as const,
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
+      },
+    });
+
+    const first = await repository.query(query("first"), {
+      databasePlan,
+      includeDiagnostics: false,
+    });
+    expect(first).toMatchObject({
+      data: { items: [{ properties: { title: "first post" } }] },
+    });
+    expect(first.__diagnostics__.artifacts).toBeUndefined();
+    const second = await repository.query(query("second"), {
+      databasePlan,
+      includeDiagnostics: false,
+    });
+    expect(second).toMatchObject({
+      data: { items: [{ properties: { title: "second post" } }] },
+    });
+    expect(second.__diagnostics__.artifacts).toBeUndefined();
+    await expect(
+      repository.query(overviewQuery(0), {
+        databasePlan,
+        includeDiagnostics: false,
+      })
+    ).resolves.toMatchObject({
+      data: { items: [{ properties: { title: "first post" } }] },
+    });
+    await expect(
+      repository.query(overviewQuery(1), {
+        databasePlan,
+        includeDiagnostics: false,
+      })
+    ).resolves.toMatchObject({
+      data: { items: [{ properties: { title: "second post" } }] },
+    });
+
+    expect(dependencies.createAssetIndex).toHaveBeenCalledOnce();
+  });
+
   test("discovers fields without preparing excerpts or file bodies", async () => {
     const dependencies = createDependencies();
     const entry = {

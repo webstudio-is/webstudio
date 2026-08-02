@@ -3,7 +3,7 @@
  */
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { RequestInspector } from "./request-inspector";
 
 (
@@ -20,7 +20,8 @@ afterEach(() => {
 
 const renderInspector = (
   query: boolean,
-  queryContainerRef: (element: HTMLDivElement | null) => void = () => {}
+  queryContainerRef: (element: HTMLDivElement | null) => void = () => {},
+  onDiagnosticsOpen?: () => void
 ) => {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -31,6 +32,7 @@ const renderInspector = (
         queryContainerRef={query ? queryContainerRef : undefined}
         preview={<div>Preview content</div>}
         diagnostics={<div>Diagnostics content</div>}
+        onDiagnosticsOpen={onDiagnosticsOpen}
       />
     );
   });
@@ -53,6 +55,18 @@ test("places an available query editor in the first selected tab", () => {
   expect(queryContainer.current?.style.minHeight).toBe("0");
   expect(queryContainer.current?.style.minWidth).toBe("0");
   expect(queryContainer.current?.style.overflow).toBe("hidden");
+});
+
+test("loads diagnostics when their tab is opened", () => {
+  const onDiagnosticsOpen = vi.fn();
+  const container = renderInspector(false, undefined, onDiagnosticsOpen);
+  const diagnostics = Array.from(
+    container.querySelectorAll<HTMLElement>('[role="tab"]')
+  ).find(({ textContent }) => textContent === "Diagnostics");
+
+  act(() => diagnostics?.click());
+
+  expect(onDiagnosticsOpen).toHaveBeenCalledOnce();
 });
 
 test("keeps preview first when no query editor is available", () => {

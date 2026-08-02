@@ -16,6 +16,7 @@ const queue = new Map<string, ResourceRequest>();
 const pending = new Map<string, ResourceRequest>();
 const cache = new Map<string, unknown>();
 const diagnosticsCache = new Map<string, AssetQueryPreviewDiagnostics>();
+const pendingDiagnostics = new Map<string, Promise<void>>();
 const knownRequests = new Map<string, ResourceRequest>();
 
 export const $resourcesCache = atom(cache);
@@ -135,6 +136,48 @@ export const invalidateResource = (resource: ResourceRequest) => {
   scheduleLoading();
 };
 
+export const loadResourceDiagnostics = (
+  resource: ResourceRequest,
+  requestFetch: typeof fetch = fetch
+) => {
+  const key = getResourceKey(resource);
+  const existing = pendingDiagnostics.get(key);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const promise = (async () => {
+    try {
+      const response = await requestFetch(
+        restResourcesLoader({ diagnostics: true }),
+        {
+          method: "POST",
+          body: JSON.stringify([resource]),
+        }
+      );
+      if (response.ok === false) {
+        return;
+      }
+      const result = new Map<string, unknown>(await response.json()).get(key);
+      const { diagnostics } = separateResourceDiagnostics({
+        request: resource,
+        result,
+      });
+      if (diagnostics === undefined) {
+        diagnosticsCache.delete(key);
+      } else {
+        diagnosticsCache.set(key, diagnostics);
+      }
+      updateCache();
+    } catch {
+      console.error("Resource diagnostics request failed");
+    } finally {
+      pendingDiagnostics.delete(key);
+    }
+  })();
+  pendingDiagnostics.set(key, promise);
+  return promise;
+};
+
 /**
  * Invalidate the assets system resource.
  * Call this when assets are uploaded, deleted, or modified to refresh expressions using assets.
@@ -185,6 +228,7 @@ const reset = () => {
   pending.clear();
   cache.clear();
   diagnosticsCache.clear();
+  pendingDiagnostics.clear();
   knownRequests.clear();
   updateCache();
   updatePending();
