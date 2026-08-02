@@ -64,9 +64,7 @@ export const createFramework = async (
       }
       const dynamic = isPathnamePattern(pagePath);
       if (dynamic && prerenderPaths.length === 0) {
-        throw new Error(
-          `Dynamic SSG page ${JSON.stringify(pagePath)} has no enumerable Assets query paths`
-        );
+        return [];
       }
       const route = generateVikeRoute(pagePath);
       const entries = [

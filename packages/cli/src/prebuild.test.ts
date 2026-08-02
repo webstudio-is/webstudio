@@ -1498,6 +1498,41 @@ describe("prebuild", () => {
     );
   });
 
+  test("ignores dynamic SSG pages without enumerable Assets query paths", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "post",
+            name: "Post",
+            title: "Post",
+            path: "/blog/:slug",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+      })
+    );
+
+    await expect(
+      prebuild({ assets: false, template: ["ssg"] })
+    ).resolves.toBeUndefined();
+    await expect(readFile("pages/index/+Page.tsx", "utf8")).resolves.toContain(
+      "Page"
+    );
+    await expect(
+      readFile("pages/blog/@slug/+Page.tsx", "utf8")
+    ).rejects.toThrow("ENOENT");
+  });
+
   test("prerenders dynamic SSG paths from parameterized Assets resources", async () => {
     const documents = [
       {
