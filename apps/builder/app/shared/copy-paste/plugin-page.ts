@@ -190,13 +190,14 @@ export const handlePastePage = async (
     if (conflictResolution === "cancel") {
       return pasteHandled;
     }
+    const rootStyleTargetData = getWebstudioData();
     const firstPageLikeItem = pageItems[0];
     const rootStyleConflictResolution =
       firstPageLikeItem === undefined
-        ? "theirs"
+        ? undefined
         : await resolveRootStyleConflicts({
             fragment: firstPageLikeItem.rootFragment,
-            targetData,
+            targetData: rootStyleTargetData,
           });
     if (rootStyleConflictResolution === "cancel") {
       return pasteHandled;

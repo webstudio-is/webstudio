@@ -111,6 +111,56 @@ const setRootLocalStyle = ({
   );
 };
 
+const addRootTokenStyle = ({
+  styleSourceId,
+  value,
+}: {
+  styleSourceId: string;
+  value: string;
+}) => {
+  const styleSources = new Map($styleSources.get());
+  styleSources.set(styleSourceId, {
+    id: styleSourceId,
+    type: "token",
+    name: "primary",
+  });
+  $styleSources.set(styleSources);
+
+  const rootSelection = $styleSourceSelections.get().get(ROOT_INSTANCE_ID);
+  const selections = new Map($styleSourceSelections.get());
+  selections.set(ROOT_INSTANCE_ID, {
+    instanceId: ROOT_INSTANCE_ID,
+    values: [...(rootSelection?.values ?? []), styleSourceId],
+  });
+  $styleSourceSelections.set(selections);
+
+  const styles = new Map($styles.get());
+  styles.set(`${styleSourceId}:base:color:`, {
+    styleSourceId,
+    breakpointId: "base",
+    property: "color",
+    value: { type: "keyword", value },
+  });
+  $styles.set(styles);
+};
+
+const updateRootLocalStyle = (value: string) => {
+  const rootLocalStyle = Array.from($styles.get().values()).find(
+    (style) =>
+      $styleSources.get().get(style.styleSourceId)?.type === "local" &&
+      style.property === "color"
+  );
+  if (rootLocalStyle === undefined) {
+    throw new Error("Expected root local color style");
+  }
+  const styles = new Map($styles.get());
+  styles.set(`${rootLocalStyle.styleSourceId}:base:color:`, {
+    ...rootLocalStyle,
+    value: { type: "keyword", value },
+  });
+  $styles.set(styles);
+};
+
 const setupProjectWithRootStyle = ({
   projectId,
   pageId,
@@ -378,6 +428,45 @@ test("cancels page paste when global root style resolution is cancelled", async 
   await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
 
   expect($pages.get()?.pages.size).toBe(initialPageCount);
+  expect($styles.get().get("target-local:base:color:")?.value).toEqual({
+    type: "keyword",
+    value: "blue",
+  });
+});
+
+test("checks current root styles after resolving token conflicts", async () => {
+  setupProjectWithRootStyle({
+    projectId: "source-project",
+    pageId: "source-page",
+    rootInstanceId: "source-body",
+    styleSourceId: "source-local",
+    color: "red",
+  });
+  addRootTokenStyle({ styleSourceId: "source-token", value: "red" });
+  const clipboardData = copyPageData("source-page");
+
+  setupProjectWithRootStyle({
+    projectId: "target-project",
+    pageId: "target-page",
+    rootInstanceId: "target-body",
+    styleSourceId: "target-local",
+    color: "red",
+  });
+  addRootTokenStyle({ styleSourceId: "target-token", value: "blue" });
+  vi.spyOn(
+    window.__webstudio__$__builderApi,
+    "showTokenConflictDialog"
+  ).mockImplementation(async () => {
+    updateRootLocalStyle("blue");
+    return "ours";
+  });
+  const rootConflictDialog = vi
+    .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+    .mockResolvedValue("ours");
+
+  await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
+
+  expect(rootConflictDialog).toHaveBeenCalledOnce();
   expect($styles.get().get("target-local:base:color:")?.value).toEqual({
     type: "keyword",
     value: "blue",

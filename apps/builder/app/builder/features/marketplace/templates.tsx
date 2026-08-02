@@ -90,20 +90,21 @@ const insertPage = async ({
   data: WebstudioData;
   pageId: Page["id"];
 }) => {
-  const targetData = getWebstudioData();
+  const tokenTargetData = getWebstudioData();
   const conflicts = detectPageTokenConflicts({
     sourceData,
-    targetData,
+    targetData: tokenTargetData,
     pageId,
   });
   const conflictResolution = await resolveTokenConflicts(conflicts);
   if (conflictResolution === "cancel") {
     return;
   }
+  const rootStyleTargetData = getWebstudioData();
   const rootFragment = extractWebstudioFragment(sourceData, ROOT_INSTANCE_ID);
   const rootStyleConflictResolution = await resolveRootStyleConflicts({
     fragment: rootFragment,
-    targetData,
+    targetData: rootStyleTargetData,
   });
   if (rootStyleConflictResolution === "cancel") {
     return;

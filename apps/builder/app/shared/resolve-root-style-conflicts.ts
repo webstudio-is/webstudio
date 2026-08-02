@@ -11,7 +11,7 @@ export const resolveRootStyleConflicts = async ({
 }) => {
   const conflicts = detectFragmentRootStyleConflicts({ fragment, targetData });
   if (conflicts.length === 0) {
-    return "theirs" as const;
+    return;
   }
   return builderApi.showRootStyleConflictDialog(
     conflicts.map((conflict) => ({
