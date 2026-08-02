@@ -419,7 +419,7 @@ Notes:
 - The `ws:` namespace contains specific Webstudio core components; it is not HTML-tag shorthand. Use `<ws.element ws:tag="div">` for a native `div` and `<ws.element ws:tag="form">` for a native form, never `<ws.div>` or `<ws.form>`.
 - For Webstudio's complete form structure, discover the Form component and insert its automatic template with `insert-component` using component `"Form"`.
 - MCP receives JSX as a JSON string because MCP arguments are JSON. The CLI converts it locally before the runtime mutation, so the project session receives structured Webstudio data, not JSX source.
-- In `insert-fragment` JSX, use `ws:style={css\`...\`}` for Webstudio-native CSS, or use React-style object syntax such as `style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
+- In `insert-fragment` JSX, use ``ws:style={css`...`}`` for Webstudio-native CSS, or use React-style object syntax such as `style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
 - Do not access host globals or dynamic code APIs in JSX fragments, including `process`, `globalThis`, `eval`, `Function`, or `constructor`.
 - Use Webstudio prop names such as `class` and `for`; do not use React aliases `className` or `htmlFor`.
 - Use Webstudio actions for event/action props, for example `onClick={new ActionValue(["event"], expression\`console.log(event)\`)}`. Do not pass JavaScript functions such as `onClick={() => ...}`.
