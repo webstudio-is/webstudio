@@ -16068,6 +16068,10 @@ export const runtimeOperationContractData = [
           type: "string",
           enum: ["ours", "theirs", "merge"],
         },
+        rootStyleConflictResolution: {
+          type: "string",
+          enum: ["ours", "theirs"],
+        },
       },
       required: ["targetFolderId", "item"],
       $defs: {

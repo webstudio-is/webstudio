@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import deepEqual from "fast-deep-equal";
 import { toValue } from "@webstudio-is/css-engine";
 import {
   getStyleDeclKey,
@@ -15,6 +16,93 @@ import {
 import { getUniqueNameWithSuffix } from "./style-utils";
 
 export type ConflictResolution = "ours" | "theirs" | "merge";
+export type RootStyleConflictResolution = "ours" | "theirs";
+
+export type RootStyleConflict = {
+  existingStyle: StyleDecl;
+  incomingStyle: StyleDecl;
+};
+
+const findLocalStyleSourceIds = ({
+  instanceId,
+  styleSourceSelections,
+  styleSources,
+}: {
+  instanceId: Instance["id"];
+  styleSourceSelections: Iterable<StyleSourceSelection>;
+  styleSources: Iterable<StyleSource>;
+}) => {
+  const localStyleSourceIds = new Set(
+    Array.from(styleSources)
+      .filter((styleSource) => styleSource.type === "local")
+      .map((styleSource) => styleSource.id)
+  );
+  const selection = Array.from(styleSourceSelections).find(
+    (candidate) => candidate.instanceId === instanceId
+  );
+  return selection?.values.filter((id) => localStyleSourceIds.has(id)) ?? [];
+};
+
+export const detectRootStyleConflicts = ({
+  fragmentStyleSources,
+  fragmentStyleSourceSelections,
+  fragmentStyles,
+  existingStyleSources,
+  existingStyleSourceSelections,
+  existingStyles,
+  mergedBreakpointIds,
+}: {
+  fragmentStyleSources: StyleSource[];
+  fragmentStyleSourceSelections: StyleSourceSelection[];
+  fragmentStyles: StyleDecl[];
+  existingStyleSources: StyleSources;
+  existingStyleSourceSelections: StyleSourceSelections;
+  existingStyles: Styles;
+  mergedBreakpointIds: Map<Breakpoint["id"], Breakpoint["id"]>;
+}): RootStyleConflict[] => {
+  const incomingStyleSourceIds = new Set(
+    findLocalStyleSourceIds({
+      instanceId: ROOT_INSTANCE_ID,
+      styleSourceSelections: fragmentStyleSourceSelections,
+      styleSources: fragmentStyleSources,
+    })
+  );
+  const existingStyleSourceId = findLocalStyleSourceIds({
+    instanceId: ROOT_INSTANCE_ID,
+    styleSourceSelections: existingStyleSourceSelections.values(),
+    styleSources: existingStyleSources.values(),
+  }).at(-1);
+  if (
+    incomingStyleSourceIds.size === 0 ||
+    existingStyleSourceId === undefined
+  ) {
+    return [];
+  }
+
+  const conflicts: RootStyleConflict[] = [];
+  for (const incomingStyle of fragmentStyles) {
+    if (incomingStyleSourceIds.has(incomingStyle.styleSourceId) === false) {
+      continue;
+    }
+    const normalizedIncomingStyle = {
+      ...incomingStyle,
+      styleSourceId: existingStyleSourceId,
+      breakpointId:
+        mergedBreakpointIds.get(incomingStyle.breakpointId) ??
+        incomingStyle.breakpointId,
+    };
+    const existingStyle = existingStyles.get(
+      getStyleDeclKey(normalizedIncomingStyle)
+    );
+    if (
+      existingStyle !== undefined &&
+      deepEqual(existingStyle.value, incomingStyle.value) === false
+    ) {
+      conflicts.push({ existingStyle, incomingStyle });
+    }
+  }
+  return conflicts;
+};
 
 export const getStyleSourceStylesSignature = (
   styleSourceId: StyleSource["id"],
@@ -481,6 +569,7 @@ type InsertLocalStyleSourcesWithNewIdsOptions = {
   styleSourceSelections: StyleSourceSelections;
   styles: Styles;
   createId?: () => string;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
 } & (
   | {
       contentMode: true;
@@ -516,6 +605,7 @@ export const insertLocalStyleSourcesWithNewIds = ({
   breakpoints,
   styleSourceIdMap = new Map(),
   mergedBreakpointIds = new Map(),
+  rootStyleConflictResolution = "theirs",
 }: InsertLocalStyleSourcesWithNewIdsOptions): void => {
   const newLocalStyleSources = new Map<StyleSource["id"], StyleSource>();
   for (const styleSource of fragmentStyleSources) {
@@ -523,6 +613,13 @@ export const insertLocalStyleSourcesWithNewIds = ({
       newLocalStyleSources.set(styleSource.id, styleSource);
     }
   }
+  const rootLocalStyleSourceIds = new Set(
+    findLocalStyleSourceIds({
+      instanceId: ROOT_INSTANCE_ID,
+      styleSourceSelections: fragmentStyleSourceSelections,
+      styleSources: fragmentStyleSources,
+    })
+  );
 
   const newLocalStyleSourceIds = new Map<
     StyleSource["id"],
@@ -630,6 +727,14 @@ export const insertLocalStyleSourcesWithNewIds = ({
       if (
         contentMode &&
         breakpoints?.has(newStyleDecl.breakpointId) === false
+      ) {
+        continue;
+      }
+      if (
+        contentMode === false &&
+        rootStyleConflictResolution === "ours" &&
+        rootLocalStyleSourceIds.has(styleSourceId) &&
+        styles.has(getStyleDeclKey(newStyleDecl))
       ) {
         continue;
       }

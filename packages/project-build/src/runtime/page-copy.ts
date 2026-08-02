@@ -1,5 +1,6 @@
 import {
   type ContentModeCopyableProp,
+  detectFragmentRootStyleConflicts,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
 } from "./fragment";
@@ -33,7 +34,10 @@ import {
   type WebstudioData,
   ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
-import type { ConflictResolution } from "./style-copy";
+import type {
+  ConflictResolution,
+  RootStyleConflictResolution,
+} from "./style-copy";
 import type { BuilderState } from "../state/builder-state";
 import { paginateOutput, type PaginatedOutputInput } from "./output";
 import { pageCopyNamespaces } from "../contracts/namespaces";
@@ -56,6 +60,7 @@ import {
   pageTransferItemInput,
   type FolderCopyData,
   type PageCopyData,
+  type PageTransferItem,
   type TemplateCopyData,
 } from "./data-formats/page-transfer";
 
@@ -319,6 +324,7 @@ const copyPageFragmentsMutable = ({
   projectId,
   metas,
   conflictResolution,
+  rootStyleConflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   createId = nanoid,
@@ -331,6 +337,7 @@ const copyPageFragmentsMutable = ({
   projectId?: string;
   metas?: Map<string, WsComponentMeta>;
   conflictResolution: ConflictResolution | undefined;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
   createId?: CreateId;
@@ -350,6 +357,7 @@ const copyPageFragmentsMutable = ({
       projectId,
       metas,
       conflictResolution,
+      rootStyleConflictResolution,
       contentModeCopyableProp,
       onBreakpointLimitMerge,
       createId,
@@ -1275,6 +1283,7 @@ export const insertPageCopyFromFragmentsMutable = ({
   target,
   projectId,
   conflictResolution,
+  rootStyleConflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   createId = nanoid,
@@ -1287,6 +1296,7 @@ export const insertPageCopyFromFragmentsMutable = ({
   target: { data: WebstudioData; folderId: Folder["id"] };
   projectId?: string;
   conflictResolution?: ConflictResolution;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
   createId?: CreateId;
@@ -1298,6 +1308,7 @@ export const insertPageCopyFromFragmentsMutable = ({
     systemDataSourceId: source.page.systemDataSourceId,
     projectId,
     conflictResolution,
+    rootStyleConflictResolution,
     contentModeCopyableProp,
     onBreakpointLimitMerge,
     createId,
@@ -1318,6 +1329,7 @@ export const insertTemplateCopyFromFragmentsMutable = ({
   target,
   projectId,
   conflictResolution,
+  rootStyleConflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   createId = nanoid,
@@ -1330,6 +1342,7 @@ export const insertTemplateCopyFromFragmentsMutable = ({
   target: { data: WebstudioData };
   projectId?: string;
   conflictResolution?: ConflictResolution;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
   createId?: CreateId;
@@ -1341,6 +1354,7 @@ export const insertTemplateCopyFromFragmentsMutable = ({
     systemDataSourceId: undefined,
     projectId,
     conflictResolution,
+    rootStyleConflictResolution,
     contentModeCopyableProp,
     onBreakpointLimitMerge,
     createId,
@@ -1361,7 +1375,22 @@ export const pageTransferInsertInput = z.object({
   targetFolderId: z.string(),
   item: pageTransferItemInput,
   conflictResolution: z.enum(["ours", "theirs", "merge"]).optional(),
+  rootStyleConflictResolution: z.enum(["ours", "theirs"]).optional(),
 });
+
+const findFirstTransferRootFragment = (
+  item: PageTransferItem
+): WebstudioFragment | undefined => {
+  if (item.type === "page" || item.type === "template") {
+    return item.rootFragment;
+  }
+  for (const child of item.children) {
+    const rootFragment = findFirstTransferRootFragment(child);
+    if (rootFragment !== undefined) {
+      return rootFragment;
+    }
+  }
+};
 
 export const createPageCopyData = ({
   data,
@@ -1487,6 +1516,7 @@ export const insertFolderCopyFromDataMutable = ({
   target,
   projectId,
   conflictResolution,
+  rootStyleConflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   forceFolderCopySuffix = false,
@@ -1496,6 +1526,7 @@ export const insertFolderCopyFromDataMutable = ({
   target: { data: WebstudioData; parentFolderId: Folder["id"] };
   projectId?: string;
   conflictResolution?: ConflictResolution;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
   forceFolderCopySuffix?: boolean;
@@ -1510,6 +1541,7 @@ export const insertFolderCopyFromDataMutable = ({
     target,
     projectId,
     conflictResolution,
+    rootStyleConflictResolution,
     contentModeCopyableProp,
     onBreakpointLimitMerge,
     forceFolderCopySuffix,
@@ -1531,6 +1563,20 @@ export const insertPageTransferItem = (
     build: data,
     assets: Array.from(data.assets.values()),
   });
+  const rootFragment = findFirstTransferRootFragment(input.item);
+  if (
+    input.rootStyleConflictResolution === undefined &&
+    rootFragment !== undefined &&
+    detectFragmentRootStyleConflicts({
+      fragment: rootFragment,
+      targetData: before,
+    }).length > 0
+  ) {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      "Global root style conflicts require an explicit rootStyleConflictResolution (ours or theirs)"
+    );
+  }
   let didReachBreakpointLimit = false;
   const onBreakpointLimitMerge = () => {
     didReachBreakpointLimit = true;
@@ -1543,6 +1589,7 @@ export const insertPageTransferItem = (
         target: { data: draft, folderId: input.targetFolderId },
         projectId: input.projectId,
         conflictResolution: input.conflictResolution,
+        rootStyleConflictResolution: input.rootStyleConflictResolution,
         onBreakpointLimitMerge,
         createId: context.createId,
       });
@@ -1552,6 +1599,7 @@ export const insertPageTransferItem = (
         target: { data: draft },
         projectId: input.projectId,
         conflictResolution: input.conflictResolution,
+        rootStyleConflictResolution: input.rootStyleConflictResolution,
         onBreakpointLimitMerge,
         createId: context.createId,
       });
@@ -1561,6 +1609,7 @@ export const insertPageTransferItem = (
         target: { data: draft, parentFolderId: input.targetFolderId },
         projectId: input.projectId,
         conflictResolution: input.conflictResolution,
+        rootStyleConflictResolution: input.rootStyleConflictResolution,
         onBreakpointLimitMerge,
         createId: context.createId,
       });
@@ -1588,6 +1637,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
   target,
   projectId,
   conflictResolution,
+  rootStyleConflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   forceFolderCopySuffix,
@@ -1598,6 +1648,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
   target: { data: WebstudioData; parentFolderId: Folder["id"] };
   projectId?: string;
   conflictResolution?: ConflictResolution;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
   forceFolderCopySuffix?: boolean;
@@ -1636,6 +1687,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
         target: { data: target.data, parentFolderId: newFolder.id },
         projectId,
         conflictResolution,
+        rootStyleConflictResolution,
         contentModeCopyableProp,
         onBreakpointLimitMerge,
         forceFolderCopySuffix,
@@ -1652,6 +1704,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
       target: { data: target.data, folderId: newFolder.id },
       projectId,
       conflictResolution,
+      rootStyleConflictResolution,
       contentModeCopyableProp,
       onBreakpointLimitMerge,
       createId,

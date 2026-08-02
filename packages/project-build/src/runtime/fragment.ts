@@ -33,11 +33,13 @@ import { clonePropForInstance, listPropExpressions } from "./props";
 import { buildMergedBreakpointIds, maxBreakpoints } from "./breakpoints";
 import {
   collectStyleSourcesFromInstances,
+  detectRootStyleConflicts,
   detectTokenConflicts,
   insertLocalStyleSourcesWithNewIds,
   insertPortalLocalStyleSources,
   insertTokenStyleSources,
   type ConflictResolution,
+  type RootStyleConflictResolution,
 } from "./style-copy";
 import { unwrap } from "./unwrap";
 import {
@@ -547,6 +549,7 @@ export const insertWebstudioFragmentCopy = ({
   availableVariables,
   projectId,
   conflictResolution = "theirs",
+  rootStyleConflictResolution = "theirs",
   onBreakpointLimitMerge,
   metas,
   contentModeCopyableProp,
@@ -560,6 +563,7 @@ export const insertWebstudioFragmentCopy = ({
   availableVariables: DataSource[];
   projectId: string;
   conflictResolution?: ConflictResolution;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
   onBreakpointLimitMerge?: () => void;
   metas?: Map<string, WsComponentMeta>;
   contentModeCopyableProp?: ContentModeCopyableProp;
@@ -912,6 +916,7 @@ export const insertWebstudioFragmentCopy = ({
       contentMode: false,
       styleSourceIdMap,
       mergedBreakpointIds,
+      rootStyleConflictResolution,
       breakpoints,
       createId,
     });
@@ -987,6 +992,30 @@ export const detectFragmentTokenConflicts = ({
     existingStyleSources: targetData.styleSources,
     existingStyles: targetData.styles,
     breakpoints: targetData.breakpoints,
+    mergedBreakpointIds,
+  });
+};
+
+export const detectFragmentRootStyleConflicts = ({
+  fragment,
+  targetData,
+}: {
+  fragment: WebstudioFragment;
+  targetData: WebstudioData;
+}) => {
+  const mergedBreakpointIds = buildMergedBreakpointIds(
+    fragment.breakpoints,
+    targetData.breakpoints,
+    { maxBreakpointCount: maxBreakpoints }
+  );
+
+  return detectRootStyleConflicts({
+    fragmentStyleSources: fragment.styleSources,
+    fragmentStyleSourceSelections: fragment.styleSourceSelections,
+    fragmentStyles: fragment.styles,
+    existingStyleSources: targetData.styleSources,
+    existingStyleSourceSelections: targetData.styleSourceSelections,
+    existingStyles: targetData.styles,
     mergedBreakpointIds,
   });
 };

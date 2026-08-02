@@ -12,8 +12,12 @@ import {
   type PageTemplate,
 } from "@webstudio-is/sdk";
 import { $pages, $project } from "~/shared/sync/data-stores";
-import { detectFragmentTokenConflicts } from "@webstudio-is/project-build/runtime";
+import {
+  detectFragmentRootStyleConflicts,
+  detectFragmentTokenConflicts,
+} from "@webstudio-is/project-build/runtime";
 import { resolveTokenConflicts } from "../resolve-token-conflicts";
+import { builderApi } from "../builder-api";
 import {
   createFolderCopyData,
   createPageCopyData,
@@ -196,6 +200,21 @@ export const handlePastePage = async (
     if (conflictResolution === "cancel") {
       return pasteHandled;
     }
+    const firstPageLikeItem = collectPageLikeItems(item)[0];
+    const rootStyleConflicts =
+      firstPageLikeItem === undefined
+        ? []
+        : detectFragmentRootStyleConflicts({
+            fragment: firstPageLikeItem.rootFragment,
+            targetData,
+          });
+    const rootStyleConflictResolution =
+      rootStyleConflicts.length === 0
+        ? "theirs"
+        : await builderApi.showRootStyleConflictDialog(rootStyleConflicts);
+    if (rootStyleConflictResolution === "cancel") {
+      return pasteHandled;
+    }
 
     const result = executeRuntimeMutation({
       id: "pageTransfer.insert",
@@ -204,6 +223,7 @@ export const handlePastePage = async (
         targetFolderId: folderId,
         projectId,
         conflictResolution,
+        rootStyleConflictResolution,
       },
     });
     if (result?.result.didReachBreakpointLimit) {
