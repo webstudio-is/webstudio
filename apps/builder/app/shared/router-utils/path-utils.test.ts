@@ -5,10 +5,12 @@ test("includes an instance deep link in builder paths", () => {
   expect(
     builderPath({
       pageId: "page-id",
-      instanceId: "instance-id",
+      instanceSelector: ["instance-id", "slot-id", "body-id"],
       mode: "content",
     })
-  ).toBe("/?pageId=page-id&instanceId=instance-id&mode=content");
+  ).toBe(
+    "/?pageId=page-id&instanceSelector=instance-id&instanceSelector=slot-id&instanceSelector=body-id&mode=content"
+  );
 });
 
 test("includes an instance deep link in builder urls", () => {
@@ -16,11 +18,11 @@ test("includes an instance deep link in builder urls", () => {
     builderUrl({
       projectId: "project-id",
       pageId: "page-id",
-      instanceId: "instance-id",
+      instanceSelector: ["instance-id", "body-id"],
       origin: "https://wstd.dev",
     })
   ).toBe(
-    "https://p-project-id.wstd.dev/?pageId=page-id&instanceId=instance-id"
+    "https://p-project-id.wstd.dev/?pageId=page-id&instanceSelector=instance-id&instanceSelector=body-id"
   );
 });
 

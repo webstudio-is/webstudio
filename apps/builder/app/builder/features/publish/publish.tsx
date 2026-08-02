@@ -133,7 +133,7 @@ const PrePublishAuditMessage = ({
   const href = builderUrl({
     projectId: project.id,
     pageId: pageId === pages.homePageId ? undefined : pageId,
-    instanceId,
+    instanceSelector,
     origin: window.location.origin,
     authToken: $authToken.get(),
     mode: $builderMode.get(),

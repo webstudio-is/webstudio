@@ -30,8 +30,8 @@ test("preserves an instance deep link until URL state is initialized", () => {
     shouldNavigateToPageState({
       isUrlStateInitialized: false,
       isSamePageState: true,
-      searchParamsInstanceId: "heading",
-      instanceId: undefined,
+      searchParamsInstanceSelector: ["heading", "box", "body"],
+      instanceSelector: undefined,
     })
   ).toBe(false);
 
@@ -39,8 +39,19 @@ test("preserves an instance deep link until URL state is initialized", () => {
     shouldNavigateToPageState({
       isUrlStateInitialized: true,
       isSamePageState: true,
-      searchParamsInstanceId: "heading",
-      instanceId: undefined,
+      searchParamsInstanceSelector: ["heading", "box", "body"],
+      instanceSelector: undefined,
+    })
+  ).toBe(true);
+});
+
+test("updates the URL when a shared instance moves to another slot path", () => {
+  expect(
+    shouldNavigateToPageState({
+      isUrlStateInitialized: true,
+      isSamePageState: true,
+      searchParamsInstanceSelector: ["box", "fragment", "slot-two", "body"],
+      instanceSelector: ["box", "fragment", "slot-one", "body"],
     })
   ).toBe(true);
 });
@@ -59,7 +70,7 @@ test("resolves a deep-linked instance to its page and full selector", () => {
   );
   expect(
     getDeepLinkedInstanceSelection({
-      instanceId: "heading",
+      instanceSelector: ["heading", "box", "body"],
       canOpenPageTemplates: true,
       pages,
       instances,
@@ -70,7 +81,7 @@ test("resolves a deep-linked instance to its page and full selector", () => {
   });
 });
 
-test("resolves shared slot content through a deterministic slot instance", () => {
+test("restores the selected shared slot occurrence from its full selector", () => {
   const pages = createDefaultPages({
     homePageId: "home-page",
     rootInstanceId: "body",
@@ -92,14 +103,14 @@ test("resolves shared slot content through a deterministic slot instance", () =>
 
   expect(
     getDeepLinkedInstanceSelection({
-      instanceId: "box",
+      instanceSelector: ["box", "fragment", "slot-one", "body"],
       canOpenPageTemplates: true,
       pages,
       instances,
     })
   ).toEqual({
     pageId: "home-page",
-    instanceSelector: ["box", "fragment", "slot-two", "body"],
+    instanceSelector: ["box", "fragment", "slot-one", "body"],
   });
 });
 
@@ -112,7 +123,7 @@ test("ignores missing deep-linked instances", () => {
 
   expect(
     getDeepLinkedInstanceSelection({
-      instanceId: "missing",
+      instanceSelector: ["missing", "body"],
       canOpenPageTemplates: true,
       pages,
       instances,

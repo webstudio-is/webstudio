@@ -18,54 +18,73 @@ import { $selectedPage } from "../nano-states";
 import { selectPage } from "../nano-states";
 import {
   findPageByIdOrPath,
+  getAllPages,
   isPageTemplate,
   type Instances,
   type Pages,
 } from "@webstudio-is/sdk";
-import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/runtime";
+import {
+  areInstanceSelectorsEqual,
+  type InstanceSelector,
+} from "@webstudio-is/project-build/runtime";
+import { canResolveInstanceSelector } from "../instance-utils/selection";
 
 const getDeepLinkedInstanceSelection = ({
-  instanceId,
+  instanceSelector,
   canOpenPageTemplates,
   pages,
   instances,
 }: {
-  instanceId: string | null;
+  instanceSelector: InstanceSelector | undefined;
   canOpenPageTemplates: boolean;
   pages: Pages;
   instances: Instances;
 }) => {
-  if (instanceId === null || instances.has(instanceId) === false) {
+  if (instanceSelector === undefined) {
     return;
   }
 
-  const selection = findPageAndSelectorByInstanceId(
-    pages,
-    instances,
-    instanceId
-  );
-  const page = canOpenPageTemplates
-    ? findPageByIdOrPath(selection.pageId, pages, { includeTemplates: true })
-    : findPageByIdOrPath(selection.pageId, pages);
-  if (page?.rootInstanceId !== selection.instanceSelector.at(-1)) {
+  const instanceId = instanceSelector[0];
+  if (
+    instanceId === undefined ||
+    instances.has(instanceId) === false ||
+    canResolveInstanceSelector(instanceSelector, instances) === false
+  ) {
     return;
   }
-  return selection;
+
+  const rootInstanceId = instanceSelector.at(-1);
+  const page = getAllPages(pages).find(
+    (page) => page.rootInstanceId === rootInstanceId
+  );
+  if (
+    page === undefined ||
+    (isPageTemplate(page) && canOpenPageTemplates === false)
+  ) {
+    return;
+  }
+  return { pageId: page.id, instanceSelector };
 };
 
 const shouldNavigateToPageState = ({
   isUrlStateInitialized,
   isSamePageState,
-  searchParamsInstanceId,
-  instanceId,
+  searchParamsInstanceSelector,
+  instanceSelector,
 }: {
   isUrlStateInitialized: boolean;
   isSamePageState: boolean;
-  searchParamsInstanceId: string | undefined;
-  instanceId: string | undefined;
+  searchParamsInstanceSelector: InstanceSelector | undefined;
+  instanceSelector: InstanceSelector | undefined;
 }) =>
   isUrlStateInitialized &&
-  (isSamePageState === false || searchParamsInstanceId !== instanceId);
+  (isSamePageState === false ||
+    (searchParamsInstanceSelector === undefined
+      ? instanceSelector !== undefined
+      : areInstanceSelectorsEqual(
+          searchParamsInstanceSelector,
+          instanceSelector
+        ) === false));
 
 const shouldInitializePageState = ({
   isDataLoaded,
@@ -107,8 +126,12 @@ const setPageStateFromUrl = () => {
     )?.id ?? pages.homePageId;
 
   $selectedPageHash.set({ hash: searchParams.get("pageHash") ?? "" });
+  const requestedInstanceSelector = searchParams.getAll("instanceSelector");
   const instanceSelection = getDeepLinkedInstanceSelection({
-    instanceId: searchParams.get("instanceId"),
+    instanceSelector:
+      requestedInstanceSelector.length === 0
+        ? undefined
+        : requestedInstanceSelector,
     canOpenPageTemplates: $canOpenPageTemplates.get(),
     pages,
     instances: $instances.get(),
@@ -173,19 +196,21 @@ export const useSyncPageUrl = ({ isDataLoaded }: { isDataLoaded: boolean }) => {
 
     const searchParamsPageId = searchParams.get("pageId") ?? pages.homePageId;
     const searchParamsPageHash = searchParams.get("pageHash") ?? "";
-    const searchParamsInstanceId = searchParams.get("instanceId") ?? undefined;
+    const searchParamsInstanceSelector =
+      searchParams.getAll("instanceSelector");
     const searchParamsModeRaw = searchParams.get("mode");
     const searchParamsMode = isBuilderMode(searchParamsModeRaw)
       ? searchParamsModeRaw
       : undefined;
     const builderModeParam = builderMode === "design" ? undefined : builderMode;
     const searchParamsSafemode = searchParams.get("safemode");
-    const selectedInstanceId = selectedInstanceSelector?.[0];
-    const instanceId =
-      selectedInstanceId === page.rootInstanceId ||
-      $instances.get().has(selectedInstanceId ?? "") === false
+    const instanceSelector =
+      selectedInstanceSelector === undefined ||
+      selectedInstanceSelector[0] === page.rootInstanceId ||
+      canResolveInstanceSelector(selectedInstanceSelector, $instances.get()) ===
+        false
         ? undefined
-        : selectedInstanceId;
+        : selectedInstanceSelector;
 
     const isSamePageState =
       searchParamsPageId === page.id &&
@@ -198,8 +223,11 @@ export const useSyncPageUrl = ({ isDataLoaded }: { isDataLoaded: boolean }) => {
       shouldNavigateToPageState({
         isUrlStateInitialized,
         isSamePageState,
-        searchParamsInstanceId,
-        instanceId,
+        searchParamsInstanceSelector:
+          searchParamsInstanceSelector.length === 0
+            ? undefined
+            : searchParamsInstanceSelector,
+        instanceSelector,
       }) === false
     ) {
       return;
@@ -208,7 +236,7 @@ export const useSyncPageUrl = ({ isDataLoaded }: { isDataLoaded: boolean }) => {
     navigate(
       builderPath({
         pageId: page.id === pages.homePageId ? undefined : page.id,
-        instanceId,
+        instanceSelector,
         authToken: $authToken.get(),
         pageHash: pageHash.hash === "" ? undefined : pageHash.hash,
         mode: builderModeParam,
