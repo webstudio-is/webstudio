@@ -21,6 +21,8 @@ import {
   pageCopyTesting,
   pageDuplicateInput,
   createPageTemplate,
+  createPageCopyData,
+  copyPage,
   createPageFromTemplate,
   createPageDuplicatePayload,
   createTemplateCopyData,
@@ -29,6 +31,7 @@ import {
   duplicatePage,
   duplicatePageTemplate,
   insertPageCopyMutable,
+  insertPageTransferItem,
   insertPageFromTemplateMutable,
   insertTemplateCopyFromFragmentsMutable,
   listPageTemplates,
@@ -37,6 +40,7 @@ import {
 } from "./page-copy";
 import {
   $,
+  css,
   expression,
   Parameter,
   renderData,
@@ -55,6 +59,69 @@ const getCopiedPages = (data: WebstudioData) =>
   Array.from(data.pages.pages.values()).filter(
     (page) => page.id !== data.pages.homePageId
   );
+
+test("requires an explicit resolution for conflicting transferred root styles", () => {
+  const { sourcePages, source, target } = createConflictingRootStyleProjects();
+
+  expect(() =>
+    insertPageTransferItem(
+      target,
+      {
+        projectId: "target-project",
+        targetFolderId: ROOT_FOLDER_ID,
+        item: {
+          type: "page",
+          ...createPageCopyData({
+            data: source,
+            page: getHomePage(sourcePages),
+          }),
+        },
+      },
+      { createId: nanoid }
+    )
+  ).toThrow(/root style conflicts require an explicit/i);
+});
+
+test("requires an explicit resolution for conflicting copied root styles", () => {
+  const { source, target } = createConflictingRootStyleProjects();
+
+  expect(() =>
+    copyPage(
+      target,
+      {
+        projectId: "target-project",
+        sourceData: source,
+        pageId: "source-page",
+      },
+      { createId: nanoid }
+    )
+  ).toThrow(/root style conflicts require an explicit/i);
+});
+
+test.each([
+  ["ours", "blue"],
+  ["theirs", "red"],
+] as const)(
+  "resolves copied root style conflicts with %s",
+  (rootStyleConflictResolution, expectedColor) => {
+    const { source, target } = createConflictingRootStyleProjects();
+    const mutation = copyPage(
+      target,
+      {
+        projectId: "target-project",
+        sourceData: source,
+        pageId: "source-page",
+        rootStyleConflictResolution,
+      },
+      { createId: nanoid }
+    );
+    const updated = applyBuilderPatchTransactions(target, [
+      { id: "copy-page", payload: mutation.payload },
+    ]).state as WebstudioData;
+
+    expect(getRootColor(updated)).toBe(expectedColor);
+  }
+);
 
 test("validates duplicate page substitutions", () => {
   expect(
@@ -93,6 +160,54 @@ const getWebstudioDataStub = (
   styles: new Map(),
   ...data,
 });
+
+const createConflictingRootStyleProjects = () => {
+  const sourcePages = createDefaultPages({
+    homePageId: "source-page",
+    rootInstanceId: "source-body",
+  });
+  const source = getWebstudioDataStub({
+    ...renderData(
+      <ws.root
+        ws:id={ROOT_INSTANCE_ID}
+        ws:style={css`
+          color: red;
+        `}
+      >
+        <$.Body ws:id="source-body"></$.Body>
+      </ws.root>
+    ),
+    pages: sourcePages,
+  });
+  const target = getWebstudioDataStub({
+    ...renderData(
+      <ws.root
+        ws:id={ROOT_INSTANCE_ID}
+        ws:style={css`
+          color: blue;
+        `}
+      >
+        <$.Body ws:id="target-body"></$.Body>
+      </ws.root>
+    ),
+    pages: createDefaultPages({
+      homePageId: "target-page",
+      rootInstanceId: "target-body",
+    }),
+  });
+  return { sourcePages, source, target };
+};
+
+const getRootColor = (data: WebstudioData) => {
+  const rootStyleSourceIds = new Set(
+    data.styleSourceSelections.get(ROOT_INSTANCE_ID)?.values
+  );
+  const color = Array.from(data.styles.values()).find(
+    (style) =>
+      rootStyleSourceIds.has(style.styleSourceId) && style.property === "color"
+  )?.value;
+  return color?.type === "keyword" ? color.value : undefined;
+};
 
 const getPagesWithSiblings = () =>
   migratePages({

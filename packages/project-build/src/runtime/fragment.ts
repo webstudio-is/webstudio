@@ -33,11 +33,13 @@ import { clonePropForInstance, listPropExpressions } from "./props";
 import { buildMergedBreakpointIds, maxBreakpoints } from "./breakpoints";
 import {
   collectStyleSourcesFromInstances,
+  detectRootStyleConflicts,
   detectTokenConflicts,
   insertLocalStyleSourcesWithNewIds,
   insertPortalLocalStyleSources,
   insertTokenStyleSources,
   type ConflictResolution,
+  type RootStyleConflictResolution,
 } from "./style-copy";
 import { unwrap } from "./unwrap";
 import {
@@ -498,7 +500,7 @@ const insertFragmentBreakpointsMutable = ({
   createId,
   onBreakpointLimitMerge,
 }: {
-  fragment: WebstudioFragment;
+  fragment: Pick<WebstudioFragment, "breakpoints">;
   breakpoints: Breakpoints;
   createId: () => string;
   onBreakpointLimitMerge?: () => void;
@@ -533,6 +535,21 @@ const insertFragmentBreakpointsMutable = ({
     }
   }
   return { mergedBreakpointIds, didMergeBreakpointsDueToLimit };
+};
+
+const buildFragmentInsertionBreakpointIds = ({
+  fragmentBreakpoints,
+  targetBreakpoints,
+}: {
+  fragmentBreakpoints: WebstudioFragment["breakpoints"];
+  targetBreakpoints: Breakpoints;
+}) => {
+  let generatedIdIndex = 0;
+  return insertFragmentBreakpointsMutable({
+    fragment: { breakpoints: fragmentBreakpoints },
+    breakpoints: new Map(targetBreakpoints),
+    createId: () => `conflict-detection-breakpoint-${generatedIdIndex++}`,
+  }).mergedBreakpointIds;
 };
 
 export const fragmentTesting = {
@@ -989,6 +1006,57 @@ export const detectFragmentTokenConflicts = ({
     breakpoints: targetData.breakpoints,
     mergedBreakpointIds,
   });
+};
+
+export const detectFragmentRootStyleConflicts = ({
+  fragment,
+  targetData,
+}: {
+  fragment: WebstudioFragment;
+  targetData: WebstudioData;
+}) => {
+  const mergedBreakpointIds = buildFragmentInsertionBreakpointIds({
+    fragmentBreakpoints: fragment.breakpoints,
+    targetBreakpoints: targetData.breakpoints,
+  });
+
+  return detectRootStyleConflicts({
+    fragmentStyleSources: fragment.styleSources,
+    fragmentStyleSourceSelections: fragment.styleSourceSelections,
+    fragmentStyles: fragment.styles,
+    existingStyleSources: targetData.styleSources,
+    existingStyleSourceSelections: targetData.styleSourceSelections,
+    existingStyles: targetData.styles,
+    mergedBreakpointIds,
+  });
+};
+
+export const resolveFragmentRootStyleConflicts = ({
+  fragment,
+  targetData,
+  resolution,
+}: {
+  fragment: WebstudioFragment;
+  targetData: WebstudioData;
+  resolution: RootStyleConflictResolution | undefined;
+}): WebstudioFragment => {
+  if (resolution !== "ours") {
+    return fragment;
+  }
+  const conflictingStyles = new Set(
+    detectFragmentRootStyleConflicts({ fragment, targetData }).map(
+      (conflict) => conflict.incomingStyle
+    )
+  );
+  if (conflictingStyles.size === 0) {
+    return fragment;
+  }
+  return {
+    ...fragment,
+    styles: fragment.styles.filter(
+      (style) => conflictingStyles.has(style) === false
+    ),
+  };
 };
 
 /**

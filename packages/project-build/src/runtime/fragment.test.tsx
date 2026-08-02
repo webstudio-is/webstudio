@@ -3,6 +3,7 @@ import {
   getCommonAncestorSelector,
   getPasteRootInstanceIds,
   copyWebstudioFragmentMutable,
+  detectFragmentRootStyleConflicts,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   mapFragmentChildrenToCopiedChildren,
@@ -484,6 +485,58 @@ test("should merge :root local styles", () => {
       }
     `).trim()
   );
+});
+
+test("does not conflict when a breakpoint id is remapped during insertion", () => {
+  const source = createStub(
+    <ws.root
+      ws:id={ROOT_INSTANCE_ID}
+      ws:style={css`
+        color: red;
+      `}
+    >
+      <$.Body></$.Body>
+    </ws.root>
+  );
+  const target = createStub(
+    <ws.root
+      ws:id={ROOT_INSTANCE_ID}
+      ws:style={css`
+        color: blue;
+      `}
+    >
+      <$.Body></$.Body>
+    </ws.root>
+  );
+  const sourceBreakpoint = source.breakpoints.values().next().value;
+  const targetBreakpoint = target.breakpoints.values().next().value;
+  const sourceStyle = source.styles.values().next().value;
+  if (
+    sourceBreakpoint === undefined ||
+    targetBreakpoint === undefined ||
+    sourceStyle === undefined
+  ) {
+    throw new Error("Expected root style fixtures");
+  }
+  source.breakpoints.clear();
+  source.breakpoints.set(targetBreakpoint.id, {
+    ...sourceBreakpoint,
+    id: targetBreakpoint.id,
+    minWidth: 640,
+  });
+  source.styles.clear();
+  const remappedSourceStyle = {
+    ...sourceStyle,
+    breakpointId: targetBreakpoint.id,
+  };
+  source.styles.set(getStyleDeclKey(remappedSourceStyle), remappedSourceStyle);
+
+  expect(
+    detectFragmentRootStyleConflicts({
+      fragment: extractWebstudioFragment(source, ROOT_INSTANCE_ID),
+      targetData: target,
+    })
+  ).toEqual([]);
 });
 
 test("should copy local styles of duplicated instance", () => {
