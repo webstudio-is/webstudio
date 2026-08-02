@@ -704,10 +704,10 @@ const validateMarkdownBlog = (
       (call) => call.name === "meta.guide" && call.isError !== true
     );
     const toolDiscoveryIndex = input.toolCalls.findIndex(
-      (call) => call.name === "meta.get_more_tools" && call.isError !== true
+      (call) => call.name === "meta.get-more-tools" && call.isError !== true
     );
     const toolDiscoveryCount = input.toolCalls.filter(
-      (call) => call.name === "meta.get_more_tools"
+      (call) => call.name === "meta.get-more-tools"
     ).length;
     recordCheck(
       checks,

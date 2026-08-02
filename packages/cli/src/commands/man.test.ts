@@ -351,6 +351,7 @@ test("prints llm manual with discovery rules", () => {
   expect(output).toContain("webstudio man --json");
   expect(output).toContain("webstudio permissions --json");
   expect(output).toContain("## MCP Argument Examples");
+  expect(output).toContain("### insert-fragment\n\n```json\n{");
   expect(output).not.toContain("append-instance");
   expect(output).not.toContain("children.json contents");
   expect(output).toContain('"updates"');
@@ -506,7 +507,7 @@ test("prints mcp manual with startup and JSON argument examples", () => {
   const output = vi.mocked(console.info).mock.calls.at(-1)?.[0];
   expect(output).toContain("# Webstudio MCP Manual");
   expect(output).toContain("stdout is reserved for MCP JSON-RPC");
-  expect(output).toContain("meta.get_more_tools");
+  expect(output).toContain("meta.get-more-tools");
   expect(output).toContain("webstudio://project/tools");
   expect(output).toContain("## MCP SDK Client Imports");
   expect(output).toContain(

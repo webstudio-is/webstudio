@@ -581,15 +581,15 @@ test("explains extract-slot selectors in focused MCP discovery", async () => {
   const core = createProjectSessionMcpCore({
     operations: [operation],
     createProjectSession: () => {
-      throw Error("meta.get_more_tools must not initialize a project session");
+      throw Error("meta.get-more-tools must not initialize a project session");
     },
     executeOperation: async () => {
-      throw Error("meta.get_more_tools must not execute a project operation");
+      throw Error("meta.get-more-tools must not execute a project operation");
     },
   });
 
   const result = await core.callTool({
-    name: "meta.get_more_tools",
+    name: "meta.get-more-tools",
     input: { tools: ["extract-slot"] },
   });
   const details = JSON.stringify(result.structuredContent.data);

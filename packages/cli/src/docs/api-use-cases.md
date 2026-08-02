@@ -53,15 +53,15 @@ Commands:
 - webstudio man llm --json
 - MCP tool: meta.index {}
 - MCP tool: meta.guide {"brief":"Create a pricing page"}
-- MCP tool: meta.get_more_tools {"brief":"update-styles"}
+- MCP tool: meta.get-more-tools {"brief":"update-styles"}
 - webstudio mcp list-resources
 - webstudio mcp read-resource webstudio://project/guide
 - webstudio mcp read-resource webstudio://project/expressions
 
 Notes:
 
-- Use `webstudio schema mcp` for a compact machine-readable MCP tool overview. Add `--verbose` or use focused `meta.get_more_tools` calls only when exact input schemas are needed.
-- Use focused MCP tools for discovery first: `meta.index`, `meta.guide`, `meta.get_more_tools`, `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get`. Protocol clients can use `resources/list` and `resources/read`; shell agents can use `webstudio mcp list-resources` and `webstudio mcp read-resource <uri>`. Read longer resources such as `webstudio://project/tools` and `webstudio://project/components` only when focused tools are insufficient.
+- Use `webstudio schema mcp` for a compact machine-readable MCP tool overview. Add `--verbose` or use focused `meta.get-more-tools` calls only when exact input schemas are needed.
+- Use focused MCP tools for discovery first: `meta.index`, `meta.guide`, `meta.get-more-tools`, `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get`. Protocol clients can use `resources/list` and `resources/read`; shell agents can use `webstudio mcp list-resources` and `webstudio mcp read-resource <uri>`. Read longer resources such as `webstudio://project/tools` and `webstudio://project/components` only when focused tools are insufficient.
 - `components.summary` returns counts by default; request `{"detail":"components","limit":20}` for paginated entries. Registry list tools return compact metadata, while `components.get` and `templates.get` return focused full details.
 - Read `webstudio://project/expressions` before authoring unfamiliar computed text, prop bindings, resource expressions, actions, or Collection item bindings.
 - From a shell, call one MCP tool with the shortcut form `webstudio <tool> '<json>'`, for example `webstudio components.summary`. The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`. Use `--input-file` for large payloads.
@@ -408,7 +408,7 @@ Commands:
 
 Commands:
 
-- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag=\"section\" ws:style={css`padding: 32px;`}><ws.element ws:tag=\"h2\">Product OS</ws.element><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag='section' ws:style={css`padding: 32px;`}><ws.element ws:tag='h2'>Product OS</ws.element><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>"}
 - MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"@webstudio-is/sdk-components-react-radix:Switch"}
 - MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"Form"}
 
@@ -705,9 +705,9 @@ Commands:
 Commands:
 
 - MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"https://api.example.com/posts","headers":[]}}
-- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts?tag=\" + filters.tag","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
-- MCP tool: create-resource {"resource":{"name":"Filtered Posts","method":"get","url":"https://api.example.com/posts","searchParams":[{"name":"tag","value":"filters.tag"},{"name":"source","value":{"type":"literal","value":"website"}}],"headers":[{"name":"Authorization","value":"\"Bearer \" + auth.token"}]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
-- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"https://api.example.com/graphql","headers":[{"name":"Content-Type","value":{"type":"literal","value":"application/json"}}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
+- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"'https://api.example.com/posts?tag=' + filters.tag","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
+- MCP tool: create-resource {"resource":{"name":"Filtered Posts","method":"get","url":"https://api.example.com/posts","searchParams":[{"name":"tag","value":"filters.tag"},{"name":"source","value":{"type":"literal","value":"website"}}],"headers":[{"name":"Authorization","value":"'Bearer ' + auth.token"}]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
+- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"https://api.example.com/graphql","headers":[{"name":"Content-Type","value":{"type":"literal","value":"application/json"}}],"body":"{ query: 'query Post($slug: String!) { post(slug: $slug) { title } }', variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
 - MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"/$resources/current-date","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
 
 Notes:
@@ -1128,7 +1128,7 @@ Commands:
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"tags","value":{"type":"json","value":["news","product"]}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"filters","value":{"type":"json","value":{"tag":"news"}}}
 - MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"https://api.example.com/posts","searchParams":[{"name":"tag","value":"filters.tag"},{"name":"source","value":{"type":"literal","value":"website"}}],"headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
-- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"https://api.example.com/graphql","headers":[{"name":"Content-Type","value":{"type":"literal","value":"application/json"}}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
+- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"https://api.example.com/graphql","headers":[{"name":"Content-Type","value":{"type":"literal","value":"application/json"}}],"body":"{ query: 'query Post($slug: String!) { post(slug: $slug) { title } }', variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
 - MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"/$resources/current-date","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
 - MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"https://api.example.com/posts"}}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
@@ -1145,7 +1145,7 @@ Notes:
 
 Commands:
 
-- MCP tool: insert-collection {"parentInstanceId":"<instanceId>","data":{"type":"expression","value":"posts.data.items"},"itemFragment":"<ws.element ws:tag=\"article\"><ws.element ws:tag=\"h2\">{expression`collectionItem.title`}</ws.element></ws.element>"}
+- MCP tool: insert-collection {"parentInstanceId":"<instanceId>","data":{"type":"expression","value":"posts.data.items"},"itemFragment":"<ws.element ws:tag='article'><ws.element ws:tag='h2'>{expression`collectionItem.title`}</ws.element></ws.element>"}
 - MCP tool: inspect-instance {"instanceId":"<collectionId>","include":["props","bindings","children"]}
 
 Notes:
@@ -1210,7 +1210,7 @@ Commands:
 - MCP tool: create-design-token {"tokens":"tokens.json contents"}
 - MCP tool: define-css-variable {"vars":"vars.json contents"}
 - MCP tool: list-breakpoints {}
-- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag=\"section\"><ws.element ws:tag=\"p\">Section copy</ws.element></ws.element>"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag='section'><ws.element ws:tag='p'>Section copy</ws.element></ws.element>"}
 - MCP tool: update-styles {"updates":[{"instanceId":"<instanceId>","breakpointId":"<breakpointId-from-list-breakpoints>","property":"padding-left","value":{"type":"unit","unit":"px","value":24}}]}
 - MCP tool: preview.start {"host":"127.0.0.1","port":5173}
 - MCP tool: screenshot {"path":"/landing","output":"landing-desktop.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}

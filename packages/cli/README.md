@@ -75,7 +75,16 @@ Shell-capable agents can call MCP tools directly as CLI subcommands immediately 
 ```bash
 webstudio meta.index
 webstudio components.search '{"brief":"button"}'
-webstudio insert-fragment '{"parentInstanceId":"<parent-id>","fragment":"<ws.element ws:tag=\"section\" />"}' --dry-run
+webstudio insert-fragment --input-file .temp/insert-fragment.json --dry-run
+```
+
+`.temp/insert-fragment.json`:
+
+```json
+{
+  "parentInstanceId": "<parent-id>",
+  "fragment": "<ws.element ws:tag='section' />"
+}
 ```
 
 The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`.

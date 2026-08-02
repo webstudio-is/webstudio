@@ -766,7 +766,7 @@ describe("project session mcp adapter", () => {
       "meta.index",
       "meta.guide",
       "workflow.next",
-      "meta.get_more_tools",
+      "meta.get-more-tools",
       "checkpoint.ack",
       "components.summary",
       "components.list",
@@ -784,6 +784,7 @@ describe("project session mcp adapter", () => {
       "insert-fragment-verified",
     ]);
     expect(toolNames).toContain("insert-fragment");
+    expect(toolNames).not.toContain("meta.get_more_tools");
     const assetOperationTools = listProjectSessionMcpTools(
       runtimeOperationContracts
         .filter(
@@ -1215,7 +1216,7 @@ describe("project session mcp adapter", () => {
       executeOperation: createExecuteOperation(),
     });
     const details = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { tools: ["large-input"] },
     });
     expect(JSON.stringify(details.structuredContent.data)).toContain(
@@ -1288,7 +1289,7 @@ describe("project session mcp adapter", () => {
       executeOperation: createExecuteOperation(),
     });
     const details = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { tools: ["create-page"] },
     });
     const [toolDetails] = (
@@ -1356,7 +1357,7 @@ describe("project session mcp adapter", () => {
       annotations: expect.objectContaining({ requiredInputFields: ["brief"] }),
     });
     expect(
-      tools.find((tool) => tool.name === "meta.get_more_tools")
+      tools.find((tool) => tool.name === "meta.get-more-tools")
     ).toMatchObject({
       inputSchema: expect.objectContaining({
         required: [],
@@ -1420,7 +1421,7 @@ describe("project session mcp adapter", () => {
           inputSchema: {
             type: "object",
             description:
-              "Pass this MCP tool's JSON arguments. Use meta.get_more_tools for examples and required fields. For authored content with styles, prefer insert-fragment so the CLI converts JSX into Webstudio data.",
+              "Pass this MCP tool's JSON arguments. Use meta.get-more-tools for examples and required fields. For authored content with styles, prefer insert-fragment so the CLI converts JSX into Webstudio data.",
             additionalProperties: false,
             required: [],
             properties: {
@@ -3832,7 +3833,7 @@ describe("project session mcp adapter", () => {
       input: { goal: "design-system-page" },
     });
     const detailsWhileCheckpointed = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { tools: ["publish"] },
     });
     await expect(
@@ -3864,15 +3865,19 @@ describe("project session mcp adapter", () => {
     });
     await ackCheckpoint();
     const details = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { tools: ["publish"] },
     });
-    const insertFragmentDetails = await adapter.callTool({
+    const legacyDetails = await adapter.callTool({
       name: "meta.get_more_tools",
+      input: { tools: ["meta.get_more_tools"] },
+    });
+    const insertFragmentDetails = await adapter.callTool({
+      name: "meta.get-more-tools",
       input: { tools: ["insert-fragment"] },
     });
     const fuzzyDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "styles" },
     });
 
@@ -3954,6 +3959,8 @@ describe("project session mcp adapter", () => {
     expect(discovery.insertFragment).toContain("not parentId");
     expect(discovery.insertFragment).toContain("ws:style={css`...`}");
     expect(discovery.insertFragment).toContain("style={{ padding: 24 }}");
+    expect(discovery.insertFragment).toContain("--input-file");
+    expect(discovery.insertFragment).not.toContain('ws:tag=\\"');
     expect(JSON.stringify(index.structuredContent.data)).not.toContain(
       "{ brief }"
     );
@@ -4012,7 +4019,15 @@ describe("project session mcp adapter", () => {
         mustReturnAfter: true,
         checkpoint: expect.objectContaining({ required: true }),
         allowedTools: expect.arrayContaining(["insert-fragment"]),
-        commandPattern: expect.stringContaining('ws:tag=\\"h2\\"'),
+        commandPattern: expect.stringContaining(
+          "--input-file .temp/design-system-section.json"
+        ),
+        inputFile: expect.objectContaining({
+          path: ".temp/design-system-section.json",
+          contents: expect.objectContaining({
+            fragment: expect.stringContaining("ws:tag='h2'"),
+          }),
+        }),
         constraints: expect.arrayContaining([
           expect.stringContaining("Keep the dry-run fragment tiny"),
           expect.stringContaining("do not use deprecated $.Box"),
@@ -4067,6 +4082,13 @@ describe("project session mcp adapter", () => {
         ],
       })
     );
+    expect(legacyDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        requestedTools: ["meta.get_more_tools"],
+        missingTools: [],
+        tools: [expect.objectContaining({ name: "meta.get-more-tools" })],
+      })
+    );
     const [publishDetails] = (
       details.structuredContent.data as {
         tools: { inputNote: string }[];
@@ -4087,7 +4109,7 @@ describe("project session mcp adapter", () => {
       insertFragmentToolDetails?.mcpExamples
     );
     expect(insertFragmentExamples).toContain("ws:style={css`");
-    expect(insertFragmentExamples).toContain('ws:tag=\\"section\\"');
+    expect(insertFragmentExamples).toContain("ws:tag='section'");
     expect(insertFragmentExamples).toContain("style={{ padding: 32");
     expect(insertFragmentExamples).toContain("ws:tokens");
     expect(insertFragmentExamples).toContain("ActionValue");
@@ -4105,7 +4127,7 @@ describe("project session mcp adapter", () => {
     ).toBeLessThanOrEqual(12);
 
     const insertDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "insert component" },
     });
     const insertToolNames = (
@@ -4119,7 +4141,7 @@ describe("project session mcp adapter", () => {
     }
 
     const styledSectionDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "create a styled section" },
     });
     const styledSectionToolNames = (
@@ -4133,7 +4155,7 @@ describe("project session mcp adapter", () => {
     );
 
     const heroSectionDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "style hero section" },
     });
     const heroSectionToolNames = (
@@ -4152,7 +4174,7 @@ describe("project session mcp adapter", () => {
     );
 
     const deleteStylesDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "delete unused styles" },
     });
     const deleteStylesToolNames = (
@@ -4172,7 +4194,7 @@ describe("project session mcp adapter", () => {
     );
 
     const deleteCssVariablesDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "delete CSS variables" },
     });
     const deleteCssVariablesToolNames = (
@@ -4188,7 +4210,7 @@ describe("project session mcp adapter", () => {
     );
 
     const deleteVariablesDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "delete variables" },
     });
     const deleteVariablesToolNames = (
@@ -4201,7 +4223,7 @@ describe("project session mcp adapter", () => {
     }
 
     const createCssVariableDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "create CSS variable" },
     });
     const createCssVariableToolNames = (
@@ -4214,7 +4236,7 @@ describe("project session mcp adapter", () => {
     }
 
     const createVariablesDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "create variables" },
     });
     const createVariablesToolNames = (
@@ -4227,7 +4249,7 @@ describe("project session mcp adapter", () => {
     }
 
     const deleteDesignTokenDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "delete design token" },
     });
     const deleteDesignTokenToolNames = (
@@ -4243,7 +4265,7 @@ describe("project session mcp adapter", () => {
     );
 
     const deleteDesignTokenStylesDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "delete design token styles" },
     });
     const deleteDesignTokenStylesToolNames = (
@@ -4260,7 +4282,7 @@ describe("project session mcp adapter", () => {
     }
 
     const detachDesignTokenDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "remove design token from component" },
     });
     const detachDesignTokenToolNames = (
@@ -4273,7 +4295,7 @@ describe("project session mcp adapter", () => {
     }
 
     const updateTextDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "update text" },
     });
     const updateTextToolNames = (
@@ -4287,7 +4309,7 @@ describe("project session mcp adapter", () => {
     );
 
     const deletePageDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "delete page" },
     });
     const deletePageToolNames = (
@@ -4309,7 +4331,7 @@ describe("project session mcp adapter", () => {
     );
 
     const deletePagesDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "delete pages" },
     });
     const deletePagesToolNames = (
@@ -4325,7 +4347,7 @@ describe("project session mcp adapter", () => {
     );
 
     const componentTreeDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "insert styled component tree" },
     });
     const componentTreeToolNames = (
@@ -4336,7 +4358,7 @@ describe("project session mcp adapter", () => {
     expect(componentTreeToolNames[0]).toBe("insert-fragment");
 
     const replaceImageDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "replace image" },
     });
     const replaceImageToolNames = (
@@ -4349,7 +4371,7 @@ describe("project session mcp adapter", () => {
     }
 
     const moveComponentDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "move component" },
     });
     const moveComponentToolNames = (
@@ -4362,7 +4384,7 @@ describe("project session mcp adapter", () => {
     }
 
     const cloneSectionDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "clone section" },
     });
     const cloneSectionToolNames = (
@@ -4375,7 +4397,7 @@ describe("project session mcp adapter", () => {
     }
 
     const deleteComponentDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "delete component" },
     });
     const deleteComponentToolNames = (
@@ -4388,7 +4410,7 @@ describe("project session mcp adapter", () => {
     }
 
     const compareScreenshotsDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "compare screenshots" },
     });
     const compareScreenshotsToolNames = (
@@ -4401,7 +4423,7 @@ describe("project session mcp adapter", () => {
     }
 
     const findComponentDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "find component" },
     });
     const findComponentToolNames = (
@@ -4414,7 +4436,7 @@ describe("project session mcp adapter", () => {
     }
 
     const getComponentDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "get component details" },
     });
     const jsonLdGuide = await adapter.callTool({
@@ -4485,7 +4507,7 @@ describe("project session mcp adapter", () => {
     }
 
     const coverageDetails = await adapter.callTool({
-      name: "meta.get_more_tools",
+      name: "meta.get-more-tools",
       input: { brief: "check component coverage" },
     });
     const coverageToolNames = (
@@ -4556,7 +4578,7 @@ describe("project session mcp adapter", () => {
         }),
         workflow: expect.arrayContaining([
           expect.stringContaining(
-            'meta.get_more_tools with {"tools":["create-assets-resource"]}'
+            'meta.get-more-tools with {"tools":["create-assets-resource"]}'
           ),
           expect.stringContaining(
             "Upload all Markdown source files together in one upload-assets call"
@@ -4754,11 +4776,11 @@ describe("project session mcp adapter", () => {
     );
     await expect(
       adapter.callTool({
-        name: "meta.get_more_tools",
+        name: "meta.get-more-tools",
         input: { tools: "insert-component" },
       })
     ).rejects.toThrow(
-      "meta.get_more_tools input.tools must be an array of strings when provided. Received string."
+      "meta.get-more-tools input.tools must be an array of strings when provided. Received string."
     );
     await expect(
       adapter.callTool({
