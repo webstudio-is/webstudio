@@ -284,7 +284,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "inspect-instance",
     description:
-      "Show details for one element instance, optionally including ancestors",
+      "Show one element with its classes and custom attributes by default. Include styles, children, bindings, sources, and ancestors as needed",
     requiredOptions: ["instance", "json"],
     examples: [
       "webstudio inspect-instance --instance instance-id --include props,styles,children,ancestors --json",
@@ -411,6 +411,15 @@ const curatedPublicApiOperationDocumentation = [
     examples: [
       'webstudio update-text --instance instance-id --child-index 0 --text "Launch faster" --mode text --json',
       'webstudio update-text --instance instance-id --child-index 0 --text "user.name" --mode expression --json',
+    ],
+  },
+  {
+    command: "set-text-content",
+    description:
+      'Replace all text content on an element instance with operation "set", or remove it with operation "reset"',
+    examples: [
+      'MCP tool: set-text-content {"operation":"set","instanceId":"instance-id","text":"Launch faster","mode":"text"}',
+      'MCP tool: set-text-content {"operation":"reset","instanceId":"instance-id"}',
     ],
   },
   {

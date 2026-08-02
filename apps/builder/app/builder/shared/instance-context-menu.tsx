@@ -7,6 +7,9 @@ import {
   ContextMenuItem,
   ContextMenuItemRightSlot,
   ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
   ContextMenuTrigger,
   theme,
   Kbd,
@@ -90,6 +93,7 @@ const getMenuPermissions = ({
       canPaste: hasActionableSelection,
       canCut: false,
       canDuplicate: false,
+      canMove: false,
       canHide: false,
       canRename: false,
       canWrap: false,
@@ -110,6 +114,8 @@ const getMenuPermissions = ({
     canPaste: canMutateDesign && !isRoot,
     canCut: canMutateDesign && hasActionableSelection,
     canDuplicate: canMutateDesign && hasActionableSelection,
+    canMove:
+      canMutateDesign && hasActionableSelection && canUseSingleSelectionActions,
     canHide: canMutateDesign && !isRoot && canUseSingleSelectionActions,
     canRename: canMutateDesign && !isRoot && canUseSingleSelectionActions,
     canWrap: canMutateDesign && !isRootOrBody && canUseSingleSelectionActions,
@@ -210,6 +216,69 @@ export const MenuItems = () => {
           />
         </ContextMenuItemRightSlot>
       </ContextMenuItem>
+      <ContextMenuSub>
+        <ContextMenuSubTrigger disabled={!permissions.canMove}>
+          Move
+        </ContextMenuSubTrigger>
+        <ContextMenuSubContent>
+          <ContextMenuItem
+            disabled={!permissions.canMove}
+            onSelect={() => {
+              emitCommand("moveInstanceUp");
+            }}
+          >
+            Move up
+            <ContextMenuItemRightSlot>
+              <Kbd
+                value={["meta", "arrowup"]}
+                color={shortcutColor(permissions.canMove)}
+              />
+            </ContextMenuItemRightSlot>
+          </ContextMenuItem>
+          <ContextMenuItem
+            disabled={!permissions.canMove}
+            onSelect={() => {
+              emitCommand("moveInstanceDown");
+            }}
+          >
+            Move down
+            <ContextMenuItemRightSlot>
+              <Kbd
+                value={["meta", "arrowdown"]}
+                color={shortcutColor(permissions.canMove)}
+              />
+            </ContextMenuItemRightSlot>
+          </ContextMenuItem>
+          <ContextMenuItem
+            disabled={!permissions.canMove}
+            onSelect={() => {
+              emitCommand("moveInstanceOut");
+            }}
+          >
+            Move out
+            <ContextMenuItemRightSlot>
+              <Kbd
+                value={["meta", "arrowleft"]}
+                color={shortcutColor(permissions.canMove)}
+              />
+            </ContextMenuItemRightSlot>
+          </ContextMenuItem>
+          <ContextMenuItem
+            disabled={!permissions.canMove}
+            onSelect={() => {
+              emitCommand("moveInstanceIntoPreviousSibling");
+            }}
+          >
+            Move in
+            <ContextMenuItemRightSlot>
+              <Kbd
+                value={["meta", "arrowright"]}
+                color={shortcutColor(permissions.canMove)}
+              />
+            </ContextMenuItemRightSlot>
+          </ContextMenuItem>
+        </ContextMenuSubContent>
+      </ContextMenuSub>
       <ContextMenuSeparator />
       <ContextMenuItem
         disabled={!permissions.canHide}

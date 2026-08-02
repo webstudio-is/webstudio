@@ -1013,6 +1013,9 @@ const getUnsupportedInputFieldHint = ({
   ) {
     return " Use get-page/get-page-by-path for page metadata, list-instances to inspect page root contents, and inspect-instance for props, styles, children, bindings, or sources.";
   }
+  if (command === "list-instances" && field === "instanceId") {
+    return " Use rootInstanceId to list a subtree, or inspect-instance to inspect one element.";
+  }
   return "";
 };
 
@@ -3589,6 +3592,7 @@ const capabilityAreas = [
       "delete-instance",
       "list-texts",
       "update-text",
+      "set-text-content",
       "replace-text",
       "replace-prop-text",
       "update-props",
@@ -6185,7 +6189,8 @@ const sdkDetailedOptionalSchemaProperties = new Set([
 ]);
 
 const getSdkSchemaProperty = (
-  value: InputJsonSchemaValue
+  value: InputJsonSchemaValue,
+  preserveRequiredShape = false
 ): InputJsonSchemaValue => {
   if (typeof value === "boolean") {
     return value;
@@ -6194,12 +6199,32 @@ const getSdkSchemaProperty = (
     Object.entries(value).filter(([key]) => sdkScalarSchemaKeys.has(key))
   );
   if (value.items !== undefined) {
-    result.items = getSdkSchemaProperty(value.items);
+    result.items = getSdkSchemaProperty(value.items, preserveRequiredShape);
+  }
+  if (
+    preserveRequiredShape &&
+    Array.isArray(value.required) &&
+    value.required.length > 0
+  ) {
+    result.required = value.required;
+    const required = new Set(value.required);
+    const properties = Object.fromEntries(
+      Object.entries(value.properties ?? {}).flatMap(([name, property]) =>
+        required.has(name)
+          ? [[name, getSdkSchemaProperty(property)] as const]
+          : []
+      )
+    );
+    if (Object.keys(properties).length > 0) {
+      result.properties = properties;
+    }
   }
   for (const key of ["allOf", "anyOf", "oneOf", "prefixItems"] as const) {
     const branches = value[key];
     if (Array.isArray(branches)) {
-      result[key] = branches.map(getSdkSchemaProperty);
+      result[key] = branches.map((branch) =>
+        getSdkSchemaProperty(branch, preserveRequiredShape)
+      );
     }
   }
   return result;
@@ -6235,6 +6260,19 @@ const getSdkInputSchema = (
         : getSdkSchemaProperty(schema.additionalProperties),
     ...(Object.keys(properties).length === 0 ? {} : { properties }),
     ...(required.size === 0 ? {} : { required: [...required] }),
+    ...Object.fromEntries(
+      (["allOf", "anyOf", "oneOf"] as const).flatMap((key) => {
+        const branches = schema[key];
+        return Array.isArray(branches)
+          ? [
+              [
+                key,
+                branches.map((branch) => getSdkSchemaProperty(branch, true)),
+              ] as const,
+            ]
+          : [];
+      })
+    ),
   };
 };
 

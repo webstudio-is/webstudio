@@ -508,6 +508,11 @@ describe("builder runtime read families", () => {
       ],
     });
 
+    expect(inspectInstance(state, { instanceId: "heading" })).toMatchObject({
+      id: "heading",
+      props: expect.arrayContaining([expect.objectContaining({ id: "prop" })]),
+    });
+
     const inspectedInstance = inspectInstance(state, {
       instanceId: "heading",
       include: ["props", "styles", "sources", "ancestors"],

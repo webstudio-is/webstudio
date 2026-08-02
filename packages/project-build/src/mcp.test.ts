@@ -2281,6 +2281,15 @@ describe("project session mcp adapter", () => {
       "list-instances input.depth is not supported. Expected one of: rootInstanceId, maxDepth. Did you mean maxDepth?"
     );
 
+    await expect(
+      adapter.callTool({
+        name: "list-instances",
+        input: { instanceId: "body" },
+      })
+    ).rejects.toThrow(
+      "list-instances input.instanceId is not supported. Expected one of: rootInstanceId, maxDepth. Did you mean rootInstanceId? Use rootInstanceId to list a subtree, or inspect-instance to inspect one element."
+    );
+
     expect(executeOperation).not.toHaveBeenCalled();
   });
 
@@ -7280,8 +7289,31 @@ describe("project session mcp adapter", () => {
   });
 
   test("connects through the official MCP SDK and exposes discovery", async () => {
+    const setTextContentOperation = publicOperation({
+      command: "set-text-content",
+      id: "instances.setTextContent",
+      method: "mutation",
+      permit: "edit",
+      description: "Set or reset text content",
+      inputSchema: getTestInputSchema(
+        z.discriminatedUnion("operation", [
+          z.object({
+            operation: z.literal("set"),
+            instanceId: z.string(),
+            text: z.string(),
+          }),
+          z.object({
+            operation: z.literal("reset"),
+            instanceId: z.string(),
+          }),
+        ])
+      ),
+      readNamespaces: ["instances"],
+      writeNamespaces: ["instances"],
+      invalidatesNamespaces: ["instances"],
+    });
     const server = await createProjectSessionMcpServer({
-      operations: publicMcpOperations,
+      operations: [...publicMcpOperations, setTextContentOperation],
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
     });
@@ -7307,6 +7339,28 @@ describe("project session mcp adapter", () => {
       expect(
         listedTools.tools.find(({ name }) => name === "list-pages")?.inputSchema
       ).toHaveProperty("additionalProperties", false);
+      expect(
+        listedTools.tools.find(({ name }) => name === "set-text-content")
+          ?.inputSchema
+      ).toMatchObject({
+        oneOf: [
+          {
+            properties: {
+              operation: { type: "string", const: "set" },
+              instanceId: { type: "string" },
+              text: { type: "string" },
+            },
+            required: ["operation", "instanceId", "text"],
+          },
+          {
+            properties: {
+              operation: { type: "string", const: "reset" },
+              instanceId: { type: "string" },
+            },
+            required: ["operation", "instanceId"],
+          },
+        ],
+      });
       expect(listedTools).toEqual({
         tools: expect.arrayContaining([
           expect.objectContaining({

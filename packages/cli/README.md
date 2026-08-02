@@ -70,7 +70,21 @@ Here is the list of independent commands:
 
 The **`link`** command stores access to a Webstudio Cloud project. MCP clients use that connection to read and edit the latest Builder build directly; the project does not need to be published or synchronized first.
 
-Shell-capable agents can use local CLI commands such as `webstudio meta.index` immediately after linking. `webstudio connect <client>` is optional persistent native MCP registration and is unnecessary for local CLI usage.
+Shell-capable agents can call MCP tools directly as CLI subcommands immediately after linking. This does not require MCP client configuration or a client restart:
+
+```bash
+webstudio meta.index
+webstudio components.search '{"brief":"button"}'
+webstudio insert-fragment '{"parentInstanceId":"<parent-id>","fragment":"<ws.element ws:tag=\"section\" />"}' --dry-run
+```
+
+The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`.
+Use `webstudio connect <client>` only when you want persistent native MCP tools
+inside Claude Code, Codex, Cursor, or VS Code. A persistent client may need to
+reconnect after its configuration or cached tool catalog changes.
+
+See the [Webstudio MCP documentation](https://docs.webstudio.is/university/mcp)
+for setup, discovery, editing, verification, and safety guidance.
 
 You can link a project from Webstudio Cloud with the following command:
 
