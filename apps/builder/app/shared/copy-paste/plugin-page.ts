@@ -12,12 +12,9 @@ import {
   type PageTemplate,
 } from "@webstudio-is/sdk";
 import { $pages, $project } from "~/shared/sync/data-stores";
-import {
-  detectFragmentRootStyleConflicts,
-  detectFragmentTokenConflicts,
-} from "@webstudio-is/project-build/runtime";
+import { detectFragmentTokenConflicts } from "@webstudio-is/project-build/runtime";
 import { resolveTokenConflicts } from "../resolve-token-conflicts";
-import { builderApi } from "../builder-api";
+import { resolveRootStyleConflicts } from "../resolve-root-style-conflicts";
 import {
   createFolderCopyData,
   createPageCopyData,
@@ -194,24 +191,13 @@ export const handlePastePage = async (
       return pasteHandled;
     }
     const firstPageLikeItem = pageItems[0];
-    const rootStyleConflicts =
+    const rootStyleConflictResolution =
       firstPageLikeItem === undefined
-        ? []
-        : detectFragmentRootStyleConflicts({
+        ? "theirs"
+        : await resolveRootStyleConflicts({
             fragment: firstPageLikeItem.rootFragment,
             targetData,
           });
-    const rootStyleConflictResolution =
-      rootStyleConflicts.length === 0
-        ? "theirs"
-        : await builderApi.showRootStyleConflictDialog(
-            rootStyleConflicts.map((conflict) => ({
-              ...conflict,
-              breakpointLabel:
-                targetData.breakpoints.get(conflict.existingStyle.breakpointId)
-                  ?.label ?? conflict.existingStyle.breakpointId,
-            }))
-          );
     if (rootStyleConflictResolution === "cancel") {
       return pasteHandled;
     }

@@ -2331,6 +2331,12 @@ export const runtimeOperationContractData = [
           type: "string",
           enum: ["ours", "theirs", "merge"],
         },
+        rootStyleConflictResolution: {
+          description:
+            'How to resolve conflicting global root-local declarations: "ours" keeps the target project values; "theirs" uses the incoming source values. Required when conflicts exist.',
+          type: "string",
+          enum: ["ours", "theirs"],
+        },
       },
       required: ["sourceData", "pageId"],
     },
@@ -16069,6 +16075,8 @@ export const runtimeOperationContractData = [
           enum: ["ours", "theirs", "merge"],
         },
         rootStyleConflictResolution: {
+          description:
+            'How to resolve conflicting global root-local declarations: "ours" keeps the target project values; "theirs" uses the incoming source values. Required when conflicts exist.',
           type: "string",
           enum: ["ours", "theirs"],
         },
