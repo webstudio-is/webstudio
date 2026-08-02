@@ -388,7 +388,7 @@ const createTestAssetIndex = (
   });
 
 const createQueryResource = (
-  content: "none" | "full" | "markdown-body" = "none"
+  content: "none" | "full" | "markdown-body-ref" = "none"
 ): Resource => ({
   id: "posts",
   name: "Posts",
@@ -1310,7 +1310,7 @@ describe("prebuild", () => {
           assetsDomain: "example",
           excludeWstdDomainFromSearch: false,
         },
-        resources: [["posts", createQueryResource("markdown-body")]],
+        resources: [["posts", createQueryResource("markdown-body-ref")]],
         dataSources: [
           [
             "posts-data",

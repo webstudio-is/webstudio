@@ -1753,7 +1753,7 @@ describe("builder runtime read families", () => {
             ],
           },
           limit: "1",
-          content: { mode: "markdown-body", maxBytes: 65_536 },
+          content: { mode: "markdown-body-ref", maxBytes: 65_536 },
         },
       },
       context: {
@@ -1834,7 +1834,7 @@ describe("builder runtime read families", () => {
             includeMetadata: false,
             fields: [["url"], ["width"], ["height"]],
           },
-          content: { mode: "markdown-body", maxBytes: 65_536 },
+          content: { mode: "markdown-body-ref", maxBytes: 65_536 },
         },
       }),
     });
@@ -1869,7 +1869,7 @@ describe("builder runtime read families", () => {
     );
     expect(updatedPayload).toContain("properties");
     expect(updatedPayload).toContain("system.params.slug");
-    expect(updatedPayload).toContain("markdown-body");
+    expect(updatedPayload).toContain("markdown-body-ref");
     expect(updatedPayload).toContain("limit: 2");
 
     const reset = executeBuilderRuntimeOperation({

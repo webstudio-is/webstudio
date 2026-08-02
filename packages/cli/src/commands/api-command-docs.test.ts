@@ -234,7 +234,7 @@ test("documents storage-efficient Assets queries for agents", () => {
 test("directs agents to deferred Markdown bodies", () => {
   for (const document of ["api-use-cases", "manual-llm"] as const) {
     const contents = readCliDoc(document);
-    expect(contents).toContain('content.mode:"markdown-body"');
+    expect(contents).toContain('content.mode:"markdown-body-ref"');
     expect(contents).toContain("document reference");
     expect(contents).toContain("selected Markdown");
     expect(contents).toContain("content.text");
@@ -243,7 +243,7 @@ test("directs agents to deferred Markdown bodies", () => {
   const tools = createMetadataOnlyMcpAdapter().listTools();
   for (const name of ["create-assets-resource", "update-assets-resource"]) {
     const description = tools.find((tool) => tool.name === name)?.description;
-    expect(description).toContain("markdown-body");
+    expect(description).toContain("markdown-body-ref");
     expect(description).toContain("document reference");
     expect(description).toContain("item.content.text");
   }

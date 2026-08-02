@@ -1,5 +1,9 @@
-import { describe, expect, test } from "vitest";
-import type { AssetFileDocument, BuilderAssetFieldCatalog } from "./schema";
+import { describe, expect, test, vi } from "vitest";
+import {
+  assetQuery,
+  type AssetFileDocument,
+  type BuilderAssetFieldCatalog,
+} from "./schema";
 import {
   executeAssetQuery,
   getAssetQueryFieldValue,
@@ -89,6 +93,15 @@ const runtimeAssets = Object.fromEntries(
 );
 
 describe("structured asset query", () => {
+  test("accepts only referenced Markdown body queries", () => {
+    expect(
+      assetQuery.safeParse({ content: { mode: "markdown-body-ref" } }).success
+    ).toBe(true);
+    expect(
+      assetQuery.safeParse({ content: { mode: "markdown-body" } }).success
+    ).toBe(false);
+  });
+
   test("combines nested all and any filter groups", async () => {
     const result = await executeAssetQuery({
       catalog,
@@ -331,7 +344,7 @@ describe("structured asset query", () => {
         sort: [],
         limit: 1,
         offset: 0,
-        content: { mode: "markdown-body" },
+        content: { mode: "markdown-body-ref" },
       },
       read: async () => ({
         data: {
@@ -348,6 +361,59 @@ describe("structured asset query", () => {
       text: "# Alpha body\n",
     });
     expect(result.items[0].content).not.toHaveProperty("contentRef");
+  });
+
+  test("excludes non-Markdown files from Markdown body queries", async () => {
+    const markdown = new TextEncoder().encode("# Alpha body\n");
+    const image = {
+      ...documents[0],
+      _id: "social-image",
+      name: "social.png",
+      path: "blog/social.png",
+      key: "social-image",
+      extension: "png",
+      mimeType: "image/png",
+      size: 100,
+      revision: "social-image-revision",
+      contentRef: "files/social.png",
+    };
+    const read = vi.fn(async () => ({
+      data: {
+        async *[Symbol.asyncIterator]() {
+          yield markdown;
+        },
+      },
+      contentLength: markdown.byteLength,
+    }));
+
+    const result = await executeAssetQuery({
+      documents: [{ ...documents[0], size: markdown.byteLength }, image],
+      query: {
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["id"]],
+        },
+        content: { mode: "markdown-body-ref" },
+      },
+      read,
+    });
+
+    expect(result).toMatchObject({
+      items: [
+        {
+          id: "alpha",
+          content: { encoding: "utf-8", text: "# Alpha body\n" },
+        },
+      ],
+      totalCount: 1,
+      hasMore: false,
+    });
+    expect(read).toHaveBeenCalledOnce();
+    expect(read).toHaveBeenCalledWith("files/alpha.md", {
+      offset: 0,
+      length: markdown.byteLength,
+    });
   });
 
   test("projects explicit output fields while retaining base file metadata", async () => {
@@ -468,7 +534,7 @@ describe("structured asset query", () => {
         limit: 1,
         offset: 0,
         output: { mode: "all", includeMetadata: false },
-        content: { mode: "markdown-body" },
+        content: { mode: "markdown-body-ref" },
       },
       read: async () => ({
         data: {

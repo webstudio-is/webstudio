@@ -39,6 +39,15 @@ export type PageTransferItem =
   | TemplateTransferData
   | FolderTransferData;
 
+export const collectPageTransferItems = (
+  item: PageTransferItem
+): Array<PageTransferData | TemplateTransferData> => {
+  if (item.type === "page" || item.type === "template") {
+    return [item];
+  }
+  return item.children.flatMap(collectPageTransferItems);
+};
+
 export const pageTransferPageInput: z.ZodType<PageTransferData> = z.object({
   type: z.literal("page"),
   page: z.custom<Page>(),

@@ -1175,7 +1175,7 @@ describe("project session mcp adapter", () => {
       expect(tool.description).toContain("Webstudio JavaScript expression");
       expect(tool.description).toContain("<dataSourceName>.data");
       expect(tool.description).toContain("<dataSourceName>.meta");
-      expect(tool.description).toContain("markdown-body");
+      expect(tool.description).toContain("markdown-body-ref");
       expect(tool.description).toContain("document reference");
       expect(tool.description).toContain("item.content.text");
       expect(tool.description).toContain(
@@ -4562,7 +4562,7 @@ describe("project session mcp adapter", () => {
             query: expect.objectContaining({
               limit: { type: "literal", value: 1 },
               offset: { type: "literal", value: 0 },
-              content: { mode: "markdown-body" },
+              content: { mode: "markdown-body-ref" },
             }),
           }),
           overviewCollection: expect.objectContaining({
@@ -4595,7 +4595,7 @@ describe("project session mcp adapter", () => {
             "bounded metadata-only result can be materialized"
           ),
           expect.stringContaining("only one materialized overview query"),
-          expect.stringContaining('content.mode:"markdown-body"'),
+          expect.stringContaining('content.mode:"markdown-body-ref"'),
           expect.stringContaining("Do not reshape or stringify any field"),
           expect.stringContaining('"value":"posts.data"'),
           expect.stringContaining("only the Markdown document reference"),

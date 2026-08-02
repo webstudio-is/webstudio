@@ -93,7 +93,7 @@ describe("content compilation plan", () => {
           ],
         },
         sort: [{ field: ["excerpt"], direction: "asc" as const }],
-        content: { mode: "markdown-body" as const },
+        content: { mode: "markdown-body-ref" as const },
       }),
     ]);
     expect(plan).toMatchObject({ excerpt: true });
@@ -360,6 +360,66 @@ describe("content compilation plan", () => {
         selectContentHydrationCandidates({ documents, plan: runtimePlan })
       ).toEqual(new Set(["alpha", "beta", "gamma"]));
     }
+  });
+
+  test("excludes non-Markdown assets from Markdown body queries", async () => {
+    const plan = createContentCompilationPlan([
+      {
+        ...compilationQuery("detail", {
+          ...query,
+          content: { mode: "markdown-body-ref" },
+        }),
+        where: {
+          field: ["properties", "slug"],
+          operator: "eq",
+          value: { type: "dynamic" },
+        },
+      },
+    ]);
+    expect(plan).toBeDefined();
+    if (plan === undefined) {
+      return;
+    }
+    const image = {
+      ...document,
+      _id: "social-image",
+      name: "social.png",
+      path: "social.png",
+      key: "social",
+      extension: "png",
+      mimeType: "image/png",
+      revision: "image-revision",
+      contentRef: "social.png",
+      properties: {},
+    };
+
+    expect(
+      selectContentHydrationCandidates({
+        documents: [document, image],
+        plan,
+      })
+    ).toEqual(new Set(["post"]));
+
+    const entries = [document, image].map((value) =>
+      createCanonicalAssetFileEntry({
+        projectId: "project",
+        document: value,
+      })
+    );
+    const loadContent = vi.fn(async () => "# Post");
+    const prepared = await prepareContentCompilerEntries({
+      entries,
+      plan,
+      loadContent,
+    });
+
+    expect(loadContent).toHaveBeenCalledOnce();
+    expect(loadContent).toHaveBeenCalledWith(
+      expect.objectContaining({ assetId: "post" })
+    );
+    expect(prepared).toEqual([
+      expect.objectContaining({ assetId: "post", contentRequired: true }),
+    ]);
   });
 
   test("reports dynamic filter and window values", () => {

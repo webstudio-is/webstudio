@@ -530,7 +530,7 @@ describe("getResourceCacheKey", () => {
         ...base,
         query: {
           ...base.query,
-          content: { mode: "markdown-body", maxBytes: 1024 },
+          content: { mode: "markdown-body-ref", maxBytes: 1024 },
         },
       },
       { ...base, indexRevision: "index-2" },

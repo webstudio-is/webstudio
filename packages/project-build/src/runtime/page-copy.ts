@@ -1,7 +1,9 @@
 import {
   type ContentModeCopyableProp,
+  detectFragmentRootStyleConflicts,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
+  resolveFragmentRootStyleConflicts,
 } from "./fragment";
 import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
 import { nanoid } from "nanoid";
@@ -33,7 +35,10 @@ import {
   type WebstudioData,
   ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
-import type { ConflictResolution } from "./style-copy";
+import type {
+  ConflictResolution,
+  RootStyleConflictResolution,
+} from "./style-copy";
 import type { BuilderState } from "../state/builder-state";
 import { paginateOutput, type PaginatedOutputInput } from "./output";
 import { pageCopyNamespaces } from "../contracts/namespaces";
@@ -54,6 +59,7 @@ import { unwrap } from "./unwrap";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
   pageTransferItemInput,
+  collectPageTransferItems,
   type FolderCopyData,
   type PageCopyData,
   type TemplateCopyData,
@@ -117,6 +123,12 @@ export const pageCopyInput = z.object({
     .describe("ID of the page in sourceData to copy into this project."),
   parentFolderId: z.string().optional(),
   conflictResolution: z.enum(["ours", "theirs", "merge"]).optional(),
+  rootStyleConflictResolution: z
+    .enum(["ours", "theirs"])
+    .optional()
+    .describe(
+      'How to resolve conflicting global root-local declarations: "ours" keeps the target project values; "theirs" uses the incoming source values. Required when conflicts exist.'
+    ),
 });
 
 export const folderDuplicateInput = z.object({
@@ -271,6 +283,7 @@ const copyPageRootAndBodyMutable = ({
   projectId,
   metas,
   conflictResolution,
+  rootStyleConflictResolution,
   contentModeCopyableProp,
   createId = nanoid,
   contentMode = false,
@@ -282,6 +295,7 @@ const copyPageRootAndBodyMutable = ({
   projectId?: string;
   metas?: Map<string, WsComponentMeta>;
   conflictResolution: ConflictResolution | undefined;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
   createId?: CreateId;
   contentMode?: boolean;
@@ -304,6 +318,7 @@ const copyPageRootAndBodyMutable = ({
     projectId,
     metas,
     conflictResolution,
+    rootStyleConflictResolution,
     systemDataSourceId,
     contentModeCopyableProp,
     createId,
@@ -319,6 +334,7 @@ const copyPageFragmentsMutable = ({
   projectId,
   metas,
   conflictResolution,
+  rootStyleConflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   createId = nanoid,
@@ -331,6 +347,7 @@ const copyPageFragmentsMutable = ({
   projectId?: string;
   metas?: Map<string, WsComponentMeta>;
   conflictResolution: ConflictResolution | undefined;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
   createId?: CreateId;
@@ -342,7 +359,11 @@ const copyPageFragmentsMutable = ({
   if (contentMode === false && rootFragment !== undefined) {
     insertWebstudioFragmentCopy({
       data: target,
-      fragment: rootFragment,
+      fragment: resolveFragmentRootStyleConflicts({
+        fragment: rootFragment,
+        targetData: target,
+        resolution: rootStyleConflictResolution,
+      }),
       availableVariables: findAvailableVariables({
         ...target,
         startingInstanceId: ROOT_INSTANCE_ID,
@@ -593,12 +614,14 @@ const copyPageMutable = ({
   target,
   projectId,
   conflictResolution,
+  rootStyleConflictResolution,
   createId = nanoid,
 }: {
   source: { data: WebstudioData; pageId: Page["id"] };
   target: { data: WebstudioData; folderId: Folder["id"] };
   projectId?: string;
   conflictResolution?: ConflictResolution;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
   createId?: CreateId;
 }) => {
   const page = findPageByIdOrPath(source.pageId, source.data.pages);
@@ -612,6 +635,7 @@ const copyPageMutable = ({
     systemDataSourceId: page.systemDataSourceId,
     projectId,
     conflictResolution,
+    rootStyleConflictResolution,
     createId,
   });
   if (copied === undefined) {
@@ -856,6 +880,30 @@ export const duplicatePage = (
   });
 };
 
+const requireRootStyleConflictResolution = ({
+  rootFragment,
+  targetData,
+  resolution,
+}: {
+  rootFragment: WebstudioFragment | undefined;
+  targetData: WebstudioData;
+  resolution: RootStyleConflictResolution | undefined;
+}) => {
+  if (
+    resolution === undefined &&
+    rootFragment !== undefined &&
+    detectFragmentRootStyleConflicts({
+      fragment: rootFragment,
+      targetData,
+    }).length > 0
+  ) {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      "Global root style conflicts require an explicit rootStyleConflictResolution (ours keeps target values; theirs uses incoming values)"
+    );
+  }
+};
+
 export const copyPage = (
   state: BuilderState,
   input: z.infer<typeof pageCopyInput>,
@@ -870,6 +918,15 @@ export const copyPage = (
     build: data,
     assets: Array.from(data.assets.values()),
   });
+  const sourcePage = findPageByIdOrPath(input.pageId, input.sourceData.pages);
+  if (sourcePage === undefined) {
+    return throwBuilderRuntimeError("BAD_REQUEST", "Page could not be copied");
+  }
+  requireRootStyleConflictResolution({
+    rootFragment: extractWebstudioFragment(input.sourceData, ROOT_INSTANCE_ID),
+    targetData: before,
+    resolution: input.rootStyleConflictResolution,
+  });
   let pageId: Page["id"] | undefined;
   const { payload } = produceWebstudioDataMutation(before, (draft) => {
     pageId = insertPageCopyMutable({
@@ -877,6 +934,7 @@ export const copyPage = (
       target: { data: draft, folderId: parentFolderId },
       projectId: input.projectId,
       conflictResolution: input.conflictResolution,
+      rootStyleConflictResolution: input.rootStyleConflictResolution,
       createId: context.createId,
     });
   });
@@ -1275,6 +1333,7 @@ export const insertPageCopyFromFragmentsMutable = ({
   target,
   projectId,
   conflictResolution,
+  rootStyleConflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   createId = nanoid,
@@ -1287,6 +1346,7 @@ export const insertPageCopyFromFragmentsMutable = ({
   target: { data: WebstudioData; folderId: Folder["id"] };
   projectId?: string;
   conflictResolution?: ConflictResolution;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
   createId?: CreateId;
@@ -1298,6 +1358,7 @@ export const insertPageCopyFromFragmentsMutable = ({
     systemDataSourceId: source.page.systemDataSourceId,
     projectId,
     conflictResolution,
+    rootStyleConflictResolution,
     contentModeCopyableProp,
     onBreakpointLimitMerge,
     createId,
@@ -1318,6 +1379,7 @@ export const insertTemplateCopyFromFragmentsMutable = ({
   target,
   projectId,
   conflictResolution,
+  rootStyleConflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   createId = nanoid,
@@ -1330,6 +1392,7 @@ export const insertTemplateCopyFromFragmentsMutable = ({
   target: { data: WebstudioData };
   projectId?: string;
   conflictResolution?: ConflictResolution;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
   createId?: CreateId;
@@ -1341,6 +1404,7 @@ export const insertTemplateCopyFromFragmentsMutable = ({
     systemDataSourceId: undefined,
     projectId,
     conflictResolution,
+    rootStyleConflictResolution,
     contentModeCopyableProp,
     onBreakpointLimitMerge,
     createId,
@@ -1361,6 +1425,12 @@ export const pageTransferInsertInput = z.object({
   targetFolderId: z.string(),
   item: pageTransferItemInput,
   conflictResolution: z.enum(["ours", "theirs", "merge"]).optional(),
+  rootStyleConflictResolution: z
+    .enum(["ours", "theirs"])
+    .optional()
+    .describe(
+      'How to resolve conflicting global root-local declarations: "ours" keeps the target project values; "theirs" uses the incoming source values. Required when conflicts exist.'
+    ),
 });
 
 export const createPageCopyData = ({
@@ -1487,6 +1557,7 @@ export const insertFolderCopyFromDataMutable = ({
   target,
   projectId,
   conflictResolution,
+  rootStyleConflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   forceFolderCopySuffix = false,
@@ -1496,6 +1567,7 @@ export const insertFolderCopyFromDataMutable = ({
   target: { data: WebstudioData; parentFolderId: Folder["id"] };
   projectId?: string;
   conflictResolution?: ConflictResolution;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
   forceFolderCopySuffix?: boolean;
@@ -1510,6 +1582,7 @@ export const insertFolderCopyFromDataMutable = ({
     target,
     projectId,
     conflictResolution,
+    rootStyleConflictResolution,
     contentModeCopyableProp,
     onBreakpointLimitMerge,
     forceFolderCopySuffix,
@@ -1531,6 +1604,12 @@ export const insertPageTransferItem = (
     build: data,
     assets: Array.from(data.assets.values()),
   });
+  const rootFragment = collectPageTransferItems(input.item)[0]?.rootFragment;
+  requireRootStyleConflictResolution({
+    rootFragment,
+    targetData: before,
+    resolution: input.rootStyleConflictResolution,
+  });
   let didReachBreakpointLimit = false;
   const onBreakpointLimitMerge = () => {
     didReachBreakpointLimit = true;
@@ -1543,6 +1622,7 @@ export const insertPageTransferItem = (
         target: { data: draft, folderId: input.targetFolderId },
         projectId: input.projectId,
         conflictResolution: input.conflictResolution,
+        rootStyleConflictResolution: input.rootStyleConflictResolution,
         onBreakpointLimitMerge,
         createId: context.createId,
       });
@@ -1552,6 +1632,7 @@ export const insertPageTransferItem = (
         target: { data: draft },
         projectId: input.projectId,
         conflictResolution: input.conflictResolution,
+        rootStyleConflictResolution: input.rootStyleConflictResolution,
         onBreakpointLimitMerge,
         createId: context.createId,
       });
@@ -1561,6 +1642,7 @@ export const insertPageTransferItem = (
         target: { data: draft, parentFolderId: input.targetFolderId },
         projectId: input.projectId,
         conflictResolution: input.conflictResolution,
+        rootStyleConflictResolution: input.rootStyleConflictResolution,
         onBreakpointLimitMerge,
         createId: context.createId,
       });
@@ -1588,6 +1670,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
   target,
   projectId,
   conflictResolution,
+  rootStyleConflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   forceFolderCopySuffix,
@@ -1598,6 +1681,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
   target: { data: WebstudioData; parentFolderId: Folder["id"] };
   projectId?: string;
   conflictResolution?: ConflictResolution;
+  rootStyleConflictResolution?: RootStyleConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
   forceFolderCopySuffix?: boolean;
@@ -1636,6 +1720,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
         target: { data: target.data, parentFolderId: newFolder.id },
         projectId,
         conflictResolution,
+        rootStyleConflictResolution,
         contentModeCopyableProp,
         onBreakpointLimitMerge,
         forceFolderCopySuffix,
@@ -1652,6 +1737,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
       target: { data: target.data, folderId: newFolder.id },
       projectId,
       conflictResolution,
+      rootStyleConflictResolution,
       contentModeCopyableProp,
       onBreakpointLimitMerge,
       createId,

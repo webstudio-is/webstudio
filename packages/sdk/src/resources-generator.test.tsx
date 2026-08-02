@@ -418,7 +418,7 @@ test("prevent generating unused system variable", () => {
   `);
 });
 
-test("generate action resource", () => {
+test("generate action resource without loading a stale data source", () => {
   expect(
     generateResources({
       scope: createScope(),
@@ -426,7 +426,15 @@ test("generate action resource", () => {
         rootInstanceId: "body",
         systemDataSourceId: "variableParamsId",
       } as Page,
-      dataSources: new Map(),
+      dataSources: toMap([
+        {
+          id: "resourceDataSourceId",
+          scopeInstanceId: "body",
+          type: "resource",
+          name: "resourceDataSource",
+          resourceId: "resourceId",
+        },
+      ]),
       resources: toMap([
         {
           id: "resourceId",

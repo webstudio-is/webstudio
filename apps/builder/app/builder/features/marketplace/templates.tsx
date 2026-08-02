@@ -23,6 +23,7 @@ import {
   getAllPages,
   type Instance,
   ROOT_FOLDER_ID,
+  ROOT_INSTANCE_ID,
   type Asset,
   type Page,
   type WebstudioData,
@@ -40,6 +41,7 @@ import {
   resolveFragmentTokenConflicts,
   resolveTokenConflicts,
 } from "~/shared/resolve-token-conflicts";
+import { resolveRootStyleConflicts } from "~/shared/resolve-root-style-conflicts";
 
 const isBody = (instance: Instance) =>
   instance.component === "Body" ||
@@ -88,13 +90,23 @@ const insertPage = async ({
   data: WebstudioData;
   pageId: Page["id"];
 }) => {
+  const tokenTargetData = getWebstudioData();
   const conflicts = detectPageTokenConflicts({
     sourceData,
-    targetData: getWebstudioData(),
+    targetData: tokenTargetData,
     pageId,
   });
   const conflictResolution = await resolveTokenConflicts(conflicts);
   if (conflictResolution === "cancel") {
+    return;
+  }
+  const rootStyleTargetData = getWebstudioData();
+  const rootFragment = extractWebstudioFragment(sourceData, ROOT_INSTANCE_ID);
+  const rootStyleConflictResolution = await resolveRootStyleConflicts({
+    fragment: rootFragment,
+    targetData: rootStyleTargetData,
+  });
+  if (rootStyleConflictResolution === "cancel") {
     return;
   }
   const projectId = $project.get()?.id;
@@ -109,6 +121,7 @@ const insertPage = async ({
       parentFolderId: ROOT_FOLDER_ID,
       projectId,
       conflictResolution,
+      rootStyleConflictResolution,
     },
   });
   const newPageId = result?.result.pageId;

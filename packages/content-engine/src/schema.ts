@@ -300,7 +300,7 @@ export const assetResourceContentOptions = discriminatedUnion("mode", [
       .max(contentEngineLimits.hydratedRangeBytes),
   }),
   object({
-    mode: literal("markdown-body"),
+    mode: literal("markdown-body-ref"),
     maxBytes: number()
       .int()
       .positive()

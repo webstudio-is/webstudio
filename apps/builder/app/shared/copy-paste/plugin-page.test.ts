@@ -1,9 +1,10 @@
-import { expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   encodeDataSourceVariable,
   ROOT_FOLDER_ID,
+  ROOT_INSTANCE_ID,
   type DataSource,
   type Instance,
 } from "@webstudio-is/sdk";
@@ -36,9 +37,15 @@ import {
   pageText,
 } from "./plugin-page";
 import { pasteHandled, pasteIgnored } from "./copy-paste";
+import { initBuilderApi } from "../builder-api";
 
 enableMapSet();
 registerContainers();
+initBuilderApi();
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 const resetBuildStores = () => {
   $instances.set(new Map());
@@ -54,6 +61,138 @@ const resetBuildStores = () => {
   $editingTemplateId.set(undefined);
   selectInstance(undefined);
   $selectedPageId.set(undefined);
+};
+
+const setRootLocalStyle = ({
+  styleSourceId,
+  value,
+}: {
+  styleSourceId: string;
+  value: string;
+}) => {
+  $instances.set(
+    new Map([
+      ...$instances.get(),
+      [
+        ROOT_INSTANCE_ID,
+        {
+          type: "instance",
+          id: ROOT_INSTANCE_ID,
+          component: "Box",
+          children: [],
+        } satisfies Instance,
+      ],
+    ])
+  );
+  $breakpoints.set(new Map([["base", { id: "base", label: "Base" }]]));
+  $styleSources.set(
+    new Map([[styleSourceId, { id: styleSourceId, type: "local" }]])
+  );
+  $styleSourceSelections.set(
+    new Map([
+      [
+        ROOT_INSTANCE_ID,
+        { instanceId: ROOT_INSTANCE_ID, values: [styleSourceId] },
+      ],
+    ])
+  );
+  $styles.set(
+    new Map([
+      [
+        `${styleSourceId}:base:color:`,
+        {
+          styleSourceId,
+          breakpointId: "base",
+          property: "color",
+          value: { type: "keyword", value },
+        },
+      ],
+    ])
+  );
+};
+
+const addRootTokenStyle = ({
+  styleSourceId,
+  value,
+}: {
+  styleSourceId: string;
+  value: string;
+}) => {
+  const styleSources = new Map($styleSources.get());
+  styleSources.set(styleSourceId, {
+    id: styleSourceId,
+    type: "token",
+    name: "primary",
+  });
+  $styleSources.set(styleSources);
+
+  const rootSelection = $styleSourceSelections.get().get(ROOT_INSTANCE_ID);
+  const selections = new Map($styleSourceSelections.get());
+  selections.set(ROOT_INSTANCE_ID, {
+    instanceId: ROOT_INSTANCE_ID,
+    values: [...(rootSelection?.values ?? []), styleSourceId],
+  });
+  $styleSourceSelections.set(selections);
+
+  const styles = new Map($styles.get());
+  styles.set(`${styleSourceId}:base:color:`, {
+    styleSourceId,
+    breakpointId: "base",
+    property: "color",
+    value: { type: "keyword", value },
+  });
+  $styles.set(styles);
+};
+
+const updateRootLocalStyle = (value: string) => {
+  const rootLocalStyle = Array.from($styles.get().values()).find(
+    (style) =>
+      $styleSources.get().get(style.styleSourceId)?.type === "local" &&
+      style.property === "color"
+  );
+  if (rootLocalStyle === undefined) {
+    throw new Error("Expected root local color style");
+  }
+  const styles = new Map($styles.get());
+  styles.set(`${rootLocalStyle.styleSourceId}:base:color:`, {
+    ...rootLocalStyle,
+    value: { type: "keyword", value },
+  });
+  $styles.set(styles);
+};
+
+const setupProjectWithRootStyle = ({
+  projectId,
+  pageId,
+  rootInstanceId,
+  styleSourceId,
+  color,
+}: {
+  projectId: string;
+  pageId: string;
+  rootInstanceId: string;
+  styleSourceId: string;
+  color: string;
+}) => {
+  $project.set({ id: projectId } as Project);
+  resetBuildStores();
+  const pages = createDefaultPages({ homePageId: pageId, rootInstanceId });
+  $pages.set(pages);
+  $instances.set(
+    new Map([
+      [
+        rootInstanceId,
+        {
+          type: "instance",
+          id: rootInstanceId,
+          component: "Body",
+          children: [],
+        } satisfies Instance,
+      ],
+    ])
+  );
+  setRootLocalStyle({ styleSourceId, value: color });
+  return pages;
 };
 
 test("copies the selected page root from the copy plugin", () => {
@@ -210,6 +349,130 @@ test("copies page data across projects", async () => {
   expect($dataSources.get().has("source-variable")).toBe(false);
 });
 
+test.each([
+  ["ours", "blue"],
+  ["theirs", "red"],
+] as const)(
+  "resolves conflicting global root styles with %s",
+  async (resolution, expectedColor) => {
+    setupProjectWithRootStyle({
+      projectId: "source-project",
+      pageId: "source-page",
+      rootInstanceId: "source-body",
+      styleSourceId: "source-local",
+      color: "red",
+    });
+    $styles.get().set("source-local:base:fontSize:", {
+      styleSourceId: "source-local",
+      breakpointId: "base",
+      property: "fontSize",
+      value: { type: "keyword", value: "medium" },
+    });
+    const clipboardData = copyPageData("source-page");
+
+    setupProjectWithRootStyle({
+      projectId: "target-project",
+      pageId: "target-page",
+      rootInstanceId: "target-body",
+      styleSourceId: "target-local",
+      color: "blue",
+    });
+    const conflictDialog = vi
+      .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+      .mockResolvedValue(resolution);
+
+    await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
+
+    expect(conflictDialog).toHaveBeenCalledWith([
+      expect.objectContaining({
+        incomingStyle: expect.objectContaining({
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        }),
+      }),
+    ]);
+    expect($styles.get().get("target-local:base:color:")?.value).toEqual({
+      type: "keyword",
+      value: expectedColor,
+    });
+    expect($styles.get().get("target-local:base:fontSize:")?.value).toEqual({
+      type: "keyword",
+      value: "medium",
+    });
+  }
+);
+
+test("cancels page paste when global root style resolution is cancelled", async () => {
+  setupProjectWithRootStyle({
+    projectId: "source-project",
+    pageId: "source-page",
+    rootInstanceId: "source-body",
+    styleSourceId: "source-local",
+    color: "red",
+  });
+  const clipboardData = copyPageData("source-page");
+
+  const targetPages = setupProjectWithRootStyle({
+    projectId: "target-project",
+    pageId: "target-page",
+    rootInstanceId: "target-body",
+    styleSourceId: "target-local",
+    color: "blue",
+  });
+  const initialPageCount = targetPages.pages.size;
+  vi.spyOn(
+    window.__webstudio__$__builderApi,
+    "showRootStyleConflictDialog"
+  ).mockResolvedValue("cancel");
+
+  await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
+
+  expect($pages.get()?.pages.size).toBe(initialPageCount);
+  expect($styles.get().get("target-local:base:color:")?.value).toEqual({
+    type: "keyword",
+    value: "blue",
+  });
+});
+
+test("checks current root styles after resolving token conflicts", async () => {
+  setupProjectWithRootStyle({
+    projectId: "source-project",
+    pageId: "source-page",
+    rootInstanceId: "source-body",
+    styleSourceId: "source-local",
+    color: "red",
+  });
+  addRootTokenStyle({ styleSourceId: "source-token", value: "red" });
+  const clipboardData = copyPageData("source-page");
+
+  setupProjectWithRootStyle({
+    projectId: "target-project",
+    pageId: "target-page",
+    rootInstanceId: "target-body",
+    styleSourceId: "target-local",
+    color: "red",
+  });
+  addRootTokenStyle({ styleSourceId: "target-token", value: "blue" });
+  vi.spyOn(
+    window.__webstudio__$__builderApi,
+    "showTokenConflictDialog"
+  ).mockImplementation(async () => {
+    updateRootLocalStyle("blue");
+    return "ours";
+  });
+  const rootConflictDialog = vi
+    .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+    .mockResolvedValue("ours");
+
+  await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
+
+  expect(rootConflictDialog).toHaveBeenCalledOnce();
+  expect($styles.get().get("target-local:base:color:")?.value).toEqual({
+    type: "keyword",
+    value: "blue",
+  });
+});
+
 test("handles page paste data without falling through when insertion cannot complete", async () => {
   $project.set({ id: "source-project" } as Project);
   resetBuildStores();
@@ -329,6 +592,7 @@ test("copies folder data with nested pages across projects", async () => {
       )
     )
   );
+  setRootLocalStyle({ styleSourceId: "source-local", value: "red" });
 
   const clipboardData = copyFolderData("source-folder");
   expect(clipboardData).toBeDefined();
@@ -354,9 +618,18 @@ test("copies folder data with nested pages across projects", async () => {
       ],
     ])
   );
+  setRootLocalStyle({ styleSourceId: "target-local", value: "blue" });
+  const conflictDialog = vi
+    .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+    .mockResolvedValue("ours");
 
   await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
 
+  expect(conflictDialog).toHaveBeenCalledOnce();
+  expect($styles.get().get("target-local:base:color:")?.value).toEqual({
+    type: "keyword",
+    value: "blue",
+  });
   const pastedFolder = Array.from($pages.get()?.folders.values() ?? []).find(
     (folder) => folder.name === "Docs"
   );
@@ -485,6 +758,7 @@ test("copies template data as a template", async () => {
       ])
     )
   );
+  setRootLocalStyle({ styleSourceId: "source-local", value: "red" });
 
   const clipboardData = copyTemplateData("template-id");
   expect(clipboardData).toBeDefined();
@@ -510,9 +784,18 @@ test("copies template data as a template", async () => {
       ],
     ])
   );
+  setRootLocalStyle({ styleSourceId: "target-local", value: "blue" });
+  const conflictDialog = vi
+    .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+    .mockResolvedValue("theirs");
 
   await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
 
+  expect(conflictDialog).toHaveBeenCalledOnce();
+  expect($styles.get().get("target-local:base:color:")?.value).toEqual({
+    type: "keyword",
+    value: "red",
+  });
   const pastedTemplate = Array.from(
     $pages.get()?.pageTemplates?.values() ?? []
   ).find((template) => template.name === "Landing Template");

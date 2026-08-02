@@ -13,6 +13,7 @@ import {
 } from "@webstudio-is/sdk";
 import {
   collectStyleSourcesFromInstances,
+  detectRootStyleConflicts,
   detectTokenConflicts,
   findTokenWithMatchingStyles,
   getStyleSourceStylesSignature,
@@ -51,6 +52,65 @@ const local = (id: string): StyleSource => ({ type: "local", id });
 const baseBreakpoints = toMap<Breakpoint>([{ id: "base", label: "Base" }]);
 const red = { type: "keyword", value: "red" } satisfies StyleValue;
 const blue = { type: "keyword", value: "blue" } satisfies StyleValue;
+
+describe("root style conflict helpers", () => {
+  test("detects different values after breakpoint remapping", () => {
+    const conflicts = detectRootStyleConflicts({
+      fragmentStyleSources: [local("incoming-local")],
+      fragmentStyleSourceSelections: [
+        { instanceId: ROOT_INSTANCE_ID, values: ["incoming-local"] },
+      ],
+      fragmentStyles: [style("incoming-local", "incoming-base", "color", red)],
+      existingStyleSources: toMap([local("existing-local")]),
+      existingStyleSourceSelections: new Map([
+        [
+          ROOT_INSTANCE_ID,
+          { instanceId: ROOT_INSTANCE_ID, values: ["existing-local"] },
+        ],
+      ]),
+      existingStyles: styleMap([
+        style("existing-local", "existing-base", "color", blue),
+      ]),
+      mergedBreakpointIds: new Map([["incoming-base", "existing-base"]]),
+    });
+
+    expect(conflicts).toEqual([
+      {
+        existingStyle: style("existing-local", "existing-base", "color", blue),
+        incomingStyle: style("incoming-local", "incoming-base", "color", red),
+      },
+    ]);
+  });
+
+  test("ignores identical and non-conflicting root declarations", () => {
+    const conflicts = detectRootStyleConflicts({
+      fragmentStyleSources: [local("incoming-local")],
+      fragmentStyleSourceSelections: [
+        { instanceId: ROOT_INSTANCE_ID, values: ["incoming-local"] },
+      ],
+      fragmentStyles: [
+        style("incoming-local", "base", "color", {
+          type: "unparsed",
+          value: "blue",
+        }),
+        style("incoming-local", "base", "backgroundColor", red),
+      ],
+      existingStyleSources: toMap([local("existing-local")]),
+      existingStyleSourceSelections: new Map([
+        [
+          ROOT_INSTANCE_ID,
+          { instanceId: ROOT_INSTANCE_ID, values: ["existing-local"] },
+        ],
+      ]),
+      existingStyles: styleMap([
+        style("existing-local", "base", "color", blue),
+      ]),
+      mergedBreakpointIds: new Map(),
+    });
+
+    expect(conflicts).toEqual([]);
+  });
+});
 
 describe("token conflict helpers", () => {
   test("creates stable style signatures independent of declaration order", () => {

@@ -580,6 +580,7 @@ describe("content source snapshots", () => {
   });
 
   test("stores Markdown references only for parsed Markdown content", async () => {
+    const markdown = "![Hero](../images/hero.png)";
     const post = createFile({ id: "post", path: "blog/post.md" });
     const image = createFile({
       id: "hero",
@@ -592,9 +593,10 @@ describe("content source snapshots", () => {
           revision: "snapshot",
           files: [post, image],
           async loadEntries() {
-            return [
-              { ...createEntry(post), content: "![Hero](../images/hero.png)" },
-            ];
+            return [{ ...createEntry(post), content: markdown }];
+          },
+          async loadDocumentSources() {
+            return [{ id: post.id, source: markdown }];
           },
           async isCurrent() {
             return true;
@@ -603,7 +605,7 @@ describe("content source snapshots", () => {
       },
     };
 
-    const compile = (mode: "full" | "markdown-body") =>
+    const compile = (mode: "full" | "markdown-body-ref") =>
       compileContentSource({
         source,
         projectId,
@@ -629,7 +631,7 @@ describe("content source snapshots", () => {
     expect((await compile("full")).artifact.assetReferences).toBeUndefined();
     expect(
       getReferencedAssetIds(
-        (await compile("markdown-body")).artifact.assetReferences
+        (await compile("markdown-body-ref")).artifact.assetReferences
       )
     ).toEqual({ "revisions/post.md": ["hero"] });
   });
@@ -687,7 +689,7 @@ describe("content source snapshots", () => {
               includeMetadata: false,
               fields: [["properties", "slug"]],
             },
-            content: { mode: "markdown-body" },
+            content: { mode: "markdown-body-ref" },
           },
         ],
       },

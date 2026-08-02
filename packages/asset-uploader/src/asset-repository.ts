@@ -836,6 +836,7 @@ export class PostgresAssetRepository implements AssetRepository {
       unboundedBytes,
       includedDocumentCount,
       omittedDocumentCount,
+      omissionReason,
       truncated,
     }: ReturnType<typeof database.getStats>) => ({
       usedBytes,
@@ -843,6 +844,7 @@ export class PostgresAssetRepository implements AssetRepository {
       unboundedBytes,
       includedDocumentCount,
       omittedDocumentCount,
+      ...(omissionReason === undefined ? {} : { omissionReason }),
       truncated,
     });
     return {

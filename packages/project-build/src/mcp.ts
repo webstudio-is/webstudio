@@ -824,7 +824,7 @@ const insertCollectionMcpInputSchema = getOperationInputSchema({
 });
 
 const assetsResourceResultDescription =
-  "Pass query as structured tool input using Webstudio JavaScript expressions rather than a JSON-stringified expression or manually authored resource body. Every reachable Assets resource contributes to one shared published database, so create only one final resource per rendered query; update an existing resource instead of creating a replacement, and remove obsolete duplicates. Keep static filters, limits, and offsets literal so bounded overview queries can be materialized. Use output mode fields, select only rendered fields, keep includeMetadata false, and use content mode none when file content is not rendered. For a Markdown detail page, query the Markdown asset directly and use content mode markdown-body; compilation keeps only its document reference in the bundle and fetches the selected body from Asset storage at runtime. Bind the resolved body from item.content.text. Assets expose an ID-keyed map at <dataSourceName>.data and collection information at <dataSourceName>.meta.";
+  "Pass query as structured tool input using Webstudio JavaScript expressions rather than a JSON-stringified expression or manually authored resource body. Every reachable Assets resource contributes to one shared published database, so create only one final resource per rendered query; update an existing resource instead of creating a replacement, and remove obsolete duplicates. Keep static filters, limits, and offsets literal so bounded overview queries can be materialized. Use output mode fields, select only rendered fields, keep includeMetadata false, and use content mode none when file content is not rendered. For a Markdown detail page, query the Markdown asset directly and use content mode markdown-body-ref; compilation keeps only its document reference in the bundle and fetches the selected body from Asset storage at runtime. Bind the resolved body from item.content.text. Assets expose an ID-keyed map at <dataSourceName>.data and collection information at <dataSourceName>.meta.";
 
 const mcpOperationOverrides = new Map<
   string,
@@ -2193,7 +2193,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
           ],
         },
         limit: 1,
-        content: { mode: "markdown-body", maxBytes: 1_048_576 },
+        content: { mode: "markdown-body-ref", maxBytes: 1_048_576 },
       },
     },
   ],
@@ -5531,7 +5531,7 @@ const metaGoalGuides = [
       'Ensure the blog has exactly two Builder pages: an overview at the fixed path "/blog" and one detail page at the dynamic path "/blog/:slug". Create each page once with a committed call; do not dry-run it. Both pages load their content from Assets resources. Do not create one page per post or copy Markdown content into page-specific static structures.',
       "Every reachable Assets data source contributes its query to one shared published database. Keep exactly one final Assets resource for the overview and one for the detail page. Never create a placeholder, preview copy, or repair replacement; update the existing scoped resource when requirements change and remove obsolete duplicates.",
       'Field paths are arrays of segments, for example field:["extension"]. Literal query values use {"type":"literal","value":"..."}; raw strings are runtime expressions. Keep every overview filter value, limit, and offset literal so the bounded metadata-only result can be materialized instead of retaining its fields across every article. Use a deterministic secondary ID sort. Query Markdown posts with static extension and blog-folder constraints before any dynamic condition. Use output.mode:"fields", includeMetadata:false, and only fields rendered by that route.',
-      'Keep content.mode:"none" on the overview and use content.mode:"markdown-body" only on the detail route. The detail query should have exactly one dynamic value, system.params.slug, a literal limit of 1, and only the title and author metadata rendered above Markdown Embed. The published database keeps only the Markdown document reference and fetches the selected body from Asset storage at runtime.',
+      'Keep content.mode:"none" on the overview and use content.mode:"markdown-body-ref" only on the detail route. The detail query should have exactly one dynamic value, system.params.slug, a literal limit of 1, and only the title and author metadata rendered above Markdown Embed. The published database keeps only the Markdown document reference and fetches the selected body from Asset storage at runtime.',
       "Call create-assets-resource exactly once with recipe.overviewResource after substituting the returned /blog root id and Blog folder id. Then call it exactly once with recipe.detailResource after substituting the returned /blog/:slug root id and the same Blog folder id.",
       'Call insert-collection exactly once with the entire recipe.overviewCollection object and exactly once with the entire recipe.detailCollection object, changing only parentInstanceId to the returned root id. Do not reshape or stringify any field: data must remain the recipe object {"type":"expression","value":"posts.data"} or {"type":"expression","value":"post.data"}. Do not improvise another fragment or call meta.get-more-tools again.',
       "Validate both queries and preview the detail query with one concrete slug before saving dynamic expressions. Query-preview diagnostics report this query separately from the merged published database; use the merged database measurement when checking the deployment limit. The merged database must contain every source document without truncation, no embedded Markdown contents, and only one materialized overview query.",
@@ -5616,7 +5616,7 @@ const metaGoalGuides = [
               ["properties", "author"],
             ],
           },
-          content: { mode: "markdown-body" },
+          content: { mode: "markdown-body-ref" },
         },
       },
       overviewCollection: {

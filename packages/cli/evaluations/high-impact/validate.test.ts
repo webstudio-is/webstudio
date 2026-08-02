@@ -310,7 +310,7 @@ const addMarkdownBlog = (): EvaluationProject => {
             ["properties", "author"],
           ],
         },
-        content: { mode: "markdown-body" },
+        content: { mode: "markdown-body-ref" },
       })
     )
   );

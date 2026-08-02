@@ -619,7 +619,7 @@ describe("shared asset index", () => {
     ).toBeGreaterThan(0);
   });
 
-  test("keeps Markdown bodies embedded when no document graph is available", async () => {
+  test("rejects Markdown body references without a document graph", async () => {
     const plan = createContentCompilationPlan([
       createLiteralContentCompilationQuery({
         id: "detail",
@@ -633,23 +633,23 @@ describe("shared asset index", () => {
             includeMetadata: false,
             fields: [["id"]],
           },
-          content: { mode: "markdown-body" },
+          content: { mode: "markdown-body-ref" },
         },
       }),
     ]);
 
-    const { artifact } = await compileContentArtifact({
-      projectId: "project",
-      entries: [{ ...entry({ id: "post" }), content: "Post body" }],
-      plan,
-    });
-
-    expect(artifact.contents).toEqual({
-      "files/post.md": "Post body",
-    });
+    await expect(
+      compileContentArtifact({
+        projectId: "project",
+        entries: [{ ...entry({ id: "post" }), content: "Post body" }],
+        plan,
+      })
+    ).rejects.toThrowError(
+      "Markdown body reference queries require a document graph"
+    );
   });
 
-  test("keeps Markdown bodies embedded when their graph node is unavailable", async () => {
+  test("rejects Markdown body references without their graph node", async () => {
     const plan = createContentCompilationPlan([
       createLiteralContentCompilationQuery({
         id: "detail",
@@ -663,21 +663,21 @@ describe("shared asset index", () => {
             includeMetadata: false,
             fields: [["id"]],
           },
-          content: { mode: "markdown-body" },
+          content: { mode: "markdown-body-ref" },
         },
       }),
     ]);
 
-    const { artifact } = await compileContentArtifact({
-      projectId: "project",
-      entries: [{ ...entry({ id: "post" }), content: "Post body" }],
-      plan,
-      documentGraph: createDocumentGraph({ nodes: [], edges: [] }),
-    });
-
-    expect(artifact.contents).toEqual({
-      "files/post.md": "Post body",
-    });
+    await expect(
+      compileContentArtifact({
+        projectId: "project",
+        entries: [{ ...entry({ id: "post" }), content: "Post body" }],
+        plan,
+        documentGraph: createDocumentGraph({ nodes: [], edges: [] }),
+      })
+    ).rejects.toThrowError(
+      "Markdown body reference queries require graph nodes for: post"
+    );
   });
 
   test("omits documents when their requested content was not materialized", async () => {

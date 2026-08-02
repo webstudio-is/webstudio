@@ -67,14 +67,37 @@ export type ContentCompilerInput = CanonicalAssetFileEntry & {
   contentRequired?: true;
 };
 
-const excludeDeferredMarkdownBodies = ({
+const selectMarkdownBodyReferenceIds = ({
+  entries,
+  plan,
+}: {
+  entries: readonly ContentCompilerInput[];
+  plan?: ContentCompilationPlan;
+}) => {
+  if (plan === undefined) {
+    return new Set<string>();
+  }
+  return selectContentHydrationCandidates({
+    documents: entries.map(({ document }) => document),
+    plan: {
+      ...plan,
+      queries: plan.queries.filter(
+        ({ content }) => content.mode === "markdown-body-ref"
+      ),
+    },
+  });
+};
+
+const excludeReferencedMarkdownBodies = ({
   entries,
   documentGraph,
   plan,
+  referencedIds,
 }: {
   entries: readonly ContentCompilerInput[];
   documentGraph: DocumentGraph;
   plan?: ContentCompilationPlan;
+  referencedIds: ReadonlySet<string>;
 }) => {
   if (plan === undefined) {
     return entries;
@@ -82,7 +105,7 @@ const excludeDeferredMarkdownBodies = ({
   const embeddedQueryPlan = {
     ...plan,
     queries: plan.queries.filter(
-      ({ content }) => content.mode !== "markdown-body"
+      ({ content }) => content.mode !== "markdown-body-ref"
     ),
   };
   const embeddedIds = selectContentHydrationCandidates({
@@ -90,10 +113,20 @@ const excludeDeferredMarkdownBodies = ({
     plan: embeddedQueryPlan,
   });
   const graphNodeIds = new Set(documentGraph.nodes.map(({ id }) => id));
+  const missingNodeIds = [...referencedIds].filter(
+    (assetId) => graphNodeIds.has(assetId) === false
+  );
+  if (missingNodeIds.length > 0) {
+    throw new Error(
+      `Markdown body reference queries require graph nodes for: ${missingNodeIds.join(
+        ", "
+      )}`
+    );
+  }
   return entries.map((entry) => {
     if (
-      embeddedIds.has(entry.assetId) ||
-      graphNodeIds.has(entry.assetId) === false
+      referencedIds.has(entry.assetId) === false ||
+      embeddedIds.has(entry.assetId)
     ) {
       return entry;
     }
@@ -353,8 +386,20 @@ export const compileContentArtifact = async ({
   if (Number.isSafeInteger(maxBytes) === false || maxBytes <= 0) {
     throw new Error("Content database byte limit must be a positive integer");
   }
+  const referencedMarkdownBodyIds = selectMarkdownBodyReferenceIds({
+    entries,
+    plan,
+  });
+  if (referencedMarkdownBodyIds.size > 0 && documentGraph === undefined) {
+    throw new Error("Markdown body reference queries require a document graph");
+  }
   if (documentGraph !== undefined) {
-    entries = excludeDeferredMarkdownBodies({ entries, documentGraph, plan });
+    entries = excludeReferencedMarkdownBodies({
+      entries,
+      documentGraph,
+      plan,
+      referencedIds: referencedMarkdownBodyIds,
+    });
   }
   validateEntries({ projectId, entries });
   const documentGraphArtifact =

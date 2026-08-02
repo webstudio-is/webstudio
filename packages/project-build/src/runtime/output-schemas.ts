@@ -625,7 +625,7 @@ export const runtimeOutputSchemas = {
   "resources.upsert": looseObject({ resourceId: id, dataSourceId: id }),
   "resources.upsertProp": looseObject({
     resourceId: id,
-    dataSourceId: id,
+    dataSourceId: id.optional(),
     propIds: stringArray,
   }),
   "resources.delete": looseObject({
