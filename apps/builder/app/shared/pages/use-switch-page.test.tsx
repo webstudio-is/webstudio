@@ -3,7 +3,28 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import { $, renderData } from "@webstudio-is/template";
 import { __testing__ } from "./use-switch-page";
 
-const { getDeepLinkedInstanceSelection } = __testing__;
+const { getDeepLinkedInstanceSelection, shouldNavigateToPageState } =
+  __testing__;
+
+test("preserves an instance deep link until URL state is initialized", () => {
+  expect(
+    shouldNavigateToPageState({
+      isUrlStateInitialized: false,
+      isSamePageState: true,
+      searchParamsInstanceId: "heading",
+      instanceId: undefined,
+    })
+  ).toBe(false);
+
+  expect(
+    shouldNavigateToPageState({
+      isUrlStateInitialized: true,
+      isSamePageState: true,
+      searchParamsInstanceId: "heading",
+      instanceId: undefined,
+    })
+  ).toBe(true);
+});
 
 test("resolves a deep-linked instance to its page and full selector", () => {
   const pages = createDefaultPages({

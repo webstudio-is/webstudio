@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { useNavigate } from "@remix-run/react";
 import { $instances, $pages, $project } from "~/shared/sync/data-stores";
@@ -53,7 +53,24 @@ const getDeepLinkedInstanceSelection = ({
   return selection;
 };
 
-export const __testing__ = { getDeepLinkedInstanceSelection };
+const shouldNavigateToPageState = ({
+  isUrlStateInitialized,
+  isSamePageState,
+  searchParamsInstanceId,
+  instanceId,
+}: {
+  isUrlStateInitialized: boolean;
+  isSamePageState: boolean;
+  searchParamsInstanceId: string | undefined;
+  instanceId: string | undefined;
+}) =>
+  isUrlStateInitialized &&
+  (isSamePageState === false || searchParamsInstanceId !== instanceId);
+
+export const __testing__ = {
+  getDeepLinkedInstanceSelection,
+  shouldNavigateToPageState,
+};
 
 const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -106,22 +123,39 @@ const setPageStateFromUrl = () => {
  */
 export const useSyncPageUrl = () => {
   const navigate = useNavigate();
+  const [isUrlStateInitialized, setIsUrlStateInitialized] = useState(false);
   const page = useStore($selectedPage);
   const pageHash = useStore($selectedPageHash);
   const builderMode = useStore($builderMode);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const canOpenPageTemplate = useStore($canOpenPageTemplates);
 
-  // Get pageId and pageHash from URL
-  // once pages are loaded
+  // Get page and instance state from the URL once both stores are loaded.
+  // Pages are populated before instances, so initializing from the pages
+  // notification can reject a valid instance deep link as missing.
   useEffect(() => {
-    const unsubscribe = $pages.subscribe((pages) => {
-      if (pages) {
-        unsubscribe();
-        setPageStateFromUrl();
+    let didInitialize = false;
+    const initialize = () => {
+      if (
+        didInitialize ||
+        $pages.get() === undefined ||
+        $instances.get().size === 0
+      ) {
+        return;
       }
-    });
-    return unsubscribe;
+
+      didInitialize = true;
+      setPageStateFromUrl();
+      setIsUrlStateInitialized(true);
+    };
+    const unsubscribePages = $pages.listen(initialize);
+    const unsubscribeInstances = $instances.listen(initialize);
+    initialize();
+
+    return () => {
+      unsubscribePages();
+      unsubscribeInstances();
+    };
   }, []);
 
   useEffect(() => {
@@ -162,8 +196,16 @@ export const useSyncPageUrl = () => {
       searchParamsPageHash === pageHash.hash &&
       searchParamsMode === builderModeParam;
 
-    // Do not navigate on popstate change or if params match
-    if (isSamePageState && searchParamsInstanceId === instanceId) {
+    // Do not navigate before initial URL state is applied, on popstate change,
+    // or if params match.
+    if (
+      shouldNavigateToPageState({
+        isUrlStateInitialized,
+        isSamePageState,
+        searchParamsInstanceId,
+        instanceId,
+      }) === false
+    ) {
       return;
     }
 
@@ -178,7 +220,14 @@ export const useSyncPageUrl = () => {
       }),
       { replace: isSamePageState }
     );
-  }, [builderMode, navigate, page, pageHash, selectedInstanceSelector]);
+  }, [
+    builderMode,
+    isUrlStateInitialized,
+    navigate,
+    page,
+    pageHash,
+    selectedInstanceSelector,
+  ]);
 
   useEffect(() => {
     const pages = $pages.get();
