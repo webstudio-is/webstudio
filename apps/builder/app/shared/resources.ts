@@ -95,8 +95,7 @@ const scheduleLoading = () => {
     return;
   }
   window.clearTimeout(timeoutId);
-  // start loading after one second of "preload" call
-  timeoutId = window.setTimeout(loadResources, 1000);
+  timeoutId = window.setTimeout(loadResources, 0);
 };
 
 const preloadResource = (resource: ResourceRequest) => {
@@ -108,7 +107,6 @@ const preloadResource = (resource: ResourceRequest) => {
   // deduplicate resources in queue
   queue.set(key, resource);
   updatePending();
-  scheduleLoading();
 };
 
 export const preloadResources = (resources: readonly ResourceRequest[]) => {
@@ -126,6 +124,7 @@ export const preloadResources = (resources: readonly ResourceRequest[]) => {
   for (const resource of resources) {
     preloadResource(resource);
   }
+  scheduleLoading();
 };
 
 export const invalidateResource = (resource: ResourceRequest) => {
@@ -133,6 +132,7 @@ export const invalidateResource = (resource: ResourceRequest) => {
   cache.delete(key);
   diagnosticsCache.delete(key);
   preloadResource(resource);
+  scheduleLoading();
 };
 
 /**
@@ -178,4 +178,16 @@ export const computeResourceRequest = (
   return request;
 };
 
-export const __testing__ = { loadResources };
+const reset = () => {
+  window.clearTimeout(timeoutId);
+  timeoutId = undefined;
+  queue.clear();
+  pending.clear();
+  cache.clear();
+  diagnosticsCache.clear();
+  knownRequests.clear();
+  updateCache();
+  updatePending();
+};
+
+export const __testing__ = { loadResources, reset };
