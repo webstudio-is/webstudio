@@ -93,7 +93,7 @@ describe("content compilation plan", () => {
           ],
         },
         sort: [{ field: ["excerpt"], direction: "asc" as const }],
-        content: { mode: "markdown-body" as const },
+        content: { mode: "markdown-body-ref" as const },
       }),
     ]);
     expect(plan).toMatchObject({ excerpt: true });
@@ -367,7 +367,7 @@ describe("content compilation plan", () => {
       {
         ...compilationQuery("detail", {
           ...query,
-          content: { mode: "markdown-body" },
+          content: { mode: "markdown-body-ref" },
         }),
         where: {
           field: ["properties", "slug"],

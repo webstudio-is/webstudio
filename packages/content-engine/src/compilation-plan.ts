@@ -177,7 +177,7 @@ const supportsQueryContent = (
   document: AssetFileDocument,
   query: ContentCompilationPlan["queries"][number]
 ) =>
-  query.content.mode !== "markdown-body" ||
+  query.content.mode !== "markdown-body-ref" ||
   document.mimeType === "text/markdown" ||
   document.extension === "md";
 

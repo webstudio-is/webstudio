@@ -152,7 +152,7 @@ describe("high-impact agent runner", () => {
       '"fields":[["properties","title"],["properties","slug"]'
     );
     expect(blogConstraints).toContain('"mode":"none"');
-    expect(blogConstraints).toContain('"mode":"markdown-body"');
+    expect(blogConstraints).toContain('"mode":"markdown-body-ref"');
     expect(blogConstraints).not.toContain('["properties","body"]');
     expect(blogConstraints).toContain('["properties","author"]');
     expect(blogConstraints).toContain("collectionItem.properties.author.name");
@@ -189,7 +189,7 @@ describe("high-impact agent runner", () => {
     const discoveryPrompt = JSON.stringify(discoveryTask);
     expect(discoveryPrompt).not.toContain("$ref");
     expect(discoveryPrompt).not.toContain('"where"');
-    expect(discoveryPrompt).not.toContain("markdown-body");
+    expect(discoveryPrompt).not.toContain("markdown-body-ref");
     expect(discoveryPrompt).not.toContain("collectionItem");
     expect(discoveryPrompt).toContain("Do not dry-run or plan mutations");
     expect(discoveryPrompt).toContain("without reshaping its fields");

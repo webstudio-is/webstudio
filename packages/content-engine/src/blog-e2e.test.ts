@@ -99,7 +99,7 @@ describe("published Markdown blog end-to-end", () => {
       },
       limit: 1,
       output: { mode: "all", includeMetadata: true },
-      content: { mode: "markdown-body" },
+      content: { mode: "markdown-body-ref" },
     });
     expect(await detail?.json()).toMatchObject({
       items: [

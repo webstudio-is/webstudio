@@ -72,7 +72,7 @@ describe("Assets resource mutation input", () => {
           },
           limit: { type: "literal", value: 20 },
           offset: { type: "literal", value: 0 },
-          content: { mode: "markdown-body", maxBytes: 65_536 },
+          content: { mode: "markdown-body-ref", maxBytes: 65_536 },
         },
       }).success
     ).toBe(true);

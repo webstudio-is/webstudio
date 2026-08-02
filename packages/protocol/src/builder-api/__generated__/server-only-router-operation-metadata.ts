@@ -443,7 +443,7 @@ export const serverOnlyRouterOperationMetadata = {
                   properties: {
                     mode: {
                       type: "string",
-                      const: "markdown-body",
+                      const: "markdown-body-ref",
                     },
                     maxBytes: {
                       type: "integer",
@@ -824,7 +824,7 @@ export const serverOnlyRouterOperationMetadata = {
                   properties: {
                     mode: {
                       type: "string",
-                      const: "markdown-body",
+                      const: "markdown-body-ref",
                     },
                     maxBytes: {
                       type: "integer",

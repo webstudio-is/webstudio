@@ -886,7 +886,7 @@ const validateMarkdownBlog = (
     "detailQuery",
     article !== undefined &&
       blogFolder !== undefined &&
-      article.content.mode === "markdown-body" &&
+      article.content.mode === "markdown-body-ref" &&
       hasWhereCondition({
         where: article.where,
         field: ["extension"],

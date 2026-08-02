@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import type { AssetFileDocument, BuilderAssetFieldCatalog } from "./schema";
+import {
+  assetQuery,
+  type AssetFileDocument,
+  type BuilderAssetFieldCatalog,
+} from "./schema";
 import {
   executeAssetQuery,
   getAssetQueryFieldValue,
@@ -89,6 +93,15 @@ const runtimeAssets = Object.fromEntries(
 );
 
 describe("structured asset query", () => {
+  test("accepts only referenced Markdown body queries", () => {
+    expect(
+      assetQuery.safeParse({ content: { mode: "markdown-body-ref" } }).success
+    ).toBe(true);
+    expect(
+      assetQuery.safeParse({ content: { mode: "markdown-body" } }).success
+    ).toBe(false);
+  });
+
   test("combines nested all and any filter groups", async () => {
     const result = await executeAssetQuery({
       catalog,
@@ -331,7 +344,7 @@ describe("structured asset query", () => {
         sort: [],
         limit: 1,
         offset: 0,
-        content: { mode: "markdown-body" },
+        content: { mode: "markdown-body-ref" },
       },
       read: async () => ({
         data: {
@@ -468,7 +481,7 @@ describe("structured asset query", () => {
         limit: 1,
         offset: 0,
         output: { mode: "all", includeMetadata: false },
-        content: { mode: "markdown-body" },
+        content: { mode: "markdown-body-ref" },
       },
       read: async () => ({
         data: {

@@ -78,7 +78,7 @@ Filtering, sorting, pagination, and projection therefore operate on resolved
 values when their property paths intersect a reference. Only properties
 selected by the Assets query are returned. Resolution cannot expose an
 unselected property merely because it exists in a fetched document.
-`markdown-body` content selection is also graph-backed. Compilation retains the
+`markdown-body-ref` content selection is also graph-backed. Compilation retains the
 Markdown document identity instead of its source bytes, and runtime hydration
 fetches only the documents selected after filtering, sorting, and pagination.
 The resolved query result continues to expose the body at `content.text`.

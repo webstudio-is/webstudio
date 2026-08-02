@@ -136,7 +136,7 @@ describe("selected asset content hydration", () => {
     const result = await hydrateAssetResourceResult({
       result: identity(document),
       documents: [document],
-      options: { mode: "markdown-body" },
+      options: { mode: "markdown-body-ref" },
       read,
     });
     expect(result.content[document._id]?.text).toBe("# Body\n");
