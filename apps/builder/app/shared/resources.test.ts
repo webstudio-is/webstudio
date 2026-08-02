@@ -6,12 +6,17 @@ import {
   $resourceDiagnosticsCache,
   $resourcesCache,
   getResourceKey,
-  invalidateResource,
   loadResourceDiagnostics,
   preloadResources,
 } from "./resources";
 
-const { loadResources, reset } = __testing__;
+const {
+  getLoaderState,
+  loadResources,
+  queueInvalidatedResource,
+  queueResources,
+  reset,
+} = __testing__;
 
 afterEach(() => {
   reset();
@@ -29,18 +34,17 @@ test("removes obsolete queued requests but keeps cached results", () => {
   };
   const key = getResourceKey(request);
 
-  preloadResources([request]);
+  queueResources([request]);
   $resourcesCache.get().set(key, { stale: true });
   expect($hasPendingResources.get()).toBe(true);
 
-  preloadResources([]);
+  queueResources([]);
 
   expect($resourcesCache.get().has(key)).toBe(true);
   expect($hasPendingResources.get()).toBe(false);
 });
 
-test("dispatches resources without a debounce", async () => {
-  vi.useFakeTimers();
+test("dispatches resources synchronously", async () => {
   const request: ResourceRequest = {
     name: "Immediate",
     method: "get",
@@ -51,10 +55,10 @@ test("dispatches resources without a debounce", async () => {
   const error = vi.spyOn(console, "error").mockImplementation(() => {});
 
   preloadResources([request]);
-  expect($hasPendingResources.get()).toBe(true);
-  await vi.advanceTimersByTimeAsync(0);
-
-  expect($hasPendingResources.get()).toBe(false);
+  expect(getLoaderState()).toEqual({ queueSize: 0, pendingSize: 1 });
+  await vi.waitFor(() => {
+    expect($hasPendingResources.get()).toBe(false);
+  });
   error.mockRestore();
 });
 
@@ -78,7 +82,7 @@ test("batches all resources from one computation", async () => {
   ];
   const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json([]));
 
-  preloadResources(requests);
+  queueResources(requests);
   await loadResources(fetch as typeof globalThis.fetch);
   expect(fetch).toHaveBeenCalledOnce();
   expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual(requests);
@@ -95,7 +99,7 @@ test("deduplicates identical requests", async () => {
   };
   const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json([]));
 
-  preloadResources([request, request]);
+  queueResources([request, request]);
   await loadResources(fetch as typeof globalThis.fetch);
 
   expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual([request]);
@@ -114,14 +118,14 @@ test("reloads an invalidated cached request", async () => {
   const firstFetch = vi.fn<typeof globalThis.fetch>(async () =>
     Response.json([[key, { data: "first" }]])
   );
-  preloadResources([request]);
+  queueResources([request]);
   await loadResources(firstFetch as typeof globalThis.fetch);
   expect($resourcesCache.get().get(key)).toEqual({ data: "first" });
 
   const secondFetch = vi.fn<typeof globalThis.fetch>(async () =>
     Response.json([[key, { data: "second" }]])
   );
-  invalidateResource(request);
+  queueInvalidatedResource(request);
   await loadResources(secondFetch as typeof globalThis.fetch);
 
   expect(secondFetch).toHaveBeenCalledOnce();
@@ -142,21 +146,23 @@ test("replaces an invalidated in-flight request without caching stale data", asy
   const firstResponse = new Promise<Response>((resolve) => {
     resolveFirst = resolve;
   });
-  const firstFetch = vi.fn<typeof globalThis.fetch>(() => firstResponse);
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(() => firstResponse)
+    .mockResolvedValueOnce(Response.json([]));
 
-  preloadResources([request]);
-  const firstLoad = loadResources(firstFetch as typeof globalThis.fetch);
-  invalidateResource(request);
+  queueResources([request]);
+  const firstLoad = loadResources(requestFetch as typeof globalThis.fetch);
+  queueInvalidatedResource(request);
   resolveFirst(Response.json([[key, { data: "stale" }]]));
   await firstLoad;
   expect($resourcesCache.get().has(key)).toBe(false);
 
-  const secondFetch = vi.fn<typeof globalThis.fetch>(async () =>
-    Response.json([])
-  );
-  await loadResources(secondFetch as typeof globalThis.fetch);
+  await vi.waitFor(() => {
+    expect(requestFetch).toHaveBeenCalledTimes(2);
+  });
 
-  expect(JSON.parse(String(secondFetch.mock.calls[0][1]?.body))).toEqual([
+  expect(JSON.parse(String(requestFetch.mock.calls[1][1]?.body))).toEqual([
     request,
   ]);
 });
@@ -172,9 +178,11 @@ test("drains bounded batches without an additional delay", async () => {
   }));
   const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json([]));
 
-  preloadResources(requests);
+  queueResources(requests);
   await loadResources(fetch as typeof globalThis.fetch);
-  await loadResources(fetch as typeof globalThis.fetch);
+  await vi.waitFor(() => {
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
 
   expect(fetch).toHaveBeenCalledTimes(2);
   expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toHaveLength(5);
@@ -246,7 +254,7 @@ test("discards stale diagnostics after invalidation", async () => {
   const firstFetch = vi.fn<typeof globalThis.fetch>(() => firstResponse);
   const first = loadResourceDiagnostics(request, firstFetch);
 
-  invalidateResource(request);
+  queueInvalidatedResource(request);
   const freshDiagnostics = {
     scope: "query-preview",
     query: {
@@ -305,7 +313,7 @@ test("keeps loading distinct from a confirmed empty Assets result", async () => 
     ])
   );
 
-  preloadResources([request]);
+  queueResources([request]);
   expect($resourcesCache.get().get(key)).toBeUndefined();
   expect($hasPendingResources.get()).toBe(true);
 
@@ -343,7 +351,7 @@ test.each([
   };
   const error = vi.spyOn(console, "error").mockImplementation(() => {});
 
-  preloadResources([request]);
+  queueResources([request]);
   await loadResources(fetch as typeof globalThis.fetch);
 
   expect($hasPendingResources.get()).toBe(false);

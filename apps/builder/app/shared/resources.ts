@@ -90,20 +90,15 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
     updatePending();
     // Restart loading until the queue is empty. An invalidation may have
     // queued a fresh request while this batch was pending.
-    scheduleLoading();
+    startLoading(requestFetch);
   }
 };
 
-let timeoutId: undefined | number;
-
-const scheduleLoading = () => {
-  // scheduling will be restarted after finishing pending one
-  // skip when there is nothing in queue
+const startLoading = (requestFetch: typeof fetch = fetch) => {
   if (pending.size > 0 || queue.size === 0) {
     return;
   }
-  window.clearTimeout(timeoutId);
-  timeoutId = window.setTimeout(loadResources, 0);
+  void loadResources(requestFetch);
 };
 
 const preloadResource = (resource: ResourceRequest) => {
@@ -126,7 +121,7 @@ const invalidateRequestState = (key: string) => {
   resourceVersions.set(key, (resourceVersions.get(key) ?? 0) + 1);
 };
 
-export const preloadResources = (resources: readonly ResourceRequest[]) => {
+const queueResources = (resources: readonly ResourceRequest[]) => {
   const currentKeys = new Set(resources.map(getResourceKey));
   let pendingChanged = false;
   let diagnosticsChanged = false;
@@ -147,10 +142,14 @@ export const preloadResources = (resources: readonly ResourceRequest[]) => {
   for (const resource of resources) {
     preloadResource(resource);
   }
-  scheduleLoading();
 };
 
-export const invalidateResource = (resource: ResourceRequest) => {
+export const preloadResources = (resources: readonly ResourceRequest[]) => {
+  queueResources(resources);
+  startLoading();
+};
+
+const queueInvalidatedResource = (resource: ResourceRequest) => {
   const key = getResourceKey(resource);
   cache.delete(key);
   invalidateRequestState(key);
@@ -158,9 +157,17 @@ export const invalidateResource = (resource: ResourceRequest) => {
   queue.set(key, resource);
   updateCache();
   updatePending();
-  scheduleLoading();
 };
 
+export const invalidateResource = (resource: ResourceRequest) => {
+  queueInvalidatedResource(resource);
+  startLoading();
+};
+
+/**
+ * Fetches the diagnostics intentionally omitted from ordinary canvas loads.
+ * Called lazily when the Diagnostics tab is opened.
+ */
 export const loadResourceDiagnostics = (
   resource: ResourceRequest,
   requestFetch: typeof fetch = fetch
@@ -226,7 +233,7 @@ export const invalidateAssets = () => {
   }
   updateCache();
   updatePending();
-  scheduleLoading();
+  startLoading();
 };
 
 export const computeResourceRequest = (
@@ -253,8 +260,6 @@ export const computeResourceRequest = (
 };
 
 const reset = () => {
-  window.clearTimeout(timeoutId);
-  timeoutId = undefined;
   queue.clear();
   pending.clear();
   cache.clear();
@@ -266,4 +271,15 @@ const reset = () => {
   updatePending();
 };
 
-export const __testing__ = { loadResources, reset };
+const getLoaderState = () => ({
+  queueSize: queue.size,
+  pendingSize: pending.size,
+});
+
+export const __testing__ = {
+  getLoaderState,
+  loadResources,
+  queueInvalidatedResource,
+  queueResources,
+  reset,
+};

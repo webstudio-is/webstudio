@@ -800,6 +800,9 @@ export class PostgresAssetRepository implements AssetRepository {
     const plan = createContentCompilationPlan([
       createLiteralContentCompilationQuery({ id: "preview", query }),
     ]);
+    // Public REST queries are not necessarily represented by the Builder's
+    // saved compilation plan. Reuse that database only when one of its queries
+    // structurally covers the current runtime values.
     const coveredByDatabasePlan =
       databasePlan !== undefined &&
       isAssetQueryCoveredByCompilationPlan({ plan: databasePlan, query });
