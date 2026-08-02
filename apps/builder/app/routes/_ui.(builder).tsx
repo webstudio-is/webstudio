@@ -22,12 +22,7 @@ import {
 import { createContext } from "~/shared/context.server";
 import { getPlanInfo } from "@webstudio-is/plans/index.server";
 import { defaultPlanFeatures } from "@webstudio-is/plans";
-import {
-  builderReauthorizationUrl,
-  dashboardPath,
-  isBuilder,
-  isDashboard,
-} from "~/shared/router-utils";
+import { dashboardPath, isBuilder, isDashboard } from "~/shared/router-utils";
 
 import env from "~/env/env.server";
 
@@ -64,19 +59,6 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return metas;
 };
 
-const reauthorizeBuilder = (loaderArgs: LoaderFunctionArgs) => {
-  const { request } = loaderArgs;
-  const authorizationRequest = new Request(
-    builderReauthorizationUrl(request.url),
-    {
-      headers: request.headers,
-      method: request.method,
-      signal: request.signal,
-    }
-  );
-  return authWsLoader({ ...loaderArgs, request: authorizationRequest });
-};
-
 export const loader = async (loaderArgs: LoaderFunctionArgs) => {
   const { request } = loaderArgs;
   preventCrossOriginCookie(request);
@@ -106,7 +88,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
   }
 
   if (context.authorization.type === "anonymous") {
-    throw await reauthorizeBuilder(loaderArgs);
+    throw await authWsLoader(loaderArgs);
   }
 
   if (
@@ -124,7 +106,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
       Date.now() - context.authorization.sessionCreatedAt >
       RELOAD_ON_NAVIGATE_TIMEOUT
     ) {
-      throw await reauthorizeBuilder(loaderArgs);
+      throw await authWsLoader(loaderArgs);
     }
   }
 
@@ -294,7 +276,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
   } catch (error) {
     if (error instanceof AuthorizationError) {
       // try to re-login user if he has no access to the project
-      throw await reauthorizeBuilder(loaderArgs);
+      throw await authWsLoader(loaderArgs);
     }
 
     throw error;

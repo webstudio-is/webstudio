@@ -1,10 +1,5 @@
 import { expect, test } from "vitest";
-import {
-  builderPath,
-  builderReauthorizationUrl,
-  builderUrl,
-  restAssetsUploadPath,
-} from "./path-utils";
+import { builderPath, builderUrl, restAssetsUploadPath } from "./path-utils";
 
 test("includes an instance deep link in builder paths", () => {
   expect(
@@ -26,16 +21,6 @@ test("includes an instance deep link in builder urls", () => {
     })
   ).toBe(
     "https://p-project-id.wstd.dev/?pageId=page-id&instanceId=instance-id"
-  );
-});
-
-test("preserves an instance deep link through Builder reauthorization", () => {
-  expect(
-    builderReauthorizationUrl(
-      "https://p-project-id.wstd.dev/?pageId=page-id&instanceId=instance-id"
-    ).href
-  ).toBe(
-    "https://p-project-id.wstd.dev/auth/ws?returnTo=%2F%3FpageId%3Dpage-id%26instanceId%3Dinstance-id"
   );
 });
 

@@ -66,14 +66,6 @@ export const builderUrl = ({
   return url.href;
 };
 
-export const builderReauthorizationUrl = (requestUrl: string) => {
-  const builderUrl = new URL(requestUrl);
-  const returnTo = `${builderUrl.pathname}${builderUrl.search}`;
-  const authorizationUrl = new URL("/auth/ws", builderUrl);
-  authorizationUrl.searchParams.set("returnTo", returnTo);
-  return authorizationUrl;
-};
-
 export const dashboardPath = (
   view: "templates" | "search" | "projects" = "projects"
 ) => {
