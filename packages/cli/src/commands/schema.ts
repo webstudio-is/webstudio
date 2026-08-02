@@ -174,7 +174,7 @@ const getSelectedMcpToolSchemas = (toolFilter: string | undefined) => {
     const tool = toolSchemaByName.get(toolName);
     if (tool === undefined) {
       throw new Error(
-        `Unknown MCP tool "${toolName}". Use webstudio schema mcp for tool names, or webstudio meta.get_more_tools '{"tools":["insert-fragment"]}' for focused discovery.`
+        `Unknown MCP tool "${toolName}". Use webstudio schema mcp for tool names, or webstudio meta.get-more-tools '{"tools":["insert-fragment"]}' for focused discovery.`
       );
     }
     return tool;
@@ -213,12 +213,12 @@ const createMcpSchema = (
     usage: focused
       ? "Focused MCP tool schema. Use this when you know the tool name and need exact input fields."
       : detailOptions.verbose
-        ? "Full MCP tool schema. This output is large; prefer compact output plus focused meta.get_more_tools/components.* calls for normal LLM workflows."
+        ? "Full MCP tool schema. This output is large; prefer compact output plus focused meta.get-more-tools/components.* calls for normal LLM workflows."
         : "Compact MCP tool summary. Use --verbose only when complete input and output schemas are needed.",
     discovery: [
       "webstudio mcp single-op-call meta.index",
       `webstudio mcp single-op-call meta.guide '{"brief":"Create a design system page using every component"}'`,
-      `webstudio mcp single-op-call meta.get_more_tools '{"tools":["insert-fragment"]}'`,
+      `webstudio mcp single-op-call meta.get-more-tools '{"tools":["insert-fragment"]}'`,
       `webstudio mcp single-op-call components.list '{"source":"all"}'`,
       "webstudio mcp single-op-call components.coverage-plan",
       `webstudio mcp single-op-call components.search '{"brief":"radix select"}'`,
@@ -253,7 +253,7 @@ const apiSchema = {
       "resources/list",
       "meta.index",
       "meta.guide",
-      "meta.get_more_tools",
+      "meta.get-more-tools",
     ],
     resources: [
       "webstudio://project/status",
@@ -269,7 +269,7 @@ const apiSchema = {
       "Data variables, resources, assets, publishing, domains, screenshots, and visual diffing",
     ],
     boundary:
-      "Builder project data manipulation is MCP-level. Use tools/list, meta.index, meta.get_more_tools, and webstudio://project/tools for exact MCP tool schemas.",
+      "Builder project data manipulation is MCP-level. Use tools/list, meta.index, meta.get-more-tools, and webstudio://project/tools for exact MCP tool schemas.",
   },
   session: {
     stateFile: ".webstudio/project-session.json",

@@ -127,6 +127,11 @@ describe("registerCommands", () => {
       "single-op-call",
       "meta.index",
     ]);
+    expect(getTopLevelMcpToolForwardArgs(["meta.get_more_tools"])).toEqual([
+      "mcp",
+      "single-op-call",
+      "meta.get_more_tools",
+    ]);
     expect(
       getTopLevelMcpToolForwardArgs([
         "insert-fragment",
@@ -236,7 +241,7 @@ describe("registerCommands", () => {
     expect(output).toContain("webstudio insert-fragment");
     expect(output).toContain("webstudio mcp single-op-call meta.index");
     expect(output).toContain(
-      "webstudio mcp single-op-call meta.get_more_tools"
+      "webstudio mcp single-op-call meta.get-more-tools"
     );
     expect(output).toContain("insert-fragment");
     expect(output).toContain("node packages/cli/local.js");

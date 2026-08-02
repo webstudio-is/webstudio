@@ -42,7 +42,7 @@ Examples:
 ```sh
 webstudio mcp single-op-call meta.index
 webstudio mcp single-op-call meta.guide '{"brief":"Create a design system page using every component"}'
-webstudio mcp single-op-call meta.get_more_tools '{"tools":["insert-fragment"]}'
+webstudio mcp single-op-call meta.get-more-tools '{"tools":["insert-fragment"]}'
 webstudio mcp single-op-call components.list '{"source":"all"}'
 webstudio mcp single-op-call components.coverage-plan
 webstudio mcp single-op-call components.search '{"brief":"radix select"}'
@@ -57,7 +57,7 @@ Shortcut equivalents:
 ```sh
 webstudio meta.index
 webstudio meta.guide '{"brief":"Create a design system page using every component"}'
-webstudio meta.get_more_tools '{"tools":["insert-fragment"]}'
+webstudio meta.get-more-tools '{"tools":["insert-fragment"]}'
 webstudio components.list '{"source":"all"}'
 webstudio components.coverage-plan
 webstudio components.search '{"brief":"radix select"}'
@@ -67,20 +67,60 @@ webstudio templates.get '{"component":"@webstudio-is/sdk-components-react-radix:
 webstudio insert-fragment --input-file .temp/insert-fragment.json
 ```
 
+### Tool name convention
+
+MCP tool names are opaque strings, not JavaScript property access. A dot separates a namespace from its tool name, and every segment uses lowercase kebab-case. For example, `components.coverage-insert-next` is the `coverage-insert-next` tool in the `components` namespace. Pass the complete name as one CLI argument: `webstudio components.coverage-insert-next`.
+
+### Readable fragment inputs
+
+Prefer `--input-file` for JSX so JSON and shell quoting do not obscure the fragment. For example, save this as `.temp/insert-fragment.json`:
+
+```json
+{
+  "parentInstanceId": "root-id",
+  "fragment": "<ws.element ws:tag='section' ws:style={css`padding: 32px; display: grid; gap: 16px;`}><ws.element ws:tag='h2'>Northstar Product OS</ws.element><ws.element ws:tag='p'>Reusable patterns for teams.</ws.element></ws.element>"
+}
+```
+
+Then run `webstudio insert-fragment --input-file .temp/insert-fragment.json`. Single quotes inside the JSX keep the JSON valid and readable without backslash-escaped attributes.
+
+Write and review larger fragments as JSX before placing them in the `fragment` field. Common patterns:
+
+```tsx
+<ws.element
+  ws:tag="section"
+  style={{ padding: 32, borderRadius: 16 }}
+>
+  <ws.element ws:tag="h2">Operations Console</ws.element>
+  <ws.element ws:tag="p">
+    React-style object styles become editable Webstudio styles.
+  </ws.element>
+</ws.element>
+
+<ws.element
+  ws:tag="section"
+  ws:tokens={[token("accent", css`color: #0f766e;`)]}
+>
+  <ws.element
+    ws:tag="button"
+    onClick={new ActionValue(["event"], expression`console.log(event)`)}
+  >
+    Track launch
+  </ws.element>
+</ws.element>
+
+<ws.element ws:tag="section">
+  <radix.Switch>
+    <radix.SwitchThumb />
+  </radix.Switch>
+</ws.element>
+```
+
 Rules:
 
 - Inside the Webstudio monorepo, replace `webstudio` in the examples above with `node packages/cli/local.js`, for example `node packages/cli/local.js meta.index`.
-- For a simple authored/styled section, run `meta.index`, then `meta.get_more_tools '{"tools":["insert-fragment"]}'`, then `insert-fragment`. Do not grep source files, dump full MCP resources, or write parser scripts first.
-- In `insert-fragment` JSX, use `ws:style={css\`...\`}`for Webstudio-native CSS, or use React-style object syntax such as`style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
-- Prefer JSX for authored/styled content. Common `insert-fragment` inputs:
-
-```jsonl
-{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\"section\" ws:style={css`padding: 32px; display: grid; gap: 16px;`}><ws.element ws:tag="h2">Northstar Product OS</ws.element><ws.element ws:tag="p">Reusable patterns for teams.</ws.element></ws.element>"}
-{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\"section\" style={{ padding: 32, borderRadius: 16 }}><ws.element ws:tag="h2">Operations Console</ws.element><ws.element ws:tag="p">React-style object styles become editable Webstudio styles.</ws.element></ws.element>"}
-{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\"section\" ws:tokens={[token(\"accent\", css`color: #0f766e;`)]}><ws.element ws:tag="button" onClick={new ActionValue([\"event\"], expression`console.log(event)`)}>Track launch</ws.element></ws.element>"}
-{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\"section\"><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>"}
-```
-
+- For a simple authored/styled section, run `meta.index`, then `meta.get-more-tools '{"tools":["insert-fragment"]}'`, then `insert-fragment`. Do not grep source files, dump full MCP resources, or write parser scripts first.
+- In `insert-fragment` JSX, use ``ws:style={css`...`}`` for Webstudio-native CSS, or use React-style object syntax such as `style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
 - Do not access host globals or dynamic code APIs in JSX fragments, including `process`, `globalThis`, `eval`, `Function`, or `constructor`.
 - Use Webstudio prop names such as `class` and `for`; do not use React aliases `className` or `htmlFor`.
 - Use Webstudio actions for event/action props, for example `onClick={new ActionValue(["event"], expression\`console.log(event)\`)}`. Do not pass JavaScript functions such as `onClick={() => ...}`.
@@ -210,7 +250,7 @@ Use MCP itself after startup, or call the same tools with `webstudio mcp single-
 - `resources/list`: available overview and full JSON resources
 - `meta.index`: concise capability catalog
 - `meta.guide`: workflow for a user goal; call with a string brief such as `{"brief":"Create a pricing page"}`
-- `meta.get_more_tools`: detailed params, examples, namespaces, and local/server behavior; prefer exact names such as `{"tools":["insert-fragment"]}` when you know them
+- `meta.get-more-tools`: detailed params, examples, namespaces, and local/server behavior; prefer exact names such as `{"tools":["insert-fragment"]}` when you know them
 - `components.list`: compact registry metadata for visible components and templates; use a focused get tool for complete details
 - `components.summary`: component counts by default; use `{"detail":"components","limit":20}` for paginated entries
 - `components.coverage-plan`: compact paged plan for design-system coverage tasks that need every component; default returns counts plus the first root page, use `{"detail":"roots"}`, `{"detail":"parts"}`, or `{"detail":"full"}` for more

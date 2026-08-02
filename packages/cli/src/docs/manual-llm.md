@@ -50,12 +50,12 @@ changing configuration or requiring project access.
 1. webstudio permissions --json
 2. For bounded shell workflows, call MCP tools directly through the CLI shortcut, for example `webstudio meta.index` or `webstudio insert-fragment '<json>' --dry-run`. The explicit form `webstudio mcp single-op-call <tool> '<json>'` is equivalent and useful when you need to make the MCP boundary obvious. Use `webstudio mcp run '[{"tool":"components.find","input":{"brief":"button"}}]'` for multiple calls in one shared CLI session. Use a normal JSON file path for large batches. Use long-running `webstudio mcp` only when your environment is a real MCP client. Do not manually send raw JSON-RPC to `webstudio mcp` from a shell or PTY.
 3. Read MCP `meta.index`, for example `webstudio meta.index`.
-4. Use focused MCP calls with concrete JSON: `webstudio meta.guide '{"brief":"Create a design system page using every component"}'`, `webstudio meta.get_more_tools '{"tools":["insert-fragment"]}'`, `webstudio components.list '{"source":"all"}'`, `webstudio components.coverage-plan`, `webstudio components.search '{"brief":"radix select"}'`, `webstudio components.get '{"component":"@webstudio-is/sdk-components-react-radix:Select"}'`, `webstudio templates.list`, and `webstudio templates.get '{"component":"@webstudio-is/sdk-components-react-radix:Select"}'`.
+4. Use focused MCP calls with concrete JSON: `webstudio meta.guide '{"brief":"Create a design system page using every component"}'`, `webstudio meta.get-more-tools '{"tools":["insert-fragment"]}'`, `webstudio components.list '{"source":"all"}'`, `webstudio components.coverage-plan`, `webstudio components.search '{"brief":"radix select"}'`, `webstudio components.get '{"component":"@webstudio-is/sdk-components-react-radix:Select"}'`, `webstudio templates.list`, and `webstudio templates.get '{"component":"@webstudio-is/sdk-components-react-radix:Select"}'`.
 5. Read overview resources `webstudio://project/tools-overview` or `webstudio://project/components-overview` when useful. Read full resources `webstudio://project/tools` or `webstudio://project/components` only when focused tools are insufficient.
 6. Pick focused MCP read tool.
 7. Pick semantic MCP write tool.
 
-Use `webstudio schema mcp` for a compact MCP tool overview. Add `--verbose` only when exact input schemas for all tools are truly needed; otherwise prefer focused `meta.get_more_tools` and `components.*` calls.
+Use `webstudio schema mcp` for a compact MCP tool overview. Add `--verbose` only when exact input schemas for all tools are truly needed; otherwise prefer focused `meta.get-more-tools` and `components.*` calls.
 
 Run these commands from the linked project root. Use the MCP startup status line's absolute root for local files; write temporary scripts and artifacts under `<project root>/.temp`, not under a parent workspace.
 
@@ -63,16 +63,25 @@ Monorepo quick path for a simple styled section:
 
 ```sh
 node packages/cli/local.js mcp single-op-call meta.index
-node packages/cli/local.js mcp single-op-call meta.get_more_tools '{"tools":["insert-fragment"]}'
-node packages/cli/local.js mcp single-op-call insert-fragment '{"parentInstanceId":"parent-id","fragment":"<ws.element ws:tag=\"section\" ws:style={css`padding: 32px; display: grid; gap: 12px;`}><ws.element ws:tag="h2">Launch Kit</ws.element><ws.element ws:tag="p">A focused section created with Webstudio JSX.</ws.element><ws.element ws:tag="button">Get started</ws.element></ws.element>"}' --dry-run
+node packages/cli/local.js mcp single-op-call meta.get-more-tools '{"tools":["insert-fragment"]}'
+node packages/cli/local.js mcp single-op-call insert-fragment --input-file .temp/insert-fragment.json --dry-run
 ```
 
-The same local shortcut form is shorter and preferred for simple shell steps:
+Save the readable payload in `.temp/insert-fragment.json`:
+
+```json
+{
+  "parentInstanceId": "parent-id",
+  "fragment": "<ws.element ws:tag='section' ws:style={css`padding: 32px; display: grid; gap: 12px;`}><ws.element ws:tag='h2'>Launch Kit</ws.element><ws.element ws:tag='p'>A focused section created with Webstudio JSX.</ws.element><ws.element ws:tag='button'>Get started</ws.element></ws.element>"
+}
+```
+
+Single quotes inside the JSX keep the JSON valid without backslash-escaped attributes. The same local shortcut form is shorter and preferred for simple shell steps:
 
 ```sh
 node packages/cli/local.js meta.index
-node packages/cli/local.js meta.get_more_tools '{"tools":["insert-fragment"]}'
-node packages/cli/local.js insert-fragment '{"parentInstanceId":"parent-id","fragment":"<ws.element ws:tag=\"section\" ws:style={css`padding: 32px; display: grid; gap: 12px;`}><ws.element ws:tag="h2">Launch Kit</ws.element><ws.element ws:tag="p">A focused section created with Webstudio JSX.</ws.element><ws.element ws:tag="button">Get started</ws.element></ws.element>"}' --dry-run
+node packages/cli/local.js meta.get-more-tools '{"tools":["insert-fragment"]}'
+node packages/cli/local.js insert-fragment --input-file .temp/insert-fragment.json --dry-run
 ```
 
 For this simple path, do not grep source files, dump full MCP resources, or write parser scripts first. Use `list-pages`, `get-page-by-path`, or `list-instances` only to get the target `parentInstanceId`.
@@ -400,7 +409,7 @@ For Video Animation, use the registered template via `insert-component` when pos
 
 Use this process for user requests that change Webstudio content, layout, styles, assets, pages, redirects, resources, or publishing state:
 
-1. Discover capabilities with `webstudio man --json`, `webstudio schema api`, `webstudio schema mcp`, MCP `meta.index`, `meta.guide`, `meta.get_more_tools`, `components.list`, `components.summary`, `components.coverage-plan`, `components.search`, `components.get`, `templates.list`, and `templates.get`. From a shell, prefer shortcut calls such as `webstudio meta.index` and `webstudio components.search '{"brief":"button"}'` for these focused tool calls; use `webstudio mcp single-op-call` when you need the explicit MCP form. Read full resources such as `webstudio://project/tools` and `webstudio://project/components` only when needed. Do not write scripts to parse full MCP discovery JSON for normal lookup.
+1. Discover capabilities with `webstudio man --json`, `webstudio schema api`, `webstudio schema mcp`, MCP `meta.index`, `meta.guide`, `meta.get-more-tools`, `components.list`, `components.summary`, `components.coverage-plan`, `components.search`, `components.get`, `templates.list`, and `templates.get`. From a shell, prefer shortcut calls such as `webstudio meta.index` and `webstudio components.search '{"brief":"button"}'` for these focused tool calls; use `webstudio mcp single-op-call` when you need the explicit MCP form. Read full resources such as `webstudio://project/tools` and `webstudio://project/components` only when needed. Do not write scripts to parse full MCP discovery JSON for normal lookup.
 2. Inspect current project state with semantic reads such as `get-project-settings`, `list-pages`, `get-page-by-path`, `list-instances`, `inspect-instance`, `get-styles`, `list-assets`, `list-breakpoints`, and `snapshot` only when needed. Before changing a project, read `get-project-settings` and follow any non-empty `meta.agentInstructions`. These are shared project instructions, not a place for secrets.
 3. Mutate the Webstudio project with semantic MCP write tools first. Prefer MCP `insert-fragment` for authored/styled sections, use `insert-component` only for one automatic component template, then `update-text`, `update-props`, `update-styles`, `upload-asset`, `create-page`, and page/project settings tools over raw patches.
 4. Use `apply-patch` only when no semantic tool covers the required change, and only after reading the latest snapshot/version.
@@ -474,7 +483,7 @@ Before authoring unfamiliar expressions, read `webstudio://project/expressions` 
 - Use scoped resources for read data. A GET resource created with `scopeInstanceId`/`dataSourceName` defaults to `exposeAsDataSource:true`, becomes a scoped resource data variable, is generated into the page resource `data` map, and may be loaded while rendering the page. Read the loaded resource result from its wrapper, usually `.data`.
 - Use prop-bound resources for actions. A resource created without `scopeInstanceId` and bound to a component prop such as Form `action` with `bind-props` and `binding.type: "resource"` becomes an action resource in the page resource `action` map. Use this for POST, PUT, DELETE, webhooks, GraphQL submissions, and anything that should run only from an explicit form/action flow.
 - POST, PUT, and DELETE resources default to `exposeAsDataSource:false`, even with a scope. Set `exposeAsDataSource:true` only for an intentional render-time read such as a GraphQL POST query; provide `scopeInstanceId` and inspect the returned warning. Set it to `false` during `update-resource` to detach existing render-time exposure.
-- For dynamic resource query parameters prefer `searchParams`, for example `{"name":"tag","value":"filters.tag"}`. Use `{"type":"literal","value":"website"}` for fixed request text. Header values can be expressions such as `"\"Bearer \" + auth.token"`. Body can be an object expression, including GraphQL payloads such as `{ query: "...", variables: { slug: system.params.slug } }`.
+- For dynamic resource query parameters prefer `searchParams`, for example `{"name":"tag","value":"filters.tag"}`. Use `{"type":"literal","value":"website"}` for fixed request text. Header values can use an expression such as `"Bearer " + auth.token`. Body can be an object expression, including GraphQL payloads such as `{ query: "...", variables: { slug: system.params.slug } }`.
 - Resource methods are `get`, `post`, `put`, and `delete`. Optional resource controls are `graphql` and `system`. Use `control:"graphql"` for GraphQL POST resources with query bodies. Use `control:"system"` for built-in local resource URLs such as `"/$resources/current-date"` and for resources reading the built-in `system` parameter. The built-in system fields are `system.origin`, `system.pathname`, `system.params`, and `system.search`; do not use `system.path`.
 - Whenever an array or object from a resource or data variable should render repeated UI, call `insert-collection` with the complete iterable and one repeated-item JSX root. The command creates the Collection, private item parameters, iterable binding, and descendant item bindings atomically. Use `collectionItem` and `collectionItemKey` expressions in the item JSX. Wrap multiple repeated siblings in one Element, and give repeated Radix items stable unique `value` bindings.
 - Expressions are single JavaScript expressions, not statements or functions. Functions, arrow functions, classes, `new`, `this`, `await`, imports, arbitrary calls, increment/decrement, and assignment outside actions are unsupported. Prefer optional chaining, nullish coalescing, ternaries, property/index access, operators, and the documented string/array methods.

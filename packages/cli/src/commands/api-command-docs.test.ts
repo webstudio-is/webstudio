@@ -150,7 +150,7 @@ test("documents every MCP session and vision tool in use-case scenarios", () => 
     expect.arrayContaining([
       "meta.index",
       "meta.guide",
-      "meta.get_more_tools",
+      "meta.get-more-tools",
       "import",
       "status",
       "refresh",
@@ -195,6 +195,16 @@ test("does not require publishing or sync before MCP editing", () => {
   expect(llmManual).toContain(
     "including for projects that have never been published"
   );
+});
+
+test("keeps JSX examples readable inside JSON inputs", () => {
+  for (const document of [
+    "api-use-cases",
+    "manual-llm",
+    "manual-mcp",
+  ] as const) {
+    expect(readCliDoc(document)).not.toContain('ws:tag=\\"');
+  }
 });
 
 test("documents the Assets result shape", () => {

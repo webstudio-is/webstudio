@@ -85,7 +85,7 @@ test("prints api command schema as json", () => {
     ])
   );
   expect(output.mcp.toolCount).toBe(apiCommandMetadata.length);
-  expect(output.mcp.discovery).toContain("meta.get_more_tools");
+  expect(output.mcp.discovery).toContain("meta.get-more-tools");
   expect(output.mcp.resources).toContain("webstudio://project/tools");
   expect(output.mcp.resources).toContain("webstudio://project/components");
   expect(output.mcp.capabilities).toEqual(
@@ -151,7 +151,7 @@ test("prints compact mcp tool summaries as json by default", () => {
   expect(output.singleOpCallCommand).toContain("webstudio mcp single-op-call");
   expect(output.usage).toContain("--verbose");
   expect(output.discovery).toContain(
-    `webstudio mcp single-op-call meta.get_more_tools '{"tools":["insert-fragment"]}'`
+    `webstudio mcp single-op-call meta.get-more-tools '{"tools":["insert-fragment"]}'`
   );
   expect(output.discovery).toEqual(
     expect.arrayContaining([
@@ -394,6 +394,6 @@ test("reports unknown schema topics with available topics", () => {
     "Handled CLI error"
   );
   expect(console.error).toHaveBeenCalledWith(
-    'Unknown MCP tool "widgets". Use webstudio schema mcp for tool names, or webstudio meta.get_more_tools \'{"tools":["insert-fragment"]}\' for focused discovery.'
+    'Unknown MCP tool "widgets". Use webstudio schema mcp for tool names, or webstudio meta.get-more-tools \'{"tools":["insert-fragment"]}\' for focused discovery.'
   );
 });
