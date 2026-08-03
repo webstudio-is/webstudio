@@ -205,6 +205,34 @@ const defaultComponentContentModel: ContentModel = {
 const getComponentContentModel = (meta: undefined | WsComponentMeta) =>
   meta?.contentModel ?? defaultComponentContentModel;
 
+export const canHaveTextContent = ({
+  instanceId,
+  instances,
+  props,
+  metas,
+  htmlTagsByInstanceId,
+}: {
+  instanceId: Instance["id"];
+  instances: Instances;
+  props: Props;
+  metas: Metas;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
+}) => {
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return false;
+  }
+  const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
+  const elementContentModel = getElementContentModel(tag);
+  return (
+    (elementContentModel === undefined ||
+      elementContentModel.children.length > 0) &&
+    getComponentContentModel(metas.get(instance.component)).children.includes(
+      "rich-text"
+    )
+  );
+};
+
 const isComponentSatisfyingContentModel = ({
   metas,
   component,

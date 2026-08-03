@@ -19,10 +19,7 @@ import {
 import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";
 import { $styleSources } from "~/shared/sync/data-stores";
-import {
-  isRichText,
-  isRichTextTree,
-} from "@webstudio-is/project-build/runtime";
+import { canHaveTextContent } from "@webstudio-is/project-build/runtime";
 import {
   createStartingPropValueFromMeta,
   getDefaultPropMetaForType,
@@ -163,31 +160,17 @@ export const __testing__ = {
 };
 
 const $canHaveTextContent = computed(
-  [
-    $instances,
-    $props,
-    $registeredComponentMetas,
-    $selectedInstancePath,
-    $isContentMode,
-  ],
-  (instances, props, metas, instancePath, isContentMode) => {
+  [$instances, $props, $registeredComponentMetas, $selectedInstancePath],
+  (instances, props, metas, instancePath) => {
     if (instancePath === undefined) {
       return false;
     }
     const [{ instanceSelector }] = instancePath;
-    if (isContentMode) {
-      return isRichTextTree({
-        instanceId: instanceSelector[0],
-        instances,
-        props,
-        metas,
-      });
-    }
-    return isRichText({
+    return canHaveTextContent({
+      instanceId: instanceSelector[0],
       instances,
       props,
       metas,
-      instanceSelector,
     });
   }
 );
