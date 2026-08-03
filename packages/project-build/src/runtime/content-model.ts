@@ -205,6 +205,28 @@ const defaultComponentContentModel: ContentModel = {
 const getComponentContentModel = (meta: undefined | WsComponentMeta) =>
   meta?.contentModel ?? defaultComponentContentModel;
 
+const isTextContentCapableInstance = ({
+  instance,
+  props,
+  metas,
+  htmlTagsByInstanceId,
+}: {
+  instance: Instance;
+  props: Props;
+  metas: Metas;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
+}) => {
+  const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
+  const elementContentModel = getElementContentModel(tag);
+  return (
+    (elementContentModel === undefined ||
+      elementContentModel.children.length > 0) &&
+    getComponentContentModel(metas.get(instance.component)).children.includes(
+      "rich-text"
+    )
+  );
+};
+
 export const canHaveTextContent = ({
   instanceId,
   instances,
@@ -222,15 +244,12 @@ export const canHaveTextContent = ({
   if (instance === undefined) {
     return false;
   }
-  const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
-  const elementContentModel = getElementContentModel(tag);
-  return (
-    (elementContentModel === undefined ||
-      elementContentModel.children.length > 0) &&
-    getComponentContentModel(metas.get(instance.component)).children.includes(
-      "rich-text"
-    )
-  );
+  return isTextContentCapableInstance({
+    instance,
+    props,
+    metas,
+    htmlTagsByInstanceId,
+  });
 };
 
 const isComponentSatisfyingContentModel = ({
@@ -596,15 +615,12 @@ export const isRichTextTree = ({
   if (instance === undefined) {
     return false;
   }
-  const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
-  const elementContentModel = getElementContentModel(tag);
-  const componentContentModel = getComponentContentModel(
-    metas.get(instance.component)
-  );
-  const isRichText =
-    (elementContentModel === undefined ||
-      elementContentModel.children.length > 0) &&
-    componentContentModel.children.includes("rich-text");
+  const isRichText = isTextContentCapableInstance({
+    instance,
+    props,
+    metas,
+    htmlTagsByInstanceId,
+  });
   // only empty instance with rich text content can be edited
   if (instance.children.length === 0) {
     return isRichText;

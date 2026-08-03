@@ -53,6 +53,27 @@ export const isDescendantOrSelf = (
   });
 };
 
+export const hasExpressionInTree = (
+  instanceId: Instance["id"],
+  instances: Instances,
+  visited = new Set<Instance["id"]>()
+): boolean => {
+  if (visited.has(instanceId)) {
+    return false;
+  }
+  visited.add(instanceId);
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return false;
+  }
+  return instance.children.some(
+    (child) =>
+      child.type === "expression" ||
+      (child.type === "id" &&
+        hasExpressionInTree(child.value, instances, visited))
+  );
+};
+
 const getInstancePathSiblingIndex = (instancePath: InstancePath) => {
   const selectedItem = instancePath[0];
   const parentItem = instancePath[1];

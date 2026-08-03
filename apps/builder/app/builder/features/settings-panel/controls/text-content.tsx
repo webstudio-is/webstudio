@@ -29,7 +29,7 @@ import {
 import { FieldLabel, useIsBindingResetForbidden } from "../property-label";
 import { useBindableControl } from "./use-bindable-control";
 import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
-import { getEditableTextChildIndex } from "./text-content-utils";
+import { getEditableTextTarget } from "./text-content-utils";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
@@ -73,19 +73,16 @@ export const TextContent = ({
 }: ControlProps<"textContent">) => {
   const instance = useInstance(instanceId);
   const hasChildren = (instance?.children.length ?? 0) > 0;
-  const childIndex = instance && getEditableTextChildIndex(instance);
-  const targetChild =
-    childIndex === undefined ? undefined : instance?.children[childIndex];
-  const child =
-    targetChild?.type === "text" || targetChild?.type === "expression"
-      ? targetChild
-      : { type: "text" as const, value: "" };
+  const target = instance && getEditableTextTarget(instance);
+  const childIndex = target?.childIndex;
+  const child = target?.child ?? { type: "text" as const, value: "" };
+  const hasMixedContent = (instance?.children.length ?? 0) > 1;
   const { scope } = useStore($selectedInstanceScope);
   let displayedValue = computedValue;
   if (
     instance !== undefined &&
     instance.children.length > 1 &&
-    child?.type === "expression"
+    child.type === "expression"
   ) {
     try {
       displayedValue = evaluateExpressionWithinScope(child.value, scope);
@@ -140,13 +137,9 @@ export const TextContent = ({
               )}
             </>
           }
-          resettable={hasChildren}
+          resettable={hasChildren && hasMixedContent === false}
           resetDisabled={isResetDisabled}
           onReset={() => {
-            if (instance !== undefined && instance.children.length > 1) {
-              updateChild(instanceId, childIndex, "text", "");
-              return;
-            }
             executeRuntimeMutation({
               id: "instances.setTextContent",
               input: {
@@ -162,6 +155,7 @@ export const TextContent = ({
     >
       <BindableExpressionControl
         {...binding}
+        allowBindingRemoval={hasMixedContent === false}
         value={localValue.value}
         showBinding={expression !== undefined}
         validate={(value) => validatePrimitiveValue(value, "Text Content")}

@@ -1,6 +1,9 @@
 import { expect, test } from "vitest";
 import { encodeDataSourceVariable } from "@webstudio-is/sdk";
-import { evaluateExpressionWithinScope } from "./binding-popover";
+import {
+  evaluateExpressionWithinScope,
+  isBindingRemovalDisabled,
+} from "./binding-popover";
 
 test("evaluateExpressionWithinScope works", () => {
   const variableName = "jsonVariable";
@@ -17,4 +20,19 @@ test("evaluateExpressionWithinScope works", () => {
 test("evaluateExpressionWithinScope treats empty expression as undefined", () => {
   expect(evaluateExpressionWithinScope("", {})).toBeUndefined();
   expect(evaluateExpressionWithinScope("  ", {})).toBeUndefined();
+});
+
+test("disables binding removal when the consumer cannot preserve its content", () => {
+  expect(
+    isBindingRemovalDisabled({
+      variant: "bound",
+      allowBindingRemoval: false,
+    })
+  ).toBe(true);
+  expect(
+    isBindingRemovalDisabled({
+      variant: "bound",
+      allowBindingRemoval: true,
+    })
+  ).toBe(false);
 });

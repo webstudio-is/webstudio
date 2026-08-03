@@ -214,6 +214,14 @@ export const BindingControl = ({ children }: { children: ReactNode }) => {
 
 export type BindingVariant = "default" | "bound" | "overwritten";
 
+export const isBindingRemovalDisabled = ({
+  variant,
+  allowBindingRemoval,
+}: {
+  variant: BindingVariant;
+  allowBindingRemoval: boolean;
+}) => variant === "default" || allowBindingRemoval === false;
+
 const BindingButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -331,6 +339,7 @@ export const BindingPopover = ({
   value,
   onChange,
   onRemove,
+  allowBindingRemoval = true,
 }: {
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
@@ -339,6 +348,7 @@ export const BindingPopover = ({
   value?: string;
   onChange: (newValue: string) => void;
   onRemove: (evaluatedValue: unknown) => void;
+  allowBindingRemoval?: boolean;
 }) => {
   const [isOpen, onOpenChange] = useState(false);
   const hasUnsavedChange = useRef<boolean>(false);
@@ -382,7 +392,10 @@ export const BindingPopover = ({
                     aria-label="Reset binding"
                     prefix={<TrashIcon />}
                     color="ghost"
-                    disabled={variant === "default"}
+                    disabled={isBindingRemovalDisabled({
+                      variant,
+                      allowBindingRemoval,
+                    })}
                     onClick={(event) => {
                       event.preventDefault();
                       // inline variables and close dialog

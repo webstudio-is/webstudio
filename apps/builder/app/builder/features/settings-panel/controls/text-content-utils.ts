@@ -1,14 +1,25 @@
 import type { Instance } from "@webstudio-is/sdk";
 
-export const getEditableTextChildIndex = (instance: Instance) => {
-  if (instance.children.length === 1 && instance.children[0]?.type !== "id") {
-    return 0;
+type TextChild = Extract<
+  Instance["children"][number],
+  { type: "text" | "expression" }
+>;
+
+export const getEditableTextTarget = (instance: Instance) => {
+  const [onlyChild] = instance.children;
+  if (instance.children.length === 1 && onlyChild?.type !== "id") {
+    return { childIndex: 0, child: onlyChild };
   }
 
-  const expressionIndexes = instance.children.flatMap((child, index) =>
-    child.type === "expression" ? [index] : []
-  );
-  if (expressionIndexes.length === 1) {
-    return expressionIndexes[0];
+  let target: { childIndex: number; child: TextChild } | undefined;
+  for (const [childIndex, child] of instance.children.entries()) {
+    if (child.type !== "expression") {
+      continue;
+    }
+    if (target !== undefined) {
+      return;
+    }
+    target = { childIndex, child };
   }
+  return target;
 };

@@ -1,10 +1,11 @@
 import { describe, expect, test } from "vitest";
-import type { Prop, PropMeta } from "@webstudio-is/sdk";
+import type { Instance, Prop, PropMeta } from "@webstudio-is/sdk";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
 import { __testing__ } from "./use-props-logic";
 import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime";
 
-const { isPropVisibleInContentMode, getAndDelete } = __testing__;
+const { isPropVisibleInContentMode, getAndDelete, canShowTextContent } =
+  __testing__;
 
 const getInput = (
   input: Partial<Parameters<typeof isPropVisibleInContentMode>[0]> = {}
@@ -145,5 +146,32 @@ describe("getAndDelete", () => {
 
     expect(getAndDelete(map, "missing")).toBeUndefined();
     expect(map).toEqual(new Map([["key", 1]]));
+  });
+});
+
+describe("canShowTextContent", () => {
+  const createInstance = (child: Instance["children"][number]): Instance => ({
+    type: "instance",
+    id: "nested",
+    component: "ws:element",
+    tag: "span",
+    children: [child],
+  });
+
+  test("limits the direct-capability exception to bound content", () => {
+    expect(
+      canShowTextContent({
+        instance: createInstance({ type: "text", value: "static" }),
+        isDirectlyCapable: true,
+        isRichTextTarget: false,
+      })
+    ).toBe(false);
+    expect(
+      canShowTextContent({
+        instance: createInstance({ type: "expression", value: "value" }),
+        isDirectlyCapable: true,
+        isRichTextTarget: false,
+      })
+    ).toBe(true);
   });
 });

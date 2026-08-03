@@ -25,7 +25,6 @@ const {
   computeStylesDiff,
   toDeclarationParams,
   toVarValue,
-  hasExpressionChildren,
   renderStateStyles,
   simulateConditionBreakpoints,
   shouldRenderInBackgroundTask,
@@ -544,6 +543,18 @@ describe("computeEditableCursorRules", () => {
     expect(result[0]).not.toContain('[data-ws-id="inst-2"]');
   });
 
+  test("excludes instances with expressions in nested children", () => {
+    const instances = new Map<string, Instance>([
+      ["parent", createInstance("parent", [{ type: "id", value: "child" }])],
+      [
+        "child",
+        createInstance("child", [{ type: "expression", value: "value" }]),
+      ],
+    ]);
+
+    expect(computeEditableCursorRules([["parent"]], instances)).toEqual([]);
+  });
+
   test("excludes instances not found in map", () => {
     const instances = new Map<string, Instance>([
       ["inst-1", createInstance("inst-1")],
@@ -768,61 +779,6 @@ describe("getPresetStyleSelector", () => {
     expect(getPresetStyleSelector("MyCustomComponent", "span")).toBe(
       'span:where([data-ws-component="MyCustomComponent"])'
     );
-  });
-});
-
-describe("hasExpressionChildren", () => {
-  const createInstance = (
-    id: string,
-    children: Instance["children"] = []
-  ): Instance => ({
-    id,
-    type: "instance",
-    component: "Box",
-    children,
-  });
-
-  test("returns false for instance with no children", () => {
-    expect(hasExpressionChildren(createInstance("box"))).toBe(false);
-  });
-
-  test("returns false for instance with only id children", () => {
-    expect(
-      hasExpressionChildren(
-        createInstance("box", [
-          { type: "id", value: "child-1" },
-          { type: "id", value: "child-2" },
-        ])
-      )
-    ).toBe(false);
-  });
-
-  test("returns false for instance with text children", () => {
-    expect(
-      hasExpressionChildren(
-        createInstance("box", [{ type: "text", value: "hello" }])
-      )
-    ).toBe(false);
-  });
-
-  test("returns true for instance with expression child", () => {
-    expect(
-      hasExpressionChildren(
-        createInstance("box", [{ type: "expression", value: "someExpr" }])
-      )
-    ).toBe(true);
-  });
-
-  test("returns true when expression is mixed with other children", () => {
-    expect(
-      hasExpressionChildren(
-        createInstance("box", [
-          { type: "text", value: "hello" },
-          { type: "expression", value: "expr" },
-          { type: "id", value: "child" },
-        ])
-      )
-    ).toBe(true);
   });
 });
 

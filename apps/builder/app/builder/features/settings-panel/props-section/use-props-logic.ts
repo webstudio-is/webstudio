@@ -19,7 +19,11 @@ import {
 import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";
 import { $styleSources } from "~/shared/sync/data-stores";
-import { canHaveTextContent } from "@webstudio-is/project-build/runtime";
+import {
+  canHaveTextContent,
+  isRichText,
+  isRichTextTree,
+} from "@webstudio-is/project-build/runtime";
 import {
   createStartingPropValueFromMeta,
   getDefaultPropMetaForType,
@@ -31,7 +35,7 @@ import {
   $selectedInstancePropsMetas,
   type PropValue,
 } from "../shared";
-import { getEditableTextChildIndex } from "../controls/text-content-utils";
+import { getEditableTextTarget } from "../controls/text-content-utils";
 
 type PropOrName = { prop?: Prop; propName: string };
 
@@ -98,24 +102,61 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
   return value;
 };
 
+const canEditTextChildren = (instance: Instance) =>
+  instance.children.length === 0 ||
+  getEditableTextTarget(instance) !== undefined;
+
+const canShowTextContent = ({
+  instance,
+  isDirectlyCapable,
+  isRichTextTarget,
+}: {
+  instance: Instance;
+  isDirectlyCapable: boolean;
+  isRichTextTarget: boolean;
+}) => {
+  if (canEditTextChildren(instance) === false) {
+    return false;
+  }
+  return (
+    isRichTextTarget ||
+    (isDirectlyCapable &&
+      getEditableTextTarget(instance)?.child.type === "expression")
+  );
+};
+
 export const __testing__ = {
   isPropVisibleInContentMode,
   getAndDelete,
+  canShowTextContent,
 };
 
-const $canHaveTextContent = computed(
-  [$instances, $props, $registeredComponentMetas, $selectedInstancePath],
-  (instances, props, metas, instancePath) => {
+const $textContentEligibility = computed(
+  [
+    $instances,
+    $props,
+    $registeredComponentMetas,
+    $selectedInstancePath,
+    $isContentMode,
+  ],
+  (instances, props, metas, instancePath, isContentMode) => {
     if (instancePath === undefined) {
-      return false;
+      return { isDirectlyCapable: false, isRichTextTarget: false };
     }
     const [{ instanceSelector }] = instancePath;
-    return canHaveTextContent({
+    const input = {
       instanceId: instanceSelector[0],
       instances,
       props,
       metas,
-    });
+    };
+    const isDirectlyCapable = canHaveTextContent(input);
+    const isRichTextTarget =
+      isDirectlyCapable &&
+      (isContentMode
+        ? isRichTextTree(input)
+        : isRichText({ ...input, instanceSelector })) === true;
+    return { isDirectlyCapable, isRichTextTarget };
   }
 );
 
@@ -180,16 +221,17 @@ export const usePropsLogic = ({
     });
   }
 
-  const canHaveTextContent = useStore($canHaveTextContent);
+  const { isDirectlyCapable, isRichTextTarget } = useStore(
+    $textContentEligibility
+  );
   const getTextContentTarget = () => {
-    const canEditChildren = (target: Instance) => {
-      return (
-        target.children.length === 0 ||
-        getEditableTextChildIndex(target) !== undefined
-      );
-    };
-
-    if (canHaveTextContent && canEditChildren(instance)) {
+    if (
+      canShowTextContent({
+        instance,
+        isDirectlyCapable,
+        isRichTextTarget,
+      })
+    ) {
       return {
         instanceId: instance.id,
         instanceSelector: selectedInstancePath?.[0].instanceSelector,
@@ -202,7 +244,7 @@ export const usePropsLogic = ({
         const childInstance = instances.get(child.value);
         if (
           childInstance?.component === "Text" &&
-          canEditChildren(childInstance)
+          canEditTextChildren(childInstance)
         ) {
           return {
             instanceId: childInstance.id,

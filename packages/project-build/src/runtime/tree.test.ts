@@ -11,6 +11,7 @@ import {
   canDropInstanceSelector,
   findClosestDroppableInstanceSelector,
   getReparentDropTargetMutable,
+  hasExpressionInTree,
   isDescendantOrSelf,
   sortInstancePathsForChildMutation,
   wrapEditableChildrenAroundDropTargetMutable,
@@ -60,6 +61,34 @@ describe("instance selectors", () => {
     expect(isDescendantOrSelf(["child"], ["parent", "root"])).toBe(false);
     expect(isDescendantOrSelf(["child"], [])).toBe(true);
   });
+});
+
+test("detects expressions anywhere in an instance tree", () => {
+  const instances = new Map([
+    ["root", createInstance("root", "Box", [{ type: "id", value: "child" }])],
+    [
+      "child",
+      createInstance("child", "Text", [{ type: "expression", value: "value" }]),
+    ],
+    [
+      "static",
+      createInstance("static", "Text", [{ type: "text", value: "ok" }]),
+    ],
+    [
+      "cycle-a",
+      createInstance("cycle-a", "Box", [{ type: "id", value: "cycle-b" }]),
+    ],
+    [
+      "cycle-b",
+      createInstance("cycle-b", "Box", [{ type: "id", value: "cycle-a" }]),
+    ],
+  ]);
+
+  expect(hasExpressionInTree("root", instances)).toBe(true);
+  expect(hasExpressionInTree("child", instances)).toBe(true);
+  expect(hasExpressionInTree("static", instances)).toBe(false);
+  expect(hasExpressionInTree("cycle-a", instances)).toBe(false);
+  expect(hasExpressionInTree("missing", instances)).toBe(false);
 });
 
 describe("child mutation order", () => {

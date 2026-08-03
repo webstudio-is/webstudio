@@ -49,7 +49,10 @@ import {
   $selectedInstanceSelector,
   $selectedPage,
 } from "~/shared/nano-states";
-import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime";
+import {
+  findAllEditableInstanceSelector,
+  hasExpressionInTree,
+} from "@webstudio-is/project-build/runtime";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
 import { createComputedStyleDeclStore } from "~/builder/features/style-panel/shared/model";
@@ -79,9 +82,6 @@ export const editablePlaceholderAttribute = "data-ws-editable-placeholder";
 // see the second edge case
 // https://developer.mozilla.org/en-US/docs/Web/CSS/attr#backwards_compatibility
 export const editingPlaceholderVariable = "--ws-editing-placeholder";
-
-const hasExpressionChildren = (instance: Instance) =>
-  instance.children.some((child) => child.type === "expression");
 
 const helperStylesShared = [
   // Display a placeholder text for elements that are editable but currently empty
@@ -213,8 +213,7 @@ const computeEditableCursorRules = (
         if (instance === undefined) {
           return false;
         }
-        // Instances with expression children are not directly editable
-        return hasExpressionChildren(instance) === false;
+        return hasExpressionInTree(instance.id, instances) === false;
       });
     if (chunk.length === 0) {
       continue;
@@ -918,7 +917,6 @@ export const __testing__ = {
   computeStylesDiff,
   toDeclarationParams,
   toVarValue,
-  hasExpressionChildren,
   renderStateStyles,
   simulateConditionBreakpoints,
   shouldRenderInBackgroundTask,

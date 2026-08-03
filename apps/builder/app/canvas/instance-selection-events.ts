@@ -18,13 +18,15 @@ import { $instances } from "~/shared/sync/data-stores";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { emitCommand } from "./shared/commands";
 import { shallowEqual } from "shallow-equal";
-import { findClosestRichText } from "@webstudio-is/project-build/runtime";
+import {
+  findClosestRichText,
+  hasExpressionInTree,
+} from "@webstudio-is/project-build/runtime";
 import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
 import { isTextEditableInContentMode } from "./shared/content-mode";
-import type { Instances } from "@webstudio-is/sdk";
 
 type SelectionAnchor = {
   current: undefined | InstanceSelector;
@@ -36,27 +38,6 @@ const isElementBeingEdited = (element: Element) => {
   }
 
   return false;
-};
-
-const hasExpressionInTree = (
-  instanceId: string,
-  instances: Instances,
-  visited = new Set<string>()
-): boolean => {
-  if (visited.has(instanceId)) {
-    return false;
-  }
-  visited.add(instanceId);
-  const instance = instances.get(instanceId);
-  if (instance === undefined) {
-    return false;
-  }
-  return instance.children.some(
-    (child) =>
-      child.type === "expression" ||
-      (child.type === "id" &&
-        hasExpressionInTree(child.value, instances, visited))
-  );
 };
 
 const getRenderedInstanceSelectors = () => {

@@ -1,4 +1,7 @@
-import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime";
+import {
+  findAllEditableInstanceSelector,
+  hasExpressionInTree,
+} from "@webstudio-is/project-build/runtime";
 import { color } from "@webstudio-is/css-engine";
 import {
   useState,
@@ -1651,12 +1654,7 @@ export const TextEditor = ({
           continue;
         }
 
-        const hasExpressionChildren = nextInstance.children.some(
-          (child) => child.type === "expression"
-        );
-
-        // opinionated: Skip if binded (double click is working)
-        if (hasExpressionChildren) {
+        if (hasExpressionInTree(nextInstance.id, instances)) {
           continue;
         }
 
