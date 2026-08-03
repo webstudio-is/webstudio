@@ -142,12 +142,33 @@ jobs:
   publish-docs:
     needs: [release, publish]
     runs-on: ubuntu-latest
+    concurrency:
+      group: publish-docs
+      cancel-in-progress: false
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.sha }}
+          ref: docs
       - name: Publish released documentation snapshot
-        run: git push origin "$GITHUB_SHA:refs/heads/docs"
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          if git merge-base --is-ancestor "$RELEASE_SHA" HEAD; then
+            echo "The docs branch already contains release $RELEASE_VERSION or a newer revision."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git merge --no-edit "$RELEASE_SHA"
+          git checkout "$RELEASE_SHA" -- docs/university/mcp.md
+          sed -i.bak "s/^# Webstudio MCP v0\\.0\\.0-webstudio-version$/# Webstudio MCP v$RELEASE_VERSION/" docs/university/mcp.md
+          rm docs/university/mcp.md.bak
+          grep -Fqx "# Webstudio MCP v$RELEASE_VERSION" docs/university/mcp.md
+          git add docs/university/mcp.md
+          git commit -m "docs: publish Webstudio CLI $RELEASE_VERSION"
+          git push origin docs

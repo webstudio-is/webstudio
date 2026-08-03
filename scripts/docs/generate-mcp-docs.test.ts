@@ -4,11 +4,12 @@ import { renderMcpDocumentation } from "./generate-mcp-docs.js";
 
 test("renders GitBook metadata around the complete CLI manual", () => {
   const generated = renderMcpDocumentation(
-    "# Webstudio MCP Manual\n\n## Startup\n\nStart here.\n"
+    "# Webstudio MCP Manual\n\n## Startup\n\nStart here.\n",
+    "1.2.3"
   );
 
   assert.match(generated, /^---\n/);
-  assert.match(generated, /# Webstudio MCP\n/);
+  assert.match(generated, /# Webstudio MCP v1\.2\.3\n/);
   assert.match(
     generated,
     /GitBook publishes it when that revision is successfully released/
@@ -24,7 +25,14 @@ test("renders GitBook metadata around the complete CLI manual", () => {
 
 test("rejects an unexpected CLI manual", () => {
   assert.throws(
-    () => renderMcpDocumentation("# Different manual"),
+    () => renderMcpDocumentation("# Different manual", "1.2.3"),
     /Expected the CLI manual/
+  );
+});
+
+test("rejects a missing CLI version", () => {
+  assert.throws(
+    () => renderMcpDocumentation("# Webstudio MCP Manual\n\nBody", ""),
+    /Expected a CLI version/
   );
 });
