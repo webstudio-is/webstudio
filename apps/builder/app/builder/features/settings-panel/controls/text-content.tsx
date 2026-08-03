@@ -21,11 +21,7 @@ import {
 } from "~/builder/shared/bindable-expression";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { CodeEditor } from "~/shared/code-editor";
-import {
-  $selectedInstanceScope,
-  type ControlProps,
-  VerticalLayout,
-} from "../shared";
+import { type ControlProps, VerticalLayout } from "../shared";
 import { FieldLabel, useIsBindingResetForbidden } from "../property-label";
 import { useBindableControl } from "./use-bindable-control";
 import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
@@ -77,27 +73,6 @@ export const TextContent = ({
   const childIndex = target?.childIndex;
   const child = target?.child ?? { type: "text" as const, value: "" };
   const hasMixedContent = (instance?.children.length ?? 0) > 1;
-  const { scope } = useStore($selectedInstanceScope);
-  let displayedValue = computedValue;
-  if (
-    instance !== undefined &&
-    instance.children.length > 1 &&
-    child.type === "expression"
-  ) {
-    try {
-      displayedValue = evaluateExpressionWithinScope(child.value, scope);
-    } catch {
-      displayedValue = undefined;
-    }
-  }
-  const localValue = useDraftValue(String(displayedValue ?? ""), (value) => {
-    updateBindableValue({
-      expression: child.type === "expression" ? child.value : undefined,
-      value,
-      onChangeValue: (value) =>
-        updateChild(instanceId, childIndex, "text", value),
-    });
-  });
 
   let expression: undefined | string;
   if (child.type === "text") {
@@ -111,6 +86,30 @@ export const TextContent = ({
     boundExpression: child.type === "expression" ? expression : undefined,
     fallbackExpression: expression ?? "",
   });
+  let displayedValue = computedValue;
+  if (
+    instance !== undefined &&
+    instance.children.length > 1 &&
+    child.type === "expression"
+  ) {
+    try {
+      displayedValue = evaluateExpressionWithinScope(
+        child.value,
+        binding.scope
+      );
+    } catch {
+      displayedValue = undefined;
+    }
+  }
+  const localValue = useDraftValue(String(displayedValue ?? ""), (value) => {
+    updateBindableValue({
+      expression: child.type === "expression" ? child.value : undefined,
+      value,
+      onChangeValue: (value) =>
+        updateChild(instanceId, childIndex, "text", value),
+    });
+  });
+
   const isBindingResetForbidden = useIsBindingResetForbidden();
   const isResetDisabled =
     child.type === "expression" && isBindingResetForbidden;
@@ -137,8 +136,8 @@ export const TextContent = ({
               )}
             </>
           }
-          resettable={hasChildren && hasMixedContent === false}
-          resetDisabled={isResetDisabled}
+          resettable={hasChildren}
+          resetDisabled={isResetDisabled || hasMixedContent}
           onReset={() => {
             executeRuntimeMutation({
               id: "instances.setTextContent",

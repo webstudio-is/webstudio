@@ -6,7 +6,11 @@ import type {
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { getAllPages } from "@webstudio-is/sdk";
-import { isRichTextTree } from "./content-model";
+import {
+  findClosestRichText,
+  isRichTextTree,
+  isTextEditorCompatibleTree,
+} from "./content-model";
 import type { InstancePath, InstanceSelector } from "./instance-path";
 
 export type { InstancePath } from "./instance-path";
@@ -101,16 +105,17 @@ export const findAllEditableInstanceSelector = ({
     return;
   }
 
-  if (
-    isRichTextTree({
-      instanceId,
-      instances,
-      props,
-      metas,
-      htmlTagsByInstanceId,
-    })
-  ) {
-    results.push(instanceSelector);
+  const args = {
+    instanceId,
+    instances,
+    props,
+    metas,
+    htmlTagsByInstanceId,
+  };
+  if (isRichTextTree(args)) {
+    if (isTextEditorCompatibleTree(args)) {
+      results.push(instanceSelector);
+    }
     return;
   }
 
@@ -129,4 +134,48 @@ export const findAllEditableInstanceSelector = ({
       }
     }
   }
+};
+
+export const findEditableInstanceSelector = ({
+  instanceSelector,
+  instances,
+  props,
+  metas,
+  htmlTagsByInstanceId,
+}: {
+  instanceSelector: InstanceSelector;
+  instances: Instances;
+  props: Props;
+  metas: Map<string, WsComponentMeta>;
+  htmlTagsByInstanceId?: Map<Instance["id"], string>;
+}) => {
+  const closestRichText = findClosestRichText({
+    instanceSelector,
+    instances,
+    props,
+    metas,
+    htmlTagsByInstanceId,
+  });
+  if (closestRichText !== undefined) {
+    return isTextEditorCompatibleTree({
+      instanceId: closestRichText[0],
+      instances,
+      props,
+      metas,
+      htmlTagsByInstanceId,
+    })
+      ? closestRichText
+      : undefined;
+  }
+
+  const results: InstanceSelector[] = [];
+  findAllEditableInstanceSelector({
+    instanceSelector,
+    instances,
+    props,
+    metas,
+    htmlTagsByInstanceId,
+    results,
+  });
+  return results[0];
 };

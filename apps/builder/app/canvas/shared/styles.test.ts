@@ -500,99 +500,28 @@ describe("computeInstanceStyles", () => {
 });
 
 describe("computeEditableCursorRules", () => {
-  const createInstance = (
-    id: string,
-    children: Instance["children"] = []
-  ): Instance => ({
-    id,
-    type: "instance",
-    component: "Box",
-    children,
-  });
-
   test("returns empty array when no selectors", () => {
-    const result = computeEditableCursorRules([], new Map());
+    const result = computeEditableCursorRules([]);
     expect(result).toEqual([]);
   });
 
   test("generates cursor rule for editable instances", () => {
-    const instances = new Map<string, Instance>([
-      ["inst-1", createInstance("inst-1")],
-      ["inst-2", createInstance("inst-2")],
-    ]);
     const selectors = [["inst-1"], ["inst-2"]] as [string][];
-    const result = computeEditableCursorRules(selectors, instances);
+    const result = computeEditableCursorRules(selectors);
     expect(result).toHaveLength(1);
     expect(result[0]).toContain('[data-ws-id="inst-1"]');
     expect(result[0]).toContain('[data-ws-id="inst-2"]');
     expect(result[0]).toContain("cursor: text");
   });
 
-  test("excludes instances with expression children", () => {
-    const instances = new Map<string, Instance>([
-      ["inst-1", createInstance("inst-1")],
-      [
-        "inst-2",
-        createInstance("inst-2", [{ type: "expression", value: "someExpr" }]),
-      ],
-    ]);
-    const selectors = [["inst-1"], ["inst-2"]] as [string][];
-    const result = computeEditableCursorRules(selectors, instances);
-    expect(result).toHaveLength(1);
-    expect(result[0]).toContain('[data-ws-id="inst-1"]');
-    expect(result[0]).not.toContain('[data-ws-id="inst-2"]');
-  });
-
-  test("excludes instances with expressions in nested children", () => {
-    const instances = new Map<string, Instance>([
-      ["parent", createInstance("parent", [{ type: "id", value: "child" }])],
-      [
-        "child",
-        createInstance("child", [{ type: "expression", value: "value" }]),
-      ],
-    ]);
-
-    expect(computeEditableCursorRules([["parent"]], instances)).toEqual([]);
-  });
-
-  test("excludes instances not found in map", () => {
-    const instances = new Map<string, Instance>([
-      ["inst-1", createInstance("inst-1")],
-    ]);
-    const selectors = [["inst-1"], ["inst-missing"]] as [string][];
-    const result = computeEditableCursorRules(selectors, instances);
-    expect(result).toHaveLength(1);
-    expect(result[0]).toContain('[data-ws-id="inst-1"]');
-    expect(result[0]).not.toContain("inst-missing");
-  });
-
   test("chunks selectors into groups of 20", () => {
-    const instances = new Map<string, Instance>();
     const selectors: [string][] = [];
     for (let i = 0; i < 25; i++) {
       const id = `inst-${i}`;
-      instances.set(id, createInstance(id));
       selectors.push([id]);
     }
-    const result = computeEditableCursorRules(selectors, instances);
+    const result = computeEditableCursorRules(selectors);
     expect(result).toHaveLength(2);
-  });
-
-  test("skips empty chunks", () => {
-    const instances = new Map<string, Instance>();
-    // All instances have expression children, so all chunks are empty
-    for (let i = 0; i < 5; i++) {
-      const id = `inst-${i}`;
-      instances.set(
-        id,
-        createInstance(id, [{ type: "expression", value: "expr" }])
-      );
-    }
-    const selectors = Array.from(instances.keys()).map((id) => [id]) as [
-      string,
-    ][];
-    const result = computeEditableCursorRules(selectors, instances);
-    expect(result).toEqual([]);
   });
 });
 

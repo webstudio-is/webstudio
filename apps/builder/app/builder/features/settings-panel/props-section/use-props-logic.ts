@@ -115,13 +115,13 @@ const canShowTextContent = ({
   isDirectlyCapable: boolean;
   isRichTextTarget: boolean;
 }) => {
-  if (canEditTextChildren(instance) === false) {
+  const target = getEditableTextTarget(instance);
+  if (instance.children.length > 0 && target === undefined) {
     return false;
   }
   return (
     isRichTextTarget ||
-    (isDirectlyCapable &&
-      getEditableTextTarget(instance)?.child.type === "expression")
+    (isDirectlyCapable && target?.child.type === "expression")
   );
 };
 

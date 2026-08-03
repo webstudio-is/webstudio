@@ -214,14 +214,6 @@ export const BindingControl = ({ children }: { children: ReactNode }) => {
 
 export type BindingVariant = "default" | "bound" | "overwritten";
 
-export const isBindingRemovalDisabled = ({
-  variant,
-  allowBindingRemoval,
-}: {
-  variant: BindingVariant;
-  allowBindingRemoval: boolean;
-}) => variant === "default" || allowBindingRemoval === false;
-
 const BindingButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -392,10 +384,9 @@ export const BindingPopover = ({
                     aria-label="Reset binding"
                     prefix={<TrashIcon />}
                     color="ghost"
-                    disabled={isBindingRemovalDisabled({
-                      variant,
-                      allowBindingRemoval,
-                    })}
+                    disabled={
+                      variant === "default" || allowBindingRemoval === false
+                    }
                     onClick={(event) => {
                       event.preventDefault();
                       // inline variables and close dialog

@@ -64,6 +64,6 @@ test("renders the existing bound Text content control for the expression child",
   });
 
   expect(container.textContent).toContain("Text Content");
-  expect(container.querySelector(".cm-content")?.textContent).toBe("2");
+  expect(container.querySelector('[role="textbox"]')?.textContent).toBe("2");
   expect(container.querySelector('[data-variant="bound"]')).not.toBeNull();
 });

@@ -18,10 +18,7 @@ import { $instances } from "~/shared/sync/data-stores";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { emitCommand } from "./shared/commands";
 import { shallowEqual } from "shallow-equal";
-import {
-  findClosestRichText,
-  hasExpressionInTree,
-} from "@webstudio-is/project-build/runtime";
+import { findClosestEditableText } from "@webstudio-is/project-build/runtime";
 import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
@@ -131,20 +128,13 @@ const handleEdit = (
 
   const instances = $instances.get();
 
-  let editableInstanceSelector = findClosestRichText({
+  let editableInstanceSelector = findClosestEditableText({
     instanceSelector,
     instances,
     props: $props.get(),
     metas: $registeredComponentMetas.get(),
     htmlTagsByInstanceId: $propsIndex.get().htmlTagsByInstanceId,
   });
-
-  if (
-    editableInstanceSelector !== undefined &&
-    hasExpressionInTree(editableInstanceSelector[0], instances)
-  ) {
-    editableInstanceSelector = undefined;
-  }
 
   if (editableInstanceSelector !== undefined && $isContentMode.get()) {
     if (

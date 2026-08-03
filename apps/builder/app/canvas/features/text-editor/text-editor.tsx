@@ -1,7 +1,4 @@
-import {
-  findAllEditableInstanceSelector,
-  hasExpressionInTree,
-} from "@webstudio-is/project-build/runtime";
+import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime";
 import { color } from "@webstudio-is/css-engine";
 import {
   useState,
@@ -1648,15 +1645,6 @@ export const TextEditor = ({
             : mod(currentIndex - i, editableInstanceSelectors.length);
 
         const nextSelector = editableInstanceSelectors[nextIndex];
-
-        const nextInstance = instances.get(nextSelector[0]);
-        if (nextInstance === undefined) {
-          continue;
-        }
-
-        if (hasExpressionInTree(nextInstance.id, instances)) {
-          continue;
-        }
 
         // Skip invisible elements
         if (getVisibleElementsByInstanceSelector(nextSelector).length === 0) {

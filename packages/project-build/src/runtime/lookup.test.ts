@@ -3,6 +3,7 @@ import type { Instance, Prop, WsComponentMeta } from "@webstudio-is/sdk";
 import { createDefaultPages } from "../shared/pages-utils";
 import {
   findAllEditableInstanceSelector,
+  findEditableInstanceSelector,
   findPageAndSelectorByInstanceId,
   getInstancePath,
 } from "./lookup";
@@ -183,23 +184,77 @@ describe("findPageAndSelectorByInstanceId", () => {
 describe("findAllEditableInstanceSelector", () => {
   test("collects editable rich-text descendants", () => {
     const results: string[][] = [];
+    const instances = new Map([
+      ["body", instance("body", "Body", [{ type: "id", value: "paragraph" }])],
+      ["paragraph", instance("paragraph", "Paragraph")],
+    ]);
+    const props = new Map<string, Prop>();
+    const metas = new Map([
+      ["Body", meta(["instance"])],
+      ["Paragraph", meta(["rich-text"])],
+    ]);
     findAllEditableInstanceSelector({
       instanceSelector: ["body"],
-      instances: new Map([
-        [
-          "body",
-          instance("body", "Body", [{ type: "id", value: "paragraph" }]),
-        ],
-        ["paragraph", instance("paragraph", "Paragraph")],
-      ]),
-      props: new Map<string, Prop>(),
-      metas: new Map([
-        ["Body", meta(["instance"])],
-        ["Paragraph", meta(["rich-text"])],
-      ]),
+      instances,
+      props,
+      metas,
       results,
     });
 
     expect(results).toEqual([["paragraph", "body"]]);
+    expect(
+      findEditableInstanceSelector({
+        instanceSelector: ["body"],
+        instances,
+        props,
+        metas,
+      })
+    ).toEqual(["paragraph", "body"]);
+  });
+
+  test("excludes rich-text trees containing nested expressions", () => {
+    const results: string[][] = [];
+    const instances = new Map([
+      [
+        "paragraph",
+        instance("paragraph", "Paragraph", [
+          { type: "text", value: "Published " },
+          { type: "id", value: "separator" },
+          { type: "id", value: "reading-time" },
+        ]),
+      ],
+      [
+        "separator",
+        instance("separator", "Span", [{ type: "text", value: " · " }]),
+      ],
+      [
+        "reading-time",
+        instance("reading-time", "Span", [
+          { type: "expression", value: 'readTime ?? ""' },
+        ]),
+      ],
+    ]);
+    const props = new Map<string, Prop>();
+    const metas = new Map([
+      ["Paragraph", meta(["rich-text"])],
+      ["Span", meta(["rich-text"])],
+    ]);
+    findAllEditableInstanceSelector({
+      instanceSelector: ["paragraph"],
+      instances,
+      props,
+      metas,
+      results,
+    });
+
+    expect(results).toEqual([]);
+    expect(
+      findEditableInstanceSelector({
+        instanceSelector: ["separator", "paragraph"],
+        instances,
+        props,
+        metas,
+      })
+    ).toBeUndefined();
   });
 });

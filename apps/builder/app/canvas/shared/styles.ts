@@ -51,9 +51,8 @@ import {
 } from "~/shared/nano-states";
 import {
   findAllEditableInstanceSelector,
-  hasExpressionInTree,
+  type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
-import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
 import { createComputedStyleDeclStore } from "~/builder/features/style-panel/shared/model";
 
@@ -199,30 +198,20 @@ const subscribeDesignModeHelperStyles = () => {
  * Groups selectors into chunks to avoid overly long :is() selectors.
  */
 const computeEditableCursorRules = (
-  editableInstanceSelectors: InstanceSelector[],
-  instances: Map<Instance["id"], Instance>
+  editableInstanceSelectors: InstanceSelector[]
 ) => {
   const rules: string[] = [];
   // 20 is arbitrary but keeps selector length reasonable
   const chunkSize = 20;
   for (let i = 0; i < editableInstanceSelectors.length; i += chunkSize) {
-    const chunk = editableInstanceSelectors
-      .slice(i, i + chunkSize)
-      .filter((selector) => {
-        const instance = instances.get(selector[0]);
-        if (instance === undefined) {
-          return false;
-        }
-        return hasExpressionInTree(instance.id, instances) === false;
-      });
-    if (chunk.length === 0) {
-      continue;
-    }
+    const chunk = editableInstanceSelectors.slice(i, i + chunkSize);
     const selectors = chunk.map(
       (selector) => `[${idAttribute}="${selector[0]}"]`
     );
     rules.push(
-      `:is(${selectors.join(", ")}), :is(${selectors.join(", ")}) a { cursor: text; }`
+      `:is(${selectors.join(", ")}), :is(${selectors.join(
+        ", "
+      )}) a { cursor: text; }`
     );
   }
   return rules;
@@ -256,8 +245,7 @@ const subscribeContentEditModeHelperStyles = () => {
       });
 
       for (const rule of computeEditableCursorRules(
-        editableInstanceSelectors,
-        instances
+        editableInstanceSelectors
       )) {
         helpersSheet.addPlaintextRule(rule);
       }
