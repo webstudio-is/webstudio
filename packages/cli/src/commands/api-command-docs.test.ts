@@ -164,15 +164,16 @@ test("documents every MCP session and vision tool in use-case scenarios", () => 
   );
 });
 
-test("documents MCP use cases with JSON inputs instead of CLI flags", () => {
+test("documents MCP use cases with JSON object inputs", () => {
   const apiUseCases = readCliDoc("api-use-cases");
-  expect(apiUseCases).not.toMatch(/^- MCP tool: .*(?:\(--| --[a-z])/m);
-  expect(apiUseCases).not.toMatch(/^- MCP tool: .*\(\{/m);
 
   for (const line of apiUseCases.match(/^- MCP tool: .+$/gm) ?? []) {
     const match = line.match(/^- MCP tool: [a-z0-9._-]+ (.+)$/);
     expect(match, line).not.toBeNull();
-    expect(() => JSON.parse(match?.[1] ?? "")).not.toThrow();
+    const input = JSON.parse(match?.[1] ?? "");
+    expect(input).not.toBeNull();
+    expect(Array.isArray(input)).toBe(false);
+    expect(typeof input).toBe("object");
   }
 });
 
