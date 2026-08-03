@@ -101,6 +101,18 @@ const startLoading = (requestFetch: typeof fetch = fetch) => {
   void loadResources(requestFetch);
 };
 
+let loadingFrameId: number | undefined;
+
+const scheduleLoading = (requestFetch: typeof fetch = fetch) => {
+  if (pending.size > 0 || queue.size === 0 || loadingFrameId !== undefined) {
+    return;
+  }
+  loadingFrameId = window.requestAnimationFrame(() => {
+    loadingFrameId = undefined;
+    startLoading(requestFetch);
+  });
+};
+
 const preloadResource = (resource: ResourceRequest) => {
   const key = getResourceKey(resource);
   knownRequests.set(key, resource);
@@ -146,7 +158,7 @@ const queueResources = (resources: readonly ResourceRequest[]) => {
 
 export const preloadResources = (resources: readonly ResourceRequest[]) => {
   queueResources(resources);
-  startLoading();
+  scheduleLoading();
 };
 
 const queueInvalidatedResource = (resource: ResourceRequest) => {
@@ -161,7 +173,7 @@ const queueInvalidatedResource = (resource: ResourceRequest) => {
 
 export const invalidateResource = (resource: ResourceRequest) => {
   queueInvalidatedResource(resource);
-  startLoading();
+  scheduleLoading();
 };
 
 /**
@@ -233,7 +245,7 @@ export const invalidateAssets = () => {
   }
   updateCache();
   updatePending();
-  startLoading();
+  scheduleLoading();
 };
 
 export const computeResourceRequest = (
@@ -260,6 +272,10 @@ export const computeResourceRequest = (
 };
 
 const reset = () => {
+  if (loadingFrameId !== undefined) {
+    window.cancelAnimationFrame(loadingFrameId);
+    loadingFrameId = undefined;
+  }
   queue.clear();
   pending.clear();
   cache.clear();
@@ -282,4 +298,5 @@ export const __testing__ = {
   queueInvalidatedResource,
   queueResources,
   reset,
+  scheduleLoading,
 };

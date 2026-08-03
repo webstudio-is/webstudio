@@ -16,6 +16,7 @@ const {
   queueInvalidatedResource,
   queueResources,
   reset,
+  scheduleLoading,
 } = __testing__;
 
 afterEach(() => {
@@ -44,7 +45,8 @@ test("removes obsolete queued requests but keeps cached results", () => {
   expect($hasPendingResources.get()).toBe(false);
 });
 
-test("dispatches resources synchronously", async () => {
+test("defers resource dispatch until the next animation frame", () => {
+  vi.useFakeTimers();
   const request: ResourceRequest = {
     name: "Immediate",
     method: "get",
@@ -52,14 +54,42 @@ test("dispatches resources synchronously", async () => {
     searchParams: [],
     headers: [],
   };
-  const error = vi.spyOn(console, "error").mockImplementation(() => {});
-
   preloadResources([request]);
-  expect(getLoaderState()).toEqual({ queueSize: 0, pendingSize: 1 });
-  await vi.waitFor(() => {
-    expect($hasPendingResources.get()).toBe(false);
-  });
-  error.mockRestore();
+  expect(getLoaderState()).toEqual({ queueSize: 1, pendingSize: 0 });
+});
+
+test("coalesces synchronous resource computations before dispatch", async () => {
+  vi.useFakeTimers();
+  const firstRequest: ResourceRequest = {
+    name: "First",
+    method: "get",
+    url: "https://example.com/first",
+    searchParams: [],
+    headers: [],
+  };
+  const finalRequest: ResourceRequest = {
+    name: "Final",
+    method: "get",
+    url: "https://example.com/final",
+    searchParams: [],
+    headers: [],
+  };
+
+  const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json([]));
+
+  queueResources([firstRequest]);
+  scheduleLoading(fetch);
+  queueResources([finalRequest]);
+
+  expect(getLoaderState()).toEqual({ queueSize: 1, pendingSize: 0 });
+  expect(fetch).not.toHaveBeenCalled();
+
+  await vi.advanceTimersByTimeAsync(16);
+
+  expect(fetch).toHaveBeenCalledOnce();
+  expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual([
+    finalRequest,
+  ]);
 });
 
 test("batches all resources from one computation", async () => {
