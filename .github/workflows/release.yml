@@ -166,9 +166,12 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git merge --no-edit "$RELEASE_SHA"
           git checkout "$RELEASE_SHA" -- docs/university/mcp.md
-          sed -i.bak "s/^\\*\\*Webstudio MCP v0\\.0\\.0-webstudio-version\\*\\*$/\\*\\*Webstudio MCP v$RELEASE_VERSION\\*\\*/" docs/university/mcp.md
+          CLI_VERSION_PLACEHOLDER="0.0.0-webstudio-version"
+          grep -Fq "$CLI_VERSION_PLACEHOLDER" docs/university/mcp.md
+          sed -i.bak "s/$CLI_VERSION_PLACEHOLDER/$RELEASE_VERSION/g" docs/university/mcp.md
           rm docs/university/mcp.md.bak
-          grep -Fqx "**Webstudio MCP v$RELEASE_VERSION**" docs/university/mcp.md
+          ! grep -Fq "$CLI_VERSION_PLACEHOLDER" docs/university/mcp.md
+          grep -Fq "$RELEASE_VERSION" docs/university/mcp.md
           git add docs/university/mcp.md
           git commit -m "docs: publish Webstudio CLI $RELEASE_VERSION"
           git push origin docs
