@@ -9,6 +9,8 @@ icon: robot
 
 # Webstudio MCP
 
+{% include "../.gitbook/includes/mcp-cli-version.md" %}
+
 {% hint style="info" %}
 This reference is generated from the Webstudio CLI source in the same Builder
 revision. GitBook publishes it when that revision is successfully released.

@@ -11,6 +11,10 @@ test("renders GitBook metadata around the complete CLI manual", () => {
   assert.match(generated, /# Webstudio MCP\n/);
   assert.match(
     generated,
+    /\{% include "\.\.\/\.gitbook\/includes\/mcp-cli-version\.md" %\}/
+  );
+  assert.match(
+    generated,
     /GitBook publishes it when that revision is successfully released/
   );
   assert.match(
