@@ -54821,6 +54821,11 @@ export const runtimeOperationContractData = [
         contentMode: {
           type: "boolean",
         },
+        allowContentModelWarnings: {
+          description:
+            "Allow legacy invalid content copied from existing projects to be pasted with a warning.",
+          type: "boolean",
+        },
         mode: {
           type: "string",
           enum: ["append", "prepend", "replace"],

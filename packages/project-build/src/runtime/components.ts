@@ -88,6 +88,12 @@ export const insertFragmentInput = z
     ),
     conflictResolution: conflictResolutionInput.optional(),
     contentMode: z.boolean().optional(),
+    allowContentModelWarnings: z
+      .boolean()
+      .optional()
+      .describe(
+        "Allow legacy invalid content copied from existing projects to be pasted with a warning."
+      ),
     mode: instanceInsertModeInput.optional(),
     insertIndex: insertIndexInput.optional(),
   })
@@ -1133,6 +1139,7 @@ export const insertFragment = (
     insertIndex: input.insertIndex,
     conflictResolution: input.conflictResolution,
     contentMode: input.contentMode,
+    validateContentModel: input.allowContentModelWarnings !== true,
     context,
   });
 };

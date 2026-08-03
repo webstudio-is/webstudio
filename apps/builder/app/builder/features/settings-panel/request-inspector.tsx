@@ -83,11 +83,13 @@ export const RequestInspector = ({
   queryContainerRef,
   preview,
   diagnostics,
+  diagnosticsPending = false,
   onDiagnosticsOpen,
 }: {
   queryContainerRef?: Ref<HTMLDivElement>;
   preview: ReactNode;
   diagnostics?: ReactNode;
+  diagnosticsPending?: boolean;
   onDiagnosticsOpen?: () => void;
 }) => (
   <PanelTabs
@@ -139,7 +141,11 @@ export const RequestInspector = ({
     >
       {diagnostics ?? (
         <Flex align="center" justify="center" css={{ height: "100%" }}>
-          <Text color="moreSubtle">No diagnostics available</Text>
+          <Text color="moreSubtle">
+            {diagnosticsPending
+              ? "Loading diagnostics..."
+              : "No diagnostics available"}
+          </Text>
         </Flex>
       )}
     </PanelTabsContent>

@@ -632,6 +632,25 @@ test("rejects fragments that violate the destination HTML content model", async 
   ).toThrow("Placing <button> element inside a <span> violates HTML spec.");
 });
 
+test("allows legacy invalid fragments when warnings are explicitly enabled", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="button"><ws.element ws:tag="h3">Legacy heading</ws.element></ws.element>`
+  );
+
+  const mutation = insertFragment(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      fragment,
+      allowContentModelWarnings: true,
+    },
+    { createId: createIdFactory() }
+  );
+
+  expect(mutation.result.rootInstanceIds).toEqual(["generated-0"]);
+});
+
 test("rejects tag when inserting non-element component", async () => {
   const parent = createParent();
 

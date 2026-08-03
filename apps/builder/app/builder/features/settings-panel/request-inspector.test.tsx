@@ -64,9 +64,41 @@ test("loads diagnostics when their tab is opened", () => {
     container.querySelectorAll<HTMLElement>('[role="tab"]')
   ).find(({ textContent }) => textContent === "Diagnostics");
 
-  act(() => diagnostics?.click());
+  act(() => {
+    diagnostics?.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, button: 0 })
+    );
+    diagnostics?.click();
+  });
 
   expect(onDiagnosticsOpen).toHaveBeenCalledOnce();
+});
+
+test("shows when diagnostics are loading", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      <RequestInspector
+        preview={<div>Preview content</div>}
+        diagnosticsPending
+      />
+    );
+  });
+  const diagnostics = Array.from(
+    container.querySelectorAll<HTMLElement>('[role="tab"]')
+  ).find(({ textContent }) => textContent === "Diagnostics");
+
+  act(() => {
+    diagnostics?.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, button: 0 })
+    );
+    diagnostics?.click();
+  });
+
+  expect(container.textContent).toContain("Loading diagnostics...");
+  expect(container.textContent).not.toContain("No diagnostics available");
 });
 
 test("keeps preview first when no query editor is available", () => {

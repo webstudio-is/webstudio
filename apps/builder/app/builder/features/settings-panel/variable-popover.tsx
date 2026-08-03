@@ -687,6 +687,7 @@ const VariablePreview = ({
   queryActive: boolean;
   queryContainerRef: (element: HTMLDivElement | null) => void;
 }) => {
+  const [diagnosticsPending, setDiagnosticsPending] = useState(false);
   const isResource =
     variableType === "resource" ||
     variableType === "graphql-resource" ||
@@ -785,9 +786,15 @@ const VariablePreview = ({
         isAssetsResourceRequest(computedResourceRequest) &&
         resourceDiagnostics?.artifacts === undefined
           ? () => {
-              void loadResourceDiagnostics(computedResourceRequest);
+              setDiagnosticsPending(true);
+              void loadResourceDiagnostics(computedResourceRequest).finally(
+                () => setDiagnosticsPending(false)
+              );
             }
           : undefined
+      }
+      diagnosticsPending={
+        diagnosticsPending && resourceDiagnostics === undefined
       }
       diagnostics={
         requestErrorDiagnostics !== undefined ? (
