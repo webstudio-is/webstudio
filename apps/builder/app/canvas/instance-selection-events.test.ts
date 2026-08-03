@@ -129,9 +129,19 @@ describe("canvas instance selection", () => {
     expect($ephemeralStyles.get()).toEqual([]);
   });
 
-  test("double click selects a bound text instance without entering the rich text editor", () => {
+  test("does not edit a promoted rich-text root containing a nested binding", () => {
     $instances.set(
       new Map([
+        [
+          "separator",
+          {
+            type: "instance",
+            id: "separator",
+            component: "ws:element",
+            tag: "span",
+            children: [{ type: "text", value: " · " }],
+          },
+        ],
         [
           "reading-time",
           {
@@ -154,6 +164,7 @@ describe("canvas instance selection", () => {
             tag: "p",
             children: [
               { type: "text", value: "" },
+              { type: "id", value: "separator" },
               { type: "id", value: "reading-time" },
             ],
           },
@@ -169,12 +180,12 @@ describe("canvas instance selection", () => {
         ],
       ])
     );
-    const readingTime = createElement("reading-time,paragraph,body");
+    const separator = createElement("separator,paragraph,body");
 
-    readingTime.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    separator.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
 
     expect($allSelectedInstanceSelectors.get()).toEqual([
-      ["reading-time", "paragraph", "body"],
+      ["separator", "paragraph", "body"],
     ]);
     expect($textEditingInstanceSelector.get()).toBeUndefined();
   });

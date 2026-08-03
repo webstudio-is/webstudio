@@ -24,6 +24,7 @@ import {
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
 import { isTextEditableInContentMode } from "./shared/content-mode";
+import type { Instances } from "@webstudio-is/sdk";
 
 type SelectionAnchor = {
   current: undefined | InstanceSelector;
@@ -35,6 +36,27 @@ const isElementBeingEdited = (element: Element) => {
   }
 
   return false;
+};
+
+const hasExpressionInTree = (
+  instanceId: string,
+  instances: Instances,
+  visited = new Set<string>()
+): boolean => {
+  if (visited.has(instanceId)) {
+    return false;
+  }
+  visited.add(instanceId);
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return false;
+  }
+  return instance.children.some(
+    (child) =>
+      child.type === "expression" ||
+      (child.type === "id" &&
+        hasExpressionInTree(child.value, instances, visited))
+  );
 };
 
 const getRenderedInstanceSelectors = () => {
@@ -136,28 +158,15 @@ const handleEdit = (
     htmlTagsByInstanceId: $propsIndex.get().htmlTagsByInstanceId,
   });
 
-  const selectedInstance = instances.get(instanceSelector[0]);
-  if (selectedInstance?.children.some((child) => child.type === "expression")) {
+  if (
+    editableInstanceSelector !== undefined &&
+    hasExpressionInTree(editableInstanceSelector[0], instances)
+  ) {
     editableInstanceSelector = undefined;
   }
 
-  // Do not allow edit bindable text instances with expression children in Content Mode
   if (editableInstanceSelector !== undefined && $isContentMode.get()) {
-    const instance = instances.get(editableInstanceSelector[0]);
-    if (instance === undefined) {
-      return false;
-    }
-
-    const hasExpressionChildren = instance.children.some(
-      (child) => child.type === "expression"
-    );
-
-    if (hasExpressionChildren) {
-      editableInstanceSelector = undefined;
-    }
-
     if (
-      editableInstanceSelector !== undefined &&
       isTextEditableInContentMode({
         isContentMode: true,
         instanceSelector: editableInstanceSelector,
