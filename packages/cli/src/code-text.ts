@@ -61,31 +61,27 @@ export const collectCodeTextAssets = ({
 
   const languages = new Set<string>();
   const themes = new Set<string>();
-  for (const instance of instances.values()) {
-    if (instance.component !== codeTextComponent) {
-      continue;
-    }
-    const selection = selections.get(instance.id);
+  for (const [instanceId, selection] of selections) {
     // Theme did not exist before syntax highlighting. Treat instances without
     // it as legacy data, including instances that already have an HTML lang.
-    if (selection?.theme === undefined) {
+    if (selection.theme === undefined) {
       continue;
     }
     const lang = readSelection({
-      instanceId: instance.id,
+      instanceId,
       label: "Language",
       prop: selection.lang,
       validate: isCodeTextLanguage,
     });
     const theme = readSelection({
-      instanceId: instance.id,
+      instanceId,
       label: "Theme",
       prop: selection.theme,
       validate: isCodeTextTheme,
     });
     if (lang === undefined || theme === undefined) {
       throw new Error(
-        `Code Text "${instance.id}" must include fixed Language and Theme selections.`
+        `Code Text "${instanceId}" must include fixed Language and Theme selections.`
       );
     }
     if (lang !== "plaintext") {
