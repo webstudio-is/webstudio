@@ -2040,46 +2040,6 @@ export const builderRuntimeOperations = [
 
 const internalBuilderRuntimeOperations = [
   runtimeOperation(
-    "system.updateContentPart",
-    api("update-content-part", "updateContentPart"),
-    mutationContract({
-      readNamespaces: ["instances", "dataSources"],
-      writeNamespaces: ["instances"],
-      retryOnConflict: true,
-    }),
-    instances.updateContentPartInput,
-    ({ state, input }) => {
-      const warnings =
-        input.replacement?.type === "expression"
-          ? getScopedExpressionWarnings(
-              state,
-              input.instanceId,
-              ["replacement", "value"],
-              input.replacement.value
-            )
-          : [];
-      return withExpressionWarnings(
-        instances.updateContentPart(
-          state,
-          input.replacement?.type === "expression"
-            ? {
-                ...input,
-                replacement: {
-                  ...input.replacement,
-                  value: bindExpressionInput(
-                    state,
-                    input.instanceId,
-                    input.replacement.value
-                  ),
-                },
-              }
-            : input
-        ),
-        warnings
-      );
-    }
-  ),
-  runtimeOperation(
     "system.migrateLoadedData",
     api("migrate-loaded-data", "migrateLoadedData"),
     mutationContract({

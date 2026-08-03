@@ -204,18 +204,6 @@ export const updateTextInstanceInput = z.object({
     ),
 });
 
-const contentPartChildInput = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("text"), value: z.string() }),
-  z.object({ type: z.literal("expression"), value: z.string() }),
-]);
-
-export const updateContentPartInput = z.object({
-  instanceId: z.string(),
-  childIndex: z.number().int().nonnegative(),
-  expectedChild: contentPartChildInput,
-  replacement: contentPartChildInput.optional(),
-});
-
 export const setTextContentInput = z.discriminatedUnion("operation", [
   z.object({
     operation: z.literal("set"),
@@ -3740,81 +3728,6 @@ export const updateTextInstance = (
       childIndex: input.childIndex,
       child: createTextContentChild({ type: mode, value: input.text }),
     }),
-    result: mutationResult,
-    invalidatesNamespaces: ["instances"],
-  });
-};
-
-export const updateContentPart = (
-  state: Pick<BuilderState, "instances">,
-  input: z.infer<typeof updateContentPartInput>
-) => {
-  const instances = getRequiredInstances(state);
-  const instance = instances.get(input.instanceId);
-  if (instance === undefined) {
-    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
-  }
-  const child = instance.children[input.childIndex];
-  if (child === undefined) {
-    return throwBuilderRuntimeError("NOT_FOUND", "Child not found");
-  }
-  if (isTextContentChild(child) === false) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Child is not text or expression"
-    );
-  }
-  if (
-    child.type !== input.expectedChild.type ||
-    child.value !== input.expectedChild.value
-  ) {
-    return throwBuilderRuntimeError(
-      "CONFLICT",
-      "Content part changed since it was read"
-    );
-  }
-  if (input.replacement !== undefined) {
-    const errors = getTextContentErrors(input.replacement);
-    if (errors.length > 0) {
-      return throwTextExpressionValidationError(errors);
-    }
-  }
-
-  const mutationResult = {
-    instanceId: input.instanceId,
-    childIndex: input.childIndex,
-    operation: input.replacement === undefined ? "remove" : "set",
-  } as const;
-  if (
-    input.replacement !== undefined &&
-    child.type === input.replacement.type &&
-    child.value === input.replacement.value
-  ) {
-    return createRuntimeMutation({
-      payload: [],
-      result: mutationResult,
-      invalidatesNamespaces: ["instances"],
-    });
-  }
-
-  return createRuntimeMutation({
-    payload: [
-      {
-        namespace: "instances",
-        patches: [
-          input.replacement === undefined
-            ? {
-                op: "remove" as const,
-                path: [input.instanceId, "children", input.childIndex],
-              }
-            : {
-                op: "replace" as const,
-                path: [input.instanceId, "children", input.childIndex],
-                value: input.replacement,
-              },
-        ],
-      },
-    ],
     result: mutationResult,
     invalidatesNamespaces: ["instances"],
   });

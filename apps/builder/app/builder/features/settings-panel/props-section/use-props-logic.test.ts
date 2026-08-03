@@ -1,11 +1,10 @@
 import { describe, expect, test } from "vitest";
-import type { Instance, Prop, PropMeta } from "@webstudio-is/sdk";
+import type { Prop, PropMeta } from "@webstudio-is/sdk";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
 import { __testing__ } from "./use-props-logic";
 import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime";
 
-const { isPropVisibleInContentMode, getAndDelete, getTextContentTarget } =
-  __testing__;
+const { isPropVisibleInContentMode, getAndDelete } = __testing__;
 
 const getInput = (
   input: Partial<Parameters<typeof isPropVisibleInContentMode>[0]> = {}
@@ -146,67 +145,5 @@ describe("getAndDelete", () => {
 
     expect(getAndDelete(map, "missing")).toBeUndefined();
     expect(map).toEqual(new Map([["key", 1]]));
-  });
-});
-
-describe("getTextContentTarget", () => {
-  test("exposes a mixed primitive sequence on the selected instance", () => {
-    const instance = {
-      type: "instance" as const,
-      id: "reading-time",
-      component: "ws:element",
-      tag: "span",
-      children: [
-        { type: "text" as const, value: " · " },
-        { type: "expression" as const, value: 'readTime ?? ""' },
-      ],
-    };
-
-    expect(
-      getTextContentTarget({
-        instance,
-        instances: new Map([[instance.id, instance]]),
-        supported: true,
-        isContentMode: false,
-        selectedInstanceSelector: [instance.id, "body"],
-      })
-    ).toEqual({
-      instanceId: instance.id,
-      instanceSelector: [instance.id, "body"],
-    });
-  });
-
-  test("uses the same mixed-content classification for Link to Text redirection", () => {
-    const text = {
-      type: "instance" as const,
-      id: "text",
-      component: "Text",
-      children: [
-        { type: "text" as const, value: "Hello " },
-        { type: "expression" as const, value: "name" },
-      ],
-    };
-    const link = {
-      type: "instance" as const,
-      id: "link",
-      component: "Link",
-      children: [{ type: "id" as const, value: text.id }],
-    };
-
-    expect(
-      getTextContentTarget({
-        instance: link,
-        instances: new Map<string, Instance>([
-          [link.id, link],
-          [text.id, text],
-        ]),
-        supported: false,
-        isContentMode: true,
-        selectedInstanceSelector: [link.id, "body"],
-      })
-    ).toEqual({
-      instanceId: text.id,
-      instanceSelector: [text.id, link.id, "body"],
-    });
   });
 });

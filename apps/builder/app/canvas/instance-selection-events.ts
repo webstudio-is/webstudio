@@ -24,7 +24,6 @@ import {
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
 import { isTextEditableInContentMode } from "./shared/content-mode";
-import { isSimpleTextContent } from "~/shared/instance-utils/content";
 
 type SelectionAnchor = {
   current: undefined | InstanceSelector;
@@ -137,14 +136,9 @@ const handleEdit = (
     htmlTagsByInstanceId: $propsIndex.get().htmlTagsByInstanceId,
   });
 
-  if (editableInstanceSelector !== undefined) {
-    const editableInstance = instances.get(editableInstanceSelector[0]);
-    if (
-      editableInstance === undefined ||
-      isSimpleTextContent({ instance: editableInstance, instances }) === false
-    ) {
-      editableInstanceSelector = undefined;
-    }
+  const selectedInstance = instances.get(instanceSelector[0]);
+  if (selectedInstance?.children.some((child) => child.type === "expression")) {
+    editableInstanceSelector = undefined;
   }
 
   // Do not allow edit bindable text instances with expression children in Content Mode

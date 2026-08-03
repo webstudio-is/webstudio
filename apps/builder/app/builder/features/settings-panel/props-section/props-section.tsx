@@ -144,7 +144,6 @@ const renderProperty = (
   return renderControl({
     key: propName,
     instanceId: targetInstanceId,
-    instanceSelector: item.instanceSelector,
     meta,
     prop,
     computedValue:

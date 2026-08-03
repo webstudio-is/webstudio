@@ -2502,18 +2502,10 @@ describe("builder runtime registry", () => {
     expect(
       builderRuntimeOperations.map((operation) => operation.id)
     ).not.toContain("system.migrateLoadedData");
-    expect(
-      builderRuntimeOperations.map((operation) => operation.id)
-    ).not.toContain("system.updateContentPart");
     expectRuntimeValidationError(
       "system.migrateLoadedData",
       { unexpected: true },
       { constraint: "recognized_keys_only" }
-    );
-    expectRuntimeValidationError(
-      "system.updateContentPart",
-      {},
-      { path: ["instanceId"], constraint: "type:string" }
     );
   });
 

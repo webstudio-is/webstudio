@@ -26,8 +26,6 @@ beforeEach(() => {
   $instances.set(new Map());
   $textEditingInstanceSelector.set(undefined);
   $ephemeralStyles.set([]);
-  $instances.set(new Map());
-  $textEditingInstanceSelector.set(undefined);
   abortController = new AbortController();
   subscribeInstanceSelection({ signal: abortController.signal });
 });
@@ -131,7 +129,7 @@ describe("canvas instance selection", () => {
     expect($ephemeralStyles.get()).toEqual([]);
   });
 
-  test("double click selects the owning instance without editing a mixed child sequence", () => {
+  test("double click selects a bound text instance without entering the rich text editor", () => {
     $instances.set(
       new Map([
         [
