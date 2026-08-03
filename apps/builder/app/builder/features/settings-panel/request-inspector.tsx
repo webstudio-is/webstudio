@@ -13,6 +13,11 @@ import {
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 
+export const clearSettledDiagnosticsKey = (
+  pendingKey: string | undefined,
+  settledKey: string
+) => (pendingKey === settledKey ? undefined : pendingKey);
+
 export const RequestDiagnosticsContent = ({
   children,
 }: {

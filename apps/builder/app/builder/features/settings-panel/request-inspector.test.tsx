@@ -4,7 +4,10 @@
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
-import { RequestInspector } from "./request-inspector";
+import {
+  clearSettledDiagnosticsKey,
+  RequestInspector,
+} from "./request-inspector";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -16,6 +19,15 @@ afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   document.body.innerHTML = "";
+});
+
+test("keeps the current diagnostics request pending when an older one settles", () => {
+  expect(clearSettledDiagnosticsKey("resource-b", "resource-a")).toBe(
+    "resource-b"
+  );
+  expect(clearSettledDiagnosticsKey("resource-b", "resource-b")).toBe(
+    undefined
+  );
 });
 
 const renderInspector = (

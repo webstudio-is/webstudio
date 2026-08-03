@@ -61,7 +61,10 @@ import { getSlotFragmentDropTargetMutable } from "./slot";
 import type { ConflictResolution } from "./style-copy";
 import { findPageAndSelectorByInstanceId } from "./lookup";
 import { validateFragmentHtmlEmbedCode } from "./html-embed";
-import { isTreeSatisfyingContentModel } from "./content-model";
+import {
+  getFragmentPlacementContentModelWarnings,
+  getNewFragmentContentModelWarnings,
+} from "./matcher";
 import { z } from "zod";
 
 const conflictResolutionInput = z.enum(["ours", "theirs", "merge"]);
@@ -88,12 +91,6 @@ export const insertFragmentInput = z
     ),
     conflictResolution: conflictResolutionInput.optional(),
     contentMode: z.boolean().optional(),
-    allowContentModelWarnings: z
-      .boolean()
-      .optional()
-      .describe(
-        "Allow legacy invalid content copied from existing projects to be pasted with a warning."
-      ),
     mode: instanceInsertModeInput.optional(),
     insertIndex: insertIndexInput.optional(),
   })
@@ -802,26 +799,27 @@ const createInsertFragmentMutation = <
         validationInstances,
         parent.id
       );
-    let contentModelError: string | undefined;
-    const isContentModelValid = insertedChildren.every((child) => {
-      if (child.type !== "id") {
-        return true;
-      }
-      return isTreeSatisfyingContentModel({
-        instances: validationInstances,
-        props: nextData.props,
-        metas: componentMetas,
-        instanceSelector: [child.value, ...parentSelector],
-        onError: (message) => {
-          contentModelError ??= message;
-        },
-      });
+    const allowedWarnings = context.allowLegacyContentModelWarnings
+      ? getFragmentPlacementContentModelWarnings({
+          children: insertedChildren,
+          instances: validationInstances,
+          props: nextData.props,
+          metas: componentMetas,
+        })
+      : [];
+    const warnings = getFragmentPlacementContentModelWarnings({
+      children: insertedChildren,
+      instances: validationInstances,
+      props: nextData.props,
+      metas: componentMetas,
+      parentSelector,
     });
-    if (isContentModelValid === false) {
-      return throwBuilderRuntimeError(
-        "BAD_REQUEST",
-        contentModelError ?? "Inserted fragment violates the content model"
-      );
+    const [contentModelError] = getNewFragmentContentModelWarnings({
+      warnings,
+      allowedWarnings,
+    });
+    if (contentModelError !== undefined) {
+      return throwBuilderRuntimeError("BAD_REQUEST", contentModelError.message);
     }
   }
 
@@ -1139,7 +1137,6 @@ export const insertFragment = (
     insertIndex: input.insertIndex,
     conflictResolution: input.conflictResolution,
     contentMode: input.contentMode,
-    validateContentModel: input.allowContentModelWarnings !== true,
     context,
   });
 };

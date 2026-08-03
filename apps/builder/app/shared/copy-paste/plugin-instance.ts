@@ -227,12 +227,12 @@ const insertPastedFragment = async ({
         parentInstanceId: pasteTarget.parentSelector[0],
         fragment,
         conflictResolution,
-        allowContentModelWarnings: true,
         insertIndex:
           typeof pasteTarget.position === "number"
             ? pasteTarget.position
             : undefined,
       },
+      context: { allowLegacyContentModelWarnings: true },
     });
     const rootInstanceIds = result?.result.rootInstanceIds;
     if (rootInstanceIds === undefined || rootInstanceIds.length === 0) {
