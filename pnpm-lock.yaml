@@ -540,6 +540,12 @@ importers:
       '@react-router/serve':
         specifier: ^7.5.3
         version: 7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2)
+      '@shikijs/langs':
+        specifier: 4.4.1
+        version: 4.4.1
+      '@shikijs/themes':
+        specifier: 4.4.1
+        version: 4.4.1
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -576,6 +582,9 @@ importers:
       react-router:
         specifier: ^7.5.3
         version: 7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      shiki:
+        specifier: 4.4.1
+        version: 4.4.1
       vite:
         specifier: 6.3.4
         version: 6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0)
@@ -610,6 +619,12 @@ importers:
       '@react-router/serve':
         specifier: ^7.5.3
         version: 7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2)
+      '@shikijs/langs':
+        specifier: 4.4.1
+        version: 4.4.1
+      '@shikijs/themes':
+        specifier: 4.4.1
+        version: 4.4.1
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -652,6 +667,9 @@ importers:
       react-router:
         specifier: ^7.5.3
         version: 7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      shiki:
+        specifier: 4.4.1
+        version: 4.4.1
       vite:
         specifier: 6.3.4
         version: 6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0)
@@ -686,6 +704,12 @@ importers:
       '@react-router/serve':
         specifier: ^7.5.3
         version: 7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2)
+      '@shikijs/langs':
+        specifier: 4.4.1
+        version: 4.4.1
+      '@shikijs/themes':
+        specifier: 4.4.1
+        version: 4.4.1
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -722,6 +746,9 @@ importers:
       react-router:
         specifier: ^7.5.3
         version: 7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      shiki:
+        specifier: 4.4.1
+        version: 4.4.1
       vite:
         specifier: 6.3.4
         version: 6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0)
@@ -753,6 +780,12 @@ importers:
       '@react-router/serve':
         specifier: ^7.5.3
         version: 7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2)
+      '@shikijs/langs':
+        specifier: 4.4.1
+        version: 4.4.1
+      '@shikijs/themes':
+        specifier: 4.4.1
+        version: 4.4.1
       '@vercel/react-router':
         specifier: ^1.1.0
         version: 1.1.0(@react-router/dev@7.5.3(@react-router/serve@7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(tsx@4.19.3)(typescript@7.0.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(wrangler@4.14.1)(yaml@2.9.0))(@react-router/node@7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2))(isbot@5.1.25)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -792,6 +825,9 @@ importers:
       react-router:
         specifier: ^7.5.3
         version: 7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      shiki:
+        specifier: 4.4.1
+        version: 4.4.1
       vite:
         specifier: 6.3.4
         version: 6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0)
@@ -811,6 +847,12 @@ importers:
 
   fixtures/ssg-cloudflare-pages:
     dependencies:
+      '@shikijs/langs':
+        specifier: 4.4.1
+        version: 4.4.1
+      '@shikijs/themes':
+        specifier: 4.4.1
+        version: 4.4.1
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -841,6 +883,9 @@ importers:
       react-dom:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
+      shiki:
+        specifier: 4.4.1
+        version: 4.4.1
       vike:
         specifier: ^0.4.229
         version: 0.4.229(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))
@@ -866,6 +911,12 @@ importers:
 
   fixtures/ssg-netlify-by-project-id:
     dependencies:
+      '@shikijs/langs':
+        specifier: 4.4.1
+        version: 4.4.1
+      '@shikijs/themes':
+        specifier: 4.4.1
+        version: 4.4.1
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -896,6 +947,9 @@ importers:
       react-dom:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
+      shiki:
+        specifier: 4.4.1
+        version: 4.4.1
       vike:
         specifier: ^0.4.229
         version: 0.4.229(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))
@@ -936,6 +990,12 @@ importers:
       '@remix-run/server-runtime':
         specifier: 2.16.5
         version: 2.16.5(typescript@7.0.2)
+      '@shikijs/langs':
+        specifier: 4.4.1
+        version: 4.4.1
+      '@shikijs/themes':
+        specifier: 4.4.1
+        version: 4.4.1
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -969,6 +1029,9 @@ importers:
       react-dom:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
+      shiki:
+        specifier: 4.4.1
+        version: 4.4.1
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -1021,6 +1084,12 @@ importers:
       '@react-router/serve':
         specifier: ^7.5.3
         version: 7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2)
+      '@shikijs/langs':
+        specifier: 4.4.1
+        version: 4.4.1
+      '@shikijs/themes':
+        specifier: 4.4.1
+        version: 4.4.1
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -1057,6 +1126,9 @@ importers:
       react-router:
         specifier: ^7.5.3
         version: 7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      shiki:
+        specifier: 4.4.1
+        version: 4.4.1
       vite:
         specifier: 6.3.4
         version: 6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0)

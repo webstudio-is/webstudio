@@ -16,7 +16,7 @@ import { tmpdir } from "node:os";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { bundleVersion } from "@webstudio-is/protocol";
-import type { Asset } from "@webstudio-is/sdk";
+import type { Asset, Prop } from "@webstudio-is/sdk";
 import {
   createDocumentGraph,
   type AssetFileDocument,
@@ -148,6 +148,7 @@ const createSiteData = (
         },
       ]
     >;
+    props?: Array<[string, Prop]>;
     pageMeta?: Record<string, unknown>;
     redirects?: Redirects;
   } = {}
@@ -227,7 +228,7 @@ const createSiteData = (
           },
         ],
       },
-      props: [],
+      props: overrides.props ?? [],
       instances: (
         overrides.instances ?? [
           [
@@ -636,6 +637,96 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test("imports only configured Code Text language and theme assets", async () => {
+    await writeSiteData(
+      createSiteData({
+        instances: [
+          [
+            "root",
+            {
+              id: "root",
+              component: "Box",
+              children: [
+                { type: "id", value: "code-1" },
+                { type: "id", value: "code-2" },
+              ],
+            },
+          ],
+          ["code-1", { id: "code-1", component: "CodeText", children: [] }],
+          ["code-2", { id: "code-2", component: "CodeText", children: [] }],
+        ],
+        props: [
+          [
+            "code-1-code",
+            {
+              id: "code-1-code",
+              instanceId: "code-1",
+              name: "code",
+              type: "string",
+              value: "const answer = 42;",
+            },
+          ],
+          [
+            "code-1-lang",
+            {
+              id: "code-1-lang",
+              instanceId: "code-1",
+              name: "lang",
+              type: "string",
+              value: "javascript",
+            },
+          ],
+          [
+            "code-1-theme",
+            {
+              id: "code-1-theme",
+              instanceId: "code-1",
+              name: "theme",
+              type: "string",
+              value: "github-light",
+            },
+          ],
+          [
+            "code-2-lang",
+            {
+              id: "code-2-lang",
+              instanceId: "code-2",
+              name: "lang",
+              type: "string",
+              value: "javascript",
+            },
+          ],
+          [
+            "code-2-theme",
+            {
+              id: "code-2-theme",
+              instanceId: "code-2",
+              name: "theme",
+              type: "string",
+              value: "nord",
+            },
+          ],
+        ],
+      })
+    );
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    const generatedPage = await readFile(
+      "app/__generated__/_index.tsx",
+      "utf8"
+    );
+    expect(generatedPage).toContain('from "@shikijs/langs/javascript"');
+    expect(generatedPage.match(/@shikijs\/langs\/javascript/g)).toHaveLength(1);
+    expect(generatedPage).toContain('from "@shikijs/themes/github-light"');
+    expect(generatedPage).toContain('from "@shikijs/themes/nord"');
+    expect(generatedPage).toContain(
+      'from "@webstudio-is/sdk-components-react/code-text"'
+    );
+    expect(generatedPage).not.toContain("@shikijs/langs/css");
+    expect(generatedPage).not.toContain("@shikijs/themes/dracula");
+  });
+
   test("emits the identity marker only for local previews", async () => {
     await prebuild({
       assets: false,

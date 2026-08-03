@@ -42,6 +42,9 @@
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "vike": "^0.4.229",
-    "@webstudio-is/wsauth": "workspace:*"
+    "@webstudio-is/wsauth": "workspace:*",
+    "@shikijs/langs": "4.4.1",
+    "@shikijs/themes": "4.4.1",
+    "shiki": "4.4.1"
   }
 }

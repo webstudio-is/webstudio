@@ -99,6 +99,7 @@ import { formatZodIssues } from "./zod-utils";
 import { createFramework as createRemixFramework } from "./framework-remix";
 import { createFramework as createReactRouterFramework } from "./framework-react-router";
 import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
+import { codeTextComponent, collectCodeTextAssets } from "./code-text";
 
 export const generatedFilesManifest = join(
   ".webstudio",
@@ -1126,10 +1127,19 @@ export const prebuild = async (options: {
       }
     }
 
+    const props = new Map(pageData.build.props);
+    const codeTextAssets = collectCodeTextAssets({ instances, props });
+
     // generate component imports
     // Map<importSource, Map<id, importSpecifier>>
     const imports = new Map<string, Map<string, string>>();
     for (const instance of instances.values()) {
+      if (
+        codeTextAssets !== undefined &&
+        instance.component === codeTextComponent
+      ) {
+        continue;
+      }
       let descriptor = framework.components[instance.component];
       let id = instance.component;
       if (instance.component === elementComponent && instance.tag) {
@@ -1158,10 +1168,34 @@ export const prebuild = async (options: {
       importsString += `import { ${specifiersString} } from "${importSource}";\n`;
     }
 
+    let codeTextSetupString = "";
+    if (codeTextAssets !== undefined) {
+      const createCodeTextName = scope.getName(
+        "code-text-factory",
+        "createCodeText"
+      );
+      const codeTextName = scope.getName(codeTextComponent, "CodeText");
+      importsString += `import { createCodeText as ${createCodeTextName} } from "@webstudio-is/sdk-components-react/code-text";\n`;
+
+      const languageNames = codeTextAssets.languages.map((language) => {
+        const name = scope.getName(
+          `code-text-language-${language}`,
+          `${language}Language`
+        );
+        importsString += `import ${name} from "@shikijs/langs/${language}";\n`;
+        return name;
+      });
+      const themeNames = codeTextAssets.themes.map((theme) => {
+        const name = scope.getName(`code-text-theme-${theme}`, `${theme}Theme`);
+        importsString += `import ${name} from "@shikijs/themes/${theme}";\n`;
+        return name;
+      });
+      codeTextSetupString = `const ${codeTextName} = ${createCodeTextName}({ languages: [${languageNames.join(", ")}], themes: [${themeNames.join(", ")}] });`;
+    }
+
     const pageFontAssets = fontAssetsByPage[page.id];
     const pageBackgroundImageAssets = backgroundImageAssetsByPage[page.id];
 
-    const props = new Map(pageData.build.props);
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
     replaceFormActionsWithResources({
@@ -1219,7 +1253,7 @@ export const prebuild = async (options: {
 
       import { Fragment, useState } from "react";
       import { renderText, useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-      ${importsString}
+      ${importsString}${codeTextSetupString}
 
       export const projectId = "${siteData.build.projectId}";
 
