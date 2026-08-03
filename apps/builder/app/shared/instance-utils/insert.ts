@@ -209,6 +209,9 @@ export const insertWebstudioFragmentAt = (
       contentMode: options?.contentMode,
       insertIndex: target.insertIndex,
     },
+    context: {
+      allowLegacyContentModelWarnings: options?.allowContentModelWarnings,
+    },
   });
   const newInstanceId = result?.result.rootInstanceIds[0];
   if (result !== undefined && newInstanceId !== undefined) {

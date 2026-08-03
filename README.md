@@ -12,8 +12,6 @@
 - [Documentation](https://docs.webstudio.is/)
 - [Brand and Product Design](https://docs.webstudio.is/contributing/contributing-for-designers)
 - [Contributing Guide for Devs](https://docs.webstudio.is/contributing/contributing-for-developers)
-- [Github Discussions](https://github.com/webstudio-is/webstudio-community/discussions)
-- [Wishlist](https://github.com/webstudio-is/webstudio-community/discussions/categories/wishlist)
 - [Builder Issues Tracker](https://github.com/webstudio-is/webstudio/issues)
 - [Roadmap](https://github.com/orgs/webstudio-is/projects/11)
 

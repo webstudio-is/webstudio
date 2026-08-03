@@ -232,6 +232,7 @@ const insertPastedFragment = async ({
             ? pasteTarget.position
             : undefined,
       },
+      context: { allowLegacyContentModelWarnings: true },
     });
     const rootInstanceIds = result?.result.rootInstanceIds;
     if (rootInstanceIds === undefined || rootInstanceIds.length === 0) {

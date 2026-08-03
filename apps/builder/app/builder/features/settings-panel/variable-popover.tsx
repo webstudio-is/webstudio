@@ -98,7 +98,10 @@ import {
 } from "~/shared/resources";
 import { Row } from "./shared";
 import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
-import { RequestInspector } from "./request-inspector";
+import {
+  clearSettledDiagnosticsKey,
+  RequestInspector,
+} from "./request-inspector";
 import { ContentDatabaseDiagnostics } from "./content-database-diagnostics";
 import {
   getRequestErrorDiagnostics,
@@ -687,6 +690,7 @@ const VariablePreview = ({
   queryActive: boolean;
   queryContainerRef: (element: HTMLDivElement | null) => void;
 }) => {
+  const [pendingDiagnosticsKey, setPendingDiagnosticsKey] = useState<string>();
   const isResource =
     variableType === "resource" ||
     variableType === "graphql-resource" ||
@@ -700,6 +704,7 @@ const VariablePreview = ({
   let computedValue: unknown;
   let resourceDiagnostics: AssetQueryPreviewDiagnostics | undefined;
   let computedResourceRequest: ResourceRequest | undefined;
+  let computedResourceKey: string | undefined;
   if (variableType === "string" || variableType === "boolean") {
     computedValue = variableValue;
   } else if (variableType === "json") {
@@ -726,6 +731,7 @@ const VariablePreview = ({
     if (parsedResourceRequest) {
       computedResourceRequest = parsedResourceRequest;
       const resourceKey = getResourceKey(parsedResourceRequest);
+      computedResourceKey = resourceKey;
       computedValue = resourcesCache.get(resourceKey);
       resourceDiagnostics = resourceDiagnosticsCache.get(resourceKey);
     }
@@ -785,9 +791,20 @@ const VariablePreview = ({
         isAssetsResourceRequest(computedResourceRequest) &&
         resourceDiagnostics?.artifacts === undefined
           ? () => {
-              void loadResourceDiagnostics(computedResourceRequest);
+              const diagnosticsKey = getResourceKey(computedResourceRequest);
+              setPendingDiagnosticsKey(diagnosticsKey);
+              void loadResourceDiagnostics(computedResourceRequest).finally(
+                () =>
+                  setPendingDiagnosticsKey((pendingKey) =>
+                    clearSettledDiagnosticsKey(pendingKey, diagnosticsKey)
+                  )
+              );
             }
           : undefined
+      }
+      diagnosticsPending={
+        pendingDiagnosticsKey === computedResourceKey &&
+        resourceDiagnostics === undefined
       }
       diagnostics={
         requestErrorDiagnostics !== undefined ? (

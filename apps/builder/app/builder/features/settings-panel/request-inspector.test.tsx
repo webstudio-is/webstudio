@@ -4,7 +4,10 @@
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
-import { RequestInspector } from "./request-inspector";
+import {
+  clearSettledDiagnosticsKey,
+  RequestInspector,
+} from "./request-inspector";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -16,6 +19,15 @@ afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   document.body.innerHTML = "";
+});
+
+test("keeps the current diagnostics request pending when an older one settles", () => {
+  expect(clearSettledDiagnosticsKey("resource-b", "resource-a")).toBe(
+    "resource-b"
+  );
+  expect(clearSettledDiagnosticsKey("resource-b", "resource-b")).toBe(
+    undefined
+  );
 });
 
 const renderInspector = (
@@ -64,9 +76,41 @@ test("loads diagnostics when their tab is opened", () => {
     container.querySelectorAll<HTMLElement>('[role="tab"]')
   ).find(({ textContent }) => textContent === "Diagnostics");
 
-  act(() => diagnostics?.click());
+  act(() => {
+    diagnostics?.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, button: 0 })
+    );
+    diagnostics?.click();
+  });
 
   expect(onDiagnosticsOpen).toHaveBeenCalledOnce();
+});
+
+test("shows when diagnostics are loading", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      <RequestInspector
+        preview={<div>Preview content</div>}
+        diagnosticsPending
+      />
+    );
+  });
+  const diagnostics = Array.from(
+    container.querySelectorAll<HTMLElement>('[role="tab"]')
+  ).find(({ textContent }) => textContent === "Diagnostics");
+
+  act(() => {
+    diagnostics?.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, button: 0 })
+    );
+    diagnostics?.click();
+  });
+
+  expect(container.textContent).toContain("Loading diagnostics...");
+  expect(container.textContent).not.toContain("No diagnostics available");
 });
 
 test("keeps preview first when no query editor is available", () => {

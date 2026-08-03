@@ -450,6 +450,34 @@ describe("insert webstudio fragment at", () => {
     );
   });
 
+  test("allows legacy fragment warnings through the internal paste context", async () => {
+    $pages.set(
+      createDefaultPages({ homePageId: "homePageId", rootInstanceId: "bodyId" })
+    );
+    selectPage("homePageId");
+    $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
+    const onContentModelWarnings = vi.fn();
+
+    const inserted = insertWebstudioFragmentAt(
+      renderTemplate(
+        <ws.element ws:id="button" ws:tag="button">
+          <ws.element ws:id="heading" ws:tag="h3" />
+        </ws.element>
+      ),
+      { parentSelector: ["bodyId"], position: "end" },
+      undefined,
+      { allowContentModelWarnings: true, onContentModelWarnings }
+    );
+
+    expect(inserted).toBe(true);
+    expect($instances.get().get("bodyId")?.children).toHaveLength(1);
+    expect(onContentModelWarnings).toHaveBeenCalledWith([
+      expect.objectContaining({
+        message: "Placing <h3> element inside a <button> violates HTML spec.",
+      }),
+    ]);
+  });
+
   test("returns false for empty fragments", async () => {
     expect(await insertWebstudioFragmentAt(createFragment({}))).toBe(false);
   });

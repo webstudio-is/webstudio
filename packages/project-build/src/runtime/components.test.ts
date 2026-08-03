@@ -591,6 +591,97 @@ test("rejects invalid HtmlEmbed code from externally authored fragments", async 
   ).toThrow("Entered HTML has a validation error");
 });
 
+test("rejects fragment trees that violate the HTML content model", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="a"><ws.element ws:tag="span"><ws.element ws:tag="a">Nested link</ws.element></ws.element></ws.element>`
+  );
+
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory() }
+    )
+  ).toThrow("Placing <a> element inside a <span> violates HTML spec.");
+});
+
+test("rejects fragments that violate the destination HTML content model", async () => {
+  const parent: Instance = {
+    ...createParent(),
+    tag: "a",
+  };
+  const root: Instance = {
+    ...createParent(),
+    id: "root",
+    tag: "body",
+    children: [{ type: "id", value: parent.id }],
+  };
+  const state = createState(root);
+  state.instances.set(parent.id, parent);
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="span"><ws.element ws:tag="button">Action</ws.element></ws.element>`
+  );
+
+  expect(() =>
+    insertFragment(
+      state,
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory() }
+    )
+  ).toThrow("Placing <button> element inside a <span> violates HTML spec.");
+});
+
+test("allows legacy invalid fragments when warnings are explicitly enabled", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="button"><ws.element ws:tag="h3">Legacy heading</ws.element></ws.element>`
+  );
+
+  const mutation = insertFragment(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      fragment,
+    },
+    {
+      createId: createIdFactory(),
+      allowLegacyContentModelWarnings: true,
+    }
+  );
+
+  expect(mutation.result.rootInstanceIds).toEqual(["generated-0"]);
+});
+
+test("rejects new placement violations while allowing legacy fragment warnings", async () => {
+  const parent: Instance = {
+    ...createParent(),
+    tag: "a",
+  };
+  const root: Instance = {
+    ...createParent(),
+    id: "root",
+    tag: "body",
+    children: [{ type: "id", value: parent.id }],
+  };
+  const state = createState(root);
+  state.instances.set(parent.id, parent);
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="button"><ws.element ws:tag="h3">Legacy heading</ws.element></ws.element>`
+  );
+
+  expect(() =>
+    insertFragment(
+      state,
+      { parentInstanceId: parent.id, fragment },
+      {
+        createId: createIdFactory(),
+        allowLegacyContentModelWarnings: true,
+      }
+    )
+  ).toThrow("Placing <button> element inside a <a> violates HTML spec.");
+});
+
 test("rejects tag when inserting non-element component", async () => {
   const parent = createParent();
 
