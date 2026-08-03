@@ -4526,6 +4526,9 @@ describe("project session mcp adapter", () => {
         workflow: expect.arrayContaining([
           expect.stringContaining("do not use update-page custom metadata"),
           expect.stringContaining("Insert JsonLd under HeadSlot"),
+          expect.stringContaining("expression that evaluates directly"),
+          expect.stringContaining("evaluated result must not be a string"),
+          expect.stringContaining("Do not call JSON.stringify"),
           expect.stringContaining("Run audit"),
         ]),
         tools: expect.arrayContaining([
@@ -5457,8 +5460,10 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         component: "JsonLd",
         description: expect.stringContaining("JSON-LD structured data"),
-        jsonLdUsage: expect.stringMatching(/inside HeadSlot.*Schema\.org/),
-        usage: expect.stringContaining("update-props"),
+        jsonLdUsage: expect.stringMatching(
+          /inside HeadSlot.*Do not call JSON\.stringify.*Schema\.org/
+        ),
+        usage: expect.stringMatching(/update-props.*bind-props/),
         props: expect.objectContaining({
           code: expect.objectContaining({
             control: "json-code",
