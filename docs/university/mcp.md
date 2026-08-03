@@ -7,7 +7,7 @@ icon: robot
 
 <!-- Generated from the local Webstudio CLI with `webstudio man mcp --verbose`. Do not edit directly. -->
 
-# Webstudio MCP v0.0.0-webstudio-version
+# Webstudio MCP v0.285.0
 
 {% hint style="info" %}
 This reference is generated from the Webstudio CLI source in the same Builder
