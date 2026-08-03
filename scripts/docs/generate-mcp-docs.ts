@@ -5,9 +5,20 @@ import { fileURLToPath } from "node:url";
 
 const manualTitle = "# Webstudio MCP Manual";
 const manualPlaceholder = "{{manual}}";
+const versionPlaceholder = "{{version}}";
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
 const outputPath = resolve(repositoryRoot, "docs/university/mcp.md");
 const template = readFileSync(new URL("mcp-page.md", import.meta.url), "utf8");
+
+const getCliVersion = () => {
+  const packageJson = JSON.parse(
+    readFileSync(resolve(repositoryRoot, "packages/cli/package.json"), "utf8")
+  ) as { version?: unknown };
+  if (typeof packageJson.version !== "string") {
+    throw new Error("Expected the CLI package to have a version.");
+  }
+  return packageJson.version;
+};
 
 const getMcpManual = () =>
   execFileSync(
@@ -31,7 +42,7 @@ const getMcpManual = () =>
     }
   ).trim();
 
-export const renderMcpDocumentation = (manual: string) => {
+export const renderMcpDocumentation = (manual: string, version: string) => {
   const normalizedManual = manual.replaceAll("\r\n", "\n").trim();
   if (normalizedManual.startsWith(`${manualTitle}\n`) === false) {
     throw new Error(
@@ -45,11 +56,20 @@ export const renderMcpDocumentation = (manual: string) => {
       `Expected one ${manualPlaceholder} placeholder, found ${placeholderCount}.`
     );
   }
-  return template.replace(manualPlaceholder, manualBody);
+  if (version.trim() === "") {
+    throw new Error("Expected a CLI version.");
+  }
+  return template
+    .replace(versionPlaceholder, version)
+    .replace(manualPlaceholder, manualBody);
 };
 
 export const generateMcpDocumentation = () => {
-  writeFileSync(outputPath, renderMcpDocumentation(getMcpManual()), "utf8");
+  writeFileSync(
+    outputPath,
+    renderMcpDocumentation(getMcpManual(), getCliVersion()),
+    "utf8"
+  );
 };
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

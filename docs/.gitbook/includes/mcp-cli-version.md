@@ -1,1 +1,0 @@
-**Webstudio MCP development version**
