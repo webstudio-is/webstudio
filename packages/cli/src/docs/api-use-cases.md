@@ -528,12 +528,14 @@ Commands:
 - MCP tool: components.get {"component":"JsonLd"}
 - MCP tool: insert-component {"parentInstanceId":"<headSlotInstanceId>","component":"JsonLd"}
 - MCP tool: update-props {"updates":[{"instanceId":"<jsonLdInstanceId>","name":"code","type":"string","value":"{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"name\":\"Acme\"}"}]}
+- MCP tool: bind-props {"bindings":[{"instanceId":"<jsonLdInstanceId>","name":"code","binding":{"type":"expression","value":"({ '@context': 'https://schema.org', '@type': 'Article', headline: post.title })"}}]}
 - MCP tool: audit {"scopes":["seo"],"pagePath":"/"}
 
 Notes:
 
 - Prefer placing `JsonLd` inside `HeadSlot`.
-- Store `code` as a JSON object or array encoded as a compact string. The Builder formats it for editing.
+- For fixed structured data, store `code` as a JSON object or array encoded as a compact string. The Builder formats it for editing.
+- For structured data containing runtime values, use `bind-props` with an expression that evaluates directly to an object or array. Do not call `JSON.stringify` or assemble JSON with string concatenation. Webstudio stores the expression as source text, evaluates it at runtime, and the `JsonLd` component validates and serializes the resulting value.
 - The semantic prop update rejects malformed JSON and structurally invalid fixed JSON-LD with a precise JSON path.
 - The SEO audit also warns about a missing top-level `@context`, unknown or superseded Schema.org terms, properties unsupported by the supplied type, and incompatible primitive value types.
 - Schema.org vocabulary findings are warnings because custom vocabularies and extensions remain valid. Dynamic JSON-LD is marked as skipped for rendered validation.

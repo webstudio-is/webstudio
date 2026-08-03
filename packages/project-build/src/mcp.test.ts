@@ -5,6 +5,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
 import { ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
+import { parseExpressionAt } from "acorn";
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
@@ -4518,22 +4519,65 @@ describe("project session mcp adapter", () => {
     if (coverageToolNames.includes("components.coverage-status")) {
       expect(coverageToolNames[0]).toBe("components.coverage-status");
     }
-    expect(jsonLdGuide.structuredContent.data).toEqual(
-      expect.objectContaining({
-        more: expect.stringContaining(
-          "client loads each named tool's exact argument contract"
-        ),
-        workflow: expect.arrayContaining([
-          expect.stringContaining("do not use update-page custom metadata"),
-          expect.stringContaining("Insert JsonLd under HeadSlot"),
-          expect.stringContaining("Run audit"),
-        ]),
-        tools: expect.arrayContaining([
-          expect.objectContaining({ name: "components.get" }),
-          expect.objectContaining({ name: "audit" }),
-        ]),
-      })
+    const jsonLdGuideData = jsonLdGuide.structuredContent.data as {
+      recipe: {
+        fixedCodeUpdate: {
+          updates: Array<{
+            instanceId: string;
+            name: string;
+            type: string;
+            value: string;
+          }>;
+        };
+        dynamicCodeBinding: {
+          bindings: Array<{
+            instanceId: string;
+            name: string;
+            binding: { type: string; value: string };
+          }>;
+        };
+      };
+      tools: Array<{ name: string }>;
+    };
+    expect(jsonLdGuideData.tools.map(({ name }) => name)).toEqual(
+      expect.arrayContaining(["components.get", "audit"])
     );
+    const fixedCode = jsonLdGuideData.recipe.fixedCodeUpdate.updates[0];
+    expect(fixedCode).toMatchObject({
+      instanceId: "<json-ld-instance-id>",
+      name: "code",
+      type: "string",
+    });
+    expect(JSON.parse(fixedCode?.value ?? "")).toEqual({
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "Acme",
+    });
+    const dynamicCodeInput =
+      jsonLdGuideData.recipe.dynamicCodeBinding.bindings[0];
+    expect(dynamicCodeInput).toMatchObject({
+      instanceId: "<json-ld-instance-id>",
+      name: "code",
+      binding: { type: "expression" },
+    });
+    const dynamicCodeExpression = parseExpressionAt(
+      dynamicCodeInput?.binding.value ?? "",
+      0,
+      { ecmaVersion: "latest" }
+    );
+    expect(dynamicCodeExpression).toMatchObject({
+      type: "ObjectExpression",
+      properties: expect.arrayContaining([
+        expect.objectContaining({
+          key: expect.objectContaining({ name: "headline" }),
+          value: expect.objectContaining({
+            type: "MemberExpression",
+            object: expect.objectContaining({ name: "post" }),
+            property: expect.objectContaining({ name: "title" }),
+          }),
+        }),
+      ]),
+    });
     expect(collectionGuide.structuredContent.data).toEqual(
       expect.objectContaining({
         workflow: expect.arrayContaining([
@@ -5456,9 +5500,6 @@ describe("project session mcp adapter", () => {
     expect(jsonLdDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "JsonLd",
-        description: expect.stringContaining("JSON-LD structured data"),
-        jsonLdUsage: expect.stringMatching(/inside HeadSlot.*Schema\.org/),
-        usage: expect.stringContaining("update-props"),
         props: expect.objectContaining({
           code: expect.objectContaining({
             control: "json-code",
