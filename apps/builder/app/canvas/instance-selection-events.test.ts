@@ -2,8 +2,10 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import {
   $allSelectedInstanceSelectors,
+  $textEditingInstanceSelector,
   selectInstances,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import { subscribeInstanceSelection } from "./instance-selection-events";
 import { $ephemeralStyles } from "./stores";
 
@@ -21,7 +23,11 @@ let abortController: AbortController;
 beforeEach(() => {
   document.body.innerHTML = "";
   selectInstances([]);
+  $instances.set(new Map());
+  $textEditingInstanceSelector.set(undefined);
   $ephemeralStyles.set([]);
+  $instances.set(new Map());
+  $textEditingInstanceSelector.set(undefined);
   abortController = new AbortController();
   subscribeInstanceSelection({ signal: abortController.signal });
 });
@@ -123,5 +129,55 @@ describe("canvas instance selection", () => {
     );
 
     expect($ephemeralStyles.get()).toEqual([]);
+  });
+
+  test("double click selects the owning instance without editing a mixed child sequence", () => {
+    $instances.set(
+      new Map([
+        [
+          "reading-time",
+          {
+            type: "instance",
+            id: "reading-time",
+            component: "ws:element",
+            tag: "span",
+            children: [
+              { type: "text", value: " · " },
+              { type: "expression", value: 'readTime ?? ""' },
+            ],
+          },
+        ],
+        [
+          "paragraph",
+          {
+            type: "instance",
+            id: "paragraph",
+            component: "ws:element",
+            tag: "p",
+            children: [
+              { type: "text", value: "" },
+              { type: "id", value: "reading-time" },
+            ],
+          },
+        ],
+        [
+          "body",
+          {
+            type: "instance",
+            id: "body",
+            component: "Body",
+            children: [{ type: "id", value: "paragraph" }],
+          },
+        ],
+      ])
+    );
+    const readingTime = createElement("reading-time,paragraph,body");
+
+    readingTime.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      ["reading-time", "paragraph", "body"],
+    ]);
+    expect($textEditingInstanceSelector.get()).toBeUndefined();
   });
 });

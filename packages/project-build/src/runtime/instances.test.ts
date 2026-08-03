@@ -54,6 +54,7 @@ import {
   setTextContentMutable,
   unwrapInstance,
   updateTextTree,
+  updateContentPart,
   updateTextInstance,
   wrapInstance,
 } from "./instances";
@@ -89,6 +90,86 @@ const createInstance = (
     typeof componentOrChildren === "string"
       ? (children ?? [])
       : componentOrChildren,
+});
+
+describe("updateContentPart", () => {
+  const children: Instance["children"] = [
+    { type: "text", value: "Hello " },
+    { type: "id", value: "strong" },
+    { type: "expression", value: "name" },
+    { type: "text", value: "!" },
+  ];
+
+  test("replaces one primitive child and preserves every sibling", () => {
+    const result = updateContentPart(
+      {
+        instances: new Map([["parent", createInstance("parent", children)]]),
+      },
+      {
+        instanceId: "parent",
+        childIndex: 2,
+        expectedChild: { type: "expression", value: "name" },
+        replacement: { type: "text", value: "Oleg" },
+      }
+    );
+    const instances = new Map([
+      ["parent", createInstance("parent", structuredClone(children))],
+    ]);
+
+    applyBuilderPatchPayloadMutable((namespace) => {
+      if (namespace === "instances") {
+        return instances;
+      }
+      throw new Error(`Unexpected namespace: ${namespace}`);
+    }, result.payload);
+
+    expect(instances.get("parent")?.children).toEqual([
+      { type: "text", value: "Hello " },
+      { type: "id", value: "strong" },
+      { type: "text", value: "Oleg" },
+      { type: "text", value: "!" },
+    ]);
+  });
+
+  test("removes only the expected primitive child", () => {
+    const result = updateContentPart(
+      {
+        instances: new Map([["parent", createInstance("parent", children)]]),
+      },
+      {
+        instanceId: "parent",
+        childIndex: 2,
+        expectedChild: { type: "expression", value: "name" },
+      }
+    );
+
+    expect(result.payload[0]?.patches).toEqual([
+      { op: "remove", path: ["parent", "children", 2] },
+    ]);
+  });
+
+  test("rejects id children and stale expected children without a mutation", () => {
+    const state = {
+      instances: new Map([["parent", createInstance("parent", children)]]),
+    };
+
+    expect(() =>
+      updateContentPart(state, {
+        instanceId: "parent",
+        childIndex: 1,
+        expectedChild: { type: "text", value: "anything" },
+      })
+    ).toThrow("not text or expression");
+    expect(() =>
+      updateContentPart(state, {
+        instanceId: "parent",
+        childIndex: 0,
+        expectedChild: { type: "text", value: "stale" },
+        replacement: { type: "text", value: "changed" },
+      })
+    ).toThrow("changed since it was read");
+    expect(state.instances.get("parent")?.children).toEqual(children);
+  });
 });
 
 describe("canUnwrapInstancePath", () => {

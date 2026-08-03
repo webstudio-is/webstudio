@@ -70,6 +70,7 @@ type PropMetaByControl<Control> = Control extends string
   : never;
 export type ControlProps<Control> = {
   instanceId: string;
+  instanceSelector?: string[];
   meta: PropMetaByControl<Control>;
   // prop is optional because we don't have it when an intial prop is not set
   // and we don't want to show user something like a 0 for number when it's in fact not set to any value

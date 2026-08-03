@@ -1,6 +1,6 @@
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
+import type { PropMeta, Instance, Instances, Prop } from "@webstudio-is/sdk";
 import { descendantComponent } from "@webstudio-is/sdk";
 import {
   getContentModeCapabilities,
@@ -34,6 +34,7 @@ import {
   $selectedInstancePropsMetas,
   type PropValue,
 } from "../shared";
+import { classifyInstanceContent } from "~/shared/instance-utils/content";
 
 type PropOrName = { prop?: Prop; propName: string };
 
@@ -100,9 +101,65 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
   return value;
 };
 
+const getTextContentTarget = ({
+  instance,
+  instances,
+  supported,
+  isContentMode,
+  selectedInstanceSelector,
+}: {
+  instance: Instance;
+  instances: Instances;
+  supported: boolean;
+  isContentMode: boolean;
+  selectedInstanceSelector?: Instance["id"][];
+}) => {
+  const contentMode = classifyInstanceContent({
+    instance,
+    instances,
+    supported,
+  });
+  if (contentMode.type === "simple" || contentMode.type === "parts") {
+    return {
+      instanceId: instance.id,
+      instanceSelector: selectedInstanceSelector,
+    };
+  }
+
+  if (isContentMode && instance.component === "Link") {
+    const [child] = instance.children;
+    if (child?.type !== "id") {
+      return;
+    }
+    const childInstance = instances.get(child.value);
+    if (childInstance?.component !== "Text") {
+      return;
+    }
+    const childContentMode = classifyInstanceContent({
+      instance: childInstance,
+      instances,
+      supported: true,
+    });
+    if (
+      childContentMode.type !== "simple" &&
+      childContentMode.type !== "parts"
+    ) {
+      return;
+    }
+    return {
+      instanceId: childInstance.id,
+      instanceSelector:
+        selectedInstanceSelector === undefined
+          ? undefined
+          : [childInstance.id, ...selectedInstanceSelector],
+    };
+  }
+};
+
 export const __testing__ = {
   isPropVisibleInContentMode,
   getAndDelete,
+  getTextContentTarget,
 };
 
 const $canHaveTextContent = computed(
@@ -197,48 +254,13 @@ export const usePropsLogic = ({
   }
 
   const canHaveTextContent = useStore($canHaveTextContent);
-  const getTextContentTarget = () => {
-    const canEditChildren = (target: Instance) => {
-      const hasNoChildren = target.children.length === 0;
-      const hasOnlyTextChild =
-        target.children.length === 1 && target.children[0].type === "text";
-      const hasOnlyExpressionChild =
-        target.children.length === 1 &&
-        target.children[0].type === "expression";
-      return hasNoChildren || hasOnlyTextChild || hasOnlyExpressionChild;
-    };
-
-    if (canHaveTextContent && canEditChildren(instance)) {
-      return {
-        instanceId: instance.id,
-        instanceSelector: selectedInstancePath?.[0].instanceSelector,
-      };
-    }
-
-    if (isContentMode && instance.component === "Link") {
-      const [child] = instance.children;
-      if (child?.type === "id") {
-        const childInstance = instances.get(child.value);
-        if (
-          childInstance?.component === "Text" &&
-          canEditChildren(childInstance)
-        ) {
-          return {
-            instanceId: childInstance.id,
-            instanceSelector:
-              selectedInstancePath === undefined
-                ? undefined
-                : [
-                    childInstance.id,
-                    ...selectedInstancePath[0].instanceSelector,
-                  ],
-          };
-        }
-      }
-    }
-  };
-
-  const textContentTarget = getTextContentTarget();
+  const textContentTarget = getTextContentTarget({
+    instance,
+    instances,
+    supported: canHaveTextContent === true,
+    isContentMode,
+    selectedInstanceSelector: selectedInstancePath?.[0].instanceSelector,
+  });
 
   if (textContentTarget) {
     systemProps.push({

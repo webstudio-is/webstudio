@@ -654,6 +654,12 @@ export const runtimeOutputSchemas = {
   "assets.duplicate": assetIdResult,
   "assets.replace": looseObject({ fromAssetId: id, toAssetId: id }),
   "assets.delete": looseObject({ assetIds: stringArray }),
+  "system.updateContentPart": looseObject({
+    instanceId: id,
+    childIndex: z.number().int(),
+    operation: z.enum(["set", "remove"]),
+    warnings: expressionWarnings.optional(),
+  }),
   "system.migrateLoadedData": looseObject({ didBreakCycles: z.boolean() }),
 } satisfies Record<string, z.ZodTypeAny>;
 
