@@ -79,6 +79,23 @@ test("keeps legacy Code Text instances on the plain renderer", () => {
   ).toBeUndefined();
 });
 
+test("keeps legacy language-only instances on the plain renderer", () => {
+  const props = new Map([
+    [
+      "code-1-lang",
+      {
+        id: "code-1-lang",
+        instanceId: "code-1",
+        name: "lang",
+        type: "string" as const,
+        value: "javascript",
+      },
+    ],
+  ]) satisfies Props;
+
+  expect(collectCodeTextAssets({ instances, props })).toBeUndefined();
+});
+
 test("rejects expression-bound selections", () => {
   const props = new Map([
     [

@@ -66,7 +66,9 @@ export const collectCodeTextAssets = ({
       continue;
     }
     const selection = selections.get(instance.id);
-    if (selection === undefined) {
+    // Theme did not exist before syntax highlighting. Treat instances without
+    // it as legacy data, including instances that already have an HTML lang.
+    if (selection?.theme === undefined) {
       continue;
     }
     const lang = readSelection({

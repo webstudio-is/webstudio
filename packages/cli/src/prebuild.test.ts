@@ -15,6 +15,12 @@ import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import {
+  defaultTreeAdapter,
+  parse as parseHtml,
+  type DefaultTreeAdapterMap,
+} from "parse5";
+import { build } from "esbuild";
 import { bundleVersion } from "@webstudio-is/protocol";
 import type { Asset, Prop } from "@webstudio-is/sdk";
 import {
@@ -122,6 +128,45 @@ const getFilePaths = async (dir: string): Promise<string[]> => {
     })
   );
   return paths.flat();
+};
+
+const getImportSources = async (source: string) => {
+  const result = await build({
+    stdin: { contents: source, loader: "tsx" },
+    bundle: false,
+    format: "esm",
+    metafile: true,
+    write: false,
+  });
+  return Object.values(result.metafile.outputs).flatMap((output) =>
+    output.imports.map(({ path }) => path)
+  );
+};
+
+const findElementsByTagName = (
+  node: DefaultTreeAdapterMap["node"],
+  tagName: string
+): DefaultTreeAdapterMap["element"][] => {
+  const elements: DefaultTreeAdapterMap["element"][] = [];
+  if (defaultTreeAdapter.isElementNode(node) && node.tagName === tagName) {
+    elements.push(node);
+  }
+  if ("childNodes" in node) {
+    for (const child of node.childNodes) {
+      elements.push(...findElementsByTagName(child, tagName));
+    }
+  }
+  return elements;
+};
+
+const getTextContent = (node: DefaultTreeAdapterMap["node"]): string => {
+  if (defaultTreeAdapter.isTextNode(node)) {
+    return node.value;
+  }
+  if ("childNodes" in node) {
+    return node.childNodes.map(getTextContent).join("");
+  }
+  return "";
 };
 
 const createSiteData = (
@@ -249,6 +294,64 @@ const createSiteData = (
       breakpoints: [],
     },
   };
+};
+
+const createCodeTextSiteData = (
+  selections: Array<{
+    id: string;
+    code: string;
+    lang: string;
+    theme: string;
+  }>
+) => {
+  const instances: Array<
+    [
+      string,
+      {
+        id: string;
+        component: string;
+        children: Array<{ type: "id"; value: string }>;
+      },
+    ]
+  > = [
+    [
+      "root",
+      {
+        id: "root",
+        component: "Box",
+        children: selections.map(({ id }) => ({ type: "id", value: id })),
+      },
+    ],
+  ];
+  const props: Array<[string, Prop]> = [];
+  for (const selection of selections) {
+    instances.push([
+      selection.id,
+      {
+        id: selection.id,
+        component: "CodeText",
+        children: [],
+      },
+    ]);
+    for (const [name, value] of [
+      ["code", selection.code],
+      ["lang", selection.lang],
+      ["theme", selection.theme],
+    ] as const) {
+      const id = `${selection.id}-${name}`;
+      props.push([
+        id,
+        {
+          id,
+          instanceId: selection.id,
+          name,
+          type: "string",
+          value,
+        },
+      ]);
+    }
+  }
+  return createSiteData({ instances, props });
 };
 
 const writeSiteData = async (
@@ -639,75 +742,20 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 describe("prebuild", () => {
   test("imports only configured Code Text language and theme assets", async () => {
     await writeSiteData(
-      createSiteData({
-        instances: [
-          [
-            "root",
-            {
-              id: "root",
-              component: "Box",
-              children: [
-                { type: "id", value: "code-1" },
-                { type: "id", value: "code-2" },
-              ],
-            },
-          ],
-          ["code-1", { id: "code-1", component: "CodeText", children: [] }],
-          ["code-2", { id: "code-2", component: "CodeText", children: [] }],
-        ],
-        props: [
-          [
-            "code-1-code",
-            {
-              id: "code-1-code",
-              instanceId: "code-1",
-              name: "code",
-              type: "string",
-              value: "const answer = 42;",
-            },
-          ],
-          [
-            "code-1-lang",
-            {
-              id: "code-1-lang",
-              instanceId: "code-1",
-              name: "lang",
-              type: "string",
-              value: "javascript",
-            },
-          ],
-          [
-            "code-1-theme",
-            {
-              id: "code-1-theme",
-              instanceId: "code-1",
-              name: "theme",
-              type: "string",
-              value: "github-light",
-            },
-          ],
-          [
-            "code-2-lang",
-            {
-              id: "code-2-lang",
-              instanceId: "code-2",
-              name: "lang",
-              type: "string",
-              value: "javascript",
-            },
-          ],
-          [
-            "code-2-theme",
-            {
-              id: "code-2-theme",
-              instanceId: "code-2",
-              name: "theme",
-              type: "string",
-              value: "nord",
-            },
-          ],
-        ],
-      })
+      createCodeTextSiteData([
+        {
+          id: "code-1",
+          code: "const answer = 42;",
+          lang: "javascript",
+          theme: "github-light",
+        },
+        {
+          id: "code-2",
+          code: "const answer = 42;",
+          lang: "javascript",
+          theme: "nord",
+        },
+      ])
     );
 
     await prebuild({ assets: false, template: ["react-router"] });
@@ -716,64 +764,31 @@ describe("prebuild", () => {
       "app/__generated__/_index.tsx",
       "utf8"
     );
-    expect(generatedPage).toContain('from "@shikijs/langs/javascript"');
-    expect(generatedPage.match(/@shikijs\/langs\/javascript/g)).toHaveLength(1);
-    expect(generatedPage).toContain('from "@shikijs/themes/github-light"');
-    expect(generatedPage).toContain('from "@shikijs/themes/nord"');
-    expect(generatedPage).toContain(
-      'from "@webstudio-is/sdk-components-react/code-text"'
+    const importSources = await getImportSources(generatedPage);
+    expect(
+      importSources.filter((source) => source === "@shikijs/langs/javascript")
+    ).toHaveLength(1);
+    expect(importSources).toEqual(
+      expect.arrayContaining([
+        "@shikijs/themes/github-light",
+        "@shikijs/themes/nord",
+        "@webstudio-is/sdk-components-react/code-text",
+      ])
     );
-    expect(generatedPage).not.toContain("@shikijs/langs/css");
-    expect(generatedPage).not.toContain("@shikijs/themes/dracula");
+    expect(importSources).not.toContain("@shikijs/langs/css");
+    expect(importSources).not.toContain("@shikijs/themes/dracula");
   });
 
   test("prerenders highlighted Code Text in SSG output", async () => {
     await writeSiteData(
-      createSiteData({
-        instances: [
-          [
-            "root",
-            {
-              id: "root",
-              component: "Box",
-              children: [{ type: "id", value: "code" }],
-            },
-          ],
-          ["code", { id: "code", component: "CodeText", children: [] }],
-        ],
-        props: [
-          [
-            "code-value",
-            {
-              id: "code-value",
-              instanceId: "code",
-              name: "code",
-              type: "string",
-              value: "const answer = 42;",
-            },
-          ],
-          [
-            "code-language",
-            {
-              id: "code-language",
-              instanceId: "code",
-              name: "lang",
-              type: "string",
-              value: "javascript",
-            },
-          ],
-          [
-            "code-theme",
-            {
-              id: "code-theme",
-              instanceId: "code",
-              name: "theme",
-              type: "string",
-              value: "github-light",
-            },
-          ],
-        ],
-      })
+      createCodeTextSiteData([
+        {
+          id: "code",
+          code: "const answer = 42;",
+          lang: "javascript",
+          theme: "github-light",
+        },
+      ])
     );
 
     await prebuild({ assets: false, template: ["ssg"] });
@@ -782,10 +797,15 @@ describe("prebuild", () => {
       "app/__generated__/_index.tsx",
       "utf8"
     );
-    expect(generatedPage).toContain('from "@shikijs/langs/javascript"');
-    expect(generatedPage).toContain('from "@shikijs/themes/github-light"');
-    expect(generatedPage).not.toContain("@shikijs/langs/css");
-    expect(generatedPage).not.toContain("@shikijs/themes/dracula");
+    const importSources = await getImportSources(generatedPage);
+    expect(importSources).toEqual(
+      expect.arrayContaining([
+        "@shikijs/langs/javascript",
+        "@shikijs/themes/github-light",
+      ])
+    );
+    expect(importSources).not.toContain("@shikijs/langs/css");
+    expect(importSources).not.toContain("@shikijs/themes/dracula");
     expect(
       JSON.parse(await readFile("package.json", "utf8")).dependencies
     ).toMatchObject({
@@ -798,12 +818,23 @@ describe("prebuild", () => {
     await runGeneratedCommand("vite", ["build"]);
     await runGeneratedCommand("vike", ["prerender"]);
 
-    const html = await readFile("dist/client/index.html", "utf8");
-    expect(html).toContain(
-      '<code tabindex="0" class="shiki github-light w-code-text"'
+    const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
+    const codeElement = findElementsByTagName(html, "code").at(0);
+    if (codeElement === undefined) {
+      throw new Error("Expected prerendered Code Text markup");
+    }
+    expect(
+      Object.fromEntries(
+        codeElement.attrs.map(({ name, value }) => [name, value])
+      )
+    ).toMatchObject({
+      tabindex: "0",
+      class: "shiki github-light w-code-text",
+    });
+    expect(findElementsByTagName(codeElement, "span").length).toBeGreaterThan(
+      0
     );
-    expect(html).toContain("<span");
-    expect(html).toContain("answer");
+    expect(getTextContent(codeElement)).toBe("const answer = 42;");
   }, 30_000);
 
   test("emits the identity marker only for local previews", async () => {
