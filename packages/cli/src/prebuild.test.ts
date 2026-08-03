@@ -727,6 +727,85 @@ describe("prebuild", () => {
     expect(generatedPage).not.toContain("@shikijs/themes/dracula");
   });
 
+  test("prerenders highlighted Code Text in SSG output", async () => {
+    await writeSiteData(
+      createSiteData({
+        instances: [
+          [
+            "root",
+            {
+              id: "root",
+              component: "Box",
+              children: [{ type: "id", value: "code" }],
+            },
+          ],
+          ["code", { id: "code", component: "CodeText", children: [] }],
+        ],
+        props: [
+          [
+            "code-value",
+            {
+              id: "code-value",
+              instanceId: "code",
+              name: "code",
+              type: "string",
+              value: "const answer = 42;",
+            },
+          ],
+          [
+            "code-language",
+            {
+              id: "code-language",
+              instanceId: "code",
+              name: "lang",
+              type: "string",
+              value: "javascript",
+            },
+          ],
+          [
+            "code-theme",
+            {
+              id: "code-theme",
+              instanceId: "code",
+              name: "theme",
+              type: "string",
+              value: "github-light",
+            },
+          ],
+        ],
+      })
+    );
+
+    await prebuild({ assets: false, template: ["ssg"] });
+
+    const generatedPage = await readFile(
+      "app/__generated__/_index.tsx",
+      "utf8"
+    );
+    expect(generatedPage).toContain('from "@shikijs/langs/javascript"');
+    expect(generatedPage).toContain('from "@shikijs/themes/github-light"');
+    expect(generatedPage).not.toContain("@shikijs/langs/css");
+    expect(generatedPage).not.toContain("@shikijs/themes/dracula");
+    expect(
+      JSON.parse(await readFile("package.json", "utf8")).dependencies
+    ).toMatchObject({
+      "@shikijs/langs": "4.4.1",
+      "@shikijs/themes": "4.4.1",
+      shiki: "4.4.1",
+    });
+
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["prerender"]);
+
+    const html = await readFile("dist/client/index.html", "utf8");
+    expect(html).toContain(
+      '<code tabindex="0" class="shiki github-light w-code-text"'
+    );
+    expect(html).toContain("<span");
+    expect(html).toContain("answer");
+  }, 30_000);
+
   test("emits the identity marker only for local previews", async () => {
     await prebuild({
       assets: false,
