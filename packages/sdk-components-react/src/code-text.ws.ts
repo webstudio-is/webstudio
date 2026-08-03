@@ -1,6 +1,8 @@
 import { BracesIcon } from "@webstudio-is/icons/svg";
 import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { code } from "@webstudio-is/sdk/normalize.css";
+import { languageNames } from "@shikijs/langs";
+import { themeNames } from "@shikijs/themes";
 import type { defaultTag } from "./code-text";
 import { props } from "./__generated__/code-text.props";
 
@@ -35,16 +37,39 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  deprecated: true,
   icon: BracesIcon,
+  description:
+    "Display source code with syntax highlighting for a selected language and theme.",
+  contentModel: {
+    category: "instance",
+    children: [],
+  },
   presetStyle,
-  initialProps: ["id", "class", "lang", "code"],
+  initialProps: ["id", "class", "code", "lang", "theme"],
   props: {
     ...props,
     code: {
       required: true,
       control: "codetext",
       type: "string",
+    },
+    lang: {
+      label: "Language",
+      required: true,
+      control: "select",
+      type: "string",
+      defaultValue: "javascript",
+      options: ["plaintext", ...languageNames],
+      bindable: false,
+    },
+    theme: {
+      label: "Theme",
+      required: true,
+      control: "select",
+      type: "string",
+      defaultValue: "github-light",
+      options: [...themeNames],
+      bindable: false,
     },
   },
 };

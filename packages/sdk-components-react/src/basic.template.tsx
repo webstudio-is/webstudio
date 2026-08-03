@@ -57,7 +57,13 @@ export const Checkbox: TemplateMeta = {
 
 export const CodeText: TemplateMeta = {
   category: "typography",
-  template: <$.CodeText>{new PlaceholderValue('status: "ready"')}</$.CodeText>,
+  template: (
+    <$.CodeText
+      code={'const status = "ready";'}
+      lang="javascript"
+      theme="github-light"
+    />
+  ),
 };
 
 export const Fragment: TemplateMeta = {

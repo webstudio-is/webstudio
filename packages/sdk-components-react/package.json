@@ -58,6 +58,8 @@
   },
   "dependencies": {
     "@react-aria/utils": "^3.27.0",
+    "@shikijs/langs": "4.4.1",
+    "@shikijs/themes": "4.4.1",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
@@ -65,13 +67,15 @@
     "await-interaction-response": "^0.0.2",
     "colord": "^2.9.3",
     "github-slugger": "2.0.0",
+    "hast-util-to-jsx-runtime": "^2.3.6",
     "mdast-util-from-markdown": "2.0.3",
     "mdast-util-frontmatter": "2.0.1",
     "mdast-util-to-string": "4.0.0",
     "micromark": "^4.0.2",
     "micromark-extension-frontmatter": "2.0.0",
     "micromark-extension-gfm": "^3.0.0",
-    "sanitize-html": "2.17.6"
+    "sanitize-html": "2.17.6",
+    "shiki": "4.4.1"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",

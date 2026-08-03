@@ -26,8 +26,8 @@ const Placeholder = ({
 
 export const CodeText = forwardRef<
   ElementRef<typeof defaultTag>,
-  ComponentProps<typeof defaultTag> & { code?: string }
->(({ code, children, ...props }, ref) => {
+  ComponentProps<typeof defaultTag> & { code?: string; theme?: string }
+>(({ code, children, theme: _theme, ...props }, ref) => {
   // We are supporting children here for historical reasons, because
   // the first version of this component allowed using any components inside the CodeText
   // and we didn't want to migrate them to use code, also it's not entirely possible.

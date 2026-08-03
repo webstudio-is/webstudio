@@ -31,6 +31,7 @@ export const SelectControl = ({
     >
       <BindableExpressionControl
         {...binding}
+        showBinding={meta.bindable !== false}
         renderControl={({ value, readOnly, onChangeValue }) => (
           <Select
             fullWidth
