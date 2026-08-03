@@ -5,14 +5,15 @@ description: >-
 icon: robot
 ---
 
-<!-- Generated from Webstudio CLI v0.285.0 with `webstudio man mcp --verbose`. Do not edit directly. -->
+<!-- Generated from the local Webstudio CLI with `webstudio man mcp --verbose`. Do not edit directly. -->
 
 # Webstudio MCP
 
 {% hint style="info" %}
-This reference was generated from Webstudio CLI **v0.285.0**. It documents
-the latest published CLI available when this page was generated. Examples use
-an installed `webstudio` command. See [CLI](cli.md) for Node.js and `npx` setup.
+This reference is generated from the Webstudio CLI source in the same Builder
+revision. It can document changes before they reach a published CLI release.
+Examples use an installed `webstudio` command. See [CLI](cli.md) for Node.js and
+`npx` setup.
 {% endhint %}
 
 `webstudio mcp` starts a stdio MCP server for real MCP clients. Shell users can call MCP tools with the shortcut form `webstudio <tool> '<json>'`, for example `webstudio meta.index` or `webstudio insert-fragment '<json>' --dry-run`. `webstudio mcp single-op-call` is the explicit equivalent and prints the structured JSON result. `webstudio mcp run` runs multiple MCP tool calls from inline JSON or a normal JSON file in one shared CLI session. Do not manually type or pipe raw JSON-RPC frames into `webstudio mcp` from an interactive shell or PTY.

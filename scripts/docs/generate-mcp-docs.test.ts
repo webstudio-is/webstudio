@@ -3,17 +3,16 @@ import test from "node:test";
 import { renderMcpDocumentation } from "./generate-mcp-docs.js";
 
 test("renders GitBook metadata around the complete CLI manual", () => {
-  const generated = renderMcpDocumentation({
-    manual: "# Webstudio MCP Manual\n\n## Startup\n\nStart here.\n",
-    version: "0.285.0",
-  });
+  const generated = renderMcpDocumentation(
+    "# Webstudio MCP Manual\n\n## Startup\n\nStart here.\n"
+  );
 
   assert.match(generated, /^---\n/);
   assert.match(generated, /# Webstudio MCP\n/);
-  assert.match(generated, /Webstudio CLI \*\*v0\.285\.0\*\*/);
+  assert.match(generated, /same Builder\s+revision/);
   assert.match(
     generated,
-    /See \[CLI\]\(cli\.md\) for Node\.js and `npx` setup/
+    /See \[CLI\]\(cli\.md\) for Node\.js and\s+`npx` setup/
   );
   assert.match(generated, /## Startup\n\nStart here\./);
   assert.match(generated, /## Related\n/);
@@ -22,11 +21,7 @@ test("renders GitBook metadata around the complete CLI manual", () => {
 
 test("rejects an unexpected CLI manual", () => {
   assert.throws(
-    () =>
-      renderMcpDocumentation({
-        manual: "# Different manual",
-        version: "0.285.0",
-      }),
+    () => renderMcpDocumentation("# Different manual"),
     /Expected the CLI manual/
   );
 });

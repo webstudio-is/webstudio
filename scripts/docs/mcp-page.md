@@ -5,14 +5,15 @@ description: >-
 icon: robot
 ---
 
-<!-- Generated from Webstudio CLI v{{version}} with `webstudio man mcp --verbose`. Do not edit directly. -->
+<!-- Generated from the local Webstudio CLI with `webstudio man mcp --verbose`. Do not edit directly. -->
 
 # Webstudio MCP
 
 {% hint style="info" %}
-This reference was generated from Webstudio CLI **v{{version}}**. It documents
-the latest published CLI available when this page was generated. Examples use
-an installed `webstudio` command. See [CLI](cli.md) for Node.js and `npx` setup.
+This reference is generated from the Webstudio CLI source in the same Builder
+revision. It can document changes before they reach a published CLI release.
+Examples use an installed `webstudio` command. See [CLI](cli.md) for Node.js and
+`npx` setup.
 {% endhint %}
 
 {{manual}}
