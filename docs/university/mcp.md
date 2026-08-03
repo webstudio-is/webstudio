@@ -7,7 +7,9 @@ icon: robot
 
 <!-- Generated from the local Webstudio CLI with `webstudio man mcp --verbose`. Do not edit directly. -->
 
-# Webstudio MCP v0.285.0
+# Webstudio MCP
+
+**Webstudio MCP v0.285.1**
 
 {% hint style="info" %}
 This reference is generated from the Webstudio CLI source in the same Builder
@@ -427,9 +429,10 @@ Generated app setup:
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
 - If dependency installation fails, check npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
 
-## MCP Argument Examples
+## MCP argument examples
 
-MCP tools receive JSON argument objects:
+Examples below show meaningful argument combinations. Tool schemas are the
+source of truth. For tools with no required arguments, pass `{}`.
 
 ### meta.guide
 
@@ -437,18 +440,6 @@ MCP tools receive JSON argument objects:
 {
   "brief": "Create a pricing page and style the hero"
 }
-```
-
-### inspect-auth-context
-
-```json
-{}
-```
-
-### inspect-design-context
-
-```json
-{}
 ```
 
 ### verify-font-assets
@@ -501,12 +492,6 @@ MCP tools receive JSON argument objects:
 }
 ```
 
-### components.summary
-
-```json
-{}
-```
-
 ### components.list
 
 ```json
@@ -517,10 +502,6 @@ MCP tools receive JSON argument objects:
 ```
 
 ### components.coverage-plan
-
-```json
-{}
-```
 
 ```json
 {
@@ -711,12 +692,6 @@ MCP tools receive JSON argument objects:
 }
 ```
 
-### list-asset-folders
-
-```json
-{}
-```
-
 ### create-asset-folder
 
 ```json
@@ -806,23 +781,7 @@ MCP tools receive JSON argument objects:
 }
 ```
 
-### preview.status
-
-```json
-{}
-```
-
-### preview.stop
-
-```json
-{}
-```
-
 ### status
-
-```json
-{}
-```
 
 ```json
 {
@@ -886,10 +845,6 @@ MCP tools receive JSON argument objects:
 ```
 
 ### audit
-
-```json
-{}
-```
 
 ```json
 {
@@ -1308,12 +1263,6 @@ MCP tools receive JSON argument objects:
 }
 ```
 
-### list-assets-resources
-
-```json
-{}
-```
-
 ### get-assets-resource
 
 ```json
@@ -1530,12 +1479,6 @@ MCP tools receive JSON argument objects:
 }
 ```
 
-### get-asset-field-catalog
-
-```json
-{}
-```
-
 ### update-asset
 
 ```json
@@ -1580,10 +1523,6 @@ MCP tools receive JSON argument objects:
 ```
 
 ### list-assets
-
-```json
-{}
-```
 
 ```json
 {
