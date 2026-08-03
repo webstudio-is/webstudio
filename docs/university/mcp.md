@@ -5,12 +5,12 @@ description: >-
 icon: robot
 ---
 
-<!-- Generated from Webstudio CLI v0.284.0 with `webstudio man mcp --verbose`. Do not edit directly. -->
+<!-- Generated from Webstudio CLI v0.285.0 with `webstudio man mcp --verbose`. Do not edit directly. -->
 
 # Webstudio MCP
 
 {% hint style="info" %}
-This reference was generated from Webstudio CLI **v0.284.0**. It documents
+This reference was generated from Webstudio CLI **v0.285.0**. It documents
 the latest published CLI available when this page was generated. Examples use
 an installed `webstudio` command. See [CLI](cli.md) for Node.js and `npx` setup.
 {% endhint %}
@@ -57,7 +57,7 @@ Examples:
 ```sh
 webstudio mcp single-op-call meta.index
 webstudio mcp single-op-call meta.guide '{"brief":"Create a design system page using every component"}'
-webstudio mcp single-op-call meta.get_more_tools '{"tools":["insert-fragment"]}'
+webstudio mcp single-op-call meta.get-more-tools '{"tools":["insert-fragment"]}'
 webstudio mcp single-op-call components.list '{"source":"all"}'
 webstudio mcp single-op-call components.coverage-plan
 webstudio mcp single-op-call components.search '{"brief":"radix select"}'
@@ -72,7 +72,7 @@ Shortcut equivalents:
 ```sh
 webstudio meta.index
 webstudio meta.guide '{"brief":"Create a design system page using every component"}'
-webstudio meta.get_more_tools '{"tools":["insert-fragment"]}'
+webstudio meta.get-more-tools '{"tools":["insert-fragment"]}'
 webstudio components.list '{"source":"all"}'
 webstudio components.coverage-plan
 webstudio components.search '{"brief":"radix select"}'
@@ -82,20 +82,60 @@ webstudio templates.get '{"component":"@webstudio-is/sdk-components-react-radix:
 webstudio insert-fragment --input-file .temp/insert-fragment.json
 ```
 
+### Tool name convention
+
+MCP tool names are opaque strings, not JavaScript property access. A dot separates a namespace from its tool name, and every segment uses lowercase kebab-case. For example, `components.coverage-insert-next` is the `coverage-insert-next` tool in the `components` namespace. Pass the complete name as one CLI argument: `webstudio components.coverage-insert-next`.
+
+### Readable fragment inputs
+
+Prefer `--input-file` for JSX so JSON and shell quoting do not obscure the fragment. For example, save this as `.temp/insert-fragment.json`:
+
+```json
+{
+  "parentInstanceId": "root-id",
+  "fragment": "<ws.element ws:tag='section' ws:style={css`padding: 32px; display: grid; gap: 16px;`}><ws.element ws:tag='h2'>Northstar Product OS</ws.element><ws.element ws:tag='p'>Reusable patterns for teams.</ws.element></ws.element>"
+}
+```
+
+Then run `webstudio insert-fragment --input-file .temp/insert-fragment.json`. Single quotes inside the JSX keep the JSON valid and readable without backslash-escaped attributes.
+
+Write and review larger fragments as JSX before placing them in the `fragment` field. Common patterns:
+
+```tsx
+<ws.element
+  ws:tag="section"
+  style={{ padding: 32, borderRadius: 16 }}
+>
+  <ws.element ws:tag="h2">Operations Console</ws.element>
+  <ws.element ws:tag="p">
+    React-style object styles become editable Webstudio styles.
+  </ws.element>
+</ws.element>
+
+<ws.element
+  ws:tag="section"
+  ws:tokens={[token("accent", css`color: #0f766e;`)]}
+>
+  <ws.element
+    ws:tag="button"
+    onClick={new ActionValue(["event"], expression`console.log(event)`)}
+  >
+    Track launch
+  </ws.element>
+</ws.element>
+
+<ws.element ws:tag="section">
+  <radix.Switch>
+    <radix.SwitchThumb />
+  </radix.Switch>
+</ws.element>
+```
+
 Rules:
 
 - Inside the Webstudio monorepo, replace `webstudio` in the examples above with `node packages/cli/local.js`, for example `node packages/cli/local.js meta.index`.
-- For a simple authored/styled section, run `meta.index`, then `meta.get_more_tools '{"tools":["insert-fragment"]}'`, then `insert-fragment`. Do not grep source files, dump full MCP resources, or write parser scripts first.
-- In `insert-fragment` JSX, use `ws:style={css\`...\`}`for Webstudio-native CSS, or use React-style object syntax such as`style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
-- Prefer JSX for authored/styled content. Common `insert-fragment` inputs:
-
-```jsonl
-{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\"section\" ws:style={css`padding: 32px; display: grid; gap: 16px;`}><ws.element ws:tag="h2">Northstar Product OS</ws.element><ws.element ws:tag="p">Reusable patterns for teams.</ws.element></ws.element>"}
-{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\"section\" style={{ padding: 32, borderRadius: 16 }}><ws.element ws:tag="h2">Operations Console</ws.element><ws.element ws:tag="p">React-style object styles become editable Webstudio styles.</ws.element></ws.element>"}
-{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\"section\" ws:tokens={[token(\"accent\", css`color: #0f766e;`)]}><ws.element ws:tag="button" onClick={new ActionValue([\"event\"], expression`console.log(event)`)}>Track launch</ws.element></ws.element>"}
-{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\"section\"><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>"}
-```
-
+- For a simple authored/styled section, run `meta.index`, then `meta.get-more-tools '{"tools":["insert-fragment"]}'`, then `insert-fragment`. Do not grep source files, dump full MCP resources, or write parser scripts first.
+- In `insert-fragment` JSX, use ``ws:style={css`...`}`` for Webstudio-native CSS, or use React-style object syntax such as `style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
 - Do not access host globals or dynamic code APIs in JSX fragments, including `process`, `globalThis`, `eval`, `Function`, or `constructor`.
 - Use Webstudio prop names such as `class` and `for`; do not use React aliases `className` or `htmlFor`.
 - Use Webstudio actions for event/action props, for example `onClick={new ActionValue(["event"], expression\`console.log(event)\`)}`. Do not pass JavaScript functions such as `onClick={() => ...}`.
@@ -225,7 +265,7 @@ Use MCP itself after startup, or call the same tools with `webstudio mcp single-
 - `resources/list`: available overview and full JSON resources
 - `meta.index`: concise capability catalog
 - `meta.guide`: workflow for a user goal; call with a string brief such as `{"brief":"Create a pricing page"}`
-- `meta.get_more_tools`: detailed params, examples, namespaces, and local/server behavior; prefer exact names such as `{"tools":["insert-fragment"]}` when you know them
+- `meta.get-more-tools`: detailed params, examples, namespaces, and local/server behavior; prefer exact names such as `{"tools":["insert-fragment"]}` when you know them
 - `components.list`: compact registry metadata for visible components and templates; use a focused get tool for complete details
 - `components.summary`: component counts by default; use `{"detail":"components","limit":20}` for paginated entries
 - `components.coverage-plan`: compact paged plan for design-system coverage tasks that need every component; default returns counts plus the first root page, use `{"detail":"roots"}`, `{"detail":"parts"}`, or `{"detail":"full"}` for more
@@ -392,140 +432,189 @@ MCP tools receive JSON argument objects:
 
 ### meta.guide
 
+```json
 {
   "brief": "Create a pricing page and style the hero"
 }
+```
 
 ### inspect-auth-context
 
+```json
 {}
+```
 
 ### inspect-design-context
 
+```json
 {}
+```
 
 ### verify-font-assets
 
+```json
 {
   "assetIds": [
     "asset-regular",
     "asset-bold"
   ]
 }
+```
 
 ### workflow.next
 
+```json
 {
   "goal": "design-system-page"
 }
+```
 
+```json
 {
   "goal": "design-system-page",
   "phase": "dry-run-section"
 }
+```
 
-### meta.get_more_tools
+### meta.get-more-tools
 
+```json
 {
   "tools": [
     "insert-fragment"
   ]
 }
+```
 
+```json
 {
   "tools": [
     "insert-component"
   ]
 }
+```
 
+```json
 {
   "brief": "update-styles"
 }
+```
 
 ### components.summary
 
+```json
 {}
+```
 
 ### components.list
 
+```json
 {
   "source": "all",
   "documentType": "html"
 }
+```
 
 ### components.coverage-plan
 
+```json
 {}
+```
 
+```json
 {
   "documentType": "html"
 }
+```
 
+```json
 {
   "documentType": "xml",
   "detail": "roots"
 }
+```
 
+```json
 {
   "detail": "full"
 }
+```
 
+```json
 {
   "detail": "roots",
   "offset": 0,
   "limit": 20
 }
+```
 
+```json
 {
   "detail": "parts",
   "namespace": "@webstudio-is/sdk-components-react-radix"
 }
+```
 
 ### components.coverage-status
 
+```json
 {
   "pagePath": "/design-system"
 }
+```
 
 ### components.coverage-insert-next
 
+```json
 {
   "pagePath": "/design-system",
   "parentInstanceId": "root-instance-id"
 }
+```
 
 ### components.find
 
+```json
 {
   "brief": "radix tabs dialog select"
 }
+```
 
 ### components.search
 
+```json
 {
   "brief": "radix tabs dialog select"
 }
+```
 
 ### components.get
 
+```json
 {
   "component": "@webstudio-is/sdk-components-react-radix:Select"
 }
+```
 
 ### templates.list
 
+```json
 {
   "documentType": "html"
 }
+```
 
 ### templates.get
 
+```json
 {
   "component": "@webstudio-is/sdk-components-react-radix:Select"
 }
+```
 
 ### refresh
 
+```json
 {
   "namespaces": [
     "pages",
@@ -533,21 +622,27 @@ MCP tools receive JSON argument objects:
     "styles"
   ]
 }
+```
 
 ### import
 
+```json
 {
   "to": "https://p-destination-project-id.wstd.dev/?authToken=destination-token"
 }
+```
 
 ### download-asset
 
+```json
 {
   "assetId": "asset-id"
 }
+```
 
 ### upload-asset
 
+```json
 {
   "asset": {
     "name": "Rajdhani-SemiBold.woff2",
@@ -561,7 +656,9 @@ MCP tools receive JSON argument objects:
   },
   "assetsDir": ".webstudio/assets"
 }
+```
 
+```json
 {
   "asset": {
     "name": "hero.png",
@@ -575,7 +672,9 @@ MCP tools receive JSON argument objects:
   },
   "assetsDir": ".webstudio/assets"
 }
+```
 
+```json
 {
   "asset": {
     "name": "hero.png",
@@ -589,9 +688,11 @@ MCP tools receive JSON argument objects:
   },
   "assetsDir": ".webstudio/assets"
 }
+```
 
 ### upload-assets
 
+```json
 {
   "assets": [
     {
@@ -607,115 +708,155 @@ MCP tools receive JSON argument objects:
   ],
   "assetsDir": ".webstudio/assets"
 }
+```
 
 ### list-asset-folders
 
+```json
 {}
+```
 
 ### create-asset-folder
 
+```json
 {
   "name": "Marketing"
 }
+```
 
+```json
 {
   "name": "Photos",
   "parentId": "marketing-folder-id"
 }
+```
 
 ### update-asset-folder
 
+```json
 {
   "folderId": "folder-id",
   "values": {
     "name": "Brand"
   }
 }
+```
 
+```json
 {
   "folderId": "folder-id",
   "values": {
     "parentId": null
   }
 }
+```
 
 ### duplicate-asset-folder
 
+```json
 {
   "folderId": "folder-id"
 }
+```
 
+```json
 {
   "folderId": "folder-id",
   "parentId": "target-folder-id"
 }
+```
 
 ### delete-asset-folder
 
+```json
 {
   "folderId": "folder-id"
 }
+```
 
 ### get-asset
 
+```json
 {
   "assetId": "asset-id"
 }
+```
 
 ### duplicate-asset
 
+```json
 {
   "assetId": "asset-id"
 }
+```
 
+```json
 {
   "assetId": "asset-id",
   "folderId": "target-folder-id"
 }
+```
 
 ### preview.start
 
+```json
 {
   "source": "session"
 }
+```
 
 ### preview.status
 
+```json
 {}
+```
 
 ### preview.stop
 
+```json
 {}
+```
 
 ### status
 
+```json
 {}
+```
 
+```json
 {
   "verbose": true
 }
+```
 
 ### list-pages
 
+```json
 {
   "limit": 20
 }
+```
 
 ### get-page-by-path
 
+```json
 {
   "path": "/pricing"
 }
+```
 
 ### list-instances
 
+```json
 {
   "pagePath": "/",
   "maxDepth": 3
 }
+```
 
 ### inspect-instance
 
+```json
 {
   "instanceId": "instance-id",
   "include": [
@@ -724,31 +865,41 @@ MCP tools receive JSON argument objects:
     "children"
   ]
 }
+```
 
 ### search-project
 
+```json
 {
   "query": "pricing"
 }
+```
 
+```json
 {
   "query": "api.example.com",
   "scopes": [
     "resources"
   ]
 }
+```
 
 ### audit
 
+```json
 {}
+```
 
+```json
 {
   "scopes": [
     "accessibility",
     "seo"
   ]
 }
+```
 
+```json
 {
   "pagePath": "/pricing",
   "severities": [
@@ -756,23 +907,29 @@ MCP tools receive JSON argument objects:
     "warning"
   ]
 }
+```
 
+```json
 {
   "scopes": [
     "accessibility"
   ],
   "verbose": true
 }
+```
 
 ### insert-component
 
+```json
 {
   "parentInstanceId": "parent-id",
   "component": "@webstudio-is/sdk-components-react-radix:Switch"
 }
+```
 
 ### extract-slot
 
+```json
 {
   "instanceSelector": [
     "header-section-id",
@@ -780,7 +937,9 @@ MCP tools receive JSON argument objects:
   ],
   "label": "Site header"
 }
+```
 
+```json
 {
   "instanceSelector": [
     "header-section-id",
@@ -789,18 +948,22 @@ MCP tools receive JSON argument objects:
   ],
   "label": "Site header"
 }
+```
 
 ### insert-collection
 
+```json
 {
   "parentInstanceId": "parent-id",
   "data": {
     "type": "expression",
     "value": "Posts.data.items"
   },
-  "itemFragment": "<ws.element ws:tag=\"article\"><ws.element ws:tag=\"h2\">{expression`collectionItem.title ?? \"Untitled\"`}</ws.element></ws.element>"
+  "itemFragment": "<ws.element ws:tag='article'><ws.element ws:tag='h2'>{expression`collectionItem.title ?? 'Untitled'`}</ws.element></ws.element>"
 }
+```
 
+```json
 {
   "parentInstanceId": "parent-id",
   "data": {
@@ -814,57 +977,73 @@ MCP tools receive JSON argument objects:
       }
     ]
   },
-  "itemFragment": "<ws.element ws:tag=\"div\">{expression`collectionItem.name`}</ws.element>"
+  "itemFragment": "<ws.element ws:tag='div'>{expression`collectionItem.name`}</ws.element>"
 }
+```
 
 ### insert-fragment
 
+```json
 {
   "parentInstanceId": "parent-id",
-  "fragment": "<ws.element ws:tag=\"section\" ws:style={css`padding: 32px; display: grid; gap: 16px;`}><ws.element ws:tag=\"h2\">Northstar Product OS</ws.element><ws.element ws:tag=\"p\">Reusable patterns for teams.</ws.element></ws.element>"
+  "fragment": "<ws.element ws:tag='section' ws:style={css`padding: 32px; display: grid; gap: 16px;`}><ws.element ws:tag='h2'>Northstar Product OS</ws.element><ws.element ws:tag='p'>Reusable patterns for teams.</ws.element></ws.element>"
 }
+```
 
+```json
 {
   "parentInstanceId": "parent-id",
-  "fragment": "<ws.element ws:tag=\"section\" style={{ padding: 32, borderRadius: 16 }}><ws.element ws:tag=\"h2\">Operations Console</ws.element><ws.element ws:tag=\"p\">Semantic section with React-style object styles converted into editable Webstudio styles.</ws.element></ws.element>"
+  "fragment": "<ws.element ws:tag='section' style={{ padding: 32, borderRadius: 16 }}><ws.element ws:tag='h2'>Operations Console</ws.element><ws.element ws:tag='p'>Semantic section with React-style object styles converted into editable Webstudio styles.</ws.element></ws.element>"
 }
+```
 
+```json
 {
   "parentInstanceId": "parent-id",
-  "fragment": "<ws.element ws:tag=\"section\" ws:tokens={[token(\"accent\", css`color: #0f766e;`)]} ws:style={css`display: grid; gap: 12px;`}><ws.element ws:tag=\"h2\">Token Example</ws.element><ws.element ws:tag=\"button\" onClick={new ActionValue([\"event\"], expression`console.log(event)`)}>Track launch</ws.element></ws.element>"
+  "fragment": "<ws.element ws:tag='section' ws:tokens={[token('accent', css`color: #0f766e;`)]} ws:style={css`display: grid; gap: 12px;`}><ws.element ws:tag='h2'>Token Example</ws.element><ws.element ws:tag='button' onClick={new ActionValue(['event'], expression`console.log(event)`)}>Track launch</ws.element></ws.element>"
 }
+```
 
+```json
 {
   "parentInstanceId": "parent-id",
-  "fragment": "<ws.element ws:tag=\"section\"><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>"
+  "fragment": "<ws.element ws:tag='section'><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>"
 }
+```
 
 ### insert-fragment-verified
 
+```json
 {
   "parentInstanceId": "parent-id",
   "pagePath": "/pricing",
-  "fragment": "<ws.element ws:tag=\"section\"><ws.element ws:tag=\"h2\">Pricing</ws.element></ws.element>"
+  "fragment": "<ws.element ws:tag='section'><ws.element ws:tag='h2'>Pricing</ws.element></ws.element>"
 }
+```
 
 ### update-text
 
+```json
 {
   "instanceId": "instance-id",
   "childIndex": 0,
   "text": "Launch faster",
   "mode": "text"
 }
+```
 
+```json
 {
   "instanceId": "instance-id",
   "childIndex": 0,
   "text": "user.name",
   "mode": "expression"
 }
+```
 
 ### replace-text
 
+```json
 {
   "find": "Start free",
   "replace": "Get started",
@@ -872,9 +1051,11 @@ MCP tools receive JSON argument objects:
   "pagePath": "/pricing",
   "limit": 20
 }
+```
 
 ### replace-prop-text
 
+```json
 {
   "find": "old.example.com",
   "replace": "www.example.com",
@@ -885,9 +1066,11 @@ MCP tools receive JSON argument objects:
   ],
   "limit": 20
 }
+```
 
 ### update-page
 
+```json
 {
   "pageId": "page-id",
   "values": {
@@ -897,9 +1080,11 @@ MCP tools receive JSON argument objects:
     }
   }
 }
+```
 
 ### update-props
 
+```json
 {
   "updates": [
     {
@@ -916,9 +1101,11 @@ MCP tools receive JSON argument objects:
     }
   ]
 }
+```
 
 ### bind-props
 
+```json
 {
   "bindings": [
     {
@@ -931,9 +1118,11 @@ MCP tools receive JSON argument objects:
     }
   ]
 }
+```
 
 ### create-variable
 
+```json
 {
   "scopeInstanceId": "body-id",
   "name": "title",
@@ -942,7 +1131,9 @@ MCP tools receive JSON argument objects:
     "value": "Hello"
   }
 }
+```
 
+```json
 {
   "scopeInstanceId": "body-id",
   "name": "count",
@@ -951,7 +1142,9 @@ MCP tools receive JSON argument objects:
     "value": 3
   }
 }
+```
 
+```json
 {
   "scopeInstanceId": "body-id",
   "name": "featured",
@@ -960,7 +1153,9 @@ MCP tools receive JSON argument objects:
     "value": true
   }
 }
+```
 
+```json
 {
   "scopeInstanceId": "body-id",
   "name": "tags",
@@ -972,7 +1167,9 @@ MCP tools receive JSON argument objects:
     ]
   }
 }
+```
 
+```json
 {
   "scopeInstanceId": "body-id",
   "name": "filters",
@@ -984,9 +1181,11 @@ MCP tools receive JSON argument objects:
     }
   }
 }
+```
 
 ### update-variable
 
+```json
 {
   "dataSourceId": "variable-id",
   "values": {
@@ -999,9 +1198,11 @@ MCP tools receive JSON argument objects:
     }
   }
 }
+```
 
 ### create-resource
 
+```json
 {
   "resource": {
     "name": "Posts",
@@ -1010,7 +1211,9 @@ MCP tools receive JSON argument objects:
     "headers": []
   }
 }
+```
 
+```json
 {
   "resource": {
     "name": "Filtered Posts",
@@ -1043,7 +1246,9 @@ MCP tools receive JSON argument objects:
   "scopeInstanceId": "body-id",
   "dataSourceName": "posts"
 }
+```
 
+```json
 {
   "resource": {
     "name": "Post GraphQL",
@@ -1065,7 +1270,9 @@ MCP tools receive JSON argument objects:
   "dataSourceName": "post",
   "exposeAsDataSource": true
 }
+```
 
+```json
 {
   "resource": {
     "name": "Current Date",
@@ -1077,16 +1284,20 @@ MCP tools receive JSON argument objects:
   "scopeInstanceId": "body-id",
   "dataSourceName": "currentDate"
 }
+```
 
 ### update-resource
 
+```json
 {
   "resourceId": "resource-id",
   "values": {
     "url": "https://api.example.com/posts"
   }
 }
+```
 
+```json
 {
   "resourceId": "resource-id",
   "values": {
@@ -1094,25 +1305,33 @@ MCP tools receive JSON argument objects:
   },
   "exposeAsDataSource": false
 }
+```
 
 ### list-assets-resources
 
+```json
 {}
+```
 
 ### get-assets-resource
 
+```json
 {
   "resourceId": "resource-id"
 }
+```
 
 ### create-assets-resource
 
+```json
 {
   "name": "All assets",
   "scopeInstanceId": "body-id",
   "dataSourceName": "assets"
 }
+```
 
+```json
 {
   "name": "Published posts",
   "scopeInstanceId": "body-id",
@@ -1169,7 +1388,9 @@ MCP tools receive JSON argument objects:
     "limit": "20"
   }
 }
+```
 
+```json
 {
   "name": "Post by slug",
   "scopeInstanceId": "body-id",
@@ -1236,9 +1457,11 @@ MCP tools receive JSON argument objects:
     }
   }
 }
+```
 
 ### update-assets-resource
 
+```json
 {
   "resourceId": "resource-id",
   "values": {
@@ -1247,16 +1470,20 @@ MCP tools receive JSON argument objects:
     }
   }
 }
+```
 
+```json
 {
   "resourceId": "resource-id",
   "values": {
     "query": null
   }
 }
+```
 
 ### validate-asset-query
 
+```json
 {
   "query": {
     "where": {
@@ -1274,9 +1501,11 @@ MCP tools receive JSON argument objects:
     "limit": 1
   }
 }
+```
 
 ### preview-asset-query
 
+```json
 {
   "query": {
     "where": {
@@ -1293,18 +1522,22 @@ MCP tools receive JSON argument objects:
     },
     "limit": 1,
     "content": {
-      "mode": "markdown-body",
+      "mode": "markdown-body-ref",
       "maxBytes": 1048576
     }
   }
 }
+```
 
 ### get-asset-field-catalog
 
+```json
 {}
+```
 
 ### update-asset
 
+```json
 {
   "assetId": "font-asset-id",
   "values": {
@@ -1315,14 +1548,18 @@ MCP tools receive JSON argument objects:
     }
   }
 }
+```
 
+```json
 {
   "assetId": "asset-id",
   "values": {
     "description": "Team collaborating around a whiteboard"
   }
 }
+```
 
+```json
 {
   "assetId": "asset-id",
   "values": {
@@ -1330,45 +1567,59 @@ MCP tools receive JSON argument objects:
     "folderId": "folder-id"
   }
 }
+```
 
+```json
 {
   "assetId": "asset-id",
   "values": {
     "folderId": null
   }
 }
+```
 
 ### list-assets
 
+```json
 {}
+```
 
+```json
 {
   "verbose": true
 }
+```
 
 ### replace-asset
 
+```json
 {
   "fromAssetId": "old-asset-id",
   "toAssetId": "new-asset-id"
 }
+```
 
 ### delete-asset
 
+```json
 {
   "assetIds": [
     "asset-id"
   ]
 }
+```
 
+```json
 {
   "assetIdPrefixes": [
     "generated-prefix"
   ]
 }
+```
 
 ### set-image-descriptions
 
+```json
 {
   "updates": [
     {
@@ -1381,9 +1632,11 @@ MCP tools receive JSON argument objects:
     }
   ]
 }
+```
 
 ### replace-resource-text
 
+```json
 {
   "find": "api.old.example.com",
   "replace": "api.example.com",
@@ -1392,9 +1645,11 @@ MCP tools receive JSON argument objects:
   ],
   "limit": 20
 }
+```
 
 ### update-styles
 
+```json
 {
   "updates": [
     {
@@ -1407,9 +1662,11 @@ MCP tools receive JSON argument objects:
     }
   ]
 }
+```
 
 ### delete-styles
 
+```json
 {
   "deletions": [
     {
@@ -1418,9 +1675,11 @@ MCP tools receive JSON argument objects:
     }
   ]
 }
+```
 
 ### apply-patch
 
+```json
 {
   "baseVersion": 12,
   "transactions": [
@@ -1444,21 +1703,27 @@ MCP tools receive JSON argument objects:
     }
   ]
 }
+```
 
 ### publish
 
+```json
 {
   "target": "production"
 }
+```
 
 ### create-domain
 
+```json
 {
   "domain": "www.example.com"
 }
+```
 
 ### screenshot
 
+```json
 {
   "path": "/",
   "output": "screenshots/home.png",
@@ -1469,7 +1734,9 @@ MCP tools receive JSON argument objects:
   "waitUntil": "load",
   "waitForTimeout": 250
 }
+```
 
+```json
 {
   "path": "/pricing",
   "output": "screenshots/pricing.png",
@@ -1480,7 +1747,9 @@ MCP tools receive JSON argument objects:
   "waitUntil": "load",
   "waitForTimeout": 250
 }
+```
 
+```json
 {
   "url": "https://example.com",
   "output": "current.png",
@@ -1490,9 +1759,11 @@ MCP tools receive JSON argument objects:
   },
   "browser": "auto"
 }
+```
 
 ### screenshot.responsive
 
+```json
 {
   "path": "/pricing",
   "viewports": [
@@ -1507,9 +1778,11 @@ MCP tools receive JSON argument objects:
   ],
   "source": "session"
 }
+```
 
 ### verify-page-responsive
 
+```json
 {
   "path": "/pricing",
   "viewports": [
@@ -1524,9 +1797,11 @@ MCP tools receive JSON argument objects:
   ],
   "source": "session"
 }
+```
 
 ### screenshot.diff
 
+```json
 {
   "baselinePath": "baseline.png",
   "currentPath": "current.png",
@@ -1547,12 +1822,15 @@ MCP tools receive JSON argument objects:
     }
   }
 }
+```
 
 ### vision.install-ocr
 
+```json
 {
   "confirm": true
 }
+```
 
 ## Screenshot Verification
 

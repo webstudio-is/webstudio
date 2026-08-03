@@ -138,3 +138,79 @@ jobs:
           name: cli-release-smoke-${{ steps.version.outputs.value }}
           path: artifacts/cli-release-smoke.json
           if-no-files-found: error
+
+  update-mcp-documentation:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test the MCP documentation generator
+        run: pnpm dlx tsx@4.19.3 --test scripts/docs/generate-mcp-docs.test.ts
+      - id: generate
+        name: Generate from the published CLI
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          pnpm dlx tsx@4.19.3 scripts/docs/generate-mcp-docs.ts "$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - id: changes
+        name: Detect a documentation update
+        run: |
+          if git diff --quiet -- docs/university/mcp.md; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Open the update pull request
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MCP_DOCS_VERSION: ${{ steps.generate.outputs.version }}
+          PR_BODY: |
+            ## Summary
+
+            Regenerate the exhaustive MCP documentation from Webstudio CLI v${{ steps.generate.outputs.version }}.
+
+            ## Todo
+
+            - [x] Generate from the exact published CLI version.
+            - [x] Record the source version in the public page.
+            - [x] Run the generator tests.
+
+            ## Verification
+
+            - `pnpm dlx tsx@4.19.3 --test scripts/docs/generate-mcp-docs.test.ts`
+            - `pnpm dlx tsx@4.19.3 scripts/docs/generate-mcp-docs.ts ${{ steps.generate.outputs.version }}`
+
+            This pull request was created automatically by the release workflow.
+        run: |
+          branch="automation/update-mcp-docs-v${MCP_DOCS_VERSION}"
+          existing_pr=$(gh pr list --head "$branch" --state open --json url --jq '.[0].url')
+          if [ -n "$existing_pr" ]; then
+            echo "An update pull request is already open: $existing_pr"
+            exit 0
+          fi
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            branch="${branch}-${GITHUB_RUN_ID}"
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add docs/university/mcp.md
+          git commit -m "docs: update MCP manual to v${MCP_DOCS_VERSION}"
+          git push --set-upstream origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --draft \
+            --title "docs: Update MCP manual to v${MCP_DOCS_VERSION}" \
+            --body "$PR_BODY"

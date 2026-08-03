@@ -18,7 +18,7 @@ Here you will find real-time updates and can see exactly what our team is workin
 
 * **Website:** [Webstudio](https://webstudio.is/)
 * **Discord:** [Join our community](https://wstd.us/community)
-* **GitHub:** [Webstudio Repository](https://github.com/webstudio-is/webstudio-community/discussions)
+* **GitHub:** [Webstudio repository](https://github.com/webstudio-is/webstudio)
 * **Product Hunt:** [Webstudio on Product Hunt](https://www.producthunt.com/products/webstudio)
 
 ### Social Media
