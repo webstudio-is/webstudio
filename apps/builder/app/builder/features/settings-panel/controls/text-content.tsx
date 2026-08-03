@@ -25,7 +25,10 @@ import { type ControlProps, VerticalLayout } from "../shared";
 import { FieldLabel, useIsBindingResetForbidden } from "../property-label";
 import { useBindableControl } from "./use-bindable-control";
 import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
-import { getEditableTextTarget } from "./text-content-utils";
+import {
+  getEditableTextTarget,
+  getTextContentUpdateOperation,
+} from "./text-content-utils";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
@@ -34,37 +37,6 @@ const useInstance = (instanceId: Instance["id"]) => {
   return useStore($store);
 };
 
-const updateChild = (
-  instanceId: Instance["id"],
-  childIndex: number | undefined,
-  type: "text" | "expression",
-  value: string
-) => {
-  if (childIndex !== undefined) {
-    executeRuntimeMutation({
-      id: "instances.updateText",
-      input: {
-        instanceId,
-        childIndex,
-        mode: type,
-        text: value,
-      },
-    });
-    return;
-  }
-  executeRuntimeMutation({
-    id: "instances.setTextContent",
-    input: {
-      operation: "set",
-      instanceId,
-      mode: type,
-      text: value,
-    },
-  });
-};
-
-export const __testing__ = { updateChild };
-
 export const TextContent = ({
   instanceId,
   computedValue,
@@ -72,9 +44,13 @@ export const TextContent = ({
   const instance = useInstance(instanceId);
   const hasChildren = (instance?.children.length ?? 0) > 0;
   const target = instance && getEditableTextTarget(instance);
-  const childIndex = target?.childIndex;
   const child = target?.child ?? { type: "text" as const, value: "" };
   const hasMixedContent = (instance?.children.length ?? 0) > 1;
+  const updateChild = (type: "text" | "expression", value: string) => {
+    executeRuntimeMutation(
+      getTextContentUpdateOperation({ instanceId, instance, type, value })
+    );
+  };
 
   let expression: undefined | string;
   if (child.type === "text") {
@@ -107,8 +83,7 @@ export const TextContent = ({
     updateBindableValue({
       expression: child.type === "expression" ? child.value : undefined,
       value,
-      onChangeValue: (value) =>
-        updateChild(instanceId, childIndex, "text", value),
+      onChangeValue: (value) => updateChild("text", value),
     });
   });
 
@@ -160,15 +135,9 @@ export const TextContent = ({
         value={localValue.value}
         showBinding={expression !== undefined}
         validate={(value) => validatePrimitiveValue(value, "Text Content")}
-        onChangeValue={(value) =>
-          updateChild(instanceId, childIndex, "text", value)
-        }
-        onChangeExpression={(value) =>
-          updateChild(instanceId, childIndex, "expression", value)
-        }
-        onRemove={(value) =>
-          updateChild(instanceId, childIndex, "text", String(value))
-        }
+        onChangeValue={(value) => updateChild("text", value)}
+        onChangeExpression={(value) => updateChild("expression", value)}
+        onRemove={(value) => updateChild("text", String(value))}
         renderControl={({ readOnly }) => (
           <CodeEditor
             title={

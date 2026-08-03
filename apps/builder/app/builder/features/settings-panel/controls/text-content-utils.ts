@@ -23,3 +23,40 @@ export const getEditableTextTarget = (instance: Instance) => {
   }
   return target;
 };
+
+export const getTextContentUpdateOperation = ({
+  instanceId,
+  instance,
+  type,
+  value,
+}: {
+  instanceId: Instance["id"];
+  instance: Instance | undefined;
+  type: "text" | "expression";
+  value: string;
+}) => {
+  const childIndex =
+    instance === undefined
+      ? undefined
+      : getEditableTextTarget(instance)?.childIndex;
+  if (childIndex !== undefined) {
+    return {
+      id: "instances.updateText" as const,
+      input: {
+        instanceId,
+        childIndex,
+        mode: type,
+        text: value,
+      },
+    };
+  }
+  return {
+    id: "instances.setTextContent" as const,
+    input: {
+      operation: "set" as const,
+      instanceId,
+      mode: type,
+      text: value,
+    },
+  };
+};

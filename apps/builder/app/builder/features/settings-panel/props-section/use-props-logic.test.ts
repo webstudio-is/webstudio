@@ -9,12 +9,8 @@ import { textContentAttribute } from "@webstudio-is/react-sdk";
 import { __testing__ } from "./use-props-logic";
 import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime";
 
-const {
-  isPropVisibleInContentMode,
-  getAndDelete,
-  canShowTextContent,
-  getTextContentEligibility,
-} = __testing__;
+const { isPropVisibleInContentMode, getAndDelete, canShowTextContent } =
+  __testing__;
 
 const getInput = (
   input: Partial<Parameters<typeof isPropVisibleInContentMode>[0]> = {}
@@ -159,27 +155,56 @@ describe("getAndDelete", () => {
 });
 
 describe("canShowTextContent", () => {
-  const createInstance = (child: Instance["children"][number]): Instance => ({
-    type: "instance",
-    id: "nested",
-    component: "ws:element",
-    tag: "span",
-    children: [child],
-  });
+  const metas = new Map<string, WsComponentMeta>();
+  const props = new Map<string, Prop>();
 
   test("limits the direct-capability exception to bound content", () => {
+    const paragraph: Instance = {
+      type: "instance",
+      id: "paragraph",
+      component: "ws:element",
+      tag: "p",
+      children: [
+        { type: "text", value: "Prefix" },
+        { type: "id", value: "nested" },
+      ],
+    };
+    const instance: Instance = {
+      type: "instance",
+      id: "nested",
+      component: "ws:element",
+      tag: "span",
+      children: [{ type: "text", value: "static" }],
+    };
+    const instances = new Map([
+      [paragraph.id, paragraph],
+      [instance.id, instance],
+    ]);
     expect(
       canShowTextContent({
-        instance: createInstance({ type: "text", value: "static" }),
-        isDirectlyCapable: true,
-        isRichTextTarget: false,
+        instance,
+        instanceSelector: [instance.id, paragraph.id],
+        instances,
+        props,
+        metas,
+        isContentMode: false,
       })
     ).toBe(false);
+    const boundInstance: Instance = {
+      ...instance,
+      children: [{ type: "expression", value: "value" }],
+    };
     expect(
       canShowTextContent({
-        instance: createInstance({ type: "expression", value: "value" }),
-        isDirectlyCapable: true,
-        isRichTextTarget: false,
+        instance: boundInstance,
+        instanceSelector: [boundInstance.id, paragraph.id],
+        instances: new Map([
+          [paragraph.id, paragraph],
+          [boundInstance.id, boundInstance],
+        ]),
+        props,
+        metas,
+        isContentMode: false,
       })
     ).toBe(true);
   });
@@ -203,13 +228,14 @@ describe("canShowTextContent", () => {
     ]);
 
     expect(
-      getTextContentEligibility({
+      canShowTextContent({
+        instance,
         instanceSelector: [instance.id],
         instances: new Map([[instance.id, instance]]),
         props: new Map(),
         metas,
         isContentMode: false,
       })
-    ).toEqual({ isDirectlyCapable: false, isRichTextTarget: true });
+    ).toBe(true);
   });
 });

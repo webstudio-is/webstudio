@@ -10,7 +10,9 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import { $builderMode } from "~/shared/nano-states";
 import { $instances, $pages } from "~/shared/sync/data-stores";
 import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
-import { TextContent, __testing__ } from "./text-content";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { TextContent } from "./text-content";
+import { getTextContentUpdateOperation } from "./text-content-utils";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -77,8 +79,19 @@ test("renders the existing bound Text content control for the expression child",
 });
 
 test("updates only the targeted expression child", () => {
+  const instance = $instances.get().get("reading-time");
+  if (instance === undefined) {
+    throw new Error("Expected the reading-time instance");
+  }
   act(() => {
-    __testing__.updateChild("reading-time", 1, "expression", "2 + 2");
+    executeRuntimeMutation(
+      getTextContentUpdateOperation({
+        instanceId: instance.id,
+        instance,
+        type: "expression",
+        value: "2 + 2",
+      })
+    );
   });
 
   expect($instances.get().get("reading-time")?.children).toEqual([
