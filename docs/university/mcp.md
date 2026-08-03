@@ -11,7 +11,7 @@ icon: robot
 
 {% hint style="info" %}
 This reference is generated from the Webstudio CLI source in the same Builder
-revision. It can document changes before they reach a published CLI release.
+revision. GitBook publishes it when that revision is successfully released.
 Examples use an installed `webstudio` command. See [CLI](cli.md) for Node.js and
 `npx` setup.
 {% endhint %}

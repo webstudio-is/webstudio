@@ -9,7 +9,10 @@ test("renders GitBook metadata around the complete CLI manual", () => {
 
   assert.match(generated, /^---\n/);
   assert.match(generated, /# Webstudio MCP\n/);
-  assert.match(generated, /same Builder\s+revision/);
+  assert.match(
+    generated,
+    /GitBook publishes it when that revision is successfully released/
+  );
   assert.match(
     generated,
     /See \[CLI\]\(cli\.md\) for Node\.js and\s+`npx` setup/
