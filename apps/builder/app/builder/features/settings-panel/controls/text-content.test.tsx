@@ -6,22 +6,30 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
+import { createDefaultPages } from "@webstudio-is/project-build";
 import { $builderMode } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
-import { TextContent } from "./text-content";
+import { $instances, $pages } from "~/shared/sync/data-stores";
+import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
+import { TextContent, __testing__ } from "./text-content";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
+registerContainers();
+
 let container: HTMLDivElement;
 let root: Root;
 
 beforeEach(() => {
+  serverSyncStore.transactionManager.currentStack = [];
+  serverSyncStore.transactionManager.undoneStack = [];
+  serverSyncStore.popAll();
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
   $builderMode.set("design");
+  $pages.set(createDefaultPages({ rootInstanceId: "reading-time" }));
   $instances.set(
     new Map([
       [
@@ -66,4 +74,15 @@ test("renders the existing bound Text content control for the expression child",
   expect(container.textContent).toContain("Text Content");
   expect(container.querySelector('[role="textbox"]')?.textContent).toBe("2");
   expect(container.querySelector('[data-variant="bound"]')).not.toBeNull();
+});
+
+test("updates only the targeted expression child", () => {
+  act(() => {
+    __testing__.updateChild("reading-time", 1, "expression", "2 + 2");
+  });
+
+  expect($instances.get().get("reading-time")?.children).toEqual([
+    { type: "text", value: " · " },
+    { type: "expression", value: "2 + 2" },
+  ]);
 });

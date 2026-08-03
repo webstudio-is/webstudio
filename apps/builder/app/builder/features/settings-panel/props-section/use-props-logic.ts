@@ -1,6 +1,12 @@
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
+import type {
+  PropMeta,
+  Instance,
+  Prop,
+  Props,
+  WsComponentMeta,
+} from "@webstudio-is/sdk";
 import { descendantComponent } from "@webstudio-is/sdk";
 import {
   getContentModeCapabilities,
@@ -125,10 +131,38 @@ const canShowTextContent = ({
   );
 };
 
+const getTextContentEligibility = ({
+  instanceSelector,
+  instances,
+  props,
+  metas,
+  isContentMode,
+}: {
+  instanceSelector: Instance["id"][];
+  instances: Map<Instance["id"], Instance>;
+  props: Props;
+  metas: Map<string, WsComponentMeta>;
+  isContentMode: boolean;
+}) => {
+  const input = {
+    instanceId: instanceSelector[0],
+    instances,
+    props,
+    metas,
+  };
+  const isDirectlyCapable = canHaveTextContent(input);
+  const isRichTextTarget =
+    (isContentMode
+      ? isRichTextTree(input)
+      : isRichText({ ...input, instanceSelector })) === true;
+  return { isDirectlyCapable, isRichTextTarget };
+};
+
 export const __testing__ = {
   isPropVisibleInContentMode,
   getAndDelete,
   canShowTextContent,
+  getTextContentEligibility,
 };
 
 const $textContentEligibility = computed(
@@ -144,19 +178,13 @@ const $textContentEligibility = computed(
       return { isDirectlyCapable: false, isRichTextTarget: false };
     }
     const [{ instanceSelector }] = instancePath;
-    const input = {
-      instanceId: instanceSelector[0],
+    return getTextContentEligibility({
+      instanceSelector,
       instances,
       props,
       metas,
-    };
-    const isDirectlyCapable = canHaveTextContent(input);
-    const isRichTextTarget =
-      isDirectlyCapable &&
-      (isContentMode
-        ? isRichTextTree(input)
-        : isRichText({ ...input, instanceSelector })) === true;
-    return { isDirectlyCapable, isRichTextTarget };
+      isContentMode,
+    });
   }
 );
 

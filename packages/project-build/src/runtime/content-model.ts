@@ -652,37 +652,6 @@ export const isRichTextTree = ({
   );
 };
 
-const hasExpressionInTree = (
-  instanceId: Instance["id"],
-  instances: Instances,
-  visited = new Set<Instance["id"]>()
-): boolean => {
-  if (visited.has(instanceId)) {
-    return false;
-  }
-  visited.add(instanceId);
-  const instance = instances.get(instanceId);
-  if (instance === undefined) {
-    return false;
-  }
-  return instance.children.some(
-    (child) =>
-      child.type === "expression" ||
-      (child.type === "id" &&
-        hasExpressionInTree(child.value, instances, visited))
-  );
-};
-
-export const isTextEditorCompatibleTree = (args: {
-  instanceId: Instance["id"];
-  instances: Instances;
-  props: Props;
-  metas: Metas;
-  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
-}) =>
-  isRichTextTree(args) &&
-  hasExpressionInTree(args.instanceId, args.instances) === false;
-
 export const findClosestRichText = ({
   instances,
   props,
@@ -713,26 +682,6 @@ export const findClosestRichText = ({
     foundRichText = instanceSelector.slice(index);
   }
   return foundRichText;
-};
-
-export const findClosestEditableText = (args: {
-  instances: Instances;
-  props: Props;
-  metas: Metas;
-  instanceSelector: InstanceSelector;
-  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
-}): undefined | InstanceSelector => {
-  const instanceSelector = findClosestRichText(args);
-  if (
-    instanceSelector === undefined ||
-    isTextEditorCompatibleTree({
-      ...args,
-      instanceId: instanceSelector[0],
-    }) === false
-  ) {
-    return;
-  }
-  return instanceSelector;
 };
 
 export const isRichTextContent = ({

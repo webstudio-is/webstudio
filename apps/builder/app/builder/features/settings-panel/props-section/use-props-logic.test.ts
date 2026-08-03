@@ -1,11 +1,20 @@
 import { describe, expect, test } from "vitest";
-import type { Instance, Prop, PropMeta } from "@webstudio-is/sdk";
+import type {
+  Instance,
+  Prop,
+  PropMeta,
+  WsComponentMeta,
+} from "@webstudio-is/sdk";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
 import { __testing__ } from "./use-props-logic";
 import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime";
 
-const { isPropVisibleInContentMode, getAndDelete, canShowTextContent } =
-  __testing__;
+const {
+  isPropVisibleInContentMode,
+  getAndDelete,
+  canShowTextContent,
+  getTextContentEligibility,
+} = __testing__;
 
 const getInput = (
   input: Partial<Parameters<typeof isPropVisibleInContentMode>[0]> = {}
@@ -173,5 +182,34 @@ describe("canShowTextContent", () => {
         isRichTextTarget: false,
       })
     ).toBe(true);
+  });
+
+  test("preserves existing text eligibility on non-text-capable components", () => {
+    const instance: Instance = {
+      type: "instance",
+      id: "head-slot",
+      component: "HeadSlot",
+      children: [{ type: "text", value: "Legacy text" }],
+    };
+    const metas = new Map<string, WsComponentMeta>([
+      [
+        "HeadSlot",
+        {
+          label: "Head slot",
+          Icon: () => null,
+          contentModel: { category: "instance", children: ["instance"] },
+        } as WsComponentMeta,
+      ],
+    ]);
+
+    expect(
+      getTextContentEligibility({
+        instanceSelector: [instance.id],
+        instances: new Map([[instance.id, instance]]),
+        props: new Map(),
+        metas,
+        isContentMode: false,
+      })
+    ).toEqual({ isDirectlyCapable: false, isRichTextTarget: true });
   });
 });

@@ -63,6 +63,8 @@ const updateChild = (
   });
 };
 
+export const __testing__ = { updateChild };
+
 export const TextContent = ({
   instanceId,
   computedValue,

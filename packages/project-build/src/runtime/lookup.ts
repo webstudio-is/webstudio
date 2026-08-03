@@ -6,11 +6,7 @@ import type {
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { getAllPages } from "@webstudio-is/sdk";
-import {
-  findClosestRichText,
-  isRichTextTree,
-  isTextEditorCompatibleTree,
-} from "./content-model";
+import { findClosestRichText, isRichTextTree } from "./content-model";
 import type { InstancePath, InstanceSelector } from "./instance-path";
 
 export type { InstancePath } from "./instance-path";
@@ -84,6 +80,53 @@ export const findPageAndSelectorByInstanceId = (
   return { pageId: pages.homePageId, instanceSelector };
 };
 
+type TextEditorLookupInput = {
+  instanceSelector: InstanceSelector;
+  instances: Instances;
+  props: Props;
+  metas: Map<string, WsComponentMeta>;
+  htmlTagsByInstanceId?: Map<Instance["id"], string>;
+};
+
+const hasExpressionInTree = (
+  instanceId: Instance["id"],
+  instances: Instances,
+  visited = new Set<Instance["id"]>()
+): boolean => {
+  if (visited.has(instanceId)) {
+    return false;
+  }
+  visited.add(instanceId);
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return false;
+  }
+  return instance.children.some(
+    (child) =>
+      child.type === "expression" ||
+      (child.type === "id" &&
+        hasExpressionInTree(child.value, instances, visited))
+  );
+};
+
+const getClosestTextEditorTarget = (args: TextEditorLookupInput) => {
+  const instanceSelector = findClosestRichText(args);
+  if (instanceSelector === undefined) {
+    return { status: "not-found" as const };
+  }
+  if (hasExpressionInTree(instanceSelector[0], args.instances)) {
+    return { status: "incompatible" as const };
+  }
+  return { status: "editable" as const, instanceSelector };
+};
+
+export const findClosestEditableText = (
+  args: TextEditorLookupInput
+): undefined | InstanceSelector => {
+  const result = getClosestTextEditorTarget(args);
+  return result.status === "editable" ? result.instanceSelector : undefined;
+};
+
 export const findAllEditableInstanceSelector = ({
   instanceSelector,
   instances,
@@ -91,12 +134,7 @@ export const findAllEditableInstanceSelector = ({
   metas,
   htmlTagsByInstanceId,
   results,
-}: {
-  instanceSelector: InstanceSelector;
-  instances: Instances;
-  props: Props;
-  metas: Map<string, WsComponentMeta>;
-  htmlTagsByInstanceId?: Map<Instance["id"], string>;
+}: TextEditorLookupInput & {
   results: InstanceSelector[];
 }) => {
   const [instanceId] = instanceSelector;
@@ -105,15 +143,16 @@ export const findAllEditableInstanceSelector = ({
     return;
   }
 
-  const args = {
-    instanceId,
-    instances,
-    props,
-    metas,
-    htmlTagsByInstanceId,
-  };
-  if (isRichTextTree(args)) {
-    if (isTextEditorCompatibleTree(args)) {
+  if (
+    isRichTextTree({
+      instanceId,
+      instances,
+      props,
+      metas,
+      htmlTagsByInstanceId,
+    })
+  ) {
+    if (hasExpressionInTree(instanceId, instances) === false) {
       results.push(instanceSelector);
     }
     return;
@@ -136,45 +175,15 @@ export const findAllEditableInstanceSelector = ({
   }
 };
 
-export const findEditableInstanceSelector = ({
-  instanceSelector,
-  instances,
-  props,
-  metas,
-  htmlTagsByInstanceId,
-}: {
-  instanceSelector: InstanceSelector;
-  instances: Instances;
-  props: Props;
-  metas: Map<string, WsComponentMeta>;
-  htmlTagsByInstanceId?: Map<Instance["id"], string>;
-}) => {
-  const closestRichText = findClosestRichText({
-    instanceSelector,
-    instances,
-    props,
-    metas,
-    htmlTagsByInstanceId,
-  });
-  if (closestRichText !== undefined) {
-    return isTextEditorCompatibleTree({
-      instanceId: closestRichText[0],
-      instances,
-      props,
-      metas,
-      htmlTagsByInstanceId,
-    })
-      ? closestRichText
-      : undefined;
+export const findEditableInstanceSelector = (args: TextEditorLookupInput) => {
+  const closest = getClosestTextEditorTarget(args);
+  if (closest.status !== "not-found") {
+    return closest.status === "editable" ? closest.instanceSelector : undefined;
   }
 
   const results: InstanceSelector[] = [];
   findAllEditableInstanceSelector({
-    instanceSelector,
-    instances,
-    props,
-    metas,
-    htmlTagsByInstanceId,
+    ...args,
     results,
   });
   return results[0];
