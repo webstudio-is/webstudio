@@ -181,8 +181,11 @@ const validateRuntimeAssets = ({
   artifact: ContentRuntimeArtifact;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
 }) => {
-  const missingReferencedAssetId = Object.values(artifact.assetReferences ?? {})
-    .flat()
+  const missingReferencedAssetId = [
+    artifact.assetReferences,
+    artifact.assetValueReferences,
+  ]
+    .flatMap((references) => Object.values(references ?? {}).flat())
     .map(({ assetId }) => assetId)
     .find((assetId) => runtimeAssets[assetId] === undefined);
   if (missingReferencedAssetId !== undefined) {

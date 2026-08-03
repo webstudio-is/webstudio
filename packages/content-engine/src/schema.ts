@@ -192,6 +192,16 @@ export const contentArtifactV1 = strictObject({
       })
     )
   ).optional(),
+  assetValueReferences: record(
+    string().min(1),
+    array(
+      strictObject({
+        path: array(string().min(1).or(number().int().nonnegative())).min(1),
+        assetId: string().min(1),
+        suffix: string().min(1).optional(),
+      })
+    )
+  ).optional(),
   fieldCatalog: builderAssetFieldCatalog,
   queries: record(sha256Revision, materializedAssetQuery).optional(),
   database: strictObject({

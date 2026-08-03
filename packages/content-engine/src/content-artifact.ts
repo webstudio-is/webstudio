@@ -13,13 +13,16 @@ export const serializeContentArtifact = (value: unknown) =>
   serializeJsonDeterministically(contentArtifactV1.parse(value));
 
 export const getContentArtifactReferencedAssetIds = (
-  artifact: Pick<ContentArtifactV1, "assetReferences">
+  artifact: Pick<ContentArtifactV1, "assetReferences" | "assetValueReferences">
 ) =>
   [
     ...new Set(
-      Object.values(artifact.assetReferences ?? {})
-        .flat()
-        .map(({ assetId }) => assetId)
+      [artifact.assetReferences, artifact.assetValueReferences].flatMap(
+        (references) =>
+          Object.values(references ?? {})
+            .flat()
+            .map(({ assetId }) => assetId)
+      )
     ),
   ].sort();
 
@@ -28,7 +31,10 @@ export const getContentArtifactRuntimeAssetIds = ({
   includeDocuments,
   includeDocumentGraph = true,
 }: {
-  artifact: Pick<ContentArtifactV1, "assetReferences"> & {
+  artifact: Pick<
+    ContentArtifactV1,
+    "assetReferences" | "assetValueReferences"
+  > & {
     documents: readonly { _id: string }[];
     documentGraph?: { readonly nodes: readonly { id: string }[] };
   };

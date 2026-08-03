@@ -23,7 +23,10 @@ const createPostEntry = (id: string, authorPath: string) =>
       size: 1,
       revision: `${id}-r1`,
       contentRef: `content:${id}`,
-      properties: { author: { $ref: authorPath } },
+      properties: {
+        author: { $ref: authorPath },
+        featureImage: "./assets/hero.png",
+      },
     },
   });
 
@@ -78,11 +81,24 @@ describe("document graph query resolution", () => {
     const { artifact } = await compileContentArtifact({
       projectId: "project",
       entries,
+      assetValueReferences: Object.fromEntries(
+        entries.map(({ assetId }) => [
+          assetId,
+          [
+            {
+              path: ["properties", "featureImage"],
+              assetId: "hero",
+            },
+          ],
+        ])
+      ),
       documentGraph: graph,
     });
     const sources: Record<string, string> = {
-      "post-ada": '{"author":{"$ref":"../authors/ada.json"}}',
-      "post-grace": '{"author":{"$ref":"../authors/grace.json"}}',
+      "post-ada":
+        '{"author":{"$ref":"../authors/ada.json"},"featureImage":"./assets/hero.png"}',
+      "post-grace":
+        '{"author":{"$ref":"../authors/grace.json"},"featureImage":"./assets/hero.png"}',
       "author-ada": '{"name":"Ada"}',
       "author-grace": '{"name":"Grace"}',
     };
@@ -103,6 +119,11 @@ describe("document graph query resolution", () => {
                 operator: "eq",
                 value: "Ada",
               },
+              {
+                field: ["properties", "featureImage"],
+                operator: "startsWith",
+                value: "/cgi/image/",
+              },
             ],
           },
           sort: [
@@ -114,19 +135,28 @@ describe("document graph query resolution", () => {
           output: {
             mode: "fields",
             includeMetadata: false,
-            fields: [["properties", "author", "name"]],
+            fields: [
+              ["properties", "author", "name"],
+              ["properties", "featureImage"],
+            ],
           },
           content: { mode: "none" },
         },
       },
       load,
+      runtimeAssets: {
+        hero: { url: "/cgi/image/hero.png?format=raw" },
+      },
     });
 
     expect(result).toEqual({
       items: [
         {
           id: "post-ada",
-          properties: { author: { name: "Ada" } },
+          properties: {
+            author: { name: "Ada" },
+            featureImage: "/cgi/image/hero.png?format=raw",
+          },
         },
       ],
       totalCount: 1,

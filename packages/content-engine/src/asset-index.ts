@@ -35,6 +35,10 @@ import {
   type DocumentGraph,
   type DocumentGraphArtifactV1,
 } from "./document-graph";
+import { getQueryConditions } from "@webstudio-is/query-builder/runtime";
+import type { AssetValueReferences } from "./asset-value-references";
+
+export const contentCompilationGeneration = 1;
 
 export type ContentCompilerDiagnostics = {
   maxBytes: number;
@@ -60,6 +64,52 @@ const getDocumentBytes = (
     serializeJsonDeterministically(
       projectContentDatabaseDocument({ document: entry.document, plan })
     )
+  );
+
+const pathsOverlap = (
+  left: readonly (string | number)[],
+  right: readonly (string | number)[]
+) => {
+  const length = Math.min(left.length, right.length);
+  return left
+    .slice(0, length)
+    .every((segment, index) => segment === right[index]);
+};
+
+const isQueryEvaluationAffectedByAssetValues = ({
+  query,
+  assetValueReferences,
+}: {
+  query: ContentCompilationPlan["queries"][number];
+  assetValueReferences?: AssetValueReferences;
+}) => {
+  const evaluationPaths = [
+    ...getQueryConditions(query.where).map(({ field }) => field),
+    ...query.sort.map(({ field }) => field),
+  ];
+  return Object.values(assetValueReferences ?? {})
+    .flat()
+    .some(({ path }) =>
+      evaluationPaths.some((field) => pathsOverlap(path, field))
+    );
+};
+
+const isDocumentEvaluationAffectedByAssetValues = ({
+  documentId,
+  plan,
+  assetValueReferences,
+}: {
+  documentId: string;
+  plan: ContentCompilationPlan;
+  assetValueReferences?: AssetValueReferences;
+}) =>
+  plan.queries.some((query) =>
+    isQueryEvaluationAffectedByAssetValues({
+      query,
+      assetValueReferences: {
+        [documentId]: assetValueReferences?.[documentId] ?? [],
+      },
+    })
   );
 
 export type ContentCompilerInput = CanonicalAssetFileEntry & {
@@ -216,6 +266,7 @@ const buildAssetIndex = async ({
   maxBytes,
   unboundedBytes,
   assetReferences,
+  assetValueReferences,
   documentGraph,
   plan,
   finalize = true,
@@ -225,6 +276,7 @@ const buildAssetIndex = async ({
   maxBytes: number;
   unboundedBytes: number;
   assetReferences?: MarkdownAssetReferences;
+  assetValueReferences?: AssetValueReferences;
   documentGraph?: DocumentGraphArtifactV1;
   plan?: ContentCompilationPlan;
   finalize?: boolean;
@@ -236,9 +288,13 @@ const buildAssetIndex = async ({
   const materializableQueries =
     plan?.queries.filter(
       (query) =>
-        documentGraph === undefined ||
-        getDocumentGraphQueryRootIds({ graph: documentGraph, query }).length ===
-          0
+        isQueryEvaluationAffectedByAssetValues({
+          query,
+          assetValueReferences,
+        }) === false &&
+        (documentGraph === undefined ||
+          getDocumentGraphQueryRootIds({ graph: documentGraph, query })
+            .length === 0)
     ) ?? [];
   const materialized =
     plan === undefined
@@ -272,12 +328,18 @@ const buildAssetIndex = async ({
       ? entries
       : runtimePlan.queries.length === 0
         ? []
-        : entries.filter(({ document }) =>
-            isContentDocumentCandidate({
-              document,
-              plan: runtimePlan,
-              available: "all",
-            })
+        : entries.filter(
+            ({ document }) =>
+              isDocumentEvaluationAffectedByAssetValues({
+                documentId: document._id,
+                plan: runtimePlan,
+                assetValueReferences,
+              }) ||
+              isContentDocumentCandidate({
+                document,
+                plan: runtimePlan,
+                available: "all",
+              })
           );
   const documents = runtimeEntries
     .map(({ document }) =>
@@ -301,6 +363,12 @@ const buildAssetIndex = async ({
   const includedAssetReferences = Object.fromEntries(
     Object.entries(assetReferences ?? {}).filter(([contentRef]) =>
       includedContentRefs.has(contentRef)
+    )
+  );
+  const includedDocumentIds = new Set(entries.map(({ assetId }) => assetId));
+  const includedAssetValueReferences = Object.fromEntries(
+    Object.entries(assetValueReferences ?? {}).filter(([documentId]) =>
+      includedDocumentIds.has(documentId)
     )
   );
   const runtimeCatalog =
@@ -336,6 +404,9 @@ const buildAssetIndex = async ({
     ...(Object.keys(includedAssetReferences).length === 0
       ? {}
       : { assetReferences: includedAssetReferences }),
+    ...(Object.keys(includedAssetValueReferences).length === 0
+      ? {}
+      : { assetValueReferences: includedAssetValueReferences }),
     fieldCatalog,
     ...(Object.keys(materialized.values).length === 0
       ? {}
@@ -370,6 +441,7 @@ export const compileContentArtifact = async ({
   entries,
   maxBytes = contentEngineLimits.databaseBytes,
   assetReferences,
+  assetValueReferences,
   documentGraph,
   plan,
 }: {
@@ -377,6 +449,7 @@ export const compileContentArtifact = async ({
   entries: readonly ContentCompilerInput[];
   maxBytes?: number;
   assetReferences?: MarkdownAssetReferences;
+  assetValueReferences?: AssetValueReferences;
   documentGraph?: DocumentGraph;
   plan?: ContentCompilationPlan;
 }): Promise<{
@@ -434,6 +507,7 @@ export const compileContentArtifact = async ({
       maxBytes,
       unboundedBytes,
       assetReferences,
+      assetValueReferences,
       documentGraph: documentGraphArtifact,
       plan,
       finalize: false,
@@ -461,6 +535,7 @@ export const compileContentArtifact = async ({
       maxBytes,
       unboundedBytes,
       assetReferences,
+      assetValueReferences,
       documentGraph: documentGraphArtifact,
       plan,
       finalize: false,
@@ -493,6 +568,7 @@ export const compileContentArtifact = async ({
           maxBytes,
           unboundedBytes,
           assetReferences,
+          assetValueReferences,
           documentGraph: documentGraphArtifact,
           plan,
           finalize: false,
@@ -526,6 +602,7 @@ export const compileContentArtifact = async ({
     maxBytes,
     unboundedBytes,
     assetReferences,
+    assetValueReferences,
     documentGraph: documentGraphArtifact,
     plan,
   });
@@ -577,6 +654,7 @@ export const createAssetIndex = async (input: {
   entries: readonly ContentCompilerInput[];
   maxBytes?: number;
   assetReferences?: MarkdownAssetReferences;
+  assetValueReferences?: AssetValueReferences;
   documentGraph?: DocumentGraph;
   plan?: ContentCompilationPlan;
 }): Promise<ContentArtifactV1> =>

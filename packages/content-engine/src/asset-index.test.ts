@@ -46,7 +46,7 @@ const entry = ({
   });
 
 describe("shared asset index", () => {
-  test("selects runtime assets from documents and Markdown references", () => {
+  test("selects runtime assets from documents and content references", () => {
     const artifact = {
       documents: [{ _id: "document" }, { _id: "shared" }],
       assetReferences: {
@@ -55,18 +55,24 @@ describe("shared asset index", () => {
           { start: 2, end: 3, assetId: "shared" },
         ],
       },
+      assetValueReferences: {
+        document: [
+          { path: ["properties", "image"], assetId: "structured-reference" },
+        ],
+      },
     };
 
     expect(getContentArtifactReferencedAssetIds(artifact)).toEqual([
       "reference",
       "shared",
+      "structured-reference",
     ]);
     expect(
       getContentArtifactRuntimeAssetIds({
         artifact,
         includeDocuments: true,
       })
-    ).toEqual(["document", "reference", "shared"]);
+    ).toEqual(["document", "reference", "shared", "structured-reference"]);
   });
 
   test("stores only fields required by an ID-only query", async () => {
@@ -328,6 +334,66 @@ describe("shared asset index", () => {
     await expect(verifyContentArtifact(materialized.artifact)).resolves.toEqual(
       materialized.artifact
     );
+  });
+
+  test("keeps queries that evaluate structured Asset values in the runtime database", async () => {
+    const post = createCanonicalAssetFileEntry({
+      projectId: "project",
+      document: {
+        ...entry({ id: "post" }).document,
+        properties: { featureImage: "./assets/hero.png" },
+      },
+    });
+    const query = assetQuery.parse({
+      where: {
+        all: [
+          {
+            field: ["properties", "featureImage"],
+            operator: "eq",
+            value: "/cgi/image/hero.png?format=raw",
+          },
+        ],
+      },
+      sort: [{ field: ["properties", "featureImage"], direction: "asc" }],
+      output: {
+        mode: "fields",
+        includeMetadata: false,
+        fields: [["properties", "featureImage"]],
+      },
+      content: { mode: "none" },
+    });
+    const { artifact } = await compileContentArtifact({
+      projectId: "project",
+      entries: [post],
+      assetValueReferences: {
+        post: [
+          {
+            path: ["properties", "featureImage"],
+            assetId: "hero",
+          },
+        ],
+      },
+      plan: createContentCompilationPlan([
+        createLiteralContentCompilationQuery({ id: "post", query }),
+      ]),
+    });
+
+    expect(artifact.queries).toBeUndefined();
+    expect(artifact.documents).toHaveLength(1);
+    await expect(
+      createContentDatabase({ artifact }).query({ query }, undefined, {
+        hero: { url: "/cgi/image/hero.png?format=raw" },
+      })
+    ).resolves.toMatchObject({
+      items: [
+        {
+          id: "post",
+          properties: {
+            featureImage: "/cgi/image/hero.png?format=raw",
+          },
+        },
+      ],
+    });
   });
 
   test("stores overview-only fields outside dynamic detail documents", async () => {

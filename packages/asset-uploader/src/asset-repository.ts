@@ -578,24 +578,36 @@ export class PostgresAssetRepository implements AssetRepository {
       assetReferences: Parameters<
         typeof createAssetIndex
       >[0]["assetReferences"],
+      assetValueReferences: Parameters<
+        typeof createAssetIndex
+      >[0]["assetValueReferences"],
       documentGraph: Parameters<typeof createAssetIndex>[0]["documentGraph"]
     ) =>
       await this.dependencies.createAssetIndex({
         projectId: this.projectId,
         entries,
         assetReferences,
+        ...(assetValueReferences === undefined ||
+        Object.keys(assetValueReferences).length === 0
+          ? {}
+          : { assetValueReferences }),
         documentGraph,
         maxBytes: this.contentDatabaseMaxBytes,
         ...(requirements === undefined ? {} : { plan: requirements }),
       });
     if (this.compilationCache === undefined) {
-      const { entries, assetReferences, documentGraph } =
+      const { entries, assetReferences, assetValueReferences, documentGraph } =
         await materializeContentSource({
           source,
           plan: requirements,
           maximumContentBytes: this.contentDatabaseMaxBytes,
         });
-      return await compile(entries, assetReferences, documentGraph);
+      return await compile(
+        entries,
+        assetReferences,
+        assetValueReferences,
+        documentGraph
+      );
     }
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const snapshot = await source.openSnapshot();
@@ -608,13 +620,22 @@ export class PostgresAssetRepository implements AssetRepository {
       });
       try {
         return await this.compilationCache.getOrCreate(key, async () => {
-          const { entries, assetReferences, documentGraph } =
-            await materializeContentSnapshot({
-              snapshot,
-              plan: requirements,
-              maximumContentBytes: this.contentDatabaseMaxBytes,
-            });
-          return await compile(entries, assetReferences, documentGraph);
+          const {
+            entries,
+            assetReferences,
+            assetValueReferences,
+            documentGraph,
+          } = await materializeContentSnapshot({
+            snapshot,
+            plan: requirements,
+            maximumContentBytes: this.contentDatabaseMaxBytes,
+          });
+          return await compile(
+            entries,
+            assetReferences,
+            assetValueReferences,
+            documentGraph
+          );
         });
       } catch (error) {
         if (error instanceof ContentSourceChangedError === false) {

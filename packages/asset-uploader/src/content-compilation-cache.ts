@@ -5,6 +5,7 @@ import {
 } from "@webstudio-is/content-engine";
 import {
   canonicalAssetMetadataExtractorGeneration,
+  contentCompilationGeneration,
   serializeJsonDeterministically,
 } from "@webstudio-is/content-engine/compiler";
 
@@ -29,6 +30,7 @@ export const createContentCompilationCacheKey = ({
     projectId,
     sourceRevision,
     metadataExtractorGeneration: canonicalAssetMetadataExtractorGeneration,
+    contentCompilationGeneration,
     plan: plan ?? null,
     strict,
     maxBytes,

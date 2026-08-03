@@ -15,6 +15,10 @@ import {
   discoverMarkdownAssetReferenceRanges,
 } from "./markdown-assets";
 import type { MarkdownAssetReferences } from "./markdown-references";
+import {
+  discoverAssetValueReferences,
+  type AssetValueReferences,
+} from "./asset-value-references";
 import { compareStrings } from "./canonical-json";
 import { encodeUtf8, type ByteSource } from "./byte-stream";
 import { extractMarkdownBody } from "./markdown-body";
@@ -175,6 +179,30 @@ const discoverSnapshotAssetReferences = async ({
   return references;
 };
 
+const discoverSnapshotAssetValueReferences = ({
+  snapshot,
+  entries,
+}: {
+  snapshot: ContentSourceSnapshot;
+  entries: readonly ContentCompilerInput[];
+}): AssetValueReferences => {
+  const assetIdsByPath = createUniqueAssetIdsByPath(snapshot.files);
+  const references: AssetValueReferences = {};
+  for (const entry of [...entries].sort((left, right) =>
+    compareStrings(left.assetId, right.assetId)
+  )) {
+    const discovered = discoverAssetValueReferences({
+      properties: entry.document.properties ?? {},
+      sourcePath: entry.document.path,
+      assetIdsByPath,
+    });
+    if (discovered.length > 0) {
+      references[entry.assetId] = discovered;
+    }
+  }
+  return references;
+};
+
 const documentUrlBase = "https://content.webstudio.local/";
 
 const getDocumentUrl = (path: string) =>
@@ -288,11 +316,16 @@ export const materializeContentSnapshot = async ({
       entries,
       plan,
     });
+    const assetValueReferences = discoverSnapshotAssetValueReferences({
+      snapshot,
+      entries,
+    });
     if (await snapshot.isCurrent()) {
       return {
         sourceRevision: snapshot.revision,
         entries,
         assetReferences,
+        assetValueReferences,
         documentGraph,
       };
     }
@@ -320,16 +353,22 @@ export const compileContentSource = async ({
   artifact: ContentArtifactV1;
   diagnostics: ContentCompilerDiagnostics;
 }> => {
-  const { sourceRevision, entries, assetReferences, documentGraph } =
-    await materializeContentSource({
-      source,
-      plan,
-      maximumContentBytes: maxBytes,
-    });
+  const {
+    sourceRevision,
+    entries,
+    assetReferences,
+    assetValueReferences,
+    documentGraph,
+  } = await materializeContentSource({
+    source,
+    plan,
+    maximumContentBytes: maxBytes,
+  });
   const compiled = await compileContentArtifact({
     projectId,
     entries,
     assetReferences,
+    assetValueReferences,
     documentGraph,
     ...(plan === undefined ? {} : { plan }),
     ...(maxBytes === undefined ? {} : { maxBytes }),
@@ -349,6 +388,7 @@ export const materializeContentSource = async ({
   sourceRevision: string;
   entries: readonly ContentCompilerInput[];
   assetReferences: MarkdownAssetReferences;
+  assetValueReferences: AssetValueReferences;
   documentGraph?: DocumentGraph;
 }> => {
   for (let attempt = 0; attempt < 2; attempt += 1) {

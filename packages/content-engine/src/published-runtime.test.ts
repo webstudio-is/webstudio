@@ -820,6 +820,91 @@ describe("published asset resource runtime", () => {
     });
   });
 
+  test("resolves structured Asset values from materialized query rows", async () => {
+    const query = assetQuery.parse({
+      where: {
+        all: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "post",
+          },
+        ],
+      },
+      sort: [],
+      limit: 1,
+      offset: 0,
+      output: {
+        mode: "fields",
+        includeMetadata: false,
+        fields: [["properties", "featureImage"]],
+      },
+      content: { mode: "none" },
+    });
+    const index = await createAssetIndex({
+      projectId: "project-1",
+      entries: [
+        createCanonicalAssetFileEntry({
+          projectId: "project-1",
+          document: {
+            ...document,
+            properties: {
+              ...document.properties,
+              featureImage: "./assets/hero.png?width=1200#cover",
+            },
+          },
+        }),
+      ],
+      assetValueReferences: {
+        "post-1": [
+          {
+            path: ["properties", "featureImage"],
+            assetId: "hero",
+            suffix: "?width=1200#cover",
+          },
+        ],
+      },
+      plan: createContentCompilationPlan([
+        createLiteralContentCompilationQuery({ id: "posts", query }),
+      ]),
+    });
+
+    expect(index.documents).toEqual([]);
+    expect(() =>
+      createPublishedAssetResourceFetch({
+        baseUrl: "https://site.example",
+        deploymentId: "missing-structured-asset",
+        artifact: index,
+        runtimeAssets: {},
+      })
+    ).toThrow("Published referenced asset URL is unavailable for hero");
+    const runtimeFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
+      deploymentId: "materialized-structured-asset",
+      artifact: index,
+      runtimeAssets: {
+        hero: { url: "/cgi/image/hero.png?format=raw" },
+      },
+    });
+    const response = await runtimeFetch("/$resources/assets", {
+      method: "POST",
+      body: JSON.stringify({ query }),
+    });
+
+    await expect(response?.json()).resolves.toEqual({
+      items: [
+        {
+          id: "post-1",
+          properties: {
+            featureImage: "/cgi/image/hero.png?format=raw&width=1200#cover",
+          },
+        },
+      ],
+      totalCount: 1,
+      hasMore: false,
+    });
+  });
+
   test("reuses one initialized runtime across deployment origins", async () => {
     const { index } = await createRuntime();
     const createGeneratedFetch = createGeneratedAssetResourceRuntime({
