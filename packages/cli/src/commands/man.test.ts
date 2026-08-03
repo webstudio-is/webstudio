@@ -526,6 +526,11 @@ test("prints mcp manual with startup and JSON argument examples", () => {
   expect(output).toContain("Read screenshot.diff textAnalysis");
   expect(output).toContain("vision.install-ocr");
   expect(output).toContain('"parentInstanceId": "parent-id"');
+  expect(output).toContain("For tools with no required arguments, pass `{}`.");
+  expect(output).not.toContain("```json\n{}\n```");
+  expect(output).not.toContain("### inspect-auth-context\n");
+  expect(output).toContain("### components.coverage-plan\n");
+  expect(output).toContain('"documentType": "html"');
   expect(output).toContain(
     "Copying a `.webstudio` folder is not an isolated project clone"
   );
