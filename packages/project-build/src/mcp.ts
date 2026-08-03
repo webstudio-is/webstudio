@@ -5653,6 +5653,32 @@ const metaGoalGuides = [
       "For structured data containing runtime values, set code with bind-props using an expression that evaluates directly to an object or array. The binding value stores expression source text, but the evaluated result must not be a string. Do not call JSON.stringify or assemble JSON with string concatenation; JsonLd performs validation and serialization.",
       'Run audit with {"scopes":["seo"],"pagePath":"<path>"} and fix any JSON-LD finding.',
     ],
+    recipe: {
+      fixedCodeUpdate: {
+        updates: [
+          {
+            instanceId: "<json-ld-instance-id>",
+            name: "code",
+            type: "string",
+            value:
+              '{"@context":"https://schema.org","@type":"Organization","name":"Acme"}',
+          },
+        ],
+      },
+      dynamicCodeBinding: {
+        bindings: [
+          {
+            instanceId: "<json-ld-instance-id>",
+            name: "code",
+            binding: {
+              type: "expression",
+              value:
+                '({ "@context": "https://schema.org", "@type": "Article", headline: post.title })',
+            },
+          },
+        ],
+      },
+    },
   },
   {
     pattern:
