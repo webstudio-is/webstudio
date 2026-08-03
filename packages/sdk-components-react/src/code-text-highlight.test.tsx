@@ -55,6 +55,22 @@ test("renders legacy content without highlighting configuration", () => {
   ).toBe("<code>legacy code</code>");
 });
 
+test("falls back to plain code for an unavailable selection", () => {
+  expect(
+    renderToStaticMarkup(
+      <HighlightedCodeText code="puts :hello" lang="ruby" theme="nord" />
+    )
+  ).toBe("<code>puts :hello</code>");
+});
+
+test("preserves the empty-code placeholder", () => {
+  expect(
+    renderToStaticMarkup(
+      <HighlightedCodeText code=" " lang="javascript" theme="github-light" />
+    )
+  ).toContain("Open the &quot;Settings&quot; panel to edit the code.");
+});
+
 test("hydrates the server markup without changing the DOM", async () => {
   const element = (
     <HighlightedCodeText
