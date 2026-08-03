@@ -382,10 +382,17 @@ const inputFileShapeIndex = Object.entries(inputFileShapes)
   .join("\n\n");
 
 const mcpArgumentExampleIndex = Object.entries(mcpArgumentExamples)
-  .map(
-    ([name, examples]) =>
-      `### ${name}\n\n${examples.map(formatJsonCodeBlock).join("\n\n")}`
-  )
+  .flatMap(([name, examples]) => {
+    const examplesWithArguments = examples.filter(
+      (example) => Object.keys(example).length > 0
+    );
+    if (examplesWithArguments.length === 0) {
+      return [];
+    }
+    return [
+      `### ${name}\n\n${examplesWithArguments.map(formatJsonCodeBlock).join("\n\n")}`,
+    ];
+  })
   .join("\n\n");
 
 const mcpVisionVerificationLoop = getVisionVerificationLoop({

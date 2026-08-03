@@ -1704,7 +1704,10 @@ const createProjectSessionMcpTool = (
   };
 };
 
-export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
+export const mcpArgumentExamples: Record<
+  string,
+  readonly Readonly<Record<string, unknown>>[]
+> = {
   "meta.guide": [{ brief: "Create a pricing page and style the hero" }],
   "inspect-auth-context": [{}],
   "inspect-design-context": [{}],

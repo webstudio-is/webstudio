@@ -9,7 +9,10 @@ test("renders GitBook metadata around the complete CLI manual", () => {
   );
 
   assert.match(generated, /^---\n/);
-  assert.match(generated, /# Webstudio MCP v1\.2\.3\n/);
+  assert.match(
+    generated,
+    /# Webstudio MCP\n\n\*\*Webstudio MCP v1\.2\.3\*\*\n/
+  );
   assert.match(
     generated,
     /GitBook publishes it when that revision is successfully released/
