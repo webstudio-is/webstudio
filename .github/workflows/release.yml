@@ -138,3 +138,16 @@ jobs:
           name: cli-release-smoke-${{ steps.version.outputs.value }}
           path: artifacts/cli-release-smoke.json
           if-no-files-found: error
+
+  publish-docs:
+    needs: [release, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+      - name: Publish released documentation snapshot
+        run: git push origin "$GITHUB_SHA:refs/heads/docs"

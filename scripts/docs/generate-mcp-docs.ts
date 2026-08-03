@@ -1,0 +1,57 @@
+import { execFileSync } from "node:child_process";
+import { readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const manualTitle = "# Webstudio MCP Manual";
+const manualPlaceholder = "{{manual}}";
+const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
+const outputPath = resolve(repositoryRoot, "docs/university/mcp.md");
+const template = readFileSync(new URL("mcp-page.md", import.meta.url), "utf8");
+
+const getMcpManual = () =>
+  execFileSync(
+    process.execPath,
+    [
+      resolve(repositoryRoot, "packages/cli/local.js"),
+      "man",
+      "mcp",
+      "--verbose",
+    ],
+    {
+      encoding: "utf8",
+      cwd: repositoryRoot,
+      env: {
+        ...process.env,
+        CI: "1",
+        FORCE_COLOR: "0",
+        NO_COLOR: "1",
+      },
+      maxBuffer: 10 * 1024 * 1024,
+    }
+  ).trim();
+
+export const renderMcpDocumentation = (manual: string) => {
+  const normalizedManual = manual.replaceAll("\r\n", "\n").trim();
+  if (normalizedManual.startsWith(`${manualTitle}\n`) === false) {
+    throw new Error(
+      `Expected the CLI manual to begin with ${JSON.stringify(manualTitle)}.`
+    );
+  }
+  const manualBody = normalizedManual.slice(manualTitle.length).trimStart();
+  const placeholderCount = template.split(manualPlaceholder).length - 1;
+  if (placeholderCount !== 1) {
+    throw new Error(
+      `Expected one ${manualPlaceholder} placeholder, found ${placeholderCount}.`
+    );
+  }
+  return template.replace(manualPlaceholder, manualBody);
+};
+
+export const generateMcpDocumentation = () => {
+  writeFileSync(outputPath, renderMcpDocumentation(getMcpManual()), "utf8");
+};
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  generateMcpDocumentation();
+}
