@@ -131,6 +131,21 @@ jobs:
           WEBSTUDIO_RELEASE_SMOKE_REPORT: ${{ github.workspace }}/artifacts/cli-release-smoke.json
         run: pnpm --filter webstudio test:release-smoke:registry
 
+      - name: Trigger MCP documentation update
+        env:
+          # Fine-grained token with Actions write access to webstudio-is/webstudio-community.
+          GH_TOKEN: ${{ secrets.WEBSTUDIO_COMMUNITY_ACTIONS_TOKEN }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "WEBSTUDIO_COMMUNITY_ACTIONS_TOKEN is required to trigger the MCP documentation updater." >&2
+            exit 1
+          fi
+          gh workflow run update-mcp-docs.yml \
+            --repo webstudio-is/webstudio-community \
+            --ref main \
+            --raw-field version="$VERSION"
+
       - name: Upload published CLI comparison report
         if: ${{ always() && (steps.registry-smoke.outcome == 'success' || steps.registry-smoke.outcome == 'failure') }}
         uses: actions/upload-artifact@v4
