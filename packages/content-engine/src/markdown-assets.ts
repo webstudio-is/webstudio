@@ -107,7 +107,7 @@ const getRelativeAssetPath = ({
   return segments.join("/");
 };
 
-const createAssetIdResolver = (
+export const createAssetIdResolver = (
   assetIdsByPath: ReadonlyMap<string, string>,
   sourcePath: string
 ) => {

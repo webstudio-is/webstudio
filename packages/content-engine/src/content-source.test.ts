@@ -504,6 +504,87 @@ describe("content source snapshots", () => {
     });
   });
 
+  test("discovers structured Asset values in Markdown and JSON documents", async () => {
+    const markdown = createFile({
+      id: "markdown",
+      path: "blog/posts/content-mode.md",
+    });
+    const json = createFile({
+      id: "json",
+      path: "team/member.json",
+      contentType: "application/json",
+      contentRef: "revisions/member.json",
+    });
+    const hero = createFile({
+      id: "hero",
+      path: "blog/posts/assets/content-mode.png",
+      contentType: "image/png",
+    });
+    const portrait = createFile({
+      id: "portrait",
+      path: "team/assets/portrait.png",
+      contentType: "image/png",
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [markdown, json, hero, portrait],
+          async loadEntries() {
+            const markdownEntry = createEntry(markdown);
+            const jsonEntry = createEntry(json);
+            return [
+              {
+                ...markdownEntry,
+                document: {
+                  ...markdownEntry.document,
+                  properties: {
+                    featureImage: "./assets/content-mode.png",
+                    openGraph: {
+                      images: ["./assets/content-mode.png#social"],
+                    },
+                  },
+                },
+              } as typeof markdownEntry,
+              {
+                ...jsonEntry,
+                document: {
+                  ...jsonEntry.document,
+                  properties: { portrait: "./assets/portrait.png" },
+                },
+              } as typeof jsonEntry,
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+
+    expect(result.artifact.assetValueReferences).toEqual({
+      json: [
+        {
+          path: ["properties", "portrait"],
+          assetId: "portrait",
+        },
+      ],
+      markdown: [
+        {
+          path: ["properties", "featureImage"],
+          assetId: "hero",
+        },
+        {
+          path: ["properties", "openGraph", "images", 0],
+          assetId: "hero",
+          suffix: "#social",
+        },
+      ],
+    });
+  });
+
   test("resolves the same relative URL independently for each Markdown folder", async () => {
     const firstPost = createFile({
       id: "first-post",

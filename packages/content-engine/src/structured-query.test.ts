@@ -93,6 +93,77 @@ const runtimeAssets = Object.fromEntries(
 );
 
 describe("structured asset query", () => {
+  test("filters, sorts, and projects resolved structured asset values", async () => {
+    const result = await executeAssetQuery({
+      documents: [
+        document({
+          id: "alpha",
+          properties: { featureImage: "./alpha.png" },
+        }),
+        document({
+          id: "beta",
+          properties: { featureImage: "./beta.png" },
+        }),
+      ],
+      assetValueReferences: {
+        alpha: [
+          {
+            path: ["properties", "featureImage"],
+            assetId: "alpha-image",
+          },
+        ],
+        beta: [
+          {
+            path: ["properties", "featureImage"],
+            assetId: "beta-image",
+          },
+        ],
+      },
+      runtimeAssets: {
+        "alpha-image": { url: "/cgi/image/z-alpha.png?format=raw" },
+        "beta-image": { url: "/cgi/image/a-beta.png?format=raw" },
+      },
+      query: {
+        where: {
+          all: [
+            {
+              field: ["properties", "featureImage"],
+              operator: "startsWith",
+              value: "/cgi/image/",
+            },
+          ],
+        },
+        sort: [
+          {
+            field: ["properties", "featureImage"],
+            direction: "asc",
+          },
+        ],
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "featureImage"]],
+        },
+        content: { mode: "none" },
+      },
+    });
+
+    expect(result.items).toEqual([
+      {
+        id: "beta",
+        properties: {
+          featureImage: "/cgi/image/a-beta.png?format=raw",
+        },
+      },
+      {
+        id: "alpha",
+        properties: {
+          featureImage: "/cgi/image/z-alpha.png?format=raw",
+        },
+      },
+    ]);
+  });
+
   test("accepts only referenced Markdown body queries", () => {
     expect(
       assetQuery.safeParse({ content: { mode: "markdown-body-ref" } }).success

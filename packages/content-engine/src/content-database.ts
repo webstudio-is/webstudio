@@ -35,6 +35,7 @@ import {
   assertDocumentSourceIdentity,
 } from "./document-graph";
 import { contentEngineLimits } from "./limits";
+import { resolveAssetValueReferences } from "./asset-value-references";
 
 type ContentDatabaseQueryArguments = [
   request: AssetQueryRequestInput,
@@ -135,7 +136,11 @@ const createQueryableContentDatabase = ({
 }: {
   artifact: Pick<
     ContentRuntimeArtifact,
-    "documents" | "contents" | "assetReferences" | "queries"
+    | "documents"
+    | "contents"
+    | "assetReferences"
+    | "assetValueReferences"
+    | "queries"
   >;
   revision: string;
   catalog?: BuilderAssetFieldCatalog;
@@ -158,12 +163,17 @@ const createQueryableContentDatabase = ({
     ) {
       throw new AssetIndexRevisionError();
     }
+    const assetUrls = Object.fromEntries(
+      Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [id, asset.url])
+    );
     const materialized =
       options?.skipMaterialized === true
         ? undefined
         : await getMaterializedAssetQueryResult({
             queries: artifact.queries,
             query: request.query,
+            assetValueReferences: artifact.assetValueReferences,
+            assetUrls,
           });
     if (materialized !== undefined) {
       return materialized;
@@ -199,6 +209,7 @@ const createQueryableContentDatabase = ({
       read: readEmbeddedContent,
       runtimeAssets,
       assetReferences: artifact.assetReferences,
+      assetValueReferences: artifact.assetValueReferences,
     });
     return result;
   };
@@ -228,7 +239,20 @@ const createQueryableContentDatabase = ({
         graph: documentGraph,
         query,
       }).filter((rootId) => {
-        const document = documentsById.get(rootId);
+        const storedDocument = documentsById.get(rootId);
+        const document =
+          storedDocument === undefined
+            ? undefined
+            : resolveAssetValueReferences({
+                value: storedDocument,
+                references: artifact.assetValueReferences?.[rootId],
+                assetUrls: Object.fromEntries(
+                  Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [
+                    id,
+                    asset.url,
+                  ])
+                ),
+              });
         if (document === undefined) {
           return false;
         }

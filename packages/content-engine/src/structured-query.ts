@@ -34,6 +34,10 @@ import { appendAssetFieldPath } from "./canonical";
 import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
 import { getUtf8ByteLength } from "./byte-stream";
 import type { MarkdownAssetReferences } from "./markdown-references";
+import {
+  resolveAssetValueReferences,
+  type AssetValueReferences,
+} from "./asset-value-references";
 
 export type AssetRuntimeData = {
   url: string;
@@ -425,6 +429,7 @@ export const executeAssetQuery = async ({
   read,
   runtimeAssets,
   assetReferences,
+  assetValueReferences,
 }: {
   query: AssetQueryInput;
   catalog?: BuilderAssetFieldCatalog;
@@ -432,6 +437,7 @@ export const executeAssetQuery = async ({
   read?: AssetResourceContentReader;
   runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   assetReferences?: MarkdownAssetReferences;
+  assetValueReferences?: AssetValueReferences;
 }): Promise<AssetQueryResult> => {
   const { query } = validateAssetQueryAgainstCatalog({ query: input, catalog });
   if (documents.length > contentEngineLimits.candidateDocuments) {
@@ -439,7 +445,17 @@ export const executeAssetQuery = async ({
       "Asset query document limit was exceeded"
     );
   }
-  const matched = documents.flatMap((document) => {
+  const assetUrls = Object.fromEntries(
+    Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [id, asset.url])
+  );
+  const resolvedDocuments = documents.map((document) =>
+    resolveAssetValueReferences({
+      value: document,
+      references: assetValueReferences?.[document._id],
+      assetUrls,
+    })
+  );
+  const matched = resolvedDocuments.flatMap((document) => {
     const runtimeAsset = runtimeAssets?.[document._id];
     if (
       supportsAssetQueryContent({ document, content: query.content }) ===
@@ -480,15 +496,7 @@ export const executeAssetQuery = async ({
       options: contentOptions,
       read,
       assetReferences,
-      assetUrls:
-        assetReferences === undefined
-          ? undefined
-          : Object.fromEntries(
-              Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [
-                id,
-                asset.url,
-              ])
-            ),
+      assetUrls: assetReferences === undefined ? undefined : assetUrls,
     });
     items = selectedDocuments.map((document, index) => {
       const content = hydrated.content[document._id];

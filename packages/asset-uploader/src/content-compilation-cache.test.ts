@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
 import {
   canonicalAssetMetadataExtractorGeneration,
+  contentCompilationGeneration,
   createAssetIndex,
 } from "@webstudio-is/content-engine/compiler";
 import {
@@ -14,7 +15,7 @@ const artifact = (revision: string) =>
   ({ integrity: { checksum: revision } }) as ContentArtifactV1;
 
 describe("content compilation cache", () => {
-  test("keys compiled artifacts by metadata extraction generation", () => {
+  test("keys compiled artifacts by compiler generations", () => {
     const key = createContentCompilationCacheKey({
       projectId: "project",
       sourceRevision: "source",
@@ -24,6 +25,7 @@ describe("content compilation cache", () => {
 
     expect(JSON.parse(key)).toMatchObject({
       metadataExtractorGeneration: canonicalAssetMetadataExtractorGeneration,
+      contentCompilationGeneration,
     });
   });
 

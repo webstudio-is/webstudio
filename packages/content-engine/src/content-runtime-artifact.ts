@@ -11,6 +11,7 @@ import {
   type DocumentRepresentation,
 } from "./document-graph";
 import type { MarkdownAssetReferences } from "./markdown-references";
+import type { AssetValueReferences } from "./asset-value-references";
 
 type RuntimeDocumentGraphEdge = Readonly<{
   sourceId: string;
@@ -28,6 +29,7 @@ export type ContentRuntimeArtifact = Readonly<{
   }>;
   contents?: Readonly<Record<string, string>>;
   assetReferences?: MarkdownAssetReferences;
+  assetValueReferences?: AssetValueReferences;
   queries?: Readonly<Record<string, MaterializedAssetQuery>>;
 }>;
 
@@ -80,6 +82,9 @@ export const createContentRuntimeArtifact = (
     ...(artifact.assetReferences === undefined
       ? {}
       : { assetReferences: artifact.assetReferences }),
+    ...(artifact.assetValueReferences === undefined
+      ? {}
+      : { assetValueReferences: artifact.assetValueReferences }),
     ...(artifact.queries === undefined ? {} : { queries: artifact.queries }),
   };
 };
@@ -96,9 +101,12 @@ export const getContentRuntimeArtifactRuntimeAssetIds = ({
   includeDocuments: boolean;
 }) => {
   const ids = new Set(
-    Object.values(artifact.assetReferences ?? {})
-      .flat()
-      .map(({ assetId }) => assetId)
+    [artifact.assetReferences, artifact.assetValueReferences].flatMap(
+      (references) =>
+        Object.values(references ?? {})
+          .flat()
+          .map(({ assetId }) => assetId)
+    )
   );
   if (includeDocuments) {
     for (const { _id } of artifact.documents) {
