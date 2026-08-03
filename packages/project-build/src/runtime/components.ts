@@ -61,6 +61,10 @@ import { getSlotFragmentDropTargetMutable } from "./slot";
 import type { ConflictResolution } from "./style-copy";
 import { findPageAndSelectorByInstanceId } from "./lookup";
 import { validateFragmentHtmlEmbedCode } from "./html-embed";
+import {
+  getFragmentPlacementContentModelWarnings,
+  getNewFragmentContentModelWarnings,
+} from "./matcher";
 import { z } from "zod";
 
 const conflictResolutionInput = z.enum(["ours", "theirs", "merge"]);
@@ -673,6 +677,7 @@ const createInsertFragmentMutation = <
   contentMode = false,
   additionalAvailableVariables = [],
   getResultDetails,
+  validateContentModel = true,
   context,
 }: {
   state: ComponentInsertState;
@@ -688,6 +693,7 @@ const createInsertFragmentMutation = <
     newInstanceIds: Map<string, string>;
     newDataSourceIds: Map<string, string>;
   }) => Details;
+  validateContentModel?: boolean;
   context: BuilderRuntimeContext;
 }) => {
   const mutationState = getRequiredComponentInsertState(state);
@@ -772,6 +778,51 @@ const createInsertFragmentMutation = <
       return child;
     }
   );
+
+  if (validateContentModel) {
+    const validationInstances = new Map(nextData.instances);
+    const validationParent: Instance = {
+      ...parent,
+      children:
+        mode === "replace"
+          ? insertedChildren
+          : [
+              ...parentChildren.slice(0, insertIndex),
+              ...insertedChildren,
+              ...parentChildren.slice(insertIndex),
+            ],
+    };
+    validationInstances.set(parent.id, validationParent);
+    const { instanceSelector: parentSelector } =
+      findPageAndSelectorByInstanceId(
+        mutationState.pages,
+        validationInstances,
+        parent.id
+      );
+    const allowedWarnings = context.allowLegacyContentModelWarnings
+      ? getFragmentPlacementContentModelWarnings({
+          children: insertedChildren,
+          instances: validationInstances,
+          props: nextData.props,
+          metas: componentMetas,
+        })
+      : [];
+    const warnings = getFragmentPlacementContentModelWarnings({
+      children: insertedChildren,
+      instances: validationInstances,
+      props: nextData.props,
+      metas: componentMetas,
+      parentSelector,
+    });
+    const [contentModelError] = getNewFragmentContentModelWarnings({
+      warnings,
+      allowedWarnings,
+    });
+    if (contentModelError !== undefined) {
+      return throwBuilderRuntimeError("BAD_REQUEST", contentModelError.message);
+    }
+  }
+
   const createResult = (
     parentInstanceId: string,
     removedInstanceIds: string[]
@@ -939,6 +990,7 @@ export const insertComponent = (
     templates,
     mode: input.mode,
     insertIndex: input.insertIndex,
+    validateContentModel: false,
     context,
   });
 };

@@ -394,7 +394,7 @@ export const uploadFileData = async (
     .eq("name", name)
     .eq("status", "UPLOADING")
     .gt(
-      "createdAt",
+      "updatedAt",
       new Date(Date.now() - UPLOADING_STALE_TIMEOUT).toISOString()
     )
     .single();

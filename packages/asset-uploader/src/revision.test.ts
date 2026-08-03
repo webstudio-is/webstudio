@@ -118,14 +118,17 @@ describe("asset content revisions", () => {
         });
         return empty({ status: 201 });
       }),
-      db.get("File", () =>
-        json({
+      db.get("File", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.has("updatedAt")).toBe(true);
+        expect(url.searchParams.has("createdAt")).toBe(false);
+        return json({
           ...oldFile,
           name: revisionName,
           format: "file",
           status: "UPLOADING",
-        })
-      ),
+        });
+      }),
       db.patch("File", () =>
         json({
           ...oldFile,
