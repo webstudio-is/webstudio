@@ -104,7 +104,7 @@ Click the "+" in the URL field to open the [**Expression editor**](../foundation
 Use the following as a template to create your dynamic body:
 
 ```json
-{ 
+{
   "filter": {
     "property": "Slug",
     "rich_text": {

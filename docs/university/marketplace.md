@@ -49,7 +49,7 @@ Learn about about [contributing to the Marketplace](../contributing/marketplace.
 
 ## Token Conflict Resolution
 
-When inserting marketplace templates that use design tokens, Webstudio automatically detects if any token names conflict with tokens already used in your project. 
+When inserting marketplace templates that use design tokens, Webstudio automatically detects if any token names conflict with tokens already used in your project.
 
 For example, if a template defines a token called `--primary-color` with value `#FF0000`, but your project already has a `--primary-color` token with value `#0000FF`, Webstudio will display a conflict resolution dialog.
 

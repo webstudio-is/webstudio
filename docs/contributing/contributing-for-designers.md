@@ -4,7 +4,7 @@ Webstudio is not just a tool, but also a community. As an open-source platform, 
 
 1.  #### Share Your Designs
 
-    One of the most straightforward ways designers can contribute is by sharing their designs built with Webstudio in [our community](https://wstd.us/community). This could be in the form of templates or individual components that others can use as starting points for their projects. We would also love to share your design showcases with the rest of the Webstudio audience via our socials. 
+    One of the most straightforward ways designers can contribute is by sharing their designs built with Webstudio in [our community](https://wstd.us/community). This could be in the form of templates or individual components that others can use as starting points for their projects. We would also love to share your design showcases with the rest of the Webstudio audience via our socials.
 2.  #### Create Tutorials & Guides
 
     If you've mastered certain aspects of using Webstudio, consider creating tutorials or guides to help other users navigate those features more effectively. Tag us in what you create and we'll help spread the word.

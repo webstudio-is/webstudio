@@ -1,6 +1,6 @@
 ---
 description: >-
-  The Dashboard is your central hub for managing all your Webstudio projects, 
+  The Dashboard is your central hub for managing all your Webstudio projects,
   featuring workspaces, search, organization with tags, and multiple view options.
 ---
 

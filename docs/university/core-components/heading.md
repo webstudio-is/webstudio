@@ -53,8 +53,8 @@ h1: Page Title
 
 ### Common Mistakes to Avoid
 
-❌ **Don't skip levels**: Going from h2 directly to h4  
-❌ **Don't choose heading level for style**: Use CSS instead  
+❌ **Don't skip levels**: Going from h2 directly to h4<br>
+❌ **Don't choose heading level for style**: Use CSS instead<br>
 ❌ **Don't use multiple h1 tags**: One per page is the standard
 
 ## Styling Headings

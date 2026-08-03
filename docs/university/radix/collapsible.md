@@ -46,4 +46,3 @@ The Collapsible component is useful for various UI patterns:
 - [Tabs](./tabs.md) – Organize content into switchable panels
 - [Dialog](./dialog.md) – Modal window for focused content
 - [Sheet](./sheet.md) – Sliding panel from screen edge
-

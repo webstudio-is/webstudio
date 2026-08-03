@@ -22,11 +22,11 @@ description: Add GSAP animations to your Webstudio site with custom code.
 <script type="module">
   gsap.registerPlugin(Flip);
   gsap.fromTo(".animation", {opacity: 0}, {
-    opacity: 1, 
-    duration: 1, 
-    stagger: 0.1, 
+    opacity: 1,
+    duration: 1,
+    stagger: 0.1,
     ease: "power2.inOut"
-  });  
+  });
 </script>
 ```
 
