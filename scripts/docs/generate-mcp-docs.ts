@@ -9,16 +9,9 @@ const versionPlaceholder = "{{version}}";
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
 const outputPath = resolve(repositoryRoot, "docs/university/mcp.md");
 const template = readFileSync(new URL("mcp-page.md", import.meta.url), "utf8");
-
-const getCliVersion = () => {
-  const packageJson = JSON.parse(
-    readFileSync(resolve(repositoryRoot, "packages/cli/package.json"), "utf8")
-  ) as { version?: unknown };
-  if (typeof packageJson.version !== "string") {
-    throw new Error("Expected the CLI package to have a version.");
-  }
-  return packageJson.version;
-};
+const { version: cliVersion } = JSON.parse(
+  readFileSync(resolve(repositoryRoot, "packages/cli/package.json"), "utf8")
+) as { version: string };
 
 const getMcpManual = () =>
   execFileSync(
@@ -67,7 +60,7 @@ export const renderMcpDocumentation = (manual: string, version: string) => {
 export const generateMcpDocumentation = () => {
   writeFileSync(
     outputPath,
-    renderMcpDocumentation(getMcpManual(), getCliVersion()),
+    renderMcpDocumentation(getMcpManual(), cliVersion),
     "utf8"
   );
 };
