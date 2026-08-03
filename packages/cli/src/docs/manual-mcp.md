@@ -399,9 +399,10 @@ Generated app setup:
 
 {{mcpGeneratedAppDependencyNotes}}
 
-## MCP Argument Examples
+## MCP argument examples
 
-MCP tools receive JSON argument objects:
+Examples below show meaningful argument combinations. Tool schemas are the
+source of truth. For tools with no required arguments, pass `{}`.
 
 {{mcpArgumentExampleIndex}}
 
