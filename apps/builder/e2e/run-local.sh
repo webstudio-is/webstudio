@@ -21,7 +21,6 @@ export DIRECT_URL="${E2E_DIRECT_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PA
 export POSTGREST_URL="${E2E_POSTGREST_URL:-http://localhost:${POSTGREST_PORT}}"
 
 source "$ROOT_DIR/apps/builder/dev/backend.sh"
-source "$ROOT_DIR/apps/builder/e2e/run-step.sh"
 builder_backend_init
 
 export E2E_DB_BOOTSTRAP="${E2E_DB_BOOTSTRAP:-auto}"
@@ -30,7 +29,7 @@ export E2E_DOCKER_PULL_TIMEOUT_SECONDS="${E2E_DOCKER_PULL_TIMEOUT_SECONDS:-300}"
 export E2E_DOCKER_TIMEOUT_SECONDS="${E2E_DOCKER_TIMEOUT_SECONDS:-60}"
 export E2E_MIGRATIONS_TIMEOUT_SECONDS="${E2E_MIGRATIONS_TIMEOUT_SECONDS:-300}"
 export E2E_INSTALL_PLAYWRIGHT="${E2E_INSTALL_PLAYWRIGHT:-auto}"
-export E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS="${E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS:-600}"
+export E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS="${E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS:-300}"
 export E2E_RUN_TESTS="${E2E_RUN_TESTS:-true}"
 export E2E_START_POSTGREST="${E2E_START_POSTGREST:-$E2E_RUN_TESTS}"
 export E2E_BUILDER_BUILD_TIMEOUT_SECONDS="${E2E_BUILDER_BUILD_TIMEOUT_SECONDS:-600}"
@@ -46,6 +45,42 @@ cleanup() {
 }
 
 trap cleanup EXIT
+
+run_step() {
+  local name="$1"
+  local timeout_seconds="$2"
+  shift 2
+
+  echo "▶ $name"
+  local started_at
+  started_at="$(date +%s)"
+  "$@" &
+  local pid="$!"
+  local timeout_at
+  timeout_at="$(($(date +%s) + timeout_seconds))"
+  while kill -0 "$pid" 2>/dev/null; do
+    if [ "$(date +%s)" -ge "$timeout_at" ]; then
+      echo "Timed out after ${timeout_seconds}s: $name" >&2
+      kill "$pid" 2>/dev/null || true
+      sleep 10
+      kill -9 "$pid" 2>/dev/null || true
+      wait "$pid" || true
+      return 124
+    fi
+    sleep 0.1
+  done
+  local status=0
+  wait "$pid" || status="$?"
+  if [ "$status" -ne 0 ]; then
+    local duration
+    duration="$(($(date +%s) - started_at))"
+    echo "✗ $name (${duration}s)" >&2
+    return "$status"
+  fi
+  local duration
+  duration="$(($(date +%s) - started_at))"
+  echo "✓ $name (${duration}s)"
+}
 
 bootstrap_database() {
   if [ "$E2E_DB_BOOTSTRAP" = "if-empty" ]; then
