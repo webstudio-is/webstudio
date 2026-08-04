@@ -2,7 +2,9 @@
 
 import { render, waitFor } from "@testing-library/react";
 import { expect, test } from "vitest";
-import { CanvasCodeText } from "./code-text-canvas";
+import { canvasComponents } from "../canvas-components";
+
+const CanvasCodeText = canvasComponents.CodeText;
 
 test("loads highlighting without replacing the code element", async () => {
   const { container, rerender } = render(

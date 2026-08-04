@@ -3,6 +3,7 @@ import {
   baseComponentImportSource,
   createFrameworkComponentRegistry,
 } from "./framework";
+import { buildHooks as baseBuildHooks } from "@webstudio-is/sdk-components-react/build-hooks";
 import { componentMetaLibraries, getComponentName } from "./shared";
 
 test("creates framework component imports from component package metas", () => {
@@ -18,9 +19,7 @@ test("creates framework component imports from component package metas", () => {
     }
   }
 
-  expect(registry.buildHooks.map((hook) => hook.component)).toEqual([
-    "CodeText",
-  ]);
+  expect(registry.buildHooks).toEqual(baseBuildHooks);
 });
 
 test("overrides router components only when a framework provides them", () => {

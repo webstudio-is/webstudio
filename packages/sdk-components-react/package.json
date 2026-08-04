@@ -38,6 +38,11 @@
       "types": "./lib/types/build-hooks.d.ts",
       "import": "./lib/build-hooks.js"
     },
+    "./canvas-components": {
+      "webstudio": "./src/canvas-components.ts",
+      "types": "./lib/types/canvas-components.d.ts",
+      "import": "./lib/canvas-components.js"
+    },
     "./metas": {
       "webstudio": "./src/metas.ts",
       "types": "./lib/types/metas.d.ts",

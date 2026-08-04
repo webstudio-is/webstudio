@@ -43,8 +43,7 @@
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/sdk-components-animation": "workspace:*",
     "@webstudio-is/sdk-components-react": "workspace:*",
-    "@webstudio-is/sdk-components-react-radix": "workspace:*",
-    "shiki": "4.4.1"
+    "@webstudio-is/sdk-components-react-radix": "workspace:*"
   },
   "devDependencies": {
     "@testing-library/react": "^16.2.0",

@@ -2892,9 +2892,6 @@ importers:
       '@webstudio-is/sdk-components-react-radix':
         specifier: workspace:*
         version: link:../sdk-components-react-radix
-      shiki:
-        specifier: 4.4.1
-        version: 4.4.1
     devDependencies:
       '@testing-library/react':
         specifier: ^16.2.0
