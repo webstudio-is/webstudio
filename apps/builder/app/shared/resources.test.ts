@@ -16,6 +16,7 @@ const {
   queueInvalidatedResource,
   queueResources,
   reset,
+  startLoading,
 } = __testing__;
 
 afterEach(() => {
@@ -154,6 +155,7 @@ test("replaces an invalidated in-flight request without caching stale data", asy
   queueResources([request]);
   const firstLoad = loadResources(requestFetch as typeof globalThis.fetch);
   queueInvalidatedResource(request);
+  startLoading(requestFetch as typeof globalThis.fetch);
   resolveFirst(Response.json([[key, { data: "stale" }]]));
   await firstLoad;
   expect($resourcesCache.get().has(key)).toBe(false);
@@ -165,6 +167,220 @@ test("replaces an invalidated in-flight request without caching stale data", asy
   expect(JSON.parse(String(requestFetch.mock.calls[1][1]?.body))).toEqual([
     request,
   ]);
+});
+
+test("loads fresh page resources alongside a still-current pending resource", async () => {
+  const shared: ResourceRequest = {
+    name: "Shared navigation",
+    method: "get",
+    url: "https://example.com/shared-navigation",
+    searchParams: [],
+    headers: [],
+  };
+  const obsolete: ResourceRequest = {
+    name: "Obsolete page",
+    method: "get",
+    url: "https://example.com/obsolete-page",
+    searchParams: [],
+    headers: [],
+  };
+  const fresh: ResourceRequest = {
+    name: "Fresh page",
+    method: "get",
+    url: "https://example.com/fresh-page",
+    searchParams: [],
+    headers: [],
+  };
+  let resolveFirst: (response: Response) => void = () => {};
+  let resolveSecond: (response: Response) => void = () => {};
+  const firstResponse = new Promise<Response>((resolve) => {
+    resolveFirst = resolve;
+  });
+  const secondResponse = new Promise<Response>((resolve) => {
+    resolveSecond = resolve;
+  });
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(() => firstResponse)
+    .mockImplementationOnce(() => secondResponse);
+
+  queueResources([shared, obsolete]);
+  const firstLoad = loadResources(requestFetch as typeof globalThis.fetch);
+  queueResources([shared, fresh]);
+  startLoading(requestFetch as typeof globalThis.fetch);
+
+  await vi.waitFor(() => {
+    expect(requestFetch).toHaveBeenCalledTimes(2);
+  });
+  expect(JSON.parse(String(requestFetch.mock.calls[1][1]?.body))).toEqual([
+    fresh,
+  ]);
+  expect(requestFetch.mock.calls[0][1]?.signal?.aborted).toBe(false);
+  expect(getLoaderState()).toEqual({ queueSize: 0, pendingSize: 2 });
+
+  resolveFirst(
+    Response.json([
+      [getResourceKey(shared), { data: "shared" }],
+      [getResourceKey(obsolete), { data: "obsolete" }],
+    ])
+  );
+  await firstLoad;
+  expect($resourcesCache.get().get(getResourceKey(shared))).toEqual({
+    data: "shared",
+  });
+  expect($resourcesCache.get().has(getResourceKey(obsolete))).toBe(false);
+  expect(getLoaderState()).toEqual({ queueSize: 0, pendingSize: 1 });
+
+  resolveSecond(Response.json([[getResourceKey(fresh), { data: "fresh" }]]));
+  await vi.waitFor(() => {
+    expect(getLoaderState()).toEqual({ queueSize: 0, pendingSize: 0 });
+  });
+  expect($resourcesCache.get().get(getResourceKey(fresh))).toEqual({
+    data: "fresh",
+  });
+});
+
+test("aborts a resource batch when all dispatched resources become obsolete", async () => {
+  const obsolete: ResourceRequest = {
+    name: "Obsolete page",
+    method: "get",
+    url: "https://example.com/obsolete-page",
+    searchParams: [],
+    headers: [],
+  };
+  const fresh: ResourceRequest = {
+    name: "Fresh page",
+    method: "get",
+    url: "https://example.com/fresh-page",
+    searchParams: [],
+    headers: [],
+  };
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(
+      (_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => reject(new DOMException("Aborted", "AbortError")),
+            { once: true }
+          );
+        })
+    )
+    .mockResolvedValueOnce(Response.json([]));
+
+  queueResources([obsolete]);
+  const obsoleteLoad = loadResources(requestFetch as typeof globalThis.fetch);
+  queueResources([fresh]);
+  startLoading(requestFetch as typeof globalThis.fetch);
+
+  expect(requestFetch.mock.calls[0][1]?.signal?.aborted).toBe(true);
+  await obsoleteLoad;
+  await vi.waitFor(() => {
+    expect(requestFetch).toHaveBeenCalledTimes(2);
+  });
+  expect(JSON.parse(String(requestFetch.mock.calls[1][1]?.body))).toEqual([
+    fresh,
+  ]);
+  expect(error).not.toHaveBeenCalled();
+  error.mockRestore();
+});
+
+test("keeps a replacement pending when an obsolete same-key batch settles", async () => {
+  const request: ResourceRequest = {
+    name: "Posts",
+    method: "get",
+    url: "https://example.com/same-key-race",
+    searchParams: [],
+    headers: [],
+  };
+  const key = getResourceKey(request);
+  let resolveFirst: (response: Response) => void = () => {};
+  let resolveSecond: (response: Response) => void = () => {};
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFirst = resolve;
+        })
+    )
+    .mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveSecond = resolve;
+        })
+    );
+
+  queueResources([request]);
+  const obsoleteLoad = loadResources(requestFetch as typeof globalThis.fetch);
+  queueInvalidatedResource(request);
+  startLoading(requestFetch as typeof globalThis.fetch);
+
+  await vi.waitFor(() => {
+    expect(requestFetch).toHaveBeenCalledTimes(2);
+  });
+  resolveFirst(Response.json([[key, { data: "stale" }]]));
+  await obsoleteLoad;
+  expect($resourcesCache.get().has(key)).toBe(false);
+  expect(getLoaderState()).toEqual({ queueSize: 0, pendingSize: 1 });
+
+  resolveSecond(Response.json([[key, { data: "fresh" }]]));
+  await vi.waitFor(() => {
+    expect(getLoaderState()).toEqual({ queueSize: 0, pendingSize: 0 });
+  });
+  expect($resourcesCache.get().get(key)).toEqual({ data: "fresh" });
+});
+
+test("fills capacity freed by obsolete resources in a mixed batch", async () => {
+  const shared = Array.from({ length: 2 }, (_, index) => ({
+    name: `Shared ${index}`,
+    method: "get" as const,
+    url: `https://example.com/shared-${index}`,
+    searchParams: [],
+    headers: [],
+  }));
+  const obsolete = Array.from({ length: 3 }, (_, index) => ({
+    name: `Obsolete ${index}`,
+    method: "get" as const,
+    url: `https://example.com/obsolete-${index}`,
+    searchParams: [],
+    headers: [],
+  }));
+  const fresh = Array.from({ length: 3 }, (_, index) => ({
+    name: `Fresh ${index}`,
+    method: "get" as const,
+    url: `https://example.com/fresh-${index}`,
+    searchParams: [],
+    headers: [],
+  }));
+  let resolveFirst: (response: Response) => void = () => {};
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFirst = resolve;
+        })
+    )
+    .mockResolvedValueOnce(Response.json([]));
+
+  queueResources([...shared, ...obsolete]);
+  const firstLoad = loadResources(requestFetch as typeof globalThis.fetch);
+  queueResources([...shared, ...fresh]);
+  startLoading(requestFetch as typeof globalThis.fetch);
+
+  await vi.waitFor(() => {
+    expect(requestFetch).toHaveBeenCalledTimes(2);
+  });
+  expect(JSON.parse(String(requestFetch.mock.calls[1][1]?.body))).toEqual(
+    fresh
+  );
+  expect(getLoaderState()).toEqual({ queueSize: 0, pendingSize: 5 });
+
+  resolveFirst(Response.json([]));
+  await firstLoad;
 });
 
 test("drains bounded batches without an additional delay", async () => {

@@ -5,11 +5,12 @@ import {
   AssetQueryExecutionError,
 } from "@webstudio-is/content-engine";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
-import { executeAssetQuery } from "./assets-query.server";
+import { executeAssetQueries, executeAssetQuery } from "./assets-query.server";
 
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const dependencies = {
   authorizeApiProject: vi.fn(),
+  previewProjectAssetQueries: vi.fn(),
   previewProjectAssetQuery: vi.fn(),
   preventCrossOriginCookie: vi.fn(),
 };
@@ -23,8 +24,96 @@ const innerRequest = (body: unknown) =>
 
 describe("configured Assets system resource", () => {
   beforeEach(() => {
+    dependencies.authorizeApiProject.mockReset();
     dependencies.authorizeApiProject.mockResolvedValue({} as never);
+    dependencies.previewProjectAssetQueries.mockReset();
     dependencies.previewProjectAssetQuery.mockReset();
+    dependencies.preventCrossOriginCookie.mockReset();
+  });
+
+  test("batches valid queries while isolating malformed and stale requests", async () => {
+    const first = {
+      data: { items: [{ id: "tools" }], totalCount: 1, hasMore: false },
+    };
+    const last = {
+      data: { items: [{ id: "updates" }], totalCount: 1, hasMore: false },
+    };
+    dependencies.previewProjectAssetQueries.mockResolvedValue([
+      { status: "fulfilled", value: first },
+      { status: "rejected", reason: new AssetIndexRevisionError() },
+      { status: "fulfilled", value: last },
+    ]);
+    const controller = new AbortController();
+    const requests = [
+      innerRequest({ query: { limit: 1 } }),
+      new Request(`https://p-${projectId}.localhost/$resources/assets`, {
+        method: "POST",
+        body: "{",
+      }),
+      innerRequest({ query: { offset: 1 } }),
+      innerRequest({ query: { offset: 2 } }),
+    ];
+
+    const responses = await executeAssetQueries(
+      {
+        request: new Request(outerRequest(), { signal: controller.signal }),
+        resourceRequests: requests,
+      },
+      dependencies
+    );
+
+    expect(responses.map(({ status }) => status)).toEqual([200, 400, 409, 200]);
+    await expect(responses[0].json()).resolves.toEqual(first);
+    await expect(responses[1].json()).resolves.toMatchObject({
+      ok: false,
+      error: { code: "INVALID_REQUEST" },
+    });
+    await expect(responses[2].json()).resolves.toMatchObject({
+      ok: false,
+      error: { code: "STALE_INDEX" },
+    });
+    await expect(responses[3].json()).resolves.toEqual(last);
+    expect(dependencies.preventCrossOriginCookie).toHaveBeenCalledOnce();
+    expect(dependencies.authorizeApiProject).toHaveBeenCalledOnce();
+    expect(dependencies.previewProjectAssetQueries).toHaveBeenCalledWith({
+      projectId,
+      requests: [
+        expect.objectContaining({
+          query: expect.objectContaining({ limit: 1 }),
+        }),
+        expect.objectContaining({
+          query: expect.objectContaining({ offset: 1 }),
+        }),
+        expect.objectContaining({
+          query: expect.objectContaining({ offset: 2 }),
+        }),
+      ],
+      context: expect.anything(),
+      signal: expect.any(AbortSignal),
+    });
+  });
+
+  test("stops an already-cancelled batch before authorization", async () => {
+    dependencies.previewProjectAssetQueries.mockResolvedValue([
+      {
+        status: "fulfilled",
+        value: { data: { items: [], totalCount: 0, hasMore: false } },
+      },
+    ]);
+    const controller = new AbortController();
+    controller.abort();
+
+    const responses = await executeAssetQueries(
+      {
+        request: new Request(outerRequest(), { signal: controller.signal }),
+        resourceRequests: [innerRequest({ query: {} })],
+      },
+      dependencies
+    );
+
+    expect(responses.map(({ status }) => status)).toEqual([499]);
+    expect(dependencies.authorizeApiProject).not.toHaveBeenCalled();
+    expect(dependencies.previewProjectAssetQueries).not.toHaveBeenCalled();
   });
 
   test("uses the outer authentication context and typed inner request", async () => {
@@ -54,7 +143,9 @@ describe("configured Assets system resource", () => {
         },
       },
     };
-    dependencies.previewProjectAssetQuery.mockResolvedValue(responseBody);
+    dependencies.previewProjectAssetQueries.mockResolvedValue([
+      { status: "fulfilled", value: responseBody },
+    ]);
     const query = {
       where: {
         all: [
@@ -84,19 +175,20 @@ describe("configured Assets system resource", () => {
       projectId,
       "view"
     );
-    expect(dependencies.previewProjectAssetQuery).toHaveBeenCalledWith({
+    expect(dependencies.previewProjectAssetQueries).toHaveBeenCalledWith({
       projectId,
-      request: {
-        query: expect.objectContaining({
-          ...query,
-          sort: [],
-          offset: 0,
-          content: { mode: "none" },
-        }),
-      },
+      requests: [
+        {
+          query: expect.objectContaining({
+            ...query,
+            sort: [],
+            offset: 0,
+            content: { mode: "none" },
+          }),
+        },
+      ],
       context: expect.anything(),
-      includeDiagnostics: false,
-      includeUnresolvedDiagnostics: false,
+      signal: expect.any(AbortSignal),
     });
   });
 

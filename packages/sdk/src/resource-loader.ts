@@ -54,6 +54,70 @@ export type ResourceLoadOptions = {
   timeoutMs?: number;
 };
 
+export const createResourceFetchBatchProvider = ({
+  baseUrl,
+  shouldBatch,
+  execute,
+}: {
+  baseUrl: string | URL;
+  shouldBatch: (input: RequestInfo | URL, init?: RequestInit) => boolean;
+  execute: (requests: readonly Request[]) => Promise<readonly Response[]>;
+}) => {
+  const pending: Array<{
+    request: Request;
+    resolve: (response: Response) => void;
+    reject: (error: unknown) => void;
+  }> = [];
+  let didFlush = false;
+  let flushPromise: Promise<void> | undefined;
+
+  return {
+    fetch: (
+      input: RequestInfo | URL,
+      init?: RequestInit
+    ): Promise<Response> | undefined => {
+      if (didFlush || shouldBatch(input, init) === false) {
+        return;
+      }
+      const request =
+        typeof input === "string"
+          ? new Request(new URL(input, baseUrl), init)
+          : new Request(input, init);
+      return new Promise<Response>((resolve, reject) => {
+        pending.push({ request, resolve, reject });
+      });
+    },
+    flush: () => {
+      if (flushPromise !== undefined) {
+        return flushPromise;
+      }
+      didFlush = true;
+      const batch = pending.splice(0);
+      flushPromise = Promise.resolve().then(async () => {
+        if (batch.length === 0) {
+          return;
+        }
+        try {
+          const responses = await execute(batch.map(({ request }) => request));
+          if (responses.length !== batch.length) {
+            throw new Error(
+              "Resource batch response count does not match requests"
+            );
+          }
+          for (const [index, response] of responses.entries()) {
+            batch[index].resolve(response);
+          }
+        } catch (error) {
+          for (const item of batch) {
+            item.reject(error);
+          }
+        }
+      });
+      return flushPromise;
+    },
+  };
+};
+
 export const isAssetsResourceRequest = (request: ResourceRequest) =>
   request.method === "post" && isLocalResource(request.url, "assets");
 

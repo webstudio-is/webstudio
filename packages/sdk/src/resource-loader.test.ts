@@ -10,6 +10,7 @@ import {
 
 import {
   assetsUploadsApiUrl,
+  createResourceFetchBatchProvider,
   getAssetApiUrl,
   getAssetContentApiUrl,
   getAssetFolderApiUrl,
@@ -32,6 +33,126 @@ test("builds canonical Assets command URLs", () => {
   expect(getAssetFolderApiUrl("folder/id")).toBe(
     "/rest/assets/folders/folder%2Fid"
   );
+});
+
+describe("resource fetch batch provider", () => {
+  test("collects matching requests and maps responses in request order", async () => {
+    const execute = vi.fn(async (requests: readonly Request[]) =>
+      requests.map(
+        (request) => new Response(new URL(request.url).searchParams.get("id"))
+      )
+    );
+    const provider = createResourceFetchBatchProvider({
+      baseUrl: "https://example.com/builder",
+      shouldBatch: (input) =>
+        typeof input === "string" && input.startsWith("/$resources/assets"),
+      execute,
+    });
+
+    const first = provider.fetch("/$resources/assets?id=first", {
+      method: "POST",
+    });
+    const second = provider.fetch("/$resources/assets?id=second", {
+      method: "POST",
+    });
+
+    expect(provider.fetch("https://example.com/posts")).toBeUndefined();
+
+    await Promise.all([provider.flush(), provider.flush()]);
+    await provider.flush();
+
+    expect(execute).toHaveBeenCalledOnce();
+    expect(execute).toHaveBeenCalledWith([
+      expect.objectContaining({
+        url: "https://example.com/$resources/assets?id=first",
+      }),
+      expect.objectContaining({
+        url: "https://example.com/$resources/assets?id=second",
+      }),
+    ]);
+    await expect(first).resolves.toHaveProperty("url");
+    await expect(first?.then((response) => response.text())).resolves.toBe(
+      "first"
+    );
+    await expect(second?.then((response) => response.text())).resolves.toBe(
+      "second"
+    );
+    expect(provider.fetch("/$resources/assets?id=late")).toBeUndefined();
+  });
+
+  test("uses the in-flight execution as the completion barrier for every flush", async () => {
+    let finishExecution!: (responses: readonly Response[]) => void;
+    const execute = vi.fn(
+      () =>
+        new Promise<readonly Response[]>((resolve) => {
+          finishExecution = resolve;
+        })
+    );
+    const provider = createResourceFetchBatchProvider({
+      baseUrl: "https://example.com",
+      shouldBatch: () => true,
+      execute,
+    });
+    const response = provider.fetch("/first");
+    const settled: string[] = [];
+
+    const firstBarrier = provider.flush();
+    const concurrentBarrier = provider.flush();
+    const usesSameBarrier = firstBarrier === concurrentBarrier;
+    const firstFlush = firstBarrier.then(() => {
+      settled.push("first");
+    });
+    const concurrentFlush = concurrentBarrier.then(() => {
+      settled.push("concurrent");
+    });
+    await Promise.resolve();
+    const settledBeforeExecution = [...settled];
+
+    finishExecution([new Response("done")]);
+    await Promise.all([firstFlush, concurrentFlush]);
+
+    expect(usesSameBarrier).toBe(true);
+    expect(settledBeforeExecution).toEqual([]);
+    expect(settled).toEqual(["first", "concurrent"]);
+    await expect(provider.flush()).resolves.toBeUndefined();
+    expect(execute).toHaveBeenCalledOnce();
+    await expect(response?.then((item) => item.text())).resolves.toBe("done");
+  });
+
+  test("rejects every request when execution fails", async () => {
+    const error = new Error("batch failed");
+    const provider = createResourceFetchBatchProvider({
+      baseUrl: "https://example.com",
+      shouldBatch: () => true,
+      execute: vi.fn().mockRejectedValue(error),
+    });
+    const first = provider.fetch("/first");
+    const second = provider.fetch("/second");
+
+    await provider.flush();
+
+    await expect(first).rejects.toBe(error);
+    await expect(second).rejects.toBe(error);
+  });
+
+  test("rejects every request when the response count does not match", async () => {
+    const provider = createResourceFetchBatchProvider({
+      baseUrl: "https://example.com",
+      shouldBatch: () => true,
+      execute: vi.fn().mockResolvedValue([new Response("first")]),
+    });
+    const first = provider.fetch("/first");
+    const second = provider.fetch("/second");
+
+    await provider.flush();
+
+    await expect(first).rejects.toThrow(
+      "Resource batch response count does not match requests"
+    );
+    await expect(second).rejects.toThrow(
+      "Resource batch response count does not match requests"
+    );
+  });
 });
 
 // Mock the fetch function

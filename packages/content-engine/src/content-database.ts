@@ -15,7 +15,7 @@ import {
 } from "./content-runtime-artifact";
 import {
   AssetIndexRevisionError,
-  executeAssetQuery,
+  executeAssetQueries,
   matchesAssetQueryFilter,
   type AssetRuntimeData,
 } from "./structured-query";
@@ -24,18 +24,24 @@ import type { AssetResourceContentReader } from "./hydration";
 import { getMaterializedAssetQueryResult } from "./materialized-query";
 import {
   createDocumentGraph,
+  createDocumentResolutionSession,
   getAdaptedDocumentProperties,
   isDocumentGraphFieldAffected,
   getDocumentGraphQueryRootIds,
-  resolveAdaptedDocumentGraph,
   selectDocumentGraphForQuery,
+  type AdaptedDocument,
+  type DocumentResolutionSession,
+  type DocumentSource,
   type DocumentSourceLoader,
   emitDocumentGraphRuntimeEvent,
   type DocumentGraphRuntimeObserver,
   assertDocumentSourceIdentity,
 } from "./document-graph";
 import { contentEngineLimits } from "./limits";
-import { resolveAssetValueReferences } from "./asset-value-references";
+import {
+  getRuntimeAssetUrls,
+  resolveAssetValueReferences,
+} from "./asset-value-references";
 
 type ContentDatabaseQueryArguments = [
   request: AssetQueryRequestInput,
@@ -45,6 +51,20 @@ type ContentDatabaseQueryArguments = [
 
 export type ContentDatabase = {
   query(...args: ContentDatabaseQueryArguments): Promise<AssetQueryResult>;
+  /**
+   * Executes independent queries through one request-scoped graph resolution
+   * session. Document loads are shared, while selection, limits, results, and
+   * failures remain isolated and in request order.
+   */
+  queryManyWithDocumentGraph(input: {
+    requests: readonly AssetQueryRequestInput[];
+    load: DocumentSourceLoader;
+    resolutionSession?: DocumentResolutionSession;
+    readContent?: AssetResourceContentReader;
+    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+    signal?: AbortSignal;
+    onEvent?: DocumentGraphRuntimeObserver;
+  }): Promise<PromiseSettledResult<AssetQueryResult>[]>;
   queryWithDocumentGraph(input: {
     request: AssetQueryRequestInput;
     load: DocumentSourceLoader;
@@ -59,7 +79,7 @@ export type ContentDatabase = {
 
 export type RuntimeContentDatabase = Pick<
   ContentDatabase,
-  "query" | "queryWithDocumentGraph"
+  "query" | "queryManyWithDocumentGraph" | "queryWithDocumentGraph"
 >;
 
 const selectByteRange = (
@@ -99,10 +119,16 @@ const selectByteRange = (
 const createDocumentContentReader = ({
   graph,
   load,
+  getCached,
+  readFallback,
   signal,
 }: {
   graph: ReturnType<typeof createDocumentGraph>;
   load: DocumentSourceLoader;
+  getCached: (
+    node: Parameters<DocumentSourceLoader>[0]
+  ) => DocumentSource | undefined;
+  readFallback?: AssetResourceContentReader;
   signal?: AbortSignal;
 }): AssetResourceContentReader => {
   const nodesByContentRef = new Map(
@@ -111,13 +137,16 @@ const createDocumentContentReader = ({
   return async (contentRef, range) => {
     const node = nodesByContentRef.get(contentRef);
     if (node === undefined) {
+      if (readFallback !== undefined) {
+        return await readFallback(contentRef, range);
+      }
       throw new Error(
         `Document content reference ${contentRef} is unavailable`
       );
     }
     const loaded = assertDocumentSourceIdentity({
       node,
-      source: await load(node, { signal }),
+      source: getCached(node) ?? (await load(node, { signal })),
     });
     return {
       data: selectByteRange(loaded.source, range),
@@ -148,40 +177,21 @@ const createQueryableContentDatabase = ({
   inlineDocuments?: ReadonlyMap<string, ContentDatabaseDocument>;
   readContent?: AssetResourceContentReader;
 }): RuntimeContentDatabase => {
-  const executeQuery = async (
-    request: AssetQueryRequestInput,
-    queryContentReader?: AssetResourceContentReader,
-    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>,
-    options?: {
-      documents?: readonly ContentDatabaseDocument[];
-      skipMaterialized?: boolean;
-    }
-  ) => {
+  const documentsById = new Map(
+    artifact.documents.map((document) => [document._id, document])
+  );
+  const assertIndexRevision = (request: AssetQueryRequestInput) => {
     if (
       request.indexRevision !== undefined &&
       request.indexRevision !== revision
     ) {
       throw new AssetIndexRevisionError();
     }
-    const assetUrls = Object.fromEntries(
-      Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [id, asset.url])
-    );
-    const materialized =
-      options?.skipMaterialized === true
-        ? undefined
-        : await getMaterializedAssetQueryResult({
-            queries: artifact.queries,
-            query: request.query,
-            assetValueReferences: artifact.assetValueReferences,
-            assetUrls,
-          });
-    if (materialized !== undefined) {
-      return materialized;
-    }
-    const readEmbeddedContent: AssetResourceContentReader = async (
-      contentRef,
-      range
-    ) => {
+  };
+  const createContentReader = (
+    queryContentReader?: AssetResourceContentReader
+  ): AssetResourceContentReader => {
+    return async (contentRef, range) => {
       const content = artifact.contents?.[contentRef];
       if (content === undefined) {
         const externalReader = queryContentReader ?? readContent;
@@ -202,132 +212,305 @@ const createQueryableContentDatabase = ({
         contentLength: selected.byteLength,
       };
     };
-    const result = await executeAssetQuery({
-      query: request.query,
+  };
+  const getSettledValue = (
+    result: PromiseSettledResult<AssetQueryResult>
+  ): AssetQueryResult => {
+    if (result.status === "rejected") {
+      throw result.reason;
+    }
+    return result.value;
+  };
+  const executeDynamicQueries = async ({
+    requests,
+    queryContentReader,
+    runtimeAssets,
+    documents = artifact.documents,
+  }: {
+    requests: readonly AssetQueryRequestInput[];
+    queryContentReader?: AssetResourceContentReader;
+    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+    documents?: readonly ContentDatabaseDocument[];
+  }) =>
+    await executeAssetQueries({
+      queries: requests.map(({ query }) => query),
       catalog,
-      documents: options?.documents ?? artifact.documents,
-      read: readEmbeddedContent,
+      documents,
+      read: createContentReader(queryContentReader),
       runtimeAssets,
       assetReferences: artifact.assetReferences,
       assetValueReferences: artifact.assetValueReferences,
     });
-    return result;
+  const executeDynamicQuery = async ({
+    request,
+    ...input
+  }: {
+    request: AssetQueryRequestInput;
+    queryContentReader?: AssetResourceContentReader;
+    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+    documents?: readonly ContentDatabaseDocument[];
+  }) =>
+    getSettledValue(
+      (
+        await executeDynamicQueries({
+          ...input,
+          requests: [request],
+        })
+      )[0]
+    );
+  const executeQueries = async ({
+    requests,
+    queryContentReader,
+    runtimeAssets,
+  }: {
+    requests: readonly AssetQueryRequestInput[];
+    queryContentReader?: AssetResourceContentReader;
+    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+  }): Promise<PromiseSettledResult<AssetQueryResult>[]> => {
+    const results: Array<PromiseSettledResult<AssetQueryResult> | undefined> =
+      Array.from({ length: requests.length });
+    const assetUrls = getRuntimeAssetUrls(runtimeAssets);
+    const pendingIndexes: number[] = [];
+    for (const [index, request] of requests.entries()) {
+      try {
+        assertIndexRevision(request);
+        const materialized = await getMaterializedAssetQueryResult({
+          queries: artifact.queries,
+          query: request.query,
+          assetValueReferences: artifact.assetValueReferences,
+          assetUrls,
+        });
+        if (materialized !== undefined) {
+          results[index] = { status: "fulfilled", value: materialized };
+          continue;
+        }
+      } catch (error) {
+        results[index] = { status: "rejected", reason: error };
+        continue;
+      }
+      pendingIndexes.push(index);
+    }
+    if (pendingIndexes.length > 0) {
+      const executed = await executeDynamicQueries({
+        requests: pendingIndexes.map((index) => requests[index]),
+        queryContentReader,
+        runtimeAssets,
+      });
+      for (const [position, index] of pendingIndexes.entries()) {
+        results[index] = executed[position];
+      }
+    }
+    return results.map((result) => {
+      if (result === undefined) {
+        throw new Error("Content database query was not settled");
+      }
+      return result;
+    });
   };
+  const executeQuery = async (
+    request: AssetQueryRequestInput,
+    queryContentReader?: AssetResourceContentReader,
+    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>
+  ) =>
+    getSettledValue(
+      (
+        await executeQueries({
+          requests: [request],
+          queryContentReader,
+          runtimeAssets,
+        })
+      )[0]
+    );
   const query = async (...args: ContentDatabaseQueryArguments) =>
     await executeQuery(...args);
-  return {
+
+  const createInlineAwareLoader = (
+    load: DocumentSourceLoader
+  ): DocumentSourceLoader => {
+    return async (node, options) => {
+      const inlineDocument = inlineDocuments?.get(node.id);
+      if (inlineDocument !== undefined) {
+        return {
+          format: "json",
+          revision: node.revision,
+          source: JSON.stringify(inlineDocument.properties),
+        };
+      }
+      return await load(node, options);
+    };
+  };
+  const getResolvableRootIds = ({
+    graph,
     query,
-    queryWithDocumentGraph: async ({
+    runtimeAssets,
+  }: {
+    graph: ReturnType<typeof createDocumentGraph>;
+    query: ReturnType<typeof assetQuery.parse>;
+    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+  }) => {
+    const assetUrls = getRuntimeAssetUrls(runtimeAssets);
+    return getDocumentGraphQueryRootIds({ graph, query }).filter((rootId) => {
+      const storedDocument = documentsById.get(rootId);
+      const document =
+        storedDocument === undefined
+          ? undefined
+          : resolveAssetValueReferences({
+              value: storedDocument,
+              references: artifact.assetValueReferences?.[rootId],
+              assetUrls,
+            });
+      if (document === undefined) {
+        return false;
+      }
+      return (
+        evaluateQueryWhere(query.where, (filter) => {
+          if (
+            isDocumentGraphFieldAffected({
+              graph,
+              sourceId: rootId,
+              field: filter.field,
+            })
+          ) {
+            return;
+          }
+          return matchesAssetQueryFilter(
+            document,
+            filter,
+            runtimeAssets?.[rootId]
+          );
+        }) !== false
+      );
+    });
+  };
+  const replaceResolvedRootProperties = ({
+    rootIds,
+    roots,
+  }: {
+    rootIds: readonly string[];
+    roots: readonly AdaptedDocument[];
+  }) => {
+    const propertiesById = new Map(
+      rootIds.flatMap((rootId, index) => {
+        const properties = getAdaptedDocumentProperties(roots[index]);
+        return properties === undefined ? [] : [[rootId, properties] as const];
+      })
+    );
+    return artifact.documents.map((document) => {
+      const properties = propertiesById.get(document._id);
+      return properties === undefined
+        ? document
+        : contentDatabaseDocument.parse({ ...document, properties });
+    });
+  };
+  const executeQueryWithDocumentGraph = async ({
+    request,
+    graph,
+    resolutionSession,
+    contentReader,
+    runtimeAssets,
+    onEvent,
+  }: {
+    request: AssetQueryRequestInput;
+    graph: ReturnType<typeof createDocumentGraph>;
+    resolutionSession: DocumentResolutionSession;
+    contentReader: AssetResourceContentReader;
+    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+    onEvent?: DocumentGraphRuntimeObserver;
+  }) => {
+    assertIndexRevision(request);
+    const query = assetQuery.parse(request.query);
+    const rootIds = getResolvableRootIds({
+      graph,
+      query,
+      runtimeAssets,
+    });
+    if (rootIds.length === 0) {
+      return await executeQuery(request, contentReader, runtimeAssets);
+    }
+    const queryGraph = selectDocumentGraphForQuery({
+      graph,
+      query,
+      rootIds,
+    });
+    emitDocumentGraphRuntimeEvent(onEvent, {
+      type: "roots-selected",
+      rootCount: rootIds.length,
+    });
+    const resolved = await resolutionSession.resolve({
+      graph: queryGraph,
+      rootIds,
+      onEvent,
+      allowUnresolvedReferences: true,
+    });
+    const documents = replaceResolvedRootProperties({
+      rootIds,
+      roots: resolved.roots,
+    });
+    return await executeDynamicQuery({
       request,
+      queryContentReader: contentReader,
+      runtimeAssets,
+      documents,
+    });
+  };
+  const queryManyWithDocumentGraph: ContentDatabase["queryManyWithDocumentGraph"] =
+    async ({
+      requests,
       load,
+      resolutionSession: sharedResolutionSession,
       readContent: queryContentReader,
       runtimeAssets,
       signal,
       onEvent,
     }) => {
       if (documentGraph === undefined) {
-        return await executeQuery(request, queryContentReader, runtimeAssets);
+        return await executeQueries({
+          requests,
+          queryContentReader,
+          runtimeAssets,
+        });
       }
-      const contentReader =
-        queryContentReader ??
-        createDocumentContentReader({ graph: documentGraph, load, signal });
-      const query = assetQuery.parse(request.query);
-      const documentsById = new Map(
-        artifact.documents.map((document) => [document._id, document])
-      );
-      const rootIds = getDocumentGraphQueryRootIds({
+      const documentLoader = createInlineAwareLoader(load);
+      const resolutionSession =
+        sharedResolutionSession ??
+        createDocumentResolutionSession({
+          load: documentLoader,
+          concurrency: contentEngineLimits.concurrentContentReads,
+          signal,
+        });
+      const contentReader = createDocumentContentReader({
         graph: documentGraph,
-        query,
-      }).filter((rootId) => {
-        const storedDocument = documentsById.get(rootId);
-        const document =
-          storedDocument === undefined
-            ? undefined
-            : resolveAssetValueReferences({
-                value: storedDocument,
-                references: artifact.assetValueReferences?.[rootId],
-                assetUrls: Object.fromEntries(
-                  Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [
-                    id,
-                    asset.url,
-                  ])
-                ),
-              });
-        if (document === undefined) {
-          return false;
-        }
-        return (
-          evaluateQueryWhere(query.where, (filter) => {
-            if (
-              isDocumentGraphFieldAffected({
-                graph: documentGraph,
-                sourceId: rootId,
-                field: filter.field,
-              })
-            ) {
-              return;
-            }
-            return matchesAssetQueryFilter(
-              document,
-              filter,
-              runtimeAssets?.[rootId]
-            );
-          }) !== false
-        );
-      });
-      if (rootIds.length === 0) {
-        return await executeQuery(request, contentReader, runtimeAssets);
-      }
-      const queryGraph = selectDocumentGraphForQuery({
-        graph: documentGraph,
-        query,
-        rootIds,
-      });
-      emitDocumentGraphRuntimeEvent(onEvent, {
-        type: "roots-selected",
-        rootCount: rootIds.length,
-      });
-      const resolved = await resolveAdaptedDocumentGraph({
-        graph: queryGraph,
-        rootIds,
-        load: async (node, options) => {
-          const inlineDocument = inlineDocuments?.get(node.id);
-          if (inlineDocument !== undefined) {
-            return {
-              format: "json",
-              revision: node.revision,
-              source: JSON.stringify(inlineDocument.properties),
-            };
-          }
-          return await load(node, options);
-        },
-        concurrency: contentEngineLimits.concurrentContentReads,
+        load: documentLoader,
+        getCached: resolutionSession.getCached,
+        readFallback: queryContentReader ?? readContent,
         signal,
-        onEvent,
-        allowUnresolvedReferences: true,
       });
-      const propertiesById = new Map(
-        rootIds.flatMap((rootId, index) => {
-          const properties = getAdaptedDocumentProperties(
-            resolved.roots[index]
-          );
-          return properties === undefined
-            ? []
-            : [[rootId, properties] as const];
-        })
+      // Share only graph resolution, like a request-scoped GraphQL DataLoader.
+      // Running each query independently preserves partial-result semantics.
+      return await Promise.allSettled(
+        requests.map((request) =>
+          executeQueryWithDocumentGraph({
+            request,
+            graph: documentGraph,
+            resolutionSession,
+            contentReader,
+            runtimeAssets,
+            onEvent,
+          })
+        )
       );
-      const documents = artifact.documents.map((document) => {
-        const properties = propertiesById.get(document._id);
-        return properties === undefined
-          ? document
-          : contentDatabaseDocument.parse({ ...document, properties });
-      });
-      return await executeQuery(request, contentReader, runtimeAssets, {
-        documents,
-        skipMaterialized: true,
-      });
-    },
-  };
+    };
+  const queryWithDocumentGraph: ContentDatabase["queryWithDocumentGraph"] =
+    async ({ request, ...input }) =>
+      getSettledValue(
+        (
+          await queryManyWithDocumentGraph({
+            ...input,
+            requests: [request],
+          })
+        )[0]
+      );
+  return { query, queryManyWithDocumentGraph, queryWithDocumentGraph };
 };
 
 export const createContentDatabase = ({

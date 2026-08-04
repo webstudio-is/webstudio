@@ -1,5 +1,7 @@
 import { type Asset, assets } from "@webstudio-is/sdk";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import type { Client } from "@webstudio-is/postgrest/index.server";
+import { mapBounded } from "@webstudio-is/content-engine/compiler";
 import { formatAsset } from "./utils/format-asset";
 import {
   applyValidatedMapPatches,
@@ -12,6 +14,21 @@ import type { AssetMetadataUpdate } from "./asset-mutation-types";
 import { AssetRepositoryNotFoundError } from "./asset-repository-errors";
 
 const serializeAssetMeta = (meta: Asset["meta"]) => JSON.stringify(meta);
+
+// Supabase documents that REST requests most often hit Cloudflare 520 errors
+// at 16+ KiB across the URL and headers, especially with long `in` filters:
+// https://supabase.com/docs/guides/troubleshooting/fixing-520-errors-in-the-database-rest-api-Ur5-B2
+// Persisted Asset ids are PostgreSQL UUIDs (36 characters). A batch of 100 keeps
+// the encoded `in` filter below 4 KiB, reserving at least 12 KiB for the endpoint,
+// selected fields, other filters, and headers.
+const maxAssetIdsPerPostgrestMetadataRequest = 100;
+
+// Metadata loading supports content reads, so cap its fan-out at half of the
+// content engine's shared remote-read ceiling instead of defining an unrelated
+// concurrency budget.
+const maxConcurrentAssetMetadataPostgrestRequests = Math.ceil(
+  assetResourceLimits.concurrentContentReads / 2
+);
 
 export const createAssetRows = (assets: Iterable<Asset>, projectId: string) =>
   Array.from(assets, (asset) => ({
@@ -28,58 +45,83 @@ export const loadAssetsByProjectWithClient = async (
   client: Client,
   assetIds?: string[]
 ): Promise<Asset[]> => {
-  let query = client
-    .from("Asset")
-    // use inner to filter out assets without file
-    // when file is not uploaded
-    .select(
-      `
-        assetId:id,
-        projectId,
-        filename,
-        description,
-        folderId,
-        file:File!inner (*)
-      `
-    )
-    .eq("projectId", projectId)
-    .eq("file.status", "UPLOADED");
-  if (assetIds !== undefined) {
-    if (assetIds.length === 0) {
-      return [];
-    }
-    query = query.in("id", assetIds);
+  if (assetIds?.length === 0) {
+    return [];
   }
-  const assets = await query
-    // always sort by primary key to get stable list
-    // required to not break fixtures
-    .order("id");
-  assertPostgrestSuccess(assets);
 
-  const result: Asset[] = [];
-  for (const {
-    assetId,
-    projectId,
-    filename,
-    description,
-    folderId,
-    file,
-  } of assets.data ?? []) {
-    if (file) {
-      result.push(
-        formatAsset({
-          assetId,
+  const load = async (requestedAssetIds: string[] | undefined) => {
+    let query = client
+      .from("Asset")
+      // use inner to filter out assets without file
+      // when file is not uploaded
+      .select(
+        `
+          assetId:id,
           projectId,
           filename,
           description,
           folderId,
-          file,
-        })
-      );
+          file:File!inner (*)
+        `
+      )
+      .eq("projectId", projectId)
+      .eq("file.status", "UPLOADED");
+    if (requestedAssetIds !== undefined) {
+      query = query.in("id", requestedAssetIds);
     }
+    const response = await query
+      // always sort by primary key to get stable list
+      // required to not break fixtures
+      .order("id");
+    assertPostgrestSuccess(response);
+
+    const result: Asset[] = [];
+    for (const {
+      assetId,
+      projectId,
+      filename,
+      description,
+      folderId,
+      file,
+    } of response.data ?? []) {
+      if (file) {
+        result.push(
+          formatAsset({
+            assetId,
+            projectId,
+            filename,
+            description,
+            folderId,
+            file,
+          })
+        );
+      }
+    }
+    return result;
+  };
+
+  if (assetIds === undefined) {
+    return await load(undefined);
   }
 
-  return result;
+  const uniqueAssetIds = [...new Set(assetIds)].sort();
+  const chunks: string[][] = [];
+  for (
+    let offset = 0;
+    offset < uniqueAssetIds.length;
+    offset += maxAssetIdsPerPostgrestMetadataRequest
+  ) {
+    chunks.push(
+      uniqueAssetIds.slice(
+        offset,
+        offset + maxAssetIdsPerPostgrestMetadataRequest
+      )
+    );
+  }
+
+  return (
+    await mapBounded(chunks, maxConcurrentAssetMetadataPostgrestRequests, load)
+  ).flat();
 };
 
 export const deleteAssetsWithClient = async (

@@ -1502,6 +1502,9 @@ importers:
       canonicalize:
         specifier: 3.0.0
         version: 3.0.0
+      lru-cache:
+        specifier: 10.4.3
+        version: 10.4.3
       micromark:
         specifier: 4.0.2
         version: 4.0.2
