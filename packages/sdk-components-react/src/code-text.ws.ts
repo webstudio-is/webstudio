@@ -7,7 +7,6 @@ import {
   codeTextThemeBackgroundVariable,
   codeTextThemeColorVariable,
 } from "./code-text-theme";
-import { props } from "./__generated__/code-text-base.props";
 
 const presetStyle = {
   code: [
@@ -54,7 +53,6 @@ export const meta: WsComponentMeta = {
   presetStyle,
   initialProps: ["id", "class", "code", "language", "theme"],
   props: {
-    ...props,
     code: {
       required: true,
       control: "codetext",
