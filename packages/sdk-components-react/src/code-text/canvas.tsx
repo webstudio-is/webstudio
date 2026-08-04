@@ -1,6 +1,6 @@
 import { bundledLanguages } from "shiki/langs";
 import { bundledThemes } from "shiki/themes";
-import { createCodeText } from "@webstudio-is/sdk-components-react/code-text";
+import { createCodeText } from "./index";
 
 export const CanvasCodeText = createCodeText({
   loaders: {
