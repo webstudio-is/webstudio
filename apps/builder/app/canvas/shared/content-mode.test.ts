@@ -3,6 +3,7 @@ import {
   blockComponent,
   blockTemplateComponent,
   elementComponent,
+  type Instances,
 } from "@webstudio-is/sdk";
 import { isTextEditableInContentMode } from "./content-mode";
 
@@ -53,6 +54,32 @@ describe("isTextEditableInContentMode", () => {
         isContentMode: false,
         instanceSelector: ["outside", "body"],
         instances,
+      })
+    ).toBe(true);
+  });
+
+  test("rejects bound text in Content mode without restricting Design mode", () => {
+    const boundInstances: Instances = new Map(instances);
+    boundInstances.set("bound", {
+      type: "instance",
+      id: "bound",
+      component: elementComponent,
+      children: [{ type: "expression", value: "value" }],
+    });
+    boundInstances.set("block", instance("block", blockComponent, ["bound"]));
+
+    expect(
+      isTextEditableInContentMode({
+        isContentMode: true,
+        instanceSelector: ["bound", "block", "body"],
+        instances: boundInstances,
+      })
+    ).toBe(false);
+    expect(
+      isTextEditableInContentMode({
+        isContentMode: false,
+        instanceSelector: ["bound", "block", "body"],
+        instances: boundInstances,
       })
     ).toBe(true);
   });

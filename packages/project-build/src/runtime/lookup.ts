@@ -114,7 +114,14 @@ const getClosestTextEditorTarget = (args: TextEditorLookupInput) => {
   if (instanceSelector === undefined) {
     return { status: "not-found" as const };
   }
-  if (hasExpressionInTree(instanceSelector[0], args.instances)) {
+  const instance = args.instances.get(instanceSelector[0]);
+  const [onlyChild] = instance?.children ?? [];
+  const isSingleExpression =
+    instance?.children.length === 1 && onlyChild?.type === "expression";
+  if (
+    isSingleExpression === false &&
+    hasExpressionInTree(instanceSelector[0], args.instances)
+  ) {
     return { status: "incompatible" as const };
   }
   return { status: "editable" as const, instanceSelector };

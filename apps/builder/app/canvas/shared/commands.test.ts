@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, test } from "vitest";
-import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import {
   $allSelectedInstanceSelectors,
   $selectedInstanceSelector,
@@ -9,6 +8,11 @@ import {
   selectInstances,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
+import {
+  createBoundTextInstances,
+  createCanvasElement,
+  createMixedBoundTextInstances,
+} from "../test-utils";
 import { emitCommand } from "./commands";
 
 afterEach(() => {
@@ -20,56 +24,23 @@ afterEach(() => {
 });
 
 test("does not enter text editing for a rich-text tree with a nested binding", () => {
-  $instances.set(
-    new Map([
-      [
-        "separator",
-        {
-          type: "instance" as const,
-          id: "separator",
-          component: "ws:element",
-          tag: "span",
-          children: [{ type: "text" as const, value: " · " }],
-        },
-      ],
-      [
-        "reading-time",
-        {
-          type: "instance" as const,
-          id: "reading-time",
-          component: "ws:element",
-          tag: "span",
-          children: [
-            { type: "text" as const, value: " · " },
-            { type: "expression" as const, value: 'readTime ?? ""' },
-          ],
-        },
-      ],
-      [
-        "paragraph",
-        {
-          type: "instance" as const,
-          id: "paragraph",
-          component: "ws:element",
-          tag: "p",
-          children: [
-            { type: "text" as const, value: "" },
-            { type: "id" as const, value: "separator" },
-            { type: "id" as const, value: "reading-time" },
-          ],
-        },
-      ],
-    ])
-  );
-  const element = document.createElement("span");
-  element.setAttribute(idAttribute, "separator");
-  element.setAttribute(selectorIdAttribute, "separator,paragraph");
-  document.body.appendChild(element);
+  $instances.set(createMixedBoundTextInstances());
+  createCanvasElement("separator,paragraph");
   selectInstance(["separator", "paragraph"]);
 
   emitCommand("editInstanceText");
 
   expect($textEditingInstanceSelector.get()).toBeUndefined();
+});
+
+test("enters text editing for a directly bound instance in Design mode", () => {
+  $instances.set(createBoundTextInstances());
+  createCanvasElement("bound-text");
+  selectInstance(["bound-text"]);
+
+  emitCommand("editInstanceText");
+
+  expect($textEditingInstanceSelector.get()?.selector).toEqual(["bound-text"]);
 });
 
 describe("escapeSelection", () => {

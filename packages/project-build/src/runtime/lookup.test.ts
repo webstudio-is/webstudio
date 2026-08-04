@@ -3,6 +3,7 @@ import type { Instance, Prop, WsComponentMeta } from "@webstudio-is/sdk";
 import { createDefaultPages } from "../shared/pages-utils";
 import {
   findAllEditableInstanceSelector,
+  findClosestEditableText,
   findEditableInstanceSelector,
   findPageAndSelectorByInstanceId,
   getInstancePath,
@@ -182,6 +183,26 @@ describe("findPageAndSelectorByInstanceId", () => {
 });
 
 describe("findAllEditableInstanceSelector", () => {
+  test("keeps a directly targeted single expression editable", () => {
+    const instances = new Map([
+      [
+        "bound-text",
+        instance("bound-text", "Span", [
+          { type: "expression", value: "value" },
+        ]),
+      ],
+    ]);
+    const input = {
+      instanceSelector: ["bound-text"],
+      instances,
+      props: new Map<string, Prop>(),
+      metas: new Map([["Span", meta(["rich-text"])]]),
+    };
+
+    expect(findClosestEditableText(input)).toEqual(["bound-text"]);
+    expect(findEditableInstanceSelector(input)).toEqual(["bound-text"]);
+  });
+
   test("collects editable rich-text descendants", () => {
     const results: string[][] = [];
     const instances = new Map([

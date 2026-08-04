@@ -84,14 +84,15 @@ test("updates only the targeted expression child", () => {
     throw new Error("Expected the reading-time instance");
   }
   act(() => {
-    executeRuntimeMutation(
-      getTextContentUpdateOperation({
-        instanceId: instance.id,
-        instance,
-        type: "expression",
-        value: "2 + 2",
-      })
-    );
+    const operation = getTextContentUpdateOperation({
+      instance,
+      type: "expression",
+      value: "2 + 2",
+    });
+    if (operation === undefined) {
+      throw new Error("Expected a text-content update operation");
+    }
+    executeRuntimeMutation(operation);
   });
 
   expect($instances.get().get("reading-time")?.children).toEqual([

@@ -65,7 +65,7 @@ const getInstancePathSiblingIndex = (instancePath: InstancePath) => {
 };
 
 export const sortInstancePathsForChildMutation = <
-  Item extends { instancePath: InstancePath }
+  Item extends { instancePath: InstancePath },
 >(
   items: Item[]
 ) =>

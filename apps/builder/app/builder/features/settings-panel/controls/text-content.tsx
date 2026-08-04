@@ -47,9 +47,10 @@ export const TextContent = ({
   const child = target?.child ?? { type: "text" as const, value: "" };
   const hasMixedContent = (instance?.children.length ?? 0) > 1;
   const updateChild = (type: "text" | "expression", value: string) => {
-    executeRuntimeMutation(
-      getTextContentUpdateOperation({ instanceId, instance, type, value })
-    );
+    const operation = getTextContentUpdateOperation({ instance, type, value });
+    if (operation !== undefined) {
+      executeRuntimeMutation(operation);
+    }
   };
 
   let expression: undefined | string;

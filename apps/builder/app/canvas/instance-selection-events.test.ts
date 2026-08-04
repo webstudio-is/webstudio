@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import {
   $allSelectedInstanceSelectors,
   $textEditingInstanceSelector,
@@ -8,15 +7,11 @@ import {
 import { $instances } from "~/shared/sync/data-stores";
 import { subscribeInstanceSelection } from "./instance-selection-events";
 import { $ephemeralStyles } from "./stores";
-
-const createElement = (selector: string) => {
-  const element = document.createElement("div");
-  const [id] = selector.split(",");
-  element.setAttribute(idAttribute, id);
-  element.setAttribute(selectorIdAttribute, selector);
-  document.body.appendChild(element);
-  return element;
-};
+import {
+  createBoundTextInstances,
+  createCanvasElement,
+  createMixedBoundTextInstances,
+} from "./test-utils";
 
 let abortController: AbortController;
 
@@ -37,8 +32,8 @@ afterEach(() => {
 
 describe("canvas instance selection", () => {
   test("plain click selects one instance and replaces multi-selection", () => {
-    const box = createElement("box,body");
-    const heading = createElement("heading,body");
+    const box = createCanvasElement("box,body");
+    const heading = createCanvasElement("heading,body");
 
     box.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     heading.dispatchEvent(
@@ -55,8 +50,8 @@ describe("canvas instance selection", () => {
   });
 
   test("cmd-click toggles rendered instances without clearing existing selection", () => {
-    const box = createElement("box,body");
-    const heading = createElement("heading,body");
+    const box = createCanvasElement("box,body");
+    const heading = createCanvasElement("heading,body");
 
     box.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     heading.dispatchEvent(
@@ -75,9 +70,9 @@ describe("canvas instance selection", () => {
   });
 
   test("shift-click selects a rendered DOM-order range from the canvas anchor", () => {
-    const box = createElement("box,body");
-    createElement("heading,body");
-    const footer = createElement("footer,body");
+    const box = createCanvasElement("box,body");
+    createCanvasElement("heading,body");
+    const footer = createCanvasElement("footer,body");
 
     box.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     footer.dispatchEvent(
@@ -92,9 +87,9 @@ describe("canvas instance selection", () => {
   });
 
   test("does not reuse range anchor after subscription is recreated", () => {
-    const box = createElement("box,body");
-    createElement("heading,body");
-    const footer = createElement("footer,body");
+    const box = createCanvasElement("box,body");
+    createCanvasElement("heading,body");
+    const footer = createCanvasElement("footer,body");
 
     box.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     abortController.abort();
@@ -110,8 +105,8 @@ describe("canvas instance selection", () => {
   });
 
   test("clears stale ephemeral styles when canvas click creates multi-selection", () => {
-    const box = createElement("box,body");
-    const heading = createElement("heading,body");
+    const box = createCanvasElement("box,body");
+    const heading = createCanvasElement("heading,body");
     $ephemeralStyles.set([
       {
         breakpointId: "base",
@@ -130,57 +125,8 @@ describe("canvas instance selection", () => {
   });
 
   test("does not edit a promoted rich-text root containing a nested binding", () => {
-    $instances.set(
-      new Map([
-        [
-          "separator",
-          {
-            type: "instance",
-            id: "separator",
-            component: "ws:element",
-            tag: "span",
-            children: [{ type: "text", value: " · " }],
-          },
-        ],
-        [
-          "reading-time",
-          {
-            type: "instance",
-            id: "reading-time",
-            component: "ws:element",
-            tag: "span",
-            children: [
-              { type: "text", value: " · " },
-              { type: "expression", value: 'readTime ?? ""' },
-            ],
-          },
-        ],
-        [
-          "paragraph",
-          {
-            type: "instance",
-            id: "paragraph",
-            component: "ws:element",
-            tag: "p",
-            children: [
-              { type: "text", value: "" },
-              { type: "id", value: "separator" },
-              { type: "id", value: "reading-time" },
-            ],
-          },
-        ],
-        [
-          "body",
-          {
-            type: "instance",
-            id: "body",
-            component: "Body",
-            children: [{ type: "id", value: "paragraph" }],
-          },
-        ],
-      ])
-    );
-    const separator = createElement("separator,paragraph,body");
+    $instances.set(createMixedBoundTextInstances({ includeBody: true }));
+    const separator = createCanvasElement("separator,paragraph,body");
 
     separator.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
 
@@ -188,5 +134,16 @@ describe("canvas instance selection", () => {
       ["separator", "paragraph", "body"],
     ]);
     expect($textEditingInstanceSelector.get()).toBeUndefined();
+  });
+
+  test("edits a directly bound text instance in Design mode", () => {
+    $instances.set(createBoundTextInstances());
+    const element = createCanvasElement("bound-text");
+
+    element.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+
+    expect($textEditingInstanceSelector.get()?.selector).toEqual([
+      "bound-text",
+    ]);
   });
 });

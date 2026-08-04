@@ -1,6 +1,9 @@
 import { expect, test } from "vitest";
 import type { Instance } from "@webstudio-is/sdk";
-import { getEditableTextTarget } from "./text-content-utils";
+import {
+  getEditableTextTarget,
+  getTextContentUpdateOperation,
+} from "./text-content-utils";
 
 const createInstance = (children: Instance["children"]): Instance => ({
   type: "instance",
@@ -44,4 +47,39 @@ test("rejects content with more than one binding", () => {
       ])
     )
   ).toBeUndefined();
+});
+
+test("does not replace unsupported nonempty content", () => {
+  expect(
+    getTextContentUpdateOperation({
+      instance: undefined,
+      type: "text",
+      value: "replacement",
+    })
+  ).toBeUndefined();
+  expect(
+    getTextContentUpdateOperation({
+      instance: createInstance([{ type: "id", value: "nested" }]),
+      type: "text",
+      value: "replacement",
+    })
+  ).toBeUndefined();
+});
+
+test("sets text content on an empty instance", () => {
+  expect(
+    getTextContentUpdateOperation({
+      instance: createInstance([]),
+      type: "text",
+      value: "content",
+    })
+  ).toEqual({
+    id: "instances.setTextContent",
+    input: {
+      operation: "set",
+      instanceId: "reading-time",
+      mode: "text",
+      text: "content",
+    },
+  });
 });
