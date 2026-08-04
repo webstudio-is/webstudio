@@ -76,6 +76,7 @@ export type ControlProps<Control> = {
   prop: Prop | undefined;
   propName: string;
   computedValue: unknown;
+  computedProps?: ReadonlyMap<string, unknown>;
   onChange: (value: PropValue) => void;
 };
 

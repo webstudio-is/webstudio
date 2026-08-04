@@ -13,7 +13,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
-import { CodeEditor } from "~/shared/code-editor";
+import { CodeEditor, type CodeEditorLanguage } from "~/shared/code-editor";
 import {
   BindableExpressionControl,
   updateBindableValue,
@@ -48,6 +48,44 @@ export type CodeControlBehavior = {
     value: unknown,
     label: string
   ) => { success: true; value: string } | { success: false; message: string };
+};
+
+const codeTextEditorLanguages = new Map<string, CodeEditorLanguage>([
+  ["html", "html"],
+  ["json", "json"],
+  ["jsonc", "json"],
+  ["json5", "json"],
+  ["markdown", "markdown"],
+  ["md", "markdown"],
+  ["mdx", "markdown"],
+  ["javascript", "javascript"],
+  ["js", "javascript"],
+  ["jsx", "jsx"],
+  ["typescript", "typescript"],
+  ["ts", "typescript"],
+  ["tsx", "tsx"],
+  ["css", "css"],
+]);
+
+export const resolveCodeEditorLanguage = ({
+  control,
+  language,
+  computedProps,
+}: {
+  control: "code" | "codetext";
+  language?: CodeEditorLanguage;
+  computedProps?: ReadonlyMap<string, unknown>;
+}) => {
+  if (control === "code") {
+    return language;
+  }
+
+  const selectedLanguage = computedProps?.get("language");
+  if (typeof selectedLanguage !== "string") {
+    return;
+  }
+
+  return codeTextEditorLanguages.get(selectedLanguage);
 };
 
 const ErrorInfo = ({
@@ -100,6 +138,7 @@ export const CodeControl = ({
   prop,
   propName,
   computedValue,
+  computedProps,
   onChange,
   behavior,
 }: (ControlProps<"code"> | ControlProps<"codetext">) & {
@@ -110,7 +149,11 @@ export const CodeControl = ({
     ...meta,
     control: "text" as const,
   };
-  const lang = meta.control === "code" ? meta.language : undefined;
+  const lang = resolveCodeEditorLanguage({
+    control: meta.control,
+    language: meta.control === "code" ? meta.language : undefined,
+    computedProps,
+  });
   const label = humanizeAttribute(metaOverride.label || propName);
   const editorValue = behavior
     ? behavior.formatValue(computedValue)
@@ -129,7 +172,11 @@ export const CodeControl = ({
         storedValue = result.value;
       }
 
-      if (behavior === undefined && lang === "html") {
+      if (
+        behavior === undefined &&
+        meta.control === "code" &&
+        lang === "html"
+      ) {
         const error = validateHtmlEmbedCode(value);
         setError(error);
 

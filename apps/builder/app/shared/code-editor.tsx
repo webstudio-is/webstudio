@@ -9,6 +9,7 @@ import type { Extension } from "@codemirror/state";
 import { styleTags, tags } from "@lezer/highlight";
 import {
   keymap,
+  lineNumbers,
   tooltips,
   highlightSpecialChars,
   highlightActiveLine,
@@ -28,6 +29,11 @@ import {
 import { html } from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
+import {
+  css as cssCodeLanguage,
+  cssCompletionSource,
+  cssLanguage,
+} from "@codemirror/lang-css";
 import { css } from "@webstudio-is/design-system";
 import {
   EditorContent,
@@ -37,7 +43,6 @@ import {
   foldGutterExtension,
   getCodeEditorCssVars,
 } from "~/shared/code-editor-base";
-import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
 
 const wrapperStyle = css({
   position: "relative",
@@ -61,6 +66,17 @@ const wrapperStyle = css({
 });
 
 const noLanguageExtensions: Extension[] = [];
+
+export type CodeEditorLanguage =
+  | "html"
+  | "json"
+  | "markdown"
+  | "javascript"
+  | "jsx"
+  | "typescript"
+  | "tsx"
+  | "css"
+  | "css-properties";
 
 const getHtmlExtensions = () => [
   highlightActiveLine(),
@@ -114,6 +130,32 @@ const getJsonExtensions = () => [
   keymap.of(closeBracketsKeymap),
 ];
 
+const getJavaScriptExtensions = ({
+  jsx,
+  typescript,
+}: {
+  jsx: boolean;
+  typescript: boolean;
+}) => [
+  highlightActiveLine(),
+  highlightSpecialChars(),
+  indentOnInput(),
+  javascript({ jsx, typescript }),
+  bracketMatching(),
+  closeBrackets(),
+  keymap.of(closeBracketsKeymap),
+];
+
+const getCssExtensions = () => [
+  highlightActiveLine(),
+  highlightSpecialChars(),
+  indentOnInput(),
+  cssCodeLanguage(),
+  bracketMatching(),
+  closeBrackets(),
+  keymap.of(closeBracketsKeymap),
+];
+
 const cssPropertiesLanguage = LRLanguage.define({
   name: "css",
   parser: cssLanguage.configure({ top: "Styles" }).parser,
@@ -139,7 +181,7 @@ const getCssPropertiesExtensions = () => [
 export const CodeEditor = forwardRef<
   HTMLDivElement,
   Omit<ComponentProps<typeof EditorContent>, "extensions"> & {
-    lang?: "html" | "json" | "markdown" | "css-properties";
+    lang?: CodeEditorLanguage;
     languageExtensions?: Extension[];
     title?: ReactNode;
     size?: "default" | "small" | "full";
@@ -167,6 +209,24 @@ export const CodeEditor = forwardRef<
       return getJsonExtensions();
     }
 
+    if (lang === "javascript" || lang === "jsx") {
+      return getJavaScriptExtensions({
+        jsx: lang === "jsx",
+        typescript: false,
+      });
+    }
+
+    if (lang === "typescript" || lang === "tsx") {
+      return getJavaScriptExtensions({
+        jsx: lang === "tsx",
+        typescript: true,
+      });
+    }
+
+    if (lang === "css") {
+      return getCssExtensions();
+    }
+
     if (lang === "css-properties") {
       return getCssPropertiesExtensions();
     }
@@ -186,7 +246,7 @@ export const CodeEditor = forwardRef<
   );
 
   const dialogExtensions = useMemo(
-    () => [...extensions, foldGutterExtension],
+    () => [...extensions, lineNumbers(), foldGutterExtension],
     [extensions]
   );
 
@@ -216,9 +276,11 @@ export const CodeEditor = forwardRef<
           <EditorContent {...editorContentProps} extensions={extensions} />
           <EditorDialog
             title={title}
+            contentPadding={false}
             content={
               <EditorContent
                 {...editorContentProps}
+                chromeless
                 extensions={dialogExtensions}
               />
             }

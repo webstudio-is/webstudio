@@ -146,6 +146,7 @@ const renderProperty = (
     instanceId: targetInstanceId,
     meta,
     prop,
+    computedProps: targetPropValues,
     computedValue:
       targetPropValues.get(propName) ??
       // support legacy html props with react names
