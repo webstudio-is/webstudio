@@ -185,8 +185,26 @@ test("resets a mixed expression without replacing its text sibling", async () =>
   act(() => resetButton.click());
 
   expect($instances.get().get("reading-time")?.children).toEqual([
-    { type: "text", value: " · " },
-    { type: "text", value: "test" },
+    { type: "text", value: " · test" },
+  ]);
+});
+
+test("resets and consolidates every expression on the instance", async () => {
+  setReadingTimeChildren([
+    { type: "text", value: "A" },
+    { type: "expression", value: '"B"' },
+    { type: "expression", value: '"C"' },
+    { type: "text", value: "D" },
+  ]);
+  renderTextContent("ABCD");
+  await openBindingPopover();
+
+  const resetButton = getResetBindingButton();
+  expect(resetButton.disabled).toBe(false);
+  act(() => resetButton.click());
+
+  expect($instances.get().get("reading-time")?.children).toEqual([
+    { type: "text", value: "ABCD" },
   ]);
 });
 

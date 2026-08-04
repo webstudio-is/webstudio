@@ -19,7 +19,10 @@ import {
   BindableExpressionControl,
   updateBindableValue,
 } from "~/builder/shared/bindable-expression";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import {
+  executeRuntimeMutation,
+  executeRuntimeMutationSequence,
+} from "~/shared/instance-utils/data";
 import { CodeEditor } from "~/shared/code-editor";
 import { type ControlProps, VerticalLayout } from "../shared";
 import { FieldLabel, useIsBindingResetForbidden } from "../property-label";
@@ -52,6 +55,32 @@ export const TextContent = ({
     if (operation !== undefined) {
       executeRuntimeMutation(operation);
     }
+  };
+  const resetBindings = (evaluatedValue: unknown) => {
+    if (instance === undefined || target === undefined) {
+      return;
+    }
+    const updates = instance.children.flatMap((child, childIndex) => {
+      if (child.type !== "expression") {
+        return [];
+      }
+      const value =
+        childIndex === target.childIndex
+          ? evaluatedValue
+          : evaluateExpressionWithinScope(child.value, binding.scope);
+      return [{ childIndex, value: String(value) }];
+    });
+    executeRuntimeMutationSequence(
+      updates.reverse().map((update) => ({
+        id: "instances.updateText",
+        input: {
+          instanceId: instance.id,
+          childIndex: update.childIndex,
+          mode: "text",
+          text: update.value,
+        },
+      }))
+    );
   };
 
   const expression =
@@ -128,7 +157,7 @@ export const TextContent = ({
         validate={(value) => validatePrimitiveValue(value, "Text Content")}
         onChangeValue={(value) => updateChild("text", value)}
         onChangeExpression={(value) => updateChild("expression", value)}
-        onRemove={(value) => updateChild("text", String(value))}
+        onRemove={resetBindings}
         renderControl={({ readOnly }) => (
           <CodeEditor
             title={

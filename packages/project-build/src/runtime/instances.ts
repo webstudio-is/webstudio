@@ -3689,10 +3689,8 @@ export const updateTextInstance = (
   state: Pick<BuilderState, "instances">,
   input: z.infer<typeof updateTextInstanceInput>
 ) => {
-  const result = findTextContentChild(
-    getRequiredInstances(state).values(),
-    input
-  );
+  const instances = getRequiredInstances(state);
+  const result = findTextContentChild(instances.values(), input);
   if (result.status === "instance-not-found") {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }
@@ -3715,9 +3713,52 @@ export const updateTextInstance = (
     childIndex: input.childIndex,
     mode,
   };
-  if (result.child.value === input.text) {
+  const instance = instances.get(input.instanceId);
+  if (instance === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  const previousChild = instance.children[input.childIndex - 1];
+  const nextChild = instance.children[input.childIndex + 1];
+  const shouldMergePrevious = mode === "text" && previousChild?.type === "text";
+  const shouldMergeNext = mode === "text" && nextChild?.type === "text";
+  if (
+    result.child.type === mode &&
+    result.child.value === input.text &&
+    shouldMergePrevious === false &&
+    shouldMergeNext === false
+  ) {
     return createRuntimeMutation({
       payload: [],
+      result: mutationResult,
+      invalidatesNamespaces: ["instances"],
+    });
+  }
+  if (shouldMergePrevious || shouldMergeNext) {
+    const firstIndex = shouldMergePrevious
+      ? input.childIndex - 1
+      : input.childIndex;
+    const lastIndex = shouldMergeNext ? input.childIndex + 1 : input.childIndex;
+    const value = `${
+      shouldMergePrevious ? previousChild.value : ""
+    }${input.text}${shouldMergeNext ? nextChild.value : ""}`;
+    const children = [
+      ...instance.children.slice(0, firstIndex),
+      createTextContentChild({ type: "text", value }),
+      ...instance.children.slice(lastIndex + 1),
+    ];
+    return createRuntimeMutation({
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: [input.instanceId, "children"],
+              value: children,
+            },
+          ],
+        },
+      ],
       result: mutationResult,
       invalidatesNamespaces: ["instances"],
     });

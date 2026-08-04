@@ -754,6 +754,75 @@ describe("text content utils", () => {
     }
   );
 
+  test.each([
+    {
+      name: "left",
+      children: [
+        { type: "text" as const, value: "Prefix " },
+        { type: "expression" as const, value: '"value"' },
+        { type: "id" as const, value: "boundary" },
+      ],
+      childIndex: 1,
+      expectedChildren: [
+        { type: "text", value: "Prefix value" },
+        { type: "id", value: "boundary" },
+      ],
+    },
+    {
+      name: "right",
+      children: [
+        { type: "id" as const, value: "boundary" },
+        { type: "expression" as const, value: '"value"' },
+        { type: "text" as const, value: " suffix" },
+      ],
+      childIndex: 1,
+      expectedChildren: [
+        { type: "id", value: "boundary" },
+        { type: "text", value: "value suffix" },
+      ],
+    },
+    {
+      name: "both sides",
+      children: [
+        { type: "text" as const, value: "Prefix " },
+        { type: "expression" as const, value: '"value"' },
+        { type: "text" as const, value: " suffix" },
+      ],
+      childIndex: 1,
+      expectedChildren: [{ type: "text", value: "Prefix value suffix" }],
+    },
+  ])(
+    "merges adjacent text on the $name",
+    ({ children, childIndex, expectedChildren }) => {
+      const result = updateTextInstance(
+        {
+          instances: new Map([
+            ["instance", createInstance("instance", children)],
+          ]),
+        },
+        {
+          instanceId: "instance",
+          childIndex,
+          text: "value",
+          mode: "text",
+        }
+      );
+
+      expect(result.payload).toEqual([
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: ["instance", "children"],
+              value: expectedChildren,
+            },
+          ],
+        },
+      ]);
+    }
+  );
+
   test("validates expression text only when expression mode is requested", () => {
     expect(() =>
       updateTextInstance(

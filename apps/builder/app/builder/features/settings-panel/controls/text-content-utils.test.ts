@@ -38,7 +38,7 @@ test("does not collapse content with nested instances into a text field", () => 
   ).toBeUndefined();
 });
 
-test("rejects content with more than one binding", () => {
+test("targets the first child when cleanup finds more than one binding", () => {
   expect(
     getEditableTextTarget(
       createInstance([
@@ -46,7 +46,10 @@ test("rejects content with more than one binding", () => {
         { type: "expression", value: "second" },
       ])
     )
-  ).toBeUndefined();
+  ).toEqual({
+    childIndex: 0,
+    child: { type: "expression", value: "first" },
+  });
 });
 
 test("updates the targeted expression without replacing its siblings", () => {
