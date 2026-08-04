@@ -54,6 +54,7 @@ import {
   type Resource,
   type WsComponentMeta,
   type Pages,
+  type ComponentBuildContribution,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
@@ -99,7 +100,6 @@ import { formatZodIssues } from "./zod-utils";
 import { createFramework as createRemixFramework } from "./framework-remix";
 import { createFramework as createReactRouterFramework } from "./framework-react-router";
 import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
-import { codeTextComponent, collectCodeTextAssets } from "./code-text";
 
 export const generatedFilesManifest = join(
   ".webstudio",
@@ -1128,20 +1128,27 @@ export const prebuild = async (options: {
     }
 
     const props = new Map(pageData.build.props);
-    const codeTextAssets = collectCodeTextAssets({
-      instances,
-      props,
-      meta: framework.metas[codeTextComponent],
-    });
+    const componentBuildContributions = new Map<
+      string,
+      ComponentBuildContribution
+    >();
+    for (const hook of framework.componentBuildHooks) {
+      const contribution = await hook.build({
+        instances,
+        props,
+        meta: framework.metas[hook.component],
+        scope,
+      });
+      if (contribution !== undefined) {
+        componentBuildContributions.set(hook.component, contribution);
+      }
+    }
 
     // generate component imports
     // Map<importSource, Map<id, importSpecifier>>
     const imports = new Map<string, Map<string, string>>();
     for (const instance of instances.values()) {
-      if (
-        codeTextAssets !== undefined &&
-        instance.component === codeTextComponent
-      ) {
+      if (componentBuildContributions.has(instance.component)) {
         continue;
       }
       let descriptor = framework.components[instance.component];
@@ -1172,59 +1179,18 @@ export const prebuild = async (options: {
       importsString += `import { ${specifiersString} } from "${importSource}";\n`;
     }
 
-    let codeTextSetupString = "";
-    if (codeTextAssets !== undefined) {
-      const createCodeTextName = scope.getName(
-        "code-text-factory",
-        "createCodeText"
-      );
-      const codeTextName = scope.getName(codeTextComponent, "CodeText");
-      importsString += `import { createCodeText as ${createCodeTextName} } from "@webstudio-is/sdk-components-react/code-text";\n`;
-
-      const staticLanguageNames: string[] = [];
-      for (const language of codeTextAssets.staticLanguages) {
-        const name = scope.getName(
-          `code-text-language-${language}`,
-          `${language}Language`
-        );
-        importsString += `import ${name} from "@shikijs/langs/${language}";\n`;
-        staticLanguageNames.push(name);
+    const componentBuildDeclarations: string[] = [];
+    for (const contribution of componentBuildContributions.values()) {
+      for (const buildImport of contribution.imports) {
+        if (buildImport.imported === undefined) {
+          importsString += `import ${buildImport.local} from ${JSON.stringify(buildImport.source)};\n`;
+        } else {
+          importsString += `import { ${buildImport.imported} as ${buildImport.local} } from ${JSON.stringify(buildImport.source)};\n`;
+        }
       }
-      const staticThemeNames: string[] = [];
-      for (const theme of codeTextAssets.staticThemes) {
-        const name = scope.getName(`code-text-theme-${theme}`, `${theme}Theme`);
-        importsString += `import ${name} from "@shikijs/themes/${theme}";\n`;
-        staticThemeNames.push(name);
-      }
-
-      const loaderEntries: string[] = [];
-      if (codeTextAssets.dynamicLanguages) {
-        const loadersName = scope.getName(
-          "code-text-language-loaders",
-          "codeTextLanguageLoaders"
-        );
-        importsString += `import { bundledLanguages as ${loadersName} } from "shiki/langs";\n`;
-        loaderEntries.push(
-          `language: (language) => { const loader = ${loadersName}[language as keyof typeof ${loadersName}]; return loader?.().then((module) => module.default); }`
-        );
-      }
-      if (codeTextAssets.dynamicThemes) {
-        const loadersName = scope.getName(
-          "code-text-theme-loaders",
-          "codeTextThemeLoaders"
-        );
-        importsString += `import { bundledThemes as ${loadersName} } from "shiki/themes";\n`;
-        loaderEntries.push(
-          `theme: (theme) => { const loader = ${loadersName}[theme as keyof typeof ${loadersName}]; return loader?.().then((module) => module.default); }`
-        );
-      }
-
-      if (loaderEntries.length === 0) {
-        codeTextSetupString = `const ${codeTextName} = ${createCodeTextName}({ languages: [${staticLanguageNames.join(", ")}], themes: [${staticThemeNames.join(", ")}] });`;
-      } else {
-        codeTextSetupString = `const ${codeTextName} = ${createCodeTextName}({ languages: [${staticLanguageNames.join(", ")}], themes: [${staticThemeNames.join(", ")}], loaders: { ${loaderEntries.join(", ")} }, suspense: true });`;
-      }
+      componentBuildDeclarations.push(...contribution.declarations);
     }
+    const componentBuildSetupString = componentBuildDeclarations.join("\n");
 
     const pageFontAssets = fontAssetsByPage[page.id];
     const pageBackgroundImageAssets = backgroundImageAssetsByPage[page.id];
@@ -1286,7 +1252,7 @@ export const prebuild = async (options: {
 
       import { Fragment, useState } from "react";
       import { renderText, useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-      ${importsString}${codeTextSetupString}
+      ${importsString}${componentBuildSetupString}
 
       export const projectId = "${siteData.build.projectId}";
 

@@ -28,6 +28,16 @@
       "types": "./lib/types/code-text.d.ts",
       "import": "./lib/code-text.js"
     },
+    "./code-text/build": {
+      "webstudio": "./src/code-text.build.ts",
+      "types": "./lib/types/code-text.build.d.ts",
+      "import": "./lib/code-text.build.js"
+    },
+    "./build-hooks": {
+      "webstudio": "./src/build-hooks.ts",
+      "types": "./lib/types/build-hooks.d.ts",
+      "import": "./lib/build-hooks.js"
+    },
     "./metas": {
       "webstudio": "./src/metas.ts",
       "types": "./lib/types/metas.d.ts",

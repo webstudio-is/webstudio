@@ -17,6 +17,10 @@ test("creates framework component imports from component package metas", () => {
       expect(registry.metas[component]).toBe(meta);
     }
   }
+
+  expect(registry.buildHooks.map((hook) => hook.component)).toEqual([
+    "CodeText",
+  ]);
 });
 
 test("overrides router components only when a framework provides them", () => {

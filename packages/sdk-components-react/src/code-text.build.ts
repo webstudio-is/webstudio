@@ -1,4 +1,5 @@
 import type {
+  ComponentBuildHook,
   Instances,
   Prop,
   Props,
@@ -113,12 +114,103 @@ export const collectCodeTextAssets = ({
     }
   }
 
-  const sortedStaticLanguages = [...staticLanguages].sort();
-  const sortedStaticThemes = [...staticThemes].sort();
   return {
-    staticLanguages: sortedStaticLanguages,
-    staticThemes: sortedStaticThemes,
+    staticLanguages: [...staticLanguages].sort(),
+    staticThemes: [...staticThemes].sort(),
     dynamicLanguages,
     dynamicThemes,
   };
+};
+
+export const codeTextBuildHook: ComponentBuildHook = {
+  component: codeTextComponent,
+  build: ({ instances, props, meta, scope }) => {
+    const assets = collectCodeTextAssets({ instances, props, meta });
+    if (assets === undefined) {
+      return;
+    }
+
+    const imports = [];
+    const createCodeTextName = scope.getName(
+      "code-text-factory",
+      "createCodeText"
+    );
+    const codeTextName = scope.getName(codeTextComponent, "CodeText");
+    imports.push({
+      source: "@webstudio-is/sdk-components-react/code-text",
+      imported: "createCodeText",
+      local: createCodeTextName,
+    });
+
+    const staticLanguageNames: string[] = [];
+    for (const language of assets.staticLanguages) {
+      const name = scope.getName(
+        `code-text-language-${language}`,
+        `${language}Language`
+      );
+      imports.push({
+        source: `@shikijs/langs/${language}`,
+        local: name,
+      });
+      staticLanguageNames.push(name);
+    }
+
+    const staticThemeNames: string[] = [];
+    for (const theme of assets.staticThemes) {
+      const name = scope.getName(`code-text-theme-${theme}`, `${theme}Theme`);
+      imports.push({
+        source: `@shikijs/themes/${theme}`,
+        local: name,
+      });
+      staticThemeNames.push(name);
+    }
+
+    const loaderEntries: string[] = [];
+    if (assets.dynamicLanguages) {
+      const loadersName = scope.getName(
+        "code-text-language-loaders",
+        "codeTextLanguageLoaders"
+      );
+      imports.push({
+        source: "shiki/langs",
+        imported: "bundledLanguages",
+        local: loadersName,
+      });
+      loaderEntries.push(
+        `language: (language) => { const loader = ${loadersName}[language as keyof typeof ${loadersName}]; return loader?.().then((module) => module.default); }`
+      );
+    }
+    if (assets.dynamicThemes) {
+      const loadersName = scope.getName(
+        "code-text-theme-loaders",
+        "codeTextThemeLoaders"
+      );
+      imports.push({
+        source: "shiki/themes",
+        imported: "bundledThemes",
+        local: loadersName,
+      });
+      loaderEntries.push(
+        `theme: (theme) => { const loader = ${loadersName}[theme as keyof typeof ${loadersName}]; return loader?.().then((module) => module.default); }`
+      );
+    }
+
+    const factoryOptions = [
+      `languages: [${staticLanguageNames.join(", ")}]`,
+      `themes: [${staticThemeNames.join(", ")}]`,
+    ];
+    if (loaderEntries.length > 0) {
+      factoryOptions.push(
+        `loaders: { ${loaderEntries.join(", ")} }`,
+        "suspense: true"
+      );
+    }
+
+    return {
+      imports,
+      declarations: [
+        `const ${codeTextName} = ${createCodeTextName}({ ${factoryOptions.join(", ")} });`,
+      ],
+    };
+  },
 };

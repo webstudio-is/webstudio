@@ -4,6 +4,8 @@
     "src/index.ts",
     "src/components.ts",
     "src/code-text.tsx",
+    "src/code-text.build.ts",
+    "src/build-hooks.ts",
     "src/metas.ts",
     "src/hooks.ts",
     "src/create-link.tsx"
