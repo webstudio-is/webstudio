@@ -31,9 +31,15 @@ test("loads highlighting without replacing the code element", async () => {
       tabIndex={0}
     />
   );
-  await waitFor(() =>
-    expect(container.querySelector("code")?.className).toContain("nord")
-  );
+  await waitFor(() => {
+    const updatedCodeElement = container.querySelector("code");
+    expect(
+      updatedCodeElement?.style.getPropertyValue(
+        "--w-code-text-theme-background"
+      )
+    ).toBe("#2e3440ff");
+    expect(updatedCodeElement?.className).toBe("");
+  });
   expect(container.querySelector("code")).toBe(codeElement);
   expect(document.activeElement).toBe(codeElement);
 });
