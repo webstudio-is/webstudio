@@ -258,8 +258,6 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: builder-e2e-playwright-${{ runner.os }}-${{ hashFiles('apps/builder/package.json', 'pnpm-lock.yaml') }}
-          restore-keys: |
-            builder-e2e-playwright-${{ runner.os }}-
 
       - name: Download builder e2e build
         uses: actions/download-artifact@v4
