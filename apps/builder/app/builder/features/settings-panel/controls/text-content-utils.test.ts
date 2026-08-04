@@ -1,9 +1,6 @@
 import { expect, test } from "vitest";
 import type { Instance } from "@webstudio-is/sdk";
-import {
-  getEditableTextTarget,
-  getTextContentUpdateOperation,
-} from "./text-content-utils";
+import { getTextContentUpdateOperation } from "./text-content-utils";
 
 const createInstance = (children: Instance["children"]): Instance => ({
   type: "instance",
@@ -11,45 +8,6 @@ const createInstance = (children: Instance["children"]): Instance => ({
   component: "ws:element",
   tag: "span",
   children,
-});
-
-test("targets the existing binding among surrounding static text", () => {
-  expect(
-    getEditableTextTarget(
-      createInstance([
-        { type: "text", value: " · " },
-        { type: "expression", value: 'readTime ?? ""' },
-      ])
-    )
-  ).toEqual({
-    childIndex: 1,
-    child: { type: "expression", value: 'readTime ?? ""' },
-  });
-});
-
-test("does not collapse content with nested instances into a text field", () => {
-  expect(
-    getEditableTextTarget(
-      createInstance([
-        { type: "text", value: "prefix" },
-        { type: "id", value: "nested" },
-      ])
-    )
-  ).toBeUndefined();
-});
-
-test("targets the first child when cleanup finds more than one binding", () => {
-  expect(
-    getEditableTextTarget(
-      createInstance([
-        { type: "expression", value: "first" },
-        { type: "expression", value: "second" },
-      ])
-    )
-  ).toEqual({
-    childIndex: 0,
-    child: { type: "expression", value: "first" },
-  });
 });
 
 test("updates the targeted expression without replacing its siblings", () => {

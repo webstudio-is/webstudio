@@ -36,7 +36,7 @@ import {
   $selectedInstancePropsMetas,
   type PropValue,
 } from "../shared";
-import { getEditableTextTarget } from "../controls/text-content-utils";
+import { getEditableTextTarget } from "@webstudio-is/project-build/runtime";
 
 type PropOrName = { prop?: Prop; propName: string };
 

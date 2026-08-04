@@ -41,6 +41,7 @@ import {
   getSameParentAdjustedInsertIndex,
   getTextContentChild,
   getTextContentErrors,
+  getEditableTextTarget,
   isTextContentChild,
   listInstances,
   deleteInstances,
@@ -906,6 +907,82 @@ describe("text content utils", () => {
     );
   });
 
+  test("inlines every expression and normalizes adjacent text", () => {
+    const result = setTextContent(
+      {
+        instances: new Map([
+          [
+            "instance",
+            createInstance("instance", [
+              { type: "text", value: "A" },
+              { type: "expression", value: '"B"' },
+              { type: "expression", value: '"C"' },
+              { type: "text", value: "D" },
+              { type: "id", value: "boundary" },
+              { type: "expression", value: '"E"' },
+            ]),
+          ],
+        ]),
+      },
+      {
+        operation: "inlineExpressions",
+        instanceId: "instance",
+        replacements: [
+          { childIndex: 1, expression: '"B"', text: "B" },
+          { childIndex: 2, expression: '"C"', text: "C" },
+          { childIndex: 5, expression: '"E"', text: "E" },
+        ],
+      }
+    );
+
+    expect(result).toMatchObject({
+      kind: "mutation",
+      result: {
+        instanceId: "instance",
+        operation: "inlineExpressions",
+      },
+    });
+    expect(result.payload).toEqual([
+      {
+        namespace: "instances",
+        patches: [
+          {
+            op: "replace",
+            path: ["instance", "children"],
+            value: [
+              { type: "text", value: "ABCD" },
+              { type: "id", value: "boundary" },
+              { type: "text", value: "E" },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("rejects an incomplete expression reset", () => {
+    expect(() =>
+      setTextContent(
+        {
+          instances: new Map([
+            [
+              "instance",
+              createInstance("instance", [
+                { type: "expression", value: "first" },
+                { type: "expression", value: "second" },
+              ]),
+            ],
+          ]),
+        },
+        {
+          operation: "inlineExpressions",
+          instanceId: "instance",
+          replacements: [{ childIndex: 0, expression: "first", text: "First" }],
+        }
+      )
+    ).toThrow("Every expression child must have a matching replacement");
+  });
+
   test("validates expression when setting text content", () => {
     expect(() =>
       setTextContent(
@@ -942,6 +1019,33 @@ describe("text content utils", () => {
 
     expect(result.noop).toEqual(true);
     expect(result.payload).toEqual([]);
+  });
+});
+
+describe("getEditableTextTarget", () => {
+  test("finds a binding among surrounding static text", () => {
+    expect(
+      getEditableTextTarget(
+        createInstance("instance", [
+          { type: "text", value: " · " },
+          { type: "expression", value: 'readTime ?? ""' },
+        ])
+      )
+    ).toEqual({
+      childIndex: 1,
+      child: { type: "expression", value: 'readTime ?? ""' },
+    });
+  });
+
+  test("rejects mixed content with nested instances and no binding", () => {
+    expect(
+      getEditableTextTarget(
+        createInstance("instance", [
+          { type: "text", value: "prefix" },
+          { type: "id", value: "nested" },
+        ])
+      )
+    ).toBeUndefined();
   });
 });
 

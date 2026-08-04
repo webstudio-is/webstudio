@@ -224,6 +224,24 @@ export const setTextContentInput = z.discriminatedUnion("operation", [
     operation: z.literal("reset"),
     instanceId: z.string().describe("Instance id to reset to no text content."),
   }),
+  z.object({
+    operation: z.literal("inlineExpressions"),
+    instanceId: z
+      .string()
+      .describe("Instance id whose expression children will become text."),
+    replacements: z
+      .array(
+        z.object({
+          childIndex: z.number().int().nonnegative(),
+          expression: z.string(),
+          text: z.string(),
+        })
+      )
+      .min(1)
+      .describe(
+        "Evaluated text for every expression child. The index and original expression must match the current instance."
+      ),
+  }),
 ]);
 
 export const updateTextTreeInput = z.object({
@@ -3272,6 +3290,19 @@ export const getTextContentChild = (instance: Instance, childIndex: number) => {
   return isTextContentChild(child) ? child : undefined;
 };
 
+export const getEditableTextTarget = (instance: Instance) => {
+  const [onlyChild] = instance.children;
+  if (instance.children.length === 1 && isTextContentChild(onlyChild)) {
+    return { childIndex: 0, child: onlyChild };
+  }
+
+  for (const [childIndex, child] of instance.children.entries()) {
+    if (child.type === "expression") {
+      return { childIndex, child };
+    }
+  }
+};
+
 export const findTextContentChild = (
   instances: Iterable<Instance>,
   input: {
@@ -3774,6 +3805,19 @@ export const updateTextInstance = (
   });
 };
 
+const normalizeAdjacentTextChildren = (children: Instance["children"]) => {
+  const normalized: Instance["children"] = [];
+  for (const child of children) {
+    const previousChild = normalized.at(-1);
+    if (child.type === "text" && previousChild?.type === "text") {
+      previousChild.value += child.value;
+      continue;
+    }
+    normalized.push({ ...child });
+  }
+  return normalized;
+};
+
 export const replaceText = (
   state: Pick<BuilderState, "pages" | "instances">,
   input: z.infer<typeof replaceTextInput>
@@ -3858,6 +3902,60 @@ export const setTextContent = (
         instance.children.length === 0
           ? []
           : createTextContentResetPayload({ instanceId: input.instanceId }),
+      result: {
+        instanceId: input.instanceId,
+        operation: input.operation,
+      },
+      invalidatesNamespaces: ["instances"],
+    });
+  }
+
+  if (input.operation === "inlineExpressions") {
+    const expressionCount = instance.children.filter(
+      (child) => child.type === "expression"
+    ).length;
+    const replacements = new Map(
+      input.replacements.map((replacement) => [
+        replacement.childIndex,
+        replacement,
+      ])
+    );
+    if (
+      replacements.size !== input.replacements.length ||
+      replacements.size !== expressionCount ||
+      input.replacements.some((replacement) => {
+        const child = instance.children[replacement.childIndex];
+        return (
+          child?.type !== "expression" || child.value !== replacement.expression
+        );
+      })
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Every expression child must have a matching replacement"
+      );
+    }
+    const children = normalizeAdjacentTextChildren(
+      instance.children.map((child, childIndex) => {
+        const replacement = replacements.get(childIndex);
+        return replacement === undefined
+          ? child
+          : createTextContentChild({ type: "text", value: replacement.text });
+      })
+    );
+    return createRuntimeMutation({
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: [input.instanceId, "children"],
+              value: children,
+            },
+          ],
+        },
+      ],
       result: {
         instanceId: input.instanceId,
         operation: input.operation,

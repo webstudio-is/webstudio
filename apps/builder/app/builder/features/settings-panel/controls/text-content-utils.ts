@@ -1,17 +1,5 @@
 import type { Instance } from "@webstudio-is/sdk";
-
-export const getEditableTextTarget = (instance: Instance) => {
-  const [onlyChild] = instance.children;
-  if (instance.children.length === 1 && onlyChild?.type !== "id") {
-    return { childIndex: 0, child: onlyChild };
-  }
-
-  for (const [childIndex, child] of instance.children.entries()) {
-    if (child.type === "expression") {
-      return { childIndex, child };
-    }
-  }
-};
+import { getEditableTextTarget } from "@webstudio-is/project-build/runtime";
 
 export const getTextContentUpdateOperation = ({
   instance,

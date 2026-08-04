@@ -19,19 +19,14 @@ import {
   BindableExpressionControl,
   updateBindableValue,
 } from "~/builder/shared/bindable-expression";
-import {
-  executeRuntimeMutation,
-  executeRuntimeMutationSequence,
-} from "~/shared/instance-utils/data";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { CodeEditor } from "~/shared/code-editor";
 import { type ControlProps, VerticalLayout } from "../shared";
 import { FieldLabel, useIsBindingResetForbidden } from "../property-label";
 import { useBindableControl } from "./use-bindable-control";
 import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
-import {
-  getEditableTextTarget,
-  getTextContentUpdateOperation,
-} from "./text-content-utils";
+import { getEditableTextTarget } from "@webstudio-is/project-build/runtime";
+import { getTextContentUpdateOperation } from "./text-content-utils";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
@@ -60,7 +55,7 @@ export const TextContent = ({
     if (instance === undefined || target === undefined) {
       return;
     }
-    const updates = instance.children.flatMap((child, childIndex) => {
+    const replacements = instance.children.flatMap((child, childIndex) => {
       if (child.type !== "expression") {
         return [];
       }
@@ -68,19 +63,22 @@ export const TextContent = ({
         childIndex === target.childIndex
           ? evaluatedValue
           : evaluateExpressionWithinScope(child.value, binding.scope);
-      return [{ childIndex, value: String(value) }];
-    });
-    executeRuntimeMutationSequence(
-      updates.reverse().map((update) => ({
-        id: "instances.updateText",
-        input: {
-          instanceId: instance.id,
-          childIndex: update.childIndex,
-          mode: "text",
-          text: update.value,
+      return [
+        {
+          childIndex,
+          expression: child.value,
+          text: String(value),
         },
-      }))
-    );
+      ];
+    });
+    executeRuntimeMutation({
+      id: "instances.setTextContent",
+      input: {
+        operation: "inlineExpressions",
+        instanceId: instance.id,
+        replacements,
+      },
+    });
   };
 
   const expression =
