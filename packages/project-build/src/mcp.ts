@@ -6307,15 +6307,7 @@ const getSdkInputSchema = (
       required.has(name) ||
       includeOptionalProperties ||
       sdkDetailedOptionalSchemaProperties.has(name)
-        ? [
-            [
-              name,
-              required.has(name) ||
-              sdkDetailedOptionalSchemaProperties.has(name)
-                ? getSdkSchemaProperty(value)
-                : {},
-            ],
-          ]
+        ? [[name, getSdkSchemaProperty(value)]]
         : []
     )
   );

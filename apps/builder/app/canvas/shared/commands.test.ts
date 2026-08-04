@@ -7,12 +7,43 @@ import {
   selectInstance,
   selectInstances,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
+import {
+  createBoundTextInstances,
+  createCanvasElement,
+  createMixedBoundTextInstances,
+} from "../test-utils";
 import { emitCommand } from "./commands";
 
 afterEach(() => {
+  document.body.innerHTML = "";
+  $instances.set(new Map());
   selectInstance(undefined);
   $textEditingInstanceSelector.set(undefined);
   $textToolbar.set(undefined);
+});
+
+test("enters the first literal descendant of a mixed rich-text tree", () => {
+  $instances.set(createMixedBoundTextInstances());
+  createCanvasElement({ selector: "separator,paragraph" });
+  selectInstance(["paragraph"]);
+
+  emitCommand("editInstanceText");
+
+  expect($textEditingInstanceSelector.get()?.selector).toEqual([
+    "separator",
+    "paragraph",
+  ]);
+});
+
+test("does not enter text editing for a directly bound instance", () => {
+  $instances.set(createBoundTextInstances());
+  createCanvasElement({ selector: "bound-text" });
+  selectInstance(["bound-text"]);
+
+  emitCommand("editInstanceText");
+
+  expect($textEditingInstanceSelector.get()).toBeUndefined();
 });
 
 describe("escapeSelection", () => {

@@ -1,10 +1,16 @@
 import { describe, expect, test } from "vitest";
-import type { Prop, PropMeta } from "@webstudio-is/sdk";
+import type {
+  Instance,
+  Prop,
+  PropMeta,
+  WsComponentMeta,
+} from "@webstudio-is/sdk";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
 import { __testing__ } from "./use-props-logic";
 import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime";
 
-const { isPropVisibleInContentMode, getAndDelete } = __testing__;
+const { isPropVisibleInContentMode, getAndDelete, canShowTextContent } =
+  __testing__;
 
 const getInput = (
   input: Partial<Parameters<typeof isPropVisibleInContentMode>[0]> = {}
@@ -145,5 +151,91 @@ describe("getAndDelete", () => {
 
     expect(getAndDelete(map, "missing")).toBeUndefined();
     expect(map).toEqual(new Map([["key", 1]]));
+  });
+});
+
+describe("canShowTextContent", () => {
+  const metas = new Map<string, WsComponentMeta>();
+  const props = new Map<string, Prop>();
+
+  test("shows directly selected scalar content inside a rich-text tree", () => {
+    const paragraph: Instance = {
+      type: "instance",
+      id: "paragraph",
+      component: "ws:element",
+      tag: "p",
+      children: [
+        { type: "text", value: "Prefix" },
+        { type: "id", value: "nested" },
+      ],
+    };
+    const instance: Instance = {
+      type: "instance",
+      id: "nested",
+      component: "ws:element",
+      tag: "span",
+      children: [{ type: "text", value: "static" }],
+    };
+    const instances = new Map([
+      [paragraph.id, paragraph],
+      [instance.id, instance],
+    ]);
+    expect(
+      canShowTextContent({
+        instance,
+        instanceSelector: [instance.id, paragraph.id],
+        instances,
+        props,
+        metas,
+        isContentMode: false,
+      })
+    ).toBe(true);
+    const boundInstance: Instance = {
+      ...instance,
+      children: [{ type: "expression", value: "value" }],
+    };
+    expect(
+      canShowTextContent({
+        instance: boundInstance,
+        instanceSelector: [boundInstance.id, paragraph.id],
+        instances: new Map([
+          [paragraph.id, paragraph],
+          [boundInstance.id, boundInstance],
+        ]),
+        props,
+        metas,
+        isContentMode: false,
+      })
+    ).toBe(true);
+  });
+
+  test("preserves existing text eligibility on non-text-capable components", () => {
+    const instance: Instance = {
+      type: "instance",
+      id: "head-slot",
+      component: "HeadSlot",
+      children: [{ type: "text", value: "Legacy text" }],
+    };
+    const metas = new Map<string, WsComponentMeta>([
+      [
+        "HeadSlot",
+        {
+          label: "Head slot",
+          Icon: () => null,
+          contentModel: { category: "instance", children: ["instance"] },
+        } as WsComponentMeta,
+      ],
+    ]);
+
+    expect(
+      canShowTextContent({
+        instance,
+        instanceSelector: [instance.id],
+        instances: new Map([[instance.id, instance]]),
+        props: new Map(),
+        metas,
+        isContentMode: false,
+      })
+    ).toBe(true);
   });
 });

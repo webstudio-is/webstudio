@@ -7482,7 +7482,22 @@ describe("project session mcp adapter", () => {
           listedTools.tools.find(({ name }) => name === "list-pages")
             ?.inputSchema
         ).includeFolders
-      ).toEqual({});
+      ).toEqual({ type: "boolean" });
+      expect(
+        getSchemaProperties(
+          listedTools.tools.find(({ name }) => name === "audit")?.inputSchema
+        )
+      ).toMatchObject({
+        cursor: { type: "string" },
+        limit: { type: "integer", minimum: 1, maximum: 200 },
+        verbose: { type: "boolean" },
+      });
+      expect(
+        getSchemaProperties(
+          listedTools.tools.find(({ name }) => name === "list-instances")
+            ?.inputSchema
+        ).maxDepth
+      ).toMatchObject({ type: "integer", minimum: 0 });
       expect(
         getSchemaProperties(
           listedTools.tools.find(({ name }) => name === "publish")?.inputSchema

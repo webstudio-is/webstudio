@@ -668,7 +668,7 @@ export const AssetSettings = ({
         />
       )}
       <PopoverAnchor asChild>{children}</PopoverAnchor>
-      <PopoverContent css={{ minWidth: 250 }}>
+      <PopoverContent css={{ width: 250 }}>
         <PopoverTitle>Asset settings</PopoverTitle>
         <AssetSettingsContent
           asset={asset}

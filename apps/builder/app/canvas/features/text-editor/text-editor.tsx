@@ -1,4 +1,4 @@
-import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime";
+import { findAllNavigableTextInstanceSelectors } from "@webstudio-is/project-build/runtime";
 import { color } from "@webstudio-is/css-engine";
 import {
   useState,
@@ -1616,13 +1616,11 @@ export const TextEditor = ({
         return;
       }
 
-      const editableInstanceSelectors: InstanceSelector[] = [];
-      findAllEditableInstanceSelector({
+      const editableInstanceSelectors = findAllNavigableTextInstanceSelectors({
         instanceSelector: [rootInstanceId],
         instances,
         props,
         metas,
-        results: editableInstanceSelectors,
       });
 
       const currentIndex = editableInstanceSelectors.findIndex(
@@ -1645,20 +1643,6 @@ export const TextEditor = ({
             : mod(currentIndex - i, editableInstanceSelectors.length);
 
         const nextSelector = editableInstanceSelectors[nextIndex];
-
-        const nextInstance = instances.get(nextSelector[0]);
-        if (nextInstance === undefined) {
-          continue;
-        }
-
-        const hasExpressionChildren = nextInstance.children.some(
-          (child) => child.type === "expression"
-        );
-
-        // opinionated: Skip if binded (double click is working)
-        if (hasExpressionChildren) {
-          continue;
-        }
 
         // Skip invisible elements
         if (getVisibleElementsByInstanceSelector(nextSelector).length === 0) {

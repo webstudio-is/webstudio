@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import {
   $allSelectedInstanceSelectors,
   $selectedInstanceOutline,
@@ -9,6 +8,7 @@ import {
 import { $instances, $styleSourceSelections } from "~/shared/sync/data-stores";
 import { subscribeSelected } from "./selected-instance-effects";
 import { subscribeInstanceSelection } from "./instance-selection-events";
+import { createCanvasElement } from "./test-utils";
 
 const createInstance = (id: string) => ({
   type: "instance" as const,
@@ -16,25 +16,6 @@ const createInstance = (id: string) => ({
   component: "Box",
   children: [],
 });
-
-const createElement = ({
-  selector,
-  rect,
-  parent = document.body,
-}: {
-  selector: string;
-  rect: { left: number; top: number; width: number; height: number };
-  parent?: HTMLElement;
-}) => {
-  const element = document.createElement("div");
-  const [id] = selector.split(",");
-  element.setAttribute(idAttribute, id);
-  element.setAttribute(selectorIdAttribute, selector);
-  element.getBoundingClientRect = () =>
-    new TestDOMRect(rect.left, rect.top, rect.width, rect.height) as DOMRect;
-  parent.appendChild(element);
-  return element;
-};
 
 class ResizeObserver {
   observe() {}
@@ -128,7 +109,7 @@ afterEach(() => {
 
 describe("subscribeSelected", () => {
   test("creates both outline stores for one selected instance", () => {
-    createElement({
+    createCanvasElement({
       selector: "box,body",
       rect: { left: 10, top: 20, width: 100, height: 50 },
     });
@@ -156,11 +137,11 @@ describe("subscribeSelected", () => {
   });
 
   test("creates an outline for every selected instance without single outline", () => {
-    createElement({
+    createCanvasElement({
       selector: "box,body",
       rect: { left: 10, top: 20, width: 100, height: 50 },
     });
-    createElement({
+    createCanvasElement({
       selector: "heading,body",
       rect: { left: 20, top: 40, width: 140, height: 70 },
     });
@@ -181,16 +162,16 @@ describe("subscribeSelected", () => {
   });
 
   test("does not fall back to parent rect for zero-size multi-selected instances", () => {
-    const parent = createElement({
+    const parent = createCanvasElement({
       selector: "parent,body",
       rect: { left: 5, top: 10, width: 500, height: 300 },
     });
-    createElement({
+    createCanvasElement({
       selector: "box,parent,body",
       rect: { left: 0, top: 0, width: 0, height: 0 },
       parent,
     });
-    createElement({
+    createCanvasElement({
       selector: "heading,parent,body",
       rect: { left: 20, top: 40, width: 140, height: 70 },
       parent,
@@ -223,11 +204,11 @@ describe("subscribeSelected", () => {
   });
 
   test("creates outlines when instances are selected by canvas clicks", () => {
-    const box = createElement({
+    const box = createCanvasElement({
       selector: "box,body",
       rect: { left: 10, top: 20, width: 100, height: 50 },
     });
-    const heading = createElement({
+    const heading = createCanvasElement({
       selector: "heading,body",
       rect: { left: 20, top: 40, width: 140, height: 70 },
     });

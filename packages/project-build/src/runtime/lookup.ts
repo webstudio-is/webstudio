@@ -80,53 +80,91 @@ export const findPageAndSelectorByInstanceId = (
   return { pageId: pages.homePageId, instanceSelector };
 };
 
-export const findAllEditableInstanceSelector = ({
-  instanceSelector,
-  instances,
-  props,
-  metas,
-  htmlTagsByInstanceId,
-  results,
-}: {
+type TextEditorLookupInput = {
   instanceSelector: InstanceSelector;
   instances: Instances;
   props: Props;
   metas: Map<string, WsComponentMeta>;
   htmlTagsByInstanceId?: Map<Instance["id"], string>;
-  results: InstanceSelector[];
-}) => {
-  const [instanceId] = instanceSelector;
+};
 
-  if (instanceId === undefined) {
-    return;
+const hasExpressionInTree = (
+  instanceId: Instance["id"],
+  instances: Instances,
+  visited = new Set<Instance["id"]>()
+): boolean => {
+  if (visited.has(instanceId)) {
+    return false;
   }
-
-  if (
-    isRichTextTree({
-      instanceId,
-      instances,
-      props,
-      metas,
-      htmlTagsByInstanceId,
-    })
-  ) {
-    results.push(instanceSelector);
-    return;
-  }
-
+  visited.add(instanceId);
   const instance = instances.get(instanceId);
-  if (instance) {
+  if (instance === undefined) {
+    return false;
+  }
+  return instance.children.some(
+    (child) =>
+      child.type === "expression" ||
+      (child.type === "id" &&
+        hasExpressionInTree(child.value, instances, visited))
+  );
+};
+
+const isTextEditorTarget = (
+  instanceId: Instance["id"],
+  args: TextEditorLookupInput
+) =>
+  isRichTextTree({
+    instanceId,
+    instances: args.instances,
+    props: args.props,
+    metas: args.metas,
+    htmlTagsByInstanceId: args.htmlTagsByInstanceId,
+  }) && hasExpressionInTree(instanceId, args.instances) === false;
+
+export const findClosestTextEditorTarget = (
+  args: TextEditorLookupInput
+): undefined | InstanceSelector => {
+  let target: InstanceSelector | undefined;
+  for (let index = 0; index < args.instanceSelector.length; index += 1) {
+    const instanceId = args.instanceSelector[index];
+    if (isTextEditorTarget(instanceId, args) === false) {
+      break;
+    }
+    target = args.instanceSelector.slice(index);
+  }
+  return target;
+};
+
+export const findAllNavigableTextInstanceSelectors = (
+  args: TextEditorLookupInput
+) => {
+  const results: InstanceSelector[] = [];
+  const visit = (instanceSelector: InstanceSelector) => {
+    const [instanceId] = instanceSelector;
+    if (instanceId === undefined) {
+      return;
+    }
+    if (isTextEditorTarget(instanceId, args)) {
+      results.push(instanceSelector);
+      return;
+    }
+    const instance = args.instances.get(instanceId);
+    if (instance === undefined) {
+      return;
+    }
     for (const child of instance.children) {
       if (child.type === "id") {
-        findAllEditableInstanceSelector({
-          instanceSelector: [child.value, ...instanceSelector],
-          instances,
-          props,
-          metas,
-          htmlTagsByInstanceId,
-          results,
-        });
+        visit([child.value, ...instanceSelector]);
       }
     }
-  }
+  };
+  visit(args.instanceSelector);
+  return results;
+};
+
+export const findTextEditorTarget = (args: TextEditorLookupInput) => {
+  return (
+    findClosestTextEditorTarget(args) ??
+    findAllNavigableTextInstanceSelectors(args)[0]
+  );
 };

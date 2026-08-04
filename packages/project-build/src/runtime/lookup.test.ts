@@ -2,8 +2,10 @@ import { describe, expect, test } from "vitest";
 import type { Instance, Prop, WsComponentMeta } from "@webstudio-is/sdk";
 import { createDefaultPages } from "../shared/pages-utils";
 import {
-  findAllEditableInstanceSelector,
+  findAllNavigableTextInstanceSelectors,
+  findClosestTextEditorTarget,
   findPageAndSelectorByInstanceId,
+  findTextEditorTarget,
   getInstancePath,
 } from "./lookup";
 
@@ -180,26 +182,132 @@ describe("findPageAndSelectorByInstanceId", () => {
   });
 });
 
-describe("findAllEditableInstanceSelector", () => {
-  test("collects editable rich-text descendants", () => {
-    const results: string[][] = [];
-    findAllEditableInstanceSelector({
-      instanceSelector: ["body"],
+describe("findClosestTextEditorTarget", () => {
+  test("excludes a directly targeted expression from the canvas editor", () => {
+    const instances = new Map([
+      [
+        "bound-text",
+        instance("bound-text", "Span", [
+          { type: "expression", value: "value" },
+        ]),
+      ],
+    ]);
+    const input = {
+      instanceSelector: ["bound-text"],
+      instances,
+      props: new Map<string, Prop>(),
+      metas: new Map([["Span", meta(["rich-text"])]]),
+    };
+
+    expect(findClosestTextEditorTarget(input)).toBeUndefined();
+    expect(findTextEditorTarget(input)).toBeUndefined();
+  });
+});
+
+describe("findAllNavigableTextInstanceSelectors", () => {
+  test("excludes single expressions from navigable targets", () => {
+    const results = findAllNavigableTextInstanceSelectors({
+      instanceSelector: ["bound-text"],
       instances: new Map([
         [
-          "body",
-          instance("body", "Body", [{ type: "id", value: "paragraph" }]),
+          "bound-text",
+          instance("bound-text", "Span", [
+            { type: "expression", value: "value" },
+          ]),
         ],
-        ["paragraph", instance("paragraph", "Paragraph")],
       ]),
-      props: new Map<string, Prop>(),
-      metas: new Map([
-        ["Body", meta(["instance"])],
-        ["Paragraph", meta(["rich-text"])],
-      ]),
-      results,
+      props: new Map(),
+      metas: new Map([["Span", meta(["rich-text"])]]),
+    });
+
+    expect(results).toEqual([]);
+  });
+
+  test("collects editable rich-text descendants", () => {
+    const instances = new Map([
+      ["body", instance("body", "Body", [{ type: "id", value: "paragraph" }])],
+      ["paragraph", instance("paragraph", "Paragraph")],
+    ]);
+    const props = new Map<string, Prop>();
+    const metas = new Map([
+      ["Body", meta(["instance"])],
+      ["Paragraph", meta(["rich-text"])],
+    ]);
+    const results = findAllNavigableTextInstanceSelectors({
+      instanceSelector: ["body"],
+      instances,
+      props,
+      metas,
     });
 
     expect(results).toEqual([["paragraph", "body"]]);
+    expect(
+      findTextEditorTarget({
+        instanceSelector: ["body"],
+        instances,
+        props,
+        metas,
+      })
+    ).toEqual(["paragraph", "body"]);
+  });
+
+  test("finds literal descendants within a rich-text tree containing expressions", () => {
+    const instances = new Map([
+      [
+        "paragraph",
+        instance("paragraph", "Paragraph", [
+          { type: "text", value: "Published " },
+          { type: "id", value: "separator" },
+          { type: "id", value: "reading-time" },
+        ]),
+      ],
+      [
+        "separator",
+        instance("separator", "Span", [{ type: "text", value: " · " }]),
+      ],
+      [
+        "reading-time",
+        instance("reading-time", "Span", [
+          { type: "expression", value: 'readTime ?? ""' },
+        ]),
+      ],
+    ]);
+    const props = new Map<string, Prop>();
+    const metas = new Map([
+      ["Paragraph", meta(["rich-text"])],
+      ["Span", meta(["rich-text"])],
+    ]);
+    const results = findAllNavigableTextInstanceSelectors({
+      instanceSelector: ["paragraph"],
+      instances,
+      props,
+      metas,
+    });
+
+    expect(results).toEqual([["separator", "paragraph"]]);
+    expect(
+      findClosestTextEditorTarget({
+        instanceSelector: ["separator", "paragraph"],
+        instances,
+        props,
+        metas,
+      })
+    ).toEqual(["separator", "paragraph"]);
+    expect(
+      findTextEditorTarget({
+        instanceSelector: ["paragraph"],
+        instances,
+        props,
+        metas,
+      })
+    ).toEqual(["separator", "paragraph"]);
+    expect(
+      findClosestTextEditorTarget({
+        instanceSelector: ["reading-time", "paragraph"],
+        instances,
+        props,
+        metas,
+      })
+    ).toBeUndefined();
   });
 });
