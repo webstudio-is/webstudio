@@ -29,11 +29,7 @@ import {
 import { html } from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
-import {
-  css as cssCodeLanguage,
-  cssCompletionSource,
-  cssLanguage,
-} from "@codemirror/lang-css";
+import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
 import { css } from "@webstudio-is/design-system";
 import {
   EditorContent,
@@ -71,11 +67,6 @@ export type CodeEditorLanguage =
   | "html"
   | "json"
   | "markdown"
-  | "javascript"
-  | "jsx"
-  | "typescript"
-  | "tsx"
-  | "css"
   | "css-properties";
 
 const getHtmlExtensions = () => [
@@ -130,32 +121,6 @@ const getJsonExtensions = () => [
   keymap.of(closeBracketsKeymap),
 ];
 
-const getJavaScriptExtensions = ({
-  jsx,
-  typescript,
-}: {
-  jsx: boolean;
-  typescript: boolean;
-}) => [
-  highlightActiveLine(),
-  highlightSpecialChars(),
-  indentOnInput(),
-  javascript({ jsx, typescript }),
-  bracketMatching(),
-  closeBrackets(),
-  keymap.of(closeBracketsKeymap),
-];
-
-const getCssExtensions = () => [
-  highlightActiveLine(),
-  highlightSpecialChars(),
-  indentOnInput(),
-  cssCodeLanguage(),
-  bracketMatching(),
-  closeBrackets(),
-  keymap.of(closeBracketsKeymap),
-];
-
 const cssPropertiesLanguage = LRLanguage.define({
   name: "css",
   parser: cssLanguage.configure({ top: "Styles" }).parser,
@@ -178,10 +143,25 @@ const getCssPropertiesExtensions = () => [
   autocompletion({ icons: false }),
 ];
 
+const getDynamicLanguageExtensions = (languageSupport: Extension) => [
+  highlightActiveLine(),
+  highlightSpecialChars(),
+  indentOnInput(),
+  languageSupport,
+  bracketMatching(),
+  closeBrackets(),
+  // render autocomplete in body
+  // to prevent popover scroll overflow
+  tooltips({ parent: document.body }),
+  autocompletion({ icons: false }),
+  keymap.of([...closeBracketsKeymap, ...completionKeymap]),
+];
+
 export const CodeEditor = forwardRef<
   HTMLDivElement,
   Omit<ComponentProps<typeof EditorContent>, "extensions"> & {
     lang?: CodeEditorLanguage;
+    languageSupport?: Extension;
     languageExtensions?: Extension[];
     title?: ReactNode;
     size?: "default" | "small" | "full";
@@ -190,6 +170,7 @@ export const CodeEditor = forwardRef<
 >((props, ref) => {
   const {
     lang,
+    languageSupport,
     languageExtensions = noLanguageExtensions,
     title,
     size,
@@ -209,24 +190,6 @@ export const CodeEditor = forwardRef<
       return getJsonExtensions();
     }
 
-    if (lang === "javascript" || lang === "jsx") {
-      return getJavaScriptExtensions({
-        jsx: lang === "jsx",
-        typescript: false,
-      });
-    }
-
-    if (lang === "typescript" || lang === "tsx") {
-      return getJavaScriptExtensions({
-        jsx: lang === "tsx",
-        typescript: true,
-      });
-    }
-
-    if (lang === "css") {
-      return getCssExtensions();
-    }
-
     if (lang === "css-properties") {
       return getCssPropertiesExtensions();
     }
@@ -240,9 +203,21 @@ export const CodeEditor = forwardRef<
     return [];
   }, [lang]);
 
+  const dynamicLanguageExtensions = useMemo(
+    () =>
+      languageSupport === undefined
+        ? noLanguageExtensions
+        : getDynamicLanguageExtensions(languageSupport),
+    [languageSupport]
+  );
+
   const extensions = useMemo(
-    () => [...builtInExtensions, ...languageExtensions],
-    [builtInExtensions, languageExtensions]
+    () => [
+      ...builtInExtensions,
+      ...dynamicLanguageExtensions,
+      ...languageExtensions,
+    ],
+    [builtInExtensions, dynamicLanguageExtensions, languageExtensions]
   );
 
   const dialogExtensions = useMemo(
