@@ -886,7 +886,7 @@ describe("PostgresAssetRepository", () => {
       dependencies,
       compilationCache: createContentCompilationCache(),
     });
-    const requests = categories.map((category) => ({
+    const validRequests = categories.map((category) => ({
       query: {
         where: {
           field: ["properties", "category"] as [string, string],
@@ -901,10 +901,11 @@ describe("PostgresAssetRepository", () => {
         content: { mode: "none" as const },
       },
     }));
+    const requests = [...validRequests, { query: { limit: -1 } }];
 
     const results = await repository.queryMany(requests);
 
-    expect(results).toEqual(
+    expect(results.slice(0, -1)).toEqual(
       categories.map((category, index) => ({
         status: "fulfilled",
         value: {
@@ -921,6 +922,10 @@ describe("PostgresAssetRepository", () => {
         },
       }))
     );
+    expect(results.at(-1)).toMatchObject({
+      status: "rejected",
+      reason: { name: "ZodError" },
+    });
     expect(dependencies.hasProjectPermit).toHaveBeenCalledOnce();
     expect(dependencies.loadCanonicalAssetBaseEntries).toHaveBeenCalledTimes(2);
     expect(dependencies.synchronizeCanonicalAssets).toHaveBeenCalledOnce();
@@ -931,7 +936,7 @@ describe("PostgresAssetRepository", () => {
     ).toHaveLength(4);
   });
 
-  test("loads a shared referenced document once per query batch", async () => {
+  test("loads a shared referenced document once across batch plans", async () => {
     const dependencies = createDependencies();
     const sources = new Map([
       [
@@ -1041,14 +1046,12 @@ describe("PostgresAssetRepository", () => {
         },
       },
     }));
-    const databasePlan = createContentCompilationPlan(
-      requests.map(({ query }, index) =>
-        createLiteralContentCompilationQuery({
-          id: `post-resource-${index}`,
-          query: assetQuery.parse(query),
-        })
-      )
-    );
+    const databasePlan = createContentCompilationPlan([
+      createLiteralContentCompilationQuery({
+        id: "post-resource-0",
+        query: assetQuery.parse(requests[0].query),
+      }),
+    ]);
     if (databasePlan === undefined) {
       throw new Error("Expected a build database plan");
     }
@@ -1095,8 +1098,7 @@ describe("PostgresAssetRepository", () => {
         ([contentRef]) => contentRef === "storage:author"
       )
     ).toHaveLength(1);
-    expect(rootsSelected).toHaveBeenCalledOnce();
-    expect(rootsSelected).toHaveBeenCalledWith(2);
+    expect(rootsSelected.mock.calls).toEqual([[1], [1]]);
   });
 
   test("prepares revision-pinned batch items independently", async () => {

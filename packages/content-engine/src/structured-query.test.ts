@@ -94,7 +94,7 @@ const runtimeAssets = Object.fromEntries(
 );
 
 describe("structured asset query", () => {
-  test("stitches sibling queries while preserving independent windows and counts", async () => {
+  test("executes sibling queries in one scan with independent windows and counts", async () => {
     const readCommon = vi.fn(() => "blog");
     const candidates = [
       document({
@@ -193,7 +193,7 @@ describe("structured asset query", () => {
     expect(readCommon).toHaveBeenCalledTimes(candidates.length);
   });
 
-  test("isolates failures between stitched queries", async () => {
+  test("isolates failures between batched queries", async () => {
     const [failed, succeeded] = await executeAssetQueries({
       documents: [document({ id: "post", properties: {} })],
       queries: [

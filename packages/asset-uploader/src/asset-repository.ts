@@ -1,11 +1,10 @@
 import {
   assetQuery,
   contentEngineLimits,
-  createCachedDocumentSourceLoader,
   createContentCompilationPlan,
   createContentFieldCatalogCompilationPlan,
+  createDocumentResolutionSession,
   createLiteralContentCompilationQuery,
-  createMemoryDocumentSourceCache,
   getContentArtifactRuntimeAssetIds,
   getDocumentFormatByContentType,
   isAssetQueryCoveredByCompilationPlan,
@@ -863,11 +862,9 @@ export class PostgresAssetRepository implements AssetRepository {
     );
   }
 
-  private createQueryDocumentLoader({
-    cache = false,
-  }: { cache?: boolean } = {}): DocumentSourceLoader {
+  private createQueryDocumentLoader(): DocumentSourceLoader {
     const onEvent = this.onDocumentGraphEvent;
-    const load = observeDocumentSourceLoader({
+    return observeDocumentSourceLoader({
       onEvent,
       load: async (node, { signal }) => {
         signal?.throwIfAborted();
@@ -883,44 +880,6 @@ export class PostgresAssetRepository implements AssetRepository {
         };
       },
     });
-    if (cache === false) {
-      return load;
-    }
-    return createCachedDocumentSourceLoader({
-      cache: createMemoryDocumentSourceCache({
-        maximumBytes: contentEngineLimits.hydratedTotalBytes,
-      }),
-      onEvent,
-      load,
-    });
-  }
-
-  private async executePreparedQuery({
-    artifact,
-    request,
-    runtimeAssets,
-    load,
-    signal,
-  }: {
-    artifact: ContentArtifactV1;
-    request: AssetQueryRequestInput;
-    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
-    load: DocumentSourceLoader;
-    signal?: AbortSignal;
-  }) {
-    signal?.throwIfAborted();
-    const data = await getContentDatabaseForArtifact(
-      artifact
-    ).queryWithDocumentGraph({
-      request,
-      readContent: this.assetStore.readFile,
-      runtimeAssets,
-      load,
-      signal,
-      onEvent: this.onDocumentGraphEvent,
-    });
-    signal?.throwIfAborted();
-    return { data };
   }
 
   async queryMany(
@@ -940,8 +899,12 @@ export class PostgresAssetRepository implements AssetRepository {
     const executions = requests.map(
       (request) => () => executeIndividually(request)
     );
-    const queries = requests.map(({ query }) => assetQuery.parse(query));
+    const queries = requests.map(({ query }) => {
+      const result = assetQuery.safeParse(query);
+      return result.success ? result.data : undefined;
+    });
     const databaseIndexes = requests.flatMap((_request, index) =>
+      queries[index] !== undefined &&
       databasePlan !== undefined &&
       isAssetQueryCoveredByCompilationPlan({
         plan: databasePlan,
@@ -953,11 +916,17 @@ export class PostgresAssetRepository implements AssetRepository {
     const databaseIndexSet = new Set(databaseIndexes);
     const literalIndexes = requests.flatMap((request, index) =>
       databaseIndexSet.has(index) === false &&
+      queries[index] !== undefined &&
       request.indexRevision === undefined
         ? [index]
         : []
     );
-    const load = this.createQueryDocumentLoader({ cache: true });
+    const load = this.createQueryDocumentLoader();
+    const resolutionSession = createDocumentResolutionSession({
+      load,
+      concurrency: contentEngineLimits.concurrentContentReads,
+      signal,
+    });
     const prepareSharedExecutions = async ({
       indexes,
       artifactPlan,
@@ -998,6 +967,7 @@ export class PostgresAssetRepository implements AssetRepository {
               readContent: this.assetStore.readFile,
               runtimeAssets,
               load,
+              resolutionSession,
               signal,
               onEvent: this.onDocumentGraphEvent,
             });
@@ -1122,13 +1092,15 @@ export class PostgresAssetRepository implements AssetRepository {
         )
       : undefined;
     signal?.throwIfAborted();
-    const { data } = await this.executePreparedQuery({
-      artifact: index,
+    const data = await database.queryWithDocumentGraph({
       request,
+      readContent: this.assetStore.readFile,
       runtimeAssets,
       load: this.createQueryDocumentLoader(),
       signal,
+      onEvent: this.onDocumentGraphEvent,
     });
+    signal?.throwIfAborted();
     const toCapacityStats = ({
       usedBytes,
       maxBytes,

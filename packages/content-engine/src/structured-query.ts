@@ -441,115 +441,120 @@ export const assertAssetQueryResultSize = (result: AssetQueryResult) => {
   }
 };
 
-export const executeAssetQueries = async ({
-  queries: inputs,
-  catalog,
-  documents,
-  read,
-  runtimeAssets,
-  assetReferences,
-  assetValueReferences,
-}: {
-  queries: readonly AssetQueryInput[];
-  catalog?: BuilderAssetFieldCatalog;
-  documents: readonly ContentDatabaseDocument[];
-  read?: AssetResourceContentReader;
-  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
-  assetReferences?: MarkdownAssetReferences;
-  assetValueReferences?: AssetValueReferences;
-}): Promise<PromiseSettledResult<AssetQueryResult>[]> => {
-  type Match = {
-    document: ContentDatabaseDocument;
-    item: AssetQueryResult["items"][number];
-  };
-  type PreparedQuery = {
-    index: number;
-    query: AssetQuery;
-    matches: Map<ContentDatabaseDocument, Match>;
-    sortGroup: SortGroup;
-  };
-  type SortGroup = {
-    sort: AssetQuery["sort"];
-    documents: Set<ContentDatabaseDocument>;
-    sorted?: readonly ContentDatabaseDocument[];
-  };
+type AssetQueryMatch = {
+  document: ContentDatabaseDocument;
+  item: AssetQueryResult["items"][number];
+};
 
-  const results: Array<PromiseSettledResult<AssetQueryResult> | undefined> =
-    Array.from({ length: inputs.length });
-  const reject = (index: number, reason: unknown) => {
-    results[index] = { status: "rejected", reason };
-  };
-  const sortGroups = new Map<string, SortGroup>();
+type AssetQuerySortGroup = {
+  sort: AssetQuery["sort"];
+  documents: Set<ContentDatabaseDocument>;
+  sorted?: readonly ContentDatabaseDocument[];
+};
+
+type PreparedAssetQuery = {
+  index: number;
+  query: AssetQuery;
+  matches: Map<ContentDatabaseDocument, AssetQueryMatch>;
+  sortGroup: AssetQuerySortGroup;
+};
+
+type AssetQuerySettlements = Array<
+  PromiseSettledResult<AssetQueryResult> | undefined
+>;
+
+const rejectAssetQuery = (
+  results: AssetQuerySettlements,
+  index: number,
+  reason: unknown
+) => {
+  results[index] = { status: "rejected", reason };
+};
+
+const prepareAssetQueries = ({
+  inputs,
+  catalog,
+  results,
+}: {
+  inputs: readonly AssetQueryInput[];
+  catalog?: BuilderAssetFieldCatalog;
+  results: AssetQuerySettlements;
+}) => {
+  const sortGroups = new Map<string, AssetQuerySortGroup>();
   const filterKeys = new Map<AssetQueryFilter, string>();
-  const prepared: PreparedQuery[] = [];
+  const preparedQueries: PreparedAssetQuery[] = [];
+
   for (const [index, input] of inputs.entries()) {
     let query: AssetQuery;
     try {
       query = validateAssetQueryAgainstCatalog({ query: input, catalog }).query;
     } catch (error) {
-      reject(index, error);
+      rejectAssetQuery(results, index, error);
       continue;
     }
+
     for (const filter of getQueryConditions(query.where)) {
       filterKeys.set(filter, serializeJsonDeterministically(filter));
     }
+
     const sortKey = serializeJsonDeterministically(query.sort);
     let sortGroup = sortGroups.get(sortKey);
     if (sortGroup === undefined) {
       sortGroup = { sort: query.sort, documents: new Set() };
       sortGroups.set(sortKey, sortGroup);
     }
-    prepared.push({
+    preparedQueries.push({
       index,
       query,
       matches: new Map(),
       sortGroup,
     });
   }
-  if (documents.length > contentEngineLimits.candidateDocuments) {
-    for (const { index } of prepared) {
-      reject(
-        index,
-        new AssetQueryExecutionError("Asset query document limit was exceeded")
-      );
-    }
-    return results.map((result) => {
-      if (result === undefined) {
-        throw new Error("Asset query result was not settled");
-      }
-      return result;
-    });
-  }
 
-  let assetUrls: Readonly<Record<string, string>>;
-  let resolvedDocuments: readonly ContentDatabaseDocument[];
-  try {
-    assetUrls = Object.fromEntries(
-      Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [id, asset.url])
-    );
-    resolvedDocuments = documents.map((document) =>
-      resolveAssetValueReferences({
-        value: document,
-        references: assetValueReferences?.[document._id],
-        assetUrls,
-      })
-    );
-  } catch (error) {
-    for (const { index } of prepared) {
-      reject(index, error);
-    }
-    return results.map((result) => {
-      if (result === undefined) {
-        throw new Error("Asset query result was not settled");
-      }
-      return result;
-    });
-  }
+  return { filterKeys, preparedQueries, sortGroups };
+};
 
-  for (const document of resolvedDocuments) {
+const rejectPreparedAssetQueries = ({
+  preparedQueries,
+  results,
+  createReason,
+}: {
+  preparedQueries: readonly PreparedAssetQuery[];
+  results: AssetQuerySettlements;
+  createReason: () => unknown;
+}) => {
+  for (const { index } of preparedQueries) {
+    rejectAssetQuery(results, index, createReason());
+  }
+};
+
+const requireSettledAssetQueryResults = (results: AssetQuerySettlements) =>
+  results.map((result) => {
+    if (result === undefined) {
+      throw new Error("Asset query result was not settled");
+    }
+    return result;
+  });
+
+const scanAndSortAssetQueryDocuments = ({
+  preparedQueries,
+  documents,
+  filterKeys,
+  sortGroups,
+  results,
+  runtimeAssets,
+}: {
+  preparedQueries: readonly PreparedAssetQuery[];
+  documents: readonly ContentDatabaseDocument[];
+  filterKeys: ReadonlyMap<AssetQueryFilter, string>;
+  sortGroups: ReadonlyMap<string, AssetQuerySortGroup>;
+  results: AssetQuerySettlements;
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+}) => {
+  for (const document of documents) {
     const runtimeAsset = runtimeAssets?.[document._id];
     const filterResults = new Map<string, boolean>();
-    for (const state of prepared) {
+    for (const state of preparedQueries) {
       if (results[state.index] !== undefined) {
         continue;
       }
@@ -579,11 +584,11 @@ export const executeAssetQueries = async ({
         const match = {
           document,
           item: { id: document._id, ...projected },
-        } satisfies Match;
+        } satisfies AssetQueryMatch;
         state.matches.set(document, match);
         state.sortGroup.documents.add(document);
       } catch (error) {
-        reject(state.index, error);
+        rejectAssetQuery(results, state.index, error);
       }
     }
   }
@@ -598,9 +603,23 @@ export const executeAssetQueries = async ({
       })
     );
   }
+};
 
+const finalizeAssetQueries = async ({
+  preparedQueries,
+  results,
+  read,
+  assetReferences,
+  assetUrls,
+}: {
+  preparedQueries: readonly PreparedAssetQuery[];
+  results: AssetQuerySettlements;
+  read?: AssetResourceContentReader;
+  assetReferences?: MarkdownAssetReferences;
+  assetUrls: Readonly<Record<string, string>>;
+}) => {
   await Promise.all(
-    prepared.map(async (state) => {
+    preparedQueries.map(async (state) => {
       if (results[state.index] !== undefined) {
         return;
       }
@@ -658,16 +677,84 @@ export const executeAssetQueries = async ({
         assertAssetQueryResultSize(result);
         results[state.index] = { status: "fulfilled", value: result };
       } catch (error) {
-        reject(state.index, error);
+        rejectAssetQuery(results, state.index, error);
       }
     })
   );
-  return results.map((result) => {
-    if (result === undefined) {
-      throw new Error("Asset query result was not settled");
-    }
-    return result;
+};
+
+export const executeAssetQueries = async ({
+  queries: inputs,
+  catalog,
+  documents,
+  read,
+  runtimeAssets,
+  assetReferences,
+  assetValueReferences,
+}: {
+  queries: readonly AssetQueryInput[];
+  catalog?: BuilderAssetFieldCatalog;
+  documents: readonly ContentDatabaseDocument[];
+  read?: AssetResourceContentReader;
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+  assetReferences?: MarkdownAssetReferences;
+  assetValueReferences?: AssetValueReferences;
+}): Promise<PromiseSettledResult<AssetQueryResult>[]> => {
+  const results: AssetQuerySettlements = Array.from({ length: inputs.length });
+  const { filterKeys, preparedQueries, sortGroups } = prepareAssetQueries({
+    inputs,
+    catalog,
+    results,
   });
+
+  if (documents.length > contentEngineLimits.candidateDocuments) {
+    rejectPreparedAssetQueries({
+      preparedQueries,
+      results,
+      createReason: () =>
+        new AssetQueryExecutionError("Asset query document limit was exceeded"),
+    });
+    return requireSettledAssetQueryResults(results);
+  }
+
+  let assetUrls: Readonly<Record<string, string>>;
+  let resolvedDocuments: readonly ContentDatabaseDocument[];
+  try {
+    assetUrls = Object.fromEntries(
+      Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [id, asset.url])
+    );
+    resolvedDocuments = documents.map((document) =>
+      resolveAssetValueReferences({
+        value: document,
+        references: assetValueReferences?.[document._id],
+        assetUrls,
+      })
+    );
+  } catch (error) {
+    rejectPreparedAssetQueries({
+      preparedQueries,
+      results,
+      createReason: () => error,
+    });
+    return requireSettledAssetQueryResults(results);
+  }
+
+  scanAndSortAssetQueryDocuments({
+    preparedQueries,
+    documents: resolvedDocuments,
+    filterKeys,
+    sortGroups,
+    results,
+    runtimeAssets,
+  });
+  await finalizeAssetQueries({
+    preparedQueries,
+    results,
+    read,
+    assetReferences,
+    assetUrls,
+  });
+  return requireSettledAssetQueryResults(results);
 };
 
 export const executeAssetQuery = async ({
