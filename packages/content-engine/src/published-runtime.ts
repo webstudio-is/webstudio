@@ -7,11 +7,10 @@ import { createRuntimeContentDatabase } from "./content-database";
 import { readAssetQueryRequest } from "./request";
 import type { AssetRuntimeData } from "./structured-query";
 import { getAssetResourceQueryError } from "./query-error";
-import { contentEngineLimits } from "./limits";
 import {
   createCachedDocumentSourceLoader,
   createHttpDocumentSourceLoader,
-  type CachedDocumentSource,
+  createMemoryDocumentSourceCache,
   type DocumentSourceCache,
   type DocumentGraphRuntimeObserver,
 } from "./document-graph";
@@ -101,42 +100,6 @@ export const createPublishedAssetResourceFetch = ({
     documentCache,
     onDocumentGraphEvent,
   });
-};
-
-const createMemoryDocumentSourceCache = (): DocumentSourceCache => {
-  const values = new Map<string, CachedDocumentSource>();
-  const maximumBytes = contentEngineLimits.hydratedTotalBytes * 4;
-  let usedBytes = 0;
-  return {
-    get: async (key) => {
-      const value = values.get(key);
-      if (value !== undefined) {
-        values.delete(key);
-        values.set(key, value);
-      }
-      return value;
-    },
-    set: async (key, source) => {
-      if (source.bytes.byteLength > maximumBytes) {
-        return;
-      }
-      const previous = values.get(key);
-      if (previous !== undefined) {
-        usedBytes -= previous.bytes.byteLength;
-        values.delete(key);
-      }
-      values.set(key, source);
-      usedBytes += source.bytes.byteLength;
-      while (usedBytes > maximumBytes) {
-        const oldest = values.entries().next().value;
-        if (oldest === undefined) {
-          break;
-        }
-        values.delete(oldest[0]);
-        usedBytes -= oldest[1].bytes.byteLength;
-      }
-    },
-  };
 };
 
 const createPublishedDocumentLoader = ({

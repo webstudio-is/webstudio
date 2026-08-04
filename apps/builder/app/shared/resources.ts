@@ -10,15 +10,26 @@ import { separateResourceDiagnostics } from "./resource-diagnostics";
 
 const MAX_PENDING_RESOURCES = 5;
 
+type InFlightResourceBatch = {
+  controller: AbortController;
+  versions: Map<string, number>;
+};
+
+type PendingResource = {
+  version: number;
+  batch: InFlightResourceBatch;
+};
+
 export { getResourceKey };
 
 const queue = new Map<string, ResourceRequest>();
-const pending = new Map<string, ResourceRequest>();
+const pending = new Map<string, PendingResource>();
 const cache = new Map<string, unknown>();
 const diagnosticsCache = new Map<string, AssetQueryPreviewDiagnostics>();
 const pendingDiagnostics = new Map<string, Promise<void>>();
 const knownRequests = new Map<string, ResourceRequest>();
 const resourceVersions = new Map<string, number>();
+const inFlightBatches = new Set<InFlightResourceBatch>();
 
 export const $resourcesCache = atom(cache);
 export const $resourceDiagnosticsCache = atom(diagnosticsCache);
@@ -40,22 +51,34 @@ export const $hasPendingResources = computed(
 );
 
 const loadResources = async (requestFetch: typeof fetch = fetch) => {
-  const list = Array.from(queue.values()).slice(0, MAX_PENDING_RESOURCES);
+  const availableSlots = MAX_PENDING_RESOURCES - pending.size;
+  if (availableSlots <= 0) {
+    return;
+  }
+  const list = Array.from(queue.values()).slice(0, availableSlots);
+  if (list.length === 0) {
+    return;
+  }
   const dispatched = new Map<string, ResourceRequest>();
   const dispatchedVersions = new Map<string, number>();
+  const controller = new AbortController();
+  const batch = { controller, versions: dispatchedVersions };
   for (const resource of list) {
     const key = getResourceKey(resource);
+    const version = resourceVersions.get(key) ?? 0;
     queue.delete(key);
-    pending.set(key, resource);
+    pending.set(key, { version, batch });
     dispatched.set(key, resource);
-    dispatchedVersions.set(key, resourceVersions.get(key) ?? 0);
+    dispatchedVersions.set(key, version);
   }
+  inFlightBatches.add(batch);
   updatePending();
 
   try {
     const response = await requestFetch(restResourcesLoader(), {
       method: "POST",
       body: JSON.stringify(list),
+      signal: controller.signal,
     });
     if (response.ok === false) {
       return;
@@ -63,8 +86,11 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
     const results = new Map<string, unknown>(await response.json());
     for (const [key, result] of results) {
       const request = dispatched.get(key);
+      const pendingResource = pending.get(key);
       if (
         request === undefined ||
+        pendingResource?.batch !== batch ||
+        pendingResource.version !== dispatchedVersions.get(key) ||
         knownRequests.has(key) === false ||
         resourceVersions.get(key) !== dispatchedVersions.get(key)
       ) {
@@ -79,26 +105,43 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
       }
     }
   } catch {
-    console.error("Resource batch request failed");
+    if (controller.signal.aborted === false) {
+      console.error("Resource batch request failed");
+    }
   } finally {
-    for (const [key, request] of dispatched) {
-      if (pending.get(key) === request) {
+    inFlightBatches.delete(batch);
+    for (const key of dispatched.keys()) {
+      if (pending.get(key)?.batch === batch) {
         pending.delete(key);
       }
     }
     updateCache();
     updatePending();
-    // Restart loading until the queue is empty. An invalidation may have
-    // queued a fresh request while this batch was pending.
-    startLoading(requestFetch);
+    // Drain any resources that did not fit in this batch.
+    if (controller.signal.aborted === false) {
+      startLoading(requestFetch);
+    }
   }
 };
 
 const startLoading = (requestFetch: typeof fetch = fetch) => {
-  if (pending.size > 0 || queue.size === 0) {
+  if (pending.size >= MAX_PENDING_RESOURCES || queue.size === 0) {
     return;
   }
   void loadResources(requestFetch);
+};
+
+const abortObsoleteBatches = () => {
+  for (const batch of inFlightBatches) {
+    const isObsolete = Array.from(batch.versions).every(
+      ([key, version]) =>
+        knownRequests.has(key) === false ||
+        resourceVersions.get(key) !== version
+    );
+    if (isObsolete) {
+      batch.controller.abort();
+    }
+  }
 };
 
 const preloadResource = (resource: ResourceRequest) => {
@@ -131,8 +174,10 @@ const queueResources = (resources: readonly ResourceRequest[]) => {
       invalidateRequestState(key);
       diagnosticsChanged = true;
       pendingChanged = queue.delete(key) || pendingChanged;
+      pendingChanged = pending.delete(key) || pendingChanged;
     }
   }
+  abortObsoleteBatches();
   if (diagnosticsChanged) {
     updateCache();
   }
@@ -149,12 +194,18 @@ export const preloadResources = (resources: readonly ResourceRequest[]) => {
   startLoading();
 };
 
-const queueInvalidatedResource = (resource: ResourceRequest) => {
+const invalidateAndQueueResource = (resource: ResourceRequest) => {
   const key = getResourceKey(resource);
   cache.delete(key);
   invalidateRequestState(key);
+  pending.delete(key);
   knownRequests.set(key, resource);
   queue.set(key, resource);
+};
+
+const queueInvalidatedResource = (resource: ResourceRequest) => {
+  invalidateAndQueueResource(resource);
+  abortObsoleteBatches();
   updateCache();
   updatePending();
 };
@@ -221,16 +272,13 @@ export const loadResourceDiagnostics = (
  * Call this when assets are uploaded, deleted, or modified to refresh expressions using assets.
  */
 export const invalidateAssets = () => {
-  for (const [key, request] of knownRequests) {
+  for (const request of knownRequests.values()) {
     if (isAssetsResourceRequest(request) === false) {
       continue;
     }
-    cache.delete(key);
-    invalidateRequestState(key);
-    // Queue another load even when the previous request is still pending. The
-    // pending load may contain the asset state from before this mutation.
-    queue.set(key, request);
+    invalidateAndQueueResource(request);
   }
+  abortObsoleteBatches();
   updateCache();
   updatePending();
   startLoading();
@@ -260,6 +308,10 @@ export const computeResourceRequest = (
 };
 
 const reset = () => {
+  for (const batch of inFlightBatches) {
+    batch.controller.abort();
+  }
+  inFlightBatches.clear();
   queue.clear();
   pending.clear();
   cache.clear();
@@ -282,4 +334,5 @@ export const __testing__ = {
   queueInvalidatedResource,
   queueResources,
   reset,
+  startLoading,
 };

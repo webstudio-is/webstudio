@@ -1,5 +1,6 @@
 import { type Asset, assets } from "@webstudio-is/sdk";
 import type { Client } from "@webstudio-is/postgrest/index.server";
+import { mapBounded } from "@webstudio-is/content-engine/compiler";
 import { formatAsset } from "./utils/format-asset";
 import {
   applyValidatedMapPatches,
@@ -12,6 +13,11 @@ import type { AssetMetadataUpdate } from "./asset-mutation-types";
 import { AssetRepositoryNotFoundError } from "./asset-repository-errors";
 
 const serializeAssetMeta = (meta: Asset["meta"]) => JSON.stringify(meta);
+
+// Keep PostgREST `in` URLs below common proxy request-line limits while still
+// overlapping the bounded remote reads.
+const assetIdFilterChunkSize = 100;
+const assetIdFilterConcurrency = 4;
 
 export const createAssetRows = (assets: Iterable<Asset>, projectId: string) =>
   Array.from(assets, (asset) => ({
@@ -28,58 +34,76 @@ export const loadAssetsByProjectWithClient = async (
   client: Client,
   assetIds?: string[]
 ): Promise<Asset[]> => {
-  let query = client
-    .from("Asset")
-    // use inner to filter out assets without file
-    // when file is not uploaded
-    .select(
-      `
-        assetId:id,
-        projectId,
-        filename,
-        description,
-        folderId,
-        file:File!inner (*)
-      `
-    )
-    .eq("projectId", projectId)
-    .eq("file.status", "UPLOADED");
-  if (assetIds !== undefined) {
-    if (assetIds.length === 0) {
-      return [];
-    }
-    query = query.in("id", assetIds);
+  if (assetIds?.length === 0) {
+    return [];
   }
-  const assets = await query
-    // always sort by primary key to get stable list
-    // required to not break fixtures
-    .order("id");
-  assertPostgrestSuccess(assets);
 
-  const result: Asset[] = [];
-  for (const {
-    assetId,
-    projectId,
-    filename,
-    description,
-    folderId,
-    file,
-  } of assets.data ?? []) {
-    if (file) {
-      result.push(
-        formatAsset({
-          assetId,
+  const load = async (requestedAssetIds: string[] | undefined) => {
+    let query = client
+      .from("Asset")
+      // use inner to filter out assets without file
+      // when file is not uploaded
+      .select(
+        `
+          assetId:id,
           projectId,
           filename,
           description,
           folderId,
-          file,
-        })
-      );
+          file:File!inner (*)
+        `
+      )
+      .eq("projectId", projectId)
+      .eq("file.status", "UPLOADED");
+    if (requestedAssetIds !== undefined) {
+      query = query.in("id", requestedAssetIds);
     }
+    const response = await query
+      // always sort by primary key to get stable list
+      // required to not break fixtures
+      .order("id");
+    assertPostgrestSuccess(response);
+
+    const result: Asset[] = [];
+    for (const {
+      assetId,
+      projectId,
+      filename,
+      description,
+      folderId,
+      file,
+    } of response.data ?? []) {
+      if (file) {
+        result.push(
+          formatAsset({
+            assetId,
+            projectId,
+            filename,
+            description,
+            folderId,
+            file,
+          })
+        );
+      }
+    }
+    return result;
+  };
+
+  if (assetIds === undefined) {
+    return await load(undefined);
   }
 
-  return result;
+  const uniqueAssetIds = [...new Set(assetIds)].sort();
+  const chunks: string[][] = [];
+  for (
+    let offset = 0;
+    offset < uniqueAssetIds.length;
+    offset += assetIdFilterChunkSize
+  ) {
+    chunks.push(uniqueAssetIds.slice(offset, offset + assetIdFilterChunkSize));
+  }
+
+  return (await mapBounded(chunks, assetIdFilterConcurrency, load)).flat();
 };
 
 export const deleteAssetsWithClient = async (

@@ -1,18 +1,63 @@
 import type { AssetQueryRequestInput } from "@webstudio-is/content-engine";
-import { previewAssetResourceQuery } from "@webstudio-is/asset-uploader/server";
+import {
+  previewAssetResourceQueries,
+  previewAssetResourceQuery,
+} from "@webstudio-is/asset-uploader/server";
 import {
   createAssetQueryPreviewCompilationPlan,
   createBuildContentCompilationPlan,
 } from "@webstudio-is/project-build";
-import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
+import {
+  loadDevBuildByProjectId,
+  loadDevBuildContentCompilationDataByProjectId,
+} from "@webstudio-is/project-build/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { createAssetClient } from "~/shared/asset-client";
 import { getContentDatabaseMaxBytes } from "./content-database.server";
 
-const defaultDependencies = {
+const defaultBatchDependencies = {
+  createAssetClient,
+  loadDevBuildContentCompilationDataByProjectId,
+  previewAssetResourceQueries,
+};
+
+const defaultQueryDependencies = {
   createAssetClient,
   loadDevBuildByProjectId,
   previewAssetResourceQuery,
+};
+
+export const previewProjectAssetQueries = async (
+  {
+    projectId,
+    requests,
+    context,
+    signal,
+  }: {
+    projectId: string;
+    requests: readonly AssetQueryRequestInput[];
+    context: AppContext;
+    signal?: AbortSignal;
+  },
+  dependencies = defaultBatchDependencies
+) => {
+  signal?.throwIfAborted();
+  const build =
+    await dependencies.loadDevBuildContentCompilationDataByProjectId(
+      context,
+      projectId,
+      signal
+    );
+  signal?.throwIfAborted();
+  return await dependencies.previewAssetResourceQueries({
+    projectId,
+    requests,
+    context,
+    assetClient: dependencies.createAssetClient(),
+    contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
+    databasePlan: createBuildContentCompilationPlan(build),
+    signal,
+  });
 };
 
 export const previewProjectAssetQuery = async (
@@ -22,16 +67,24 @@ export const previewProjectAssetQuery = async (
     context,
     includeDiagnostics,
     includeUnresolvedDiagnostics,
+    signal,
   }: {
     projectId: string;
     request: AssetQueryRequestInput;
     context: AppContext;
     includeDiagnostics?: boolean;
     includeUnresolvedDiagnostics?: boolean;
+    signal?: AbortSignal;
   },
-  dependencies = defaultDependencies
+  dependencies = defaultQueryDependencies
 ) => {
-  const build = await dependencies.loadDevBuildByProjectId(context, projectId);
+  signal?.throwIfAborted();
+  const build = await dependencies.loadDevBuildByProjectId(
+    context,
+    projectId,
+    signal
+  );
+  signal?.throwIfAborted();
   const databasePlan = createBuildContentCompilationPlan(build);
   return await dependencies.previewAssetResourceQuery({
     projectId,
@@ -40,6 +93,7 @@ export const previewProjectAssetQuery = async (
     assetClient: dependencies.createAssetClient(),
     contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
     databasePlan,
+    signal,
     ...(includeDiagnostics === false
       ? {}
       : {

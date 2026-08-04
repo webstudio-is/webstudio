@@ -538,6 +538,43 @@ describe("asset patch persistence", () => {
     expect(requestCount).toBe(0);
   });
 
+  test("chunks large requested asset id filters", async () => {
+    const projectId = uid();
+    const idFilters: string[] = [];
+    server.use(
+      db.get("Asset", ({ request }) => {
+        const idFilter = new URL(request.url).searchParams.get("id");
+        if (idFilter !== null) {
+          idFilters.push(idFilter);
+        }
+        return json([]);
+      })
+    );
+    const assetIds = Array.from(
+      { length: 201 },
+      (_, index) => `asset-${String(index).padStart(3, "0")}`
+    );
+
+    await expect(
+      loadAssetsByProjectWithClient(
+        projectId,
+        testContext.postgrest.client,
+        assetIds
+      )
+    ).resolves.toEqual([]);
+
+    expect(idFilters).toHaveLength(3);
+    const filteredIds = idFilters.flatMap((filter) =>
+      filter.slice("in.(".length, -1).split(",")
+    );
+    expect(filteredIds).toEqual(assetIds);
+    expect(
+      idFilters.every(
+        (filter) => filter.slice("in.(".length, -1).split(",").length <= 100
+      )
+    ).toBe(true);
+  });
+
   test("rejects assets that are patched into another project", async () => {
     const projectId = uid();
     server.use(db.get("Asset", () => json([{ ...assetRow, projectId }])));

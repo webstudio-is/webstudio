@@ -1,9 +1,11 @@
 import {
   assetQuery,
   contentEngineLimits,
+  createCachedDocumentSourceLoader,
   createContentCompilationPlan,
   createContentFieldCatalogCompilationPlan,
   createLiteralContentCompilationQuery,
+  createMemoryDocumentSourceCache,
   getContentArtifactRuntimeAssetIds,
   getDocumentFormatByContentType,
   isAssetQueryCoveredByCompilationPlan,
@@ -13,10 +15,14 @@ import {
   requiresStructuredProperties,
   type AssetQueryRequestInput,
   type AssetQueryPreviewResult,
+  type AssetQuery,
   type AssetQueryResult,
+  type AssetRuntimeData,
   type BuilderAssetFieldCatalog,
+  type ContentArtifactV1,
   type ContentCompilationPlan,
   type DocumentGraphRuntimeObserver,
+  type DocumentSourceLoader,
   observeDocumentSourceLoader,
 } from "@webstudio-is/content-engine";
 import {
@@ -29,6 +35,7 @@ import {
   materializeContentSnapshot,
   ContentSourceChangedError,
   readBoundedBytes,
+  serializeJsonDeterministically,
   toBuilderAssetFieldCatalog,
   type ContentSource,
 } from "@webstudio-is/content-engine/compiler";
@@ -139,6 +146,7 @@ type AssetQueryPreviewOptions = {
   diagnosticsPlan?: ContentCompilationPlan;
   includeDiagnostics?: boolean;
   includeUnresolvedDiagnostics?: boolean;
+  signal?: AbortSignal;
 };
 
 type AssetQueryResultOnly = { data: AssetQueryResult };
@@ -147,6 +155,29 @@ type AssetQueryOptionsWithoutDiagnostics = AssetQueryPreviewOptions & {
 };
 type AssetQueryOptionsWithDiagnostics = AssetQueryPreviewOptions & {
   includeDiagnostics?: true;
+};
+type AssetQueryBatchOptions = {
+  databasePlan?: ContentCompilationPlan;
+  signal?: AbortSignal;
+};
+
+const createAssetQueryBatchPlan = (
+  requests: readonly AssetQueryRequestInput[]
+) => {
+  const queryByKey = new Map<string, AssetQuery>();
+  for (const request of requests) {
+    const query = assetQuery.parse(request.query);
+    queryByKey.set(serializeJsonDeterministically(query), query);
+  }
+  const queries = [...queryByKey]
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .map(([, query], index) =>
+      createLiteralContentCompilationQuery({
+        id: `batch-${index}`,
+        query,
+      })
+    );
+  return createContentCompilationPlan(queries);
 };
 
 export interface AssetRepository {
@@ -198,6 +229,10 @@ export interface AssetRepository {
     request: AssetQueryRequestInput,
     options?: AssetQueryOptionsWithDiagnostics
   ): Promise<AssetQueryPreviewResult>;
+  queryMany(
+    requests: readonly AssetQueryRequestInput[],
+    options?: AssetQueryBatchOptions
+  ): Promise<PromiseSettledResult<AssetQueryResultOnly>[]>;
 }
 
 /**
@@ -799,6 +834,205 @@ export class PostgresAssetRepository implements AssetRepository {
     return toBuilderAssetFieldCatalog(await createAssetFieldCatalog(entries));
   }
 
+  private async loadQueryRuntimeAssets({
+    artifact,
+    plan,
+  }: {
+    artifact: ContentArtifactV1;
+    plan?: ContentCompilationPlan;
+  }): Promise<Readonly<Record<string, AssetRuntimeData>> | undefined> {
+    const runtimeAssetIds = getContentArtifactRuntimeAssetIds({
+      artifact,
+      includeDocuments: plan !== undefined && requiresRuntimeDocumentData(plan),
+      includeDocumentGraph: false,
+    });
+    if (runtimeAssetIds.length === 0) {
+      return;
+    }
+    return Object.fromEntries(
+      (
+        await this.dependencies.loadAssetsByProjectWithClient(
+          this.projectId,
+          this.context.postgrest.client,
+          runtimeAssetIds
+        )
+      ).map((asset) => [
+        asset.id,
+        toRuntimeAsset(asset, "https://webstudio.local"),
+      ])
+    );
+  }
+
+  private createQueryDocumentLoader({
+    cache = false,
+  }: { cache?: boolean } = {}): DocumentSourceLoader {
+    const onEvent = this.onDocumentGraphEvent;
+    const load = observeDocumentSourceLoader({
+      onEvent,
+      load: async (node, { signal }) => {
+        signal?.throwIfAborted();
+        if (node.format === undefined) {
+          throw new Error(`Document ${node.id} format is unavailable`);
+        }
+        const response = await this.assetStore.readFile(node.contentRef);
+        signal?.throwIfAborted();
+        return {
+          format: node.format,
+          revision: node.revision,
+          source: response.data,
+        };
+      },
+    });
+    if (cache === false) {
+      return load;
+    }
+    return createCachedDocumentSourceLoader({
+      cache: createMemoryDocumentSourceCache({
+        maximumBytes: contentEngineLimits.hydratedTotalBytes,
+      }),
+      onEvent,
+      load,
+    });
+  }
+
+  private async executePreparedQuery({
+    artifact,
+    request,
+    runtimeAssets,
+    load,
+    signal,
+  }: {
+    artifact: ContentArtifactV1;
+    request: AssetQueryRequestInput;
+    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+    load: DocumentSourceLoader;
+    signal?: AbortSignal;
+  }) {
+    signal?.throwIfAborted();
+    const data = await getContentDatabaseForArtifact(
+      artifact
+    ).queryWithDocumentGraph({
+      request,
+      readContent: this.assetStore.readFile,
+      runtimeAssets,
+      load,
+      signal,
+      onEvent: this.onDocumentGraphEvent,
+    });
+    signal?.throwIfAborted();
+    return { data };
+  }
+
+  async queryMany(
+    requests: readonly AssetQueryRequestInput[],
+    { databasePlan, signal }: AssetQueryBatchOptions = {}
+  ): Promise<PromiseSettledResult<AssetQueryResultOnly>[]> {
+    if (requests.length === 0) {
+      return [];
+    }
+    await this.assertCanView();
+    signal?.throwIfAborted();
+    const executeIndividually = (request: AssetQueryRequestInput) =>
+      this.queryAfterAuthorization(request, {
+        includeDiagnostics: false,
+        signal,
+      });
+    const executions = requests.map(
+      (request) => () => executeIndividually(request)
+    );
+    const queries = requests.map(({ query }) => assetQuery.parse(query));
+    const databaseIndexes = requests.flatMap((_request, index) =>
+      databasePlan !== undefined &&
+      isAssetQueryCoveredByCompilationPlan({
+        plan: databasePlan,
+        query: queries[index],
+      })
+        ? [index]
+        : []
+    );
+    const databaseIndexSet = new Set(databaseIndexes);
+    const literalIndexes = requests.flatMap((request, index) =>
+      databaseIndexSet.has(index) === false &&
+      request.indexRevision === undefined
+        ? [index]
+        : []
+    );
+    const load = this.createQueryDocumentLoader({ cache: true });
+    const prepareSharedExecutions = async ({
+      indexes,
+      artifactPlan,
+      preserveTruncation,
+      fallbackToIndividualOnError,
+    }: {
+      indexes: readonly number[];
+      artifactPlan: ContentCompilationPlan;
+      preserveTruncation: boolean;
+      fallbackToIndividualOnError: boolean;
+    }) => {
+      if (indexes.length === 0) {
+        return;
+      }
+      try {
+        signal?.throwIfAborted();
+        const artifact = await this.prepareIndexAfterAuthorization(
+          artifactPlan,
+          false
+        );
+        signal?.throwIfAborted();
+        const database = getContentDatabaseForArtifact(artifact);
+        if (preserveTruncation || database.getStats().truncated === false) {
+          const runtimePlan = createAssetQueryBatchPlan(
+            indexes.map((index) => requests[index])
+          );
+          const runtimeAssets = await this.loadQueryRuntimeAssets({
+            artifact,
+            plan: runtimePlan,
+          });
+          signal?.throwIfAborted();
+          for (const index of indexes) {
+            executions[index] = () =>
+              this.executePreparedQuery({
+                artifact,
+                request: requests[index],
+                runtimeAssets,
+                load,
+                signal,
+              });
+          }
+        }
+      } catch (error) {
+        if (fallbackToIndividualOnError && signal?.aborted !== true) {
+          return;
+        }
+        for (const index of indexes) {
+          executions[index] = async () => {
+            throw error;
+          };
+        }
+      }
+    };
+    if (databasePlan !== undefined) {
+      await prepareSharedExecutions({
+        indexes: databaseIndexes,
+        artifactPlan: databasePlan,
+        preserveTruncation: true,
+        fallbackToIndividualOnError: false,
+      });
+    }
+    const literalPlan = createAssetQueryBatchPlan(
+      literalIndexes.map((index) => requests[index])
+    );
+    if (literalPlan !== undefined) {
+      await prepareSharedExecutions({
+        indexes: literalIndexes,
+        artifactPlan: literalPlan,
+        preserveTruncation: false,
+        fallbackToIndividualOnError: true,
+      });
+    }
+    return await Promise.allSettled(executions.map((execute) => execute()));
+  }
+
   query(
     request: AssetQueryRequestInput,
     options: AssetQueryOptionsWithoutDiagnostics
@@ -809,14 +1043,23 @@ export class PostgresAssetRepository implements AssetRepository {
   ): Promise<AssetQueryPreviewResult>;
   async query(
     request: AssetQueryRequestInput,
+    options: AssetQueryPreviewOptions = {}
+  ): Promise<AssetQueryPreviewResult | AssetQueryResultOnly> {
+    await this.assertCanView();
+    return await this.queryAfterAuthorization(request, options);
+  }
+
+  private async queryAfterAuthorization(
+    request: AssetQueryRequestInput,
     {
       databasePlan,
       diagnosticsPlan,
       includeDiagnostics = true,
       includeUnresolvedDiagnostics = false,
+      signal,
     }: AssetQueryPreviewOptions = {}
   ): Promise<AssetQueryPreviewResult | AssetQueryResultOnly> {
-    await this.assertCanView();
+    signal?.throwIfAborted();
     const query = assetQuery.parse(request.query);
     const plan = createContentCompilationPlan([
       createLiteralContentCompilationQuery({ id: "preview", query }),
@@ -831,11 +1074,13 @@ export class PostgresAssetRepository implements AssetRepository {
       coveredByDatabasePlan ? databasePlan : plan,
       false
     );
+    signal?.throwIfAborted();
     const database = getContentDatabaseForArtifact(index);
     const queryIndex =
       includeDiagnostics && coveredByDatabasePlan
         ? await this.prepareIndexAfterAuthorization(plan, false)
         : index;
+    signal?.throwIfAborted();
     let publishedIndex: typeof index | undefined;
     if (includeDiagnostics) {
       const publishedPlan = diagnosticsPlan ?? databasePlan;
@@ -844,26 +1089,12 @@ export class PostgresAssetRepository implements AssetRepository {
           ? queryIndex
           : await this.prepareIndexAfterAuthorization(publishedPlan, false);
     }
-    const runtimeAssetIds = getContentArtifactRuntimeAssetIds({
+    signal?.throwIfAborted();
+    const runtimeAssets = await this.loadQueryRuntimeAssets({
       artifact: index,
-      includeDocuments: plan !== undefined && requiresRuntimeDocumentData(plan),
-      includeDocumentGraph: false,
+      plan,
     });
-    const runtimeAssets =
-      runtimeAssetIds.length > 0
-        ? Object.fromEntries(
-            (
-              await this.dependencies.loadAssetsByProjectWithClient(
-                this.projectId,
-                this.context.postgrest.client,
-                runtimeAssetIds
-              )
-            ).map((asset) => [
-              asset.id,
-              toRuntimeAsset(asset, "https://webstudio.local"),
-            ])
-          )
-        : undefined;
+    signal?.throwIfAborted();
     const unresolved = includeUnresolvedDiagnostics
       ? await getContentDatabaseForArtifact(queryIndex).query(
           query.content.mode === "none"
@@ -873,25 +1104,13 @@ export class PostgresAssetRepository implements AssetRepository {
           runtimeAssets
         )
       : undefined;
-    const data = await database.queryWithDocumentGraph({
+    signal?.throwIfAborted();
+    const { data } = await this.executePreparedQuery({
+      artifact: index,
       request,
-      readContent: this.assetStore.readFile,
       runtimeAssets,
-      load: observeDocumentSourceLoader({
-        onEvent: this.onDocumentGraphEvent,
-        load: async (node) => {
-          if (node.format === undefined) {
-            throw new Error(`Document ${node.id} format is unavailable`);
-          }
-          const response = await this.assetStore.readFile(node.contentRef);
-          return {
-            format: node.format,
-            revision: node.revision,
-            source: response.data,
-          };
-        },
-      }),
-      onEvent: this.onDocumentGraphEvent,
+      load: this.createQueryDocumentLoader(),
+      signal,
     });
     const toCapacityStats = ({
       usedBytes,

@@ -11,6 +11,7 @@ import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import {
   loadRawBuildById,
   loadBuildById,
+  loadDevBuildContentCompilationDataByProjectId,
   loadDevBuildByProjectId,
   createBuild,
   createProductionBuild,
@@ -220,6 +221,122 @@ describe("loadDevBuildByProjectId (msw)", () => {
     await expect(
       loadDevBuildByProjectId(createContext(), "proj-1")
     ).rejects.toThrow("No dev build found");
+  });
+
+  test("cancels the full Build request with the caller signal", async () => {
+    server.use(db.get("Build", () => json([buildRow])));
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      loadDevBuildByProjectId(createContext(), "proj-1", controller.signal)
+    ).rejects.toMatchObject({
+      message: expect.stringContaining("AbortError"),
+    });
+  });
+});
+
+describe("loadDevBuildContentCompilationDataByProjectId (msw)", () => {
+  test("selects only the Build fields used for content compilation", async () => {
+    let requestedUrl: URL | undefined;
+    server.use(
+      db.get("Build", ({ request }) => {
+        requestedUrl = new URL(request.url);
+        return json([
+          {
+            props: JSON.stringify([]),
+            dataSources: JSON.stringify([]),
+            resources: JSON.stringify([]),
+          },
+        ]);
+      })
+    );
+
+    const result = await loadDevBuildContentCompilationDataByProjectId(
+      createContext(),
+      "proj-1"
+    );
+
+    expect(requestedUrl?.searchParams.get("select")).toBe(
+      "props,dataSources,resources"
+    );
+    expect(requestedUrl?.searchParams.get("projectId")).toBe("eq.proj-1");
+    expect(requestedUrl?.searchParams.get("deployment")).toBe("is.null");
+    expect(result).toEqual({ props: [], dataSources: [], resources: [] });
+  });
+
+  test("parses the selected fields identically to the full dev Build loader", async () => {
+    const row = {
+      ...buildRow,
+      props: JSON.stringify([
+        {
+          id: "title-prop",
+          instanceId: "body-1",
+          name: "title",
+          type: "string",
+          value: "Blog",
+        },
+      ]),
+      dataSources: JSON.stringify([
+        {
+          type: "resource",
+          id: "posts-data-source",
+          name: "posts",
+          resourceId: "assets",
+        },
+      ]),
+      resources: JSON.stringify([
+        {
+          id: "assets",
+          name: "Assets",
+          control: "system",
+          method: "get",
+          url: '"/$resources/assets"',
+          searchParams: [],
+          headers: [],
+        },
+      ]),
+    };
+    server.use(db.get("Build", () => json([row])));
+
+    const contentCompilationData =
+      await loadDevBuildContentCompilationDataByProjectId(
+        createContext(),
+        "proj-1"
+      );
+    const fullBuild = await loadDevBuildByProjectId(createContext(), "proj-1");
+
+    expect(contentCompilationData).toEqual({
+      props: fullBuild.props,
+      dataSources: fullBuild.dataSources,
+      resources: fullBuild.resources,
+    });
+  });
+
+  test("cancels the partial Build request with the caller signal", async () => {
+    server.use(
+      db.get("Build", () =>
+        json([
+          {
+            props: JSON.stringify([]),
+            dataSources: JSON.stringify([]),
+            resources: JSON.stringify([]),
+          },
+        ])
+      )
+    );
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      loadDevBuildContentCompilationDataByProjectId(
+        createContext(),
+        "proj-1",
+        controller.signal
+      )
+    ).rejects.toMatchObject({
+      message: expect.stringContaining("AbortError"),
+    });
   });
 });
 

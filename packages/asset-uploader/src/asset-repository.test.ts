@@ -791,6 +791,606 @@ describe("PostgresAssetRepository", () => {
     expect(dependencies.createAssetIndex).toHaveBeenCalledOnce();
   });
 
+  test("stops diagnostics work after cancellation during index preparation", async () => {
+    const dependencies = createDependencies();
+    const entry = {
+      projectId: "project-1",
+      assetId: "post",
+      revision: "revision-post",
+      document: {
+        _id: "post",
+        _type: "asset.file" as const,
+        name: "post.md",
+        path: "blog/post.md",
+        key: "post",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 1,
+        revision: "revision-post",
+        contentRef: "post.md",
+        properties: { category: "Tools", title: "Post" },
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    const controller = new AbortController();
+    dependencies.createAssetIndex.mockImplementation(async (input) => {
+      const artifact = await createAssetIndex(input);
+      if (dependencies.createAssetIndex.mock.calls.length === 1) {
+        controller.abort();
+      }
+      return artifact;
+    });
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: assetClient,
+      dependencies,
+    });
+    const query = {
+      where: {
+        field: ["properties", "category"] as [string, string],
+        operator: "eq" as const,
+        value: "Tools",
+      },
+      output: {
+        mode: "fields" as const,
+        includeMetadata: false,
+        fields: [["properties", "title"]],
+      },
+      content: { mode: "none" as const },
+    };
+    const databasePlan = createCompilationPlan(query);
+
+    await expect(
+      repository.query({ query }, { databasePlan, signal: controller.signal })
+    ).rejects.toMatchObject({ name: "AbortError" });
+
+    expect(dependencies.createAssetIndex).toHaveBeenCalledOnce();
+    expect(dependencies.loadAssetsByProjectWithClient).not.toHaveBeenCalled();
+  });
+
+  test("executes an Assets request batch with one authorization and union index", async () => {
+    const dependencies = createDependencies();
+    const categories = ["Tools", "Strategy", "Guide", "Updates"];
+    const entries = categories.map((category, index) => ({
+      projectId: "project-1",
+      assetId: `post-${index}`,
+      revision: `revision-${index}`,
+      document: {
+        _id: `post-${index}`,
+        _type: "asset.file" as const,
+        name: `post-${index}.md`,
+        path: `blog/posts/post-${index}.md`,
+        key: `post-${index}`,
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 1,
+        revision: `revision-${index}`,
+        contentRef: `post-${index}.md`,
+        properties: { category, title: `${category} post` },
+      },
+    }));
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(
+      entries.map((entry) => ({
+        ...entry,
+        document: { ...entry.document, properties: {} },
+      }))
+    );
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: assetClient,
+      dependencies,
+      compilationCache: createContentCompilationCache(),
+    });
+    const requests = categories.map((category) => ({
+      query: {
+        where: {
+          field: ["properties", "category"] as [string, string],
+          operator: "eq" as const,
+          value: category,
+        },
+        output: {
+          mode: "fields" as const,
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
+        content: { mode: "none" as const },
+      },
+    }));
+
+    const results = await repository.queryMany(requests);
+
+    expect(results).toEqual(
+      categories.map((category, index) => ({
+        status: "fulfilled",
+        value: {
+          data: {
+            items: [
+              {
+                id: `post-${index}`,
+                properties: { title: `${category} post` },
+              },
+            ],
+            totalCount: 1,
+            hasMore: false,
+          },
+        },
+      }))
+    );
+    expect(dependencies.hasProjectPermit).toHaveBeenCalledOnce();
+    expect(dependencies.loadCanonicalAssetBaseEntries).toHaveBeenCalledTimes(2);
+    expect(dependencies.synchronizeCanonicalAssets).toHaveBeenCalledOnce();
+    expect(dependencies.loadCanonicalAssetFileEntries).toHaveBeenCalledOnce();
+    expect(dependencies.createAssetIndex).toHaveBeenCalledOnce();
+    expect(
+      dependencies.createAssetIndex.mock.calls[0][0].plan?.queries
+    ).toHaveLength(4);
+  });
+
+  test("loads a shared referenced document once per query batch", async () => {
+    const dependencies = createDependencies();
+    const sources = new Map([
+      [
+        "storage:post-a",
+        '{"title":"First","author":{"$ref":"./author.md#frontmatter"}}',
+      ],
+      [
+        "storage:post-b",
+        '{"title":"Second","author":{"$ref":"./author.md#frontmatter"}}',
+      ],
+      ["storage:author", "---\nname: Ada\nrole: Writer\n---\nBio\n"],
+    ]);
+    const createEntry = ({
+      id,
+      name,
+      properties,
+    }: {
+      id: string;
+      name: string;
+      properties: AssetFileDocument["properties"];
+    }): CanonicalAssetFileEntry => {
+      const contentRef = `storage:${id}`;
+      const source = sources.get(contentRef);
+      if (source === undefined) {
+        throw new Error(`Missing source for ${id}`);
+      }
+      return {
+        projectId: "project-1",
+        assetId: id,
+        revision: `${id}-r1`,
+        document: {
+          _id: id,
+          _type: "asset.file",
+          name,
+          path: `content/${name}`,
+          key: name.slice(0, name.lastIndexOf(".")),
+          extension: name.endsWith(".json") ? "json" : "md",
+          mimeType: name.endsWith(".json")
+            ? "application/json"
+            : "text/markdown; charset=utf-8",
+          size: new TextEncoder().encode(source).byteLength,
+          revision: `${id}-r1`,
+          contentRef,
+          properties,
+        },
+      };
+    };
+    const entries = [
+      createEntry({
+        id: "post-a",
+        name: "post-a.json",
+        properties: {
+          title: "First",
+          author: { $ref: "./author.md#frontmatter" },
+        },
+      }),
+      createEntry({
+        id: "post-b",
+        name: "post-b.json",
+        properties: {
+          title: "Second",
+          author: { $ref: "./author.md#frontmatter" },
+        },
+      }),
+      createEntry({
+        id: "author",
+        name: "author.md",
+        properties: { name: "Ada", role: "Writer" },
+      }),
+    ];
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const readFile = vi.fn(async (contentRef: string) => {
+      const source = sources.get(contentRef);
+      if (source === undefined) {
+        throw new Error(`Missing source for ${contentRef}`);
+      }
+      return {
+        data: new Blob([source]).stream(),
+        contentLength: new TextEncoder().encode(source).byteLength,
+      };
+    });
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { readFile },
+      dependencies,
+      compilationCache: createContentCompilationCache(),
+    });
+    const requests = ["post-a", "post-b"].map((id) => ({
+      query: {
+        where: { all: [{ field: ["id"], operator: "eq" as const, value: id }] },
+        output: {
+          mode: "fields" as const,
+          includeMetadata: false,
+          fields: [
+            ["properties", "title"],
+            ["properties", "author"],
+          ],
+        },
+      },
+    }));
+    const databasePlan = createContentCompilationPlan(
+      requests.map(({ query }, index) =>
+        createLiteralContentCompilationQuery({
+          id: `post-resource-${index}`,
+          query: assetQuery.parse(query),
+        })
+      )
+    );
+    if (databasePlan === undefined) {
+      throw new Error("Expected a build database plan");
+    }
+    await repository.queryMany(requests, { databasePlan });
+    readFile.mockClear();
+
+    const results = await repository.queryMany(requests, { databasePlan });
+
+    expect(results).toMatchObject([
+      {
+        status: "fulfilled",
+        value: {
+          data: {
+            items: [
+              {
+                properties: {
+                  title: "First",
+                  author: { name: "Ada", role: "Writer" },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        status: "fulfilled",
+        value: {
+          data: {
+            items: [
+              {
+                properties: {
+                  title: "Second",
+                  author: { name: "Ada", role: "Writer" },
+                },
+              },
+            ],
+          },
+        },
+      },
+    ]);
+    expect(
+      readFile.mock.calls.filter(
+        ([contentRef]) => contentRef === "storage:author"
+      )
+    ).toHaveLength(1);
+  });
+
+  test("prepares revision-pinned batch items independently", async () => {
+    const dependencies = createDependencies();
+    const entry = {
+      projectId: "project-1",
+      assetId: "post",
+      revision: "revision-post",
+      document: {
+        _id: "post",
+        _type: "asset.file" as const,
+        name: "post.md",
+        path: "blog/post.md",
+        key: "post",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 1,
+        revision: "revision-post",
+        contentRef: "post.md",
+        properties: {},
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: assetClient,
+      dependencies,
+    });
+
+    const [result] = await repository.queryMany([
+      {
+        indexRevision: `sha256:${"f".repeat(64)}`,
+        query: { where: { all: [] } },
+      },
+    ]);
+
+    expect(result.status).toBe("rejected");
+    if (result.status === "rejected") {
+      expect(result.reason).toBeInstanceOf(Error);
+      expect(result.reason.name).toBe("AssetIndexRevisionError");
+    }
+    expect(
+      dependencies.createAssetIndex.mock.calls[0][0].plan?.queries[0].id
+    ).toBe("preview");
+  });
+
+  test("uses the build database for a covered revision-pinned query", async () => {
+    const dependencies = createDependencies();
+    const entry = {
+      projectId: "project-1",
+      assetId: "post",
+      revision: "revision-post",
+      document: {
+        _id: "post",
+        _type: "asset.file" as const,
+        name: "post.md",
+        path: "blog/post.md",
+        key: "post",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 1,
+        revision: "revision-post",
+        contentRef: "post.md",
+        properties: { category: "Tools", title: "Post" },
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: assetClient,
+      dependencies,
+      compilationCache: createContentCompilationCache(),
+    });
+    const query = {
+      where: {
+        field: ["properties", "category"] as [string, string],
+        operator: "eq" as const,
+        value: "Tools",
+      },
+      output: {
+        mode: "fields" as const,
+        includeMetadata: false,
+        fields: [["properties", "title"]],
+      },
+      content: { mode: "none" as const },
+    };
+    const databasePlan = createCompilationPlan(query);
+    const artifact = await repository.prepareIndex(databasePlan);
+
+    const [result] = await repository.queryMany(
+      [{ query, indexRevision: artifact.integrity.checksum }],
+      { databasePlan }
+    );
+
+    expect(result).toMatchObject({
+      status: "fulfilled",
+      value: {
+        data: {
+          items: [{ id: "post", properties: { title: "Post" } }],
+        },
+      },
+    });
+    expect(dependencies.createAssetIndex).toHaveBeenCalledTimes(2);
+    expect(
+      dependencies.createAssetIndex.mock.calls.map(([input]) => input.plan)
+    ).toEqual([databasePlan, databasePlan]);
+  });
+
+  test("falls back to individual queries when the union index is truncated", async () => {
+    const dependencies = createDependencies();
+    const entries = ["Tools", "Updates"].map((category, index) => ({
+      projectId: "project-1",
+      assetId: `post-${index}`,
+      revision: `revision-${index}`,
+      document: {
+        _id: `post-${index}`,
+        _type: "asset.file" as const,
+        name: `post-${index}.md`,
+        path: `blog/post-${index}.md`,
+        key: `post-${index}`,
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 1,
+        revision: `revision-${index}`,
+        contentRef: `post-${index}.md`,
+        properties: { category, payload: "x".repeat(1_200) },
+      },
+    }));
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: assetClient,
+      dependencies,
+      contentDatabaseMaxBytes: 2_500,
+    });
+    const requests = ["Tools", "Updates"].map((category) => ({
+      query: {
+        where: {
+          field: ["properties", "category"] as [string, string],
+          operator: "eq" as const,
+          value: category,
+        },
+        output: {
+          mode: "fields" as const,
+          includeMetadata: false,
+          fields: [["properties", "payload"]],
+        },
+      },
+    }));
+
+    const results = await repository.queryMany(requests);
+
+    expect(results.map(({ status }) => status)).toEqual([
+      "fulfilled",
+      "fulfilled",
+    ]);
+    expect(dependencies.createAssetIndex).toHaveBeenCalledTimes(3);
+    expect(
+      dependencies.createAssetIndex.mock.calls[0][0].plan?.queries
+    ).toHaveLength(2);
+    expect(
+      dependencies.createAssetIndex.mock.calls
+        .slice(1)
+        .map(([input]) => input.plan?.queries[0].id)
+    ).toEqual(["preview", "preview"]);
+  });
+
+  test("preserves truncation from the build database plan", async () => {
+    const dependencies = createDependencies();
+    const entries = ["Tools", "Updates"].map((category, index) => ({
+      projectId: "project-1",
+      assetId: `post-${index}`,
+      revision: `revision-${index}`,
+      document: {
+        _id: `post-${index}`,
+        _type: "asset.file" as const,
+        name: `post-${index}.md`,
+        path: `blog/post-${index}.md`,
+        key: `post-${index}`,
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 1,
+        revision: `revision-${index}`,
+        contentRef: `post-${index}.md`,
+        properties: { category, payload: "x".repeat(1_200) },
+      },
+    }));
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: assetClient,
+      dependencies,
+      contentDatabaseMaxBytes: 2_500,
+    });
+    const requests = ["Tools", "Updates"].map((category) => ({
+      query: {
+        where: {
+          field: ["properties", "category"] as [string, string],
+          operator: "eq" as const,
+          value: category,
+        },
+        output: {
+          mode: "fields" as const,
+          includeMetadata: false,
+          fields: [["properties", "payload"]],
+        },
+      },
+    }));
+    const databasePlan = createContentCompilationPlan(
+      requests.map(({ query }, index) =>
+        createLiteralContentCompilationQuery({
+          id: `build-resource-${index}`,
+          query: assetQuery.parse(query),
+        })
+      )
+    );
+    if (databasePlan === undefined) {
+      throw new Error("Expected a build database plan");
+    }
+
+    const results = await repository.queryMany(requests, { databasePlan });
+
+    expect(results.map(({ status }) => status)).toEqual([
+      "fulfilled",
+      "fulfilled",
+    ]);
+    expect(dependencies.createAssetIndex).toHaveBeenCalledOnce();
+    expect(dependencies.createAssetIndex.mock.calls[0][0].plan).toBe(
+      databasePlan
+    );
+  });
+
+  test("falls back to independent queries when union preparation fails", async () => {
+    const dependencies = createDependencies();
+    const entries = ["Tools", "Updates"].map((category, index) => ({
+      projectId: "project-1",
+      assetId: `post-${index}`,
+      revision: `revision-${index}`,
+      document: {
+        _id: `post-${index}`,
+        _type: "asset.file" as const,
+        name: `post-${index}.md`,
+        path: `blog/post-${index}.md`,
+        key: `post-${index}`,
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 1,
+        revision: `revision-${index}`,
+        contentRef: `post-${index}.md`,
+        properties: { category },
+      },
+    }));
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.createAssetIndex.mockImplementation(async (input) => {
+      if (input.plan?.queries.length === 2) {
+        throw new Error("Union compilation failed");
+      }
+      return await createAssetIndex(input);
+    });
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: assetClient,
+      dependencies,
+    });
+    const requests = ["Tools", "Updates"].map((category) => ({
+      query: {
+        where: {
+          field: ["properties", "category"] as [string, string],
+          operator: "eq" as const,
+          value: category,
+        },
+        output: {
+          mode: "fields" as const,
+          includeMetadata: false,
+          fields: [["properties", "category"]],
+        },
+        content: { mode: "none" as const },
+      },
+    }));
+
+    const results = await repository.queryMany(requests);
+
+    expect(results.map(({ status }) => status)).toEqual([
+      "fulfilled",
+      "fulfilled",
+    ]);
+    expect(dependencies.createAssetIndex).toHaveBeenCalledTimes(3);
+  });
+
   test("discovers fields without preparing excerpts or file bodies", async () => {
     const dependencies = createDependencies();
     const entry = {

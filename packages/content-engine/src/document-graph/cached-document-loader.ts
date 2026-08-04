@@ -25,6 +25,47 @@ export interface DocumentSourceCache {
   set(key: string, source: CachedDocumentSource): Promise<void>;
 }
 
+/** Creates a byte-bounded in-memory LRU for revision-keyed document sources. */
+export const createMemoryDocumentSourceCache = ({
+  maximumBytes = contentEngineLimits.hydratedTotalBytes * 4,
+}: { maximumBytes?: number } = {}): DocumentSourceCache => {
+  if (Number.isSafeInteger(maximumBytes) === false || maximumBytes <= 0) {
+    throw new TypeError("Document source cache byte limit must be positive");
+  }
+  const values = new Map<string, CachedDocumentSource>();
+  let usedBytes = 0;
+  return {
+    get: async (key) => {
+      const value = values.get(key);
+      if (value !== undefined) {
+        values.delete(key);
+        values.set(key, value);
+      }
+      return value;
+    },
+    set: async (key, source) => {
+      if (source.bytes.byteLength > maximumBytes) {
+        return;
+      }
+      const previous = values.get(key);
+      if (previous !== undefined) {
+        usedBytes -= previous.bytes.byteLength;
+        values.delete(key);
+      }
+      values.set(key, source);
+      usedBytes += source.bytes.byteLength;
+      while (usedBytes > maximumBytes) {
+        const oldest = values.entries().next().value;
+        if (oldest === undefined) {
+          break;
+        }
+        values.delete(oldest[0]);
+        usedBytes -= oldest[1].bytes.byteLength;
+      }
+    },
+  };
+};
+
 export class CachedDocumentLoaderError extends Error {
   readonly code = "CONTENT_LIMIT_EXCEEDED";
   readonly documentId: string;
