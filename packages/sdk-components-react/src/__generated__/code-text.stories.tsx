@@ -3,7 +3,12 @@ import { Box as Box, CodeText as CodeText } from "../components";
 const Component = () => {
   return (
     <Box className={`w-box`}>
-      <CodeText className={`w-code-text`}>{'status: "ready"'}</CodeText>
+      <CodeText
+        code={'const status = "ready";'}
+        language={"javascript"}
+        theme={"github-light"}
+        className={`w-code-text`}
+      />
     </Box>
   );
 };
@@ -29,7 +34,8 @@ const Story = {
     display: block;
     padding-left: 0.2em;
     padding-right: 0.2em;
-    background-color: rgb(238 238 238 / 1);
+    color: var(--w-code-text-theme-color);
+    background-color: var(--w-code-text-theme-background, rgb(238 238 238 / 1));
     white-space: pre-wrap;
     white-space-collapse: preserve
   }

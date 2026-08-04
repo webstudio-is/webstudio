@@ -24,14 +24,14 @@
       "import": "./lib/components.js"
     },
     "./code-text": {
-      "webstudio": "./src/code-text.tsx",
-      "types": "./lib/types/code-text.d.ts",
-      "import": "./lib/code-text.js"
+      "webstudio": "./src/code-text/index.tsx",
+      "types": "./lib/types/code-text/index.d.ts",
+      "import": "./lib/code-text/index.js"
     },
     "./code-text/build": {
-      "webstudio": "./src/code-text.build.ts",
-      "types": "./lib/types/code-text.build.d.ts",
-      "import": "./lib/code-text.build.js"
+      "webstudio": "./src/code-text/build.ts",
+      "types": "./lib/types/code-text/build.d.ts",
+      "import": "./lib/code-text/build.js"
     },
     "./build-hooks": {
       "webstudio": "./src/build-hooks.ts",
@@ -61,7 +61,7 @@
   },
   "scripts": {
     "build": "vite build --config ../../vite.sdk-components.config.ts",
-    "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.test.{ts,tsx} !./src/*.ws.ts !./src/*.template.tsx !./src/code-text.tsx !./src/code-text-base.tsx' && oxfmt \"**/*.props.ts\"",
+    "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.test.{ts,tsx} !./src/*.ws.ts !./src/*.template.tsx' && oxfmt \"**/*.props.ts\"",
     "build:stories": "tsx --conditions=webstudio src/generate-stories.ts && oxfmt \"src/__generated__/*.stories.tsx\"",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",

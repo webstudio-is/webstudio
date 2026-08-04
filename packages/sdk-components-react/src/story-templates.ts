@@ -6,3 +6,4 @@ export { meta as YouTube } from "./youtube.template";
 export { meta as HeadSlot } from "./head-slot.template";
 export { meta as Select } from "./select.template";
 export * from "./basic.template";
+export * from "./code-text/template";

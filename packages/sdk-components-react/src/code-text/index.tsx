@@ -21,11 +21,11 @@ import {
   type ThemeRegistrationAny,
 } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
-import { CodeText, defaultTag } from "./code-text-base";
+import { CodeText, defaultTag } from "./base";
 import {
   codeTextThemeBackgroundVariable,
   codeTextThemeColorVariable,
-} from "./code-text-theme";
+} from "./theme";
 
 type CodeTextProps = ComponentProps<typeof CodeText>;
 type Highlighter = ReturnType<typeof createHighlighterCoreSync>;

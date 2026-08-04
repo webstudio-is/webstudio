@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { themeNames } from "@shikijs/themes";
 import { bundledLanguagesInfo } from "shiki/langs";
-import { meta } from "./code-text.ws";
+import { meta } from "./meta";
 
 test("exposes static language and theme selections", () => {
   expect(meta.deprecated).toBeUndefined();

@@ -1,12 +1,12 @@
 import { BracesIcon } from "@webstudio-is/icons/svg";
 import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { code } from "@webstudio-is/sdk/normalize.css";
-import type { defaultTag } from "./code-text-base";
-import { codeTextLanguageNames, codeTextThemeNames } from "./code-text-options";
+import type { defaultTag } from "./base";
+import { codeTextLanguageNames, codeTextThemeNames } from "./options";
 import {
   codeTextThemeBackgroundVariable,
   codeTextThemeColorVariable,
-} from "./code-text-theme";
+} from "./theme";
 
 const presetStyle = {
   code: [

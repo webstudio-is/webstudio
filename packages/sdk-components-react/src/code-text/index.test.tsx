@@ -9,8 +9,8 @@ import css from "@shikijs/langs/css";
 import javascript from "@shikijs/langs/javascript";
 import githubLight from "@shikijs/themes/github-light";
 import nord from "@shikijs/themes/nord";
-import { createCodeText } from "./code-text";
-import { CodeText } from "./code-text-base";
+import { createCodeText } from ".";
+import { CodeText } from "./base";
 
 const HighlightedCodeText = createCodeText({
   languages: [javascript],

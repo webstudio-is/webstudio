@@ -23,7 +23,7 @@ export { meta as Blockquote } from "./blockquote.ws";
 export { meta as List } from "./list.ws";
 export { meta as ListItem } from "./list-item.ws";
 export { meta as Separator } from "./separator.ws";
-export { meta as CodeText } from "./code-text.ws";
+export { meta as CodeText } from "./code-text/meta";
 export { meta as Label } from "./label.ws";
 export { meta as Textarea } from "./textarea.ws";
 export { meta as RadioButton } from "./radio-button.ws";

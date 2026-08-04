@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Instances, Props, WsComponentMeta } from "@webstudio-is/sdk";
-import { collectCodeTextAssets } from "./code-text.build";
+import { collectCodeTextAssets } from "./build";
 
 const meta = {
   props: {
