@@ -1,3 +1,4 @@
+import { LRUCache } from "lru-cache";
 import { ByteLimitExceededError, readBoundedBytes } from "../byte-stream";
 import { serializeJsonDeterministically } from "../canonical-json";
 import { contentEngineLimits } from "../limits";
@@ -21,9 +22,28 @@ export type CachedDocumentSource = Readonly<{
 }>;
 
 export interface DocumentSourceCache {
-  get(key: string): Promise<CachedDocumentSource | undefined>;
-  set(key: string, source: CachedDocumentSource): Promise<void>;
+  get(
+    key: string
+  ):
+    | CachedDocumentSource
+    | undefined
+    | PromiseLike<CachedDocumentSource | undefined>;
+  set(key: string, source: CachedDocumentSource): unknown;
 }
+
+/** Creates a byte-bounded in-memory LRU for revision-keyed document sources. */
+export const createMemoryDocumentSourceCache = ({
+  maximumBytes = contentEngineLimits.hydratedTotalBytes * 4,
+}: { maximumBytes?: number } = {}) => {
+  if (Number.isSafeInteger(maximumBytes) === false || maximumBytes <= 0) {
+    throw new TypeError("Document source cache byte limit must be positive");
+  }
+  return new LRUCache<string, CachedDocumentSource>({
+    maxSize: maximumBytes,
+    // The package requires positive sizes, and an empty source still uses memory.
+    sizeCalculation: (source) => Math.max(1, source.bytes.byteLength),
+  });
+};
 
 export class CachedDocumentLoaderError extends Error {
   readonly code = "CONTENT_LIMIT_EXCEEDED";

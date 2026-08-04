@@ -55,11 +55,6 @@ export const Checkbox: TemplateMeta = {
   template: <$.Checkbox aria-label="Enable weekly summary" />,
 };
 
-export const CodeText: TemplateMeta = {
-  category: "typography",
-  template: <$.CodeText>{new PlaceholderValue('status: "ready"')}</$.CodeText>,
-};
-
 export const Fragment: TemplateMeta = {
   category: "general",
   template: (

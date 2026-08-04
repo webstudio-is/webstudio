@@ -18,6 +18,7 @@ export const previewAssetResourceQuery = async ({
   includeDiagnostics,
   includeUnresolvedDiagnostics,
   onDocumentGraphEvent,
+  signal,
 }: {
   projectId: string;
   request: AssetQueryRequestInput;
@@ -29,6 +30,7 @@ export const previewAssetResourceQuery = async ({
   includeDiagnostics?: boolean;
   includeUnresolvedDiagnostics?: boolean;
   onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
+  signal?: AbortSignal;
 }) => {
   const repository = new PostgresAssetRepository({
     projectId,
@@ -41,6 +43,7 @@ export const previewAssetResourceQuery = async ({
     databasePlan,
     diagnosticsPlan,
     includeUnresolvedDiagnostics,
+    signal,
   };
   if (includeDiagnostics === false) {
     return await repository.query(request, {
@@ -52,4 +55,33 @@ export const previewAssetResourceQuery = async ({
     ...options,
     includeDiagnostics: true,
   });
+};
+
+export const previewAssetResourceQueries = async ({
+  projectId,
+  requests,
+  context,
+  assetClient,
+  contentDatabaseMaxBytes,
+  databasePlan,
+  onDocumentGraphEvent,
+  signal,
+}: {
+  projectId: string;
+  requests: readonly AssetQueryRequestInput[];
+  context: AppContext;
+  assetClient: Pick<AssetObjectStore, "readFile">;
+  contentDatabaseMaxBytes?: number;
+  databasePlan?: ContentCompilationPlan;
+  onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
+  signal?: AbortSignal;
+}) => {
+  const repository = new PostgresAssetRepository({
+    projectId,
+    context,
+    assetStore: assetClient,
+    contentDatabaseMaxBytes,
+    onDocumentGraphEvent,
+  });
+  return await repository.queryMany(requests, { databasePlan, signal });
 };

@@ -19,9 +19,14 @@ import {
   type MaterializedAssetQuery,
 } from "./schema";
 import {
+  assertAssetQueryResultSize,
   AssetQueryExecutionError,
   executeAssetQuery,
 } from "./structured-query";
+import {
+  resolveAssetValueReferences,
+  type AssetValueReferences,
+} from "./asset-value-references";
 
 const hasOverlappingFields = (fields: readonly AssetQueryFieldPath[]) =>
   fields.some((field, index) =>
@@ -249,13 +254,32 @@ const hydrateMaterializedQuery = (
 export const getMaterializedAssetQueryResult = async ({
   queries,
   query,
+  assetValueReferences,
+  assetUrls = {},
 }: {
   queries: Readonly<Record<string, MaterializedAssetQuery>> | undefined;
   query: AssetQueryInput;
+  assetValueReferences?: AssetValueReferences;
+  assetUrls?: Readonly<Record<string, string>>;
 }): Promise<AssetQueryResult | undefined> => {
   if (queries === undefined) {
     return;
   }
   const value = queries[await getAssetQueryHash(assetQuery.parse(query))];
-  return value === undefined ? undefined : hydrateMaterializedQuery(value);
+  if (value === undefined) {
+    return;
+  }
+  const result = hydrateMaterializedQuery(value);
+  const resolved = {
+    ...result,
+    items: result.items.map((item) =>
+      resolveAssetValueReferences({
+        value: item,
+        references: assetValueReferences?.[item.id],
+        assetUrls,
+      })
+    ),
+  };
+  assertAssetQueryResultSize(resolved);
+  return resolved;
 };

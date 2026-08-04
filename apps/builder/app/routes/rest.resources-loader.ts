@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { type ActionFunctionArgs, data, json } from "@remix-run/server-runtime";
-import { type ResourceRequest, resourceRequest } from "@webstudio-is/sdk";
-import { isLocalResource, loadResource } from "@webstudio-is/sdk/runtime";
+import { isLocalResource } from "@webstudio-is/sdk/runtime";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { loader as siteMapLoader } from "../shared/$resources/sitemap.xml.server";
 import { loader as currentDateLoader } from "../shared/$resources/current-date.server";
@@ -10,8 +9,8 @@ import { executeAssetQuery } from "../shared/$resources/assets-query.server";
 import { loader as assetsOpenApiLoader } from "./rest.assets.openapi[.]json";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
-import { getResourceKey } from "~/shared/resources";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
+import { loadResourceRequestList } from "~/services/resource-list-loader.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
@@ -65,26 +64,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
-  const output = await Promise.all(
-    requestList.data.map(async (item) => {
-      const resource = resourceRequest.safeParse(item);
-      if (resource.success === false) {
-        return [
-          getResourceKey(item as ResourceRequest),
-          {
-            ok: false,
-            data: resource.error.format(),
-            status: 403,
-            statusText: "Resource validation error",
-          },
-        ];
-      }
-      return [
-        getResourceKey(resource.data),
-        await loadResource(customFetch, resource.data, sourceOrigin),
-      ];
-    })
-  );
+  const output = await loadResourceRequestList({
+    request,
+    requestList: requestList.data,
+    sourceOrigin,
+    includeDiagnostics,
+    customFetch,
+  });
 
   return json(output, { headers: privateNoStoreResponseHeaders });
 };

@@ -224,6 +224,24 @@ export const setTextContentInput = z.discriminatedUnion("operation", [
     operation: z.literal("reset"),
     instanceId: z.string().describe("Instance id to reset to no text content."),
   }),
+  z.object({
+    operation: z.literal("inlineExpressions"),
+    instanceId: z
+      .string()
+      .describe("Instance id whose expression children will become text."),
+    replacements: z
+      .array(
+        z.object({
+          childIndex: z.number().int().nonnegative(),
+          expression: z.string(),
+          text: z.string(),
+        })
+      )
+      .min(1)
+      .describe(
+        "Evaluated text for every expression child. The index and original expression must match the current instance."
+      ),
+  }),
 ]);
 
 export const updateTextTreeInput = z.object({
@@ -3272,6 +3290,19 @@ export const getTextContentChild = (instance: Instance, childIndex: number) => {
   return isTextContentChild(child) ? child : undefined;
 };
 
+export const getEditableTextTarget = (instance: Instance) => {
+  const [onlyChild] = instance.children;
+  if (instance.children.length === 1 && isTextContentChild(onlyChild)) {
+    return { childIndex: 0, child: onlyChild };
+  }
+
+  for (const [childIndex, child] of instance.children.entries()) {
+    if (child.type === "expression") {
+      return { childIndex, child };
+    }
+  }
+};
+
 export const findTextContentChild = (
   instances: Iterable<Instance>,
   input: {
@@ -3689,10 +3720,8 @@ export const updateTextInstance = (
   state: Pick<BuilderState, "instances">,
   input: z.infer<typeof updateTextInstanceInput>
 ) => {
-  const result = findTextContentChild(
-    getRequiredInstances(state).values(),
-    input
-  );
+  const instances = getRequiredInstances(state);
+  const result = findTextContentChild(instances.values(), input);
   if (result.status === "instance-not-found") {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }
@@ -3715,9 +3744,52 @@ export const updateTextInstance = (
     childIndex: input.childIndex,
     mode,
   };
-  if (result.child.value === input.text) {
+  const instance = instances.get(input.instanceId);
+  if (instance === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  const previousChild = instance.children[input.childIndex - 1];
+  const nextChild = instance.children[input.childIndex + 1];
+  const shouldMergePrevious = mode === "text" && previousChild?.type === "text";
+  const shouldMergeNext = mode === "text" && nextChild?.type === "text";
+  if (
+    result.child.type === mode &&
+    result.child.value === input.text &&
+    shouldMergePrevious === false &&
+    shouldMergeNext === false
+  ) {
     return createRuntimeMutation({
       payload: [],
+      result: mutationResult,
+      invalidatesNamespaces: ["instances"],
+    });
+  }
+  if (shouldMergePrevious || shouldMergeNext) {
+    const firstIndex = shouldMergePrevious
+      ? input.childIndex - 1
+      : input.childIndex;
+    const lastIndex = shouldMergeNext ? input.childIndex + 1 : input.childIndex;
+    const value = `${
+      shouldMergePrevious ? previousChild.value : ""
+    }${input.text}${shouldMergeNext ? nextChild.value : ""}`;
+    const children = [
+      ...instance.children.slice(0, firstIndex),
+      createTextContentChild({ type: "text", value }),
+      ...instance.children.slice(lastIndex + 1),
+    ];
+    return createRuntimeMutation({
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: [input.instanceId, "children"],
+              value: children,
+            },
+          ],
+        },
+      ],
       result: mutationResult,
       invalidatesNamespaces: ["instances"],
     });
@@ -3731,6 +3803,19 @@ export const updateTextInstance = (
     result: mutationResult,
     invalidatesNamespaces: ["instances"],
   });
+};
+
+const normalizeAdjacentTextChildren = (children: Instance["children"]) => {
+  const normalized: Instance["children"] = [];
+  for (const child of children) {
+    const previousChild = normalized.at(-1);
+    if (child.type === "text" && previousChild?.type === "text") {
+      previousChild.value += child.value;
+      continue;
+    }
+    normalized.push({ ...child });
+  }
+  return normalized;
 };
 
 export const replaceText = (
@@ -3817,6 +3902,60 @@ export const setTextContent = (
         instance.children.length === 0
           ? []
           : createTextContentResetPayload({ instanceId: input.instanceId }),
+      result: {
+        instanceId: input.instanceId,
+        operation: input.operation,
+      },
+      invalidatesNamespaces: ["instances"],
+    });
+  }
+
+  if (input.operation === "inlineExpressions") {
+    const expressionCount = instance.children.filter(
+      (child) => child.type === "expression"
+    ).length;
+    const replacements = new Map(
+      input.replacements.map((replacement) => [
+        replacement.childIndex,
+        replacement,
+      ])
+    );
+    if (
+      replacements.size !== input.replacements.length ||
+      replacements.size !== expressionCount ||
+      input.replacements.some((replacement) => {
+        const child = instance.children[replacement.childIndex];
+        return (
+          child?.type !== "expression" || child.value !== replacement.expression
+        );
+      })
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Every expression child must have a matching replacement"
+      );
+    }
+    const children = normalizeAdjacentTextChildren(
+      instance.children.map((child, childIndex) => {
+        const replacement = replacements.get(childIndex);
+        return replacement === undefined
+          ? child
+          : createTextContentChild({ type: "text", value: replacement.text });
+      })
+    );
+    return createRuntimeMutation({
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: [input.instanceId, "children"],
+              value: children,
+            },
+          ],
+        },
+      ],
       result: {
         instanceId: input.instanceId,
         operation: input.operation,

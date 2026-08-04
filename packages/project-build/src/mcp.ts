@@ -5395,7 +5395,7 @@ const getComponentDetails = (component: string) => {
     component === "ws:collection" ? collectionComponentUsage : undefined;
   const jsonLdUsage =
     component === "JsonLd"
-      ? 'Prefer placing JsonLd inside HeadSlot. Insert it with insert-component using the HeadSlot instance as parentInstanceId and component "JsonLd". Set its code prop with update-props using type "string" and a compact JSON object or array string. Fixed values with structurally invalid JSON-LD are rejected. Run audit with the seo scope after editing to find unknown, superseded, unsupported, or incompatible Schema.org terms; vocabulary findings are warnings because custom vocabularies remain valid.'
+      ? 'Prefer placing JsonLd inside HeadSlot. Insert it with insert-component using the HeadSlot instance as parentInstanceId and component "JsonLd". For fixed structured data, set code with update-props using type "string" and a compact JSON object or array string. For structured data containing runtime values, use bind-props with an expression that evaluates directly to an object or array. The binding value stores expression source text, but the evaluated result must not be a string. Do not call JSON.stringify or assemble JSON with string concatenation; JsonLd validates and serializes the evaluated value. Fixed values with structurally invalid JSON-LD are rejected. Run audit with the seo scope after editing to find unknown, superseded, unsupported, or incompatible Schema.org terms; vocabulary findings are warnings because custom vocabularies remain valid.'
       : undefined;
   if (entry === undefined || meta === undefined) {
     return {
@@ -5643,14 +5643,42 @@ const metaGoalGuides = [
       "list-instances",
       "insert-component",
       "update-props",
+      "bind-props",
       "audit",
     ],
     workflow: [
       'Call components.get with {"component":"JsonLd"}; do not use update-page custom metadata for JSON-LD.',
       "Find the page HeadSlot instance with list-instances.",
-      'Insert JsonLd under HeadSlot with insert-component, then set code with update-props using type "string" and a compact JSON object or array string.',
+      'Insert JsonLd under HeadSlot with insert-component. For fixed structured data, set code with update-props using type "string" and a compact JSON object or array string.',
+      "For structured data containing runtime values, set code with bind-props using an expression that evaluates directly to an object or array. The binding value stores expression source text, but the evaluated result must not be a string. Do not call JSON.stringify or assemble JSON with string concatenation; JsonLd performs validation and serialization.",
       'Run audit with {"scopes":["seo"],"pagePath":"<path>"} and fix any JSON-LD finding.',
     ],
+    recipe: {
+      fixedCodeUpdate: {
+        updates: [
+          {
+            instanceId: "<json-ld-instance-id>",
+            name: "code",
+            type: "string",
+            value:
+              '{"@context":"https://schema.org","@type":"Organization","name":"Acme"}',
+          },
+        ],
+      },
+      dynamicCodeBinding: {
+        bindings: [
+          {
+            instanceId: "<json-ld-instance-id>",
+            name: "code",
+            binding: {
+              type: "expression",
+              value:
+                '({ "@context": "https://schema.org", "@type": "Article", headline: post.title })',
+            },
+          },
+        ],
+      },
+    },
   },
   {
     pattern:
@@ -6279,15 +6307,7 @@ const getSdkInputSchema = (
       required.has(name) ||
       includeOptionalProperties ||
       sdkDetailedOptionalSchemaProperties.has(name)
-        ? [
-            [
-              name,
-              required.has(name) ||
-              sdkDetailedOptionalSchemaProperties.has(name)
-                ? getSdkSchemaProperty(value)
-                : {},
-            ],
-          ]
+        ? [[name, getSdkSchemaProperty(value)]]
         : []
     )
   );

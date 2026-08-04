@@ -1,7 +1,9 @@
 import { describe, expect, test, vi } from "vitest";
+import { LRUCache } from "lru-cache";
 import { parseDocumentSource } from "./document-adapter";
 import {
   createCachedDocumentSourceLoader,
+  createMemoryDocumentSourceCache,
   getDocumentSourceCacheKey,
   type CachedDocumentSource,
 } from "./cached-document-loader";
@@ -14,6 +16,21 @@ const node = {
 };
 
 describe("cached document source loader", () => {
+  test("exposes the byte-bounded memory cache as an LRU", () => {
+    const cache = createMemoryDocumentSourceCache({ maximumBytes: 2 });
+    const source: CachedDocumentSource = {
+      format: "json",
+      revision: "post-r1",
+      bytes: new TextEncoder().encode("{}"),
+    };
+
+    expect(cache).toBeInstanceOf(LRUCache);
+    cache.set("source", source);
+    expect(cache.get("source")).toBe(source);
+    cache.set("oversized", { ...source, bytes: new Uint8Array(3) });
+    expect(cache.has("oversized")).toBe(false);
+  });
+
   test("supports loader-defined formats", async () => {
     const cache = {
       get: vi.fn(async () => undefined),

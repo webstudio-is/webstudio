@@ -72,12 +72,28 @@ const parseMarketplaceProduct = (serialized: string | null | undefined) => {
   return marketplaceProduct.parse(value);
 };
 
+type ContentEngineBuildRow = Pick<
+  Database["public"]["Tables"]["Build"]["Row"],
+  "props" | "dataSources" | "resources"
+>;
+
+const parseCompactContentEngineData = (build: ContentEngineBuildRow) => {
+  const resources = parseCompactData<Resource>(build.resources);
+  migrateResourcesMutable(resources);
+  return {
+    props: parseCompactData<Prop>(build.props),
+    dataSources: parseCompactData<unknown>(build.dataSources).map((value) =>
+      dataSource.parse(value)
+    ),
+    resources,
+  } satisfies Pick<CompactBuild, "props" | "dataSources" | "resources">;
+};
+
 const parseCompactBuild = async (
   build: Database["public"]["Tables"]["Build"]["Row"]
 ) => {
   const pages = migratePages(parseConfig<unknown>(build.pages));
-  const resources = parseCompactData<Resource>(build.resources);
-  migrateResourcesMutable(resources);
+  const contentEngineData = parseCompactContentEngineData(build);
   const parsedProjectSettings =
     build.projectSettings === undefined || build.projectSettings === null
       ? createProjectSettingsFromPages(pages)
@@ -96,11 +112,7 @@ const parseCompactBuild = async (
     styleSourceSelections: parseCompactData<StyleSourceSelection>(
       build.styleSourceSelections
     ),
-    props: parseCompactData<Prop>(build.props),
-    dataSources: parseCompactData<unknown>(build.dataSources).map((value) =>
-      dataSource.parse(value)
-    ),
-    resources,
+    ...contentEngineData,
     instances: parseCompactInstanceData(build.instances),
     deployment: parseDeployment(build.deployment),
     marketplaceProduct: parseMarketplaceProduct(build.marketplaceProduct),
@@ -158,15 +170,19 @@ export const loadBuildById = async (context: AppContext, id: Build["id"]) => {
 
 export const loadDevBuildByProjectId = async (
   context: AppContext,
-  projectId: Build["projectId"]
+  projectId: Build["projectId"],
+  signal?: AbortSignal
 ) => {
-  const build = await context.postgrest.client
+  const query = context.postgrest.client
     .from("Build")
     .select("*")
     .eq("projectId", projectId)
     .is("deployment", null)
     .order("createdAt", { ascending: false })
     .limit(1);
+  const build = await (signal === undefined
+    ? query
+    : query.abortSignal(signal));
   // .single(); Note: Single response is not compressed. Uncomment the following line once the issue is resolved: https://github.com/orgs/supabase/discussions/28757
 
   if (build.error) {
@@ -177,7 +193,33 @@ export const loadDevBuildByProjectId = async (
     throw new Error("No dev build found");
   }
 
+  signal?.throwIfAborted();
   return parseCompactBuild(build.data[0]);
+};
+
+export const loadDevBuildContentEngineDataByProjectId = async (
+  context: AppContext,
+  projectId: Build["projectId"],
+  signal?: AbortSignal
+) => {
+  const query = context.postgrest.client
+    .from("Build")
+    .select("props,dataSources,resources")
+    .eq("projectId", projectId)
+    .is("deployment", null)
+    .order("createdAt", { ascending: false })
+    .limit(1);
+  const build = await (signal === undefined
+    ? query
+    : query.abortSignal(signal));
+  if (build.error) {
+    throw build.error;
+  }
+  if (build.data.length === 0) {
+    throw new Error("No dev build found");
+  }
+  signal?.throwIfAborted();
+  return parseCompactContentEngineData(build.data[0]);
 };
 
 export const loadApprovedProdBuildByProjectId = async (

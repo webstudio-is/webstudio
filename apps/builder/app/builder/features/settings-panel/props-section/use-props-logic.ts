@@ -1,9 +1,20 @@
-import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
+import type {
+  PropMeta,
+  Instance,
+  Prop,
+  Props,
+  WsComponentMeta,
+} from "@webstudio-is/sdk";
 import { descendantComponent } from "@webstudio-is/sdk";
 import {
+  canHaveTextContent,
+  createStartingPropValueFromMeta,
+  getDefaultPropMetaForType,
   getContentModeCapabilities,
+  isRichText,
+  isRichTextTree,
+  showAttributeMeta,
   type ContentModeCapabilities,
 } from "@webstudio-is/project-build/runtime";
 import {
@@ -19,21 +30,13 @@ import {
 import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";
 import { $styleSources } from "~/shared/sync/data-stores";
-import {
-  isRichText,
-  isRichTextTree,
-} from "@webstudio-is/project-build/runtime";
-import {
-  createStartingPropValueFromMeta,
-  getDefaultPropMetaForType,
-  showAttributeMeta,
-} from "@webstudio-is/project-build/runtime";
 import { $selectedInstancePath } from "~/shared/nano-states";
 import {
   $selectedInstanceInitialPropNames,
   $selectedInstancePropsMetas,
   type PropValue,
 } from "../shared";
+import { getEditableTextTarget } from "@webstudio-is/project-build/runtime";
 
 type PropOrName = { prop?: Prop; propName: string };
 
@@ -100,40 +103,49 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
   return value;
 };
 
+const canShowTextContent = ({
+  instance,
+  instanceSelector,
+  instances,
+  props,
+  metas,
+  isContentMode,
+}: {
+  instance: Instance;
+  instanceSelector: Instance["id"][] | undefined;
+  instances: Map<Instance["id"], Instance>;
+  props: Props;
+  metas: Map<string, WsComponentMeta>;
+  isContentMode: boolean;
+}) => {
+  const target = getEditableTextTarget(instance);
+  if (
+    instanceSelector === undefined ||
+    (instance.children.length > 0 && target === undefined)
+  ) {
+    return false;
+  }
+  const input = {
+    instanceId: instanceSelector[0],
+    instances,
+    props,
+    metas,
+  };
+  if (
+    (isContentMode
+      ? isRichTextTree(input)
+      : isRichText({ ...input, instanceSelector })) === true
+  ) {
+    return true;
+  }
+  return canHaveTextContent(input);
+};
+
 export const __testing__ = {
   isPropVisibleInContentMode,
   getAndDelete,
+  canShowTextContent,
 };
-
-const $canHaveTextContent = computed(
-  [
-    $instances,
-    $props,
-    $registeredComponentMetas,
-    $selectedInstancePath,
-    $isContentMode,
-  ],
-  (instances, props, metas, instancePath, isContentMode) => {
-    if (instancePath === undefined) {
-      return false;
-    }
-    const [{ instanceSelector }] = instancePath;
-    if (isContentMode) {
-      return isRichTextTree({
-        instanceId: instanceSelector[0],
-        instances,
-        props,
-        metas,
-      });
-    }
-    return isRichText({
-      instances,
-      props,
-      metas,
-      instanceSelector,
-    });
-  }
-);
 
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
@@ -196,19 +208,17 @@ export const usePropsLogic = ({
     });
   }
 
-  const canHaveTextContent = useStore($canHaveTextContent);
   const getTextContentTarget = () => {
-    const canEditChildren = (target: Instance) => {
-      const hasNoChildren = target.children.length === 0;
-      const hasOnlyTextChild =
-        target.children.length === 1 && target.children[0].type === "text";
-      const hasOnlyExpressionChild =
-        target.children.length === 1 &&
-        target.children[0].type === "expression";
-      return hasNoChildren || hasOnlyTextChild || hasOnlyExpressionChild;
-    };
-
-    if (canHaveTextContent && canEditChildren(instance)) {
+    if (
+      canShowTextContent({
+        instance,
+        instanceSelector: selectedInstancePath?.[0].instanceSelector,
+        instances,
+        props: allProps,
+        metas,
+        isContentMode,
+      })
+    ) {
       return {
         instanceId: instance.id,
         instanceSelector: selectedInstancePath?.[0].instanceSelector,
@@ -221,7 +231,8 @@ export const usePropsLogic = ({
         const childInstance = instances.get(child.value);
         if (
           childInstance?.component === "Text" &&
-          canEditChildren(childInstance)
+          (childInstance.children.length === 0 ||
+            getEditableTextTarget(childInstance) !== undefined)
         ) {
           return {
             instanceId: childInstance.id,

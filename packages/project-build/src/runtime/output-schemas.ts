@@ -509,7 +509,7 @@ export const runtimeOutputSchemas = {
   }),
   "instances.setTextContent": looseObject({
     instanceId: id,
-    operation: z.enum(["set", "reset"]),
+    operation: z.enum(["set", "reset", "inlineExpressions"]),
     mode: z.enum(["text", "expression"]).optional(),
     warnings: expressionWarnings.optional(),
   }),

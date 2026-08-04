@@ -1,6 +1,6 @@
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
-import type { WsComponentMeta } from "@webstudio-is/sdk";
+import type { ComponentBuildHook, WsComponentMeta } from "@webstudio-is/sdk";
 
 export type FrameworkOptions = { preserveTemplates?: boolean };
 export const routeTemplatesDirectory = join("app", "route-templates");
@@ -23,6 +23,7 @@ export type Framework = {
   metas: Record<string, WsComponentMeta>;
   // instance.component: "importSource:importSpecifier"
   components: Record<string, string>;
+  componentBuildHooks: ComponentBuildHook[];
   // instance.tag: "importSource:importSpecifier"
   tags: Record<string, string>;
   html: (params: {

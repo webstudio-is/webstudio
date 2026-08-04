@@ -34,7 +34,10 @@
     "wrangler": "^4.14.1",
     "@webstudio-is/wsauth": "workspace:*",
     "@react-router/node": "^7.5.3",
-    "@react-router/serve": "^7.5.3"
+    "@react-router/serve": "^7.5.3",
+    "@shikijs/langs": "4.4.1",
+    "@shikijs/themes": "4.4.1",
+    "shiki": "4.4.1"
   },
   "type": "module",
   "private": true,

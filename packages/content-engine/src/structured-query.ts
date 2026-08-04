@@ -34,6 +34,11 @@ import { appendAssetFieldPath } from "./canonical";
 import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
 import { getUtf8ByteLength } from "./byte-stream";
 import type { MarkdownAssetReferences } from "./markdown-references";
+import {
+  getRuntimeAssetUrls,
+  resolveAssetValueReferences,
+  type AssetValueReferences,
+} from "./asset-value-references";
 
 export type AssetRuntimeData = {
   url: string;
@@ -262,14 +267,30 @@ export const matchesAssetQueryFilter = (
   return compared <= 0;
 };
 
-const matchesAssetQueryWhere = (
-  document: ContentDatabaseDocument,
-  where: AssetQueryWhere,
-  runtimeAsset?: AssetRuntimeData
-): boolean =>
-  evaluateQueryWhere(where, (filter) =>
-    matchesAssetQueryFilter(document, filter, runtimeAsset)
-  ) === true;
+const matchesAssetQueryWhere = ({
+  document,
+  where,
+  runtimeAsset,
+  filterKeys,
+  filterResults,
+}: {
+  document: ContentDatabaseDocument;
+  where: AssetQueryWhere;
+  runtimeAsset?: AssetRuntimeData;
+  filterKeys: ReadonlyMap<AssetQueryFilter, string>;
+  filterResults: Map<string, boolean>;
+}): boolean =>
+  evaluateQueryWhere(where, (filter) => {
+    const key =
+      filterKeys.get(filter) ?? serializeJsonDeterministically(filter);
+    const cached = filterResults.get(key);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const matched = matchesAssetQueryFilter(document, filter, runtimeAsset);
+    filterResults.set(key, matched);
+    return matched;
+  }) === true;
 
 export const supportsAssetQueryContent = ({
   document,
@@ -418,13 +439,324 @@ export const assertAssetQueryResultSize = (result: AssetQueryResult) => {
   }
 };
 
-export const executeAssetQuery = async ({
-  query: input,
+type AssetQueryMatch = {
+  document: ContentDatabaseDocument;
+  item: AssetQueryResult["items"][number];
+};
+
+type AssetQuerySortGroup = {
+  sort: AssetQuery["sort"];
+  documents: Set<ContentDatabaseDocument>;
+  sorted: readonly ContentDatabaseDocument[];
+};
+
+type PreparedAssetQuery = {
+  index: number;
+  query: AssetQuery;
+  matches: Map<ContentDatabaseDocument, AssetQueryMatch>;
+  sortGroup: AssetQuerySortGroup;
+};
+
+type AssetQuerySettlements = Array<
+  PromiseSettledResult<AssetQueryResult> | undefined
+>;
+
+const rejectAssetQuery = (
+  results: AssetQuerySettlements,
+  index: number,
+  reason: unknown
+) => {
+  results[index] = { status: "rejected", reason };
+};
+
+const prepareAssetQueries = ({
+  inputs,
+  catalog,
+  results,
+}: {
+  inputs: readonly AssetQueryInput[];
+  catalog?: BuilderAssetFieldCatalog;
+  results: AssetQuerySettlements;
+}) => {
+  // Canonical keys share pure filter evaluation and sorting work only. Matches,
+  // pagination, hydration, and settlement remain owned by each query.
+  const sortGroups = new Map<string, AssetQuerySortGroup>();
+  const filterKeys = new Map<AssetQueryFilter, string>();
+  const preparedQueries: PreparedAssetQuery[] = [];
+
+  for (const [index, input] of inputs.entries()) {
+    let query: AssetQuery;
+    try {
+      query = validateAssetQueryAgainstCatalog({ query: input, catalog }).query;
+    } catch (error) {
+      rejectAssetQuery(results, index, error);
+      continue;
+    }
+
+    for (const filter of getQueryConditions(query.where)) {
+      filterKeys.set(filter, serializeJsonDeterministically(filter));
+    }
+
+    const sortKey = serializeJsonDeterministically(query.sort);
+    let sortGroup = sortGroups.get(sortKey);
+    if (sortGroup === undefined) {
+      sortGroup = { sort: query.sort, documents: new Set(), sorted: [] };
+      sortGroups.set(sortKey, sortGroup);
+    }
+    preparedQueries.push({
+      index,
+      query,
+      matches: new Map(),
+      sortGroup,
+    });
+  }
+
+  return { filterKeys, preparedQueries, sortGroups };
+};
+
+const rejectPreparedAssetQueries = ({
+  preparedQueries,
+  results,
+  createReason,
+}: {
+  preparedQueries: readonly PreparedAssetQuery[];
+  results: AssetQuerySettlements;
+  createReason: () => unknown;
+}) => {
+  for (const { index } of preparedQueries) {
+    rejectAssetQuery(results, index, createReason());
+  }
+};
+
+const requireSettledAssetQueryResults = (results: AssetQuerySettlements) =>
+  results.map((result) => {
+    if (result === undefined) {
+      throw new Error("Asset query result was not settled");
+    }
+    return result;
+  });
+
+const scanAndSortAssetQueryDocuments = ({
+  preparedQueries,
+  documents,
+  filterKeys,
+  sortGroups,
+  results,
+  runtimeAssets,
+}: {
+  preparedQueries: readonly PreparedAssetQuery[];
+  documents: readonly ContentDatabaseDocument[];
+  filterKeys: ReadonlyMap<AssetQueryFilter, string>;
+  sortGroups: ReadonlyMap<string, AssetQuerySortGroup>;
+  results: AssetQuerySettlements;
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+}) => {
+  for (const document of documents) {
+    const runtimeAsset = runtimeAssets?.[document._id];
+    const filterResults = new Map<string, boolean>();
+    for (const state of preparedQueries) {
+      if (results[state.index] !== undefined) {
+        continue;
+      }
+      const { query } = state;
+      try {
+        if (
+          supportsAssetQueryContent({ document, content: query.content }) ===
+            false ||
+          matchesAssetQueryWhere({
+            document,
+            where: query.where,
+            runtimeAsset,
+            filterKeys,
+            filterResults,
+          }) === false
+        ) {
+          continue;
+        }
+        const projected = toQueryItem(document, query.output, runtimeAsset);
+        if (
+          query.content.mode === "none" &&
+          Object.keys(projected).length === 0 &&
+          includesOutputField(query.output, "id") === false
+        ) {
+          continue;
+        }
+        const match = {
+          document,
+          item: { id: document._id, ...projected },
+        } satisfies AssetQueryMatch;
+        state.matches.set(document, match);
+        state.sortGroup.documents.add(document);
+      } catch (error) {
+        rejectAssetQuery(results, state.index, error);
+      }
+    }
+  }
+
+  for (const group of sortGroups.values()) {
+    group.sorted = [...group.documents].sort((left, right) =>
+      compareAssetQueryDocumentsWithRuntime({
+        left,
+        right,
+        sort: group.sort,
+        runtimeAssets,
+      })
+    );
+  }
+};
+
+const finalizeAssetQueries = async ({
+  preparedQueries,
+  results,
+  read,
+  assetReferences,
+  assetUrls,
+}: {
+  preparedQueries: readonly PreparedAssetQuery[];
+  results: AssetQuerySettlements;
+  read?: AssetResourceContentReader;
+  assetReferences?: MarkdownAssetReferences;
+  assetUrls: Readonly<Record<string, string>>;
+}) => {
+  await Promise.all(
+    preparedQueries.map(async (state) => {
+      if (results[state.index] !== undefined) {
+        return;
+      }
+      const { query } = state;
+      try {
+        const matched = state.sortGroup.sorted.flatMap((document) => {
+          const match = state.matches.get(document);
+          return match === undefined ? [] : [match];
+        });
+        const selected = matched.slice(
+          query.offset,
+          query.offset + query.limit
+        );
+        const selectedDocuments = selected.map(({ document }) => document);
+        let items = selected.map(({ item }) => item);
+        if (query.content.mode !== "none") {
+          const contentOptions = query.content;
+          if (read === undefined) {
+            throw new AssetQueryExecutionError(
+              "Asset content reader is unavailable"
+            );
+          }
+          const hydrated = await hydrateAssetResourceResult({
+            result: selectedDocuments,
+            documents: selectedDocuments,
+            options: contentOptions,
+            read,
+            assetReferences,
+            assetUrls: assetReferences === undefined ? undefined : assetUrls,
+          });
+          items = selectedDocuments.map((document, index) => {
+            const content = hydrated.content[document._id];
+            if (content === undefined) {
+              throw new AssetQueryExecutionError(
+                "Selected asset content could not be read"
+              );
+            }
+            return {
+              ...items[index],
+              content: {
+                encoding: content.encoding,
+                text: content.text,
+                ...(content.range === undefined
+                  ? {}
+                  : { range: content.range }),
+              },
+            };
+          });
+        }
+        const result = {
+          items,
+          totalCount: matched.length,
+          hasMore: query.offset + selected.length < matched.length,
+        } satisfies AssetQueryResult;
+        assertAssetQueryResultSize(result);
+        results[state.index] = { status: "fulfilled", value: result };
+      } catch (error) {
+        rejectAssetQuery(results, state.index, error);
+      }
+    })
+  );
+};
+
+export const executeAssetQueries = async ({
+  queries: inputs,
   catalog,
   documents,
   read,
   runtimeAssets,
   assetReferences,
+  assetValueReferences,
+}: {
+  queries: readonly AssetQueryInput[];
+  catalog?: BuilderAssetFieldCatalog;
+  documents: readonly ContentDatabaseDocument[];
+  read?: AssetResourceContentReader;
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+  assetReferences?: MarkdownAssetReferences;
+  assetValueReferences?: AssetValueReferences;
+}): Promise<PromiseSettledResult<AssetQueryResult>[]> => {
+  const results: AssetQuerySettlements = Array.from({ length: inputs.length });
+  const { filterKeys, preparedQueries, sortGroups } = prepareAssetQueries({
+    inputs,
+    catalog,
+    results,
+  });
+
+  if (documents.length > contentEngineLimits.candidateDocuments) {
+    rejectPreparedAssetQueries({
+      preparedQueries,
+      results,
+      createReason: () =>
+        new AssetQueryExecutionError("Asset query document limit was exceeded"),
+    });
+    return requireSettledAssetQueryResults(results);
+  }
+
+  const assetUrls = getRuntimeAssetUrls(runtimeAssets);
+  let resolvedDocuments: readonly ContentDatabaseDocument[];
+  try {
+    resolvedDocuments = documents.map((document) =>
+      resolveAssetValueReferences({
+        value: document,
+        references: assetValueReferences?.[document._id],
+        assetUrls,
+      })
+    );
+  } catch (error) {
+    rejectPreparedAssetQueries({
+      preparedQueries,
+      results,
+      createReason: () => error,
+    });
+    return requireSettledAssetQueryResults(results);
+  }
+
+  scanAndSortAssetQueryDocuments({
+    preparedQueries,
+    documents: resolvedDocuments,
+    filterKeys,
+    sortGroups,
+    results,
+    runtimeAssets,
+  });
+  await finalizeAssetQueries({
+    preparedQueries,
+    results,
+    read,
+    assetReferences,
+    assetUrls,
+  });
+  return requireSettledAssetQueryResults(results);
+};
+
+export const executeAssetQuery = async ({
+  query,
+  ...input
 }: {
   query: AssetQueryInput;
   catalog?: BuilderAssetFieldCatalog;
@@ -432,86 +764,14 @@ export const executeAssetQuery = async ({
   read?: AssetResourceContentReader;
   runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   assetReferences?: MarkdownAssetReferences;
+  assetValueReferences?: AssetValueReferences;
 }): Promise<AssetQueryResult> => {
-  const { query } = validateAssetQueryAgainstCatalog({ query: input, catalog });
-  if (documents.length > contentEngineLimits.candidateDocuments) {
-    throw new AssetQueryExecutionError(
-      "Asset query document limit was exceeded"
-    );
-  }
-  const matched = documents.flatMap((document) => {
-    const runtimeAsset = runtimeAssets?.[document._id];
-    if (
-      supportsAssetQueryContent({ document, content: query.content }) ===
-        false ||
-      matchesAssetQueryWhere(document, query.where, runtimeAsset) === false
-    ) {
-      return [];
-    }
-    const item = toQueryItem(document, query.output, runtimeAsset);
-    if (
-      query.content.mode === "none" &&
-      Object.keys(item).length === 0 &&
-      includesOutputField(query.output, "id") === false
-    ) {
-      return [];
-    }
-    return [{ document, item: { id: document._id, ...item } }];
+  const [result] = await executeAssetQueries({
+    ...input,
+    queries: [query],
   });
-  const sorted = [...matched].sort((left, right) =>
-    compareAssetQueryDocumentsWithRuntime({
-      left: left.document,
-      right: right.document,
-      sort: query.sort,
-      runtimeAssets,
-    })
-  );
-  const selected = sorted.slice(query.offset, query.offset + query.limit);
-  const selectedDocuments = selected.map(({ document }) => document);
-  let items = selected.map(({ item }) => item);
-  if (query.content.mode !== "none") {
-    const contentOptions = query.content;
-    if (read === undefined) {
-      throw new AssetQueryExecutionError("Asset content reader is unavailable");
-    }
-    const hydrated = await hydrateAssetResourceResult({
-      result: selectedDocuments,
-      documents: selectedDocuments,
-      options: contentOptions,
-      read,
-      assetReferences,
-      assetUrls:
-        assetReferences === undefined
-          ? undefined
-          : Object.fromEntries(
-              Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [
-                id,
-                asset.url,
-              ])
-            ),
-    });
-    items = selectedDocuments.map((document, index) => {
-      const content = hydrated.content[document._id];
-      if (content === undefined) {
-        throw new AssetQueryExecutionError(
-          "Selected asset content could not be read"
-        );
-      }
-      return {
-        ...items[index],
-        content: {
-          encoding: content.encoding,
-          text: content.text,
-          ...(content.range === undefined ? {} : { range: content.range }),
-        },
-      };
-    });
+  if (result.status === "rejected") {
+    throw result.reason;
   }
-  const result = {
-    items,
-    totalCount: matched.length,
-    hasMore: query.offset + selected.length < matched.length,
-  } satisfies AssetQueryResult;
-  assertAssetQueryResultSize(result);
-  return result;
+  return result.value;
 };

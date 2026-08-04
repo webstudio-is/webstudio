@@ -107,7 +107,7 @@ export const BindableExpressionControl = <Value,>({
   parseValue?: (value: Value) => unknown;
   onChangeValue: (value: Value) => void;
   onChangeExpression: (expression: string) => void;
-  onRemove: (evaluatedValue: unknown) => void;
+  onRemove?: (evaluatedValue: unknown) => void;
   bindingState?: BindingState;
 }) => {
   if (bindingState === undefined) {

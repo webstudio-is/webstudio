@@ -23,6 +23,11 @@ export * from "./core-metas";
 export * from "./instances-utils";
 export * from "./page-utils";
 export * from "./scope";
+export type {
+  ComponentBuildContribution,
+  ComponentBuildHook,
+  ComponentBuildImport,
+} from "./component-build";
 export * from "./expression";
 export * from "./resources-generator";
 export * from "./page-meta-generator";

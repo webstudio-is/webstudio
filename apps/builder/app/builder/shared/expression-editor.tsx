@@ -9,6 +9,7 @@ import {
   WidgetType,
   ViewPlugin,
   keymap,
+  lineNumbers,
   EditorView,
   tooltips,
 } from "@codemirror/view";
@@ -40,6 +41,7 @@ import {
   EditorDialogButton,
   EditorDialogControl,
   type EditorApi,
+  foldGutterExtension,
   getCodeEditorCssVars,
   normalizeEditorValue,
 } from "~/shared/code-editor-base";
@@ -670,6 +672,10 @@ export const ExpressionEditor = ({
     ],
     [scopeWithUnsetVariables, aliasesWithUnsetVariables, size]
   );
+  const dialogExtensions = useMemo(
+    () => [...extensions, lineNumbers(), foldGutterExtension],
+    [extensions]
+  );
 
   // prevent clicking on autocomplete options propagating to body
   // and closing dialogs and popovers
@@ -689,6 +695,20 @@ export const ExpressionEditor = ({
     };
   }, []);
 
+  const handleChange = (newValue: string) => {
+    const expressionWithRestoredVariables = restoreExpressionVariables({
+      expression: newValue,
+      maskedIdByName: idByName,
+    });
+    onChange(expressionWithRestoredVariables);
+  };
+  const handleChangeComplete = (newValue: string) => {
+    const expressionWithRestoredVariables = restoreExpressionVariables({
+      expression: newValue,
+      maskedIdByName: idByName,
+    });
+    onChangeComplete(expressionWithRestoredVariables);
+  };
   const content = (
     <EditorContent
       aria-label={ariaLabel}
@@ -699,20 +719,8 @@ export const ExpressionEditor = ({
       readOnly={readOnly}
       autoFocus={autoFocus}
       value={expressionWithUnsetVariables}
-      onChange={(newValue: string) => {
-        const expressionWithRestoredVariables = restoreExpressionVariables({
-          expression: newValue,
-          maskedIdByName: idByName,
-        });
-        onChange(expressionWithRestoredVariables);
-      }}
-      onChangeComplete={(newValue: string) => {
-        const expressionWithRestoredVariables = restoreExpressionVariables({
-          expression: newValue,
-          maskedIdByName: idByName,
-        });
-        onChangeComplete(expressionWithRestoredVariables);
-      }}
+      onChange={handleChange}
+      onChangeComplete={handleChangeComplete}
     />
   );
 
@@ -724,7 +732,24 @@ export const ExpressionEditor = ({
     <div className={wrapperStyle({ size })}>
       <EditorDialogControl>
         {content}
-        <EditorDialog title="Expression Editor" content={content}>
+        <EditorDialog
+          title="Expression editor"
+          contentPadding={false}
+          content={
+            <EditorContent
+              aria-label={ariaLabel}
+              editorApiRef={editorApiRef}
+              extensions={dialogExtensions}
+              invalid={color === "error"}
+              chromeless
+              readOnly={readOnly}
+              autoFocus={autoFocus}
+              value={expressionWithUnsetVariables}
+              onChange={handleChange}
+              onChangeComplete={handleChangeComplete}
+            />
+          }
+        >
           <EditorDialogButton />
         </EditorDialog>
       </EditorDialogControl>

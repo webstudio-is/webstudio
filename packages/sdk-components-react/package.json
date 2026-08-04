@@ -23,6 +23,26 @@
       "types": "./lib/types/components.d.ts",
       "import": "./lib/components.js"
     },
+    "./code-text": {
+      "webstudio": "./src/code-text/index.tsx",
+      "types": "./lib/types/code-text/index.d.ts",
+      "import": "./lib/code-text/index.js"
+    },
+    "./code-text/build": {
+      "webstudio": "./src/code-text/build.ts",
+      "types": "./lib/types/code-text/build.d.ts",
+      "import": "./lib/code-text/build.js"
+    },
+    "./build-hooks": {
+      "webstudio": "./src/build-hooks.ts",
+      "types": "./lib/types/build-hooks.d.ts",
+      "import": "./lib/build-hooks.js"
+    },
+    "./canvas-components": {
+      "webstudio": "./src/canvas-components.ts",
+      "types": "./lib/types/canvas-components.d.ts",
+      "import": "./lib/canvas-components.js"
+    },
     "./metas": {
       "webstudio": "./src/metas.ts",
       "types": "./lib/types/metas.d.ts",
@@ -46,7 +66,7 @@
   },
   "scripts": {
     "build": "vite build --config ../../vite.sdk-components.config.ts",
-    "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.test.{ts,tsx} !./src/*.ws.ts !./src/*.ws.ts !./src/*.template.tsx' && oxfmt \"**/*.props.ts\"",
+    "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.test.{ts,tsx} !./src/*.ws.ts !./src/*.template.tsx' && oxfmt \"**/*.props.ts\"",
     "build:stories": "tsx --conditions=webstudio src/generate-stories.ts && oxfmt \"src/__generated__/*.stories.tsx\"",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
@@ -58,6 +78,8 @@
   },
   "dependencies": {
     "@react-aria/utils": "^3.27.0",
+    "@shikijs/langs": "4.4.1",
+    "@shikijs/themes": "4.4.1",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
@@ -65,13 +87,15 @@
     "await-interaction-response": "^0.0.2",
     "colord": "^2.9.3",
     "github-slugger": "2.0.0",
+    "hast-util-to-jsx-runtime": "^2.3.6",
     "mdast-util-from-markdown": "2.0.3",
     "mdast-util-frontmatter": "2.0.1",
     "mdast-util-to-string": "4.0.0",
     "micromark": "^4.0.2",
     "micromark-extension-frontmatter": "2.0.0",
     "micromark-extension-gfm": "^3.0.0",
-    "sanitize-html": "2.17.6"
+    "sanitize-html": "2.17.6",
+    "shiki": "4.4.1"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",

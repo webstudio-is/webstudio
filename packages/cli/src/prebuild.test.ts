@@ -15,8 +15,14 @@ import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import {
+  defaultTreeAdapter,
+  parse as parseHtml,
+  type DefaultTreeAdapterMap,
+} from "parse5";
+import { build } from "esbuild";
 import { bundleVersion } from "@webstudio-is/protocol";
-import type { Asset } from "@webstudio-is/sdk";
+import type { Asset, Instance, Prop } from "@webstudio-is/sdk";
 import {
   createDocumentGraph,
   type AssetFileDocument,
@@ -124,6 +130,45 @@ const getFilePaths = async (dir: string): Promise<string[]> => {
   return paths.flat();
 };
 
+const getImportSources = async (source: string) => {
+  const result = await build({
+    stdin: { contents: source, loader: "tsx" },
+    bundle: false,
+    format: "esm",
+    metafile: true,
+    write: false,
+  });
+  return Object.values(result.metafile.outputs).flatMap((output) =>
+    output.imports.map(({ path }) => path)
+  );
+};
+
+const findElementsByTagName = (
+  node: DefaultTreeAdapterMap["node"],
+  tagName: string
+): DefaultTreeAdapterMap["element"][] => {
+  const elements: DefaultTreeAdapterMap["element"][] = [];
+  if (defaultTreeAdapter.isElementNode(node) && node.tagName === tagName) {
+    elements.push(node);
+  }
+  if ("childNodes" in node) {
+    for (const child of node.childNodes) {
+      elements.push(...findElementsByTagName(child, tagName));
+    }
+  }
+  return elements;
+};
+
+const getTextContent = (node: DefaultTreeAdapterMap["node"]): string => {
+  if (defaultTreeAdapter.isTextNode(node)) {
+    return node.value;
+  }
+  if ("childNodes" in node) {
+    return node.childNodes.map(getTextContent).join("");
+  }
+  return "";
+};
+
 const createSiteData = (
   overrides: {
     assets?: Asset[];
@@ -136,18 +181,8 @@ const createSiteData = (
       meta: Record<string, unknown>;
       isDraft?: boolean;
     }>;
-    instances?: Array<
-      [
-        string,
-        {
-          type?: "instance";
-          id: string;
-          component: string;
-          tag?: string;
-          children: Array<{ type: "id"; value: string }>;
-        },
-      ]
-    >;
+    instances?: Array<[string, Omit<Instance, "type">]>;
+    props?: Array<[string, Prop]>;
     pageMeta?: Record<string, unknown>;
     redirects?: Redirects;
   } = {}
@@ -227,7 +262,7 @@ const createSiteData = (
           },
         ],
       },
-      props: [],
+      props: overrides.props ?? [],
       instances: (
         overrides.instances ?? [
           [
@@ -248,6 +283,62 @@ const createSiteData = (
       breakpoints: [],
     },
   };
+};
+
+const createCodeTextSiteData = (
+  selections: Array<{
+    id: string;
+    code?: string;
+    language?: string | { type: "expression"; value: string };
+    theme?: string | { type: "expression"; value: string };
+    lang?: string;
+    children?: Instance["children"];
+  }>
+) => {
+  const instances: Array<[string, Omit<Instance, "type">]> = [
+    [
+      "root",
+      {
+        id: "root",
+        component: "Box",
+        children: selections.map(({ id }) => ({ type: "id", value: id })),
+      },
+    ],
+  ];
+  const props: Array<[string, Prop]> = [];
+  for (const selection of selections) {
+    instances.push([
+      selection.id,
+      {
+        id: selection.id,
+        component: "CodeText",
+        children: selection.children ?? [],
+      },
+    ]);
+    for (const [name, value] of [
+      ["code", selection.code],
+      ["language", selection.language],
+      ["theme", selection.theme],
+      ["lang", selection.lang],
+    ] as const) {
+      if (value === undefined) {
+        continue;
+      }
+      const id = `${selection.id}-${name}`;
+      props.push([
+        id,
+        {
+          id,
+          instanceId: selection.id,
+          name,
+          ...(typeof value === "string"
+            ? { type: "string" as const, value }
+            : value),
+        },
+      ]);
+    }
+  }
+  return createSiteData({ instances, props });
 };
 
 const writeSiteData = async (
@@ -636,6 +727,216 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test("imports only configured Code Text language and theme assets", async () => {
+    await writeSiteData(
+      createCodeTextSiteData([
+        {
+          id: "code-1",
+          code: "const answer = 42;",
+          language: "javascript",
+          theme: "github-light",
+        },
+        {
+          id: "code-2",
+          code: "const answer = 42;",
+          language: "javascript",
+          theme: "nord",
+        },
+      ])
+    );
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    const generatedPage = await readFile(
+      "app/__generated__/_index.tsx",
+      "utf8"
+    );
+    const importSources = await getImportSources(generatedPage);
+    expect(
+      importSources.filter((source) => source === "@shikijs/langs/javascript")
+    ).toHaveLength(1);
+    expect(importSources).toEqual(
+      expect.arrayContaining([
+        "@shikijs/themes/github-light",
+        "@shikijs/themes/nord",
+        "@webstudio-is/sdk-components-react/code-text",
+      ])
+    );
+    expect(importSources).not.toContain("@shikijs/langs/css");
+    expect(importSources).not.toContain("@shikijs/themes/dracula");
+  });
+
+  test("generates lazy loaders for bound selections", async () => {
+    await writeSiteData(
+      createCodeTextSiteData([
+        {
+          id: "code-1",
+          code: "const answer = 42;",
+          language: { type: "expression", value: '"javascript"' },
+          theme: { type: "expression", value: '"github-light"' },
+        },
+      ])
+    );
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    const generatedPage = await readFile(
+      "app/__generated__/_index.tsx",
+      "utf8"
+    );
+    const importSources = await getImportSources(generatedPage);
+    expect(importSources).toEqual(
+      expect.arrayContaining(["shiki/langs", "shiki/themes"])
+    );
+    expect(importSources).not.toContain("@shikijs/langs/javascript");
+    expect(importSources).not.toContain("@shikijs/themes/github-light");
+    expect(generatedPage).not.toContain("import.meta.env.SSR");
+    expect(generatedPage).not.toContain("await Promise.all");
+    expect(generatedPage).toContain("suspense: true");
+    expect(generatedPage).toContain("loader?.().then");
+  });
+
+  test("prerenders configured and legacy Code Text in SSG output", async () => {
+    await writeSiteData(
+      createCodeTextSiteData([
+        {
+          id: "code-highlighted",
+          code: "const answer = 42;",
+          language: "javascript",
+          theme: "github-light",
+        },
+        {
+          id: "code-plaintext",
+          code: "plain <value>",
+          language: "plaintext",
+          theme: "nord",
+        },
+        {
+          id: "code-legacy",
+          lang: "en",
+          children: [{ type: "text", value: "legacy <code>" }],
+        },
+      ])
+    );
+
+    await prebuild({ assets: false, template: ["ssg"] });
+
+    const generatedPage = await readFile(
+      "app/__generated__/_index.tsx",
+      "utf8"
+    );
+    const importSources = await getImportSources(generatedPage);
+    expect(importSources).toEqual(
+      expect.arrayContaining([
+        "@shikijs/langs/javascript",
+        "@shikijs/themes/github-light",
+        "@shikijs/themes/nord",
+      ])
+    );
+    expect(importSources).not.toContain("@shikijs/langs/plaintext");
+    expect(importSources).not.toContain("@shikijs/langs/css");
+    expect(importSources).not.toContain("@shikijs/themes/dracula");
+    expect(
+      JSON.parse(await readFile("package.json", "utf8")).dependencies
+    ).toMatchObject({
+      "@shikijs/langs": "4.4.1",
+      "@shikijs/themes": "4.4.1",
+      shiki: "4.4.1",
+    });
+
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["prerender"]);
+
+    const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
+    const codeElements = findElementsByTagName(html, "code");
+    const [highlightedCode, plaintextCode, legacyCode] = codeElements;
+    if (
+      highlightedCode === undefined ||
+      plaintextCode === undefined ||
+      legacyCode === undefined
+    ) {
+      throw new Error("Expected three prerendered Code Text elements");
+    }
+    expect(
+      Object.fromEntries(
+        highlightedCode.attrs.map(({ name, value }) => [name, value])
+      )
+    ).toMatchObject({
+      class: "w-code-text",
+    });
+    expect(
+      Object.fromEntries(
+        highlightedCode.attrs.map(({ name, value }) => [name, value])
+      )
+    ).not.toHaveProperty("tabindex");
+    expect(
+      findElementsByTagName(highlightedCode, "span").length
+    ).toBeGreaterThan(0);
+    expect(getTextContent(highlightedCode)).toBe("const answer = 42;");
+
+    expect(
+      Object.fromEntries(
+        plaintextCode.attrs.map(({ name, value }) => [name, value])
+      )
+    ).toMatchObject({
+      class: "w-code-text",
+      style: expect.stringContaining(
+        "--w-code-text-theme-background:#2e3440ff"
+      ),
+    });
+    expect(getTextContent(plaintextCode)).toBe("plain <value>");
+
+    expect(
+      Object.fromEntries(
+        legacyCode.attrs.map(({ name, value }) => [name, value])
+      )
+    ).toMatchObject({ class: "w-code-text", lang: "en" });
+    expect(findElementsByTagName(legacyCode, "span")).toHaveLength(0);
+    expect(getTextContent(legacyCode)).toBe("legacy <code>");
+  }, 30_000);
+
+  test("prerenders bound Code Text while keeping catalog chunks lazy", async () => {
+    await writeSiteData(
+      createCodeTextSiteData([
+        {
+          id: "code-bound",
+          code: "const answer = 42;",
+          language: { type: "expression", value: '"javascript"' },
+          theme: { type: "expression", value: '"github-light"' },
+        },
+      ])
+    );
+
+    await prebuild({ assets: false, template: ["ssg"] });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["prerender"]);
+
+    const htmlSource = await readFile("dist/client/index.html", "utf8");
+    expect(htmlSource).toMatch(/^<!DOCTYPE html><html/);
+    const html = parseHtml(htmlSource);
+    const [codeElement] = findElementsByTagName(html, "code");
+    if (codeElement === undefined) {
+      throw new Error("Expected a prerendered Code Text element");
+    }
+    expect(findElementsByTagName(codeElement, "span").length).toBeGreaterThan(
+      0
+    );
+    expect(getTextContent(codeElement)).toBe("const answer = 42;");
+
+    const clientPaths = await getFilePaths("dist/client");
+    const catalogChunks = clientPaths.filter(
+      (path) => path.includes("/chunks/") && path.endsWith(".js")
+    );
+    expect(catalogChunks.length).toBeGreaterThan(100);
+    const referencedChunks = catalogChunks.filter((chunk) => {
+      const filename = chunk.split("/").at(-1);
+      return filename !== undefined && htmlSource.includes(filename);
+    });
+    expect(referencedChunks).toHaveLength(1);
+  }, 60_000);
+
   test("emits the identity marker only for local previews", async () => {
     await prebuild({
       assets: false,

@@ -7,3 +7,4 @@ export * as notification from "./db/notification";
 export * from "./trpc/project-router";
 export * from "./trpc/workspace-router";
 export * from "./trpc/notification-router";
+export * from "./asset-query-preview.server";

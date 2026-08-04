@@ -1,8 +1,12 @@
 import { BracesIcon } from "@webstudio-is/icons/svg";
 import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { code } from "@webstudio-is/sdk/normalize.css";
-import type { defaultTag } from "./code-text";
-import { props } from "./__generated__/code-text.props";
+import type { defaultTag } from "./base";
+import { codeTextLanguageNames, codeTextThemeNames } from "./options";
+import {
+  codeTextThemeBackgroundVariable,
+  codeTextThemeColorVariable,
+} from "./theme";
 
 const presetStyle = {
   code: [
@@ -28,23 +32,45 @@ const presetStyle = {
       value: { type: "unit", value: 0.2, unit: "em" },
     },
     {
+      property: "color",
+      value: { type: "var", value: codeTextThemeColorVariable },
+    },
+    {
       property: "background-color",
-      value: { type: "rgb", r: 238, g: 238, b: 238, alpha: 1 },
+      value: {
+        type: "var",
+        value: codeTextThemeBackgroundVariable,
+        fallback: { type: "rgb", r: 238, g: 238, b: 238, alpha: 1 },
+      },
     },
   ],
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  deprecated: true,
   icon: BracesIcon,
+  description:
+    "Display source code with syntax highlighting for a selected language and theme.",
   presetStyle,
-  initialProps: ["id", "class", "lang", "code"],
+  initialProps: ["id", "class", "code", "language", "theme"],
   props: {
-    ...props,
     code: {
       required: true,
       control: "codetext",
       type: "string",
+    },
+    language: {
+      label: "Language",
+      required: true,
+      control: "select",
+      type: "string",
+      options: codeTextLanguageNames,
+    },
+    theme: {
+      label: "Theme",
+      required: true,
+      control: "select",
+      type: "string",
+      options: codeTextThemeNames,
     },
   },
 };

@@ -2,7 +2,7 @@ import { FORMAT_TEXT_COMMAND } from "lexical";
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { createCommandsEmitter } from "~/shared/commands-emitter";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
-import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime";
+import { findTextEditorTarget } from "@webstudio-is/project-build/runtime";
 import {
   $allSelectedInstanceSelectors,
   $isContentMode,
@@ -21,12 +21,8 @@ import {
   getActiveEditor,
   hasSelectionFormat,
 } from "../features/text-editor/toolbar-connector";
-import {
-  isDescendantOrSelf,
-  type InstanceSelector,
-} from "@webstudio-is/project-build/runtime";
+import { isDescendantOrSelf } from "@webstudio-is/project-build/runtime";
 import { deleteSelectedInstance } from "~/shared/instance-utils/mutation";
-import { findClosestRichText } from "@webstudio-is/project-build/runtime";
 import { getDeletablePageActionTarget } from "~/shared/page-action-target";
 import { isTextEditableInContentMode } from "./content-mode";
 
@@ -87,7 +83,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           return;
         }
 
-        let editableInstanceSelector = findClosestRichText({
+        const editableInstanceSelector = findTextEditorTarget({
           instanceSelector: selectedInstanceSelector,
           instances: $instances.get(),
           props: $props.get(),
@@ -96,23 +92,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         });
 
         if (editableInstanceSelector === undefined) {
-          const selectors: InstanceSelector[] = [];
-
-          findAllEditableInstanceSelector({
-            instanceSelector: selectedInstanceSelector,
-            instances: $instances.get(),
-            props: $props.get(),
-            metas: $registeredComponentMetas.get(),
-            htmlTagsByInstanceId: $propsIndex.get().htmlTagsByInstanceId,
-            results: selectors,
-          });
-
-          if (selectors.length === 0) {
-            $textEditingInstanceSelector.set(undefined);
-            return;
-          }
-
-          editableInstanceSelector = selectors[0];
+          $textEditingInstanceSelector.set(undefined);
+          return;
         }
 
         if (
