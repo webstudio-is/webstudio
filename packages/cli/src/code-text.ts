@@ -1,37 +1,45 @@
-import type { Instances, Prop, Props } from "@webstudio-is/sdk";
-import { languageNames } from "@shikijs/langs";
-import { themeNames } from "@shikijs/themes";
+import type {
+  Instances,
+  Prop,
+  Props,
+  WsComponentMeta,
+} from "@webstudio-is/sdk";
 
 export const codeTextComponent = "CodeText";
 
 type Selection = {
-  lang?: Prop;
+  language?: Prop;
   theme?: Prop;
 };
 
-const codeTextLanguageSet = new Set<string>(["plaintext", ...languageNames]);
-const codeTextThemeSet = new Set<string>(themeNames);
+const readOptions = (
+  meta: WsComponentMeta | undefined,
+  name: "language" | "theme"
+) => {
+  const propMeta = meta?.props?.[name];
+  if (propMeta?.control !== "select") {
+    throw new Error(`Code Text ${name} metadata must use a select control.`);
+  }
+  return new Set(propMeta.options);
+};
 
 const readSelection = ({
   instanceId,
   label,
   prop,
-  validate,
+  supportedValues,
 }: {
   instanceId: string;
   label: "Language" | "Theme";
-  prop: Prop | undefined;
-  validate: (value: string) => boolean;
+  prop: Prop;
+  supportedValues: ReadonlySet<string>;
 }) => {
-  if (prop === undefined) {
-    return;
-  }
   if (prop.type !== "string") {
     throw new Error(
       `Code Text "${instanceId}" ${label} must be a fixed selection.`
     );
   }
-  if (validate(prop.value) === false) {
+  if (supportedValues.has(prop.value) === false) {
     throw new Error(
       `Code Text "${instanceId}" has an unsupported ${label.toLowerCase()} selection "${prop.value}".`
     );
@@ -42,13 +50,15 @@ const readSelection = ({
 export const collectCodeTextAssets = ({
   instances,
   props,
+  meta,
 }: {
   instances: Instances;
   props: Props;
+  meta: WsComponentMeta | undefined;
 }) => {
   const selections = new Map<string, Selection>();
   for (const prop of props.values()) {
-    if (prop.name !== "lang" && prop.name !== "theme") {
+    if (prop.name !== "language" && prop.name !== "theme") {
       continue;
     }
     const instance = instances.get(prop.instanceId);
@@ -60,40 +70,38 @@ export const collectCodeTextAssets = ({
     selections.set(instance.id, selection);
   }
 
+  if (selections.size === 0) {
+    return;
+  }
+
+  const supportedLanguages = readOptions(meta, "language");
+  const supportedThemes = readOptions(meta, "theme");
   const languages = new Set<string>();
   const themes = new Set<string>();
   for (const [instanceId, selection] of selections) {
-    // Theme did not exist before syntax highlighting. Treat instances without
-    // it as legacy data, including instances that already have an HTML lang.
-    if (selection.theme === undefined) {
-      continue;
+    if (selection.language === undefined || selection.theme === undefined) {
+      throw new Error(
+        `Code Text "${instanceId}" requires both Language and Theme selections.`
+      );
     }
-    const lang = readSelection({
+    const language = readSelection({
       instanceId,
       label: "Language",
-      prop: selection.lang,
-      validate: (value) => codeTextLanguageSet.has(value),
+      prop: selection.language,
+      supportedValues: supportedLanguages,
     });
     const theme = readSelection({
       instanceId,
       label: "Theme",
       prop: selection.theme,
-      validate: (value) => codeTextThemeSet.has(value),
+      supportedValues: supportedThemes,
     });
-    if (lang === undefined || theme === undefined) {
-      throw new Error(
-        `Code Text "${instanceId}" must include fixed Language and Theme selections.`
-      );
-    }
-    if (lang !== "plaintext") {
-      languages.add(lang);
+    if (language !== "plaintext") {
+      languages.add(language);
     }
     themes.add(theme);
   }
 
-  if (themes.size === 0) {
-    return;
-  }
   return {
     languages: [...languages].sort(),
     themes: [...themes].sort(),

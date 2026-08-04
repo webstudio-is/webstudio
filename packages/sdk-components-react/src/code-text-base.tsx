@@ -1,43 +1,45 @@
-import {
-  type ElementRef,
-  type ComponentProps,
-  forwardRef,
-  type ForwardedRef,
-} from "react";
+import { type ElementRef, type ComponentProps, forwardRef } from "react";
 
 export const defaultTag = "code";
 
-const Placeholder = ({
-  innerRef,
-  ...rest
-}: {
-  innerRef: ForwardedRef<HTMLElement>;
-}) => {
-  return (
-    <code {...rest} style={{ padding: 20 }} ref={innerRef}>
-      {`Open the "Settings" panel to edit the code.`}
-    </code>
-  );
+type CodeTextProps = ComponentProps<typeof defaultTag> & {
+  code?: string;
+  language?: string;
+  theme?: string;
 };
 
 export const CodeText = forwardRef<
   ElementRef<typeof defaultTag>,
-  ComponentProps<typeof defaultTag> & { code?: string; theme?: string }
->(({ code, children, lang: _lang, theme: _theme, ...props }, ref) => {
-  // We are supporting children here for historical reasons, because
-  // the first version of this component allowed using any components inside the CodeText
-  // and we didn't want to migrate them to use code, also it's not entirely possible.
-  if (
-    (children === undefined && code === undefined) ||
-    String(code).trim().length === 0
-  ) {
-    return <Placeholder innerRef={ref} {...props} />;
+  CodeTextProps
+>(
+  (
+    {
+      code,
+      children,
+      language: _language,
+      theme: _theme,
+      ...props
+    }: CodeTextProps,
+    ref
+  ) => {
+    // Children are supported for Code Text instances created before the
+    // editable code property was introduced.
+    if (
+      (children === undefined && code === undefined) ||
+      String(code).trim().length === 0
+    ) {
+      return (
+        <code {...props} style={{ padding: 20 }} ref={ref}>
+          {`Open the "Settings" panel to edit the code.`}
+        </code>
+      );
+    }
+    return (
+      <code {...props} ref={ref}>
+        {code ?? children}
+      </code>
+    );
   }
-  return (
-    <code {...props} ref={ref}>
-      {code ?? children}
-    </code>
-  );
-});
+);
 
 CodeText.displayName = "CodeText";

@@ -102,7 +102,7 @@ const blockMeta: TemplateMeta = {
         <$.HtmlEmbed />
         <$.CodeText
           code={'const status = "ready";'}
-          lang="javascript"
+          language="javascript"
           theme="github-light"
         />
       </BlockTemplate>
@@ -192,7 +192,7 @@ const typography: Record<string, TemplateMeta> = {
     template: (
       <$.CodeText
         code={'const status = "ready";'}
-        lang="javascript"
+        language="javascript"
         theme="github-light"
       />
     ),

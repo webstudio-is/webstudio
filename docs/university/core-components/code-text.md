@@ -32,8 +32,9 @@ when the page first loads and after it becomes interactive.
 ## Styling
 
 Apply typography, spacing, border, and background styles in the Style panel.
-The selected theme supplies the syntax token colors and the initial text and
-background colors.
+The selected theme supplies the syntax token colors and initial text and
+background colors. A background set in the Style panel overrides the theme
+background; select another theme to change the syntax colors.
 
 ## Related
 

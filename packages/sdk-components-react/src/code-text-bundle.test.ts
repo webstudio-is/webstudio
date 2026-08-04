@@ -41,6 +41,9 @@ test("bundles only directly selected Shiki assets", async () => {
     inputs.some((path) => path.endsWith("@shikijs/langs/dist/css.mjs"))
   ).toBe(false);
   expect(
+    inputs.some((path) => path.endsWith("@shikijs/langs/dist/index.mjs"))
+  ).toBe(false);
+  expect(
     inputs.some((path) => path.endsWith("@shikijs/themes/dist/dracula.mjs"))
   ).toBe(false);
   expect(inputs.some((path) => path.endsWith("shiki/dist/index.mjs"))).toBe(
@@ -55,4 +58,23 @@ test("keeps Shiki out of plain Code Text bundles", async () => {
   `);
 
   expect(inputs.filter((path) => path.includes("shiki"))).toEqual([]);
+});
+
+test("reads Code Text metadata without bundling Shiki loaders", async () => {
+  const inputs = await getBundleInputs(`
+    import { CodeText } from "@webstudio-is/sdk-components-react/metas";
+    export const options = CodeText.props;
+  `);
+
+  expect(
+    inputs.some((path) => path.includes("shiki/dist/langs-bundle-full"))
+  ).toBe(false);
+  expect(inputs.some((path) => path.includes("@shikijs/core"))).toBe(false);
+  expect(
+    inputs.filter(
+      (path) =>
+        path.includes("@shikijs/langs/dist/") &&
+        path.endsWith("@shikijs/langs/dist/index.mjs") === false
+    )
+  ).toEqual([]);
 });

@@ -1,18 +1,23 @@
 import { expect, test } from "vitest";
-import { languageNames } from "@shikijs/langs";
 import { themeNames } from "@shikijs/themes";
+import { bundledLanguagesInfo } from "shiki/langs";
 import { meta } from "./code-text.ws";
 
 test("exposes static language and theme selections", () => {
   expect(meta.deprecated).toBeUndefined();
-  expect(meta.initialProps).toEqual(["id", "class", "code", "lang", "theme"]);
-  expect(meta.props?.lang).toEqual({
+  expect(meta.initialProps).toEqual([
+    "id",
+    "class",
+    "code",
+    "language",
+    "theme",
+  ]);
+  expect(meta.props?.language).toEqual({
     label: "Language",
     required: true,
     control: "select",
     type: "string",
-    defaultValue: "javascript",
-    options: ["plaintext", ...languageNames],
+    options: ["plaintext", ...bundledLanguagesInfo.map(({ id }) => id)],
     bindable: false,
   });
   expect(meta.props?.theme).toEqual({
@@ -20,8 +25,23 @@ test("exposes static language and theme selections", () => {
     required: true,
     control: "select",
     type: "string",
-    defaultValue: "github-light",
     options: [...themeNames],
     bindable: false,
   });
+  expect(meta.presetStyle?.code).toEqual(
+    expect.arrayContaining([
+      {
+        property: "color",
+        value: { type: "var", value: "w-code-text-theme-color" },
+      },
+      {
+        property: "background-color",
+        value: {
+          type: "var",
+          value: "w-code-text-theme-background",
+          fallback: { type: "rgb", r: 238, g: 238, b: 238, alpha: 1 },
+        },
+      },
+    ])
+  );
 });

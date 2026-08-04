@@ -60,7 +60,7 @@ export const CodeText: TemplateMeta = {
   template: (
     <$.CodeText
       code={'const status = "ready";'}
-      lang="javascript"
+      language="javascript"
       theme="github-light"
     />
   ),

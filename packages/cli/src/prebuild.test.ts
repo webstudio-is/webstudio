@@ -22,7 +22,7 @@ import {
 } from "parse5";
 import { build } from "esbuild";
 import { bundleVersion } from "@webstudio-is/protocol";
-import type { Asset, Prop } from "@webstudio-is/sdk";
+import type { Asset, Instance, Prop } from "@webstudio-is/sdk";
 import {
   createDocumentGraph,
   type AssetFileDocument,
@@ -181,18 +181,7 @@ const createSiteData = (
       meta: Record<string, unknown>;
       isDraft?: boolean;
     }>;
-    instances?: Array<
-      [
-        string,
-        {
-          type?: "instance";
-          id: string;
-          component: string;
-          tag?: string;
-          children: Array<{ type: "id"; value: string }>;
-        },
-      ]
-    >;
+    instances?: Array<[string, Omit<Instance, "type">]>;
     props?: Array<[string, Prop]>;
     pageMeta?: Record<string, unknown>;
     redirects?: Redirects;
@@ -299,21 +288,14 @@ const createSiteData = (
 const createCodeTextSiteData = (
   selections: Array<{
     id: string;
-    code: string;
-    lang: string;
-    theme: string;
+    code?: string;
+    language?: string;
+    theme?: string;
+    lang?: string;
+    children?: Instance["children"];
   }>
 ) => {
-  const instances: Array<
-    [
-      string,
-      {
-        id: string;
-        component: string;
-        children: Array<{ type: "id"; value: string }>;
-      },
-    ]
-  > = [
+  const instances: Array<[string, Omit<Instance, "type">]> = [
     [
       "root",
       {
@@ -330,14 +312,18 @@ const createCodeTextSiteData = (
       {
         id: selection.id,
         component: "CodeText",
-        children: [],
+        children: selection.children ?? [],
       },
     ]);
     for (const [name, value] of [
       ["code", selection.code],
-      ["lang", selection.lang],
+      ["language", selection.language],
       ["theme", selection.theme],
+      ["lang", selection.lang],
     ] as const) {
+      if (value === undefined) {
+        continue;
+      }
       const id = `${selection.id}-${name}`;
       props.push([
         id,
@@ -746,13 +732,13 @@ describe("prebuild", () => {
         {
           id: "code-1",
           code: "const answer = 42;",
-          lang: "javascript",
+          language: "javascript",
           theme: "github-light",
         },
         {
           id: "code-2",
           code: "const answer = 42;",
-          lang: "javascript",
+          language: "javascript",
           theme: "nord",
         },
       ])
@@ -779,14 +765,25 @@ describe("prebuild", () => {
     expect(importSources).not.toContain("@shikijs/themes/dracula");
   });
 
-  test("prerenders highlighted Code Text in SSG output", async () => {
+  test("prerenders configured and legacy Code Text in SSG output", async () => {
     await writeSiteData(
       createCodeTextSiteData([
         {
-          id: "code",
+          id: "code-highlighted",
           code: "const answer = 42;",
-          lang: "javascript",
+          language: "javascript",
           theme: "github-light",
+        },
+        {
+          id: "code-plaintext",
+          code: "plain <value>",
+          language: "plaintext",
+          theme: "nord",
+        },
+        {
+          id: "code-legacy",
+          lang: "en",
+          children: [{ type: "text", value: "legacy <code>" }],
         },
       ])
     );
@@ -802,8 +799,10 @@ describe("prebuild", () => {
       expect.arrayContaining([
         "@shikijs/langs/javascript",
         "@shikijs/themes/github-light",
+        "@shikijs/themes/nord",
       ])
     );
+    expect(importSources).not.toContain("@shikijs/langs/plaintext");
     expect(importSources).not.toContain("@shikijs/langs/css");
     expect(importSources).not.toContain("@shikijs/themes/dracula");
     expect(
@@ -819,22 +818,51 @@ describe("prebuild", () => {
     await runGeneratedCommand("vike", ["prerender"]);
 
     const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
-    const codeElement = findElementsByTagName(html, "code").at(0);
-    if (codeElement === undefined) {
-      throw new Error("Expected prerendered Code Text markup");
+    const codeElements = findElementsByTagName(html, "code");
+    const [highlightedCode, plaintextCode, legacyCode] = codeElements;
+    if (
+      highlightedCode === undefined ||
+      plaintextCode === undefined ||
+      legacyCode === undefined
+    ) {
+      throw new Error("Expected three prerendered Code Text elements");
     }
     expect(
       Object.fromEntries(
-        codeElement.attrs.map(({ name, value }) => [name, value])
+        highlightedCode.attrs.map(({ name, value }) => [name, value])
       )
     ).toMatchObject({
-      tabindex: "0",
       class: "shiki github-light w-code-text",
     });
-    expect(findElementsByTagName(codeElement, "span").length).toBeGreaterThan(
-      0
-    );
-    expect(getTextContent(codeElement)).toBe("const answer = 42;");
+    expect(
+      Object.fromEntries(
+        highlightedCode.attrs.map(({ name, value }) => [name, value])
+      )
+    ).not.toHaveProperty("tabindex");
+    expect(
+      findElementsByTagName(highlightedCode, "span").length
+    ).toBeGreaterThan(0);
+    expect(getTextContent(highlightedCode)).toBe("const answer = 42;");
+
+    expect(
+      Object.fromEntries(
+        plaintextCode.attrs.map(({ name, value }) => [name, value])
+      )
+    ).toMatchObject({
+      class: "shiki nord w-code-text",
+      style: expect.stringContaining(
+        "--w-code-text-theme-background:#2e3440ff"
+      ),
+    });
+    expect(getTextContent(plaintextCode)).toBe("plain <value>");
+
+    expect(
+      Object.fromEntries(
+        legacyCode.attrs.map(({ name, value }) => [name, value])
+      )
+    ).toMatchObject({ class: "w-code-text", lang: "en" });
+    expect(findElementsByTagName(legacyCode, "span")).toHaveLength(0);
+    expect(getTextContent(legacyCode)).toBe("legacy <code>");
   }, 30_000);
 
   test("emits the identity marker only for local previews", async () => {

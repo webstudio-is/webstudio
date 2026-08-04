@@ -1,9 +1,12 @@
 import { BracesIcon } from "@webstudio-is/icons/svg";
 import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
-import { languageNames } from "@shikijs/langs";
-import { themeNames } from "@shikijs/themes";
 import { code } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./code-text-base";
+import { codeTextLanguageNames, codeTextThemeNames } from "./code-text-options";
+import {
+  codeTextThemeBackgroundVariable,
+  codeTextThemeColorVariable,
+} from "./code-text-theme";
 import { props } from "./__generated__/code-text-base.props";
 
 const presetStyle = {
@@ -30,8 +33,16 @@ const presetStyle = {
       value: { type: "unit", value: 0.2, unit: "em" },
     },
     {
+      property: "color",
+      value: { type: "var", value: codeTextThemeColorVariable },
+    },
+    {
       property: "background-color",
-      value: { type: "rgb", r: 238, g: 238, b: 238, alpha: 1 },
+      value: {
+        type: "var",
+        value: codeTextThemeBackgroundVariable,
+        fallback: { type: "rgb", r: 238, g: 238, b: 238, alpha: 1 },
+      },
     },
   ],
 } satisfies PresetStyle<typeof defaultTag>;
@@ -40,12 +51,8 @@ export const meta: WsComponentMeta = {
   icon: BracesIcon,
   description:
     "Display source code with syntax highlighting for a selected language and theme.",
-  contentModel: {
-    category: "instance",
-    children: [],
-  },
   presetStyle,
-  initialProps: ["id", "class", "code", "lang", "theme"],
+  initialProps: ["id", "class", "code", "language", "theme"],
   props: {
     ...props,
     code: {
@@ -53,13 +60,12 @@ export const meta: WsComponentMeta = {
       control: "codetext",
       type: "string",
     },
-    lang: {
+    language: {
       label: "Language",
       required: true,
       control: "select",
       type: "string",
-      defaultValue: "javascript",
-      options: ["plaintext", ...languageNames],
+      options: codeTextLanguageNames,
       bindable: false,
     },
     theme: {
@@ -67,8 +73,7 @@ export const meta: WsComponentMeta = {
       required: true,
       control: "select",
       type: "string",
-      defaultValue: "github-light",
-      options: [...themeNames],
+      options: codeTextThemeNames,
       bindable: false,
     },
   },

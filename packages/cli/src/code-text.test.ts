@@ -1,6 +1,23 @@
 import { expect, test } from "vitest";
-import type { Instances, Props } from "@webstudio-is/sdk";
+import type { Instances, Props, WsComponentMeta } from "@webstudio-is/sdk";
 import { collectCodeTextAssets } from "./code-text";
+
+const meta = {
+  props: {
+    language: {
+      required: true,
+      control: "select",
+      type: "string",
+      options: ["plaintext", "javascript"],
+    },
+    theme: {
+      required: true,
+      control: "select",
+      type: "string",
+      options: ["github-light", "nord"],
+    },
+  },
+} satisfies WsComponentMeta;
 
 const instances = new Map([
   [
@@ -23,14 +40,17 @@ const instances = new Map([
   ],
 ]) satisfies Instances;
 
+const collect = (props: Props) =>
+  collectCodeTextAssets({ instances, props, meta });
+
 test("collects the deduplicated union of configured Code Text assets", () => {
   const props = new Map([
     [
-      "code-1-lang",
+      "code-1-language",
       {
-        id: "code-1-lang",
+        id: "code-1-language",
         instanceId: "code-1",
-        name: "lang",
+        name: "language",
         type: "string" as const,
         value: "javascript",
       },
@@ -46,11 +66,11 @@ test("collects the deduplicated union of configured Code Text assets", () => {
       },
     ],
     [
-      "code-2-lang",
+      "code-2-language",
       {
-        id: "code-2-lang",
+        id: "code-2-language",
         instanceId: "code-2",
-        name: "lang",
+        name: "language",
         type: "string" as const,
         value: "javascript",
       },
@@ -67,19 +87,17 @@ test("collects the deduplicated union of configured Code Text assets", () => {
     ],
   ]) satisfies Props;
 
-  expect(collectCodeTextAssets({ instances, props })).toEqual({
+  expect(collect(props)).toEqual({
     languages: ["javascript"],
     themes: ["github-light", "nord"],
   });
 });
 
 test("keeps legacy Code Text instances on the plain renderer", () => {
-  expect(
-    collectCodeTextAssets({ instances, props: new Map() })
-  ).toBeUndefined();
+  expect(collect(new Map())).toBeUndefined();
 });
 
-test("keeps legacy language-only instances on the plain renderer", () => {
+test("keeps legacy HTML language instances on the plain renderer", () => {
   const props = new Map([
     [
       "code-1-lang",
@@ -93,17 +111,36 @@ test("keeps legacy language-only instances on the plain renderer", () => {
     ],
   ]) satisfies Props;
 
-  expect(collectCodeTextAssets({ instances, props })).toBeUndefined();
+  expect(collect(props)).toBeUndefined();
+});
+
+test("rejects incomplete highlighting selections", () => {
+  const props = new Map([
+    [
+      "code-1-theme",
+      {
+        id: "code-1-theme",
+        instanceId: "code-1",
+        name: "theme",
+        type: "string" as const,
+        value: "github-light",
+      },
+    ],
+  ]) satisfies Props;
+
+  expect(() => collect(props)).toThrow(
+    'Code Text "code-1" requires both Language and Theme selections.'
+  );
 });
 
 test("rejects expression-bound selections", () => {
   const props = new Map([
     [
-      "code-1-lang",
+      "code-1-language",
       {
-        id: "code-1-lang",
+        id: "code-1-language",
         instanceId: "code-1",
-        name: "lang",
+        name: "language",
         type: "expression" as const,
         value: '"javascript"',
       },
@@ -120,7 +157,36 @@ test("rejects expression-bound selections", () => {
     ],
   ]) satisfies Props;
 
-  expect(() => collectCodeTextAssets({ instances, props })).toThrow(
+  expect(() => collect(props)).toThrow(
     'Code Text "code-1" Language must be a fixed selection.'
+  );
+});
+
+test("rejects selections outside the component metadata", () => {
+  const props = new Map([
+    [
+      "code-1-language",
+      {
+        id: "code-1-language",
+        instanceId: "code-1",
+        name: "language",
+        type: "string" as const,
+        value: "ruby",
+      },
+    ],
+    [
+      "code-1-theme",
+      {
+        id: "code-1-theme",
+        instanceId: "code-1",
+        name: "theme",
+        type: "string" as const,
+        value: "github-light",
+      },
+    ],
+  ]) satisfies Props;
+
+  expect(() => collect(props)).toThrow(
+    'Code Text "code-1" has an unsupported language selection "ruby".'
   );
 });

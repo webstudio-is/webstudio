@@ -1128,7 +1128,11 @@ export const prebuild = async (options: {
     }
 
     const props = new Map(pageData.build.props);
-    const codeTextAssets = collectCodeTextAssets({ instances, props });
+    const codeTextAssets = collectCodeTextAssets({
+      instances,
+      props,
+      meta: framework.metas[codeTextComponent],
+    });
 
     // generate component imports
     // Map<importSource, Map<id, importSpecifier>>
