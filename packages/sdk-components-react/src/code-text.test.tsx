@@ -7,7 +7,7 @@ import { act } from "@testing-library/react";
 import { expect, test } from "vitest";
 import javascript from "@shikijs/langs/javascript";
 import githubLight from "@shikijs/themes/github-light";
-import { createCodeText } from "./code-text-highlight";
+import { createCodeText } from "./code-text";
 
 const HighlightedCodeText = createCodeText({
   languages: [javascript],

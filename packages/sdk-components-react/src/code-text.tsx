@@ -1,43 +1,108 @@
 import {
-  type ElementRef,
-  type ComponentProps,
+  Fragment,
   forwardRef,
-  type ForwardedRef,
+  useMemo,
+  type ComponentProps,
+  type CSSProperties,
+  type ElementRef,
+  type ReactElement,
 } from "react";
+import { jsx, jsxs } from "react/jsx-runtime";
+import { toJsxRuntime } from "hast-util-to-jsx-runtime";
+import {
+  createHighlighterCoreSync,
+  type LanguageRegistration,
+  type MaybeArray,
+  type ThemeRegistrationAny,
+} from "shiki/core";
+import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+import { CodeText, defaultTag } from "./code-text-base";
 
-export const defaultTag = "code";
+type CodeTextProps = ComponentProps<typeof CodeText>;
 
-const Placeholder = ({
-  innerRef,
-  ...rest
+const joinClassNames = (
+  first: string | undefined,
+  second: string | undefined
+) => [first, second].filter(Boolean).join(" ") || undefined;
+
+export const createCodeText = ({
+  languages,
+  themes,
 }: {
-  innerRef: ForwardedRef<HTMLElement>;
+  languages: MaybeArray<LanguageRegistration>[];
+  themes: ThemeRegistrationAny[];
 }) => {
-  return (
-    <code {...rest} style={{ padding: 20 }} ref={innerRef}>
-      {`Open the "Settings" panel to edit the code.`}
-    </code>
-  );
+  const highlighter = createHighlighterCoreSync({
+    langs: languages,
+    themes,
+    engine: createJavaScriptRegexEngine({ target: "ES2018" }),
+    warnings: false,
+  });
+
+  const HighlightedCodeText = forwardRef<
+    ElementRef<typeof defaultTag>,
+    CodeTextProps
+  >(({ code, children, lang, theme, className, style, ...props }, ref) => {
+    const highlighted = useMemo(() => {
+      if (
+        typeof code !== "string" ||
+        code.trim().length === 0 ||
+        typeof lang !== "string" ||
+        typeof theme !== "string"
+      ) {
+        return;
+      }
+
+      try {
+        return highlighter.codeToHast(code, { lang, theme });
+      } catch {
+        return;
+      }
+    }, [code, lang, theme]);
+
+    if (highlighted === undefined) {
+      return (
+        <CodeText
+          {...props}
+          className={className}
+          style={style}
+          code={code}
+          ref={ref}
+        >
+          {children}
+        </CodeText>
+      );
+    }
+
+    return toJsxRuntime(highlighted, {
+      Fragment,
+      jsx,
+      jsxs,
+      components: {
+        pre: ({
+          children: highlightedChildren,
+          className: highlightedClassName,
+          style: highlightedStyle,
+          ...highlightedProps
+        }) => (
+          <code
+            {...highlightedProps}
+            {...props}
+            ref={ref}
+            className={joinClassNames(highlightedClassName, className)}
+            style={{
+              ...(highlightedStyle as CSSProperties),
+              ...style,
+            }}
+          >
+            {highlightedChildren}
+          </code>
+        ),
+        code: ({ children: highlightedChildren }) => <>{highlightedChildren}</>,
+      },
+    }) as ReactElement;
+  });
+
+  HighlightedCodeText.displayName = "HighlightedCodeText";
+  return HighlightedCodeText;
 };
-
-export const CodeText = forwardRef<
-  ElementRef<typeof defaultTag>,
-  ComponentProps<typeof defaultTag> & { code?: string; theme?: string }
->(({ code, children, lang: _lang, theme: _theme, ...props }, ref) => {
-  // We are supporting children here for historical reasons, because
-  // the first version of this component allowed using any components inside the CodeText
-  // and we didn't want to migrate them to use code, also it's not entirely possible.
-  if (
-    (children === undefined && code === undefined) ||
-    String(code).trim().length === 0
-  ) {
-    return <Placeholder innerRef={ref} {...props} />;
-  }
-  return (
-    <code {...props} ref={ref}>
-      {code ?? children}
-    </code>
-  );
-});
-
-CodeText.displayName = "CodeText";

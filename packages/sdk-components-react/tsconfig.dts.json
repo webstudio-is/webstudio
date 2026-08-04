@@ -3,7 +3,7 @@
   "include": [
     "src/index.ts",
     "src/components.ts",
-    "src/code-text-highlight.tsx",
+    "src/code-text.tsx",
     "src/metas.ts",
     "src/hooks.ts",
     "src/create-link.tsx"

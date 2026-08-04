@@ -23,7 +23,7 @@ export { Blockquote } from "./blockquote";
 export { List } from "./list";
 export { ListItem } from "./list-item";
 export { Separator } from "./separator";
-export { CodeText } from "./code-text";
+export { CodeText } from "./code-text-base";
 export { Label } from "./label";
 export { Textarea } from "./textarea";
 export { RadioButton } from "./radio-button";

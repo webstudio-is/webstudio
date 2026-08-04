@@ -2,18 +2,10 @@ import { build } from "esbuild";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
 
-test("bundles only directly selected Shiki assets", async () => {
+const getBundleInputs = async (contents: string) => {
   const result = await build({
     stdin: {
-      contents: `
-        import javascript from "@shikijs/langs/javascript";
-        import nord from "@shikijs/themes/nord";
-        import { createCodeText } from "@webstudio-is/sdk-components-react/code-text";
-        export const CodeText = createCodeText({
-          languages: [javascript],
-          themes: [nord],
-        });
-      `,
+      contents,
       loader: "tsx",
       resolveDir: fileURLToPath(new URL(".", import.meta.url)),
     },
@@ -25,7 +17,19 @@ test("bundles only directly selected Shiki assets", async () => {
     conditions: ["webstudio"],
     external: ["react", "react/jsx-runtime"],
   });
-  const inputs = Object.keys(result.metafile?.inputs ?? {});
+  return Object.keys(result.metafile?.inputs ?? {});
+};
+
+test("bundles only directly selected Shiki assets", async () => {
+  const inputs = await getBundleInputs(`
+        import javascript from "@shikijs/langs/javascript";
+        import nord from "@shikijs/themes/nord";
+        import { createCodeText } from "@webstudio-is/sdk-components-react/code-text";
+        export const CodeText = createCodeText({
+          languages: [javascript],
+          themes: [nord],
+        });
+      `);
 
   expect(
     inputs.some((path) => path.endsWith("@shikijs/langs/dist/javascript.mjs"))
@@ -42,4 +46,13 @@ test("bundles only directly selected Shiki assets", async () => {
   expect(inputs.some((path) => path.endsWith("shiki/dist/index.mjs"))).toBe(
     false
   );
+});
+
+test("keeps Shiki out of plain Code Text bundles", async () => {
+  const inputs = await getBundleInputs(`
+    import { CodeText } from "@webstudio-is/sdk-components-react/components";
+    export const code = <CodeText code="plain" />;
+  `);
+
+  expect(inputs.filter((path) => path.includes("shiki"))).toEqual([]);
 });

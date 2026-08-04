@@ -3,8 +3,8 @@ import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { languageNames } from "@shikijs/langs";
 import { themeNames } from "@shikijs/themes";
 import { code } from "@webstudio-is/sdk/normalize.css";
-import type { defaultTag } from "./code-text";
-import { props } from "./__generated__/code-text.props";
+import type { defaultTag } from "./code-text-base";
+import { props } from "./__generated__/code-text-base.props";
 
 const presetStyle = {
   code: [
