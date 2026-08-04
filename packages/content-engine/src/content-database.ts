@@ -51,6 +51,11 @@ type ContentDatabaseQueryArguments = [
 
 export type ContentDatabase = {
   query(...args: ContentDatabaseQueryArguments): Promise<AssetQueryResult>;
+  /**
+   * Executes independent queries through one request-scoped graph resolution
+   * session. Document loads are shared, while selection, limits, results, and
+   * failures remain isolated and in request order.
+   */
   queryManyWithDocumentGraph(input: {
     requests: readonly AssetQueryRequestInput[];
     load: DocumentSourceLoader;
@@ -480,6 +485,8 @@ const createQueryableContentDatabase = ({
         readFallback: queryContentReader ?? readContent,
         signal,
       });
+      // Share only graph resolution, like a request-scoped GraphQL DataLoader.
+      // Running each query independently preserves partial-result semantics.
       return await Promise.allSettled(
         requests.map((request) =>
           executeQueryWithDocumentGraph({

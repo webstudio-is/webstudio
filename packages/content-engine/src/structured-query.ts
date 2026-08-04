@@ -478,6 +478,8 @@ const prepareAssetQueries = ({
   catalog?: BuilderAssetFieldCatalog;
   results: AssetQuerySettlements;
 }) => {
+  // Canonical keys share pure filter evaluation and sorting work only. Matches,
+  // pagination, hydration, and settlement remain owned by each query.
   const sortGroups = new Map<string, AssetQuerySortGroup>();
   const filterKeys = new Map<AssetQueryFilter, string>();
   const preparedQueries: PreparedAssetQuery[] = [];

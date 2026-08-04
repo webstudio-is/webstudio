@@ -161,6 +161,8 @@ type AssetQueryBatchOptions = {
 };
 
 const createAssetQueryBatchPlan = (queries: readonly AssetQuery[]) => {
+  // The generated artifact must depend on query semantics, not request order or
+  // duplicate callers. Stable keys also make equivalent batches reproducible.
   const queryByKey = new Map<string, AssetQuery>();
   for (const query of queries) {
     queryByKey.set(serializeJsonDeterministically(query), query);
@@ -905,6 +907,9 @@ export class PostgresAssetRepository implements AssetRepository {
         const query = queries[index];
         return query === undefined ? [] : [query];
       });
+    // Queries covered by the saved plan must use its artifact so published
+    // truncation and revision semantics remain unchanged. Only unpinned,
+    // uncovered queries may use a temporary literal union.
     const databaseIndexes = requests.flatMap((_request, index) =>
       queries[index] !== undefined &&
       databasePlan !== undefined &&
@@ -988,6 +993,8 @@ export class PostgresAssetRepository implements AssetRepository {
           }
         }
       } catch (error) {
+        // A temporary union is an optimization and may safely degrade to the
+        // original per-query path. Saved-plan failures are authoritative.
         if (fallbackToIndividualOnError && signal?.aborted !== true) {
           return;
         }
