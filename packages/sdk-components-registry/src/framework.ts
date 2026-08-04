@@ -1,4 +1,5 @@
-import type { WsComponentMeta } from "@webstudio-is/sdk";
+import type { ComponentBuildHook, WsComponentMeta } from "@webstudio-is/sdk";
+import { buildHooks as baseBuildHooks } from "@webstudio-is/sdk-components-react/build-hooks";
 import {
   baseComponentImportSource,
   componentMetaLibraries,
@@ -8,6 +9,7 @@ import {
 export type FrameworkComponentRegistry = {
   metas: Record<string, WsComponentMeta>;
   components: Record<string, string>;
+  buildHooks: ComponentBuildHook[];
 };
 
 export const createFrameworkComponentRegistry = ({
@@ -19,6 +21,7 @@ export const createFrameworkComponentRegistry = ({
 } = {}): FrameworkComponentRegistry => {
   const components: Record<string, string> = {};
   const metas: Record<string, WsComponentMeta> = {};
+  const buildHooks: ComponentBuildHook[] = [...baseBuildHooks];
 
   for (const library of componentMetaLibraries) {
     for (const [exportName, meta] of Object.entries(library.metas)) {
@@ -37,7 +40,7 @@ export const createFrameworkComponentRegistry = ({
     }
   }
 
-  return { components, metas };
+  return { components, metas, buildHooks };
 };
 
 export { baseComponentImportSource };

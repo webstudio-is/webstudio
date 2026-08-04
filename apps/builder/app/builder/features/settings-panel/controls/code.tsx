@@ -1,4 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  LanguageDescription,
+  type LanguageSupport,
+} from "@codemirror/language";
+import { languages } from "@codemirror/language-data";
 import {
   Button,
   DialogClose,
@@ -48,6 +53,48 @@ export type CodeControlBehavior = {
     value: unknown,
     label: string
   ) => { success: true; value: string } | { success: false; message: string };
+};
+
+export const matchCodeTextEditorLanguage = (selectedLanguage: unknown) => {
+  if (typeof selectedLanguage !== "string") {
+    return;
+  }
+
+  return (
+    LanguageDescription.matchLanguageName(languages, selectedLanguage, false) ??
+    undefined
+  );
+};
+
+const useCodeTextLanguageSupport = (selectedLanguage: unknown) => {
+  const [languageSupport, setLanguageSupport] = useState<LanguageSupport>();
+
+  useEffect(() => {
+    let canceled = false;
+    setLanguageSupport(undefined);
+
+    const description = matchCodeTextEditorLanguage(selectedLanguage);
+    if (description === undefined) {
+      return;
+    }
+
+    void description.load().then(
+      (support) => {
+        if (canceled === false) {
+          setLanguageSupport(support);
+        }
+      },
+      () => {
+        // Keep the editor in plain-text mode when a language fails to load.
+      }
+    );
+
+    return () => {
+      canceled = true;
+    };
+  }, [selectedLanguage]);
+
+  return languageSupport;
 };
 
 const ErrorInfo = ({
@@ -100,6 +147,7 @@ export const CodeControl = ({
   prop,
   propName,
   computedValue,
+  computedProps,
   onChange,
   behavior,
 }: (ControlProps<"code"> | ControlProps<"codetext">) & {
@@ -111,6 +159,9 @@ export const CodeControl = ({
     control: "text" as const,
   };
   const lang = meta.control === "code" ? meta.language : undefined;
+  const codeTextLanguageSupport = useCodeTextLanguageSupport(
+    meta.control === "codetext" ? computedProps?.get("language") : undefined
+  );
   const label = humanizeAttribute(metaOverride.label || propName);
   const editorValue = behavior
     ? behavior.formatValue(computedValue)
@@ -129,7 +180,11 @@ export const CodeControl = ({
         storedValue = result.value;
       }
 
-      if (behavior === undefined && lang === "html") {
+      if (
+        behavior === undefined &&
+        meta.control === "code" &&
+        lang === "html"
+      ) {
         const error = validateHtmlEmbedCode(value);
         setError(error);
 
@@ -204,6 +259,7 @@ export const CodeControl = ({
         renderControl={({ readOnly }) => (
           <CodeEditor
             lang={lang}
+            languageSupport={codeTextLanguageSupport}
             title={
               <DialogTitle
                 maximizable

@@ -36,7 +36,7 @@ export const createFramework = async (
   await cleanupFrameworkTemplates(options);
 
   const remix = "@webstudio-is/sdk-components-react-remix";
-  const { components, metas } = createFrameworkComponentRegistry({
+  const { components, metas, buildHooks } = createFrameworkComponentRegistry({
     routerComponents: remixComponents,
     routerComponentPackage: remix,
   });
@@ -44,6 +44,7 @@ export const createFramework = async (
   return {
     metas,
     components,
+    componentBuildHooks: buildHooks,
     tags: {
       textarea: `${baseComponentImportSource}:Textarea`,
       input: `${baseComponentImportSource}:Input`,

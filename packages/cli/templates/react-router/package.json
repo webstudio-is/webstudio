@@ -9,6 +9,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@shikijs/langs": "4.4.1",
+    "@shikijs/themes": "4.4.1",
     "@react-router/dev": "^7.5.3",
     "@react-router/fs-routes": "^7.5.3",
     "@react-router/node": "^7.5.3",
@@ -25,6 +27,7 @@
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "react-router": "^7.5.3",
+    "shiki": "4.4.1",
     "vite": "^6.3.4"
   },
   "devDependencies": {

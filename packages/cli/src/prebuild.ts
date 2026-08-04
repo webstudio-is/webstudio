@@ -54,6 +54,7 @@ import {
   type Resource,
   type WsComponentMeta,
   type Pages,
+  type ComponentBuildContribution,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
@@ -1126,10 +1127,30 @@ export const prebuild = async (options: {
       }
     }
 
+    const props = new Map(pageData.build.props);
+    const componentBuildContributions = new Map<
+      string,
+      ComponentBuildContribution
+    >();
+    for (const hook of framework.componentBuildHooks) {
+      const contribution = await hook.build({
+        instances,
+        props,
+        meta: framework.metas[hook.component],
+        scope,
+      });
+      if (contribution !== undefined) {
+        componentBuildContributions.set(hook.component, contribution);
+      }
+    }
+
     // generate component imports
     // Map<importSource, Map<id, importSpecifier>>
     const imports = new Map<string, Map<string, string>>();
     for (const instance of instances.values()) {
+      if (componentBuildContributions.has(instance.component)) {
+        continue;
+      }
       let descriptor = framework.components[instance.component];
       let id = instance.component;
       if (instance.component === elementComponent && instance.tag) {
@@ -1158,10 +1179,22 @@ export const prebuild = async (options: {
       importsString += `import { ${specifiersString} } from "${importSource}";\n`;
     }
 
+    const componentBuildDeclarations: string[] = [];
+    for (const contribution of componentBuildContributions.values()) {
+      for (const buildImport of contribution.imports) {
+        if (buildImport.imported === undefined) {
+          importsString += `import ${buildImport.local} from ${JSON.stringify(buildImport.source)};\n`;
+        } else {
+          importsString += `import { ${buildImport.imported} as ${buildImport.local} } from ${JSON.stringify(buildImport.source)};\n`;
+        }
+      }
+      componentBuildDeclarations.push(...contribution.declarations);
+    }
+    const componentBuildSetupString = componentBuildDeclarations.join("\n");
+
     const pageFontAssets = fontAssetsByPage[page.id];
     const pageBackgroundImageAssets = backgroundImageAssetsByPage[page.id];
 
-    const props = new Map(pageData.build.props);
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
     replaceFormActionsWithResources({
@@ -1219,7 +1252,7 @@ export const prebuild = async (options: {
 
       import { Fragment, useState } from "react";
       import { renderText, useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-      ${importsString}
+      ${importsString}${componentBuildSetupString}
 
       export const projectId = "${siteData.build.projectId}";
 

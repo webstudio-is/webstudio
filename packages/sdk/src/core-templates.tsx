@@ -100,7 +100,11 @@ const blockMeta: TemplateMeta = {
         <ws.element ws:label="Separator" ws:tag="hr" />
         <ws.element ws:label="Blockquote" ws:tag="blockquote"></ws.element>
         <$.HtmlEmbed />
-        <ws.element ws:label="Code Text" ws:tag="code" />
+        <$.CodeText
+          code={'const status = "ready";'}
+          language="javascript"
+          theme="github-light"
+        />
       </BlockTemplate>
       <ws.element ws:label="Paragraph" ws:tag="p">
         The Content Block component designates regions on the page where
@@ -186,17 +190,11 @@ const typography: Record<string, TemplateMeta> = {
   code_text: {
     category: "typography",
     template: (
-      <ws.element
-        ws:tag="code"
-        ws:style={css`
-          display: block;
-          white-space-collapse: preserve;
-          text-wrap-mode: wrap;
-          padding-left: 0.2em;
-          padding-right: 0.2em;
-          background-color: rgb(238 238 238);
-        `}
-      ></ws.element>
+      <$.CodeText
+        code={'const status = "ready";'}
+        language="javascript"
+        theme="github-light"
+      />
     ),
   },
 

@@ -9,6 +9,7 @@ import type { Extension } from "@codemirror/state";
 import { styleTags, tags } from "@lezer/highlight";
 import {
   keymap,
+  lineNumbers,
   tooltips,
   highlightSpecialChars,
   highlightActiveLine,
@@ -28,6 +29,7 @@ import {
 import { html } from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
+import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
 import { css } from "@webstudio-is/design-system";
 import {
   EditorContent,
@@ -37,7 +39,6 @@ import {
   foldGutterExtension,
   getCodeEditorCssVars,
 } from "~/shared/code-editor-base";
-import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
 
 const wrapperStyle = css({
   position: "relative",
@@ -61,6 +62,12 @@ const wrapperStyle = css({
 });
 
 const noLanguageExtensions: Extension[] = [];
+
+export type CodeEditorLanguage =
+  | "html"
+  | "json"
+  | "markdown"
+  | "css-properties";
 
 const getHtmlExtensions = () => [
   highlightActiveLine(),
@@ -136,10 +143,25 @@ const getCssPropertiesExtensions = () => [
   autocompletion({ icons: false }),
 ];
 
+const getDynamicLanguageExtensions = (languageSupport: Extension) => [
+  highlightActiveLine(),
+  highlightSpecialChars(),
+  indentOnInput(),
+  languageSupport,
+  bracketMatching(),
+  closeBrackets(),
+  // render autocomplete in body
+  // to prevent popover scroll overflow
+  tooltips({ parent: document.body }),
+  autocompletion({ icons: false }),
+  keymap.of([...closeBracketsKeymap, ...completionKeymap]),
+];
+
 export const CodeEditor = forwardRef<
   HTMLDivElement,
   Omit<ComponentProps<typeof EditorContent>, "extensions"> & {
-    lang?: "html" | "json" | "markdown" | "css-properties";
+    lang?: CodeEditorLanguage;
+    languageSupport?: Extension;
     languageExtensions?: Extension[];
     title?: ReactNode;
     size?: "default" | "small" | "full";
@@ -148,6 +170,7 @@ export const CodeEditor = forwardRef<
 >((props, ref) => {
   const {
     lang,
+    languageSupport,
     languageExtensions = noLanguageExtensions,
     title,
     size,
@@ -180,13 +203,25 @@ export const CodeEditor = forwardRef<
     return [];
   }, [lang]);
 
+  const dynamicLanguageExtensions = useMemo(
+    () =>
+      languageSupport === undefined
+        ? noLanguageExtensions
+        : getDynamicLanguageExtensions(languageSupport),
+    [languageSupport]
+  );
+
   const extensions = useMemo(
-    () => [...builtInExtensions, ...languageExtensions],
-    [builtInExtensions, languageExtensions]
+    () => [
+      ...builtInExtensions,
+      ...dynamicLanguageExtensions,
+      ...languageExtensions,
+    ],
+    [builtInExtensions, dynamicLanguageExtensions, languageExtensions]
   );
 
   const dialogExtensions = useMemo(
-    () => [...extensions, foldGutterExtension],
+    () => [...extensions, lineNumbers(), foldGutterExtension],
     [extensions]
   );
 
@@ -216,9 +251,11 @@ export const CodeEditor = forwardRef<
           <EditorContent {...editorContentProps} extensions={extensions} />
           <EditorDialog
             title={title}
+            contentPadding={false}
             content={
               <EditorContent
                 {...editorContentProps}
+                chromeless
                 extensions={dialogExtensions}
               />
             }

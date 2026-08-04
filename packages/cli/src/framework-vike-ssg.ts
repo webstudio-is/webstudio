@@ -47,11 +47,12 @@ export const createFramework = async (
   // cleanup route templates after reading to not bloat generated code
   await cleanupFrameworkTemplates(options);
 
-  const { components, metas } = createFrameworkComponentRegistry();
+  const { components, metas, buildHooks } = createFrameworkComponentRegistry();
 
   return {
     metas,
     components,
+    componentBuildHooks: buildHooks,
     tags: {
       textarea: `${baseComponentImportSource}:Textarea`,
       input: `${baseComponentImportSource}:Input`,
