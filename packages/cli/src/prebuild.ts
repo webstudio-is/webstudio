@@ -1181,20 +1181,49 @@ export const prebuild = async (options: {
       const codeTextName = scope.getName(codeTextComponent, "CodeText");
       importsString += `import { createCodeText as ${createCodeTextName} } from "@webstudio-is/sdk-components-react/code-text";\n`;
 
-      const languageNames = codeTextAssets.languages.map((language) => {
+      const staticLanguageNames: string[] = [];
+      for (const language of codeTextAssets.staticLanguages) {
         const name = scope.getName(
           `code-text-language-${language}`,
           `${language}Language`
         );
         importsString += `import ${name} from "@shikijs/langs/${language}";\n`;
-        return name;
-      });
-      const themeNames = codeTextAssets.themes.map((theme) => {
+        staticLanguageNames.push(name);
+      }
+      const staticThemeNames: string[] = [];
+      for (const theme of codeTextAssets.staticThemes) {
         const name = scope.getName(`code-text-theme-${theme}`, `${theme}Theme`);
         importsString += `import ${name} from "@shikijs/themes/${theme}";\n`;
-        return name;
-      });
-      codeTextSetupString = `const ${codeTextName} = ${createCodeTextName}({ languages: [${languageNames.join(", ")}], themes: [${themeNames.join(", ")}] });`;
+        staticThemeNames.push(name);
+      }
+
+      const loaderEntries: string[] = [];
+      if (codeTextAssets.dynamicLanguages) {
+        const loadersName = scope.getName(
+          "code-text-language-loaders",
+          "codeTextLanguageLoaders"
+        );
+        importsString += `import { bundledLanguages as ${loadersName} } from "shiki/langs";\n`;
+        loaderEntries.push(
+          `language: (language) => { const loader = ${loadersName}[language as keyof typeof ${loadersName}]; return loader?.().then((module) => module.default); }`
+        );
+      }
+      if (codeTextAssets.dynamicThemes) {
+        const loadersName = scope.getName(
+          "code-text-theme-loaders",
+          "codeTextThemeLoaders"
+        );
+        importsString += `import { bundledThemes as ${loadersName} } from "shiki/themes";\n`;
+        loaderEntries.push(
+          `theme: (theme) => { const loader = ${loadersName}[theme as keyof typeof ${loadersName}]; return loader?.().then((module) => module.default); }`
+        );
+      }
+
+      if (loaderEntries.length === 0) {
+        codeTextSetupString = `const ${codeTextName} = ${createCodeTextName}({ languages: [${staticLanguageNames.join(", ")}], themes: [${staticThemeNames.join(", ")}] });`;
+      } else {
+        codeTextSetupString = `const ${codeTextName} = ${createCodeTextName}({ languages: [${staticLanguageNames.join(", ")}], themes: [${staticThemeNames.join(", ")}], loaders: { ${loaderEntries.join(", ")} }, suspense: true });`;
+      }
     }
 
     const pageFontAssets = fontAssetsByPage[page.id];

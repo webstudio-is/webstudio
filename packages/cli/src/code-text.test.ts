@@ -88,8 +88,10 @@ test("collects the deduplicated union of configured Code Text assets", () => {
   ]) satisfies Props;
 
   expect(collect(props)).toEqual({
-    languages: ["javascript"],
-    themes: ["github-light", "nord"],
+    staticLanguages: ["javascript"],
+    staticThemes: ["github-light", "nord"],
+    dynamicLanguages: false,
+    dynamicThemes: false,
   });
 });
 
@@ -133,7 +135,7 @@ test("rejects incomplete highlighting selections", () => {
   );
 });
 
-test("rejects expression-bound selections", () => {
+test("marks expression-bound selections as dynamic", () => {
   const props = new Map([
     [
       "code-1-language",
@@ -157,9 +159,12 @@ test("rejects expression-bound selections", () => {
     ],
   ]) satisfies Props;
 
-  expect(() => collect(props)).toThrow(
-    'Code Text "code-1" Language must be a fixed selection.'
-  );
+  expect(collect(props)).toEqual({
+    staticLanguages: [],
+    staticThemes: ["github-light"],
+    dynamicLanguages: true,
+    dynamicThemes: false,
+  });
 });
 
 test("rejects selections outside the component metadata", () => {

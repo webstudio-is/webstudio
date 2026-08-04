@@ -4,7 +4,8 @@ import { createRef } from "react";
 import { renderToStaticMarkup, renderToString } from "react-dom/server";
 import { hydrateRoot } from "react-dom/client";
 import { act, render, waitFor } from "@testing-library/react";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
+import css from "@shikijs/langs/css";
 import javascript from "@shikijs/langs/javascript";
 import githubLight from "@shikijs/themes/github-light";
 import nord from "@shikijs/themes/nord";
@@ -161,6 +162,103 @@ test("hydrates the server markup without changing the DOM", async () => {
   });
   expect(container.innerHTML).toBe(serverMarkup);
   await act(async () => root.unmount());
+});
+
+test("preserves server highlighting while client assets load", async () => {
+  let resolveLanguage: (language: typeof javascript) => void = () => {};
+  const language = new Promise<typeof javascript>((resolve) => {
+    resolveLanguage = resolve;
+  });
+  const ServerCodeText = createCodeText({
+    languages: [javascript],
+    themes: [githubLight],
+    suspense: true,
+  });
+  const ClientCodeText = createCodeText({
+    loaders: {
+      language: () => language,
+      theme: async () => githubLight,
+    },
+    suspense: true,
+  });
+  const props = {
+    code: "const answer = 42;",
+    language: "javascript",
+    theme: "github-light",
+  } as const;
+  const container = document.createElement("div");
+  container.innerHTML = renderToString(<ServerCodeText {...props} />);
+  const serverMarkup = container.innerHTML;
+  const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+  let root: ReturnType<typeof hydrateRoot>;
+  await act(async () => {
+    root = hydrateRoot(container, <ClientCodeText {...props} />);
+  });
+  expect(container.innerHTML).toBe(serverMarkup);
+  expect(consoleError).not.toHaveBeenCalled();
+
+  await act(async () => resolveLanguage(javascript));
+  await waitFor(() =>
+    expect(container.querySelector("code span")).not.toBeNull()
+  );
+  expect(container.innerHTML).toBe(serverMarkup);
+  expect(consoleError).not.toHaveBeenCalled();
+
+  await act(async () => root.unmount());
+  consoleError.mockRestore();
+});
+
+test("keeps the code element mounted when a bound selection changes", async () => {
+  let resolveLanguage: (language: typeof css) => void = () => {};
+  const language = new Promise<typeof css>((resolve) => {
+    resolveLanguage = resolve;
+  });
+  let resolveTheme: (theme: typeof nord) => void = () => {};
+  const theme = new Promise<typeof nord>((resolve) => {
+    resolveTheme = resolve;
+  });
+  const DynamicCodeText = createCodeText({
+    languages: [javascript],
+    themes: [githubLight],
+    loaders: {
+      language: () => language,
+      theme: () => theme,
+    },
+    suspense: true,
+  });
+  const view = render(
+    <DynamicCodeText
+      code="const answer = 42;"
+      language="javascript"
+      theme="github-light"
+      tabIndex={0}
+    />
+  );
+  const codeElement = view.container.querySelector("code");
+  codeElement?.focus();
+
+  view.rerender(
+    <DynamicCodeText
+      code=".answer { color: red; }"
+      language="css"
+      theme="nord"
+      tabIndex={0}
+    />
+  );
+  expect(view.container.querySelector("code")).toBe(codeElement);
+  expect(document.activeElement).toBe(codeElement);
+
+  await act(async () => {
+    resolveLanguage(css);
+    resolveTheme(nord);
+  });
+  await waitFor(() =>
+    expect(view.container.querySelector("code span")).not.toBeNull()
+  );
+  expect(view.container.querySelector("code")).toBe(codeElement);
+  expect(document.activeElement).toBe(codeElement);
+  expect(codeElement?.className).toContain("nord");
 });
 
 test("forwards the code element ref", async () => {

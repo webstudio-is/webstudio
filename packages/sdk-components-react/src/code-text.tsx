@@ -1,8 +1,10 @@
 import {
   Fragment,
+  Suspense,
   forwardRef,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ComponentProps,
   type CSSProperties,
@@ -29,11 +31,13 @@ type CodeTextProps = ComponentProps<typeof CodeText>;
 type Highlighter = ReturnType<typeof createHighlighterCoreSync>;
 type LanguageLoader = (
   language: string
-) => Promise<MaybeArray<LanguageRegistration> | undefined>;
-type ThemeLoader = (theme: string) => Promise<ThemeRegistrationAny | undefined>;
+) => Promise<MaybeArray<LanguageRegistration> | undefined> | undefined;
+type ThemeLoader = (
+  theme: string
+) => Promise<ThemeRegistrationAny | undefined> | undefined;
 type AssetLoaders = {
-  language: LanguageLoader;
-  theme: ThemeLoader;
+  language?: LanguageLoader;
+  theme?: ThemeLoader;
 };
 
 const joinClassNames = (
@@ -92,10 +96,12 @@ export const createCodeText = ({
   languages = [],
   themes = [],
   loaders,
+  suspense = false,
 }: {
   languages?: MaybeArray<LanguageRegistration>[];
   themes?: ThemeRegistrationAny[];
   loaders?: AssetLoaders;
+  suspense?: boolean;
 }) => {
   const highlighter = createHighlighterCoreSync({
     langs: languages,
@@ -103,58 +109,142 @@ export const createCodeText = ({
     engine: createJavaScriptRegexEngine({ target: "ES2018" }),
     warnings: false,
   });
-  const loadedSelections = new Set<string>();
-  const assetLoads = new Map<string, Promise<boolean>>();
+  const languageLoads = new Map<string, Promise<boolean>>();
+  const themeLoads = new Map<string, Promise<boolean>>();
+  const suspenseLoads = new Map<string, Promise<void>>();
 
-  const loadAssets = (language: string, theme: string) => {
-    if (loaders === undefined) {
+  const isLanguageLoaded = (language: string) =>
+    language === "plaintext" ||
+    highlighter.getLoadedLanguages().includes(language);
+  const isThemeLoaded = (theme: string) =>
+    highlighter.getLoadedThemes().includes(theme);
+  const isSelectionLoaded = (language: string, theme: string) =>
+    isLanguageLoaded(language) && isThemeLoaded(theme);
+
+  const loadAsset = <Registration,>({
+    name,
+    isLoaded,
+    loads,
+    loader,
+    register,
+  }: {
+    name: string;
+    isLoaded: (name: string) => boolean;
+    loads: Map<string, Promise<boolean>>;
+    loader:
+      | ((name: string) => Promise<Registration | undefined> | undefined)
+      | undefined;
+    register: (registration: Registration) => void;
+  }) => {
+    if (isLoaded(name)) {
       return;
     }
-
-    const key = JSON.stringify([language, theme]);
-    if (loadedSelections.has(key)) {
-      return;
-    }
-    let promise = assetLoads.get(key);
+    let promise = loads.get(name);
     if (promise !== undefined) {
       return promise;
     }
-
-    promise = (async () => {
-      const [languageRegistration, themeRegistration] = await Promise.all([
-        language === "plaintext" ? undefined : loaders.language(language),
-        loaders.theme(theme),
-      ]);
-      if (
-        themeRegistration === undefined ||
-        (language !== "plaintext" && languageRegistration === undefined)
-      ) {
-        return false;
-      }
-      if (languageRegistration !== undefined) {
-        highlighter.loadLanguageSync(languageRegistration);
-      }
-      highlighter.loadThemeSync(themeRegistration);
-      loadedSelections.add(key);
-      return true;
-    })().catch(() => false);
-    assetLoads.set(key, promise);
+    const registration = loader?.(name);
+    if (registration === undefined) {
+      return;
+    }
+    promise = registration
+      .then((loaded) => {
+        if (loaded === undefined) {
+          return false;
+        }
+        register(loaded);
+        return true;
+      })
+      .catch(() => false);
+    loads.set(name, promise);
     void promise.then((loaded) => {
-      if (loaded === false && assetLoads.get(key) === promise) {
-        assetLoads.delete(key);
+      if (loaded === false && loads.get(name) === promise) {
+        loads.delete(name);
       }
     });
     return promise;
   };
 
-  const HighlightedCodeText = forwardRef<
+  const loadLanguage = (language: string) =>
+    loadAsset({
+      name: language,
+      isLoaded: isLanguageLoaded,
+      loads: languageLoads,
+      loader: loaders?.language,
+      register: (registration) => highlighter.loadLanguageSync(registration),
+    });
+
+  const loadTheme = (theme: string) =>
+    loadAsset({
+      name: theme,
+      isLoaded: isThemeLoaded,
+      loads: themeLoads,
+      loader: loaders?.theme,
+      register: (registration) => highlighter.loadThemeSync(registration),
+    });
+
+  const loadAssets = (language: string, theme: string) => {
+    if (isSelectionLoaded(language, theme)) {
+      return;
+    }
+    const promises: Promise<boolean>[] = [];
+    if (isLanguageLoaded(language) === false) {
+      const promise = loadLanguage(language);
+      if (promise === undefined) {
+        return;
+      }
+      promises.push(promise);
+    }
+    if (isThemeLoaded(theme) === false) {
+      const promise = loadTheme(theme);
+      if (promise === undefined) {
+        return;
+      }
+      promises.push(promise);
+    }
+    if (promises.length === 0) {
+      return;
+    }
+    return Promise.all(promises).then(() => isSelectionLoaded(language, theme));
+  };
+
+  const CodeTextContent = forwardRef<
     ElementRef<typeof defaultTag>,
     CodeTextProps
   >(({ code, children, language, theme, className, style, ...props }, ref) => {
     const [, rerender] = useState(0);
+    const didCommit = useRef(false);
 
     useEffect(() => {
-      if (typeof language !== "string" || typeof theme !== "string") {
+      didCommit.current = true;
+    }, []);
+
+    const hasSelection =
+      typeof language === "string" && typeof theme === "string";
+    const assetsReady = hasSelection && isSelectionLoaded(language, theme);
+    if (suspense && didCommit.current === false && assetsReady === false) {
+      if (hasSelection) {
+        const key = JSON.stringify([language, theme]);
+        let promise = suspenseLoads.get(key);
+        if (promise === undefined) {
+          const assets = loadAssets(language, theme);
+          if (assets !== undefined) {
+            promise = assets.then((loaded) => {
+              if (loaded === false) {
+                return new Promise<void>(() => {});
+              }
+            });
+            suspenseLoads.set(key, promise);
+          }
+        }
+        if (promise !== undefined) {
+          throw promise;
+        }
+      }
+    }
+
+    useEffect(() => {
+      if (hasSelection === false || assetsReady) {
         return;
       }
       const promise = loadAssets(language, theme);
@@ -171,13 +261,8 @@ export const createCodeText = ({
       return () => {
         active = false;
       };
-    }, [language, theme]);
+    }, [assetsReady, hasSelection, language, theme]);
 
-    const assetsReady =
-      loaders === undefined ||
-      (typeof language === "string" &&
-        typeof theme === "string" &&
-        loadedSelections.has(JSON.stringify([language, theme])));
     const highlighted = useMemo(() => {
       if (
         assetsReady === false ||
@@ -230,6 +315,19 @@ export const createCodeText = ({
     );
   });
 
-  HighlightedCodeText.displayName = "HighlightedCodeText";
-  return HighlightedCodeText;
+  CodeTextContent.displayName = "CodeTextContent";
+  if (suspense === false) {
+    return CodeTextContent;
+  }
+
+  const SuspenseCodeText = forwardRef<
+    ElementRef<typeof defaultTag>,
+    CodeTextProps
+  >((props, ref) => (
+    <Suspense fallback={<CodeText {...props} ref={ref} />}>
+      <CodeTextContent {...props} ref={ref} />
+    </Suspense>
+  ));
+  SuspenseCodeText.displayName = "SuspenseCodeText";
+  return SuspenseCodeText;
 };

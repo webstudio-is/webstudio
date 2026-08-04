@@ -289,8 +289,8 @@ const createCodeTextSiteData = (
   selections: Array<{
     id: string;
     code?: string;
-    language?: string;
-    theme?: string;
+    language?: string | { type: "expression"; value: string };
+    theme?: string | { type: "expression"; value: string };
     lang?: string;
     children?: Instance["children"];
   }>
@@ -331,8 +331,9 @@ const createCodeTextSiteData = (
           id,
           instanceId: selection.id,
           name,
-          type: "string",
-          value,
+          ...(typeof value === "string"
+            ? { type: "string" as const, value }
+            : value),
         },
       ]);
     }
@@ -765,6 +766,36 @@ describe("prebuild", () => {
     expect(importSources).not.toContain("@shikijs/themes/dracula");
   });
 
+  test("generates lazy loaders for bound selections", async () => {
+    await writeSiteData(
+      createCodeTextSiteData([
+        {
+          id: "code-1",
+          code: "const answer = 42;",
+          language: { type: "expression", value: '"javascript"' },
+          theme: { type: "expression", value: '"github-light"' },
+        },
+      ])
+    );
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    const generatedPage = await readFile(
+      "app/__generated__/_index.tsx",
+      "utf8"
+    );
+    const importSources = await getImportSources(generatedPage);
+    expect(importSources).toEqual(
+      expect.arrayContaining(["shiki/langs", "shiki/themes"])
+    );
+    expect(importSources).not.toContain("@shikijs/langs/javascript");
+    expect(importSources).not.toContain("@shikijs/themes/github-light");
+    expect(generatedPage).not.toContain("import.meta.env.SSR");
+    expect(generatedPage).not.toContain("await Promise.all");
+    expect(generatedPage).toContain("suspense: true");
+    expect(generatedPage).toContain("loader?.().then");
+  });
+
   test("prerenders configured and legacy Code Text in SSG output", async () => {
     await writeSiteData(
       createCodeTextSiteData([
@@ -864,6 +895,47 @@ describe("prebuild", () => {
     expect(findElementsByTagName(legacyCode, "span")).toHaveLength(0);
     expect(getTextContent(legacyCode)).toBe("legacy <code>");
   }, 30_000);
+
+  test("prerenders bound Code Text while keeping catalog chunks lazy", async () => {
+    await writeSiteData(
+      createCodeTextSiteData([
+        {
+          id: "code-bound",
+          code: "const answer = 42;",
+          language: { type: "expression", value: '"javascript"' },
+          theme: { type: "expression", value: '"github-light"' },
+        },
+      ])
+    );
+
+    await prebuild({ assets: false, template: ["ssg"] });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["prerender"]);
+
+    const htmlSource = await readFile("dist/client/index.html", "utf8");
+    expect(htmlSource).toMatch(/^<!DOCTYPE html><html/);
+    const html = parseHtml(htmlSource);
+    const [codeElement] = findElementsByTagName(html, "code");
+    if (codeElement === undefined) {
+      throw new Error("Expected a prerendered Code Text element");
+    }
+    expect(findElementsByTagName(codeElement, "span").length).toBeGreaterThan(
+      0
+    );
+    expect(getTextContent(codeElement)).toBe("const answer = 42;");
+
+    const clientPaths = await getFilePaths("dist/client");
+    const catalogChunks = clientPaths.filter(
+      (path) => path.includes("/chunks/") && path.endsWith(".js")
+    );
+    expect(catalogChunks.length).toBeGreaterThan(100);
+    const referencedChunks = catalogChunks.filter((chunk) => {
+      const filename = chunk.split("/").at(-1);
+      return filename !== undefined && htmlSource.includes(filename);
+    });
+    expect(referencedChunks).toHaveLength(1);
+  }, 60_000);
 
   test("emits the identity marker only for local previews", async () => {
     await prebuild({

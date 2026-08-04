@@ -64,7 +64,6 @@ export const meta: WsComponentMeta = {
       control: "select",
       type: "string",
       options: codeTextLanguageNames,
-      bindable: false,
     },
     theme: {
       label: "Theme",
@@ -72,7 +71,6 @@ export const meta: WsComponentMeta = {
       control: "select",
       type: "string",
       options: codeTextThemeNames,
-      bindable: false,
     },
   },
 };

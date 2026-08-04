@@ -18,7 +18,6 @@ test("exposes static language and theme selections", () => {
     control: "select",
     type: "string",
     options: ["plaintext", ...bundledLanguagesInfo.map(({ id }) => id)],
-    bindable: false,
   });
   expect(meta.props?.theme).toEqual({
     label: "Theme",
@@ -26,7 +25,6 @@ test("exposes static language and theme selections", () => {
     control: "select",
     type: "string",
     options: [...themeNames],
-    bindable: false,
   });
   expect(meta.presetStyle?.code).toEqual(
     expect.arrayContaining([

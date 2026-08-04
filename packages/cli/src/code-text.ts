@@ -34,9 +34,12 @@ const readSelection = ({
   prop: Prop;
   supportedValues: ReadonlySet<string>;
 }) => {
+  if (prop.type === "expression") {
+    return;
+  }
   if (prop.type !== "string") {
     throw new Error(
-      `Code Text "${instanceId}" ${label} must be a fixed selection.`
+      `Code Text "${instanceId}" ${label} must be a fixed selection or expression binding.`
     );
   }
   if (supportedValues.has(prop.value) === false) {
@@ -76,8 +79,10 @@ export const collectCodeTextAssets = ({
 
   const supportedLanguages = readOptions(meta, "language");
   const supportedThemes = readOptions(meta, "theme");
-  const languages = new Set<string>();
-  const themes = new Set<string>();
+  const staticLanguages = new Set<string>();
+  const staticThemes = new Set<string>();
+  let dynamicLanguages = false;
+  let dynamicThemes = false;
   for (const [instanceId, selection] of selections) {
     if (selection.language === undefined || selection.theme === undefined) {
       throw new Error(
@@ -96,14 +101,24 @@ export const collectCodeTextAssets = ({
       prop: selection.theme,
       supportedValues: supportedThemes,
     });
-    if (language !== "plaintext") {
-      languages.add(language);
+    if (language === undefined) {
+      dynamicLanguages = true;
+    } else if (language !== "plaintext") {
+      staticLanguages.add(language);
     }
-    themes.add(theme);
+    if (theme === undefined) {
+      dynamicThemes = true;
+    } else {
+      staticThemes.add(theme);
+    }
   }
 
+  const sortedStaticLanguages = [...staticLanguages].sort();
+  const sortedStaticThemes = [...staticThemes].sort();
   return {
-    languages: [...languages].sort(),
-    themes: [...themes].sort(),
+    staticLanguages: sortedStaticLanguages,
+    staticThemes: sortedStaticThemes,
+    dynamicLanguages,
+    dynamicThemes,
   };
 };
