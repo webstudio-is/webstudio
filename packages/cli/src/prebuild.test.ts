@@ -863,7 +863,7 @@ describe("prebuild", () => {
         highlightedCode.attrs.map(({ name, value }) => [name, value])
       )
     ).toMatchObject({
-      class: "shiki github-light w-code-text",
+      class: "w-code-text",
     });
     expect(
       Object.fromEntries(
@@ -880,7 +880,7 @@ describe("prebuild", () => {
         plaintextCode.attrs.map(({ name, value }) => [name, value])
       )
     ).toMatchObject({
-      class: "shiki nord w-code-text",
+      class: "w-code-text",
       style: expect.stringContaining(
         "--w-code-text-theme-background:#2e3440ff"
       ),

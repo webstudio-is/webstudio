@@ -40,11 +40,6 @@ type AssetLoaders = {
   theme?: ThemeLoader;
 };
 
-const joinClassNames = (
-  first: string | undefined,
-  second: string | undefined
-) => [first, second].filter(Boolean).join(" ") || undefined;
-
 // Canvas assets load after the first paint, so theme typography must not
 // change text metrics when highlighting appears.
 const colorOnlyThemeTransformer: ShikiTransformer = {
@@ -291,7 +286,6 @@ export const createCodeText = ({
     }
 
     const {
-      className: highlightedClassName,
       style: highlightedStyle,
       children: highlightedChildren,
       ...highlightedProps
@@ -307,7 +301,7 @@ export const createCodeText = ({
         {...highlightedProps}
         {...props}
         ref={ref}
-        className={joinClassNames(highlightedClassName, className)}
+        className={className}
         style={themedStyle}
       >
         {highlightedChildren}

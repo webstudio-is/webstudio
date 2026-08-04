@@ -29,14 +29,13 @@ test("renders highlighted HAST inside the semantic code root", () => {
 
   expect(markup).toMatch(/^<code/);
   expect(markup).not.toContain("<pre");
-  expect(markup).toContain("shiki");
-  expect(markup).toContain("github-light");
-  expect(markup).toContain("custom-code");
   expect(markup).toContain("<span");
   expect(markup).not.toContain('language="javascript"');
   const container = document.createElement("div");
   container.innerHTML = markup;
-  expect(container.querySelector("code")?.getAttribute("tabindex")).toBeNull();
+  const codeElement = container.querySelector("code");
+  expect(codeElement?.className).toBe("custom-code");
+  expect(codeElement?.getAttribute("tabindex")).toBeNull();
 });
 
 test("keeps theme colors without changing typography", () => {
@@ -258,7 +257,9 @@ test("keeps the code element mounted when a bound selection changes", async () =
   );
   expect(view.container.querySelector("code")).toBe(codeElement);
   expect(document.activeElement).toBe(codeElement);
-  expect(codeElement?.className).toContain("nord");
+  expect(
+    codeElement?.style.getPropertyValue("--w-code-text-theme-background")
+  ).toBe("#2e3440ff");
 });
 
 test("forwards the code element ref", async () => {
