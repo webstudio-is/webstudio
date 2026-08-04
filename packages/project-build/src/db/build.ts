@@ -72,12 +72,31 @@ const parseMarketplaceProduct = (serialized: string | null | undefined) => {
   return marketplaceProduct.parse(value);
 };
 
+type ContentCompilationBuildRow = Pick<
+  Database["public"]["Tables"]["Build"]["Row"],
+  "props" | "dataSources" | "resources"
+>;
+
+const parseCompactContentCompilationData = (
+  build: ContentCompilationBuildRow
+) => {
+  const resources = parseCompactData<Resource>(build.resources);
+  migrateResourcesMutable(resources);
+
+  return {
+    props: parseCompactData<Prop>(build.props),
+    dataSources: parseCompactData<unknown>(build.dataSources).map((value) =>
+      dataSource.parse(value)
+    ),
+    resources,
+  } satisfies Pick<CompactBuild, "props" | "dataSources" | "resources">;
+};
+
 const parseCompactBuild = async (
   build: Database["public"]["Tables"]["Build"]["Row"]
 ) => {
   const pages = migratePages(parseConfig<unknown>(build.pages));
-  const resources = parseCompactData<Resource>(build.resources);
-  migrateResourcesMutable(resources);
+  const contentCompilationData = parseCompactContentCompilationData(build);
   const parsedProjectSettings =
     build.projectSettings === undefined || build.projectSettings === null
       ? createProjectSettingsFromPages(pages)
@@ -96,11 +115,7 @@ const parseCompactBuild = async (
     styleSourceSelections: parseCompactData<StyleSourceSelection>(
       build.styleSourceSelections
     ),
-    props: parseCompactData<Prop>(build.props),
-    dataSources: parseCompactData<unknown>(build.dataSources).map((value) =>
-      dataSource.parse(value)
-    ),
-    resources,
+    ...contentCompilationData,
     instances: parseCompactInstanceData(build.instances),
     deployment: parseDeployment(build.deployment),
     marketplaceProduct: parseMarketplaceProduct(build.marketplaceProduct),
@@ -178,6 +193,29 @@ export const loadDevBuildByProjectId = async (
   }
 
   return parseCompactBuild(build.data[0]);
+};
+
+export const loadDevBuildContentCompilationDataByProjectId = async (
+  context: AppContext,
+  projectId: Build["projectId"]
+) => {
+  const build = await context.postgrest.client
+    .from("Build")
+    .select("props,dataSources,resources")
+    .eq("projectId", projectId)
+    .is("deployment", null)
+    .order("createdAt", { ascending: false })
+    .limit(1);
+
+  if (build.error) {
+    throw build.error;
+  }
+
+  if (build.data.length === 0) {
+    throw new Error("No dev build found");
+  }
+
+  return parseCompactContentCompilationData(build.data[0]);
 };
 
 export const loadApprovedProdBuildByProjectId = async (
