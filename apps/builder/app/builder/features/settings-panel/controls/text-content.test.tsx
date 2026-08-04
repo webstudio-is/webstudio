@@ -141,8 +141,6 @@ test("updates only the targeted expression child through the binding editor", as
   renderTextContent();
   await openBindingPopover();
 
-  expect(getResetBindingButton().disabled).toBe(true);
-
   const editorElement = document.querySelector<HTMLElement>(
     '[role="dialog"] [role="textbox"]'
   );
@@ -171,6 +169,24 @@ test("updates only the targeted expression child through the binding editor", as
   expect($instances.get().get("reading-time")?.children).toEqual([
     { type: "text", value: " · " },
     { type: "expression", value: "2 + 2" },
+  ]);
+});
+
+test("resets a mixed expression without replacing its text sibling", async () => {
+  setReadingTimeChildren([
+    { type: "text", value: " · " },
+    { type: "expression", value: '"test"' },
+  ]);
+  renderTextContent(" · test");
+  await openBindingPopover();
+
+  const resetButton = getResetBindingButton();
+  expect(resetButton.disabled).toBe(false);
+  act(() => resetButton.click());
+
+  expect($instances.get().get("reading-time")?.children).toEqual([
+    { type: "text", value: " · " },
+    { type: "text", value: "test" },
   ]);
 });
 

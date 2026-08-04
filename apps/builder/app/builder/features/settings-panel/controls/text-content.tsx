@@ -128,11 +128,7 @@ export const TextContent = ({
         validate={(value) => validatePrimitiveValue(value, "Text Content")}
         onChangeValue={(value) => updateChild("text", value)}
         onChangeExpression={(value) => updateChild("expression", value)}
-        onRemove={
-          hasMixedContent
-            ? undefined
-            : (value) => updateChild("text", String(value))
-        }
+        onRemove={(value) => updateChild("text", String(value))}
         renderControl={({ readOnly }) => (
           <CodeEditor
             title={
