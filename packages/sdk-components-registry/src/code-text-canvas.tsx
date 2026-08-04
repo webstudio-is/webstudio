@@ -5,9 +5,10 @@ import {
   type ComponentProps,
   type ElementRef,
 } from "react";
-import { bundledLanguages, bundledThemes } from "shiki";
-import { CodeText, defaultTag } from "./code-text";
-import { createCodeText } from "./code-text-highlight";
+import { bundledLanguages } from "shiki/langs";
+import { bundledThemes } from "shiki/themes";
+import { CodeText } from "@webstudio-is/sdk-components-react/components";
+import { createCodeText } from "@webstudio-is/sdk-components-react/code-text";
 
 type CodeTextComponent = ReturnType<typeof createCodeText>;
 type LoadedCodeText = {
@@ -49,7 +50,7 @@ const loadCodeText = (lang: string, theme: string) => {
 };
 
 export const CanvasCodeText = forwardRef<
-  ElementRef<typeof defaultTag>,
+  ElementRef<"code">,
   ComponentProps<typeof CodeText>
 >(({ lang, theme, ...props }, ref) => {
   const key =

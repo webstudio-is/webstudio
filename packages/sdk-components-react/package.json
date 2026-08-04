@@ -28,16 +28,6 @@
       "types": "./lib/types/code-text-highlight.d.ts",
       "import": "./lib/code-text-highlight.js"
     },
-    "./code-text-canvas": {
-      "webstudio": "./src/code-text-canvas.tsx",
-      "types": "./lib/types/code-text-canvas.d.ts",
-      "import": "./lib/code-text-canvas.js"
-    },
-    "./code-text-config": {
-      "webstudio": "./src/code-text-config.ts",
-      "types": "./lib/types/code-text-config.d.ts",
-      "import": "./lib/code-text-config.js"
-    },
     "./metas": {
       "webstudio": "./src/metas.ts",
       "types": "./lib/types/metas.d.ts",

@@ -1,7 +1,6 @@
 import { coreMetas } from "@webstudio-is/sdk";
 import { coreTemplates } from "@webstudio-is/sdk/core-templates";
 import * as baseComponents from "@webstudio-is/sdk-components-react/components";
-import { CanvasCodeText } from "@webstudio-is/sdk-components-react/code-text-canvas";
 import { hooks as baseHooks } from "@webstudio-is/sdk-components-react/hooks";
 import * as baseTemplates from "@webstudio-is/sdk-components-react/templates";
 import * as animationComponents from "@webstudio-is/sdk-components-animation";
@@ -15,6 +14,7 @@ import {
   componentMetaLibraries,
   radixComponentNamespace,
 } from "./shared";
+import { CanvasCodeText } from "./code-text-canvas";
 
 const getLibraryMetas = (namespace?: string) => {
   const library = componentMetaLibraries.find(

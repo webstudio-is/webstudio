@@ -1,8 +1,6 @@
 import type { Instances, Prop, Props } from "@webstudio-is/sdk";
-import {
-  isCodeTextLanguage,
-  isCodeTextTheme,
-} from "@webstudio-is/sdk-components-react/code-text-config";
+import { languageNames } from "@shikijs/langs";
+import { themeNames } from "@shikijs/themes";
 
 export const codeTextComponent = "CodeText";
 
@@ -10,6 +8,9 @@ type Selection = {
   lang?: Prop;
   theme?: Prop;
 };
+
+const codeTextLanguageSet = new Set<string>(["plaintext", ...languageNames]);
+const codeTextThemeSet = new Set<string>(themeNames);
 
 const readSelection = ({
   instanceId,
@@ -71,13 +72,13 @@ export const collectCodeTextAssets = ({
       instanceId,
       label: "Language",
       prop: selection.lang,
-      validate: isCodeTextLanguage,
+      validate: (value) => codeTextLanguageSet.has(value),
     });
     const theme = readSelection({
       instanceId,
       label: "Theme",
       prop: selection.theme,
-      validate: isCodeTextTheme,
+      validate: (value) => codeTextThemeSet.has(value),
     });
     if (lang === undefined || theme === undefined) {
       throw new Error(

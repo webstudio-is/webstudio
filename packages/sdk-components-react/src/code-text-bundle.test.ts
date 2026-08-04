@@ -8,7 +8,7 @@ test("bundles only directly selected Shiki assets", async () => {
       contents: `
         import javascript from "@shikijs/langs/javascript";
         import nord from "@shikijs/themes/nord";
-        import { createCodeText } from "./code-text-highlight";
+        import { createCodeText } from "@webstudio-is/sdk-components-react/code-text";
         export const CodeText = createCodeText({
           languages: [javascript],
           themes: [nord],

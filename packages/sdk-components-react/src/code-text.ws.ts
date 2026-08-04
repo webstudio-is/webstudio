@@ -1,8 +1,9 @@
 import { BracesIcon } from "@webstudio-is/icons/svg";
 import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
+import { languageNames } from "@shikijs/langs";
+import { themeNames } from "@shikijs/themes";
 import { code } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./code-text";
-import { codeTextLanguages, codeTextThemes } from "./code-text-config";
 import { props } from "./__generated__/code-text.props";
 
 const presetStyle = {
@@ -58,7 +59,7 @@ export const meta: WsComponentMeta = {
       control: "select",
       type: "string",
       defaultValue: "javascript",
-      options: codeTextLanguages,
+      options: ["plaintext", ...languageNames],
       bindable: false,
     },
     theme: {
@@ -67,7 +68,7 @@ export const meta: WsComponentMeta = {
       control: "select",
       type: "string",
       defaultValue: "github-light",
-      options: codeTextThemes,
+      options: [...themeNames],
       bindable: false,
     },
   },
