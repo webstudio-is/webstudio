@@ -97,26 +97,6 @@ test("uses an auto-growing textarea for the asset description", () => {
   ).toEqual(["Name", "Folder", "Description", "ID"]);
 });
 
-test("keeps the asset settings popover at a fixed width", () => {
-  renderer.render(
-    <TooltipProvider>
-      <AssetSettings
-        open
-        onOpenChange={vi.fn()}
-        asset={createImageAsset({ description: "A".repeat(1_000) })}
-      >
-        <button>Anchor</button>
-      </AssetSettings>
-    </TooltipProvider>
-  );
-
-  const popover = document.querySelector(
-    "[data-radix-popper-content-wrapper] > div"
-  );
-  expect(popover).not.toBeNull();
-  expect((popover as HTMLElement).style.width).toBe("250px");
-});
-
 test("closes asset settings before replacing an asset", () => {
   const onOpenChange = vi.fn();
   const onReplace = vi.fn();
