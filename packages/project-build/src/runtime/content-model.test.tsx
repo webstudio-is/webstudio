@@ -3,6 +3,7 @@ import { type Prop, type Props } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { $, expression, renderData, ws } from "@webstudio-is/template";
 import {
+  canHaveTextContent,
   findClosestContainer,
   findClosestNonTextualContainer,
   findClosestRichText,
@@ -11,6 +12,45 @@ import {
 } from "./content-model";
 
 const defaultMetas = componentMetas;
+
+test("checks direct text capability without promoting the outer rich-text root", () => {
+  const { instances, props } = renderData(
+    <ws.element ws:tag="body" ws:id="bodyId">
+      <ws.element ws:tag="p" ws:id="paragraphId">
+        prefix
+        <ws.element ws:tag="span" ws:id="readingTimeId">
+          · reading time
+        </ws.element>
+      </ws.element>
+      <ws.element ws:tag="input" ws:id="inputId"></ws.element>
+    </ws.element>
+  );
+
+  expect(
+    canHaveTextContent({
+      instanceId: "readingTimeId",
+      instances,
+      props,
+      metas: defaultMetas,
+    })
+  ).toBe(true);
+  expect(
+    canHaveTextContent({
+      instanceId: "paragraphId",
+      instances,
+      props,
+      metas: defaultMetas,
+    })
+  ).toBe(true);
+  expect(
+    canHaveTextContent({
+      instanceId: "inputId",
+      instances,
+      props,
+      metas: defaultMetas,
+    })
+  ).toBe(false);
+});
 
 test("support element with ws:tag", () => {
   expect(

@@ -1,5 +1,5 @@
 import type { WebstudioFragment } from "@webstudio-is/sdk";
-import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime";
+import { findTextEditorTarget } from "@webstudio-is/project-build/runtime";
 import {
   executeRuntimeMutationAsync,
   getWebstudioData,
@@ -177,15 +177,12 @@ export const insertTemplateAt = async (
       return;
     }
     const data = getWebstudioData();
-    const selectors: InstanceSelector[] = [];
-    findAllEditableInstanceSelector({
+    const editableInstanceSelector = findTextEditorTarget({
       instanceSelector: selectedInstanceSelector,
       instances: data.instances,
       props: data.props,
       metas: $registeredComponentMetas.get(),
-      results: selectors,
     });
-    const editableInstanceSelector = selectors[0];
     $textEditingInstanceSelector.set(
       editableInstanceSelector
         ? { selector: editableInstanceSelector, reason: "new" }

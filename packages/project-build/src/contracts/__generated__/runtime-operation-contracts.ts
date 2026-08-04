@@ -61413,6 +61413,44 @@ export const runtimeOperationContractData = [
           },
           required: ["operation", "instanceId"],
         },
+        {
+          type: "object",
+          properties: {
+            operation: {
+              type: "string",
+              const: "inlineExpressions",
+            },
+            instanceId: {
+              type: "string",
+              description:
+                "Instance id whose expression children will become text.",
+            },
+            replacements: {
+              minItems: 1,
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  childIndex: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  expression: {
+                    type: "string",
+                  },
+                  text: {
+                    type: "string",
+                  },
+                },
+                required: ["childIndex", "expression", "text"],
+              },
+              description:
+                "Evaluated text for every expression child. The index and original expression must match the current instance.",
+            },
+          },
+          required: ["operation", "instanceId", "replacements"],
+        },
       ],
     },
     outputSchema: {
@@ -61423,7 +61461,7 @@ export const runtimeOperationContractData = [
         },
         operation: {
           type: "string",
-          enum: ["set", "reset"],
+          enum: ["set", "reset", "inlineExpressions"],
         },
         mode: {
           type: "string",
