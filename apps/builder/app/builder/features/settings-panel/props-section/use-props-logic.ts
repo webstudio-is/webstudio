@@ -138,7 +138,7 @@ const canShowTextContent = ({
   ) {
     return true;
   }
-  return canHaveTextContent(input) && target?.child.type === "expression";
+  return canHaveTextContent(input);
 };
 
 export const __testing__ = {

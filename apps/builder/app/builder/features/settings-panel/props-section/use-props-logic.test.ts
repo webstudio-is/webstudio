@@ -158,7 +158,7 @@ describe("canShowTextContent", () => {
   const metas = new Map<string, WsComponentMeta>();
   const props = new Map<string, Prop>();
 
-  test("limits the direct-capability exception to bound content", () => {
+  test("shows directly selected scalar content inside a rich-text tree", () => {
     const paragraph: Instance = {
       type: "instance",
       id: "paragraph",
@@ -189,7 +189,7 @@ describe("canShowTextContent", () => {
         metas,
         isContentMode: false,
       })
-    ).toBe(false);
+    ).toBe(true);
     const boundInstance: Instance = {
       ...instance,
       children: [{ type: "expression", value: "value" }],
