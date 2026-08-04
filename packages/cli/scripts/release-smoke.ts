@@ -42,6 +42,10 @@ import {
   startRuntimeFixtureApi,
 } from "./runtime-fixture-api";
 import { runAgentCommand } from "./run-agent-command";
+import {
+  resolveRegistryTarget,
+  type ReleaseTarget,
+} from "./release-smoke-registry";
 import { isPlainRecord } from "../src/type-utils";
 
 const execFileAsync = promisify(execFile);
@@ -76,37 +80,8 @@ const reporter = createReleaseSmokeReporter({
 });
 const reportPhase = reporter.complete;
 
-type ReleaseTarget = {
-  source: "local" | "registry";
-  version: string;
-  installSpec: string;
-  integrity?: string;
-};
-
 const readNpmJson = async (args: string[]) =>
   JSON.parse((await execFileAsync("npm", args)).stdout) as unknown;
-
-const resolveRegistryTarget = async (spec: string): Promise<ReleaseTarget> => {
-  const version = await readNpmJson(["view", spec, "version", "--json"]);
-  const integrity = await readNpmJson([
-    "view",
-    spec,
-    "dist.integrity",
-    "--json",
-  ]);
-  if (typeof version !== "string" || version.length === 0) {
-    throw new Error(`Could not resolve registry package ${spec}.`);
-  }
-  if (typeof integrity !== "string" || integrity.length === 0) {
-    throw new Error(`Registry package webstudio@${version} has no integrity.`);
-  }
-  return {
-    source: "registry",
-    version,
-    installSpec: `webstudio@${version}`,
-    integrity,
-  };
-};
 
 const installReleaseTarget = async ({
   directory,
@@ -1246,7 +1221,8 @@ const run = async () => {
     if (requestedCandidate === "local") {
       const releaseVersion =
         process.env.WEBSTUDIO_RELEASE_SMOKE_VERSION ??
-        (await resolveRegistryTarget("webstudio@latest")).version;
+        (await resolveRegistryTarget("webstudio@latest", { readNpmJson }))
+          .version;
       const packStartedAt = Date.now();
       await packReleaseShapedCli({
         stagingDirectory,
@@ -1266,10 +1242,13 @@ const run = async () => {
         installSpec: join(packDirectory, tarballName),
       };
     } else {
-      candidate = await resolveRegistryTarget(requestedCandidate);
+      candidate = await resolveRegistryTarget(requestedCandidate, {
+        readNpmJson,
+      });
     }
     const baseline = await resolveRegistryTarget(
-      process.env.WEBSTUDIO_RELEASE_SMOKE_BASELINE ?? "webstudio@latest"
+      process.env.WEBSTUDIO_RELEASE_SMOKE_BASELINE ?? "webstudio@latest",
+      { readNpmJson }
     );
     reporter.setSubjects({
       candidate: { source: candidate.source, version: candidate.version },
