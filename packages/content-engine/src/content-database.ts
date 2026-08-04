@@ -38,7 +38,10 @@ import {
   assertDocumentSourceIdentity,
 } from "./document-graph";
 import { contentEngineLimits } from "./limits";
-import { resolveAssetValueReferences } from "./asset-value-references";
+import {
+  getRuntimeAssetUrls,
+  resolveAssetValueReferences,
+} from "./asset-value-references";
 
 type ContentDatabaseQueryArguments = [
   request: AssetQueryRequestInput,
@@ -169,6 +172,9 @@ const createQueryableContentDatabase = ({
   inlineDocuments?: ReadonlyMap<string, ContentDatabaseDocument>;
   readContent?: AssetResourceContentReader;
 }): RuntimeContentDatabase => {
+  const documentsById = new Map(
+    artifact.documents.map((document) => [document._id, document])
+  );
   const assertIndexRevision = (request: AssetQueryRequestInput) => {
     if (
       request.indexRevision !== undefined &&
@@ -258,9 +264,7 @@ const createQueryableContentDatabase = ({
   }): Promise<PromiseSettledResult<AssetQueryResult>[]> => {
     const results: Array<PromiseSettledResult<AssetQueryResult> | undefined> =
       Array.from({ length: requests.length });
-    const assetUrls = Object.fromEntries(
-      Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [id, asset.url])
-    );
+    const assetUrls = getRuntimeAssetUrls(runtimeAssets);
     const pendingIndexes: number[] = [];
     for (const [index, request] of requests.entries()) {
       try {
@@ -339,12 +343,7 @@ const createQueryableContentDatabase = ({
     query: ReturnType<typeof assetQuery.parse>;
     runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   }) => {
-    const assetUrls = Object.fromEntries(
-      Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [id, asset.url])
-    );
-    const documentsById = new Map(
-      artifact.documents.map((document) => [document._id, document])
-    );
+    const assetUrls = getRuntimeAssetUrls(runtimeAssets);
     return getDocumentGraphQueryRootIds({ graph, query }).filter((rootId) => {
       const storedDocument = documentsById.get(rootId);
       const document =

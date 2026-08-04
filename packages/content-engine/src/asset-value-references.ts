@@ -8,6 +8,13 @@ export type AssetValueReference = {
 
 export type AssetValueReferences = Record<string, AssetValueReference[]>;
 
+export const getRuntimeAssetUrls = (
+  runtimeAssets?: Readonly<Record<string, { url: string }>>
+): Readonly<Record<string, string>> =>
+  Object.fromEntries(
+    Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [id, asset.url])
+  );
+
 const getUrlSuffix = (value: string) => {
   let parsed: URL;
   try {

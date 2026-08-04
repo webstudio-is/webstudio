@@ -160,15 +160,12 @@ type AssetQueryBatchOptions = {
   signal?: AbortSignal;
 };
 
-const createAssetQueryBatchPlan = (
-  requests: readonly AssetQueryRequestInput[]
-) => {
+const createAssetQueryBatchPlan = (queries: readonly AssetQuery[]) => {
   const queryByKey = new Map<string, AssetQuery>();
-  for (const request of requests) {
-    const query = assetQuery.parse(request.query);
+  for (const query of queries) {
     queryByKey.set(serializeJsonDeterministically(query), query);
   }
-  const queries = [...queryByKey]
+  const compilationQueries = [...queryByKey]
     .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
     .map(([, query], index) =>
       createLiteralContentCompilationQuery({
@@ -176,7 +173,7 @@ const createAssetQueryBatchPlan = (
         query,
       })
     );
-  return createContentCompilationPlan(queries);
+  return createContentCompilationPlan(compilationQueries);
 };
 
 export interface AssetRepository {
@@ -903,6 +900,11 @@ export class PostgresAssetRepository implements AssetRepository {
       const result = assetQuery.safeParse(query);
       return result.success ? result.data : undefined;
     });
+    const selectQueries = (indexes: readonly number[]) =>
+      indexes.flatMap((index) => {
+        const query = queries[index];
+        return query === undefined ? [] : [query];
+      });
     const databaseIndexes = requests.flatMap((_request, index) =>
       queries[index] !== undefined &&
       databasePlan !== undefined &&
@@ -950,9 +952,7 @@ export class PostgresAssetRepository implements AssetRepository {
         signal?.throwIfAborted();
         const database = getContentDatabaseForArtifact(artifact);
         if (preserveTruncation || database.getStats().truncated === false) {
-          const runtimePlan = createAssetQueryBatchPlan(
-            indexes.map((index) => requests[index])
-          );
+          const runtimePlan = createAssetQueryBatchPlan(selectQueries(indexes));
           const runtimeAssets = await this.loadQueryRuntimeAssets({
             artifact,
             plan: runtimePlan,
@@ -1007,7 +1007,7 @@ export class PostgresAssetRepository implements AssetRepository {
       });
     }
     const literalPlan = createAssetQueryBatchPlan(
-      literalIndexes.map((index) => requests[index])
+      selectQueries(literalIndexes)
     );
     if (literalPlan !== undefined) {
       await prepareSharedExecutions({

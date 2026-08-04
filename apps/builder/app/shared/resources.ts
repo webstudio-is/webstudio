@@ -15,15 +15,10 @@ type InFlightResourceBatch = {
   versions: Map<string, number>;
 };
 
-type PendingResource = {
-  version: number;
-  batch: InFlightResourceBatch;
-};
-
 export { getResourceKey };
 
 const queue = new Map<string, ResourceRequest>();
-const pending = new Map<string, PendingResource>();
+const pending = new Map<string, InFlightResourceBatch>();
 const cache = new Map<string, unknown>();
 const diagnosticsCache = new Map<string, AssetQueryPreviewDiagnostics>();
 const pendingDiagnostics = new Map<string, Promise<void>>();
@@ -60,16 +55,15 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
     return;
   }
   const dispatched = new Map<string, ResourceRequest>();
-  const dispatchedVersions = new Map<string, number>();
   const controller = new AbortController();
-  const batch = { controller, versions: dispatchedVersions };
+  const batch = { controller, versions: new Map<string, number>() };
   for (const resource of list) {
     const key = getResourceKey(resource);
     const version = resourceVersions.get(key) ?? 0;
     queue.delete(key);
-    pending.set(key, { version, batch });
+    pending.set(key, batch);
     dispatched.set(key, resource);
-    dispatchedVersions.set(key, version);
+    batch.versions.set(key, version);
   }
   inFlightBatches.add(batch);
   updatePending();
@@ -86,13 +80,11 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
     const results = new Map<string, unknown>(await response.json());
     for (const [key, result] of results) {
       const request = dispatched.get(key);
-      const pendingResource = pending.get(key);
       if (
         request === undefined ||
-        pendingResource?.batch !== batch ||
-        pendingResource.version !== dispatchedVersions.get(key) ||
+        pending.get(key) !== batch ||
         knownRequests.has(key) === false ||
-        resourceVersions.get(key) !== dispatchedVersions.get(key)
+        resourceVersions.get(key) !== batch.versions.get(key)
       ) {
         continue;
       }
@@ -111,7 +103,7 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
   } finally {
     inFlightBatches.delete(batch);
     for (const key of dispatched.keys()) {
-      if (pending.get(key)?.batch === batch) {
+      if (pending.get(key) === batch) {
         pending.delete(key);
       }
     }

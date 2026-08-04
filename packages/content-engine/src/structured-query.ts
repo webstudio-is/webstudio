@@ -35,6 +35,7 @@ import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
 import { getUtf8ByteLength } from "./byte-stream";
 import type { MarkdownAssetReferences } from "./markdown-references";
 import {
+  getRuntimeAssetUrls,
   resolveAssetValueReferences,
   type AssetValueReferences,
 } from "./asset-value-references";
@@ -276,17 +277,14 @@ const matchesAssetQueryWhere = ({
   document: ContentDatabaseDocument;
   where: AssetQueryWhere;
   runtimeAsset?: AssetRuntimeData;
-  filterKeys?: ReadonlyMap<AssetQueryFilter, string>;
-  filterResults?: Map<string, boolean>;
+  filterKeys: ReadonlyMap<AssetQueryFilter, string>;
+  filterResults: Map<string, boolean>;
 }): boolean =>
   evaluateQueryWhere(where, (filter) => {
-    if (filterResults === undefined) {
-      return matchesAssetQueryFilter(document, filter, runtimeAsset);
-    }
     const key =
-      filterKeys?.get(filter) ?? serializeJsonDeterministically(filter);
+      filterKeys.get(filter) ?? serializeJsonDeterministically(filter);
     const cached = filterResults.get(key);
-    if (cached !== undefined || filterResults.has(key)) {
+    if (cached !== undefined) {
       return cached;
     }
     const matched = matchesAssetQueryFilter(document, filter, runtimeAsset);
@@ -449,7 +447,7 @@ type AssetQueryMatch = {
 type AssetQuerySortGroup = {
   sort: AssetQuery["sort"];
   documents: Set<ContentDatabaseDocument>;
-  sorted?: readonly ContentDatabaseDocument[];
+  sorted: readonly ContentDatabaseDocument[];
 };
 
 type PreparedAssetQuery = {
@@ -500,7 +498,7 @@ const prepareAssetQueries = ({
     const sortKey = serializeJsonDeterministically(query.sort);
     let sortGroup = sortGroups.get(sortKey);
     if (sortGroup === undefined) {
-      sortGroup = { sort: query.sort, documents: new Set() };
+      sortGroup = { sort: query.sort, documents: new Set(), sorted: [] };
       sortGroups.set(sortKey, sortGroup);
     }
     preparedQueries.push({
@@ -625,7 +623,7 @@ const finalizeAssetQueries = async ({
       }
       const { query } = state;
       try {
-        const matched = (state.sortGroup.sorted ?? []).flatMap((document) => {
+        const matched = state.sortGroup.sorted.flatMap((document) => {
           const match = state.matches.get(document);
           return match === undefined ? [] : [match];
         });
@@ -717,12 +715,9 @@ export const executeAssetQueries = async ({
     return requireSettledAssetQueryResults(results);
   }
 
-  let assetUrls: Readonly<Record<string, string>>;
+  const assetUrls = getRuntimeAssetUrls(runtimeAssets);
   let resolvedDocuments: readonly ContentDatabaseDocument[];
   try {
-    assetUrls = Object.fromEntries(
-      Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [id, asset.url])
-    );
     resolvedDocuments = documents.map((document) =>
       resolveAssetValueReferences({
         value: document,
