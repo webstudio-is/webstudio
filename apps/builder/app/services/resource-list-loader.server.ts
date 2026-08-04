@@ -1,67 +1,11 @@
 import { type ResourceRequest, resourceRequest } from "@webstudio-is/sdk";
-import { isLocalResource, loadResource } from "@webstudio-is/sdk/runtime";
+import {
+  createResourceFetchBatchProvider,
+  isLocalResource,
+  loadResource,
+} from "@webstudio-is/sdk/runtime";
 import { executeAssetQueries } from "~/shared/$resources/assets-query.server";
 import { getResourceKey } from "~/shared/resource-utils";
-
-const createAssetQueryBatchProvider = ({
-  request,
-  execute,
-}: {
-  request: Request;
-  execute: typeof executeAssetQueries;
-}) => {
-  const pending: Array<{
-    request: Request;
-    resolve: (response: Response) => void;
-    reject: (error: unknown) => void;
-  }> = [];
-  let didFlush = false;
-  return {
-    fetch: (
-      input: RequestInfo | URL,
-      init?: RequestInit
-    ): Promise<Response> | undefined => {
-      if (
-        didFlush ||
-        typeof input !== "string" ||
-        isLocalResource(input, "assets") === false
-      ) {
-        return;
-      }
-      return new Promise<Response>((resolve, reject) => {
-        pending.push({
-          request: new Request(new URL(input, request.url), init),
-          resolve,
-          reject,
-        });
-      });
-    },
-    flush: async () => {
-      didFlush = true;
-      if (pending.length === 0) {
-        return;
-      }
-      try {
-        const responses = await execute({
-          request,
-          resourceRequests: pending.map(({ request }) => request),
-        });
-        if (responses.length !== pending.length) {
-          throw new Error(
-            "Assets batch response count does not match requests"
-          );
-        }
-        for (const [index, response] of responses.entries()) {
-          pending[index].resolve(response);
-        }
-      } catch (error) {
-        for (const item of pending) {
-          item.reject(error);
-        }
-      }
-    },
-  };
-};
 
 const defaultDependencies = {
   executeAssetQueries,
@@ -86,9 +30,12 @@ export const loadResourceRequestList = async (
 ) => {
   const assetProvider = includeDiagnostics
     ? undefined
-    : createAssetQueryBatchProvider({
-        request,
-        execute: dependencies.executeAssetQueries,
+    : createResourceFetchBatchProvider({
+        baseUrl: request.url,
+        shouldBatch: (input) =>
+          typeof input === "string" && isLocalResource(input, "assets"),
+        execute: (resourceRequests) =>
+          dependencies.executeAssetQueries({ request, resourceRequests }),
       });
   const providerFetch: typeof fetch = (input, init) =>
     assetProvider?.fetch(input, init) ?? customFetch(input, init);

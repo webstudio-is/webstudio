@@ -1015,12 +1015,18 @@ describe("PostgresAssetRepository", () => {
         contentLength: new TextEncoder().encode(source).byteLength,
       };
     });
+    const rootsSelected = vi.fn();
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
       assetStore: { readFile },
       dependencies,
       compilationCache: createContentCompilationCache(),
+      onDocumentGraphEvent: (event) => {
+        if (event.type === "roots-selected") {
+          rootsSelected(event.rootCount);
+        }
+      },
     });
     const requests = ["post-a", "post-b"].map((id) => ({
       query: {
@@ -1048,6 +1054,7 @@ describe("PostgresAssetRepository", () => {
     }
     await repository.queryMany(requests, { databasePlan });
     readFile.mockClear();
+    rootsSelected.mockClear();
 
     const results = await repository.queryMany(requests, { databasePlan });
 
@@ -1088,6 +1095,8 @@ describe("PostgresAssetRepository", () => {
         ([contentRef]) => contentRef === "storage:author"
       )
     ).toHaveLength(1);
+    expect(rootsSelected).toHaveBeenCalledOnce();
+    expect(rootsSelected).toHaveBeenCalledWith(2);
   });
 
   test("prepares revision-pinned batch items independently", async () => {

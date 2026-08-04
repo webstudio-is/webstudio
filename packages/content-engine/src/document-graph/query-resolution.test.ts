@@ -2,11 +2,12 @@ import { describe, expect, test, vi } from "vitest";
 import { compileContentArtifact } from "../asset-index";
 import { createCanonicalAssetFileEntry } from "../canonical";
 import { createContentDatabase } from "../content-database";
-import type { AssetQuery } from "../schema";
+import { assetQuery, type AssetQuery } from "../schema";
 import {
   createContentCompilationPlan,
   createLiteralContentCompilationQuery,
 } from "../compilation-plan";
+import { contentEngineLimits } from "../limits";
 import { createDocumentGraph } from "./graph";
 
 const createPostEntry = (id: string, authorPath: string) =>
@@ -29,6 +30,109 @@ const createPostEntry = (id: string, authorPath: string) =>
       },
     },
   });
+
+const createCategorizedGraphFixture = async ({
+  categoryCounts,
+  sharedAuthor = true,
+}: {
+  categoryCounts: Readonly<Record<string, number>>;
+  sharedAuthor?: boolean;
+}) => {
+  const definitions = Object.entries(categoryCounts).flatMap(
+    ([category, count]) =>
+      Array.from({ length: count }, (_, index) => ({
+        id: `${category.toLowerCase()}-${String(index).padStart(2, "0")}`,
+        category,
+        authorId: sharedAuthor ? "author" : `author-${category.toLowerCase()}`,
+      }))
+  );
+  const entries = definitions.map(({ id, category, authorId }) =>
+    createCanonicalAssetFileEntry({
+      projectId: "project",
+      document: {
+        _id: id,
+        _type: "asset.file",
+        name: `${id}.json`,
+        path: `posts/${id}.json`,
+        key: id,
+        extension: "json",
+        mimeType: "application/json",
+        size: 1,
+        revision: `${id}-r1`,
+        contentRef: `content:${id}`,
+        properties: {
+          category,
+          author: { $ref: `../authors/${authorId}.json` },
+        },
+      },
+    })
+  );
+  const authorIds = [...new Set(definitions.map(({ authorId }) => authorId))];
+  const graph = createDocumentGraph({
+    nodes: [
+      ...entries.map(({ assetId, revision, document }) => ({
+        id: assetId,
+        revision,
+        contentRef: document.contentRef,
+        format: "json" as const,
+      })),
+      ...authorIds.map((id) => ({
+        id,
+        revision: `${id}-r1`,
+        contentRef: `content:${id}`,
+        format: "json" as const,
+      })),
+    ],
+    edges: definitions.map(({ id, authorId }) => ({
+      sourceId: id,
+      referenceId: "#/author",
+      reference: {
+        documentId: authorId,
+        revision: `${authorId}-r1`,
+        representation: { type: "document" as const },
+      },
+    })),
+  });
+  const { artifact } = await compileContentArtifact({
+    projectId: "project",
+    entries,
+    documentGraph: graph,
+  });
+  const sources = Object.fromEntries([
+    ...definitions.map(({ id, category, authorId }) => [
+      id,
+      JSON.stringify({
+        category,
+        author: { $ref: `../authors/${authorId}.json` },
+      }),
+    ]),
+    ...authorIds.map((id) => [id, JSON.stringify({ name: id })]),
+  ]);
+  return { artifact, graph, sources };
+};
+
+const createCategoryRequests = (categories: readonly string[]) =>
+  categories.map((category) => ({
+    query: assetQuery.parse({
+      where: {
+        all: [
+          {
+            field: ["properties", "category"],
+            operator: "eq",
+            value: category,
+          },
+        ],
+      },
+      sort: [{ field: ["id"], direction: "asc" }],
+      limit: 20,
+      output: {
+        mode: "fields",
+        includeMetadata: false,
+        fields: [["properties", "author"]],
+      },
+      content: { mode: "none" },
+    }),
+  }));
 
 describe("document graph query resolution", () => {
   test("resolves referenced fields before filtering and projection", async () => {
@@ -371,5 +475,162 @@ describe("document graph query resolution", () => {
       "author",
       ...entries.map(({ assetId }) => assetId),
     ]);
+  });
+
+  test("stitches graph queries whose valid logical closures exceed the single-query limit in aggregate", async () => {
+    const { artifact, graph, sources } = await createCategorizedGraphFixture({
+      categoryCounts: { Tools: 10, Strategy: 10 },
+    });
+    const load = vi.fn(async (node: (typeof graph.nodes)[number]) => ({
+      format: "json" as const,
+      revision: node.revision,
+      source: sources[node.id],
+    }));
+    const onEvent = vi.fn();
+
+    const results = await createContentDatabase({
+      artifact,
+    }).queryManyWithDocumentGraph({
+      requests: createCategoryRequests(["Tools", "Strategy"]),
+      load,
+      onEvent,
+    });
+
+    expect(results.map(({ status }) => status)).toEqual([
+      "fulfilled",
+      "fulfilled",
+    ]);
+    expect(
+      results.map((result) =>
+        result.status === "fulfilled" ? result.value.totalCount : undefined
+      )
+    ).toEqual([10, 10]);
+    expect(load).toHaveBeenCalledTimes(21);
+    expect(
+      onEvent.mock.calls
+        .map(([event]) => event)
+        .filter(({ type }) => type === "roots-selected")
+    ).toEqual([{ type: "roots-selected", rootCount: 20 }]);
+  });
+
+  test("falls back when a stitched graph union exceeds the aggregate byte limit", async () => {
+    const categories = ["Tools", "Strategy", "Design"] as const;
+    const { artifact, graph, sources } = await createCategorizedGraphFixture({
+      categoryCounts: { Tools: 1, Strategy: 1, Design: 1 },
+      sharedAuthor: false,
+    });
+    const authorBio = "x".repeat(
+      Math.floor((contentEngineLimits.hydratedFileBytes * 3) / 4)
+    );
+    for (const category of categories) {
+      const authorId = `author-${category.toLowerCase()}`;
+      sources[authorId] = JSON.stringify({ name: authorId, bio: authorBio });
+    }
+    const load = vi.fn(async (node: (typeof graph.nodes)[number]) => ({
+      format: "json" as const,
+      revision: node.revision,
+      source: sources[node.id],
+    }));
+    const onEvent = vi.fn();
+
+    const results = await createContentDatabase({
+      artifact,
+    }).queryManyWithDocumentGraph({
+      requests: createCategoryRequests(categories),
+      load,
+      onEvent,
+    });
+
+    expect(results.map(({ status }) => status)).toEqual([
+      "fulfilled",
+      "fulfilled",
+      "fulfilled",
+    ]);
+    expect(
+      results.map((result) =>
+        result.status === "fulfilled" ? result.value.totalCount : undefined
+      )
+    ).toEqual([1, 1, 1]);
+    const events = onEvent.mock.calls.map(([event]) => event);
+    expect(events.filter(({ type }) => type === "resolution-failed")).toEqual([
+      {
+        type: "resolution-failed",
+        rootCount: 3,
+        documentCount: 6,
+        errorCode: "DOCUMENT_LOAD_FAILED",
+      },
+    ]);
+    expect(events.filter(({ type }) => type === "roots-selected")).toEqual([
+      { type: "roots-selected", rootCount: 3 },
+      { type: "roots-selected", rootCount: 1 },
+      { type: "roots-selected", rootCount: 1 },
+      { type: "roots-selected", rootCount: 1 },
+    ]);
+  });
+
+  test("falls back to isolated graph execution when one stitched member fails", async () => {
+    const { artifact, graph, sources } = await createCategorizedGraphFixture({
+      categoryCounts: { Good: 1, Broken: 1 },
+      sharedAuthor: false,
+    });
+    const load = vi.fn(async (node: (typeof graph.nodes)[number]) => {
+      if (node.id === "author-broken") {
+        throw new Error("Broken author");
+      }
+      return {
+        format: "json" as const,
+        revision: node.revision,
+        source: sources[node.id],
+      };
+    });
+
+    const [good, broken] = await createContentDatabase({
+      artifact,
+    }).queryManyWithDocumentGraph({
+      requests: createCategoryRequests(["Good", "Broken"]),
+      load,
+    });
+
+    expect(good).toMatchObject({
+      status: "fulfilled",
+      value: { totalCount: 1 },
+    });
+    expect(broken.status).toBe("rejected");
+  });
+
+  test("does not retry stitched graph queries after cancellation", async () => {
+    const { artifact, graph, sources } = await createCategorizedGraphFixture({
+      categoryCounts: { Tools: 1, Strategy: 1 },
+    });
+    const controller = new AbortController();
+    const onEvent = vi.fn();
+    const load = vi.fn(async (node: (typeof graph.nodes)[number]) => {
+      controller.abort();
+      controller.signal.throwIfAborted();
+      return {
+        format: "json" as const,
+        revision: node.revision,
+        source: sources[node.id],
+      };
+    });
+
+    const results = await createContentDatabase({
+      artifact,
+    }).queryManyWithDocumentGraph({
+      requests: createCategoryRequests(["Tools", "Strategy"]),
+      load,
+      signal: controller.signal,
+      onEvent,
+    });
+
+    expect(results.map(({ status }) => status)).toEqual([
+      "rejected",
+      "rejected",
+    ]);
+    expect(
+      onEvent.mock.calls
+        .map(([event]) => event)
+        .filter(({ type }) => type === "roots-selected")
+    ).toEqual([{ type: "roots-selected", rootCount: 2 }]);
   });
 });

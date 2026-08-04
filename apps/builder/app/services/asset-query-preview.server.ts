@@ -1,39 +1,26 @@
 import type { AssetQueryRequestInput } from "@webstudio-is/content-engine";
 import {
-  previewAssetResourceQueries,
-  previewAssetResourceQuery,
-} from "@webstudio-is/asset-uploader/server";
-import {
-  createAssetQueryPreviewCompilationPlan,
-  createBuildContentCompilationPlan,
-} from "@webstudio-is/project-build";
-import {
-  loadDevBuildByProjectId,
-  loadDevBuildContentCompilationDataByProjectId,
-} from "@webstudio-is/project-build/server";
+  previewProjectAssetQueries as previewSharedProjectAssetQueries,
+  previewProjectAssetQuery as previewSharedProjectAssetQuery,
+} from "@webstudio-is/project/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { createAssetClient } from "~/shared/asset-client";
 import { getContentDatabaseMaxBytes } from "./content-database.server";
 
 const defaultBatchDependencies = {
   createAssetClient,
-  loadDevBuildContentCompilationDataByProjectId,
-  previewAssetResourceQueries,
+  getContentDatabaseMaxBytes,
+  previewProjectAssetQueries: previewSharedProjectAssetQueries,
 };
 
 const defaultQueryDependencies = {
   createAssetClient,
-  loadDevBuildByProjectId,
-  previewAssetResourceQuery,
+  getContentDatabaseMaxBytes,
+  previewProjectAssetQuery: previewSharedProjectAssetQuery,
 };
 
 export const previewProjectAssetQueries = async (
-  {
-    projectId,
-    requests,
-    context,
-    signal,
-  }: {
+  args: {
     projectId: string;
     requests: readonly AssetQueryRequestInput[];
     context: AppContext;
@@ -41,34 +28,16 @@ export const previewProjectAssetQueries = async (
   },
   dependencies = defaultBatchDependencies
 ) => {
-  signal?.throwIfAborted();
-  const build =
-    await dependencies.loadDevBuildContentCompilationDataByProjectId(
-      context,
-      projectId,
-      signal
-    );
-  signal?.throwIfAborted();
-  return await dependencies.previewAssetResourceQueries({
-    projectId,
-    requests,
-    context,
+  args.signal?.throwIfAborted();
+  return await dependencies.previewProjectAssetQueries({
+    ...args,
     assetClient: dependencies.createAssetClient(),
-    contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
-    databasePlan: createBuildContentCompilationPlan(build),
-    signal,
+    contentDatabaseMaxBytes: dependencies.getContentDatabaseMaxBytes(),
   });
 };
 
 export const previewProjectAssetQuery = async (
-  {
-    projectId,
-    request,
-    context,
-    includeDiagnostics,
-    includeUnresolvedDiagnostics,
-    signal,
-  }: {
+  args: {
     projectId: string;
     request: AssetQueryRequestInput;
     context: AppContext;
@@ -78,33 +47,10 @@ export const previewProjectAssetQuery = async (
   },
   dependencies = defaultQueryDependencies
 ) => {
-  signal?.throwIfAborted();
-  const build = await dependencies.loadDevBuildByProjectId(
-    context,
-    projectId,
-    signal
-  );
-  signal?.throwIfAborted();
-  const databasePlan = createBuildContentCompilationPlan(build);
-  return await dependencies.previewAssetResourceQuery({
-    projectId,
-    request,
-    context,
+  args.signal?.throwIfAborted();
+  return await dependencies.previewProjectAssetQuery({
+    ...args,
     assetClient: dependencies.createAssetClient(),
-    contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
-    databasePlan,
-    signal,
-    ...(includeDiagnostics === false
-      ? {}
-      : {
-          diagnosticsPlan: createAssetQueryPreviewCompilationPlan({
-            databasePlan,
-            query: request.query,
-          }),
-        }),
-    ...(includeDiagnostics === undefined ? {} : { includeDiagnostics }),
-    ...(includeUnresolvedDiagnostics === true
-      ? { includeUnresolvedDiagnostics: true }
-      : {}),
+    contentDatabaseMaxBytes: dependencies.getContentDatabaseMaxBytes(),
   });
 };

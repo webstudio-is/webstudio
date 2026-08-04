@@ -1,3 +1,4 @@
+import { LRUCache } from "lru-cache";
 import { ByteLimitExceededError, readBoundedBytes } from "../byte-stream";
 import { serializeJsonDeterministically } from "../canonical-json";
 import { contentEngineLimits } from "../limits";
@@ -32,36 +33,18 @@ export const createMemoryDocumentSourceCache = ({
   if (Number.isSafeInteger(maximumBytes) === false || maximumBytes <= 0) {
     throw new TypeError("Document source cache byte limit must be positive");
   }
-  const values = new Map<string, CachedDocumentSource>();
-  let usedBytes = 0;
+  const values = new LRUCache<string, CachedDocumentSource>({
+    maxSize: maximumBytes,
+    // The package requires positive sizes, and an empty source still uses memory.
+    sizeCalculation: (source) => Math.max(1, source.bytes.byteLength),
+  });
   return {
-    get: async (key) => {
-      const value = values.get(key);
-      if (value !== undefined) {
-        values.delete(key);
-        values.set(key, value);
-      }
-      return value;
-    },
+    get: async (key) => values.get(key),
     set: async (key, source) => {
       if (source.bytes.byteLength > maximumBytes) {
         return;
       }
-      const previous = values.get(key);
-      if (previous !== undefined) {
-        usedBytes -= previous.bytes.byteLength;
-        values.delete(key);
-      }
       values.set(key, source);
-      usedBytes += source.bytes.byteLength;
-      while (usedBytes > maximumBytes) {
-        const oldest = values.entries().next().value;
-        if (oldest === undefined) {
-          break;
-        }
-        values.delete(oldest[0]);
-        usedBytes -= oldest[1].bytes.byteLength;
-      }
     },
   };
 };

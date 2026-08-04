@@ -72,14 +72,12 @@ const parseMarketplaceProduct = (serialized: string | null | undefined) => {
   return marketplaceProduct.parse(value);
 };
 
-type ContentCompilationBuildRow = Pick<
+type ContentEngineBuildRow = Pick<
   Database["public"]["Tables"]["Build"]["Row"],
   "props" | "dataSources" | "resources"
 >;
 
-const parseCompactContentCompilationData = (
-  build: ContentCompilationBuildRow
-) => {
+const parseCompactContentEngineData = (build: ContentEngineBuildRow) => {
   const resources = parseCompactData<Resource>(build.resources);
   migrateResourcesMutable(resources);
   return {
@@ -95,7 +93,7 @@ const parseCompactBuild = async (
   build: Database["public"]["Tables"]["Build"]["Row"]
 ) => {
   const pages = migratePages(parseConfig<unknown>(build.pages));
-  const contentCompilationData = parseCompactContentCompilationData(build);
+  const contentEngineData = parseCompactContentEngineData(build);
   const parsedProjectSettings =
     build.projectSettings === undefined || build.projectSettings === null
       ? createProjectSettingsFromPages(pages)
@@ -114,7 +112,7 @@ const parseCompactBuild = async (
     styleSourceSelections: parseCompactData<StyleSourceSelection>(
       build.styleSourceSelections
     ),
-    ...contentCompilationData,
+    ...contentEngineData,
     instances: parseCompactInstanceData(build.instances),
     deployment: parseDeployment(build.deployment),
     marketplaceProduct: parseMarketplaceProduct(build.marketplaceProduct),
@@ -199,7 +197,7 @@ export const loadDevBuildByProjectId = async (
   return parseCompactBuild(build.data[0]);
 };
 
-export const loadDevBuildContentCompilationDataByProjectId = async (
+export const loadDevBuildContentEngineDataByProjectId = async (
   context: AppContext,
   projectId: Build["projectId"],
   signal?: AbortSignal
@@ -221,7 +219,7 @@ export const loadDevBuildContentCompilationDataByProjectId = async (
     throw new Error("No dev build found");
   }
   signal?.throwIfAborted();
-  return parseCompactContentCompilationData(build.data[0]);
+  return parseCompactContentEngineData(build.data[0]);
 };
 
 export const loadApprovedProdBuildByProjectId = async (

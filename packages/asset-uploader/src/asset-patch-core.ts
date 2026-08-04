@@ -1,4 +1,5 @@
 import { type Asset, assets } from "@webstudio-is/sdk";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import { mapBounded } from "@webstudio-is/content-engine/compiler";
 import { formatAsset } from "./utils/format-asset";
@@ -14,10 +15,20 @@ import { AssetRepositoryNotFoundError } from "./asset-repository-errors";
 
 const serializeAssetMeta = (meta: Asset["meta"]) => JSON.stringify(meta);
 
-// Keep PostgREST `in` URLs below common proxy request-line limits while still
-// overlapping the bounded remote reads.
-const assetIdFilterChunkSize = 100;
-const assetIdFilterConcurrency = 4;
+// Supabase documents that REST requests most often hit Cloudflare 520 errors
+// at 16+ KiB across the URL and headers, especially with long `in` filters:
+// https://supabase.com/docs/guides/troubleshooting/fixing-520-errors-in-the-database-rest-api-Ur5-B2
+// Persisted Asset ids are PostgreSQL UUIDs (36 characters). A batch of 100 keeps
+// the encoded `in` filter below 4 KiB, reserving at least 12 KiB for the endpoint,
+// selected fields, other filters, and headers.
+const maxAssetIdsPerPostgrestMetadataRequest = 100;
+
+// Metadata loading supports content reads, so cap its fan-out at half of the
+// content engine's shared remote-read ceiling instead of defining an unrelated
+// concurrency budget.
+const maxConcurrentAssetMetadataPostgrestRequests = Math.ceil(
+  assetResourceLimits.concurrentContentReads / 2
+);
 
 export const createAssetRows = (assets: Iterable<Asset>, projectId: string) =>
   Array.from(assets, (asset) => ({
@@ -98,12 +109,19 @@ export const loadAssetsByProjectWithClient = async (
   for (
     let offset = 0;
     offset < uniqueAssetIds.length;
-    offset += assetIdFilterChunkSize
+    offset += maxAssetIdsPerPostgrestMetadataRequest
   ) {
-    chunks.push(uniqueAssetIds.slice(offset, offset + assetIdFilterChunkSize));
+    chunks.push(
+      uniqueAssetIds.slice(
+        offset,
+        offset + maxAssetIdsPerPostgrestMetadataRequest
+      )
+    );
   }
 
-  return (await mapBounded(chunks, assetIdFilterConcurrency, load)).flat();
+  return (
+    await mapBounded(chunks, maxConcurrentAssetMetadataPostgrestRequests, load)
+  ).flat();
 };
 
 export const deleteAssetsWithClient = async (

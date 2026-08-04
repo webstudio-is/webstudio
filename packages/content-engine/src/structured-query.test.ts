@@ -6,6 +6,7 @@ import {
 } from "./schema";
 import {
   executeAssetQuery,
+  executeAssetQueries,
   getAssetQueryFieldValue,
   validateAssetQueryAgainstCatalog,
 } from "./structured-query";
@@ -93,6 +94,141 @@ const runtimeAssets = Object.fromEntries(
 );
 
 describe("structured asset query", () => {
+  test("stitches sibling queries while preserving independent windows and counts", async () => {
+    const readCommon = vi.fn(() => "blog");
+    const candidates = [
+      document({
+        id: "tools-newest",
+        properties: {
+          category: "Tools",
+          publishedAt: "2026-04-03",
+        },
+      }),
+      document({
+        id: "tools-middle",
+        properties: {
+          category: "Tools",
+          publishedAt: "2026-04-02",
+        },
+      }),
+      document({
+        id: "tools-oldest",
+        properties: {
+          category: "Tools",
+          publishedAt: "2026-04-01",
+        },
+      }),
+      document({
+        id: "strategy",
+        properties: {
+          category: "Strategy",
+          publishedAt: "2026-04-04",
+        },
+      }),
+    ];
+    for (const candidate of candidates) {
+      Object.defineProperty(candidate.properties, "common", {
+        configurable: true,
+        enumerable: true,
+        get: readCommon,
+      });
+    }
+    const requests = [
+      { category: "Tools", offset: 1 },
+      { category: "Strategy", offset: 0 },
+    ];
+
+    const results = await executeAssetQueries({
+      documents: candidates,
+      queries: requests.map(({ category, offset }) => ({
+        where: {
+          all: [
+            {
+              field: ["properties", "common"],
+              operator: "eq",
+              value: "blog",
+            },
+            {
+              field: ["properties", "category"],
+              operator: "eq",
+              value: category,
+            },
+          ],
+        },
+        sort: [
+          {
+            field: ["properties", "publishedAt"],
+            direction: "desc",
+          },
+        ],
+        limit: 1,
+        offset,
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["id"]],
+        },
+        content: { mode: "none" },
+      })),
+    });
+
+    expect(results).toEqual([
+      {
+        status: "fulfilled",
+        value: {
+          items: [{ id: "tools-middle" }],
+          totalCount: 3,
+          hasMore: true,
+        },
+      },
+      {
+        status: "fulfilled",
+        value: {
+          items: [{ id: "strategy" }],
+          totalCount: 1,
+          hasMore: false,
+        },
+      },
+    ]);
+    expect(readCommon).toHaveBeenCalledTimes(candidates.length);
+  });
+
+  test("isolates failures between stitched queries", async () => {
+    const [failed, succeeded] = await executeAssetQueries({
+      documents: [document({ id: "post", properties: {} })],
+      queries: [
+        {
+          where: { all: [] },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["url"]],
+          },
+          content: { mode: "none" },
+        },
+        {
+          where: { all: [] },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "none" },
+        },
+      ],
+    });
+
+    expect(failed.status).toBe("rejected");
+    expect(succeeded).toEqual({
+      status: "fulfilled",
+      value: {
+        items: [{ id: "post" }],
+        totalCount: 1,
+        hasMore: false,
+      },
+    });
+  });
+
   test("filters, sorts, and projects resolved structured asset values", async () => {
     const result = await executeAssetQuery({
       documents: [

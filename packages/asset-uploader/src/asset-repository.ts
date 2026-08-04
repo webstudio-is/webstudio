@@ -989,15 +989,32 @@ export class PostgresAssetRepository implements AssetRepository {
             plan: runtimePlan,
           });
           signal?.throwIfAborted();
-          for (const index of indexes) {
-            executions[index] = () =>
-              this.executePreparedQuery({
-                artifact,
-                request: requests[index],
-                runtimeAssets,
-                load,
-                signal,
-              });
+          let batchExecution:
+            | Promise<PromiseSettledResult<AssetQueryResult>[]>
+            | undefined;
+          const executeBatch = () => {
+            batchExecution ??= database.queryManyWithDocumentGraph({
+              requests: indexes.map((index) => requests[index]),
+              readContent: this.assetStore.readFile,
+              runtimeAssets,
+              load,
+              signal,
+              onEvent: this.onDocumentGraphEvent,
+            });
+            return batchExecution;
+          };
+          for (const [position, index] of indexes.entries()) {
+            executions[index] = async () => {
+              signal?.throwIfAborted();
+              const result = (await executeBatch())[position];
+              signal?.throwIfAborted();
+              if (result.status === "rejected") {
+                throw result.reason;
+              }
+              return {
+                data: result.value,
+              };
+            };
           }
         }
       } catch (error) {

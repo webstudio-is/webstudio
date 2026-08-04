@@ -11,7 +11,7 @@ import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import {
   loadRawBuildById,
   loadBuildById,
-  loadDevBuildContentCompilationDataByProjectId,
+  loadDevBuildContentEngineDataByProjectId,
   loadDevBuildByProjectId,
   createBuild,
   createProductionBuild,
@@ -236,8 +236,8 @@ describe("loadDevBuildByProjectId (msw)", () => {
   });
 });
 
-describe("loadDevBuildContentCompilationDataByProjectId (msw)", () => {
-  test("selects only the Build fields used for content compilation", async () => {
+describe("loadDevBuildContentEngineDataByProjectId (msw)", () => {
+  test("selects only the Build fields used by the content engine", async () => {
     let requestedUrl: URL | undefined;
     server.use(
       db.get("Build", ({ request }) => {
@@ -252,7 +252,7 @@ describe("loadDevBuildContentCompilationDataByProjectId (msw)", () => {
       })
     );
 
-    const result = await loadDevBuildContentCompilationDataByProjectId(
+    const result = await loadDevBuildContentEngineDataByProjectId(
       createContext(),
       "proj-1"
     );
@@ -299,14 +299,13 @@ describe("loadDevBuildContentCompilationDataByProjectId (msw)", () => {
     };
     server.use(db.get("Build", () => json([row])));
 
-    const contentCompilationData =
-      await loadDevBuildContentCompilationDataByProjectId(
-        createContext(),
-        "proj-1"
-      );
+    const contentEngineData = await loadDevBuildContentEngineDataByProjectId(
+      createContext(),
+      "proj-1"
+    );
     const fullBuild = await loadDevBuildByProjectId(createContext(), "proj-1");
 
-    expect(contentCompilationData).toEqual({
+    expect(contentEngineData).toEqual({
       props: fullBuild.props,
       dataSources: fullBuild.dataSources,
       resources: fullBuild.resources,
@@ -329,7 +328,7 @@ describe("loadDevBuildContentCompilationDataByProjectId (msw)", () => {
     controller.abort();
 
     await expect(
-      loadDevBuildContentCompilationDataByProjectId(
+      loadDevBuildContentEngineDataByProjectId(
         createContext(),
         "proj-1",
         controller.signal
