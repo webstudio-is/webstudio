@@ -6,7 +6,7 @@ import type {
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { getAllPages } from "@webstudio-is/sdk";
-import { findClosestRichText, isRichTextTree } from "./content-model";
+import { isRichTextTree } from "./content-model";
 import type { InstancePath, InstanceSelector } from "./instance-path";
 
 export type { InstancePath } from "./instance-path";
@@ -109,89 +109,62 @@ const hasExpressionInTree = (
   );
 };
 
-const getClosestTextEditorTarget = (args: TextEditorLookupInput) => {
-  const instanceSelector = findClosestRichText(args);
-  if (instanceSelector === undefined) {
-    return { status: "not-found" as const };
-  }
-  const instance = args.instances.get(instanceSelector[0]);
-  const [onlyChild] = instance?.children ?? [];
-  const isSingleExpression =
-    instance?.children.length === 1 && onlyChild?.type === "expression";
-  if (
-    isSingleExpression === false &&
-    hasExpressionInTree(instanceSelector[0], args.instances)
-  ) {
-    return { status: "incompatible" as const };
-  }
-  return { status: "editable" as const, instanceSelector };
-};
+const isTextEditorTarget = (
+  instanceId: Instance["id"],
+  args: TextEditorLookupInput
+) =>
+  isRichTextTree({
+    instanceId,
+    instances: args.instances,
+    props: args.props,
+    metas: args.metas,
+    htmlTagsByInstanceId: args.htmlTagsByInstanceId,
+  }) && hasExpressionInTree(instanceId, args.instances) === false;
 
-export const findClosestEditableText = (
+export const findClosestTextEditorTarget = (
   args: TextEditorLookupInput
 ): undefined | InstanceSelector => {
-  const result = getClosestTextEditorTarget(args);
-  return result.status === "editable" ? result.instanceSelector : undefined;
+  let target: InstanceSelector | undefined;
+  for (let index = 0; index < args.instanceSelector.length; index += 1) {
+    const instanceId = args.instanceSelector[index];
+    if (isTextEditorTarget(instanceId, args) === false) {
+      break;
+    }
+    target = args.instanceSelector.slice(index);
+  }
+  return target;
 };
 
-export const findAllEditableInstanceSelector = ({
-  instanceSelector,
-  instances,
-  props,
-  metas,
-  htmlTagsByInstanceId,
-  results,
-}: TextEditorLookupInput & {
-  results: InstanceSelector[];
-}) => {
-  const [instanceId] = instanceSelector;
-
-  if (instanceId === undefined) {
-    return;
-  }
-
-  if (
-    isRichTextTree({
-      instanceId,
-      instances,
-      props,
-      metas,
-      htmlTagsByInstanceId,
-    })
-  ) {
-    if (hasExpressionInTree(instanceId, instances) === false) {
-      results.push(instanceSelector);
+export const findAllNavigableTextInstanceSelectors = (
+  args: TextEditorLookupInput
+) => {
+  const results: InstanceSelector[] = [];
+  const visit = (instanceSelector: InstanceSelector) => {
+    const [instanceId] = instanceSelector;
+    if (instanceId === undefined) {
+      return;
     }
-    return;
-  }
-
-  const instance = instances.get(instanceId);
-  if (instance) {
+    if (isTextEditorTarget(instanceId, args)) {
+      results.push(instanceSelector);
+      return;
+    }
+    const instance = args.instances.get(instanceId);
+    if (instance === undefined) {
+      return;
+    }
     for (const child of instance.children) {
       if (child.type === "id") {
-        findAllEditableInstanceSelector({
-          instanceSelector: [child.value, ...instanceSelector],
-          instances,
-          props,
-          metas,
-          htmlTagsByInstanceId,
-          results,
-        });
+        visit([child.value, ...instanceSelector]);
       }
     }
-  }
+  };
+  visit(args.instanceSelector);
+  return results;
 };
 
-export const findEditableInstanceSelector = (args: TextEditorLookupInput) => {
-  const closest = getClosestTextEditorTarget(args);
-  if (closest.status !== "not-found") {
-    return closest.status === "editable" ? closest.instanceSelector : undefined;
-  }
-
-  const results: InstanceSelector[] = [];
-  findAllEditableInstanceSelector({
-    ...args,
-    results,
-  });
-  return results[0];
+export const findTextEditorTarget = (args: TextEditorLookupInput) => {
+  return (
+    findClosestTextEditorTarget(args) ??
+    findAllNavigableTextInstanceSelectors(args)[0]
+  );
 };

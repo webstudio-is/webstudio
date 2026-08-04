@@ -32,8 +32,8 @@ afterEach(() => {
 
 describe("canvas instance selection", () => {
   test("plain click selects one instance and replaces multi-selection", () => {
-    const box = createCanvasElement("box,body");
-    const heading = createCanvasElement("heading,body");
+    const box = createCanvasElement({ selector: "box,body" });
+    const heading = createCanvasElement({ selector: "heading,body" });
 
     box.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     heading.dispatchEvent(
@@ -50,8 +50,8 @@ describe("canvas instance selection", () => {
   });
 
   test("cmd-click toggles rendered instances without clearing existing selection", () => {
-    const box = createCanvasElement("box,body");
-    const heading = createCanvasElement("heading,body");
+    const box = createCanvasElement({ selector: "box,body" });
+    const heading = createCanvasElement({ selector: "heading,body" });
 
     box.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     heading.dispatchEvent(
@@ -70,9 +70,9 @@ describe("canvas instance selection", () => {
   });
 
   test("shift-click selects a rendered DOM-order range from the canvas anchor", () => {
-    const box = createCanvasElement("box,body");
-    createCanvasElement("heading,body");
-    const footer = createCanvasElement("footer,body");
+    const box = createCanvasElement({ selector: "box,body" });
+    createCanvasElement({ selector: "heading,body" });
+    const footer = createCanvasElement({ selector: "footer,body" });
 
     box.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     footer.dispatchEvent(
@@ -87,9 +87,9 @@ describe("canvas instance selection", () => {
   });
 
   test("does not reuse range anchor after subscription is recreated", () => {
-    const box = createCanvasElement("box,body");
-    createCanvasElement("heading,body");
-    const footer = createCanvasElement("footer,body");
+    const box = createCanvasElement({ selector: "box,body" });
+    createCanvasElement({ selector: "heading,body" });
+    const footer = createCanvasElement({ selector: "footer,body" });
 
     box.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     abortController.abort();
@@ -105,8 +105,8 @@ describe("canvas instance selection", () => {
   });
 
   test("clears stale ephemeral styles when canvas click creates multi-selection", () => {
-    const box = createCanvasElement("box,body");
-    const heading = createCanvasElement("heading,body");
+    const box = createCanvasElement({ selector: "box,body" });
+    const heading = createCanvasElement({ selector: "heading,body" });
     $ephemeralStyles.set([
       {
         breakpointId: "base",
@@ -124,26 +124,44 @@ describe("canvas instance selection", () => {
     expect($ephemeralStyles.get()).toEqual([]);
   });
 
-  test("does not edit a promoted rich-text root containing a nested binding", () => {
-    $instances.set(createMixedBoundTextInstances({ includeBody: true }));
-    const separator = createCanvasElement("separator,paragraph,body");
+  test("edits a literal child without promoting its mixed rich-text parent", () => {
+    $instances.set(createMixedBoundTextInstances());
+    const separator = createCanvasElement({
+      selector: "separator,paragraph,body",
+    });
 
     separator.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
 
     expect($allSelectedInstanceSelectors.get()).toEqual([
       ["separator", "paragraph", "body"],
     ]);
-    expect($textEditingInstanceSelector.get()).toBeUndefined();
+    expect($textEditingInstanceSelector.get()?.selector).toEqual([
+      "separator",
+      "paragraph",
+      "body",
+    ]);
   });
 
-  test("edits a directly bound text instance in Design mode", () => {
+  test("does not edit a directly bound text instance on canvas", () => {
     $instances.set(createBoundTextInstances());
-    const element = createCanvasElement("bound-text");
+    const element = createCanvasElement({ selector: "bound-text" });
 
     element.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
 
-    expect($textEditingInstanceSelector.get()?.selector).toEqual([
-      "bound-text",
+    expect($textEditingInstanceSelector.get()).toBeUndefined();
+  });
+
+  test("does not edit mixed bound text on canvas", () => {
+    $instances.set(createMixedBoundTextInstances());
+    const element = createCanvasElement({
+      selector: "reading-time,paragraph,body",
+    });
+
+    element.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      ["reading-time", "paragraph", "body"],
     ]);
+    expect($textEditingInstanceSelector.get()).toBeUndefined();
   });
 });

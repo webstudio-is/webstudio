@@ -84,7 +84,6 @@ export const BindableExpressionControl = <Value,>({
   validate,
   showBinding = true,
   allowBindingOverwrite = true,
-  allowBindingRemoval = true,
   renderControl,
   parseValue = (value) => value,
   onChangeValue,
@@ -100,7 +99,6 @@ export const BindableExpressionControl = <Value,>({
   validate?: (value: unknown) => string | undefined;
   showBinding?: boolean;
   allowBindingOverwrite?: boolean;
-  allowBindingRemoval?: boolean;
   renderControl: (props: {
     value: Value;
     readOnly: boolean;
@@ -109,7 +107,7 @@ export const BindableExpressionControl = <Value,>({
   parseValue?: (value: Value) => unknown;
   onChangeValue: (value: Value) => void;
   onChangeExpression: (expression: string) => void;
-  onRemove: (evaluatedValue: unknown) => void;
+  onRemove?: (evaluatedValue: unknown) => void;
   bindingState?: BindingState;
 }) => {
   if (bindingState === undefined) {
@@ -123,7 +121,6 @@ export const BindableExpressionControl = <Value,>({
         validate={validate}
         showBinding={showBinding}
         allowBindingOverwrite={allowBindingOverwrite}
-        allowBindingRemoval={allowBindingRemoval}
         renderControl={renderControl}
         parseValue={parseValue}
         onChangeValue={onChangeValue}
@@ -159,7 +156,6 @@ export const BindableExpressionControl = <Value,>({
           value={expression}
           onChange={onChangeExpression}
           onRemove={onRemove}
-          allowBindingRemoval={allowBindingRemoval}
         />
       )}
     </BindingControl>

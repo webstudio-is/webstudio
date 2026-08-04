@@ -1,4 +1,4 @@
-import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime";
+import { findAllNavigableTextInstanceSelectors } from "@webstudio-is/project-build/runtime";
 import { color } from "@webstudio-is/css-engine";
 import {
   useState,
@@ -1616,13 +1616,11 @@ export const TextEditor = ({
         return;
       }
 
-      const editableInstanceSelectors: InstanceSelector[] = [];
-      findAllEditableInstanceSelector({
+      const editableInstanceSelectors = findAllNavigableTextInstanceSelectors({
         instanceSelector: [rootInstanceId],
         instances,
         props,
         metas,
-        results: editableInstanceSelectors,
       });
 
       const currentIndex = editableInstanceSelectors.findIndex(

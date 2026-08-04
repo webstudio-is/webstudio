@@ -23,24 +23,27 @@ afterEach(() => {
   $textToolbar.set(undefined);
 });
 
-test("does not enter text editing for a rich-text tree with a nested binding", () => {
+test("enters the first literal descendant of a mixed rich-text tree", () => {
   $instances.set(createMixedBoundTextInstances());
-  createCanvasElement("separator,paragraph");
-  selectInstance(["separator", "paragraph"]);
+  createCanvasElement({ selector: "separator,paragraph" });
+  selectInstance(["paragraph"]);
 
   emitCommand("editInstanceText");
 
-  expect($textEditingInstanceSelector.get()).toBeUndefined();
+  expect($textEditingInstanceSelector.get()?.selector).toEqual([
+    "separator",
+    "paragraph",
+  ]);
 });
 
-test("enters text editing for a directly bound instance in Design mode", () => {
+test("does not enter text editing for a directly bound instance", () => {
   $instances.set(createBoundTextInstances());
-  createCanvasElement("bound-text");
+  createCanvasElement({ selector: "bound-text" });
   selectInstance(["bound-text"]);
 
   emitCommand("editInstanceText");
 
-  expect($textEditingInstanceSelector.get()?.selector).toEqual(["bound-text"]);
+  expect($textEditingInstanceSelector.get()).toBeUndefined();
 });
 
 describe("escapeSelection", () => {

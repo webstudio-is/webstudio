@@ -2,7 +2,7 @@ import { FORMAT_TEXT_COMMAND } from "lexical";
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { createCommandsEmitter } from "~/shared/commands-emitter";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
-import { findEditableInstanceSelector } from "@webstudio-is/project-build/runtime";
+import { findTextEditorTarget } from "@webstudio-is/project-build/runtime";
 import {
   $allSelectedInstanceSelectors,
   $isContentMode,
@@ -83,7 +83,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           return;
         }
 
-        const editableInstanceSelector = findEditableInstanceSelector({
+        const editableInstanceSelector = findTextEditorTarget({
           instanceSelector: selectedInstanceSelector,
           instances: $instances.get(),
           props: $props.get(),

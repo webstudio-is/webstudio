@@ -42,10 +42,11 @@ export const TextContent = ({
   computedValue,
 }: ControlProps<"textContent">) => {
   const instance = useInstance(instanceId);
-  const hasChildren = (instance?.children.length ?? 0) > 0;
+  const childrenCount = instance?.children.length ?? 0;
+  const hasChildren = childrenCount > 0;
+  const hasMixedContent = childrenCount > 1;
   const target = instance && getEditableTextTarget(instance);
   const child = target?.child ?? { type: "text" as const, value: "" };
-  const hasMixedContent = (instance?.children.length ?? 0) > 1;
   const updateChild = (type: "text" | "expression", value: string) => {
     const operation = getTextContentUpdateOperation({ instance, type, value });
     if (operation !== undefined) {
@@ -53,24 +54,15 @@ export const TextContent = ({
     }
   };
 
-  let expression: undefined | string;
-  if (child.type === "text") {
-    expression = JSON.stringify(child.value);
-  }
-  if (child.type === "expression") {
-    expression = child.value;
-  }
+  const expression =
+    child.type === "text" ? JSON.stringify(child.value) : child.value;
 
   const binding = useBindableControl({
     boundExpression: child.type === "expression" ? expression : undefined,
-    fallbackExpression: expression ?? "",
+    fallbackExpression: expression,
   });
   let displayedValue = computedValue;
-  if (
-    instance !== undefined &&
-    instance.children.length > 1 &&
-    child.type === "expression"
-  ) {
+  if (hasMixedContent && child.type === "expression") {
     try {
       displayedValue = evaluateExpressionWithinScope(
         child.value,
@@ -132,13 +124,15 @@ export const TextContent = ({
     >
       <BindableExpressionControl
         {...binding}
-        allowBindingRemoval={hasMixedContent === false}
         value={localValue.value}
-        showBinding={expression !== undefined}
         validate={(value) => validatePrimitiveValue(value, "Text Content")}
         onChangeValue={(value) => updateChild("text", value)}
         onChangeExpression={(value) => updateChild("expression", value)}
-        onRemove={(value) => updateChild("text", String(value))}
+        onRemove={
+          hasMixedContent
+            ? undefined
+            : (value) => updateChild("text", String(value))
+        }
         renderControl={({ readOnly }) => (
           <CodeEditor
             title={

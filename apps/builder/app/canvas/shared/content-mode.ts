@@ -14,13 +14,6 @@ export const isTextEditableInContentMode = ({
   if (isContentMode === false) {
     return true;
   }
-  if (
-    instances
-      .get(instanceSelector[0])
-      ?.children.some((child) => child.type === "expression")
-  ) {
-    return false;
-  }
   return getContentModeEditableInstanceIds({ instances }).has(
     instanceSelector[0]
   );

@@ -3,16 +3,16 @@
  */
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { EditorView } from "@codemirror/view";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $builderMode } from "~/shared/nano-states";
 import { $instances, $pages } from "~/shared/sync/data-stores";
 import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { TextContent } from "./text-content";
-import { getTextContentUpdateOperation } from "./text-content-utils";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -22,8 +22,41 @@ registerContainers();
 
 let container: HTMLDivElement;
 let root: Root;
+const rangeGetClientRects = Object.getOwnPropertyDescriptor(
+  Range.prototype,
+  "getClientRects"
+);
+
+const setReadingTimeChildren = (children: Instance["children"]) => {
+  $instances.set(
+    new Map([
+      [
+        "reading-time",
+        {
+          type: "instance" as const,
+          id: "reading-time",
+          component: "ws:element",
+          tag: "span",
+          children,
+        },
+      ],
+    ])
+  );
+};
 
 beforeEach(() => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+  );
+  Object.defineProperty(Range.prototype, "getClientRects", {
+    configurable: true,
+    value: () => [],
+  });
   serverSyncStore.transactionManager.currentStack = [];
   serverSyncStore.transactionManager.undoneStack = [];
   serverSyncStore.popAll();
@@ -32,32 +65,29 @@ beforeEach(() => {
   root = createRoot(container);
   $builderMode.set("design");
   $pages.set(createDefaultPages({ rootInstanceId: "reading-time" }));
-  $instances.set(
-    new Map([
-      [
-        "reading-time",
-        {
-          type: "instance",
-          id: "reading-time",
-          component: "ws:element",
-          tag: "span",
-          children: [
-            { type: "text", value: " · " },
-            { type: "expression", value: "1 + 1" },
-          ],
-        },
-      ],
-    ])
-  );
+  setReadingTimeChildren([
+    { type: "text", value: " · " },
+    { type: "expression", value: "1 + 1" },
+  ]);
 });
 
 afterEach(() => {
   act(() => root.unmount());
   container.remove();
   $instances.set(new Map());
+  vi.unstubAllGlobals();
+  if (rangeGetClientRects === undefined) {
+    delete (Range.prototype as { getClientRects?: unknown }).getClientRects;
+  } else {
+    Object.defineProperty(
+      Range.prototype,
+      "getClientRects",
+      rangeGetClientRects
+    );
+  }
 });
 
-test("renders the existing bound Text content control for the expression child", () => {
+const renderTextContent = (computedValue = " · 2") => {
   act(() => {
     root.render(
       <TooltipProvider>
@@ -66,37 +96,94 @@ test("renders the existing bound Text content control for the expression child",
           meta={{ control: "textContent", type: "string", required: false }}
           prop={undefined}
           propName={textContentAttribute}
-          computedValue=" · 2"
+          computedValue={computedValue}
           onChange={() => {}}
         />
       </TooltipProvider>
     );
   });
+};
+
+const openBindingPopover = async () => {
+  const trigger = container.querySelector<HTMLButtonElement>(
+    'button[data-variant="bound"]'
+  );
+  if (trigger === null) {
+    throw new Error("Expected the bound expression trigger");
+  }
+  await act(async () => {
+    trigger.click();
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve())
+    );
+  });
+};
+
+const getResetBindingButton = () => {
+  const button = document.querySelector<HTMLButtonElement>(
+    '[aria-label="Reset binding"]'
+  );
+  if (button === null) {
+    throw new Error("Expected the reset binding button");
+  }
+  return button;
+};
+
+test("renders the existing bound Text content control for the expression child", () => {
+  renderTextContent();
 
   expect(container.textContent).toContain("Text Content");
   expect(container.querySelector('[role="textbox"]')?.textContent).toBe("2");
   expect(container.querySelector('[data-variant="bound"]')).not.toBeNull();
 });
 
-test("updates only the targeted expression child", () => {
-  const instance = $instances.get().get("reading-time");
-  if (instance === undefined) {
-    throw new Error("Expected the reading-time instance");
+test("updates only the targeted expression child through the binding editor", async () => {
+  renderTextContent();
+  await openBindingPopover();
+
+  expect(getResetBindingButton().disabled).toBe(true);
+
+  const editorElement = document.querySelector<HTMLElement>(
+    '[role="dialog"] [role="textbox"]'
+  );
+  if (editorElement === null) {
+    throw new Error("Expected the expression editor");
   }
+  const view = EditorView.findFromDOM(editorElement);
+  if (view === null) {
+    throw new Error("Expected the CodeMirror view");
+  }
+
   act(() => {
-    const operation = getTextContentUpdateOperation({
-      instance,
-      type: "expression",
-      value: "2 + 2",
+    view.dispatch({
+      changes: {
+        from: 0,
+        to: view.state.doc.length,
+        insert: "2 + 2",
+      },
     });
-    if (operation === undefined) {
-      throw new Error("Expected a text-content update operation");
-    }
-    executeRuntimeMutation(operation);
+  });
+  act(() => {
+    view.focus();
+    view.contentDOM.blur();
   });
 
   expect($instances.get().get("reading-time")?.children).toEqual([
     { type: "text", value: " · " },
     { type: "expression", value: "2 + 2" },
+  ]);
+});
+
+test("resets a sole expression to its evaluated text value", async () => {
+  setReadingTimeChildren([{ type: "expression", value: "1 + 1" }]);
+  renderTextContent("2");
+  await openBindingPopover();
+
+  const resetButton = getResetBindingButton();
+  expect(resetButton.disabled).toBe(false);
+  act(() => resetButton.click());
+
+  expect($instances.get().get("reading-time")?.children).toEqual([
+    { type: "text", value: "2" },
   ]);
 });

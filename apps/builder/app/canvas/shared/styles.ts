@@ -50,7 +50,7 @@ import {
   $selectedPage,
 } from "~/shared/nano-states";
 import {
-  findAllEditableInstanceSelector,
+  findAllNavigableTextInstanceSelectors,
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
 import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
@@ -233,15 +233,13 @@ const subscribeContentEditModeHelperStyles = () => {
     // to better distinguish clickable vs editable elements, needs more investigation
     const rootInstanceId = $selectedPage.get()?.rootInstanceId;
     if (rootInstanceId !== undefined) {
-      const editableInstanceSelectors: InstanceSelector[] = [];
       const instances = $instances.get();
 
-      findAllEditableInstanceSelector({
+      const editableInstanceSelectors = findAllNavigableTextInstanceSelectors({
         instanceSelector: [rootInstanceId],
         instances,
         props: $props.get(),
         metas: $registeredComponentMetas.get(),
-        results: editableInstanceSelectors,
       });
 
       for (const rule of computeEditableCursorRules(

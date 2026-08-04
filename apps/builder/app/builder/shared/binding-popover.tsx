@@ -331,7 +331,6 @@ export const BindingPopover = ({
   value,
   onChange,
   onRemove,
-  allowBindingRemoval = true,
 }: {
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
@@ -339,8 +338,7 @@ export const BindingPopover = ({
   validate?: (value: unknown) => undefined | string;
   value?: string;
   onChange: (newValue: string) => void;
-  onRemove: (evaluatedValue: unknown) => void;
-  allowBindingRemoval?: boolean;
+  onRemove?: (evaluatedValue: unknown) => void;
 }) => {
   const [isOpen, onOpenChange] = useState(false);
   const hasUnsavedChange = useRef<boolean>(false);
@@ -384,11 +382,12 @@ export const BindingPopover = ({
                     aria-label="Reset binding"
                     prefix={<TrashIcon />}
                     color="ghost"
-                    disabled={
-                      variant === "default" || allowBindingRemoval === false
-                    }
+                    disabled={variant === "default" || onRemove === undefined}
                     onClick={(event) => {
                       event.preventDefault();
+                      if (onRemove === undefined) {
+                        return;
+                      }
                       // inline variables and close dialog
                       const evaluatedValue = evaluateExpressionWithinScope(
                         normalizedValue,

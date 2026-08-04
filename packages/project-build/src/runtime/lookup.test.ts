@@ -2,10 +2,10 @@ import { describe, expect, test } from "vitest";
 import type { Instance, Prop, WsComponentMeta } from "@webstudio-is/sdk";
 import { createDefaultPages } from "../shared/pages-utils";
 import {
-  findAllEditableInstanceSelector,
-  findClosestEditableText,
-  findEditableInstanceSelector,
+  findAllNavigableTextInstanceSelectors,
+  findClosestTextEditorTarget,
   findPageAndSelectorByInstanceId,
+  findTextEditorTarget,
   getInstancePath,
 } from "./lookup";
 
@@ -182,8 +182,8 @@ describe("findPageAndSelectorByInstanceId", () => {
   });
 });
 
-describe("findAllEditableInstanceSelector", () => {
-  test("keeps a directly targeted single expression editable", () => {
+describe("findClosestTextEditorTarget", () => {
+  test("excludes a directly targeted expression from the canvas editor", () => {
     const instances = new Map([
       [
         "bound-text",
@@ -199,12 +199,31 @@ describe("findAllEditableInstanceSelector", () => {
       metas: new Map([["Span", meta(["rich-text"])]]),
     };
 
-    expect(findClosestEditableText(input)).toEqual(["bound-text"]);
-    expect(findEditableInstanceSelector(input)).toEqual(["bound-text"]);
+    expect(findClosestTextEditorTarget(input)).toBeUndefined();
+    expect(findTextEditorTarget(input)).toBeUndefined();
+  });
+});
+
+describe("findAllNavigableTextInstanceSelectors", () => {
+  test("excludes single expressions from navigable targets", () => {
+    const results = findAllNavigableTextInstanceSelectors({
+      instanceSelector: ["bound-text"],
+      instances: new Map([
+        [
+          "bound-text",
+          instance("bound-text", "Span", [
+            { type: "expression", value: "value" },
+          ]),
+        ],
+      ]),
+      props: new Map(),
+      metas: new Map([["Span", meta(["rich-text"])]]),
+    });
+
+    expect(results).toEqual([]);
   });
 
   test("collects editable rich-text descendants", () => {
-    const results: string[][] = [];
     const instances = new Map([
       ["body", instance("body", "Body", [{ type: "id", value: "paragraph" }])],
       ["paragraph", instance("paragraph", "Paragraph")],
@@ -214,17 +233,16 @@ describe("findAllEditableInstanceSelector", () => {
       ["Body", meta(["instance"])],
       ["Paragraph", meta(["rich-text"])],
     ]);
-    findAllEditableInstanceSelector({
+    const results = findAllNavigableTextInstanceSelectors({
       instanceSelector: ["body"],
       instances,
       props,
       metas,
-      results,
     });
 
     expect(results).toEqual([["paragraph", "body"]]);
     expect(
-      findEditableInstanceSelector({
+      findTextEditorTarget({
         instanceSelector: ["body"],
         instances,
         props,
@@ -233,8 +251,7 @@ describe("findAllEditableInstanceSelector", () => {
     ).toEqual(["paragraph", "body"]);
   });
 
-  test("excludes rich-text trees containing nested expressions", () => {
-    const results: string[][] = [];
+  test("finds literal descendants within a rich-text tree containing expressions", () => {
     const instances = new Map([
       [
         "paragraph",
@@ -260,18 +277,33 @@ describe("findAllEditableInstanceSelector", () => {
       ["Paragraph", meta(["rich-text"])],
       ["Span", meta(["rich-text"])],
     ]);
-    findAllEditableInstanceSelector({
+    const results = findAllNavigableTextInstanceSelectors({
       instanceSelector: ["paragraph"],
       instances,
       props,
       metas,
-      results,
     });
 
-    expect(results).toEqual([]);
+    expect(results).toEqual([["separator", "paragraph"]]);
     expect(
-      findEditableInstanceSelector({
+      findClosestTextEditorTarget({
         instanceSelector: ["separator", "paragraph"],
+        instances,
+        props,
+        metas,
+      })
+    ).toEqual(["separator", "paragraph"]);
+    expect(
+      findTextEditorTarget({
+        instanceSelector: ["paragraph"],
+        instances,
+        props,
+        metas,
+      })
+    ).toEqual(["separator", "paragraph"]);
+    expect(
+      findClosestTextEditorTarget({
+        instanceSelector: ["reading-time", "paragraph"],
         instances,
         props,
         metas,

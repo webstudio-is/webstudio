@@ -18,7 +18,7 @@ import { $instances } from "~/shared/sync/data-stores";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { emitCommand } from "./shared/commands";
 import { shallowEqual } from "shallow-equal";
-import { findClosestEditableText } from "@webstudio-is/project-build/runtime";
+import { findClosestTextEditorTarget } from "@webstudio-is/project-build/runtime";
 import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
@@ -128,7 +128,7 @@ const handleEdit = (
 
   const instances = $instances.get();
 
-  let editableInstanceSelector = findClosestEditableText({
+  let editableInstanceSelector = findClosestTextEditorTarget({
     instanceSelector,
     instances,
     props: $props.get(),
