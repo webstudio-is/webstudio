@@ -17,6 +17,22 @@ test("does not mark a preview fresh after a newer mutation", () => {
   expect(freshness.isStale()).toBe(false);
 });
 
+test("reports stale state and the last rendered project version", () => {
+  const freshness = createPreviewFreshness();
+
+  expect(freshness.status()).toEqual({ stale: true });
+  freshness.markFresh(freshness.capture(), 7);
+  expect(freshness.status()).toEqual({
+    stale: false,
+    renderedProjectVersion: 7,
+  });
+  freshness.markStale();
+  expect(freshness.status()).toEqual({
+    stale: true,
+    renderedProjectVersion: 7,
+  });
+});
+
 test("coalesces overlapping refreshes of the same stale preview", async () => {
   const freshness = createPreviewFreshness();
   let releasePreparation: () => void = () => undefined;

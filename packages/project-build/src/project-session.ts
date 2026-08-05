@@ -273,13 +273,23 @@ export const serializeProjectSessionMeta = (
   const diagnosticErrorCount = diagnostics.filter(
     (diagnostic) => diagnostic.level === "error"
   ).length;
+  const commitStatus = envelope.state.committed
+    ? "committed"
+    : envelope.source === "dry-run"
+      ? "planned"
+      : envelope.namespaces.write.length > 0
+        ? "unchanged"
+        : "not-applicable";
   const compact = {
     operationId: envelope.operationId,
     projectId: envelope.projectId,
     ...(envelope.buildId === undefined ? {} : { buildId: envelope.buildId }),
     ...(envelope.version === undefined ? {} : { version: envelope.version }),
     source: envelope.source,
-    committed: envelope.state.committed,
+    commitStatus,
+    ...(commitStatus === "not-applicable"
+      ? {}
+      : { committed: envelope.state.committed }),
     namespaceCounts: getNamespaceCounts(envelope),
     diagnosticCount: diagnostics.length,
     ...(diagnosticErrorCount === 0 ? {} : { diagnosticErrorCount }),

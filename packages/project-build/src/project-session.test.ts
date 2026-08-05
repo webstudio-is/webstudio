@@ -630,6 +630,19 @@ describe("project session", () => {
     expect(storage.saved).toHaveLength(1);
   });
 
+  test("describes commit status as not applicable for read operations", async () => {
+    const session = createSession({
+      storage: createStorage(createPersistedSnapshot()),
+    });
+    const result = await session.read("breakpoints.list", {});
+
+    expect(serializeProjectSessionMeta(result)).toMatchObject({
+      source: "local",
+      commitStatus: "not-applicable",
+    });
+    expect(serializeProjectSessionMeta(result)).not.toHaveProperty("committed");
+  });
+
   test("reports persistent session write conflicts as transient busy errors", async () => {
     const storage: ProjectSessionStorage = {
       async load() {
@@ -667,6 +680,8 @@ describe("project session", () => {
     expect(result.transaction?.payload).toHaveLength(1);
     expect(serializeProjectSessionMeta(result)).toMatchObject({
       diagnosticCount: 1,
+      commitStatus: "planned",
+      committed: false,
       transaction: result.transaction,
       diagnostics: [
         {
@@ -920,6 +935,7 @@ describe("project session", () => {
     });
     expect(serializeProjectSessionMeta(result)).toMatchObject({
       source: "local",
+      commitStatus: "committed",
       committed: true,
     });
     expect(storage.saved.at(-1)?.freshness.instances).toEqual({

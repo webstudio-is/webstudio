@@ -1206,13 +1206,10 @@ describe("builder runtime read families", () => {
           name: "--brand-color",
           scope: "heading",
           usageCount: 1,
-          valueLength: expect.any(Number),
+          value: expect.any(String),
         },
       ],
     });
-    expect(
-      listCssVariables(state, { withUsage: true, verbose: true })
-    ).toMatchObject({ vars: [{ value: expect.any(String) }] });
     expect(listDataVariables(state)).toMatchObject({
       variables: [
         {

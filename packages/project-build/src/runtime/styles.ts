@@ -3515,9 +3515,9 @@ export const listCssVariables = (
           name: variable.name,
           scope: variable.scope,
           usageCount: variable.usageCount,
-          valueLength: variable.value.length,
+          value: variable.value,
         },
-        expanded: () => ({ value: variable.value }),
+        expanded: () => ({ valueLength: variable.value.length }),
       })
     ),
     cursor: input.cursor,

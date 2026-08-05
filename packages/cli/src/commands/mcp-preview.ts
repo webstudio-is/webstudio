@@ -69,15 +69,23 @@ type McpToolProgress = {
 export const createPreviewFreshness = () => {
   let revision = 0;
   let freshRevision = -1;
+  let renderedProjectVersion: number | undefined;
   return {
     markStale() {
       revision += 1;
     },
     isStale: () => freshRevision !== revision,
     capture: () => revision,
-    markFresh(capturedRevision: number) {
+    status: () => ({
+      stale: freshRevision !== revision,
+      ...(renderedProjectVersion === undefined
+        ? {}
+        : { renderedProjectVersion }),
+    }),
+    markFresh(capturedRevision: number, projectVersion?: number) {
       if (capturedRevision === revision) {
         freshRevision = revision;
+        renderedProjectVersion = projectVersion;
       }
     },
   };
@@ -158,6 +166,7 @@ export const createMcpPreviewHandlers = ({
   isStale = () => true,
   captureFreshness = () => 0,
   markFresh = () => undefined,
+  getProjectVersion = () => undefined,
   preparePreview = prepareDefaultPreviewProject,
   prepareSessionDataFile,
   captureScreenshot = captureScreenshotWithBrowserInstall,
@@ -168,7 +177,8 @@ export const createMcpPreviewHandlers = ({
   preview: McpPreviewController;
   isStale?: () => boolean;
   captureFreshness?: () => number;
-  markFresh?: (freshness: number) => void;
+  markFresh?: (freshness: number, projectVersion?: number) => void;
+  getProjectVersion?: () => number | undefined;
   preparePreview?: typeof prepareDefaultPreviewProject;
   prepareSessionDataFile?: () => Promise<void>;
   captureScreenshot?: typeof captureScreenshotWithBrowserInstall;
@@ -286,6 +296,7 @@ export const createMcpPreviewHandlers = ({
       });
       progress?.report("tool screenshot preparing generated preview project");
       const freshness = captureFreshness();
+      const projectVersion = getProjectVersion();
       const previewProject = await preparePreview(
         source,
         prepareSessionDataFile,
@@ -307,7 +318,7 @@ export const createMcpPreviewHandlers = ({
         restart: canReusePreview === false,
       });
       activeSource = source;
-      markFresh(freshness);
+      markFresh(freshness, projectVersion);
     }
     return preview.resolveUrl(input.path);
   };
@@ -374,6 +385,7 @@ export const createMcpPreviewHandlers = ({
           "tool preview.start preparing generated preview project"
         );
         const freshness = captureFreshness();
+        const projectVersion = getProjectVersion();
         const previewProject = await preparePreview(
           source,
           prepareSessionDataFile,
@@ -393,7 +405,7 @@ export const createMcpPreviewHandlers = ({
           restart: canReusePreview === false,
         });
         activeSource = source;
-        markFresh(freshness);
+        markFresh(freshness, projectVersion);
         return {
           ...result,
           ...(mode === "production"

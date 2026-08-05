@@ -1976,6 +1976,23 @@ export const mcpArgumentExamples: Record<
       ],
     },
   ],
+  "list-css-variables": [{ withUsage: true }],
+  "define-css-variable": [
+    {
+      vars: {
+        "--color-primary": "#2d3748",
+        "--color-accent": "#e53e3e",
+        "--space-card": "1.5rem",
+      },
+      overwrite: true,
+    },
+  ],
+  "delete-css-variable": [
+    {
+      names: ["--color-primary", "--color-accent", "--space-card"],
+      force: true,
+    },
+  ],
   "create-variable": [
     {
       scopeInstanceId: "body-id",
@@ -2414,6 +2431,8 @@ const previewDataSchema = {
     pid: { type: "integer" },
     running: { type: "boolean" },
     mode: { type: "string", enum: projectSessionPreviewModes },
+    stale: { type: "boolean" },
+    renderedProjectVersion: { type: "integer" },
   },
   required: ["url", "running", "mode"],
   additionalProperties: false,
@@ -6253,6 +6272,8 @@ const sdkDetailedOptionalSchemaProperties = new Set([
   "dryRun",
   "confirmDestructive",
   "confirmationToken",
+  "force",
+  "overwrite",
 ]);
 
 const getSdkSchemaProperty = (

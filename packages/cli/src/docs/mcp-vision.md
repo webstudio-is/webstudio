@@ -22,6 +22,7 @@ and fail instead of returning a screenshot of Builder chrome.
 
 - Make focused page/content/style changes with semantic MCP tools.
 - Call preview.start once to keep the iterative generated site running. In shell-driven workflows, run preview.start, screenshot, and preview.stop inside one `webstudio mcp run` call so they share the same preview owner.
+- Read `preview.status.stale` before relying on generated output. When present, `renderedProjectVersion` identifies the last project version materialized into the preview; a stale preview refreshes automatically on the next managed screenshot or `preview.start` call.
 - {{dependency-notes}}
 - After MCP mutations, path-based screenshots regenerate the current session in place, wait for its exact project version, and normally reload the route. The server and browser remain alive. From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running generated site without starting it. Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview; a separate one-shot `single-op-call` process does not own another process's preview controller.
 - For multi-page work, capture each changed page by path through the same preview server, for example screenshot({ path: "/" }), screenshot({ path: "/pricing" }), and screenshot({ path: "/about" }). The screenshot tool navigates directly to the requested route; no browser click navigation is required.
