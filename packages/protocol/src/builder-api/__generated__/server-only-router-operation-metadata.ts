@@ -103,7 +103,7 @@ export const serverOnlyRouterOperationMetadata = {
           maxLength: 160,
           pattern: "^[a-z0-9]+(?:[.-][a-z0-9]+)*$",
           description:
-            "Stable anonymous technical identity for this problem, using lowercase words separated by dots or hyphens. Do not include user, project, resource, or domain identifiers.",
+            "Stable lowercase anonymous technical slug without user, project, resource, or domain identifiers.",
         },
         title: {
           type: "string",
@@ -200,7 +200,7 @@ export const serverOnlyRouterOperationMetadata = {
           ],
           additionalProperties: false,
           description:
-            "Anonymous technical runtime metadata collected by the CLI. Never include hostnames, usernames, paths, environment variables, IP addresses, domains, locale, timezone, project identifiers, or raw command arguments.",
+            "Anonymous CLI-collected runtime metadata without host, user, path, environment, network, location, project, or argument data.",
         },
         report: {
           type: "object",
@@ -290,7 +290,7 @@ export const serverOnlyRouterOperationMetadata = {
       ],
       additionalProperties: false,
       description:
-        "Anonymous LLM-authored technical issue report. Generalize the user story and omit names, usernames, emails, phone numbers, organizations, project or resource ids, domains, URLs, IP addresses, local paths, credentials, tokens, customer content, and exact unique values. Preserve only stable technical details such as MCP tool names, schema fields, error codes, CLI versions, and generalized input shapes.",
+        "Anonymous LLM-authored technical report. Generalize context, exclude all identifying or project-specific data, and preserve only stable tool, schema, error, version, and input-shape details.",
     },
   },
   "build.get": {
