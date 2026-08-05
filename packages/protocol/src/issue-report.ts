@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-export const issueReportTrigger = z.enum([
+const issueReportTrigger = z.enum([
   "user-requested",
   "automatic-friction",
 ]);
 
-export const issueReportCategory = z.enum([
+const issueReportCategory = z.enum([
   "tool-failure",
   "incorrect-result",
   "schema-or-docs-mismatch",
@@ -16,7 +16,7 @@ export const issueReportCategory = z.enum([
   "other",
 ]);
 
-export const issueReportReasoningEffort = z.enum([
+const issueReportReasoningEffort = z.enum([
   "none",
   "minimal",
   "low",
@@ -31,7 +31,7 @@ export const issueReportReasoningEffort = z.enum([
 const reportText = z.string().trim().min(1).max(4_000);
 const reportItems = z.array(reportText).min(1).max(20);
 
-export const issueReportAgent = z
+const issueReportAgent = z
   .object({
     client: z.string().trim().min(1).max(100),
     clientVersion: z.string().trim().min(1).max(100).optional(),
@@ -41,7 +41,7 @@ export const issueReportAgent = z
   })
   .strict();
 
-export const issueReportContent = z
+const issueReportContent = z
   .object({
     userStory: reportText,
     summary: reportText,

@@ -15,6 +15,7 @@ type GitHubSearchResponse = {
 };
 
 const githubApiVersion = "2022-11-28";
+const reportRepository = "webstudio-is/webstudio";
 
 const getReportMarker = (deduplicationKey: string) =>
   `<!-- webstudio-issue-report:${deduplicationKey} -->`;
@@ -64,7 +65,7 @@ ${report.technicalContext}
 
 ## Agent environment
 
-- MCP client: ${agent.client}${agent.clientVersion === undefined ? "" : ` ${agent.clientVersion}`}
+- Client: ${agent.client}${agent.clientVersion === undefined ? "" : ` ${agent.clientVersion}`}
 - Provider: ${agent.provider ?? "unknown"}
 - Model: ${agent.model}
 - Reasoning effort: ${agent.reasoningEffort}
@@ -76,7 +77,29 @@ ${report.technicalContext}
 ${formatItems(report.acceptanceCriteria)}
 `;
 
-const getJson = async <Result>(response: Response): Promise<Result> => {
+const requestGitHub = async <Result>({
+  body,
+  method,
+  path,
+  request,
+  token,
+}: {
+  body?: object;
+  method?: "GET" | "POST";
+  path: string;
+  request: typeof fetch;
+  token: string;
+}) => {
+  const response = await request(new URL(path, "https://api.github.com"), {
+    method,
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${token}`,
+      "X-GitHub-Api-Version": githubApiVersion,
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
   if (response.ok === false) {
     throw new Error(
       `GitHub issue reporting failed with HTTP ${response.status}.`
@@ -84,12 +107,6 @@ const getJson = async <Result>(response: Response): Promise<Result> => {
   }
   return (await response.json()) as Result;
 };
-
-const getGitHubHeaders = (token: string) => ({
-  Accept: "application/vnd.github+json",
-  Authorization: `Bearer ${token}`,
-  "X-GitHub-Api-Version": githubApiVersion,
-});
 
 const encodeJwtPart = (value: object) =>
   Buffer.from(JSON.stringify(value)).toString("base64url");
@@ -119,23 +136,30 @@ export const createGitHubAppJwt = ({
 
 export const createGitHubInstallationToken = async ({
   appId,
-  installationId,
+  createJwt = createGitHubAppJwt,
   privateKey,
   request = fetch,
 }: {
   appId: string;
-  installationId: string;
+  createJwt?: typeof createGitHubAppJwt;
   privateKey: string;
   request?: typeof fetch;
 }) => {
-  const response = await request(
-    `https://api.github.com/app/installations/${encodeURIComponent(installationId)}/access_tokens`,
-    {
-      method: "POST",
-      headers: getGitHubHeaders(createGitHubAppJwt({ appId, privateKey })),
-    }
-  );
-  const result = await getJson<{ token?: unknown }>(response);
+  const appJwt = createJwt({ appId, privateKey });
+  const installation = await requestGitHub<{ id?: unknown }>({
+    path: `/repos/${reportRepository}/installation`,
+    request,
+    token: appJwt,
+  });
+  if (typeof installation.id !== "number") {
+    throw new Error("GitHub App installation was not found.");
+  }
+  const result = await requestGitHub<{ token?: unknown }>({
+    method: "POST",
+    path: `/app/installations/${installation.id}/access_tokens`,
+    request,
+    token: appJwt,
+  });
   if (typeof result.token !== "string" || result.token.length === 0) {
     throw new Error("GitHub App did not return an installation token.");
   }
@@ -145,29 +169,24 @@ export const createGitHubInstallationToken = async ({
 export const publishIssueReport = async (
   input: IssueReportInput,
   {
-    repository,
     getInstallationToken,
     request = fetch,
   }: {
-    repository: string;
     getInstallationToken: () => Promise<string>;
     request?: typeof fetch;
   }
 ): Promise<IssueReportResult> => {
-  const [owner, name, ...extra] = repository.split("/");
-  if (owner === undefined || name === undefined || extra.length > 0) {
-    throw new Error("GitHub issue reporting repository must use owner/name.");
-  }
   const token = await getInstallationToken();
-  const headers = getGitHubHeaders(token);
   const searchUrl = new URL("https://api.github.com/search/issues");
   searchUrl.searchParams.set(
     "q",
-    `repo:${repository} is:issue in:body "${getReportMarker(input.deduplicationKey)}"`
+    `repo:${reportRepository} is:issue in:body "${getReportMarker(input.deduplicationKey)}"`
   );
-  const search = await getJson<GitHubSearchResponse>(
-    await request(searchUrl, { headers })
-  );
+  const search = await requestGitHub<GitHubSearchResponse>({
+    path: `${searchUrl.pathname}${searchUrl.search}`,
+    request,
+    token,
+  });
   const existing = search.items?.[0];
   if (existing !== undefined) {
     return {
@@ -177,19 +196,16 @@ export const publishIssueReport = async (
     };
   }
 
-  const created = await getJson<GitHubIssue>(
-    await request(
-      `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}/issues`,
-      {
-        method: "POST",
-        headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: input.title,
-          body: formatIssueReport(input),
-        }),
-      }
-    )
-  );
+  const created = await requestGitHub<GitHubIssue>({
+    method: "POST",
+    path: `/repos/${reportRepository}/issues`,
+    request,
+    token,
+    body: {
+      title: input.title,
+      body: formatIssueReport(input),
+    },
+  });
   return {
     status: "created",
     issueNumber: created.number,
@@ -199,21 +215,14 @@ export const publishIssueReport = async (
 
 export const publishConfiguredIssueReport = async (input: IssueReportInput) => {
   const appId = env.GITHUB_ISSUE_REPORT_APP_ID;
-  const installationId = env.GITHUB_ISSUE_REPORT_INSTALLATION_ID;
   const privateKey = env.GITHUB_ISSUE_REPORT_PRIVATE_KEY;
-  if (
-    appId === undefined ||
-    installationId === undefined ||
-    privateKey === undefined
-  ) {
+  if (appId === undefined || privateKey === undefined) {
     throw new Error("GitHub issue reporting is not configured.");
   }
   return await publishIssueReport(input, {
-    repository: env.GITHUB_ISSUE_REPORT_REPOSITORY,
     getInstallationToken: async () =>
       await createGitHubInstallationToken({
         appId,
-        installationId,
         privateKey,
       }),
   });

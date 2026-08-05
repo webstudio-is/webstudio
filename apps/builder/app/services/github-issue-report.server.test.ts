@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { IssueReportInput } from "@webstudio-is/protocol";
 import {
+  createGitHubInstallationToken,
   formatIssueReport,
   publishIssueReport,
 } from "./github-issue-report.server";
@@ -39,11 +40,40 @@ describe("GitHub issue reports", () => {
     expect(body).toContain(report.report.userStory);
     expect(body).toContain("## Expected behavior");
     expect(body).toContain(report.report.actualResult);
+    expect(body).toContain("- Client: Codex 1.2.3");
     expect(body).toContain("- Model: gpt-5.6-sol");
     expect(body).toContain("- Reasoning effort: medium");
     expect(body).toContain(
       "<!-- webstudio-issue-report:update-props-input-contract -->"
     );
+  });
+
+  test("discovers the repository installation before creating its token", async () => {
+    const requests: Array<{ url: URL; init?: RequestInit }> = [];
+    const request: typeof fetch = async (input, init) => {
+      const url = new URL(input.toString());
+      requests.push({ url, init });
+      if (url.pathname === "/repos/webstudio-is/webstudio/installation") {
+        return Response.json({ id: 123 });
+      }
+      return Response.json({ token: "installation-token" });
+    };
+
+    await expect(
+      createGitHubInstallationToken({
+        appId: "app-id",
+        privateKey: "private-key",
+        createJwt: () => "app-jwt",
+        request,
+      })
+    ).resolves.toBe("installation-token");
+    expect(requests.map(({ url }) => url.pathname)).toEqual([
+      "/repos/webstudio-is/webstudio/installation",
+      "/app/installations/123/access_tokens",
+    ]);
+    expect(requests[0]?.init?.headers).toMatchObject({
+      Authorization: "Bearer app-jwt",
+    });
   });
 
   test("returns an existing issue with the same deduplication key", async () => {
@@ -62,7 +92,6 @@ describe("GitHub issue reports", () => {
 
     await expect(
       publishIssueReport(report, {
-        repository: "webstudio-is/webstudio",
         getInstallationToken: async () => "installation-token",
         request,
       })
@@ -93,7 +122,6 @@ describe("GitHub issue reports", () => {
 
     await expect(
       publishIssueReport(report, {
-        repository: "webstudio-is/webstudio",
         getInstallationToken: async () => "installation-token",
         request,
       })
