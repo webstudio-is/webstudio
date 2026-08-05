@@ -130,7 +130,7 @@ test("it works well with no background-images", async () => {
   expect(denormalizedAssetIds).toEqual(inputUrls.map(src2AssetId));
 });
 
-test("upload raw inception images", async () => {
+test("uploads original inception images without transformation parameters", async () => {
   const data = renderTemplate(
     <$.Body ws:id="boxA">
       <$.Image
@@ -148,7 +148,7 @@ test("upload raw inception images", async () => {
     (instanceId, propName) => `${instanceId}:${propName}`
   );
   expect(uploadImages).toBeCalledWith([
-    "https://preview.webstudio.ai/cgi/image/dev/5036ed5c3dfce99eaac566a06bc3729620354a364357907a523f1feb2d6fb819.png?format=raw",
+    "https://preview.webstudio.ai/cgi/image/dev/5036ed5c3dfce99eaac566a06bc3729620354a364357907a523f1feb2d6fb819.png",
   ]);
 });
 

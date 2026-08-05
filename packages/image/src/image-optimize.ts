@@ -95,7 +95,7 @@ export type ImageLoader = (
         height?: number;
         fit?: "pad";
       }
-    | { src: string; format: "raw" }
+    | { src: string }
 ) => string;
 
 /**
@@ -292,7 +292,7 @@ export const getImageAttributes = (props: {
     } = {
       src: UrlCanParse(props.src)
         ? props.src
-        : props.loader({ src: props.src, format: "raw" }),
+        : props.loader({ src: props.src }),
     };
 
     if (props.srcSet != null) {
