@@ -70,6 +70,229 @@ export const serverOnlyRouterOperationMetadata = {
       required: ["acknowledgePublicSubmission"],
     },
   },
+  "reports.issue": {
+    id: "reports.issue",
+    command: "report-issue",
+    method: "mutation",
+    path: "api.reports.issue",
+    client: "reportIssue",
+    permit: "view",
+    inputSchema: {
+      type: "object",
+      properties: {
+        trigger: {
+          type: "string",
+          enum: ["user-requested", "automatic-friction"],
+        },
+        category: {
+          type: "string",
+          enum: [
+            "tool-failure",
+            "incorrect-result",
+            "schema-or-docs-mismatch",
+            "documented-recovery-failed",
+            "undocumented-workaround",
+            "hang-or-crash",
+            "feature-request",
+            "other",
+          ],
+        },
+        deduplicationKey: {
+          type: "string",
+          minLength: 3,
+          maxLength: 160,
+          pattern: "^[a-z0-9]+(?:[.-][a-z0-9]+)*$",
+          description:
+            "Stable lowercase anonymous technical slug without user, project, resource, or domain identifiers.",
+        },
+        title: {
+          type: "string",
+          minLength: 1,
+          maxLength: 160,
+        },
+        agent: {
+          type: "object",
+          properties: {
+            client: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            clientVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            provider: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            model: {
+              type: "string",
+              minLength: 1,
+              maxLength: 200,
+            },
+            reasoningEffort: {
+              type: "string",
+              enum: [
+                "none",
+                "minimal",
+                "low",
+                "medium",
+                "high",
+                "xhigh",
+                "max",
+                "ultra",
+                "unknown",
+              ],
+            },
+          },
+          required: ["client", "model", "reasoningEffort"],
+          additionalProperties: false,
+        },
+        runtime: {
+          type: "object",
+          properties: {
+            cliVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            nodeVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            os: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            osVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            architecture: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            executionMode: {
+              type: "string",
+              enum: ["mcp"],
+            },
+            apiContractVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+          },
+          required: [
+            "cliVersion",
+            "nodeVersion",
+            "os",
+            "osVersion",
+            "architecture",
+            "executionMode",
+            "apiContractVersion",
+          ],
+          additionalProperties: false,
+          description:
+            "Anonymous CLI-collected runtime metadata without host, user, path, environment, network, location, project, or argument data.",
+        },
+        report: {
+          type: "object",
+          properties: {
+            userStory: {
+              type: "string",
+              minLength: 1,
+              maxLength: 4000,
+            },
+            summary: {
+              type: "string",
+              minLength: 1,
+              maxLength: 4000,
+            },
+            attemptedWorkflow: {
+              minItems: 1,
+              maxItems: 20,
+              type: "array",
+              items: {
+                type: "string",
+                minLength: 1,
+                maxLength: 4000,
+              },
+            },
+            expectedBehavior: {
+              type: "string",
+              minLength: 1,
+              maxLength: 4000,
+            },
+            actualResult: {
+              type: "string",
+              minLength: 1,
+              maxLength: 4000,
+            },
+            recoveryAttempts: {
+              minItems: 1,
+              maxItems: 20,
+              type: "array",
+              items: {
+                type: "string",
+                minLength: 1,
+                maxLength: 4000,
+              },
+            },
+            userImpact: {
+              type: "string",
+              minLength: 1,
+              maxLength: 4000,
+            },
+            technicalContext: {
+              type: "string",
+              minLength: 1,
+              maxLength: 4000,
+            },
+            acceptanceCriteria: {
+              minItems: 1,
+              maxItems: 20,
+              type: "array",
+              items: {
+                type: "string",
+                minLength: 1,
+                maxLength: 4000,
+              },
+            },
+          },
+          required: [
+            "userStory",
+            "summary",
+            "attemptedWorkflow",
+            "expectedBehavior",
+            "actualResult",
+            "recoveryAttempts",
+            "userImpact",
+            "technicalContext",
+            "acceptanceCriteria",
+          ],
+          additionalProperties: false,
+        },
+      },
+      required: [
+        "trigger",
+        "category",
+        "deduplicationKey",
+        "title",
+        "agent",
+        "report",
+      ],
+      additionalProperties: false,
+      description:
+        "Anonymous LLM-authored technical report. Generalize context, exclude all identifying or project-specific data, and preserve only stable tool, schema, error, version, and input-shape details.",
+    },
+  },
   "build.get": {
     id: "build.get",
     command: "snapshot",

@@ -1,4 +1,5 @@
 import { rm } from "node:fs/promises";
+import { release } from "node:os";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
@@ -14,8 +15,10 @@ import {
   publicApiContractVersion,
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
+  type IssueReportRuntime,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
+import packageJson from "../package.json";
 import {
   createReachableAssetContentCompilationPlan,
   getHomePage,
@@ -224,6 +227,27 @@ const publicOperationById = new Map(
   publicApiOperations.map((operation) => [operation.id, operation])
 );
 
+const getIssueReportRuntime = (): IssueReportRuntime => ({
+  cliVersion: packageJson.version,
+  nodeVersion: process.versions.node,
+  os: process.platform,
+  osVersion: release().split(".")[0] ?? "unknown",
+  architecture: process.arch,
+  executionMode: "mcp",
+  apiContractVersion: publicApiContractVersion,
+});
+
+export const addIssueReportRuntime = (
+  operationId: string,
+  input: unknown,
+  runtime: IssueReportRuntime = getIssueReportRuntime()
+) => {
+  if (operationId !== "report-issue" || isPlainRecord(input) === false) {
+    return input;
+  }
+  return { ...input, runtime };
+};
+
 const executePublicServerOperation = async ({
   connection,
   operationId,
@@ -247,7 +271,7 @@ const executePublicServerOperation = async ({
   }
   return await client({
     ...connection,
-    ...(input as Record<string, unknown>),
+    ...(addIssueReportRuntime(operationId, input) as Record<string, unknown>),
     projectId: connection.projectId,
   });
 };

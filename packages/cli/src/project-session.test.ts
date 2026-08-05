@@ -10,12 +10,32 @@ import {
   createCliProjectRestorePointStorage,
   createCliProjectSessionStorage,
   createCliProjectSessionTransport,
+  addIssueReportRuntime,
   getCliServerApiContract,
   getCliProjectSessionFile,
   getCliProjectRestorePointsFile,
   getSupportedPublicApiOperations,
   loadCliProjectSessionAssetIndex,
 } from "./project-session";
+
+test("adds anonymous local runtime metadata only to issue reports", () => {
+  const report = { title: "test: Report transport" };
+  const runtime = {
+    cliVersion: "1.2.3",
+    nodeVersion: "22.14.0",
+    os: "linux",
+    osVersion: "6",
+    architecture: "arm64",
+    executionMode: "mcp" as const,
+    apiContractVersion: "public-api:client",
+  };
+
+  expect(addIssueReportRuntime("report-issue", report, runtime)).toEqual({
+    ...report,
+    runtime,
+  });
+  expect(addIssueReportRuntime("audit", report, runtime)).toBe(report);
+});
 
 test("scopes project session files for explicitly selected projects", () => {
   expect(getCliProjectSessionFile("/workspace", "project/a")).toBe(
