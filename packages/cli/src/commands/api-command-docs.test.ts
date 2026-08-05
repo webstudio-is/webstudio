@@ -340,15 +340,17 @@ test("MCP capability index covers every public API operation", async () => {
   }
 });
 
-test("documents that MCP visual verification requires current generated files", () => {
-  expect(
-    useCaseScenarios.find(
-      (scenario) =>
-        scenario.useCase === "Visually verify rendered work with AI vision"
-    )?.notes
-  ).toEqual(
-    expect.arrayContaining([
-      expect.stringContaining("generated project files are current"),
-    ])
+test("documents MCP preview freshness metadata", () => {
+  const scenario = useCaseScenarios.find(
+    (candidate) =>
+      candidate.useCase === "Visually verify rendered work with AI vision"
   );
+
+  expect(scenario?.commands).toContain("MCP tool: preview.status {}");
+  expect(
+    scenario?.notes?.some(
+      (note) =>
+        note.includes("`stale`") && note.includes("`renderedProjectVersion`")
+    )
+  ).toBe(true);
 });

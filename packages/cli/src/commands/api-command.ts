@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import * as httpClient from "@webstudio-is/http-client";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import { getPublicApiOperation } from "@webstudio-is/protocol";
 import type { PageRedirect } from "@webstudio-is/sdk";
 import { isFileExists } from "../fs-utils";
 import { HandledCliError } from "../errors";
@@ -3222,7 +3223,10 @@ export const apiCommand = async (
       }
     );
     const session = isProjectSessionEnvelope(response)
-      ? getProjectSessionMeta(response)
+      ? getProjectSessionMeta(response, {
+          mutation:
+            getPublicApiOperation(options.command).method === "mutation",
+        })
       : undefined;
     const result = isProjectSessionEnvelope(response)
       ? response.result

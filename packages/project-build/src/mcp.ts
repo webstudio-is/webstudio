@@ -6500,6 +6500,7 @@ const toCallResult = (
   envelope: Parameters<typeof serializeProjectSessionMeta>[0],
   options: {
     verboseSession?: boolean;
+    mutation?: boolean;
     error?: { code: string; message: string };
     next?: string[];
     confirmation?: DestructiveConfirmation;
@@ -6508,6 +6509,7 @@ const toCallResult = (
   const meta = {
     session: serializeProjectSessionMeta(envelope, {
       verbose: options.verboseSession,
+      mutation: options.mutation,
     }),
     ...(options.next === undefined ? {} : { next: options.next }),
     ...(options.confirmation === undefined
@@ -8017,6 +8019,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           signal,
         });
         return toCallResult(auditedEnvelope, {
+          mutation: false,
           error: getRenderedAuditError(auditedEnvelope, isRenderedAudit),
         });
       }
@@ -8044,6 +8047,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           : []),
       ];
       return toCallResult(envelope, {
+        mutation: operation.method === "mutation",
         ...(operation.method !== "mutation" || dryRun || next.length === 0
           ? {}
           : { next }),

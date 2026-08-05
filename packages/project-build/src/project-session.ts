@@ -263,7 +263,7 @@ const getNamespaceCounts = (envelope: ProjectSessionEnvelope) =>
 
 export const serializeProjectSessionMeta = (
   envelope: ProjectSessionEnvelope,
-  input: { verbose?: boolean } = {}
+  input: { verbose?: boolean; mutation?: boolean } = {}
 ) => {
   const diagnostics = envelope.diagnostics.map(({ level, code, message }) => ({
     level,
@@ -273,13 +273,16 @@ export const serializeProjectSessionMeta = (
   const diagnosticErrorCount = diagnostics.filter(
     (diagnostic) => diagnostic.level === "error"
   ).length;
-  const commitStatus = envelope.state.committed
-    ? "committed"
-    : envelope.source === "dry-run"
-      ? "planned"
-      : envelope.namespaces.write.length > 0
-        ? "unchanged"
-        : "not-applicable";
+  const commitStatus =
+    input.mutation === false
+      ? "not-applicable"
+      : envelope.state.committed
+        ? "committed"
+        : envelope.source === "dry-run"
+          ? "planned"
+          : envelope.namespaces.write.length > 0
+            ? "unchanged"
+            : "not-applicable";
   const compact = {
     operationId: envelope.operationId,
     projectId: envelope.projectId,

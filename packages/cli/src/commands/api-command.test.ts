@@ -103,7 +103,11 @@ const dependencies = new Proxy(
   }
 ) as unknown as Parameters<typeof apiCommand>[1];
 
-const expectJsonOutput = (command: string, data: unknown = { ok: true }) => {
+const expectJsonOutput = (
+  command: Parameters<typeof apiCommand>[0]["command"],
+  data: unknown = { ok: true }
+) => {
+  const operation = getPublicApiOperation(command);
   expect(getLastJsonOutput()).toEqual({
     ok: true,
     data,
@@ -117,7 +121,12 @@ const expectJsonOutput = (command: string, data: unknown = { ok: true }) => {
         buildId: "build-1",
         version: 1,
         source: expect.any(String),
-        committed: expect.any(Boolean),
+        ...(operation.method === "mutation"
+          ? {
+              commitStatus: "committed",
+              committed: expect.any(Boolean),
+            }
+          : { commitStatus: "not-applicable" }),
         namespaceCounts: { read: 0, write: 0, invalidated: 0, missing: 0 },
         diagnosticCount: 0,
       },

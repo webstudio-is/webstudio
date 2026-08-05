@@ -641,6 +641,21 @@ describe("project session", () => {
       commitStatus: "not-applicable",
     });
     expect(serializeProjectSessionMeta(result)).not.toHaveProperty("committed");
+
+    const serverResult = {
+      ...result,
+      source: "server" as const,
+      state: { ...result.state, committed: true },
+    };
+    expect(
+      serializeProjectSessionMeta(serverResult, { mutation: false })
+    ).toMatchObject({
+      source: "server",
+      commitStatus: "not-applicable",
+    });
+    expect(
+      serializeProjectSessionMeta(serverResult, { mutation: false })
+    ).not.toHaveProperty("committed");
   });
 
   test("reports persistent session write conflicts as transient busy errors", async () => {
