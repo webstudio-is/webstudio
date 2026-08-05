@@ -86,7 +86,7 @@ node packages/cli/local.js insert-fragment --input-file .temp/insert-fragment.js
 
 For this simple path, do not grep source files, dump full MCP resources, or write parser scripts first. Use `list-pages`, `get-page-by-path`, or `list-instances` only to get the target `parentInstanceId`.
 
-When authoring JSX for `insert-fragment`, use Webstudio component helpers and Webstudio style syntax. Use `ws:style={css\`...\`}`for Webstudio-native CSS, or use React-style object syntax such as`style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
+When authoring JSX for `insert-fragment`, use Webstudio component helpers and Webstudio style syntax. Write Webstudio-native CSS with `ws:style={css\`...\`}`. For simpler cases, use React-style object syntax such as `style={{ padding: 24 }}`. Both forms create editable Webstudio style data.
 
 When the task says another user will edit a page in Content mode, use a Content Block (`ws:block`) around every editable region. Content-mode users can edit text and supported props only in descendants of that block; content outside it is read-only. Put reusable insertable options in the block's `ws:block-template` child. Do not put intended editor content inside that template container: templates are protected source material, while an inserted template copy becomes an editable direct child of the Content Block. Verify this structure before handoff.
 
