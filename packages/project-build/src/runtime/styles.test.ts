@@ -52,7 +52,6 @@ import {
   getStyleSourceInsertionIndex,
   getStyleDeclarations,
   getUnusedCssVariableNames,
-  listCssVariables,
   performCssVariableRename,
   renameCssVariable,
   serializeCssVariables,
@@ -767,41 +766,6 @@ describe("css variable usage", () => {
           usageCount: 2,
         },
       ],
-    });
-  });
-
-  test("lists exact css variable values in compact output", () => {
-    expect(
-      listCssVariables(
-        {
-          styles: new Map([
-            [
-              "local:base:--color",
-              createCssVariableStyleDecl("local", "--color", "#2d3748"),
-            ],
-          ]),
-          props: new Map(),
-          styleSources: new Map([["local", { id: "local", type: "local" }]]),
-          styleSourceSelections: new Map([
-            ["box", { instanceId: "box", values: ["local"] }],
-          ]),
-        },
-        {}
-      )
-    ).toEqual({
-      vars: [
-        {
-          name: "--color",
-          value: "#2d3748",
-          scope: "box",
-          usageCount: undefined,
-        },
-      ],
-      total: 1,
-      returnedCount: 1,
-      nextCursor: null,
-      detail: "compact",
-      filters: {},
     });
   });
 

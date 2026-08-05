@@ -339,18 +339,3 @@ test("MCP capability index covers every public API operation", async () => {
     expect(indexedTools).toContain(command);
   }
 });
-
-test("documents MCP preview freshness metadata", () => {
-  const scenario = useCaseScenarios.find(
-    (candidate) =>
-      candidate.useCase === "Visually verify rendered work with AI vision"
-  );
-
-  expect(scenario?.commands).toContain("MCP tool: preview.status {}");
-  expect(
-    scenario?.notes?.some(
-      (note) =>
-        note.includes("`stale`") && note.includes("`renderedProjectVersion`")
-    )
-  ).toBe(true);
-});

@@ -120,6 +120,7 @@ export const executeProjectSessionApiOperation = async ({
       ? await session.executeServerOperation(
           {
             id: operation.id,
+            method: operation.method,
             invalidatesNamespaces: operation.invalidatesNamespaces,
             refetchInvalidatedNamespaces:
               operation.invalidatesNamespaces.length > 0,

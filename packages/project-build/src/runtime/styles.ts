@@ -3508,18 +3508,13 @@ export const listCssVariables = (
     withUsage: input.withUsage,
   });
   const { items, ...pagination } = paginateOutput({
-    items: serialized.vars.map((variable) =>
-      projectOutput({
-        input,
-        compact: {
-          name: variable.name,
-          scope: variable.scope,
-          usageCount: variable.usageCount,
-          value: variable.value,
-        },
-        expanded: () => ({ valueLength: variable.value.length }),
-      })
-    ),
+    items: serialized.vars.map((variable) => ({
+      name: variable.name,
+      scope: variable.scope,
+      usageCount: variable.usageCount,
+      value: variable.value,
+      valueLength: variable.value.length,
+    })),
     cursor: input.cursor,
     limit: input.limit,
     filters: { filter: input.filter, withUsage: input.withUsage },

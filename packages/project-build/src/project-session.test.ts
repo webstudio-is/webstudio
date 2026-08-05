@@ -639,23 +639,18 @@ describe("project session", () => {
     expect(serializeProjectSessionMeta(result)).toMatchObject({
       source: "local",
       commitStatus: "not-applicable",
+      committed: false,
     });
-    expect(serializeProjectSessionMeta(result)).not.toHaveProperty("committed");
 
-    const serverResult = {
-      ...result,
-      source: "server" as const,
-      state: { ...result.state, committed: true },
-    };
-    expect(
-      serializeProjectSessionMeta(serverResult, { mutation: false })
-    ).toMatchObject({
+    const serverResult = await session.executeServerOperation(
+      { id: "auth.me", method: "query" },
+      {}
+    );
+    expect(serializeProjectSessionMeta(serverResult)).toMatchObject({
       source: "server",
       commitStatus: "not-applicable",
+      committed: false,
     });
-    expect(
-      serializeProjectSessionMeta(serverResult, { mutation: false })
-    ).not.toHaveProperty("committed");
   });
 
   test("reports persistent session write conflicts as transient busy errors", async () => {
@@ -1167,6 +1162,10 @@ describe("project session", () => {
     });
 
     expect(result.state.committed).toBe(false);
+    expect(serializeProjectSessionMeta(result)).toMatchObject({
+      commitStatus: "failed",
+      committed: false,
+    });
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
         code: "INVALID_INPUT",
@@ -1372,7 +1371,11 @@ describe("project session", () => {
 
     await session.initialize();
     const result = await session.executeServerOperation(
-      { id: "upload-asset", invalidatesNamespaces: ["assets"] },
+      {
+        id: "upload-asset",
+        method: "mutation",
+        invalidatesNamespaces: ["assets"],
+      },
       { file: "image.png" }
     );
 
@@ -1390,6 +1393,7 @@ describe("project session", () => {
     const result = await session.executeServerOperation(
       {
         id: "upload-asset",
+        method: "mutation",
         invalidatesNamespaces: ["assets"],
         refetchInvalidatedNamespaces: true,
       },

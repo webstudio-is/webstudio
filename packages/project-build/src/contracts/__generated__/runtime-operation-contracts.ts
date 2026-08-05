@@ -63475,7 +63475,7 @@ export const runtimeOperationContractData = [
                 maximum: 9007199254740991,
               },
             },
-            required: ["name", "value", "scope"],
+            required: ["name", "value", "valueLength", "scope"],
             additionalProperties: {},
           },
         },

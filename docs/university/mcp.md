@@ -402,7 +402,7 @@ Use `node packages/cli/local.js mcp` from the Webstudio monorepo root for local 
 - Read ids before writing.
 - Prefer semantic tools over `apply-patch`.
 - Use `status` and `refresh` when cached namespaces may be stale. Pass `status {"verbose":true}` only when debugging full namespace arrays, freshness, compatibility, or diagnostic details.
-- Read `meta.session.commitStatus` before interpreting durability. Read-only results report `not-applicable` and omit `committed`; dry-run plans report `planned`; no-op mutations report `unchanged`; durable mutations report `committed` with `meta.session.committed:true`.
+- Read `meta.session.commitStatus` before interpreting durability. Read-only results report `not-applicable` and retain `committed:false` for compatibility; dry-run plans report `planned`; failed mutations report `failed`; no-op mutations report `unchanged`; durable mutations report `committed` with `meta.session.committed:true`.
 - For visual/design work, verify the rendered result with vision before finishing.
 
 ## Vision Verification Loop

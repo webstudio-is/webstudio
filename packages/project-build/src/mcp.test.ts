@@ -7387,6 +7387,22 @@ describe("project session mcp adapter", () => {
       ),
       readNamespaces: ["styles"],
     });
+    const listCssVariablesOperation = publicOperation({
+      command: "list-css-variables",
+      id: "cssVariables.list",
+      method: "query",
+      permit: "view",
+      description: "List CSS variables",
+      inputSchema: getTestInputSchema(
+        z.object({
+          withUsage: z.boolean().optional(),
+          verbose: z.boolean().optional(),
+        })
+      ),
+      readNamespaces: ["styles"],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+    });
     const deleteCssVariablesOperation = styleOperation({
       command: "delete-css-variable",
       id: "cssVariables.delete",
@@ -7403,6 +7419,7 @@ describe("project session mcp adapter", () => {
       operations: [
         ...publicMcpOperations,
         setTextContentOperation,
+        listCssVariablesOperation,
         defineCssVariablesOperation,
         deleteCssVariablesOperation,
       ],
@@ -7452,6 +7469,13 @@ describe("project session mcp adapter", () => {
             required: ["operation", "instanceId"],
           },
         ],
+      });
+      expect(
+        listedTools.tools.find(({ name }) => name === "list-css-variables")
+          ?.inputSchema.properties
+      ).toMatchObject({
+        withUsage: { type: "boolean" },
+        verbose: { type: "boolean" },
       });
       expect(listedTools).toEqual({
         tools: expect.arrayContaining([

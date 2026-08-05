@@ -13,7 +13,10 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { HandledCliError } from "../errors";
 import { printJson } from "../json-output";
-import { useCaseScenarios } from "./api-command-docs";
+import {
+  projectSessionResultMetadataDescription,
+  useCaseScenarios,
+} from "./api-command-docs";
 import {
   apiCommandMetadata,
   cliCommandGroupMetadata,
@@ -281,8 +284,7 @@ const apiSchema = {
       "Local-capable mutation commands build patches locally, commit with the cached build version, and update local state only after the remote commit succeeds.",
     serverOnly:
       "Server-only commands run remotely and invalidate/refetch namespaces declared by the public operation catalog.",
-    resultMetadata:
-      "Successful command JSON includes compact meta.session with operationId, buildId, version, source, commitStatus, mutation-only committed, namespaceCounts, diagnosticCount, non-empty diagnostic summaries, and optional compatibilityVersion.",
+    resultMetadata: projectSessionResultMetadataDescription,
   },
   useCases: topLevelUseCases,
   patch: {

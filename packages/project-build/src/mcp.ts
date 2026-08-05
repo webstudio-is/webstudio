@@ -6268,13 +6268,10 @@ const sdkScalarSchemaKeys = new Set([
   "uniqueItems",
 ]);
 
-const sdkDetailedOptionalSchemaProperties = new Set([
-  "dryRun",
-  "confirmDestructive",
-  "confirmationToken",
-  "force",
-  "overwrite",
-]);
+const sdkDetailedOptionalSchemaProperties = new Set(["confirmationToken"]);
+
+const isSdkBooleanSchemaProperty = (value: InputJsonSchemaValue) =>
+  typeof value !== "boolean" && value.type === "boolean";
 
 const getSdkSchemaProperty = (
   value: InputJsonSchemaValue,
@@ -6327,7 +6324,8 @@ const getSdkInputSchema = (
     Object.entries(schema.properties ?? {}).flatMap(([name, value]) =>
       required.has(name) ||
       includeOptionalProperties ||
-      sdkDetailedOptionalSchemaProperties.has(name)
+      sdkDetailedOptionalSchemaProperties.has(name) ||
+      isSdkBooleanSchemaProperty(value)
         ? [[name, getSdkSchemaProperty(value)]]
         : []
     )
@@ -6500,7 +6498,6 @@ const toCallResult = (
   envelope: Parameters<typeof serializeProjectSessionMeta>[0],
   options: {
     verboseSession?: boolean;
-    mutation?: boolean;
     error?: { code: string; message: string };
     next?: string[];
     confirmation?: DestructiveConfirmation;
@@ -6509,7 +6506,6 @@ const toCallResult = (
   const meta = {
     session: serializeProjectSessionMeta(envelope, {
       verbose: options.verboseSession,
-      mutation: options.mutation,
     }),
     ...(options.next === undefined ? {} : { next: options.next }),
     ...(options.confirmation === undefined
@@ -8019,7 +8015,6 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           signal,
         });
         return toCallResult(auditedEnvelope, {
-          mutation: false,
           error: getRenderedAuditError(auditedEnvelope, isRenderedAudit),
         });
       }
@@ -8047,7 +8042,6 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           : []),
       ];
       return toCallResult(envelope, {
-        mutation: operation.method === "mutation",
         ...(operation.method !== "mutation" || dryRun || next.length === 0
           ? {}
           : { next }),

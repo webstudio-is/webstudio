@@ -1206,7 +1206,8 @@ describe("builder runtime read families", () => {
           name: "--brand-color",
           scope: "heading",
           usageCount: 1,
-          value: expect.any(String),
+          value: "red",
+          valueLength: 3,
         },
       ],
     });
@@ -1240,7 +1241,7 @@ describe("builder runtime read families", () => {
       const { detail: _compactDetail, ...compactResult } = compact;
       const { detail: _verboseDetail, ...verboseResult } = verbose;
       expect(verboseResult).toMatchObject(compactResult);
-      expect(JSON.stringify(compact).length).toBeLessThan(
+      expect(JSON.stringify(compact).length).toBeLessThanOrEqual(
         JSON.stringify(verbose).length
       );
       expect(verbose.total).toBe(compact.total);

@@ -263,7 +263,7 @@ const getNamespaceCounts = (envelope: ProjectSessionEnvelope) =>
 
 export const serializeProjectSessionMeta = (
   envelope: ProjectSessionEnvelope,
-  input: { verbose?: boolean; mutation?: boolean } = {}
+  input: { verbose?: boolean } = {}
 ) => {
   const diagnostics = envelope.diagnostics.map(({ level, code, message }) => ({
     level,
@@ -273,16 +273,15 @@ export const serializeProjectSessionMeta = (
   const diagnosticErrorCount = diagnostics.filter(
     (diagnostic) => diagnostic.level === "error"
   ).length;
-  const commitStatus =
-    input.mutation === false
-      ? "not-applicable"
-      : envelope.state.committed
-        ? "committed"
-        : envelope.source === "dry-run"
-          ? "planned"
-          : envelope.namespaces.write.length > 0
-            ? "unchanged"
-            : "not-applicable";
+  const commitStatus = envelope.state.committed
+    ? "committed"
+    : envelope.source === "dry-run"
+      ? "planned"
+      : diagnosticErrorCount > 0 && envelope.namespaces.write.length > 0
+        ? "failed"
+        : envelope.namespaces.write.length > 0
+          ? "unchanged"
+          : "not-applicable";
   const compact = {
     operationId: envelope.operationId,
     projectId: envelope.projectId,
@@ -290,9 +289,7 @@ export const serializeProjectSessionMeta = (
     ...(envelope.version === undefined ? {} : { version: envelope.version }),
     source: envelope.source,
     commitStatus,
-    ...(commitStatus === "not-applicable"
-      ? {}
-      : { committed: envelope.state.committed }),
+    committed: envelope.state.committed,
     namespaceCounts: getNamespaceCounts(envelope),
     diagnosticCount: diagnostics.length,
     ...(diagnosticErrorCount === 0 ? {} : { diagnosticErrorCount }),
@@ -329,6 +326,7 @@ export type ProjectSessionReadOptions = {
 
 export type ProjectSessionServerOperationDescriptor = {
   id: string;
+  method: "query" | "mutation";
   invalidatesNamespaces?: readonly BuilderNamespace[];
   refetchInvalidatedNamespaces?: boolean;
 };
@@ -957,7 +955,7 @@ export class ProjectSession {
     return this.createEnvelope({
       source: "server",
       result,
-      committed: true,
+      committed: descriptor.method === "mutation",
       contract: {
         ...emptyContract,
         id: descriptor.id,
@@ -1286,6 +1284,7 @@ export class ProjectSession {
       return await this.executeServerOperation<Result>(
         {
           id: operationId,
+          method: "mutation",
           invalidatesNamespaces: mutation.invalidatesNamespaces,
           refetchInvalidatedNamespaces: true,
         },
