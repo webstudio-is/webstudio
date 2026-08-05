@@ -463,7 +463,35 @@ export type CssVariableNameError =
   | { type: "invalid"; message: string }
   | { type: "duplicate"; message: string };
 
-export const cssVariableValueInput = z.union([z.string(), styleValue]);
+export const cssVariableValueInput = z
+  .union([z.string(), styleValue])
+  .superRefine((value, context) => {
+    if (
+      typeof value === "string" ||
+      value.type !== "color" ||
+      value.colorSpace !== "hex"
+    ) {
+      return;
+    }
+    if (value.components.some((component) => component < 0 || component > 1)) {
+      context.addIssue({
+        code: "custom",
+        path: ["components"],
+        message:
+          'Hex color components must be numbers from 0 to 1. Pass a CSS string such as "#2d3748" when using 0-255 hex values.',
+      });
+    }
+    if (
+      typeof value.alpha === "number" &&
+      (value.alpha < 0 || value.alpha > 1)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["alpha"],
+        message: "Hex color alpha must be a number from 0 to 1.",
+      });
+    }
+  });
 
 export const cssVariableDefineInput = z.object({
   vars: z.record(z.string(), cssVariableValueInput),

@@ -444,6 +444,57 @@ describe("css variable usage", () => {
     });
   });
 
+  test("rejects structured hex colors outside the normalized range", () => {
+    const result = cssVariableValueInput.safeParse({
+      type: "color",
+      colorSpace: "hex",
+      components: [45, 55, 72],
+      alpha: 1,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success === false) {
+      expect(result.error.issues).toEqual([
+        expect.objectContaining({
+          path: ["components"],
+          message:
+            'Hex color components must be numbers from 0 to 1. Pass a CSS string such as "#2d3748" when using 0-255 hex values.',
+        }),
+      ]);
+    }
+  });
+
+  test("accepts normalized structured hex colors and CSS color strings", () => {
+    expect(
+      cssVariableValueInput.safeParse({
+        type: "color",
+        colorSpace: "hex",
+        components: [45 / 255, 55 / 255, 72 / 255],
+        alpha: 1,
+      }).success
+    ).toBe(true);
+    expect(cssVariableValueInput.safeParse("#2d3748").success).toBe(true);
+  });
+
+  test("rejects structured hex alpha outside the normalized range", () => {
+    const result = cssVariableValueInput.safeParse({
+      type: "color",
+      colorSpace: "hex",
+      components: [0.1, 0.2, 0.3],
+      alpha: 255,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success === false) {
+      expect(result.error.issues).toEqual([
+        expect.objectContaining({
+          path: ["alpha"],
+          message: "Hex color alpha must be a number from 0 to 1.",
+        }),
+      ]);
+    }
+  });
+
   test("finds defined css variable names", () => {
     expect(
       getDefinedCssVariableNames([
