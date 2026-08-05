@@ -12,6 +12,15 @@ const report = {
     model: "gpt-5.6-sol",
     reasoningEffort: "medium",
   },
+  runtime: {
+    cliVersion: "1.2.3",
+    nodeVersion: "22.14.0",
+    os: "linux",
+    osVersion: "6",
+    architecture: "arm64",
+    executionMode: "mcp",
+    apiContractVersion: "public-api:client",
+  },
   report: {
     userStory:
       "As a Webstudio user, I want an agent to update component properties through MCP so routine edits complete without corrective retries.",

@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-const issueReportTrigger = z.enum([
-  "user-requested",
-  "automatic-friction",
-]);
+const issueReportTrigger = z.enum(["user-requested", "automatic-friction"]);
 
 const issueReportCategory = z.enum([
   "tool-failure",
@@ -41,6 +38,21 @@ const issueReportAgent = z
   })
   .strict();
 
+const issueReportRuntime = z
+  .object({
+    cliVersion: z.string().trim().min(1).max(100),
+    nodeVersion: z.string().trim().min(1).max(100),
+    os: z.string().trim().min(1).max(100),
+    osVersion: z.string().trim().min(1).max(100),
+    architecture: z.string().trim().min(1).max(100),
+    executionMode: z.enum(["mcp"]),
+    apiContractVersion: z.string().trim().min(1).max(100),
+  })
+  .strict()
+  .describe(
+    "Anonymous technical runtime metadata collected by the CLI. Never include hostnames, usernames, paths, environment variables, IP addresses, domains, locale, timezone, project identifiers, or raw command arguments."
+  );
+
 const issueReportContent = z
   .object({
     userStory: reportText,
@@ -70,6 +82,7 @@ export const issueReportInput = z
       ),
     title: z.string().trim().min(1).max(160),
     agent: issueReportAgent,
+    runtime: issueReportRuntime.optional(),
     report: issueReportContent,
   })
   .strict()
@@ -87,3 +100,4 @@ export const issueReportResult = z
 
 export type IssueReportInput = z.infer<typeof issueReportInput>;
 export type IssueReportResult = z.infer<typeof issueReportResult>;
+export type IssueReportRuntime = z.infer<typeof issueReportRuntime>;

@@ -28,6 +28,7 @@ export const formatIssueReport = ({
   category,
   deduplicationKey,
   report,
+  runtime,
   trigger,
 }: IssueReportInput) => `${getReportMarker(deduplicationKey)}
 
@@ -71,6 +72,19 @@ ${report.technicalContext}
 - Reasoning effort: ${agent.reasoningEffort}
 - Trigger: ${trigger}
 - Category: ${category}
+${
+  runtime === undefined
+    ? ""
+    : `
+## Technical runtime
+
+- CLI: ${runtime.cliVersion}
+- Node.js: ${runtime.nodeVersion}
+- Operating system: ${runtime.os} ${runtime.osVersion} (${runtime.architecture})
+- Execution mode: ${runtime.executionMode}
+- API contract: ${runtime.apiContractVersion}
+`
+}
 
 ## Acceptance criteria
 

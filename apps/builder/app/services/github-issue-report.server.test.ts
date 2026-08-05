@@ -18,6 +18,15 @@ const report: IssueReportInput = {
     model: "gpt-5.6-sol",
     reasoningEffort: "medium",
   },
+  runtime: {
+    cliVersion: "1.2.3",
+    nodeVersion: "22.14.0",
+    os: "linux",
+    osVersion: "6",
+    architecture: "arm64",
+    executionMode: "mcp",
+    apiContractVersion: "public-api:client",
+  },
   report: {
     userStory:
       "As a Webstudio user, I want routine MCP edits to complete without corrective retries.",
@@ -41,6 +50,11 @@ describe("GitHub issue reports", () => {
     expect(body).toContain("## Expected behavior");
     expect(body).toContain(report.report.actualResult);
     expect(body).toContain("- Client: Codex 1.2.3");
+    expect(body).toContain("- CLI: 1.2.3");
+    expect(body).toContain("- Node.js: 22.14.0");
+    expect(body).toContain("- Operating system: linux 6 (arm64)");
+    expect(body).toContain("- Execution mode: mcp");
+    expect(body).toContain("- API contract: public-api:client");
     expect(body).toContain("- Model: gpt-5.6-sol");
     expect(body).toContain("- Reasoning effort: medium");
     expect(body).toContain(

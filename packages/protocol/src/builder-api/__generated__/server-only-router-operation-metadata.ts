@@ -151,6 +151,57 @@ export const serverOnlyRouterOperationMetadata = {
           required: ["client", "model", "reasoningEffort"],
           additionalProperties: false,
         },
+        runtime: {
+          type: "object",
+          properties: {
+            cliVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            nodeVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            os: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            osVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            architecture: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            executionMode: {
+              type: "string",
+              enum: ["mcp"],
+            },
+            apiContractVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+          },
+          required: [
+            "cliVersion",
+            "nodeVersion",
+            "os",
+            "osVersion",
+            "architecture",
+            "executionMode",
+            "apiContractVersion",
+          ],
+          additionalProperties: false,
+          description:
+            "Anonymous technical runtime metadata collected by the CLI. Never include hostnames, usernames, paths, environment variables, IP addresses, domains, locale, timezone, project identifiers, or raw command arguments.",
+        },
         report: {
           type: "object",
           properties: {

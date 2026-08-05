@@ -700,12 +700,17 @@ export const apiRouter = router({
         const { projectId: _projectId, ...report } = input;
         return await publishConfiguredIssueReport({
           ...report,
-          agent: {
-            ...report.agent,
-            ...(ctx.apiClient.version === undefined
-              ? {}
-              : { clientVersion: ctx.apiClient.version }),
-          },
+          ...(report.runtime === undefined
+            ? {}
+            : {
+                runtime: {
+                  ...report.runtime,
+                  ...(ctx.apiClient.version === undefined
+                    ? {}
+                    : { cliVersion: ctx.apiClient.version }),
+                  apiContractVersion: publicApiContractVersion,
+                },
+              }),
         });
       },
       { command: "report-issue", client: "reportIssue" }
