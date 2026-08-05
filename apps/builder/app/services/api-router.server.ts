@@ -46,6 +46,7 @@ import {
   publicApiContractVersion,
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
+  issueReportInput,
 } from "@webstudio-is/protocol";
 import {
   assertApiProjectPermit,
@@ -84,6 +85,7 @@ import {
 } from "./api-runtime.server";
 import { createAssetClient } from "../shared/asset-client";
 import { previewProjectAssetQuery } from "./asset-query-preview.server";
+import { publishConfiguredIssueReport } from "./github-issue-report.server";
 
 const assertApiPublishDomains = ({
   auth,
@@ -687,6 +689,26 @@ export const apiRouter = router({
         command: "submit-marketplace-product",
         client: "submitMarketplaceProduct",
       }
+    ),
+  }),
+
+  reports: router({
+    issue: projectMutation(
+      withProjectId(issueReportInput),
+      "view",
+      async ({ ctx, input }) => {
+        const { projectId: _projectId, ...report } = input;
+        return await publishConfiguredIssueReport({
+          ...report,
+          agent: {
+            ...report.agent,
+            ...(ctx.apiClient.version === undefined
+              ? {}
+              : { clientVersion: ctx.apiClient.version }),
+          },
+        });
+      },
+      { command: "report-issue", client: "reportIssue" }
     ),
   }),
 

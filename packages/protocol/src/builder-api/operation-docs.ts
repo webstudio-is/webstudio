@@ -314,6 +314,14 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "report-issue",
+    description:
+      "Create or deduplicate an anonymous LLM-authored technical issue after an explicit user request or qualifying MCP friction. Explain the generalized user story, attempted workflow, expected behavior, actual result, recovery attempts, impact, technical context, acceptance criteria, model, and reasoning effort. Never include names, usernames, emails, phone numbers, organizations, project or resource ids, domains, URLs, IP addresses, local paths, credentials, tokens, customer content, or exact unique values.",
+    examples: [
+      'MCP tool: report-issue {"trigger":"user-requested","category":"schema-or-docs-mismatch","deduplicationKey":"update-props-input-contract","title":"fix: Clarify the update-props input contract","agent":{"client":"Codex","provider":"OpenAI","model":"gpt-5.6-sol","reasoningEffort":"medium"},"report":{"userStory":"As a Webstudio user, I want routine MCP edits to complete without corrective retries.","summary":"A documented operation required a corrected retry.","attemptedWorkflow":["Inspect the target component.","Attempt the update with the advertised tool."],"expectedBehavior":"The documented input should be accepted.","actualResult":"The initial call returned BAD_REQUEST.","recoveryAttempts":["Inspect the schema and retry with corrected input nesting."],"userImpact":"The edit required extra tool calls.","technicalContext":"The update-props input shape was ambiguous.","acceptanceCriteria":["The exposed schema matches runtime validation.","A regression test covers the workflow."]}}',
+    ],
+  },
+  {
     command: "verify-bindings",
     description:
       "Statically verify persisted text, prop, resource, parameter, action, and page metadata bindings without resolving rendered values or executing external resources",

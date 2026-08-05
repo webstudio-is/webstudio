@@ -874,6 +874,42 @@ source of truth. For tools with no required arguments, pass `{}`.
 }
 ```
 
+### report-issue
+
+```json
+{
+  "trigger": "user-requested",
+  "category": "schema-or-docs-mismatch",
+  "deduplicationKey": "update-props-input-contract",
+  "title": "fix: Clarify the update-props input contract",
+  "agent": {
+    "client": "Codex",
+    "provider": "OpenAI",
+    "model": "gpt-5.6-sol",
+    "reasoningEffort": "medium"
+  },
+  "report": {
+    "userStory": "As a Webstudio user, I want routine MCP edits to complete without corrective retries.",
+    "summary": "A documented operation required a corrected retry.",
+    "attemptedWorkflow": [
+      "Inspect the target component.",
+      "Attempt the update with the advertised tool."
+    ],
+    "expectedBehavior": "The documented input should be accepted.",
+    "actualResult": "The initial call returned BAD_REQUEST.",
+    "recoveryAttempts": [
+      "Inspect the schema and retry with corrected input nesting."
+    ],
+    "userImpact": "The edit required extra tool calls.",
+    "technicalContext": "The update-props input shape was ambiguous.",
+    "acceptanceCriteria": [
+      "The exposed schema matches runtime validation.",
+      "A regression test covers the workflow."
+    ]
+  }
+}
+```
+
 ### insert-component
 
 ```json

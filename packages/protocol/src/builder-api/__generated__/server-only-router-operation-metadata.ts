@@ -70,6 +70,178 @@ export const serverOnlyRouterOperationMetadata = {
       required: ["acknowledgePublicSubmission"],
     },
   },
+  "reports.issue": {
+    id: "reports.issue",
+    command: "report-issue",
+    method: "mutation",
+    path: "api.reports.issue",
+    client: "reportIssue",
+    permit: "view",
+    inputSchema: {
+      type: "object",
+      properties: {
+        trigger: {
+          type: "string",
+          enum: ["user-requested", "automatic-friction"],
+        },
+        category: {
+          type: "string",
+          enum: [
+            "tool-failure",
+            "incorrect-result",
+            "schema-or-docs-mismatch",
+            "documented-recovery-failed",
+            "undocumented-workaround",
+            "hang-or-crash",
+            "feature-request",
+            "other",
+          ],
+        },
+        deduplicationKey: {
+          type: "string",
+          minLength: 3,
+          maxLength: 160,
+          pattern: "^[a-z0-9]+(?:[.-][a-z0-9]+)*$",
+          description:
+            "Stable anonymous technical identity for this problem, using lowercase words separated by dots or hyphens. Do not include user, project, resource, or domain identifiers.",
+        },
+        title: {
+          type: "string",
+          minLength: 1,
+          maxLength: 160,
+        },
+        agent: {
+          type: "object",
+          properties: {
+            client: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            clientVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            provider: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            model: {
+              type: "string",
+              minLength: 1,
+              maxLength: 200,
+            },
+            reasoningEffort: {
+              type: "string",
+              enum: [
+                "none",
+                "minimal",
+                "low",
+                "medium",
+                "high",
+                "xhigh",
+                "max",
+                "ultra",
+                "unknown",
+              ],
+            },
+          },
+          required: ["client", "model", "reasoningEffort"],
+          additionalProperties: false,
+        },
+        report: {
+          type: "object",
+          properties: {
+            userStory: {
+              type: "string",
+              minLength: 1,
+              maxLength: 4000,
+            },
+            summary: {
+              type: "string",
+              minLength: 1,
+              maxLength: 4000,
+            },
+            attemptedWorkflow: {
+              minItems: 1,
+              maxItems: 20,
+              type: "array",
+              items: {
+                type: "string",
+                minLength: 1,
+                maxLength: 4000,
+              },
+            },
+            expectedBehavior: {
+              type: "string",
+              minLength: 1,
+              maxLength: 4000,
+            },
+            actualResult: {
+              type: "string",
+              minLength: 1,
+              maxLength: 4000,
+            },
+            recoveryAttempts: {
+              minItems: 1,
+              maxItems: 20,
+              type: "array",
+              items: {
+                type: "string",
+                minLength: 1,
+                maxLength: 4000,
+              },
+            },
+            userImpact: {
+              type: "string",
+              minLength: 1,
+              maxLength: 4000,
+            },
+            technicalContext: {
+              type: "string",
+              minLength: 1,
+              maxLength: 4000,
+            },
+            acceptanceCriteria: {
+              minItems: 1,
+              maxItems: 20,
+              type: "array",
+              items: {
+                type: "string",
+                minLength: 1,
+                maxLength: 4000,
+              },
+            },
+          },
+          required: [
+            "userStory",
+            "summary",
+            "attemptedWorkflow",
+            "expectedBehavior",
+            "actualResult",
+            "recoveryAttempts",
+            "userImpact",
+            "technicalContext",
+            "acceptanceCriteria",
+          ],
+          additionalProperties: false,
+        },
+      },
+      required: [
+        "trigger",
+        "category",
+        "deduplicationKey",
+        "title",
+        "agent",
+        "report",
+      ],
+      additionalProperties: false,
+      description:
+        "Anonymous LLM-authored technical issue report. Generalize the user story and omit names, usernames, emails, phone numbers, organizations, project or resource ids, domains, URLs, IP addresses, local paths, credentials, tokens, customer content, and exact unique values. Preserve only stable technical details such as MCP tool names, schema fields, error codes, CLI versions, and generalized input shapes.",
+    },
+  },
   "build.get": {
     id: "build.get",
     command: "snapshot",
