@@ -2558,7 +2558,7 @@ describe("prebuild", () => {
         template: ["defaults"],
       });
       expect(fetch).toHaveBeenCalledWith(
-        "https://assets.example/cgi/image/image.png?format=raw"
+        "https://assets.example/cgi/image/image.png"
       );
       expect(consoleWarn).not.toHaveBeenCalled();
       expect(consoleError).toHaveBeenCalledWith(

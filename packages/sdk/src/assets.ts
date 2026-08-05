@@ -543,7 +543,7 @@ export const getAssetUrl = (
   origin: string
 ): URL => {
   const path = isResizableImageFileName(asset.name)
-    ? `/cgi/image/${asset.name}?format=raw`
+    ? `/cgi/image/${asset.name}`
     : `/cgi/asset/${asset.name}?format=raw`;
   return new URL(path, origin);
 };
