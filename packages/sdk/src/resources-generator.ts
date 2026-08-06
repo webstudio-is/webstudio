@@ -1,14 +1,12 @@
-import type { DataSources } from "./schema/data-sources";
+import type { DataSource, DataSources } from "./schema/data-sources";
 import type { Page } from "./schema/pages";
 import type { Resource, Resources } from "./schema/resources";
 import type { Props } from "./schema/props";
 import type { Instance, Instances } from "./schema/instances";
 import type { Scope } from "./scope";
 import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
-import {
-  getExpressionDataSourceIds,
-  getResourceDataSourceIds,
-} from "./resource-dependencies";
+import { findTreeInstanceIds } from "./instances-utils";
+import { getPageResourceRootIds } from "./resource-dependencies";
 
 const generateResourceRequestFields = ({
   resource,
@@ -88,65 +86,37 @@ export const generateResources = ({
   const usedDataSources: DataSources = new Map();
   const generatedResourceIds = new Set<string>();
   const actionResourceIds = new Set<string>();
+  const pageInstanceIds = findTreeInstanceIds(instances, page.rootInstanceId);
   for (const prop of props.values()) {
+    if (instances.size > 0 && pageInstanceIds.has(prop.instanceId) === false) {
+      continue;
+    }
     if (prop.type === "resource" && resources.has(prop.value)) {
       actionResourceIds.add(prop.value);
     }
   }
-  const resourceDataSourceByResourceId = new Map(
+  const dataResourceDataSourceByResourceId = new Map(
     Array.from(dataSources.values())
-      .filter((dataSource) => dataSource.type === "resource")
+      .filter(
+        (dataSource): dataSource is Extract<DataSource, { type: "resource" }> =>
+          dataSource.type === "resource" &&
+          actionResourceIds.has(dataSource.resourceId) === false
+      )
       .map((dataSource) => [dataSource.resourceId, dataSource] as const)
   );
-  const consumingExpressions: Array<string | undefined> = [
-    page.title,
-    page.meta?.description,
-    page.meta?.excludePageFromSearch,
-    page.meta?.language,
-    page.meta?.socialImageUrl,
-    page.meta?.status,
-    page.meta?.redirect,
-    page.meta?.content,
-    ...(page.meta?.custom ?? []).map(({ content }) => content),
-  ];
-  for (const prop of props.values()) {
-    if (prop.type === "expression") {
-      consumingExpressions.push(prop.value);
-    }
-    if (prop.type === "action") {
-      for (const action of prop.value) {
-        consumingExpressions.push(action.code);
-      }
-    }
-  }
-  for (const instance of instances.values()) {
-    for (const child of instance.children) {
-      if (child.type === "expression") {
-        consumingExpressions.push(child.value);
-      }
-    }
-  }
-  const rootResourceIds = new Set<string>();
-  for (const dataSourceId of getExpressionDataSourceIds(consumingExpressions)) {
-    const dataSource = dataSources.get(dataSourceId);
-    if (dataSource?.type === "resource") {
-      rootResourceIds.add(dataSource.resourceId);
-    }
-  }
-  const usesResourceGraph = Array.from(resources.values()).some(
-    (resource) =>
-      resourceDataSourceByResourceId.has(resource.id) &&
-      Array.from(getResourceDataSourceIds(resource)).some(
-        (dataSourceId) => dataSources.get(dataSourceId)?.type === "resource"
-      )
-  );
+  const rootResourceIds = getPageResourceRootIds({
+    page,
+    instances,
+    props,
+    dataSources,
+  });
   const resourceDependencies = new Map<string, string[]>();
 
   let generatedRequests = "";
   for (const resource of resources.values()) {
     generatedResourceIds.add(resource.id);
     const resourceName = scope.getName(resource.id, resource.name);
-    if (usesResourceGraph && resourceDataSourceByResourceId.has(resource.id)) {
+    if (dataResourceDataSourceByResourceId.has(resource.id)) {
       const requestDataSources: DataSources = new Map();
       const fields = generateResourceRequestFields({
         resource,
@@ -209,65 +179,43 @@ export const generateResources = ({
 
   let generated = "";
   generated += `import type { System, ResourceRequest } from "@webstudio-is/sdk";\n`;
-  if (usesResourceGraph) {
-    generated += `import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";\n`;
-  }
+  generated += `import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";\n`;
   generated += `export const getResources = (_props: { system: System }) => {\n`;
   generated += generatedVariables;
   generated += generatedRequests;
 
-  if (usesResourceGraph) {
-    generated += `  const _data: ResourceRequestGraph = {\n`;
-    generated += `    resources: [\n`;
-    for (const [resourceId, dataSource] of resourceDataSourceByResourceId) {
-      if (generatedResourceIds.has(resourceId) === false) {
-        continue;
-      }
-      const name = scope.getName(resourceId, dataSource.name);
-      const dependencies = resourceDependencies.get(resourceId) ?? [];
-      generated += `      { id: ${JSON.stringify(
-        resourceId
-      )}, dependencies: ${JSON.stringify(
-        dependencies
-      )}, createRequest: ${name} },\n`;
+  generated += `  const _data: ResourceRequestGraph = {\n`;
+  generated += `    resources: [\n`;
+  for (const [resourceId, dataSource] of dataResourceDataSourceByResourceId) {
+    if (generatedResourceIds.has(resourceId) === false) {
+      continue;
     }
-    generated += `    ],\n`;
-    generated += `    rootIds: [\n`;
-    for (const resourceId of rootResourceIds) {
-      if (generatedResourceIds.has(resourceId)) {
-        generated += `      ${JSON.stringify(resourceId)},\n`;
-      }
-    }
-    generated += `    ],\n`;
-    generated += `    outputNames: new Map([\n`;
-    for (const resourceId of rootResourceIds) {
-      const dataSource = resourceDataSourceByResourceId.get(resourceId);
-      if (generatedResourceIds.has(resourceId) && dataSource !== undefined) {
-        const name = scope.getName(resourceId, dataSource.name);
-        generated += `      [${JSON.stringify(resourceId)}, ${JSON.stringify(
-          name
-        )}],\n`;
-      }
-    }
-    generated += `    ]),\n`;
-    generated += `  }\n`;
-  } else {
-    generated += `  const _data = new Map<string, ResourceRequest>([\n`;
-    for (const dataSource of dataSources.values()) {
-      if (
-        dataSource.type === "resource" &&
-        generatedResourceIds.has(dataSource.resourceId) &&
-        actionResourceIds.has(dataSource.resourceId) === false
-      ) {
-        const name = scope.getName(dataSource.resourceId, dataSource.name);
-        generated += `    ["${name}", ${name}],\n`;
-      }
-    }
-    generated += `  ])\n`;
+    const name = scope.getName(resourceId, dataSource.name);
+    const dependencies = resourceDependencies.get(resourceId) ?? [];
+    generated += `      { id: ${JSON.stringify(
+      resourceId
+    )}, outputName: ${JSON.stringify(name)}, dependencies: ${JSON.stringify(
+      dependencies
+    )}, createRequest: ${name} },\n`;
   }
+  generated += `    ],\n`;
+  generated += `    rootIds: [\n`;
+  for (const resourceId of rootResourceIds) {
+    if (
+      generatedResourceIds.has(resourceId) &&
+      dataResourceDataSourceByResourceId.has(resourceId)
+    ) {
+      generated += `      ${JSON.stringify(resourceId)},\n`;
+    }
+  }
+  generated += `    ],\n`;
+  generated += `  }\n`;
 
   generated += `  const _action = new Map<string, ResourceRequest>([\n`;
   for (const prop of props.values()) {
+    if (instances.size > 0 && pageInstanceIds.has(prop.instanceId) === false) {
+      continue;
+    }
     if (prop.type === "resource" && generatedResourceIds.has(prop.value)) {
       const name = scope.getName(prop.value, prop.name);
       generated += `    ["${name}", ${name}],\n`;

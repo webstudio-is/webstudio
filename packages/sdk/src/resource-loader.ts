@@ -1,7 +1,7 @@
 import hash from "@emotion/hash";
 import {
   resolveResources as resolveResourceGraph,
-  type Resource as AsyncResource,
+  type Resource,
 } from "@webstudio-is/content-engine";
 import type { ResourceRequest } from "./schema/resources";
 import { serializeValue } from "./to-string";
@@ -60,6 +60,7 @@ export type ResourceLoadOptions = {
 
 export type ResourceRequestResource = Readonly<{
   id: string;
+  outputName: string;
   dependencies: readonly string[];
   createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;
 }>;
@@ -67,7 +68,6 @@ export type ResourceRequestResource = Readonly<{
 export type ResourceRequestGraph = Readonly<{
   resources: readonly ResourceRequestResource[];
   rootIds: readonly string[];
-  outputNames: ReadonlyMap<string, string>;
 }>;
 
 export const createResourceFetchBatchProvider = ({
@@ -270,8 +270,8 @@ export const loadResource = async (
       const resolutionBase = local
         ? new URL("https://webstudio.local")
         : baseUrl === undefined
-        ? undefined
-        : new URL("/", baseUrl);
+          ? undefined
+          : new URL("/", baseUrl);
       const url = new URL(sourceUrl, resolutionBase);
       if (searchParams) {
         for (const { name, value } of searchParams) {
@@ -365,7 +365,7 @@ export const loadResources = async (
   options?: ResourceLoadOptions
 ) => {
   if (requests instanceof Map === false) {
-    const resources: AsyncResource<unknown>[] = requests.resources.map(
+    const resources: Resource<unknown>[] = requests.resources.map(
       (resource) => ({
         id: resource.id,
         dependencies: resource.dependencies,
@@ -385,9 +385,13 @@ export const loadResources = async (
       signal: options?.signal,
     });
     const output = new Map<string, unknown>();
-    for (const [resourceId, name] of requests.outputNames) {
-      if (resolved.documents.has(resourceId)) {
-        output.set(name, resolved.documents.get(resourceId));
+    const resourcesById = new Map(
+      requests.resources.map((resource) => [resource.id, resource])
+    );
+    for (const resourceId of requests.rootIds) {
+      const resource = resourcesById.get(resourceId);
+      if (resource !== undefined && resolved.documents.has(resourceId)) {
+        output.set(resource.outputName, resolved.documents.get(resourceId));
       }
     }
     return Object.fromEntries(output);
