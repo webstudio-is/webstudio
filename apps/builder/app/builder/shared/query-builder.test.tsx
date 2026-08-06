@@ -5,6 +5,8 @@ import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test } from "vitest";
 import type { QueryDefinition } from "@webstudio-is/query-builder";
+import { encodeDataSourceVariable, type DataSource } from "@webstudio-is/sdk";
+import { $dataSources } from "~/shared/sync/data-stores";
 import { BindableQueryBuilder } from "./query-builder";
 
 (
@@ -24,6 +26,7 @@ afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   document.body.innerHTML = "";
+  $dataSources.set(new Map());
 });
 
 const renderQueryBuilder = <Query extends Record<string, unknown>>({
@@ -140,6 +143,83 @@ test("shows an evaluated value for a bound number input", () => {
 
   expect(input?.value).toBe("20");
   expect(input?.step).toBe("1");
+  expect(input?.disabled).toBe(true);
+});
+
+test("keeps query values bound to mutable variables read-only", () => {
+  const textVariable: DataSource = {
+    type: "variable",
+    id: "text-variable-id",
+    name: "Text variable",
+    value: { type: "string", value: "article" },
+  };
+  const numberVariable: DataSource = {
+    type: "variable",
+    id: "number-variable-id",
+    name: "Number variable",
+    value: { type: "number", value: 20 },
+  };
+  $dataSources.set(
+    new Map([
+      [textVariable.id, textVariable],
+      [numberVariable.id, numberVariable],
+    ])
+  );
+  const textIdentifier = encodeDataSourceVariable(textVariable.id);
+  const numberIdentifier = encodeDataSourceVariable(numberVariable.id);
+  const capabilities = {
+    version: 1,
+    fields: [{ path: ["path"], label: "Path", types: ["string"] }],
+    operators: [
+      {
+        value: "eq",
+        label: "Equals",
+        types: ["string"],
+        input: { control: "expression", defaultValue: '""' },
+      },
+    ],
+    source: {
+      fieldPathSchema: {
+        type: "array",
+        items: { type: "string" },
+        minItems: 1,
+      },
+      controls: [
+        {
+          type: "filter",
+          key: "where",
+          label: "Filters",
+          defaultValue: { all: [] },
+          combinators: ["all"],
+          limits: { conditions: 8, depth: 3 },
+          defaultCondition: { field: ["path"], operator: "eq" },
+        },
+        {
+          type: "expression",
+          key: "limit",
+          label: "Limit",
+          defaultValue: "20",
+          input: "number",
+        },
+      ],
+    },
+  } as const satisfies QueryDefinition<string, string>;
+
+  const container = renderQueryBuilder({
+    value: {
+      where: {
+        all: [{ field: ["path"], operator: "eq", value: textIdentifier }],
+      },
+      limit: numberIdentifier,
+    },
+    capabilities,
+  });
+  const editor = container.querySelector<HTMLElement>(".cm-content");
+  const input = container.querySelector<HTMLInputElement>(
+    'input[aria-label="Limit"]'
+  );
+
+  expect(editor?.getAttribute("contenteditable")).toBe("false");
   expect(input?.disabled).toBe(true);
 });
 

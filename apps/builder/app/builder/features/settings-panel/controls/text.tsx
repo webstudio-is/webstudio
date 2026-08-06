@@ -2,10 +2,7 @@ import { useId } from "react";
 import { TextArea } from "@webstudio-is/design-system";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
-import {
-  BindableExpressionControl,
-  updateBindableValue,
-} from "~/builder/shared/bindable-expression";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import {
   type ControlProps,
   ResponsiveLayout,
@@ -22,11 +19,10 @@ export const TextControl = ({
   onChange,
 }: ControlProps<"text">) => {
   const localValue = useDraftValue(String(computedValue ?? ""), (value) => {
-    updateBindableValue({
-      expression: prop?.type === "expression" ? prop.value : undefined,
-      value,
-      onChangeValue: (value) => onChange({ type: "string", value }),
-    });
+    if (prop?.type === "expression") {
+      return;
+    }
+    onChange({ type: "string", value });
   });
   const id = useId();
   const label = humanizeAttribute(meta.label || propName);

@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { isLiteralExpression } from "@webstudio-is/expression";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
-import {
-  BindableExpressionControl,
-  updateBindableValue,
-} from "~/builder/shared/bindable-expression";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { type ControlProps, VerticalLayout } from "../shared";
 import {
   ExpressionEditor,
@@ -22,6 +19,9 @@ export const JsonControl = ({
   const [error, setError] = useState<boolean>(false);
   const valueString = formatValue(computedValue ?? "");
   const localValue = useDraftValue(valueString, (value) => {
+    if (prop?.type === "expression") {
+      return;
+    }
     const isLiteral = isLiteralExpression(value);
     setError(isLiteral ? false : true);
     // prevent executing expressions which depends on global variables
@@ -31,11 +31,7 @@ export const JsonControl = ({
     try {
       // wrap into parens to treat object expression as value instead of block
       const parsedValue = eval(`(${value})`);
-      updateBindableValue({
-        expression: prop?.type === "expression" ? prop.value : undefined,
-        value: parsedValue,
-        onChangeValue: (value) => onChange({ type: "json", value }),
-      });
+      onChange({ type: "json", value: parsedValue });
     } catch {
       // empty block
     }

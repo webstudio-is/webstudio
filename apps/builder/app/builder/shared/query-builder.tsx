@@ -62,7 +62,6 @@ const BoundExpression = ({
             return `${label} expects a value ${exclusiveMax ? "less than" : "less than or equal to"} ${max}`;
           }
         }}
-        parseValue={Number}
         onChangeValue={onChange}
         onChangeExpression={onChange}
         onRemove={(value) => onChange(String(Number(value) || 0))}
@@ -90,7 +89,6 @@ const BoundExpression = ({
       bound={bound}
       scope={scope}
       aliases={aliases}
-      parseValue={(value) => evaluateExpressionWithinScope(value, {})}
       onChangeValue={onChange}
       onChangeExpression={onChange}
       onRemove={(value) => onChange(JSON.stringify(value) ?? "undefined")}
