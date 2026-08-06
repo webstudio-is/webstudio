@@ -1,4 +1,8 @@
 import hash from "@emotion/hash";
+import {
+  resolveResources as resolveResourceGraph,
+  type Resource as AsyncResource,
+} from "@webstudio-is/content-engine";
 import type { ResourceRequest } from "./schema/resources";
 import { serializeValue } from "./to-string";
 
@@ -53,6 +57,18 @@ export type ResourceLoadOptions = {
   signal?: AbortSignal;
   timeoutMs?: number;
 };
+
+export type ResourceRequestResource = Readonly<{
+  id: string;
+  dependencies: readonly string[];
+  createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;
+}>;
+
+export type ResourceRequestGraph = Readonly<{
+  resources: readonly ResourceRequestResource[];
+  rootIds: readonly string[];
+  outputNames: ReadonlyMap<string, string>;
+}>;
 
 export const createResourceFetchBatchProvider = ({
   baseUrl,
@@ -254,8 +270,8 @@ export const loadResource = async (
       const resolutionBase = local
         ? new URL("https://webstudio.local")
         : baseUrl === undefined
-          ? undefined
-          : new URL("/", baseUrl);
+        ? undefined
+        : new URL("/", baseUrl);
       const url = new URL(sourceUrl, resolutionBase);
       if (searchParams) {
         for (const { name, value } of searchParams) {
@@ -344,10 +360,38 @@ export const loadResource = async (
 
 export const loadResources = async (
   customFetch: typeof fetch,
-  requests: Map<string, ResourceRequest>,
+  requests: Map<string, ResourceRequest> | ResourceRequestGraph,
   baseUrl?: string | URL,
   options?: ResourceLoadOptions
 ) => {
+  if (requests instanceof Map === false) {
+    const resources: AsyncResource<unknown>[] = requests.resources.map(
+      (resource) => ({
+        id: resource.id,
+        dependencies: resource.dependencies,
+        resolve: ({ documents, signal }) =>
+          loadResource(
+            customFetch,
+            resource.createRequest(documents),
+            baseUrl,
+            { ...options, signal }
+          ),
+      })
+    );
+    const resolved = await resolveResourceGraph({
+      resources,
+      rootIds: requests.rootIds,
+      concurrency: Math.max(1, resources.length),
+      signal: options?.signal,
+    });
+    const output = new Map<string, unknown>();
+    for (const [resourceId, name] of requests.outputNames) {
+      if (resolved.documents.has(resourceId)) {
+        output.set(name, resolved.documents.get(resourceId));
+      }
+    }
+    return Object.fromEntries(output);
+  }
   return Object.fromEntries(
     await Promise.all(
       Array.from(
