@@ -3,15 +3,10 @@ import { decodeDataVariableId } from "./expression";
 import type { DataSource } from "./schema/data-sources";
 import type { Resource } from "./schema/resources";
 
-/** Returns data sources referenced by any expression in a resource request. */
-export const getResourceDataSourceIds = (resource: Resource) => {
+export const getExpressionDataSourceIds = (
+  expressions: Iterable<string | undefined>
+) => {
   const dataSourceIds = new Set<DataSource["id"]>();
-  const expressions = [
-    resource.url,
-    ...(resource.searchParams ?? []).map(({ value }) => value),
-    ...resource.headers.map(({ value }) => value),
-    resource.body,
-  ];
   for (const expression of expressions) {
     if (expression === undefined) {
       continue;
@@ -24,4 +19,14 @@ export const getResourceDataSourceIds = (resource: Resource) => {
     }
   }
   return dataSourceIds;
+};
+
+/** Returns data sources referenced by any expression in a resource request. */
+export const getResourceDataSourceIds = (resource: Resource) => {
+  return getExpressionDataSourceIds([
+    resource.url,
+    ...(resource.searchParams ?? []).map(({ value }) => value),
+    ...resource.headers.map(({ value }) => value),
+    resource.body,
+  ]);
 };
