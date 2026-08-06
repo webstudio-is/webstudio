@@ -4,6 +4,7 @@
 
       import type { PageMeta } from "@webstudio-is/sdk";
       import type { System, ResourceRequest } from "@webstudio-is/sdk";
+import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";
 export const getResources = (_props: { system: System }) => {
   const action: ResourceRequest = {
     name: "action",
@@ -15,8 +16,12 @@ export const getResources = (_props: { system: System }) => {
       { name: "Content-Type", value: "application/json" },
     ],
   }
-  const _data = new Map<string, ResourceRequest>([
-  ])
+  const _data: ResourceRequestGraph = {
+    resources: [
+    ],
+    rootIds: [
+    ],
+  }
   const _action = new Map<string, ResourceRequest>([
     ["action", action],
   ])
