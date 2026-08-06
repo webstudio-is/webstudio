@@ -1,6 +1,9 @@
 import { expect, test } from "vitest";
 import type { Resource } from "./schema/resources";
-import { getResourceDataSourceIds } from "./resource-dependencies";
+import {
+  getResourceDataSourceIds,
+  getTransitiveResourceDataSourceIds,
+} from "./resource-dependencies";
 
 test("extracts unique data source dependencies from every resource expression", () => {
   const resource: Resource = {
@@ -34,4 +37,67 @@ test("ignores malformed legacy resource expressions", () => {
       headers: [],
     })
   ).toEqual(new Set());
+});
+
+test("finds transitive resource dependencies for editor cycle prevention", () => {
+  const resources = new Map<string, Resource>([
+    [
+      "firstResource",
+      {
+        id: "firstResource",
+        name: "First",
+        method: "get",
+        url: '"/first"',
+        headers: [],
+      },
+    ],
+    [
+      "secondResource",
+      {
+        id: "secondResource",
+        name: "Second",
+        method: "get",
+        url: "$ws$dataSource$firstDataSource.data.url",
+        headers: [],
+      },
+    ],
+    [
+      "thirdResource",
+      {
+        id: "thirdResource",
+        name: "Third",
+        method: "get",
+        url: "$ws$dataSource$secondDataSource.data.url",
+        headers: [],
+      },
+    ],
+  ]);
+  const dataSources = new Map([
+    [
+      "firstDataSource",
+      {
+        type: "resource" as const,
+        id: "firstDataSource",
+        name: "First",
+        resourceId: "firstResource",
+      },
+    ],
+    [
+      "secondDataSource",
+      {
+        type: "resource" as const,
+        id: "secondDataSource",
+        name: "Second",
+        resourceId: "secondResource",
+      },
+    ],
+  ]);
+
+  expect(
+    getTransitiveResourceDataSourceIds({
+      resourceId: "thirdResource",
+      resources,
+      dataSources,
+    })
+  ).toEqual(new Set(["secondDataSource", "firstDataSource"]));
 });
