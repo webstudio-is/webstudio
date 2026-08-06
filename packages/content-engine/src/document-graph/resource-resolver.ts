@@ -7,18 +7,6 @@ export type Resource<Document> = Readonly<{
   }) => Document | Promise<Document>;
 }>;
 
-export const createImmediateResource = <Document>({
-  id,
-  document,
-}: {
-  id: string;
-  document: Document;
-}): Resource<Document> => ({
-  id,
-  dependencies: [],
-  resolve: () => document,
-});
-
 export type ResourceResolutionErrorCode =
   | "DUPLICATE_RESOURCE"
   | "ROOT_NOT_FOUND"

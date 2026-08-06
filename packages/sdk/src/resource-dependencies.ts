@@ -1,6 +1,10 @@
 import { getExpressionIdentifiers } from "@webstudio-is/expression";
 import { decodeDataVariableId } from "./expression";
+import { findTreeInstanceIds } from "./instances-utils";
 import type { DataSource, DataSources } from "./schema/data-sources";
+import type { Instances } from "./schema/instances";
+import type { Page } from "./schema/pages";
+import type { Props } from "./schema/props";
 import type { Resource, Resources } from "./schema/resources";
 
 export const getExpressionDataSourceIds = (
@@ -31,6 +35,63 @@ export const getResourceDataSourceIds = (resource: Resource) => {
   ]);
 };
 
+export const getPageResourceRootIds = ({
+  page,
+  instances,
+  props,
+  dataSources,
+}: {
+  page: Pick<Page, "rootInstanceId" | "title" | "meta">;
+  instances: Instances;
+  props: Props;
+  dataSources: DataSources;
+}) => {
+  const instanceIds = findTreeInstanceIds(instances, page.rootInstanceId);
+  const expressions: Array<string | undefined> = [
+    page.title,
+    page.meta?.description,
+    page.meta?.excludePageFromSearch,
+    page.meta?.language,
+    page.meta?.socialImageUrl,
+    page.meta?.status,
+    page.meta?.redirect,
+    page.meta?.content,
+    ...(page.meta?.custom ?? []).map(({ content }) => content),
+  ];
+  for (const prop of props.values()) {
+    if (instances.size > 0 && instanceIds.has(prop.instanceId) === false) {
+      continue;
+    }
+    if (prop.type === "expression") {
+      expressions.push(prop.value);
+    }
+    if (prop.type === "action") {
+      for (const action of prop.value) {
+        expressions.push(action.code);
+      }
+    }
+  }
+  for (const instanceId of instanceIds) {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      continue;
+    }
+    for (const child of instance.children) {
+      if (child.type === "expression") {
+        expressions.push(child.value);
+      }
+    }
+  }
+  const resourceIds = new Set<Resource["id"]>();
+  for (const dataSourceId of getExpressionDataSourceIds(expressions)) {
+    const dataSource = dataSources.get(dataSourceId);
+    if (dataSource?.type === "resource") {
+      resourceIds.add(dataSource.resourceId);
+    }
+  }
+  return resourceIds;
+};
+
 export const getTransitiveResourceDataSourceIds = ({
   resourceId,
   resources,
@@ -52,11 +113,12 @@ export const getTransitiveResourceDataSourceIds = ({
       return;
     }
     for (const dataSourceId of getResourceDataSourceIds(resource)) {
-      dependencies.add(dataSourceId);
       const dataSource = dataSources.get(dataSourceId);
-      if (dataSource?.type === "resource") {
-        visit(dataSource.resourceId);
+      if (dataSource?.type !== "resource") {
+        continue;
       }
+      dependencies.add(dataSourceId);
+      visit(dataSource.resourceId);
     }
   };
   visit(resourceId);

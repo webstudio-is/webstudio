@@ -178,13 +178,20 @@ test("page root scope should rely on selected page", () => {
   });
 });
 
-test("page root scope should use variable and resource values", () => {
-  $pages.set(
-    createDefaultPages({
-      rootInstanceId: "homeRootId",
-      homePageId: "homePageId",
-    })
-  );
+test("page root scope should use a resource value consumed by the page", () => {
+  const pages = createDefaultPages({
+    rootInstanceId: "homeRootId",
+    homePageId: "homePageId",
+  });
+  const homePage = pages.pages.get("homePageId");
+  if (homePage === undefined) {
+    throw new Error("Home page is missing");
+  }
+  pages.pages.set("homePageId", {
+    ...homePage,
+    title: "$ws$dataSource$resourceVariableId",
+  });
+  $pages.set(pages);
   $selectedPageId.set("homePageId");
   $dataSources.set(
     toMap([

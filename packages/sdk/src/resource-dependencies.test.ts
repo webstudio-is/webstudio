@@ -57,7 +57,7 @@ test("finds transitive resource dependencies for editor cycle prevention", () =>
         id: "secondResource",
         name: "Second",
         method: "get",
-        url: "$ws$dataSource$firstDataSource.data.url",
+        url: "$ws$dataSource$firstDataSource.data.url + $ws$dataSource$tokenDataSource",
         headers: [],
       },
     ],
@@ -89,6 +89,15 @@ test("finds transitive resource dependencies for editor cycle prevention", () =>
         id: "secondDataSource",
         name: "Second",
         resourceId: "secondResource",
+      },
+    ],
+    [
+      "tokenDataSource",
+      {
+        type: "variable" as const,
+        id: "tokenDataSource",
+        name: "Token",
+        value: { type: "string" as const, value: "secret" },
       },
     ],
   ]);

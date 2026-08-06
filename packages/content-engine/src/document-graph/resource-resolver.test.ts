@@ -1,6 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
 import {
-  createImmediateResource,
   ResourceResolutionError,
   resolveResources,
   type Resource,
@@ -13,27 +12,6 @@ const resource = (
 ): Resource<unknown> => ({ id, dependencies, resolve });
 
 describe("resource resolver", () => {
-  test("uses immediate documents as dependencies without a separate value path", async () => {
-    const result = await resolveResources({
-      resources: [
-        createImmediateResource<unknown>({ id: "answer", document: 21 }),
-        resource("doubled", ["answer"], ({ documents }) =>
-          Promise.resolve(Number(documents.get("answer")) * 2)
-        ),
-      ],
-      rootIds: ["doubled"],
-      concurrency: 1,
-    });
-
-    expect(result.roots).toEqual([42]);
-    expect(result.documents).toEqual(
-      new Map([
-        ["answer", 21],
-        ["doubled", 42],
-      ])
-    );
-  });
-
   test("resolves only the requested closure and shares dependency documents", async () => {
     const calls: string[] = [];
     let active = 0;

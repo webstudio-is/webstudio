@@ -37,6 +37,7 @@ test("resolves request resources after their dependency documents", async () => 
     resources: [
       {
         id: "posts",
+        outputName: "Posts",
         dependencies: [],
         createRequest: () => ({
           name: "Posts",
@@ -48,6 +49,7 @@ test("resolves request resources after their dependency documents", async () => 
       },
       {
         id: "author",
+        outputName: "Author",
         dependencies: ["posts"],
         createRequest: (documents) => ({
           name: "Author",
@@ -61,6 +63,7 @@ test("resolves request resources after their dependency documents", async () => 
       },
       {
         id: "unused",
+        outputName: "Unused",
         dependencies: [],
         createRequest: () => ({
           name: "Unused",
@@ -72,7 +75,6 @@ test("resolves request resources after their dependency documents", async () => 
       },
     ],
     rootIds: ["author"],
-    outputNames: new Map([["author", "Author"]]),
   };
 
   await expect(loadResources(fetch, graph)).resolves.toEqual({
