@@ -779,6 +779,127 @@ const createMcpRunErrorPayload = ({
   },
 });
 
+type McpRunTerminationReason =
+  | { type: "beforeExit"; exitCode: number }
+  | { type: "signal"; signal: "SIGINT" | "SIGTERM" };
+
+type ActiveMcpRunCall = {
+  number: number;
+  tool: string;
+};
+
+const createMcpRunTerminationPayload = ({
+  reason,
+  activeCall,
+  totalCalls,
+  results,
+  elapsedMs,
+}: {
+  reason: McpRunTerminationReason;
+  activeCall: ActiveMcpRunCall;
+  totalCalls: number;
+  results: unknown[];
+  elapsedMs: number;
+}) => ({
+  ok: false,
+  error: {
+    code: "MCP_RUN_TERMINATED",
+    message:
+      reason.type === "signal"
+        ? `MCP run received ${reason.signal} before call ${activeCall.number}/${totalCalls} ${activeCall.tool} returned a result.`
+        : `MCP run terminated before call ${activeCall.number}/${totalCalls} ${activeCall.tool} returned a result.`,
+  },
+  data: {
+    completedCalls: results.length,
+    unfinishedCall: activeCall,
+    totalCalls,
+    results,
+  },
+  meta: {
+    elapsedMs,
+    termination: reason,
+  },
+});
+
+const installMcpRunTerminationHandlers = ({
+  getActiveCall,
+  totalCalls,
+  results,
+  startedAt,
+  registerBeforeExit = (listener) => {
+    process.once("beforeExit", listener);
+    return () => process.off("beforeExit", listener);
+  },
+  registerSignal = (signal, listener) => {
+    process.once(signal, listener);
+    return () => process.off(signal, listener);
+  },
+  writeStatus = (message) => stderr.write(`${message}\n`),
+  writeResult = printJson,
+  setExitCode = (exitCode) => {
+    process.exitCode = exitCode;
+  },
+  exitProcess = (exitCode) => process.exit(exitCode),
+}: {
+  getActiveCall: () => ActiveMcpRunCall | undefined;
+  totalCalls: number;
+  results: unknown[];
+  startedAt: number;
+  registerBeforeExit?: (listener: (exitCode: number) => void) => () => void;
+  registerSignal?: (
+    signal: "SIGINT" | "SIGTERM",
+    listener: () => void
+  ) => () => void;
+  writeStatus?: (message: string) => unknown;
+  writeResult?: (result: unknown) => void;
+  setExitCode?: (exitCode: number) => void;
+  exitProcess?: (exitCode: number) => never;
+}) => {
+  let reported = false;
+  const report = (reason: McpRunTerminationReason) => {
+    const activeCall = getActiveCall();
+    if (reported || activeCall === undefined) {
+      return false;
+    }
+    reported = true;
+    const payload = createMcpRunTerminationPayload({
+      reason,
+      activeCall,
+      totalCalls,
+      results,
+      elapsedMs: Date.now() - startedAt,
+    });
+    writeStatus(
+      formatMcpStatusLine(
+        `run ${activeCall.number}/${totalCalls} ${activeCall.tool} terminated: ${payload.error.message}`
+      )
+    );
+    writeResult(payload);
+    return true;
+  };
+  const beforeExit = (exitCode: number) => {
+    if (report({ type: "beforeExit", exitCode })) {
+      setExitCode(1);
+    }
+  };
+  const sigint = () => {
+    report({ type: "signal", signal: "SIGINT" });
+    exitProcess(130);
+  };
+  const sigterm = () => {
+    report({ type: "signal", signal: "SIGTERM" });
+    exitProcess(143);
+  };
+  const disposeBeforeExit = registerBeforeExit(beforeExit);
+  const disposeSigint = registerSignal("SIGINT", sigint);
+  const disposeSigterm = registerSignal("SIGTERM", sigterm);
+  return () => {
+    disposeBeforeExit();
+    disposeSigint();
+    disposeSigterm();
+  };
+};
+
 const reportMcpRunPreflightFailure = ({
   error,
   startedAt,
@@ -1246,6 +1367,8 @@ export const __testing__ = {
     meta: { elapsedMs },
   }),
   createMcpRunErrorPayload,
+  createMcpRunTerminationPayload,
+  installMcpRunTerminationHandlers,
   createMcpRunCheckpointStopPayload,
   getLoadedProjectSessionSnapshot,
   getResultCheckpoint,
@@ -1507,97 +1630,112 @@ export const mcpRun = async (options: McpRunOptions) => {
     });
     throw new HandledCliError();
   }
-  for (const [index, call] of calls.entries()) {
-    const callNumber = index + 1;
-    stderr.write(
-      `${formatMcpStatusLine(
-        `run ${callNumber}/${calls.length} ${call.tool} started${call.dryRun ? " (dry run)" : ""}`
-      )}\n`
-    );
-    try {
-      const { result, checkpoint } = await executeMcpRunCall({
-        core,
-        call,
-        scope,
-      });
-      const session = result.structuredContent.meta.session;
-      const committed =
-        session === undefined ? "" : `; committed=${session.committed}`;
+  let activeCall: ActiveMcpRunCall | undefined;
+  const disposeTerminationHandlers = installMcpRunTerminationHandlers({
+    getActiveCall: () => activeCall,
+    totalCalls: calls.length,
+    results,
+    startedAt,
+  });
+  try {
+    for (const [index, call] of calls.entries()) {
+      const callNumber = index + 1;
+      activeCall = { number: callNumber, tool: call.tool };
       stderr.write(
         `${formatMcpStatusLine(
-          `run ${callNumber}/${calls.length} ${call.tool} succeeded${committed}`
+          `run ${callNumber}/${calls.length} ${call.tool} started${call.dryRun ? " (dry run)" : ""}`
         )}\n`
       );
-      results.push({
-        tool: call.tool,
-        ok: true,
-        structuredContent: result.structuredContent,
-      });
-      const nextTool = calls[callNumber]?.tool;
-      if (
-        checkpoint !== undefined &&
-        callNumber < calls.length &&
-        (nextTool === undefined ||
-          isReadOnlyProjectSessionMcpToolCall(nextTool, core.listTools()) ===
-            false)
-      ) {
-        const checkpointStopPayload = createMcpRunCheckpointStopPayload({
-          checkpoint,
-          completedCalls: callNumber,
+      try {
+        const { result, checkpoint } = await executeMcpRunCall({
+          core,
+          call,
+          scope,
+        });
+        const session = result.structuredContent.meta.session;
+        const committed =
+          session === undefined ? "" : `; committed=${session.committed}`;
+        stderr.write(
+          `${formatMcpStatusLine(
+            `run ${callNumber}/${calls.length} ${call.tool} succeeded${committed}`
+          )}\n`
+        );
+        results.push({
+          tool: call.tool,
+          ok: true,
+          structuredContent: result.structuredContent,
+        });
+        activeCall = undefined;
+        const nextTool = calls[callNumber]?.tool;
+        if (
+          checkpoint !== undefined &&
+          callNumber < calls.length &&
+          (nextTool === undefined ||
+            isReadOnlyProjectSessionMcpToolCall(nextTool, core.listTools()) ===
+              false)
+        ) {
+          const checkpointStopPayload = createMcpRunCheckpointStopPayload({
+            checkpoint,
+            completedCalls: callNumber,
+            totalCalls: calls.length,
+            results,
+            elapsedMs: Date.now() - startedAt,
+          });
+          stderr.write(
+            `${formatMcpStatusLine(
+              `run stopped after ${callNumber}/${calls.length} ${call.tool}: ${checkpointStopPayload.error.message}`
+            )}\n`
+          );
+          printJson(checkpointStopPayload);
+          throw new McpRunCheckpointStop();
+        }
+      } catch (error) {
+        activeCall = undefined;
+        if (error instanceof McpRunCheckpointStop) {
+          throw new HandledCliError();
+        }
+        const structuredError = getMcpRunError(error);
+        results.push({
+          tool: call.tool,
+          ok: false,
+          error: structuredError,
+        });
+        const payload = createMcpRunErrorPayload({
+          error: structuredError,
+          completedCalls: index,
+          failedCall: callNumber,
           totalCalls: calls.length,
           results,
           elapsedMs: Date.now() - startedAt,
         });
         stderr.write(
           `${formatMcpStatusLine(
-            `run stopped after ${callNumber}/${calls.length} ${call.tool}: ${checkpointStopPayload.error.message}`
+            `run ${callNumber}/${calls.length} ${call.tool} failed: ${payload.error.message}`
           )}\n`
         );
-        printJson(checkpointStopPayload);
-        throw new McpRunCheckpointStop();
-      }
-    } catch (error) {
-      if (error instanceof McpRunCheckpointStop) {
+        printJson(payload);
         throw new HandledCliError();
       }
-      const structuredError = getMcpRunError(error);
-      results.push({
-        tool: call.tool,
-        ok: false,
-        error: structuredError,
-      });
-      const payload = createMcpRunErrorPayload({
-        error: structuredError,
-        completedCalls: index,
-        failedCall: callNumber,
+    }
+    stderr.write(
+      `${formatMcpStatusLine(
+        `run succeeded in ${Date.now() - startedAt}ms with ${calls.length} calls`
+      )}\n`
+    );
+    printJson({
+      ok: true,
+      data: {
         totalCalls: calls.length,
         results,
+      },
+      meta: {
         elapsedMs: Date.now() - startedAt,
-      });
-      stderr.write(
-        `${formatMcpStatusLine(
-          `run ${callNumber}/${calls.length} ${call.tool} failed: ${payload.error.message}`
-        )}\n`
-      );
-      printJson(payload);
-      throw new HandledCliError();
-    }
+      },
+    });
+  } finally {
+    activeCall = undefined;
+    disposeTerminationHandlers();
   }
-  stderr.write(
-    `${formatMcpStatusLine(
-      `run succeeded in ${Date.now() - startedAt}ms with ${calls.length} calls`
-    )}\n`
-  );
-  printJson({
-    ok: true,
-    data: {
-      totalCalls: calls.length,
-      results,
-    },
-    meta: {
-      elapsedMs: Date.now() - startedAt,
-    },
-  });
 };
 
 export const mcpListTools = async (options: McpListToolsOptions) => {

@@ -16,10 +16,12 @@ const {
   createMcpResourceErrorPayload,
   createMcpRunCheckpointStopPayload,
   createMcpRunErrorPayload,
+  createMcpRunTerminationPayload,
   createMcpSingleOpCallErrorPayload,
   createMcpStatusReporter,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
+  installMcpRunTerminationHandlers,
   parseMcpRunCalls,
   parseMcpRunInput,
   parseMcpSingleOpCallInput,
@@ -869,6 +871,84 @@ test("formats MCP run failures as structured JSON payloads", () => {
       elapsedMs: 12,
     },
   });
+});
+
+test("preserves completed calls when a run terminates during an asset query preview", () => {
+  const completedResults = [
+    "status",
+    "list-assets",
+    "get-asset-field-catalog",
+  ].map((tool) => ({
+    tool,
+    ok: true,
+    structuredContent: { ok: true, data: {}, meta: {} },
+  }));
+
+  expect(
+    createMcpRunTerminationPayload({
+      reason: { type: "beforeExit", exitCode: 0 },
+      activeCall: { number: 4, tool: "preview-asset-query" },
+      totalCalls: 4,
+      results: completedResults,
+      elapsedMs: 123,
+    })
+  ).toEqual({
+    ok: false,
+    error: {
+      code: "MCP_RUN_TERMINATED",
+      message:
+        "MCP run terminated before call 4/4 preview-asset-query returned a result.",
+    },
+    data: {
+      completedCalls: 3,
+      unfinishedCall: { number: 4, tool: "preview-asset-query" },
+      totalCalls: 4,
+      results: completedResults,
+    },
+    meta: {
+      elapsedMs: 123,
+      termination: { type: "beforeExit", exitCode: 0 },
+    },
+  });
+});
+
+test("reports the active MCP call when Node exits with an unresolved tool promise", () => {
+  let beforeExit: ((exitCode: number) => void) | undefined;
+  const writeResult = vi.fn();
+  const setExitCode = vi.fn();
+  const dispose = installMcpRunTerminationHandlers({
+    getActiveCall: () => ({ number: 4, tool: "preview-asset-query" }),
+    totalCalls: 4,
+    results: [
+      { tool: "status", ok: true },
+      { tool: "list-assets", ok: true },
+      { tool: "get-asset-field-catalog", ok: true },
+    ],
+    startedAt: Date.now(),
+    registerBeforeExit: (listener) => {
+      beforeExit = listener;
+      return vi.fn();
+    },
+    registerSignal: () => vi.fn(),
+    writeStatus: vi.fn(),
+    writeResult,
+    setExitCode,
+  });
+
+  beforeExit?.(0);
+
+  expect(writeResult).toHaveBeenCalledWith(
+    expect.objectContaining({
+      ok: false,
+      error: expect.objectContaining({ code: "MCP_RUN_TERMINATED" }),
+      data: expect.objectContaining({
+        completedCalls: 3,
+        unfinishedCall: { number: 4, tool: "preview-asset-query" },
+      }),
+    })
+  );
+  expect(setExitCode).toHaveBeenCalledWith(1);
+  dispose();
 });
 
 test("preserves already structured MCP run errors", () => {
