@@ -164,6 +164,60 @@ test("generate variable and use in resources loader", () => {
   `);
 });
 
+test("generate dependency-gated resource request factories", () => {
+  const generated = generateResources({
+    scope: createScope(),
+    page: { rootInstanceId: "body" } as Page,
+    dataSources: toMap([
+      {
+        id: "firstDataSource",
+        scopeInstanceId: "body",
+        type: "resource",
+        name: "First",
+        resourceId: "firstResource",
+      },
+      {
+        id: "secondDataSource",
+        scopeInstanceId: "body",
+        type: "resource",
+        name: "Second",
+        resourceId: "secondResource",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "firstResource",
+        name: "First",
+        method: "get",
+        url: '"https://example.com/first"',
+        headers: [],
+      },
+      {
+        id: "secondResource",
+        name: "Second",
+        method: "get",
+        url: '"https://example.com/second/" + $ws$dataSource$firstDataSource.data.id',
+        headers: [],
+      },
+    ]),
+    props: toMap([
+      {
+        id: "prop",
+        instanceId: "body",
+        name: "data-value",
+        type: "expression",
+        value: "$ws$dataSource$secondDataSource",
+      },
+    ]),
+  });
+
+  expect(generated).toContain('const First_1 = documents.get("firstResource")');
+  expect(generated).toContain("const _data: ResourceRequestGraph");
+  expect(generated).toContain(
+    'dependencies: ["firstResource"], createRequest: Second'
+  );
+});
+
 test("generate page system variable and use in resources loader", () => {
   expect(
     generateResources({
