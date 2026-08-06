@@ -14,6 +14,7 @@ import {
 import { useStore } from "@nanostores/react";
 import {
   encodeDataVariableId,
+  getTransitiveResourceDataSourceIds,
   isAssetsResource as isAssetsResourceRecord,
   SYSTEM_VARIABLE_ID,
   systemParameter,
@@ -391,11 +392,13 @@ export const getResourceScopeForInstance = ({
   instanceKey,
   dataSources,
   variableValuesByInstanceSelector,
+  includeResourceDataSources = false,
 }: {
   page: undefined | Page | PageTemplate;
   instanceKey: undefined | string;
   dataSources: DataSources;
   variableValuesByInstanceSelector: Map<string, Map<string, unknown>>;
+  includeResourceDataSources?: boolean;
 }) => {
   const scope: Record<string, unknown> = {};
   const aliases = new Map<string, string>();
@@ -408,8 +411,10 @@ export const getResourceScopeForInstance = ({
     if (dataSource.type === "parameter") {
       hiddenDataSourceIds.add(dataSource.id);
     }
-    // prevent resources using data of other resources
-    if (dataSource.type === "resource") {
+    if (
+      dataSource.type === "resource" &&
+      includeResourceDataSources === false
+    ) {
       hiddenDataSourceIds.add(dataSource.id);
     }
   }
@@ -467,12 +472,14 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
             $selectedInstancePathWithRoot,
             $variableValuesByInstanceSelector,
             $dataSources,
+            $resources,
           ],
           (
             page,
             instancePath,
             variableValuesByInstanceSelector,
-            dataSources
+            dataSources,
+            resources
           ) => {
             const { scope, aliases, variableValues } =
               getResourceScopeForInstance({
@@ -483,6 +490,7 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
                 }),
                 dataSources,
                 variableValuesByInstanceSelector,
+                includeResourceDataSources: true,
               });
             // prevent showing currently edited variable in suggestions
             // to avoid cirular dependeny
@@ -494,6 +502,22 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
               delete newScope[key];
               newAliases.delete(key);
               newVariableValues.delete(variable.id);
+              for (const dataSource of dataSources.values()) {
+                if (
+                  dataSource.type !== "resource" ||
+                  getTransitiveResourceDataSourceIds({
+                    resourceId: dataSource.resourceId,
+                    resources,
+                    dataSources,
+                  }).has(variable.id) === false
+                ) {
+                  continue;
+                }
+                const dependencyKey = encodeDataVariableId(dataSource.id);
+                delete newScope[dependencyKey];
+                newAliases.delete(dependencyKey);
+                newVariableValues.delete(dataSource.id);
+              }
             }
             return {
               scope: newScope,
