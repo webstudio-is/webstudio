@@ -9,13 +9,13 @@ import {
   portalComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
+  getPageResourceRootIds,
 } from "@webstudio-is/sdk";
 import { transpileExpression } from "@webstudio-is/expression";
 import {
   normalizeProps,
   textContentAttribute,
   getCollectionEntries,
-  findTreeInstanceIdsExcludingStaticHidden,
 } from "@webstudio-is/react-sdk";
 import { mapGroupBy } from "~/shared/shim";
 import { $instances } from "../sync/data-stores";
@@ -201,12 +201,13 @@ const $resourceRequestPlan = computed(
   [
     $selectedPage,
     $instances,
+    $props,
     $dataSources,
     $resources,
     $resourceVariableValues,
     $resourcesCache,
   ],
-  (page, instances, dataSources, resources, values, resourceCache) => {
+  (page, instances, props, dataSources, resources, values, resourceCache) => {
     if (page === undefined) {
       return computeResourceRequestPlan({
         rootResourceIds: [],
@@ -216,19 +217,13 @@ const $resourceRequestPlan = computed(
         resourceCache,
       });
     }
-    const instanceIds = findTreeInstanceIds(instances, page.rootInstanceId);
-    instanceIds.add(ROOT_INSTANCE_ID);
-    const rootResourceIds: string[] = [];
-    for (const dataSource of dataSources.values()) {
-      if (
-        dataSource.type === "resource" &&
-        instanceIds.has(dataSource.scopeInstanceId ?? "")
-      ) {
-        rootResourceIds.push(dataSource.resourceId);
-      }
-    }
     return computeResourceRequestPlan({
-      rootResourceIds,
+      rootResourceIds: getPageResourceRootIds({
+        page,
+        instances,
+        props,
+        dataSources,
+      }),
       resources,
       dataSources,
       values,

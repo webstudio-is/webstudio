@@ -432,7 +432,6 @@ export const computeResourceRequestPlan = ({
   return {
     requests: Array.from(requests.values()),
     documents,
-    values: resolvedValues,
   };
 };
 
