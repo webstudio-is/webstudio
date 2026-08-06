@@ -105,6 +105,12 @@ There are several fields available to configure the fetch request.
 
 Once the Resource fetches data, you'll use the [Expression editor](expression-editor.md) to bind data from the response to your website. See [Binding](expression-editor.md#binding) for more information.
 
+#### Dependent resources
+
+Bind a Resource request field to another Resource variable when one request needs data from an earlier response. For example, bind an author ID from one Resource into the URL or search parameters of a second Resource that loads the author's posts.
+
+Webstudio fetches the dependency first and evaluates the dependent request after the dependency data is available. A Resource cannot depend on itself or on another Resource that already depends on it. Collection item and component parameter variables are not available in Resource request fields.
+
 #### Caching
 
 You may be wondering whether every visit to your blog results in an API call to your CMS or if the content is cached in Webstudio.
