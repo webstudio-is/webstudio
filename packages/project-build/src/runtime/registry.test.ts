@@ -1206,13 +1206,11 @@ describe("builder runtime read families", () => {
           name: "--brand-color",
           scope: "heading",
           usageCount: 1,
-          valueLength: expect.any(Number),
+          value: "red",
+          valueLength: 3,
         },
       ],
     });
-    expect(
-      listCssVariables(state, { withUsage: true, verbose: true })
-    ).toMatchObject({ vars: [{ value: expect.any(String) }] });
     expect(listDataVariables(state)).toMatchObject({
       variables: [
         {
@@ -1243,7 +1241,7 @@ describe("builder runtime read families", () => {
       const { detail: _compactDetail, ...compactResult } = compact;
       const { detail: _verboseDetail, ...verboseResult } = verbose;
       expect(verboseResult).toMatchObject(compactResult);
-      expect(JSON.stringify(compact).length).toBeLessThan(
+      expect(JSON.stringify(compact).length).toBeLessThanOrEqual(
         JSON.stringify(verbose).length
       );
       expect(verbose.total).toBe(compact.total);

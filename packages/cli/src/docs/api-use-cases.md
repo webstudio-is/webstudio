@@ -145,6 +145,9 @@ Commands:
 
 Notes:
 
+- `preview.status` reports whether generated output is `stale`. When present, `renderedProjectVersion` is the last project version materialized into the preview.
+- A managed `screenshot` or another `preview.start` refreshes stale generated output before capture.
+
 - Use this after page/content/style mutations so a vision-capable AI can see the generated site from the current MCP session. Use `path`; never pass a Webstudio Builder/share URL or capture Builder chrome.
 - For multi-page work, capture every changed page by `path` through the same preview server; no click navigation is required.
 - Iterative mode is the default: after MCP mutations, path screenshots ensure generated project files are current, wait for the exact session version, and perform an ordinary page reload without Vite HMR. The preview server and browser stay alive. Use `{"mode":"production"}` only for release-like verification; rendered audit does this automatically.
@@ -641,13 +644,22 @@ Commands:
 
 Commands:
 
-- MCP tool: define-css-variable {"vars":"vars.json contents"}
+- MCP tool: define-css-variable {"vars":{"--color-primary":"#2d3748","--color-accent":"#e53e3e","--space-card":"1.5rem"},"overwrite":true}
+
+Notes:
+
+- Define or overwrite multiple CSS variables atomically by including every name and value in one `vars` object.
+- Pass colors as CSS strings. Structured `hex` color components use normalized values from `0` to `1`, not `0` to `255`.
 
 ## Delete CSS variables
 
 Commands:
 
-- MCP tool: delete-css-variable {"names":"names.json contents","force":true}
+- MCP tool: delete-css-variable {"names":["--color-primary","--color-accent","--space-card"],"force":true}
+
+Notes:
+
+- Delete multiple CSS variables atomically by including every name in one `names` array. Destructive MCP calls still require the returned confirmation token before they commit.
 
 ## Rewrite CSS variable references
 

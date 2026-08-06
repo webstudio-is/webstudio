@@ -177,6 +177,7 @@ describe("project session api adapter", () => {
     expect(session.executeServerOperation).toHaveBeenCalledWith(
       {
         id: "auth.me",
+        method: "query",
         invalidatesNamespaces: [],
         refetchInvalidatedNamespaces: false,
       },

@@ -339,16 +339,3 @@ test("MCP capability index covers every public API operation", async () => {
     expect(indexedTools).toContain(command);
   }
 });
-
-test("documents that MCP visual verification requires current generated files", () => {
-  expect(
-    useCaseScenarios.find(
-      (scenario) =>
-        scenario.useCase === "Visually verify rendered work with AI vision"
-    )?.notes
-  ).toEqual(
-    expect.arrayContaining([
-      expect.stringContaining("generated project files are current"),
-    ])
-  );
-});

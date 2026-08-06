@@ -402,7 +402,7 @@ Use `node packages/cli/local.js mcp` from the Webstudio monorepo root for local 
 - Read ids before writing.
 - Prefer semantic tools over `apply-patch`.
 - Use `status` and `refresh` when cached namespaces may be stale. Pass `status {"verbose":true}` only when debugging full namespace arrays, freshness, compatibility, or diagnostic details.
-- A mutation is durable only when `meta.session.committed` is true.
+- Read `meta.session.commitStatus` before interpreting durability. Read-only results report `not-applicable` and retain `committed:false` for compatibility; dry-run plans report `planned`; failed mutations report `failed`; no-op mutations report `unchanged`; durable mutations report `committed` with `meta.session.committed:true`.
 - For visual/design work, verify the rendered result with vision before finishing.
 
 ## Vision Verification Loop
@@ -411,17 +411,18 @@ Vision-capable AI can use MCP to see what it is building:
 
 1. Make focused page/content/style changes with semantic MCP tools.
 2. Call preview.start once to keep the iterative generated site running. In shell-driven workflows, run preview.start, screenshot, and preview.stop inside one `webstudio mcp run` call so they share the same preview owner.
-3. `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
-4. Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
-5. If dependency installation fails, check npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
-6. After MCP mutations, path-based screenshots regenerate the current session in place, wait for its exact project version, and normally reload the route. The server and browser remain alive. From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running generated site without starting it. Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview; a separate one-shot `single-op-call` process does not own another process's preview controller.
-7. For multi-page work, capture each changed page by path through the same preview server, for example screenshot({ path: "/" }), screenshot({ path: "/pricing" }), and screenshot({ path: "/about" }). The screenshot tool navigates directly to the requested route; no browser click navigation is required.
-8. For responsive work, call list-breakpoints first, then capture screenshots at viewport widths based on the Builder breakpoints plus a narrow mobile and desktop width.
-9. Call screenshot with { path: "/" } or the changed page path and viewport such as { width: 375, height: 812 } and { width: 1440, height: 900 }. For an existing preview in another process, call screenshot with { baseUrl: "http://127.0.0.1:5177", path: "/" }. Use waitForSelector when the page has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
-10. When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir for each page/viewport pair. Add expectedText when a specific visible phrase must be present; its assertions report pass/fail plus found and missing text. Add expectedVisual to set pass/fail limits for mismatch percentage, the number of changed regions, or an overall dominant color/brightness direction.
-11. Read screenshot.diff textAnalysis: it reports OCR status plus text that appeared, disappeared, moved, changed content, or changed font/style geometry. If OCR is unavailable, expectedText assertions fail and textAnalysis reports why; ask the user for permission to install Tesseract, then call vision.install-ocr with { "confirm": true }, or rely on visual inspection.
-12. Inspect every viewport PNG and any diff artifacts with vision, then compare layout, OCR text evidence, color, spacing, imagery, and responsive framing against the user intent.
-13. If the screenshot does not match, apply another focused mutation and repeat screenshot verification.
+3. Read `preview.status.stale` before relying on generated output. When present, `renderedProjectVersion` identifies the last project version materialized into the preview; a stale preview refreshes automatically on the next managed screenshot or `preview.start` call.
+4. `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
+5. Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
+6. If dependency installation fails, check npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
+7. After MCP mutations, path-based screenshots regenerate the current session in place, wait for its exact project version, and normally reload the route. The server and browser remain alive. From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running generated site without starting it. Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview; a separate one-shot `single-op-call` process does not own another process's preview controller.
+8. For multi-page work, capture each changed page by path through the same preview server, for example screenshot({ path: "/" }), screenshot({ path: "/pricing" }), and screenshot({ path: "/about" }). The screenshot tool navigates directly to the requested route; no browser click navigation is required.
+9. For responsive work, call list-breakpoints first, then capture screenshots at viewport widths based on the Builder breakpoints plus a narrow mobile and desktop width.
+10. Call screenshot with { path: "/" } or the changed page path and viewport such as { width: 375, height: 812 } and { width: 1440, height: 900 }. For an existing preview in another process, call screenshot with { baseUrl: "http://127.0.0.1:5177", path: "/" }. Use waitForSelector when the page has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
+11. When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir for each page/viewport pair. Add expectedText when a specific visible phrase must be present; its assertions report pass/fail plus found and missing text. Add expectedVisual to set pass/fail limits for mismatch percentage, the number of changed regions, or an overall dominant color/brightness direction.
+12. Read screenshot.diff textAnalysis: it reports OCR status plus text that appeared, disappeared, moved, changed content, or changed font/style geometry. If OCR is unavailable, expectedText assertions fail and textAnalysis reports why; ask the user for permission to install Tesseract, then call vision.install-ocr with { "confirm": true }, or rely on visual inspection.
+13. Inspect every viewport PNG and any diff artifacts with vision, then compare layout, OCR text evidence, color, spacing, imagery, and responsive framing against the user intent.
+14. If the screenshot does not match, apply another focused mutation and repeat screenshot verification.
 
 Generated app setup:
 
@@ -1109,6 +1110,40 @@ source of truth. For tools with no required arguments, pass `{}`.
       }
     }
   ]
+}
+```
+
+### list-css-variables
+
+```json
+{
+  "withUsage": true
+}
+```
+
+### define-css-variable
+
+```json
+{
+  "vars": {
+    "--color-primary": "#2d3748",
+    "--color-accent": "#e53e3e",
+    "--space-card": "1.5rem"
+  },
+  "overwrite": true
+}
+```
+
+### delete-css-variable
+
+```json
+{
+  "names": [
+    "--color-primary",
+    "--color-accent",
+    "--space-card"
+  ],
+  "force": true
 }
 ```
 

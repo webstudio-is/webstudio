@@ -174,7 +174,7 @@ const token = looseObject({
 });
 const cssVariable = looseObject({
   name: z.string(),
-  value: z.string().optional(),
+  value: z.string(),
   valueLength: z.number().int().nonnegative(),
   scope: z.string(),
   usageCount: z.number().int().optional(),

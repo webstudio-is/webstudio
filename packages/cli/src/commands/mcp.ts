@@ -950,6 +950,7 @@ const createCliMcpHost = async ({
     isStale: previewFreshness.isStale,
     captureFreshness: previewFreshness.capture,
     markFresh: previewFreshness.markFresh,
+    getProjectVersion: () => getLoadedProjectSessionSnapshot(session).version,
     getHttpCredentials: (pagePath) =>
       getProjectBasicAuthCredentials(
         getLoadedProjectSessionSnapshot(session).state.projectSettings?.meta
@@ -1092,16 +1093,20 @@ const createCliMcpHost = async ({
       };
     },
     async startPreview(input, progress) {
-      return await startMcpPreview({
+      const result = await startMcpPreview({
         input,
         startPreview: async (resolvedInput) =>
           await previewHandlers.startPreview(resolvedInput, progress),
       });
+      return { ...result, ...previewFreshness.status() };
     },
     async getPreviewStatus() {
-      return preview.status();
+      return { ...preview.status(), ...previewFreshness.status() };
     },
-    stopPreview: previewHandlers.stopPreview,
+    async stopPreview() {
+      const result = await previewHandlers.stopPreview();
+      return { ...result, ...previewFreshness.status() };
+    },
     async captureScreenshot(input) {
       const resolvedInput = await resolveMcpScreenshotInput(
         input,

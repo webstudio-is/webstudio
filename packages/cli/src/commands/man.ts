@@ -23,7 +23,11 @@ import {
   mcpOnlyApiCommandMetadata,
   topLevelCliCommandMetadata,
 } from "./api-command-metadata";
-import { knownCliGaps, useCaseScenarios } from "./api-command-docs";
+import {
+  knownCliGaps,
+  projectSessionResultMetadataDescription,
+  useCaseScenarios,
+} from "./api-command-docs";
 
 const apiManualMarkdown = readCliDoc("manual-api");
 const llmManualMarkdown = readCliDoc("manual-llm");
@@ -659,10 +663,11 @@ const createLlmManualJson = (
       writeCommands,
       sessionBehavior: [
         "Read meta.session.source and meta.session.namespaceCounts to understand whether data came from local cache, remote refresh, dry-run, or server-only execution.",
+        'Read meta.session.commitStatus to distinguish read-only results ("not-applicable"), dry-run plans ("planned"), failed mutations ("failed"), no-op mutations ("unchanged"), and durable mutations ("committed").',
         "For a dry-run mutation, inspect meta.session.transaction for the computed Builder patch; meta.session.version is its base build version.",
         "Use status with { verbose: true } only when debugging full namespace arrays, freshness, compatibility, or diagnostic details.",
         "Use --refresh before a local-capable command when the cached snapshot may be stale.",
-        "A mutation is durable only when meta.session.committed is true.",
+        'A mutation is durable only when meta.session.commitStatus is "committed" and meta.session.committed is true. Read operations retain committed:false for compatibility, but durability does not apply.',
       ],
       writes: [
         "Use MCP tools for fine-grained project edits.",
@@ -751,8 +756,7 @@ const topics = {
             "Run remotely and invalidate/refetch namespaces declared by the public operation catalog.",
           refreshFlag:
             "Use --refresh to refresh required namespaces before local-capable commands.",
-          metadata:
-            "Successful command JSON includes compact meta.session with operationId, buildId, version, source, committed, namespaceCounts, diagnosticCount, non-empty diagnostic summaries, and optional compatibilityVersion.",
+          metadata: projectSessionResultMetadataDescription,
         },
       },
       apiDocSections
