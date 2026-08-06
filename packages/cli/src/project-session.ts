@@ -16,6 +16,7 @@ import {
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
   type IssueReportRuntime,
+  type PublicApiCommand,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
 import packageJson from "../package.json";
@@ -238,11 +239,11 @@ const getIssueReportRuntime = (): IssueReportRuntime => ({
 });
 
 export const addIssueReportRuntime = (
-  operationId: string,
+  command: PublicApiCommand,
   input: unknown,
   runtime: IssueReportRuntime = getIssueReportRuntime()
 ) => {
-  if (operationId !== "report-issue" || isPlainRecord(input) === false) {
+  if (command !== "report-issue" || isPlainRecord(input) === false) {
     return input;
   }
   return { ...input, runtime };
@@ -271,7 +272,10 @@ const executePublicServerOperation = async ({
   }
   return await client({
     ...connection,
-    ...(addIssueReportRuntime(operationId, input) as Record<string, unknown>),
+    ...(addIssueReportRuntime(operation.command, input) as Record<
+      string,
+      unknown
+    >),
     projectId: connection.projectId,
   });
 };
