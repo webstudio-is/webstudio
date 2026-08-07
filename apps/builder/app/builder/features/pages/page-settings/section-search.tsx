@@ -45,7 +45,6 @@ const LanguageField = ({
         expression={value}
         value={computePageSettingsText(value, variableValues)}
         bound={isLiteralExpression(value) === false}
-        allowBindingOverwrite={false}
         showBinding={showBindingControls}
         scope={scope}
         aliases={aliases}
@@ -147,7 +146,6 @@ export const SearchSection = ({
           expression={values.title}
           value={title}
           bound={isLiteralExpression(values.title) === false}
-          allowBindingOverwrite={false}
           showBinding={showBindingControls}
           scope={scope}
           aliases={aliases}
@@ -180,7 +178,6 @@ export const SearchSection = ({
           expression={values.description}
           value={description}
           bound={isLiteralExpression(values.description) === false}
-          allowBindingOverwrite={false}
           showBinding={showBindingControls}
           scope={scope}
           aliases={aliases}
@@ -215,7 +212,6 @@ export const SearchSection = ({
           expression={values.excludePageFromSearch}
           value={excludePageFromSearch}
           bound={isLiteralExpression(values.excludePageFromSearch) === false}
-          allowBindingOverwrite={false}
           showBinding={showBindingControls}
           scope={scope}
           aliases={aliases}

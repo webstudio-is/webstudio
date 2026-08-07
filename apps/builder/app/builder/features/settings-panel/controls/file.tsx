@@ -1,9 +1,6 @@
 import { useId } from "react";
 import { Flex, InputField, theme } from "@webstudio-is/design-system";
-import {
-  BindableExpressionControl,
-  updateBindableValue,
-} from "~/builder/shared/bindable-expression";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
@@ -56,14 +53,10 @@ export const FileControl = ({
       ? String(computedValue)
       : undefined,
     (value) => {
-      if (value === undefined) {
+      if (value === undefined || prop?.type === "expression") {
         return;
       }
-      updateBindableValue({
-        expression: prop?.type === "expression" ? prop.value : undefined,
-        value,
-        onChangeValue: (value) => onChange({ type: "string", value }),
-      });
+      onChange({ type: "string", value });
     }
   );
 

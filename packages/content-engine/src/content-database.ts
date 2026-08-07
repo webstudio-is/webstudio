@@ -3,6 +3,7 @@ import type {
   ContentArtifactV1,
   AssetQueryRequestInput,
   AssetQueryResult,
+  AssetQueryExecutionResult,
   BuilderAssetFieldCatalog,
   ContentDatabaseStats,
   ContentDatabaseDocument,
@@ -214,8 +215,8 @@ const createQueryableContentDatabase = ({
     };
   };
   const getSettledValue = (
-    result: PromiseSettledResult<AssetQueryResult>
-  ): AssetQueryResult => {
+    result: PromiseSettledResult<AssetQueryExecutionResult>
+  ): AssetQueryExecutionResult => {
     if (result.status === "rejected") {
       throw result.reason;
     }
@@ -266,9 +267,10 @@ const createQueryableContentDatabase = ({
     requests: readonly AssetQueryRequestInput[];
     queryContentReader?: AssetResourceContentReader;
     runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
-  }): Promise<PromiseSettledResult<AssetQueryResult>[]> => {
-    const results: Array<PromiseSettledResult<AssetQueryResult> | undefined> =
-      Array.from({ length: requests.length });
+  }): Promise<PromiseSettledResult<AssetQueryExecutionResult>[]> => {
+    const results: Array<
+      PromiseSettledResult<AssetQueryExecutionResult> | undefined
+    > = Array.from({ length: requests.length });
     const assetUrls = getRuntimeAssetUrls(runtimeAssets);
     const pendingIndexes: number[] = [];
     for (const [index, request] of requests.entries()) {
@@ -453,64 +455,69 @@ const createQueryableContentDatabase = ({
       documents,
     });
   };
-  const queryManyWithDocumentGraph: ContentDatabase["queryManyWithDocumentGraph"] =
-    async ({
-      requests,
-      load,
-      resolutionSession: sharedResolutionSession,
-      readContent: queryContentReader,
-      runtimeAssets,
-      signal,
-      onEvent,
-    }) => {
-      if (documentGraph === undefined) {
-        return await executeQueries({
-          requests,
-          queryContentReader,
-          runtimeAssets,
-        });
-      }
-      const documentLoader = createInlineAwareLoader(load);
-      const resolutionSession =
-        sharedResolutionSession ??
-        createDocumentResolutionSession({
-          load: documentLoader,
-          concurrency: contentEngineLimits.concurrentContentReads,
-          signal,
-        });
-      const contentReader = createDocumentContentReader({
-        graph: documentGraph,
+  const queryManyWithDocumentGraph = async ({
+    requests,
+    load,
+    resolutionSession: sharedResolutionSession,
+    readContent: queryContentReader,
+    runtimeAssets,
+    signal,
+    onEvent,
+  }: Parameters<ContentDatabase["queryManyWithDocumentGraph"]>[0]) => {
+    if (documentGraph === undefined) {
+      return await executeQueries({
+        requests,
+        queryContentReader,
+        runtimeAssets,
+      });
+    }
+    const documentLoader = createInlineAwareLoader(load);
+    const resolutionSession =
+      sharedResolutionSession ??
+      createDocumentResolutionSession({
         load: documentLoader,
-        getCached: resolutionSession.getCached,
-        readFallback: queryContentReader ?? readContent,
+        concurrency: contentEngineLimits.concurrentContentReads,
         signal,
       });
-      // Share only graph resolution, like a request-scoped GraphQL DataLoader.
-      // Running each query independently preserves partial-result semantics.
-      return await Promise.allSettled(
-        requests.map((request) =>
-          executeQueryWithDocumentGraph({
-            request,
-            graph: documentGraph,
-            resolutionSession,
-            contentReader,
-            runtimeAssets,
-            onEvent,
-          })
-        )
-      );
-    };
-  const queryWithDocumentGraph: ContentDatabase["queryWithDocumentGraph"] =
-    async ({ request, ...input }) =>
-      getSettledValue(
-        (
-          await queryManyWithDocumentGraph({
-            ...input,
-            requests: [request],
-          })
-        )[0]
-      );
-  return { query, queryManyWithDocumentGraph, queryWithDocumentGraph };
+    const contentReader = createDocumentContentReader({
+      graph: documentGraph,
+      load: documentLoader,
+      getCached: resolutionSession.getCached,
+      readFallback: queryContentReader ?? readContent,
+      signal,
+    });
+    // Share only graph resolution, like a request-scoped GraphQL DataLoader.
+    // Running each query independently preserves partial-result semantics.
+    return await Promise.allSettled(
+      requests.map((request) =>
+        executeQueryWithDocumentGraph({
+          request,
+          graph: documentGraph,
+          resolutionSession,
+          contentReader,
+          runtimeAssets,
+          onEvent,
+        })
+      )
+    );
+  };
+  const queryWithDocumentGraph = async ({
+    request,
+    ...input
+  }: Parameters<ContentDatabase["queryWithDocumentGraph"]>[0]) =>
+    getSettledValue(
+      (
+        await queryManyWithDocumentGraph({
+          ...input,
+          requests: [request],
+        })
+      )[0]
+    );
+  return {
+    query,
+    queryManyWithDocumentGraph,
+    queryWithDocumentGraph,
+  } as unknown as RuntimeContentDatabase;
 };
 
 export const createContentDatabase = ({

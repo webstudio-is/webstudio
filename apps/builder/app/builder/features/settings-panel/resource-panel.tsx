@@ -131,7 +131,6 @@ export const UrlField = ({
         expression={value}
         value={String(evaluateExpressionWithinScope(value, scope))}
         bound={isLiteralExpression(value) === false}
-        allowBindingOverwrite={false}
         scope={scope}
         aliases={aliases}
         onChangeValue={(value) => onChange(JSON.stringify(value))}
@@ -250,7 +249,6 @@ const ExpressionNameValuePair = ({
         expression={value}
         value={serializeValue(evaluatedValue)}
         bound={isLiteralExpression(value) === false}
-        allowBindingOverwrite={false}
         scope={scope}
         aliases={aliases}
         onChangeValue={(value) => onChange(name, JSON.stringify(value))}
@@ -605,12 +603,8 @@ const BodyField = ({
         expression={value}
         value={displayedValue}
         bound={isBodyLiteral === false}
-        allowBindingOverwrite={false}
         scope={scope}
         aliases={aliases}
-        parseValue={(value) =>
-          bodyType === "json" ? evaluateExpressionWithinScope(value, {}) : value
-        }
         onChangeValue={(value) =>
           updateBody(bodyType === "json" ? value : JSON.stringify(value))
         }
@@ -1161,10 +1155,8 @@ export const GraphqlResourceForm = forwardRef<
                   ) ?? "")
             }
             bound={isVariablesLiteral === false}
-            allowBindingOverwrite={false}
             scope={scope}
             aliases={aliases}
-            parseValue={(value) => evaluateExpressionWithinScope(value, {})}
             onChangeValue={setVariables}
             onChangeExpression={(value) => {
               setVariables(value);

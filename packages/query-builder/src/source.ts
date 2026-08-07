@@ -294,6 +294,20 @@ export const createQuerySourceCodec = <
           value[control.key] = expression;
           continue;
         }
+        if (control.type === "select") {
+          const selected = parseJsonExpression(expression);
+          if (
+            typeof selected !== "string" ||
+            control.options.some(({ value }) => value === selected) === false
+          ) {
+            return {
+              success: false,
+              message: `Select a valid ${control.label.toLowerCase()}.`,
+            };
+          }
+          value[control.key] = selected;
+          continue;
+        }
         if (control.type === "filter") {
           const where = parseWhere({
             expression,
@@ -353,6 +367,17 @@ export const createQuerySourceCodec = <
             throw new Error(`Query ${control.key} is invalid`);
           }
           fields.set(control.key, value);
+          continue;
+        }
+        if (control.type === "select") {
+          if (
+            typeof value !== "string" ||
+            control.options.some(({ value: option }) => option === value) ===
+              false
+          ) {
+            throw new Error(`Query ${control.key} is invalid`);
+          }
+          fields.set(control.key, generateJsonExpression(value));
           continue;
         }
         if (control.type === "filter") {

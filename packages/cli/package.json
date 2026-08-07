@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit",
     "generate-docs": "tsx scripts/generate-docs.ts && oxfmt src/docs.generated.ts",
     "build:content-runtime": "esbuild @webstudio-is/content-engine/runtime --bundle --format=esm --platform=browser --target=es2022 --conditions=webstudio --minify --outfile=lib/content-runtime.js",
+    "fixtures:build": "pnpm build:content-runtime",
     "build": "pnpm generate-docs && rm -rf lib && vite build && pnpm build:content-runtime",
     "pretest": "mkdir -p lib && pnpm build:content-runtime",
     "evaluations": "tsx --import ../../scripts/register-react-global.ts --conditions=webstudio evaluations/high-impact/run-local-agent.ts",

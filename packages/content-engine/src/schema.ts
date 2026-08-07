@@ -10,6 +10,7 @@ import {
   record,
   strictObject,
   string,
+  union,
   type ZodType,
   type infer as Infer,
   type input as Input,
@@ -519,6 +520,10 @@ export const assetQuerySort = strictObject({
 
 export type AssetQuerySort = Infer<typeof assetQuerySort>;
 
+export const assetQueryResultMode = zEnum(["many", "one", "first", "last"]);
+
+export type AssetQueryResultMode = Infer<typeof assetQueryResultMode>;
+
 export const hasAssetQueryOutput = ({
   output,
   content,
@@ -533,6 +538,7 @@ export const hasAssetQueryOutput = ({
 
 /** Typed configuration for the query mode of the Assets system resource. */
 export const assetQuery = strictObject({
+  result: assetQueryResultMode.default("many"),
   where: assetQueryWhere.default({ all: [] }),
   sort: array(assetQuerySort).max(contentEngineLimits.sortCount).default([]),
   limit: number()
@@ -549,11 +555,28 @@ export const assetQuery = strictObject({
     defaultAssetResourceOutputSelection
   ),
   content: assetResourceContentOptions.default({ mode: "none" }),
-}).refine(hasAssetQueryOutput, {
-  error: "Select at least one asset query output",
+}).superRefine((query, context) => {
+  if (hasAssetQueryOutput(query) === false) {
+    context.addIssue({
+      code: "custom",
+      message: "Select at least one asset query output",
+    });
+  }
+  if (
+    (query.result === "first" || query.result === "last") &&
+    query.sort.length === 0
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["sort"],
+      message: "Add sorting to define which item is first.",
+    });
+  }
 });
 
-export type AssetQuery = Infer<typeof assetQuery>;
+export type AssetQuery = Omit<Infer<typeof assetQuery>, "result"> & {
+  result?: AssetQueryResultMode;
+};
 export type AssetQueryInput = Input<typeof assetQuery>;
 
 export const assetQueryRequest = strictObject({
@@ -629,13 +652,29 @@ const contentDatabaseCapacityStats = contentDatabaseStats.pick({
   truncated: true,
 });
 
-export const assetQueryResult = strictObject({
+export const assetQueryCollectionResult = strictObject({
   items: array(assetQueryItem),
   totalCount: number().int().nonnegative(),
   hasMore: boolean(),
 });
 
-export type AssetQueryResult = Infer<typeof assetQueryResult>;
+export const assetQuerySingleResult = strictObject({
+  item: assetQueryItem.nullable(),
+  totalCount: number().int().nonnegative(),
+});
+
+export const assetQueryResult = union([
+  assetQueryCollectionResult,
+  assetQuerySingleResult,
+]);
+
+export type AssetQueryCollectionResult = Infer<
+  typeof assetQueryCollectionResult
+>;
+export type AssetQuerySingleResult = Infer<typeof assetQuerySingleResult>;
+export type AssetQueryExecutionResult = Infer<typeof assetQueryResult>;
+/** Backward-compatible collection result type for existing many-result APIs. */
+export type AssetQueryResult = AssetQueryCollectionResult;
 
 export const assetQueryPreviewDiagnostics = strictObject({
   scope: literal("query-preview"),
@@ -651,13 +690,26 @@ export const assetQueryPreviewDiagnostics = strictObject({
 export type AssetQueryPreviewDiagnostics = Infer<
   typeof assetQueryPreviewDiagnostics
 >;
+type AssetQueryCollectionPreviewDiagnostics = Omit<
+  AssetQueryPreviewDiagnostics,
+  "unresolved"
+> & { unresolved?: AssetQueryCollectionResult };
 
 export const assetQueryPreviewResult = strictObject({
   data: assetQueryResult,
   __diagnostics__: assetQueryPreviewDiagnostics,
 });
 
-export type AssetQueryPreviewResult = Infer<typeof assetQueryPreviewResult>;
+export type AssetQueryExecutionPreviewResult = Infer<
+  typeof assetQueryPreviewResult
+>;
+export type AssetQueryPreviewResult = Omit<
+  AssetQueryExecutionPreviewResult,
+  "data" | "__diagnostics__"
+> & {
+  data: AssetQueryCollectionResult;
+  __diagnostics__: AssetQueryCollectionPreviewDiagnostics;
+};
 
 export const assetResourceErrorCode = zEnum([
   "INVALID_REQUEST",
@@ -669,6 +721,7 @@ export const assetResourceErrorCode = zEnum([
   "CONTENT_NOT_TEXT",
   "CONTENT_DECODING_FAILED",
   "CONTENT_LIMIT_EXCEEDED",
+  "MULTIPLE_RESULTS",
   "INTERNAL_ERROR",
 ]);
 

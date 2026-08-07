@@ -33,10 +33,16 @@ type AssetQueryDefinition = QueryDefinition<
 const defaultConfiguration: StructuredAssetQueryResourceConfiguration =
   createDefaultStructuredAssetQueryResourceConfiguration();
 
+const controlOrder = new Map([
+  ["output", 1],
+  ["result", 2],
+]);
+
 const normalizeConfiguration = (
   value: StructuredAssetQueryResourceConfiguration
 ): StructuredAssetQueryResourceConfiguration => ({
   ...value,
+  result: value.result ?? "many",
   where: "field" in value.where ? { all: [value.where] } : value.where,
 });
 
@@ -66,6 +72,38 @@ const loadAssetQueryDefinition = async (
     },
   });
   return definition as AssetQueryDefinition;
+};
+
+const configureAssetQueryDefinition = ({
+  definition,
+  paths,
+  result,
+}: {
+  definition: AssetQueryDefinition;
+  paths: string[][];
+  result: StructuredAssetQueryResourceConfiguration["result"];
+}) => {
+  const configured = addConfiguredQueryFields({
+    definition,
+    paths,
+    fallbackType: "string",
+  });
+  return {
+    ...configured,
+    source: {
+      ...configured.source,
+      controls: configured.source.controls
+        .filter(
+          ({ key }) =>
+            result === "many" || (key !== "limit" && key !== "offset")
+        )
+        .toSorted(
+          (left, right) =>
+            (controlOrder.get(left.key) ?? 0) -
+            (controlOrder.get(right.key) ?? 0)
+        ),
+    },
+  };
 };
 
 export const AssetQueryForm = ({
@@ -109,20 +147,25 @@ export const AssetQueryForm = ({
       ),
     [configuration]
   );
-  const definition = useMemo(
-    () =>
-      baseDefinition === undefined
-        ? undefined
-        : addConfiguredQueryFields({
-            definition: baseDefinition,
-            paths: configuredPaths,
-            fallbackType: "string",
-          }),
-    [baseDefinition, configuredPaths]
-  );
+  const definition = useMemo(() => {
+    if (baseDefinition === undefined) {
+      return;
+    }
+    return configureAssetQueryDefinition({
+      definition: baseDefinition,
+      paths: configuredPaths,
+      result: configuration.result,
+    });
+  }, [baseDefinition, configuration.result, configuredPaths]);
   const configurationError = useMemo(() => {
     if (definition === undefined) {
       return;
+    }
+    if (
+      (configuration.result === "first" || configuration.result === "last") &&
+      configuration.sort.length === 0
+    ) {
+      return "Add sorting to define which item is first.";
     }
     try {
       createQuerySourceCodec<
@@ -192,7 +235,15 @@ export const AssetQueryForm = ({
           sourceContainer={sourceContainer}
           sectionPaddingInline={theme.panel.paddingInline}
           onChange={(value) => {
-            setConfiguration(value);
+            setConfiguration(
+              configuration.result === "many" && value.result !== "many"
+                ? {
+                    ...value,
+                    limit: defaultConfiguration.limit,
+                    offset: defaultConfiguration.offset,
+                  }
+                : value
+            );
           }}
         />
       ) : (
@@ -207,4 +258,7 @@ export const AssetQueryForm = ({
   );
 };
 
-export const __testing__ = { loadAssetQueryDefinition };
+export const __testing__ = {
+  configureAssetQueryDefinition,
+  loadAssetQueryDefinition,
+};

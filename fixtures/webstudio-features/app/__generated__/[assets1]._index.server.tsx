@@ -18,16 +18,17 @@ export const getResources = (_props: { system: System }) => {
     body: {
   query: ({
     output: {
-      mode: "fields",
-      includeMetadata: false,
-      fields: [["url"], ["width"], ["height"]],
-    },
+        mode: "fields",
+        includeMetadata: false,
+        fields: [["url"], ["width"], ["height"]],
+      },
     content: {
-      mode: "none",
-    },
+        mode: "none",
+      },
+    result: "many",
     where: {
-      all: [],
-    },
+        all: [],
+      },
     sort: [],
     limit: 1000,
     offset: 0,

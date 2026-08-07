@@ -413,6 +413,7 @@ describe("published asset resource runtime", () => {
     const plan = createContentCompilationPlan([
       {
         id: "post",
+        result: "one",
         where: {
           all: [
             {
@@ -423,7 +424,7 @@ describe("published asset resource runtime", () => {
           ],
         },
         sort: [],
-        limit: { type: "literal", value: 1 },
+        limit: { type: "literal", value: 20 },
         offset: { type: "literal", value: 0 },
         output: {
           mode: "fields",
@@ -477,6 +478,7 @@ describe("published asset resource runtime", () => {
       method: "POST",
       body: JSON.stringify({
         query: {
+          result: "one",
           where: {
             all: [
               {
@@ -486,7 +488,6 @@ describe("published asset resource runtime", () => {
               },
             ],
           },
-          limit: 1,
           output: {
             mode: "fields",
             includeMetadata: false,
@@ -498,13 +499,12 @@ describe("published asset resource runtime", () => {
     });
 
     await expect(response?.json()).resolves.toMatchObject({
-      items: [
-        {
-          id: "second",
-          properties: { title: "Second" },
-          content: { text: "Second stored body\n" },
-        },
-      ],
+      item: {
+        id: "second",
+        properties: { title: "Second" },
+        content: { text: "Second stored body\n" },
+      },
+      totalCount: 1,
     });
     expect(fetchDocument).toHaveBeenCalledOnce();
     expect(String(fetchDocument.mock.calls[0][0])).toContain("second.md");

@@ -20,6 +20,7 @@ const {
   createMcpStatusReporter,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
+  reportMcpRunTermination,
   parseMcpRunCalls,
   parseMcpRunInput,
   parseMcpSingleOpCallInput,
@@ -869,6 +870,51 @@ test("formats MCP run failures as structured JSON payloads", () => {
       elapsedMs: 12,
     },
   });
+});
+
+test("preserves completed calls when a run terminates during an asset query preview", () => {
+  const completedResults = [
+    "status",
+    "list-assets",
+    "get-asset-field-catalog",
+  ].map((tool) => ({
+    tool,
+    ok: true,
+    structuredContent: { ok: true, data: {}, meta: {} },
+  }));
+
+  const writeResult = vi.fn();
+  const setExitCode = vi.fn();
+  reportMcpRunTermination({
+    exitCode: 0,
+    activeCall: { number: 4, tool: "preview-asset-query" },
+    totalCalls: 4,
+    results: completedResults,
+    elapsedMs: 123,
+    writeStatus: vi.fn(),
+    writeResult,
+    setExitCode,
+  });
+
+  expect(writeResult).toHaveBeenCalledWith({
+    ok: false,
+    error: {
+      code: "MCP_RUN_TERMINATED",
+      message:
+        "MCP run terminated before call 4/4 preview-asset-query returned a result.",
+    },
+    data: {
+      completedCalls: 3,
+      unfinishedCall: { number: 4, tool: "preview-asset-query" },
+      totalCalls: 4,
+      results: completedResults,
+    },
+    meta: {
+      elapsedMs: 123,
+      termination: { type: "beforeExit", exitCode: 0 },
+    },
+  });
+  expect(setExitCode).toHaveBeenCalledWith(1);
 });
 
 test("preserves already structured MCP run errors", () => {

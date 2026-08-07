@@ -124,10 +124,20 @@ export type QueryExpressionControl = {
   integer?: boolean;
 };
 
+export type QuerySelectControl = {
+  type: "select";
+  key: string;
+  label: string;
+  sectionLabel?: string;
+  defaultValue: string;
+  options: readonly { value: string; label: string }[];
+};
+
 export type QueryControl<Operator extends string = string> =
   | QueryFilterControl<Operator>
   | QuerySortControl
   | QueryExpressionControl
+  | QuerySelectControl
   | QueryVariantControl;
 
 export type QueryDefinition<
@@ -159,6 +169,7 @@ export type QuerySourceDefinition<
       | QueryFilterControl<Operator>
       | QuerySortControl
       | QueryExpressionControl
+      | QuerySelectControl
       | QuerySourceVariantControl
     )[];
   };

@@ -731,4 +731,78 @@ describe("cli project session transport", () => {
     expect(requestText).toContain("project-1");
     expect(requestText).not.toContain("other-project");
   });
+
+  test("adds anonymous runtime metadata to issue report requests", async () => {
+    let requestBody = "";
+    const fetch = vi.fn(
+      async (request: URL | RequestInfo, init?: RequestInit) => {
+        if (request instanceof Request) {
+          requestBody = await request.clone().text();
+        } else if (typeof init?.body === "string") {
+          requestBody = init.body;
+        }
+        return new Response(
+          JSON.stringify([
+            {
+              result: {
+                data: {
+                  status: "created",
+                  issueNumber: 1,
+                  issueUrl: "https://example.com/issues/1",
+                },
+              },
+            },
+          ]),
+          { headers: { "content-type": "application/json" } }
+        );
+      }
+    );
+    vi.stubGlobal("fetch", fetch);
+    const transport = createCliProjectSessionTransport({
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+    });
+
+    await transport.executeServerOperation?.({
+      operationId: "reports.issue",
+      input: {
+        trigger: "user-requested",
+        category: "tool-failure",
+        deduplicationKey: "report-runtime",
+        title: "fix: Include report runtime",
+        agent: {
+          client: "Codex",
+          model: "test-model",
+          reasoningEffort: "medium",
+        },
+        report: {
+          userStory: "Use issue reporting.",
+          summary: "Runtime metadata was omitted.",
+          attemptedWorkflow: ["Submit an issue report."],
+          expectedBehavior: "The report includes runtime metadata.",
+          actualResult: "The report omitted runtime metadata.",
+          recoveryAttempts: ["Inspect the created issue."],
+          userImpact: "The report is harder to diagnose.",
+          technicalContext: "The CLI transport submitted the report.",
+          acceptanceCriteria: ["The report includes runtime metadata."],
+        },
+      },
+    });
+
+    const body = JSON.parse(requestBody) as {
+      0: { runtime?: Record<string, unknown> };
+    };
+    expect(body[0].runtime).toEqual({
+      cliVersion: expect.any(String),
+      nodeVersion: process.versions.node,
+      os: process.platform,
+      osVersion: expect.any(String),
+      architecture: process.arch,
+      executionMode: "mcp",
+      apiContractVersion: expect.any(String),
+    });
+  });
 });

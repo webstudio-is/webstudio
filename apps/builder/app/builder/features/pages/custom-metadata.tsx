@@ -76,7 +76,6 @@ const MetadataItem = (props: {
         expression={props.content}
         value={String(content ?? "")}
         bound={isLiteralExpression(props.content) === false}
-        allowBindingOverwrite={false}
         showBinding={props.showBindingControls}
         scope={scope}
         aliases={aliases}
