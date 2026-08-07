@@ -194,6 +194,7 @@ test("captures stale path screenshots through the restarted preview server", asy
 
 test("passes explicit preview source to preview preparation", async () => {
   const events: string[] = [];
+  let projectVersion = 1;
   const preview = {
     status: vi.fn(() => ({
       url: "",
@@ -210,18 +211,23 @@ test("passes explicit preview source to preview preparation", async () => {
     }),
     resolveUrl: vi.fn(),
   };
-  const prepareSessionDataFile = vi.fn(async () => undefined);
+  const prepareSessionDataFile = vi.fn(async () => {
+    projectVersion = 2;
+  });
   const preparePreview = vi.fn(async (source, prepareSessionDataFile) => {
     events.push(`prepare:${source}`);
     await prepareSessionDataFile?.();
     return { cwd: "/tmp/generated-preview" };
   });
   const progress: string[] = [];
+  const markFresh = vi.fn();
 
   const handlers = createMcpPreviewHandlers({
     preview,
     preparePreview,
     prepareSessionDataFile,
+    getProjectVersion: () => projectVersion,
+    markFresh,
   });
 
   await handlers.startPreview(
@@ -242,6 +248,7 @@ test("passes explicit preview source to preview preparation", async () => {
     }
   );
   expect(prepareSessionDataFile).toHaveBeenCalledOnce();
+  expect(markFresh).toHaveBeenCalledWith(expect.any(Number), 2);
   expect(events).toEqual([
     "prepare:session",
     "start:/tmp/generated-preview:true",

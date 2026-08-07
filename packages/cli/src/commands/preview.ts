@@ -17,7 +17,6 @@ import { join } from "node:path";
 import { chdir, cwd } from "node:process";
 import { promisify } from "node:util";
 import { log } from "@clack/prompts";
-import { builderNamespaces } from "@webstudio-is/project-build/contracts";
 import {
   projectPreviewSources,
   type ProjectPreviewSource,
@@ -42,8 +41,7 @@ import { sync, defaultSyncDependencies, type SyncDependencies } from "./sync";
 import { resolveApiConnection } from "../api-connection";
 import {
   createCliProjectSession,
-  loadCliProjectSessionAssetIndex,
-  writeCliProjectSessionDataFile,
+  writeCliProjectSessionPreviewDataFile,
 } from "../project-session";
 import { LOCAL_ASSETS_DIR } from "../asset-files";
 import packageJson from "../../package.json" with { type: "json" };
@@ -447,15 +445,10 @@ export const preparePreviewProject = async ({
     const connection = await resolveApiConnection();
     const session = createCliProjectSession({ connection });
     await session.initialize();
-    const snapshot = await session.ensureNamespaces(builderNamespaces);
-    const assetIndex = await loadCliProjectSessionAssetIndex(
-      snapshot,
+    await writeCliProjectSessionPreviewDataFile({
+      session,
       connection,
-      join(cwd(), LOCAL_ASSETS_DIR)
-    );
-    await writeCliProjectSessionDataFile(snapshot, undefined, {
-      origin: connection.origin,
-      assetIndex,
+      assetsDirectory: join(cwd(), LOCAL_ASSETS_DIR),
     });
   },
 }: {

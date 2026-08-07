@@ -303,7 +303,6 @@ export const createMcpPreviewHandlers = ({
       });
       progress?.report("tool screenshot preparing generated preview project");
       const freshness = captureFreshness();
-      const projectVersion = getProjectVersion();
       const previewProject = await preparePreview(
         source,
         prepareSessionDataFile,
@@ -312,6 +311,7 @@ export const createMcpPreviewHandlers = ({
           prepareForIncrementalGeneration: mode === "iterative",
         }
       );
+      const projectVersion = getProjectVersion();
       progress?.report(
         `tool screenshot ${canReusePreview ? "refreshing" : "starting"} ${mode} preview server`
       );
@@ -398,7 +398,6 @@ export const createMcpPreviewHandlers = ({
           "tool preview.start preparing generated preview project"
         );
         const freshness = captureFreshness();
-        const projectVersion = getProjectVersion();
         const previewProject = await preparePreview(
           source,
           prepareSessionDataFile,
@@ -407,6 +406,7 @@ export const createMcpPreviewHandlers = ({
             prepareForIncrementalGeneration: mode === "iterative",
           }
         );
+        const projectVersion = getProjectVersion();
         progress?.report(
           `tool preview.start ${canReusePreview ? "refreshing" : "starting"} ${mode} preview server`
         );

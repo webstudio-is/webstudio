@@ -40,9 +40,8 @@ import {
   getCliProjectRestorePointsFile,
   getCliServerApiContract,
   getSupportedPublicApiOperations,
-  loadCliProjectSessionAssetIndex,
   type CliServerApiContract,
-  writeCliProjectSessionDataFile,
+  writeCliProjectSessionPreviewDataFile,
 } from "../project-session";
 import { executeProjectSessionApiOperation } from "../project-session-api";
 import { createPreviewController, findAvailablePort } from "../preview-server";
@@ -1041,17 +1040,12 @@ const createCliMcpHost = async ({
         pagePath
       ),
     prepareSessionDataFile: async () => {
-      const snapshot = getLoadedProjectSessionSnapshot(session);
-      const assetIndex = await loadCliProjectSessionAssetIndex(
-        snapshot,
-        apiConnection,
-        path.join(projectRoot, LOCAL_ASSETS_DIR)
-      );
-      await writeCliProjectSessionDataFile(
-        snapshot,
-        path.join(projectRoot, LOCAL_DATA_FILE),
-        { origin: connection.origin, assetIndex }
-      );
+      await writeCliProjectSessionPreviewDataFile({
+        session,
+        connection: apiConnection,
+        path: path.join(projectRoot, LOCAL_DATA_FILE),
+        assetsDirectory: path.join(projectRoot, LOCAL_ASSETS_DIR),
+      });
     },
   });
   type ScreenshotResult = Awaited<
