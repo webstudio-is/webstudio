@@ -155,11 +155,9 @@ const StatusField = ({
         expression={value ?? ""}
         value={String(computeExpression(value, variableValues) ?? "")}
         bound={value !== undefined && isLiteralExpression(value) === false}
-        allowBindingOverwrite={false}
         showBinding={showBindingControls}
         scope={scope}
         aliases={aliases}
-        parseValue={parseStatus}
         onChangeValue={(value) => {
           const status = parseStatus(value);
           if (status === undefined) {
@@ -251,7 +249,6 @@ const RedirectField = ({
         expression={value ?? ""}
         value={computePageSettingsText(value, variableValues)}
         bound={value !== undefined && isLiteralExpression(value) === false}
-        allowBindingOverwrite={false}
         showBinding={showBindingControls}
         scope={scope}
         aliases={aliases}

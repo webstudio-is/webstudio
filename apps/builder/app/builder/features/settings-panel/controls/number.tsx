@@ -1,10 +1,7 @@
 import { useId, useState } from "react";
 import { InputField } from "@webstudio-is/design-system";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
-import {
-  BindableExpressionControl,
-  updateBindableValue,
-} from "~/builder/shared/bindable-expression";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import {
   type ControlProps,
   ResponsiveLayout,
@@ -27,12 +24,11 @@ export const NumberControl = ({
   const localValue = useDraftValue(
     Number.isNaN(number) ? "" : number,
     (value) => {
+      if (prop?.type === "expression") {
+        return;
+      }
       if (typeof value === "number") {
-        updateBindableValue({
-          expression: prop?.type === "expression" ? prop.value : undefined,
-          value,
-          onChangeValue: (value) => onChange({ type: "number", value }),
-        });
+        onChange({ type: "number", value });
       }
       if (value === "") {
         setIsInvalid(true);

@@ -4,10 +4,7 @@ import { matchSorter } from "match-sorter";
 import { Box, Combobox, Text, theme } from "@webstudio-is/design-system";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
-import {
-  BindableExpressionControl,
-  updateBindableValue,
-} from "~/builder/shared/bindable-expression";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { $props } from "~/shared/sync/data-stores";
 import {
   type ControlProps,
@@ -196,11 +193,10 @@ export const TimeZoneControl = ({
     computedValue ?? meta.defaultValue ?? defaultTimeZone
   );
   const localValue = useDraftValue(savedValue, (value) => {
-    updateBindableValue({
-      expression: prop?.type === "expression" ? prop.value : undefined,
-      value,
-      onChangeValue: (value) => onChange({ type: "string", value }),
-    });
+    if (prop?.type === "expression") {
+      return;
+    }
+    onChange({ type: "string", value });
   });
   const timeZoneItems = getTimeZoneItems(meta.options);
   const selectedItem = getTimeZoneItem(savedValue);

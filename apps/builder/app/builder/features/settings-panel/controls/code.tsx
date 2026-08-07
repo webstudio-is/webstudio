@@ -19,10 +19,7 @@ import {
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { CodeEditor } from "~/shared/code-editor";
-import {
-  BindableExpressionControl,
-  updateBindableValue,
-} from "~/builder/shared/bindable-expression";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import {
   validateHtmlEmbedCode,
   type HtmlEmbedCodeError,
@@ -169,6 +166,9 @@ export const CodeControl = ({
   const localValue = useDraftValue(
     editorValue,
     (value) => {
+      if (prop?.type === "expression") {
+        return;
+      }
       let storedValue = value;
 
       if (behavior) {
@@ -193,11 +193,7 @@ export const CodeControl = ({
         }
       }
 
-      updateBindableValue({
-        expression: prop?.type === "expression" ? prop.value : undefined,
-        value: storedValue,
-        onChangeValue: (value) => onChange({ type: "string", value }),
-      });
+      onChange({ type: "string", value: storedValue });
     },
     { autoSave: behavior?.autoSave ?? true }
   );
