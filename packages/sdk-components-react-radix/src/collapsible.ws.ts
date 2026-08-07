@@ -34,7 +34,7 @@ export const metaCollapsibleTrigger: WsComponentMeta = {
   icon: TriggerIcon,
   contentModel: {
     category: "none",
-    children: ["instance", "rich-text"],
+    children: ["instance"],
   },
   states: [
     { label: "Open", selector: '[data-state="open"]' },

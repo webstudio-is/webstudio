@@ -1426,18 +1426,29 @@ test("rejects unsupported expressions in webstudio jsx fragments", async () => {
   );
 });
 
-test("requires element children for Radix asChild components", async () => {
-  await expect(
-    parseWebstudioJsxFragment(
-      `<radix.NavigationMenuTrigger>Open</radix.NavigationMenuTrigger>`
+test("uses component content models to require element children", async () => {
+  const parent = createParent();
+  const invalidFragment = await parseWebstudioJsxFragment(
+    `<radix.Collapsible><radix.CollapsibleTrigger>Open</radix.CollapsibleTrigger></radix.Collapsible>`
+  );
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      { parentInstanceId: parent.id, fragment: invalidFragment },
+      { createId: createIdFactory(), projectId: "project-id" }
     )
-  ).rejects.toThrow(/NavigationMenuTrigger requires an element child/);
+  ).toThrow('"CollapsibleTrigger" does not accept text content');
 
-  await expect(
-    parseWebstudioJsxFragment(
-      `<radix.NavigationMenuTrigger><ws.element ws:tag="span">Open</ws.element></radix.NavigationMenuTrigger>`
+  const fragment = await parseWebstudioJsxFragment(
+    `<radix.Collapsible><radix.CollapsibleTrigger><ws.element ws:tag="span">Open</ws.element></radix.CollapsibleTrigger></radix.Collapsible>`
+  );
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory(), projectId: "project-id" }
     )
-  ).resolves.toEqual(expect.objectContaining({ instances: expect.any(Array) }));
+  ).not.toThrow();
 });
 
 test("reports unsupported existing resource references in jsx", async () => {
