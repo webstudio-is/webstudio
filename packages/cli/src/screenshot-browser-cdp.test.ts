@@ -860,9 +860,9 @@ test("retries browser startup before capturing a viewport batch", async () => {
   vi.mocked(dependencies.spawnBrowser)
     .mockImplementationOnce(() => {
       setTimeout(() => failedBrowser.emit("exit", 21), 0);
-      return failedBrowser;
+      return failedBrowser as never;
     })
-    .mockImplementationOnce(() => activeBrowser);
+    .mockImplementationOnce(() => activeBrowser as never);
   vi.mocked(dependencies.readFile)
     .mockImplementationOnce(async () => await new Promise(() => undefined))
     .mockResolvedValue("9222\n/devtools/browser/1\n");
@@ -898,31 +898,30 @@ test("reports browser startup exit diagnostics without local paths", async () =>
   vi.mocked(dependencies.spawnBrowser).mockImplementation(() => {
     const browserProcess = new FakeBrowserProcess();
     setTimeout(() => browserProcess.emit("exit", 21), 0);
-    return browserProcess;
+    return browserProcess as never;
   });
   vi.mocked(dependencies.readFile).mockImplementation(
     async () => await new Promise(() => undefined)
   );
 
-  const error = await createBrowserScreenshotSession(
-    {
-      url: "https://example.com",
-      output: "/tmp/current.png",
-      width: 800,
-      height: 600,
-      browserPath: "/Users/example/Applications/Chromium",
-      waitUntil: "networkidle",
-      waitForTimeout: 0,
-      timeout: 1000,
-    },
-    dependencies
-  ).catch((error: unknown) => error);
-
-  expect(error).toBeInstanceOf(Error);
-  expect((error as Error).message).toBe(
-    "Browser exited before its DevTools endpoint became ready (exit code 21). Check the browser installation or set WEBSTUDIO_BROWSER_PATH to a supported Chromium executable."
-  );
-  expect((error as Error).message).not.toContain("/Users/example");
+  await expect(
+    createBrowserScreenshotSession(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/Users/example/Applications/Chromium",
+        waitUntil: "networkidle",
+        waitForTimeout: 0,
+        timeout: 1000,
+      },
+      dependencies
+    )
+  ).rejects.toMatchObject({
+    message:
+      "Browser exited before its DevTools endpoint became ready (exit code 21). Check the browser installation or set WEBSTUDIO_BROWSER_PATH to a supported Chromium executable.",
+  });
 });
 
 test("does not restart a browser session after cleanup", async () => {

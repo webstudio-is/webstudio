@@ -382,9 +382,9 @@ describe("captureScreenshot", () => {
 test("resets a reusable capture session after browser startup rejects", async () => {
   const spawnBrowser = vi.fn(() => ({
     kill: vi.fn(() => true),
-    once: vi.fn((event: string, listener: () => void) => {
+    once: vi.fn((event: string, listener: (error: Error) => void) => {
       if (event === "error") {
-        setTimeout(listener, 0);
+        setTimeout(() => listener(new Error("spawn failed")), 0);
       }
     }),
   }));
