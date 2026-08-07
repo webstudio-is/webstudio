@@ -341,6 +341,26 @@ describe("checkProjectPermit — token auth (msw)", () => {
     expect(allowed).toBe(false);
   });
 
+  test("denies when token belongs to another project", async () => {
+    const projectId = uid();
+    server.use(
+      db.get("AuthorizationToken", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("projectId") === `eq.${projectId}`) {
+          return json(null);
+        }
+        return json({ token: "other-project-token" });
+      })
+    );
+    const allowed = await checkProjectPermit({
+      projectId,
+      permit: "view",
+      authInfo: { type: "token", authToken: "other-project-token" },
+      postgrestClient: testContext.postgrest.client,
+    });
+    expect(allowed).toBe(false);
+  });
+
   test("denies 'own' permit for tokens regardless of DB", async () => {
     const projectId = uid();
     const allowed = await checkProjectPermit({

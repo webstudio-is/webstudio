@@ -261,7 +261,6 @@ model AuthorizationToken {
 
   canClone  Boolean @default(true)
   canCopy   Boolean @default(true)
-  canPublish Boolean @default(false)
   canUseApi Boolean @default(false)
 
   @@id([token, projectId])

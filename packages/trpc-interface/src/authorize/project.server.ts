@@ -97,6 +97,7 @@ const check = async (
     .from("AuthorizationToken")
     .select("token")
     .eq("token", subjectSet.id)
+    .eq("projectId", input.id)
     .in("relation", [...permitToRelationRewrite[input.permit]])
     .maybeSingle();
 
