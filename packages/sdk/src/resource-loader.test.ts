@@ -18,8 +18,78 @@ import {
   getResourceCacheKey,
   isLocalResource,
   loadResource,
+  loadResources,
+  type ResourceRequestGraph,
 } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
+
+test("resolves request resources after their dependency documents", async () => {
+  const requestedUrls: string[] = [];
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+    const url = String(input);
+    requestedUrls.push(url);
+    if (url.endsWith("/posts")) {
+      return Response.json({ id: "author-id" });
+    }
+    return Response.json({ name: "Ada" });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "posts",
+        outputName: "Posts",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Posts",
+          method: "get",
+          url: "https://example.com/posts",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "author",
+        outputName: "Author",
+        dependencies: ["posts"],
+        createRequest: (documents) => ({
+          name: "Author",
+          method: "get",
+          url: `https://example.com/authors/${
+            (documents.get("posts") as { data: { id: string } }).data.id
+          }`,
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "unused",
+        outputName: "Unused",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Unused",
+          method: "get",
+          url: "https://example.com/unused",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+    ],
+    rootIds: ["author"],
+  };
+
+  await expect(loadResources(fetch, graph)).resolves.toEqual({
+    Author: {
+      data: { name: "Ada" },
+      ok: true,
+      status: 200,
+      statusText: "",
+    },
+  });
+  expect(requestedUrls).toEqual([
+    "https://example.com/posts",
+    "https://example.com/authors/author-id",
+  ]);
+});
 
 test("builds canonical Assets command URLs", () => {
   expect(assetsUploadsApiUrl).toBe("/rest/assets/uploads");

@@ -1326,6 +1326,7 @@ export const prebuild = async (options: {
         dataSources,
         props,
         resources,
+        instances,
       })}
 
       ${generatePageMeta({

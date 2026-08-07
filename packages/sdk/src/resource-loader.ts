@@ -1,4 +1,8 @@
 import hash from "@emotion/hash";
+import {
+  resolveResources as resolveResourceGraph,
+  type Resource,
+} from "@webstudio-is/content-engine";
 import type { ResourceRequest } from "./schema/resources";
 import { serializeValue } from "./to-string";
 
@@ -53,6 +57,18 @@ export type ResourceLoadOptions = {
   signal?: AbortSignal;
   timeoutMs?: number;
 };
+
+export type ResourceRequestResource = Readonly<{
+  id: string;
+  outputName: string;
+  dependencies: readonly string[];
+  createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;
+}>;
+
+export type ResourceRequestGraph = Readonly<{
+  resources: readonly ResourceRequestResource[];
+  rootIds: readonly string[];
+}>;
 
 export const createResourceFetchBatchProvider = ({
   baseUrl,
@@ -341,10 +357,42 @@ export const loadResource = async (
 
 export const loadResources = async (
   customFetch: typeof fetch,
-  requests: Map<string, ResourceRequest>,
+  requests: Map<string, ResourceRequest> | ResourceRequestGraph,
   baseUrl?: string | URL,
   options?: ResourceLoadOptions
 ) => {
+  if (requests instanceof Map === false) {
+    const resources: Resource<unknown>[] = requests.resources.map(
+      (resource) => ({
+        id: resource.id,
+        dependencies: resource.dependencies,
+        resolve: ({ documents, signal }) =>
+          loadResource(
+            customFetch,
+            resource.createRequest(documents),
+            baseUrl,
+            { ...options, signal }
+          ),
+      })
+    );
+    const resolved = await resolveResourceGraph({
+      resources,
+      rootIds: requests.rootIds,
+      concurrency: Math.max(1, resources.length),
+      signal: options?.signal,
+    });
+    const output = new Map<string, unknown>();
+    const resourcesById = new Map(
+      requests.resources.map((resource) => [resource.id, resource])
+    );
+    for (const resourceId of requests.rootIds) {
+      const resource = resourcesById.get(resourceId);
+      if (resource !== undefined && resolved.documents.has(resourceId)) {
+        output.set(resource.outputName, resolved.documents.get(resourceId));
+      }
+    }
+    return Object.fromEntries(output);
+  }
   return Object.fromEntries(
     await Promise.all(
       Array.from(
