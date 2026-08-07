@@ -42,6 +42,7 @@ const normalizeConfiguration = (
   value: StructuredAssetQueryResourceConfiguration
 ): StructuredAssetQueryResourceConfiguration => ({
   ...value,
+  result: value.result ?? "many",
   where: "field" in value.where ? { all: [value.where] } : value.where,
 });
 
