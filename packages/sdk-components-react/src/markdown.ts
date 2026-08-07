@@ -6,7 +6,7 @@ import { frontmatterFromMarkdown } from "mdast-util-frontmatter";
 import { toString } from "mdast-util-to-string";
 import GithubSlugger from "github-slugger";
 import type { HtmlExtension } from "micromark-util-types";
-import sanitizeHtml from "sanitize-html";
+import sanitizeHtml from "./sanitize-html";
 
 const getHeadingIds = (markdown: string) => {
   const slugger = new GithubSlugger();
