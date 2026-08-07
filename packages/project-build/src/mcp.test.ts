@@ -1178,7 +1178,8 @@ describe("project session mcp adapter", () => {
       expect(tool.description).toContain("<dataSourceName>.meta");
       expect(tool.description).toContain("markdown-body-ref");
       expect(tool.description).toContain("document reference");
-      expect(tool.description).toContain("item.content.text");
+      expect(tool.description).toContain("content.text");
+      expect(tool.description).toContain("result one");
       expect(tool.description).toContain(
         "one final resource per rendered query"
       );
@@ -4597,6 +4598,7 @@ describe("project session mcp adapter", () => {
           overviewResource: expect.objectContaining({
             dataSourceName: "posts",
             query: expect.objectContaining({
+              result: "many",
               limit: { type: "literal", value: 20 },
               offset: { type: "literal", value: 0 },
             }),
@@ -4604,8 +4606,7 @@ describe("project session mcp adapter", () => {
           detailResource: expect.objectContaining({
             dataSourceName: "post",
             query: expect.objectContaining({
-              limit: { type: "literal", value: 1 },
-              offset: { type: "literal", value: 0 },
+              result: "one",
               content: { mode: "markdown-body-ref" },
             }),
           }),
@@ -4614,10 +4615,8 @@ describe("project session mcp adapter", () => {
               "collectionItem.properties.author.name"
             ),
           }),
-          detailCollection: expect.objectContaining({
-            itemFragment: expect.stringContaining(
-              "collectionItem.content.text"
-            ),
+          detailFragment: expect.objectContaining({
+            fragment: expect.stringContaining("post.data?.content?.text"),
           }),
         }),
         workflow: expect.arrayContaining([
@@ -4640,7 +4639,8 @@ describe("project session mcp adapter", () => {
           ),
           expect.stringContaining("only one materialized overview query"),
           expect.stringContaining('content.mode:"markdown-body-ref"'),
-          expect.stringContaining("Do not reshape or stringify any field"),
+          expect.stringContaining('result:"one"'),
+          expect.stringContaining("do not wrap the detail result"),
           expect.stringContaining('"value":"posts.data"'),
           expect.stringContaining("only the Markdown document reference"),
           expect.stringContaining('field:["extension"]'),

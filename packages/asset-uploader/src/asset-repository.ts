@@ -14,8 +14,9 @@ import {
   requiresStructuredProperties,
   type AssetQueryRequestInput,
   type AssetQueryPreviewResult,
+  type AssetQueryExecutionPreviewResult,
   type AssetQuery,
-  type AssetQueryResult,
+  type AssetQueryExecutionResult,
   type AssetRuntimeData,
   type BuilderAssetFieldCatalog,
   type ContentArtifactV1,
@@ -148,7 +149,7 @@ type AssetQueryPreviewOptions = {
   signal?: AbortSignal;
 };
 
-type AssetQueryResultOnly = { data: AssetQueryResult };
+type AssetQueryResultOnly = { data: AssetQueryExecutionResult };
 type AssetQueryOptionsWithoutDiagnostics = AssetQueryPreviewOptions & {
   includeDiagnostics: false;
 };
@@ -964,7 +965,7 @@ export class PostgresAssetRepository implements AssetRepository {
           });
           signal?.throwIfAborted();
           let batchExecution:
-            | Promise<PromiseSettledResult<AssetQueryResult>[]>
+            | Promise<PromiseSettledResult<AssetQueryExecutionResult>[]>
             | undefined;
           const executeBatch = () => {
             batchExecution ??= database.queryManyWithDocumentGraph({
@@ -1038,7 +1039,7 @@ export class PostgresAssetRepository implements AssetRepository {
   async query(
     request: AssetQueryRequestInput,
     options: AssetQueryPreviewOptions = {}
-  ): Promise<AssetQueryPreviewResult | AssetQueryResultOnly> {
+  ): Promise<AssetQueryExecutionPreviewResult | AssetQueryResultOnly> {
     await this.assertCanView();
     return await this.queryAfterAuthorization(request, options);
   }
@@ -1052,7 +1053,7 @@ export class PostgresAssetRepository implements AssetRepository {
       includeUnresolvedDiagnostics = false,
       signal,
     }: AssetQueryPreviewOptions = {}
-  ): Promise<AssetQueryPreviewResult | AssetQueryResultOnly> {
+  ): Promise<AssetQueryExecutionPreviewResult | AssetQueryResultOnly> {
     signal?.throwIfAborted();
     const query = assetQuery.parse(request.query);
     const plan = createContentCompilationPlan([

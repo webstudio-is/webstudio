@@ -236,6 +236,50 @@ const GroupedSelectionFixture = () => {
 };
 
 describe("structured query builder", () => {
+  test("renders and updates a select control", () => {
+    const capabilities = {
+      version: 1,
+      fields: [],
+      operators: [],
+      source: {
+        fieldPathSchema: true,
+        controls: [
+          {
+            type: "select",
+            key: "result",
+            label: "Result",
+            sectionLabel: "Result",
+            defaultValue: "many",
+            options: [
+              { value: "many", label: "Many" },
+              { value: "one", label: "Exactly one" },
+            ],
+          },
+        ],
+      },
+    } as const satisfies QueryDefinition;
+
+    const Fixture = () => {
+      const [query, setQuery] = useState({ result: "many" });
+      return (
+        <StructuredQueryBuilder
+          value={query}
+          capabilities={capabilities}
+          onChange={setQuery}
+        />
+      );
+    };
+    render(<Fixture />);
+
+    expect(screen.getByText("Result")).toBeTruthy();
+    expect(screen.queryByText("Return")).toBeNull();
+    fireEvent.click(screen.getByLabelText("Result"));
+    fireEvent.click(screen.getByText("Exactly one"));
+    expect(
+      (screen.getByLabelText("Query") as HTMLTextAreaElement).value
+    ).toContain('result: "one"');
+  });
+
   test("renders and edits solely from provider-neutral capabilities", () => {
     render(<QueryBuilderFixture />);
 
