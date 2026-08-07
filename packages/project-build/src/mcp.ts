@@ -6132,29 +6132,33 @@ const getWorkflowNext = (input: unknown) => {
   };
 };
 
+const toUnderscoredToolName = (name: string) =>
+  name.replace(/[^a-zA-Z0-9_]/g, "_");
+
 const getExactToolSelection = (
   toolNames: readonly string[],
   tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const toolByName = new Map(tools.map((tool) => [tool.name, tool]));
-  const toolByUnderscoredName = new Map(
-    tools.map((tool) => [tool.name.replace(/[^a-zA-Z0-9_]/g, "_"), tool])
+  const toolByName = new Map(
+    tools.map((tool) => [toUnderscoredToolName(tool.name), tool])
   );
+  for (const tool of tools) {
+    toolByName.set(tool.name, tool);
+  }
   const selectedTools: ProjectSessionMcpTool[] = [];
   const missingTools: string[] = [];
   const includedToolNames = new Set<string>();
   for (const requestedName of toolNames) {
     const resolvedName = resolveToolName(requestedName);
-    const tool =
-      toolByName.get(resolvedName) ?? toolByUnderscoredName.get(resolvedName);
+    const tool = toolByName.get(resolvedName);
     if (tool === undefined) {
       missingTools.push(requestedName);
       continue;
     }
-    if (includedToolNames.has(resolvedName)) {
+    if (includedToolNames.has(tool.name)) {
       continue;
     }
-    includedToolNames.add(resolvedName);
+    includedToolNames.add(tool.name);
     selectedTools.push(tool);
   }
   return { tools: selectedTools, missingTools };
@@ -8270,7 +8274,7 @@ export const createProjectSessionMcpServer = async <
     ...tool,
     name:
       toolNameFormat === "underscores"
-        ? tool.name.replace(/[^a-zA-Z0-9_]/g, "_")
+        ? toUnderscoredToolName(tool.name)
         : tool.name,
   }));
   const canonicalToolNameByExposedName = new Map<string, string>();

@@ -365,6 +365,10 @@ export const createMcpPreviewHandlers = ({
     }
     return result;
   };
+  const getManagedPreviewMetadata = (input: McpScreenshotInput) =>
+    input.path !== undefined && input.baseUrl === undefined
+      ? { previewMode: preview.status().mode ?? undefined }
+      : {};
   return {
     async startPreview(input: McpPreviewInput, progress?: McpToolProgress) {
       return await runPreviewLifecycle(async () => {
@@ -374,7 +378,8 @@ export const createMcpPreviewHandlers = ({
         const canReusePreview =
           mode === "iterative" &&
           isPreviewTargetCompatible(input, mode, preview.status());
-        if (canReusePreview === false || previewWasStale) {
+        const restartPreview = canReusePreview === false || previewWasStale;
+        if (restartPreview) {
           await closeCaptureSession();
         }
         validatePreviewServerOptions({
@@ -403,7 +408,7 @@ export const createMcpPreviewHandlers = ({
           mode,
           cwd: previewProject.cwd,
           buildCacheKey: previewProject.buildCacheKey,
-          restart: canReusePreview === false || previewWasStale,
+          restart: restartPreview,
         });
         activeSource = source;
         markFresh(freshness, projectVersion);
@@ -459,9 +464,7 @@ export const createMcpPreviewHandlers = ({
         const completedAt = Date.now();
         return {
           ...assertGeneratedSiteCapture(input, result),
-          ...(input.path !== undefined && input.baseUrl === undefined
-            ? { previewMode: preview.status().mode ?? undefined }
-            : {}),
+          ...getManagedPreviewMetadata(input),
           lifecycleTimings: {
             previewRefreshMs: previewReadyAt - startedAt,
             captureMs: completedAt - previewReadyAt,
@@ -522,9 +525,7 @@ export const createMcpPreviewHandlers = ({
           }
           return {
             ...assertGeneratedSiteCapture(input, result),
-            ...(input.path !== undefined && input.baseUrl === undefined
-              ? { previewMode: preview.status().mode ?? undefined }
-              : {}),
+            ...getManagedPreviewMetadata(input),
           };
         });
       });

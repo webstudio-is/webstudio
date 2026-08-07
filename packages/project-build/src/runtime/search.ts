@@ -243,10 +243,10 @@ const hasAssociatedFormLabel = ({
     ) {
       continue;
     }
+    const labelProps = propsByInstance.get(label.id);
     if (
       id !== undefined &&
-      (propsByInstance.get(label.id)?.get("for") ??
-        propsByInstance.get(label.id)?.get("htmlFor")) === id &&
+      (labelProps?.get("for") ?? labelProps?.get("htmlFor")) === id &&
       hasAccessibleName({
         instanceId: label.id,
         instances,

@@ -1918,11 +1918,9 @@ export const createStyleDeclsFromInput = ({
     `.styles{${cssProperty}:${toValue(parsedValue.data)}}`,
     new Map()
   );
-  const unresolvedVariableWasExpanded =
-    parsed.styles.length > 0 &&
-    parsed.styles.every(
-      ({ value: parsedStyleValue }) => parsedStyleValue.type === "var"
-    );
+  const unresolvedVariableWasExpanded = parsed.styles.every(
+    ({ value: parsedStyleValue }) => parsedStyleValue.type === "var"
+  );
   if (
     (parsed.errors.length > 0 && unresolvedVariableWasExpanded === false) ||
     parsed.styles.length === 0 ||

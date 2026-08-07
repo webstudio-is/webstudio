@@ -81,7 +81,7 @@ export class ResourceValue {
   constructor(name: string, config: ResourceConfig) {
     if (config === undefined) {
       throw new Error(
-        "ResourceValue requires a resource definition. Existing resource ids are not supported in JSX; insert the component first, then bind its resource prop with update-props."
+        "Invalid JSX prop: ResourceValue requires a resource definition. Existing resource ids are not supported in JSX; insert the component first, then bind its resource prop with update-props."
       );
     }
     this.name = name;
