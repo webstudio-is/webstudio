@@ -23,7 +23,7 @@ node --version
 npm --version
 ```
 
-If `node` is version 22 or greater and `npm` prints a version, skip Node.js installation. If either command is missing, install Node.js 22 or greater before using the Webstudio CLI.
+If `node` is version 22.12 or greater and `npm` prints a version, skip Node.js installation. If either command is missing, install Node.js 22.12 or greater before using the Webstudio CLI.
 
 Run the latest Webstudio CLI without a global install:
 
@@ -100,7 +100,7 @@ Publish the Project in Webstudio Cloud before syncing when you need recent Build
 
 ## Install Node.js only when needed
 
-You need Node.js 22 or greater to use the Webstudio CLI. If `node --version` reports version 22 or greater, skip this section.
+You need Node.js 22.12 or greater to use the Webstudio CLI. If `node --version` reports version 22.12 or greater, skip this section.
 
 On macOS or Linux, you can install Node.js with NVM. First check whether NVM already exists:
 
@@ -128,7 +128,7 @@ Verify your Node.js installation by checking its version:
 node --version
 ```
 
-On Windows, install Node.js 22 or greater from [nodejs.org](https://nodejs.org/) or use a Windows-compatible Node version manager. After installing Node.js, open a new terminal and verify:
+On Windows, install Node.js 22.12 or greater from [nodejs.org](https://nodejs.org/) or use a Windows-compatible Node version manager. After installing Node.js, open a new terminal and verify:
 
 ```powershell
 node --version

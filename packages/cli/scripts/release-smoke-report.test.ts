@@ -204,7 +204,7 @@ describe("comparative release smoke report", () => {
       type: "module",
       bin: { "webstudio-cli": "./bin.js", webstudio: "./bin.js" },
       files: ["lib/*", "templates/*", "bin.js", "!*.{test,stories}.*"],
-      engines: { node: ">=22" },
+      engines: { node: ">=22.12.0" },
     };
     expect(publishedCliManifestContractSchema.parse(contract)).toEqual(
       contract
