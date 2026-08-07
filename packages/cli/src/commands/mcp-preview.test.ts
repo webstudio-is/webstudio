@@ -467,6 +467,60 @@ test("reuses and closes one browser capture session for session screenshots", as
   expect(preview.stop).toHaveBeenCalledOnce();
 });
 
+test("times out a stalled screenshot after preview start and releases its session", async () => {
+  let running = false;
+  const stop = vi.fn(async () => {
+    running = false;
+    return { running: false as const };
+  });
+  const preview = {
+    status: vi.fn(() =>
+      running
+        ? {
+            url: "http://127.0.0.1:5173/",
+            running: true as const,
+            mode: "iterative" as const,
+          }
+        : { running: false as const }
+    ),
+    startAndWait: vi.fn(async () => {
+      running = true;
+      return {
+        url: "http://127.0.0.1:5173/",
+        running: true as const,
+        mode: "iterative" as const,
+      };
+    }),
+    resolveUrl: vi.fn(() => "http://127.0.0.1:5173/"),
+    stop,
+  };
+  const close = vi.fn(async () => undefined);
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    preparePreview: vi.fn(async () => ({ cwd: "/tmp/preview" })),
+    createCaptureSession: vi.fn(() => ({
+      capture: vi.fn(() => new Promise<never>(() => undefined)),
+      capturePage: vi.fn(),
+      close,
+    })) as never,
+  });
+
+  await handlers.startPreview({ source: "session", mode: "iterative" });
+  await expect(
+    handlers.captureScreenshot({
+      path: "/",
+      source: "session",
+      mode: "iterative",
+      viewport: { width: 1440, height: 900 },
+      timeout: 5,
+    })
+  ).rejects.toMatchObject({ code: "SCREENSHOT_TIMEOUT" });
+  expect(close).toHaveBeenCalledOnce();
+
+  await expect(handlers.stopPreview()).resolves.toEqual({ running: false });
+  expect(stop).toHaveBeenCalledOnce();
+});
+
 test("applies internal page credentials only to owned preview captures", async () => {
   const preview = {
     status: vi.fn(() => ({
@@ -704,6 +758,41 @@ test("captures one session page across multiple viewports through resize", async
     }),
   ]);
   expect(preview.startAndWait).not.toHaveBeenCalled();
+});
+
+test("times out a stalled responsive capture and releases its session", async () => {
+  const close = vi.fn(async () => undefined);
+  const preview = {
+    status: vi.fn(() => ({
+      url: "http://127.0.0.1:3000/",
+      running: true,
+      mode: "iterative" as const,
+    })),
+    startAndWait: vi.fn(),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+  };
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => false,
+    createCaptureSession: vi.fn(() => ({
+      capture: vi.fn(),
+      capturePage: vi.fn(() => new Promise<never>(() => undefined)),
+      close,
+    })) as never,
+  });
+
+  await expect(
+    handlers.capturePageScreenshots(
+      [375, 768, 1024, 1440].map((width) => ({
+        path: "/responsive",
+        source: "session" as const,
+        mode: "iterative" as const,
+        viewport: { width, height: 900 },
+        timeout: 5,
+      }))
+    )
+  ).rejects.toMatchObject({ code: "SCREENSHOT_TIMEOUT" });
+  expect(close).toHaveBeenCalledOnce();
 });
 
 test.each([

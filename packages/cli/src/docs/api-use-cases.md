@@ -156,6 +156,7 @@ Notes:
 - From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running preview/site without generating, building, starting, or restarting preview.
 - Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview. A separate one-shot `single-op-call` process does not own another process's preview controller.
 - Use waitForSelector when the rendered app has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
+- The screenshot timeout bounds browser capture after the preview is ready. A timeout returns `SCREENSHOT_TIMEOUT`, resets the reusable browser session, and releases the shared preview lifecycle for cleanup.
 - Preview installs generated app dependencies under `.webstudio/preview` and reuses them across regenerations.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
 - If dependency installation fails, check npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.

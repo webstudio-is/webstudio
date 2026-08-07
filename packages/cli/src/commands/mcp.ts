@@ -1267,6 +1267,9 @@ const createCliMcpHost = async ({
       }
       stderr.write(`${formatMcpStatusLine(message)}\n`);
     },
+    async dispose() {
+      await previewHandlers.stopPreview();
+    },
   };
 };
 
@@ -1587,11 +1590,13 @@ export const mcpRun = async (options: McpRunOptions) => {
   const results: unknown[] = [];
   let core: ReturnType<typeof createProjectSessionMcpCore<PublicApiCommand>>;
   let scope: McpProjectScope = {};
+  let disposeHost: () => Promise<void> = async () => undefined;
   try {
     const mcpHost = await createCliMcpHost({
       projectId: options.project,
     });
     const { host, apiContract } = mcpHost;
+    disposeHost = mcpHost.dispose;
     scope = mcpHost.scope;
     for (const call of calls) {
       assertMcpToolServerSupport(call.tool, apiContract);
@@ -1666,6 +1671,7 @@ export const mcpRun = async (options: McpRunOptions) => {
     } catch (error) {
       activeCall = undefined;
       disposeTerminationHandlers();
+      await disposeHost().catch(() => undefined);
       if (error instanceof McpRunCheckpointStop) {
         throw new HandledCliError();
       }
@@ -1693,6 +1699,7 @@ export const mcpRun = async (options: McpRunOptions) => {
     }
   }
   disposeTerminationHandlers();
+  await disposeHost().catch(() => undefined);
   stderr.write(
     `${formatMcpStatusLine(
       `run succeeded in ${Date.now() - startedAt}ms with ${calls.length} calls`
@@ -1768,19 +1775,31 @@ export const mcp = async (
 ) => {
   const status = createMcpStatusReporter();
   let didReportClose = false;
+  let disposeHost: () => Promise<void> = async () => undefined;
   const reportClose = () => {
     if (didReportClose) {
       return;
     }
     didReportClose = true;
     status.connectionClosed();
+    void disposeHost().catch((error: unknown) => {
+      status.connectionError(
+        error instanceof Error ? error : new Error(String(error))
+      );
+    });
   };
   stdin.once("end", reportClose);
   stdin.once("close", reportClose);
   status.starting();
-  const { host, toolCount, reportLog, apiContract } = await createCliMcpHost({
-    projectId: options.project,
-  });
+  const { host, toolCount, reportLog, apiContract, dispose } =
+    await createCliMcpHost({
+      projectId: options.project,
+    });
+  disposeHost = dispose;
+  if (didReportClose) {
+    await disposeHost().catch(() => undefined);
+    return;
+  }
   status.sessionReady();
   status.apiContract(apiContract);
   status.ready(toolCount);

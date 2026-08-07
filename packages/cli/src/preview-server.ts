@@ -1,4 +1,5 @@
 import {
+  execFile,
   spawn,
   type ChildProcess,
   type StdioOptions,
@@ -27,6 +28,7 @@ export type PreviewServerResult = {
 export type PreviewServerDependencies = {
   spawn: typeof spawn;
   killProcess: (pid: number, signal: NodeJS.Signals) => boolean;
+  killWindowsProcessTree: (pid: number) => Promise<boolean>;
   parentProcess: {
     pid: number;
     once: (signal: NodeJS.Signals, handler: () => void) => unknown;
@@ -48,6 +50,25 @@ export type PreviewServerDependencies = {
 export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   spawn,
   killProcess: process.kill,
+  killWindowsProcessTree: (pid) =>
+    new Promise((resolve, reject) => {
+      execFile(
+        "taskkill.exe",
+        ["/pid", String(pid), "/T", "/F"],
+        { windowsHide: true },
+        (error) => {
+          if (error === null) {
+            resolve(true);
+            return;
+          }
+          if (error.code === 128) {
+            resolve(false);
+            return;
+          }
+          reject(error);
+        }
+      );
+    }),
   parentProcess: process,
   fetch,
   cp,
@@ -264,11 +285,14 @@ export const startPreviewServer = (
   };
 };
 
-const killPreviewProcess = (
+const killPreviewProcess = async (
   previewProcess: ChildProcess,
   signal: NodeJS.Signals,
   dependencies: PreviewServerDependencies
 ) => {
+  if (dependencies.platform === "win32" && previewProcess.pid !== undefined) {
+    return await dependencies.killWindowsProcessTree(previewProcess.pid);
+  }
   if (dependencies.platform !== "win32" && previewProcess.pid !== undefined) {
     try {
       return dependencies.killProcess(-previewProcess.pid, signal);
@@ -532,16 +556,21 @@ export const createPreviewController = (
         const activeServer = server;
         server = undefined;
         removeTerminationHandlers();
-        try {
-          if (activeServer !== undefined) {
-            killPreviewProcess(activeServer.process, "SIGTERM", dependencies);
-          }
-        } finally {
+        if (activeServer === undefined) {
           dependencies.parentProcess.kill(
             dependencies.parentProcess.pid,
             signal
           );
+          return;
         }
+        void killPreviewProcess(activeServer.process, "SIGTERM", dependencies)
+          .catch(() => undefined)
+          .finally(() => {
+            dependencies.parentProcess.kill(
+              dependencies.parentProcess.pid,
+              signal
+            );
+          });
       };
       terminationHandlers.set(signal, handler);
       dependencies.parentProcess.once(signal, handler);
@@ -613,13 +642,16 @@ export const createPreviewController = (
     ) {
       return;
     }
-    await new Promise<void>((resolve, reject) => {
+    const exited = new Promise<void>((resolve, reject) => {
       process.once("error", reject);
       process.once("exit", () => resolve());
-      if (killPreviewProcess(process, "SIGTERM", dependencies) === false) {
-        resolve();
-      }
     });
+    if (
+      (await killPreviewProcess(process, "SIGTERM", dependencies)) === false
+    ) {
+      return;
+    }
+    await exited;
   };
   const start = async (
     options: PreviewControllerStartOptions = {}

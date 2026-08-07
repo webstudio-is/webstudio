@@ -8,7 +8,8 @@ import {
   createScreenshotCaptureSession,
 } from "../screenshot";
 import { inspectGeneratedBuildMetrics } from "../generated-build-metrics";
-import { createExclusiveAsyncRunner } from "../async-utils";
+import { createExclusiveAsyncRunner, withTimeout } from "../async-utils";
+import { defaultScreenshotTimeout } from "@webstudio-is/project-build/visual";
 import {
   preparePreviewProject,
   previewDefaultTemplate,
@@ -111,6 +112,12 @@ const isSameCaptureSessionConfig = (
 const defaultPreviewSource = "session" satisfies PreviewSource;
 const defaultSleep = (durationMs: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, durationMs));
+
+const createScreenshotTimeoutError = (timeout: number) =>
+  Object.assign(
+    new Error(`Screenshot capture did not finish within ${timeout}ms.`),
+    { code: "SCREENSHOT_TIMEOUT" }
+  );
 const getPreviewSource = (source: PreviewSource | undefined): PreviewSource =>
   source ?? defaultPreviewSource;
 
@@ -434,32 +441,46 @@ export const createMcpPreviewHandlers = ({
         const previewReadyAt = Date.now();
         progress?.report(`tool screenshot capturing ${url}`);
         const captureOptions = getCaptureOptions(input, url);
+        const managedCapture = isManagedSessionPreviewCapture(input);
         let result: Awaited<ReturnType<typeof captureScreenshot>>;
-        if (
-          isManagedSessionPreviewCapture(input) &&
-          createCaptureSession !== undefined
-        ) {
-          const captureSession = await getCaptureSession(input);
-          result = await captureSession.capture(captureOptions);
-          for (
-            let retry = 0;
-            retry < 2 && result.navigation?.generatedSiteRootPresent === false;
-            retry += 1
-          ) {
-            progress?.report(
-              "tool screenshot waiting for refreshed generated route"
-            );
-            await sleep(1000);
-            result = await captureSession.capture(captureOptions);
+        try {
+          const timeout = input.timeout ?? defaultScreenshotTimeout;
+          result = await withTimeout(
+            (async () => {
+              if (managedCapture && createCaptureSession !== undefined) {
+                const captureSession = await getCaptureSession(input);
+                let captureResult =
+                  await captureSession.capture(captureOptions);
+                for (
+                  let retry = 0;
+                  retry < 2 &&
+                  captureResult.navigation?.generatedSiteRootPresent === false;
+                  retry += 1
+                ) {
+                  progress?.report(
+                    "tool screenshot waiting for refreshed generated route"
+                  );
+                  await sleep(1000);
+                  captureResult = await captureSession.capture(captureOptions);
+                }
+                return captureResult;
+              }
+              return await captureScreenshot({
+                ...captureOptions,
+                isJson: false,
+                isMcp: true,
+                isInteractive: false,
+                confirmInstall: async () => false,
+              });
+            })(),
+            timeout,
+            () => createScreenshotTimeoutError(timeout)
+          );
+        } catch (error) {
+          if (managedCapture) {
+            await closeCaptureSession().catch(() => undefined);
           }
-        } else {
-          result = await captureScreenshot({
-            ...captureOptions,
-            isJson: false,
-            isMcp: true,
-            isInteractive: false,
-            confirmInstall: async () => false,
-          });
+          throw error;
         }
         const completedAt = Date.now();
         return {
@@ -507,17 +528,28 @@ export const createMcpPreviewHandlers = ({
         progress?.report(
           `tool screenshot capturing ${new Set(urls).size} pages across ${inputs.length} viewport widths`
         );
-        const results = await (
-          await getCaptureSession(firstInput)
-        ).capturePage(
-          inputs.map((input, index) => {
-            const url = urls[index];
-            if (url === undefined) {
-              throw new Error("Screenshot URL resolution was incomplete.");
-            }
-            return getCaptureOptions(input, url);
-          })
-        );
+        let results;
+        try {
+          const timeout = Math.max(
+            ...inputs.map((input) => input.timeout ?? defaultScreenshotTimeout)
+          );
+          results = await withTimeout(
+            (await getCaptureSession(firstInput)).capturePage(
+              inputs.map((input, index) => {
+                const url = urls[index];
+                if (url === undefined) {
+                  throw new Error("Screenshot URL resolution was incomplete.");
+                }
+                return getCaptureOptions(input, url);
+              })
+            ),
+            timeout,
+            () => createScreenshotTimeoutError(timeout)
+          );
+        } catch (error) {
+          await closeCaptureSession().catch(() => undefined);
+          throw error;
+        }
         return results.map((result, index) => {
           const input = inputs[index];
           if (input === undefined) {

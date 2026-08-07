@@ -1302,7 +1302,8 @@ const screenshotInputSchema = {
     timeout: {
       type: "number",
       default: defaultScreenshotTimeout,
-      description: "Maximum milliseconds to wait for page readiness.",
+      description:
+        "Maximum milliseconds for browser capture after preview is ready.",
     },
     source: {
       type: "string",

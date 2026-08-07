@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn, type ChildProcess } from "node:child_process";
 import type { ScreenshotWaitUntil } from "@webstudio-is/project-build/visual";
+import { withTimeout } from "./async-utils";
 
 type BrowserProcess = Pick<ChildProcess, "kill" | "once">;
 
@@ -100,27 +101,18 @@ const delay = (ms: number) =>
   new Promise<void>((resolveDelay) => setTimeout(resolveDelay, ms));
 
 const createTimeoutError = (message: string, timeout: number) =>
-  new Error(`${message} within ${timeout}ms.`);
+  Object.assign(new Error(`${message} within ${timeout}ms.`), {
+    code: "SCREENSHOT_TIMEOUT",
+  });
 
 const withDeadline = async <Result>(
   promise: Promise<Result>,
   message: string,
   timeout: number
-): Promise<Result> => {
-  let timeoutId: NodeJS.Timeout | undefined;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => {
-      reject(createTimeoutError(message, timeout));
-    }, timeout);
-  });
-  try {
-    return await Promise.race([promise, timeoutPromise]);
-  } finally {
-    if (timeoutId !== undefined) {
-      clearTimeout(timeoutId);
-    }
-  }
-};
+): Promise<Result> =>
+  await withTimeout(promise, timeout, () =>
+    createTimeoutError(message, timeout)
+  );
 
 const measureDuration = async <Result>(operation: () => Promise<Result>) => {
   const startedAt = Date.now();
@@ -1637,12 +1629,18 @@ export const createBrowserScreenshotSession = async (
 ): Promise<BrowserScreenshotSession> => {
   let runtime = await startBrowserRuntime(options, dependencies);
   let restartPromise: Promise<BrowserRuntime> | undefined;
+  let closed = false;
   const restart = async (failedRuntime: BrowserRuntime) => {
     if (runtime !== failedRuntime) {
       return runtime;
     }
     restartPromise ??= (async () => {
       await failedRuntime.close();
+      if (closed) {
+        throw new BrowserSessionClosedError(
+          "Browser screenshot session was closed."
+        );
+      }
       const next = await startBrowserRuntime(options, dependencies);
       runtime = next;
       restartPromise = undefined;
@@ -1653,12 +1651,18 @@ export const createBrowserScreenshotSession = async (
   const captureWithRestart = async <Result>(
     capture: (activeRuntime: BrowserRuntime) => Promise<Result>
   ) => {
+    if (closed) {
+      throw new BrowserSessionClosedError(
+        "Browser screenshot session was closed."
+      );
+    }
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const activeRuntime = runtime;
       try {
         return await capture(activeRuntime);
       } catch (error) {
         if (
+          closed ||
           attempt === 1 ||
           (error instanceof BrowserSessionClosedError === false &&
             activeRuntime.running)
@@ -1692,6 +1696,7 @@ export const createBrowserScreenshotSession = async (
       );
     },
     async close() {
+      closed = true;
       await runtime.close();
     },
   };

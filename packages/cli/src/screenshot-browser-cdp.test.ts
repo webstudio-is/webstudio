@@ -581,7 +581,10 @@ test("ignores lifecycle readiness from child frames", async () => {
       },
       createDependencies({ socket })
     )
-  ).rejects.toThrow("Page did not reach networkidle");
+  ).rejects.toMatchObject({
+    code: "SCREENSHOT_TIMEOUT",
+    message: expect.stringContaining("Page did not reach networkidle"),
+  });
 });
 
 test("reuses one browser process across screenshot captures", async () => {
@@ -848,6 +851,28 @@ test("restarts the shared browser once after an unexpected exit", async () => {
 
   expect(secondProcess.kill).toHaveBeenCalledOnce();
   expect(dependencies.rm).toHaveBeenCalledTimes(2);
+});
+
+test("does not restart a browser session after cleanup", async () => {
+  const dependencies = createDependencies();
+  const options = {
+    url: "https://example.com",
+    output: "/tmp/closed.png",
+    width: 800,
+    height: 600,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(options, dependencies);
+
+  await session.close();
+
+  await expect(session.capture(options)).rejects.toThrow(
+    "Browser screenshot session was closed."
+  );
+  expect(dependencies.spawnBrowser).toHaveBeenCalledOnce();
 });
 
 test("captures full page and returns DevTools layout metrics", async () => {
