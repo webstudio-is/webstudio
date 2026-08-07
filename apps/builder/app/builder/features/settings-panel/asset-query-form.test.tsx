@@ -85,9 +85,8 @@ test("loads the external query schema declared by OpenAPI", async () => {
     result: "one",
   }).source.controls;
 
-  expect(manyControls.slice(0, 3).map(({ key }) => key)).toEqual([
+  expect(manyControls.slice(-2).map(({ key }) => key)).toEqual([
     "output",
-    "content",
     "result",
   ]);
   expect(manyControls.map(({ key }) => key)).toEqual(

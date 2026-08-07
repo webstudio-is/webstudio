@@ -84,8 +84,7 @@ const configureAssetQueryDefinition = ({
     fallbackType: "string",
   });
   const order = new Map([
-    ["output", 0],
-    ["content", 1],
+    ["output", 1],
     ["result", 2],
   ]);
   return {
@@ -99,7 +98,7 @@ const configureAssetQueryDefinition = ({
         )
         .toSorted(
           (left, right) =>
-            (order.get(left.key) ?? 3) - (order.get(right.key) ?? 3)
+            (order.get(left.key) ?? 0) - (order.get(right.key) ?? 0)
         ),
     },
   };
