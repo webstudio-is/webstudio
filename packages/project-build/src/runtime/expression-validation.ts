@@ -1,6 +1,6 @@
 import { lintExpression } from "@webstudio-is/expression";
 import { z } from "zod";
-import type { SemanticValidationIssue } from "./errors";
+import { addZodValidationIssue, type SemanticValidationIssue } from "./errors";
 
 export const getExpressionErrorMessages = (
   options: Parameters<typeof lintExpression>[0]
@@ -11,6 +11,23 @@ export const getExpressionErrorMessages = (
 
 export const getExpressionErrors = (expression: string) =>
   getExpressionErrorMessages({ expression });
+
+export const addExpressionValidationIssues = (
+  context: z.RefinementCtx,
+  errors: readonly string[],
+  path: (string | number)[] = []
+) => {
+  for (const detail of errors) {
+    addZodValidationIssue(context, {
+      code: "invalid_expression",
+      path: path.map(String),
+      message: "Invalid Webstudio expression",
+      constraint: "valid_webstudio_expression",
+      example: "item.title",
+      detail,
+    });
+  }
+};
 
 export const hasExpressionDiagnostics = (
   options: Parameters<typeof lintExpression>[0]

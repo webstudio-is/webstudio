@@ -33,7 +33,22 @@ const {
   resolveMcpPreviewInput,
   resolveMcpScreenshotInput,
   startMcpPreview,
+  withMcpHost,
 } = __testing__;
+
+test("disposes an MCP host when its operation fails", async () => {
+  const dispose = vi.fn(async () => undefined);
+
+  await expect(
+    withMcpHost(
+      async () => ({ dispose }),
+      async () => {
+        throw new Error("operation failed");
+      }
+    )
+  ).rejects.toThrow("operation failed");
+  expect(dispose).toHaveBeenCalledOnce();
+});
 
 test("allocates an available port only when MCP preview omits one", async () => {
   const getAvailablePort = vi.fn(async () => 53124);

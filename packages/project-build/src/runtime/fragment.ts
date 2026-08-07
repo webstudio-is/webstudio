@@ -31,8 +31,10 @@ import {
 } from "./data";
 import { cloneInstanceWithNewIds } from "./instances";
 import { clonePropForInstance, listPropExpressions } from "./props";
-import { addZodValidationIssue } from "./errors";
-import { getExpressionErrorMessages } from "./expression-validation";
+import {
+  addExpressionValidationIssues,
+  getExpressionErrorMessages,
+} from "./expression-validation";
 import { buildMergedBreakpointIds, maxBreakpoints } from "./breakpoints";
 import {
   collectStyleSourcesFromInstances,
@@ -100,16 +102,7 @@ export const webstudioFragmentInput = webstudioFragment.superRefine(
         allowAssignment: entry.allowAssignment,
         availableVariables: new Set(entry.variables),
       });
-      for (const detail of errors) {
-        addZodValidationIssue(context, {
-          code: "invalid_expression",
-          path: entry.path,
-          message: "Invalid Webstudio expression",
-          constraint: "valid_webstudio_expression",
-          example: "item.title",
-          detail,
-        });
-      }
+      addExpressionValidationIssues(context, errors, entry.path);
     }
   }
 );

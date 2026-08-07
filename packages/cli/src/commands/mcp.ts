@@ -1275,6 +1275,21 @@ const createCliMcpCore = (host: CliMcpHost) =>
     },
   });
 
+const withMcpHost = async <
+  Host extends { dispose: () => Promise<void> },
+  Result,
+>(
+  createHost: () => Promise<Host>,
+  callback: (host: Host) => Promise<Result>
+) => {
+  const host = await createHost();
+  try {
+    return await callback(host);
+  } finally {
+    await host.dispose().catch(() => undefined);
+  }
+};
+
 type CliMcpCore = ReturnType<
   typeof createProjectSessionMcpCore<PublicApiCommand>
 >;
@@ -1355,6 +1370,7 @@ export const __testing__ = {
   readPersistedMcpCheckpoint,
   updatePersistedMcpCheckpoint,
   executeMcpRunCall,
+  withMcpHost,
   resolveMcpPreviewInput,
   resolveMcpScreenshotInput,
   startMcpPreview,
@@ -1364,73 +1380,76 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
   if (options.tool === undefined || options.tool === "") {
     throw new Error("mcp single-op-call requires a tool name.");
   }
+  const tool = options.tool;
   const startedAt = Date.now();
   stderr.write(
     `${formatMcpStatusLine(
-      `single-op-call ${options.tool} started${options.dryRun === true ? " (dry run)" : ""}`
+      `single-op-call ${tool} started${options.dryRun === true ? " (dry run)" : ""}`
     )}\n`
   );
   try {
-    assertSingleOpCallToolSupported(options.tool);
+    assertSingleOpCallToolSupported(tool);
     const input = await parseMcpSingleOpCallInput(options);
-    validateSingleOpCallInput(options.tool, input);
-    const { host, apiContract, scope } = await createCliMcpHost({
-      projectId: options.project,
-    });
-    assertMcpToolServerSupport(options.tool, apiContract);
-    const core = createCliMcpCore(host);
-    const persistedCheckpoint =
-      options.tool === "checkpoint.ack"
-        ? await readPersistedMcpCheckpoint(scope)
-        : undefined;
-    await assertPersistedMcpCheckpointAcknowledged(
-      options.tool,
-      core.listTools(),
-      scope
+    validateSingleOpCallInput(tool, input);
+    await withMcpHost(
+      () => createCliMcpHost({ projectId: options.project }),
+      async ({ host, apiContract, scope }) => {
+        assertMcpToolServerSupport(tool, apiContract);
+        const core = createCliMcpCore(host);
+        const persistedCheckpoint =
+          tool === "checkpoint.ack"
+            ? await readPersistedMcpCheckpoint(scope)
+            : undefined;
+        await assertPersistedMcpCheckpointAcknowledged(
+          tool,
+          core.listTools(),
+          scope
+        );
+        if (options.refresh === true && tool !== "refresh") {
+          await core.callTool({ name: "refresh" });
+        }
+        const result = await core.callTool({
+          name: tool,
+          input,
+          dryRun: options.dryRun,
+        });
+        if (isMcpToolCallFailure(result)) {
+          stderr.write(
+            `${formatMcpStatusLine(
+              `single-op-call ${tool} failed in ${Date.now() - startedAt}ms`
+            )}\n`
+          );
+          printJson(result.structuredContent);
+          throw new HandledCliError();
+        }
+        if (
+          tool === "checkpoint.ack" &&
+          persistedCheckpoint?.nextCommand !== undefined &&
+          isPlainRecord(result.structuredContent.data)
+        ) {
+          result.structuredContent.data.nextCommand =
+            persistedCheckpoint.nextCommand;
+        }
+        await updatePersistedMcpCheckpoint({
+          tool,
+          structuredContent: result.structuredContent,
+          scope,
+        });
+        const session = result.structuredContent.meta.session;
+        const committed =
+          session === undefined ? "" : `; committed=${session.committed}`;
+        stderr.write(
+          `${formatMcpStatusLine(
+            `single-op-call ${tool} succeeded in ${Date.now() - startedAt}ms${committed}`
+          )}\n`
+        );
+        if (options.printSuccess === undefined) {
+          printJson(result.structuredContent);
+        } else {
+          options.printSuccess(result.structuredContent.data);
+        }
+      }
     );
-    if (options.refresh === true && options.tool !== "refresh") {
-      await core.callTool({ name: "refresh" });
-    }
-    const result = await core.callTool({
-      name: options.tool,
-      input,
-      dryRun: options.dryRun,
-    });
-    if (isMcpToolCallFailure(result)) {
-      stderr.write(
-        `${formatMcpStatusLine(
-          `single-op-call ${options.tool} failed in ${Date.now() - startedAt}ms`
-        )}\n`
-      );
-      printJson(result.structuredContent);
-      throw new HandledCliError();
-    }
-    if (
-      options.tool === "checkpoint.ack" &&
-      persistedCheckpoint?.nextCommand !== undefined &&
-      isPlainRecord(result.structuredContent.data)
-    ) {
-      result.structuredContent.data.nextCommand =
-        persistedCheckpoint.nextCommand;
-    }
-    await updatePersistedMcpCheckpoint({
-      tool: options.tool,
-      structuredContent: result.structuredContent,
-      scope,
-    });
-    const session = result.structuredContent.meta.session;
-    const committed =
-      session === undefined ? "" : `; committed=${session.committed}`;
-    stderr.write(
-      `${formatMcpStatusLine(
-        `single-op-call ${options.tool} succeeded in ${Date.now() - startedAt}ms${committed}`
-      )}\n`
-    );
-    if (options.printSuccess === undefined) {
-      printJson(result.structuredContent);
-    } else {
-      options.printSuccess(result.structuredContent.data);
-    }
   } catch (error) {
     if (isHandledCliError(error)) {
       throw error;
@@ -1441,7 +1460,7 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
     });
     stderr.write(
       `${formatMcpStatusLine(
-        `single-op-call ${options.tool} failed in ${payload.meta.elapsedMs}ms: ${payload.error.message}`
+        `single-op-call ${tool} failed in ${payload.meta.elapsedMs}ms: ${payload.error.message}`
       )}\n`
     );
     printJson(payload);
@@ -1481,45 +1500,54 @@ const runMcpProjectsBatch = async ({
           `batch project ${project.id} started at call ${startCall + 1}/${project.calls.length}`
         )}\n`
       );
-      const { host, apiContract } = await createCliMcpHost({
-        projectRoot: project.root,
-      });
-      const core = createCliMcpCore(host);
-      const tools = new Map(core.listTools().map((tool) => [tool.name, tool]));
-      for (const call of project.calls.slice(startCall)) {
-        assertMcpToolServerSupport(call.tool, apiContract);
-        const tool = tools.get(call.tool);
-        assertMcpBatchMutationApproved({
-          projectId: project.id,
-          call,
-          method: tool?.annotations.method,
-          approved: options.approveMutations === true,
-        });
-      }
-      for (let index = startCall; index < project.calls.length; index++) {
-        const call = project.calls[index]!;
-        const tool = tools.get(call.tool);
-        await callStarted(
-          index,
-          call.dryRun || tool?.annotations.method !== "mutation"
-        );
-        const { checkpoint } = await executeMcpRunCall({
-          core,
-          call,
-          scope: { projectRoot: project.root },
-        });
-        await callSucceeded(index + 1);
-        const nextTool = project.calls[index + 1]?.tool;
-        if (
-          checkpoint !== undefined &&
-          index + 1 < project.calls.length &&
-          (nextTool === undefined ||
-            isReadOnlyProjectSessionMcpToolCall(nextTool, core.listTools()) ===
-              false)
-        ) {
-          throw createMcpInputError(checkpoint.message, "CHECKPOINT_REQUIRED");
+      await withMcpHost(
+        () => createCliMcpHost({ projectRoot: project.root }),
+        async ({ host, apiContract }) => {
+          const core = createCliMcpCore(host);
+          const tools = new Map(
+            core.listTools().map((tool) => [tool.name, tool])
+          );
+          for (const call of project.calls.slice(startCall)) {
+            assertMcpToolServerSupport(call.tool, apiContract);
+            const tool = tools.get(call.tool);
+            assertMcpBatchMutationApproved({
+              projectId: project.id,
+              call,
+              method: tool?.annotations.method,
+              approved: options.approveMutations === true,
+            });
+          }
+          for (let index = startCall; index < project.calls.length; index++) {
+            const call = project.calls[index]!;
+            const tool = tools.get(call.tool);
+            await callStarted(
+              index,
+              call.dryRun || tool?.annotations.method !== "mutation"
+            );
+            const { checkpoint } = await executeMcpRunCall({
+              core,
+              call,
+              scope: { projectRoot: project.root },
+            });
+            await callSucceeded(index + 1);
+            const nextTool = project.calls[index + 1]?.tool;
+            if (
+              checkpoint !== undefined &&
+              index + 1 < project.calls.length &&
+              (nextTool === undefined ||
+                isReadOnlyProjectSessionMcpToolCall(
+                  nextTool,
+                  core.listTools()
+                ) === false)
+            ) {
+              throw createMcpInputError(
+                checkpoint.message,
+                "CHECKPOINT_REQUIRED"
+              );
+            }
+          }
         }
-      }
+      );
     },
   });
   const succeeded = reports.filter(
@@ -1597,6 +1625,7 @@ export const mcpRun = async (options: McpRunOptions) => {
     }
     core = createCliMcpCore(host);
   } catch (error) {
+    await disposeHost().catch(() => undefined);
     reportMcpRunPreflightFailure({
       error,
       startedAt,
@@ -1611,89 +1640,90 @@ export const mcpRun = async (options: McpRunOptions) => {
     results,
     startedAt,
   });
-  for (const [index, call] of calls.entries()) {
-    const callNumber = index + 1;
-    activeCall = { number: callNumber, tool: call.tool };
-    stderr.write(
-      `${formatMcpStatusLine(
-        `run ${callNumber}/${calls.length} ${call.tool} started${call.dryRun ? " (dry run)" : ""}`
-      )}\n`
-    );
-    try {
-      const { result, checkpoint } = await executeMcpRunCall({
-        core,
-        call,
-        scope,
-      });
-      const session = result.structuredContent.meta.session;
-      const committed =
-        session === undefined ? "" : `; committed=${session.committed}`;
+  try {
+    for (const [index, call] of calls.entries()) {
+      const callNumber = index + 1;
+      activeCall = { number: callNumber, tool: call.tool };
       stderr.write(
         `${formatMcpStatusLine(
-          `run ${callNumber}/${calls.length} ${call.tool} succeeded${committed}`
+          `run ${callNumber}/${calls.length} ${call.tool} started${call.dryRun ? " (dry run)" : ""}`
         )}\n`
       );
-      results.push({
-        tool: call.tool,
-        ok: true,
-        structuredContent: result.structuredContent,
-      });
-      activeCall = undefined;
-      const nextTool = calls[callNumber]?.tool;
-      if (
-        checkpoint !== undefined &&
-        callNumber < calls.length &&
-        (nextTool === undefined ||
-          isReadOnlyProjectSessionMcpToolCall(nextTool, core.listTools()) ===
-            false)
-      ) {
-        const checkpointStopPayload = createMcpRunCheckpointStopPayload({
-          checkpoint,
-          completedCalls: callNumber,
+      try {
+        const { result, checkpoint } = await executeMcpRunCall({
+          core,
+          call,
+          scope,
+        });
+        const session = result.structuredContent.meta.session;
+        const committed =
+          session === undefined ? "" : `; committed=${session.committed}`;
+        stderr.write(
+          `${formatMcpStatusLine(
+            `run ${callNumber}/${calls.length} ${call.tool} succeeded${committed}`
+          )}\n`
+        );
+        results.push({
+          tool: call.tool,
+          ok: true,
+          structuredContent: result.structuredContent,
+        });
+        activeCall = undefined;
+        const nextTool = calls[callNumber]?.tool;
+        if (
+          checkpoint !== undefined &&
+          callNumber < calls.length &&
+          (nextTool === undefined ||
+            isReadOnlyProjectSessionMcpToolCall(nextTool, core.listTools()) ===
+              false)
+        ) {
+          const checkpointStopPayload = createMcpRunCheckpointStopPayload({
+            checkpoint,
+            completedCalls: callNumber,
+            totalCalls: calls.length,
+            results,
+            elapsedMs: Date.now() - startedAt,
+          });
+          stderr.write(
+            `${formatMcpStatusLine(
+              `run stopped after ${callNumber}/${calls.length} ${call.tool}: ${checkpointStopPayload.error.message}`
+            )}\n`
+          );
+          printJson(checkpointStopPayload);
+          throw new McpRunCheckpointStop();
+        }
+      } catch (error) {
+        activeCall = undefined;
+        if (error instanceof McpRunCheckpointStop) {
+          throw new HandledCliError();
+        }
+        const structuredError = getMcpRunError(error);
+        results.push({
+          tool: call.tool,
+          ok: false,
+          error: structuredError,
+        });
+        const payload = createMcpRunErrorPayload({
+          error: structuredError,
+          completedCalls: index,
+          failedCall: callNumber,
           totalCalls: calls.length,
           results,
           elapsedMs: Date.now() - startedAt,
         });
         stderr.write(
           `${formatMcpStatusLine(
-            `run stopped after ${callNumber}/${calls.length} ${call.tool}: ${checkpointStopPayload.error.message}`
+            `run ${callNumber}/${calls.length} ${call.tool} failed: ${payload.error.message}`
           )}\n`
         );
-        printJson(checkpointStopPayload);
-        throw new McpRunCheckpointStop();
-      }
-    } catch (error) {
-      activeCall = undefined;
-      disposeTerminationHandlers();
-      await disposeHost().catch(() => undefined);
-      if (error instanceof McpRunCheckpointStop) {
+        printJson(payload);
         throw new HandledCliError();
       }
-      const structuredError = getMcpRunError(error);
-      results.push({
-        tool: call.tool,
-        ok: false,
-        error: structuredError,
-      });
-      const payload = createMcpRunErrorPayload({
-        error: structuredError,
-        completedCalls: index,
-        failedCall: callNumber,
-        totalCalls: calls.length,
-        results,
-        elapsedMs: Date.now() - startedAt,
-      });
-      stderr.write(
-        `${formatMcpStatusLine(
-          `run ${callNumber}/${calls.length} ${call.tool} failed: ${payload.error.message}`
-        )}\n`
-      );
-      printJson(payload);
-      throw new HandledCliError();
     }
+  } finally {
+    disposeTerminationHandlers();
+    await disposeHost().catch(() => undefined);
   }
-  disposeTerminationHandlers();
-  await disposeHost().catch(() => undefined);
   stderr.write(
     `${formatMcpStatusLine(
       `run succeeded in ${Date.now() - startedAt}ms with ${calls.length} calls`

@@ -221,6 +221,9 @@ const createParentIdsByInstance = (
   return parentIdsByInstance;
 };
 
+const getLabelTargetId = (props: ReadonlyMap<string, unknown> | undefined) =>
+  props?.get("for") ?? props?.get("htmlFor");
+
 const hasAssociatedFormLabel = ({
   instanceId,
   instances,
@@ -243,10 +246,9 @@ const hasAssociatedFormLabel = ({
     ) {
       continue;
     }
-    const labelProps = propsByInstance.get(label.id);
     if (
       id !== undefined &&
-      (labelProps?.get("for") ?? labelProps?.get("htmlFor")) === id &&
+      getLabelTargetId(propsByInstance.get(label.id)) === id &&
       hasAccessibleName({
         instanceId: label.id,
         instances,
@@ -1062,8 +1064,7 @@ export const analyzeProject = (
       ) {
         continue;
       }
-      const labelProps = propsByInstance.get(instance.id);
-      const htmlFor = labelProps?.get("for") ?? labelProps?.get("htmlFor");
+      const htmlFor = getLabelTargetId(propsByInstance.get(instance.id));
       if (typeof htmlFor !== "string" || htmlFor.trim().length === 0) {
         continue;
       }
