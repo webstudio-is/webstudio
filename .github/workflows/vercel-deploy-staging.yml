@@ -64,6 +64,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.action == 'labeled' && github.event.label.name == 'safe-to-deploy' }}
 
       - uses: ./.github/actions/submodules-checkout
         with:
@@ -124,6 +125,11 @@ jobs:
       builder-host: "${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is"
 
   deployment-host:
+    # Run on push (for repo branches) OR on labeled event with safe-to-deploy label (for fork PRs)
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request_target' && github.event.action == 'labeled' && github.event.label.name == 'safe-to-deploy')
+
     runs-on: ubuntu-latest
     outputs:
       development-builder-host: ${{ steps.host.outputs.value }}
@@ -131,6 +137,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.action == 'labeled' && github.event.label.name == 'safe-to-deploy' }}
 
       - id: host
         shell: bash

@@ -45,6 +45,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       # Will not checkout submodules on empty environment, and will on development
       - uses: ./.github/actions/submodules-checkout
@@ -105,6 +106,12 @@ jobs:
           pnpm -r typecheck
 
   check-size:
+    # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
+
     runs-on: ubuntu-24.04-arm
 
     environment:
@@ -114,6 +121,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       - uses: ./.github/actions/submodules-checkout
         with:
@@ -184,6 +192,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       - uses: ./.github/actions/submodules-checkout
         with:
@@ -244,6 +253,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       - uses: ./.github/actions/submodules-checkout
         with:
