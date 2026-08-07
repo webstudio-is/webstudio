@@ -245,7 +245,8 @@ const hasAssociatedFormLabel = ({
     }
     if (
       id !== undefined &&
-      propsByInstance.get(label.id)?.get("for") === id &&
+      (propsByInstance.get(label.id)?.get("for") ??
+        propsByInstance.get(label.id)?.get("htmlFor")) === id &&
       hasAccessibleName({
         instanceId: label.id,
         instances,
@@ -833,6 +834,7 @@ export const analyzeProject = (
           instanceId: instance.id,
           instances: state.instances,
           propsByInstance,
+          propTypesByInstance,
         }) === false
       ) {
         matches.push({
@@ -857,6 +859,7 @@ export const analyzeProject = (
           instanceId: instance.id,
           instances: state.instances,
           propsByInstance,
+          propTypesByInstance,
         }) === false &&
         hasAssociatedFormLabel({
           instanceId: instance.id,
@@ -1059,7 +1062,8 @@ export const analyzeProject = (
       ) {
         continue;
       }
-      const htmlFor = propsByInstance.get(instance.id)?.get("for");
+      const labelProps = propsByInstance.get(instance.id);
+      const htmlFor = labelProps?.get("for") ?? labelProps?.get("htmlFor");
       if (typeof htmlFor !== "string" || htmlFor.trim().length === 0) {
         continue;
       }

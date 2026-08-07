@@ -1416,6 +1416,40 @@ test("rejects invalid token syntax in webstudio jsx fragments", async () => {
   );
 });
 
+test("rejects unsupported expressions in webstudio jsx fragments", async () => {
+  await expect(
+    parseWebstudioJsxFragment(
+      `<$.Text>{expression\`items.map(item => item.title).join(", ")\`}</$.Text>`
+    )
+  ).rejects.toThrow(
+    /Invalid Webstudio expression.*Functions are not supported/
+  );
+});
+
+test("requires element children for Radix asChild components", async () => {
+  await expect(
+    parseWebstudioJsxFragment(
+      `<radix.NavigationMenuTrigger>Open</radix.NavigationMenuTrigger>`
+    )
+  ).rejects.toThrow(/NavigationMenuTrigger requires an element child/);
+
+  await expect(
+    parseWebstudioJsxFragment(
+      `<radix.NavigationMenuTrigger><ws.element ws:tag="span">Open</ws.element></radix.NavigationMenuTrigger>`
+    )
+  ).resolves.toEqual(expect.objectContaining({ instances: expect.any(Array) }));
+});
+
+test("reports unsupported existing resource references in jsx", async () => {
+  await expect(
+    parseWebstudioJsxFragment(
+      `<$.Form action={new ResourceValue("resource-id")} />`
+    )
+  ).rejects.toThrow(
+    "ResourceValue requires a resource definition. Existing resource ids are not supported in JSX"
+  );
+});
+
 test("converts react prop aliases in webstudio jsx fragments", async () => {
   expect(
     (await parseWebstudioJsxFragment(`<$.Box className="panel">Hello</$.Box>`))

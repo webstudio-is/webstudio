@@ -2235,6 +2235,28 @@ describe("style declaration helpers", () => {
     ).toThrow('Invalid value for shorthand CSS property "inset"');
   });
 
+  test("expands unresolved variable shorthand values", () => {
+    expect(
+      createStyleDeclsFromInput({
+        styleSourceId: "token",
+        property: "borderRadius",
+        value: { type: "var", value: "radius" },
+      })
+    ).toEqual(
+      [
+        "borderTopLeftRadius",
+        "borderTopRightRadius",
+        "borderBottomRightRadius",
+        "borderBottomLeftRadius",
+      ].map((property) => ({
+        styleSourceId: "token",
+        breakpointId: "base",
+        property,
+        value: { type: "var", value: "radius" },
+      }))
+    );
+  });
+
   test("creates style declaration keys from user input with base breakpoint default", () => {
     expect(
       getStyleDeclKeyFromInput({

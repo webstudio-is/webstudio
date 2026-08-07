@@ -358,6 +358,20 @@ test("iterative preview starts without a production build", async () => {
   );
 });
 
+test("preview status omits fabricated server details when stopped", () => {
+  const controller = createPreviewController({
+    host: "127.0.0.1",
+    port: 5173,
+  });
+
+  expect(controller.status()).toEqual({
+    url: null,
+    pid: null,
+    running: false,
+    mode: null,
+  });
+});
+
 test("preview controller reuses a matching persisted production build", async () => {
   const process = createPreviewProcess();
   const spawn = vi.fn(() => process);
@@ -486,17 +500,17 @@ test("preview controller stops the running server", async () => {
   await controller.start();
 
   await expect(controller.stop()).resolves.toEqual({
-    url: "http://127.0.0.1:5173/",
-    pid: undefined,
+    url: null,
+    pid: null,
     running: false,
-    mode: "production",
+    mode: null,
   });
   expect(process.kill).toHaveBeenCalledOnce();
   await expect(controller.stop()).resolves.toEqual({
-    url: "http://127.0.0.1:5173/",
-    pid: undefined,
+    url: null,
+    pid: null,
     running: false,
-    mode: "production",
+    mode: null,
   });
 });
 

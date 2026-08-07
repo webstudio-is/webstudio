@@ -252,6 +252,46 @@ test("passes explicit preview source to preview preparation", async () => {
   ]);
 });
 
+test("restarts a stale iterative preview for external clients", async () => {
+  const preview = {
+    status: vi.fn(() => ({
+      url: "http://127.0.0.1:5173/",
+      running: true,
+      mode: "iterative" as const,
+    })),
+    canReuse: vi.fn(() => true),
+    startAndWait: vi.fn(async () => ({
+      url: "http://127.0.0.1:5173/",
+      running: true,
+      mode: "iterative" as const,
+    })),
+    resolveUrl: vi.fn(),
+  };
+  const preparePreview = vi.fn(async () => ({
+    cwd: "/tmp/generated-preview",
+    buildCacheKey: "version-2",
+  }));
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => true,
+    preparePreview,
+  });
+
+  await handlers.startPreview({ mode: "iterative" });
+
+  expect(preparePreview).toHaveBeenCalledWith("session", undefined, {
+    preserveGeneratedProject: true,
+    prepareForIncrementalGeneration: true,
+  });
+  expect(preview.startAndWait).toHaveBeenCalledWith(
+    expect.objectContaining({
+      cwd: "/tmp/generated-preview",
+      buildCacheKey: "version-2",
+      restart: true,
+    })
+  );
+});
+
 test("rejects invalid external image domains before preparing preview", async () => {
   const preview = {
     status: vi.fn(() => ({

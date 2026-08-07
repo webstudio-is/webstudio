@@ -937,7 +937,7 @@ const resolveMcpPreviewInput = async (
 
 const resolveMcpScreenshotInput = async (
   input: ProjectSessionScreenshotInput,
-  previewStatus: { running: boolean; url: string },
+  previewStatus: { running: boolean; url: string | null },
   getAvailablePort: (host?: string) => Promise<number> = findAvailablePort
 ) => {
   if (
@@ -949,7 +949,7 @@ const resolveMcpScreenshotInput = async (
     return input;
   }
   const host = input.host ?? "127.0.0.1";
-  if (previewStatus.running) {
+  if (previewStatus.running && previewStatus.url !== null) {
     const previewUrl = new URL(previewStatus.url);
     if (input.host === undefined || previewUrl.hostname === input.host) {
       const previewPort = Number(previewUrl.port);
@@ -1181,7 +1181,21 @@ const createCliMcpHost = async ({
         startPreview: async (resolvedInput) =>
           await previewHandlers.startPreview(resolvedInput, progress),
       });
-      return { ...result, ...previewFreshness.status() };
+      if (
+        result.running === false ||
+        result.url === null ||
+        result.mode === null
+      ) {
+        throw new Error("Preview server did not start.");
+      }
+      return {
+        ...result,
+        ...previewFreshness.status(),
+        url: result.url,
+        pid: result.pid ?? undefined,
+        running: true,
+        mode: result.mode,
+      };
     },
     async getPreviewStatus() {
       return { ...preview.status(), ...previewFreshness.status() };

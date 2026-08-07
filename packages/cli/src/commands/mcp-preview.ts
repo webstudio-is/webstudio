@@ -370,10 +370,11 @@ export const createMcpPreviewHandlers = ({
       return await runPreviewLifecycle(async () => {
         const mode = input.mode ?? "iterative";
         const source = getPreviewSource(input.source);
+        const previewWasStale = isStale();
         const canReusePreview =
           mode === "iterative" &&
           isPreviewTargetCompatible(input, mode, preview.status());
-        if (canReusePreview === false) {
+        if (canReusePreview === false || previewWasStale) {
           await closeCaptureSession();
         }
         validatePreviewServerOptions({
@@ -402,7 +403,7 @@ export const createMcpPreviewHandlers = ({
           mode,
           cwd: previewProject.cwd,
           buildCacheKey: previewProject.buildCacheKey,
-          restart: canReusePreview === false,
+          restart: canReusePreview === false || previewWasStale,
         });
         activeSource = source;
         markFresh(freshness, projectVersion);
@@ -459,7 +460,7 @@ export const createMcpPreviewHandlers = ({
         return {
           ...assertGeneratedSiteCapture(input, result),
           ...(input.path !== undefined && input.baseUrl === undefined
-            ? { previewMode: preview.status().mode }
+            ? { previewMode: preview.status().mode ?? undefined }
             : {}),
           lifecycleTimings: {
             previewRefreshMs: previewReadyAt - startedAt,
@@ -522,7 +523,7 @@ export const createMcpPreviewHandlers = ({
           return {
             ...assertGeneratedSiteCapture(input, result),
             ...(input.path !== undefined && input.baseUrl === undefined
-              ? { previewMode: preview.status().mode }
+              ? { previewMode: preview.status().mode ?? undefined }
               : {}),
           };
         });

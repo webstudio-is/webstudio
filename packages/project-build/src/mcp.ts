@@ -313,12 +313,19 @@ export type ProjectSessionPreviewResult = {
   mode: ProjectSessionPreviewMode;
 };
 
+export type ProjectSessionPreviewStatusResult = {
+  url: string | null;
+  pid?: number | null;
+  running: boolean;
+  mode: ProjectSessionPreviewMode | null;
+};
+
 type StartPreview = (
   input: ProjectSessionPreviewInput,
   progress?: McpToolProgress
 ) => Promise<ProjectSessionPreviewResult>;
-type GetPreviewStatus = () => Promise<ProjectSessionPreviewResult>;
-type StopPreview = () => Promise<ProjectSessionPreviewResult>;
+type GetPreviewStatus = () => Promise<ProjectSessionPreviewStatusResult>;
+type StopPreview = () => Promise<ProjectSessionPreviewStatusResult>;
 
 export type ProjectSessionImportInput = {
   to: string;
@@ -2461,10 +2468,13 @@ const refreshDataSchema = {
 const previewDataSchema = {
   type: "object",
   properties: {
-    url: { type: "string" },
-    pid: { type: "integer" },
+    url: { type: ["string", "null"] },
+    pid: { type: ["integer", "null"] },
     running: { type: "boolean" },
-    mode: { type: "string", enum: projectSessionPreviewModes },
+    mode: {
+      type: ["string", "null"],
+      enum: [...projectSessionPreviewModes, null],
+    },
     stale: { type: "boolean" },
     renderedProjectVersion: { type: "integer" },
   },
@@ -6127,12 +6137,16 @@ const getExactToolSelection = (
   tools: readonly ProjectSessionMcpTool[]
 ) => {
   const toolByName = new Map(tools.map((tool) => [tool.name, tool]));
+  const toolByUnderscoredName = new Map(
+    tools.map((tool) => [tool.name.replace(/[^a-zA-Z0-9_]/g, "_"), tool])
+  );
   const selectedTools: ProjectSessionMcpTool[] = [];
   const missingTools: string[] = [];
   const includedToolNames = new Set<string>();
   for (const requestedName of toolNames) {
     const resolvedName = resolveToolName(requestedName);
-    const tool = toolByName.get(resolvedName);
+    const tool =
+      toolByName.get(resolvedName) ?? toolByUnderscoredName.get(resolvedName);
     if (tool === undefined) {
       missingTools.push(requestedName);
       continue;

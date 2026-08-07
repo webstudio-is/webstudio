@@ -293,10 +293,10 @@ export const waitForPreviewExit = async (process: ChildProcess) => {
 };
 
 export type PreviewControllerResult = {
-  url: string;
-  pid?: number;
+  url: string | null;
+  pid?: number | null;
   running: boolean;
-  mode: PreviewMode;
+  mode: PreviewMode | null;
 };
 
 type PreviewControllerStartOptions = Partial<PreviewServerOptions> & {
@@ -555,12 +555,17 @@ export const createPreviewController = (
     server.process.killed === false &&
     server.process.exitCode === null &&
     server.process.signalCode === null;
-  const getStatus = (): PreviewControllerResult => ({
-    url: getPreviewUrl(currentOptions),
-    pid: server?.process.pid,
-    running: isRunning(),
-    mode: currentOptions.mode ?? "production",
-  });
+  const getStatus = (): PreviewControllerResult => {
+    if (isRunning() === false) {
+      return { url: null, pid: null, running: false, mode: null };
+    }
+    return {
+      url: getPreviewUrl(currentOptions),
+      pid: server?.process.pid,
+      running: true,
+      mode: currentOptions.mode ?? "production",
+    };
+  };
   const resolveOptions = (
     options: PreviewControllerStartOptions
   ): PreviewServerOptions => {
@@ -690,13 +695,14 @@ export const createPreviewController = (
         dependencies
       );
       const result = await start(options);
+      const url = result.url ?? getPreviewUrl(currentOptions);
       const requiredAssetNames =
         result.mode === "production"
           ? await getPreviewCssAssetNames(currentCwd, dependencies)
           : [];
       try {
         await waitForPreviewReady(
-          result.url,
+          url,
           { isRunning, requiredAssetNames, requiredProject },
           dependencies
         );
@@ -707,7 +713,7 @@ export const createPreviewController = (
             formatPreviewServerStartupError({
               message: error.message,
               output,
-              url: result.url,
+              url,
             })
           );
         }

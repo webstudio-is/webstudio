@@ -979,8 +979,8 @@ describe("project session mcp adapter", () => {
         type: "object",
         required: ["url", "running", "mode"],
         properties: {
-          url: { type: "string" },
-          pid: { type: "integer" },
+          url: { type: ["string", "null"] },
+          pid: { type: ["integer", "null"] },
           running: { type: "boolean" },
         },
       });
@@ -3874,6 +3874,10 @@ describe("project session mcp adapter", () => {
       name: "meta.get_more_tools",
       input: { tools: ["meta.get_more_tools", "meta.get-more-tools"] },
     });
+    const underscoreToolDetails = await adapter.callTool({
+      name: "meta.get-more-tools",
+      input: { tools: ["insert_fragment"] },
+    });
     const insertFragmentDetails = await adapter.callTool({
       name: "meta.get-more-tools",
       input: { tools: ["insert-fragment"] },
@@ -3884,6 +3888,15 @@ describe("project session mcp adapter", () => {
     });
 
     expect(session.initialize).not.toHaveBeenCalled();
+    expect(underscoreToolDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        missingTools: [],
+        count: 1,
+        tools: expect.arrayContaining([
+          expect.objectContaining({ name: "insert-fragment" }),
+        ]),
+      })
+    );
     expect(index.structuredContent.data).toEqual(
       expect.objectContaining({
         readThisFirst: expect.stringContaining(

@@ -14,6 +14,7 @@ const templateValidationMessagePrefixes = [
   "Do not use React fragment shorthand",
   "Invalid JSX component",
   "Invalid JSX prop",
+  "ResourceValue",
   "token()",
   "ws:style",
   "ws:tokens",
