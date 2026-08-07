@@ -738,6 +738,7 @@ const importFrom = (importee: string, importer: string) => {
 };
 
 const npmrc = `force=true
+engine-strict=true
 loglevel=error
 audit=false
 fund=false

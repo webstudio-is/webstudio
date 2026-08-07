@@ -1293,6 +1293,17 @@ describe("prebuild", () => {
       "ENOENT"
     );
     const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+    expect(packageJson.engines).toEqual({ node: ">=22.12.0" });
+    expect(packageJson.devEngines).toEqual({
+      runtime: {
+        name: "node",
+        version: ">=22.12.0",
+        onFail: "error",
+      },
+    });
+    await expect(readFile(".npmrc", "utf8")).resolves.toContain(
+      "engine-strict=true"
+    );
     expect(packageJson.dependencies).not.toHaveProperty(
       "@webstudio-is/asset-resource"
     );
