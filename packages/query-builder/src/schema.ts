@@ -105,6 +105,14 @@ const control = z.discriminatedUnion("type", [
     integer: z.boolean().optional(),
   }),
   z.strictObject({
+    type: z.literal("select"),
+    key: z.string().min(1),
+    label: z.string().min(1),
+    sectionLabel: z.string().min(1).optional(),
+    defaultValue: z.string().min(1),
+    options: z.array(choice).min(1),
+  }),
+  z.strictObject({
     type: z.literal("variant"),
     key: z.string().min(1),
     label: z.string().min(1),
@@ -266,6 +274,18 @@ export const queryDefinition = z
           context.addIssue({
             code: "custom",
             message: "Default sort value is invalid",
+          });
+        }
+      }
+      if (item.type === "select") {
+        const values = item.options.map(({ value }) => value);
+        if (
+          new Set(values).size !== values.length ||
+          values.includes(item.defaultValue) === false
+        ) {
+          context.addIssue({
+            code: "custom",
+            message: "Select options and default must be valid",
           });
         }
       }

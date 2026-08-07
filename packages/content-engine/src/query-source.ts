@@ -5,6 +5,7 @@ import {
   assetObservedFieldType,
   assetQueryFieldPath,
   assetQueryOperators,
+  assetQueryResultMode,
   assetQueryStandardFields,
   assetQueryStandardFieldTypes,
   assetResourceContentOptions,
@@ -101,6 +102,24 @@ export const assetQuerySourceDefinition = {
           target: "draft-2020-12",
           io: "input",
         }),
+      },
+      {
+        type: "select" as const,
+        key: "result",
+        label: "Return",
+        sectionLabel: "Result",
+        defaultValue: "many",
+        options: assetQueryResultMode.options.map((value) => ({
+          value,
+          label:
+            value === "many"
+              ? "Many"
+              : value === "one"
+                ? "Exactly one"
+                : value === "first"
+                  ? "First"
+                  : "Last",
+        })),
       },
       {
         type: "filter" as const,

@@ -415,6 +415,21 @@ describe("Assets OpenAPI description", () => {
       type: "variant",
       config: { selection: { label: "Output", emptyOption: "none" } },
     });
+    expect(
+      definition.source.controls.find(({ key }) => key === "result")
+    ).toEqual({
+      type: "select",
+      key: "result",
+      label: "Return",
+      sectionLabel: "Result",
+      defaultValue: "many",
+      options: [
+        { value: "many", label: "Many" },
+        { value: "one", label: "Exactly one" },
+        { value: "first", label: "First" },
+        { value: "last", label: "Last" },
+      ],
+    });
     expect(definition.description).toMatch(
       /^Autocomplete includes \d+ of 4096 observed content fields/
     );

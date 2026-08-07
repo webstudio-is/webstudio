@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/protocol/asset-resource-api";
 import { AssetQueryForm, __testing__ } from "./asset-query-form";
 
-const { loadAssetQueryDefinition } = __testing__;
+const { configureAssetQueryDefinition, loadAssetQueryDefinition } = __testing__;
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -73,5 +73,27 @@ test("loads the external query schema declared by OpenAPI", async () => {
   );
   expect(definition.fields).toContainEqual(
     expect.objectContaining({ path: ["properties", "title"] })
+  );
+  const manyControls = configureAssetQueryDefinition({
+    definition,
+    paths: [],
+    result: "many",
+  }).source.controls;
+  const oneControls = configureAssetQueryDefinition({
+    definition,
+    paths: [],
+    result: "one",
+  }).source.controls;
+
+  expect(manyControls.slice(0, 3).map(({ key }) => key)).toEqual([
+    "output",
+    "content",
+    "result",
+  ]);
+  expect(manyControls.map(({ key }) => key)).toEqual(
+    expect.arrayContaining(["limit", "offset"])
+  );
+  expect(oneControls.map(({ key }) => key)).not.toEqual(
+    expect.arrayContaining(["limit", "offset"])
   );
 });

@@ -325,6 +325,7 @@ const operatorLabels = new Map(
 );
 
 const queryPropertyLabels: Record<string, string> = {
+  result: "Return",
   where: "Filters",
   sort: "Sort",
   limit: "Limit",
@@ -334,6 +335,13 @@ const queryPropertyLabels: Record<string, string> = {
   includeMetadata: "File metadata",
   maxBytes: "Maximum content bytes",
   length: "Content byte length",
+};
+
+const queryResultLabels: Record<string, string> = {
+  many: "Many",
+  one: "Exactly one",
+  first: "First",
+  last: "Last",
 };
 
 const queryModeLabels: Record<string, string> = {
@@ -532,6 +540,18 @@ const decorateAssetQuerySchema = ({
       next.title = queryPropertyLabels[property];
     }
     if (
+      property === "result" &&
+      Array.isArray(next.enum) &&
+      next.enum.every((value) => typeof value === "string")
+    ) {
+      next.oneOf = next.enum.map((value) => ({
+        const: value,
+        title: queryResultLabels[value] ?? value,
+      }));
+      delete next.enum;
+      next["x-webstudio-section"] = "Result";
+    }
+    if (
       (property === "field" || property === "fields") &&
       next.type === "array" &&
       next.minItems === 1 &&
@@ -674,8 +694,8 @@ const findAssetQueryObjectSchema = (value: unknown): JsonSchema | undefined => {
   }
   if (
     isObject(value.properties) &&
-    ["where", "sort", "limit", "offset", "output", "content"].every((key) =>
-      Object.hasOwn(value.properties as object, key)
+    ["result", "where", "sort", "limit", "offset", "output", "content"].every(
+      (key) => Object.hasOwn(value.properties as object, key)
     )
   ) {
     return value;

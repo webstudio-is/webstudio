@@ -67723,6 +67723,11 @@ export const runtimeOperationContractData = [
         query: {
           type: "object",
           properties: {
+            result: {
+              default: "many",
+              type: "string",
+              enum: ["many", "one", "first", "last"],
+            },
             where: {
               default: {
                 all: [],
@@ -68294,6 +68299,10 @@ export const runtimeOperationContractData = [
                 {
                   type: "object",
                   properties: {
+                    result: {
+                      type: "string",
+                      enum: ["many", "one", "first", "last"],
+                    },
                     where: {
                       description:
                         "A boolean filter tree. Use { all: [...] } for AND and { any: [...] } for OR; leaves contain field, operator, and value.",

@@ -24,6 +24,7 @@ import {
   type AssetQueryFieldPath,
   type AssetQueryFilter,
   type AssetQuerySort,
+  type AssetQueryResultMode,
   type AssetResourceContentOptions,
   type AssetResourceOutputSelection,
   type ContentCompilationPlan,
@@ -67,6 +68,7 @@ export type StructuredAssetQueryWhereBinding =
   QueryWhereTree<StructuredAssetQueryFilterBinding>;
 
 export type StructuredAssetQueryResourceConfiguration = {
+  result: AssetQueryResultMode;
   where: StructuredAssetQueryWhereBinding;
   sort: AssetQuerySort[];
   limit: string;
@@ -74,6 +76,11 @@ export type StructuredAssetQueryResourceConfiguration = {
   output: AssetResourceOutputSelection;
   content: AssetResourceContentOptions;
 };
+
+type StructuredAssetQueryResourceConfigurationInput = Omit<
+  StructuredAssetQueryResourceConfiguration,
+  "result"
+> & { result?: AssetQueryResultMode };
 
 const toContentCompilationWhere = (
   where: StructuredAssetQueryWhereBinding
@@ -113,6 +120,7 @@ const createAssetContentCompilationQuery = ({
   configuration: StructuredAssetQueryResourceConfiguration;
 }): ContentCompilationQuery => ({
   id: resourceId,
+  result: configuration.result,
   where: toContentCompilationWhere(configuration.where),
   sort: configuration.sort,
   limit: toContentCompilationInteger(configuration.limit),
@@ -195,17 +203,19 @@ export const parseStructuredAssetQueryResourceBody = (
 };
 
 export const createStructuredAssetQueryResourceBody = ({
+  result = "many",
   where,
   sort,
   limit,
   offset,
   output = defaultAssetResourceOutputSelection,
   content,
-}: StructuredAssetQueryResourceConfiguration) => {
+}: StructuredAssetQueryResourceConfigurationInput) => {
   if (hasAssetQueryOutput({ output, content }) === false) {
     throw new Error("Select at least one asset query output");
   }
   const query = assetQuerySourceCodec.format({
+    result,
     where,
     sort,
     limit,
@@ -213,5 +223,15 @@ export const createStructuredAssetQueryResourceBody = ({
     output,
     content: assetResourceContentOptions.parse(content),
   });
-  return generateObjectExpression(new Map([["query", query]]));
+  const fields = parseExpressionObject(query);
+  if (fields === undefined) {
+    throw new Error("Assets query could not be serialized");
+  }
+  if (result !== "many") {
+    fields.delete("limit");
+    fields.delete("offset");
+  }
+  return generateObjectExpression(
+    new Map([["query", `(${generateObjectExpression(fields)})`]])
+  );
 };

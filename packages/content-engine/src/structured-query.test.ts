@@ -94,6 +94,165 @@ const runtimeAssets = Object.fromEntries(
 );
 
 describe("structured asset query", () => {
+  test("returns direct items for single-result modes", async () => {
+    const empty = await executeAssetQuery({
+      documents,
+      query: {
+        result: "one",
+        where: {
+          all: [
+            {
+              field: ["properties", "title"],
+              operator: "eq",
+              value: "Missing",
+            },
+          ],
+        },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
+      },
+    });
+    const one = await executeAssetQuery({
+      documents,
+      query: {
+        result: "one",
+        where: {
+          all: [
+            {
+              field: ["properties", "title"],
+              operator: "eq",
+              value: "Alpha",
+            },
+          ],
+        },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
+      },
+    });
+
+    expect(empty).toEqual({ item: null, totalCount: 0 });
+    expect(one).toEqual({
+      item: { id: "alpha", properties: { title: "Alpha" } },
+      totalCount: 1,
+    });
+  });
+
+  test("rejects ambiguous exactly-one results before pagination", async () => {
+    await expect(
+      executeAssetQuery({
+        documents,
+        query: {
+          result: "one",
+          where: { all: [] },
+          limit: 1,
+          offset: 2,
+        },
+        runtimeAssets,
+      })
+    ).rejects.toMatchObject({
+      code: "MULTIPLE_RESULTS",
+      matchedCount: 3,
+    });
+  });
+
+  test("returns deterministic first and last results", async () => {
+    const tied = [
+      document({ id: "charlie", properties: { order: 1 } }),
+      document({ id: "alpha", properties: { order: 1 } }),
+      document({ id: "bravo", properties: { order: 1 } }),
+    ];
+    const query = {
+      where: { all: [] as never[] },
+      sort: [
+        {
+          field: ["properties", "order"],
+          direction: "asc" as const,
+        },
+      ],
+      output: {
+        mode: "fields" as const,
+        includeMetadata: false,
+        fields: [["properties", "order"]],
+      },
+    };
+
+    await expect(
+      executeAssetQuery({
+        documents: tied,
+        query: { ...query, result: "first" },
+      })
+    ).resolves.toEqual({
+      item: { id: "alpha", properties: { order: 1 } },
+      totalCount: 3,
+    });
+    await expect(
+      executeAssetQuery({
+        documents: tied,
+        query: { ...query, result: "last" },
+      })
+    ).resolves.toEqual({
+      item: { id: "charlie", properties: { order: 1 } },
+      totalCount: 3,
+    });
+  });
+
+  test("requires sorting for first and last results", async () => {
+    for (const result of ["first", "last"] as const) {
+      await expect(
+        executeAssetQuery({
+          documents,
+          query: { result, sort: [] },
+          runtimeAssets,
+        })
+      ).rejects.toThrow("Add sorting to define which item is first.");
+    }
+  });
+
+  test("hydrates only the selected single Markdown result", async () => {
+    const body = new TextEncoder().encode("# Body\n");
+    const read = vi.fn(async () => ({
+      data: {
+        async *[Symbol.asyncIterator]() {
+          yield body;
+        },
+      },
+      contentLength: body.byteLength,
+    }));
+    const result = await executeAssetQuery({
+      documents: documents.map((item) => ({ ...item, size: body.byteLength })),
+      query: {
+        result: "first",
+        sort: [{ field: ["properties", "publishedAt"], direction: "desc" }],
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
+        content: { mode: "markdown-body-ref" },
+      },
+      read,
+    });
+
+    expect(result).toMatchObject({
+      item: {
+        id: "gamma",
+        content: { text: "# Body\n" },
+      },
+      totalCount: 3,
+    });
+    expect(read).toHaveBeenCalledOnce();
+    expect(read).toHaveBeenCalledWith("files/gamma.md", {
+      offset: 0,
+      length: body.byteLength,
+    });
+  });
+
   test("executes sibling queries in one scan with independent windows and counts", async () => {
     const readCommon = vi.fn(() => "blog");
     const candidates = [

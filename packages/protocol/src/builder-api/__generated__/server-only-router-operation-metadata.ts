@@ -501,6 +501,11 @@ export const serverOnlyRouterOperationMetadata = {
         query: {
           type: "object",
           properties: {
+            result: {
+              default: "many",
+              type: "string",
+              enum: ["many", "one", "first", "last"],
+            },
             where: {
               default: {
                 all: [],
@@ -882,6 +887,11 @@ export const serverOnlyRouterOperationMetadata = {
         query: {
           type: "object",
           properties: {
+            result: {
+              default: "many",
+              type: "string",
+              enum: ["many", "one", "first", "last"],
+            },
             where: {
               default: {
                 all: [],
