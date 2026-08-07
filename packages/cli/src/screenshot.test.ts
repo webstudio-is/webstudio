@@ -410,7 +410,7 @@ test("resets a reusable capture session after browser startup rejects", async ()
     "Browser exited before its DevTools endpoint became ready."
   );
   await session.close();
-  expect(spawnBrowser).toHaveBeenCalledTimes(2);
+  expect(spawnBrowser).toHaveBeenCalledTimes(4);
 });
 
 describe("browser installation", () => {

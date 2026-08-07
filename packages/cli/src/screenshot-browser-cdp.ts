@@ -6,7 +6,16 @@ import { spawn, type ChildProcess } from "node:child_process";
 import type { ScreenshotWaitUntil } from "@webstudio-is/project-build/visual";
 import { withTimeout } from "./async-utils";
 
-type BrowserProcess = Pick<ChildProcess, "kill" | "once">;
+type BrowserProcess = Pick<ChildProcess, "kill"> & {
+  once(
+    event: "exit",
+    listener: (code: number | null, signal: NodeJS.Signals | null) => void
+  ): unknown;
+  once(
+    event: "error",
+    listener: (error: Error & { code?: string }) => void
+  ): unknown;
+};
 
 export type BrowserScreenshotOptions = {
   browserPath: string;
@@ -1177,10 +1186,31 @@ const getScreenshotCaptureParams = async ({
 
 class BrowserSessionClosedError extends Error {}
 
+type BrowserExitDiagnostics = {
+  exitCode?: number;
+  signal?: NodeJS.Signals;
+  spawnErrorCode?: string;
+};
+
+const getBrowserExitMessage = (
+  message: string,
+  diagnostics: BrowserExitDiagnostics
+) => {
+  let reason = "";
+  if (diagnostics.exitCode !== undefined) {
+    reason = ` (exit code ${diagnostics.exitCode})`;
+  } else if (diagnostics.signal !== undefined) {
+    reason = ` (signal ${diagnostics.signal})`;
+  } else if (diagnostics.spawnErrorCode !== undefined) {
+    reason = ` (spawn error ${diagnostics.spawnErrorCode})`;
+  }
+  return `${message}${reason}. Check the browser installation or set WEBSTUDIO_BROWSER_PATH to a supported Chromium executable.`;
+};
+
 type BrowserRuntime = {
   userDataDir: string;
   browserProcess: BrowserProcess;
-  browserClosed: Promise<void>;
+  browserClosed: Promise<BrowserExitDiagnostics>;
   port: string;
   running: boolean;
   close: () => Promise<void>;
@@ -1203,20 +1233,34 @@ const startBrowserRuntime = async (
     })
   );
   let running = true;
-  const browserClosed = new Promise<void>((resolveClosed) => {
-    const close = () => {
+  const browserClosed = new Promise<BrowserExitDiagnostics>((resolveClosed) => {
+    const close = (diagnostics: BrowserExitDiagnostics) => {
       running = false;
-      resolveClosed();
+      resolveClosed(diagnostics);
     };
-    browserProcess.once("exit", close);
-    browserProcess.once("error", close);
+    browserProcess.once("exit", (code, signal) =>
+      close({
+        ...(typeof code === "number" ? { exitCode: code } : {}),
+        ...(typeof signal === "string" ? { signal } : {}),
+      })
+    );
+    browserProcess.once("error", (error) =>
+      close({
+        ...(typeof error?.code === "string"
+          ? { spawnErrorCode: error.code }
+          : {}),
+      })
+    );
   });
   try {
     const { port } = await Promise.race([
       waitForDevToolsPort(userDataDir, dependencies, options.timeout),
-      browserClosed.then(() => {
+      browserClosed.then((diagnostics) => {
         throw new BrowserSessionClosedError(
-          "Browser exited before its DevTools endpoint became ready."
+          getBrowserExitMessage(
+            "Browser exited before its DevTools endpoint became ready",
+            diagnostics
+          )
         );
       }),
     ]);
@@ -1256,6 +1300,20 @@ const startBrowserRuntime = async (
   }
 };
 
+const startBrowserRuntimeWithRetry = async (
+  options: BrowserScreenshotOptions,
+  dependencies: BrowserScreenshotDependencies
+) => {
+  try {
+    return await startBrowserRuntime(options, dependencies);
+  } catch (error) {
+    if (error instanceof BrowserSessionClosedError === false) {
+      throw error;
+    }
+  }
+  return await startBrowserRuntime(options, dependencies);
+};
+
 const capturePageWithBrowserRuntime = async (
   runtime: BrowserRuntime,
   optionsList: readonly BrowserScreenshotOptions[],
@@ -1270,9 +1328,12 @@ const capturePageWithBrowserRuntime = async (
   const layouts: BrowserScreenshotLayout[] = [];
   try {
     await Promise.race([
-      runtime.browserClosed.then(() => {
+      runtime.browserClosed.then((diagnostics) => {
         throw new BrowserSessionClosedError(
-          "Browser exited before screenshot capture completed."
+          getBrowserExitMessage(
+            "Browser exited before screenshot capture completed",
+            diagnostics
+          )
         );
       }),
       (async () => {
@@ -1627,7 +1688,7 @@ export const createBrowserScreenshotSession = async (
   options: BrowserScreenshotOptions,
   dependencies = defaultBrowserScreenshotDependencies
 ): Promise<BrowserScreenshotSession> => {
-  let runtime = await startBrowserRuntime(options, dependencies);
+  let runtime = await startBrowserRuntimeWithRetry(options, dependencies);
   let restartPromise: Promise<BrowserRuntime> | undefined;
   let closed = false;
   const restart = async (failedRuntime: BrowserRuntime) => {
@@ -1641,7 +1702,7 @@ export const createBrowserScreenshotSession = async (
           "Browser screenshot session was closed."
         );
       }
-      const next = await startBrowserRuntime(options, dependencies);
+      const next = await startBrowserRuntimeWithRetry(options, dependencies);
       runtime = next;
       restartPromise = undefined;
       return next;
