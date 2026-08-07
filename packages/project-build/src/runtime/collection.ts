@@ -1,6 +1,5 @@
 import {
   collectionComponent,
-  webstudioFragment,
   type DataSource,
   type Instance,
   type Prop,
@@ -12,6 +11,7 @@ import { componentInsertResult } from "./component-insert-contract";
 import type { ComponentTemplateRegistry } from "./component-template";
 import { bindExpressionToInstanceScope } from "./data";
 import { throwBuilderRuntimeError } from "./errors";
+import { webstudioFragmentInput } from "./fragment";
 import { insertIndexInput, instanceInsertModeInput } from "./instances";
 
 const collectionDataInput = z.discriminatedUnion("type", [
@@ -35,7 +35,7 @@ export const insertCollectionInput = z.object({
   data: collectionDataInput.describe(
     "Complete iterable for the Collection. Do not pass one indexed item."
   ),
-  itemFragment: webstudioFragment.describe(
+  itemFragment: webstudioFragmentInput.describe(
     "One structured repeated-item fragment. Descendant expressions may reference collectionItem and collectionItemKey."
   ),
   mode: instanceInsertModeInput.optional(),

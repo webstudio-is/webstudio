@@ -21,6 +21,7 @@ import {
   findTreeInstanceIdsExcludingSlotDescendants,
   getHomePage,
   portalComponent,
+  webstudioFragment,
 } from "@webstudio-is/sdk";
 import {
   findAvailableVariables,
@@ -30,6 +31,8 @@ import {
 } from "./data";
 import { cloneInstanceWithNewIds } from "./instances";
 import { clonePropForInstance, listPropExpressions } from "./props";
+import { addZodValidationIssue } from "./errors";
+import { getExpressionErrorMessages } from "./expression-validation";
 import { buildMergedBreakpointIds, maxBreakpoints } from "./breakpoints";
 import {
   collectStyleSourcesFromInstances,
@@ -88,6 +91,28 @@ export const listFragmentExpressions = (fragment: WebstudioFragment) => [
     }))
   ),
 ];
+
+export const webstudioFragmentInput = webstudioFragment.superRefine(
+  (fragment, context) => {
+    for (const entry of listFragmentExpressions(fragment)) {
+      const errors = getExpressionErrorMessages({
+        expression: entry.expression,
+        allowAssignment: entry.allowAssignment,
+        availableVariables: new Set(entry.variables),
+      });
+      for (const detail of errors) {
+        addZodValidationIssue(context, {
+          code: "invalid_expression",
+          path: entry.path,
+          message: "Invalid Webstudio expression",
+          constraint: "valid_webstudio_expression",
+          example: "item.title",
+          detail,
+        });
+      }
+    }
+  }
+);
 
 const mergeById = <Item extends { id: string }>(items: Item[]) =>
   Array.from(new Map(items.map((item) => [item.id, item])).values());

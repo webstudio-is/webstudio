@@ -3,7 +3,6 @@ import {
   elementComponent,
   instanceComponent,
   ROOT_INSTANCE_ID,
-  webstudioFragment,
   type Breakpoints,
   type DataSource,
   type DataSources,
@@ -49,6 +48,7 @@ import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
 import {
   detectFragmentTokenConflicts,
   insertWebstudioFragmentCopy,
+  webstudioFragmentInput,
 } from "./fragment";
 import {
   createInstanceAppendPayload,
@@ -86,7 +86,7 @@ export const insertComponentInput = z.object({
 export const insertFragmentInput = z
   .object({
     parentInstanceId: z.string().optional(),
-    fragment: webstudioFragment.describe(
+    fragment: webstudioFragmentInput.describe(
       "Structured Webstudio fragment produced by Webstudio JSX/template helpers. Runtime remaps fragment ids to generated project ids."
     ),
     conflictResolution: conflictResolutionInput.optional(),

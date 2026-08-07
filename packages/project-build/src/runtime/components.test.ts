@@ -24,6 +24,7 @@ import {
 import { getZodValidationIssues } from "./errors";
 import { getComponentTemplates } from "./component-templates";
 import { createEmptyWebstudioFragment } from "./component-template";
+import { insertCollectionInput } from "./collection";
 import { isLikelyWebstudioJsxFragment, parseWebstudioJsxFragment } from "./jsx";
 import { inspectWebstudioJsxFragmentSyntax } from "./jsx/syntax";
 
@@ -1416,14 +1417,40 @@ test("rejects invalid token syntax in webstudio jsx fragments", async () => {
   );
 });
 
-test("rejects unsupported expressions in webstudio jsx fragments", async () => {
-  await expect(
-    parseWebstudioJsxFragment(
-      `<$.Text>{expression\`items.map(item => item.title).join(", ")\`}</$.Text>`
-    )
-  ).rejects.toThrow(
-    /Invalid Webstudio expression.*Functions are not supported/
+test("rejects unsupported expressions in shared fragment inputs", async () => {
+  const fragment = await parseWebstudioJsxFragment(
+    `<$.Text>{expression\`items.map(item => item.title).join(", ")\`}</$.Text>`
   );
+  const result = insertFragmentInput.safeParse({
+    parentInstanceId: "parent",
+    fragment,
+  });
+  if (result.success) {
+    throw new Error("Expected fragment expression validation to fail");
+  }
+  const issues = getZodValidationIssues(result.error);
+  expect(issues).toHaveLength(2);
+  expect(issues).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        code: "invalid_expression",
+        path: ["fragment", "instances", "0", "children", "0", "value"],
+        detail: "Functions are not supported",
+      }),
+      expect.objectContaining({
+        code: "invalid_expression",
+        path: ["fragment", "instances", "0", "children", "0", "value"],
+        detail: '"map" function is not supported',
+      }),
+    ])
+  );
+  expect(
+    insertCollectionInput.safeParse({
+      parentInstanceId: "parent",
+      data: { type: "json", value: [] },
+      itemFragment: fragment,
+    }).success
+  ).toBe(false);
 });
 
 test("uses component content models to require element children", async () => {
