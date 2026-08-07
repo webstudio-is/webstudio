@@ -420,7 +420,7 @@ describe("Assets OpenAPI description", () => {
     ).toEqual({
       type: "select",
       key: "result",
-      label: "Return",
+      label: "Result",
       sectionLabel: "Result",
       defaultValue: "many",
       options: [

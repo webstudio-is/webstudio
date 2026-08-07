@@ -1175,7 +1175,9 @@ export const StructuredQueryBuilder = <
                 <Label text="title">{control.sectionLabel}</Label>
               )}
               <Grid gap={1}>
-                <Label>{control.label}</Label>
+                {control.sectionLabel === undefined ? (
+                  <Label>{control.label}</Label>
+                ) : null}
                 <Select<(typeof control.options)[number]>
                   aria-label={control.label}
                   options={control.options}

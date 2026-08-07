@@ -325,7 +325,7 @@ const operatorLabels = new Map(
 );
 
 const queryPropertyLabels: Record<string, string> = {
-  result: "Return",
+  result: "Result",
   where: "Filters",
   sort: "Sort",
   limit: "Limit",

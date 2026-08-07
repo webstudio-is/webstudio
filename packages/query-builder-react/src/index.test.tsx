@@ -247,7 +247,7 @@ describe("structured query builder", () => {
           {
             type: "select",
             key: "result",
-            label: "Return",
+            label: "Result",
             sectionLabel: "Result",
             defaultValue: "many",
             options: [
@@ -272,7 +272,8 @@ describe("structured query builder", () => {
     render(<Fixture />);
 
     expect(screen.getByText("Result")).toBeTruthy();
-    fireEvent.click(screen.getByLabelText("Return"));
+    expect(screen.queryByText("Return")).toBeNull();
+    fireEvent.click(screen.getByLabelText("Result"));
     fireEvent.click(screen.getByText("Exactly one"));
     expect(
       (screen.getByLabelText("Query") as HTMLTextAreaElement).value
