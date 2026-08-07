@@ -29,3 +29,65 @@ export const mapBounded = async <Value, Result>(
   }
   return results;
 };
+
+export const createConcurrencyLimiter = ({
+  concurrency,
+  signal,
+}: {
+  concurrency: number;
+  signal?: AbortSignal;
+}) => {
+  if (Number.isSafeInteger(concurrency) === false || concurrency <= 0) {
+    throw new TypeError("Concurrency must be a positive safe integer");
+  }
+  let active = 0;
+  const waiters: Array<{ start: () => void }> = [];
+
+  const acquire = async () => {
+    signal?.throwIfAborted();
+    if (active < concurrency) {
+      active += 1;
+      return;
+    }
+    await new Promise<void>((resolve, reject) => {
+      let waiter: { start: () => void };
+      const onAbort = () => {
+        const index = waiters.indexOf(waiter);
+        if (index !== -1) {
+          waiters.splice(index, 1);
+        }
+        try {
+          signal?.throwIfAborted();
+        } catch (error) {
+          reject(error);
+        }
+      };
+      waiter = {
+        start: () => {
+          signal?.removeEventListener("abort", onAbort);
+          resolve();
+        },
+      };
+      waiters.push(waiter);
+      signal?.addEventListener("abort", onAbort, { once: true });
+    });
+  };
+
+  const release = () => {
+    const next = waiters.shift();
+    if (next === undefined) {
+      active -= 1;
+      return;
+    }
+    next.start();
+  };
+
+  return async <Result>(run: () => Promise<Result>) => {
+    await acquire();
+    try {
+      return await run();
+    } finally {
+      release();
+    }
+  };
+};

@@ -1,4 +1,5 @@
 import { LRUCache } from "lru-cache";
+import { createConcurrencyLimiter } from "../async-utils";
 import { ByteLimitExceededError, readBytePrefix } from "../byte-stream";
 import { contentEngineLimits } from "../limits";
 import {
@@ -96,62 +97,6 @@ export type DocumentResolutionSession = Readonly<{
     input: ResolveDocumentGraphInput
   ) => Promise<ResolvedDocumentGraph<AdaptedDocument>>;
 }>;
-
-const createConcurrencyLimiter = (
-  concurrency: number,
-  signal: AbortSignal | undefined
-) => {
-  let active = 0;
-  const waiters: Array<{ start: () => void }> = [];
-
-  const acquire = async () => {
-    signal?.throwIfAborted();
-    if (active < concurrency) {
-      active += 1;
-      return;
-    }
-    await new Promise<void>((resolve, reject) => {
-      let waiter: { start: () => void };
-      const onAbort = () => {
-        const index = waiters.indexOf(waiter);
-        if (index !== -1) {
-          waiters.splice(index, 1);
-        }
-        try {
-          signal?.throwIfAborted();
-        } catch (error) {
-          reject(error);
-        }
-      };
-      waiter = {
-        start: () => {
-          signal?.removeEventListener("abort", onAbort);
-          resolve();
-        },
-      };
-      waiters.push(waiter);
-      signal?.addEventListener("abort", onAbort, { once: true });
-    });
-  };
-
-  const release = () => {
-    const next = waiters.shift();
-    if (next === undefined) {
-      active -= 1;
-      return;
-    }
-    next.start();
-  };
-
-  return async <Result>(run: () => Promise<Result>) => {
-    await acquire();
-    try {
-      return await run();
-    } finally {
-      release();
-    }
-  };
-};
 
 const resolveWithSessionDocumentLoader = async ({
   graph,
@@ -303,7 +248,7 @@ export const createDocumentResolutionSession = ({
     sizeCalculation: ({ byteLength }) => Math.max(1, byteLength),
   });
   const pending = new Map<string, Promise<SessionDocumentSource>>();
-  const limit = createConcurrencyLimiter(concurrency, signal);
+  const limit = createConcurrencyLimiter({ concurrency, signal });
 
   const assertSessionSignal = (requestedSignal?: AbortSignal) => {
     if (requestedSignal !== undefined && requestedSignal !== signal) {

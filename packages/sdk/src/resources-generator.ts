@@ -1,7 +1,7 @@
 import type { DataSource, DataSources } from "./schema/data-sources";
 import type { Page } from "./schema/pages";
 import type { Resource, Resources } from "./schema/resources";
-import type { Props } from "./schema/props";
+import type { Prop, Props } from "./schema/props";
 import type { Instance, Instances } from "./schema/instances";
 import type { Scope } from "./scope";
 import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
@@ -84,22 +84,22 @@ export const generateResources = ({
   instances?: Instances;
 }) => {
   const usedDataSources: DataSources = new Map();
-  const generatedResourceIds = new Set<string>();
-  const actionResourceIds = new Set<string>();
   const pageInstanceIds = findTreeInstanceIds(instances, page.rootInstanceId);
-  for (const prop of props.values()) {
-    if (instances.size > 0 && pageInstanceIds.has(prop.instanceId) === false) {
-      continue;
-    }
-    if (prop.type === "resource" && resources.has(prop.value)) {
-      actionResourceIds.add(prop.value);
-    }
-  }
+  const actionResourceProps = Array.from(props.values()).filter(
+    (prop): prop is Extract<Prop, { type: "resource" }> =>
+      (instances.size === 0 || pageInstanceIds.has(prop.instanceId)) &&
+      prop.type === "resource" &&
+      resources.has(prop.value)
+  );
+  const actionResourceIds = new Set(
+    actionResourceProps.map((prop) => prop.value)
+  );
   const dataResourceDataSourceByResourceId = new Map(
     Array.from(dataSources.values())
       .filter(
         (dataSource): dataSource is Extract<DataSource, { type: "resource" }> =>
           dataSource.type === "resource" &&
+          resources.has(dataSource.resourceId) &&
           actionResourceIds.has(dataSource.resourceId) === false
       )
       .map((dataSource) => [dataSource.resourceId, dataSource] as const)
@@ -114,7 +114,6 @@ export const generateResources = ({
 
   let generatedRequests = "";
   for (const resource of resources.values()) {
-    generatedResourceIds.add(resource.id);
     const resourceName = scope.getName(resource.id, resource.name);
     if (dataResourceDataSourceByResourceId.has(resource.id)) {
       const requestDataSources: DataSources = new Map();
@@ -187,9 +186,6 @@ export const generateResources = ({
   generated += `  const _data: ResourceRequestGraph = {\n`;
   generated += `    resources: [\n`;
   for (const [resourceId, dataSource] of dataResourceDataSourceByResourceId) {
-    if (generatedResourceIds.has(resourceId) === false) {
-      continue;
-    }
     const name = scope.getName(resourceId, dataSource.name);
     const dependencies = resourceDependencies.get(resourceId) ?? [];
     generated += `      { id: ${JSON.stringify(
@@ -201,10 +197,7 @@ export const generateResources = ({
   generated += `    ],\n`;
   generated += `    rootIds: [\n`;
   for (const resourceId of rootResourceIds) {
-    if (
-      generatedResourceIds.has(resourceId) &&
-      dataResourceDataSourceByResourceId.has(resourceId)
-    ) {
+    if (dataResourceDataSourceByResourceId.has(resourceId)) {
       generated += `      ${JSON.stringify(resourceId)},\n`;
     }
   }
@@ -212,14 +205,9 @@ export const generateResources = ({
   generated += `  }\n`;
 
   generated += `  const _action = new Map<string, ResourceRequest>([\n`;
-  for (const prop of props.values()) {
-    if (instances.size > 0 && pageInstanceIds.has(prop.instanceId) === false) {
-      continue;
-    }
-    if (prop.type === "resource" && generatedResourceIds.has(prop.value)) {
-      const name = scope.getName(prop.value, prop.name);
-      generated += `    ["${name}", ${name}],\n`;
-    }
+  for (const prop of actionResourceProps) {
+    const name = scope.getName(prop.value, prop.name);
+    generated += `    ["${name}", ${name}],\n`;
   }
   generated += `  ])\n`;
 
