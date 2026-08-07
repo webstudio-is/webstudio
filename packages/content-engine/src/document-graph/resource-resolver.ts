@@ -1,3 +1,5 @@
+import { createConcurrencyLimiter } from "../async-utils";
+
 export type Resource<Document> = Readonly<{
   id: string;
   dependencies: readonly string[];
@@ -50,61 +52,6 @@ const assertActive = (signal: AbortSignal | undefined) => {
       cause: signal.reason,
     });
   }
-};
-
-const createConcurrencyLimiter = (
-  concurrency: number,
-  signal: AbortSignal | undefined
-) => {
-  if (Number.isSafeInteger(concurrency) === false || concurrency <= 0) {
-    throw new TypeError("Resource resolution concurrency must be positive");
-  }
-  let active = 0;
-  const waiters: Array<() => void> = [];
-
-  const acquire = async () => {
-    assertActive(signal);
-    if (active < concurrency) {
-      active += 1;
-      return;
-    }
-    await new Promise<void>((resolve, reject) => {
-      const start = () => {
-        signal?.removeEventListener("abort", cancel);
-        active += 1;
-        resolve();
-      };
-      const cancel = () => {
-        const index = waiters.indexOf(start);
-        if (index !== -1) {
-          waiters.splice(index, 1);
-        }
-        reject(
-          new ResourceResolutionError({
-            code: "REQUEST_CANCELLED",
-            message: "Resource resolution was cancelled",
-            cause: signal?.reason,
-          })
-        );
-      };
-      waiters.push(start);
-      signal?.addEventListener("abort", cancel, { once: true });
-    });
-  };
-
-  const release = () => {
-    active -= 1;
-    waiters.shift()?.();
-  };
-
-  return async <Result>(run: () => Promise<Result>) => {
-    await acquire();
-    try {
-      return await run();
-    } finally {
-      release();
-    }
-  };
 };
 
 const getReachableResources = <Document>({
@@ -173,6 +120,9 @@ export const resolveResources = async <Document>({
   concurrency: number;
   signal?: AbortSignal;
 }): Promise<ResolvedResources<Document>> => {
+  if (Number.isSafeInteger(concurrency) === false || concurrency <= 0) {
+    throw new TypeError("Resource resolution concurrency must be positive");
+  }
   assertActive(signal);
   const resourcesById = new Map<string, Resource<Document>>();
   for (const resource of resources) {
@@ -189,7 +139,7 @@ export const resolveResources = async <Document>({
     resourcesById,
     rootIds,
   });
-  const limit = createConcurrencyLimiter(concurrency, signal);
+  const limit = createConcurrencyLimiter({ concurrency, signal });
   const documents = new Map<string, Document>();
   const pending = new Map<string, Promise<Document>>();
 
@@ -220,6 +170,9 @@ export const resolveResources = async <Document>({
           });
         });
       } catch (cause) {
+        if (signal?.aborted) {
+          assertActive(signal);
+        }
         if (cause instanceof ResourceResolutionError) {
           throw cause;
         }
