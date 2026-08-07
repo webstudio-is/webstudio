@@ -10,6 +10,7 @@ import {
 import {
   assetQueryRequest,
   assetQueryPreviewResult,
+  assetQueryResultOptions,
   assetQuerySourceDefinition,
   assetQueryResult,
   assetResourceQueryFailure,
@@ -337,12 +338,9 @@ const queryPropertyLabels: Record<string, string> = {
   length: "Content byte length",
 };
 
-const queryResultLabels: Record<string, string> = {
-  many: "Many",
-  one: "Exactly one",
-  first: "First",
-  last: "Last",
-};
+const queryResultLabels: Readonly<Record<string, string>> = Object.fromEntries(
+  assetQueryResultOptions.map(({ value, label }) => [value, label])
+);
 
 const queryModeLabels: Record<string, string> = {
   "output:all": "All content fields",

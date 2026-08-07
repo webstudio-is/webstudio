@@ -15,9 +15,9 @@ import {
   type AssetQueryFieldPath,
   type AssetQueryFilter,
   type AssetQueryCollectionResult,
-  type AssetQueryDirectResult,
   type AssetQueryExecutionResult,
   type AssetQueryItem,
+  type AssetQuerySingleResult,
   type AssetQueryWhere,
   type AssetResourceContentOptions,
   type AssetResourceOutputSelection,
@@ -647,19 +647,15 @@ const finalizeAssetQueries = async ({
           return match === undefined ? [] : [match];
         });
         const resultMode = query.result ?? "many";
-        let selected: AssetQueryMatch[];
-        if (resultMode === "many") {
-          selected = matched.slice(query.offset, query.offset + query.limit);
-        } else if (resultMode === "one") {
-          if (matched.length > 1) {
-            throw new AssetQueryMultipleResultsError(matched.length);
-          }
-          selected = matched.slice(0, 1);
-        } else if (resultMode === "first") {
-          selected = matched.slice(0, 1);
-        } else {
-          selected = matched.slice(-1);
+        if (resultMode === "one" && matched.length > 1) {
+          throw new AssetQueryMultipleResultsError(matched.length);
         }
+        const selected =
+          resultMode === "many"
+            ? matched.slice(query.offset, query.offset + query.limit)
+            : resultMode === "last"
+              ? matched.slice(-1)
+              : matched.slice(0, 1);
         const selectedDocuments = selected.map(({ document }) => document);
         let items = selected.map(({ item }) => item);
         if (query.content.mode !== "none") {
@@ -705,8 +701,7 @@ const finalizeAssetQueries = async ({
               }
             : {
                 item: items[0] ?? null,
-                totalCount:
-                  resultMode === "one" ? selected.length : matched.length,
+                totalCount: matched.length,
               };
         assertAssetQueryResultSize(result);
         results[state.index] = { status: "fulfilled", value: result };
@@ -802,7 +797,7 @@ export function executeAssetQuery(
   input: Omit<ExecuteAssetQueryInput, "query"> & {
     query: AssetQueryInput & { result: "one" | "first" | "last" };
   }
-): Promise<AssetQueryDirectResult>;
+): Promise<AssetQuerySingleResult>;
 export function executeAssetQuery(
   input: Omit<ExecuteAssetQueryInput, "query"> & {
     query: AssetQueryInput & { result?: "many" };

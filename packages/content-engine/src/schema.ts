@@ -671,7 +671,7 @@ export const assetQueryResult = union([
 export type AssetQueryCollectionResult = Infer<
   typeof assetQueryCollectionResult
 >;
-export type AssetQueryDirectResult = Infer<typeof assetQuerySingleResult>;
+export type AssetQuerySingleResult = Infer<typeof assetQuerySingleResult>;
 export type AssetQueryExecutionResult = Infer<typeof assetQueryResult>;
 /** Backward-compatible collection result type for existing many-result APIs. */
 export type AssetQueryResult = AssetQueryCollectionResult;
@@ -687,13 +687,11 @@ export const assetQueryPreviewDiagnostics = strictObject({
   unresolved: assetQueryResult.optional(),
 });
 
-export type AssetQueryExecutionPreviewDiagnostics = Infer<
+export type AssetQueryPreviewDiagnostics = Infer<
   typeof assetQueryPreviewDiagnostics
 >;
-export type AssetQueryPreviewDiagnostics =
-  AssetQueryExecutionPreviewDiagnostics;
 type AssetQueryCollectionPreviewDiagnostics = Omit<
-  AssetQueryExecutionPreviewDiagnostics,
+  AssetQueryPreviewDiagnostics,
   "unresolved"
 > & { unresolved?: AssetQueryCollectionResult };
 

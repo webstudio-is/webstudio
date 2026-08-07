@@ -5,7 +5,6 @@ import {
   assetObservedFieldType,
   assetQueryFieldPath,
   assetQueryOperators,
-  assetQueryResultMode,
   assetQueryStandardFields,
   assetQueryStandardFieldTypes,
   assetResourceContentOptions,
@@ -14,7 +13,18 @@ import {
   getAssetQueryOperatorsForFieldTypes,
   type AssetObservedFieldType,
   type AssetQueryFilter,
+  type AssetQueryResultMode,
 } from "./schema";
+
+export const assetQueryResultOptions = [
+  { value: "many", label: "Many" },
+  { value: "one", label: "Exactly one" },
+  { value: "first", label: "First" },
+  { value: "last", label: "Last" },
+] as const satisfies readonly {
+  value: AssetQueryResultMode;
+  label: string;
+}[];
 
 const getDefaultFilterValue = (operator: AssetQueryFilter["operator"]) =>
   operator === "in"
@@ -106,20 +116,10 @@ export const assetQuerySourceDefinition = {
       {
         type: "select" as const,
         key: "result",
-        label: "Return",
+        label: "Result",
         sectionLabel: "Result",
         defaultValue: "many",
-        options: assetQueryResultMode.options.map((value) => ({
-          value,
-          label:
-            value === "many"
-              ? "Many"
-              : value === "one"
-                ? "Exactly one"
-                : value === "first"
-                  ? "First"
-                  : "Last",
-        })),
+        options: assetQueryResultOptions,
       },
       {
         type: "filter" as const,

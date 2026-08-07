@@ -33,11 +33,15 @@ type AssetQueryDefinition = QueryDefinition<
 const defaultConfiguration: StructuredAssetQueryResourceConfiguration =
   createDefaultStructuredAssetQueryResourceConfiguration();
 
+const controlOrder = new Map([
+  ["output", 1],
+  ["result", 2],
+]);
+
 const normalizeConfiguration = (
   value: StructuredAssetQueryResourceConfiguration
 ): StructuredAssetQueryResourceConfiguration => ({
   ...value,
-  result: value.result ?? "many",
   where: "field" in value.where ? { all: [value.where] } : value.where,
 });
 
@@ -83,10 +87,6 @@ const configureAssetQueryDefinition = ({
     paths,
     fallbackType: "string",
   });
-  const order = new Map([
-    ["output", 1],
-    ["result", 2],
-  ]);
   return {
     ...configured,
     source: {
@@ -98,7 +98,8 @@ const configureAssetQueryDefinition = ({
         )
         .toSorted(
           (left, right) =>
-            (order.get(left.key) ?? 0) - (order.get(right.key) ?? 0)
+            (controlOrder.get(left.key) ?? 0) -
+            (controlOrder.get(right.key) ?? 0)
         ),
     },
   };
@@ -234,7 +235,7 @@ export const AssetQueryForm = ({
           sectionPaddingInline={theme.panel.paddingInline}
           onChange={(value) => {
             setConfiguration(
-              value.result !== "many" && value.result !== configuration.result
+              configuration.result === "many" && value.result !== "many"
                 ? {
                     ...value,
                     limit: defaultConfiguration.limit,
