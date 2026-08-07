@@ -293,10 +293,10 @@ export const waitForPreviewExit = async (process: ChildProcess) => {
 };
 
 export type PreviewControllerResult = {
-  url: string | null;
-  pid?: number | null;
+  url?: string;
+  pid?: number;
   running: boolean;
-  mode: PreviewMode | null;
+  mode?: PreviewMode;
 };
 
 type PreviewControllerStartOptions = Partial<PreviewServerOptions> & {
@@ -557,7 +557,7 @@ export const createPreviewController = (
     server.process.signalCode === null;
   const getStatus = (): PreviewControllerResult => {
     if (isRunning() === false) {
-      return { url: null, pid: null, running: false, mode: null };
+      return { running: false };
     }
     return {
       url: getPreviewUrl(currentOptions),

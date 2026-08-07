@@ -365,10 +365,7 @@ test("preview status omits fabricated server details when stopped", () => {
   });
 
   expect(controller.status()).toEqual({
-    url: null,
-    pid: null,
     running: false,
-    mode: null,
   });
 });
 
@@ -500,17 +497,11 @@ test("preview controller stops the running server", async () => {
   await controller.start();
 
   await expect(controller.stop()).resolves.toEqual({
-    url: null,
-    pid: null,
     running: false,
-    mode: null,
   });
   expect(process.kill).toHaveBeenCalledOnce();
   await expect(controller.stop()).resolves.toEqual({
-    url: null,
-    pid: null,
     running: false,
-    mode: null,
   });
 });
 

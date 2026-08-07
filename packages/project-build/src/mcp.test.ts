@@ -970,17 +970,21 @@ describe("project session mcp adapter", () => {
       })
     ).not.toThrow();
     for (const command of ["preview.start", "preview.status", "preview.stop"]) {
+      const outputSchema = getSuccessfulOutputDataSchema(
+        visualTools.find((tool) => tool.name === command)?.outputSchema
+      );
       expect(
-        getSuccessfulOutputDataSchema(
-          visualTools.find((tool) => tool.name === command)?.outputSchema
-        ),
+        outputSchema,
         `Missing MCP output schema for ${command}`
       ).toMatchObject({
         type: "object",
-        required: ["url", "running", "mode"],
+        required:
+          command === "preview.start"
+            ? ["url", "running", "mode"]
+            : ["running"],
         properties: {
-          url: { type: ["string", "null"] },
-          pid: { type: ["integer", "null"] },
+          url: { type: "string" },
+          pid: { type: "integer" },
           running: { type: "boolean" },
         },
       });

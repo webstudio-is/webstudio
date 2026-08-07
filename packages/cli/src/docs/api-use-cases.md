@@ -145,7 +145,7 @@ Commands:
 
 Notes:
 
-- `preview.status` reports whether generated output is `stale`. When no preview is running, `url`, `pid`, and `mode` are `null`. When present, `renderedProjectVersion` is the last project version materialized into the preview.
+- `preview.status` reports whether generated output is `stale`. When no preview is running, `url`, `pid`, and `mode` are omitted. When present, `renderedProjectVersion` is the last project version materialized into the preview.
 - A managed `screenshot` or another `preview.start` refreshes stale generated output before capture.
 
 - Use this after page/content/style mutations so a vision-capable AI can see the generated site from the current MCP session. Use `path`; never pass a Webstudio Builder/share URL or capture Builder chrome.

@@ -314,10 +314,10 @@ export type ProjectSessionPreviewResult = {
 };
 
 export type ProjectSessionPreviewStatusResult = {
-  url: string | null;
-  pid?: number | null;
+  url?: string;
+  pid?: number;
   running: boolean;
-  mode: ProjectSessionPreviewMode | null;
+  mode?: ProjectSessionPreviewMode;
 };
 
 type StartPreview = (
@@ -2465,21 +2465,26 @@ const refreshDataSchema = {
   additionalProperties: false,
 } as const satisfies InputJsonSchema;
 
-const previewDataSchema = {
+const previewStatusDataSchema = {
   type: "object",
   properties: {
-    url: { type: ["string", "null"] },
-    pid: { type: ["integer", "null"] },
+    url: { type: "string" },
+    pid: { type: "integer" },
     running: { type: "boolean" },
     mode: {
-      type: ["string", "null"],
-      enum: [...projectSessionPreviewModes, null],
+      type: "string",
+      enum: projectSessionPreviewModes,
     },
     stale: { type: "boolean" },
     renderedProjectVersion: { type: "integer" },
   },
-  required: ["url", "running", "mode"],
+  required: ["running"],
   additionalProperties: false,
+} as const satisfies InputJsonSchema;
+
+const previewDataSchema = {
+  ...previewStatusDataSchema,
+  required: ["url", "running", "mode"],
 } as const satisfies InputJsonSchema;
 
 const restorePointSummaryDataSchema = getZodObjectSchema(
@@ -3316,7 +3321,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Return the active generated-site preview server URL and process state for screenshot-based verification.",
     inputSchema: emptyInputSchema,
-    outputSchema: getMcpOutputSchema(previewDataSchema),
+    outputSchema: getMcpOutputSchema(previewStatusDataSchema),
     mcpExamples: getMcpExamples("preview.status"),
     annotations: {
       command: "preview.status",
@@ -3336,7 +3341,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Stop the active generated-site preview server owned by this MCP session.",
     inputSchema: emptyInputSchema,
-    outputSchema: getMcpOutputSchema(previewDataSchema),
+    outputSchema: getMcpOutputSchema(previewStatusDataSchema),
     mcpExamples: getMcpExamples("preview.stop"),
     annotations: {
       command: "preview.stop",

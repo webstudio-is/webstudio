@@ -367,7 +367,7 @@ export const createMcpPreviewHandlers = ({
   };
   const getManagedPreviewMetadata = (input: McpScreenshotInput) =>
     input.path !== undefined && input.baseUrl === undefined
-      ? { previewMode: preview.status().mode ?? undefined }
+      ? { previewMode: preview.status().mode }
       : {};
   return {
     async startPreview(input: McpPreviewInput, progress?: McpToolProgress) {
