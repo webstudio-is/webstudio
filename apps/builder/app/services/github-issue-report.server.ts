@@ -72,15 +72,15 @@ ${report.technicalContext}
 - Reasoning effort: ${agent.reasoningEffort}
 - Trigger: ${trigger}
 - Category: ${category}
+
+## Technical runtime
+
+- CLI: ${runtime?.cliVersion ?? "unknown"}
+- Node.js: ${runtime?.nodeVersion ?? "unknown"}
 ${
   runtime === undefined
     ? ""
-    : `
-## Technical runtime
-
-- CLI: ${runtime.cliVersion}
-- Node.js: ${runtime.nodeVersion}
-- Operating system: ${runtime.os} ${runtime.osVersion} (${runtime.architecture})
+    : `- Operating system: ${runtime.os} ${runtime.osVersion} (${runtime.architecture})
 - Execution mode: ${runtime.executionMode}
 - API contract: ${runtime.apiContractVersion}
 `
