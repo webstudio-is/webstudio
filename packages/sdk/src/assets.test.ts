@@ -593,11 +593,9 @@ describe("allowed-file-types", () => {
 
     test("generates correct URL for image assets", () => {
       const url = getAssetUrl(mockImageAsset, "https://example.com");
-      expect(url.href).toBe(
-        "https://example.com/cgi/image/photo.jpg?format=raw"
-      );
+      expect(url.href).toBe("https://example.com/cgi/image/photo.jpg");
       expect(url.pathname).toBe("/cgi/image/photo.jpg");
-      expect(url.search).toBe("?format=raw");
+      expect(url.search).toBe("");
     });
 
     test.each(["bmp", "ico", "avif"])(
@@ -611,33 +609,25 @@ describe("allowed-file-types", () => {
           "https://example.com"
         );
 
-        expect(url.href).toBe(
-          `https://example.com/cgi/asset/photo.${format}?format=raw`
-        );
+        expect(url.href).toBe(`https://example.com/cgi/asset/photo.${format}`);
       }
     );
 
     test("generates correct URL for video assets", () => {
       const url = getAssetUrl(mockVideoAsset, "https://example.com");
-      expect(url.href).toBe(
-        "https://example.com/cgi/asset/video.mp4?format=raw"
-      );
+      expect(url.href).toBe("https://example.com/cgi/asset/video.mp4");
       expect(url.pathname).toBe("/cgi/asset/video.mp4");
     });
 
     test("generates correct URL for font assets", () => {
       const url = getAssetUrl(mockFontAsset, "https://example.com");
-      expect(url.href).toBe(
-        "https://example.com/cgi/asset/font.woff2?format=raw"
-      );
+      expect(url.href).toBe("https://example.com/cgi/asset/font.woff2");
       expect(url.pathname).toBe("/cgi/asset/font.woff2");
     });
 
     test("generates correct URL for generic file assets", () => {
       const url = getAssetUrl(mockGenericAsset, "https://example.com");
-      expect(url.href).toBe(
-        "https://example.com/cgi/asset/document.pdf?format=raw"
-      );
+      expect(url.href).toBe("https://example.com/cgi/asset/document.pdf");
       expect(url.pathname).toBe("/cgi/asset/document.pdf");
     });
 
@@ -1048,7 +1038,7 @@ describe("allowed-file-types", () => {
     test("converts image asset with all fields", () => {
       const result = toRuntimeAsset(mockImageAsset, "https://example.com");
       expect(result).toEqual({
-        url: "/cgi/image/photo.jpg?format=raw",
+        url: "/cgi/image/photo.jpg",
         width: 1920,
         height: 1080,
       });
@@ -1057,7 +1047,7 @@ describe("allowed-file-types", () => {
     test("converts static font asset with metadata", () => {
       const result = toRuntimeAsset(mockFontAsset, "https://example.com");
       expect(result).toEqual({
-        url: "/cgi/asset/font.woff2?format=raw",
+        url: "/cgi/asset/font.woff2",
         family: "Arial",
         style: "normal",
         weight: 400,
@@ -1070,7 +1060,7 @@ describe("allowed-file-types", () => {
         "https://example.com"
       );
       expect(result).toEqual({
-        url: "/cgi/asset/variable-font.woff2?format=raw",
+        url: "/cgi/asset/variable-font.woff2",
         family: "Inter",
       });
     });
@@ -1078,7 +1068,7 @@ describe("allowed-file-types", () => {
     test("converts generic file asset with minimal fields", () => {
       const result = toRuntimeAsset(mockGenericAsset, "https://example.com");
       expect(result).toEqual({
-        url: "/cgi/asset/document.pdf?format=raw",
+        url: "/cgi/asset/document.pdf",
       });
     });
 
@@ -1086,8 +1076,8 @@ describe("allowed-file-types", () => {
       const result1 = toRuntimeAsset(mockImageAsset, "https://cdn.example.com");
       const result2 = toRuntimeAsset(mockImageAsset, "http://localhost:3000");
       // Both should return the same relative URL
-      expect(result1.url).toBe("/cgi/image/photo.jpg?format=raw");
-      expect(result2.url).toBe("/cgi/image/photo.jpg?format=raw");
+      expect(result1.url).toBe("/cgi/image/photo.jpg");
+      expect(result2.url).toBe("/cgi/image/photo.jpg");
     });
 
     test("handles image without dimensions", () => {
