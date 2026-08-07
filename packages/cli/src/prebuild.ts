@@ -100,6 +100,7 @@ import { formatZodIssues } from "./zod-utils";
 import { createFramework as createRemixFramework } from "./framework-remix";
 import { createFramework as createReactRouterFramework } from "./framework-react-router";
 import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
+import { routeTemplatesDirectory } from "./framework";
 
 export const generatedFilesManifest = join(
   ".webstudio",
@@ -879,19 +880,17 @@ export const prebuild = async (options: {
 
   const preserveRouteTemplates =
     options.incremental === true || options.preserveRouteTemplates === true;
+  const frameworkOptions = {
+    preserveTemplates: preserveRouteTemplates,
+    templatesDirectory: join(buildRoot, routeTemplatesDirectory),
+  };
   let framework;
   if (options.template.includes("ssg")) {
-    framework = await createVikeSsgFramework({
-      preserveTemplates: preserveRouteTemplates,
-    });
+    framework = await createVikeSsgFramework(frameworkOptions);
   } else if (options.template.includes("react-router")) {
-    framework = await createReactRouterFramework({
-      preserveTemplates: preserveRouteTemplates,
-    });
+    framework = await createReactRouterFramework(frameworkOptions);
   } else {
-    framework = await createRemixFramework({
-      preserveTemplates: preserveRouteTemplates,
-    });
+    framework = await createRemixFramework(frameworkOptions);
   }
 
   const assetBaseUrl = await readAssetBaseUrl(join(cwd(), "app/constants.mjs"));

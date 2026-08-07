@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/sdk-components-registry/framework";
 import {
   cleanupFrameworkTemplates,
-  routeTemplatesDirectory,
+  getFrameworkTemplatesDirectory,
   type Framework,
   type FrameworkOptions,
 } from "./framework";
@@ -31,16 +31,17 @@ const generateVikeRoute = (pagePath: string) => {
 export const createFramework = async (
   options: FrameworkOptions = {}
 ): Promise<Framework> => {
+  const templatesDirectory = getFrameworkTemplatesDirectory(options);
   const htmlPageTemplate = await readFile(
-    join(routeTemplatesDirectory, "html", "+Page.tsx"),
+    join(templatesDirectory, "html", "+Page.tsx"),
     "utf8"
   );
   const htmlHeadTemplate = await readFile(
-    join(routeTemplatesDirectory, "html", "+Head.tsx"),
+    join(templatesDirectory, "html", "+Head.tsx"),
     "utf8"
   );
   const htmlDataTemplate = await readFile(
-    join(routeTemplatesDirectory, "html", "+data.ts"),
+    join(templatesDirectory, "html", "+data.ts"),
     "utf8"
   );
 
