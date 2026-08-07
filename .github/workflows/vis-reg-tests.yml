@@ -38,6 +38,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       - uses: ./.github/actions/ci-setup
 

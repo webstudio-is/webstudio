@@ -36,6 +36,7 @@ jobs:
         with:
           fetch-depth: 2 # we need to fetch at least parent commit to satisfy Chromatic
           ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       # Storybook with submodules
       - uses: ./.github/actions/submodules-checkout
