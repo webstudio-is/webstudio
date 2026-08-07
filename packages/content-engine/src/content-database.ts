@@ -47,7 +47,7 @@ import {
 type ContentDatabaseQueryArguments = [
   request: AssetQueryRequestInput,
   readContent?: AssetResourceContentReader,
-  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>,
 ];
 
 export type ContentDatabase = {
@@ -565,8 +565,8 @@ export const createContentDatabase = ({
         omittedDocumentCount === 0
           ? undefined
           : unboundedBytes > maxBytes
-          ? "size"
-          : "unavailable",
+            ? "size"
+            : "unavailable",
       truncated: omittedDocumentCount > 0,
     }),
   };
