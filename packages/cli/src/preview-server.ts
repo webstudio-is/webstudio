@@ -26,6 +26,13 @@ export type PreviewServerResult = {
 
 export type PreviewServerDependencies = {
   spawn: typeof spawn;
+  killProcess: (pid: number, signal: NodeJS.Signals) => boolean;
+  parentProcess: {
+    pid: number;
+    once: (signal: NodeJS.Signals, handler: () => void) => unknown;
+    off: (signal: NodeJS.Signals, handler: () => void) => unknown;
+    kill: (pid: number, signal: NodeJS.Signals) => boolean;
+  };
   fetch: typeof fetch;
   cp: typeof cp;
   mkdir: typeof mkdir;
@@ -40,6 +47,8 @@ export type PreviewServerDependencies = {
 
 export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   spawn,
+  killProcess: process.kill,
+  parentProcess: process,
   fetch,
   cp,
   mkdir,
@@ -218,7 +227,10 @@ export const materializePreviewAssets = async (
 };
 
 export const startPreviewServer = (
-  options: PreviewServerOptions & { stdio?: StdioOptions },
+  options: PreviewServerOptions & {
+    stdio?: StdioOptions;
+    detached?: boolean;
+  },
   dependencies = defaultPreviewServerDependencies
 ): PreviewServerResult => {
   const invocation = getNpmInvocation(
@@ -230,6 +242,7 @@ export const startPreviewServer = (
     invocation.args,
     {
       cwd: options.cwd,
+      ...(options.detached === undefined ? {} : { detached: options.detached }),
       stdio: options.stdio ?? "inherit",
       env: getPreviewEnv(options.cwd, {
         ...processEnv(),
@@ -249,6 +262,24 @@ export const startPreviewServer = (
     url: getPreviewUrl(options),
     process: previewProcess,
   };
+};
+
+const killPreviewProcess = (
+  previewProcess: ChildProcess,
+  signal: NodeJS.Signals,
+  dependencies: PreviewServerDependencies
+) => {
+  if (dependencies.platform !== "win32" && previewProcess.pid !== undefined) {
+    try {
+      return dependencies.killProcess(-previewProcess.pid, signal);
+    } catch (error) {
+      if (error instanceof Error && "code" in error && error.code === "ESRCH") {
+        return false;
+      }
+      throw error;
+    }
+  }
+  return previewProcess.kill(signal);
 };
 
 export const waitForPreviewExit = async (process: ChildProcess) => {
@@ -479,6 +510,43 @@ export const createPreviewController = (
   let currentOptions = defaults;
   let currentCwd = defaults.cwd;
   let serverOutput = "";
+  const terminationSignals = ["SIGHUP", "SIGINT", "SIGTERM"] as const;
+  let isTerminating = false;
+  const terminationHandlers = new Map<NodeJS.Signals, () => void>();
+  const removeTerminationHandlers = () => {
+    for (const [signal, handler] of terminationHandlers) {
+      dependencies.parentProcess.off(signal, handler);
+    }
+    terminationHandlers.clear();
+  };
+  const installTerminationHandlers = () => {
+    if (terminationHandlers.size > 0) {
+      return;
+    }
+    for (const signal of terminationSignals) {
+      const handler = () => {
+        if (isTerminating) {
+          return;
+        }
+        isTerminating = true;
+        const activeServer = server;
+        server = undefined;
+        removeTerminationHandlers();
+        try {
+          if (activeServer !== undefined) {
+            killPreviewProcess(activeServer.process, "SIGTERM", dependencies);
+          }
+        } finally {
+          dependencies.parentProcess.kill(
+            dependencies.parentProcess.pid,
+            signal
+          );
+        }
+      };
+      terminationHandlers.set(signal, handler);
+      dependencies.parentProcess.once(signal, handler);
+    }
+  };
   const appendServerOutput = (chunk: unknown) => {
     serverOutput = `${serverOutput}${String(chunk)}`.slice(-4000);
   };
@@ -532,6 +600,7 @@ export const createPreviewController = (
     }
     const process = server.process;
     server = undefined;
+    removeTerminationHandlers();
     if (
       process.killed ||
       process.exitCode !== null ||
@@ -542,7 +611,7 @@ export const createPreviewController = (
     await new Promise<void>((resolve, reject) => {
       process.once("error", reject);
       process.once("exit", () => resolve());
-      if (process.kill() === false) {
+      if (killPreviewProcess(process, "SIGTERM", dependencies) === false) {
         resolve();
       }
     });
@@ -592,16 +661,19 @@ export const createPreviewController = (
     const startedServer = startPreviewServer(
       {
         ...nextOptions,
+        detached: dependencies.platform !== "win32",
         stdio: ["ignore", "pipe", "pipe"],
       },
       dependencies
     );
     server = startedServer;
+    installTerminationHandlers();
     startedServer.process.stdout?.on("data", appendServerOutput);
     startedServer.process.stderr?.on("data", appendServerOutput);
     startedServer.process.once("exit", () => {
       if (server === startedServer) {
         server = undefined;
+        removeTerminationHandlers();
       }
     });
     return getStatus();
