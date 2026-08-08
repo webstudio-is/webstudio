@@ -94,7 +94,7 @@ export const listFragmentExpressions = (fragment: WebstudioFragment) => [
   ),
 ];
 
-export const webstudioFragmentInput = webstudioFragment.superRefine(
+export const webstudioFragmentMutationInput = webstudioFragment.superRefine(
   (fragment, context) => {
     for (const entry of listFragmentExpressions(fragment)) {
       const errors = getExpressionErrorMessages({
