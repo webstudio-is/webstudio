@@ -139,9 +139,21 @@ export const getPlaywrightInstallations = async ({
   homeDirectory?: string;
 } = {}) => {
   const configuredCache = env.PLAYWRIGHT_BROWSERS_PATH;
+  const defaultCacheDirectory =
+    platform === "darwin"
+      ? join(homeDirectory, "Library", "Caches", "ms-playwright")
+      : platform === "win32"
+        ? join(
+            env.LOCALAPPDATA ?? join(homeDirectory, "AppData", "Local"),
+            "ms-playwright"
+          )
+        : join(
+            env.XDG_CACHE_HOME ?? join(homeDirectory, ".cache"),
+            "ms-playwright"
+          );
   const cacheDirectory =
     configuredCache === undefined || configuredCache === ""
-      ? join(homeDirectory, ".cache", "ms-playwright")
+      ? defaultCacheDirectory
       : configuredCache === "0"
         ? undefined
         : resolve(configuredCache);

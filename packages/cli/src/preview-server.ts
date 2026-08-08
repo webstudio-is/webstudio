@@ -218,6 +218,21 @@ export const getNpmInvocation = (
       return { command: nodeExecPath, args: [npmCliPath, ...args] };
     }
   }
+  if (platform === "win32") {
+    return {
+      command: nodeExecPath,
+      args: [
+        win32.join(
+          win32.dirname(nodeExecPath),
+          "node_modules",
+          "npm",
+          "bin",
+          "npm-cli.js"
+        ),
+        ...args,
+      ],
+    };
+  }
   return { command: getPreviewCommand(platform), args };
 };
 

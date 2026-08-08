@@ -70,6 +70,45 @@ describe("resolveScreenshotBrowser", () => {
     }
   });
 
+  test.each([
+    {
+      platform: "darwin" as const,
+      cacheSegments: ["Library", "Caches", "ms-playwright"],
+      executableSegments: [
+        "chromium-1208",
+        "chrome-mac",
+        "Chromium.app",
+        "Contents",
+        "MacOS",
+        "Chromium",
+      ],
+    },
+    {
+      platform: "win32" as const,
+      cacheSegments: ["AppData", "Local", "ms-playwright"],
+      executableSegments: ["chromium-1208", "chrome-win", "chrome.exe"],
+    },
+  ])(
+    "finds Playwright Chromium in the default $platform cache",
+    async ({ platform, cacheSegments, executableSegments }) => {
+      const homeDirectory = await mkdtemp(
+        join(tmpdir(), "webstudio-playwright-home-")
+      );
+      try {
+        const cacheDirectory = join(homeDirectory, ...cacheSegments);
+        await mkdir(join(cacheDirectory, "chromium-1208"), {
+          recursive: true,
+        });
+
+        await expect(
+          getPlaywrightInstallations({ env: {}, platform, homeDirectory })
+        ).resolves.toContain(join(cacheDirectory, ...executableSegments));
+      } finally {
+        await rm(homeDirectory, { recursive: true, force: true });
+      }
+    }
+  );
+
   test("uses explicit browser path before discovered browsers", async () => {
     const dependencies = createDependencies({
       which: vi.fn(async (command) =>

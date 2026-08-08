@@ -6146,18 +6146,14 @@ const getExactToolSelection = (
   toolNames: readonly string[],
   tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const toolByName = new Map(
-    tools.map((tool) => [toUnderscoredToolName(tool.name), tool])
-  );
-  for (const tool of tools) {
-    toolByName.set(tool.name, tool);
-  }
+  const toolNameIndex = createToolNameIndex(tools);
   const selectedTools: ProjectSessionMcpTool[] = [];
   const missingTools: string[] = [];
   const includedToolNames = new Set<string>();
   for (const requestedName of toolNames) {
-    const resolvedName = resolveToolName(requestedName);
-    const tool = toolByName.get(resolvedName);
+    const tool = toolNameIndex.toolByCanonicalName.get(
+      toolNameIndex.resolve(requestedName)
+    );
     if (tool === undefined) {
       missingTools.push(requestedName);
       continue;
@@ -6294,19 +6290,39 @@ const toolAliases = new Map([
   ["meta.get_more_tools", "meta.get-more-tools"],
 ]);
 
+const createToolNameIndex = (tools: readonly ProjectSessionMcpTool[]) => {
+  const toolByCanonicalName = new Map(
+    tools.map((tool) => [tool.name, tool] as const)
+  );
+  const canonicalNamesByUnderscoredName = new Map<string, string[]>();
+  for (const tool of tools) {
+    const underscoredName = toUnderscoredToolName(tool.name);
+    const canonicalNames =
+      canonicalNamesByUnderscoredName.get(underscoredName) ?? [];
+    canonicalNames.push(tool.name);
+    canonicalNamesByUnderscoredName.set(underscoredName, canonicalNames);
+  }
+  return {
+    toolByCanonicalName,
+    canonicalNamesByUnderscoredName,
+    resolve(name: string) {
+      const aliasedName = toolAliases.get(name) ?? name;
+      if (toolByCanonicalName.has(aliasedName)) {
+        return aliasedName;
+      }
+      const canonicalNames =
+        canonicalNamesByUnderscoredName.get(aliasedName) ?? [];
+      return canonicalNames.length === 1
+        ? (canonicalNames[0] ?? aliasedName)
+        : aliasedName;
+    },
+  };
+};
+
 const resolveToolName = (
   name: string,
   tools: readonly ProjectSessionMcpTool[] = []
-) => {
-  const aliasedName = toolAliases.get(name) ?? name;
-  if (tools.some((tool) => tool.name === aliasedName)) {
-    return aliasedName;
-  }
-  const matches = tools.filter(
-    (tool) => toUnderscoredToolName(tool.name) === aliasedName
-  );
-  return matches.length === 1 ? (matches[0]?.name ?? aliasedName) : aliasedName;
-};
+) => createToolNameIndex(tools).resolve(name);
 
 const getToolNameEditDistance = (left: string, right: string) => {
   const previous = Array.from(
@@ -7288,18 +7304,19 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   const operationByCommand = new Map(
     operations.map((operation) => [operation.command, operation])
   );
-  const listTools = () =>
-    listProjectSessionMcpTools(operations, {
-      includeImport: importProject !== undefined,
-      includeDownloadAsset: downloadAsset !== undefined,
-      includeScreenshot: captureScreenshot !== undefined,
-      includeResponsiveScreenshot: capturePageScreenshots !== undefined,
-      includeScreenshotDiff: diffScreenshots !== undefined,
-      includeInstallOcr: installOcr !== undefined,
-      includePreview:
-        startPreview !== undefined && getPreviewStatus !== undefined,
-      includeRestorePoints: restorePoints !== undefined,
-    });
+  const tools = listProjectSessionMcpTools(operations, {
+    includeImport: importProject !== undefined,
+    includeDownloadAsset: downloadAsset !== undefined,
+    includeScreenshot: captureScreenshot !== undefined,
+    includeResponsiveScreenshot: capturePageScreenshots !== undefined,
+    includeScreenshotDiff: diffScreenshots !== undefined,
+    includeInstallOcr: installOcr !== undefined,
+    includePreview:
+      startPreview !== undefined && getPreviewStatus !== undefined,
+    includeRestorePoints: restorePoints !== undefined,
+  });
+  const listTools = () => [...tools];
+  const toolNameIndex = createToolNameIndex(tools);
   const getSession = () => {
     session ??= createProjectSession();
     return session;
@@ -7519,8 +7536,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       signal?: AbortSignal;
     }): Promise<ProjectSessionMcpToolResult> {
       const requestedName = name;
-      const tools = listTools();
-      name = resolveToolName(name, tools);
+      name = toolNameIndex.resolve(name);
       if (name === "checkpoint.ack") {
         if (
           isRecord(input) === false ||
@@ -8351,27 +8367,34 @@ export const createProjectSessionMcpServer = async <
       sendLog("info", message);
     },
   });
-  const exposedTools = core.listTools().map((tool) => ({
+  const tools = core.listTools();
+  const toolNameIndex = createToolNameIndex(tools);
+  const exposedTools = tools.map((tool) => ({
     ...tool,
     name:
       toolNameFormat === "underscores"
         ? toUnderscoredToolName(tool.name)
         : tool.name,
   }));
-  const canonicalToolNameByExposedName = new Map<string, string>();
-  for (const [index, tool] of core.listTools().entries()) {
-    const exposedName = exposedTools[index]?.name;
-    if (exposedName === undefined) {
-      continue;
-    }
-    const existingName = canonicalToolNameByExposedName.get(exposedName);
-    if (existingName !== undefined && existingName !== tool.name) {
+  if (toolNameFormat === "underscores") {
+    for (const [
+      exposedName,
+      canonicalNames,
+    ] of toolNameIndex.canonicalNamesByUnderscoredName) {
+      if (canonicalNames.length < 2) {
+        continue;
+      }
       throw new Error(
-        `MCP tool names ${existingName} and ${tool.name} both map to ${exposedName}.`
+        `MCP tool names ${canonicalNames.join(" and ")} both map to ${exposedName}.`
       );
     }
-    canonicalToolNameByExposedName.set(exposedName, tool.name);
   }
+  const canonicalToolNameByExposedName = new Map(
+    exposedTools.map((tool, index) => [
+      tool.name,
+      tools[index]?.name ?? tool.name,
+    ])
+  );
 
   server.oninitialized = () => {
     onInitialized?.(server.getClientVersion()?.name);
