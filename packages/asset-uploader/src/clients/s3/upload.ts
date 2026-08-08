@@ -1,4 +1,8 @@
-import { arrayBuffer } from "node:stream/consumers";
+import { randomUUID } from "node:crypto";
+import { createReadStream } from "node:fs";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { SignatureV4 } from "@smithy/signature-v4";
 import {
   applyAssetDataOverride,
@@ -7,10 +11,14 @@ import {
   getAssetData,
 } from "../../utils/get-asset-data";
 import { createSizeLimiter } from "../../utils/size-limiter";
+import { spoolToFile } from "../../utils/spool-to-file";
 import { getMimeTypeByFilename } from "@webstudio-is/sdk";
 import { createS3ObjectUrl } from "./object-url";
 import { createS3FetchHeaders, signS3Request } from "./request-headers";
 import type { AssetInfoFallback } from "../../client";
+
+const getAssetDataType = (type: string) =>
+  type.startsWith("image") ? "image" : type === "font" ? "font" : "file";
 
 export const uploadToS3 = async ({
   signer,
@@ -37,70 +45,101 @@ export const uploadToS3 = async ({
 }): Promise<AssetData> => {
   const limitSize = createSizeLimiter(maxSize, name);
 
-  // @todo this is going to put the entire file in memory
-  // this has to be a stream that goes directly to s3
-  // Size check has to happen as you stream and interrupted when size is too big
-  // Also check if S3 client has an option to check the size limit
-  const data = await arrayBuffer(limitSize(dataStream));
+  // The incoming stream has an unknown length while S3 requires either a
+  // known Content-Length or AWS SigV4 streaming-chunked encoding (which still
+  // needs the decoded content length up front). Spool the stream to a temp
+  // file first so the size is known and the PUT body can be streamed from
+  // disk instead of buffering the whole file in memory. The size check runs
+  // while spooling and aborts as soon as the limit is exceeded.
+  //
+  // The temp file name is a random UUID, decoupled from the object key: the
+  // key is user-influenced (slashes, encoding, up to 1024 bytes) and must not
+  // be treated as a filesystem path.
+  const tempDirectory = await mkdtemp(join(tmpdir(), "webstudio-asset-"));
+  const tempPath = join(tempDirectory, randomUUID());
 
-  const url = createS3ObjectUrl({
-    endpoint,
-    bucket,
-    key: name,
-  });
+  try {
+    const size = await spoolToFile(limitSize(dataStream), tempPath);
 
-  // Use proper MIME type based on file extension instead of generic type category
-  const contentType = getMimeTypeByFilename(name);
+    const url = createS3ObjectUrl({
+      endpoint,
+      bucket,
+      key: name,
+    });
 
-  const assetData = applyAssetDataOverride(
-    type.startsWith("video") && assetInfoFallback !== undefined
-      ? {
-          size: data.byteLength,
-          format: assetInfoFallback.format,
-          meta: {
-            width: assetInfoFallback.width,
-            height: assetInfoFallback.height,
-          },
-        }
-      : await getAssetData({
-          type: type.startsWith("image")
-            ? "image"
-            : type === "font"
-              ? "font"
-              : "file",
-          size: data.byteLength,
-          data: new Uint8Array(data),
-          name,
-        }),
-    assetDataOverride
-  );
+    // Use proper MIME type based on file extension instead of generic type category
+    const contentType = getMimeTypeByFilename(name);
 
-  const s3Request = await signS3Request({
-    signer,
-    url,
-    method: "PUT",
-    headers: {
-      "Content-Type": contentType,
-      "Content-Length": `${data.byteLength}`,
-      "Cache-Control": "public, max-age=31536004,immutable",
-      "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
-      // encodeURIComponent is needed to support special characters like Cyrillic
-      "x-amz-meta-filename": encodeURIComponent(name),
-      // when no ACL passed we do not default since some providers do not support it
-      ...(acl ? { "x-amz-acl": acl } : {}),
-    },
-    body: data,
-  });
+    const assetType = getAssetDataType(type);
 
-  const response = await fetch(url, {
-    method: s3Request.method,
-    headers: createS3FetchHeaders(s3Request.headers),
-    body: data,
-  });
+    const assetData = applyAssetDataOverride(
+      type.startsWith("video") && assetInfoFallback !== undefined
+        ? {
+            size,
+            format: assetInfoFallback.format,
+            meta: {
+              width: assetInfoFallback.width,
+              height: assetInfoFallback.height,
+            },
+          }
+        : await getAssetData({
+            type: assetType,
+            size,
+            data:
+              assetType === "image" || assetType === "font"
+                ? await readFile(tempPath)
+                : new Uint8Array(),
+            name,
+          }),
+      assetDataOverride
+    );
 
-  if (response.status !== 200) {
-    throw Error(`Cannot upload file ${name}`);
+    // x-amz-content-sha256: UNSIGNED-PAYLOAD makes @smithy/signature-v4 skip
+    // hashing the body (getPayloadHash returns the header value), so no body
+    // is passed to the signer. Passing a stream here would leak its file
+    // descriptor, because the signer never consumes or destroys it.
+    const s3Request = await signS3Request({
+      signer,
+      url,
+      method: "PUT",
+      headers: {
+        "Content-Type": contentType,
+        "Content-Length": `${size}`,
+        "Cache-Control": "public, max-age=31536004,immutable",
+        "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
+        // encodeURIComponent is needed to support special characters like Cyrillic
+        "x-amz-meta-filename": encodeURIComponent(name),
+        // when no ACL passed we do not default since some providers do not support it
+        ...(acl ? { "x-amz-acl": acl } : {}),
+      },
+    });
+
+    // Image and font metadata is derived from the full file, so it is read
+    // into memory transiently and released before the PUT below. Reading only
+    // the header would be unsafe: image-meta rejects truncated buffers for
+    // formats whose dimensions live past the leading bytes (e.g. AVIF/TIFF).
+    // The S3 transfer itself streams from disk, which bounds memory for the
+    // large-file cases (videos, files).
+    //
+    // duplex: "half" is required by undici when the body is a stream; without
+    // it the PUT fails at runtime with "duplex option is required".
+    const response = await fetch(url, {
+      method: s3Request.method,
+      headers: createS3FetchHeaders(s3Request.headers),
+      body: createReadStream(tempPath) as unknown as BodyInit,
+      duplex: "half",
+    } as RequestInit);
+
+    if (response.status !== 200) {
+      throw Error(`Cannot upload file ${name}`);
+    }
+
+    return assetData;
+  } finally {
+    try {
+      await rm(tempDirectory, { recursive: true, force: true });
+    } catch {
+      // ignore cleanup failure
+    }
   }
-
-  return assetData;
 };
