@@ -2237,6 +2237,9 @@ importers:
       fast-png:
         specifier: 8.0.0
         version: 8.0.0
+      fastest-levenshtein:
+        specifier: ^1.0.16
+        version: 1.0.16
       immer:
         specifier: ^10.1.1
         version: 10.1.1
@@ -8203,6 +8206,10 @@ packages:
 
   fast-uri@3.1.3:
     resolution: {integrity: sha512-i70LwGWUduXqzicKXWshooq+sWL1K3WUU5rKZNG/0i3a1OSoX3HqhH5WbWwTmqWfor4urUakGPiRQcleRZTwOg==}
+
+  fastest-levenshtein@1.0.16:
+    resolution: {integrity: sha512-eRnCtTTtGZFpQCwhJiUOuxPQWRXVKYDn0b2PeHfXL6/Zi53SLAzAHfVhVWK2AryC/WH05kGfxhFIPvTF0SXQzg==}
+    engines: {node: '>= 4.9.1'}
 
   fastq@1.13.0:
     resolution: {integrity: sha512-YpkpUnK8od0o1hmeSc7UUs/eB/vIPWJYjKck2QKIzAf71Vm1AAQ3EbuZB3g2JIy+pg+ERD0vqI79KyZiB2e2Nw==}
@@ -17623,6 +17630,8 @@ snapshots:
       fast-decode-uri-component: 1.0.1
 
   fast-uri@3.1.3: {}
+
+  fastest-levenshtein@1.0.16: {}
 
   fastq@1.13.0:
     dependencies:

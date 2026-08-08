@@ -4,13 +4,13 @@
  * License: Apache-2.0
  */
 
+import { distance as getLevenshteinDistance } from "fastest-levenshtein";
 import { extractOcrTextBlocks, type OcrTextBlock } from "./screenshot-ocr";
 import type {
   ScreenshotDiffBounds,
   ScreenshotDiffRgb,
 } from "./screenshot-diff";
 import type { DecodedRgbaImage } from "./screenshot-resize";
-import { getLevenshteinDistance } from "../shared/string-utils";
 
 export type ScreenshotTextChangeKind =
   | "moved"

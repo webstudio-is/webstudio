@@ -16,6 +16,7 @@ import {
   allowedArrayMethods,
   allowedStringMethods,
 } from "@webstudio-is/expression";
+import { distance as getLevenshteinDistance } from "fastest-levenshtein";
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
 import { Transform } from "node:stream";
@@ -28,7 +29,6 @@ import {
 } from "./project-session";
 import type { ScreenshotVisualExpectation } from "./visual/screenshot-diff";
 import { isPlainRecord, isRecord } from "./shared/type-utils";
-import { getLevenshteinDistance } from "./shared/string-utils";
 import {
   augmentAuditWithRenderedChecks,
   type RenderedAuditArtifactManifest,
