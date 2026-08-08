@@ -693,6 +693,50 @@ test("update data variable converts resource data source and deletes resource", 
   ]);
 });
 
+test("renames a resource-backed variable without replacing its value", () => {
+  const dataSource: DataSource = {
+    id: "data-source-id",
+    scopeInstanceId: "body",
+    name: "ficheMoto",
+    type: "resource",
+    resourceId: "resource-id",
+  };
+  const resource: Resource = {
+    id: "resource-id",
+    name: "Motorcycles",
+    method: "get",
+    url: `"https://example.com/motorcycles"`,
+    headers: [],
+  };
+
+  expect(
+    updateDataVariable(
+      {
+        pages: createDefaultPages({ rootInstanceId: "body" }),
+        instances: new Map(),
+        props: new Map(),
+        dataSources: new Map([[dataSource.id, dataSource]]),
+        resources: new Map([[resource.id, resource]]),
+      },
+      {
+        dataSourceId: dataSource.id,
+        values: { name: "ficheQuad" },
+      }
+    ).payload
+  ).toEqual([
+    {
+      namespace: "dataSources",
+      patches: [
+        {
+          op: "replace",
+          path: ["data-source-id", "name"],
+          value: "ficheQuad",
+        },
+      ],
+    },
+  ]);
+});
+
 test("dencode data variable name with dollar sign", () => {
   expect(
     decodeDataVariableName(encodeDataVariableName("$my$Variable"))

@@ -1381,7 +1381,7 @@ export const createDataVariableUpdatePayload = ({
   values,
   dataSources,
 }: {
-  variable: DataVariable;
+  variable: Pick<DataSource, "id" | "name" | "scopeInstanceId">;
   values: Partial<Pick<DataVariable, "scopeInstanceId" | "name" | "value">>;
   dataSources: Iterable<DataSource>;
 }) => {
@@ -1472,12 +1472,6 @@ export const updateDataVariable = (
   if (dataSource === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Variable not found");
   }
-  if (dataSource.type !== "variable" && input.values.value === undefined) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Variable value is required"
-    );
-  }
   const scopeInstanceId =
     input.values.scopeInstanceId ?? dataSource.scopeInstanceId;
   if (scopeInstanceId === undefined) {
@@ -1485,6 +1479,21 @@ export const updateDataVariable = (
       "BAD_REQUEST",
       "Variable scope instance is required"
     );
+  }
+  const { error, payload } = createDataVariableUpdatePayload({
+    variable: dataSource,
+    values: input.values,
+    dataSources: dataSources.values(),
+  });
+  if (error) {
+    return throwBuilderRuntimeError("BAD_REQUEST", error.message);
+  }
+  if (dataSource.type !== "variable" && input.values.value === undefined) {
+    return createRuntimeMutation({
+      payload,
+      result: { dataSourceId: dataSource.id },
+      invalidatesNamespaces: ["dataSources"],
+    });
   }
   const variable =
     dataSource.type === "variable"
@@ -1495,14 +1504,6 @@ export const updateDataVariable = (
           name: dataSource.name,
           value: input.values.value ?? { type: "string", value: "" },
         });
-  const { error } = createDataVariableUpdatePayload({
-    variable,
-    values: input.values,
-    dataSources: dataSources.values(),
-  });
-  if (error) {
-    return throwBuilderRuntimeError("BAD_REQUEST", error.message);
-  }
   const nextVariable = { ...variable, ...input.values };
   return createRuntimeMutation({
     payload: createDataVariableUpsertPayload({
