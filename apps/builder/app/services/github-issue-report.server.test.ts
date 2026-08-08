@@ -62,6 +62,17 @@ describe("GitHub issue reports", () => {
     );
   });
 
+  test("keeps version fields visible for reports from legacy clients", () => {
+    const legacyReport = structuredClone(report);
+    delete legacyReport.runtime;
+
+    const body = formatIssueReport(legacyReport);
+
+    expect(body).toContain("## Technical runtime");
+    expect(body).toContain("- CLI: unknown");
+    expect(body).toContain("- Node.js: unknown");
+  });
+
   test("discovers the repository installation before creating its token", async () => {
     const requests: Array<{ url: URL; init?: RequestInit }> = [];
     const request: typeof fetch = async (input, init) => {

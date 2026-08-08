@@ -7,10 +7,10 @@ import {
   listProjectSessionMcpTools,
 } from "@webstudio-is/project-build/mcp";
 import { publicApiOperations } from "@webstudio-is/protocol";
+import { updatePersistedMcpCheckpoint } from "./mcp-checkpoint";
 import { __testing__, mcpOptions, prepareMcpProjectSession } from "./mcp";
 
 const {
-  assertPersistedMcpCheckpointAcknowledged,
   assertSingleOpCallToolSupported,
   applyMcpRunOptions,
   createMcpResourceErrorPayload,
@@ -27,99 +27,22 @@ const {
   validateSingleOpCallInput,
   isMcpToolCallFailure,
   getMcpToolCallError,
-  readPersistedMcpCheckpoint,
-  updatePersistedMcpCheckpoint,
   executeMcpRunCall,
-  resolveMcpPreviewInput,
-  resolveMcpScreenshotInput,
-  startMcpPreview,
+  withMcpHost,
 } = __testing__;
 
-test("allocates an available port only when MCP preview omits one", async () => {
-  const getAvailablePort = vi.fn(async () => 53124);
+test("disposes an MCP host when its operation fails", async () => {
+  const dispose = vi.fn(async () => undefined);
 
   await expect(
-    resolveMcpPreviewInput({ source: "session" }, getAvailablePort)
-  ).resolves.toEqual({ source: "session", port: 53124 });
-  await expect(
-    resolveMcpPreviewInput({ source: "session", port: 0 }, getAvailablePort)
-  ).resolves.toEqual({ source: "session", port: 53124 });
-  await expect(
-    resolveMcpPreviewInput({ source: "session", port: 4173 }, getAvailablePort)
-  ).resolves.toEqual({ source: "session", port: 4173 });
-  expect(getAvailablePort).toHaveBeenCalledTimes(2);
-  expect(getAvailablePort).toHaveBeenNthCalledWith(1, "127.0.0.1");
-  expect(getAvailablePort).toHaveBeenNthCalledWith(2, "127.0.0.1");
-});
-
-test("allocates and reuses a collision-free port for automatic screenshots", async () => {
-  const getAvailablePort = vi.fn(async () => 53124);
-
-  await expect(
-    resolveMcpScreenshotInput(
-      {
-        path: "/account",
-        browser: "auto",
-        viewport: { width: 390, height: 844 },
-      },
-      { running: false, url: "http://127.0.0.1:5173/" },
-      getAvailablePort
+    withMcpHost(
+      async () => ({ dispose }),
+      async () => {
+        throw new Error("operation failed");
+      }
     )
-  ).resolves.toMatchObject({ port: 53124 });
-  await expect(
-    resolveMcpScreenshotInput(
-      {
-        path: "/account",
-        browser: "auto",
-        viewport: { width: 1440, height: 900 },
-      },
-      { running: true, url: "http://127.0.0.1:53125/" },
-      getAvailablePort
-    )
-  ).resolves.toMatchObject({ port: 53125 });
-  await expect(
-    resolveMcpScreenshotInput(
-      {
-        path: "/account",
-        browser: "auto",
-        port: 4173,
-        viewport: { width: 1440, height: 900 },
-      },
-      { running: false, url: "http://127.0.0.1:5173/" },
-      getAvailablePort
-    )
-  ).resolves.toMatchObject({ port: 4173 });
-  expect(getAvailablePort).toHaveBeenCalledOnce();
-});
-
-test("retries automatic MCP preview ports after a startup race", async () => {
-  const getAvailablePort = vi
-    .fn()
-    .mockResolvedValueOnce(53124)
-    .mockResolvedValueOnce(53125);
-  const startPreview = vi
-    .fn()
-    .mockRejectedValueOnce(new Error("Preview server exited before ready"))
-    .mockResolvedValueOnce({ url: "http://127.0.0.1:53125/" });
-  const sleep = vi.fn(async () => undefined);
-
-  await expect(
-    startMcpPreview({
-      input: { source: "session" },
-      getAvailablePort,
-      startPreview,
-      sleep,
-    })
-  ).resolves.toEqual({ url: "http://127.0.0.1:53125/" });
-  expect(startPreview).toHaveBeenNthCalledWith(1, {
-    source: "session",
-    port: 53124,
-  });
-  expect(startPreview).toHaveBeenNthCalledWith(2, {
-    source: "session",
-    port: 53125,
-  });
-  expect(sleep).toHaveBeenCalledWith(500);
+  ).rejects.toThrow("operation failed");
+  expect(dispose).toHaveBeenCalledOnce();
 });
 
 test("classifies structured MCP tool failures for nonzero CLI exit", () => {
@@ -604,90 +527,6 @@ test("explains extract-slot selectors in focused MCP discovery", async () => {
   );
 });
 
-test("persists MCP checkpoints across single-op-call processes", async () => {
-  const tools = listProjectSessionMcpTools(publicApiOperations);
-  const dir = await mkdtemp(path.join(tmpdir(), "webstudio-mcp-checkpoint-"));
-  tempDirs.push(dir);
-
-  await updatePersistedMcpCheckpoint({
-    tool: "components.coverage-plan",
-    scope: { projectRoot: dir },
-    structuredContent: {
-      data: {
-        checkpoint: {
-          required: true,
-          instruction:
-            "Stop after this coverage-plan response and report before continuing.",
-          nextCommand:
-            'node packages/cli/local.js workflow.next \'{"goal":"design-system-page","phase":"page-creation"}\'',
-        },
-      },
-    },
-  });
-
-  await expect(
-    readPersistedMcpCheckpoint({ projectRoot: dir })
-  ).resolves.toEqual({
-    tool: "components.coverage-plan",
-    message:
-      "Stop after this coverage-plan response and report before continuing.",
-    nextCommand:
-      'node packages/cli/local.js workflow.next \'{"goal":"design-system-page","phase":"page-creation"}\'',
-  });
-  await expect(
-    assertPersistedMcpCheckpointAcknowledged("components.get", tools, {
-      projectRoot: dir,
-    })
-  ).resolves.toBeUndefined();
-  await expect(
-    assertPersistedMcpCheckpointAcknowledged("create-page", tools, {
-      projectRoot: dir,
-    })
-  ).rejects.toMatchObject({
-    code: "CHECKPOINT_REQUIRED",
-    message: expect.stringContaining("CHECKPOINT_REQUIRED"),
-  });
-  await expect(
-    assertPersistedMcpCheckpointAcknowledged("checkpoint.ack", tools, {
-      projectRoot: dir,
-    })
-  ).resolves.toBeUndefined();
-
-  await updatePersistedMcpCheckpoint({
-    tool: "checkpoint.ack",
-    scope: { projectRoot: dir },
-    structuredContent: { data: { acknowledged: true } },
-  });
-
-  await expect(
-    readPersistedMcpCheckpoint({ projectRoot: dir })
-  ).resolves.toBeUndefined();
-  await expect(
-    assertPersistedMcpCheckpointAcknowledged("create-page", tools, {
-      projectRoot: dir,
-    })
-  ).resolves.toBeUndefined();
-});
-
-test("isolates persisted MCP checkpoints by selected project", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "webstudio-mcp-projects-"));
-  tempDirs.push(dir);
-  await updatePersistedMcpCheckpoint({
-    tool: "workflow.next",
-    scope: { projectRoot: dir, projectId: "project-a" },
-    structuredContent: {
-      data: { checkpoint: { required: true, instruction: "Report project A" } },
-    },
-  });
-
-  await expect(
-    readPersistedMcpCheckpoint({ projectRoot: dir, projectId: "project-a" })
-  ).resolves.toEqual(expect.objectContaining({ message: "Report project A" }));
-  await expect(
-    readPersistedMcpCheckpoint({ projectRoot: dir, projectId: "project-b" })
-  ).resolves.toBeUndefined();
-});
-
 test("checks persisted checkpoints before every MCP run call", async () => {
   const dir = await mkdtemp(
     path.join(tmpdir(), "webstudio-mcp-run-checkpoint-")
@@ -947,30 +786,6 @@ test("preserves already structured MCP run errors", () => {
     meta: {
       elapsedMs: 12,
     },
-  });
-});
-
-test("persists checkpoint producer tool name", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "webstudio-mcp-checkpoint-"));
-  tempDirs.push(dir);
-
-  await updatePersistedMcpCheckpoint({
-    tool: "future.checkpoint-tool",
-    scope: { projectRoot: dir },
-    structuredContent: {
-      data: {
-        checkpoint: {
-          required: true,
-          instruction: "Report this future checkpoint before continuing.",
-        },
-      },
-    },
-  });
-
-  await expect(
-    readPersistedMcpCheckpoint({ projectRoot: dir })
-  ).resolves.toMatchObject({
-    tool: "future.checkpoint-tool",
   });
 });
 

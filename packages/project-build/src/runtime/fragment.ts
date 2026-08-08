@@ -21,6 +21,7 @@ import {
   findTreeInstanceIdsExcludingSlotDescendants,
   getHomePage,
   portalComponent,
+  webstudioFragment,
 } from "@webstudio-is/sdk";
 import {
   findAvailableVariables,
@@ -30,6 +31,10 @@ import {
 } from "./data";
 import { cloneInstanceWithNewIds } from "./instances";
 import { clonePropForInstance, listPropExpressions } from "./props";
+import {
+  addExpressionValidationIssues,
+  getExpressionErrorMessages,
+} from "./expression-validation";
 import { buildMergedBreakpointIds, maxBreakpoints } from "./breakpoints";
 import {
   collectStyleSourcesFromInstances,
@@ -88,6 +93,19 @@ export const listFragmentExpressions = (fragment: WebstudioFragment) => [
     }))
   ),
 ];
+
+export const webstudioFragmentMutationInput = webstudioFragment.superRefine(
+  (fragment, context) => {
+    for (const entry of listFragmentExpressions(fragment)) {
+      const errors = getExpressionErrorMessages({
+        expression: entry.expression,
+        allowAssignment: entry.allowAssignment,
+        availableVariables: new Set(entry.variables),
+      });
+      addExpressionValidationIssues(context, errors, entry.path);
+    }
+  }
+);
 
 const mergeById = <Item extends { id: string }>(items: Item[]) =>
   Array.from(new Map(items.map((item) => [item.id, item])).values());

@@ -313,12 +313,19 @@ export type ProjectSessionPreviewResult = {
   mode: ProjectSessionPreviewMode;
 };
 
+export type ProjectSessionPreviewStatusResult = {
+  url?: string;
+  pid?: number;
+  running: boolean;
+  mode?: ProjectSessionPreviewMode;
+};
+
 type StartPreview = (
   input: ProjectSessionPreviewInput,
   progress?: McpToolProgress
 ) => Promise<ProjectSessionPreviewResult>;
-type GetPreviewStatus = () => Promise<ProjectSessionPreviewResult>;
-type StopPreview = () => Promise<ProjectSessionPreviewResult>;
+type GetPreviewStatus = () => Promise<ProjectSessionPreviewStatusResult>;
+type StopPreview = () => Promise<ProjectSessionPreviewStatusResult>;
 
 export type ProjectSessionImportInput = {
   to: string;
@@ -1295,7 +1302,8 @@ const screenshotInputSchema = {
     timeout: {
       type: "number",
       default: defaultScreenshotTimeout,
-      description: "Maximum milliseconds to wait for page readiness.",
+      description:
+        "Maximum milliseconds for browser capture after preview is ready.",
     },
     source: {
       type: "string",
@@ -2458,18 +2466,26 @@ const refreshDataSchema = {
   additionalProperties: false,
 } as const satisfies InputJsonSchema;
 
-const previewDataSchema = {
+const previewStatusDataSchema = {
   type: "object",
   properties: {
     url: { type: "string" },
     pid: { type: "integer" },
     running: { type: "boolean" },
-    mode: { type: "string", enum: projectSessionPreviewModes },
+    mode: {
+      type: "string",
+      enum: projectSessionPreviewModes,
+    },
     stale: { type: "boolean" },
     renderedProjectVersion: { type: "integer" },
   },
-  required: ["url", "running", "mode"],
+  required: ["running"],
   additionalProperties: false,
+} as const satisfies InputJsonSchema;
+
+const previewDataSchema = {
+  ...previewStatusDataSchema,
+  required: ["url", "running", "mode"],
 } as const satisfies InputJsonSchema;
 
 const restorePointSummaryDataSchema = getZodObjectSchema(
@@ -3306,7 +3322,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Return the active generated-site preview server URL and process state for screenshot-based verification.",
     inputSchema: emptyInputSchema,
-    outputSchema: getMcpOutputSchema(previewDataSchema),
+    outputSchema: getMcpOutputSchema(previewStatusDataSchema),
     mcpExamples: getMcpExamples("preview.status"),
     annotations: {
       command: "preview.status",
@@ -3326,7 +3342,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Stop the active generated-site preview server owned by this MCP session.",
     inputSchema: emptyInputSchema,
-    outputSchema: getMcpOutputSchema(previewDataSchema),
+    outputSchema: getMcpOutputSchema(previewStatusDataSchema),
     mcpExamples: getMcpExamples("preview.stop"),
     annotations: {
       command: "preview.stop",
@@ -6122,11 +6138,19 @@ const getWorkflowNext = (input: unknown) => {
   };
 };
 
+const toUnderscoredToolName = (name: string) =>
+  name.replace(/[^a-zA-Z0-9_]/g, "_");
+
 const getExactToolSelection = (
   toolNames: readonly string[],
   tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const toolByName = new Map(tools.map((tool) => [tool.name, tool]));
+  const toolByName = new Map(
+    tools.map((tool) => [toUnderscoredToolName(tool.name), tool])
+  );
+  for (const tool of tools) {
+    toolByName.set(tool.name, tool);
+  }
   const selectedTools: ProjectSessionMcpTool[] = [];
   const missingTools: string[] = [];
   const includedToolNames = new Set<string>();
@@ -6137,10 +6161,10 @@ const getExactToolSelection = (
       missingTools.push(requestedName);
       continue;
     }
-    if (includedToolNames.has(resolvedName)) {
+    if (includedToolNames.has(tool.name)) {
       continue;
     }
-    includedToolNames.add(resolvedName);
+    includedToolNames.add(tool.name);
     selectedTools.push(tool);
   }
   return { tools: selectedTools, missingTools };
@@ -8256,7 +8280,7 @@ export const createProjectSessionMcpServer = async <
     ...tool,
     name:
       toolNameFormat === "underscores"
-        ? tool.name.replace(/[^a-zA-Z0-9_]/g, "_")
+        ? toUnderscoredToolName(tool.name)
         : tool.name,
   }));
   const canonicalToolNameByExposedName = new Map<string, string>();

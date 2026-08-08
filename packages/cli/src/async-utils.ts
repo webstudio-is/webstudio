@@ -14,3 +14,21 @@ export const createExclusiveAsyncRunner = () => {
     }
   };
 };
+
+export const withTimeout = async <Result>(
+  operation: Promise<Result>,
+  timeout: number,
+  createTimeoutError: () => Error
+) => {
+  let timeoutId: NodeJS.Timeout | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(createTimeoutError()), timeout);
+  });
+  try {
+    return await Promise.race([operation, timeoutPromise]);
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+  }
+};

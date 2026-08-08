@@ -145,16 +145,18 @@ Commands:
 
 Notes:
 
-- `preview.status` reports whether generated output is `stale`. When present, `renderedProjectVersion` is the last project version materialized into the preview.
+- `preview.status` reports whether generated output is `stale`. When no preview is running, `url`, `pid`, and `mode` are omitted. When present, `renderedProjectVersion` is the last project version materialized into the preview.
 - A managed `screenshot` or another `preview.start` refreshes stale generated output before capture.
 
 - Use this after page/content/style mutations so a vision-capable AI can see the generated site from the current MCP session. Use `path`; never pass a Webstudio Builder/share URL or capture Builder chrome.
 - For multi-page work, capture every changed page by `path` through the same preview server; no click navigation is required.
 - Iterative mode is the default: after MCP mutations, path screenshots ensure generated project files are current, wait for the exact session version, and perform an ordinary page reload without Vite HMR. The preview server and browser stay alive. Use `{"mode":"production"}` only for release-like verification; rendered audit does this automatically.
+- Calling `preview.start` after a committed mutation restarts a stale iterative server so external browsers and HTTP clients receive the newly generated project.
 - Do not call `preview.start` through one-shot `webstudio mcp single-op-call`: it is long-lived. From a shell, use `webstudio mcp run` with preview.start, screenshot, and preview.stop in one shared process, or use a real long-running MCP client.
 - From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running preview/site without generating, building, starting, or restarting preview.
 - Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview. A separate one-shot `single-op-call` process does not own another process's preview controller.
 - Use waitForSelector when the rendered app has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
+- The screenshot timeout bounds browser capture after the preview is ready. A timeout returns `SCREENSHOT_TIMEOUT`, resets the reusable browser session, and releases the shared preview lifecycle for cleanup.
 - Preview installs generated app dependencies under `.webstudio/preview` and reuses them across regenerations.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
 - If dependency installation fails, check npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
