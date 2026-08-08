@@ -1,4 +1,5 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, vi } from "vitest";
@@ -9,6 +10,7 @@ import {
   getNpmInvocation,
   getPreviewStartArgs,
   getPreviewUrl,
+  isPreviewPortAvailable,
   materializePreviewAssets,
   runPreviewBuild,
   startPreviewServer,
@@ -21,6 +23,28 @@ test("allocates an available local preview port", async () => {
 
   expect(port).toBeGreaterThan(0);
   expect(port).toBeLessThanOrEqual(65_535);
+});
+
+test("repeatedly reports an unoccupied explicit preview port as available", async () => {
+  const server = createServer();
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  if (address === null || typeof address === "string") {
+    throw new Error("Expected the test server to have a TCP address.");
+  }
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => (error === undefined ? resolve() : reject(error)));
+  });
+
+  await expect(isPreviewPortAvailable("127.0.0.1", address.port)).resolves.toBe(
+    true
+  );
+  await expect(isPreviewPortAvailable("127.0.0.1", address.port)).resolves.toBe(
+    true
+  );
 });
 
 const createDependencies = (

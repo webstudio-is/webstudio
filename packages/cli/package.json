@@ -47,6 +47,7 @@
     "chrome-launcher": "^1.2.1",
     "deepmerge": "^4.3.1",
     "decode-named-character-reference": "^1.0.2",
+    "detect-port": "^2.1.0",
     "env-paths": "^3.0.0",
     "esbuild": "^0.25.3",
     "fast-deep-equal": "^3.1.3",

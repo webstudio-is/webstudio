@@ -6,6 +6,7 @@ import {
 } from "node:child_process";
 import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { basename, delimiter, dirname, join, parse, win32 } from "node:path";
+import detectPort from "detect-port";
 import getPort from "get-port";
 import pathKey from "path-key";
 import { parse as parseHtml, type DefaultTreeAdapterMap } from "parse5";
@@ -86,7 +87,7 @@ export const defaultPreviewServerDependencies: PreviewServerDependencies = {
 export const findAvailablePort = (host = "127.0.0.1") => getPort({ host });
 
 export const isPreviewPortAvailable = async (host: string, port: number) => {
-  const availablePort = await getPort({ host, port });
+  const availablePort = await detectPort({ hostname: host, port });
   return availablePort === port;
 };
 

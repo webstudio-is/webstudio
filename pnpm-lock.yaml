@@ -1279,6 +1279,9 @@ importers:
       deepmerge:
         specifier: ^4.3.1
         version: 4.3.1
+      detect-port:
+        specifier: ^2.1.0
+        version: 2.1.0
       env-paths:
         specifier: ^3.0.0
         version: 3.0.0
@@ -7073,6 +7076,10 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
+  address@2.0.3:
+    resolution: {integrity: sha512-XNAb/a6TCqou+TufU8/u11HCu9x1gYvOoxLwtlXgIqmkrYQADVv6ljyW2zwiPhHz9R1gItAWpuDrdJMmrOBFEA==}
+    engines: {node: '>= 16.0.0'}
+
   agent-base@6.0.2:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
     engines: {node: '>= 6.0.0'}
@@ -7841,6 +7848,11 @@ packages:
 
   detect-node-es@1.1.0:
     resolution: {integrity: sha512-ypdmJU/TbBby2Dxibuv7ZLW3Bs1QEmM7nHjEANfohJLvE0XVujisn1qPJcZxg+qDucsr+bP6fLD1rPS3AhJ7EQ==}
+
+  detect-port@2.1.0:
+    resolution: {integrity: sha512-epZuWb/6Q62L+nDHJc/hQAqf8pylsqgk3BpZXVBx1CDnr3nkrVNn73Uu1rXcFzkNcc+hkP3whuOg7JZYaQB65Q==}
+    engines: {node: '>= 16.0.0'}
+    hasBin: true
 
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
@@ -16371,6 +16383,8 @@ snapshots:
 
   acorn@8.17.0: {}
 
+  address@2.0.3: {}
+
   agent-base@6.0.2:
     dependencies:
       debug: 4.4.3
@@ -17091,6 +17105,10 @@ snapshots:
   detect-libc@2.0.3: {}
 
   detect-node-es@1.1.0: {}
+
+  detect-port@2.1.0:
+    dependencies:
+      address: 2.0.3
 
   devlop@1.1.0:
     dependencies:
