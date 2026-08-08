@@ -7,6 +7,7 @@ import {
 import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { basename, delimiter, dirname, join, parse, win32 } from "node:path";
 import getPort from "get-port";
+import pathKey from "path-key";
 import { parse as parseHtml, type DefaultTreeAdapterMap } from "parse5";
 import type { ProjectPreviewMode } from "@webstudio-is/project-build/visual";
 
@@ -82,8 +83,7 @@ export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   platform: process.platform,
 };
 
-export const findAvailablePort = (host = "127.0.0.1") =>
-  getPort({ host });
+export const findAvailablePort = (host = "127.0.0.1") => getPort({ host });
 
 export const isPreviewPortAvailable = async (host: string, port: number) => {
   const availablePort = await getPort({ host, port });
@@ -91,8 +91,6 @@ export const isPreviewPortAvailable = async (host: string, port: number) => {
 };
 
 const processEnv = () => process.env;
-
-const pathKey = () => (process.platform === "win32" ? "Path" : "PATH");
 
 const getAncestorBinPaths = (directory: string) => {
   const paths: string[] = [];
@@ -120,7 +118,7 @@ const getPreviewEnv = (
   if (cwd === undefined) {
     return extraEnv;
   }
-  const key = pathKey();
+  const key = pathKey({ env: extraEnv });
   return {
     ...extraEnv,
     [key]: [...getAncestorBinPaths(cwd), extraEnv[key]]

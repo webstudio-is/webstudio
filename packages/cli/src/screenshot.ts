@@ -2,9 +2,9 @@ import { constants } from "node:fs";
 import { access, mkdir, readdir } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { execFile, spawn } from "node:child_process";
-import { promisify } from "node:util";
+import { spawn } from "node:child_process";
 import { Launcher } from "chrome-launcher";
+import which from "which";
 import {
   defaultScreenshotTimeout,
   defaultScreenshotWaitForTimeout,
@@ -21,8 +21,6 @@ import {
   type BrowserScreenshotLayout,
   type BrowserScreenshotOptions,
 } from "./screenshot-browser-cdp";
-
-const execFileAsync = promisify(execFile);
 
 export type BrowserCandidate = {
   path: string;
@@ -75,15 +73,8 @@ export const defaultScreenshotDependencies: ScreenshotDependencies = {
   platform: process.platform,
   access,
   mkdir,
-  async which(command) {
-    const lookup = process.platform === "win32" ? "where" : "which";
-    try {
-      const { stdout } = await execFileAsync(lookup, [command]);
-      return stdout.split(/\r?\n/).find((path) => path.length > 0);
-    } catch {
-      return undefined;
-    }
-  },
+  which: async (command) =>
+    (await which(command, { nothrow: true })) ?? undefined,
   getChromeLauncherInstallations() {
     try {
       return Launcher.getInstallations();

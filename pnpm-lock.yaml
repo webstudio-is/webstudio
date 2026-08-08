@@ -1303,6 +1303,9 @@ importers:
       parse5:
         specifier: 7.3.0
         version: 7.3.0
+      path-key:
+        specifier: ^4.0.0
+        version: 4.0.0
       picocolors:
         specifier: ^1.1.1
         version: 1.1.1
@@ -1318,6 +1321,9 @@ importers:
       warn-once:
         specifier: ^0.1.1
         version: 0.1.1
+      which:
+        specifier: ^5.0.0
+        version: 5.0.0
       yargs:
         specifier: ^17.7.2
         version: 17.7.2
@@ -1376,6 +1382,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@types/which':
+        specifier: ^3.0.4
+        version: 3.0.4
       '@types/yargs':
         specifier: ^17.0.33
         version: 17.0.33
@@ -6761,6 +6770,9 @@ packages:
   '@types/validate-npm-package-name@4.0.2':
     resolution: {integrity: sha512-lrpDziQipxCEeK5kWxvljWYhUvOiB2A9izZd9B2AFarYAkqZshb4lPbRs7zKEic6eGtH8V/2qJW+dPp9OtF6bw==}
 
+  '@types/which@3.0.4':
+    resolution: {integrity: sha512-liyfuo/106JdlgSchJzXEQCVArk0CvevqPote8F8HgWgJ3dRCcTHgJIsLDuee0kxk/mhbInzIZk3QWSZJ8R+2w==}
+
   '@types/yargs-parser@21.0.0':
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
 
@@ -11605,6 +11617,11 @@ packages:
     engines: {node: ^16.13.0 || >=18.0.0}
     hasBin: true
 
+  which@5.0.0:
+    resolution: {integrity: sha512-JEdGzHwwkrbWoGOlIHqQ5gtprKGOenpDHpxE9zVR1bWbOtYRyPPHMe9FaP6x61CmNaTThSkb0DAJte5jD+DmzQ==}
+    engines: {node: ^18.17.0 || >=20.5.0}
+    hasBin: true
+
   why-is-node-running@2.3.0:
     resolution: {integrity: sha512-hUrmaWBdVDcxvYqnyh09zunKzROWjbZTiNy8dBEjkS7ehEDQibXJ7XvlmtbwuTclUiIyN+CyXQD4Vmko8fNm8w==}
     engines: {node: '>=8'}
@@ -16020,6 +16037,8 @@ snapshots:
   '@types/uuid@9.0.8': {}
 
   '@types/validate-npm-package-name@4.0.2': {}
+
+  '@types/which@3.0.4': {}
 
   '@types/yargs-parser@21.0.0': {}
 
@@ -21642,6 +21661,10 @@ snapshots:
       isexe: 2.0.0
 
   which@4.0.0:
+    dependencies:
+      isexe: 3.1.5
+
+  which@5.0.0:
     dependencies:
       isexe: 3.1.5
 
