@@ -67016,6 +67016,10 @@ export const runtimeOperationContractData = [
               query: {
                 type: "object",
                 properties: {
+                  result: {
+                    type: "string",
+                    enum: ["many", "one", "first", "last"],
+                  },
                   where: {
                     $ref: "#/$defs/__schema1",
                   },
@@ -67180,7 +67184,14 @@ export const runtimeOperationContractData = [
                     ],
                   },
                 },
-                required: ["where", "sort", "limit", "offset", "content"],
+                required: [
+                  "result",
+                  "where",
+                  "sort",
+                  "limit",
+                  "offset",
+                  "content",
+                ],
                 additionalProperties: {},
               },
               configurationError: {
@@ -67402,6 +67413,10 @@ export const runtimeOperationContractData = [
             query: {
               type: "object",
               properties: {
+                result: {
+                  type: "string",
+                  enum: ["many", "one", "first", "last"],
+                },
                 where: {
                   $ref: "#/$defs/__schema1",
                 },
@@ -67566,7 +67581,14 @@ export const runtimeOperationContractData = [
                   ],
                 },
               },
-              required: ["where", "sort", "limit", "offset", "content"],
+              required: [
+                "result",
+                "where",
+                "sort",
+                "limit",
+                "offset",
+                "content",
+              ],
               additionalProperties: {},
             },
             configurationError: {

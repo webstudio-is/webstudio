@@ -13,6 +13,7 @@ import {
   instance,
 } from "@webstudio-is/sdk";
 import {
+  assetQueryResultMode,
   assetQuerySort,
   assetResourceContentOptions,
   assetResourceOutputSelection,
@@ -196,6 +197,7 @@ const resource = looseObject({
   dataSourceId: id.optional(),
 });
 const assetResourceConfiguration = looseObject({
+  result: assetQueryResultMode,
   where: assetQueryWhereExpression,
   sort: z.array(assetQuerySort),
   limit: z.string(),

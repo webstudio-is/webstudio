@@ -5598,21 +5598,17 @@ const metaGoalGuides = [
       "preview-asset-query",
       "create-page",
       "create-assets-resource",
-      "insert-fragment-verified",
       "insert-collection",
       "verify-page-responsive",
     ],
     workflow: [
-      'Call meta.get-more-tools with {"tools":["create-assets-resource"]} once for the complete nested query contract. Use exact tool names, not brief search, and do not repeat discovery for this workflow.',
-      'Create one Blog asset folder. Upload all Markdown source files together in one upload-assets call with assetsDir ".webstudio/assets". Put queryable metadata such as slug, title, author, publishedAt, excerpt, and draft in each file\'s frontmatter. Every file must use {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}. Do not create companion JSON descriptors, use a combined format value, or retry a failed mutation; report its actionable error instead.',
-      'Ensure the blog has exactly two Builder pages: an overview at the fixed path "/blog" and one detail page at the dynamic path "/blog/:slug". Create each page once with a committed call; do not dry-run it. Both pages load their content from Assets resources. Do not create one page per post or copy Markdown content into page-specific static structures.',
-      "Every reachable Assets data source contributes its query to one shared published database. Keep exactly one final Assets resource for the overview and one for the detail page. Never create a placeholder, preview copy, or repair replacement; update the existing scoped resource when requirements change and remove obsolete duplicates.",
-      'Field paths are arrays of segments, for example field:["extension"]. Literal query values use {"type":"literal","value":"..."}; raw strings are runtime expressions. Keep every overview filter value, limit, and offset literal so the bounded metadata-only result can be materialized instead of retaining its fields across every article. Use a deterministic secondary ID sort. Query Markdown posts with static extension and blog-folder constraints before any dynamic condition. Use output.mode:"fields", includeMetadata:false, and only fields rendered by that route.',
-      'Keep content.mode:"none" on the overview and use content.mode:"markdown-body-ref" only on the detail route. Set result:"one" on the detail query, use exactly one dynamic value, system.params.slug, omit limit and offset, and select only the title and author metadata rendered above Markdown Embed. The published database keeps only the Markdown document reference and fetches the selected body from Asset storage at runtime.',
-      "Call create-assets-resource exactly once with recipe.overviewResource after substituting the returned /blog root id and Blog folder id. Then call it exactly once with recipe.detailResource after substituting the returned /blog/:slug root id and the same Blog folder id.",
-      'Call insert-collection exactly once with the entire recipe.overviewCollection object, changing only parentInstanceId to the returned overview root id. Call insert-fragment-verified exactly once with recipe.detailFragment, changing only parentInstanceId to the detail root id. Keep the listing data object exactly as {"type":"expression","value":"posts.data"} and bind detail fields directly from post.data; do not wrap the detail result in a Collection or call meta.get-more-tools again.',
-      "Validate both queries and preview the detail query with one concrete slug before saving dynamic expressions. Query-preview diagnostics report this query separately from the merged published database; use the merged database measurement when checking the deployment limit. The merged database must contain every source document without truncation, no embedded Markdown contents, and only one materialized overview query.",
-      "Verify only after both insertions succeed and confirm that both pages load their content from Assets. Call verify-page-responsive once for /blog and once for one concrete detail route, including empty/not-found behavior, before finishing. If any call fails, stop and report it without retrying.",
+      'Call meta.get-more-tools once with {"tools":["create-assets-resource"]}; the recipe below supplies the remaining inputs.',
+      'Create one asset folder named exactly "Blog", then call upload-assets exactly once with all Markdown files and assetsDir ".webstudio/assets". Put slug, title, author, publishedAt, excerpt, and draft in frontmatter. Each asset uses {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}; do not create companion files.',
+      'Create exactly two pages once: "/blog" and "/blog/:slug". Do not dry-run page creation, create one page per post, or copy Markdown into static page content.',
+      "Substitute the returned folder id in both recipe queries. Validate both, then preview the detail query with one concrete slug. Keep overview values literal and keep system.params.slug as the detail query's only dynamic value.",
+      'Create exactly one scoped Assets resource per page by copying recipe.overviewResource and recipe.detailResource unchanged except for id placeholders. Keep the detail query result as "one"; Collection accepts this single-result object. Do not add query defaults or create placeholder resources.',
+      "Insert recipe.overviewCollection under the overview root and recipe.detailCollection under the detail root. Use each object unchanged except for parentInstanceId. Both bindings must remain editable Collections; do not replace the detail Collection with a static fragment.",
+      'After both insertions succeed, call verify-page-responsive once for "/blog" and once for one concrete detail path with desktop and mobile viewports. Confirm Assets-backed content and empty/not-found behavior. Stop on an error instead of retrying.',
     ],
     recipe: {
       overviewResource: {
@@ -5702,10 +5698,14 @@ const metaGoalGuides = [
         itemFragment:
           '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">{expression`collectionItem.properties.excerpt ?? ""`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><ws.element ws:tag="time">{expression`collectionItem.properties.publishedAt ?? ""`}</ws.element><ws.element ws:tag="a" href={expression`"/blog/" + collectionItem.properties.slug`}>Read article</ws.element></ws.element>',
       },
-      detailFragment: {
+      detailCollection: {
         parentInstanceId: "<detail-root-id>",
-        fragment:
-          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`post.data?.properties?.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`post.data?.properties?.author?.name ?? ""`}</ws.element><$.MarkdownEmbed code={expression`post.data?.content?.text ?? ""`} /></ws.element>',
+        data: {
+          type: "expression",
+          value: "post.data == null ? [] : [post.data]",
+        },
+        itemFragment:
+          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name ?? ""`}</ws.element><$.MarkdownEmbed code={expression`collectionItem.content.text ?? ""`} /></ws.element>',
       },
     },
   },
@@ -5930,25 +5930,25 @@ const getMetaGuide = (
   const canDiffScreenshots = tools.some(
     (tool) => tool.name === "screenshot.diff"
   );
+  const generalWorkflow = [
+    "Use the fewest discovery calls needed for the immediate action.",
+    "Call permissions or status only when the task depends on capabilities or local session freshness.",
+    matches.some((tool) => tool.annotations.localCapable) &&
+    matches.some((tool) => tool.name === "verify-font-assets") === false
+      ? "Call refresh if cached namespaces may be stale."
+      : undefined,
+    "Use focused read tools to collect ids and current values.",
+    "Use the smallest semantic mutation tool that matches the requested change.",
+    valuesVsBindingsRule,
+    "Use apply-patch only when no semantic mutation tool fits.",
+    canVerifyVisually && guidance !== undefined
+      ? guidance.getVisionWorkflowSummary({ includeDiff: canDiffScreenshots })
+      : undefined,
+  ].filter(Boolean);
   return {
     delegatedAgentRule:
       "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
-    workflow: [
-      ...(goalGuide?.workflow ?? []),
-      "Use the fewest discovery calls needed for the immediate action.",
-      "Call permissions or status only when the task depends on capabilities or local session freshness.",
-      matches.some((tool) => tool.annotations.localCapable) &&
-      matches.some((tool) => tool.name === "verify-font-assets") === false
-        ? "Call refresh if cached namespaces may be stale."
-        : undefined,
-      "Use focused read tools to collect ids and current values.",
-      "Use the smallest semantic mutation tool that matches the requested change.",
-      valuesVsBindingsRule,
-      "Use apply-patch only when no semantic mutation tool fits.",
-      canVerifyVisually && guidance !== undefined
-        ? guidance.getVisionWorkflowSummary({ includeDiff: canDiffScreenshots })
-        : undefined,
-    ].filter(Boolean),
+    workflow: goalGuide?.workflow ?? generalWorkflow,
     tools: matches.map((tool) =>
       serializeMetaGuideTool(tool, goalGuide === undefined)
     ),
@@ -5958,7 +5958,7 @@ const getMetaGuide = (
     more:
       goalGuide === undefined
         ? "The MCP handshake provides top-level argument contracts and required fields, while this guide includes exact examples plus complete schemas for selected complex tools. Call meta.get-more-tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover."
-        : "The MCP client loads each named tool's exact argument contract before calling it. This guide includes a complete schema only for selected complex inputs. Call meta.get-more-tools once with all needed tool names only when the client does not expose a nested input shape or when you need server/local behavior that the guide does not cover.",
+        : "Follow this workflow and recipe without additional discovery unless the workflow explicitly requests it.",
   };
 };
 
@@ -6416,11 +6416,15 @@ const getSdkInputSchema = (
   };
 };
 
-const sdkDescribedToolNames = new Set([
+const sdkDetailedInputToolNames = new Set([
   "meta.index",
   "meta.guide",
   "meta.get-more-tools",
   "workflow.next",
+]);
+
+const sdkDescribedToolNames = new Set([
+  ...sdkDetailedInputToolNames,
   ...metaGoalGuides.flatMap(({ tools }) => tools),
 ]);
 
@@ -6450,7 +6454,7 @@ const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => {
       : {}),
     inputSchema: getSdkInputSchema(
       tool.inputSchema,
-      sdkDescribedToolNames.has(tool.name)
+      sdkDetailedInputToolNames.has(tool.name)
     ),
     ...(annotations === undefined ? {} : { annotations }),
   };
