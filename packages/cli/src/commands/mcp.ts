@@ -1,15 +1,11 @@
 import { cwd, stdin, stdout, stderr } from "node:process";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
   connectProjectSessionMcpServer,
   createProjectSessionMcpCore,
   createMcpStdioTransport,
-  getProjectSessionMcpCheckpoint,
   isReadOnlyProjectSessionMcpToolCall,
-  type ProjectSessionPreviewInput,
-  type ProjectSessionScreenshotInput,
-  type ProjectSessionMcpTool,
 } from "@webstudio-is/project-build/mcp";
 import {
   getProjectBasicAuthCredentials,
@@ -44,7 +40,7 @@ import {
   writeCliProjectSessionPreviewDataFile,
 } from "../project-session";
 import { executeProjectSessionApiOperation } from "../project-session-api";
-import { createPreviewController, findAvailablePort } from "../preview-server";
+import { createPreviewController } from "../preview-server";
 import {
   createScreenshotCaptureSession,
   installTesseractForOcr,
@@ -65,7 +61,7 @@ import {
 import { readCliDoc } from "../docs";
 import { printJson } from "../json-output";
 import { isPlainRecord } from "../type-utils";
-import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "../config";
+import { LOCAL_DATA_FILE } from "../config";
 import {
   assertMcpBatchMutationApproved,
   isMcpProjectsManifest,
@@ -76,8 +72,18 @@ import {
 import { apiCompatibilityHeaders } from "./api";
 import { importProject as importProjectCommand } from "./import";
 import {
+  assertPersistedMcpCheckpointAcknowledged,
+  getResultCheckpoint,
+  readPersistedMcpCheckpoint,
+  updatePersistedMcpCheckpoint,
+  type McpProjectScope,
+  type PersistedMcpCheckpoint,
+} from "./mcp-checkpoint";
+import {
   createMcpPreviewHandlers,
   createPreviewFreshness,
+  resolveMcpScreenshotInput,
+  startMcpPreview,
 } from "./mcp-preview";
 import type {
   CommonYargsArgv,
@@ -104,7 +110,6 @@ export const prepareMcpProjectSession = async (
 };
 
 const mcpStatusPrefix = "[webstudio mcp]";
-const mcpCheckpointFilename = "mcp-checkpoint.json";
 const renderedAuditArtifactDirectory = ".webstudio/audits";
 
 export const formatMcpStatusLine = (message: string) =>
@@ -209,100 +214,6 @@ const getMcpUpdateAssetContentInput = (input: unknown) => {
     content: typeof input.content === "string" ? input.content : undefined,
     readFile,
   });
-};
-
-type PersistedMcpCheckpoint = {
-  tool: string;
-  message: string;
-  nextCommand?: string;
-};
-
-type McpProjectScope = {
-  projectRoot?: string;
-  projectId?: string;
-};
-
-const getMcpCheckpointPath = ({
-  projectRoot = cwd(),
-  projectId,
-}: McpProjectScope = {}) =>
-  path.join(
-    getLocalProjectStateDirectory(projectRoot, projectId),
-    mcpCheckpointFilename
-  );
-
-const readPersistedMcpCheckpoint = async (scope: McpProjectScope = {}) => {
-  try {
-    return JSON.parse(
-      await readFile(getMcpCheckpointPath(scope), "utf8")
-    ) as PersistedMcpCheckpoint;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return;
-    }
-    throw error;
-  }
-};
-
-const writePersistedMcpCheckpoint = async (
-  checkpoint: PersistedMcpCheckpoint,
-  scope: McpProjectScope = {}
-) => {
-  const checkpointPath = getMcpCheckpointPath(scope);
-  await mkdir(path.dirname(checkpointPath), { recursive: true });
-  await writeFile(checkpointPath, JSON.stringify(checkpoint, undefined, 2));
-};
-
-const clearPersistedMcpCheckpoint = async (scope: McpProjectScope = {}) => {
-  await rm(getMcpCheckpointPath(scope), { force: true });
-};
-
-const assertPersistedMcpCheckpointAcknowledged = async (
-  tool: string,
-  tools: readonly ProjectSessionMcpTool[],
-  scope: McpProjectScope = {}
-) => {
-  if (
-    tool === "checkpoint.ack" ||
-    isReadOnlyProjectSessionMcpToolCall(tool, tools)
-  ) {
-    return;
-  }
-  const checkpoint = await readPersistedMcpCheckpoint(scope);
-  if (checkpoint === undefined) {
-    return;
-  }
-  throw createMcpInputError(
-    `CHECKPOINT_REQUIRED: ${checkpoint.message} Stop now and report the previous checkpoint to the parent/user. Only after the parent/user continues, call checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"} before calling "${tool}".`,
-    "CHECKPOINT_REQUIRED"
-  );
-};
-
-const getResultCheckpoint = (tool: string, structuredContent: unknown) => {
-  if (isPlainRecord(structuredContent) === false) {
-    return;
-  }
-  const data = structuredContent.data;
-  return getProjectSessionMcpCheckpoint(tool, data);
-};
-
-const updatePersistedMcpCheckpoint = async ({
-  tool,
-  structuredContent,
-  scope = {},
-}: {
-  tool: string;
-  structuredContent: unknown;
-  scope?: McpProjectScope;
-}) => {
-  if (tool === "checkpoint.ack") {
-    await clearPersistedMcpCheckpoint(scope);
-    return;
-  }
-  const checkpoint = getResultCheckpoint(tool, structuredContent);
-  if (checkpoint !== undefined) {
-    await writePersistedMcpCheckpoint(checkpoint, scope);
-  }
 };
 
 const getMcpOperationInput = (command: string, input: unknown) => {
@@ -921,72 +832,6 @@ const assertSingleOpCallToolSupported = (tool: string) => {
   }
 };
 
-const resolveMcpPreviewInput = async (
-  input: ProjectSessionPreviewInput,
-  getAvailablePort: (host?: string) => Promise<number> = findAvailablePort
-) => {
-  if (input.port !== undefined && input.port !== 0) {
-    return input;
-  }
-  return {
-    ...input,
-    port: await getAvailablePort(input.host ?? "127.0.0.1"),
-  };
-};
-
-const resolveMcpScreenshotInput = async (
-  input: ProjectSessionScreenshotInput,
-  previewStatus: { running: boolean; url?: string },
-  getAvailablePort: (host?: string) => Promise<number> = findAvailablePort
-) => {
-  if (
-    input.url !== undefined ||
-    input.baseUrl !== undefined ||
-    input.source === "local" ||
-    (input.port !== undefined && input.port !== 0)
-  ) {
-    return input;
-  }
-  const host = input.host ?? "127.0.0.1";
-  if (previewStatus.running && previewStatus.url !== undefined) {
-    const previewUrl = new URL(previewStatus.url);
-    if (input.host === undefined || previewUrl.hostname === input.host) {
-      const previewPort = Number(previewUrl.port);
-      if (Number.isInteger(previewPort) && previewPort > 0) {
-        return { ...input, port: previewPort };
-      }
-    }
-  }
-  return { ...input, port: await getAvailablePort(host) };
-};
-
-const startMcpPreview = async <Result>({
-  input,
-  startPreview,
-  getAvailablePort = findAvailablePort,
-  sleep = async (durationMs) =>
-    await new Promise<void>((resolve) => setTimeout(resolve, durationMs)),
-}: {
-  input: ProjectSessionPreviewInput;
-  startPreview: (input: ProjectSessionPreviewInput) => Promise<Result>;
-  getAvailablePort?: (host?: string) => Promise<number>;
-  sleep?: (durationMs: number) => Promise<void>;
-}) => {
-  const attempts = input.port === undefined || input.port === 0 ? 5 : 1;
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
-    const resolvedInput = await resolveMcpPreviewInput(input, getAvailablePort);
-    try {
-      return await startPreview(resolvedInput);
-    } catch (error) {
-      if (attempt === attempts - 1) {
-        throw error;
-      }
-      await sleep(500);
-    }
-  }
-  throw new Error("MCP preview did not start.");
-};
-
 const createCliMcpHost = async ({
   projectRoot = cwd(),
   projectId,
@@ -1337,43 +1182,6 @@ const executeMcpRunCall = async ({
     scope,
   });
   return { result, checkpoint };
-};
-
-export const __testing__ = {
-  createMcpStatusReporter,
-  formatMcpStatusLine,
-  assertSingleOpCallToolSupported,
-  assertPersistedMcpCheckpointAcknowledged,
-  clearPersistedMcpCheckpoint,
-  createMcpSingleOpCallErrorPayload,
-  createMcpResourceErrorPayload: (error: unknown, elapsedMs: number) => ({
-    ok: false,
-    error: {
-      code: getStableErrorCode(error) ?? "MCP_RESOURCE_FAILED",
-      message: error instanceof Error ? error.message : String(error),
-    },
-    meta: { elapsedMs },
-  }),
-  createMcpRunErrorPayload,
-  reportMcpRunTermination,
-  createMcpRunCheckpointStopPayload,
-  getLoadedProjectSessionSnapshot,
-  getResultCheckpoint,
-  getMcpOperationInput,
-  parseMcpSingleOpCallInput,
-  validateSingleOpCallInput,
-  isMcpToolCallFailure,
-  getMcpToolCallError,
-  applyMcpRunOptions,
-  parseMcpRunCalls,
-  parseMcpRunInput,
-  readPersistedMcpCheckpoint,
-  updatePersistedMcpCheckpoint,
-  executeMcpRunCall,
-  withMcpHost,
-  resolveMcpPreviewInput,
-  resolveMcpScreenshotInput,
-  startMcpPreview,
 };
 
 export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
@@ -1840,4 +1648,33 @@ export const mcp = async (
   server.onerror = (error) => {
     status.connectionError(error);
   };
+};
+
+export const __testing__ = {
+  createMcpStatusReporter,
+  formatMcpStatusLine,
+  assertSingleOpCallToolSupported,
+  createMcpSingleOpCallErrorPayload,
+  createMcpResourceErrorPayload: (error: unknown, elapsedMs: number) => ({
+    ok: false,
+    error: {
+      code: getStableErrorCode(error) ?? "MCP_RESOURCE_FAILED",
+      message: error instanceof Error ? error.message : String(error),
+    },
+    meta: { elapsedMs },
+  }),
+  createMcpRunErrorPayload,
+  reportMcpRunTermination,
+  createMcpRunCheckpointStopPayload,
+  getLoadedProjectSessionSnapshot,
+  getMcpOperationInput,
+  parseMcpSingleOpCallInput,
+  validateSingleOpCallInput,
+  isMcpToolCallFailure,
+  getMcpToolCallError,
+  applyMcpRunOptions,
+  parseMcpRunCalls,
+  parseMcpRunInput,
+  executeMcpRunCall,
+  withMcpHost,
 };

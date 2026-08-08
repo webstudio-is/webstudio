@@ -2,7 +2,97 @@ import { expect, test, vi } from "vitest";
 import {
   createMcpPreviewHandlers,
   createPreviewFreshness,
+  resolveMcpPreviewInput,
+  resolveMcpScreenshotInput,
+  startMcpPreview,
 } from "./mcp-preview";
+
+test("allocates an available port only when MCP preview omits one", async () => {
+  const getAvailablePort = vi.fn(async () => 53124);
+
+  await expect(
+    resolveMcpPreviewInput({ source: "session" }, getAvailablePort)
+  ).resolves.toEqual({ source: "session", port: 53124 });
+  await expect(
+    resolveMcpPreviewInput({ source: "session", port: 0 }, getAvailablePort)
+  ).resolves.toEqual({ source: "session", port: 53124 });
+  await expect(
+    resolveMcpPreviewInput({ source: "session", port: 4173 }, getAvailablePort)
+  ).resolves.toEqual({ source: "session", port: 4173 });
+  expect(getAvailablePort).toHaveBeenCalledTimes(2);
+  expect(getAvailablePort).toHaveBeenNthCalledWith(1, "127.0.0.1");
+  expect(getAvailablePort).toHaveBeenNthCalledWith(2, "127.0.0.1");
+});
+
+test("allocates and reuses a collision-free port for automatic screenshots", async () => {
+  const getAvailablePort = vi.fn(async () => 53124);
+
+  await expect(
+    resolveMcpScreenshotInput(
+      {
+        path: "/account",
+        browser: "auto",
+        viewport: { width: 390, height: 844 },
+      },
+      { running: false, url: "http://127.0.0.1:5173/" },
+      getAvailablePort
+    )
+  ).resolves.toMatchObject({ port: 53124 });
+  await expect(
+    resolveMcpScreenshotInput(
+      {
+        path: "/account",
+        browser: "auto",
+        viewport: { width: 1440, height: 900 },
+      },
+      { running: true, url: "http://127.0.0.1:53125/" },
+      getAvailablePort
+    )
+  ).resolves.toMatchObject({ port: 53125 });
+  await expect(
+    resolveMcpScreenshotInput(
+      {
+        path: "/account",
+        browser: "auto",
+        port: 4173,
+        viewport: { width: 1440, height: 900 },
+      },
+      { running: false, url: "http://127.0.0.1:5173/" },
+      getAvailablePort
+    )
+  ).resolves.toMatchObject({ port: 4173 });
+  expect(getAvailablePort).toHaveBeenCalledOnce();
+});
+
+test("retries automatic MCP preview ports after a startup race", async () => {
+  const getAvailablePort = vi
+    .fn()
+    .mockResolvedValueOnce(53124)
+    .mockResolvedValueOnce(53125);
+  const startPreview = vi
+    .fn()
+    .mockRejectedValueOnce(new Error("Preview server exited before ready"))
+    .mockResolvedValueOnce({ url: "http://127.0.0.1:53125/" });
+  const sleep = vi.fn(async () => undefined);
+
+  await expect(
+    startMcpPreview({
+      input: { source: "session" },
+      getAvailablePort,
+      startPreview,
+      sleep,
+    })
+  ).resolves.toEqual({ url: "http://127.0.0.1:53125/" });
+  expect(startPreview).toHaveBeenNthCalledWith(1, {
+    source: "session",
+    port: 53124,
+  });
+  expect(startPreview).toHaveBeenNthCalledWith(2, {
+    source: "session",
+    port: 53125,
+  });
+  expect(sleep).toHaveBeenCalledWith(500);
+});
 
 test("does not mark a preview fresh after a newer mutation", () => {
   const freshness = createPreviewFreshness();

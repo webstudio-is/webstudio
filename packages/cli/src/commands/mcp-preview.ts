@@ -1,6 +1,7 @@
 import {
   arePreviewImageDomainsEqual,
   createPreviewController,
+  findAvailablePort,
   type PreviewMode,
 } from "../preview-server";
 import {
@@ -112,6 +113,71 @@ const isSameCaptureSessionConfig = (
 const defaultPreviewSource = "session" satisfies PreviewSource;
 const defaultSleep = (durationMs: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, durationMs));
+
+export const resolveMcpPreviewInput = async (
+  input: McpPreviewInput,
+  getAvailablePort: (host?: string) => Promise<number> = findAvailablePort
+) => {
+  if (input.port !== undefined && input.port !== 0) {
+    return input;
+  }
+  return {
+    ...input,
+    port: await getAvailablePort(input.host ?? "127.0.0.1"),
+  };
+};
+
+export const resolveMcpScreenshotInput = async (
+  input: McpScreenshotInput,
+  previewStatus: { running: boolean; url?: string },
+  getAvailablePort: (host?: string) => Promise<number> = findAvailablePort
+) => {
+  if (
+    input.url !== undefined ||
+    input.baseUrl !== undefined ||
+    input.source === "local" ||
+    (input.port !== undefined && input.port !== 0)
+  ) {
+    return input;
+  }
+  const host = input.host ?? "127.0.0.1";
+  if (previewStatus.running && previewStatus.url !== undefined) {
+    const previewUrl = new URL(previewStatus.url);
+    if (input.host === undefined || previewUrl.hostname === input.host) {
+      const previewPort = Number(previewUrl.port);
+      if (Number.isInteger(previewPort) && previewPort > 0) {
+        return { ...input, port: previewPort };
+      }
+    }
+  }
+  return { ...input, port: await getAvailablePort(host) };
+};
+
+export const startMcpPreview = async <Result>({
+  input,
+  startPreview,
+  getAvailablePort = findAvailablePort,
+  sleep = defaultSleep,
+}: {
+  input: McpPreviewInput;
+  startPreview: (input: McpPreviewInput) => Promise<Result>;
+  getAvailablePort?: (host?: string) => Promise<number>;
+  sleep?: (durationMs: number) => Promise<void>;
+}) => {
+  const attempts = input.port === undefined || input.port === 0 ? 5 : 1;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const resolvedInput = await resolveMcpPreviewInput(input, getAvailablePort);
+    try {
+      return await startPreview(resolvedInput);
+    } catch (error) {
+      if (attempt === attempts - 1) {
+        throw error;
+      }
+      await sleep(500);
+    }
+  }
+  throw new Error("MCP preview did not start.");
+};
 
 const createScreenshotTimeoutError = (timeout: number) =>
   Object.assign(
