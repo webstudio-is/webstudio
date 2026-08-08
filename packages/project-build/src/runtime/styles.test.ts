@@ -1068,20 +1068,13 @@ const instance = (id: string): Instance => ({
 
 describe("runtime style operations", () => {
   test.each([":hover, body", ":hover > div", "body:hover"])(
-    "rejects state selectors that escape the styled element: %s",
+    "rejects state selectors that escape the styled element when writing: %s",
     (state) => {
       expect(
         styleUpdateInput.safeParse({
           instanceId: "box",
           property: "color",
           value: { type: "keyword", value: "red" },
-          state,
-        })
-      ).toMatchObject({ success: false });
-      expect(
-        styleDeleteInput.safeParse({
-          instanceId: "box",
-          property: "color",
           state,
         })
       ).toMatchObject({ success: false });
@@ -1099,6 +1092,16 @@ describe("runtime style operations", () => {
       ).toMatchObject({ success: false });
     }
   );
+
+  test("accepts an invalid state as an existing declaration deletion coordinate", () => {
+    expect(
+      styleDeleteInput.safeParse({
+        instanceId: "box",
+        property: "color",
+        state: "::-webkit-search-cancel-button",
+      })
+    ).toMatchObject({ success: true });
+  });
 
   test("preserves an editable compound state through mutation and generated CSS", () => {
     const state = ":hover:focus-visible";

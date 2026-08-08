@@ -301,6 +301,13 @@ const styleStateInput = z.string().superRefine((state, context) => {
   }
 });
 
+const existingStyleStateDeletionInput = z
+  .string()
+  .min(1)
+  .describe(
+    "Exact state selector to delete. An invalid selector is accepted only when it identifies an existing declaration with the same style source, breakpoint, property, and state."
+  );
+
 const styleValueExample = { type: "keyword", value: "red" } as const;
 const typedStyleValueInput = z
   .object({ type: z.string() })
@@ -337,7 +344,7 @@ export const styleDeleteInput = z.object({
   instanceId: z.string(),
   property: z.string(),
   breakpoint: z.string().optional(),
-  state: styleStateInput.optional(),
+  state: existingStyleStateDeletionInput.optional(),
 });
 
 const jsonArrayStringInput = (value: unknown) => {
@@ -1952,6 +1959,44 @@ export const getStyleDeclKeyFromInput = ({
     property: normalizeStyleProperty(property),
   });
 
+const getExistingStyleDeletionKeys = <
+  Deletion extends { state?: StyleDecl["state"] },
+>({
+  deletions,
+  styles,
+  getStyleKey,
+}: {
+  deletions: readonly Deletion[];
+  styles: Iterable<StyleDecl>;
+  getStyleKey: (deletion: Deletion) => string | undefined;
+}) => {
+  const existingStyleKeys = new Set(
+    Array.from(styles, (styleDecl) => getStyleDeclKey(styleDecl))
+  );
+  const matchedStyleKeys = new Set<string>();
+
+  for (const deletion of deletions) {
+    const styleKey = getStyleKey(deletion);
+    const exists =
+      styleKey !== undefined && existingStyleKeys.has(styleKey) === true;
+    if (
+      deletion.state !== undefined &&
+      validateSelector(deletion.state).success === false &&
+      exists === false
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "An invalid state selector can only delete an existing declaration. Use the exact target, state selector, breakpoint, and property reported by the style audit."
+      );
+    }
+    if (exists) {
+      matchedStyleKeys.add(styleKey);
+    }
+  }
+
+  return Array.from(matchedStyleKeys);
+};
+
 export const updateStyleDecl = (
   declaration: StyleDecl,
   values: Partial<Omit<StyleDecl, "property" | "value">> & {
@@ -2774,17 +2819,16 @@ export const createDesignTokenStyleDeletePayload = ({
   deletions: Array<Omit<z.infer<typeof styleDeleteInput>, "instanceId">>;
   styles: Iterable<StyleDecl>;
 }) => {
-  const existingStyleKeys = new Set(
-    Array.from(styles, (styleDecl) => getStyleDeclKey(styleDecl))
-  );
-  const styleKeys = deletions.flatMap((deletion) => {
-    const key = getStyleDeclKeyFromInput({
-      styleSourceId: designTokenId,
-      breakpoint: deletion.breakpoint,
-      state: deletion.state,
-      property: deletion.property,
-    });
-    return existingStyleKeys.has(key) ? [key] : [];
+  const styleKeys = getExistingStyleDeletionKeys({
+    deletions,
+    styles,
+    getStyleKey: (deletion) =>
+      getStyleDeclKeyFromInput({
+        styleSourceId: designTokenId,
+        breakpoint: deletion.breakpoint,
+        state: deletion.state,
+        property: deletion.property,
+      }),
   });
 
   return {
@@ -2995,41 +3039,35 @@ export const createStyleDeclarationDeletePayload = ({
   styleSourceSelections: Iterable<StyleSourceSelection>;
   styles: Iterable<StyleDecl>;
 }) => {
-  const styleKeys = new Set<string>();
   const styleSourceSelectionByInstanceId = new Map(
     Array.from(styleSourceSelections, (selection) => [
       selection.instanceId,
       selection,
     ])
   );
-  const existingStyleKeys = new Set(
-    Array.from(styles, (styleDecl) => getStyleDeclKey(styleDecl))
-  );
-
-  for (const deletion of deletions) {
-    const styleSourceId = getLocalStyleSourceIdWithCreated({
-      createdLocalSourceIds: new Map(),
-      instanceId: deletion.instanceId,
-      styleSources,
-      styleSourceSelection: styleSourceSelectionByInstanceId.get(
-        deletion.instanceId
-      ),
-    });
-    if (styleSourceId === undefined) {
-      continue;
-    }
-    const key = getStyleDeclKeyFromInput({
-      styleSourceId,
-      breakpoint: deletion.breakpoint,
-      state: deletion.state,
-      property: deletion.property,
-    });
-    if (existingStyleKeys.has(key)) {
-      styleKeys.add(key);
-    }
-  }
-
-  const removedStyleKeys = Array.from(styleKeys);
+  const removedStyleKeys = getExistingStyleDeletionKeys({
+    deletions,
+    styles,
+    getStyleKey: (deletion) => {
+      const styleSourceId = getLocalStyleSourceIdWithCreated({
+        createdLocalSourceIds: new Map(),
+        instanceId: deletion.instanceId,
+        styleSources,
+        styleSourceSelection: styleSourceSelectionByInstanceId.get(
+          deletion.instanceId
+        ),
+      });
+      if (styleSourceId === undefined) {
+        return;
+      }
+      return getStyleDeclKeyFromInput({
+        styleSourceId,
+        breakpoint: deletion.breakpoint,
+        state: deletion.state,
+        property: deletion.property,
+      });
+    },
+  });
   return {
     payload: createStyleRemovePayload(removedStyleKeys),
     styleKeys: removedStyleKeys,
@@ -3167,17 +3205,16 @@ export const createSelectedStyleDeclarationDeletePayload = ({
   >;
   styles: Iterable<StyleDecl>;
 }) => {
-  const existingStyleKeys = new Set(
-    Array.from(styles, (styleDecl) => getStyleDeclKey(styleDecl))
-  );
-  const styleKeys = deletions.flatMap((deletion) => {
-    const styleKey = getStyleDeclKeyFromInput({
-      styleSourceId: deletion.styleSourceId,
-      breakpoint: deletion.breakpoint,
-      state: deletion.state,
-      property: deletion.property,
-    });
-    return existingStyleKeys.has(styleKey) ? [styleKey] : [];
+  const styleKeys = getExistingStyleDeletionKeys({
+    deletions,
+    styles,
+    getStyleKey: (deletion) =>
+      getStyleDeclKeyFromInput({
+        styleSourceId: deletion.styleSourceId,
+        breakpoint: deletion.breakpoint,
+        state: deletion.state,
+        property: deletion.property,
+      }),
   });
   return {
     payload: createStyleRemovePayload(styleKeys),
@@ -3823,11 +3860,12 @@ export const deleteDesignTokenStyles = (
 ) => {
   const styleState = getRequiredStyleState(state);
   getDesignTokenOrThrow(styleState.styleSources.values(), input.designTokenId);
+  const deletions = input.deletions.map((deletion) =>
+    withValidatedBreakpoint(deletion, state.breakpoints)
+  );
   const { payload, styleKeys } = createDesignTokenStyleDeletePayload({
     designTokenId: input.designTokenId,
-    deletions: input.deletions.map((deletion) =>
-      withValidatedBreakpoint(deletion, state.breakpoints)
-    ),
+    deletions,
     styles: styleState.styles.values(),
   });
   return createRuntimeMutation({

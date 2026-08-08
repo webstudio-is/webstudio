@@ -62024,6 +62024,9 @@ export const runtimeOperationContractData = [
               },
               state: {
                 type: "string",
+                minLength: 1,
+                description:
+                  "Exact state selector to delete. An invalid selector is accepted only when it identifies an existing declaration with the same style source, breakpoint, property, and state.",
               },
             },
             required: ["instanceId", "property"],
@@ -62162,6 +62165,9 @@ export const runtimeOperationContractData = [
               },
               state: {
                 type: "string",
+                minLength: 1,
+                description:
+                  "Exact state selector to delete. An invalid selector is accepted only when it identifies an existing declaration with the same style source, breakpoint, property, and state.",
               },
               styleSourceId: {
                 type: "string",
@@ -62986,6 +62992,9 @@ export const runtimeOperationContractData = [
               },
               state: {
                 type: "string",
+                minLength: 1,
+                description:
+                  "Exact state selector to delete. An invalid selector is accepted only when it identifies an existing declaration with the same style source, breakpoint, property, and state.",
               },
             },
             required: ["property"],
