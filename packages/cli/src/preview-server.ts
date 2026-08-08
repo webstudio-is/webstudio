@@ -5,8 +5,8 @@ import {
   type StdioOptions,
 } from "node:child_process";
 import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
-import { createServer as createTcpServer } from "node:net";
 import { basename, delimiter, dirname, join, parse, win32 } from "node:path";
+import getPort from "get-port";
 import { parse as parseHtml, type DefaultTreeAdapterMap } from "parse5";
 import type { ProjectPreviewMode } from "@webstudio-is/project-build/visual";
 
@@ -82,42 +82,12 @@ export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   platform: process.platform,
 };
 
-const probePreviewPort = (host: string, port: number) =>
-  new Promise<number>((resolve, reject) => {
-    const server = createTcpServer();
-    server.unref();
-    server.once("error", reject);
-    server.listen({ host, port, exclusive: true }, () => {
-      const address = server.address();
-      if (address === null || typeof address === "string") {
-        server.close();
-        reject(new Error("Could not allocate a local preview port."));
-        return;
-      }
-      server.close((error) =>
-        error === undefined ? resolve(address.port) : reject(error)
-      );
-    });
-  });
-
 export const findAvailablePort = (host = "127.0.0.1") =>
-  probePreviewPort(host, 0);
+  getPort({ host });
 
 export const isPreviewPortAvailable = async (host: string, port: number) => {
-  try {
-    await probePreviewPort(host, port);
-    return true;
-  } catch (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === "EADDRINUSE"
-    ) {
-      return false;
-    }
-    throw error;
-  }
+  const availablePort = await getPort({ host, port });
+  return availablePort === port;
 };
 
 const processEnv = () => process.env;
