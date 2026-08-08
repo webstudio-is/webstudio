@@ -82,12 +82,12 @@ export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   platform: process.platform,
 };
 
-export const findAvailablePort = (host = "127.0.0.1") =>
+const probePreviewPort = (host: string, port: number) =>
   new Promise<number>((resolve, reject) => {
     const server = createTcpServer();
     server.unref();
     server.once("error", reject);
-    server.listen({ host, port: 0, exclusive: true }, () => {
+    server.listen({ host, port, exclusive: true }, () => {
       const address = server.address();
       if (address === null || typeof address === "string") {
         server.close();
@@ -100,26 +100,25 @@ export const findAvailablePort = (host = "127.0.0.1") =>
     });
   });
 
-export const isPreviewPortAvailable = (
-  host: string,
-  port: number
-): Promise<boolean> =>
-  new Promise((resolve, reject) => {
-    const server = createTcpServer();
-    server.unref();
-    server.once("error", (error) => {
-      if ("code" in error && error.code === "EADDRINUSE") {
-        resolve(false);
-        return;
-      }
-      reject(error);
-    });
-    server.listen({ host, port, exclusive: true }, () => {
-      server.close((error) =>
-        error === undefined ? resolve(true) : reject(error)
-      );
-    });
-  });
+export const findAvailablePort = (host = "127.0.0.1") =>
+  probePreviewPort(host, 0);
+
+export const isPreviewPortAvailable = async (host: string, port: number) => {
+  try {
+    await probePreviewPort(host, port);
+    return true;
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "EADDRINUSE"
+    ) {
+      return false;
+    }
+    throw error;
+  }
+};
 
 const processEnv = () => process.env;
 

@@ -35,7 +35,7 @@ test("allocates and reuses a collision-free port for automatic screenshots", asy
         viewport: { width: 390, height: 844 },
       },
       { running: false, url: "http://127.0.0.1:5173/" },
-      getAvailablePort
+      { getAvailablePort }
     )
   ).resolves.toMatchObject({ port: 53124 });
   await expect(
@@ -46,7 +46,7 @@ test("allocates and reuses a collision-free port for automatic screenshots", asy
         viewport: { width: 1440, height: 900 },
       },
       { running: true, url: "http://127.0.0.1:53125/" },
-      getAvailablePort
+      { getAvailablePort }
     )
   ).resolves.toMatchObject({ port: 53125 });
   await expect(
@@ -58,7 +58,7 @@ test("allocates and reuses a collision-free port for automatic screenshots", asy
         viewport: { width: 1440, height: 900 },
       },
       { running: false, url: "http://127.0.0.1:5173/" },
-      getAvailablePort
+      { getAvailablePort }
     )
   ).resolves.toMatchObject({ port: 4173 });
   expect(getAvailablePort).toHaveBeenCalledOnce();
@@ -75,8 +75,10 @@ test("rejects an occupied explicit screenshot port before preview preparation", 
         viewport: { width: 1440, height: 900 },
       },
       { running: false },
-      vi.fn(async () => 53124),
-      isPortAvailable
+      {
+        getAvailablePort: vi.fn(async () => 53124),
+        isPortAvailable,
+      }
     )
   ).rejects.toMatchObject({
     code: "PREVIEW_PORT_IN_USE",
@@ -98,10 +100,32 @@ test("reuses an owned explicit screenshot port when host is omitted", async () =
         viewport: { width: 1440, height: 900 },
       },
       { running: true, url: "http://localhost:5199/" },
-      vi.fn(async () => 53124),
-      isPortAvailable
+      {
+        getAvailablePort: vi.fn(async () => 53124),
+        isPortAvailable,
+      }
     )
   ).resolves.toMatchObject({ port: 5199 });
+  expect(isPortAvailable).not.toHaveBeenCalled();
+});
+
+test("reuses an owned preview on the default HTTP port", async () => {
+  const isPortAvailable = vi.fn(async () => false);
+
+  await expect(
+    resolveMcpScreenshotInput(
+      {
+        path: "/account",
+        port: 80,
+        viewport: { width: 1440, height: 900 },
+      },
+      { running: true, url: "http://localhost/" },
+      {
+        getAvailablePort: vi.fn(async () => 53124),
+        isPortAvailable,
+      }
+    )
+  ).resolves.toMatchObject({ port: 80 });
   expect(isPortAvailable).not.toHaveBeenCalled();
 });
 
