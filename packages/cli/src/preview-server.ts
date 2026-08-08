@@ -183,10 +183,6 @@ export const getPreviewStartArgs = (options: PreviewServerOptions) =>
       ]
     : ["run", "start"];
 
-export const getPreviewCommand = (
-  platform: typeof process.platform = process.platform
-) => (platform === "win32" ? "npm.cmd" : "npm");
-
 export const getNpmInvocation = (
   args: string[],
   {
@@ -233,7 +229,7 @@ export const getNpmInvocation = (
       ],
     };
   }
-  return { command: getPreviewCommand(platform), args };
+  return { command: "npm", args };
 };
 
 export const runPreviewBuild = async (

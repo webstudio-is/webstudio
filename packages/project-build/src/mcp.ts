@@ -28,6 +28,7 @@ import {
 } from "./project-session";
 import type { ScreenshotVisualExpectation } from "./visual/screenshot-diff";
 import { isPlainRecord, isRecord } from "./shared/type-utils";
+import { getLevenshteinDistance } from "./shared/string-utils";
 import {
   augmentAuditWithRenderedChecks,
   type RenderedAuditArtifactManifest,
@@ -6151,9 +6152,7 @@ const getExactToolSelection = (
   const missingTools: string[] = [];
   const includedToolNames = new Set<string>();
   for (const requestedName of toolNames) {
-    const tool = toolNameIndex.toolByCanonicalName.get(
-      toolNameIndex.resolve(requestedName)
-    );
+    const tool = toolNameIndex.get(requestedName);
     if (tool === undefined) {
       missingTools.push(requestedName);
       continue;
@@ -6291,7 +6290,7 @@ const toolAliases = new Map([
 ]);
 
 const createToolNameIndex = (tools: readonly ProjectSessionMcpTool[]) => {
-  const toolByCanonicalName = new Map(
+  const toolByAcceptedName = new Map(
     tools.map((tool) => [tool.name, tool] as const)
   );
   const canonicalNamesByUnderscoredName = new Map<string, string[]>();
@@ -6302,46 +6301,27 @@ const createToolNameIndex = (tools: readonly ProjectSessionMcpTool[]) => {
     canonicalNames.push(tool.name);
     canonicalNamesByUnderscoredName.set(underscoredName, canonicalNames);
   }
-  return {
-    toolByCanonicalName,
-    canonicalNamesByUnderscoredName,
-    resolve(name: string) {
-      const aliasedName = toolAliases.get(name) ?? name;
-      if (toolByCanonicalName.has(aliasedName)) {
-        return aliasedName;
+  for (const [
+    underscoredName,
+    canonicalNames,
+  ] of canonicalNamesByUnderscoredName) {
+    if (
+      canonicalNames.length === 1 &&
+      toolByAcceptedName.has(underscoredName) === false
+    ) {
+      const tool = toolByAcceptedName.get(canonicalNames[0] ?? "");
+      if (tool !== undefined) {
+        toolByAcceptedName.set(underscoredName, tool);
       }
-      const canonicalNames =
-        canonicalNamesByUnderscoredName.get(aliasedName) ?? [];
-      return canonicalNames.length === 1
-        ? (canonicalNames[0] ?? aliasedName)
-        : aliasedName;
-    },
-  };
-};
-
-const resolveToolName = (
-  name: string,
-  tools: readonly ProjectSessionMcpTool[] = []
-) => createToolNameIndex(tools).resolve(name);
-
-const getToolNameEditDistance = (left: string, right: string) => {
-  const previous = Array.from(
-    { length: right.length + 1 },
-    (_, index) => index
-  );
-  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
-    const current = [leftIndex];
-    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
-      current[rightIndex] = Math.min(
-        (current[rightIndex - 1] ?? 0) + 1,
-        (previous[rightIndex] ?? 0) + 1,
-        (previous[rightIndex - 1] ?? 0) +
-          (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1)
-      );
     }
-    previous.splice(0, previous.length, ...current);
   }
-  return previous[right.length] ?? 0;
+  const getAcceptedName = (name: string) => toolAliases.get(name) ?? name;
+  const get = (name: string) => toolByAcceptedName.get(getAcceptedName(name));
+  return {
+    canonicalNamesByUnderscoredName,
+    get,
+    resolve: (name: string) => get(name)?.name ?? getAcceptedName(name),
+  };
 };
 
 const getUnknownToolMessage = (
@@ -6354,7 +6334,7 @@ const getUnknownToolMessage = (
   const suggestions = tools
     .map((tool) => ({
       name: tool.name,
-      distance: getToolNameEditDistance(
+      distance: getLevenshteinDistance(
         normalizedRequestedName,
         toUnderscoredToolName(tool.name.toLowerCase())
       ),
@@ -6385,11 +6365,8 @@ export const isReadOnlyProjectSessionMcpToolCall = (
   name: string,
   tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const resolvedName = resolveToolName(name, tools);
-  return tools.some(
-    (tool) =>
-      tool.name === resolvedName && isReadOnlyProjectSessionMcpTool(tool)
-  );
+  const tool = createToolNameIndex(tools).get(name);
+  return tool !== undefined && isReadOnlyProjectSessionMcpTool(tool);
 };
 
 const sdkScalarSchemaKeys = new Set([
@@ -8389,13 +8366,6 @@ export const createProjectSessionMcpServer = async <
       );
     }
   }
-  const canonicalToolNameByExposedName = new Map(
-    exposedTools.map((tool, index) => [
-      tool.name,
-      tools[index]?.name ?? tool.name,
-    ])
-  );
-
   server.oninitialized = () => {
     onInitialized?.(server.getClientVersion()?.name);
     sendLog(
@@ -8449,7 +8419,7 @@ export const createProjectSessionMcpServer = async <
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const params = getRequestParams(request);
     const exposedName = typeof params.name === "string" ? params.name : "";
-    const name = canonicalToolNameByExposedName.get(exposedName) ?? exposedName;
+    const name = toolNameIndex.resolve(exposedName);
     const { input, dryRun } = getToolCallInput(params.arguments ?? {});
     const startedAt = Date.now();
     sendLog("info", `tool ${name} started${dryRun ? " (dry run)" : ""}`);
@@ -8513,73 +8483,59 @@ export const createMcpStdioTransport = async ({
   stdout: ConstructorParameters<typeof StdioServerTransport>[1];
   partialFrameTimeoutMs?: number;
 }): Promise<McpTransport> => {
-  class RecoveringLineInput extends Transform {
-    #partialFrame: Buffer | undefined;
-    #discardTimer: ReturnType<typeof setTimeout> | undefined;
-
-    #clearDiscardTimer() {
-      if (this.#discardTimer !== undefined) {
-        clearTimeout(this.#discardTimer);
-        this.#discardTimer = undefined;
-      }
+  let partialFrame: Buffer | undefined;
+  let discardTimer: ReturnType<typeof setTimeout> | undefined;
+  const clearDiscardTimer = () => {
+    if (discardTimer !== undefined) {
+      clearTimeout(discardTimer);
+      discardTimer = undefined;
     }
-
-    #scheduleDiscard() {
-      this.#clearDiscardTimer();
-      if (this.#partialFrame === undefined || partialFrameTimeoutMs <= 0) {
-        return;
-      }
-      this.#discardTimer = setTimeout(() => {
-        this.#partialFrame = undefined;
-        this.#discardTimer = undefined;
-      }, partialFrameTimeoutMs);
-      this.#discardTimer.unref?.();
+  };
+  const scheduleDiscard = () => {
+    clearDiscardTimer();
+    if (partialFrame === undefined || partialFrameTimeoutMs <= 0) {
+      return;
     }
-
-    override _transform(
-      chunk: Buffer | string,
-      encoding: BufferEncoding,
-      callback: (error?: Error | null) => void
-    ) {
+    discardTimer = setTimeout(() => {
+      partialFrame = undefined;
+      discardTimer = undefined;
+    }, partialFrameTimeoutMs);
+    discardTimer.unref?.();
+  };
+  const recoveringInput = new Transform({
+    transform(chunk: Buffer | string, encoding: BufferEncoding, callback) {
       const nextChunk = Buffer.isBuffer(chunk)
         ? chunk
         : Buffer.from(chunk, encoding);
       const buffered =
-        this.#partialFrame === undefined
+        partialFrame === undefined
           ? nextChunk
-          : Buffer.concat([this.#partialFrame, nextChunk]);
+          : Buffer.concat([partialFrame, nextChunk]);
       const lastNewline = buffered.lastIndexOf(10);
       if (lastNewline === -1) {
-        this.#partialFrame = buffered;
-        this.#scheduleDiscard();
+        partialFrame = buffered;
+        scheduleDiscard();
         callback();
         return;
       }
-      this.#clearDiscardTimer();
+      clearDiscardTimer();
       this.push(buffered.subarray(0, lastNewline + 1));
       const remainder = buffered.subarray(lastNewline + 1);
-      this.#partialFrame = remainder.length === 0 ? undefined : remainder;
-      this.#scheduleDiscard();
+      partialFrame = remainder.length === 0 ? undefined : remainder;
+      scheduleDiscard();
       callback();
-    }
-
-    override _flush(callback: (error?: Error | null) => void) {
-      this.#clearDiscardTimer();
-      this.#partialFrame = undefined;
+    },
+    flush(callback) {
+      clearDiscardTimer();
+      partialFrame = undefined;
       callback();
-    }
-
-    override _destroy(
-      error: Error | null,
-      callback: (error?: Error | null) => void
-    ) {
-      this.#clearDiscardTimer();
-      this.#partialFrame = undefined;
+    },
+    destroy(error, callback) {
+      clearDiscardTimer();
+      partialFrame = undefined;
       callback(error);
-    }
-  }
-
-  const recoveringInput = new RecoveringLineInput();
+    },
+  });
   stdin.pipe(recoveringInput);
   const transport = new StdioServerTransport(recoveringInput, stdout);
   const closeTransport = transport.close.bind(transport);

@@ -10,6 +10,7 @@ import type {
   ScreenshotDiffRgb,
 } from "./screenshot-diff";
 import type { DecodedRgbaImage } from "./screenshot-resize";
+import { getLevenshteinDistance } from "../shared/string-utils";
 
 export type ScreenshotTextChangeKind =
   | "moved"
@@ -635,31 +636,8 @@ const normalizedTextSimilarity = (left: string, right: string) =>
   left === right
     ? 1
     : 1 -
-      levenshteinDistance(left, right) / Math.max(left.length, right.length, 1);
-
-const levenshteinDistance = (left: string, right: string) => {
-  const previous = new Array<number>(right.length + 1);
-  const current = new Array<number>(right.length + 1);
-  for (let index = 0; index <= right.length; index++) {
-    previous[index] = index;
-  }
-
-  for (let leftIndex = 1; leftIndex <= left.length; leftIndex++) {
-    current[0] = leftIndex;
-    for (let rightIndex = 1; rightIndex <= right.length; rightIndex++) {
-      const cost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
-      current[rightIndex] = Math.min(
-        current[rightIndex - 1] + 1,
-        previous[rightIndex] + 1,
-        previous[rightIndex - 1] + cost
-      );
-    }
-    for (let index = 0; index <= right.length; index++) {
-      previous[index] = current[index];
-    }
-  }
-  return previous[right.length];
-};
+      getLevenshteinDistance(left, right) /
+        Math.max(left.length, right.length, 1);
 
 const boundsDelta = (
   baseline: ScreenshotDiffBounds,

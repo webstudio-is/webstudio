@@ -6,7 +6,6 @@ import {
   createPreviewController,
   findAvailablePort,
   getPreviewBuildArgs,
-  getPreviewCommand,
   getNpmInvocation,
   getPreviewStartArgs,
   getPreviewUrl,
@@ -112,12 +111,6 @@ test("builds iterative preview args for an ordinary reload server", () => {
     "5173",
     "--strictPort",
   ]);
-});
-
-test("uses the platform npm executable for preview commands", () => {
-  expect(getPreviewCommand("linux")).toBe("npm");
-  expect(getPreviewCommand("darwin")).toBe("npm");
-  expect(getPreviewCommand("win32")).toBe("npm.cmd");
 });
 
 test("reuses the npm cli that launched webstudio for preview commands", () => {
