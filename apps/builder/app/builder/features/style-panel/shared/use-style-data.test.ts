@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
 import {
   $selectedBreakpointId,
+  $selectedStyleState,
   $selectedStyleSources,
 } from "~/shared/nano-states";
 import { createDefaultPages } from "@webstudio-is/project-build";
@@ -50,6 +51,7 @@ const setupBaseStores = () => {
   selectInstance(["body"]);
   $breakpoints.set(new Map([["base", { id: "base", label: "Base" }]]));
   $selectedBreakpointId.set("base");
+  $selectedStyleState.set(undefined);
   $styles.set(new Map());
 };
 
@@ -74,6 +76,15 @@ const setupSelection = (styleSource: {
   );
   $selectedStyleSources.set(new Map([["body", styleSource.id]]));
 };
+
+const invalidState = "::-webkit-search-cancel-button";
+const createInvalidStyleDecl = (styleSourceId: string): StyleDecl => ({
+  breakpointId: "base",
+  styleSourceId,
+  property: "color",
+  state: invalidState,
+  value: { type: "keyword", value: "red" },
+});
 
 describe("use-style-data", () => {
   test("does not write styles for locked tokens", () => {
@@ -129,6 +140,35 @@ describe("use-style-data", () => {
         state: undefined,
       },
     ]);
+  });
+
+  test("deletes an existing token declaration with an invalid state", () => {
+    setupSelection({ id: "token1", type: "token", name: "Primary" });
+    const styleDecl = createInvalidStyleDecl("token1");
+    $styles.set(new Map([[getStyleDeclKey(styleDecl), styleDecl]]));
+    $selectedStyleState.set(invalidState);
+
+    deleteProperty("color");
+
+    expect($styles.get().size).toBe(0);
+  });
+
+  test("deletes an existing local declaration with an invalid state", () => {
+    setupBaseStores();
+    const styleDecl = createInvalidStyleDecl("local1");
+    $styleSources.set(
+      new Map([["local1", { id: "local1", type: "local" as const }]])
+    );
+    $styleSourceSelections.set(
+      new Map([["body", { instanceId: "body", values: ["local1"] }]])
+    );
+    $selectedStyleSources.set(new Map());
+    $styles.set(new Map([[getStyleDeclKey(styleDecl), styleDecl]]));
+    $selectedStyleState.set(invalidState);
+
+    deleteProperty("color");
+
+    expect($styles.get().size).toBe(0);
   });
 
   test("writes styles for implicit local source through runtime generated ids", () => {
