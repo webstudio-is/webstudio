@@ -6293,7 +6293,71 @@ const toolAliases = new Map([
   ["meta.get_more_tools", "meta.get-more-tools"],
 ]);
 
-const resolveToolName = (name: string) => toolAliases.get(name) ?? name;
+const resolveToolName = (
+  name: string,
+  tools: readonly ProjectSessionMcpTool[] = []
+) => {
+  const aliasedName = toolAliases.get(name) ?? name;
+  if (tools.some((tool) => tool.name === aliasedName)) {
+    return aliasedName;
+  }
+  const matches = tools.filter(
+    (tool) => toUnderscoredToolName(tool.name) === aliasedName
+  );
+  return matches.length === 1 ? (matches[0]?.name ?? aliasedName) : aliasedName;
+};
+
+const getToolNameEditDistance = (left: string, right: string) => {
+  const previous = Array.from(
+    { length: right.length + 1 },
+    (_, index) => index
+  );
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    const current = [leftIndex];
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      current[rightIndex] = Math.min(
+        (current[rightIndex - 1] ?? 0) + 1,
+        (previous[rightIndex] ?? 0) + 1,
+        (previous[rightIndex - 1] ?? 0) +
+          (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1)
+      );
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+  return previous[right.length] ?? 0;
+};
+
+const getUnknownToolMessage = (
+  requestedName: string,
+  tools: readonly ProjectSessionMcpTool[]
+) => {
+  const normalizedRequestedName = toUnderscoredToolName(
+    requestedName.toLowerCase()
+  );
+  const suggestions = tools
+    .map((tool) => ({
+      name: tool.name,
+      distance: getToolNameEditDistance(
+        normalizedRequestedName,
+        toUnderscoredToolName(tool.name.toLowerCase())
+      ),
+    }))
+    .filter(
+      ({ distance }) =>
+        distance <= Math.max(2, Math.floor(normalizedRequestedName.length / 3))
+    )
+    .sort(
+      (left, right) =>
+        left.distance - right.distance || left.name.localeCompare(right.name)
+    )
+    .slice(0, 3)
+    .map(({ name }) => name);
+  const suggestion =
+    suggestions.length === 0
+      ? ""
+      : ` Did you mean ${suggestions.map((name) => `"${name}"`).join(", ")}?`;
+  return `Unknown MCP tool "${requestedName}".${suggestion} Use meta.index to list available tools.`;
+};
 
 export const isReadOnlyProjectSessionMcpTool = (tool: ProjectSessionMcpTool) =>
   tool.annotations.method === "query" ||
@@ -6304,7 +6368,7 @@ export const isReadOnlyProjectSessionMcpToolCall = (
   name: string,
   tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const resolvedName = resolveToolName(name);
+  const resolvedName = resolveToolName(name, tools);
   return tools.some(
     (tool) =>
       tool.name === resolvedName && isReadOnlyProjectSessionMcpTool(tool)
@@ -7453,7 +7517,9 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       dryRun?: boolean;
       signal?: AbortSignal;
     }): Promise<ProjectSessionMcpToolResult> {
-      name = resolveToolName(name);
+      const requestedName = name;
+      const tools = listTools();
+      name = resolveToolName(name, tools);
       if (name === "checkpoint.ack") {
         if (
           isRecord(input) === false ||
@@ -7578,11 +7644,15 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         return toCheckpointedMetaResult(name, getWorkflowNext(input));
       }
       if (name === "meta.get-more-tools") {
+        const normalizedInput = parseStringifiedJsonInputFields(
+          input,
+          toolDetailsInputSchema
+        );
         return toMetaResult(
           getMoreTools(
-            getBrief(input, "meta.get-more-tools"),
-            getToolNamesInput(input),
-            listTools()
+            getBrief(normalizedInput, "meta.get-more-tools"),
+            getToolNamesInput(normalizedInput),
+            tools
           )
         );
       }
@@ -7922,7 +7992,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       }
       const operation = operationByCommand.get(name as Command);
       if (operation === undefined) {
-        throw new Error(`Unknown MCP tool "${name}".`);
+        throw new Error(getUnknownToolMessage(requestedName, tools));
       }
       const transportInput = getToolCallInput(input, operation.requiresConfirm);
       const toolInput = transportInput.input;

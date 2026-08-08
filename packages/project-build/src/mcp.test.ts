@@ -3882,6 +3882,10 @@ describe("project session mcp adapter", () => {
       name: "meta.get-more-tools",
       input: { tools: ["insert_fragment"] },
     });
+    const stringifiedToolDetails = await adapter.callTool({
+      name: "meta.get-more-tools",
+      input: { tools: '["insert-fragment"]' },
+    });
     const insertFragmentDetails = await adapter.callTool({
       name: "meta.get-more-tools",
       input: { tools: ["insert-fragment"] },
@@ -3899,6 +3903,13 @@ describe("project session mcp adapter", () => {
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "insert-fragment" }),
         ]),
+      })
+    );
+    expect(stringifiedToolDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        requestedTools: ["insert-fragment"],
+        missingTools: [],
+        count: 1,
       })
     );
     expect(index.structuredContent.data).toEqual(
@@ -7051,10 +7062,40 @@ describe("project session mcp adapter", () => {
     });
 
     await expect(adapter.callTool({ name: "unknown-tool" })).rejects.toThrow(
-      'Unknown MCP tool "unknown-tool".'
+      'Unknown MCP tool "unknown-tool". Use meta.index to list available tools.'
+    );
+    await expect(adapter.callTool({ name: "updat_styles" })).rejects.toThrow(
+      'Unknown MCP tool "updat_styles". Did you mean "update-styles"? Use meta.index to list available tools.'
     );
     expect(createProjectSession).not.toHaveBeenCalled();
     expect(executeOperation).not.toHaveBeenCalled();
+  });
+
+  test("accepts exposed underscore spellings in direct MCP calls", async () => {
+    const executeOperation = createExecuteOperation();
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await adapter.callTool({
+      name: "update_styles",
+      input: {
+        updates: [
+          {
+            instanceId: "body",
+            breakpointId: "base",
+            property: "display",
+            value: "grid",
+          },
+        ],
+      },
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ command: "update-styles" })
+    );
   });
 
   test.each([
