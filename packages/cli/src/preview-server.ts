@@ -5,8 +5,10 @@ import {
   type StdioOptions,
 } from "node:child_process";
 import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
-import { createServer as createTcpServer } from "node:net";
 import { basename, delimiter, dirname, join, parse, win32 } from "node:path";
+import detectPort from "detect-port";
+import getPort from "get-port";
+import pathKey from "path-key";
 import { parse as parseHtml, type DefaultTreeAdapterMap } from "parse5";
 import type { ProjectPreviewMode } from "@webstudio-is/project-build/visual";
 
@@ -82,27 +84,14 @@ export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   platform: process.platform,
 };
 
-export const findAvailablePort = (host = "127.0.0.1") =>
-  new Promise<number>((resolve, reject) => {
-    const server = createTcpServer();
-    server.unref();
-    server.once("error", reject);
-    server.listen({ host, port: 0, exclusive: true }, () => {
-      const address = server.address();
-      if (address === null || typeof address === "string") {
-        server.close();
-        reject(new Error("Could not allocate a local preview port."));
-        return;
-      }
-      server.close((error) =>
-        error === undefined ? resolve(address.port) : reject(error)
-      );
-    });
-  });
+export const findAvailablePort = (host = "127.0.0.1") => getPort({ host });
+
+export const isPreviewPortAvailable = async (host: string, port: number) => {
+  const availablePort = await detectPort({ hostname: host, port });
+  return availablePort === port;
+};
 
 const processEnv = () => process.env;
-
-const pathKey = () => (process.platform === "win32" ? "Path" : "PATH");
 
 const getAncestorBinPaths = (directory: string) => {
   const paths: string[] = [];
@@ -130,7 +119,7 @@ const getPreviewEnv = (
   if (cwd === undefined) {
     return extraEnv;
   }
-  const key = pathKey();
+  const key = pathKey({ env: extraEnv });
   return {
     ...extraEnv,
     [key]: [...getAncestorBinPaths(cwd), extraEnv[key]]
@@ -162,10 +151,6 @@ export const getPreviewStartArgs = (options: PreviewServerOptions) =>
       ]
     : ["run", "start"];
 
-export const getPreviewCommand = (
-  platform: typeof process.platform = process.platform
-) => (platform === "win32" ? "npm.cmd" : "npm");
-
 export const getNpmInvocation = (
   args: string[],
   {
@@ -184,10 +169,35 @@ export const getNpmInvocation = (
       : platform === "win32"
         ? win32.basename(npmExecPath)
         : basename(npmExecPath);
-  if (npmExecPath !== undefined && npmCliName === "npm-cli.js") {
-    return { command: nodeExecPath, args: [npmExecPath, ...args] };
+  if (npmExecPath !== undefined && npmCliName !== undefined) {
+    const npmCliPath =
+      npmCliName === "npm-cli.js"
+        ? npmExecPath
+        : npmCliName === "npx-cli.js"
+          ? platform === "win32"
+            ? win32.join(win32.dirname(npmExecPath), "npm-cli.js")
+            : join(dirname(npmExecPath), "npm-cli.js")
+          : undefined;
+    if (npmCliPath !== undefined) {
+      return { command: nodeExecPath, args: [npmCliPath, ...args] };
+    }
   }
-  return { command: getPreviewCommand(platform), args };
+  if (platform === "win32") {
+    return {
+      command: nodeExecPath,
+      args: [
+        win32.join(
+          win32.dirname(nodeExecPath),
+          "node_modules",
+          "npm",
+          "bin",
+          "npm-cli.js"
+        ),
+        ...args,
+      ],
+    };
+  }
+  return { command: "npm", args };
 };
 
 export const runPreviewBuild = async (

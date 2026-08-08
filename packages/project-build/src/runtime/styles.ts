@@ -1363,25 +1363,21 @@ export const validateStyleSourceName = ({
 export const createDesignTokenStyleInputs = (input: {
   styles?: Record<string, z.infer<typeof designTokenStyleValueInput>>;
   declarations?: DesignTokenStyleInput[];
-}): Array<Omit<DesignTokenStyleInput, "value"> & { value: StyleValue }> => [
-  ...Object.entries(input.styles ?? {}).map(([property, value]) => ({
-    property,
-    value:
-      typeof value === "string"
-        ? parseCssValue(hyphenateProperty(property), value)
-        : styleValue.parse(value),
-  })),
-  ...(input.declarations ?? []).map((declaration) => ({
+}): Array<Omit<DesignTokenStyleInput, "value"> & { value: StyleValue }> => {
+  const parseInput = ({ value, ...declaration }: DesignTokenStyleInput) => ({
     ...declaration,
     value:
-      typeof declaration.value === "string"
-        ? parseCssValue(
-            hyphenateProperty(declaration.property),
-            declaration.value
-          )
-        : styleValue.parse(declaration.value),
-  })),
-];
+      typeof value === "string"
+        ? parseCssValue(hyphenateProperty(declaration.property), value)
+        : styleValue.parse(value),
+  });
+  return [
+    ...Object.entries(input.styles ?? {}).map(([property, value]) =>
+      parseInput({ property, value })
+    ),
+    ...(input.declarations ?? []).map(parseInput),
+  ];
+};
 
 export const getLocalStyleSourceId = ({
   styleSources,
@@ -3806,8 +3802,8 @@ export const updateDesignTokenStyles = (
   getDesignTokenOrThrow(styleState.styleSources.values(), input.designTokenId);
   const { payload, styleKeys } = createDesignTokenStyleUpdatePayload({
     designTokenId: input.designTokenId,
-    updates: input.updates.map((update) =>
-      withValidatedBreakpoint(update, state.breakpoints)
+    updates: createDesignTokenStyleInputs({ declarations: input.updates }).map(
+      (update) => withValidatedBreakpoint(update, state.breakpoints)
     ),
     styles: styleState.styles.values(),
   });

@@ -2,6 +2,7 @@ import {
   arePreviewImageDomainsEqual,
   createPreviewController,
   findAvailablePort,
+  isPreviewPortAvailable,
   type PreviewMode,
 } from "../preview-server";
 import {
@@ -127,28 +128,66 @@ export const resolveMcpPreviewInput = async (
   };
 };
 
+const getRunningPreviewPort = (
+  previewStatus: { running: boolean; url?: string },
+  host: string | undefined
+) => {
+  if (previewStatus.running === false || previewStatus.url === undefined) {
+    return;
+  }
+  const previewUrl = new URL(previewStatus.url);
+  if (host !== undefined && previewUrl.hostname !== host) {
+    return;
+  }
+  const defaultPort =
+    previewUrl.protocol === "http:"
+      ? 80
+      : previewUrl.protocol === "https:"
+        ? 443
+        : undefined;
+  const port = previewUrl.port === "" ? defaultPort : Number(previewUrl.port);
+  return port !== undefined && Number.isInteger(port) && port > 0
+    ? port
+    : undefined;
+};
+
 export const resolveMcpScreenshotInput = async (
   input: McpScreenshotInput,
   previewStatus: { running: boolean; url?: string },
-  getAvailablePort: (host?: string) => Promise<number> = findAvailablePort
+  {
+    getAvailablePort = findAvailablePort,
+    isPortAvailable = isPreviewPortAvailable,
+  }: {
+    getAvailablePort?: (host?: string) => Promise<number>;
+    isPortAvailable?: (host: string, port: number) => Promise<boolean>;
+  } = {}
 ) => {
   if (
     input.url !== undefined ||
     input.baseUrl !== undefined ||
-    input.source === "local" ||
-    (input.port !== undefined && input.port !== 0)
+    input.source === "local"
   ) {
     return input;
   }
-  const host = input.host ?? "127.0.0.1";
-  if (previewStatus.running && previewStatus.url !== undefined) {
-    const previewUrl = new URL(previewStatus.url);
-    if (input.host === undefined || previewUrl.hostname === input.host) {
-      const previewPort = Number(previewUrl.port);
-      if (Number.isInteger(previewPort) && previewPort > 0) {
-        return { ...input, port: previewPort };
-      }
+  const runningPreviewPort = getRunningPreviewPort(previewStatus, input.host);
+  if (input.port !== undefined && input.port !== 0) {
+    const host = input.host ?? "127.0.0.1";
+    if (runningPreviewPort === input.port) {
+      return input;
     }
+    if ((await isPortAvailable(host, input.port)) === false) {
+      throw Object.assign(
+        new Error(
+          `Preview port ${input.port} is already in use on ${host}. Pass baseUrl with path to capture that existing site, or choose another port.`
+        ),
+        { code: "PREVIEW_PORT_IN_USE" }
+      );
+    }
+    return input;
+  }
+  const host = input.host ?? "127.0.0.1";
+  if (runningPreviewPort !== undefined) {
+    return { ...input, port: runningPreviewPort };
   }
   return { ...input, port: await getAvailablePort(host) };
 };

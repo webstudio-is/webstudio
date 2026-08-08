@@ -1,6 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { PassThrough } from "node:stream";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
@@ -19,6 +20,7 @@ import { BuilderRuntimeError } from "./runtime/errors";
 import {
   createProjectSessionMcpCore,
   createProjectSessionMcpServer,
+  createMcpStdioTransport,
   hiddenMcpOperationCommands,
   listProjectSessionMcpResources,
   listProjectSessionMcpTools,
@@ -3882,6 +3884,10 @@ describe("project session mcp adapter", () => {
       name: "meta.get-more-tools",
       input: { tools: ["insert_fragment"] },
     });
+    const stringifiedToolDetails = await adapter.callTool({
+      name: "meta.get-more-tools",
+      input: { tools: '["insert-fragment"]' },
+    });
     const insertFragmentDetails = await adapter.callTool({
       name: "meta.get-more-tools",
       input: { tools: ["insert-fragment"] },
@@ -3899,6 +3905,13 @@ describe("project session mcp adapter", () => {
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "insert-fragment" }),
         ]),
+      })
+    );
+    expect(stringifiedToolDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        requestedTools: ["insert-fragment"],
+        missingTools: [],
+        count: 1,
       })
     );
     expect(index.structuredContent.data).toEqual(
@@ -7051,10 +7064,40 @@ describe("project session mcp adapter", () => {
     });
 
     await expect(adapter.callTool({ name: "unknown-tool" })).rejects.toThrow(
-      'Unknown MCP tool "unknown-tool".'
+      'Unknown MCP tool "unknown-tool". Use meta.index to list available tools.'
+    );
+    await expect(adapter.callTool({ name: "updat_styles" })).rejects.toThrow(
+      'Unknown MCP tool "updat_styles". Did you mean "update-styles"? Use meta.index to list available tools.'
     );
     expect(createProjectSession).not.toHaveBeenCalled();
     expect(executeOperation).not.toHaveBeenCalled();
+  });
+
+  test("accepts exposed underscore spellings in direct MCP calls", async () => {
+    const executeOperation = createExecuteOperation();
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await adapter.callTool({
+      name: "update_styles",
+      input: {
+        updates: [
+          {
+            instanceId: "body",
+            breakpointId: "base",
+            property: "display",
+            value: "grid",
+          },
+        ],
+      },
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ command: "update-styles" })
+    );
   });
 
   test.each([
@@ -7762,6 +7805,33 @@ describe("project session mcp adapter", () => {
     } finally {
       await close();
     }
+  });
+
+  test("recovers stdio transport after an idle partial JSON-RPC frame", async () => {
+    const stdin = new PassThrough();
+    const stdout = new PassThrough();
+    const transport = await createMcpStdioTransport({
+      stdin,
+      stdout,
+      partialFrameTimeoutMs: 10,
+    });
+    const messages: unknown[] = [];
+    const errors: Error[] = [];
+    transport.onmessage = (message) => messages.push(message);
+    transport.onerror = (error) => errors.push(error);
+    await transport.start();
+
+    stdin.write('{"jsonrpc":"2.0","id":1,"method":"tools/call"');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    stdin.write(
+      `${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "ping" })}\n`
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(messages).toEqual([{ jsonrpc: "2.0", id: 2, method: "ping" }]);
+    expect(errors).toEqual([]);
+
+    await transport.close();
   });
 
   test("sends sparse protocol-native startup logging after initialization", async () => {

@@ -1361,6 +1361,40 @@ describe("runtime style operations", () => {
     });
   });
 
+  test("parses CSS strings when updating design token styles", () => {
+    const mutation = updateDesignTokenStyles(
+      {
+        breakpoints: runtimeBreakpoints,
+        styles: new Map(),
+        styleSources: sources([token("token", "Layout")]),
+        styleSourceSelections: new Map(),
+      },
+      {
+        designTokenId: "token",
+        updates: [
+          {
+            property: "max-width",
+            value: "max(var(--x), calc(50% - 40rem))",
+          },
+        ],
+      }
+    );
+
+    expect(mutation.payload).toContainEqual({
+      namespace: "styles",
+      patches: [
+        {
+          op: "add",
+          path: ["token:desktop:maxWidth:"],
+          value: createStyleDecl("token", "desktop", "maxWidth", {
+            type: "unparsed",
+            value: "max(var(--x), calc(50% - 40rem))",
+          }),
+        },
+      ],
+    });
+  });
+
   test("creates and attaches design tokens atomically", () => {
     const mutation = createAttachedDesignTokens(
       {

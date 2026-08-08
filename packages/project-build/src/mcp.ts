@@ -16,8 +16,10 @@ import {
   allowedArrayMethods,
   allowedStringMethods,
 } from "@webstudio-is/expression";
+import { distance as getLevenshteinDistance } from "fastest-levenshtein";
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
+import { Transform } from "node:stream";
 import {
   projectSessionRestorePointSummarySchema,
   projectSessionBusyMessage,
@@ -6145,18 +6147,12 @@ const getExactToolSelection = (
   toolNames: readonly string[],
   tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const toolByName = new Map(
-    tools.map((tool) => [toUnderscoredToolName(tool.name), tool])
-  );
-  for (const tool of tools) {
-    toolByName.set(tool.name, tool);
-  }
+  const toolNameIndex = createToolNameIndex(tools);
   const selectedTools: ProjectSessionMcpTool[] = [];
   const missingTools: string[] = [];
   const includedToolNames = new Set<string>();
   for (const requestedName of toolNames) {
-    const resolvedName = resolveToolName(requestedName);
-    const tool = toolByName.get(resolvedName);
+    const tool = toolNameIndex.get(requestedName);
     if (tool === undefined) {
       missingTools.push(requestedName);
       continue;
@@ -6293,7 +6289,72 @@ const toolAliases = new Map([
   ["meta.get_more_tools", "meta.get-more-tools"],
 ]);
 
-const resolveToolName = (name: string) => toolAliases.get(name) ?? name;
+const createToolNameIndex = (tools: readonly ProjectSessionMcpTool[]) => {
+  const toolByAcceptedName = new Map(
+    tools.map((tool) => [tool.name, tool] as const)
+  );
+  const canonicalNamesByUnderscoredName = new Map<string, string[]>();
+  for (const tool of tools) {
+    const underscoredName = toUnderscoredToolName(tool.name);
+    const canonicalNames =
+      canonicalNamesByUnderscoredName.get(underscoredName) ?? [];
+    canonicalNames.push(tool.name);
+    canonicalNamesByUnderscoredName.set(underscoredName, canonicalNames);
+  }
+  for (const [
+    underscoredName,
+    canonicalNames,
+  ] of canonicalNamesByUnderscoredName) {
+    if (
+      canonicalNames.length === 1 &&
+      toolByAcceptedName.has(underscoredName) === false
+    ) {
+      const tool = toolByAcceptedName.get(canonicalNames[0] ?? "");
+      if (tool !== undefined) {
+        toolByAcceptedName.set(underscoredName, tool);
+      }
+    }
+  }
+  const getAcceptedName = (name: string) => toolAliases.get(name) ?? name;
+  const get = (name: string) => toolByAcceptedName.get(getAcceptedName(name));
+  return {
+    canonicalNamesByUnderscoredName,
+    get,
+    resolve: (name: string) => get(name)?.name ?? getAcceptedName(name),
+  };
+};
+
+const getUnknownToolMessage = (
+  requestedName: string,
+  tools: readonly ProjectSessionMcpTool[]
+) => {
+  const normalizedRequestedName = toUnderscoredToolName(
+    requestedName.toLowerCase()
+  );
+  const suggestions = tools
+    .map((tool) => ({
+      name: tool.name,
+      distance: getLevenshteinDistance(
+        normalizedRequestedName,
+        toUnderscoredToolName(tool.name.toLowerCase())
+      ),
+    }))
+    .filter(
+      ({ distance }) =>
+        distance <= Math.max(2, Math.floor(normalizedRequestedName.length / 3))
+    )
+    .sort(
+      (left, right) =>
+        left.distance - right.distance || left.name.localeCompare(right.name)
+    )
+    .slice(0, 3)
+    .map(({ name }) => name);
+  const suggestion =
+    suggestions.length === 0
+      ? ""
+      : ` Did you mean ${suggestions.map((name) => `"${name}"`).join(", ")}?`;
+  return `Unknown MCP tool "${requestedName}".${suggestion} Use meta.index to list available tools.`;
+};
 
 export const isReadOnlyProjectSessionMcpTool = (tool: ProjectSessionMcpTool) =>
   tool.annotations.method === "query" ||
@@ -6304,11 +6365,8 @@ export const isReadOnlyProjectSessionMcpToolCall = (
   name: string,
   tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const resolvedName = resolveToolName(name);
-  return tools.some(
-    (tool) =>
-      tool.name === resolvedName && isReadOnlyProjectSessionMcpTool(tool)
-  );
+  const tool = createToolNameIndex(tools).get(name);
+  return tool !== undefined && isReadOnlyProjectSessionMcpTool(tool);
 };
 
 const sdkScalarSchemaKeys = new Set([
@@ -7223,18 +7281,19 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   const operationByCommand = new Map(
     operations.map((operation) => [operation.command, operation])
   );
-  const listTools = () =>
-    listProjectSessionMcpTools(operations, {
-      includeImport: importProject !== undefined,
-      includeDownloadAsset: downloadAsset !== undefined,
-      includeScreenshot: captureScreenshot !== undefined,
-      includeResponsiveScreenshot: capturePageScreenshots !== undefined,
-      includeScreenshotDiff: diffScreenshots !== undefined,
-      includeInstallOcr: installOcr !== undefined,
-      includePreview:
-        startPreview !== undefined && getPreviewStatus !== undefined,
-      includeRestorePoints: restorePoints !== undefined,
-    });
+  const tools = listProjectSessionMcpTools(operations, {
+    includeImport: importProject !== undefined,
+    includeDownloadAsset: downloadAsset !== undefined,
+    includeScreenshot: captureScreenshot !== undefined,
+    includeResponsiveScreenshot: capturePageScreenshots !== undefined,
+    includeScreenshotDiff: diffScreenshots !== undefined,
+    includeInstallOcr: installOcr !== undefined,
+    includePreview:
+      startPreview !== undefined && getPreviewStatus !== undefined,
+    includeRestorePoints: restorePoints !== undefined,
+  });
+  const listTools = () => [...tools];
+  const toolNameIndex = createToolNameIndex(tools);
   const getSession = () => {
     session ??= createProjectSession();
     return session;
@@ -7453,7 +7512,8 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       dryRun?: boolean;
       signal?: AbortSignal;
     }): Promise<ProjectSessionMcpToolResult> {
-      name = resolveToolName(name);
+      const requestedName = name;
+      name = toolNameIndex.resolve(name);
       if (name === "checkpoint.ack") {
         if (
           isRecord(input) === false ||
@@ -7578,11 +7638,15 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         return toCheckpointedMetaResult(name, getWorkflowNext(input));
       }
       if (name === "meta.get-more-tools") {
+        const normalizedInput = parseStringifiedJsonInputFields(
+          input,
+          toolDetailsInputSchema
+        );
         return toMetaResult(
           getMoreTools(
-            getBrief(input, "meta.get-more-tools"),
-            getToolNamesInput(input),
-            listTools()
+            getBrief(normalizedInput, "meta.get-more-tools"),
+            getToolNamesInput(normalizedInput),
+            tools
           )
         );
       }
@@ -7922,7 +7986,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       }
       const operation = operationByCommand.get(name as Command);
       if (operation === undefined) {
-        throw new Error(`Unknown MCP tool "${name}".`);
+        throw new Error(getUnknownToolMessage(requestedName, tools));
       }
       const transportInput = getToolCallInput(input, operation.requiresConfirm);
       const toolInput = transportInput.input;
@@ -8280,28 +8344,28 @@ export const createProjectSessionMcpServer = async <
       sendLog("info", message);
     },
   });
-  const exposedTools = core.listTools().map((tool) => ({
+  const tools = core.listTools();
+  const toolNameIndex = createToolNameIndex(tools);
+  const exposedTools = tools.map((tool) => ({
     ...tool,
     name:
       toolNameFormat === "underscores"
         ? toUnderscoredToolName(tool.name)
         : tool.name,
   }));
-  const canonicalToolNameByExposedName = new Map<string, string>();
-  for (const [index, tool] of core.listTools().entries()) {
-    const exposedName = exposedTools[index]?.name;
-    if (exposedName === undefined) {
-      continue;
-    }
-    const existingName = canonicalToolNameByExposedName.get(exposedName);
-    if (existingName !== undefined && existingName !== tool.name) {
+  if (toolNameFormat === "underscores") {
+    for (const [
+      exposedName,
+      canonicalNames,
+    ] of toolNameIndex.canonicalNamesByUnderscoredName) {
+      if (canonicalNames.length < 2) {
+        continue;
+      }
       throw new Error(
-        `MCP tool names ${existingName} and ${tool.name} both map to ${exposedName}.`
+        `MCP tool names ${canonicalNames.join(" and ")} both map to ${exposedName}.`
       );
     }
-    canonicalToolNameByExposedName.set(exposedName, tool.name);
   }
-
   server.oninitialized = () => {
     onInitialized?.(server.getClientVersion()?.name);
     sendLog(
@@ -8355,7 +8419,7 @@ export const createProjectSessionMcpServer = async <
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const params = getRequestParams(request);
     const exposedName = typeof params.name === "string" ? params.name : "";
-    const name = canonicalToolNameByExposedName.get(exposedName) ?? exposedName;
+    const name = toolNameIndex.resolve(exposedName);
     const { input, dryRun } = getToolCallInput(params.arguments ?? {});
     const startedAt = Date.now();
     sendLog("info", `tool ${name} started${dryRun ? " (dry run)" : ""}`);
@@ -8413,9 +8477,72 @@ export const connectProjectSessionMcpServer = async <Command extends string>({
 export const createMcpStdioTransport = async ({
   stdin,
   stdout,
+  partialFrameTimeoutMs = 5_000,
 }: {
-  stdin: ConstructorParameters<typeof StdioServerTransport>[0];
+  stdin: NonNullable<ConstructorParameters<typeof StdioServerTransport>[0]>;
   stdout: ConstructorParameters<typeof StdioServerTransport>[1];
+  partialFrameTimeoutMs?: number;
 }): Promise<McpTransport> => {
-  return new StdioServerTransport(stdin, stdout);
+  let partialFrame: Buffer | undefined;
+  let discardTimer: ReturnType<typeof setTimeout> | undefined;
+  const clearDiscardTimer = () => {
+    if (discardTimer !== undefined) {
+      clearTimeout(discardTimer);
+      discardTimer = undefined;
+    }
+  };
+  const scheduleDiscard = () => {
+    clearDiscardTimer();
+    if (partialFrame === undefined || partialFrameTimeoutMs <= 0) {
+      return;
+    }
+    discardTimer = setTimeout(() => {
+      partialFrame = undefined;
+      discardTimer = undefined;
+    }, partialFrameTimeoutMs);
+    discardTimer.unref?.();
+  };
+  const recoveringInput = new Transform({
+    transform(chunk: Buffer | string, encoding: BufferEncoding, callback) {
+      const nextChunk = Buffer.isBuffer(chunk)
+        ? chunk
+        : Buffer.from(chunk, encoding);
+      const buffered =
+        partialFrame === undefined
+          ? nextChunk
+          : Buffer.concat([partialFrame, nextChunk]);
+      const lastNewline = buffered.lastIndexOf(10);
+      if (lastNewline === -1) {
+        partialFrame = buffered;
+        scheduleDiscard();
+        callback();
+        return;
+      }
+      clearDiscardTimer();
+      this.push(buffered.subarray(0, lastNewline + 1));
+      const remainder = buffered.subarray(lastNewline + 1);
+      partialFrame = remainder.length === 0 ? undefined : remainder;
+      scheduleDiscard();
+      callback();
+    },
+    flush(callback) {
+      clearDiscardTimer();
+      partialFrame = undefined;
+      callback();
+    },
+    destroy(error, callback) {
+      clearDiscardTimer();
+      partialFrame = undefined;
+      callback(error);
+    },
+  });
+  stdin.pipe(recoveringInput);
+  const transport = new StdioServerTransport(recoveringInput, stdout);
+  const closeTransport = transport.close.bind(transport);
+  transport.close = async () => {
+    await closeTransport();
+    stdin.unpipe(recoveringInput);
+    recoveringInput.destroy();
+  };
+  return transport;
 };

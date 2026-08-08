@@ -1,4 +1,5 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, vi } from "vitest";
@@ -6,10 +7,10 @@ import {
   createPreviewController,
   findAvailablePort,
   getPreviewBuildArgs,
-  getPreviewCommand,
   getNpmInvocation,
   getPreviewStartArgs,
   getPreviewUrl,
+  isPreviewPortAvailable,
   materializePreviewAssets,
   runPreviewBuild,
   startPreviewServer,
@@ -22,6 +23,28 @@ test("allocates an available local preview port", async () => {
 
   expect(port).toBeGreaterThan(0);
   expect(port).toBeLessThanOrEqual(65_535);
+});
+
+test("repeatedly reports an unoccupied explicit preview port as available", async () => {
+  const server = createServer();
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  if (address === null || typeof address === "string") {
+    throw new Error("Expected the test server to have a TCP address.");
+  }
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => (error === undefined ? resolve() : reject(error)));
+  });
+
+  await expect(isPreviewPortAvailable("127.0.0.1", address.port)).resolves.toBe(
+    true
+  );
+  await expect(isPreviewPortAvailable("127.0.0.1", address.port)).resolves.toBe(
+    true
+  );
 });
 
 const createDependencies = (
@@ -114,18 +137,47 @@ test("builds iterative preview args for an ordinary reload server", () => {
   ]);
 });
 
-test("uses the platform npm executable for preview commands", () => {
-  expect(getPreviewCommand("linux")).toBe("npm");
-  expect(getPreviewCommand("darwin")).toBe("npm");
-  expect(getPreviewCommand("win32")).toBe("npm.cmd");
-});
-
 test("reuses the npm cli that launched webstudio for preview commands", () => {
   expect(
     getNpmInvocation(["run", "build"], {
       nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
       npmExecPath:
         "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      platform: "win32",
+    })
+  ).toEqual({
+    command: "C:\\Program Files\\nodejs\\node.exe",
+    args: [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "build",
+    ],
+  });
+});
+
+test("uses npm-cli when webstudio was launched through npx on windows", () => {
+  expect(
+    getNpmInvocation(["run", "build"], {
+      nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+      npmExecPath:
+        "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
+      platform: "win32",
+    })
+  ).toEqual({
+    command: "C:\\Program Files\\nodejs\\node.exe",
+    args: [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "build",
+    ],
+  });
+});
+
+test("uses npm-cli when windows npm launcher metadata is unavailable", () => {
+  expect(
+    getNpmInvocation(["run", "build"], {
+      nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+      npmExecPath: undefined,
       platform: "win32",
     })
   ).toEqual({
@@ -186,21 +238,33 @@ test("does not fail when the generated preview has no downloaded assets", async 
   }
 });
 
-test("runs generated project production build with the windows npm executable", async () => {
+test("runs generated project production build through windows npm-cli", async () => {
   const process = createPreviewProcess();
   const spawn = vi.fn(() => process);
   resolveProcessExit(process);
 
   await runPreviewBuild(
-    createDependencies({ spawn: spawn as never, platform: "win32" }),
+    createDependencies({
+      spawn: spawn as never,
+      nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+      platform: "win32",
+    }),
     "C:/project/.webstudio/preview"
   );
 
-  expect(spawn).toHaveBeenCalledWith("npm.cmd", ["run", "build"], {
-    cwd: "C:/project/.webstudio/preview",
-    stdio: "inherit",
-    env: expect.objectContaining({ NODE_ENV: "production" }),
-  });
+  expect(spawn).toHaveBeenCalledWith(
+    "C:\\Program Files\\nodejs\\node.exe",
+    [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "build",
+    ],
+    {
+      cwd: "C:/project/.webstudio/preview",
+      stdio: "inherit",
+      env: expect.objectContaining({ NODE_ENV: "production" }),
+    }
+  );
 });
 
 test("starts generated project production server with inherited stdio", () => {
@@ -252,7 +316,7 @@ test("passes explicit external image domains to the preview optimizer", () => {
   );
 });
 
-test("starts generated project production server with the windows npm executable", () => {
+test("starts generated project production server through windows npm-cli", () => {
   const process = {} as ReturnType<typeof startPreviewServer>["process"];
   const spawn = vi.fn(() => process);
 
@@ -263,21 +327,33 @@ test("starts generated project production server with the windows npm executable
         port: 5173,
         cwd: "C:/project/.webstudio/preview",
       },
-      createDependencies({ spawn: spawn as never, platform: "win32" })
+      createDependencies({
+        spawn: spawn as never,
+        nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+        platform: "win32",
+      })
     )
   ).toEqual({
     url: "http://127.0.0.1:5173/",
     process,
   });
-  expect(spawn).toHaveBeenCalledWith("npm.cmd", ["run", "start"], {
-    cwd: "C:/project/.webstudio/preview",
-    stdio: "inherit",
-    env: expect.objectContaining({
-      HOST: "127.0.0.1",
-      PORT: "5173",
-      NODE_ENV: "production",
-    }),
-  });
+  expect(spawn).toHaveBeenCalledWith(
+    "C:\\Program Files\\nodejs\\node.exe",
+    [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "start",
+    ],
+    {
+      cwd: "C:/project/.webstudio/preview",
+      stdio: "inherit",
+      env: expect.objectContaining({
+        HOST: "127.0.0.1",
+        PORT: "5173",
+        NODE_ENV: "production",
+      }),
+    }
+  );
 });
 
 test("preview controller builds once and reuses a running server", async () => {
@@ -355,6 +431,48 @@ test("iterative preview starts without a production build", async () => {
         NODE_ENV: "development",
         WEBSTUDIO_PREVIEW_HMR: "disabled",
       }),
+    })
+  );
+});
+
+test("starts a managed Windows preview through npm-cli with supported spawn options", async () => {
+  const process = createPreviewProcess();
+  const spawn = vi.fn(() => process);
+  const controller = createPreviewController(
+    {
+      host: "127.0.0.1",
+      port: 5173,
+      cwd: "C:/project/.webstudio/preview",
+      mode: "iterative",
+    },
+    createDependencies({
+      spawn: spawn as never,
+      nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+      npmExecPath:
+        "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
+      platform: "win32",
+    })
+  );
+
+  await expect(controller.start()).resolves.toMatchObject({ running: true });
+
+  expect(spawn).toHaveBeenCalledWith(
+    "C:\\Program Files\\nodejs\\node.exe",
+    [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "dev",
+      "--",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "5173",
+      "--strictPort",
+    ],
+    expect.objectContaining({
+      cwd: "C:/project/.webstudio/preview",
+      detached: false,
+      stdio: ["ignore", "pipe", "pipe"],
     })
   );
 });

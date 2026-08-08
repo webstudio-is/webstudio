@@ -1333,18 +1333,18 @@ export const createDataVariableCreatePayload = ({
   };
 };
 
-const createDataVariableUpsertPayload = ({
+const createDataSourceUpsertPayload = ({
   pages,
   instances,
   props,
   dataSources,
   resources,
-  variable,
+  dataSource,
 }: Pick<
   BuilderState,
   "pages" | "instances" | "props" | "dataSources" | "resources"
 > & {
-  variable: DataVariable;
+  dataSource: DataSource;
 }) => {
   if (
     instances === undefined ||
@@ -1354,20 +1354,20 @@ const createDataVariableUpsertPayload = ({
   ) {
     return [];
   }
-  if (variable.scopeInstanceId === undefined) {
+  if (dataSource.scopeInstanceId === undefined) {
     return [];
   }
-  const scopeInstanceId = variable.scopeInstanceId;
+  const scopeInstanceId = dataSource.scopeInstanceId;
   return produceWebstudioDataMutation(
     { pages, instances, props, dataSources, resources },
     (draft) => {
-      if (variable.type === "variable") {
-        const previous = draft.dataSources.get(variable.id);
+      if (dataSource.type === "variable") {
+        const previous = draft.dataSources.get(dataSource.id);
         if (previous?.type === "resource") {
           draft.resources.delete(previous.resourceId);
         }
       }
-      draft.dataSources.set(variable.id, variable);
+      draft.dataSources.set(dataSource.id, dataSource);
       rebindTreeVariablesMutable({
         startingInstanceId: scopeInstanceId,
         ...draft,
@@ -1381,7 +1381,7 @@ export const createDataVariableUpdatePayload = ({
   values,
   dataSources,
 }: {
-  variable: DataVariable;
+  variable: Pick<DataSource, "id" | "name" | "scopeInstanceId">;
   values: Partial<Pick<DataVariable, "scopeInstanceId" | "name" | "value">>;
   dataSources: Iterable<DataSource>;
 }) => {
@@ -1445,9 +1445,9 @@ export const createDataVariable = (
   });
   return createRuntimeMutation({
     payload:
-      createDataVariableUpsertPayload({
+      createDataSourceUpsertPayload({
         ...state,
-        variable,
+        dataSource: variable,
       }) ?? payload,
     result: { dataSourceId },
     invalidatesNamespaces: [
@@ -1472,12 +1472,6 @@ export const updateDataVariable = (
   if (dataSource === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Variable not found");
   }
-  if (dataSource.type !== "variable" && input.values.value === undefined) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Variable value is required"
-    );
-  }
   const scopeInstanceId =
     input.values.scopeInstanceId ?? dataSource.scopeInstanceId;
   if (scopeInstanceId === undefined) {
@@ -1486,30 +1480,49 @@ export const updateDataVariable = (
       "Variable scope instance is required"
     );
   }
-  const variable =
-    dataSource.type === "variable"
-      ? dataSource
-      : createDataVariableValue({
-          dataSourceId: dataSource.id,
-          scopeInstanceId,
-          name: dataSource.name,
-          value: input.values.value ?? { type: "string", value: "" },
-        });
-  const { error } = createDataVariableUpdatePayload({
-    variable,
+  const { error, payload } = createDataVariableUpdatePayload({
+    variable: dataSource,
     values: input.values,
     dataSources: dataSources.values(),
   });
   if (error) {
     return throwBuilderRuntimeError("BAD_REQUEST", error.message);
   }
-  const nextVariable = { ...variable, ...input.values };
+  const { value, ...metadataValues } = input.values;
+  if (
+    dataSource.type === "resource" &&
+    value === undefined &&
+    (metadataValues.scopeInstanceId === undefined ||
+      metadataValues.scopeInstanceId === dataSource.scopeInstanceId)
+  ) {
+    return createRuntimeMutation({
+      payload,
+      result: { dataSourceId: dataSource.id },
+      invalidatesNamespaces: ["dataSources"],
+    });
+  }
+  const nextDataSource =
+    dataSource.type === "resource" && value !== undefined
+      ? {
+          ...createDataVariableValue({
+            dataSourceId: dataSource.id,
+            scopeInstanceId,
+            name: dataSource.name,
+            value,
+          }),
+          ...metadataValues,
+        }
+      : {
+          ...dataSource,
+          ...metadataValues,
+          ...(value === undefined ? {} : { value }),
+        };
   return createRuntimeMutation({
-    payload: createDataVariableUpsertPayload({
+    payload: createDataSourceUpsertPayload({
       ...state,
-      variable: nextVariable,
+      dataSource: nextDataSource,
     }),
-    result: { dataSourceId: variable.id },
+    result: { dataSourceId: nextDataSource.id },
     invalidatesNamespaces: [
       "pages",
       "instances",
