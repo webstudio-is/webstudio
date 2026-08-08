@@ -64,6 +64,47 @@ test("allocates and reuses a collision-free port for automatic screenshots", asy
   expect(getAvailablePort).toHaveBeenCalledOnce();
 });
 
+test("rejects an occupied explicit screenshot port before preview preparation", async () => {
+  const isPortAvailable = vi.fn(async () => false);
+
+  await expect(
+    resolveMcpScreenshotInput(
+      {
+        path: "/account",
+        port: 5199,
+        viewport: { width: 1440, height: 900 },
+      },
+      { running: false },
+      vi.fn(async () => 53124),
+      isPortAvailable
+    )
+  ).rejects.toMatchObject({
+    code: "PREVIEW_PORT_IN_USE",
+    message: expect.stringContaining(
+      "Pass baseUrl with path to capture that existing site"
+    ),
+  });
+  expect(isPortAvailable).toHaveBeenCalledWith("127.0.0.1", 5199);
+});
+
+test("reuses an owned explicit screenshot port when host is omitted", async () => {
+  const isPortAvailable = vi.fn(async () => false);
+
+  await expect(
+    resolveMcpScreenshotInput(
+      {
+        path: "/account",
+        port: 5199,
+        viewport: { width: 1440, height: 900 },
+      },
+      { running: true, url: "http://localhost:5199/" },
+      vi.fn(async () => 53124),
+      isPortAvailable
+    )
+  ).resolves.toMatchObject({ port: 5199 });
+  expect(isPortAvailable).not.toHaveBeenCalled();
+});
+
 test("retries automatic MCP preview ports after a startup race", async () => {
   const getAvailablePort = vi
     .fn()

@@ -138,6 +138,24 @@ test("reuses the npm cli that launched webstudio for preview commands", () => {
   });
 });
 
+test("uses npm-cli when webstudio was launched through npx on windows", () => {
+  expect(
+    getNpmInvocation(["run", "build"], {
+      nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+      npmExecPath:
+        "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
+      platform: "win32",
+    })
+  ).toEqual({
+    command: "C:\\Program Files\\nodejs\\node.exe",
+    args: [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "build",
+    ],
+  });
+});
+
 test("runs generated project production build", async () => {
   const process = createPreviewProcess();
   const spawn = vi.fn(() => process);
@@ -355,6 +373,48 @@ test("iterative preview starts without a production build", async () => {
         NODE_ENV: "development",
         WEBSTUDIO_PREVIEW_HMR: "disabled",
       }),
+    })
+  );
+});
+
+test("starts a managed Windows preview through npm-cli with supported spawn options", async () => {
+  const process = createPreviewProcess();
+  const spawn = vi.fn(() => process);
+  const controller = createPreviewController(
+    {
+      host: "127.0.0.1",
+      port: 5173,
+      cwd: "C:/project/.webstudio/preview",
+      mode: "iterative",
+    },
+    createDependencies({
+      spawn: spawn as never,
+      nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+      npmExecPath:
+        "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
+      platform: "win32",
+    })
+  );
+
+  await expect(controller.start()).resolves.toMatchObject({ running: true });
+
+  expect(spawn).toHaveBeenCalledWith(
+    "C:\\Program Files\\nodejs\\node.exe",
+    [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "dev",
+      "--",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "5173",
+      "--strictPort",
+    ],
+    expect.objectContaining({
+      cwd: "C:/project/.webstudio/preview",
+      detached: false,
+      stdio: ["ignore", "pipe", "pipe"],
     })
   );
 });

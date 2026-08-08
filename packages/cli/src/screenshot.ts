@@ -1,7 +1,7 @@
 import { constants } from "node:fs";
-import { access, mkdir } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { dirname, resolve } from "node:path";
+import { access, mkdir, readdir } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import { Launcher } from "chrome-launcher";
@@ -26,7 +26,13 @@ const execFileAsync = promisify(execFile);
 
 export type BrowserCandidate = {
   path: string;
-  source: "option" | "env" | "path" | "platform" | "chrome-launcher";
+  source:
+    | "option"
+    | "env"
+    | "path"
+    | "platform"
+    | "playwright"
+    | "chrome-launcher";
   browser: Exclude<ScreenshotBrowser, "auto">;
 };
 
@@ -54,6 +60,7 @@ export type ScreenshotDependencies = {
   mkdir: (path: string, options: { recursive: true }) => Promise<unknown>;
   which: (command: string) => Promise<string | undefined>;
   getChromeLauncherInstallations: () => string[];
+  getPlaywrightInstallations: () => Promise<string[]>;
 } & BrowserScreenshotDependencies & {
     captureBrowserScreenshot?: (
       options: BrowserScreenshotOptions
@@ -84,6 +91,7 @@ export const defaultScreenshotDependencies: ScreenshotDependencies = {
       return [];
     }
   },
+  getPlaywrightInstallations: () => getPlaywrightInstallations(),
   ...defaultBrowserScreenshotDependencies,
   async installCommand(file, args) {
     await new Promise<void>((resolve, reject) => {
@@ -120,6 +128,57 @@ const pathCommandCandidates = [
   { command: "brave-browser", browser: "brave" },
   { command: "brave", browser: "brave" },
 ] as const;
+
+export const getPlaywrightInstallations = async ({
+  env = process.env,
+  platform = process.platform,
+  homeDirectory = homedir(),
+}: {
+  env?: NodeJS.ProcessEnv;
+  platform?: NodeJS.Platform;
+  homeDirectory?: string;
+} = {}) => {
+  const configuredCache = env.PLAYWRIGHT_BROWSERS_PATH;
+  const cacheDirectory =
+    configuredCache === undefined || configuredCache === ""
+      ? join(homeDirectory, ".cache", "ms-playwright")
+      : configuredCache === "0"
+        ? undefined
+        : resolve(configuredCache);
+  if (cacheDirectory === undefined) {
+    return [];
+  }
+  const entries = await readdir(cacheDirectory, { withFileTypes: true }).catch(
+    () => []
+  );
+  const executablePaths =
+    platform === "win32"
+      ? [["chrome-win", "chrome.exe"]]
+      : platform === "darwin"
+        ? [
+            ["chrome-mac", "Chromium.app", "Contents", "MacOS", "Chromium"],
+            [
+              "chrome-mac-arm64",
+              "Chromium.app",
+              "Contents",
+              "MacOS",
+              "Chromium",
+            ],
+          ]
+        : [
+            ["chrome-linux64", "chrome"],
+            ["chrome-linux", "chrome"],
+          ];
+  return entries
+    .filter(
+      (entry) => entry.isDirectory() && entry.name.startsWith("chromium-")
+    )
+    .flatMap((entry) =>
+      executablePaths.map((segments) =>
+        join(cacheDirectory, entry.name, ...segments)
+      )
+    );
+};
 
 const platformPathCandidates: Record<
   NodeJS.Platform,
@@ -297,6 +356,16 @@ export const resolveScreenshotBrowser = async (
       (candidate) => matchesBrowser(candidate, options.browser)
     )
   );
+
+  if (options.browser === "auto" || options.browser === "chromium") {
+    candidates.push(
+      ...(await dependencies.getPlaywrightInstallations()).map((path) => ({
+        path,
+        source: "playwright" as const,
+        browser: "chromium" as const,
+      }))
+    );
+  }
 
   candidates.push(
     ...dependencies

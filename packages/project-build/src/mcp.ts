@@ -18,6 +18,7 @@ import {
 } from "@webstudio-is/expression";
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
+import { Transform } from "node:stream";
 import {
   projectSessionRestorePointSummarySchema,
   projectSessionBusyMessage,
@@ -8483,9 +8484,86 @@ export const connectProjectSessionMcpServer = async <Command extends string>({
 export const createMcpStdioTransport = async ({
   stdin,
   stdout,
+  partialFrameTimeoutMs = 5_000,
 }: {
-  stdin: ConstructorParameters<typeof StdioServerTransport>[0];
+  stdin: NonNullable<ConstructorParameters<typeof StdioServerTransport>[0]>;
   stdout: ConstructorParameters<typeof StdioServerTransport>[1];
+  partialFrameTimeoutMs?: number;
 }): Promise<McpTransport> => {
-  return new StdioServerTransport(stdin, stdout);
+  class RecoveringLineInput extends Transform {
+    #partialFrame: Buffer | undefined;
+    #discardTimer: ReturnType<typeof setTimeout> | undefined;
+
+    #clearDiscardTimer() {
+      if (this.#discardTimer !== undefined) {
+        clearTimeout(this.#discardTimer);
+        this.#discardTimer = undefined;
+      }
+    }
+
+    #scheduleDiscard() {
+      this.#clearDiscardTimer();
+      if (this.#partialFrame === undefined || partialFrameTimeoutMs <= 0) {
+        return;
+      }
+      this.#discardTimer = setTimeout(() => {
+        this.#partialFrame = undefined;
+        this.#discardTimer = undefined;
+      }, partialFrameTimeoutMs);
+      this.#discardTimer.unref?.();
+    }
+
+    override _transform(
+      chunk: Buffer | string,
+      encoding: BufferEncoding,
+      callback: (error?: Error | null) => void
+    ) {
+      const nextChunk = Buffer.isBuffer(chunk)
+        ? chunk
+        : Buffer.from(chunk, encoding);
+      const buffered =
+        this.#partialFrame === undefined
+          ? nextChunk
+          : Buffer.concat([this.#partialFrame, nextChunk]);
+      const lastNewline = buffered.lastIndexOf(10);
+      if (lastNewline === -1) {
+        this.#partialFrame = buffered;
+        this.#scheduleDiscard();
+        callback();
+        return;
+      }
+      this.#clearDiscardTimer();
+      this.push(buffered.subarray(0, lastNewline + 1));
+      const remainder = buffered.subarray(lastNewline + 1);
+      this.#partialFrame = remainder.length === 0 ? undefined : remainder;
+      this.#scheduleDiscard();
+      callback();
+    }
+
+    override _flush(callback: (error?: Error | null) => void) {
+      this.#clearDiscardTimer();
+      this.#partialFrame = undefined;
+      callback();
+    }
+
+    override _destroy(
+      error: Error | null,
+      callback: (error?: Error | null) => void
+    ) {
+      this.#clearDiscardTimer();
+      this.#partialFrame = undefined;
+      callback(error);
+    }
+  }
+
+  const recoveringInput = new RecoveringLineInput();
+  stdin.pipe(recoveringInput);
+  const transport = new StdioServerTransport(recoveringInput, stdout);
+  const closeTransport = transport.close.bind(transport);
+  transport.close = async () => {
+    await closeTransport();
+    stdin.unpipe(recoveringInput);
+    recoveringInput.destroy();
+  };
+  return transport;
 };

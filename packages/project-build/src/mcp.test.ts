@@ -1,6 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { PassThrough } from "node:stream";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
@@ -19,6 +20,7 @@ import { BuilderRuntimeError } from "./runtime/errors";
 import {
   createProjectSessionMcpCore,
   createProjectSessionMcpServer,
+  createMcpStdioTransport,
   hiddenMcpOperationCommands,
   listProjectSessionMcpResources,
   listProjectSessionMcpTools,
@@ -7803,6 +7805,33 @@ describe("project session mcp adapter", () => {
     } finally {
       await close();
     }
+  });
+
+  test("recovers stdio transport after an idle partial JSON-RPC frame", async () => {
+    const stdin = new PassThrough();
+    const stdout = new PassThrough();
+    const transport = await createMcpStdioTransport({
+      stdin,
+      stdout,
+      partialFrameTimeoutMs: 10,
+    });
+    const messages: unknown[] = [];
+    const errors: Error[] = [];
+    transport.onmessage = (message) => messages.push(message);
+    transport.onerror = (error) => errors.push(error);
+    await transport.start();
+
+    stdin.write('{"jsonrpc":"2.0","id":1,"method":"tools/call"');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    stdin.write(
+      `${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "ping" })}\n`
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(messages).toEqual([{ jsonrpc: "2.0", id: 2, method: "ping" }]);
+    expect(errors).toEqual([]);
+
+    await transport.close();
   });
 
   test("sends sparse protocol-native startup logging after initialization", async () => {

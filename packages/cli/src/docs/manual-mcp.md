@@ -69,7 +69,7 @@ webstudio insert-fragment --input-file .temp/insert-fragment.json
 
 ### Tool name convention
 
-MCP tool names are opaque strings, not JavaScript property access. A dot separates a namespace from its tool name, and every segment uses lowercase kebab-case. For example, `components.coverage-insert-next` is the `coverage-insert-next` tool in the `components` namespace. Pass the complete name as one CLI argument: `webstudio components.coverage-insert-next`.
+MCP tool names are opaque strings, not JavaScript property access. A dot separates a namespace from its tool name, and every segment uses lowercase kebab-case. For example, `components.coverage-insert-next` is the `coverage-insert-next` tool in the `components` namespace. Pass the complete name as one CLI argument: `webstudio components.coverage-insert-next`. Batch `mcp run` calls also accept the underscore form advertised by MCP protocol discovery, such as `components_coverage_insert_next`. Unknown names return near matches and direct you to `meta.index`.
 
 ### Readable fragment inputs
 

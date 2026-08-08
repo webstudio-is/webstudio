@@ -455,7 +455,7 @@ test("installs isolated generated dependencies when the cli does not ship them",
   expect(execFile).toHaveBeenCalledWith(
     "npm",
     expect.arrayContaining(["install", "--legacy-peer-deps"]),
-    { cwd: "/tmp/project/.webstudio/preview" }
+    expect.objectContaining({ cwd: "/tmp/project/.webstudio/preview" })
   );
   expect(writeFile).toHaveBeenCalledWith(
     "/tmp/project/.webstudio/preview/node_modules/.webstudio-preview-dependencies",
@@ -495,7 +495,45 @@ test("reuses the npm cli that launched webstudio on windows", async () => {
       "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
       "install",
     ]),
-    { cwd: "/tmp/project/.webstudio/preview" }
+    expect.objectContaining({ cwd: "/tmp/project/.webstudio/preview" })
+  );
+});
+
+test("uses npm-cli from an npx launcher and forwards a writable npm cache", async () => {
+  let installed = false;
+  const execFile = vi.fn(async () => {
+    installed = true;
+    return { stdout: "", stderr: "" };
+  });
+  const env = { npm_config_cache: "C:\\workspace\\.npm-cache" };
+
+  await ensurePreviewDependencies("C:/project/.webstudio/preview", {
+    access: vi.fn(async (path) => {
+      if (installed && path.startsWith("C:/project/.webstudio/preview")) {
+        return;
+      }
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    execFile,
+    lstat: vi.fn(async () => {
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+    nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+    npmExecPath:
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
+    platform: "win32",
+    env,
+    writeFile: vi.fn(async () => undefined),
+  });
+
+  expect(execFile).toHaveBeenCalledWith(
+    "C:\\Program Files\\nodejs\\node.exe",
+    expect.arrayContaining([
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "install",
+    ]),
+    { cwd: "C:/project/.webstudio/preview", env }
   );
 });
 
@@ -520,6 +558,32 @@ test("reports an actionable error when generated dependencies cannot install", a
   ).rejects.toThrow(
     "PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies"
   );
+});
+
+test("reports sanitized package-manager diagnostics for preview install failures", async () => {
+  const installError = Object.assign(new Error("npm install failed"), {
+    code: 1,
+    stderr:
+      "npm error code EACCES\nnpm error cache C:\\Users\\agent\\.npm authToken=private-token",
+  });
+
+  const promise = ensurePreviewDependencies("C:/project/.webstudio/preview", {
+    access: vi.fn(async () => {
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    execFile: vi.fn(async () => {
+      throw installError;
+    }),
+    lstat: vi.fn(async () => {
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+    platform: "win32",
+  });
+
+  await expect(promise).rejects.toThrow("npm error code EACCES");
+  await expect(promise).rejects.toThrow("authToken=[redacted]");
+  await expect(promise).rejects.not.toThrow("private-token");
 });
 
 test("rejects an incomplete generated dependency tree", async () => {

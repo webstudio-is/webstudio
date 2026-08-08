@@ -21,6 +21,7 @@ import {
   projectPreviewSources,
   type ProjectPreviewSource,
 } from "@webstudio-is/project-build/visual";
+import { sanitizeValidationDetail } from "@webstudio-is/project-build/runtime";
 import { generatedFilesManifest, prebuild } from "../prebuild";
 import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "../config";
 import { HandledCliError } from "../errors";
@@ -162,7 +163,7 @@ type PreviewDependencyOperations = {
   execFile: (
     file: string,
     args: string[],
-    options: { cwd: string }
+    options: { cwd: string; env: NodeJS.ProcessEnv }
   ) => Promise<unknown>;
   lstat: (path: string) => Promise<{ isSymbolicLink: () => boolean }>;
   readFile: (path: string, encoding: "utf8") => Promise<string>;
@@ -179,6 +180,27 @@ type PreviewDependencyOperations = {
   nodeExecPath: string;
   npmExecPath?: string;
   platform: NodeJS.Platform;
+  env: NodeJS.ProcessEnv;
+};
+
+const getPreviewInstallFailureDiagnostics = (error: unknown) => {
+  if (typeof error !== "object" || error === null) {
+    return sanitizeValidationDetail(String(error)).trim().slice(-2000);
+  }
+  const record = error as Record<string, unknown>;
+  const output = [record.stderr, record.stdout, record.message].find(
+    (value) => typeof value === "string" && value.trim().length > 0
+  );
+  const diagnostics = sanitizeValidationDetail(
+    typeof output === "string" ? output : String(error)
+  )
+    .trim()
+    .slice(-2000);
+  const code =
+    typeof record.code === "string" || typeof record.code === "number"
+      ? String(record.code)
+      : undefined;
+  return `${code === undefined ? "" : `npm exit code ${code}. `}${diagnostics}`;
 };
 
 export const getPreviewProjectDir = (projectDir = cwd()) =>
@@ -199,6 +221,7 @@ export const ensurePreviewDependencies = async (
     nodeExecPath: process.execPath,
     npmExecPath: process.env.npm_execpath,
     platform: process.platform,
+    env: process.env,
     ...dependencies,
   };
   const previewNodeModules = join(previewProjectDir, "node_modules");
@@ -276,10 +299,11 @@ export const ensurePreviewDependencies = async (
   try {
     await operations.execFile(invocation.command, invocation.args, {
       cwd: previewProjectDir,
+      env: operations.env,
     });
   } catch (error) {
     throw new Error(
-      "PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies. Check the npm/network configuration, then reinstall or update webstudio if the problem persists.",
+      `PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies. Check the npm/network configuration, then reinstall or update webstudio if the problem persists.\n\nPackage-manager diagnostics:\n${getPreviewInstallFailureDiagnostics(error)}`,
       { cause: error }
     );
   }

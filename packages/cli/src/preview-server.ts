@@ -100,6 +100,27 @@ export const findAvailablePort = (host = "127.0.0.1") =>
     });
   });
 
+export const isPreviewPortAvailable = (
+  host: string,
+  port: number
+): Promise<boolean> =>
+  new Promise((resolve, reject) => {
+    const server = createTcpServer();
+    server.unref();
+    server.once("error", (error) => {
+      if ("code" in error && error.code === "EADDRINUSE") {
+        resolve(false);
+        return;
+      }
+      reject(error);
+    });
+    server.listen({ host, port, exclusive: true }, () => {
+      server.close((error) =>
+        error === undefined ? resolve(true) : reject(error)
+      );
+    });
+  });
+
 const processEnv = () => process.env;
 
 const pathKey = () => (process.platform === "win32" ? "Path" : "PATH");
@@ -184,8 +205,18 @@ export const getNpmInvocation = (
       : platform === "win32"
         ? win32.basename(npmExecPath)
         : basename(npmExecPath);
-  if (npmExecPath !== undefined && npmCliName === "npm-cli.js") {
-    return { command: nodeExecPath, args: [npmExecPath, ...args] };
+  if (npmExecPath !== undefined && npmCliName !== undefined) {
+    const npmCliPath =
+      npmCliName === "npm-cli.js"
+        ? npmExecPath
+        : npmCliName === "npx-cli.js"
+          ? platform === "win32"
+            ? win32.join(win32.dirname(npmExecPath), "npm-cli.js")
+            : join(dirname(npmExecPath), "npm-cli.js")
+          : undefined;
+    if (npmCliPath !== undefined) {
+      return { command: nodeExecPath, args: [npmCliPath, ...args] };
+    }
   }
   return { command: getPreviewCommand(platform), args };
 };

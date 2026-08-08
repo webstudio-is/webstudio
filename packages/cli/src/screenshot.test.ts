@@ -1,6 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
 import { constants } from "node:fs";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   BrowserNotFoundError,
   BrowserInstallUnavailableError,
@@ -9,6 +11,7 @@ import {
   createScreenshotCaptureSession,
   getChromiumInstallCommand,
   getNoBrowserFoundMessage,
+  getPlaywrightInstallations,
   installTesseractForOcr,
   resolveScreenshotBrowser,
   shouldOfferBrowserInstall,
@@ -25,6 +28,7 @@ const createDependencies = (
   mkdir: vi.fn(async () => undefined),
   which: vi.fn(async () => undefined),
   getChromeLauncherInstallations: vi.fn(() => []),
+  getPlaywrightInstallations: vi.fn(async () => []),
   spawnBrowser: vi.fn(() => ({
     kill: vi.fn(),
     once: vi.fn(),
@@ -45,6 +49,27 @@ const createDependencies = (
 });
 
 describe("resolveScreenshotBrowser", () => {
+  test("finds Playwright Chromium executables in the configured cache", async () => {
+    const cacheDirectory = await mkdtemp(
+      join(tmpdir(), "webstudio-playwright-cache-")
+    );
+    try {
+      await mkdir(join(cacheDirectory, "chromium-1208"));
+
+      await expect(
+        getPlaywrightInstallations({
+          env: { PLAYWRIGHT_BROWSERS_PATH: cacheDirectory },
+          platform: "linux",
+        })
+      ).resolves.toEqual([
+        join(cacheDirectory, "chromium-1208", "chrome-linux64", "chrome"),
+        join(cacheDirectory, "chromium-1208", "chrome-linux", "chrome"),
+      ]);
+    } finally {
+      await rm(cacheDirectory, { recursive: true, force: true });
+    }
+  });
+
   test("uses explicit browser path before discovered browsers", async () => {
     const dependencies = createDependencies({
       which: vi.fn(async (command) =>
@@ -116,6 +141,31 @@ describe("resolveScreenshotBrowser", () => {
       "/usr/local/bin/chromium",
       constants.X_OK
     );
+  });
+
+  test("discovers Chromium installed in the Playwright browser cache", async () => {
+    const dependencies = createDependencies({
+      access: vi.fn(async (path) => {
+        if (
+          path ===
+          "/root/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome"
+        ) {
+          return;
+        }
+        throw new Error("missing");
+      }),
+      getPlaywrightInstallations: vi.fn(async () => [
+        "/root/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome",
+      ]),
+    });
+
+    await expect(
+      resolveScreenshotBrowser({ browser: "auto" }, dependencies)
+    ).resolves.toEqual({
+      path: "/root/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome",
+      source: "playwright",
+      browser: "chromium",
+    });
   });
 
   test("throws with checked paths when no browser is executable", async () => {
