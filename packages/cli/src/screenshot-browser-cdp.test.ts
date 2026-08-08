@@ -581,7 +581,10 @@ test("ignores lifecycle readiness from child frames", async () => {
       },
       createDependencies({ socket })
     )
-  ).rejects.toThrow("Page did not reach networkidle");
+  ).rejects.toMatchObject({
+    code: "SCREENSHOT_TIMEOUT",
+    message: expect.stringContaining("Page did not reach networkidle"),
+  });
 });
 
 test("reuses one browser process across screenshot captures", async () => {
@@ -848,6 +851,99 @@ test("restarts the shared browser once after an unexpected exit", async () => {
 
   expect(secondProcess.kill).toHaveBeenCalledOnce();
   expect(dependencies.rm).toHaveBeenCalledTimes(2);
+});
+
+test("retries browser startup before capturing a viewport batch", async () => {
+  const failedBrowser = new FakeBrowserProcess();
+  const activeBrowser = new FakeBrowserProcess();
+  const dependencies = createDependencies();
+  vi.mocked(dependencies.spawnBrowser)
+    .mockImplementationOnce(() => {
+      setTimeout(() => failedBrowser.emit("exit", 21), 0);
+      return failedBrowser as never;
+    })
+    .mockImplementationOnce(() => activeBrowser as never);
+  vi.mocked(dependencies.readFile)
+    .mockImplementationOnce(async () => await new Promise(() => undefined))
+    .mockResolvedValue("9222\n/devtools/browser/1\n");
+  dependencies.createWebSocket = vi.fn(
+    () => new FakeWebSocket() as unknown as WebSocket
+  );
+  const options = {
+    url: "https://example.com",
+    output: "/tmp/current.png",
+    width: 800,
+    height: 600,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+
+  const session = await createBrowserScreenshotSession(options, dependencies);
+  await session.capturePage([
+    options,
+    { ...options, output: "/tmp/mobile.png", width: 375 },
+    { ...options, output: "/tmp/tablet.png", width: 768 },
+    { ...options, output: "/tmp/desktop.png", width: 1440 },
+  ]);
+  await session.close();
+
+  expect(dependencies.spawnBrowser).toHaveBeenCalledTimes(2);
+  expect(dependencies.writeFile).toHaveBeenCalledTimes(4);
+});
+
+test("reports browser startup exit diagnostics without local paths", async () => {
+  const dependencies = createDependencies();
+  vi.mocked(dependencies.spawnBrowser).mockImplementation(() => {
+    const browserProcess = new FakeBrowserProcess();
+    setTimeout(() => browserProcess.emit("exit", 21), 0);
+    return browserProcess as never;
+  });
+  vi.mocked(dependencies.readFile).mockImplementation(
+    async () => await new Promise(() => undefined)
+  );
+
+  await expect(
+    createBrowserScreenshotSession(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/Users/example/Applications/Chromium",
+        waitUntil: "networkidle",
+        waitForTimeout: 0,
+        timeout: 1000,
+      },
+      dependencies
+    )
+  ).rejects.toMatchObject({
+    message:
+      "Browser exited before its DevTools endpoint became ready (exit code 21). Check the browser installation or set WEBSTUDIO_BROWSER_PATH to a supported Chromium executable.",
+  });
+});
+
+test("does not restart a browser session after cleanup", async () => {
+  const dependencies = createDependencies();
+  const options = {
+    url: "https://example.com",
+    output: "/tmp/closed.png",
+    width: 800,
+    height: 600,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(options, dependencies);
+
+  await session.close();
+
+  await expect(session.capture(options)).rejects.toThrow(
+    "Browser screenshot session was closed."
+  );
+  expect(dependencies.spawnBrowser).toHaveBeenCalledOnce();
 });
 
 test("captures full page and returns DevTools layout metrics", async () => {

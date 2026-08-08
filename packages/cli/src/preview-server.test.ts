@@ -36,6 +36,7 @@ const createDependencies = (
   writeFile: vi.fn(async () => undefined) as never,
   sleep: vi.fn(async () => undefined),
   killProcess: vi.fn(() => true),
+  killWindowsProcessTree: vi.fn(async () => true),
   parentProcess: {
     pid: 456,
     once: vi.fn(),
@@ -358,6 +359,17 @@ test("iterative preview starts without a production build", async () => {
   );
 });
 
+test("preview status omits fabricated server details when stopped", () => {
+  const controller = createPreviewController({
+    host: "127.0.0.1",
+    port: 5173,
+  });
+
+  expect(controller.status()).toEqual({
+    running: false,
+  });
+});
+
 test("preview controller reuses a matching persisted production build", async () => {
   const process = createPreviewProcess();
   const spawn = vi.fn(() => process);
@@ -455,13 +467,19 @@ test("preview controller passes image domains to the managed server", async () =
   );
 });
 
-test("preview controller stops the running server", async () => {
+test("preview controller stops the Windows preview process tree", async () => {
   const process = createPreviewProcess();
   const buildProcess = createPreviewProcess();
+  let exitListener: (() => void) | undefined;
+  const killWindowsProcessTree = vi.fn(async () => {
+    exitListener?.();
+    return true;
+  });
   const controller = createPreviewController(
     { host: "127.0.0.1", port: 5173, cwd: "/tmp/preview" },
     createDependencies({
       platform: "win32",
+      killWindowsProcessTree,
       spawn: vi
         .fn()
         .mockReturnValueOnce(buildProcess)
@@ -469,7 +487,6 @@ test("preview controller stops the running server", async () => {
     })
   );
   resolveProcessExit(buildProcess);
-  let exitListener: (() => void) | undefined;
   vi.mocked(
     process.once as (event: string, callback: unknown) => unknown
   ).mockImplementation((event, callback) => {
@@ -478,25 +495,15 @@ test("preview controller stops the running server", async () => {
     }
     return process;
   });
-  vi.mocked(process.kill).mockImplementation(() => {
-    exitListener?.();
-    return true;
-  });
-
   await controller.start();
 
   await expect(controller.stop()).resolves.toEqual({
-    url: "http://127.0.0.1:5173/",
-    pid: undefined,
     running: false,
-    mode: "production",
   });
-  expect(process.kill).toHaveBeenCalledOnce();
+  expect(killWindowsProcessTree).toHaveBeenCalledWith(123);
+  expect(process.kill).not.toHaveBeenCalled();
   await expect(controller.stop()).resolves.toEqual({
-    url: "http://127.0.0.1:5173/",
-    pid: undefined,
     running: false,
-    mode: "production",
   });
 });
 
@@ -567,8 +574,11 @@ test("preview controller stops its process group before propagating termination"
     | undefined;
   signalHandler?.();
 
+  await vi.waitFor(() => {
+    expect(parentProcess.kill).toHaveBeenCalledWith(456, "SIGTERM");
+  });
+
   expect(killProcess).toHaveBeenCalledWith(-123, "SIGTERM");
-  expect(parentProcess.kill).toHaveBeenCalledWith(456, "SIGTERM");
   expect(controller.status().running).toBe(false);
 });
 

@@ -2,7 +2,97 @@ import { expect, test, vi } from "vitest";
 import {
   createMcpPreviewHandlers,
   createPreviewFreshness,
+  resolveMcpPreviewInput,
+  resolveMcpScreenshotInput,
+  startMcpPreview,
 } from "./mcp-preview";
+
+test("allocates an available port only when MCP preview omits one", async () => {
+  const getAvailablePort = vi.fn(async () => 53124);
+
+  await expect(
+    resolveMcpPreviewInput({ source: "session" }, getAvailablePort)
+  ).resolves.toEqual({ source: "session", port: 53124 });
+  await expect(
+    resolveMcpPreviewInput({ source: "session", port: 0 }, getAvailablePort)
+  ).resolves.toEqual({ source: "session", port: 53124 });
+  await expect(
+    resolveMcpPreviewInput({ source: "session", port: 4173 }, getAvailablePort)
+  ).resolves.toEqual({ source: "session", port: 4173 });
+  expect(getAvailablePort).toHaveBeenCalledTimes(2);
+  expect(getAvailablePort).toHaveBeenNthCalledWith(1, "127.0.0.1");
+  expect(getAvailablePort).toHaveBeenNthCalledWith(2, "127.0.0.1");
+});
+
+test("allocates and reuses a collision-free port for automatic screenshots", async () => {
+  const getAvailablePort = vi.fn(async () => 53124);
+
+  await expect(
+    resolveMcpScreenshotInput(
+      {
+        path: "/account",
+        browser: "auto",
+        viewport: { width: 390, height: 844 },
+      },
+      { running: false, url: "http://127.0.0.1:5173/" },
+      getAvailablePort
+    )
+  ).resolves.toMatchObject({ port: 53124 });
+  await expect(
+    resolveMcpScreenshotInput(
+      {
+        path: "/account",
+        browser: "auto",
+        viewport: { width: 1440, height: 900 },
+      },
+      { running: true, url: "http://127.0.0.1:53125/" },
+      getAvailablePort
+    )
+  ).resolves.toMatchObject({ port: 53125 });
+  await expect(
+    resolveMcpScreenshotInput(
+      {
+        path: "/account",
+        browser: "auto",
+        port: 4173,
+        viewport: { width: 1440, height: 900 },
+      },
+      { running: false, url: "http://127.0.0.1:5173/" },
+      getAvailablePort
+    )
+  ).resolves.toMatchObject({ port: 4173 });
+  expect(getAvailablePort).toHaveBeenCalledOnce();
+});
+
+test("retries automatic MCP preview ports after a startup race", async () => {
+  const getAvailablePort = vi
+    .fn()
+    .mockResolvedValueOnce(53124)
+    .mockResolvedValueOnce(53125);
+  const startPreview = vi
+    .fn()
+    .mockRejectedValueOnce(new Error("Preview server exited before ready"))
+    .mockResolvedValueOnce({ url: "http://127.0.0.1:53125/" });
+  const sleep = vi.fn(async () => undefined);
+
+  await expect(
+    startMcpPreview({
+      input: { source: "session" },
+      getAvailablePort,
+      startPreview,
+      sleep,
+    })
+  ).resolves.toEqual({ url: "http://127.0.0.1:53125/" });
+  expect(startPreview).toHaveBeenNthCalledWith(1, {
+    source: "session",
+    port: 53124,
+  });
+  expect(startPreview).toHaveBeenNthCalledWith(2, {
+    source: "session",
+    port: 53125,
+  });
+  expect(sleep).toHaveBeenCalledWith(500);
+});
 
 test("does not mark a preview fresh after a newer mutation", () => {
   const freshness = createPreviewFreshness();
@@ -194,6 +284,7 @@ test("captures stale path screenshots through the restarted preview server", asy
 
 test("passes explicit preview source to preview preparation", async () => {
   const events: string[] = [];
+  let projectVersion = 1;
   const preview = {
     status: vi.fn(() => ({
       url: "",
@@ -210,18 +301,23 @@ test("passes explicit preview source to preview preparation", async () => {
     }),
     resolveUrl: vi.fn(),
   };
-  const prepareSessionDataFile = vi.fn(async () => undefined);
+  const prepareSessionDataFile = vi.fn(async () => {
+    projectVersion = 2;
+  });
   const preparePreview = vi.fn(async (source, prepareSessionDataFile) => {
     events.push(`prepare:${source}`);
     await prepareSessionDataFile?.();
     return { cwd: "/tmp/generated-preview" };
   });
   const progress: string[] = [];
+  const markFresh = vi.fn();
 
   const handlers = createMcpPreviewHandlers({
     preview,
     preparePreview,
     prepareSessionDataFile,
+    getProjectVersion: () => projectVersion,
+    markFresh,
   });
 
   await handlers.startPreview(
@@ -242,6 +338,7 @@ test("passes explicit preview source to preview preparation", async () => {
     }
   );
   expect(prepareSessionDataFile).toHaveBeenCalledOnce();
+  expect(markFresh).toHaveBeenCalledWith(expect.any(Number), 2);
   expect(events).toEqual([
     "prepare:session",
     "start:/tmp/generated-preview:true",
@@ -250,6 +347,46 @@ test("passes explicit preview source to preview preparation", async () => {
     "tool preview.start preparing generated preview project",
     "tool preview.start starting iterative preview server",
   ]);
+});
+
+test("restarts a stale iterative preview for external clients", async () => {
+  const preview = {
+    status: vi.fn(() => ({
+      url: "http://127.0.0.1:5173/",
+      running: true,
+      mode: "iterative" as const,
+    })),
+    canReuse: vi.fn(() => true),
+    startAndWait: vi.fn(async () => ({
+      url: "http://127.0.0.1:5173/",
+      running: true,
+      mode: "iterative" as const,
+    })),
+    resolveUrl: vi.fn(),
+  };
+  const preparePreview = vi.fn(async () => ({
+    cwd: "/tmp/generated-preview",
+    buildCacheKey: "version-2",
+  }));
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => true,
+    preparePreview,
+  });
+
+  await handlers.startPreview({ mode: "iterative" });
+
+  expect(preparePreview).toHaveBeenCalledWith("session", undefined, {
+    preserveGeneratedProject: true,
+    prepareForIncrementalGeneration: true,
+  });
+  expect(preview.startAndWait).toHaveBeenCalledWith(
+    expect.objectContaining({
+      cwd: "/tmp/generated-preview",
+      buildCacheKey: "version-2",
+      restart: true,
+    })
+  );
 });
 
 test("rejects invalid external image domains before preparing preview", async () => {
@@ -425,6 +562,60 @@ test("reuses and closes one browser capture session for session screenshots", as
 
   expect(close).toHaveBeenCalledOnce();
   expect(preview.stop).toHaveBeenCalledOnce();
+});
+
+test("times out a stalled screenshot after preview start and releases its session", async () => {
+  let running = false;
+  const stop = vi.fn(async () => {
+    running = false;
+    return { running: false as const };
+  });
+  const preview = {
+    status: vi.fn(() =>
+      running
+        ? {
+            url: "http://127.0.0.1:5173/",
+            running: true as const,
+            mode: "iterative" as const,
+          }
+        : { running: false as const }
+    ),
+    startAndWait: vi.fn(async () => {
+      running = true;
+      return {
+        url: "http://127.0.0.1:5173/",
+        running: true as const,
+        mode: "iterative" as const,
+      };
+    }),
+    resolveUrl: vi.fn(() => "http://127.0.0.1:5173/"),
+    stop,
+  };
+  const close = vi.fn(async () => undefined);
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    preparePreview: vi.fn(async () => ({ cwd: "/tmp/preview" })),
+    createCaptureSession: vi.fn(() => ({
+      capture: vi.fn(() => new Promise<never>(() => undefined)),
+      capturePage: vi.fn(),
+      close,
+    })) as never,
+  });
+
+  await handlers.startPreview({ source: "session", mode: "iterative" });
+  await expect(
+    handlers.captureScreenshot({
+      path: "/",
+      source: "session",
+      mode: "iterative",
+      viewport: { width: 1440, height: 900 },
+      timeout: 5,
+    })
+  ).rejects.toMatchObject({ code: "SCREENSHOT_TIMEOUT" });
+  expect(close).toHaveBeenCalledOnce();
+
+  await expect(handlers.stopPreview()).resolves.toEqual({ running: false });
+  expect(stop).toHaveBeenCalledOnce();
 });
 
 test("applies internal page credentials only to owned preview captures", async () => {
@@ -664,6 +855,41 @@ test("captures one session page across multiple viewports through resize", async
     }),
   ]);
   expect(preview.startAndWait).not.toHaveBeenCalled();
+});
+
+test("times out a stalled responsive capture and releases its session", async () => {
+  const close = vi.fn(async () => undefined);
+  const preview = {
+    status: vi.fn(() => ({
+      url: "http://127.0.0.1:3000/",
+      running: true,
+      mode: "iterative" as const,
+    })),
+    startAndWait: vi.fn(),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+  };
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => false,
+    createCaptureSession: vi.fn(() => ({
+      capture: vi.fn(),
+      capturePage: vi.fn(() => new Promise<never>(() => undefined)),
+      close,
+    })) as never,
+  });
+
+  await expect(
+    handlers.capturePageScreenshots(
+      [375, 768, 1024, 1440].map((width) => ({
+        path: "/responsive",
+        source: "session" as const,
+        mode: "iterative" as const,
+        viewport: { width, height: 900 },
+        timeout: 5,
+      }))
+    )
+  ).rejects.toMatchObject({ code: "SCREENSHOT_TIMEOUT" });
+  expect(close).toHaveBeenCalledOnce();
 });
 
 test.each([

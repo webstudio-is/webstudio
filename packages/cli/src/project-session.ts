@@ -37,12 +37,17 @@ import {
   type ProjectSessionStorage,
   type ProjectSessionTransport,
 } from "@webstudio-is/project-build/project-session";
-import type { BuilderNamespace } from "@webstudio-is/project-build/contracts";
+import {
+  builderNamespaces,
+  webstudioDataNamespaces,
+  type BuilderNamespace,
+} from "@webstudio-is/project-build/contracts";
 import {
   createBuilderStateFromBuildData,
   createBuilderStateFromSerializedSnapshot,
   createSerializedBuilderBuildDataFromState,
   createSerializedBuilderStateSnapshotFromState,
+  getMissingBuilderStateNamespaces,
   type BuilderBuildDataSnapshot,
   type SerializedBuilderStateSnapshot,
 } from "@webstudio-is/project-build/state";
@@ -591,6 +596,15 @@ export const createLocalProjectBundleFromSessionSnapshot = (
     assetIndex?: PublishedProjectBundle["assetIndex"];
   } = {}
 ): PublishedProjectBundle => {
+  const missing = getMissingBuilderStateNamespaces(
+    snapshot.state,
+    webstudioDataNamespaces
+  );
+  if (missing.length > 0) {
+    throw new Error(
+      `Project session is missing preview data: ${missing.join(", ")}`
+    );
+  }
   const pages = snapshot.state.pages;
   if (pages === undefined) {
     throw new Error("Project session pages namespace is missing.");
@@ -638,4 +652,27 @@ export const writeCliProjectSessionDataFile = async (
 ) => {
   const data = createLocalProjectBundleFromSessionSnapshot(snapshot, options);
   await writeFileAtomic(path, `${JSON.stringify(data, undefined, 2)}\n`);
+};
+
+export const writeCliProjectSessionPreviewDataFile = async ({
+  session,
+  connection,
+  path,
+  assetsDirectory = LOCAL_ASSETS_DIR,
+}: {
+  session: Pick<CliProjectSession, "ensureNamespaces">;
+  connection: ApiConnection;
+  path?: string;
+  assetsDirectory?: string;
+}) => {
+  const snapshot = await session.ensureNamespaces(builderNamespaces);
+  const assetIndex = await loadCliProjectSessionAssetIndex(
+    snapshot,
+    connection,
+    assetsDirectory
+  );
+  await writeCliProjectSessionDataFile(snapshot, path, {
+    origin: connection.origin,
+    assetIndex,
+  });
 };

@@ -218,12 +218,14 @@ const isTextContentCapableInstance = ({
 }) => {
   const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
   const elementContentModel = getElementContentModel(tag);
+  const componentChildren = getComponentContentModel(
+    metas.get(instance.component)
+  ).children;
   return (
     (elementContentModel === undefined ||
       elementContentModel.children.length > 0) &&
-    getComponentContentModel(metas.get(instance.component)).children.includes(
-      "rich-text"
-    )
+    (componentChildren.includes("rich-text") ||
+      componentChildren.includes("text"))
   );
 };
 
@@ -459,6 +461,22 @@ export const isTreeSatisfyingContentModel = ({
     }
   }
   let isSatisfying = isTagSatisfying && isComponentSatisfying;
+  if (
+    instance.children.some((child) => child.type !== "id") &&
+    isTextContentCapableInstance({
+      instance,
+      props,
+      metas,
+      htmlTagsByInstanceId,
+    }) === false
+  ) {
+    const [, name] = parseComponentName(instance.component);
+    onError?.(
+      `"${name}" does not accept text content. Insert an element child instead.`,
+      instanceSelector
+    );
+    isSatisfying = false;
+  }
   const contentModel = getComponentContentModel(metas.get(instance.component));
   allowedCategories = getElementChildren(tag, allowedCategories);
   allowedParentCategories = contentModel.children;

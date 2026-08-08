@@ -396,6 +396,53 @@ test("generate jsx children with expression", () => {
   );
 });
 
+test("preserves siblings before expression children", () => {
+  expect(
+    generateJsxChildren({
+      scope: createScope(),
+      metas: new Map(),
+      children: [
+        { type: "id", value: "strong" },
+        { type: "expression", value: "$ws$dataSource$var" },
+      ],
+      instances: new Map([
+        [
+          "strong",
+          {
+            type: "instance",
+            id: "strong",
+            component: "Text",
+            tag: "strong",
+            children: [{ type: "text", value: "Important: " }],
+          },
+        ],
+      ]),
+      props: new Map(),
+      dataSources: toMap([
+        {
+          id: "var",
+          scopeInstanceId: "body",
+          name: "message",
+          type: "variable",
+          value: { type: "string", value: "Details" },
+        },
+      ]),
+      usedDataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      <Text
+      data-ws-tag="strong">
+      {"Important: "}
+      </Text>
+      {renderText(message)}
+    `)
+    )
+  );
+});
+
 test("generate jsx children with nested instances", () => {
   expect(
     generateJsxChildren({

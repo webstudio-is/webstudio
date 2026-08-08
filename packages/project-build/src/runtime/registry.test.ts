@@ -1741,6 +1741,7 @@ describe("builder runtime read families", () => {
         name: "Blog posts",
         scopeInstanceId: "heading",
         query: {
+          result: "one",
           where: {
             all: [
               {
@@ -1815,6 +1816,7 @@ describe("builder runtime read families", () => {
         scopeInstanceId: "heading",
         mode: "query",
         query: {
+          result: "one",
           where: {
             all: [
               {
@@ -1825,7 +1827,7 @@ describe("builder runtime read families", () => {
             ],
           },
           sort: [],
-          limit: "1",
+          limit: "20",
           offset: "0",
           output: {
             mode: "fields",
@@ -1851,6 +1853,7 @@ describe("builder runtime read families", () => {
         resourceId: "asset-resource",
         values: {
           query: {
+            result: "many",
             limit: "2",
           },
         },
@@ -1868,6 +1871,7 @@ describe("builder runtime read families", () => {
     expect(updatedPayload).toContain("properties");
     expect(updatedPayload).toContain("system.params.slug");
     expect(updatedPayload).toContain("markdown-body-ref");
+    expect(updatedPayload).toContain('result: \\"many\\"');
     expect(updatedPayload).toContain("limit: 2");
 
     const reset = executeBuilderRuntimeOperation({

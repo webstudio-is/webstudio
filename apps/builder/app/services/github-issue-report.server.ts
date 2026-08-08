@@ -23,6 +23,21 @@ const getReportMarker = (deduplicationKey: string) =>
 const formatItems = (items: readonly string[]) =>
   items.map((item, index) => `${index + 1}. ${item}`).join("\n");
 
+const formatRuntime = (runtime: IssueReportInput["runtime"]) =>
+  [
+    "## Technical runtime",
+    "",
+    `- CLI: ${runtime?.cliVersion ?? "unknown"}`,
+    `- Node.js: ${runtime?.nodeVersion ?? "unknown"}`,
+    ...(runtime === undefined
+      ? []
+      : [
+          `- Operating system: ${runtime.os} ${runtime.osVersion} (${runtime.architecture})`,
+          `- Execution mode: ${runtime.executionMode}`,
+          `- API contract: ${runtime.apiContractVersion}`,
+        ]),
+  ].join("\n");
+
 export const formatIssueReport = ({
   agent,
   category,
@@ -72,19 +87,8 @@ ${report.technicalContext}
 - Reasoning effort: ${agent.reasoningEffort}
 - Trigger: ${trigger}
 - Category: ${category}
-${
-  runtime === undefined
-    ? ""
-    : `
-## Technical runtime
 
-- CLI: ${runtime.cliVersion}
-- Node.js: ${runtime.nodeVersion}
-- Operating system: ${runtime.os} ${runtime.osVersion} (${runtime.architecture})
-- Execution mode: ${runtime.executionMode}
-- API contract: ${runtime.apiContractVersion}
-`
-}
+${formatRuntime(runtime)}
 
 ## Acceptance criteria
 

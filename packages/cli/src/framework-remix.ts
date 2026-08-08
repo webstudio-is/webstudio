@@ -8,7 +8,7 @@ import {
 import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
 import {
   cleanupFrameworkTemplates,
-  routeTemplatesDirectory,
+  getFrameworkTemplatesDirectory,
   type Framework,
   type FrameworkOptions,
 } from "./framework";
@@ -16,20 +16,21 @@ import {
 export const createFramework = async (
   options: FrameworkOptions = {}
 ): Promise<Framework> => {
+  const templatesDirectory = getFrameworkTemplatesDirectory(options);
   const htmlTemplate = await readFile(
-    join(routeTemplatesDirectory, "html.tsx"),
+    join(templatesDirectory, "html.tsx"),
     "utf8"
   );
   const xmlTemplate = await readFile(
-    join(routeTemplatesDirectory, "xml.tsx"),
+    join(templatesDirectory, "xml.tsx"),
     "utf8"
   );
   const textTemplate = await readFile(
-    join(routeTemplatesDirectory, "text.tsx"),
+    join(templatesDirectory, "text.tsx"),
     "utf8"
   );
   const defaultSitemapTemplate = await readFile(
-    join(routeTemplatesDirectory, "default-sitemap.tsx"),
+    join(templatesDirectory, "default-sitemap.tsx"),
     "utf8"
   );
   // cleanup route templates after reading to not bloat generated code

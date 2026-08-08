@@ -24,6 +24,7 @@ import {
 import { getZodValidationIssues } from "./errors";
 import { getComponentTemplates } from "./component-templates";
 import { createEmptyWebstudioFragment } from "./component-template";
+import { insertCollectionInput } from "./collection";
 import { isLikelyWebstudioJsxFragment, parseWebstudioJsxFragment } from "./jsx";
 import { inspectWebstudioJsxFragmentSyntax } from "./jsx/syntax";
 
@@ -1413,6 +1414,77 @@ test("rejects invalid token syntax in webstudio jsx fragments", async () => {
     )
   ).rejects.toThrow(
     /^token\(\) styles must include at least one valid CSS declaration/
+  );
+});
+
+test("rejects unsupported expressions in shared fragment inputs", async () => {
+  const fragment = await parseWebstudioJsxFragment(
+    `<$.Text>{expression\`items.map(item => item.title).join(", ")\`}</$.Text>`
+  );
+  const result = insertFragmentInput.safeParse({
+    parentInstanceId: "parent",
+    fragment,
+  });
+  if (result.success) {
+    throw new Error("Expected fragment expression validation to fail");
+  }
+  const issues = getZodValidationIssues(result.error);
+  expect(issues).toHaveLength(2);
+  expect(issues).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        code: "invalid_expression",
+        path: ["fragment", "instances", "0", "children", "0", "value"],
+        detail: "Functions are not supported",
+      }),
+      expect.objectContaining({
+        code: "invalid_expression",
+        path: ["fragment", "instances", "0", "children", "0", "value"],
+        detail: '"map" function is not supported',
+      }),
+    ])
+  );
+  expect(
+    insertCollectionInput.safeParse({
+      parentInstanceId: "parent",
+      data: { type: "json", value: [] },
+      itemFragment: fragment,
+    }).success
+  ).toBe(false);
+});
+
+test("uses component content models to require element children", async () => {
+  const parent = createParent();
+  const invalidFragment = await parseWebstudioJsxFragment(
+    `<radix.Collapsible><radix.CollapsibleTrigger>Open</radix.CollapsibleTrigger></radix.Collapsible>`
+  );
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      { parentInstanceId: parent.id, fragment: invalidFragment },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).toThrow('"CollapsibleTrigger" does not accept text content');
+
+  const fragment = await parseWebstudioJsxFragment(
+    `<radix.Collapsible><radix.CollapsibleTrigger><ws.element ws:tag="span">Open</ws.element></radix.CollapsibleTrigger></radix.Collapsible>`
+  );
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).not.toThrow();
+});
+
+test("reports unsupported existing resource references in jsx", async () => {
+  await expect(
+    parseWebstudioJsxFragment(
+      `<$.Form action={new ResourceValue("resource-id")} />`
+    )
+  ).rejects.toThrow(
+    "ResourceValue requires a resource definition. Existing resource ids are not supported in JSX"
   );
 });
 

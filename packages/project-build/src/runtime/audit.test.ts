@@ -515,6 +515,88 @@ describe("project audit and analysis", () => {
     });
   });
 
+  test("recognizes dynamic image alt text and htmlFor label aliases", () => {
+    const instances = new Map<string, Instance>(state.instances);
+    instances.set("image-link", {
+      type: "instance",
+      id: "image-link",
+      component: "Link",
+      tag: "a",
+      children: [{ type: "id", value: "dynamic-image" }],
+    });
+    instances.set("dynamic-image", {
+      type: "instance",
+      id: "dynamic-image",
+      component: "Image",
+      tag: "img",
+      children: [],
+    });
+    instances.set("label", {
+      type: "instance",
+      id: "label",
+      component: "Label",
+      tag: "label",
+      children: [{ type: "text", value: "Email" }],
+    });
+    instances.set("input", {
+      type: "instance",
+      id: "input",
+      component: "Input",
+      tag: "input",
+      children: [],
+    });
+    instances.set("body", {
+      ...instances.get("body")!,
+      children: [
+        ...instances.get("body")!.children,
+        { type: "id", value: "image-link" },
+        { type: "id", value: "label" },
+        { type: "id", value: "input" },
+      ],
+    });
+    const props = new Map<string, Prop>(state.props);
+    props.set("dynamic-alt", {
+      id: "dynamic-alt",
+      instanceId: "dynamic-image",
+      name: "alt",
+      type: "expression",
+      value: "product.alt",
+    });
+    props.set("label-for", {
+      id: "label-for",
+      instanceId: "label",
+      name: "htmlFor",
+      type: "string",
+      value: "email",
+    });
+    props.set("input-id", {
+      id: "input-id",
+      instanceId: "input",
+      name: "id",
+      type: "string",
+      value: "email",
+    });
+
+    const result = audit(
+      { ...state, instances, props },
+      { scopes: ["accessibility"], pageId: "home" },
+      { projectVersion: 1 }
+    );
+
+    expect(result.findings).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: "missing-accessible-name",
+          location: expect.objectContaining({ instanceId: "image-link" }),
+        }),
+        expect.objectContaining({
+          ruleId: "missing-form-label",
+          location: expect.objectContaining({ instanceId: "input" }),
+        }),
+      ])
+    );
+  });
+
   test("reports resource, parameter, and text expression audit values as skipped", () => {
     const instances = new Map<string, Instance>(state.instances);
     instances.set("resource-image", {
