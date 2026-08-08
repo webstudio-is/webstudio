@@ -62986,6 +62986,9 @@ export const runtimeOperationContractData = [
               },
               state: {
                 type: "string",
+                minLength: 1,
+                description:
+                  "Exact state selector to delete. Use the selector reported by the style audit; an invalid selector is accepted only when it identifies an existing declaration with the same token, breakpoint, property, and state.",
               },
             },
             required: ["property"],

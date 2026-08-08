@@ -1,10 +1,12 @@
 import { describe, expect, test } from "vitest";
 import {
+  getStyleDeclKey,
   type Instance,
   type Page,
   type Prop,
   type StyleDecl,
 } from "@webstudio-is/sdk";
+import type { BuilderRuntimeMutation } from "./mutation";
 import { executeBuilderRuntimeOperation } from "./registry";
 import { setImageDescriptions } from "./assets";
 import { analyzeProject, searchProject } from "./search";
@@ -2756,6 +2758,88 @@ describe("project audit and analysis", () => {
           }),
         }),
       ])
+    );
+  });
+
+  test("deletes an invalid design token selector reported by the style audit", () => {
+    const invalidState = "::-webkit-search-cancel-button";
+    const declaration: StyleDecl = {
+      styleSourceId: "token",
+      breakpointId: "base",
+      property: "color",
+      state: invalidState,
+      value: { type: "keyword", value: "red" },
+    };
+    const styles = new Map<string, StyleDecl>(state.styles);
+    styles.set(getStyleDeclKey(declaration), declaration);
+    const project = {
+      ...state,
+      styles,
+    } satisfies BuilderState;
+    const before = audit(
+      project,
+      { scopes: ["styles"], verbose: true },
+      { projectVersion: 1 }
+    );
+    const finding = before.findings.find(
+      ({ ruleId }) => ruleId === "invalid-style-state-selector"
+    );
+    expect(finding?.location).toMatchObject({
+      styleSourceId: "token",
+      breakpointId: "base",
+      stateSelector: invalidState,
+      styleProperty: "color",
+    });
+
+    const mutation = executeBuilderRuntimeOperation({
+      id: "designTokens.deleteStyles",
+      state: project,
+      input: {
+        designTokenId: "token",
+        deletions: [
+          {
+            breakpoint: "base",
+            property: "color",
+            state: invalidState,
+          },
+        ],
+      },
+      context,
+    }) as BuilderRuntimeMutation;
+    const { state: updatedProject } = applyBuilderPatchTransactions(project, [
+      { id: "delete-invalid-selector", payload: mutation.payload },
+    ]);
+
+    expect(
+      audit(
+        updatedProject,
+        { scopes: ["styles"], verbose: true },
+        { projectVersion: 2 }
+      ).findings
+    ).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: "invalid-style-state-selector" }),
+      ])
+    );
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "designTokens.deleteStyles",
+        state: updatedProject,
+        input: {
+          designTokenId: "token",
+          deletions: [
+            {
+              breakpoint: "base",
+              property: "color",
+              state: ":not-a-real-selector",
+            },
+          ],
+        },
+        context,
+      })
+    ).toThrow(
+      "An invalid state selector can only delete an existing declaration"
     );
   });
 

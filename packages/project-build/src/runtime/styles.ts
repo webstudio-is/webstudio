@@ -1250,9 +1250,20 @@ export const designTokenStyleUpdatesInput = z.object({
   updates: jsonArrayInput(designTokenStyleInput),
 });
 
+const existingStyleStateDeletionInput = z
+  .string()
+  .min(1)
+  .describe(
+    "Exact state selector to delete. Use the selector reported by the style audit; an invalid selector is accepted only when it identifies an existing declaration with the same token, breakpoint, property, and state."
+  );
+
+export const designTokenStyleDeletionInput = styleDeleteInput
+  .omit({ instanceId: true })
+  .extend({ state: existingStyleStateDeletionInput.optional() });
+
 export const designTokenStyleDeletionsInput = z.object({
   designTokenId: z.string(),
-  deletions: jsonArrayInput(styleDeleteInput.omit({ instanceId: true })),
+  deletions: jsonArrayInput(designTokenStyleDeletionInput),
 });
 
 export const designTokenAttachInput = z.object({
@@ -2771,7 +2782,7 @@ export const createDesignTokenStyleDeletePayload = ({
   styles,
 }: {
   designTokenId: StyleSource["id"];
-  deletions: Array<Omit<z.infer<typeof styleDeleteInput>, "instanceId">>;
+  deletions: Array<z.infer<typeof designTokenStyleDeletionInput>>;
   styles: Iterable<StyleDecl>;
 }) => {
   const existingStyleKeys = new Set(
@@ -3823,11 +3834,34 @@ export const deleteDesignTokenStyles = (
 ) => {
   const styleState = getRequiredStyleState(state);
   getDesignTokenOrThrow(styleState.styleSources.values(), input.designTokenId);
+  const deletions = input.deletions.map((deletion) =>
+    withValidatedBreakpoint(deletion, state.breakpoints)
+  );
+  const existingStyleKeys = new Set(
+    Array.from(styleState.styles.values(), getStyleDeclKey)
+  );
+  for (const deletion of deletions) {
+    if (
+      deletion.state !== undefined &&
+      validateSelector(deletion.state).success === false &&
+      existingStyleKeys.has(
+        getStyleDeclKeyFromInput({
+          styleSourceId: input.designTokenId,
+          breakpoint: deletion.breakpoint,
+          property: deletion.property,
+          state: deletion.state,
+        })
+      ) === false
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "An invalid state selector can only delete an existing declaration. Use the exact state selector, breakpoint, and property reported by the style audit."
+      );
+    }
+  }
   const { payload, styleKeys } = createDesignTokenStyleDeletePayload({
     designTokenId: input.designTokenId,
-    deletions: input.deletions.map((deletion) =>
-      withValidatedBreakpoint(deletion, state.breakpoints)
-    ),
+    deletions,
     styles: styleState.styles.values(),
   });
   return createRuntimeMutation({
