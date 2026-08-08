@@ -2776,6 +2776,20 @@ export const createDesignTokenStyleUpdatePayload = ({
   };
 };
 
+const getDesignTokenStyleDeletionKey = ({
+  designTokenId,
+  deletion,
+}: {
+  designTokenId: StyleSource["id"];
+  deletion: z.infer<typeof designTokenStyleDeletionInput>;
+}) =>
+  getStyleDeclKeyFromInput({
+    styleSourceId: designTokenId,
+    breakpoint: deletion.breakpoint,
+    state: deletion.state,
+    property: deletion.property,
+  });
+
 export const createDesignTokenStyleDeletePayload = ({
   designTokenId,
   deletions,
@@ -2789,12 +2803,7 @@ export const createDesignTokenStyleDeletePayload = ({
     Array.from(styles, (styleDecl) => getStyleDeclKey(styleDecl))
   );
   const styleKeys = deletions.flatMap((deletion) => {
-    const key = getStyleDeclKeyFromInput({
-      styleSourceId: designTokenId,
-      breakpoint: deletion.breakpoint,
-      state: deletion.state,
-      property: deletion.property,
-    });
+    const key = getDesignTokenStyleDeletionKey({ designTokenId, deletion });
     return existingStyleKeys.has(key) ? [key] : [];
   });
 
@@ -3837,19 +3846,20 @@ export const deleteDesignTokenStyles = (
   const deletions = input.deletions.map((deletion) =>
     withValidatedBreakpoint(deletion, state.breakpoints)
   );
-  const existingStyleKeys = new Set(
-    Array.from(styleState.styles.values(), getStyleDeclKey)
-  );
+  const { payload, styleKeys } = createDesignTokenStyleDeletePayload({
+    designTokenId: input.designTokenId,
+    deletions,
+    styles: styleState.styles.values(),
+  });
+  const matchedStyleKeys = new Set(styleKeys);
   for (const deletion of deletions) {
     if (
       deletion.state !== undefined &&
       validateSelector(deletion.state).success === false &&
-      existingStyleKeys.has(
-        getStyleDeclKeyFromInput({
-          styleSourceId: input.designTokenId,
-          breakpoint: deletion.breakpoint,
-          property: deletion.property,
-          state: deletion.state,
+      matchedStyleKeys.has(
+        getDesignTokenStyleDeletionKey({
+          designTokenId: input.designTokenId,
+          deletion,
         })
       ) === false
     ) {
@@ -3859,11 +3869,6 @@ export const deleteDesignTokenStyles = (
       );
     }
   }
-  const { payload, styleKeys } = createDesignTokenStyleDeletePayload({
-    designTokenId: input.designTokenId,
-    deletions,
-    styles: styleState.styles.values(),
-  });
   return createRuntimeMutation({
     payload,
     result: { designTokenId: input.designTokenId, styleKeys },
