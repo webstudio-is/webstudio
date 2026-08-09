@@ -14,79 +14,12 @@ import {
   create,
   update,
   remove,
-  __testing__,
 } from "./authorization-token";
 import { authorizationTokenRouter } from "../trpc/authorization-tokens-router";
 
-const { applyTokenPermissions } = __testing__;
-
 // ---------------------------------------------------------------------------
-// applyTokenPermissions — pure logic tests
-// Verifies the business rules that override stored DB values by relation.
+// getTokenProjectPermits — pure logic tests
 // ---------------------------------------------------------------------------
-
-const baseToken = {
-  token: "tok-1",
-  projectId: "proj-1",
-  name: "test",
-  createdAt: "2024-01-01T00:00:00.000Z",
-  canClone: false,
-  canCopy: false,
-  canPublish: true,
-  canUseApi: false,
-};
-
-describe("applyTokenPermissions", () => {
-  test("viewers: canPublish forced to false, canClone/canCopy unchanged", () => {
-    const result = applyTokenPermissions({ ...baseToken, relation: "viewers" });
-    expect(result.canPublish).toBe(false);
-    expect(result.canClone).toBe(false);
-    expect(result.canCopy).toBe(false);
-  });
-
-  test("editors: canClone forced to false, canCopy forced to true, canPublish unchanged", () => {
-    const result = applyTokenPermissions({
-      ...baseToken,
-      relation: "editors",
-      canClone: true,
-      canPublish: false,
-    });
-    expect(result.canClone).toBe(false);
-    expect(result.canCopy).toBe(true);
-    expect(result.canPublish).toBe(false);
-  });
-
-  test("builders: canClone/canCopy true, canPublish forced to false", () => {
-    const result = applyTokenPermissions({
-      ...baseToken,
-      relation: "builders",
-      canPublish: true,
-    });
-    expect(result.canClone).toBe(true);
-    expect(result.canCopy).toBe(true);
-    expect(result.canPublish).toBe(false);
-  });
-
-  test("administrators: canClone/canCopy true, canPublish forced to true", () => {
-    const result = applyTokenPermissions({
-      ...baseToken,
-      relation: "administrators",
-      canPublish: false,
-    });
-    expect(result.canClone).toBe(true);
-    expect(result.canCopy).toBe(true);
-    expect(result.canPublish).toBe(true);
-  });
-
-  test("preserves explicit API capability", () => {
-    const result = applyTokenPermissions({
-      ...baseToken,
-      relation: "viewers",
-      canUseApi: true,
-    });
-    expect(result.canUseApi).toBe(true);
-  });
-});
 
 describe("getTokenProjectPermits", () => {
   test("maps token relation to project permits", () => {
@@ -137,20 +70,20 @@ const tokenRow = {
   projectId: "proj-1",
   name: "My Token",
   relation: "builders",
-  canClone: false,
-  canCopy: false,
-  canPublish: true,
+  canClone: true,
+  canCopy: true,
+  canPublish: false,
   canUseApi: false,
   createdAt: "2024-01-01T00:00:00.000Z",
 };
 
 describe("getTokenInfo (msw)", () => {
   // getTokenInfo does not call hasProjectPermit — no Project handler needed.
-  test("returns token with permissions applied for builders relation", async () => {
+  test("returns the builders token with DB-normalized permissions", async () => {
     server.use(db.get("AuthorizationToken", () => json(tokenRow)));
 
     const result = await getTokenInfo("tok-abc", createContext());
-    // builders rule: canClone=true, canCopy=true, canPublish=false
+    // builders are normalized in SQL: canClone=true, canCopy=true, canPublish=false
     expect(result.canClone).toBe(true);
     expect(result.canCopy).toBe(true);
     expect(result.canPublish).toBe(false);
@@ -166,21 +99,21 @@ describe("getTokenInfo (msw)", () => {
 });
 
 describe("findMany (msw)", () => {
-  test("returns tokens with permissions applied, ordered by createdAt", async () => {
+  test("returns tokens with DB-normalized permissions, ordered by createdAt", async () => {
     server.use(
       projectOwnershipHandler,
       db.get("AuthorizationToken", ({ request }) => {
         const url = new URL(request.url);
         expect(url.searchParams.get("projectId")).toBe("eq.proj-1");
         return json([
-          { ...tokenRow, relation: "administrators", canPublish: false },
+          { ...tokenRow, relation: "administrators", canPublish: true },
         ]);
       })
     );
 
     const result = await findMany({ projectId: "proj-1" }, createContext());
     expect(result).toHaveLength(1);
-    // administrators rule: canPublish=true
+    // administrators are normalized in SQL: canPublish=true
     expect(result[0].canPublish).toBe(true);
   });
 });

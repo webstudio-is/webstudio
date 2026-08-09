@@ -11,56 +11,6 @@ import {
 type AuthorizationToken =
   Database["public"]["Tables"]["AuthorizationToken"]["Row"];
 
-const applyTokenPermissions = (
-  token: AuthorizationToken
-): AuthorizationToken => {
-  let result = token;
-
-  // @todo: fix this on SQL level
-  if (token.relation === "editors") {
-    result = {
-      ...result,
-      canClone: false,
-      canCopy: true,
-    };
-  }
-
-  // @todo: fix this on SQL level
-  if (token.relation === "builders" || token.relation === "administrators") {
-    result = {
-      ...result,
-      canClone: true,
-      canCopy: true,
-    };
-  }
-
-  // @todo: fix this on SQL level
-  if (token.relation === "viewers") {
-    result = {
-      ...result,
-      canPublish: false,
-    };
-  }
-
-  // @todo: fix this on SQL level
-  if (token.relation === "builders") {
-    result = {
-      ...result,
-      canPublish: false,
-    };
-  }
-
-  // @todo: fix this on SQL level
-  if (token.relation === "administrators") {
-    result = {
-      ...result,
-      canPublish: true,
-    };
-  }
-
-  return result;
-};
-
 export const findMany = async (
   props: { projectId: string },
   context: AppContext
@@ -88,7 +38,7 @@ export const findMany = async (
     throw dbTokens.error;
   }
 
-  return dbTokens.data.map(applyTokenPermissions);
+  return dbTokens.data;
 };
 
 export const tokenDefaultPermissions = {
@@ -149,7 +99,7 @@ export const getTokenInfo = async (
     throw new AuthorizationError("Authorization token not found");
   }
 
-  return applyTokenPermissions(dbToken.data);
+  return dbToken.data;
 };
 
 export const getTokenPermissions = async (
@@ -293,5 +243,3 @@ export const remove = async (
 
   return dbToken.data;
 };
-
-export const __testing__ = { applyTokenPermissions };
