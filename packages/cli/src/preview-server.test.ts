@@ -700,6 +700,33 @@ test("preview controller stops its process group before propagating termination"
   expect(controller.status().running).toBe(false);
 });
 
+test("lets an outer lifecycle owner manage process signals", async () => {
+  const process = createPreviewProcess();
+  const parentProcess = {
+    pid: 456,
+    once: vi.fn(),
+    off: vi.fn(),
+    kill: vi.fn(() => true),
+  };
+  const controller = createPreviewController(
+    {
+      host: "127.0.0.1",
+      port: 5173,
+      cwd: "/tmp/preview",
+      mode: "iterative",
+    },
+    createDependencies({
+      spawn: vi.fn(() => process) as never,
+      parentProcess,
+    }),
+    { manageProcessSignals: false }
+  );
+
+  await controller.start();
+
+  expect(parentProcess.once).not.toHaveBeenCalled();
+});
+
 test("preview controller reuses custom running options when start has no options", async () => {
   const process = createPreviewProcess();
   const buildProcess = createPreviewProcess();

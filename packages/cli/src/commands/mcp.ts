@@ -61,6 +61,7 @@ import {
 import { readCliDoc } from "../docs";
 import { printJson } from "../json-output";
 import { isPlainRecord } from "../type-utils";
+import { withTimeout } from "../async-utils";
 import { LOCAL_DATA_FILE } from "../config";
 import {
   assertMcpBatchMutationApproved,
@@ -694,8 +695,14 @@ type ActiveMcpRunCall = {
   tool: string;
 };
 
+type McpRunTermination =
+  | { type: "beforeExit"; exitCode: number }
+  | { type: "signal"; signal: NodeJS.Signals };
+
+const mcpRunTerminationCleanupTimeout = 5000;
+
 const reportMcpRunTermination = ({
-  exitCode,
+  termination,
   activeCall,
   totalCalls,
   results,
@@ -706,7 +713,7 @@ const reportMcpRunTermination = ({
     process.exitCode = code;
   },
 }: {
-  exitCode: number;
+  termination: McpRunTermination;
   activeCall: ActiveMcpRunCall;
   totalCalls: number;
   results: unknown[];
@@ -736,10 +743,69 @@ const reportMcpRunTermination = ({
     data: { ...payload.data, unfinishedCall: activeCall },
     meta: {
       ...payload.meta,
-      termination: { type: "beforeExit", exitCode },
+      termination,
     },
   });
-  setExitCode(1);
+  if (termination.type === "beforeExit") {
+    setExitCode(1);
+  }
+};
+
+const createMcpRunTerminationController = ({
+  getActiveCall,
+  totalCalls,
+  results,
+  startedAt,
+  disposeHost,
+  reportTermination = reportMcpRunTermination,
+  cleanupTimeout = mcpRunTerminationCleanupTimeout,
+  exitWithSignal = (signal) => {
+    process.kill(process.pid, signal);
+  },
+}: {
+  getActiveCall: () => ActiveMcpRunCall | undefined;
+  totalCalls: number;
+  results: unknown[];
+  startedAt: number;
+  disposeHost: () => Promise<void>;
+  reportTermination?: typeof reportMcpRunTermination;
+  cleanupTimeout?: number;
+  exitWithSignal?: (signal: NodeJS.Signals) => void;
+}) => {
+  let isTerminating = false;
+  const beginTermination = (termination: McpRunTermination) => {
+    if (isTerminating) {
+      return;
+    }
+    const activeCall = getActiveCall();
+    if (activeCall === undefined && termination.type === "beforeExit") {
+      return;
+    }
+    isTerminating = true;
+    if (activeCall !== undefined) {
+      reportTermination({
+        termination,
+        activeCall,
+        totalCalls,
+        results,
+        elapsedMs: Date.now() - startedAt,
+      });
+    }
+    const cleanup = withTimeout(
+      Promise.resolve().then(disposeHost),
+      cleanupTimeout,
+      () => new Error("MCP run cleanup timed out.")
+    ).catch(() => undefined);
+    if (termination.type === "signal") {
+      void cleanup.finally(() => exitWithSignal(termination.signal));
+    }
+  };
+  return {
+    beforeExit: (exitCode: number) =>
+      beginTermination({ type: "beforeExit", exitCode }),
+    signal: (signal: NodeJS.Signals) =>
+      beginTermination({ type: "signal", signal }),
+  };
 };
 
 const installMcpRunTerminationHandlers = ({
@@ -747,29 +813,44 @@ const installMcpRunTerminationHandlers = ({
   totalCalls,
   results,
   startedAt,
+  disposeHost,
 }: {
   getActiveCall: () => ActiveMcpRunCall | undefined;
   totalCalls: number;
   results: unknown[];
   startedAt: number;
+  disposeHost: () => Promise<void>;
 }) => {
+  const controller = createMcpRunTerminationController({
+    getActiveCall,
+    totalCalls,
+    results,
+    startedAt,
+    disposeHost,
+  });
+  const terminationSignals = ["SIGHUP", "SIGINT", "SIGTERM"] as const;
+  const signalHandlers = new Map<NodeJS.Signals, () => void>();
   const beforeExit = (exitCode: number) => {
-    const activeCall = getActiveCall();
-    if (activeCall === undefined) {
-      return;
+    dispose();
+    controller.beforeExit(exitCode);
+  };
+  const dispose = () => {
+    process.off("beforeExit", beforeExit);
+    for (const [signal, handler] of signalHandlers) {
+      process.off(signal, handler);
     }
-    reportMcpRunTermination({
-      exitCode,
-      activeCall,
-      totalCalls,
-      results,
-      elapsedMs: Date.now() - startedAt,
-    });
+    signalHandlers.clear();
   };
   process.once("beforeExit", beforeExit);
-  return () => {
-    process.off("beforeExit", beforeExit);
-  };
+  for (const signal of terminationSignals) {
+    const handler = () => {
+      dispose();
+      controller.signal(signal);
+    };
+    signalHandlers.set(signal, handler);
+    process.once(signal, handler);
+  }
+  return dispose;
 };
 
 const reportMcpRunPreflightFailure = ({
@@ -835,9 +916,11 @@ const assertSingleOpCallToolSupported = (tool: string) => {
 const createCliMcpHost = async ({
   projectRoot = cwd(),
   projectId,
+  managePreviewProcessSignals = true,
 }: {
   projectRoot?: string;
   projectId?: string;
+  managePreviewProcessSignals?: boolean;
 } = {}) => {
   const connection = await resolveApiConnection(
     undefined,
@@ -869,7 +952,11 @@ const createCliMcpHost = async ({
     getCliProjectRestorePointsFile(projectRoot, projectId)
   );
   await prepareMcpProjectSession(session);
-  const preview = createPreviewController({ host: "127.0.0.1", port: 5173 });
+  const preview = createPreviewController(
+    { host: "127.0.0.1", port: 5173 },
+    undefined,
+    { manageProcessSignals: managePreviewProcessSignals }
+  );
   const previewFreshness = createPreviewFreshness();
   const previewHandlers = createMcpPreviewHandlers({
     preview,
@@ -1424,6 +1511,7 @@ export const mcpRun = async (options: McpRunOptions) => {
   try {
     const mcpHost = await createCliMcpHost({
       projectId: options.project,
+      managePreviewProcessSignals: false,
     });
     const { host, apiContract } = mcpHost;
     disposeHost = mcpHost.dispose;
@@ -1447,6 +1535,7 @@ export const mcpRun = async (options: McpRunOptions) => {
     totalCalls: calls.length,
     results,
     startedAt,
+    disposeHost: () => disposeHost(),
   });
   try {
     for (const [index, call] of calls.entries()) {
@@ -1665,6 +1754,7 @@ export const __testing__ = {
   }),
   createMcpRunErrorPayload,
   reportMcpRunTermination,
+  createMcpRunTerminationController,
   createMcpRunCheckpointStopPayload,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
