@@ -21,6 +21,7 @@ const {
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
   reportMcpRunTermination,
+  createMcpRunTerminationController,
   parseMcpRunCalls,
   parseMcpRunInput,
   parseMcpSingleOpCallInput,
@@ -725,7 +726,7 @@ test("preserves completed calls when a run terminates during an asset query prev
   const writeResult = vi.fn();
   const setExitCode = vi.fn();
   reportMcpRunTermination({
-    exitCode: 0,
+    termination: { type: "beforeExit", exitCode: 0 },
     activeCall: { number: 4, tool: "preview-asset-query" },
     totalCalls: 4,
     results: completedResults,
@@ -754,6 +755,93 @@ test("preserves completed calls when a run terminates during an asset query prev
     },
   });
   expect(setExitCode).toHaveBeenCalledWith(1);
+});
+
+test("identifies a signal that terminates preview.start", () => {
+  const writeResult = vi.fn();
+  const setExitCode = vi.fn();
+  const options = {
+    termination: { type: "signal" as const, signal: "SIGTERM" as const },
+    activeCall: { number: 1, tool: "preview.start" },
+    totalCalls: 4,
+    results: [],
+    elapsedMs: 123,
+    writeStatus: vi.fn(),
+    writeResult,
+    setExitCode,
+  };
+
+  reportMcpRunTermination(options);
+
+  expect(writeResult).toHaveBeenCalledWith({
+    ok: false,
+    error: {
+      code: "MCP_RUN_TERMINATED",
+      message:
+        "MCP run terminated before call 1/4 preview.start returned a result.",
+    },
+    data: {
+      completedCalls: 0,
+      unfinishedCall: { number: 1, tool: "preview.start" },
+      totalCalls: 4,
+      results: [],
+    },
+    meta: {
+      elapsedMs: 123,
+      termination: { type: "signal", signal: "SIGTERM" },
+    },
+  });
+  expect(setExitCode).not.toHaveBeenCalled();
+});
+
+test("disposes the preview owner before completing signal termination", async () => {
+  const disposeHost = vi.fn(async () => undefined);
+  const reportTermination = vi.fn();
+  const exitWithSignal = vi.fn();
+  const controller = createMcpRunTerminationController({
+    getActiveCall: () => ({ number: 1, tool: "preview.start" }),
+    totalCalls: 4,
+    results: [],
+    startedAt: Date.now(),
+    disposeHost,
+    reportTermination,
+    exitWithSignal,
+  });
+
+  controller.signal("SIGTERM");
+  await vi.waitFor(() => expect(exitWithSignal).toHaveBeenCalledOnce());
+  controller.signal("SIGINT");
+
+  expect(reportTermination).toHaveBeenCalledWith(
+    expect.objectContaining({
+      termination: { type: "signal", signal: "SIGTERM" },
+      activeCall: { number: 1, tool: "preview.start" },
+      totalCalls: 4,
+      results: [],
+    })
+  );
+  expect(disposeHost).toHaveBeenCalledOnce();
+  expect(exitWithSignal).toHaveBeenCalledWith("SIGTERM");
+});
+
+test("completes signal termination when preview cleanup stalls", async () => {
+  const exitWithSignal = vi.fn();
+  const controller = createMcpRunTerminationController({
+    getActiveCall: () => ({ number: 1, tool: "preview.start" }),
+    totalCalls: 4,
+    results: [],
+    startedAt: Date.now(),
+    disposeHost: () => new Promise<never>(() => undefined),
+    reportTermination: vi.fn(),
+    cleanupTimeout: 1,
+    exitWithSignal,
+  });
+
+  controller.signal("SIGTERM");
+
+  await vi.waitFor(() =>
+    expect(exitWithSignal).toHaveBeenCalledWith("SIGTERM")
+  );
 });
 
 test("preserves already structured MCP run errors", () => {

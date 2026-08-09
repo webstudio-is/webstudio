@@ -538,7 +538,8 @@ const formatPreviewServerStartupError = ({
 
 export const createPreviewController = (
   defaults: PreviewServerOptions,
-  dependencies = defaultPreviewServerDependencies
+  dependencies = defaultPreviewServerDependencies,
+  { manageProcessSignals = true }: { manageProcessSignals?: boolean } = {}
 ) => {
   let server: PreviewServerResult | undefined;
   let currentOptions = defaults;
@@ -554,7 +555,7 @@ export const createPreviewController = (
     terminationHandlers.clear();
   };
   const installTerminationHandlers = () => {
-    if (terminationHandlers.size > 0) {
+    if (manageProcessSignals === false || terminationHandlers.size > 0) {
       return;
     }
     for (const signal of terminationSignals) {
