@@ -8,9 +8,26 @@ export type ImageAttributeProps = {
   width?: number | string;
 };
 
-export type ResolvedImageProps<Props extends ImageAttributeProps> = Omit<
+type ImageOptions = {
+  decoding?: "async" | "auto" | "sync";
+  loader: ImageLoader;
+  loading?: "eager" | "lazy";
+  /** Optimize the image for enhanced performance. */
+  optimize?: boolean;
+  quality?: number;
+};
+
+export type ResolvedImageProps<
+  Props extends ImageAttributeProps & ImageOptions,
+> = Omit<
   Props,
-  "alt" | "decoding" | "loading" | "sizes" | "src" | "srcSet"
+  | keyof ImageOptions
+  | "alt"
+  | "decoding"
+  | "loading"
+  | "sizes"
+  | "src"
+  | "srcSet"
 > & {
   alt: string | undefined;
   decoding: "async" | "auto" | "sync";
@@ -20,21 +37,16 @@ export type ResolvedImageProps<Props extends ImageAttributeProps> = Omit<
   srcSet?: string;
 };
 
-export const getImageProps = <Props extends ImageAttributeProps>({
-  imageProps,
+export const getImageProps = <
+  Props extends ImageAttributeProps & ImageOptions,
+>({
   quality,
   loader,
   optimize = true,
   loading = "lazy",
   decoding = "async",
-}: {
-  imageProps: Props;
-  quality?: number;
-  loader: ImageLoader;
-  optimize?: boolean;
-  loading?: "eager" | "lazy";
-  decoding?: "async" | "auto" | "sync";
-}): ResolvedImageProps<Props> => {
+  ...imageProps
+}: Props): ResolvedImageProps<Props> => {
   const imageAttributes = getImageAttributes({
     src: imageProps.src,
     srcSet: imageProps.srcSet,

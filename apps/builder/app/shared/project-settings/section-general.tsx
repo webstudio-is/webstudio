@@ -17,7 +17,7 @@ import {
   IconButton,
 } from "@webstudio-is/design-system";
 import { CopyIcon, InfoCircleIcon } from "@webstudio-is/icons";
-import { Image, wsImageLoader } from "@webstudio-is/image";
+import { getImageProps, wsImageLoader } from "@webstudio-is/image";
 import type { ProjectMeta } from "@webstudio-is/sdk";
 import { validateContactEmail } from "@webstudio-is/project-build/contracts";
 import { ImageControl } from "./image-control";
@@ -172,12 +172,14 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
       <Grid gap={2} css={sectionSpacing} justify={"start"}>
         <Label>Favicon</Label>
         <Grid flow="column" gap={3}>
-          <Image
-            width={72}
-            height={72}
-            className={imgStyle()}
-            src={favIconUrl}
-            loader={wsImageLoader}
+          <img
+            {...getImageProps({
+              width: 72,
+              height: 72,
+              className: imgStyle(),
+              src: favIconUrl,
+              loader: wsImageLoader,
+            })}
           />
 
           <Grid gap={2}>

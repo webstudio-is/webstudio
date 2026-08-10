@@ -1,5 +1,5 @@
 import { Box, Flex, Grid } from "@webstudio-is/design-system";
-import { Image, wsImageLoader } from "@webstudio-is/image";
+import { getImageProps, wsImageLoader } from "@webstudio-is/image";
 import { formatUrl, truncateByWords, truncate } from "./social-utils";
 
 /**
@@ -92,11 +92,13 @@ export const SearchPreview = (props: SearchPreviewProps) => {
           justify={"center"}
           align={"center"}
         >
-          <Image
-            width={18}
-            height={18}
-            loader={wsImageLoader}
-            src={props.faviconUrl}
+          <img
+            {...getImageProps({
+              width: 18,
+              height: 18,
+              loader: wsImageLoader,
+              src: props.faviconUrl,
+            })}
           />
         </Flex>
         <Grid>

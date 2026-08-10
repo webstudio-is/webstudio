@@ -1,10 +1,10 @@
-import {
-  getImageProps,
-  type ImageLoader,
-  type ImageProps,
-} from "@webstudio-is/image";
+import { getImageProps, type ImageLoader } from "@webstudio-is/image";
+import type { ComponentPropsWithoutRef } from "react";
 
-export type SdkImageProps = Omit<ImageProps, "loader" | "ref"> & {
+export type SdkImageProps = ComponentPropsWithoutRef<"img"> & {
+  quality?: number;
+  /** Optimize the image for enhanced performance. */
+  optimize?: boolean;
   // @todo: This builder-only prop should not be part of the runtime component.
   $webstudio$canvasOnly$assetId?: string;
 };
@@ -54,7 +54,10 @@ export const getSdkImageProps = ({
   return {
     key,
     imageProps: getImageProps({
-      imageProps: { width, height, ...rest, src },
+      width,
+      height,
+      ...rest,
+      src,
       quality,
       loader: imageLoader,
       optimize,

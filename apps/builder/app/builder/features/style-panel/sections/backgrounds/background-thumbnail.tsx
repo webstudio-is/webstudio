@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import type { Assets } from "@webstudio-is/sdk";
-import { Image as WebstudioImage, wsImageLoader } from "@webstudio-is/image";
+import { getImageProps, wsImageLoader } from "@webstudio-is/image";
 import { styled, theme } from "@webstudio-is/design-system";
 import {
   type StyleValue,
@@ -44,7 +44,7 @@ const NoneThumbnail = styled(Thumbnail, {
     "repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%",
 });
 
-const StyledWebstudioImage = styled(WebstudioImage, {
+const StyledImage = styled("img", {
   position: "relative",
   width: thumbSize,
   height: thumbSize,
@@ -144,12 +144,14 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
       return;
     }
     return (
-      <StyledWebstudioImage
+      <StyledImage
         key={asset.id}
-        loader={wsImageLoader}
-        src={asset.name}
-        width={thumbSize}
-        optimize={true}
+        {...getImageProps({
+          loader: wsImageLoader,
+          src: asset.name,
+          width: thumbSize,
+          optimize: true,
+        })}
       />
     );
   }
@@ -159,12 +161,14 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
     backgroundImageValue.value.type === "url"
   ) {
     return (
-      <StyledWebstudioImage
+      <StyledImage
         key={backgroundImageValue.value.url}
-        loader={wsImageLoader}
-        src={backgroundImageValue.value.url}
-        width={thumbSize}
-        optimize={true}
+        {...getImageProps({
+          loader: wsImageLoader,
+          src: backgroundImageValue.value.url,
+          width: thumbSize,
+          optimize: true,
+        })}
       />
     );
   }

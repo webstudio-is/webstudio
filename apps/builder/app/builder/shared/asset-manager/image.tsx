@@ -1,4 +1,4 @@
-import { Image as WebstudioImage, wsImageLoader } from "@webstudio-is/image";
+import { getImageProps, wsImageLoader } from "@webstudio-is/image";
 
 type ImageProps = {
   assetId: string;
@@ -26,24 +26,26 @@ export const Image = ({
   const src = objectURL ?? name;
 
   return (
-    <WebstudioImage
-      className={className}
-      style={{
-        // Prevent native image drag in Image Manager to avoid issues with monitorForExternal
-        // from @atlaskit/pragmatic-drag-and-drop, which incorrectly identifies it as an external drag operation
-        // when used inside an iframe.
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        WebkitUserDrag: "none",
-        maxWidth: "100%",
-      }}
+    <img
       key={assetId}
-      loader={wsImageLoader}
-      decoding={decoding}
-      src={src}
-      width={width}
-      optimize={optimize}
-      alt={alt}
+      {...getImageProps({
+        className,
+        style: {
+          // Prevent native image drag in Image Manager to avoid issues with monitorForExternal
+          // from @atlaskit/pragmatic-drag-and-drop, which incorrectly identifies it as an external drag operation
+          // when used inside an iframe.
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          WebkitUserDrag: "none",
+          maxWidth: "100%",
+        },
+        loader: wsImageLoader,
+        decoding,
+        src,
+        width,
+        optimize,
+        alt,
+      })}
     />
   );
 };

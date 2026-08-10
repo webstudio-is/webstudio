@@ -2,7 +2,7 @@
 
 import type * as React from "react";
 import { StorySection } from "@webstudio-is/design-system";
-import { Image as ImagePrimitive, wsImageLoader } from "./";
+import { getImageProps, wsImageLoader } from "./";
 
 // to not allow include local assets everywhere, just enable it for this file
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -12,8 +12,6 @@ import localLogoImage from "../storybook-assets/logo.webp";
 export default {
   title: "Image dev",
 };
-
-type ImageProps = React.ComponentProps<typeof ImagePrimitive>;
 
 /**
  * In case you need to test img with real cloudflare trasforms
@@ -28,11 +26,7 @@ const imageSrc = USE_CLOUDFLARE_IMAGE_TRANSFORM
   ? REMOTE_SELF_DOMAIN_IMAGE
   : localLogoImage;
 
-const ImageBase = (
-  args: Omit<ImageProps, "loader"> & {
-    style?: React.HTMLAttributes<"img">["style"];
-  }
-) => {
+const ImageBase = (args: React.ComponentPropsWithoutRef<"img">) => {
   const style = {
     maxWidth: "100%",
     display: "block",
@@ -40,11 +34,13 @@ const ImageBase = (
   };
 
   return (
-    <ImagePrimitive
-      {...args}
-      optimize={true}
-      loader={wsImageLoader}
-      style={style}
+    <img
+      {...getImageProps({
+        ...args,
+        optimize: true,
+        loader: wsImageLoader,
+        style,
+      })}
     />
   );
 };
