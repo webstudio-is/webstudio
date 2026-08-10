@@ -57,6 +57,7 @@ test("shows the unresolved query result in a read-only JSON editor", () => {
               phases: {
                 buildPlan: 20,
                 indexPreparation: 80,
+                diagnosticsPreparation: 40,
                 documentGraph: 30,
                 assetReferences: 5,
                 sourceValidation: 10,
@@ -123,10 +124,11 @@ test("shows the unresolved query result in a read-only JSON editor", () => {
   expect(container.textContent).toContain("1.02 kB");
   expect(container.textContent).toContain("Build plan");
   expect(container.textContent).toContain("Index preparation");
+  expect(container.textContent).toContain("Published diagnostics");
   expect(container.textContent).toContain("Compilation workCompiled");
   expect(container.textContent).toContain("Resolved documents2");
   expect(container.textContent).toContain("Timing");
   expect(container.textContent).toContain("Query work");
   expect(container.textContent).toContain("Database and sizes");
-  expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(23);
+  expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(24);
 });

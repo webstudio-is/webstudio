@@ -55,6 +55,11 @@ describe("configured Assets system resource", () => {
           durationMs: 30,
         });
         onPerformanceEvent?.({
+          type: "phase-completed",
+          phase: "diagnostics-preparation",
+          durationMs: 40,
+        });
+        onPerformanceEvent?.({
           type: "content-read",
           purpose: "compiler-entry",
           byteLength: 1000,
@@ -109,6 +114,7 @@ describe("configured Assets system resource", () => {
             authorization: expect.any(Number),
             buildPlan: 20,
             documentGraph: 30,
+            diagnosticsPreparation: 40,
           },
           compilationCache: "miss",
           resolvedDocumentCount: 2,

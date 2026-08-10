@@ -11,6 +11,7 @@ export type AssetQueryPerformancePhase =
   | "source-validation"
   | "artifact-compilation"
   | "index-preparation"
+  | "diagnostics-preparation"
   | "runtime-assets"
   | "document-resolution";
 

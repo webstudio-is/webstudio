@@ -22,6 +22,7 @@ export const resourcePerformance = z.strictObject({
           sourceValidation: z.number().nonnegative().optional(),
           artifactCompilation: z.number().nonnegative().optional(),
           indexPreparation: z.number().nonnegative().optional(),
+          diagnosticsPreparation: z.number().nonnegative().optional(),
           runtimeAssets: z.number().nonnegative().optional(),
           documentResolution: z.number().nonnegative().optional(),
         })

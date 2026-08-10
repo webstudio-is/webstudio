@@ -143,7 +143,14 @@ export class AssetIndexPreparationError extends Error {
     issues: Awaited<ReturnType<typeof synchronizeCanonicalAssets>>["issues"]
   ) {
     super(
-      `Asset index preparation failed for ${issues.length} asset${issues.length === 1 ? "" : "s"}: ${issues.map(({ assetId, storageName, message }) => `${assetId} (${storageName}): ${message}`).join("; ")}`
+      `Asset index preparation failed for ${issues.length} asset${
+        issues.length === 1 ? "" : "s"
+      }: ${issues
+        .map(
+          ({ assetId, storageName, message }) =>
+            `${assetId} (${storageName}): ${message}`
+        )
+        .join("; ")}`
     );
     this.name = "AssetIndexPreparationError";
     this.issues = issues;
@@ -1032,11 +1039,12 @@ export class PostgresAssetRepository implements AssetRepository {
         const query = queries[index];
         return query === undefined ? [] : [query];
       });
-    // Queries covered by the saved plan must use its artifact so published
-    // truncation and revision semantics remain unchanged. Only unpinned,
-    // uncovered queries may use a temporary literal union.
-    const databaseIndexes = requests.flatMap((_request, index) =>
+    // Revision-pinned requests must use the saved plan that produced the
+    // expected artifact. Ordinary Builder previews compile their concrete
+    // query values so a detail page hydrates only the documents it needs.
+    const databaseIndexes = requests.flatMap((request, index) =>
       queries[index] !== undefined &&
+      request.indexRevision !== undefined &&
       databasePlan !== undefined &&
       isAssetQueryCoveredByCompilationPlan({
         plan: databasePlan,
@@ -1045,11 +1053,8 @@ export class PostgresAssetRepository implements AssetRepository {
         ? [index]
         : []
     );
-    const databaseIndexSet = new Set(databaseIndexes);
     const literalIndexes = requests.flatMap((request, index) =>
-      databaseIndexSet.has(index) === false &&
-      queries[index] !== undefined &&
-      request.indexRevision === undefined
+      queries[index] !== undefined && request.indexRevision === undefined
         ? [index]
         : []
     );
@@ -1200,15 +1205,17 @@ export class PostgresAssetRepository implements AssetRepository {
     const plan = createContentCompilationPlan([
       createLiteralContentCompilationQuery({ id: "preview", query }),
     ]);
-    // Public REST queries are not necessarily represented by the Builder's
-    // saved compilation plan. Reuse that database only when one of its queries
-    // structurally covers the current runtime values.
+    // Revision-pinned requests must use the saved plan that produced the
+    // expected artifact. Unpinned previews compile the concrete query and only
+    // prepare the saved deployment plan for explicit diagnostics.
     const coveredByDatabasePlan =
       databasePlan !== undefined &&
       isAssetQueryCoveredByCompilationPlan({ plan: databasePlan, query });
+    const usePublishedIndex =
+      request.indexRevision !== undefined && coveredByDatabasePlan;
     const index = await this.measurePerformance("index-preparation", () =>
       this.prepareIndexAfterAuthorization(
-        coveredByDatabasePlan ? databasePlan : plan,
+        usePublishedIndex ? databasePlan : plan,
         false,
         contentBytesCache
       )
@@ -1216,26 +1223,13 @@ export class PostgresAssetRepository implements AssetRepository {
     signal?.throwIfAborted();
     const database = getContentDatabaseForArtifact(index);
     const queryIndex =
-      includeDiagnostics && coveredByDatabasePlan
+      includeDiagnostics && usePublishedIndex
         ? await this.prepareIndexAfterAuthorization(
             plan,
             false,
             contentBytesCache
           )
         : index;
-    signal?.throwIfAborted();
-    let publishedIndex: typeof index | undefined;
-    if (includeDiagnostics) {
-      const publishedPlan = diagnosticsPlan ?? databasePlan;
-      publishedIndex =
-        publishedPlan === undefined
-          ? queryIndex
-          : await this.prepareIndexAfterAuthorization(
-              publishedPlan,
-              false,
-              contentBytesCache
-            );
-    }
     signal?.throwIfAborted();
     const runtimeAssets = await this.measurePerformance("runtime-assets", () =>
       this.loadQueryRuntimeAssets({ artifact: index, plan })
@@ -1261,6 +1255,30 @@ export class PostgresAssetRepository implements AssetRepository {
         onEvent: this.onDocumentGraphEvent,
       })
     );
+    signal?.throwIfAborted();
+    let publishedIndex: typeof index | undefined;
+    if (includeDiagnostics) {
+      const publishedPlan = diagnosticsPlan ?? databasePlan;
+      if (publishedPlan === undefined) {
+        publishedIndex = queryIndex;
+      } else {
+        const diagnosticsRepository = new PostgresAssetRepository({
+          projectId: this.projectId,
+          context: this.context,
+          assetStore: this.assetStore,
+          dependencies: this.dependencies,
+          contentDatabaseMaxBytes: this.contentDatabaseMaxBytes,
+        });
+        publishedIndex = await this.measurePerformance(
+          "diagnostics-preparation",
+          () =>
+            diagnosticsRepository.prepareIndexAfterAuthorization(
+              publishedPlan,
+              false
+            )
+        );
+      }
+    }
     signal?.throwIfAborted();
     const toCapacityStats = ({
       usedBytes,

@@ -651,7 +651,7 @@ describe("PostgresAssetRepository", () => {
     expect(readFile).not.toHaveBeenCalled();
   });
 
-  test("reuses one compiled database across dynamic query values", async () => {
+  test("compiles concrete databases across dynamic query values", async () => {
     const dependencies = createDependencies();
     const entries = ["first", "second"].map((slug) => ({
       projectId: "project-1",
@@ -788,7 +788,10 @@ describe("PostgresAssetRepository", () => {
       data: { items: [{ properties: { title: "second post" } }] },
     });
 
-    expect(dependencies.createAssetIndex).toHaveBeenCalledOnce();
+    expect(dependencies.createAssetIndex).toHaveBeenCalledTimes(4);
+    expect(
+      dependencies.createAssetIndex.mock.calls.map(([input]) => input.plan)
+    ).not.toContain(databasePlan);
   });
 
   test("stops diagnostics work after cancellation during index preparation", async () => {
@@ -954,6 +957,124 @@ describe("PostgresAssetRepository", () => {
         }),
       ])
     );
+  });
+
+  test("hydrates concrete preview content instead of the saved dynamic plan", async () => {
+    const dependencies = createDependencies();
+    const sources = new Map([
+      ["storage:post-a", "---\nslug: post-a\ntitle: First\n---\nFirst body\n"],
+      [
+        "storage:post-b",
+        "---\nslug: post-b\ntitle: Second\n---\nSecond body\n",
+      ],
+    ]);
+    const entries: CanonicalAssetFileEntry[] = [...sources].map(
+      ([contentRef, source]) => {
+        const slug = contentRef.slice("storage:".length);
+        return {
+          projectId: "project-1",
+          assetId: slug,
+          revision: `${slug}-r1`,
+          document: {
+            _id: slug,
+            _type: "asset.file",
+            name: `${slug}.md`,
+            path: `content/${slug}.md`,
+            key: slug,
+            extension: "md",
+            mimeType: "text/markdown; charset=utf-8",
+            size: new TextEncoder().encode(source).byteLength,
+            revision: `${slug}-r1`,
+            contentRef,
+            properties: {
+              slug,
+              title: slug === "post-a" ? "First" : "Second",
+            },
+          },
+        };
+      }
+    );
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const readFile = vi.fn(async (contentRef: string) => {
+      const source = sources.get(contentRef);
+      if (source === undefined) {
+        throw new Error(`Missing source for ${contentRef}`);
+      }
+      return {
+        data: new Blob([source]).stream(),
+        contentLength: new TextEncoder().encode(source).byteLength,
+      };
+    });
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { readFile },
+      dependencies,
+    });
+    const databasePlan = createContentCompilationPlan([
+      {
+        id: "post-page",
+        where: {
+          field: ["properties", "slug"],
+          operator: "eq",
+          value: { type: "dynamic" },
+        },
+        sort: [],
+        limit: { type: "literal", value: 1 },
+        offset: { type: "literal", value: 0 },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
+        content: { mode: "markdown-body-ref" },
+      },
+    ]);
+    if (databasePlan === undefined) {
+      throw new Error("Expected a build database plan");
+    }
+
+    const [result] = await repository.queryMany(
+      [
+        {
+          query: {
+            where: {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "post-a",
+            },
+            limit: 1,
+            output: {
+              mode: "fields",
+              includeMetadata: false,
+              fields: [["properties", "title"]],
+            },
+            content: { mode: "markdown-body-ref" },
+          },
+        },
+      ],
+      { databasePlan }
+    );
+
+    expect(result).toMatchObject({
+      status: "fulfilled",
+      value: {
+        data: {
+          items: [
+            {
+              id: "post-a",
+              properties: { title: "First" },
+              content: { text: "First body\n" },
+            },
+          ],
+        },
+      },
+    });
+    expect(readFile.mock.calls.map(([contentRef]) => contentRef)).toEqual([
+      "storage:post-a",
+    ]);
   });
 
   test("loads a shared referenced document once across batch plans", async () => {
@@ -1295,7 +1416,7 @@ describe("PostgresAssetRepository", () => {
     ).toEqual(["preview", "preview"]);
   });
 
-  test("preserves truncation from the build database plan", async () => {
+  test("uses a concrete union instead of a truncated build plan", async () => {
     const dependencies = createDependencies();
     const entries = ["Tools", "Updates"].map((category, index) => ({
       projectId: "project-1",
@@ -1357,10 +1478,13 @@ describe("PostgresAssetRepository", () => {
       "fulfilled",
       "fulfilled",
     ]);
-    expect(dependencies.createAssetIndex).toHaveBeenCalledOnce();
-    expect(dependencies.createAssetIndex.mock.calls[0][0].plan).toBe(
+    expect(dependencies.createAssetIndex).toHaveBeenCalledTimes(3);
+    expect(dependencies.createAssetIndex.mock.calls[0][0].plan).not.toBe(
       databasePlan
     );
+    expect(
+      dependencies.createAssetIndex.mock.calls[0][0].plan?.queries
+    ).toHaveLength(2);
   });
 
   test("falls back to independent queries when union preparation fails", async () => {

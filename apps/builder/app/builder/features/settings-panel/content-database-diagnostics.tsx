@@ -34,6 +34,11 @@ const assetQueryPhaseRows = [
     "Inclusive time spent preparing the in-memory query database. It contains the source snapshot, canonical metadata, compiler entries, and artifact compilation phases.",
   ],
   [
+    "diagnosticsPreparation",
+    "Published diagnostics",
+    "Inclusive time spent compiling the deployment-wide database only for detailed Diagnostics. This work is not part of the normal resource load, and its internal phases are excluded from the rows below.",
+  ],
+  [
     "sourceSnapshot",
     "Source snapshot",
     "Time spent loading canonical asset entries and computing the source revision used by the compilation cache.",
@@ -283,8 +288,12 @@ export const ContentDatabaseDiagnostics = ({
 }) => {
   const totalDocumentCount =
     value.database.includedDocumentCount + value.database.omittedDocumentCount;
-  const candidateFilesLabel = `${totalDocumentCount} candidate ${totalDocumentCount === 1 ? "file" : "files"}`;
-  const omittedFilesLabel = `${value.database.omittedDocumentCount} ${value.database.omittedDocumentCount === 1 ? "file" : "files"}`;
+  const candidateFilesLabel = `${totalDocumentCount} candidate ${
+    totalDocumentCount === 1 ? "file" : "files"
+  }`;
+  const omittedFilesLabel = `${value.database.omittedDocumentCount} ${
+    value.database.omittedDocumentCount === 1 ? "file" : "files"
+  }`;
   const rows = getContentDatabaseDiagnosticRows(value);
   return (
     <RequestDiagnosticsContent>

@@ -45,6 +45,7 @@ const phaseKeys = {
   "source-validation": "sourceValidation",
   "artifact-compilation": "artifactCompilation",
   "index-preparation": "indexPreparation",
+  "diagnostics-preparation": "diagnosticsPreparation",
   "runtime-assets": "runtimeAssets",
   "document-resolution": "documentResolution",
 } as const;
