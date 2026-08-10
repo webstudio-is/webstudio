@@ -70,9 +70,12 @@ describe("structured asset value references", () => {
     };
     const references = discoverAssetValueReferences({
       properties,
-      sourcePath: "blog/posts/inception.md",
+      sourcePath: "content/data/inception.json",
       assetIdsByPath: new Map([
-        ["blog/images/inception_TDxBrdPwfoJJe_A-k5jhB.png", "inception-image"],
+        [
+          "content/images/inception_TDxBrdPwfoJJe_A-k5jhB.png",
+          "inception-image",
+        ],
       ]),
     });
 
