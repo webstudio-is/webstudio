@@ -413,7 +413,7 @@ Vision-capable AI can use MCP to see what it is building:
 2. Call preview.start once to keep the iterative generated site running. In shell-driven workflows, run preview.start, screenshot, and preview.stop inside one `webstudio mcp run` call so they share the same preview owner.
 3. Read `preview.status.stale` before relying on generated output. When present, `renderedProjectVersion` identifies the last project version materialized into the preview; a stale preview refreshes automatically on the next managed screenshot or `preview.start` call.
 4. `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
-5. Session preview startup downloads missing project assets into `.webstudio/assets` before generating the app. If it reports `PREVIEW_ASSET_DOWNLOAD_FAILED`, restore network and project asset access, then retry `preview.start`; do not create placeholder asset files.
+5. Session previews download missing project assets into `.webstudio/assets`. If `PREVIEW_ASSET_DOWNLOAD_FAILED` occurs, restore network and project asset access, then retry `preview.start`.
 6. Dependency installation honors `npm_config_cache`, including a caller-provided writable cache on Windows.
 7. Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
 8. If dependency installation fails, the error includes sanitized npm diagnostics. Check the reported npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
@@ -432,7 +432,7 @@ Vision-capable AI can use MCP to see what it is building:
 Generated app setup:
 
 - `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
-- Session preview startup downloads missing project assets into `.webstudio/assets` before generating the app. If it reports `PREVIEW_ASSET_DOWNLOAD_FAILED`, restore network and project asset access, then retry `preview.start`; do not create placeholder asset files.
+- Session previews download missing project assets into `.webstudio/assets`. If `PREVIEW_ASSET_DOWNLOAD_FAILED` occurs, restore network and project asset access, then retry `preview.start`.
 - Dependency installation honors `npm_config_cache`, including a caller-provided writable cache on Windows.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
 - If dependency installation fails, the error includes sanitized npm diagnostics. Check the reported npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.

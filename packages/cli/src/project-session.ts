@@ -583,7 +583,7 @@ export const loadCliProjectSessionAssetIndex = async (
   } catch (error) {
     throw Object.assign(
       new Error(
-        "PREVIEW_ASSET_DOWNLOAD_FAILED: Could not download project assets required by the generated preview. Restore network and project asset access, then retry preview.start; it recreates .webstudio/assets automatically.",
+        "Could not download assets required for preview. Restore network and project asset access, then retry preview.start.",
         { cause: error }
       ),
       { code: "PREVIEW_ASSET_DOWNLOAD_FAILED" }

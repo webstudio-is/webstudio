@@ -3,7 +3,7 @@
 ## Generated App Dependency Notes
 
 - `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
-- Session preview startup downloads missing project assets into `.webstudio/assets` before generating the app. If it reports `PREVIEW_ASSET_DOWNLOAD_FAILED`, restore network and project asset access, then retry `preview.start`; do not create placeholder asset files.
+- Session previews download missing project assets into `.webstudio/assets`. If `PREVIEW_ASSET_DOWNLOAD_FAILED` occurs, restore network and project asset access, then retry `preview.start`.
 - Dependency installation honors `npm_config_cache`, including a caller-provided writable cache on Windows.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
 - If dependency installation fails, the error includes sanitized npm diagnostics. Check the reported npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.

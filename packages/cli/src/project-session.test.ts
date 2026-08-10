@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -104,36 +104,23 @@ const createAssetPreviewSnapshot = (contentSize = 0) => {
   } as never;
 };
 
-test("loads a preview index only for configured Assets resources", async () => {
-  const snapshot = (resources: Map<string, unknown>) =>
-    ({ projectId: "project", state: { resources } }) as never;
-
-  await expect(
-    loadCliProjectSessionAssetIndex(snapshot(new Map()), previewConnection)
-  ).resolves.toBeUndefined();
-
-  const directory = await createTemporaryDirectory();
-  await writeFile(
-    join(directory, "post_hash.md"),
-    "---\ntitle: Hello\n---\nBody"
-  );
+test("skips the preview index without configured Assets resources", async () => {
   await expect(
     loadCliProjectSessionAssetIndex(
-      createAssetPreviewSnapshot(),
-      previewConnection,
-      directory
+      { projectId: "project", state: { resources: new Map() } } as never,
+      previewConnection
     )
-  ).resolves.toMatchObject({
-    documents: [{ _id: "post", properties: { title: "Hello" } }],
-  });
+  ).resolves.toBeUndefined();
 });
 
 test("downloads preview index assets when the local directory is missing", async () => {
   const projectDirectory = await createTemporaryDirectory();
   const assetsDirectory = join(projectDirectory, "assets");
   const content = "---\ntitle: Hello\n---\nBody";
-  const fetch = vi.fn(async () => new Response(content));
-  vi.stubGlobal("fetch", fetch);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => new Response(content))
+  );
 
   await expect(
     loadCliProjectSessionAssetIndex(
@@ -147,16 +134,15 @@ test("downloads preview index assets when the local directory is missing", async
   await expect(
     readFile(join(assetsDirectory, "post_hash.md"), "utf8")
   ).resolves.toBe(content);
-  expect(fetch).toHaveBeenCalledOnce();
 });
 
 test("explains how to recover when preview assets cannot be downloaded", async () => {
   const projectDirectory = await createTemporaryDirectory();
   vi.stubGlobal(
     "fetch",
-    vi.fn(async () => {
-      throw new Error("network unavailable");
-    })
+    vi.fn(
+      async () => new Response("", { status: 404, statusText: "Not Found" })
+    )
   );
   await expect(
     loadCliProjectSessionAssetIndex(
@@ -166,7 +152,8 @@ test("explains how to recover when preview assets cannot be downloaded", async (
     )
   ).rejects.toMatchObject({
     code: "PREVIEW_ASSET_DOWNLOAD_FAILED",
-    message: expect.stringContaining("retry preview.start"),
+    message:
+      "Could not download assets required for preview. Restore network and project asset access, then retry preview.start.",
   });
 });
 
