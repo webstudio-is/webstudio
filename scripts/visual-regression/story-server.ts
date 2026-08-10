@@ -204,22 +204,27 @@ export const startVisualStoryServer = async ({
   root,
   port,
   outputDirectory,
+  storyFiles,
 }: {
   root: string;
   port: number;
   outputDirectory: string;
+  storyFiles?: readonly string[];
 }) => {
   const resolvedRoot = await realpath(root);
   const input = path.join(resolvedRoot, ".visual-regression", "harness.tsx");
   await mkdir(path.dirname(input), { recursive: true });
-  const storyFiles = (
-    await Promise.all(
-      storyPatterns.map((pattern) => globFiles(pattern, resolvedRoot))
-    )
-  )
-    .flat()
-    .sort();
-  const storyModules = storyFiles
+  const resolvedStoryFiles = [
+    ...new Set(
+      storyFiles ??
+        (
+          await Promise.all(
+            storyPatterns.map((pattern) => globFiles(pattern, resolvedRoot))
+          )
+        ).flat()
+    ),
+  ].sort();
+  const storyModules = resolvedStoryFiles
     .map(
       (file) =>
         `${JSON.stringify(`/${file}`)}: () => import(${JSON.stringify(path.join(resolvedRoot, file))})`

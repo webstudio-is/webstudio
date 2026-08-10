@@ -44,6 +44,7 @@ export type BrowserScreenshotOptions = {
   waitForSelector?: string;
   failForSelector?: string;
   waitForTimeout: number;
+  finalizeExpression?: string;
   timeout: number;
   format?: "png" | "jpeg" | "webp";
   quality?: number;
@@ -1531,6 +1532,23 @@ const capturePageWithBrowserRuntime = async (
           const readiness = await waitForFontsAndFrames(cdp, options.timeout);
           if (options.waitForTimeout > 0) {
             await delay(options.waitForTimeout);
+          }
+          if (options.finalizeExpression !== undefined) {
+            try {
+              await send(
+                "Runtime.evaluate",
+                {
+                  expression: options.finalizeExpression,
+                  awaitPromise: true,
+                },
+                options.timeout
+              );
+            } catch (cause) {
+              throw new Error(
+                `Screenshot target finalization failed: ${options.url}\nOutput: ${options.output}`,
+                { cause }
+              );
+            }
           }
           const readinessMs = Date.now() - readinessStartedAt;
           const locationPromise = send<{

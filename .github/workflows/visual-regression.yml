@@ -78,6 +78,9 @@ jobs:
 
       - uses: ./.github/actions/ci-setup
 
+      - name: Install visual comparison dependencies
+        run: sudo apt-get install --no-install-recommends -y tesseract-ocr
+
       - name: Compare portable stories
         id: compare
         env:

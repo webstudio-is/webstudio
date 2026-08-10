@@ -688,6 +688,7 @@ test("navigates once while resizing one page through multiple viewports", async 
       width: 375,
       height: 812,
       prepareExpression: "window.renderStory('mobile')",
+      finalizeExpression: "window.finishStory('mobile')",
     },
     dependencies
   );
@@ -699,6 +700,7 @@ test("navigates once while resizing one page through multiple viewports", async 
       width: 375,
       height: 812,
       prepareExpression: "window.renderStory('mobile')",
+      finalizeExpression: "window.finishStory('mobile')",
     },
     {
       ...baseOptions,
@@ -706,6 +708,7 @@ test("navigates once while resizing one page through multiple viewports", async 
       width: 1440,
       height: 900,
       prepareExpression: "window.renderStory('desktop')",
+      finalizeExpression: "window.finishStory('desktop')",
     },
   ]);
 
@@ -741,6 +744,15 @@ test("navigates once while resizing one page through multiple viewports", async 
       )
       .map((message) => message.params?.expression)
   ).toEqual(["window.renderStory('mobile')", "window.renderStory('desktop')"]);
+  expect(
+    socket.sentMessages
+      .filter(
+        (message) =>
+          message.method === "Runtime.evaluate" &&
+          String(message.params?.expression).startsWith("window.finishStory")
+      )
+      .map((message) => message.params?.expression)
+  ).toEqual(["window.finishStory('mobile')", "window.finishStory('desktop')"]);
   expect(
     socket.sentMessages.some(
       (message) =>

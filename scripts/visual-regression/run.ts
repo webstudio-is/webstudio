@@ -145,6 +145,8 @@ const getCaptureOptions = ({
   waitForSelector: "#visual-ready, #visual-error",
   failForSelector: "#visual-error",
   waitForTimeout: storyOptions[entry.id]?.delay ?? defaultStoryDelay,
+  finalizeExpression:
+    "document.activeElement?.blur(); new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))",
   timeout: 30_000,
   format: "png",
   scale: 1,
@@ -396,11 +398,17 @@ const main = async () => {
           root: checkout,
           port: baselinePort,
           outputDirectory: baselineBundleDirectory,
+          storyFiles: Object.values(filteredBaselineEntries).map(
+            (entry) => entry.file
+          ),
         }),
         startVisualStoryServer({
           root: repositoryRoot,
           port: currentPort,
           outputDirectory: currentBundleDirectory,
+          storyFiles: Object.values(filteredCurrentEntries).map(
+            (entry) => entry.file
+          ),
         }),
       ]))
     );

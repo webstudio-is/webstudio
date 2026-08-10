@@ -7,6 +7,7 @@ export const storyOptions: Record<
   "builder-builder-help-remote-dialog--remote-dialog": {
     hideSelectors: ["iframe"],
   },
+  "builder-dashboard--welcome": { hideSelectors: ["iframe"] },
   "builder-builder-shared-loading--loading": { disableIntervals: true },
   "builder-pages-page-settings--page-settings": { delay: 3000 },
   "builder-settings-panel-props-section--props-section": { delay: 5000 },
