@@ -1,4 +1,4 @@
-import type { ImageLoader } from "@webstudio-is/image";
+import { Image as OptimizedImage, type ImageLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { renderToStaticMarkup } from "react-dom/server";
 import sanitizeHtml from "sanitize-html";
@@ -121,14 +121,14 @@ Hello, world!
     {
       name: "published pages",
       renderer: undefined,
-      loading: "lazy",
-      decoding: "async",
+      loading: "lazy" as const,
+      decoding: "async" as const,
     },
     {
       name: "the canvas",
       renderer: "canvas" as const,
-      loading: "eager",
-      decoding: "sync",
+      loading: "eager" as const,
+      decoding: "sync" as const,
     },
   ])(
     "renders images like the SDK Image component on $name",
@@ -161,9 +161,26 @@ Hello, world!
           </div>
         </ReactSdkContext.Provider>
       );
+      const optimizedImageHtml = renderToStaticMarkup(
+        <div>
+          <OptimizedImage
+            src="/photo.jpg"
+            alt="Photo"
+            width={320}
+            height={180}
+            className="hero"
+            loader={imageLoader}
+            loading={loading}
+            decoding={decoding}
+          />
+        </div>
+      );
 
       expect(readImageAttributes(markdownHtml)).toEqual(
         readImageAttributes(sdkHtml)
+      );
+      expect(readImageAttributes(markdownHtml)).toEqual(
+        readImageAttributes(optimizedImageHtml)
       );
       expect(markdownHtml).toContain(`loading="${loading}"`);
       expect(markdownHtml).toContain(`decoding="${decoding}"`);

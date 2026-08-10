@@ -7,11 +7,8 @@ import { toString } from "mdast-util-to-string";
 import GithubSlugger from "github-slugger";
 import type { HtmlExtension } from "micromark-util-types";
 import sanitizeHtml from "sanitize-html";
-import {
-  getImageAttributes,
-  imagePlaceholderDataUrl,
-  type ImageLoader,
-} from "@webstudio-is/image";
+import type { ImageLoader } from "@webstudio-is/image";
+import { getSdkImageProps, type SdkImageProps } from "./image-utils";
 
 const getHeadingIds = (markdown: string) => {
   const slugger = new GithubSlugger();
@@ -165,48 +162,34 @@ const createImageTransformer =
     renderer: "canvas" | "preview" | undefined;
   }): sanitizeHtml.Transformer =>
   (tagName, attributes) => {
-    let loading = attributes.loading ?? "lazy";
-    let decoding = attributes.decoding ?? "async";
-
-    if (renderer === "canvas") {
-      loading = "eager";
-      decoding = "sync";
+    const { srcset, ...rest } = attributes;
+    const { imageProps } = getSdkImageProps({
+      props: {
+        ...rest,
+        srcSet: srcset,
+        loading: attributes.loading as SdkImageProps["loading"],
+        decoding: attributes.decoding as SdkImageProps["decoding"],
+      } as SdkImageProps,
+      imageLoader,
+      renderer,
+    });
+    const { sizes, srcSet, src, decoding, loading, ...htmlProps } = imageProps;
+    const transformedAttributes: sanitizeHtml.Attributes = {};
+    for (const [name, value] of Object.entries(htmlProps)) {
+      if (typeof value === "string" || typeof value === "number") {
+        transformedAttributes[name] = String(value);
+      }
     }
-
-    const imageAttributes = getImageAttributes({
-      src: String(attributes.src ?? ""),
-      srcSet: attributes.srcset,
-      sizes: attributes.sizes,
-      width: attributes.width,
-      quality: undefined,
-      loader: imageLoader,
-      optimize: true,
-    }) ?? { src: imagePlaceholderDataUrl };
-
-    const {
-      src: _src,
-      srcset: sourceSrcSet,
-      sizes: sourceSizes,
-      decoding: _decoding,
-      loading: _loading,
-      ...rest
-    } = attributes;
-    const transformedAttributes: sanitizeHtml.Attributes = {
-      alt: "",
-      ...rest,
-    };
-    const sizes = imageAttributes.sizes ?? sourceSizes;
-    const srcSet = imageAttributes.srcSet ?? sourceSrcSet;
     if (sizes !== undefined) {
-      transformedAttributes.sizes = sizes;
+      transformedAttributes.sizes = String(sizes);
     }
     if (srcSet !== undefined) {
-      transformedAttributes.srcset = srcSet;
+      transformedAttributes.srcset = String(srcSet);
     }
     // Keep src after sizes and srcset so Safari does not load the image twice.
-    transformedAttributes.src = imageAttributes.src;
-    transformedAttributes.decoding = decoding;
-    transformedAttributes.loading = loading;
+    transformedAttributes.src = String(src);
+    transformedAttributes.decoding = String(decoding);
+    transformedAttributes.loading = String(loading);
 
     return { tagName, attribs: transformedAttributes };
   };
