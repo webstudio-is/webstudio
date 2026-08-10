@@ -31,6 +31,7 @@ import {
   createContentSourceFile,
   computeCanonicalAssetRevision,
   decodeUtf8,
+  fullCanonicalAssetMetadataRequirements,
   materializeContentSource,
   materializeContentSnapshot,
   ContentSourceChangedError,
@@ -75,10 +76,14 @@ import {
 } from "./asset-patch-core";
 import type { UploadTicket } from "./types";
 import {
+  areCanonicalAssetFileEntriesCurrent,
   loadCanonicalAssetBaseEntries,
   synchronizeCanonicalAssets,
 } from "./canonical-metadata-backfill";
-import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
+import {
+  loadCanonicalAssetFileEntries,
+  loadCanonicalAssetFileEntriesForRecovery,
+} from "./canonical-metadata-persistence";
 import {
   deleteAssetFoldersWithClient,
   loadAssetFoldersByProjectWithClient,
@@ -128,6 +133,7 @@ const defaultDependencies = {
   loadCanonicalAssetBaseEntries,
   synchronizeCanonicalAssets,
   loadCanonicalAssetFileEntries,
+  loadCanonicalAssetFileEntriesForRecovery,
   createAssetIndex,
   performanceNow: () => performance.now(),
 };
@@ -864,6 +870,30 @@ export class PostgresAssetRepository implements AssetRepository {
       entries = await this.measurePerformance(
         "canonical-metadata",
         async () => {
+          const metadataRequirements =
+            requirements === undefined
+              ? fullCanonicalAssetMetadataRequirements
+              : {
+                  structuredProperties:
+                    requiresStructuredProperties(requirements),
+                  excerpt: requirements.excerpt,
+                };
+          const current =
+            await this.dependencies.loadCanonicalAssetFileEntriesForRecovery({
+              client: this.context.postgrest.client,
+              projectId: this.projectId,
+              assetIds: candidateAssetIds,
+            });
+          if (
+            current.inconsistentRows.length === 0 &&
+            areCanonicalAssetFileEntriesCurrent({
+              baseEntries: candidateBaseEntries,
+              currentEntries: current.entries,
+              requirements: metadataRequirements,
+            })
+          ) {
+            return current.entries;
+          }
           const result = await this.synchronizeTrusted(
             requirements,
             candidateAssetIds
