@@ -143,21 +143,7 @@ test("allows Video inside a Div with valid children", () => {
   expect(runAudit({ instances, props })).toEqual([]);
 });
 
-test("allows Video without controls inside a Div link descendant", () => {
-  const { instances, props } = renderData(
-    <$.Body ws:id="body">
-      <$.Link>
-        <$.Box>
-          <$.Video />
-        </$.Box>
-      </$.Link>
-    </$.Body>
-  );
-
-  expect(runAudit({ instances, props })).toEqual([]);
-});
-
-test("warns about controlled Video inside a Div link descendant", () => {
+test("reports the Link constraint for Video inside a Div", () => {
   const { instances, props } = renderData(
     <$.Body ws:id="body">
       <$.Link>
@@ -172,7 +158,7 @@ test("warns about controlled Video inside a Div link descendant", () => {
     {
       ruleId: "html-content-model",
       severity: "warning",
-      message: "Placing <video> element inside a <div> violates HTML spec.",
+      message: "Placing <video> element inside a <a> violates HTML spec.",
       location: {
         pageId: "marketedge",
         pageName: "MarketEdge",

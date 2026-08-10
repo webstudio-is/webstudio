@@ -15,7 +15,6 @@ import type { InstanceSelector } from "./instance-path";
 
 type Metas = Map<Instance["component"], WsComponentMeta>;
 type HtmlTagsByInstanceId = Map<Instance["id"], string>;
-type InteractiveInstanceIds = Set<Instance["id"]>;
 
 const getTag = ({
   instance,
@@ -52,31 +51,7 @@ const getElementContentModel = (tag: undefined | string) => {
  * though img is an exception and historically its interactivity ignored
  * so img can be put into links and buttons
  */
-const getInteractiveInstanceIds = (props: Props) => {
-  const instanceIds: InteractiveInstanceIds = new Set();
-  for (const prop of props.values()) {
-    if (
-      prop.name === "controls" &&
-      (prop.type !== "boolean" || prop.value === true)
-    ) {
-      instanceIds.add(prop.instanceId);
-    }
-  }
-  return instanceIds;
-};
-
-const isTagInteractive = ({
-  tag,
-  instanceId,
-  interactiveInstanceIds,
-}: {
-  tag: string;
-  instanceId: Instance["id"];
-  interactiveInstanceIds: InteractiveInstanceIds;
-}) => {
-  if (tag === "audio" || tag === "video") {
-    return interactiveInstanceIds.has(instanceId);
-  }
+const isTagInteractive = (tag: string) => {
   return (
     tag !== "img" &&
     getElementContentModel(tag)?.categories.includes("interactive") === true
@@ -87,12 +62,10 @@ const isTagSatisfyingContentModel = ({
   tag,
   component,
   allowedCategories,
-  isInteractive,
 }: {
   tag: undefined | string;
   component: Instance["component"];
   allowedCategories: undefined | string[];
-  isInteractive: boolean;
 }) => {
   // slot or collection does not have tag and should pass through allowed categories
   if (tag === undefined) {
@@ -128,7 +101,7 @@ const isTagSatisfyingContentModel = ({
   }
   // prevent nesting interactive elements
   // like button > button or a > input
-  if (allowedCategories.includes("non-interactive") && isInteractive) {
+  if (allowedCategories.includes("non-interactive") && isTagInteractive(tag)) {
     return false;
   }
   // prevent nesting form elements
@@ -145,8 +118,7 @@ const isTagSatisfyingContentModel = ({
  */
 const getElementChildren = (
   tag: undefined | string,
-  allowedCategories: undefined | string[],
-  isInteractive: boolean
+  allowedCategories: undefined | string[]
 ) => {
   // A transparent component without a known parent imposes no constraint.
   if (tag === undefined && allowedCategories === undefined) {
@@ -167,7 +139,7 @@ const getElementChildren = (
   // like button > button or a > input
   if (
     tag &&
-    (isInteractive || allowedCategories?.includes("non-interactive"))
+    (isTagInteractive(tag) || allowedCategories?.includes("non-interactive"))
   ) {
     elementChildren = [...elementChildren, "non-interactive"];
   }
@@ -203,14 +175,12 @@ const computeAllowedCategories = ({
   metas,
   instanceSelector,
   htmlTagsByInstanceId,
-  interactiveInstanceIds,
 }: {
   instances: Instances;
   props: Props;
   metas: Metas;
   instanceSelector: InstanceSelector;
   htmlTagsByInstanceId?: HtmlTagsByInstanceId;
-  interactiveInstanceIds: InteractiveInstanceIds;
 }) => {
   let instance: undefined | Instance;
   let allowedCategories: undefined | string[];
@@ -222,18 +192,56 @@ const computeAllowedCategories = ({
       continue;
     }
     const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
-    allowedCategories = getElementChildren(
-      tag,
-      allowedCategories,
-      tag !== undefined &&
-        isTagInteractive({
-          tag,
-          instanceId: instance.id,
-          interactiveInstanceIds,
-        })
-    );
+    allowedCategories = getElementChildren(tag, allowedCategories);
   }
   return allowedCategories;
+};
+
+const findHtmlConstraintInstance = ({
+  instances,
+  props,
+  metas,
+  instanceSelector,
+  htmlTagsByInstanceId,
+  tag,
+  component,
+}: {
+  instances: Instances;
+  props: Props;
+  metas: Metas;
+  instanceSelector: InstanceSelector;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
+  tag: undefined | string;
+  component: Instance["component"];
+}) => {
+  let allowedCategories: undefined | string[];
+  let wasSatisfying = true;
+  let constraintInstance: undefined | Instance;
+
+  for (const instanceId of instanceSelector.slice(1).reverse()) {
+    const ancestor = instances.get(instanceId);
+    if (ancestor === undefined) {
+      continue;
+    }
+    const ancestorTag = getTag({
+      instance: ancestor,
+      metas,
+      props,
+      htmlTagsByInstanceId,
+    });
+    allowedCategories = getElementChildren(ancestorTag, allowedCategories);
+    const isSatisfying = isTagSatisfyingContentModel({
+      tag,
+      component,
+      allowedCategories,
+    });
+    if (wasSatisfying && isSatisfying === false) {
+      constraintInstance = ancestor;
+    }
+    wasSatisfying = isSatisfying;
+  }
+
+  return constraintInstance;
 };
 
 const defaultComponentContentModel: ContentModel = {
@@ -405,9 +413,6 @@ export const isTreeSatisfyingContentModel = ({
   metas,
   instanceSelector,
   htmlTagsByInstanceId = getHtmlTagsFromProps(props),
-  _interactiveInstanceIds: interactiveInstanceIds = getInteractiveInstanceIds(
-    props
-  ),
   onError,
   _allowedCategories: allowedCategories,
   _allowedAncestorCategories: allowedAncestorCategories,
@@ -422,7 +427,6 @@ export const isTreeSatisfyingContentModel = ({
   _allowedCategories?: string[];
   _allowedAncestorCategories?: string[];
   _allowedParentCategories?: string[];
-  _interactiveInstanceIds?: InteractiveInstanceIds;
 }): boolean => {
   // compute constraints only when not passed from parent
   allowedCategories ??= computeAllowedCategories({
@@ -431,7 +435,6 @@ export const isTreeSatisfyingContentModel = ({
     props,
     metas,
     htmlTagsByInstanceId,
-    interactiveInstanceIds,
   });
   allowedParentCategories ??= getAllowedParentCategories({
     instanceSelector,
@@ -450,33 +453,33 @@ export const isTreeSatisfyingContentModel = ({
     return true;
   }
   const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
-  const isInteractive =
-    tag !== undefined &&
-    isTagInteractive({
-      tag,
-      instanceId: instance.id,
-      interactiveInstanceIds,
-    });
   const isTagSatisfying = isTagSatisfyingContentModel({
     tag,
     component: instance.component,
     allowedCategories,
-    isInteractive,
   });
   if (isTagSatisfying === false) {
-    const parentInstance = instances.get(parentInstanceId);
-    let parentTag: undefined | string;
-    if (parentInstance) {
-      parentTag = getTag({
-        instance: parentInstance,
+    const constraintInstance = findHtmlConstraintInstance({
+      instances,
+      props,
+      metas,
+      instanceSelector,
+      htmlTagsByInstanceId,
+      tag,
+      component: instance.component,
+    });
+    let constraintTag: undefined | string;
+    if (constraintInstance) {
+      constraintTag = getTag({
+        instance: constraintInstance,
         metas,
         props,
         htmlTagsByInstanceId,
       });
     }
-    if (parentTag) {
+    if (constraintTag) {
       onError?.(
-        `Placing <${tag}> element inside a <${parentTag}> violates HTML spec.`,
+        `Placing <${tag}> element inside a <${constraintTag}> violates HTML spec.`,
         instanceSelector
       );
     } else {
@@ -530,7 +533,7 @@ export const isTreeSatisfyingContentModel = ({
     isSatisfying = false;
   }
   const contentModel = getComponentContentModel(metas.get(instance.component));
-  allowedCategories = getElementChildren(tag, allowedCategories, isInteractive);
+  allowedCategories = getElementChildren(tag, allowedCategories);
   allowedParentCategories = contentModel.children;
   if (contentModel.descendants) {
     allowedAncestorCategories ??= [];
@@ -551,7 +554,6 @@ export const isTreeSatisfyingContentModel = ({
         _allowedCategories: allowedCategories,
         _allowedParentCategories: allowedParentCategories,
         _allowedAncestorCategories: allowedAncestorCategories,
-        _interactiveInstanceIds: interactiveInstanceIds,
       });
     }
   }
