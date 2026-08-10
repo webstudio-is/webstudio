@@ -10,10 +10,7 @@ import {
   createAssetQueryPreviewCompilationPlan,
   createBuildContentCompilationPlan,
 } from "@webstudio-is/project-build";
-import {
-  loadDevBuildByProjectId,
-  loadDevBuildContentEngineDataByProjectId,
-} from "@webstudio-is/project-build/server";
+import { loadDevBuildContentEngineDataByProjectId } from "@webstudio-is/project-build/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 
 const defaultBatchDependencies = {
@@ -22,7 +19,7 @@ const defaultBatchDependencies = {
 };
 
 const defaultQueryDependencies = {
-  loadDevBuildByProjectId,
+  loadDevBuildContentEngineDataByProjectId,
   previewAssetResourceQuery,
 };
 
@@ -100,7 +97,11 @@ export const previewProjectAssetQuery = async (
     phase: "build-plan",
     observer: onPerformanceEvent,
     operation: () =>
-      dependencies.loadDevBuildByProjectId(context, projectId, signal),
+      dependencies.loadDevBuildContentEngineDataByProjectId(
+        context,
+        projectId,
+        signal
+      ),
   });
   signal?.throwIfAborted();
   const databasePlan = createBuildContentCompilationPlan(build);
