@@ -36,8 +36,12 @@ test("resolves asset IDs and relative paths in Markdown images and links", () =>
     origin: "https://builder.example",
   });
 
-  expect(html).toContain('src="https://builder.example/cgi/image/image.png"');
-  expect(html).toContain('href="https://builder.example/cgi/image/image.png"');
+  expect(html).toContain(
+    'src="https://builder.example/cgi/image/image.png?format=raw"'
+  );
+  expect(html).toContain(
+    'href="https://builder.example/cgi/image/image.png?format=raw"'
+  );
   expect(html).toContain('src="https://example.com/image.png"');
 });
 

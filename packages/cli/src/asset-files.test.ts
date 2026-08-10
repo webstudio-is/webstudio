@@ -136,7 +136,9 @@ test("downloads asset files when they are missing from the synced asset cache", 
   await expect(readFile("public/assets/image.png", "utf8")).resolves.toBe(
     "downloaded"
   );
-  expect(fetch).toHaveBeenCalledWith("https://example.com/cgi/image/image.png");
+  expect(fetch).toHaveBeenCalledWith(
+    "https://example.com/cgi/image/image.png?format=raw"
+  );
 });
 
 test("retries asset download once after a server error", async () => {

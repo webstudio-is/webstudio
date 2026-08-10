@@ -593,9 +593,11 @@ describe("allowed-file-types", () => {
 
     test("generates correct URL for image assets", () => {
       const url = getAssetUrl(mockImageAsset, "https://example.com");
-      expect(url.href).toBe("https://example.com/cgi/image/photo.jpg");
+      expect(url.href).toBe(
+        "https://example.com/cgi/image/photo.jpg?format=raw"
+      );
       expect(url.pathname).toBe("/cgi/image/photo.jpg");
-      expect(url.search).toBe("");
+      expect(url.search).toBe("?format=raw");
     });
 
     test.each(["bmp", "ico", "avif"])(
@@ -1046,7 +1048,7 @@ describe("allowed-file-types", () => {
     test("converts image asset with all fields", () => {
       const result = toRuntimeAsset(mockImageAsset, "https://example.com");
       expect(result).toEqual({
-        url: "/cgi/image/photo.jpg",
+        url: "/cgi/image/photo.jpg?format=raw",
         width: 1920,
         height: 1080,
       });
@@ -1084,8 +1086,8 @@ describe("allowed-file-types", () => {
       const result1 = toRuntimeAsset(mockImageAsset, "https://cdn.example.com");
       const result2 = toRuntimeAsset(mockImageAsset, "http://localhost:3000");
       // Both should return the same relative URL
-      expect(result1.url).toBe("/cgi/image/photo.jpg");
-      expect(result2.url).toBe("/cgi/image/photo.jpg");
+      expect(result1.url).toBe("/cgi/image/photo.jpg?format=raw");
+      expect(result2.url).toBe("/cgi/image/photo.jpg?format=raw");
     });
 
     test("handles image without dimensions", () => {

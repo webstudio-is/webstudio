@@ -2613,7 +2613,7 @@ describe("prebuild", () => {
         template: ["defaults"],
       });
       expect(fetch).toHaveBeenCalledWith(
-        "https://assets.example/cgi/image/image.png"
+        "https://assets.example/cgi/image/image.png?format=raw"
       );
       expect(consoleWarn).not.toHaveBeenCalled();
       expect(consoleError).toHaveBeenCalledWith(
