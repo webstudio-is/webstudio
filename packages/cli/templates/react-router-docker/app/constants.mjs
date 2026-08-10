@@ -21,7 +21,7 @@ const UrlCanParse = (url) => {
  * @type {import("@webstudio-is/image").ImageLoader}
  */
 export const imageLoader = (props) => {
-  if ("width" in props === false) {
+  if (props.format === "raw") {
     return props.src;
   }
   // IPX (sharp) does not support ico

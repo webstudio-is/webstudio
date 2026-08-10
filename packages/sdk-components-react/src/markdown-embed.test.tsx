@@ -7,7 +7,7 @@ import { Image } from "./image";
 import { MarkdownEmbed } from "./markdown-embed";
 
 const imageLoader: ImageLoader = (options) => {
-  if ("width" in options === false) {
+  if (options.format === "raw") {
     return `/raw${options.src}`;
   }
   return `/optimized/${options.width}${options.src}`;
