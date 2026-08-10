@@ -15,10 +15,7 @@ import { AlertIcon } from "@webstudio-is/icons";
 import { $instances } from "~/shared/sync/data-stores";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
-import {
-  BindableExpressionControl,
-  updateBindableValue,
-} from "~/builder/shared/bindable-expression";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { CodeEditor } from "~/shared/code-editor";
 import { type ControlProps, VerticalLayout } from "../shared";
@@ -100,11 +97,10 @@ export const TextContent = ({
     }
   }
   const localValue = useDraftValue(String(displayedValue ?? ""), (value) => {
-    updateBindableValue({
-      expression: child.type === "expression" ? child.value : undefined,
-      value,
-      onChangeValue: (value) => updateChild("text", value),
-    });
+    if (child.type === "expression") {
+      return;
+    }
+    updateChild("text", value);
   });
 
   const isBindingResetForbidden = useIsBindingResetForbidden();

@@ -44,6 +44,8 @@ import {
   isPublicApiRemoteErrorCode,
   type PublishedProjectBundle,
   type PublicApiCommand,
+  type IssueReportInput,
+  type IssueReportResult,
 } from "@webstudio-is/protocol";
 export { getBundleVersion, bundleVersion } from "@webstudio-is/protocol";
 export { parseBuilderUrl } from "@webstudio-is/protocol";
@@ -1461,6 +1463,11 @@ export const searchProject = projectQueryInput<
 export const audit = projectQueryInput<
   AuthProjectParams & Record<string, unknown>
 >("audit");
+
+export const reportIssue = projectMutationInput<
+  AuthProjectParams & IssueReportInput,
+  IssueReportResult
+>("report-issue");
 
 export const verifyBindings = projectQueryInput<
   AuthProjectParams & PaginatedQueryInput & Record<string, unknown>

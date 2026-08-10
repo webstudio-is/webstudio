@@ -1,6 +1,32 @@
+import { getImageAttributes, type ImageLoader } from "@webstudio-is/image";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { renderToStaticMarkup } from "react-dom/server";
+import sanitizeHtml from "sanitize-html";
 import { describe, expect, test } from "vitest";
+import { Image } from "./image";
 import { MarkdownEmbed } from "./markdown-embed";
+
+const imageLoader: ImageLoader = (options) => {
+  if ("width" in options === false) {
+    return `/raw${options.src}`;
+  }
+  return `/optimized/${options.width}${options.src}`;
+};
+
+const readImageAttributes = (html: string) => {
+  let imageAttributes: Record<string, string> = {};
+  sanitizeHtml(html, {
+    allowedTags: ["img"],
+    allowedAttributes: false,
+    transformTags: {
+      img: (tagName, attributes) => {
+        imageAttributes = attributes;
+        return { tagName, attribs: attributes };
+      },
+    },
+  });
+  return imageAttributes;
+};
 
 describe("MarkdownEmbed", () => {
   test("adds stable unique IDs to ATX and setext headings", () => {
@@ -55,8 +81,10 @@ Hello, world!
       '<iframe src="https://player.vimeo.com/video/123" title="Demo" allowfullscreen></iframe>'
     );
     expect(html).toContain("<figcaption>Demo video</figcaption>");
+    expect(html).toContain('alt="Safe image"');
+    expect(html).toContain('src="https://example.com/image.png"');
     expect(html).toContain(
-      '<img src="https://example.com/image.png" alt="Safe image" />'
+      'srcset="https://example.com/image.png 384w, https://example.com/image.png 640w'
     );
     expect(html).not.toContain("<script");
     expect(html).not.toContain("javascript:");
@@ -88,4 +116,79 @@ Hello, world!
     expect(html).toContain('<h1 id="visible">Visible</h1>');
     expect(html).not.toContain("title: Hidden");
   });
+
+  test.each([
+    {
+      name: "published pages",
+      renderer: undefined,
+      loading: "lazy" as const,
+      decoding: "async" as const,
+    },
+    {
+      name: "the canvas",
+      renderer: "canvas" as const,
+      loading: "eager" as const,
+      decoding: "sync" as const,
+    },
+  ])(
+    "renders images like the SDK Image component on $name",
+    ({ renderer, loading, decoding }) => {
+      const context = {
+        assetBaseUrl: "/",
+        imageLoader,
+        resources: {},
+        breakpoints: [],
+        onError: () => {},
+        renderer,
+      };
+      const markdownHtml = renderToStaticMarkup(
+        <ReactSdkContext.Provider value={context}>
+          <MarkdownEmbed
+            code={`<img src="/photo.jpg" alt="Photo" width="320" height="180" class="hero">`}
+          />
+        </ReactSdkContext.Provider>
+      );
+      const sdkHtml = renderToStaticMarkup(
+        <ReactSdkContext.Provider value={context}>
+          <div>
+            <Image
+              src="/photo.jpg"
+              alt="Photo"
+              width={320}
+              height={180}
+              className="hero"
+            />
+          </div>
+        </ReactSdkContext.Provider>
+      );
+      const optimizedImageHtml = renderToStaticMarkup(
+        <div>
+          <img
+            className="hero"
+            {...getImageAttributes({
+              src: "/photo.jpg",
+              alt: "Photo",
+              width: 320,
+              height: 180,
+              loader: imageLoader,
+              loading,
+              decoding,
+            })}
+          />
+        </div>
+      );
+
+      expect(readImageAttributes(markdownHtml)).toEqual(
+        readImageAttributes(sdkHtml)
+      );
+      expect(readImageAttributes(markdownHtml)).toEqual(
+        readImageAttributes(optimizedImageHtml)
+      );
+      expect(markdownHtml).toContain(`loading="${loading}"`);
+      expect(markdownHtml).toContain(`decoding="${decoding}"`);
+      expect(markdownHtml.indexOf(" srcset=")).toBeLessThan(
+        markdownHtml.indexOf(" src=")
+      );
+    }
+  );
 });

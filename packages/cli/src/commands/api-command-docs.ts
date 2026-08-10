@@ -4,6 +4,9 @@ import { publicApiOperations } from "@webstudio-is/protocol";
 
 const apiUseCasesMarkdown = readCliDoc("api-use-cases");
 
+export const projectSessionResultMetadataDescription =
+  "Successful command JSON includes compact meta.session with operationId, buildId, version, source, commitStatus, committed, namespaceCounts, diagnosticCount, non-empty diagnostic summaries, and optional compatibilityVersion.";
+
 type UseCaseScenario = {
   useCase: string;
   commands: string[];

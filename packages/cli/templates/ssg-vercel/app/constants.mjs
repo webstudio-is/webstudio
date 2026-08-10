@@ -13,7 +13,7 @@ export const imageLoader = (props) => {
     return props.src;
   }
 
-  if (props.format === "raw") {
+  if ("width" in props === false) {
     return props.src;
   }
 

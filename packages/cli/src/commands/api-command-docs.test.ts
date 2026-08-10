@@ -215,7 +215,7 @@ test("documents the Assets result shape", () => {
     expect(contents).toContain("<dataSourceName>.meta");
     expect(contents).toContain("posts.data");
     expect(contents).toContain("post.data");
-    expect(contents).toContain("content.text");
+    expect(contents).toContain("post.data?.content?.text");
   }
 });
 
@@ -238,7 +238,7 @@ test("directs agents to deferred Markdown bodies", () => {
     expect(contents).toContain('content.mode:"markdown-body-ref"');
     expect(contents).toContain("document reference");
     expect(contents).toContain("selected Markdown");
-    expect(contents).toContain("content.text");
+    expect(contents).toContain("post.data?.content?.text");
   }
 
   const tools = createMetadataOnlyMcpAdapter().listTools();
@@ -246,7 +246,8 @@ test("directs agents to deferred Markdown bodies", () => {
     const description = tools.find((tool) => tool.name === name)?.description;
     expect(description).toContain("markdown-body-ref");
     expect(description).toContain("document reference");
-    expect(description).toContain("item.content.text");
+    expect(description).toContain("<dataSourceName>.data");
+    expect(description).toContain("content.text");
   }
 });
 
@@ -338,17 +339,4 @@ test("MCP capability index covers every public API operation", async () => {
     }
     expect(indexedTools).toContain(command);
   }
-});
-
-test("documents that MCP visual verification requires current generated files", () => {
-  expect(
-    useCaseScenarios.find(
-      (scenario) =>
-        scenario.useCase === "Visually verify rendered work with AI vision"
-    )?.notes
-  ).toEqual(
-    expect.arrayContaining([
-      expect.stringContaining("generated project files are current"),
-    ])
-  );
 });

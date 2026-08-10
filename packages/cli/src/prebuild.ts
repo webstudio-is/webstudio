@@ -100,6 +100,7 @@ import { formatZodIssues } from "./zod-utils";
 import { createFramework as createRemixFramework } from "./framework-remix";
 import { createFramework as createReactRouterFramework } from "./framework-react-router";
 import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
+import { routeTemplatesDirectory } from "./framework";
 
 export const generatedFilesManifest = join(
   ".webstudio",
@@ -738,6 +739,7 @@ const importFrom = (importee: string, importer: string) => {
 };
 
 const npmrc = `force=true
+engine-strict=true
 loglevel=error
 audit=false
 fund=false
@@ -879,19 +881,17 @@ export const prebuild = async (options: {
 
   const preserveRouteTemplates =
     options.incremental === true || options.preserveRouteTemplates === true;
+  const frameworkOptions = {
+    preserveTemplates: preserveRouteTemplates,
+    templatesDirectory: join(buildRoot, routeTemplatesDirectory),
+  };
   let framework;
   if (options.template.includes("ssg")) {
-    framework = await createVikeSsgFramework({
-      preserveTemplates: preserveRouteTemplates,
-    });
+    framework = await createVikeSsgFramework(frameworkOptions);
   } else if (options.template.includes("react-router")) {
-    framework = await createReactRouterFramework({
-      preserveTemplates: preserveRouteTemplates,
-    });
+    framework = await createReactRouterFramework(frameworkOptions);
   } else {
-    framework = await createRemixFramework({
-      preserveTemplates: preserveRouteTemplates,
-    });
+    framework = await createRemixFramework(frameworkOptions);
   }
 
   const assetBaseUrl = await readAssetBaseUrl(join(cwd(), "app/constants.mjs"));
@@ -1500,9 +1500,14 @@ export const prebuild = async (options: {
     generateRedirectsModule(pages.redirects)
   );
 
-  if (pages.redirects !== undefined && pages.redirects.length > 0) {
+  const redirectFallbackPath = join(routesDir, "$.tsx");
+  if (
+    pages.redirects !== undefined &&
+    pages.redirects.length > 0 &&
+    generatedFiles.has(normalize(redirectFallbackPath)) === false
+  ) {
     await writeGeneratedFile(
-      join(routesDir, "$.tsx"),
+      redirectFallbackPath,
       generateRedirectFallbackRoute(
         options.template.includes("react-router") ? "react-router" : "remix"
       )

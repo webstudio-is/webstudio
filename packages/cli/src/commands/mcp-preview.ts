@@ -1,6 +1,8 @@
 import {
   arePreviewImageDomainsEqual,
   createPreviewController,
+  findAvailablePort,
+  isPreviewPortAvailable,
   type PreviewMode,
 } from "../preview-server";
 import {
@@ -8,7 +10,8 @@ import {
   createScreenshotCaptureSession,
 } from "../screenshot";
 import { inspectGeneratedBuildMetrics } from "../generated-build-metrics";
-import { createExclusiveAsyncRunner } from "../async-utils";
+import { createExclusiveAsyncRunner, withTimeout } from "../async-utils";
+import { defaultScreenshotTimeout } from "@webstudio-is/project-build/visual";
 import {
   preparePreviewProject,
   previewDefaultTemplate,
@@ -66,18 +69,37 @@ type McpToolProgress = {
   report: (message: string) => void;
 };
 
+const getPreparationProgress = (
+  progress: McpToolProgress | undefined,
+  tool: "screenshot" | "preview.start"
+) =>
+  progress === undefined
+    ? {}
+    : {
+        reportProgress: (message: string) =>
+          progress.report(`tool ${tool} ${message}`),
+      };
+
 export const createPreviewFreshness = () => {
   let revision = 0;
   let freshRevision = -1;
+  let renderedProjectVersion: number | undefined;
   return {
     markStale() {
       revision += 1;
     },
     isStale: () => freshRevision !== revision,
     capture: () => revision,
-    markFresh(capturedRevision: number) {
+    status: () => ({
+      stale: freshRevision !== revision,
+      ...(renderedProjectVersion === undefined
+        ? {}
+        : { renderedProjectVersion }),
+    }),
+    markFresh(capturedRevision: number, projectVersion?: number) {
       if (capturedRevision === revision) {
         freshRevision = revision;
+        renderedProjectVersion = projectVersion;
       }
     },
   };
@@ -103,6 +125,115 @@ const isSameCaptureSessionConfig = (
 const defaultPreviewSource = "session" satisfies PreviewSource;
 const defaultSleep = (durationMs: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, durationMs));
+
+export const resolveMcpPreviewInput = async (
+  input: McpPreviewInput,
+  getAvailablePort: (host?: string) => Promise<number> = findAvailablePort
+) => {
+  if (input.port !== undefined && input.port !== 0) {
+    return input;
+  }
+  return {
+    ...input,
+    port: await getAvailablePort(input.host ?? "127.0.0.1"),
+  };
+};
+
+const getRunningPreviewPort = (
+  previewStatus: { running: boolean; url?: string },
+  host: string | undefined
+) => {
+  if (previewStatus.running === false || previewStatus.url === undefined) {
+    return;
+  }
+  const previewUrl = new URL(previewStatus.url);
+  if (host !== undefined && previewUrl.hostname !== host) {
+    return;
+  }
+  const defaultPort =
+    previewUrl.protocol === "http:"
+      ? 80
+      : previewUrl.protocol === "https:"
+        ? 443
+        : undefined;
+  const port = previewUrl.port === "" ? defaultPort : Number(previewUrl.port);
+  return port !== undefined && Number.isInteger(port) && port > 0
+    ? port
+    : undefined;
+};
+
+export const resolveMcpScreenshotInput = async (
+  input: McpScreenshotInput,
+  previewStatus: { running: boolean; url?: string },
+  {
+    getAvailablePort = findAvailablePort,
+    isPortAvailable = isPreviewPortAvailable,
+  }: {
+    getAvailablePort?: (host?: string) => Promise<number>;
+    isPortAvailable?: (host: string, port: number) => Promise<boolean>;
+  } = {}
+) => {
+  if (
+    input.url !== undefined ||
+    input.baseUrl !== undefined ||
+    input.source === "local"
+  ) {
+    return input;
+  }
+  const runningPreviewPort = getRunningPreviewPort(previewStatus, input.host);
+  if (input.port !== undefined && input.port !== 0) {
+    const host = input.host ?? "127.0.0.1";
+    if (runningPreviewPort === input.port) {
+      return input;
+    }
+    if ((await isPortAvailable(host, input.port)) === false) {
+      throw Object.assign(
+        new Error(
+          `Preview port ${input.port} is already in use on ${host}. Pass baseUrl with path to capture that existing site, or choose another port.`
+        ),
+        { code: "PREVIEW_PORT_IN_USE" }
+      );
+    }
+    return input;
+  }
+  const host = input.host ?? "127.0.0.1";
+  if (runningPreviewPort !== undefined) {
+    return { ...input, port: runningPreviewPort };
+  }
+  return { ...input, port: await getAvailablePort(host) };
+};
+
+export const startMcpPreview = async <Result>({
+  input,
+  startPreview,
+  getAvailablePort = findAvailablePort,
+  sleep = defaultSleep,
+}: {
+  input: McpPreviewInput;
+  startPreview: (input: McpPreviewInput) => Promise<Result>;
+  getAvailablePort?: (host?: string) => Promise<number>;
+  sleep?: (durationMs: number) => Promise<void>;
+}) => {
+  const attempts = input.port === undefined || input.port === 0 ? 5 : 1;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const resolvedInput = await resolveMcpPreviewInput(input, getAvailablePort);
+    try {
+      return await startPreview(resolvedInput);
+    } catch (error) {
+      if (attempt === attempts - 1) {
+        throw error;
+      }
+      await sleep(500);
+    }
+  }
+  throw new Error("MCP preview did not start.");
+};
+
+const createScreenshotTimeoutError = (timeout: number) =>
+  Object.assign(
+    new Error(`Screenshot capture did not finish within ${timeout}ms.`),
+    { code: "SCREENSHOT_TIMEOUT" }
+  );
 const getPreviewSource = (source: PreviewSource | undefined): PreviewSource =>
   source ?? defaultPreviewSource;
 
@@ -135,9 +266,11 @@ const prepareDefaultPreviewProject = (
   {
     preserveGeneratedProject = false,
     prepareForIncrementalGeneration = false,
+    reportProgress,
   }: {
     preserveGeneratedProject?: boolean;
     prepareForIncrementalGeneration?: boolean;
+    reportProgress?: (message: string) => void;
   } = {}
 ) =>
   preparePreviewProject({
@@ -151,6 +284,7 @@ const prepareDefaultPreviewProject = (
     prepareSessionDataFile,
     preserveGeneratedProject,
     prepareForIncrementalGeneration,
+    reportProgress,
   });
 
 export const createMcpPreviewHandlers = ({
@@ -158,6 +292,7 @@ export const createMcpPreviewHandlers = ({
   isStale = () => true,
   captureFreshness = () => 0,
   markFresh = () => undefined,
+  getProjectVersion = () => undefined,
   preparePreview = prepareDefaultPreviewProject,
   prepareSessionDataFile,
   captureScreenshot = captureScreenshotWithBrowserInstall,
@@ -168,7 +303,8 @@ export const createMcpPreviewHandlers = ({
   preview: McpPreviewController;
   isStale?: () => boolean;
   captureFreshness?: () => number;
-  markFresh?: (freshness: number) => void;
+  markFresh?: (freshness: number, projectVersion?: number) => void;
+  getProjectVersion?: () => number | undefined;
   preparePreview?: typeof prepareDefaultPreviewProject;
   prepareSessionDataFile?: () => Promise<void>;
   captureScreenshot?: typeof captureScreenshotWithBrowserInstall;
@@ -190,6 +326,22 @@ export const createMcpPreviewHandlers = ({
     } finally {
       captureSession = undefined;
       captureSessionConfig = undefined;
+    }
+  };
+  const captureWithTimeout = async <Result>(
+    operation: () => Promise<Result>,
+    timeout: number,
+    resetSession?: () => Promise<void>
+  ) => {
+    try {
+      return await withTimeout(operation(), timeout, () =>
+        createScreenshotTimeoutError(timeout)
+      );
+    } catch (error) {
+      if (resetSession !== undefined) {
+        await resetSession().catch(() => undefined);
+      }
+      throw error;
     }
   };
   const getCaptureSession = async (input: McpScreenshotInput) => {
@@ -292,8 +444,10 @@ export const createMcpPreviewHandlers = ({
         {
           preserveGeneratedProject: canReusePreview && mode === "iterative",
           prepareForIncrementalGeneration: mode === "iterative",
+          ...getPreparationProgress(progress, "screenshot"),
         }
       );
+      const projectVersion = getProjectVersion();
       progress?.report(
         `tool screenshot ${canReusePreview ? "refreshing" : "starting"} ${mode} preview server`
       );
@@ -307,7 +461,7 @@ export const createMcpPreviewHandlers = ({
         restart: canReusePreview === false,
       });
       activeSource = source;
-      markFresh(freshness);
+      markFresh(freshness, projectVersion);
     }
     return preview.resolveUrl(input.path);
   };
@@ -354,15 +508,21 @@ export const createMcpPreviewHandlers = ({
     }
     return result;
   };
+  const getManagedPreviewMetadata = (input: McpScreenshotInput) =>
+    input.path !== undefined && input.baseUrl === undefined
+      ? { previewMode: preview.status().mode }
+      : {};
   return {
     async startPreview(input: McpPreviewInput, progress?: McpToolProgress) {
       return await runPreviewLifecycle(async () => {
         const mode = input.mode ?? "iterative";
         const source = getPreviewSource(input.source);
+        const previewWasStale = isStale();
         const canReusePreview =
           mode === "iterative" &&
           isPreviewTargetCompatible(input, mode, preview.status());
-        if (canReusePreview === false) {
+        const restartPreview = canReusePreview === false || previewWasStale;
+        if (restartPreview) {
           await closeCaptureSession();
         }
         validatePreviewServerOptions({
@@ -380,8 +540,10 @@ export const createMcpPreviewHandlers = ({
           {
             preserveGeneratedProject: canReusePreview && mode === "iterative",
             prepareForIncrementalGeneration: mode === "iterative",
+            ...getPreparationProgress(progress, "preview.start"),
           }
         );
+        const projectVersion = getProjectVersion();
         progress?.report(
           `tool preview.start ${canReusePreview ? "refreshing" : "starting"} ${mode} preview server`
         );
@@ -390,10 +552,10 @@ export const createMcpPreviewHandlers = ({
           mode,
           cwd: previewProject.cwd,
           buildCacheKey: previewProject.buildCacheKey,
-          restart: canReusePreview === false,
+          restart: restartPreview,
         });
         activeSource = source;
-        markFresh(freshness);
+        markFresh(freshness, projectVersion);
         return {
           ...result,
           ...(mode === "production"
@@ -416,39 +578,42 @@ export const createMcpPreviewHandlers = ({
         const previewReadyAt = Date.now();
         progress?.report(`tool screenshot capturing ${url}`);
         const captureOptions = getCaptureOptions(input, url);
-        let result: Awaited<ReturnType<typeof captureScreenshot>>;
-        if (
-          isManagedSessionPreviewCapture(input) &&
-          createCaptureSession !== undefined
-        ) {
-          const captureSession = await getCaptureSession(input);
-          result = await captureSession.capture(captureOptions);
-          for (
-            let retry = 0;
-            retry < 2 && result.navigation?.generatedSiteRootPresent === false;
-            retry += 1
-          ) {
-            progress?.report(
-              "tool screenshot waiting for refreshed generated route"
-            );
-            await sleep(1000);
-            result = await captureSession.capture(captureOptions);
-          }
-        } else {
-          result = await captureScreenshot({
-            ...captureOptions,
-            isJson: false,
-            isMcp: true,
-            isInteractive: false,
-            confirmInstall: async () => false,
-          });
-        }
+        const managedCapture = isManagedSessionPreviewCapture(input);
+        const timeout = input.timeout ?? defaultScreenshotTimeout;
+        const result = await captureWithTimeout(
+          async () => {
+            if (managedCapture && createCaptureSession !== undefined) {
+              const captureSession = await getCaptureSession(input);
+              let captureResult = await captureSession.capture(captureOptions);
+              for (
+                let retry = 0;
+                retry < 2 &&
+                captureResult.navigation?.generatedSiteRootPresent === false;
+                retry += 1
+              ) {
+                progress?.report(
+                  "tool screenshot waiting for refreshed generated route"
+                );
+                await sleep(1000);
+                captureResult = await captureSession.capture(captureOptions);
+              }
+              return captureResult;
+            }
+            return await captureScreenshot({
+              ...captureOptions,
+              isJson: false,
+              isMcp: true,
+              isInteractive: false,
+              confirmInstall: async () => false,
+            });
+          },
+          timeout,
+          managedCapture ? closeCaptureSession : undefined
+        );
         const completedAt = Date.now();
         return {
           ...assertGeneratedSiteCapture(input, result),
-          ...(input.path !== undefined && input.baseUrl === undefined
-            ? { previewMode: preview.status().mode }
-            : {}),
+          ...getManagedPreviewMetadata(input),
           lifecycleTimings: {
             previewRefreshMs: previewReadyAt - startedAt,
             captureMs: completedAt - previewReadyAt,
@@ -491,16 +656,24 @@ export const createMcpPreviewHandlers = ({
         progress?.report(
           `tool screenshot capturing ${new Set(urls).size} pages across ${inputs.length} viewport widths`
         );
-        const results = await (
-          await getCaptureSession(firstInput)
-        ).capturePage(
-          inputs.map((input, index) => {
-            const url = urls[index];
-            if (url === undefined) {
-              throw new Error("Screenshot URL resolution was incomplete.");
-            }
-            return getCaptureOptions(input, url);
-          })
+        const timeout = Math.max(
+          ...inputs.map((input) => input.timeout ?? defaultScreenshotTimeout)
+        );
+        const results = await captureWithTimeout(
+          async () => {
+            const captureSession = await getCaptureSession(firstInput);
+            return await captureSession.capturePage(
+              inputs.map((input, index) => {
+                const url = urls[index];
+                if (url === undefined) {
+                  throw new Error("Screenshot URL resolution was incomplete.");
+                }
+                return getCaptureOptions(input, url);
+              })
+            );
+          },
+          timeout,
+          closeCaptureSession
         );
         return results.map((result, index) => {
           const input = inputs[index];
@@ -509,9 +682,7 @@ export const createMcpPreviewHandlers = ({
           }
           return {
             ...assertGeneratedSiteCapture(input, result),
-            ...(input.path !== undefined && input.baseUrl === undefined
-              ? { previewMode: preview.status().mode }
-              : {}),
+            ...getManagedPreviewMetadata(input),
           };
         });
       });

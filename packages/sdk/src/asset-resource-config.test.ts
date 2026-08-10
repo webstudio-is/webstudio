@@ -223,6 +223,7 @@ describe("asset query resource configuration", () => {
 
   test("round-trips typed filters with Webstudio value expressions", () => {
     const configuration = {
+      result: "many" as const,
       where: {
         all: [
           {
@@ -261,6 +262,40 @@ describe("asset query resource configuration", () => {
 
     expect(parseStructuredAssetQueryResourceBody(body)).toEqual(configuration);
     expect(body).toContain("value: $ws$dataSource$routeSlug");
+  });
+
+  test("omits pagination from saved single-result queries", () => {
+    const configuration =
+      createDefaultStructuredAssetQueryResourceConfiguration();
+    const body = createStructuredAssetQueryResourceBody({
+      ...configuration,
+      result: "one",
+      limit: "1",
+      offset: "4",
+    });
+    const query = parseExpressionObject(body)?.get("query");
+    const fields = parseExpressionObject(query ?? "");
+
+    expect(fields?.has("limit")).toBe(false);
+    expect(fields?.has("offset")).toBe(false);
+    expect(parseStructuredAssetQueryResourceBody(body)).toMatchObject({
+      result: "one",
+      limit: String(assetResourceLimits.defaultResultCount),
+      offset: "0",
+    });
+  });
+
+  test("defaults existing serialized queries to many results", () => {
+    expect(
+      parseStructuredAssetQueryResourceBody(`({ query: {
+        where: { all: [] },
+        sort: [],
+        limit: 1,
+        offset: 0,
+        output: { mode: "base", includeMetadata: true },
+        content: { mode: "none" },
+      } })`)
+    ).toMatchObject({ result: "many", limit: "1", offset: "0" });
   });
 
   test("rejects malformed structured resource bodies", () => {

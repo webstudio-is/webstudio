@@ -34,7 +34,6 @@ export const TextContentSection = ({
             computeExpression(values.content, variableValues) ?? ""
           )}
           bound={isLiteralExpression(values.content) === false}
-          allowBindingOverwrite={false}
           scope={scope}
           aliases={aliases}
           onChangeValue={(value) =>

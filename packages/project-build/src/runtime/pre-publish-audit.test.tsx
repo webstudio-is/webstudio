@@ -128,17 +128,45 @@ test("allows valid legacy CodeText children", () => {
   expect(runAudit({ instances, props })).toEqual([]);
 });
 
-test("allows valid Video children", () => {
+test("allows Video inside a Div with valid children", () => {
   const { instances, props } = renderData(
     <$.Body ws:id="body">
-      <$.Video>
-        <ws.element ws:tag="source" />
-        <ws.element ws:tag="track" />
-      </$.Video>
+      <$.Box>
+        <$.Video>
+          <ws.element ws:tag="source" />
+          <ws.element ws:tag="track" />
+        </$.Video>
+      </$.Box>
     </$.Body>
   );
 
   expect(runAudit({ instances, props })).toEqual([]);
+});
+
+test("reports the Link constraint for Video inside a Div", () => {
+  const { instances, props } = renderData(
+    <$.Body ws:id="body">
+      <$.Link>
+        <$.Box>
+          <$.Video ws:id="video" controls />
+        </$.Box>
+      </$.Link>
+    </$.Body>
+  );
+
+  expect(runAudit({ instances, props })).toEqual([
+    {
+      ruleId: "html-content-model",
+      severity: "warning",
+      message: "Placing <video> element inside a <a> violates HTML spec.",
+      location: {
+        pageId: "marketedge",
+        pageName: "MarketEdge",
+        pagePath: "/marketedge",
+        instanceId: "video",
+      },
+    },
+  ]);
 });
 
 test("warns about unknown element tags without throwing", () => {

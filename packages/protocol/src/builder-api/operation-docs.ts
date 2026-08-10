@@ -314,6 +314,14 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "report-issue",
+    description:
+      "Create or deduplicate a structured anonymous LLM-authored issue after an explicit request or qualifying MCP friction. Exclude all identifying and project-specific data.",
+    examples: [
+      'MCP tool: report-issue {"trigger":"user-requested","category":"schema-or-docs-mismatch","deduplicationKey":"update-props-input-contract","title":"fix: Clarify the update-props input contract","agent":{"client":"Codex","provider":"OpenAI","model":"gpt-5.6-sol","reasoningEffort":"medium"},"report":{"userStory":"As a Webstudio user, I want routine MCP edits to complete without corrective retries.","summary":"A documented operation required a corrected retry.","attemptedWorkflow":["Inspect the target component.","Attempt the update with the advertised tool."],"expectedBehavior":"The documented input should be accepted.","actualResult":"The initial call returned BAD_REQUEST.","recoveryAttempts":["Inspect the schema and retry with corrected input nesting."],"userImpact":"The edit required extra tool calls.","technicalContext":"The update-props input shape was ambiguous.","acceptanceCriteria":["The exposed schema matches runtime validation.","A regression test covers the workflow."]}}',
+    ],
+  },
+  {
     command: "verify-bindings",
     description:
       "Statically verify persisted text, prop, resource, parameter, action, and page metadata bindings without resolving rendered values or executing external resources",
@@ -621,7 +629,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "create-assets-resource",
     description:
-      'Create a scoped Assets resource. Omit query to use the minimal default query. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false, and using content mode none. Use markdown-body-ref when querying a Markdown body directly; it requires storage-backed document resolution and never embeds the body in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }. Preview concrete queries and inspect size diagnostics before saving.',
+      'Create a scoped Assets resource. Omit query to use the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false, and using content mode none. Use markdown-body-ref when querying a Markdown body directly; it requires storage-backed document resolution and never embeds the body in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }. Preview concrete queries and inspect size diagnostics before saving.',
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio create-assets-resource --input assets-resource.json --json",
@@ -630,7 +638,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-assets-resource",
     description:
-      'Update an Assets resource. Set query to null to restore the minimal default query. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false, and using content mode none. Use markdown-body-ref for a directly queried Markdown body; it requires storage-backed document resolution and never embeds the body in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }.',
+      'Update an Assets resource. Set query to null to restore the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false, and using content mode none. Use markdown-body-ref for a directly queried Markdown body; it requires storage-backed document resolution and never embeds the body in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }.',
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio update-assets-resource --input assets-resource-update.json --json",

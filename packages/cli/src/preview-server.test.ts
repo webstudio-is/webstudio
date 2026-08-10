@@ -1,4 +1,5 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, vi } from "vitest";
@@ -6,10 +7,10 @@ import {
   createPreviewController,
   findAvailablePort,
   getPreviewBuildArgs,
-  getPreviewCommand,
   getNpmInvocation,
   getPreviewStartArgs,
   getPreviewUrl,
+  isPreviewPortAvailable,
   materializePreviewAssets,
   runPreviewBuild,
   startPreviewServer,
@@ -24,6 +25,28 @@ test("allocates an available local preview port", async () => {
   expect(port).toBeLessThanOrEqual(65_535);
 });
 
+test("repeatedly reports an unoccupied explicit preview port as available", async () => {
+  const server = createServer();
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  if (address === null || typeof address === "string") {
+    throw new Error("Expected the test server to have a TCP address.");
+  }
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => (error === undefined ? resolve() : reject(error)));
+  });
+
+  await expect(isPreviewPortAvailable("127.0.0.1", address.port)).resolves.toBe(
+    true
+  );
+  await expect(isPreviewPortAvailable("127.0.0.1", address.port)).resolves.toBe(
+    true
+  );
+});
+
 const createDependencies = (
   overrides: Partial<PreviewServerDependencies> = {}
 ): PreviewServerDependencies => ({
@@ -35,6 +58,14 @@ const createDependencies = (
   readFile: vi.fn(async () => "") as never,
   writeFile: vi.fn(async () => undefined) as never,
   sleep: vi.fn(async () => undefined),
+  killProcess: vi.fn(() => true),
+  killWindowsProcessTree: vi.fn(async () => true),
+  parentProcess: {
+    pid: 456,
+    once: vi.fn(),
+    off: vi.fn(),
+    kill: vi.fn(() => true),
+  },
   nodeExecPath: "/usr/bin/node",
   npmExecPath: undefined,
   platform: "linux",
@@ -106,18 +137,47 @@ test("builds iterative preview args for an ordinary reload server", () => {
   ]);
 });
 
-test("uses the platform npm executable for preview commands", () => {
-  expect(getPreviewCommand("linux")).toBe("npm");
-  expect(getPreviewCommand("darwin")).toBe("npm");
-  expect(getPreviewCommand("win32")).toBe("npm.cmd");
-});
-
 test("reuses the npm cli that launched webstudio for preview commands", () => {
   expect(
     getNpmInvocation(["run", "build"], {
       nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
       npmExecPath:
         "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      platform: "win32",
+    })
+  ).toEqual({
+    command: "C:\\Program Files\\nodejs\\node.exe",
+    args: [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "build",
+    ],
+  });
+});
+
+test("uses npm-cli when webstudio was launched through npx on windows", () => {
+  expect(
+    getNpmInvocation(["run", "build"], {
+      nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+      npmExecPath:
+        "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
+      platform: "win32",
+    })
+  ).toEqual({
+    command: "C:\\Program Files\\nodejs\\node.exe",
+    args: [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "build",
+    ],
+  });
+});
+
+test("uses npm-cli when windows npm launcher metadata is unavailable", () => {
+  expect(
+    getNpmInvocation(["run", "build"], {
+      nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+      npmExecPath: undefined,
       platform: "win32",
     })
   ).toEqual({
@@ -178,21 +238,33 @@ test("does not fail when the generated preview has no downloaded assets", async 
   }
 });
 
-test("runs generated project production build with the windows npm executable", async () => {
+test("runs generated project production build through windows npm-cli", async () => {
   const process = createPreviewProcess();
   const spawn = vi.fn(() => process);
   resolveProcessExit(process);
 
   await runPreviewBuild(
-    createDependencies({ spawn: spawn as never, platform: "win32" }),
+    createDependencies({
+      spawn: spawn as never,
+      nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+      platform: "win32",
+    }),
     "C:/project/.webstudio/preview"
   );
 
-  expect(spawn).toHaveBeenCalledWith("npm.cmd", ["run", "build"], {
-    cwd: "C:/project/.webstudio/preview",
-    stdio: "inherit",
-    env: expect.objectContaining({ NODE_ENV: "production" }),
-  });
+  expect(spawn).toHaveBeenCalledWith(
+    "C:\\Program Files\\nodejs\\node.exe",
+    [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "build",
+    ],
+    {
+      cwd: "C:/project/.webstudio/preview",
+      stdio: "inherit",
+      env: expect.objectContaining({ NODE_ENV: "production" }),
+    }
+  );
 });
 
 test("starts generated project production server with inherited stdio", () => {
@@ -244,7 +316,7 @@ test("passes explicit external image domains to the preview optimizer", () => {
   );
 });
 
-test("starts generated project production server with the windows npm executable", () => {
+test("starts generated project production server through windows npm-cli", () => {
   const process = {} as ReturnType<typeof startPreviewServer>["process"];
   const spawn = vi.fn(() => process);
 
@@ -255,21 +327,33 @@ test("starts generated project production server with the windows npm executable
         port: 5173,
         cwd: "C:/project/.webstudio/preview",
       },
-      createDependencies({ spawn: spawn as never, platform: "win32" })
+      createDependencies({
+        spawn: spawn as never,
+        nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+        platform: "win32",
+      })
     )
   ).toEqual({
     url: "http://127.0.0.1:5173/",
     process,
   });
-  expect(spawn).toHaveBeenCalledWith("npm.cmd", ["run", "start"], {
-    cwd: "C:/project/.webstudio/preview",
-    stdio: "inherit",
-    env: expect.objectContaining({
-      HOST: "127.0.0.1",
-      PORT: "5173",
-      NODE_ENV: "production",
-    }),
-  });
+  expect(spawn).toHaveBeenCalledWith(
+    "C:\\Program Files\\nodejs\\node.exe",
+    [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "start",
+    ],
+    {
+      cwd: "C:/project/.webstudio/preview",
+      stdio: "inherit",
+      env: expect.objectContaining({
+        HOST: "127.0.0.1",
+        PORT: "5173",
+        NODE_ENV: "production",
+      }),
+    }
+  );
 });
 
 test("preview controller builds once and reuses a running server", async () => {
@@ -302,6 +386,7 @@ test("preview controller builds once and reuses a running server", async () => {
   expect(spawn).toHaveBeenCalledTimes(2);
   expect(spawn).toHaveBeenLastCalledWith("npm", ["run", "start"], {
     cwd: "/tmp/preview",
+    detached: true,
     stdio: ["ignore", "pipe", "pipe"],
     env: expect.objectContaining({
       HOST: "127.0.0.1",
@@ -348,6 +433,59 @@ test("iterative preview starts without a production build", async () => {
       }),
     })
   );
+});
+
+test("starts a managed Windows preview through npm-cli with supported spawn options", async () => {
+  const process = createPreviewProcess();
+  const spawn = vi.fn(() => process);
+  const controller = createPreviewController(
+    {
+      host: "127.0.0.1",
+      port: 5173,
+      cwd: "C:/project/.webstudio/preview",
+      mode: "iterative",
+    },
+    createDependencies({
+      spawn: spawn as never,
+      nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+      npmExecPath:
+        "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
+      platform: "win32",
+    })
+  );
+
+  await expect(controller.start()).resolves.toMatchObject({ running: true });
+
+  expect(spawn).toHaveBeenCalledWith(
+    "C:\\Program Files\\nodejs\\node.exe",
+    [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "dev",
+      "--",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "5173",
+      "--strictPort",
+    ],
+    expect.objectContaining({
+      cwd: "C:/project/.webstudio/preview",
+      detached: false,
+      stdio: ["ignore", "pipe", "pipe"],
+    })
+  );
+});
+
+test("preview status omits fabricated server details when stopped", () => {
+  const controller = createPreviewController({
+    host: "127.0.0.1",
+    port: 5173,
+  });
+
+  expect(controller.status()).toEqual({
+    running: false,
+  });
 });
 
 test("preview controller reuses a matching persisted production build", async () => {
@@ -447,12 +585,19 @@ test("preview controller passes image domains to the managed server", async () =
   );
 });
 
-test("preview controller stops the running server", async () => {
+test("preview controller stops the Windows preview process tree", async () => {
   const process = createPreviewProcess();
   const buildProcess = createPreviewProcess();
+  let exitListener: (() => void) | undefined;
+  const killWindowsProcessTree = vi.fn(async () => {
+    exitListener?.();
+    return true;
+  });
   const controller = createPreviewController(
     { host: "127.0.0.1", port: 5173, cwd: "/tmp/preview" },
     createDependencies({
+      platform: "win32",
+      killWindowsProcessTree,
       spawn: vi
         .fn()
         .mockReturnValueOnce(buildProcess)
@@ -460,6 +605,41 @@ test("preview controller stops the running server", async () => {
     })
   );
   resolveProcessExit(buildProcess);
+  vi.mocked(
+    process.once as (event: string, callback: unknown) => unknown
+  ).mockImplementation((event, callback) => {
+    if (event === "exit" && typeof callback === "function") {
+      exitListener = callback as () => void;
+    }
+    return process;
+  });
+  await controller.start();
+
+  await expect(controller.stop()).resolves.toEqual({
+    running: false,
+  });
+  expect(killWindowsProcessTree).toHaveBeenCalledWith(123);
+  expect(process.kill).not.toHaveBeenCalled();
+  await expect(controller.stop()).resolves.toEqual({
+    running: false,
+  });
+});
+
+test("preview controller stops the entire POSIX preview process group", async () => {
+  const process = createPreviewProcess();
+  const killProcess = vi.fn(() => true);
+  const controller = createPreviewController(
+    {
+      host: "127.0.0.1",
+      port: 5173,
+      cwd: "/tmp/preview",
+      mode: "iterative",
+    },
+    createDependencies({
+      spawn: vi.fn(() => process) as never,
+      killProcess,
+    })
+  );
   let exitListener: (() => void) | undefined;
   vi.mocked(
     process.once as (event: string, callback: unknown) => unknown
@@ -469,26 +649,82 @@ test("preview controller stops the running server", async () => {
     }
     return process;
   });
-  vi.mocked(process.kill).mockImplementation(() => {
+  killProcess.mockImplementation(() => {
     exitListener?.();
     return true;
   });
 
   await controller.start();
+  await controller.stop();
 
-  await expect(controller.stop()).resolves.toEqual({
-    url: "http://127.0.0.1:5173/",
-    pid: undefined,
-    running: false,
-    mode: "production",
+  expect(killProcess).toHaveBeenCalledWith(-123, "SIGTERM");
+  expect(process.kill).not.toHaveBeenCalled();
+});
+
+test("preview controller stops its process group before propagating termination", async () => {
+  const process = createPreviewProcess();
+  const killProcess = vi.fn(() => true);
+  const parentProcess = {
+    pid: 456,
+    once: vi.fn(),
+    off: vi.fn(),
+    kill: vi.fn(() => true),
+  };
+  const controller = createPreviewController(
+    {
+      host: "127.0.0.1",
+      port: 5173,
+      cwd: "/tmp/preview",
+      mode: "iterative",
+    },
+    createDependencies({
+      spawn: vi.fn(() => process) as never,
+      killProcess,
+      parentProcess,
+    })
+  );
+
+  await controller.start();
+  const signalHandler = vi
+    .mocked(parentProcess.once)
+    .mock.calls.find(([signal]) => signal === "SIGTERM")?.[1] as
+    | (() => void)
+    | undefined;
+  signalHandler?.();
+
+  await vi.waitFor(() => {
+    expect(parentProcess.kill).toHaveBeenCalledWith(456, "SIGTERM");
   });
-  expect(process.kill).toHaveBeenCalledOnce();
-  await expect(controller.stop()).resolves.toEqual({
-    url: "http://127.0.0.1:5173/",
-    pid: undefined,
-    running: false,
-    mode: "production",
-  });
+
+  expect(killProcess).toHaveBeenCalledWith(-123, "SIGTERM");
+  expect(controller.status().running).toBe(false);
+});
+
+test("lets an outer lifecycle owner manage process signals", async () => {
+  const process = createPreviewProcess();
+  const parentProcess = {
+    pid: 456,
+    once: vi.fn(),
+    off: vi.fn(),
+    kill: vi.fn(() => true),
+  };
+  const controller = createPreviewController(
+    {
+      host: "127.0.0.1",
+      port: 5173,
+      cwd: "/tmp/preview",
+      mode: "iterative",
+    },
+    createDependencies({
+      spawn: vi.fn(() => process) as never,
+      parentProcess,
+    }),
+    { manageProcessSignals: false }
+  );
+
+  await controller.start();
+
+  expect(parentProcess.once).not.toHaveBeenCalled();
 });
 
 test("preview controller reuses custom running options when start has no options", async () => {
@@ -530,12 +766,13 @@ test("preview controller can restart a running server after rebuilding", async (
     .mockReturnValueOnce(firstProcess)
     .mockReturnValueOnce(secondBuildProcess)
     .mockReturnValueOnce(secondProcess);
+  const killProcess = vi.fn(() => true);
   resolveProcessExit(firstBuildProcess);
   resolveProcessExit(secondBuildProcess);
 
   const controller = createPreviewController(
     { host: "127.0.0.1", port: 5173, cwd: "/tmp/preview" },
-    createDependencies({ spawn: spawn as never })
+    createDependencies({ spawn: spawn as never, killProcess })
   );
 
   await expect(controller.start()).resolves.toEqual({
@@ -552,7 +789,7 @@ test("preview controller can restart a running server after rebuilding", async (
     mode: "production",
   });
 
-  expect(firstProcess.kill).toHaveBeenCalledOnce();
+  expect(killProcess).toHaveBeenCalledWith(-123, "SIGTERM");
   expect(spawn).toHaveBeenCalledTimes(4);
 });
 
@@ -579,7 +816,10 @@ test("ignores a delayed exit from a previously owned preview server", async () =
       cwd: "/tmp/preview",
       mode: "iterative",
     },
-    createDependencies({ spawn: spawn as never })
+    createDependencies({
+      spawn: spawn as never,
+      killProcess: vi.fn(() => false),
+    })
   );
 
   await controller.start();

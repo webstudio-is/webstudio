@@ -1,11 +1,14 @@
 import {
+  execFile,
   spawn,
   type ChildProcess,
   type StdioOptions,
 } from "node:child_process";
 import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
-import { createServer as createTcpServer } from "node:net";
 import { basename, delimiter, dirname, join, parse, win32 } from "node:path";
+import detectPort from "detect-port";
+import getPort from "get-port";
+import pathKey from "path-key";
 import { parse as parseHtml, type DefaultTreeAdapterMap } from "parse5";
 import type { ProjectPreviewMode } from "@webstudio-is/project-build/visual";
 
@@ -26,6 +29,14 @@ export type PreviewServerResult = {
 
 export type PreviewServerDependencies = {
   spawn: typeof spawn;
+  killProcess: (pid: number, signal: NodeJS.Signals) => boolean;
+  killWindowsProcessTree: (pid: number) => Promise<boolean>;
+  parentProcess: {
+    pid: number;
+    once: (signal: NodeJS.Signals, handler: () => void) => unknown;
+    off: (signal: NodeJS.Signals, handler: () => void) => unknown;
+    kill: (pid: number, signal: NodeJS.Signals) => boolean;
+  };
   fetch: typeof fetch;
   cp: typeof cp;
   mkdir: typeof mkdir;
@@ -40,6 +51,27 @@ export type PreviewServerDependencies = {
 
 export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   spawn,
+  killProcess: process.kill,
+  killWindowsProcessTree: (pid) =>
+    new Promise((resolve, reject) => {
+      execFile(
+        "taskkill.exe",
+        ["/pid", String(pid), "/T", "/F"],
+        { windowsHide: true },
+        (error) => {
+          if (error === null) {
+            resolve(true);
+            return;
+          }
+          if (error.code === 128) {
+            resolve(false);
+            return;
+          }
+          reject(error);
+        }
+      );
+    }),
+  parentProcess: process,
   fetch,
   cp,
   mkdir,
@@ -52,27 +84,14 @@ export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   platform: process.platform,
 };
 
-export const findAvailablePort = (host = "127.0.0.1") =>
-  new Promise<number>((resolve, reject) => {
-    const server = createTcpServer();
-    server.unref();
-    server.once("error", reject);
-    server.listen({ host, port: 0, exclusive: true }, () => {
-      const address = server.address();
-      if (address === null || typeof address === "string") {
-        server.close();
-        reject(new Error("Could not allocate a local preview port."));
-        return;
-      }
-      server.close((error) =>
-        error === undefined ? resolve(address.port) : reject(error)
-      );
-    });
-  });
+export const findAvailablePort = (host = "127.0.0.1") => getPort({ host });
+
+export const isPreviewPortAvailable = async (host: string, port: number) => {
+  const availablePort = await detectPort({ hostname: host, port });
+  return availablePort === port;
+};
 
 const processEnv = () => process.env;
-
-const pathKey = () => (process.platform === "win32" ? "Path" : "PATH");
 
 const getAncestorBinPaths = (directory: string) => {
   const paths: string[] = [];
@@ -100,7 +119,7 @@ const getPreviewEnv = (
   if (cwd === undefined) {
     return extraEnv;
   }
-  const key = pathKey();
+  const key = pathKey({ env: extraEnv });
   return {
     ...extraEnv,
     [key]: [...getAncestorBinPaths(cwd), extraEnv[key]]
@@ -132,10 +151,6 @@ export const getPreviewStartArgs = (options: PreviewServerOptions) =>
       ]
     : ["run", "start"];
 
-export const getPreviewCommand = (
-  platform: typeof process.platform = process.platform
-) => (platform === "win32" ? "npm.cmd" : "npm");
-
 export const getNpmInvocation = (
   args: string[],
   {
@@ -154,10 +169,35 @@ export const getNpmInvocation = (
       : platform === "win32"
         ? win32.basename(npmExecPath)
         : basename(npmExecPath);
-  if (npmExecPath !== undefined && npmCliName === "npm-cli.js") {
-    return { command: nodeExecPath, args: [npmExecPath, ...args] };
+  if (npmExecPath !== undefined && npmCliName !== undefined) {
+    const npmCliPath =
+      npmCliName === "npm-cli.js"
+        ? npmExecPath
+        : npmCliName === "npx-cli.js"
+          ? platform === "win32"
+            ? win32.join(win32.dirname(npmExecPath), "npm-cli.js")
+            : join(dirname(npmExecPath), "npm-cli.js")
+          : undefined;
+    if (npmCliPath !== undefined) {
+      return { command: nodeExecPath, args: [npmCliPath, ...args] };
+    }
   }
-  return { command: getPreviewCommand(platform), args };
+  if (platform === "win32") {
+    return {
+      command: nodeExecPath,
+      args: [
+        win32.join(
+          win32.dirname(nodeExecPath),
+          "node_modules",
+          "npm",
+          "bin",
+          "npm-cli.js"
+        ),
+        ...args,
+      ],
+    };
+  }
+  return { command: "npm", args };
 };
 
 export const runPreviewBuild = async (
@@ -218,7 +258,10 @@ export const materializePreviewAssets = async (
 };
 
 export const startPreviewServer = (
-  options: PreviewServerOptions & { stdio?: StdioOptions },
+  options: PreviewServerOptions & {
+    stdio?: StdioOptions;
+    detached?: boolean;
+  },
   dependencies = defaultPreviewServerDependencies
 ): PreviewServerResult => {
   const invocation = getNpmInvocation(
@@ -230,6 +273,7 @@ export const startPreviewServer = (
     invocation.args,
     {
       cwd: options.cwd,
+      ...(options.detached === undefined ? {} : { detached: options.detached }),
       stdio: options.stdio ?? "inherit",
       env: getPreviewEnv(options.cwd, {
         ...processEnv(),
@@ -251,6 +295,27 @@ export const startPreviewServer = (
   };
 };
 
+const killPreviewProcess = async (
+  previewProcess: ChildProcess,
+  signal: NodeJS.Signals,
+  dependencies: PreviewServerDependencies
+) => {
+  if (dependencies.platform === "win32" && previewProcess.pid !== undefined) {
+    return await dependencies.killWindowsProcessTree(previewProcess.pid);
+  }
+  if (dependencies.platform !== "win32" && previewProcess.pid !== undefined) {
+    try {
+      return dependencies.killProcess(-previewProcess.pid, signal);
+    } catch (error) {
+      if (error instanceof Error && "code" in error && error.code === "ESRCH") {
+        return false;
+      }
+      throw error;
+    }
+  }
+  return previewProcess.kill(signal);
+};
+
 export const waitForPreviewExit = async (process: ChildProcess) => {
   const code = await new Promise<number | null>((resolve, reject) => {
     process.once("error", reject);
@@ -262,10 +327,10 @@ export const waitForPreviewExit = async (process: ChildProcess) => {
 };
 
 export type PreviewControllerResult = {
-  url: string;
+  url?: string;
   pid?: number;
   running: boolean;
-  mode: PreviewMode;
+  mode?: PreviewMode;
 };
 
 type PreviewControllerStartOptions = Partial<PreviewServerOptions> & {
@@ -473,12 +538,55 @@ const formatPreviewServerStartupError = ({
 
 export const createPreviewController = (
   defaults: PreviewServerOptions,
-  dependencies = defaultPreviewServerDependencies
+  dependencies = defaultPreviewServerDependencies,
+  { manageProcessSignals = true }: { manageProcessSignals?: boolean } = {}
 ) => {
   let server: PreviewServerResult | undefined;
   let currentOptions = defaults;
   let currentCwd = defaults.cwd;
   let serverOutput = "";
+  const terminationSignals = ["SIGHUP", "SIGINT", "SIGTERM"] as const;
+  let isTerminating = false;
+  const terminationHandlers = new Map<NodeJS.Signals, () => void>();
+  const removeTerminationHandlers = () => {
+    for (const [signal, handler] of terminationHandlers) {
+      dependencies.parentProcess.off(signal, handler);
+    }
+    terminationHandlers.clear();
+  };
+  const installTerminationHandlers = () => {
+    if (manageProcessSignals === false || terminationHandlers.size > 0) {
+      return;
+    }
+    for (const signal of terminationSignals) {
+      const handler = () => {
+        if (isTerminating) {
+          return;
+        }
+        isTerminating = true;
+        const activeServer = server;
+        server = undefined;
+        removeTerminationHandlers();
+        if (activeServer === undefined) {
+          dependencies.parentProcess.kill(
+            dependencies.parentProcess.pid,
+            signal
+          );
+          return;
+        }
+        void killPreviewProcess(activeServer.process, "SIGTERM", dependencies)
+          .catch(() => undefined)
+          .finally(() => {
+            dependencies.parentProcess.kill(
+              dependencies.parentProcess.pid,
+              signal
+            );
+          });
+      };
+      terminationHandlers.set(signal, handler);
+      dependencies.parentProcess.once(signal, handler);
+    }
+  };
   const appendServerOutput = (chunk: unknown) => {
     serverOutput = `${serverOutput}${String(chunk)}`.slice(-4000);
   };
@@ -487,12 +595,17 @@ export const createPreviewController = (
     server.process.killed === false &&
     server.process.exitCode === null &&
     server.process.signalCode === null;
-  const getStatus = (): PreviewControllerResult => ({
-    url: getPreviewUrl(currentOptions),
-    pid: server?.process.pid,
-    running: isRunning(),
-    mode: currentOptions.mode ?? "production",
-  });
+  const getStatus = (): PreviewControllerResult => {
+    if (isRunning() === false) {
+      return { running: false };
+    }
+    return {
+      url: getPreviewUrl(currentOptions),
+      pid: server?.process.pid,
+      running: true,
+      mode: currentOptions.mode ?? "production",
+    };
+  };
   const resolveOptions = (
     options: PreviewControllerStartOptions
   ): PreviewServerOptions => {
@@ -532,6 +645,7 @@ export const createPreviewController = (
     }
     const process = server.process;
     server = undefined;
+    removeTerminationHandlers();
     if (
       process.killed ||
       process.exitCode !== null ||
@@ -539,13 +653,16 @@ export const createPreviewController = (
     ) {
       return;
     }
-    await new Promise<void>((resolve, reject) => {
+    const exited = new Promise<void>((resolve, reject) => {
       process.once("error", reject);
       process.once("exit", () => resolve());
-      if (process.kill() === false) {
-        resolve();
-      }
     });
+    if (
+      (await killPreviewProcess(process, "SIGTERM", dependencies)) === false
+    ) {
+      return;
+    }
+    await exited;
   };
   const start = async (
     options: PreviewControllerStartOptions = {}
@@ -592,16 +709,19 @@ export const createPreviewController = (
     const startedServer = startPreviewServer(
       {
         ...nextOptions,
+        detached: dependencies.platform !== "win32",
         stdio: ["ignore", "pipe", "pipe"],
       },
       dependencies
     );
     server = startedServer;
+    installTerminationHandlers();
     startedServer.process.stdout?.on("data", appendServerOutput);
     startedServer.process.stderr?.on("data", appendServerOutput);
     startedServer.process.once("exit", () => {
       if (server === startedServer) {
         server = undefined;
+        removeTerminationHandlers();
       }
     });
     return getStatus();
@@ -618,13 +738,14 @@ export const createPreviewController = (
         dependencies
       );
       const result = await start(options);
+      const url = result.url ?? getPreviewUrl(currentOptions);
       const requiredAssetNames =
         result.mode === "production"
           ? await getPreviewCssAssetNames(currentCwd, dependencies)
           : [];
       try {
         await waitForPreviewReady(
-          result.url,
+          url,
           { isRunning, requiredAssetNames, requiredProject },
           dependencies
         );
@@ -635,7 +756,7 @@ export const createPreviewController = (
             formatPreviewServerStartupError({
               message: error.message,
               output,
-              url: result.url,
+              url,
             })
           );
         }

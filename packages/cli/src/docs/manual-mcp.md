@@ -69,7 +69,7 @@ webstudio insert-fragment --input-file .temp/insert-fragment.json
 
 ### Tool name convention
 
-MCP tool names are opaque strings, not JavaScript property access. A dot separates a namespace from its tool name, and every segment uses lowercase kebab-case. For example, `components.coverage-insert-next` is the `coverage-insert-next` tool in the `components` namespace. Pass the complete name as one CLI argument: `webstudio components.coverage-insert-next`.
+MCP tool names are opaque strings, not JavaScript property access. A dot separates a namespace from its tool name, and every segment uses lowercase kebab-case. For example, `components.coverage-insert-next` is the `coverage-insert-next` tool in the `components` namespace. Pass the complete name as one CLI argument: `webstudio components.coverage-insert-next`. Batch `mcp run` calls also accept the underscore form advertised by MCP protocol discovery, such as `components_coverage_insert_next`. Unknown names return near matches and direct you to `meta.index`.
 
 ### Readable fragment inputs
 
@@ -386,7 +386,7 @@ Use `node packages/cli/local.js mcp` from the Webstudio monorepo root for local 
 - Read ids before writing.
 - Prefer semantic tools over `apply-patch`.
 - Use `status` and `refresh` when cached namespaces may be stale. Pass `status {"verbose":true}` only when debugging full namespace arrays, freshness, compatibility, or diagnostic details.
-- A mutation is durable only when `meta.session.committed` is true.
+- Read `meta.session.commitStatus` before interpreting durability. Read-only results report `not-applicable` and retain `committed:false` for compatibility; dry-run plans report `planned`; failed mutations report `failed`; no-op mutations report `unchanged`; durable mutations report `committed` with `meta.session.committed:true`.
 - For visual/design work, verify the rendered result with vision before finishing.
 
 ## Vision Verification Loop

@@ -6,6 +6,7 @@ import type {
   QueryFilterControl,
   QueryOperator,
   QueryParameterControlField,
+  QuerySelectControl,
 } from "./types";
 import { getQueryFieldKey } from "./runtime";
 
@@ -729,6 +730,21 @@ const createDefinition = ({
         input: "number",
         ...getNumberControlConstraints(property),
       });
+      continue;
+    }
+    const choices = getChoices(document, property);
+    if (property.type === "string" && choices.length > 0) {
+      controls.push({
+        type: "select",
+        key,
+        label,
+        sectionLabel:
+          typeof property["x-webstudio-section"] === "string"
+            ? property["x-webstudio-section"]
+            : undefined,
+        defaultValue: String(defaultFromSchema(document, property)),
+        options: choices,
+      } satisfies QuerySelectControl);
       continue;
     }
     const variant = createVariantControl({ document, key, schema: property });

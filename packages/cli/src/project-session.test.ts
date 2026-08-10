@@ -4,18 +4,40 @@ import { tmpdir } from "node:os";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { createBuilderStateFromSnapshot } from "@webstudio-is/project-build/state";
 import { createBuilderStateFreshness } from "@webstudio-is/project-build/state";
+import { builderNamespaces } from "@webstudio-is/project-build/contracts";
 import { createStructuredAssetQueryResourceBody } from "@webstudio-is/sdk";
 import {
   createLocalProjectBundleFromSessionSnapshot,
   createCliProjectRestorePointStorage,
   createCliProjectSessionStorage,
   createCliProjectSessionTransport,
+  addIssueReportRuntime,
   getCliServerApiContract,
   getCliProjectSessionFile,
   getCliProjectRestorePointsFile,
   getSupportedPublicApiOperations,
   loadCliProjectSessionAssetIndex,
+  writeCliProjectSessionPreviewDataFile,
 } from "./project-session";
+
+test("adds anonymous local runtime metadata only to issue reports", () => {
+  const report = { title: "test: Report transport" };
+  const runtime = {
+    cliVersion: "1.2.3",
+    nodeVersion: "22.14.0",
+    os: "linux",
+    osVersion: "6",
+    architecture: "arm64",
+    executionMode: "mcp" as const,
+    apiContractVersion: "public-api:client",
+  };
+
+  expect(addIssueReportRuntime("report-issue", report, runtime)).toEqual({
+    ...report,
+    runtime,
+  });
+  expect(addIssueReportRuntime("audit", report, runtime)).toBe(report);
+});
 
 test("scopes project session files for explicitly selected projects", () => {
   expect(getCliProjectSessionFile("/workspace", "project/a")).toBe(
@@ -333,19 +355,20 @@ describe("CLI/server operation contract", () => {
   });
 });
 
-test("creates preview bundle from project session snapshot", () => {
-  const marketplaceProduct = {
-    category: "pageTemplates" as const,
-    name: "Session template",
-    thumbnailAssetId: "asset-1",
-    author: "Webstudio",
-    email: "hello@example.com",
-    website: "https://example.com",
-    issues: "",
-    description: "A reusable project-session template.",
-  };
+const previewMarketplaceProduct = {
+  category: "pageTemplates" as const,
+  name: "Session template",
+  thumbnailAssetId: "asset-1",
+  author: "Webstudio",
+  email: "hello@example.com",
+  website: "https://example.com",
+  issues: "",
+  description: "A reusable project-session template.",
+};
+
+const createPreviewSessionSnapshot = () => {
   const state = createBuilderStateFromSnapshot({
-    marketplaceProduct,
+    marketplaceProduct: previewMarketplaceProduct,
     pages: {
       homePageId: "home",
       rootFolderId: "root",
@@ -389,7 +412,38 @@ test("creates preview bundle from project session snapshot", () => {
     instances: [
       [
         "body",
-        { type: "instance", id: "body", component: "Body", children: [] },
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "header" },
+            { type: "id", value: "main" },
+            { type: "id", value: "footer" },
+          ],
+        },
+      ],
+      [
+        "header",
+        {
+          type: "instance",
+          id: "header",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "main",
+        { type: "instance", id: "main", component: "Box", children: [] },
+      ],
+      [
+        "footer",
+        {
+          type: "instance",
+          id: "footer",
+          component: "Box",
+          children: [],
+        },
       ],
       [
         "design-system-body",
@@ -412,25 +466,37 @@ test("creates preview bundle from project session snapshot", () => {
         },
       ],
     ],
+    props: [],
+    styles: [],
+    styleSources: [],
+    styleSourceSelections: [],
+    dataSources: [],
+    resources: [],
+    assets: [],
+    breakpoints: [],
   });
-
-  const assetIndex = { marker: "derived-index" } as never;
-  const bundle = createLocalProjectBundleFromSessionSnapshot(
-    {
-      projectId: "project",
-      buildId: "build",
-      version: 7,
-      state,
-      freshness: createBuilderStateFreshness({ state, version: 7 }),
-      compatibilityVersion: "test",
-      compatibility: {
-        sessionVersion: "test",
-        runtimeContractVersion: "test-runtime",
-        projectSchemaVersion: "test-schema",
-      },
+  return {
+    projectId: "project",
+    buildId: "build",
+    version: 7,
+    state,
+    freshness: createBuilderStateFreshness({ state, version: 7 }),
+    compatibilityVersion: "test",
+    compatibility: {
+      sessionVersion: "test",
+      runtimeContractVersion: "test-runtime",
+      projectSchemaVersion: "test-schema",
     },
-    { origin: "https://assets.example.com", assetIndex }
-  );
+  };
+};
+
+test("creates preview bundle from complete project session snapshot", async () => {
+  const snapshot = createPreviewSessionSnapshot();
+  const assetIndex = { marker: "derived-index" } as never;
+  const bundle = createLocalProjectBundleFromSessionSnapshot(snapshot, {
+    origin: "https://assets.example.com",
+    assetIndex,
+  });
 
   expect(bundle.origin).toBe("https://assets.example.com");
   expect(bundle.assetIndex).toBe(assetIndex);
@@ -440,12 +506,50 @@ test("creates preview bundle from project session snapshot", () => {
   expect(bundle.build.pages.pages).toEqual(bundle.pages);
   expect(bundle.build.instances.map(([id]) => id)).toEqual([
     "body",
+    "header",
+    "main",
+    "footer",
     "design-system-body",
   ]);
-  expect(bundle.build.marketplaceProduct).toEqual(marketplaceProduct);
+  expect(bundle.build.marketplaceProduct).toEqual(previewMarketplaceProduct);
   expect(bundle.assetFolders).toEqual([
     expect.objectContaining({ id: "asset-folder", name: "Images" }),
   ]);
+
+  const directory = await createTemporaryDirectory();
+  const path = join(directory, "data.json");
+  const ensureNamespaces = vi.fn(async () => snapshot);
+  await writeCliProjectSessionPreviewDataFile({
+    session: { ensureNamespaces },
+    connection: {
+      projectId: "project",
+      origin: "https://assets.example.com",
+      authToken: "token",
+    },
+    path,
+    assetsDirectory: directory,
+  });
+
+  expect(ensureNamespaces).toHaveBeenCalledWith(builderNamespaces);
+  const written = JSON.parse(await readFile(path, "utf8")) as {
+    build: {
+      instances: Array<[string, { children: Array<{ value: string }> }]>;
+      styles: unknown[];
+    };
+  };
+  expect(
+    written.build.instances[0]?.[1].children.map(({ value }) => value)
+  ).toEqual(["header", "main", "footer"]);
+  expect(written.build.styles).toEqual([]);
+});
+
+test("rejects incomplete project session snapshots before preview generation", () => {
+  const snapshot = createPreviewSessionSnapshot();
+  snapshot.state.styles = undefined;
+
+  expect(() => createLocalProjectBundleFromSessionSnapshot(snapshot)).toThrow(
+    "Project session is missing preview data: styles"
+  );
 });
 
 describe("cli project session transport", () => {
@@ -710,5 +814,79 @@ describe("cli project session transport", () => {
     const requestText = `${requestUrl}\n${requestBody}`;
     expect(requestText).toContain("project-1");
     expect(requestText).not.toContain("other-project");
+  });
+
+  test("adds anonymous runtime metadata to issue report requests", async () => {
+    let requestBody = "";
+    const fetch = vi.fn(
+      async (request: URL | RequestInfo, init?: RequestInit) => {
+        if (request instanceof Request) {
+          requestBody = await request.clone().text();
+        } else if (typeof init?.body === "string") {
+          requestBody = init.body;
+        }
+        return new Response(
+          JSON.stringify([
+            {
+              result: {
+                data: {
+                  status: "created",
+                  issueNumber: 1,
+                  issueUrl: "https://example.com/issues/1",
+                },
+              },
+            },
+          ]),
+          { headers: { "content-type": "application/json" } }
+        );
+      }
+    );
+    vi.stubGlobal("fetch", fetch);
+    const transport = createCliProjectSessionTransport({
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+    });
+
+    await transport.executeServerOperation?.({
+      operationId: "reports.issue",
+      input: {
+        trigger: "user-requested",
+        category: "tool-failure",
+        deduplicationKey: "report-runtime",
+        title: "fix: Include report runtime",
+        agent: {
+          client: "Codex",
+          model: "test-model",
+          reasoningEffort: "medium",
+        },
+        report: {
+          userStory: "Use issue reporting.",
+          summary: "Runtime metadata was omitted.",
+          attemptedWorkflow: ["Submit an issue report."],
+          expectedBehavior: "The report includes runtime metadata.",
+          actualResult: "The report omitted runtime metadata.",
+          recoveryAttempts: ["Inspect the created issue."],
+          userImpact: "The report is harder to diagnose.",
+          technicalContext: "The CLI transport submitted the report.",
+          acceptanceCriteria: ["The report includes runtime metadata."],
+        },
+      },
+    });
+
+    const body = JSON.parse(requestBody) as {
+      0: { runtime?: Record<string, unknown> };
+    };
+    expect(body[0].runtime).toEqual({
+      cliVersion: expect.any(String),
+      nodeVersion: process.versions.node,
+      os: process.platform,
+      osVersion: expect.any(String),
+      architecture: process.arch,
+      executionMode: "mcp",
+      apiContractVersion: expect.any(String),
+    });
   });
 });

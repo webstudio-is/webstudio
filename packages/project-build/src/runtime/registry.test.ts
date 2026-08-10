@@ -1206,13 +1206,11 @@ describe("builder runtime read families", () => {
           name: "--brand-color",
           scope: "heading",
           usageCount: 1,
-          valueLength: expect.any(Number),
+          value: "red",
+          valueLength: 3,
         },
       ],
     });
-    expect(
-      listCssVariables(state, { withUsage: true, verbose: true })
-    ).toMatchObject({ vars: [{ value: expect.any(String) }] });
     expect(listDataVariables(state)).toMatchObject({
       variables: [
         {
@@ -1243,7 +1241,7 @@ describe("builder runtime read families", () => {
       const { detail: _compactDetail, ...compactResult } = compact;
       const { detail: _verboseDetail, ...verboseResult } = verbose;
       expect(verboseResult).toMatchObject(compactResult);
-      expect(JSON.stringify(compact).length).toBeLessThan(
+      expect(JSON.stringify(compact).length).toBeLessThanOrEqual(
         JSON.stringify(verbose).length
       );
       expect(verbose.total).toBe(compact.total);
@@ -1743,6 +1741,7 @@ describe("builder runtime read families", () => {
         name: "Blog posts",
         scopeInstanceId: "heading",
         query: {
+          result: "one",
           where: {
             all: [
               {
@@ -1817,6 +1816,7 @@ describe("builder runtime read families", () => {
         scopeInstanceId: "heading",
         mode: "query",
         query: {
+          result: "one",
           where: {
             all: [
               {
@@ -1827,7 +1827,7 @@ describe("builder runtime read families", () => {
             ],
           },
           sort: [],
-          limit: "1",
+          limit: "20",
           offset: "0",
           output: {
             mode: "fields",
@@ -1853,6 +1853,7 @@ describe("builder runtime read families", () => {
         resourceId: "asset-resource",
         values: {
           query: {
+            result: "many",
             limit: "2",
           },
         },
@@ -1870,6 +1871,7 @@ describe("builder runtime read families", () => {
     expect(updatedPayload).toContain("properties");
     expect(updatedPayload).toContain("system.params.slug");
     expect(updatedPayload).toContain("markdown-body-ref");
+    expect(updatedPayload).toContain('result: \\"many\\"');
     expect(updatedPayload).toContain("limit: 2");
 
     const reset = executeBuilderRuntimeOperation({

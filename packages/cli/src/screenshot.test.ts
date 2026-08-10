@@ -1,6 +1,9 @@
 import { describe, expect, test, vi } from "vitest";
 import { constants } from "node:fs";
+import { Buffer } from "node:buffer";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   BrowserNotFoundError,
   BrowserInstallUnavailableError,
@@ -9,6 +12,7 @@ import {
   createScreenshotCaptureSession,
   getChromiumInstallCommand,
   getNoBrowserFoundMessage,
+  getPlaywrightInstallations,
   installTesseractForOcr,
   resolveScreenshotBrowser,
   shouldOfferBrowserInstall,
@@ -25,11 +29,12 @@ const createDependencies = (
   mkdir: vi.fn(async () => undefined),
   which: vi.fn(async () => undefined),
   getChromeLauncherInstallations: vi.fn(() => []),
+  getPlaywrightInstallations: vi.fn(async () => []),
   spawnBrowser: vi.fn(() => ({
     kill: vi.fn(),
     once: vi.fn(),
   })),
-  readFile: vi.fn(),
+  readFile: vi.fn(async () => Buffer.from("image")) as never,
   writeFile: vi.fn(),
   mkdtemp: vi.fn(
     async () => "/tmp/webstudio-browser"
@@ -39,12 +44,73 @@ const createDependencies = (
   createWebSocket: vi.fn(),
   captureBrowserScreenshot: vi.fn(async () => undefined),
   installCommand: vi.fn(async () => undefined),
+  readArtifactByte: vi.fn(async () => 1),
   getuid: vi.fn(() => 1000),
   now: vi.fn(() => 123),
   ...overrides,
 });
 
 describe("resolveScreenshotBrowser", () => {
+  test("finds Playwright Chromium executables in the configured cache", async () => {
+    const cacheDirectory = await mkdtemp(
+      join(tmpdir(), "webstudio-playwright-cache-")
+    );
+    try {
+      await mkdir(join(cacheDirectory, "chromium-1208"));
+
+      await expect(
+        getPlaywrightInstallations({
+          env: { PLAYWRIGHT_BROWSERS_PATH: cacheDirectory },
+          platform: "linux",
+        })
+      ).resolves.toEqual([
+        join(cacheDirectory, "chromium-1208", "chrome-linux64", "chrome"),
+        join(cacheDirectory, "chromium-1208", "chrome-linux", "chrome"),
+      ]);
+    } finally {
+      await rm(cacheDirectory, { recursive: true, force: true });
+    }
+  });
+
+  test.each([
+    {
+      platform: "darwin" as const,
+      cacheSegments: ["Library", "Caches", "ms-playwright"],
+      executableSegments: [
+        "chromium-1208",
+        "chrome-mac",
+        "Chromium.app",
+        "Contents",
+        "MacOS",
+        "Chromium",
+      ],
+    },
+    {
+      platform: "win32" as const,
+      cacheSegments: ["AppData", "Local", "ms-playwright"],
+      executableSegments: ["chromium-1208", "chrome-win", "chrome.exe"],
+    },
+  ])(
+    "finds Playwright Chromium in the default $platform cache",
+    async ({ platform, cacheSegments, executableSegments }) => {
+      const homeDirectory = await mkdtemp(
+        join(tmpdir(), "webstudio-playwright-home-")
+      );
+      try {
+        const cacheDirectory = join(homeDirectory, ...cacheSegments);
+        await mkdir(join(cacheDirectory, "chromium-1208"), {
+          recursive: true,
+        });
+
+        await expect(
+          getPlaywrightInstallations({ env: {}, platform, homeDirectory })
+        ).resolves.toContain(join(cacheDirectory, ...executableSegments));
+      } finally {
+        await rm(homeDirectory, { recursive: true, force: true });
+      }
+    }
+  );
+
   test("uses explicit browser path before discovered browsers", async () => {
     const dependencies = createDependencies({
       which: vi.fn(async (command) =>
@@ -116,6 +182,31 @@ describe("resolveScreenshotBrowser", () => {
       "/usr/local/bin/chromium",
       constants.X_OK
     );
+  });
+
+  test("discovers Chromium installed in the Playwright browser cache", async () => {
+    const dependencies = createDependencies({
+      access: vi.fn(async (path) => {
+        if (
+          path ===
+          "/root/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome"
+        ) {
+          return;
+        }
+        throw new Error("missing");
+      }),
+      getPlaywrightInstallations: vi.fn(async () => [
+        "/root/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome",
+      ]),
+    });
+
+    await expect(
+      resolveScreenshotBrowser({ browser: "auto" }, dependencies)
+    ).resolves.toEqual({
+      path: "/root/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome",
+      source: "playwright",
+      browser: "chromium",
+    });
   });
 
   test("throws with checked paths when no browser is executable", async () => {
@@ -377,14 +468,45 @@ describe("captureScreenshot", () => {
       recursive: true,
     });
   });
+
+  test("rejects an empty screenshot artifact", async () => {
+    const dependencies = createDependencies({
+      which: vi.fn(async (command) =>
+        command === "chromium" ? "/usr/bin/chromium" : undefined
+      ),
+      readArtifactByte: vi.fn(async () => 0),
+      captureBrowserScreenshot: vi.fn(async () => ({
+        viewportWidth: 1440,
+        viewportHeight: 900,
+        contentWidth: 1440,
+        contentHeight: 900,
+        horizontalOverflow: false,
+        images: [],
+        resources: [],
+      })),
+    });
+
+    await expect(
+      captureScreenshot(
+        {
+          url: "https://example.com",
+          output: "empty.png",
+          width: 1440,
+          height: 900,
+          browser: "auto",
+        },
+        dependencies
+      )
+    ).rejects.toThrow("Screenshot artifact is empty");
+  });
 });
 
 test("resets a reusable capture session after browser startup rejects", async () => {
   const spawnBrowser = vi.fn(() => ({
     kill: vi.fn(() => true),
-    once: vi.fn((event: string, listener: () => void) => {
+    once: vi.fn((event: string, listener: (error: Error) => void) => {
       if (event === "error") {
-        setTimeout(listener, 0);
+        setTimeout(() => listener(new Error("spawn failed")), 0);
       }
     }),
   }));
@@ -410,7 +532,7 @@ test("resets a reusable capture session after browser startup rejects", async ()
     "Browser exited before its DevTools endpoint became ready."
   );
   await session.close();
-  expect(spawnBrowser).toHaveBeenCalledTimes(2);
+  expect(spawnBrowser).toHaveBeenCalledTimes(4);
 });
 
 describe("browser installation", () => {

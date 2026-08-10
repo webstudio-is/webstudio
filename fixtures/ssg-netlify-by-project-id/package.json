@@ -15,7 +15,7 @@
     "start": "vite preview"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12.0"
   },
   "type": "module",
   "keywords": [],
@@ -46,5 +46,12 @@
     "@shikijs/langs": "4.4.1",
     "@shikijs/themes": "4.4.1",
     "shiki": "4.4.1"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=22.12.0",
+      "onFail": "error"
+    }
   }
 }

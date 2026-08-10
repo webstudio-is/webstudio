@@ -13,7 +13,18 @@ import {
   getAssetQueryOperatorsForFieldTypes,
   type AssetObservedFieldType,
   type AssetQueryFilter,
+  type AssetQueryResultMode,
 } from "./schema";
+
+export const assetQueryResultOptions = [
+  { value: "many", label: "Many" },
+  { value: "one", label: "Exactly one" },
+  { value: "first", label: "First" },
+  { value: "last", label: "Last" },
+] as const satisfies readonly {
+  value: AssetQueryResultMode;
+  label: string;
+}[];
 
 const getDefaultFilterValue = (operator: AssetQueryFilter["operator"]) =>
   operator === "in"
@@ -101,6 +112,14 @@ export const assetQuerySourceDefinition = {
           target: "draft-2020-12",
           io: "input",
         }),
+      },
+      {
+        type: "select" as const,
+        key: "result",
+        label: "Result",
+        sectionLabel: "Result",
+        defaultValue: "many",
+        options: assetQueryResultOptions,
       },
       {
         type: "filter" as const,

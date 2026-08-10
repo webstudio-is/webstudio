@@ -1,10 +1,12 @@
 import { describe, expect, test } from "vitest";
 import {
+  getStyleDeclKey,
   type Instance,
   type Page,
   type Prop,
   type StyleDecl,
 } from "@webstudio-is/sdk";
+import type { BuilderRuntimeMutation } from "./mutation";
 import { executeBuilderRuntimeOperation } from "./registry";
 import { setImageDescriptions } from "./assets";
 import { analyzeProject, searchProject } from "./search";
@@ -513,6 +515,88 @@ describe("project audit and analysis", () => {
       message: "alt is expression-backed and cannot be audited statically.",
       location: { instanceId: "image", propName: "alt" },
     });
+  });
+
+  test("recognizes dynamic image alt text and htmlFor label aliases", () => {
+    const instances = new Map<string, Instance>(state.instances);
+    instances.set("image-link", {
+      type: "instance",
+      id: "image-link",
+      component: "Link",
+      tag: "a",
+      children: [{ type: "id", value: "dynamic-image" }],
+    });
+    instances.set("dynamic-image", {
+      type: "instance",
+      id: "dynamic-image",
+      component: "Image",
+      tag: "img",
+      children: [],
+    });
+    instances.set("label", {
+      type: "instance",
+      id: "label",
+      component: "Label",
+      tag: "label",
+      children: [{ type: "text", value: "Email" }],
+    });
+    instances.set("input", {
+      type: "instance",
+      id: "input",
+      component: "Input",
+      tag: "input",
+      children: [],
+    });
+    instances.set("body", {
+      ...instances.get("body")!,
+      children: [
+        ...instances.get("body")!.children,
+        { type: "id", value: "image-link" },
+        { type: "id", value: "label" },
+        { type: "id", value: "input" },
+      ],
+    });
+    const props = new Map<string, Prop>(state.props);
+    props.set("dynamic-alt", {
+      id: "dynamic-alt",
+      instanceId: "dynamic-image",
+      name: "alt",
+      type: "expression",
+      value: "product.alt",
+    });
+    props.set("label-for", {
+      id: "label-for",
+      instanceId: "label",
+      name: "htmlFor",
+      type: "string",
+      value: "email",
+    });
+    props.set("input-id", {
+      id: "input-id",
+      instanceId: "input",
+      name: "id",
+      type: "string",
+      value: "email",
+    });
+
+    const result = audit(
+      { ...state, instances, props },
+      { scopes: ["accessibility"], pageId: "home" },
+      { projectVersion: 1 }
+    );
+
+    expect(result.findings).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: "missing-accessible-name",
+          location: expect.objectContaining({ instanceId: "image-link" }),
+        }),
+        expect.objectContaining({
+          ruleId: "missing-form-label",
+          location: expect.objectContaining({ instanceId: "input" }),
+        }),
+      ])
+    );
   });
 
   test("reports resource, parameter, and text expression audit values as skipped", () => {
@@ -2674,6 +2758,88 @@ describe("project audit and analysis", () => {
           }),
         }),
       ])
+    );
+  });
+
+  test("deletes an invalid design token selector reported by the style audit", () => {
+    const invalidState = "::-webkit-search-cancel-button";
+    const declaration: StyleDecl = {
+      styleSourceId: "token",
+      breakpointId: "base",
+      property: "color",
+      state: invalidState,
+      value: { type: "keyword", value: "red" },
+    };
+    const styles = new Map<string, StyleDecl>(state.styles);
+    styles.set(getStyleDeclKey(declaration), declaration);
+    const project = {
+      ...state,
+      styles,
+    } satisfies BuilderState;
+    const before = audit(
+      project,
+      { scopes: ["styles"], verbose: true },
+      { projectVersion: 1 }
+    );
+    const finding = before.findings.find(
+      ({ ruleId }) => ruleId === "invalid-style-state-selector"
+    );
+    expect(finding?.location).toMatchObject({
+      styleSourceId: "token",
+      breakpointId: "base",
+      stateSelector: invalidState,
+      styleProperty: "color",
+    });
+
+    const mutation = executeBuilderRuntimeOperation({
+      id: "designTokens.deleteStyles",
+      state: project,
+      input: {
+        designTokenId: "token",
+        deletions: [
+          {
+            breakpoint: "base",
+            property: "color",
+            state: invalidState,
+          },
+        ],
+      },
+      context,
+    }) as BuilderRuntimeMutation;
+    const { state: updatedProject } = applyBuilderPatchTransactions(project, [
+      { id: "delete-invalid-selector", payload: mutation.payload },
+    ]);
+
+    expect(
+      audit(
+        updatedProject,
+        { scopes: ["styles"], verbose: true },
+        { projectVersion: 2 }
+      ).findings
+    ).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: "invalid-style-state-selector" }),
+      ])
+    );
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "designTokens.deleteStyles",
+        state: updatedProject,
+        input: {
+          designTokenId: "token",
+          deletions: [
+            {
+              breakpoint: "base",
+              property: "color",
+              state: ":not-a-real-selector",
+            },
+          ],
+        },
+        context,
+      })
+    ).toThrow(
+      "An invalid state selector can only delete an existing declaration"
     );
   });
 

@@ -14,7 +14,10 @@ import {
   type AssetQueryInput,
   type AssetQueryFieldPath,
   type AssetQueryFilter,
-  type AssetQueryResult,
+  type AssetQueryCollectionResult,
+  type AssetQueryExecutionResult,
+  type AssetQueryItem,
+  type AssetQuerySingleResult,
   type AssetQueryWhere,
   type AssetResourceContentOptions,
   type AssetResourceOutputSelection,
@@ -52,6 +55,18 @@ export class AssetQueryExecutionError extends Error {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
     this.name = "AssetQueryExecutionError";
+  }
+}
+
+export class AssetQueryMultipleResultsError extends AssetQueryExecutionError {
+  readonly code = "MULTIPLE_RESULTS";
+
+  readonly matchedCount: number;
+
+  constructor(matchedCount: number) {
+    super(`Expected at most one asset, but the query matched ${matchedCount}.`);
+    this.matchedCount = matchedCount;
+    this.name = "AssetQueryMultipleResultsError";
   }
 }
 
@@ -428,7 +443,9 @@ const toQueryItem = (
   };
 };
 
-export const assertAssetQueryResultSize = (result: AssetQueryResult) => {
+export const assertAssetQueryResultSize = (
+  result: AssetQueryExecutionResult
+) => {
   if (
     getUtf8ByteLength(serializeJsonDeterministically(result)) >
     contentEngineLimits.resultBytes
@@ -441,7 +458,7 @@ export const assertAssetQueryResultSize = (result: AssetQueryResult) => {
 
 type AssetQueryMatch = {
   document: ContentDatabaseDocument;
-  item: AssetQueryResult["items"][number];
+  item: AssetQueryItem;
 };
 
 type AssetQuerySortGroup = {
@@ -458,7 +475,7 @@ type PreparedAssetQuery = {
 };
 
 type AssetQuerySettlements = Array<
-  PromiseSettledResult<AssetQueryResult> | undefined
+  PromiseSettledResult<AssetQueryExecutionResult> | undefined
 >;
 
 const rejectAssetQuery = (
@@ -629,10 +646,16 @@ const finalizeAssetQueries = async ({
           const match = state.matches.get(document);
           return match === undefined ? [] : [match];
         });
-        const selected = matched.slice(
-          query.offset,
-          query.offset + query.limit
-        );
+        const resultMode = query.result ?? "many";
+        if (resultMode === "one" && matched.length > 1) {
+          throw new AssetQueryMultipleResultsError(matched.length);
+        }
+        const selected =
+          resultMode === "many"
+            ? matched.slice(query.offset, query.offset + query.limit)
+            : resultMode === "last"
+              ? matched.slice(-1)
+              : matched.slice(0, 1);
         const selectedDocuments = selected.map(({ document }) => document);
         let items = selected.map(({ item }) => item);
         if (query.content.mode !== "none") {
@@ -669,11 +692,17 @@ const finalizeAssetQueries = async ({
             };
           });
         }
-        const result = {
-          items,
-          totalCount: matched.length,
-          hasMore: query.offset + selected.length < matched.length,
-        } satisfies AssetQueryResult;
+        const result: AssetQueryExecutionResult =
+          resultMode === "many"
+            ? {
+                items,
+                totalCount: matched.length,
+                hasMore: query.offset + selected.length < matched.length,
+              }
+            : {
+                item: items[0] ?? null,
+                totalCount: matched.length,
+              };
         assertAssetQueryResultSize(result);
         results[state.index] = { status: "fulfilled", value: result };
       } catch (error) {
@@ -699,7 +728,7 @@ export const executeAssetQueries = async ({
   runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   assetReferences?: MarkdownAssetReferences;
   assetValueReferences?: AssetValueReferences;
-}): Promise<PromiseSettledResult<AssetQueryResult>[]> => {
+}): Promise<PromiseSettledResult<AssetQueryExecutionResult>[]> => {
   const results: AssetQuerySettlements = Array.from({ length: inputs.length });
   const { filterKeys, preparedQueries, sortGroups } = prepareAssetQueries({
     inputs,
@@ -754,10 +783,7 @@ export const executeAssetQueries = async ({
   return requireSettledAssetQueryResults(results);
 };
 
-export const executeAssetQuery = async ({
-  query,
-  ...input
-}: {
+type ExecuteAssetQueryInput = {
   query: AssetQueryInput;
   catalog?: BuilderAssetFieldCatalog;
   documents: readonly ContentDatabaseDocument[];
@@ -765,7 +791,25 @@ export const executeAssetQuery = async ({
   runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   assetReferences?: MarkdownAssetReferences;
   assetValueReferences?: AssetValueReferences;
-}): Promise<AssetQueryResult> => {
+};
+
+export function executeAssetQuery(
+  input: Omit<ExecuteAssetQueryInput, "query"> & {
+    query: AssetQueryInput & { result: "one" | "first" | "last" };
+  }
+): Promise<AssetQuerySingleResult>;
+export function executeAssetQuery(
+  input: Omit<ExecuteAssetQueryInput, "query"> & {
+    query: AssetQueryInput & { result?: "many" };
+  }
+): Promise<AssetQueryCollectionResult>;
+export function executeAssetQuery(
+  input: ExecuteAssetQueryInput
+): Promise<AssetQueryExecutionResult>;
+export async function executeAssetQuery({
+  query,
+  ...input
+}: ExecuteAssetQueryInput): Promise<AssetQueryExecutionResult> {
   const [result] = await executeAssetQueries({
     ...input,
     queries: [query],
@@ -774,4 +818,4 @@ export const executeAssetQuery = async ({
     throw result.reason;
   }
   return result.value;
-};
+}

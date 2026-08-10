@@ -1293,6 +1293,17 @@ describe("prebuild", () => {
       "ENOENT"
     );
     const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+    expect(packageJson.engines).toEqual({ node: ">=22.12.0" });
+    expect(packageJson.devEngines).toEqual({
+      runtime: {
+        name: "node",
+        version: ">=22.12.0",
+        onFail: "error",
+      },
+    });
+    await expect(readFile(".npmrc", "utf8")).resolves.toContain(
+      "engine-strict=true"
+    );
     expect(packageJson.dependencies).not.toHaveProperty(
       "@webstudio-is/asset-resource"
     );
@@ -1361,6 +1372,50 @@ describe("prebuild", () => {
       readFile("app/routes/[blog].$slug._index.tsx", "utf8")
     ).resolves.toContain("../__generated__/[blog].$slug._index");
     await expectGeneratedRedirectFallback("app/routes/$.tsx");
+  });
+
+  test("preserves an authored catch-all page when redirects are configured", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "not-found",
+            name: "Not found",
+            title: "Not found",
+            path: "/*",
+            rootInstanceId: "root",
+            meta: { status: "404" },
+          },
+        ],
+      })
+    );
+
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      incremental: true,
+    });
+
+    const route = await readFile("app/routes/$.tsx", "utf8");
+    expect(route).toContain("../__generated__/$");
+    expect(route).toContain("../__generated__/$.server");
+    expect(route).not.toContain('new Response("Not Found"');
+    await expect(
+      readFile("app/__generated__/$.server.tsx", "utf8")
+    ).resolves.toContain("status: 404");
   });
 
   test("ignores the catch-all fallback when generating an SSG site", async () => {

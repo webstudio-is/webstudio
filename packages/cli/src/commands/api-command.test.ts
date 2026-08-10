@@ -27,11 +27,13 @@ const createSessionEnvelope = ({
   projectId,
   result,
   source,
+  committed,
 }: {
   operationId: string;
   projectId: string;
   result: unknown;
   source: "local" | "remote" | "server";
+  committed: boolean;
 }) => ({
   operationId,
   projectId,
@@ -39,7 +41,7 @@ const createSessionEnvelope = ({
   version: 1,
   source,
   result,
-  state: { committed: source !== "local", freshness: {} },
+  state: { committed, freshness: {} },
   namespaces: { read: [], write: [], invalidated: [], missing: [] },
   diagnostics: [],
 });
@@ -47,11 +49,15 @@ const createCliProjectSession = vi.fn(({ connection }) => ({
   initialize: vi.fn(async () => ({ result: { loaded: true } })),
   refresh: vi.fn(async () => ({ result: { refreshedNamespaces: [] } })),
   executeServerOperation: vi.fn(
-    async ({ id }: { id: string }, input: unknown) =>
+    async (
+      { id, method }: { id: string; method: "query" | "mutation" },
+      input: unknown
+    ) =>
       createSessionEnvelope({
         operationId: id,
         projectId: connection.projectId,
         source: "server",
+        committed: method === "mutation",
         result: await apiCalls[apiClientByOperationId.get(id) ?? ""]({
           ...connection,
           ...(input as Record<string, unknown>),
@@ -63,6 +69,7 @@ const createCliProjectSession = vi.fn(({ connection }) => ({
       operationId,
       projectId: connection.projectId,
       source: "local",
+      committed: false,
       result: await apiCalls[apiClientByOperationId.get(operationId) ?? ""]({
         ...connection,
         ...(input as Record<string, unknown>),
@@ -74,6 +81,7 @@ const createCliProjectSession = vi.fn(({ connection }) => ({
       operationId,
       projectId: connection.projectId,
       source: "remote",
+      committed: true,
       result: await apiCalls[apiClientByOperationId.get(operationId) ?? ""]({
         ...connection,
         ...(input as Record<string, unknown>),
@@ -103,7 +111,11 @@ const dependencies = new Proxy(
   }
 ) as unknown as Parameters<typeof apiCommand>[1];
 
-const expectJsonOutput = (command: string, data: unknown = { ok: true }) => {
+const expectJsonOutput = (
+  command: Parameters<typeof apiCommand>[0]["command"],
+  data: unknown = { ok: true }
+) => {
+  const operation = getPublicApiOperation(command);
   expect(getLastJsonOutput()).toEqual({
     ok: true,
     data,
@@ -117,6 +129,8 @@ const expectJsonOutput = (command: string, data: unknown = { ok: true }) => {
         buildId: "build-1",
         version: 1,
         source: expect.any(String),
+        commitStatus:
+          operation.method === "mutation" ? "committed" : "not-applicable",
         committed: expect.any(Boolean),
         namespaceCounts: { read: 0, write: 0, invalidated: 0, missing: 0 },
         diagnosticCount: 0,
@@ -502,6 +516,7 @@ test("routes server-only commands through project session transport", async () =
   expect(session.executeServerOperation).toHaveBeenCalledWith(
     {
       id: "auth.me",
+      method: "query",
       invalidatesNamespaces: [],
       refetchInvalidatedNamespaces: false,
     },

@@ -906,7 +906,7 @@ const validateMarkdownBlog = (
         value: "system.params.slug",
         normalizeExpression,
       }) &&
-      article.limit === "1" &&
+      article.result === "one" &&
       article.output.includeMetadata === false &&
       hasOutputField(article.output, ["properties", "body"]) === false,
     "The detail Assets resource does not defer one Markdown body selected by the dynamic slug parameter."

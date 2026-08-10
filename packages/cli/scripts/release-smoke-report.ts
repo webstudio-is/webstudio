@@ -146,7 +146,7 @@ export const publishedCliManifestContractSchema = z
       z.literal("bin.js"),
       z.literal("!*.{test,stories}.*"),
     ]),
-    engines: z.object({ node: z.literal(">=22") }).strict(),
+    engines: z.object({ node: z.literal(">=22.12.0") }).strict(),
   })
   .strict();
 

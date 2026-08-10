@@ -16,8 +16,10 @@ import {
   allowedArrayMethods,
   allowedStringMethods,
 } from "@webstudio-is/expression";
+import { distance as getLevenshteinDistance } from "fastest-levenshtein";
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
+import { Transform } from "node:stream";
 import {
   projectSessionRestorePointSummarySchema,
   projectSessionBusyMessage,
@@ -313,12 +315,19 @@ export type ProjectSessionPreviewResult = {
   mode: ProjectSessionPreviewMode;
 };
 
+export type ProjectSessionPreviewStatusResult = {
+  url?: string;
+  pid?: number;
+  running: boolean;
+  mode?: ProjectSessionPreviewMode;
+};
+
 type StartPreview = (
   input: ProjectSessionPreviewInput,
   progress?: McpToolProgress
 ) => Promise<ProjectSessionPreviewResult>;
-type GetPreviewStatus = () => Promise<ProjectSessionPreviewResult>;
-type StopPreview = () => Promise<ProjectSessionPreviewResult>;
+type GetPreviewStatus = () => Promise<ProjectSessionPreviewStatusResult>;
+type StopPreview = () => Promise<ProjectSessionPreviewStatusResult>;
 
 export type ProjectSessionImportInput = {
   to: string;
@@ -824,7 +833,7 @@ const insertCollectionMcpInputSchema = getOperationInputSchema({
 });
 
 const assetsResourceResultDescription =
-  "Pass query as structured tool input using Webstudio JavaScript expressions rather than a JSON-stringified expression or manually authored resource body. Every reachable Assets resource contributes to one shared published database, so create only one final resource per rendered query; update an existing resource instead of creating a replacement, and remove obsolete duplicates. Keep static filters, limits, and offsets literal so bounded overview queries can be materialized. Use output mode fields, select only rendered fields, keep includeMetadata false, and use content mode none when file content is not rendered. For a Markdown detail page, query the Markdown asset directly and use content mode markdown-body-ref; compilation keeps only its document reference in the bundle and fetches the selected body from Asset storage at runtime. Bind the resolved body from item.content.text. Assets expose an ID-keyed map at <dataSourceName>.data and collection information at <dataSourceName>.meta.";
+  "Pass query as structured tool input with Webstudio JavaScript expressions. Keep one final resource per rendered query and remove obsolete duplicates. Use result many for listings and result one for unique details; first and last require sorting. Keep static filters, limits, and offsets literal; single modes omit pagination. Select only rendered fields, keep includeMetadata false, and use content mode none unless file content is rendered. For Markdown details, use markdown-body-ref; compilation keeps a document reference and fetches the body at runtime. Bind <dataSourceName>.data, including id and content.text. Many returns an ID map plus totalCount and hasMore at <dataSourceName>.meta; single modes return an item or null plus totalCount.";
 
 const mcpOperationOverrides = new Map<
   string,
@@ -1295,7 +1304,8 @@ const screenshotInputSchema = {
     timeout: {
       type: "number",
       default: defaultScreenshotTimeout,
-      description: "Maximum milliseconds to wait for page readiness.",
+      description:
+        "Maximum milliseconds for browser capture after preview is ready.",
     },
     source: {
       type: "string",
@@ -1841,6 +1851,40 @@ export const mcpArgumentExamples: Record<
     { pagePath: "/pricing", severities: ["error", "warning"] },
     { scopes: ["accessibility"], verbose: true },
   ],
+  "report-issue": [
+    {
+      trigger: "user-requested",
+      category: "schema-or-docs-mismatch",
+      deduplicationKey: "update-props-input-contract",
+      title: "fix: Clarify the update-props input contract",
+      agent: {
+        client: "Codex",
+        provider: "OpenAI",
+        model: "gpt-5.6-sol",
+        reasoningEffort: "medium",
+      },
+      report: {
+        userStory:
+          "As a Webstudio user, I want routine MCP edits to complete without corrective retries.",
+        summary: "A documented operation required a corrected retry.",
+        attemptedWorkflow: [
+          "Inspect the target component.",
+          "Attempt the update with the advertised tool.",
+        ],
+        expectedBehavior: "The documented input should be accepted.",
+        actualResult: "The initial call returned BAD_REQUEST.",
+        recoveryAttempts: [
+          "Inspect the schema and retry with corrected input nesting.",
+        ],
+        userImpact: "The edit required extra tool calls.",
+        technicalContext: "The update-props input shape was ambiguous.",
+        acceptanceCriteria: [
+          "The exposed schema matches runtime validation.",
+          "A regression test covers the workflow.",
+        ],
+      },
+    },
+  ],
   "insert-component": [
     {
       parentInstanceId: "parent-id",
@@ -1974,6 +2018,23 @@ export const mcpArgumentExamples: Record<
           binding: { type: "expression", value: "currentPost.url" },
         },
       ],
+    },
+  ],
+  "list-css-variables": [{ withUsage: true }],
+  "define-css-variable": [
+    {
+      vars: {
+        "--color-primary": "#2d3748",
+        "--color-accent": "#e53e3e",
+        "--space-card": "1.5rem",
+      },
+      overwrite: true,
+    },
+  ],
+  "delete-css-variable": [
+    {
+      names: ["--color-primary", "--color-accent", "--space-card"],
+      force: true,
     },
   ],
   "create-variable": [
@@ -2407,16 +2468,26 @@ const refreshDataSchema = {
   additionalProperties: false,
 } as const satisfies InputJsonSchema;
 
-const previewDataSchema = {
+const previewStatusDataSchema = {
   type: "object",
   properties: {
     url: { type: "string" },
     pid: { type: "integer" },
     running: { type: "boolean" },
-    mode: { type: "string", enum: projectSessionPreviewModes },
+    mode: {
+      type: "string",
+      enum: projectSessionPreviewModes,
+    },
+    stale: { type: "boolean" },
+    renderedProjectVersion: { type: "integer" },
   },
-  required: ["url", "running", "mode"],
+  required: ["running"],
   additionalProperties: false,
+} as const satisfies InputJsonSchema;
+
+const previewDataSchema = {
+  ...previewStatusDataSchema,
+  required: ["url", "running", "mode"],
 } as const satisfies InputJsonSchema;
 
 const restorePointSummaryDataSchema = getZodObjectSchema(
@@ -3253,7 +3324,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Return the active generated-site preview server URL and process state for screenshot-based verification.",
     inputSchema: emptyInputSchema,
-    outputSchema: getMcpOutputSchema(previewDataSchema),
+    outputSchema: getMcpOutputSchema(previewStatusDataSchema),
     mcpExamples: getMcpExamples("preview.status"),
     annotations: {
       command: "preview.status",
@@ -3273,7 +3344,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Stop the active generated-site preview server owned by this MCP session.",
     inputSchema: emptyInputSchema,
-    outputSchema: getMcpOutputSchema(previewDataSchema),
+    outputSchema: getMcpOutputSchema(previewStatusDataSchema),
     mcpExamples: getMcpExamples("preview.stop"),
     annotations: {
       command: "preview.stop",
@@ -3545,6 +3616,11 @@ const capabilityAreas = [
       "whoami",
       "inspect",
     ],
+  },
+  {
+    area: "reporting",
+    goal: "Report anonymous, actionable CLI and MCP product issues without requiring the user to authenticate with GitHub.",
+    tools: ["report-issue"],
   },
   {
     area: "project-lifecycle",
@@ -5524,21 +5600,17 @@ const metaGoalGuides = [
       "preview-asset-query",
       "create-page",
       "create-assets-resource",
-      "insert-fragment-verified",
       "insert-collection",
       "verify-page-responsive",
     ],
     workflow: [
-      'Call meta.get-more-tools with {"tools":["create-assets-resource"]} once for the complete nested query contract. Use exact tool names, not brief search, and do not repeat discovery for this workflow.',
-      'Create one Blog asset folder. Upload all Markdown source files together in one upload-assets call with assetsDir ".webstudio/assets". Put queryable metadata such as slug, title, author, publishedAt, excerpt, and draft in each file\'s frontmatter. Every file must use {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}. Do not create companion JSON descriptors, use a combined format value, or retry a failed mutation; report its actionable error instead.',
-      'Ensure the blog has exactly two Builder pages: an overview at the fixed path "/blog" and one detail page at the dynamic path "/blog/:slug". Create each page once with a committed call; do not dry-run it. Both pages load their content from Assets resources. Do not create one page per post or copy Markdown content into page-specific static structures.',
-      "Every reachable Assets data source contributes its query to one shared published database. Keep exactly one final Assets resource for the overview and one for the detail page. Never create a placeholder, preview copy, or repair replacement; update the existing scoped resource when requirements change and remove obsolete duplicates.",
-      'Field paths are arrays of segments, for example field:["extension"]. Literal query values use {"type":"literal","value":"..."}; raw strings are runtime expressions. Keep every overview filter value, limit, and offset literal so the bounded metadata-only result can be materialized instead of retaining its fields across every article. Use a deterministic secondary ID sort. Query Markdown posts with static extension and blog-folder constraints before any dynamic condition. Use output.mode:"fields", includeMetadata:false, and only fields rendered by that route.',
-      'Keep content.mode:"none" on the overview and use content.mode:"markdown-body-ref" only on the detail route. The detail query should have exactly one dynamic value, system.params.slug, a literal limit of 1, and only the title and author metadata rendered above Markdown Embed. The published database keeps only the Markdown document reference and fetches the selected body from Asset storage at runtime.',
-      "Call create-assets-resource exactly once with recipe.overviewResource after substituting the returned /blog root id and Blog folder id. Then call it exactly once with recipe.detailResource after substituting the returned /blog/:slug root id and the same Blog folder id.",
-      'Call insert-collection exactly once with the entire recipe.overviewCollection object and exactly once with the entire recipe.detailCollection object, changing only parentInstanceId to the returned root id. Do not reshape or stringify any field: data must remain the recipe object {"type":"expression","value":"posts.data"} or {"type":"expression","value":"post.data"}. Do not improvise another fragment or call meta.get-more-tools again.',
-      "Validate both queries and preview the detail query with one concrete slug before saving dynamic expressions. Query-preview diagnostics report this query separately from the merged published database; use the merged database measurement when checking the deployment limit. The merged database must contain every source document without truncation, no embedded Markdown contents, and only one materialized overview query.",
-      "Verify only after both Collections succeed and confirm that both pages load their content from Assets. Call verify-page-responsive once for /blog and once for one concrete detail route, including empty/not-found behavior, before finishing. If any call fails, stop and report it without retrying.",
+      'Call meta.get-more-tools once with {"tools":["create-assets-resource"]}; the recipe below supplies the remaining inputs.',
+      'Create one asset folder named exactly "Blog", then call upload-assets exactly once with all Markdown files and assetsDir ".webstudio/assets". Put slug, title, author, publishedAt, excerpt, and draft in frontmatter. Each asset uses {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}; do not create companion files.',
+      'Create exactly two pages once: "/blog" and "/blog/:slug". Do not dry-run page creation, create one page per post, or copy Markdown into static page content.',
+      "Substitute the returned folder id in both recipe queries. Validate both, then preview the detail query with one concrete slug. Keep overview values literal and keep system.params.slug as the detail query's only dynamic value.",
+      'Create exactly one scoped Assets resource per page by copying recipe.overviewResource and recipe.detailResource unchanged except for id placeholders. Keep the detail query result as "one"; Collection accepts this single-result object. Do not add query defaults or create placeholder resources.',
+      "Insert recipe.overviewCollection under the overview root and recipe.detailCollection under the detail root. Use each object unchanged except for parentInstanceId. Both bindings must remain editable Collections; do not replace the detail Collection with a static fragment.",
+      'After both insertions succeed, call verify-page-responsive once for "/blog" and once for one concrete detail path with desktop and mobile viewports. Confirm Assets-backed content and empty/not-found behavior. Stop on an error instead of retrying.',
     ],
     recipe: {
       overviewResource: {
@@ -5546,6 +5618,7 @@ const metaGoalGuides = [
         scopeInstanceId: "<overview-root-id>",
         dataSourceName: "posts",
         query: {
+          result: "many",
           where: {
             all: [
               {
@@ -5590,6 +5663,7 @@ const metaGoalGuides = [
         scopeInstanceId: "<detail-root-id>",
         dataSourceName: "post",
         query: {
+          result: "one",
           where: {
             all: [
               {
@@ -5609,8 +5683,6 @@ const metaGoalGuides = [
               },
             ],
           },
-          limit: { type: "literal", value: 1 },
-          offset: { type: "literal", value: 0 },
           output: {
             mode: "fields",
             includeMetadata: false,
@@ -5630,9 +5702,12 @@ const metaGoalGuides = [
       },
       detailCollection: {
         parentInstanceId: "<detail-root-id>",
-        data: { type: "expression", value: "post.data" },
+        data: {
+          type: "expression",
+          value: "post.data == null ? [] : [post.data]",
+        },
         itemFragment:
-          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><$.MarkdownEmbed code={expression`collectionItem.content.text`} /></ws.element>',
+          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name ?? ""`}</ws.element><$.MarkdownEmbed code={expression`collectionItem.content.text ?? ""`} /></ws.element>',
       },
     },
   },
@@ -5857,25 +5932,25 @@ const getMetaGuide = (
   const canDiffScreenshots = tools.some(
     (tool) => tool.name === "screenshot.diff"
   );
+  const generalWorkflow = [
+    "Use the fewest discovery calls needed for the immediate action.",
+    "Call permissions or status only when the task depends on capabilities or local session freshness.",
+    matches.some((tool) => tool.annotations.localCapable) &&
+    matches.some((tool) => tool.name === "verify-font-assets") === false
+      ? "Call refresh if cached namespaces may be stale."
+      : undefined,
+    "Use focused read tools to collect ids and current values.",
+    "Use the smallest semantic mutation tool that matches the requested change.",
+    valuesVsBindingsRule,
+    "Use apply-patch only when no semantic mutation tool fits.",
+    canVerifyVisually && guidance !== undefined
+      ? guidance.getVisionWorkflowSummary({ includeDiff: canDiffScreenshots })
+      : undefined,
+  ].filter(Boolean);
   return {
     delegatedAgentRule:
       "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
-    workflow: [
-      ...(goalGuide?.workflow ?? []),
-      "Use the fewest discovery calls needed for the immediate action.",
-      "Call permissions or status only when the task depends on capabilities or local session freshness.",
-      matches.some((tool) => tool.annotations.localCapable) &&
-      matches.some((tool) => tool.name === "verify-font-assets") === false
-        ? "Call refresh if cached namespaces may be stale."
-        : undefined,
-      "Use focused read tools to collect ids and current values.",
-      "Use the smallest semantic mutation tool that matches the requested change.",
-      valuesVsBindingsRule,
-      "Use apply-patch only when no semantic mutation tool fits.",
-      canVerifyVisually && guidance !== undefined
-        ? guidance.getVisionWorkflowSummary({ includeDiff: canDiffScreenshots })
-        : undefined,
-    ].filter(Boolean),
+    workflow: goalGuide?.workflow ?? generalWorkflow,
     tools: matches.map((tool) =>
       serializeMetaGuideTool(tool, goalGuide === undefined)
     ),
@@ -5885,7 +5960,7 @@ const getMetaGuide = (
     more:
       goalGuide === undefined
         ? "The MCP handshake provides top-level argument contracts and required fields, while this guide includes exact examples plus complete schemas for selected complex tools. Call meta.get-more-tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover."
-        : "The MCP client loads each named tool's exact argument contract before calling it. This guide includes a complete schema only for selected complex inputs. Call meta.get-more-tools once with all needed tool names only when the client does not expose a nested input shape or when you need server/local behavior that the guide does not cover.",
+        : "Follow this workflow and recipe without additional discovery unless the workflow explicitly requests it.",
   };
 };
 
@@ -6065,25 +6140,27 @@ const getWorkflowNext = (input: unknown) => {
   };
 };
 
+const toUnderscoredToolName = (name: string) =>
+  name.replace(/[^a-zA-Z0-9_]/g, "_");
+
 const getExactToolSelection = (
   toolNames: readonly string[],
   tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const toolByName = new Map(tools.map((tool) => [tool.name, tool]));
+  const toolNameIndex = createToolNameIndex(tools);
   const selectedTools: ProjectSessionMcpTool[] = [];
   const missingTools: string[] = [];
   const includedToolNames = new Set<string>();
   for (const requestedName of toolNames) {
-    const resolvedName = resolveToolName(requestedName);
-    const tool = toolByName.get(resolvedName);
+    const tool = toolNameIndex.get(requestedName);
     if (tool === undefined) {
       missingTools.push(requestedName);
       continue;
     }
-    if (includedToolNames.has(resolvedName)) {
+    if (includedToolNames.has(tool.name)) {
       continue;
     }
-    includedToolNames.add(resolvedName);
+    includedToolNames.add(tool.name);
     selectedTools.push(tool);
   }
   return { tools: selectedTools, missingTools };
@@ -6212,7 +6289,72 @@ const toolAliases = new Map([
   ["meta.get_more_tools", "meta.get-more-tools"],
 ]);
 
-const resolveToolName = (name: string) => toolAliases.get(name) ?? name;
+const createToolNameIndex = (tools: readonly ProjectSessionMcpTool[]) => {
+  const toolByAcceptedName = new Map(
+    tools.map((tool) => [tool.name, tool] as const)
+  );
+  const canonicalNamesByUnderscoredName = new Map<string, string[]>();
+  for (const tool of tools) {
+    const underscoredName = toUnderscoredToolName(tool.name);
+    const canonicalNames =
+      canonicalNamesByUnderscoredName.get(underscoredName) ?? [];
+    canonicalNames.push(tool.name);
+    canonicalNamesByUnderscoredName.set(underscoredName, canonicalNames);
+  }
+  for (const [
+    underscoredName,
+    canonicalNames,
+  ] of canonicalNamesByUnderscoredName) {
+    if (
+      canonicalNames.length === 1 &&
+      toolByAcceptedName.has(underscoredName) === false
+    ) {
+      const tool = toolByAcceptedName.get(canonicalNames[0] ?? "");
+      if (tool !== undefined) {
+        toolByAcceptedName.set(underscoredName, tool);
+      }
+    }
+  }
+  const getAcceptedName = (name: string) => toolAliases.get(name) ?? name;
+  const get = (name: string) => toolByAcceptedName.get(getAcceptedName(name));
+  return {
+    canonicalNamesByUnderscoredName,
+    get,
+    resolve: (name: string) => get(name)?.name ?? getAcceptedName(name),
+  };
+};
+
+const getUnknownToolMessage = (
+  requestedName: string,
+  tools: readonly ProjectSessionMcpTool[]
+) => {
+  const normalizedRequestedName = toUnderscoredToolName(
+    requestedName.toLowerCase()
+  );
+  const suggestions = tools
+    .map((tool) => ({
+      name: tool.name,
+      distance: getLevenshteinDistance(
+        normalizedRequestedName,
+        toUnderscoredToolName(tool.name.toLowerCase())
+      ),
+    }))
+    .filter(
+      ({ distance }) =>
+        distance <= Math.max(2, Math.floor(normalizedRequestedName.length / 3))
+    )
+    .sort(
+      (left, right) =>
+        left.distance - right.distance || left.name.localeCompare(right.name)
+    )
+    .slice(0, 3)
+    .map(({ name }) => name);
+  const suggestion =
+    suggestions.length === 0
+      ? ""
+      : ` Did you mean ${suggestions.map((name) => `"${name}"`).join(", ")}?`;
+  return `Unknown MCP tool "${requestedName}".${suggestion} Use meta.index to list available tools.`;
+};
 
 export const isReadOnlyProjectSessionMcpTool = (tool: ProjectSessionMcpTool) =>
   tool.annotations.method === "query" ||
@@ -6223,11 +6365,8 @@ export const isReadOnlyProjectSessionMcpToolCall = (
   name: string,
   tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const resolvedName = resolveToolName(name);
-  return tools.some(
-    (tool) =>
-      tool.name === resolvedName && isReadOnlyProjectSessionMcpTool(tool)
-  );
+  const tool = createToolNameIndex(tools).get(name);
+  return tool !== undefined && isReadOnlyProjectSessionMcpTool(tool);
 };
 
 const sdkScalarSchemaKeys = new Set([
@@ -6249,11 +6388,10 @@ const sdkScalarSchemaKeys = new Set([
   "uniqueItems",
 ]);
 
-const sdkDetailedOptionalSchemaProperties = new Set([
-  "dryRun",
-  "confirmDestructive",
-  "confirmationToken",
-]);
+const sdkDetailedOptionalSchemaProperties = new Set(["confirmationToken"]);
+
+const isSdkBooleanSchemaProperty = (value: InputJsonSchemaValue) =>
+  typeof value !== "boolean" && value.type === "boolean";
 
 const getSdkSchemaProperty = (
   value: InputJsonSchemaValue,
@@ -6306,7 +6444,8 @@ const getSdkInputSchema = (
     Object.entries(schema.properties ?? {}).flatMap(([name, value]) =>
       required.has(name) ||
       includeOptionalProperties ||
-      sdkDetailedOptionalSchemaProperties.has(name)
+      sdkDetailedOptionalSchemaProperties.has(name) ||
+      isSdkBooleanSchemaProperty(value)
         ? [[name, getSdkSchemaProperty(value)]]
         : []
     )
@@ -6335,11 +6474,15 @@ const getSdkInputSchema = (
   };
 };
 
-const sdkDescribedToolNames = new Set([
+const sdkDetailedInputToolNames = new Set([
   "meta.index",
   "meta.guide",
   "meta.get-more-tools",
   "workflow.next",
+]);
+
+const sdkDescribedToolNames = new Set([
+  ...sdkDetailedInputToolNames,
   ...metaGoalGuides.flatMap(({ tools }) => tools),
 ]);
 
@@ -6369,7 +6512,7 @@ const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => {
       : {}),
     inputSchema: getSdkInputSchema(
       tool.inputSchema,
-      sdkDescribedToolNames.has(tool.name)
+      sdkDetailedInputToolNames.has(tool.name)
     ),
     ...(annotations === undefined ? {} : { annotations }),
   };
@@ -7138,18 +7281,19 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   const operationByCommand = new Map(
     operations.map((operation) => [operation.command, operation])
   );
-  const listTools = () =>
-    listProjectSessionMcpTools(operations, {
-      includeImport: importProject !== undefined,
-      includeDownloadAsset: downloadAsset !== undefined,
-      includeScreenshot: captureScreenshot !== undefined,
-      includeResponsiveScreenshot: capturePageScreenshots !== undefined,
-      includeScreenshotDiff: diffScreenshots !== undefined,
-      includeInstallOcr: installOcr !== undefined,
-      includePreview:
-        startPreview !== undefined && getPreviewStatus !== undefined,
-      includeRestorePoints: restorePoints !== undefined,
-    });
+  const tools = listProjectSessionMcpTools(operations, {
+    includeImport: importProject !== undefined,
+    includeDownloadAsset: downloadAsset !== undefined,
+    includeScreenshot: captureScreenshot !== undefined,
+    includeResponsiveScreenshot: capturePageScreenshots !== undefined,
+    includeScreenshotDiff: diffScreenshots !== undefined,
+    includeInstallOcr: installOcr !== undefined,
+    includePreview:
+      startPreview !== undefined && getPreviewStatus !== undefined,
+    includeRestorePoints: restorePoints !== undefined,
+  });
+  const listTools = () => [...tools];
+  const toolNameIndex = createToolNameIndex(tools);
   const getSession = () => {
     session ??= createProjectSession();
     return session;
@@ -7368,7 +7512,8 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       dryRun?: boolean;
       signal?: AbortSignal;
     }): Promise<ProjectSessionMcpToolResult> {
-      name = resolveToolName(name);
+      const requestedName = name;
+      name = toolNameIndex.resolve(name);
       if (name === "checkpoint.ack") {
         if (
           isRecord(input) === false ||
@@ -7493,11 +7638,15 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         return toCheckpointedMetaResult(name, getWorkflowNext(input));
       }
       if (name === "meta.get-more-tools") {
+        const normalizedInput = parseStringifiedJsonInputFields(
+          input,
+          toolDetailsInputSchema
+        );
         return toMetaResult(
           getMoreTools(
-            getBrief(input, "meta.get-more-tools"),
-            getToolNamesInput(input),
-            listTools()
+            getBrief(normalizedInput, "meta.get-more-tools"),
+            getToolNamesInput(normalizedInput),
+            tools
           )
         );
       }
@@ -7837,7 +7986,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       }
       const operation = operationByCommand.get(name as Command);
       if (operation === undefined) {
-        throw new Error(`Unknown MCP tool "${name}".`);
+        throw new Error(getUnknownToolMessage(requestedName, tools));
       }
       const transportInput = getToolCallInput(input, operation.requiresConfirm);
       const toolInput = transportInput.input;
@@ -8195,28 +8344,28 @@ export const createProjectSessionMcpServer = async <
       sendLog("info", message);
     },
   });
-  const exposedTools = core.listTools().map((tool) => ({
+  const tools = core.listTools();
+  const toolNameIndex = createToolNameIndex(tools);
+  const exposedTools = tools.map((tool) => ({
     ...tool,
     name:
       toolNameFormat === "underscores"
-        ? tool.name.replace(/[^a-zA-Z0-9_]/g, "_")
+        ? toUnderscoredToolName(tool.name)
         : tool.name,
   }));
-  const canonicalToolNameByExposedName = new Map<string, string>();
-  for (const [index, tool] of core.listTools().entries()) {
-    const exposedName = exposedTools[index]?.name;
-    if (exposedName === undefined) {
-      continue;
-    }
-    const existingName = canonicalToolNameByExposedName.get(exposedName);
-    if (existingName !== undefined && existingName !== tool.name) {
+  if (toolNameFormat === "underscores") {
+    for (const [
+      exposedName,
+      canonicalNames,
+    ] of toolNameIndex.canonicalNamesByUnderscoredName) {
+      if (canonicalNames.length < 2) {
+        continue;
+      }
       throw new Error(
-        `MCP tool names ${existingName} and ${tool.name} both map to ${exposedName}.`
+        `MCP tool names ${canonicalNames.join(" and ")} both map to ${exposedName}.`
       );
     }
-    canonicalToolNameByExposedName.set(exposedName, tool.name);
   }
-
   server.oninitialized = () => {
     onInitialized?.(server.getClientVersion()?.name);
     sendLog(
@@ -8270,7 +8419,7 @@ export const createProjectSessionMcpServer = async <
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const params = getRequestParams(request);
     const exposedName = typeof params.name === "string" ? params.name : "";
-    const name = canonicalToolNameByExposedName.get(exposedName) ?? exposedName;
+    const name = toolNameIndex.resolve(exposedName);
     const { input, dryRun } = getToolCallInput(params.arguments ?? {});
     const startedAt = Date.now();
     sendLog("info", `tool ${name} started${dryRun ? " (dry run)" : ""}`);
@@ -8328,9 +8477,72 @@ export const connectProjectSessionMcpServer = async <Command extends string>({
 export const createMcpStdioTransport = async ({
   stdin,
   stdout,
+  partialFrameTimeoutMs = 5_000,
 }: {
-  stdin: ConstructorParameters<typeof StdioServerTransport>[0];
+  stdin: NonNullable<ConstructorParameters<typeof StdioServerTransport>[0]>;
   stdout: ConstructorParameters<typeof StdioServerTransport>[1];
+  partialFrameTimeoutMs?: number;
 }): Promise<McpTransport> => {
-  return new StdioServerTransport(stdin, stdout);
+  let partialFrame: Buffer | undefined;
+  let discardTimer: ReturnType<typeof setTimeout> | undefined;
+  const clearDiscardTimer = () => {
+    if (discardTimer !== undefined) {
+      clearTimeout(discardTimer);
+      discardTimer = undefined;
+    }
+  };
+  const scheduleDiscard = () => {
+    clearDiscardTimer();
+    if (partialFrame === undefined || partialFrameTimeoutMs <= 0) {
+      return;
+    }
+    discardTimer = setTimeout(() => {
+      partialFrame = undefined;
+      discardTimer = undefined;
+    }, partialFrameTimeoutMs);
+    discardTimer.unref?.();
+  };
+  const recoveringInput = new Transform({
+    transform(chunk: Buffer | string, encoding: BufferEncoding, callback) {
+      const nextChunk = Buffer.isBuffer(chunk)
+        ? chunk
+        : Buffer.from(chunk, encoding);
+      const buffered =
+        partialFrame === undefined
+          ? nextChunk
+          : Buffer.concat([partialFrame, nextChunk]);
+      const lastNewline = buffered.lastIndexOf(10);
+      if (lastNewline === -1) {
+        partialFrame = buffered;
+        scheduleDiscard();
+        callback();
+        return;
+      }
+      clearDiscardTimer();
+      this.push(buffered.subarray(0, lastNewline + 1));
+      const remainder = buffered.subarray(lastNewline + 1);
+      partialFrame = remainder.length === 0 ? undefined : remainder;
+      scheduleDiscard();
+      callback();
+    },
+    flush(callback) {
+      clearDiscardTimer();
+      partialFrame = undefined;
+      callback();
+    },
+    destroy(error, callback) {
+      clearDiscardTimer();
+      partialFrame = undefined;
+      callback(error);
+    },
+  });
+  stdin.pipe(recoveringInput);
+  const transport = new StdioServerTransport(recoveringInput, stdout);
+  const closeTransport = transport.close.bind(transport);
+  transport.close = async () => {
+    await closeTransport();
+    stdin.unpipe(recoveringInput);
+    recoveringInput.destroy();
+  };
+  return transport;
 };

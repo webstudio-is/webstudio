@@ -31,10 +31,7 @@ import {
 import { $instances, $pages, $props } from "~/shared/sync/data-stores";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
-import {
-  BindableExpressionControl,
-  updateBindableValue,
-} from "~/builder/shared/bindable-expression";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { getPageDisplayName } from "~/builder/features/pages/page-utils";
 import {
   type ControlProps,
@@ -108,11 +105,10 @@ const addHttpsIfMissing = (url: string) => {
 
 const BaseUrl = ({ readOnly, prop, value, onChange, id }: BaseControlProps) => {
   const localValue = useDraftValue(value, (value) => {
-    updateBindableValue({
-      expression: prop?.type === "expression" ? prop.value : undefined,
-      value,
-      onChangeValue: (value) => onChange({ type: "string", value }),
-    });
+    if (prop?.type === "expression") {
+      return;
+    }
+    onChange({ type: "string", value });
   });
 
   useEffect(() => {
@@ -154,12 +150,11 @@ const BasePhone = ({
   const localValue = useDraftValue(
     value.startsWith("tel:") ? value.slice(4) : "",
     (value) => {
+      if (prop?.type === "expression") {
+        return;
+      }
       const nextValue = `tel:${value}`;
-      updateBindableValue({
-        expression: prop?.type === "expression" ? prop.value : undefined,
-        value: nextValue,
-        onChangeValue: (value) => onChange({ type: "string", value }),
-      });
+      onChange({ type: "string", value: nextValue });
     }
   );
 
@@ -232,12 +227,11 @@ const BaseEmail = ({
   id,
 }: BaseControlProps) => {
   const localValue = useDraftValue(propToEmail(value), ({ email, subject }) => {
+    if (prop?.type === "expression") {
+      return;
+    }
     const value = emailToProp({ email, subject });
-    updateBindableValue({
-      expression: prop?.type === "expression" ? prop.value : undefined,
-      value,
-      onChangeValue: (value) => onChange({ type: "string", value }),
-    });
+    onChange({ type: "string", value });
   });
 
   return (

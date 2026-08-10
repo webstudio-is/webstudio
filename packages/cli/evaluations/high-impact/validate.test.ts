@@ -288,6 +288,7 @@ const addMarkdownBlog = (): EvaluationProject => {
       "post-resource",
       "Post",
       createStructuredAssetQueryResourceBody({
+        result: "one",
         where: {
           all: [
             { field: ["extension"], operator: "eq", value: '"md"' },
@@ -300,7 +301,7 @@ const addMarkdownBlog = (): EvaluationProject => {
           ],
         },
         sort: [],
-        limit: "1",
+        limit: "20",
         offset: "0",
         output: {
           mode: "fields",
