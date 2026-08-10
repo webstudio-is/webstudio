@@ -31,7 +31,7 @@ const states: ReadonlyArray<ComponentProps<typeof ButtonComponent>["state"]> = [
 ];
 
 export const Button = () => (
-  <div style={{ border: "20px solid magenta" }}>
+  <>
     <StorySection title="Colors & States">
       <StoryGrid>
         {colors.map((color) => (
@@ -116,5 +116,5 @@ export const Button = () => (
         ))}
       </StoryGrid>
     </StorySection>
-  </div>
+  </>
 );
