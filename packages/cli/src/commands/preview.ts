@@ -536,6 +536,13 @@ export const preparePreviewProject = async ({
   if (generate === false) {
     return { cwd: projectDir };
   }
+  const prepareDependencies = async () => {
+    reportProgress?.(
+      `checking or installing generated preview dependencies (${previewDependencyInstallTimeout / 60_000} minute timeout)`
+    );
+    await ensureDependencies(previewProjectDir);
+    reportProgress?.("generated preview project is ready");
+  };
 
   const buildCacheKey = await getBuildCacheKey({
     projectDir,
@@ -553,42 +560,32 @@ export const preparePreviewProject = async ({
       "utf8"
     ).catch(() => undefined);
     if (cachedBuildKey === buildCacheKey && canReuseCachedProject) {
-      reportProgress?.(
-        `checking or installing generated preview dependencies (${previewDependencyInstallTimeout / 60_000} minute timeout)`
-      );
-      await ensureDependencies(previewProjectDir);
-      reportProgress?.("generated preview project is ready");
+      await prepareDependencies();
       return { cwd: previewProjectDir, buildCacheKey, buildRequired: false };
     }
   }
 
-  if (generate) {
-    await runExclusive(async () => {
-      const reuseGeneratedProject =
-        preserveGeneratedProject && hasIncrementalInputs;
-      await preparePreviewDirectory(projectDir, reuseGeneratedProject);
-      await runInDirectory(previewProjectDir, async () => {
-        reportProgress?.("generating preview files");
-        await prebuildProject({
-          assets,
-          template: getPreviewTemplates(template),
-          previewIdentity: true,
-          sourceAssetsDirectory: join(projectDir, LOCAL_ASSETS_DIR),
-          ...(silent ? { silent: true } : {}),
-          ...(includeDraftPages ? { includeDraftPages: true } : {}),
-          ...(reuseGeneratedProject ? { incremental: true } : {}),
-          ...(prepareForIncrementalGeneration
-            ? { preserveRouteTemplates: true }
-            : {}),
-        });
+  await runExclusive(async () => {
+    const reuseGeneratedProject =
+      preserveGeneratedProject && hasIncrementalInputs;
+    await preparePreviewDirectory(projectDir, reuseGeneratedProject);
+    await runInDirectory(previewProjectDir, async () => {
+      reportProgress?.("generating preview files");
+      await prebuildProject({
+        assets,
+        template: getPreviewTemplates(template),
+        previewIdentity: true,
+        sourceAssetsDirectory: join(projectDir, LOCAL_ASSETS_DIR),
+        ...(silent ? { silent: true } : {}),
+        ...(includeDraftPages ? { includeDraftPages: true } : {}),
+        ...(reuseGeneratedProject ? { incremental: true } : {}),
+        ...(prepareForIncrementalGeneration
+          ? { preserveRouteTemplates: true }
+          : {}),
       });
-      reportProgress?.(
-        `checking or installing generated preview dependencies (${previewDependencyInstallTimeout / 60_000} minute timeout)`
-      );
-      await ensureDependencies(previewProjectDir);
-      reportProgress?.("generated preview project is ready");
     });
-  }
+    await prepareDependencies();
+  });
 
   return {
     cwd: previewProjectDir,

@@ -69,6 +69,17 @@ type McpToolProgress = {
   report: (message: string) => void;
 };
 
+const getPreparationProgress = (
+  progress: McpToolProgress | undefined,
+  tool: "screenshot" | "preview.start"
+) =>
+  progress === undefined
+    ? {}
+    : {
+        reportProgress: (message: string) =>
+          progress.report(`tool ${tool} ${message}`),
+      };
+
 export const createPreviewFreshness = () => {
   let revision = 0;
   let freshRevision = -1;
@@ -433,12 +444,7 @@ export const createMcpPreviewHandlers = ({
         {
           preserveGeneratedProject: canReusePreview && mode === "iterative",
           prepareForIncrementalGeneration: mode === "iterative",
-          ...(progress === undefined
-            ? {}
-            : {
-                reportProgress: (message: string) =>
-                  progress.report(`tool screenshot ${message}`),
-              }),
+          ...getPreparationProgress(progress, "screenshot"),
         }
       );
       const projectVersion = getProjectVersion();
@@ -534,12 +540,7 @@ export const createMcpPreviewHandlers = ({
           {
             preserveGeneratedProject: canReusePreview && mode === "iterative",
             prepareForIncrementalGeneration: mode === "iterative",
-            ...(progress === undefined
-              ? {}
-              : {
-                  reportProgress: (message: string) =>
-                    progress.report(`tool preview.start ${message}`),
-                }),
+            ...getPreparationProgress(progress, "preview.start"),
           }
         );
         const projectVersion = getProjectVersion();

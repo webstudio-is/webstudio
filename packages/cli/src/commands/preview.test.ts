@@ -544,38 +544,6 @@ test("uses npm-cli from an npx launcher and forwards a writable npm cache", asyn
   );
 });
 
-test("reports generated preview preparation phases", async () => {
-  const previousDirectory = cwd();
-  const projectDir = join(tmpdir(), `webstudio-preview-test-${randomUUID()}`);
-  const progress: string[] = [];
-
-  await mkdir(join(projectDir, ".webstudio"), { recursive: true });
-  await writeFile(join(projectDir, ".webstudio", "data.json"), "{}");
-  chdir(projectDir);
-  try {
-    await preparePreviewProject({
-      assets: true,
-      template: [],
-      generate: true,
-      source: "session",
-      prepareSessionDataFile: vi.fn(async () => undefined),
-      prebuildProject: vi.fn(async () => undefined),
-      ensureDependencies: vi.fn(async () => undefined),
-      reportProgress: (message) => progress.push(message),
-    });
-  } finally {
-    chdir(previousDirectory);
-    await rm(projectDir, { recursive: true, force: true });
-  }
-
-  expect(progress).toEqual([
-    "materializing session project data",
-    "generating preview files",
-    "checking or installing generated preview dependencies (2 minute timeout)",
-    "generated preview project is ready",
-  ]);
-});
-
 test("reports an actionable error when generated dependencies cannot install", async () => {
   const access = vi.fn(async () => {
     throw Object.assign(new Error("missing"), { code: "ENOENT" });
@@ -647,6 +615,7 @@ test("materializes session data before previewing from session source", async ()
   const previousDirectory = cwd();
   const projectDir = join(tmpdir(), `webstudio-preview-test-${randomUUID()}`);
   let expectedPreviewProjectDir = "";
+  const progress: string[] = [];
   const prepareSessionDataFile = vi.fn(async () => {
     await mkdir(join(projectDir, ".webstudio"), { recursive: true });
     await writeFile(join(projectDir, ".webstudio", "data.json"), "{}");
@@ -669,6 +638,7 @@ test("materializes session data before previewing from session source", async ()
         prepareSessionDataFile,
         prebuildProject,
         ensureDependencies: vi.fn(async () => undefined),
+        reportProgress: (message) => progress.push(message),
       })
     ).resolves.toEqual({
       cwd: expectedPreviewProjectDir,
@@ -686,6 +656,12 @@ test("materializes session data before previewing from session source", async ()
     previewIdentity: true,
     sourceAssetsDirectory: join(expectedPreviewProjectDir, "..", "assets"),
   });
+  expect(progress).toEqual([
+    "materializing session project data",
+    "generating preview files",
+    "checking or installing generated preview dependencies (2 minute timeout)",
+    "generated preview project is ready",
+  ]);
 });
 
 test("refreshes an iterative generated project without replacing its directory", async () => {

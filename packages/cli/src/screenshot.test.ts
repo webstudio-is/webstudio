@@ -44,6 +44,7 @@ const createDependencies = (
   createWebSocket: vi.fn(),
   captureBrowserScreenshot: vi.fn(async () => undefined),
   installCommand: vi.fn(async () => undefined),
+  readArtifactByte: vi.fn(async () => 1),
   getuid: vi.fn(() => 1000),
   now: vi.fn(() => 123),
   ...overrides,
@@ -473,7 +474,7 @@ describe("captureScreenshot", () => {
       which: vi.fn(async (command) =>
         command === "chromium" ? "/usr/bin/chromium" : undefined
       ),
-      readFile: vi.fn(async () => Buffer.alloc(0)) as never,
+      readArtifactByte: vi.fn(async () => 0),
       captureBrowserScreenshot: vi.fn(async () => ({
         viewportWidth: 1440,
         viewportHeight: 900,
