@@ -1,6 +1,6 @@
 import { Toast as ToastComponent } from "./toast";
 import { StorySection, StoryGrid } from "./storybook";
-import { getImageProps } from "@webstudio-is/image";
+import { getImageAttributes } from "@webstudio-is/image";
 import { Box } from "./box";
 import { css, theme } from "../stitches.config";
 import { AlertCircleIcon } from "@webstudio-is/icons";
@@ -25,8 +25,8 @@ const imageWidth = css({
 const ImageIcon = () => (
   <Box css={{ width: theme.spacing[18] }}>
     <img
-      {...getImageProps({
-        className: imageWidth(),
+      className={imageWidth()}
+      {...getImageAttributes({
         src: toastIconUrl,
         optimize: false,
         width: 64,

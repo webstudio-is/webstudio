@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { getImageProps, wsImageLoader } from "@webstudio-is/image";
+import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
 import { css, theme, textVariants } from "@webstudio-is/design-system";
 
 const abbrStyle = css(textVariants.brandThumbnailLargeDefault, {
@@ -75,10 +75,10 @@ export const ThumbnailLinkWithImage = forwardRef<
   return (
     <a ref={ref} href={to} className={imageContainerStyle()} tabIndex={-1}>
       <img
-        {...getImageProps({
+        className={imageStyle()}
+        {...getImageAttributes({
           src: name,
           loader: wsImageLoader,
-          className: imageStyle(),
         })}
       />
     </a>
@@ -101,10 +101,10 @@ export const ThumbnailWithImage = forwardRef<
       tabIndex={-1}
     >
       <img
-        {...getImageProps({
+        className={imageStyle()}
+        {...getImageAttributes({
           src: name,
           loader: wsImageLoader,
-          className: imageStyle(),
         })}
       />
     </div>

@@ -2,7 +2,7 @@
 
 import type * as React from "react";
 import { StorySection } from "@webstudio-is/design-system";
-import { getImageProps, wsImageLoader } from "./";
+import { getImageAttributes, wsImageLoader } from "./";
 
 // to not allow include local assets everywhere, just enable it for this file
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -26,20 +26,39 @@ const imageSrc = USE_CLOUDFLARE_IMAGE_TRANSFORM
   ? REMOTE_SELF_DOMAIN_IMAGE
   : localLogoImage;
 
-const ImageBase = (args: React.ComponentPropsWithoutRef<"img">) => {
+const ImageBase = ({
+  alt,
+  decoding,
+  height,
+  loading,
+  sizes,
+  src,
+  srcSet,
+  style: inputStyle,
+  width,
+  ...props
+}: React.ComponentPropsWithoutRef<"img">) => {
   const style = {
     maxWidth: "100%",
     display: "block",
-    ...args.style,
+    ...inputStyle,
   };
 
   return (
     <img
-      {...getImageProps({
-        ...args,
+      {...props}
+      style={style}
+      {...getImageAttributes({
+        alt,
+        decoding,
+        height,
+        loading,
+        sizes,
+        src,
+        srcSet,
+        width,
         optimize: true,
         loader: wsImageLoader,
-        style,
       })}
     />
   );

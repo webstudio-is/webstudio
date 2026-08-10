@@ -1,5 +1,5 @@
 import { Box, Flex, Grid } from "@webstudio-is/design-system";
-import { getImageProps, wsImageLoader } from "@webstudio-is/image";
+import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
 import { formatUrl, truncateByWords, truncate } from "./social-utils";
 
 /**
@@ -93,7 +93,7 @@ export const SearchPreview = (props: SearchPreviewProps) => {
           align={"center"}
         >
           <img
-            {...getImageProps({
+            {...getImageAttributes({
               width: 18,
               height: 18,
               loader: wsImageLoader,

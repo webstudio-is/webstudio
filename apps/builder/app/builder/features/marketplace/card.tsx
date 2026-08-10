@@ -7,7 +7,7 @@ import {
   css,
   rawTheme,
 } from "@webstudio-is/design-system";
-import { getImageProps, wsImageLoader } from "@webstudio-is/image";
+import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
 import { SpinnerIcon } from "@webstudio-is/icons";
 
 const focusOutline = focusRingStyle();
@@ -74,11 +74,11 @@ const Thumbnail = ({ image, state, alt }: ThumbnailProps) => {
         <img src={image} className={imageStyle({ hasAsset: true })} />
       ) : (
         <img
-          {...getImageProps({
+          className={imageStyle({ hasAsset: true })}
+          {...getImageAttributes({
             src: image.name,
             width: rawTheme.spacing[28],
             loader: wsImageLoader,
-            className: imageStyle({ hasAsset: true }),
           })}
         />
       )}

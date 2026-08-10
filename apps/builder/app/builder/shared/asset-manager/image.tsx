@@ -1,4 +1,4 @@
-import { getImageProps, wsImageLoader } from "@webstudio-is/image";
+import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
 
 type ImageProps = {
   assetId: string;
@@ -28,17 +28,17 @@ export const Image = ({
   return (
     <img
       key={assetId}
-      {...getImageProps({
-        className,
-        style: {
-          // Prevent native image drag in Image Manager to avoid issues with monitorForExternal
-          // from @atlaskit/pragmatic-drag-and-drop, which incorrectly identifies it as an external drag operation
-          // when used inside an iframe.
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          WebkitUserDrag: "none",
-          maxWidth: "100%",
-        },
+      className={className}
+      style={{
+        // Prevent native image drag in Image Manager to avoid issues with monitorForExternal
+        // from @atlaskit/pragmatic-drag-and-drop, which incorrectly identifies it as an external drag operation
+        // when used inside an iframe.
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        WebkitUserDrag: "none",
+        maxWidth: "100%",
+      }}
+      {...getImageAttributes({
         loader: wsImageLoader,
         decoding,
         src,

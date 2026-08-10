@@ -1,5 +1,5 @@
 import { Box, Grid, Label, css, theme } from "@webstudio-is/design-system";
-import { getImageProps, wsImageLoader } from "@webstudio-is/image";
+import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
 import { truncateByWords, truncate } from "./social-utils";
 
 type SocialPreviewProps = {
@@ -44,14 +44,14 @@ export const SocialPreview = ({
         }}
       >
         <img
-          {...getImageProps({
+          className={imgStyle({
+            hasImage:
+              ogImageUrl === undefined || ogImageUrl === "" ? false : true,
+          })}
+          {...getImageAttributes({
             alt: "Social sharing preview image",
             src: ogImageUrl,
             loader: wsImageLoader,
-            className: imgStyle({
-              hasImage:
-                ogImageUrl === undefined || ogImageUrl === "" ? false : true,
-            }),
           })}
         />
 

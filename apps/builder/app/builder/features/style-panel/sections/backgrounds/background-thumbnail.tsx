@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import type { Assets } from "@webstudio-is/sdk";
-import { getImageProps, wsImageLoader } from "@webstudio-is/image";
+import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
 import { styled, theme } from "@webstudio-is/design-system";
 import {
   type StyleValue,
@@ -146,7 +146,7 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
     return (
       <StyledImage
         key={asset.id}
-        {...getImageProps({
+        {...getImageAttributes({
           loader: wsImageLoader,
           src: asset.name,
           width: thumbSize,
@@ -163,7 +163,7 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
     return (
       <StyledImage
         key={backgroundImageValue.value.url}
-        {...getImageProps({
+        {...getImageAttributes({
           loader: wsImageLoader,
           src: backgroundImageValue.value.url,
           width: thumbSize,

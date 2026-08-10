@@ -16,7 +16,7 @@ import {
   Select,
   Box,
 } from "@webstudio-is/design-system";
-import { getImageProps, wsImageLoader } from "@webstudio-is/image";
+import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
 import { useState } from "react";
 import {
   type MarketplaceProduct,
@@ -219,10 +219,10 @@ export const SectionMarketplace = () => {
           <Grid flow="column" gap={3}>
             <Box className={thumbnailStyle()}>
               <img
-                {...getImageProps({
-                  className: thumbnailImageStyle({
-                    hasAsset: asset !== undefined,
-                  }),
+                className={thumbnailImageStyle({
+                  hasAsset: asset !== undefined,
+                })}
+                {...getImageAttributes({
                   src: asset ? `${asset.name}` : undefined,
                   loader: wsImageLoader,
                 })}

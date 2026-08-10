@@ -1,4 +1,4 @@
-import { getImageProps, type ImageLoader } from "@webstudio-is/image";
+import { getImageAttributes, type ImageLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { renderToStaticMarkup } from "react-dom/server";
 import sanitizeHtml from "sanitize-html";
@@ -164,12 +164,12 @@ Hello, world!
       const optimizedImageHtml = renderToStaticMarkup(
         <div>
           <img
-            {...getImageProps({
+            className="hero"
+            {...getImageAttributes({
               src: "/photo.jpg",
               alt: "Photo",
               width: 320,
               height: 180,
-              className: "hero",
               loader: imageLoader,
               loading,
               decoding,

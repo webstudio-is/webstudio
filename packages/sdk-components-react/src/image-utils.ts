@@ -1,4 +1,4 @@
-import { getImageProps, type ImageLoader } from "@webstudio-is/image";
+import { getImageAttributes, type ImageLoader } from "@webstudio-is/image";
 import type { ComponentPropsWithoutRef } from "react";
 
 export type SdkImageProps = ComponentPropsWithoutRef<"img"> & {
@@ -26,9 +26,13 @@ export const getSdkImageProps = ({
     decoding,
     quality,
     $webstudio$canvasOnly$assetId,
-    ...rest
+    alt,
+    sizes,
+    srcSet,
+    src: source,
+    ...imageProps
   } = props;
-  const src = String(rest.src ?? "");
+  const src = String(source ?? "");
   let key = src;
 
   if (renderer === "canvas") {
@@ -53,16 +57,21 @@ export const getSdkImageProps = ({
 
   return {
     key,
-    imageProps: getImageProps({
-      width,
-      height,
-      ...rest,
-      src,
-      quality,
-      loader: imageLoader,
-      optimize,
-      loading,
-      decoding,
-    }),
+    imageProps: {
+      ...imageProps,
+      ...getImageAttributes({
+        alt,
+        width,
+        height,
+        sizes,
+        src,
+        srcSet,
+        quality,
+        loader: imageLoader,
+        optimize,
+        loading,
+        decoding,
+      }),
+    },
   };
 };

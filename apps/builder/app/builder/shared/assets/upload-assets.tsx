@@ -6,7 +6,7 @@ import type { AssetUploadResult } from "@webstudio-is/protocol/asset-resource-ap
 import type { AssetType, UploadTicket } from "@webstudio-is/asset-uploader";
 import { Box, toast, css, theme } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
-import { getImageProps, wsImageLoader } from "@webstudio-is/image";
+import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
 import { restAssetsUploadPath } from "~/shared/router-utils";
 import { fetch } from "~/shared/fetch.client";
 import {
@@ -374,8 +374,8 @@ const ToastImageInfo = ({ objectURL }: { objectURL: string }) => {
   return (
     <Box css={{ width: theme.spacing[18] }}>
       <img
-        {...getImageProps({
-          className: imageWidth(),
+        className={imageWidth()}
+        {...getImageAttributes({
           src: objectURL,
           optimize: false,
           width: 64,
