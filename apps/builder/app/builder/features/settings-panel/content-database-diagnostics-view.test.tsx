@@ -41,7 +41,7 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-test("shows the unresolved query result in a read-only JSON editor", () => {
+test("orders collapsible sections and opens only database sizes by default", () => {
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -110,13 +110,41 @@ test("shows the unresolved query result in a read-only JSON editor", () => {
     );
   });
 
+  const sectionLabels = [
+    "Database and sizes",
+    "Timing",
+    "Query work",
+    "Query database",
+    "Published database",
+    "Unresolved query result",
+  ];
+  const triggers = Array.from(
+    container.querySelectorAll<HTMLButtonElement>("button[data-state]")
+  );
+  expect(triggers).toHaveLength(sectionLabels.length);
+  expect(triggers.map((trigger) => trigger.parentElement?.textContent)).toEqual(
+    sectionLabels
+  );
+  expect(triggers.map((trigger) => trigger.dataset.state)).toEqual([
+    "open",
+    "closed",
+    "closed",
+    "closed",
+    "closed",
+    "closed",
+  ]);
+  expect(container.textContent).not.toContain("Server duration");
+
+  act(() => {
+    triggers[1]?.click();
+    triggers[2]?.click();
+    triggers[5]?.click();
+  });
+
   const editor = container.querySelector(".cm-content");
   expect(editor).not.toBeNull();
   expect(editor?.getAttribute("aria-readonly")).toBe("true");
-  expect(container.textContent).toContain("Unresolved query result");
   expect(container.textContent).toContain('"$ref": "./post.md#body"');
-  expect(container.textContent).toContain("Query database");
-  expect(container.textContent).toContain("Published database");
   expect(container.textContent).toContain("Server duration");
   expect(container.textContent).toContain("125.5 ms");
   expect(container.textContent).toContain("Builder round trip");

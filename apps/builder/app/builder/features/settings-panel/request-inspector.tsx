@@ -31,6 +31,16 @@ export const RequestDiagnosticsContent = ({
   </ScrollAreaNative>
 );
 
+export const RequestDiagnosticsSections = ({
+  children,
+}: {
+  children: ReactNode;
+}) => (
+  <ScrollAreaNative css={{ height: "100%", overflow: "auto" }}>
+    {children}
+  </ScrollAreaNative>
+);
+
 export const RequestDiagnosticsTable = ({
   children,
 }: {

@@ -1,11 +1,12 @@
 import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
-import { Grid, PanelBanner, Text } from "@webstudio-is/design-system";
+import { PanelBanner, Text } from "@webstudio-is/design-system";
 import prettyBytes from "pretty-bytes";
 import type { ResourcePerformance } from "~/shared/resource-diagnostics";
 import { CodeEditor } from "~/shared/code-editor";
+import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import {
-  RequestDiagnosticsContent,
   RequestDiagnosticsRow,
+  RequestDiagnosticsSections,
   RequestDiagnosticsTable,
 } from "./request-inspector";
 
@@ -92,23 +93,14 @@ const compilationWorkLabels = {
   disabled: "Reuse disabled",
 } as const;
 
-const ReadonlyJsonEditor = ({
-  title,
-  value,
-}: {
-  title: string;
-  value: unknown;
-}) => (
-  <Grid gap={1}>
-    <Text variant="titles">{title}</Text>
-    <CodeEditor
-      lang="json"
-      readOnly
-      value={JSON.stringify(value, undefined, 2)}
-      onChange={() => {}}
-      onChangeComplete={() => {}}
-    />
-  </Grid>
+const ReadonlyJsonEditor = ({ value }: { value: unknown }) => (
+  <CodeEditor
+    lang="json"
+    readOnly
+    value={JSON.stringify(value, undefined, 2)}
+    onChange={() => {}}
+    onChangeComplete={() => {}}
+  />
 );
 
 export const getContentDatabaseDiagnosticRows = (
@@ -137,9 +129,11 @@ export const getContentDatabaseDiagnosticRows = (
 const ResourcePerformanceSections = ({
   value,
   includeSizes = true,
+  openFirst = true,
 }: {
   value: ResourcePerformance;
   includeSizes?: boolean;
+  openFirst?: boolean;
 }) => {
   const hasTiming =
     value.loaderDurationMs !== undefined ||
@@ -160,9 +154,38 @@ const ResourcePerformanceSections = ({
       value.assetQuery?.documentGraphContentBytes !== undefined);
   return (
     <>
+      {hasSizes && (
+        <CollapsibleSection label="Sizes" isOpen={openFirst}>
+          <RequestDiagnosticsTable>
+            {value.responseBytes !== undefined && (
+              <RequestDiagnosticsRow
+                label="Response size"
+                value={prettyBytes(value.responseBytes)}
+                description="Serialized size of the server resource result before performance metadata is attached."
+              />
+            )}
+            {value.assetQuery?.compilerContentBytes !== undefined && (
+              <RequestDiagnosticsRow
+                label="Compiler content read"
+                value={prettyBytes(value.assetQuery.compilerContentBytes)}
+                description="Total bytes read from storage while preparing compiler entries."
+              />
+            )}
+            {value.assetQuery?.documentGraphContentBytes !== undefined && (
+              <RequestDiagnosticsRow
+                label="Document graph content read"
+                value={prettyBytes(value.assetQuery.documentGraphContentBytes)}
+                description="Total bytes read from storage while constructing the document graph."
+              />
+            )}
+          </RequestDiagnosticsTable>
+        </CollapsibleSection>
+      )}
       {hasTiming && (
-        <>
-          <Text variant="titles">Timing</Text>
+        <CollapsibleSection
+          label="Timing"
+          isOpen={openFirst && hasSizes === false}
+        >
           <RequestDiagnosticsTable>
             {value.loaderDurationMs !== undefined && (
               <RequestDiagnosticsRow
@@ -193,11 +216,13 @@ const ResourcePerformanceSections = ({
               );
             })}
           </RequestDiagnosticsTable>
-        </>
+        </CollapsibleSection>
       )}
       {hasQueryWork && (
-        <>
-          <Text variant="titles">Query work</Text>
+        <CollapsibleSection
+          label="Query work"
+          isOpen={openFirst && hasSizes === false && hasTiming === false}
+        >
           <RequestDiagnosticsTable>
             {value.assetQuery?.compilationCache !== undefined && (
               <RequestDiagnosticsRow
@@ -235,35 +260,7 @@ const ResourcePerformanceSections = ({
               />
             )}
           </RequestDiagnosticsTable>
-        </>
-      )}
-      {hasSizes && (
-        <>
-          <Text variant="titles">Sizes</Text>
-          <RequestDiagnosticsTable>
-            {value.responseBytes !== undefined && (
-              <RequestDiagnosticsRow
-                label="Response size"
-                value={prettyBytes(value.responseBytes)}
-                description="Serialized size of the server resource result before performance metadata is attached."
-              />
-            )}
-            {value.assetQuery?.compilerContentBytes !== undefined && (
-              <RequestDiagnosticsRow
-                label="Compiler content read"
-                value={prettyBytes(value.assetQuery.compilerContentBytes)}
-                description="Total bytes read from storage while preparing compiler entries."
-              />
-            )}
-            {value.assetQuery?.documentGraphContentBytes !== undefined && (
-              <RequestDiagnosticsRow
-                label="Document graph content read"
-                value={prettyBytes(value.assetQuery.documentGraphContentBytes)}
-                description="Total bytes read from storage while constructing the document graph."
-              />
-            )}
-          </RequestDiagnosticsTable>
-        </>
+        </CollapsibleSection>
       )}
     </>
   );
@@ -274,9 +271,9 @@ export const ResourcePerformanceDiagnostics = ({
 }: {
   value: ResourcePerformance;
 }) => (
-  <RequestDiagnosticsContent>
+  <RequestDiagnosticsSections>
     <ResourcePerformanceSections value={value} />
-  </RequestDiagnosticsContent>
+  </RequestDiagnosticsSections>
 );
 
 export const ContentDatabaseDiagnostics = ({
@@ -296,99 +293,107 @@ export const ContentDatabaseDiagnostics = ({
   }`;
   const rows = getContentDatabaseDiagnosticRows(value);
   return (
-    <RequestDiagnosticsContent>
+    <RequestDiagnosticsSections>
+      <CollapsibleSection label="Database and sizes" isOpen>
+        <PanelBanner variant={value.database.truncated ? "warning" : "success"}>
+          <Text>
+            {value.database.truncated
+              ? `${value.database.includedDocumentCount} of ${candidateFilesLabel} fit in the merged published content database. ${omittedFilesLabel} may be omitted from published query results.`
+              : totalDocumentCount === 1
+                ? "The candidate file fits in the merged published content database."
+                : `All ${candidateFilesLabel} fit in the merged published content database.`}
+          </Text>
+        </PanelBanner>
+        <RequestDiagnosticsTable>
+          {performance?.responseBytes !== undefined && (
+            <RequestDiagnosticsRow
+              label="Response size"
+              value={prettyBytes(performance.responseBytes)}
+              description="Serialized size of the server resource result before performance metadata is attached."
+            />
+          )}
+          {performance?.assetQuery?.compilerContentBytes !== undefined && (
+            <RequestDiagnosticsRow
+              label="Compiler content read"
+              value={prettyBytes(performance.assetQuery.compilerContentBytes)}
+              description="Total bytes read from storage while preparing compiler entries."
+            />
+          )}
+          {performance?.assetQuery?.documentGraphContentBytes !== undefined && (
+            <RequestDiagnosticsRow
+              label="Document graph content read"
+              value={prettyBytes(
+                performance.assetQuery.documentGraphContentBytes
+              )}
+              description="Total bytes read from storage while constructing the document graph."
+            />
+          )}
+          <RequestDiagnosticsRow
+            label="Scope"
+            value="Query preview"
+            description="These database measurements describe the current Assets query preview and its published-database context."
+          />
+          <RequestDiagnosticsRow
+            label="Published database status"
+            value={value.database.truncated ? "Truncated" : "Complete"}
+            description="Whether every candidate document fits within the published content database limit."
+          />
+          {rows.map((row) => (
+            <RequestDiagnosticsRow key={row.label} {...row} />
+          ))}
+          <RequestDiagnosticsRow
+            label="Database limit"
+            value={prettyBytes(value.database.maxBytes)}
+            description="Maximum serialized size allowed for the merged published content database."
+          />
+          <RequestDiagnosticsRow
+            label="Published included files"
+            value={value.database.includedDocumentCount}
+            description="Number of candidate files included in the published content database within the size limit."
+          />
+          <RequestDiagnosticsRow
+            label="Published omitted files"
+            value={value.database.omittedDocumentCount}
+            description="Number of candidate files omitted from the published content database because of its size limit."
+          />
+        </RequestDiagnosticsTable>
+      </CollapsibleSection>
       {performance !== undefined && (
-        <ResourcePerformanceSections value={performance} includeSizes={false} />
+        <ResourcePerformanceSections
+          value={performance}
+          includeSizes={false}
+          openFirst={false}
+        />
       )}
-      <Text variant="titles">Database and sizes</Text>
-      <PanelBanner variant={value.database.truncated ? "warning" : "success"}>
-        <Text>
-          {value.database.truncated
-            ? `${value.database.includedDocumentCount} of ${candidateFilesLabel} fit in the merged published content database. ${omittedFilesLabel} may be omitted from published query results.`
-            : totalDocumentCount === 1
-              ? "The candidate file fits in the merged published content database."
-              : `All ${candidateFilesLabel} fit in the merged published content database.`}
-        </Text>
-      </PanelBanner>
-      <RequestDiagnosticsTable>
-        {performance?.responseBytes !== undefined && (
-          <RequestDiagnosticsRow
-            label="Response size"
-            value={prettyBytes(performance.responseBytes)}
-            description="Serialized size of the server resource result before performance metadata is attached."
-          />
-        )}
-        {performance?.assetQuery?.compilerContentBytes !== undefined && (
-          <RequestDiagnosticsRow
-            label="Compiler content read"
-            value={prettyBytes(performance.assetQuery.compilerContentBytes)}
-            description="Total bytes read from storage while preparing compiler entries."
-          />
-        )}
-        {performance?.assetQuery?.documentGraphContentBytes !== undefined && (
-          <RequestDiagnosticsRow
-            label="Document graph content read"
-            value={prettyBytes(
-              performance.assetQuery.documentGraphContentBytes
-            )}
-            description="Total bytes read from storage while constructing the document graph."
-          />
-        )}
-        <RequestDiagnosticsRow
-          label="Scope"
-          value="Query preview"
-          description="These database measurements describe the current Assets query preview and its published-database context."
-        />
-        <RequestDiagnosticsRow
-          label="Published database status"
-          value={value.database.truncated ? "Truncated" : "Complete"}
-          description="Whether every candidate document fits within the published content database limit."
-        />
-        {rows.map((row) => (
-          <RequestDiagnosticsRow key={row.label} {...row} />
-        ))}
-        <RequestDiagnosticsRow
-          label="Database limit"
-          value={prettyBytes(value.database.maxBytes)}
-          description="Maximum serialized size allowed for the merged published content database."
-        />
-        <RequestDiagnosticsRow
-          label="Published included files"
-          value={value.database.includedDocumentCount}
-          description="Number of candidate files included in the published content database within the size limit."
-        />
-        <RequestDiagnosticsRow
-          label="Published omitted files"
-          value={value.database.omittedDocumentCount}
-          description="Number of candidate files omitted from the published content database because of its size limit."
-        />
-      </RequestDiagnosticsTable>
       {value.artifacts !== undefined && (
         <>
-          <ReadonlyJsonEditor
-            title={
+          <CollapsibleSection
+            label={
               value.query.truncated
                 ? "Included query database"
                 : "Query database"
             }
-            value={value.artifacts.query}
-          />
-          <ReadonlyJsonEditor
-            title={
+            isOpen={false}
+          >
+            <ReadonlyJsonEditor value={value.artifacts.query} />
+          </CollapsibleSection>
+          <CollapsibleSection
+            label={
               value.database.truncated
                 ? "Included published database"
                 : "Published database"
             }
-            value={value.artifacts.database}
-          />
+            isOpen={false}
+          >
+            <ReadonlyJsonEditor value={value.artifacts.database} />
+          </CollapsibleSection>
         </>
       )}
       {value.unresolved !== undefined && (
-        <ReadonlyJsonEditor
-          title="Unresolved query result"
-          value={value.unresolved}
-        />
+        <CollapsibleSection label="Unresolved query result" isOpen={false}>
+          <ReadonlyJsonEditor value={value.unresolved} />
+        </CollapsibleSection>
       )}
-    </RequestDiagnosticsContent>
+    </RequestDiagnosticsSections>
   );
 };
