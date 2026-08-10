@@ -1,9 +1,9 @@
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { access, mkdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { parseArgs } from "node:util";
+import { parseArgs, promisify } from "node:util";
 import { createBrowserScreenshotSession } from "@webstudio-is/project-build/vision";
 import {
   defaultScreenshotDependencies,
@@ -43,6 +43,7 @@ const currentPort = 6102;
 const pixelThreshold = 0.1;
 const maxMismatchPercentage = 0.001;
 const captureConcurrency = Number(process.env.VISUAL_CAPTURE_CONCURRENCY ?? 5);
+const execFileAsync = promisify(execFile);
 if (Number.isInteger(captureConcurrency) === false || captureConcurrency < 1) {
   throw new Error("VISUAL_CAPTURE_CONCURRENCY must be a positive integer.");
 }
@@ -91,36 +92,25 @@ const run = async ({
   return exitCode;
 };
 
-const getCommandBuffer = async (command: string, commandArgs: string[]) => {
-  const chunks: Buffer[] = [];
-  const child = spawn(command, commandArgs, {
+const getCommandOutput = async (command: string, commandArgs: string[]) => {
+  const { stdout } = await execFileAsync(command, commandArgs, {
     cwd: repositoryRoot,
-    stdio: ["ignore", "pipe", "inherit"],
+    encoding: "utf8",
   });
-  child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk));
-  const exitCode = await new Promise<number>((resolve, reject) => {
-    child.on("error", reject);
-    child.on("exit", (code) => resolve(code ?? 1));
-  });
-  if (exitCode !== 0) {
-    throw new Error(`${command} exited with code ${exitCode}`);
-  }
-  return Buffer.concat(chunks);
+  return stdout.trim();
 };
-
-const getCommandOutput = async (command: string, commandArgs: string[]) =>
-  (await getCommandBuffer(command, commandArgs)).toString("utf8").trim();
 
 const getScreenshotRuntimeHash = async (browserPath: string) => {
   const runtimeHash = createHash("sha256");
-  for (const file of [
-    ".storybook/preview.tsx",
-    ".storybook/story-sources.json",
-    "scripts/visual-regression/capture.ts",
-    "scripts/visual-regression/harness.tsx",
-    "scripts/visual-regression/story-server.ts",
-    "pnpm-lock.yaml",
-  ]) {
+  const runtimeFiles = (
+    await readFile(
+      new URL("./screenshot-runtime-files.txt", import.meta.url),
+      "utf8"
+    )
+  )
+    .split("\n")
+    .filter((file) => file !== "");
+  for (const file of runtimeFiles) {
     runtimeHash.update(await readFile(path.join(repositoryRoot, file)));
   }
   runtimeHash.update(await getCommandOutput(browserPath, ["--version"]));

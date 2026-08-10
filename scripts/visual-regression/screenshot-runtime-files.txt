@@ -1,0 +1,6 @@
+.storybook/preview.tsx
+.storybook/story-sources.json
+scripts/visual-regression/capture.ts
+scripts/visual-regression/harness.tsx
+scripts/visual-regression/story-server.ts
+pnpm-lock.yaml
