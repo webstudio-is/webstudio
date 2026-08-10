@@ -54,3 +54,7 @@ export const ColorPicker = () => {
     </>
   );
 };
+
+ColorPicker.parameters = {
+  visualRegression: { delay: 500 },
+};

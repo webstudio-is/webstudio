@@ -1,0 +1,171 @@
+import React from "react";
+import { flushSync } from "react-dom";
+import { createRoot } from "react-dom/client";
+import { composeStories, setProjectAnnotations } from "@storybook/react";
+import preview from "visual:preview";
+import { modules } from "visual:story-modules";
+
+type VisualRegressionParameters = {
+  delay?: number;
+  disableIntervals?: boolean;
+  hideSelectors?: readonly string[];
+};
+
+type VisualStoryInput = {
+  file: string;
+  exportName: string;
+  title: string;
+};
+
+type ComposedStory = React.ComponentType & {
+  parameters?: {
+    backgrounds?: {
+      default?: string;
+      values?: Array<{ name: string; value: string }>;
+    };
+    visualRegression?: VisualRegressionParameters;
+  };
+};
+
+declare global {
+  interface Window {
+    renderVisualStory: (input: VisualStoryInput) => Promise<void>;
+    showVisualError: (error: unknown) => void;
+  }
+}
+
+setProjectAnnotations(preview);
+
+const markReady = async () => {
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+  const ready = document.createElement("div");
+  ready.id = "visual-ready";
+  ready.hidden = true;
+  document.body.append(ready);
+};
+
+const showError = (error: unknown) => {
+  document.querySelector("#visual-ready")?.remove();
+  document.querySelector("#visual-error")?.remove();
+  const output = document.createElement("pre");
+  output.id = "visual-error";
+  output.textContent =
+    error instanceof Error ? (error.stack ?? error.message) : String(error);
+  document.body.append(output);
+};
+window.showVisualError = showError;
+
+window.addEventListener("error", (event) =>
+  showError(event.error ?? event.message)
+);
+window.addEventListener("unhandledrejection", (event) =>
+  showError(event.reason)
+);
+
+const rootElement = document.querySelector("#root");
+if (rootElement === null) {
+  throw new Error("Visual story root is missing");
+}
+const root = createRoot(rootElement);
+const originalSetInterval = window.setInterval;
+const originalClearInterval = window.clearInterval;
+const storyIntervals = new Set<number>();
+const OriginalDate = Date;
+const fixedTime = Date.UTC(2020, 0, 1);
+window.Date = new Proxy(OriginalDate, {
+  construct(target, argumentsList, newTarget) {
+    return Reflect.construct(
+      target,
+      argumentsList.length === 0 ? [fixedTime] : argumentsList,
+      newTarget
+    );
+  },
+  apply(target, thisArgument, argumentsList) {
+    return Reflect.apply(target, thisArgument, argumentsList);
+  },
+});
+window.Date.now = () => fixedTime;
+
+window.renderVisualStory = async ({ file, exportName, title }) => {
+  flushSync(() => root.render(null));
+  for (const interval of storyIntervals) {
+    originalClearInterval(interval);
+  }
+  storyIntervals.clear();
+  for (const element of document.querySelectorAll(
+    "body > :not(#root), [data-visual-regression-style]"
+  )) {
+    element.remove();
+  }
+  document.body.style.background = "";
+
+  let randomState = 0x12345678;
+  Math.random = () => {
+    randomState = (randomState * 1664525 + 1013904223) >>> 0;
+    return randomState / 0x100000000;
+  };
+  const load = modules[`/${file}`];
+  if (load === undefined) {
+    throw new Error(`Visual story module not found: ${file}`);
+  }
+  const module = await load();
+  const meta =
+    typeof module.default === "object" && module.default !== null
+      ? module.default
+      : {};
+  const csfModule = {
+    ...module,
+    default: { ...meta, title },
+  } as Parameters<typeof composeStories>[0];
+  const stories = composeStories(csfModule) as Record<string, ComposedStory>;
+  const Story = stories[exportName];
+  if (Story === undefined) {
+    throw new Error(`Visual story export not found: ${exportName}`);
+  }
+  const options = (Story.parameters?.visualRegression ??
+    {}) as VisualRegressionParameters;
+  Object.defineProperty(window, "setInterval", {
+    configurable: true,
+    value: options.disableIntervals
+      ? () => 0
+      : (handler: TimerHandler, timeout?: number, ...arguments_: unknown[]) => {
+          const interval = originalSetInterval(handler, timeout, ...arguments_);
+          storyIntervals.add(interval);
+          return interval;
+        },
+  });
+  if (options.hideSelectors?.length !== undefined) {
+    const style = document.createElement("style");
+    style.dataset.visualRegressionStyle = "";
+    style.textContent = options.hideSelectors
+      .map((selector) => `${selector} { visibility: hidden !important; }`)
+      .join("\n");
+    document.head.append(style);
+  }
+
+  const backgrounds = Story.parameters?.backgrounds;
+  const background = backgrounds?.values?.find(
+    ({ name }: { name: string }) => name === backgrounds.default
+  );
+  if (background?.value !== undefined) {
+    document.body.style.background = background.value;
+  }
+
+  flushSync(() => root.render(React.createElement(Story)));
+  if (options.delay !== undefined && options.delay > 0) {
+    await new Promise((resolve) => window.setTimeout(resolve, options.delay));
+  }
+  await markReady();
+};
+
+const params = new URLSearchParams(window.location.search);
+if (params.has("file")) {
+  const file = params.get("file");
+  const exportName = params.get("exportName");
+  const title = params.get("title");
+  if (file !== null && exportName !== null && title !== null) {
+    window.renderVisualStory({ file, exportName, title }).catch(showError);
+  }
+}

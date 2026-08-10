@@ -3,8 +3,50 @@ import path from "node:path";
 import { glob } from "node:fs/promises";
 import { loadCsf } from "storybook/internal/csf-tools";
 import { toId } from "storybook/internal/csf";
-import { storySources } from "../../.storybook/story-sources";
 import type { StoryEntry } from "./shared";
+
+export type StorySource = {
+  directory: string;
+  files: string;
+  titlePrefix: string;
+};
+
+const isStorySource = (value: unknown): value is StorySource =>
+  typeof value === "object" &&
+  value !== null &&
+  "directory" in value &&
+  typeof value.directory === "string" &&
+  "files" in value &&
+  typeof value.files === "string" &&
+  "titlePrefix" in value &&
+  typeof value.titlePrefix === "string";
+
+export const readStorySources = async (
+  root: string
+): Promise<readonly StorySource[] | undefined> => {
+  let source: string;
+  try {
+    source = await readFile(
+      path.join(root, ".storybook/story-sources.json"),
+      "utf8"
+    );
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "ENOENT"
+    ) {
+      return;
+    }
+    throw error;
+  }
+  const value: unknown = JSON.parse(source);
+  if (Array.isArray(value) === false || value.every(isStorySource) === false) {
+    throw new Error(".storybook/story-sources.json is invalid.");
+  }
+  return value;
+};
 
 export type VisualStoryEntry = StoryEntry & {
   exportName: string;
@@ -53,7 +95,13 @@ const readScopeEntries = async ({
   return entries;
 };
 
-export const readStoryManifest = async (root: string) => {
+export const readStoryManifest = async ({
+  root,
+  storySources,
+}: {
+  root: string;
+  storySources: readonly StorySource[];
+}) => {
   const entries = (
     await Promise.all(
       storySources.map(({ directory, files, titlePrefix }) => {

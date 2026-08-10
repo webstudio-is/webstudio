@@ -1,21 +1,10 @@
 import * as path from "node:path";
-import { existsSync, readdirSync } from "node:fs";
 import { defaultClientConditions } from "vite";
 import type { StorybookConfig } from "@storybook/react-vite";
-import { storySources } from "./story-sources";
+import storySources from "./story-sources.json" with { type: "json" };
+import { hasPrivateStorySources } from "./story-settings";
 
-const isFolderEmpty = (folderPath: string) => {
-  if (!existsSync(folderPath)) {
-    return true; // Folder does not exist
-  }
-  const contents = readdirSync(folderPath);
-
-  return contents.length === 0;
-};
-
-const hasPrivateFolders = !isFolderEmpty(
-  path.join(__dirname, "../../packages/sdk-components-animation/private-src")
-);
+const repositoryRoot = path.resolve(__dirname, "..");
 
 export default {
   stories: storySources,
@@ -44,7 +33,7 @@ export default {
       },
       resolve: {
         ...config.resolve,
-        conditions: hasPrivateFolders
+        conditions: hasPrivateStorySources(repositoryRoot)
           ? ["webstudio-private", "webstudio", ...defaultClientConditions]
           : ["webstudio", ...defaultClientConditions],
 

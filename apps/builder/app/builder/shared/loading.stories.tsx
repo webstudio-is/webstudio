@@ -58,3 +58,7 @@ export const Loading = () => (
     </Flex>
   </StorySection>
 );
+
+Loading.parameters = {
+  visualRegression: { disableIntervals: true },
+};

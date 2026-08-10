@@ -25,9 +25,14 @@ The HTML report shows baseline, current, and diff images for every mismatch,
 plus OCR evidence for changed text. CI uploads the same self-contained report
 as a `visual-regression-report` artifact.
 
-Pixel sensitivity, mismatch tolerance, viewport settings, and browser
-concurrency are configured near the top of `run.ts`. Story-specific settling
-delays and deterministic rendering options belong in `story-options.ts`.
+Pixel sensitivity and mismatch tolerance are configured near the top of
+`run.ts`. Viewport and capture settings live in `capture.ts`. Add
+story-specific settling and deterministic rendering options to the story's
+`parameters.visualRegression` object.
+
+Story scopes are data in `.storybook/story-sources.json`. Each compared
+revision loads its own copy so removing or changing a scope remains visible to
+the comparison.
 
 GitHub Actions runs the complete suite in one job. The runner keeps an ignored
 baseline worktree in the operating system's temporary directory so subsequent
