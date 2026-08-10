@@ -2412,6 +2412,7 @@ describe("PostgresAssetRepository", () => {
     expect(result.__diagnostics__.artifacts?.query.documentGraph).toMatchObject(
       { nodes: [{ id: "post", format: "markdown" }], edges: [] }
     );
+    expect(readFile).toHaveBeenCalledOnce();
     expect(performanceEvents).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -2427,11 +2428,6 @@ describe("PostgresAssetRepository", () => {
         {
           type: "content-read",
           purpose: "compiler-entry",
-          byteLength: entry.document.size,
-        },
-        {
-          type: "content-read",
-          purpose: "document-graph",
           byteLength: entry.document.size,
         },
       ])
