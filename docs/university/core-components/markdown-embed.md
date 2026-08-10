@@ -34,11 +34,9 @@ Styles applied to each of these tags will apply to all occurrences of that tag w
 
 ## Image handling
 
-Webstudio does NOT optimize images contained in the markup.
+Webstudio optimizes images contained in Markdown with the same responsive image pipeline as the [Image component](image.md#optimize). It generates the appropriate `srcset` and `sizes` attributes and lazy-loads images by default.
 
-On the other hand, images bound to the [Image Component](image.md) are [optimized by default](image.md#optimize).
-
-The difference is in markup, we are not mapping every element to a Webstudio Component; rather, the element is served as-is with the exception of your custom styles applied to it.
+Data URL images are served as-is without optimization.
 
 ## Similar components
 
