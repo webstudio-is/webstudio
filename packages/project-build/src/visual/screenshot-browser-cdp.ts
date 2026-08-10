@@ -38,6 +38,7 @@ export type BrowserScreenshotOptions = {
   url: string;
   httpCredentials?: { username: string; password: string };
   uid?: number;
+  disableSandbox?: boolean;
   waitUntil: ScreenshotWaitUntil;
   prepareExpression?: string;
   waitForSelector?: string;
@@ -527,11 +528,13 @@ const createBrowserLaunchArgs = ({
   width,
   height,
   uid,
+  disableSandbox,
 }: {
   userDataDir: string;
   width: number;
   height: number;
   uid?: number;
+  disableSandbox?: boolean;
 }) => [
   "--headless=new",
   "--disable-gpu",
@@ -544,7 +547,7 @@ const createBrowserLaunchArgs = ({
   `--window-size=${width},${height}`,
   "--no-first-run",
   "--no-default-browser-check",
-  ...(uid === 0 ? ["--no-sandbox"] : []),
+  ...(uid === 0 || disableSandbox === true ? ["--no-sandbox"] : []),
   "about:blank",
 ];
 
@@ -1236,6 +1239,7 @@ const startBrowserRuntimeOnce = async (
       width: options.width,
       height: options.height,
       uid: options.uid,
+      disableSandbox: options.disableSandbox,
     })
   );
   let running = true;

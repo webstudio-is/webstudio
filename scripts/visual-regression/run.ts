@@ -132,6 +132,7 @@ const getCaptureOptions = ({
   includeElementGeometry: false,
   url: getStoryUrl(port),
   uid: process.getuid?.(),
+  disableSandbox: process.env.GITHUB_ACTIONS === "true",
   waitUntil: "load",
   prepareExpression: `window.renderVisualStory(${JSON.stringify({
     file: entry.file,
