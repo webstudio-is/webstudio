@@ -17,6 +17,9 @@ export const resourcePerformance = z.strictObject({
           sourceSnapshot: z.number().nonnegative().optional(),
           canonicalMetadata: z.number().nonnegative().optional(),
           compilerEntries: z.number().nonnegative().optional(),
+          documentGraph: z.number().nonnegative().optional(),
+          assetReferences: z.number().nonnegative().optional(),
+          sourceValidation: z.number().nonnegative().optional(),
           artifactCompilation: z.number().nonnegative().optional(),
           indexPreparation: z.number().nonnegative().optional(),
           runtimeAssets: z.number().nonnegative().optional(),
@@ -28,6 +31,10 @@ export const resourcePerformance = z.strictObject({
         .optional(),
       resolvedDocumentCount: z.number().int().nonnegative().optional(),
       documentFetchCount: z.number().int().nonnegative().optional(),
+      compilerContentFetchCount: z.number().int().nonnegative().optional(),
+      compilerContentBytes: z.number().int().nonnegative().optional(),
+      documentGraphContentFetchCount: z.number().int().nonnegative().optional(),
+      documentGraphContentBytes: z.number().int().nonnegative().optional(),
     })
     .optional(),
 });

@@ -668,6 +668,8 @@ export class PostgresAssetRepository implements AssetRepository {
           source,
           plan: requirements,
           maximumContentBytes: this.contentDatabaseMaxBytes,
+          onPerformanceEvent: this.onPerformanceEvent,
+          performanceNow: this.dependencies.performanceNow,
         });
       return await compile(
         entries,
@@ -701,6 +703,8 @@ export class PostgresAssetRepository implements AssetRepository {
               snapshot,
               plan: requirements,
               maximumContentBytes: this.contentDatabaseMaxBytes,
+              onPerformanceEvent: this.onPerformanceEvent,
+              performanceNow: this.dependencies.performanceNow,
             });
             return await compile(
               entries,
@@ -726,6 +730,7 @@ export class PostgresAssetRepository implements AssetRepository {
 
   private createContentSource(strict: boolean): ContentSource {
     const readFile = this.assetStore.readFile;
+    const onPerformanceEvent = this.onPerformanceEvent;
     const loadBaseEntries = () =>
       this.dependencies.loadCanonicalAssetBaseEntries({
         client: this.context.postgrest.client,
@@ -767,6 +772,11 @@ export class PostgresAssetRepository implements AssetRepository {
                           "Asset content does not match its canonical size"
                         );
                       }
+                      emitAssetQueryPerformanceEvent(onPerformanceEvent, {
+                        type: "content-read",
+                        purpose: "document-graph",
+                        byteLength: readBytes,
+                      });
                     },
                   },
                 },
@@ -856,6 +866,11 @@ export class PostgresAssetRepository implements AssetRepository {
                 "Asset content does not match its canonical size"
               );
             }
+            emitAssetQueryPerformanceEvent(this.onPerformanceEvent, {
+              type: "content-read",
+              purpose: "compiler-entry",
+              byteLength: bytes.byteLength,
+            });
             let content: string;
             try {
               content = decodeUtf8(bytes);

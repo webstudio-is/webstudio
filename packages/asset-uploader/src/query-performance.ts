@@ -6,6 +6,9 @@ export type AssetQueryPerformancePhase =
   | "source-snapshot"
   | "canonical-metadata"
   | "compiler-entries"
+  | "document-graph"
+  | "asset-references"
+  | "source-validation"
   | "artifact-compilation"
   | "index-preparation"
   | "runtime-assets"
@@ -20,6 +23,11 @@ export type AssetQueryPerformanceEvent =
   | Readonly<{
       type: "compilation-cache";
       status: "hit" | "coalesced" | "miss" | "disabled";
+    }>
+  | Readonly<{
+      type: "content-read";
+      purpose: "compiler-entry" | "document-graph";
+      byteLength: number;
     }>;
 
 export type AssetQueryPerformanceObserver = (

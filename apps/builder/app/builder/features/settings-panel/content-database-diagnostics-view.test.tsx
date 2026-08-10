@@ -57,9 +57,16 @@ test("shows the unresolved query result in a read-only JSON editor", () => {
               phases: {
                 buildPlan: 20,
                 indexPreparation: 80,
+                documentGraph: 30,
+                assetReferences: 5,
+                sourceValidation: 10,
                 documentResolution: 15,
               },
               compilationCache: "miss",
+              compilerContentFetchCount: 3,
+              compilerContentBytes: 3_000,
+              documentGraphContentFetchCount: 2,
+              documentGraphContentBytes: 2_000,
               resolvedDocumentCount: 2,
               documentFetchCount: 1,
             },
@@ -121,5 +128,5 @@ test("shows the unresolved query result in a read-only JSON editor", () => {
   expect(container.textContent).toContain("Timing");
   expect(container.textContent).toContain("Query work");
   expect(container.textContent).toContain("Database and sizes");
-  expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(16);
+  expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(23);
 });

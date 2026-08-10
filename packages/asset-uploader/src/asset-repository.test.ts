@@ -2365,11 +2365,13 @@ describe("PostgresAssetRepository", () => {
       data: new Blob([source]).stream(),
       contentLength: entry.document.size,
     }));
+    const performanceEvents: unknown[] = [];
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
       assetStore: { readFile },
       dependencies,
+      onPerformanceEvent: (event) => performanceEvents.push(event),
     });
 
     const result = await repository.query(
@@ -2409,6 +2411,30 @@ describe("PostgresAssetRepository", () => {
     expect(result.__diagnostics__.artifacts?.query.contents).toBeUndefined();
     expect(result.__diagnostics__.artifacts?.query.documentGraph).toMatchObject(
       { nodes: [{ id: "post", format: "markdown" }], edges: [] }
+    );
+    expect(performanceEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "phase-completed",
+          phase: "document-graph",
+          durationMs: expect.any(Number),
+        }),
+        expect.objectContaining({
+          type: "phase-completed",
+          phase: "source-validation",
+          durationMs: expect.any(Number),
+        }),
+        {
+          type: "content-read",
+          purpose: "compiler-entry",
+          byteLength: entry.document.size,
+        },
+        {
+          type: "content-read",
+          purpose: "document-graph",
+          byteLength: entry.document.size,
+        },
+      ])
     );
   });
 });

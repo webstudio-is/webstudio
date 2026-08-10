@@ -49,6 +49,21 @@ const assetQueryPhaseRows = [
     "Time spent reading and parsing selected asset content into compiler input.",
   ],
   [
+    "documentGraph",
+    "Document graph",
+    "Time spent reading supported documents and compiling their cross-document references.",
+  ],
+  [
+    "assetReferences",
+    "Asset references",
+    "Time spent discovering asset references in the selected document content.",
+  ],
+  [
+    "sourceValidation",
+    "Source validation",
+    "Time spent reloading the canonical inventory to confirm that the source did not change during compilation.",
+  ],
+  [
     "artifactCompilation",
     "Artifact compilation",
     "Time spent compiling prepared entries into the in-memory content database artifact.",
@@ -116,10 +131,10 @@ export const getContentDatabaseDiagnosticRows = (
 
 const ResourcePerformanceSections = ({
   value,
-  includeResponseSize = true,
+  includeSizes = true,
 }: {
   value: ResourcePerformance;
-  includeResponseSize?: boolean;
+  includeSizes?: boolean;
 }) => {
   const hasTiming =
     value.loaderDurationMs !== undefined ||
@@ -129,8 +144,15 @@ const ResourcePerformanceSections = ({
     );
   const hasQueryWork =
     value.assetQuery?.compilationCache !== undefined ||
+    value.assetQuery?.compilerContentFetchCount !== undefined ||
+    value.assetQuery?.documentGraphContentFetchCount !== undefined ||
     value.assetQuery?.resolvedDocumentCount !== undefined ||
     value.assetQuery?.documentFetchCount !== undefined;
+  const hasSizes =
+    includeSizes &&
+    (value.responseBytes !== undefined ||
+      value.assetQuery?.compilerContentBytes !== undefined ||
+      value.assetQuery?.documentGraphContentBytes !== undefined);
   return (
     <>
       {hasTiming && (
@@ -181,6 +203,20 @@ const ResourcePerformanceSections = ({
                 description="Whether this server process reused a compiled artifact, joined an in-progress compilation, compiled it on a miss, or ran with caching disabled."
               />
             )}
+            {value.assetQuery?.compilerContentFetchCount !== undefined && (
+              <RequestDiagnosticsRow
+                label="Compiler content fetches"
+                value={value.assetQuery.compilerContentFetchCount}
+                description="Number of asset contents read from storage while preparing compiler entries."
+              />
+            )}
+            {value.assetQuery?.documentGraphContentFetchCount !== undefined && (
+              <RequestDiagnosticsRow
+                label="Document graph content fetches"
+                value={value.assetQuery.documentGraphContentFetchCount}
+                description="Number of document contents read from storage while constructing the document graph."
+              />
+            )}
             {value.assetQuery?.resolvedDocumentCount !== undefined && (
               <RequestDiagnosticsRow
                 label="Resolved documents"
@@ -198,15 +234,31 @@ const ResourcePerformanceSections = ({
           </RequestDiagnosticsTable>
         </>
       )}
-      {includeResponseSize && value.responseBytes !== undefined && (
+      {hasSizes && (
         <>
           <Text variant="titles">Sizes</Text>
           <RequestDiagnosticsTable>
-            <RequestDiagnosticsRow
-              label="Response size"
-              value={prettyBytes(value.responseBytes)}
-              description="Serialized size of the server resource result before performance metadata is attached."
-            />
+            {value.responseBytes !== undefined && (
+              <RequestDiagnosticsRow
+                label="Response size"
+                value={prettyBytes(value.responseBytes)}
+                description="Serialized size of the server resource result before performance metadata is attached."
+              />
+            )}
+            {value.assetQuery?.compilerContentBytes !== undefined && (
+              <RequestDiagnosticsRow
+                label="Compiler content read"
+                value={prettyBytes(value.assetQuery.compilerContentBytes)}
+                description="Total bytes read from storage while preparing compiler entries."
+              />
+            )}
+            {value.assetQuery?.documentGraphContentBytes !== undefined && (
+              <RequestDiagnosticsRow
+                label="Document graph content read"
+                value={prettyBytes(value.assetQuery.documentGraphContentBytes)}
+                description="Total bytes read from storage while constructing the document graph."
+              />
+            )}
           </RequestDiagnosticsTable>
         </>
       )}
@@ -239,10 +291,7 @@ export const ContentDatabaseDiagnostics = ({
   return (
     <RequestDiagnosticsContent>
       {performance !== undefined && (
-        <ResourcePerformanceSections
-          value={performance}
-          includeResponseSize={false}
-        />
+        <ResourcePerformanceSections value={performance} includeSizes={false} />
       )}
       <Text variant="titles">Database and sizes</Text>
       <PanelBanner variant={value.database.truncated ? "warning" : "success"}>
@@ -260,6 +309,22 @@ export const ContentDatabaseDiagnostics = ({
             label="Response size"
             value={prettyBytes(performance.responseBytes)}
             description="Serialized size of the server resource result before performance metadata is attached."
+          />
+        )}
+        {performance?.assetQuery?.compilerContentBytes !== undefined && (
+          <RequestDiagnosticsRow
+            label="Compiler content read"
+            value={prettyBytes(performance.assetQuery.compilerContentBytes)}
+            description="Total bytes read from storage while preparing compiler entries."
+          />
+        )}
+        {performance?.assetQuery?.documentGraphContentBytes !== undefined && (
+          <RequestDiagnosticsRow
+            label="Document graph content read"
+            value={prettyBytes(
+              performance.assetQuery.documentGraphContentBytes
+            )}
+            description="Total bytes read from storage while constructing the document graph."
           />
         )}
         <RequestDiagnosticsRow

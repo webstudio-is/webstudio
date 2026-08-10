@@ -49,6 +49,21 @@ describe("configured Assets system resource", () => {
           type: "compilation-cache",
           status: "miss",
         });
+        onPerformanceEvent?.({
+          type: "phase-completed",
+          phase: "document-graph",
+          durationMs: 30,
+        });
+        onPerformanceEvent?.({
+          type: "content-read",
+          purpose: "compiler-entry",
+          byteLength: 1000,
+        });
+        onPerformanceEvent?.({
+          type: "content-read",
+          purpose: "document-graph",
+          byteLength: 750,
+        });
         onDocumentGraphEvent?.({
           type: "resolution-started",
           rootCount: 1,
@@ -90,10 +105,18 @@ describe("configured Assets system resource", () => {
       ...first,
       __performance__: {
         assetQuery: {
-          phases: { authorization: expect.any(Number), buildPlan: 20 },
+          phases: {
+            authorization: expect.any(Number),
+            buildPlan: 20,
+            documentGraph: 30,
+          },
           compilationCache: "miss",
           resolvedDocumentCount: 2,
           documentFetchCount: 1,
+          compilerContentFetchCount: 1,
+          compilerContentBytes: 1000,
+          documentGraphContentFetchCount: 1,
+          documentGraphContentBytes: 750,
         },
       },
     });
@@ -212,6 +235,10 @@ describe("configured Assets system resource", () => {
       __performance__: {
         assetQuery: {
           phases: { authorization: expect.any(Number) },
+          compilerContentFetchCount: 0,
+          compilerContentBytes: 0,
+          documentGraphContentFetchCount: 0,
+          documentGraphContentBytes: 0,
         },
       },
     });

@@ -40,6 +40,9 @@ const phaseKeys = {
   "source-snapshot": "sourceSnapshot",
   "canonical-metadata": "canonicalMetadata",
   "compiler-entries": "compilerEntries",
+  "document-graph": "documentGraph",
+  "asset-references": "assetReferences",
+  "source-validation": "sourceValidation",
   "artifact-compilation": "artifactCompilation",
   "index-preparation": "indexPreparation",
   "runtime-assets": "runtimeAssets",
@@ -51,10 +54,24 @@ const createPerformanceCollector = () => {
   let compilationCache: "hit" | "coalesced" | "miss" | "disabled" | undefined;
   let resolvedDocumentCount = 0;
   let documentFetchCount = 0;
+  let compilerContentFetchCount = 0;
+  let compilerContentBytes = 0;
+  let documentGraphContentFetchCount = 0;
+  let documentGraphContentBytes = 0;
   const onPerformanceEvent: AssetQueryPerformanceObserver = (event) => {
     if (event.type === "phase-completed") {
       const key = phaseKeys[event.phase];
       phases[key] = (phases[key] ?? 0) + event.durationMs;
+      return;
+    }
+    if (event.type === "content-read") {
+      if (event.purpose === "compiler-entry") {
+        compilerContentFetchCount += 1;
+        compilerContentBytes += event.byteLength;
+      } else {
+        documentGraphContentFetchCount += 1;
+        documentGraphContentBytes += event.byteLength;
+      }
       return;
     }
     const rank = { hit: 0, coalesced: 1, disabled: 2, miss: 3 } as const;
@@ -84,6 +101,10 @@ const createPerformanceCollector = () => {
       ...(compilationCache === undefined ? {} : { compilationCache }),
       resolvedDocumentCount,
       documentFetchCount,
+      compilerContentFetchCount,
+      compilerContentBytes,
+      documentGraphContentFetchCount,
+      documentGraphContentBytes,
     }),
   };
 };
