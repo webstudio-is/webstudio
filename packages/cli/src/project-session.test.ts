@@ -52,25 +52,13 @@ test("scopes project session files for explicitly selected projects", () => {
 });
 
 const temporaryDirectories: string[] = [];
+const previewConnection = {
+  projectId: "project",
+  origin: "https://example.com",
+  authToken: "token",
+};
 
-test("loads a preview index only for configured Assets resources", async () => {
-  const connection = {
-    projectId: "project",
-    origin: "https://example.com",
-    authToken: "token",
-  };
-  const snapshot = (resources: Map<string, unknown>) =>
-    ({ projectId: "project", state: { resources } }) as never;
-
-  await expect(
-    loadCliProjectSessionAssetIndex(snapshot(new Map()), connection)
-  ).resolves.toBeUndefined();
-
-  const directory = await createTemporaryDirectory();
-  await writeFile(
-    join(directory, "post_hash.md"),
-    "---\ntitle: Hello\n---\nBody"
-  );
+const createAssetPreviewSnapshot = (contentSize = 0) => {
   const resource = {
     id: "posts",
     name: "Posts",
@@ -87,41 +75,98 @@ test("loads a preview index only for configured Assets resources", async () => {
       content: { mode: "none" },
     }),
   };
+  return {
+    projectId: "project",
+    state: {
+      resources: new Map([[resource.id, resource]]),
+      props: new Map([
+        ["prop", { id: "prop", type: "resource", value: resource.id }],
+      ]),
+      assets: new Map([
+        [
+          "post",
+          {
+            id: "post",
+            projectId: "project",
+            type: "file",
+            name: "post_hash.md",
+            filename: "post",
+            size: contentSize,
+            description: null,
+            createdAt: "2026-07-27T00:00:00.000Z",
+            format: "md",
+            meta: {},
+          },
+        ],
+      ]),
+      assetFolders: new Map(),
+    },
+  } as never;
+};
+
+test("loads a preview index only for configured Assets resources", async () => {
+  const snapshot = (resources: Map<string, unknown>) =>
+    ({ projectId: "project", state: { resources } }) as never;
 
   await expect(
+    loadCliProjectSessionAssetIndex(snapshot(new Map()), previewConnection)
+  ).resolves.toBeUndefined();
+
+  const directory = await createTemporaryDirectory();
+  await writeFile(
+    join(directory, "post_hash.md"),
+    "---\ntitle: Hello\n---\nBody"
+  );
+  await expect(
     loadCliProjectSessionAssetIndex(
-      {
-        projectId: "project",
-        state: {
-          resources: new Map([[resource.id, resource]]),
-          props: new Map([
-            ["prop", { id: "prop", type: "resource", value: resource.id }],
-          ]),
-          assets: new Map([
-            [
-              "post",
-              {
-                id: "post",
-                projectId: "project",
-                type: "file",
-                name: "post_hash.md",
-                filename: "post",
-                size: 0,
-                description: null,
-                createdAt: "2026-07-27T00:00:00.000Z",
-                format: "md",
-                meta: {},
-              },
-            ],
-          ]),
-          assetFolders: new Map(),
-        },
-      } as never,
-      connection,
+      createAssetPreviewSnapshot(),
+      previewConnection,
       directory
     )
   ).resolves.toMatchObject({
     documents: [{ _id: "post", properties: { title: "Hello" } }],
+  });
+});
+
+test("downloads preview index assets when the local directory is missing", async () => {
+  const projectDirectory = await createTemporaryDirectory();
+  const assetsDirectory = join(projectDirectory, "assets");
+  const content = "---\ntitle: Hello\n---\nBody";
+  const fetch = vi.fn(async () => new Response(content));
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    loadCliProjectSessionAssetIndex(
+      createAssetPreviewSnapshot(content.length),
+      previewConnection,
+      assetsDirectory
+    )
+  ).resolves.toMatchObject({
+    documents: [{ _id: "post", properties: { title: "Hello" } }],
+  });
+  await expect(
+    readFile(join(assetsDirectory, "post_hash.md"), "utf8")
+  ).resolves.toBe(content);
+  expect(fetch).toHaveBeenCalledOnce();
+});
+
+test("explains how to recover when preview assets cannot be downloaded", async () => {
+  const projectDirectory = await createTemporaryDirectory();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => {
+      throw new Error("network unavailable");
+    })
+  );
+  await expect(
+    loadCliProjectSessionAssetIndex(
+      createAssetPreviewSnapshot(),
+      previewConnection,
+      join(projectDirectory, "assets")
+    )
+  ).rejects.toMatchObject({
+    code: "PREVIEW_ASSET_DOWNLOAD_FAILED",
+    message: expect.stringContaining("retry preview.start"),
   });
 });
 
