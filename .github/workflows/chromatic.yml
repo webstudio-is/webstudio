@@ -39,10 +39,11 @@ jobs:
       name: development
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Chromatic needs full history to find baselines and changed stories
           ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       # Storybook with submodules
       - uses: ./.github/actions/submodules-checkout
@@ -53,7 +54,7 @@ jobs:
 
       - name: Chromatic
         id: chromatic
-        uses: chromaui/action@v11.3.0
+        uses: chromaui/action@v16
         env:
           VISUAL_TESTING: "true"
         with:
