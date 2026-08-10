@@ -118,4 +118,8 @@ test("shows the unresolved query result in a read-only JSON editor", () => {
   expect(container.textContent).toContain("Index preparation");
   expect(container.textContent).toContain("Compilation cacheMiss");
   expect(container.textContent).toContain("Resolved documents2");
+  expect(container.textContent).toContain("Timing");
+  expect(container.textContent).toContain("Query work");
+  expect(container.textContent).toContain("Database and sizes");
+  expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(16);
 });
