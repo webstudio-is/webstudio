@@ -20,7 +20,7 @@ import {
   type BrowserScreenshotDependencies,
   type BrowserScreenshotLayout,
   type BrowserScreenshotOptions,
-} from "./screenshot-browser-cdp";
+} from "@webstudio-is/project-build/vision";
 
 export type BrowserCandidate = {
   path: string;

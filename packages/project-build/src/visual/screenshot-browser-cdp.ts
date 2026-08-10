@@ -3,8 +3,25 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn, type ChildProcess } from "node:child_process";
-import type { ScreenshotWaitUntil } from "@webstudio-is/project-build/vision";
-import { withTimeout } from "./async-utils";
+import type { ScreenshotWaitUntil } from "./screenshot-browser";
+
+const withTimeout = async <Result>(
+  operation: Promise<Result>,
+  timeout: number,
+  createTimeoutError: () => Error
+) => {
+  let timeoutId: NodeJS.Timeout | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(createTimeoutError()), timeout);
+  });
+  try {
+    return await Promise.race([operation, timeoutPromise]);
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
 
 type BrowserProcess = Pick<ChildProcess, "kill" | "once">;
 
@@ -1652,7 +1669,8 @@ export type BrowserScreenshotSession = {
     options: BrowserScreenshotOptions
   ) => Promise<BrowserScreenshotLayout>;
   capturePage: (
-    options: readonly BrowserScreenshotOptions[]
+    options: readonly BrowserScreenshotOptions[],
+    sessionOptions?: { concurrency?: number }
   ) => Promise<BrowserScreenshotLayout[]>;
   close: () => Promise<void>;
 };
@@ -1719,15 +1737,51 @@ export const createBrowserScreenshotSession = async (
           )
       );
     },
-    async capturePage(captureOptions) {
-      return await captureWithRestart(
-        async (activeRuntime) =>
-          await capturePageWithBrowserRuntime(
+    async capturePage(captureOptions, sessionOptions) {
+      return await captureWithRestart(async (activeRuntime) => {
+        const concurrency = sessionOptions?.concurrency ?? 1;
+        if (Number.isInteger(concurrency) === false || concurrency < 1) {
+          throw new Error("Screenshot concurrency must be a positive integer.");
+        }
+        if (concurrency === 1 || captureOptions.length < 2) {
+          return await capturePageWithBrowserRuntime(
             activeRuntime,
             captureOptions,
             dependencies
-          )
-      );
+          );
+        }
+
+        const groups = Array.from(
+          { length: Math.min(concurrency, captureOptions.length) },
+          () =>
+            [] as Array<{ index: number; options: BrowserScreenshotOptions }>
+        );
+        captureOptions.forEach((options, index) => {
+          groups[index % groups.length].push({ index, options });
+        });
+        const captures = await Promise.all(
+          groups.map(async (group) => ({
+            group,
+            layouts: await capturePageWithBrowserRuntime(
+              activeRuntime,
+              group.map(({ options }) => options),
+              dependencies
+            ),
+          }))
+        );
+        const layouts = new Array<BrowserScreenshotLayout>(
+          captureOptions.length
+        );
+        for (const capture of captures) {
+          capture.group.forEach(({ index }, groupIndex) => {
+            const layout = capture.layouts[groupIndex];
+            if (layout !== undefined) {
+              layouts[index] = layout;
+            }
+          });
+        }
+        return layouts;
+      });
     },
     async close() {
       closed = true;

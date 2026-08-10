@@ -4,7 +4,7 @@ import {
   captureBrowserScreenshot,
   createBrowserScreenshotSession,
   type BrowserScreenshotDependencies,
-} from "./screenshot-browser-cdp";
+} from "@webstudio-is/project-build/vision";
 
 class FakeBrowserProcess {
   readonly listeners = new Map<string, Array<(value?: unknown) => void>>();

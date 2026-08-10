@@ -150,6 +150,7 @@ export const diffPngFiles = async ({
   outputDir,
   threshold = DEFAULT_THRESHOLD,
   ignoreTopNormalizedY = DEFAULT_IGNORE_TOP_NORMALIZED_Y,
+  analyzeText = true,
   expectedText,
   expectedVisual,
 }: {
@@ -158,6 +159,7 @@ export const diffPngFiles = async ({
   outputDir: string;
   threshold?: number;
   ignoreTopNormalizedY?: number;
+  analyzeText?: boolean;
   expectedText?: readonly string[];
   expectedVisual?: ScreenshotVisualExpectation;
 }): Promise<ScreenshotDiffResult> => {
@@ -246,17 +248,18 @@ export const diffPngFiles = async ({
   const canAnalyzeText =
     decodedBaseline.width === decodedCurrent.width &&
     decodedBaseline.height === decodedCurrent.height;
-  const textAnalysis: ScreenshotTextAnalysis = canAnalyzeText
-    ? await analyzeScreenshotTextChanges({
-        baselinePath,
-        currentPath,
-        hasPixelDiff: pixelDiff.differentPixels > 0,
-        baselineImage: baseline,
-        currentImage: current,
-        ignoreTopPixels: Math.ceil(baseline.height * ignoreTopNormalizedY),
-        includeObservedText: expectedText !== undefined,
-      })
-    : createSkippedTextAnalysis();
+  const textAnalysis: ScreenshotTextAnalysis =
+    canAnalyzeText && analyzeText
+      ? await analyzeScreenshotTextChanges({
+          baselinePath,
+          currentPath,
+          hasPixelDiff: pixelDiff.differentPixels > 0,
+          baselineImage: baseline,
+          currentImage: current,
+          ignoreTopPixels: Math.ceil(baseline.height * ignoreTopNormalizedY),
+          includeObservedText: expectedText !== undefined,
+        })
+      : createSkippedTextAnalysis();
 
   return summarizeResult({
     totalPixels,
