@@ -157,6 +157,7 @@ const formatAssetsResourceResult = (value: unknown, body: unknown) => {
       ? body.query.result
       : "many";
   const diagnostics = isRecord(value) ? value.__diagnostics__ : undefined;
+  const performance = isRecord(value) ? value.__performance__ : undefined;
   if (
     resultMode !== "many" &&
     isRecord(collection) &&
@@ -170,6 +171,7 @@ const formatAssetsResourceResult = (value: unknown, body: unknown) => {
       ...(preview === undefined || diagnostics === undefined
         ? {}
         : { __diagnostics__: diagnostics }),
+      ...(performance === undefined ? {} : { __performance__: performance }),
     };
   }
   if (
@@ -198,6 +200,7 @@ const formatAssetsResourceResult = (value: unknown, body: unknown) => {
     ...(preview === undefined || diagnostics === undefined
       ? {}
       : { __diagnostics__: diagnostics }),
+    ...(performance === undefined ? {} : { __performance__: performance }),
   };
 };
 

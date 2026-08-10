@@ -852,6 +852,7 @@ describe("PostgresAssetRepository", () => {
 
   test("executes an Assets request batch with one authorization and union index", async () => {
     const dependencies = createDependencies();
+    const performanceEvents: unknown[] = [];
     const categories = ["Tools", "Strategy", "Guide", "Updates"];
     const entries = categories.map((category, index) => ({
       projectId: "project-1",
@@ -885,6 +886,7 @@ describe("PostgresAssetRepository", () => {
       assetStore: assetClient,
       dependencies,
       compilationCache: createContentCompilationCache(),
+      onPerformanceEvent: (event: unknown) => performanceEvents.push(event),
     });
     const validRequests = categories.map((category) => ({
       query: {
@@ -934,6 +936,24 @@ describe("PostgresAssetRepository", () => {
     expect(
       dependencies.createAssetIndex.mock.calls[0][0].plan?.queries
     ).toHaveLength(4);
+    expect(performanceEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "phase-completed",
+          phase: "repository-authorization",
+          durationMs: expect.any(Number),
+        }),
+        expect.objectContaining({
+          type: "phase-completed",
+          phase: "index-preparation",
+          durationMs: expect.any(Number),
+        }),
+        expect.objectContaining({
+          type: "compilation-cache",
+          status: "miss",
+        }),
+      ])
+    );
   });
 
   test("loads a shared referenced document once across batch plans", async () => {

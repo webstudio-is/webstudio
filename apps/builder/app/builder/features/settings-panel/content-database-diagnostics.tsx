@@ -1,6 +1,7 @@
 import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
 import { Grid, PanelBanner, Text } from "@webstudio-is/design-system";
 import prettyBytes from "pretty-bytes";
+import type { ResourcePerformance } from "~/shared/resource-diagnostics";
 import { CodeEditor } from "~/shared/code-editor";
 import {
   RequestDiagnosticsContent,
@@ -10,6 +11,30 @@ import {
 
 const runtimeContentNote =
   "Referenced documents fetched from storage at runtime are not included.";
+
+const assetQueryPhaseRows = [
+  ["authorization", "Authorization", undefined],
+  ["buildPlan", "Build plan", undefined],
+  ["repositoryAuthorization", "Repository authorization", undefined],
+  ["sourceSnapshot", "Source snapshot", undefined],
+  ["canonicalMetadata", "Canonical metadata", undefined],
+  ["compilerEntries", "Compiler entries", undefined],
+  ["artifactCompilation", "Artifact compilation", undefined],
+  [
+    "indexPreparation",
+    "Index preparation",
+    "Inclusive duration. It contains the source, metadata, compiler entry, and artifact compilation phases shown above.",
+  ],
+  ["runtimeAssets", "Runtime assets", undefined],
+  ["documentResolution", "Document resolution", undefined],
+] as const;
+
+const compilationCacheLabels = {
+  hit: "Hit",
+  coalesced: "Coalesced",
+  miss: "Miss",
+  disabled: "Disabled",
+} as const;
 
 const ReadonlyJsonEditor = ({
   title,
@@ -53,10 +78,85 @@ export const getContentDatabaseDiagnosticRows = (
   },
 ];
 
-export const ContentDatabaseDiagnostics = ({
+const ResourcePerformanceSection = ({
   value,
 }: {
+  value: ResourcePerformance;
+}) => (
+  <>
+    <Text variant="titles">Performance</Text>
+    <RequestDiagnosticsTable>
+      {value.serverDurationMs !== undefined && (
+        <RequestDiagnosticsRow
+          label="Server duration"
+          value={`${value.serverDurationMs.toFixed(1)} ms`}
+        />
+      )}
+      {value.loaderDurationMs !== undefined && (
+        <RequestDiagnosticsRow
+          label="Builder round trip"
+          value={`${value.loaderDurationMs.toFixed(1)} ms`}
+          description="Duration of the complete Builder resource batch request containing this resource."
+        />
+      )}
+      {value.responseBytes !== undefined && (
+        <RequestDiagnosticsRow
+          label="Response size"
+          value={prettyBytes(value.responseBytes)}
+        />
+      )}
+      {assetQueryPhaseRows.map(([key, label, description]) => {
+        const durationMs = value.assetQuery?.phases?.[key];
+        if (durationMs === undefined) {
+          return;
+        }
+        return (
+          <RequestDiagnosticsRow
+            key={key}
+            label={label}
+            value={`${durationMs.toFixed(1)} ms`}
+            description={description}
+          />
+        );
+      })}
+      {value.assetQuery?.compilationCache !== undefined && (
+        <RequestDiagnosticsRow
+          label="Compilation cache"
+          value={compilationCacheLabels[value.assetQuery.compilationCache]}
+        />
+      )}
+      {value.assetQuery?.resolvedDocumentCount !== undefined && (
+        <RequestDiagnosticsRow
+          label="Resolved documents"
+          value={value.assetQuery.resolvedDocumentCount}
+        />
+      )}
+      {value.assetQuery?.documentFetchCount !== undefined && (
+        <RequestDiagnosticsRow
+          label="Document fetches"
+          value={value.assetQuery.documentFetchCount}
+        />
+      )}
+    </RequestDiagnosticsTable>
+  </>
+);
+
+export const ResourcePerformanceDiagnostics = ({
+  value,
+}: {
+  value: ResourcePerformance;
+}) => (
+  <RequestDiagnosticsContent>
+    <ResourcePerformanceSection value={value} />
+  </RequestDiagnosticsContent>
+);
+
+export const ContentDatabaseDiagnostics = ({
+  value,
+  performance,
+}: {
   value: AssetQueryPreviewDiagnostics;
+  performance?: ResourcePerformance;
 }) => {
   const totalDocumentCount =
     value.database.includedDocumentCount + value.database.omittedDocumentCount;
@@ -65,6 +165,9 @@ export const ContentDatabaseDiagnostics = ({
   const rows = getContentDatabaseDiagnosticRows(value);
   return (
     <RequestDiagnosticsContent>
+      {performance !== undefined && (
+        <ResourcePerformanceSection value={performance} />
+      )}
       <PanelBanner variant={value.database.truncated ? "warning" : "success"}>
         <Text>
           {value.database.truncated

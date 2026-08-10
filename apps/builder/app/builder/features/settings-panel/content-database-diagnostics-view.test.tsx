@@ -49,6 +49,21 @@ test("shows the unresolved query result in a read-only JSON editor", () => {
     root?.render(
       <TooltipProvider>
         <ContentDatabaseDiagnostics
+          performance={{
+            serverDurationMs: 125.5,
+            loaderDurationMs: 150.25,
+            responseBytes: 1024,
+            assetQuery: {
+              phases: {
+                buildPlan: 20,
+                indexPreparation: 80,
+                documentResolution: 15,
+              },
+              compilationCache: "miss",
+              resolvedDocumentCount: 2,
+              documentFetchCount: 1,
+            },
+          }}
           value={{
             scope: "query-preview",
             unresolved: {
@@ -94,4 +109,13 @@ test("shows the unresolved query result in a read-only JSON editor", () => {
   expect(container.textContent).toContain('"$ref": "./post.md#body"');
   expect(container.textContent).toContain("Query database");
   expect(container.textContent).toContain("Published database");
+  expect(container.textContent).toContain("Server duration");
+  expect(container.textContent).toContain("125.5 ms");
+  expect(container.textContent).toContain("Builder round trip");
+  expect(container.textContent).toContain("150.3 ms");
+  expect(container.textContent).toContain("1.02 kB");
+  expect(container.textContent).toContain("Build plan");
+  expect(container.textContent).toContain("Index preparation");
+  expect(container.textContent).toContain("Compilation cacheMiss");
+  expect(container.textContent).toContain("Resolved documents2");
 });

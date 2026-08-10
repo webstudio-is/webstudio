@@ -54,36 +54,47 @@ export const createContentCompilationCache = (maximumEntries = 32) => {
       entries.delete(completed[0]);
     }
   };
+  const getOrCreateWithStatus = (
+    key: string,
+    create: () => Promise<ContentArtifactV1>
+  ): {
+    promise: Promise<ContentArtifactV1>;
+    status: "hit" | "coalesced" | "miss";
+  } => {
+    const existing = entries.get(key);
+    if (existing !== undefined) {
+      entries.delete(key);
+      entries.set(key, existing);
+      return {
+        promise: existing.promise,
+        status: existing.settled ? "hit" : "coalesced",
+      };
+    }
+    let entry: CacheEntry;
+    const promise = create().then(
+      (value) => {
+        entry.settled = true;
+        trim();
+        return value;
+      },
+      (error) => {
+        if (entries.get(key) === entry) {
+          entries.delete(key);
+        }
+        throw error;
+      }
+    );
+    entry = { promise, settled: false };
+    entries.set(key, entry);
+    trim();
+    return { promise: entry.promise, status: "miss" };
+  };
   return {
     getOrCreate: (
       key: string,
       create: () => Promise<ContentArtifactV1>
-    ): Promise<ContentArtifactV1> => {
-      const existing = entries.get(key);
-      if (existing !== undefined) {
-        entries.delete(key);
-        entries.set(key, existing);
-        return existing.promise;
-      }
-      let entry: CacheEntry;
-      const promise = create().then(
-        (value) => {
-          entry.settled = true;
-          trim();
-          return value;
-        },
-        (error) => {
-          if (entries.get(key) === entry) {
-            entries.delete(key);
-          }
-          throw error;
-        }
-      );
-      entry = { promise, settled: false };
-      entries.set(key, entry);
-      trim();
-      return entry.promise;
-    },
+    ): Promise<ContentArtifactV1> => getOrCreateWithStatus(key, create).promise,
+    getOrCreateWithStatus,
     clear: () => entries.clear(),
     get size() {
       return entries.size;

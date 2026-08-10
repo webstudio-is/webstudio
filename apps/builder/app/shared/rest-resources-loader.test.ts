@@ -81,3 +81,53 @@ test("batches Assets while starting and preserving independent remote resources"
   });
   expect(output[3][1]).toMatchObject({ ok: true, data: { source: "remote" } });
 });
+
+test("records non-bindable server duration and response size", async () => {
+  const resource: ResourceRequest = {
+    name: "Remote",
+    method: "get",
+    url: "https://api.example/posts",
+    searchParams: [],
+    headers: [],
+  };
+  const request = new Request(
+    "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb.localhost/rest/resources-loader",
+    { method: "POST" }
+  );
+  const result = {
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    data: { title: "Post" },
+  };
+  const now = vi.fn().mockReturnValueOnce(10).mockReturnValueOnce(35.5);
+
+  const output = await loadResourceRequestList(
+    {
+      request,
+      requestList: [resource],
+      sourceOrigin: "https://source.example",
+      includeDiagnostics: false,
+      customFetch: vi.fn(),
+    },
+    {
+      executeAssetQueries: vi.fn() as never,
+      loadResource: vi.fn().mockResolvedValue(result),
+      now,
+    }
+  );
+
+  expect(output).toEqual([
+    [
+      getResourceKey(resource),
+      {
+        ...result,
+        __performance__: {
+          serverDurationMs: 25.5,
+          responseBytes: new TextEncoder().encode(JSON.stringify(result))
+            .byteLength,
+        },
+      },
+    ],
+  ]);
+});

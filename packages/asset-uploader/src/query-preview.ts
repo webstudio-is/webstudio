@@ -6,6 +6,7 @@ import {
 import type { AssetObjectStore } from "./client";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { PostgresAssetRepository } from "./asset-repository";
+import type { AssetQueryPerformanceObserver } from "./query-performance";
 
 export const previewAssetResourceQuery = async ({
   projectId,
@@ -18,6 +19,7 @@ export const previewAssetResourceQuery = async ({
   includeDiagnostics,
   includeUnresolvedDiagnostics,
   onDocumentGraphEvent,
+  onPerformanceEvent,
   signal,
 }: {
   projectId: string;
@@ -30,6 +32,7 @@ export const previewAssetResourceQuery = async ({
   includeDiagnostics?: boolean;
   includeUnresolvedDiagnostics?: boolean;
   onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
+  onPerformanceEvent?: AssetQueryPerformanceObserver;
   signal?: AbortSignal;
 }) => {
   const repository = new PostgresAssetRepository({
@@ -38,6 +41,7 @@ export const previewAssetResourceQuery = async ({
     assetStore: assetClient,
     contentDatabaseMaxBytes,
     onDocumentGraphEvent,
+    onPerformanceEvent,
   });
   const options = {
     databasePlan,
@@ -65,6 +69,7 @@ export const previewAssetResourceQueries = async ({
   contentDatabaseMaxBytes,
   databasePlan,
   onDocumentGraphEvent,
+  onPerformanceEvent,
   signal,
 }: {
   projectId: string;
@@ -74,6 +79,7 @@ export const previewAssetResourceQueries = async ({
   contentDatabaseMaxBytes?: number;
   databasePlan?: ContentCompilationPlan;
   onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
+  onPerformanceEvent?: AssetQueryPerformanceObserver;
   signal?: AbortSignal;
 }) => {
   const repository = new PostgresAssetRepository({
@@ -82,6 +88,7 @@ export const previewAssetResourceQueries = async ({
     assetStore: assetClient,
     contentDatabaseMaxBytes,
     onDocumentGraphEvent,
+    onPerformanceEvent,
   });
   return await repository.queryMany(requests, { databasePlan, signal });
 };

@@ -70,6 +70,9 @@ describe("project asset query preview", () => {
       previewAssetResourceQueries: vi.fn().mockResolvedValue(result),
     };
     const signal = new AbortController().signal;
+    const performanceEvents: unknown[] = [];
+    const onPerformanceEvent = (event: unknown) =>
+      performanceEvents.push(event);
 
     await expect(
       previewProjectAssetQueries(
@@ -80,6 +83,7 @@ describe("project asset query preview", () => {
           assetClient,
           contentDatabaseMaxBytes: 42,
           signal,
+          onPerformanceEvent,
         },
         dependencies
       )
@@ -98,7 +102,15 @@ describe("project asset query preview", () => {
         queries: [expect.objectContaining({ id: "posts-resource" })],
       }),
       signal,
+      onPerformanceEvent,
     });
+    expect(performanceEvents).toEqual([
+      expect.objectContaining({
+        type: "phase-completed",
+        phase: "build-plan",
+        durationMs: expect.any(Number),
+      }),
+    ]);
   });
 
   test("stops a cancelled batch before loading Build data", async () => {

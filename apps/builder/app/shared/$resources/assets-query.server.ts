@@ -2,7 +2,9 @@ import { json } from "@remix-run/server-runtime";
 import {
   getAssetResourceQueryError,
   readAssetQueryRequest,
+  type DocumentGraphRuntimeObserver,
 } from "@webstudio-is/content-engine";
+import type { AssetQueryPerformanceObserver } from "@webstudio-is/asset-uploader/server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import {
   authorizeApiProject,
@@ -21,6 +23,7 @@ type Dependencies = {
   previewProjectAssetQueries: typeof previewProjectAssetQueries;
   previewProjectAssetQuery: typeof previewProjectAssetQuery;
   preventCrossOriginCookie: typeof preventCrossOriginCookie;
+  now: () => number;
 };
 
 const defaultDependencies: Dependencies = {
@@ -28,6 +31,61 @@ const defaultDependencies: Dependencies = {
   previewProjectAssetQueries,
   previewProjectAssetQuery,
   preventCrossOriginCookie,
+  now: () => performance.now(),
+};
+
+const phaseKeys = {
+  "build-plan": "buildPlan",
+  "repository-authorization": "repositoryAuthorization",
+  "source-snapshot": "sourceSnapshot",
+  "canonical-metadata": "canonicalMetadata",
+  "compiler-entries": "compilerEntries",
+  "artifact-compilation": "artifactCompilation",
+  "index-preparation": "indexPreparation",
+  "runtime-assets": "runtimeAssets",
+  "document-resolution": "documentResolution",
+} as const;
+
+const createPerformanceCollector = () => {
+  const phases: Record<string, number> = {};
+  let compilationCache: "hit" | "coalesced" | "miss" | "disabled" | undefined;
+  let resolvedDocumentCount = 0;
+  let documentFetchCount = 0;
+  const onPerformanceEvent: AssetQueryPerformanceObserver = (event) => {
+    if (event.type === "phase-completed") {
+      const key = phaseKeys[event.phase];
+      phases[key] = (phases[key] ?? 0) + event.durationMs;
+      return;
+    }
+    const rank = { hit: 0, coalesced: 1, disabled: 2, miss: 3 } as const;
+    if (
+      compilationCache === undefined ||
+      rank[event.status] > rank[compilationCache]
+    ) {
+      compilationCache = event.status;
+    }
+  };
+  const onDocumentGraphEvent: DocumentGraphRuntimeObserver = (event) => {
+    if (event.type === "resolution-started") {
+      resolvedDocumentCount += event.documentCount;
+    }
+    if (event.type === "document-fetch-started") {
+      documentFetchCount += 1;
+    }
+  };
+  return {
+    onPerformanceEvent,
+    onDocumentGraphEvent,
+    addPhase: (key: string, durationMs: number) => {
+      phases[key] = (phases[key] ?? 0) + durationMs;
+    },
+    getMetrics: () => ({
+      phases,
+      ...(compilationCache === undefined ? {} : { compilationCache }),
+      resolvedDocumentCount,
+      documentFetchCount,
+    }),
+  };
 };
 
 const createFailureResponse = (error: unknown, request: Request) => {
@@ -77,9 +135,11 @@ export const executeAssetQueries = async (
     resourceRequests: readonly Request[];
     includeDiagnostics?: boolean;
   },
-  dependencies = defaultDependencies
+  dependencies: Partial<Dependencies> = {}
 ) => {
-  dependencies.preventCrossOriginCookie(request);
+  const resolvedDependencies = { ...defaultDependencies, ...dependencies };
+  const performanceCollector = createPerformanceCollector();
+  resolvedDependencies.preventCrossOriginCookie(request);
   if (request.signal.aborted) {
     return resourceRequests.map(() =>
       createFailureResponse(request.signal.reason, request)
@@ -128,11 +188,19 @@ export const executeAssetQueries = async (
 
   let context: Awaited<ReturnType<typeof authorizeApiProject>>;
   try {
-    context = await dependencies.authorizeApiProject(
-      request,
-      projectId,
-      "view"
-    );
+    const startedAt = resolvedDependencies.now();
+    try {
+      context = await resolvedDependencies.authorizeApiProject(
+        request,
+        projectId,
+        "view"
+      );
+    } finally {
+      performanceCollector.addPhase(
+        "authorization",
+        Math.max(0, resolvedDependencies.now() - startedAt)
+      );
+    }
   } catch (error) {
     for (const { index } of parsedRequests) {
       responses[index] = createFailureResponse(error, request);
@@ -145,22 +213,26 @@ export const executeAssetQueries = async (
     if (includeDiagnostics) {
       results = await Promise.allSettled(
         parsedRequests.map(({ request: parsed }) =>
-          dependencies.previewProjectAssetQuery({
+          resolvedDependencies.previewProjectAssetQuery({
             projectId,
             request: parsed,
             context,
             includeDiagnostics: true,
             includeUnresolvedDiagnostics: true,
             signal: request.signal,
+            onPerformanceEvent: performanceCollector.onPerformanceEvent,
+            onDocumentGraphEvent: performanceCollector.onDocumentGraphEvent,
           })
         )
       );
     } else {
-      results = await dependencies.previewProjectAssetQueries({
+      results = await resolvedDependencies.previewProjectAssetQueries({
         projectId,
         requests: parsedRequests.map(({ request }) => request),
         context,
         signal: request.signal,
+        onPerformanceEvent: performanceCollector.onPerformanceEvent,
+        onDocumentGraphEvent: performanceCollector.onDocumentGraphEvent,
       });
     }
   } catch (error) {
@@ -174,7 +246,16 @@ export const executeAssetQueries = async (
         request
       );
     } else if (result.status === "fulfilled") {
-      responses[index] = json(result.value, {
+      const value =
+        typeof result.value === "object" && result.value !== null
+          ? {
+              ...result.value,
+              __performance__: {
+                assetQuery: performanceCollector.getMetrics(),
+              },
+            }
+          : result.value;
+      responses[index] = json(value, {
         headers: privateNoStoreResponseHeaders,
       });
     } else {
@@ -194,7 +275,7 @@ export const executeAssetQuery = async (
     resourceRequest: Request;
     includeDiagnostics?: boolean;
   },
-  dependencies = defaultDependencies
+  dependencies: Partial<Dependencies> = {}
 ) =>
   (
     await executeAssetQueries(

@@ -1,7 +1,10 @@
 import {
   previewAssetResourceQueries,
   previewAssetResourceQuery,
+  measureAssetQueryPerformance,
   type AssetObjectStore,
+  type AssetQueryDocumentGraphObserver,
+  type AssetQueryPerformanceObserver,
 } from "@webstudio-is/asset-uploader/server";
 import {
   createAssetQueryPreviewCompilationPlan,
@@ -29,6 +32,8 @@ type ProjectAssetQueryContext = {
   assetClient: Pick<AssetObjectStore, "readFile">;
   contentDatabaseMaxBytes?: number;
   signal?: AbortSignal;
+  onPerformanceEvent?: AssetQueryPerformanceObserver;
+  onDocumentGraphEvent?: AssetQueryDocumentGraphObserver;
 };
 
 export const previewProjectAssetQueries = async (
@@ -39,17 +44,24 @@ export const previewProjectAssetQueries = async (
     assetClient,
     contentDatabaseMaxBytes,
     signal,
+    onPerformanceEvent,
+    onDocumentGraphEvent,
   }: ProjectAssetQueryContext & {
     requests: Parameters<typeof previewAssetResourceQueries>[0]["requests"];
   },
   dependencies = defaultBatchDependencies
 ) => {
   signal?.throwIfAborted();
-  const build = await dependencies.loadDevBuildContentEngineDataByProjectId(
-    context,
-    projectId,
-    signal
-  );
+  const build = await measureAssetQueryPerformance({
+    phase: "build-plan",
+    observer: onPerformanceEvent,
+    operation: () =>
+      dependencies.loadDevBuildContentEngineDataByProjectId(
+        context,
+        projectId,
+        signal
+      ),
+  });
   signal?.throwIfAborted();
   return await dependencies.previewAssetResourceQueries({
     projectId,
@@ -59,6 +71,8 @@ export const previewProjectAssetQueries = async (
     contentDatabaseMaxBytes,
     databasePlan: createBuildContentCompilationPlan(build),
     signal,
+    onPerformanceEvent,
+    onDocumentGraphEvent,
   });
 };
 
@@ -72,6 +86,8 @@ export const previewProjectAssetQuery = async (
     includeDiagnostics,
     includeUnresolvedDiagnostics,
     signal,
+    onPerformanceEvent,
+    onDocumentGraphEvent,
   }: ProjectAssetQueryContext & {
     request: Parameters<typeof previewAssetResourceQuery>[0]["request"];
     includeDiagnostics?: boolean;
@@ -80,11 +96,12 @@ export const previewProjectAssetQuery = async (
   dependencies = defaultQueryDependencies
 ) => {
   signal?.throwIfAborted();
-  const build = await dependencies.loadDevBuildByProjectId(
-    context,
-    projectId,
-    signal
-  );
+  const build = await measureAssetQueryPerformance({
+    phase: "build-plan",
+    observer: onPerformanceEvent,
+    operation: () =>
+      dependencies.loadDevBuildByProjectId(context, projectId, signal),
+  });
   signal?.throwIfAborted();
   const databasePlan = createBuildContentCompilationPlan(build);
   return await dependencies.previewAssetResourceQuery({
@@ -95,6 +112,8 @@ export const previewProjectAssetQuery = async (
     contentDatabaseMaxBytes,
     databasePlan,
     signal,
+    onPerformanceEvent,
+    onDocumentGraphEvent,
     ...(includeDiagnostics === false
       ? {}
       : {
