@@ -85,9 +85,9 @@ import {
   upsertAssetFolderWithClient,
 } from "./folder-persistence";
 import {
+  createContentCompilationCache,
   createContentCompilationCacheKey,
   getContentDatabaseForArtifact,
-  sharedContentCompilationCache,
   type ContentCompilationCache,
 } from "./content-compilation-cache";
 import {
@@ -283,7 +283,7 @@ export class PostgresAssetRepository implements AssetRepository {
     assetStore: RepositoryObjectStore;
     dependencies?: Partial<AssetRepositoryDependencies>;
     contentDatabaseMaxBytes?: number;
-    compilationCache?: ContentCompilationCache;
+    compilationCache?: ContentCompilationCache | false;
     onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
     onPerformanceEvent?: AssetQueryPerformanceObserver;
   }) {
@@ -293,8 +293,9 @@ export class PostgresAssetRepository implements AssetRepository {
     this.dependencies = { ...defaultDependencies, ...dependencies };
     this.contentDatabaseMaxBytes = contentDatabaseMaxBytes;
     this.compilationCache =
-      compilationCache ??
-      (dependencies === undefined ? sharedContentCompilationCache : undefined);
+      compilationCache === false
+        ? undefined
+        : (compilationCache ?? createContentCompilationCache());
     this.onDocumentGraphEvent = onDocumentGraphEvent;
     this.onPerformanceEvent = onPerformanceEvent;
   }

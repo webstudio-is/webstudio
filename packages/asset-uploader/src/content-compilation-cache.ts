@@ -102,8 +102,6 @@ export const createContentCompilationCache = (maximumEntries = 32) => {
   };
 };
 
-export const sharedContentCompilationCache = createContentCompilationCache();
-
 const databaseByArtifact = new WeakMap<
   ContentArtifactV1,
   ReturnType<typeof createContentDatabase>

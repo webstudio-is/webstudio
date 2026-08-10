@@ -80,11 +80,11 @@ const assetQueryPhaseRows = [
   ],
 ] as const;
 
-const compilationCacheLabels = {
-  hit: "Hit",
-  coalesced: "Coalesced",
-  miss: "Miss",
-  disabled: "Disabled",
+const compilationWorkLabels = {
+  hit: "Reused",
+  coalesced: "Joined",
+  miss: "Compiled",
+  disabled: "Reuse disabled",
 } as const;
 
 const ReadonlyJsonEditor = ({
@@ -196,11 +196,9 @@ const ResourcePerformanceSections = ({
           <RequestDiagnosticsTable>
             {value.assetQuery?.compilationCache !== undefined && (
               <RequestDiagnosticsRow
-                label="Compilation cache"
-                value={
-                  compilationCacheLabels[value.assetQuery.compilationCache]
-                }
-                description="Whether this server process reused a compiled artifact, joined an in-progress compilation, compiled it on a miss, or ran with caching disabled."
+                label="Compilation work"
+                value={compilationWorkLabels[value.assetQuery.compilationCache]}
+                description="Whether this Assets request reused an artifact compiled earlier in the same request, joined matching in-progress work, compiled it on a miss, or ran with reuse disabled."
               />
             )}
             {value.assetQuery?.compilerContentFetchCount !== undefined && (

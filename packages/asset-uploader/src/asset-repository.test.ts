@@ -1499,7 +1499,6 @@ describe("PostgresAssetRepository", () => {
       context,
       assetStore: assetClient,
       dependencies,
-      compilationCache: createContentCompilationCache(),
     });
 
     const [first, second] = await Promise.all([
