@@ -49,15 +49,17 @@ const getMarkdownUrlTokens = (markdown: string) => {
 const getRelativeAssetPath = ({
   sourcePath,
   url,
+  allowRootRelative = false,
 }: {
   sourcePath: string;
   url: string;
+  allowRootRelative?: boolean;
 }) => {
   if (
     url.length === 0 ||
     url.startsWith("#") ||
     url.startsWith("?") ||
-    url.startsWith("/")
+    (allowRootRelative === false && url.startsWith("/"))
   ) {
     return;
   }
@@ -107,15 +109,35 @@ const getRelativeAssetPath = ({
   return segments.join("/");
 };
 
+const getPublishedAssetName = (url: string) => {
+  const path = getRelativeAssetPath({
+    sourcePath: "document.md",
+    url,
+    allowRootRelative: true,
+  });
+  const segments = path?.split("/");
+  if (segments?.length !== 2 || segments[0] !== "assets") {
+    return;
+  }
+  return segments[1];
+};
+
 export const createAssetIdResolver = (
   assetIdsByPath: ReadonlyMap<string, string>,
   sourcePath: string
 ) => {
   const assetIds = new Set(assetIdsByPath.values());
+  const assetIdsByName = createUniqueAssetIdsByPath(
+    Array.from(assetIdsByPath, ([path, id]) => ({
+      id,
+      path: path.slice(path.lastIndexOf("/") + 1),
+    }))
+  );
   return (url: string) => {
     const path = getRelativeAssetPath({ sourcePath, url });
     return (
       (path === undefined ? undefined : assetIdsByPath.get(path)) ??
+      assetIdsByName.get(getPublishedAssetName(url) ?? "") ??
       (assetIds.has(url) ? url : undefined)
     );
   };
