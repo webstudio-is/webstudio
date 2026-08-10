@@ -13,6 +13,9 @@ exporting them from a database first.
 This guide creates a blog overview at `/blog` and one dynamic article page at
 `/blog/:slug`.
 
+To see the finished setup first, start with the
+[Markdown Blog marketplace template](https://webstudio.is/marketplace/templates/markdown-blog).
+
 <figure><img src="../../.gitbook/assets/content-engine-assets-structure.png" alt="Assets panel showing Markdown articles and their assets folder"><figcaption><p>Markdown articles stored alongside their assets</p></figcaption></figure>
 
 ## Build it with MCP
@@ -35,7 +38,8 @@ it manually.
 
 ## 1. Organize the files
 
-Create this folder structure in the Assets panel:
+The Content Engine does not require a particular folder structure. This guide
+uses the following organization in the Assets panel:
 
 ```text
 blog/
