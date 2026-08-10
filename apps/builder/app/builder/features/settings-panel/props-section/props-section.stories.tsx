@@ -442,10 +442,4 @@ export const PropsSection = () => {
 export default {
   title: "Settings panel/Props Section",
   component: PropsSection,
-  parameters: {
-    chromatic: {
-      // this is to fix cutting off the after scroll area in the screenshot
-      delay: 5000,
-    },
-  },
 };

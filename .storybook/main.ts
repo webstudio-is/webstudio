@@ -12,9 +12,11 @@ const isFolderEmpty = (folderPath: string) => {
   return contents.length === 0;
 };
 
-const hasPrivateFolders = !isFolderEmpty(
-  path.join(__dirname, "../../packages/sdk-components-animation/private-src")
-);
+const hasPrivateFolders =
+  process.env.VISUAL_TESTING !== "true" &&
+  !isFolderEmpty(
+    path.join(__dirname, "../../packages/sdk-components-animation/private-src")
+  );
 
 const visualTestingStories: StorybookConfig["stories"] = [
   {
