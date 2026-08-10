@@ -1,4 +1,5 @@
-import { forwardRef, useMemo, type ComponentProps } from "react";
+import { forwardRef, useContext, useMemo, type ComponentProps } from "react";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { renderMarkdownHtml } from "./markdown";
 
 type MarkdownEmbedProps = ComponentProps<"div"> & {
@@ -12,10 +13,11 @@ export const MarkdownEmbed = /* @__PURE__ */ forwardRef<
   MarkdownEmbedProps
 >((props, ref) => {
   const { code, children, ...rest } = props;
+  const { imageLoader, renderer } = useContext(ReactSdkContext);
   const html = useMemo(
     // support data uri protocol in images
-    () => renderMarkdownHtml(code ?? ""),
-    [code]
+    () => renderMarkdownHtml(code ?? "", { imageLoader, renderer }),
+    [code, imageLoader, renderer]
   );
   return <div {...rest} ref={ref} dangerouslySetInnerHTML={{ __html: html }} />;
 });

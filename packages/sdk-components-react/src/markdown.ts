@@ -7,6 +7,11 @@ import { toString } from "mdast-util-to-string";
 import GithubSlugger from "github-slugger";
 import type { HtmlExtension } from "micromark-util-types";
 import sanitizeHtml from "sanitize-html";
+import {
+  getImageAttributes,
+  imagePlaceholderDataUrl,
+  type ImageLoader,
+} from "@webstudio-is/image";
 
 const getHeadingIds = (markdown: string) => {
   const slugger = new GithubSlugger();
@@ -66,7 +71,13 @@ const createHeadingIdsHtmlExtension = (
 
 const sanitizeMarkdownHtml = (
   html: string,
-  { allowBlobImages }: { allowBlobImages: boolean }
+  {
+    allowBlobImages,
+    transformTags,
+  }: {
+    allowBlobImages: boolean;
+    transformTags?: sanitizeHtml.IOptions["transformTags"];
+  }
 ) =>
   sanitizeHtml(html, {
     allowedTags: [
@@ -106,7 +117,16 @@ const sanitizeMarkdownHtml = (
         "src",
         "width",
       ],
-      img: ["alt", "height", "loading", "sizes", "src", "srcset", "width"],
+      img: [
+        "alt",
+        "decoding",
+        "height",
+        "loading",
+        "sizes",
+        "src",
+        "srcset",
+        "width",
+      ],
       input: ["checked", "disabled", "type"],
       source: ["media", "sizes", "src", "srcset", "type"],
       video: [
@@ -130,10 +150,66 @@ const sanitizeMarkdownHtml = (
       video: ["data", "http", "https"],
     },
     allowProtocolRelative: false,
+    transformTags,
     exclusiveFilter: ({ tag, attribs }) =>
       tag === "input" &&
       (attribs.type !== "checkbox" || attribs.disabled === undefined),
   });
+
+const createImageTransformer =
+  ({
+    imageLoader,
+    renderer,
+  }: {
+    imageLoader: ImageLoader;
+    renderer: "canvas" | "preview" | undefined;
+  }): sanitizeHtml.Transformer =>
+  (tagName, attributes) => {
+    let loading = attributes.loading ?? "lazy";
+    let decoding = attributes.decoding ?? "async";
+
+    if (renderer === "canvas") {
+      loading = "eager";
+      decoding = "sync";
+    }
+
+    const imageAttributes = getImageAttributes({
+      src: String(attributes.src ?? ""),
+      srcSet: attributes.srcset,
+      sizes: attributes.sizes,
+      width: attributes.width,
+      quality: undefined,
+      loader: imageLoader,
+      optimize: true,
+    }) ?? { src: imagePlaceholderDataUrl };
+
+    const {
+      src: _src,
+      srcset: sourceSrcSet,
+      sizes: sourceSizes,
+      decoding: _decoding,
+      loading: _loading,
+      ...rest
+    } = attributes;
+    const transformedAttributes: sanitizeHtml.Attributes = {
+      alt: "",
+      ...rest,
+    };
+    const sizes = imageAttributes.sizes ?? sourceSizes;
+    const srcSet = imageAttributes.srcSet ?? sourceSrcSet;
+    if (sizes !== undefined) {
+      transformedAttributes.sizes = sizes;
+    }
+    if (srcSet !== undefined) {
+      transformedAttributes.srcset = srcSet;
+    }
+    // Keep src after sizes and srcset so Safari does not load the image twice.
+    transformedAttributes.src = imageAttributes.src;
+    transformedAttributes.decoding = decoding;
+    transformedAttributes.loading = loading;
+
+    return { tagName, attribs: transformedAttributes };
+  };
 
 const createGfmHtmlExtension = () => {
   const extension = gfmHtml();
@@ -148,9 +224,17 @@ const createGfmHtmlExtension = () => {
 /** Shared safe renderer used by both the authoring preview and published component. */
 export const renderMarkdownHtml = (
   markdown: string,
-  { allowBlobImages = false }: { allowBlobImages?: boolean } = {}
-) =>
-  sanitizeMarkdownHtml(
+  {
+    allowBlobImages = false,
+    imageLoader,
+    renderer,
+  }: {
+    allowBlobImages?: boolean;
+    imageLoader?: ImageLoader;
+    renderer?: "canvas" | "preview";
+  } = {}
+) => {
+  const html = sanitizeMarkdownHtml(
     micromark(markdown, {
       allowDangerousHtml: true,
       allowDangerousProtocol: true,
@@ -162,3 +246,18 @@ export const renderMarkdownHtml = (
     }),
     { allowBlobImages }
   );
+
+  if (imageLoader === undefined) {
+    return html;
+  }
+
+  // Sanitize before transforming so unsafe sources cannot become valid URLs
+  // after passing through the image loader. Sanitize the generated attributes
+  // again because loaders are application-provided.
+  return sanitizeMarkdownHtml(html, {
+    allowBlobImages,
+    transformTags: {
+      img: createImageTransformer({ imageLoader, renderer }),
+    },
+  });
+};
