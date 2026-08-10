@@ -29,6 +29,7 @@ export const Video = forwardRef<
     $visible?: Atom<boolean>;
     $timeline?: boolean;
   } & {
+    // @todo: This builder-only prop should not be part of the runtime component.
     $webstudio$canvasOnly$assetId?: string | undefined;
   }
 >(
