@@ -84,6 +84,7 @@ jobs:
         run: |
           echo "base=$(git merge-base HEAD "$BASE_REF")" >> "$GITHUB_OUTPUT"
           echo "head=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "version=${{ hashFiles('.storybook/**', 'scripts/visual-regression/**', 'pnpm-lock.yaml') }}" >> "$GITHUB_OUTPUT"
           browser_path="$(command -v chromium || command -v chromium-browser || command -v google-chrome || true)"
           if [[ -n "$browser_path" ]]; then
             "$browser_path" --version | sha256sum | cut -d ' ' -f 1 | sed 's/^/browser=/' >> "$GITHUB_OUTPUT"
@@ -95,7 +96,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .visual-regression-cache
-          key: visual-baseline-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-${{ hashFiles('.storybook/**', 'scripts/visual-regression/**', 'pnpm-lock.yaml') }}
+          key: visual-baseline-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.version }}
 
       - name: Compare portable stories
         env:
@@ -122,4 +123,11 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: .visual-regression-cache/${{ steps.visual-cache.outputs.head }}-*
-          key: visual-baseline-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.head }}-${{ hashFiles('.storybook/**', 'scripts/visual-regression/**', 'pnpm-lock.yaml') }}
+          key: visual-baseline-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.head }}-${{ steps.visual-cache.outputs.version }}
+
+      - name: Cache generated baseline screenshots
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .visual-regression-cache/${{ steps.visual-cache.outputs.base }}-*
+          key: visual-baseline-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.version }}
