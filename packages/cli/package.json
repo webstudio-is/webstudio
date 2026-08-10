@@ -9,6 +9,11 @@
     "webstudio-cli": "./bin.js",
     "webstudio": "./bin.js"
   },
+  "exports": {
+    "./vision": {
+      "webstudio": "./src/vision.ts"
+    }
+  },
   "files": [
     "lib/*",
     "templates/*",

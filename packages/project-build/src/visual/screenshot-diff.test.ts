@@ -220,6 +220,37 @@ test("can skip writing diff artifacts during a detection pass", async () => {
   expect(result.contextDiffPath).toBeUndefined();
 });
 
+test("writes diff artifacts conditionally without a second comparison", async () => {
+  const baselinePath = path.join(tempDir, "baseline.png");
+  const unchangedPath = path.join(tempDir, "unchanged.png");
+  const changedPath = path.join(tempDir, "changed.png");
+  const white = createPng(2, 2, { r: 255, g: 255, b: 255 });
+
+  await writePng(baselinePath, white);
+  await writePng(unchangedPath, white);
+  await writePng(changedPath, createPng(2, 2, { r: 0, g: 0, b: 0 }));
+
+  const unchanged = await diffPngFiles({
+    baselinePath,
+    currentPath: unchangedPath,
+    outputDir: path.join(tempDir, "unchanged-diff"),
+    analyzeText: false,
+    writeArtifacts: "when-different",
+  });
+  const changed = await diffPngFiles({
+    baselinePath,
+    currentPath: changedPath,
+    outputDir: path.join(tempDir, "changed-diff"),
+    analyzeText: false,
+    writeArtifacts: "when-different",
+  });
+
+  expect(unchanged.diffPath).toBeUndefined();
+  await expect(readFile(changed.diffPath ?? "")).resolves.toBeInstanceOf(
+    Buffer
+  );
+});
+
 test("reports dimension mismatch for different aspect ratios", async () => {
   const baselinePath = path.join(tempDir, "baseline.png");
   const currentPath = path.join(tempDir, "current.png");

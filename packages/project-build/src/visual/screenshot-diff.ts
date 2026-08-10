@@ -160,8 +160,8 @@ export const diffPngFiles = async ({
   outputDir: string;
   threshold?: number;
   ignoreTopNormalizedY?: number;
-  analyzeText?: boolean;
-  writeArtifacts?: boolean;
+  analyzeText?: boolean | "when-different";
+  writeArtifacts?: boolean | "when-different";
   expectedText?: readonly string[];
   expectedVisual?: ScreenshotVisualExpectation;
 }): Promise<ScreenshotDiffResult> => {
@@ -238,7 +238,11 @@ export const diffPngFiles = async ({
     current,
   });
   const totalPixels = baseline.width * baseline.height;
-  const artifactPaths = writeArtifacts
+  const hasPixelDifference = pixelDiff.differentPixels > 0;
+  const shouldWriteArtifacts =
+    writeArtifacts === true ||
+    (writeArtifacts === "when-different" && hasPixelDifference);
+  const artifactPaths = shouldWriteArtifacts
     ? getDiffArtifactPaths({ currentPath, outputDir })
     : undefined;
   if (artifactPaths !== undefined) {
@@ -254,12 +258,15 @@ export const diffPngFiles = async ({
   const canAnalyzeText =
     decodedBaseline.width === decodedCurrent.width &&
     decodedBaseline.height === decodedCurrent.height;
+  const shouldAnalyzeText =
+    analyzeText === true ||
+    (analyzeText === "when-different" && hasPixelDifference);
   const textAnalysis: ScreenshotTextAnalysis =
-    canAnalyzeText && analyzeText
+    canAnalyzeText && shouldAnalyzeText
       ? await analyzeScreenshotTextChanges({
           baselinePath,
           currentPath,
-          hasPixelDiff: pixelDiff.differentPixels > 0,
+          hasPixelDiff: hasPixelDifference,
           baselineImage: baseline,
           currentImage: current,
           ignoreTopPixels: Math.ceil(baseline.height * ignoreTopNormalizedY),

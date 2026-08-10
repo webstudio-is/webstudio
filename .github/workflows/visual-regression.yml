@@ -78,7 +78,6 @@ jobs:
         run: sudo apt-get install --no-install-recommends -y tesseract-ocr
 
       - name: Compare portable stories
-        id: compare
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
           APPROVE_VISUAL_CHANGES: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'visual-change-approved' }}
@@ -87,11 +86,7 @@ jobs:
           if [[ "$APPROVE_VISUAL_CHANGES" == "true" ]]; then
             args+=(--approve-visual-changes)
           fi
-          set +e
           pnpm visual-regression -- "${args[@]}"
-          status=$?
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          exit 0
 
       - name: Upload visual comparison report
         if: always()
@@ -101,9 +96,3 @@ jobs:
           path: .visual-regression/report
           if-no-files-found: warn
           retention-days: 14
-
-      - name: Enforce visual comparison result
-        if: always()
-        env:
-          STATUS: ${{ steps.compare.outputs.status }}
-        run: exit "${STATUS:-1}"

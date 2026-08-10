@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { VisualTestReport } from "./shared";
 
@@ -46,6 +46,14 @@ export const writeVisualReport = async ({
     throw new Error(`Visual report template is missing ${reportDataMarker}.`);
   }
   await Promise.all([
+    copyFile(
+      new URL("./report.css", import.meta.url),
+      path.join(reportDirectory, "report.css")
+    ),
+    copyFile(
+      new URL("./report.js", import.meta.url),
+      path.join(reportDirectory, "report.js")
+    ),
     writeFile(
       path.join(reportDirectory, "report.json"),
       `${JSON.stringify(portableReport, undefined, 2)}\n`

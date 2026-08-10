@@ -3,7 +3,25 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { parse, type DefaultTreeAdapterTypes as Html } from "parse5";
 import { writeVisualReport } from "./report";
+
+const findElement = (
+  node: Html.Node,
+  predicate: (element: Html.Element) => boolean
+): Html.Element | undefined => {
+  if ("tagName" in node && predicate(node)) {
+    return node;
+  }
+  if ("childNodes" in node) {
+    for (const child of node.childNodes) {
+      const found = findElement(child, predicate);
+      if (found !== undefined) {
+        return found;
+      }
+    }
+  }
+};
 
 test("writes portable JSON data for the static visual report", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "visual-report-"));
@@ -50,17 +68,28 @@ test("writes portable JSON data for the static visual report", async () => {
       path.join(reportDirectory, "index.html"),
       "utf8"
     );
-    const dataStart =
-      '<script id="visual-report-data" type="application/json">';
-    const start = html.indexOf(dataStart);
-    const end = html.indexOf("</script>", start + dataStart.length);
-    assert.notEqual(start, -1);
-    assert.notEqual(end, -1);
+    const document = parse(html);
+    const data = findElement(
+      document,
+      (element) =>
+        element.tagName === "script" &&
+        element.attrs.some(
+          ({ name, value }) => name === "id" && value === "visual-report-data"
+        )
+    );
+    assert.notEqual(data, undefined);
     const embeddedReport = JSON.parse(
-      html.slice(start + dataStart.length, end)
+      data?.childNodes
+        .filter((node): node is Html.TextNode => node.nodeName === "#text")
+        .map((node) => node.value)
+        .join("") ?? ""
     );
     assert.deepEqual(embeddedReport, json);
     assert.equal(html.includes("</script><script>unsafe()"), false);
+    await Promise.all([
+      readFile(path.join(reportDirectory, "report.css"), "utf8"),
+      readFile(path.join(reportDirectory, "report.js"), "utf8"),
+    ]);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
