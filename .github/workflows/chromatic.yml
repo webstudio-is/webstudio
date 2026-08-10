@@ -60,5 +60,4 @@ jobs:
         with:
           projectToken: bea8dc1981d4
           buildScriptName: storybook:build
-          onlyChanged: true
           exitZeroOnChanges: false
