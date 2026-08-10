@@ -41,39 +41,6 @@ export type VisualTestReport = {
   errors: readonly string[];
 };
 
-export const parseVisualShard = (value: string | undefined) => {
-  if (value === undefined) {
-    return { index: 1, total: 1 };
-  }
-  const [indexText, totalText, extra] = value.split("/");
-  const index = Number(indexText);
-  const total = Number(totalText);
-  if (
-    extra !== undefined ||
-    Number.isInteger(index) === false ||
-    Number.isInteger(total) === false ||
-    index < 1 ||
-    total < 1 ||
-    index > total
-  ) {
-    throw new Error(`Invalid visual regression shard: ${value}`);
-  }
-  return { index, total };
-};
-
-export const getVisualShardIds = ({
-  baselineIds,
-  currentIds,
-  shard,
-}: {
-  baselineIds: readonly string[];
-  currentIds: readonly string[];
-  shard: { index: number; total: number };
-}) =>
-  [...new Set([...baselineIds, ...currentIds])]
-    .sort()
-    .filter((_, index) => index % shard.total === shard.index - 1);
-
 export const getStoryComparisons = ({
   baselineEntries,
   currentEntries,

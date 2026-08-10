@@ -6,26 +6,9 @@ import test from "node:test";
 import { readStoryManifest } from "./manifest";
 import {
   classifyVisualTestRun,
-  getVisualShardIds,
   getStoryComparisons,
-  parseVisualShard,
   type VisualTestReport,
 } from "./shared";
-
-test("partitions the union of story ids into stable shards", () => {
-  const ids = [1, 2, 3].flatMap((index) =>
-    getVisualShardIds({
-      baselineIds: ["alpha", "removed", "shared"],
-      currentIds: ["added", "alpha", "shared"],
-      shard: { index, total: 3 },
-    })
-  );
-
-  assert.deepEqual(ids.sort(), ["added", "alpha", "removed", "shared"]);
-  assert.deepEqual(parseVisualShard("2/6"), { index: 2, total: 6 });
-  assert.deepEqual(parseVisualShard(undefined), { index: 1, total: 1 });
-  assert.throws(() => parseVisualShard("7/6"), /Invalid visual regression/);
-});
 
 test("classifies common, added, and removed stories", () => {
   const comparisons = getStoryComparisons({

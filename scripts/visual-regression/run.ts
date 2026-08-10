@@ -16,9 +16,7 @@ import { readStoryManifest, type VisualStoryEntry } from "./manifest";
 import { writeVisualReport } from "./report";
 import {
   classifyVisualTestRun,
-  getVisualShardIds,
   getStoryComparisons,
-  parseVisualShard,
   type VisualComparisonResult,
   type VisualTestReport,
 } from "./shared";
@@ -45,11 +43,8 @@ const getArgument = (name: string) => {
 
 const baseRef = getArgument("--base") ?? "origin/main";
 const grep = getArgument("--grep");
-const shardArgument = getArgument("--shard");
 const openReport = args.includes("--open-report");
 const approved = args.includes("--approve-visual-changes");
-
-const shard = parseVisualShard(shardArgument);
 
 const run = async ({
   command,
@@ -370,20 +365,12 @@ const main = async () => {
       readStoryManifest(repositoryRoot),
     ]);
     const matches = grep === undefined ? undefined : new RegExp(grep, "i");
-    const selectedIds = new Set(
-      getVisualShardIds({
-        baselineIds: Object.keys(baselineEntries),
-        currentIds: Object.keys(currentEntries),
-        shard,
-      })
-    );
     const filterEntries = (entries: Record<string, VisualStoryEntry>) =>
       Object.fromEntries(
         Object.entries(entries).filter(
           ([id, entry]) =>
-            selectedIds.has(id) &&
-            (matches === undefined ||
-              matches.test(`${id} ${entry.title} ${entry.name}`))
+            matches === undefined ||
+            matches.test(`${id} ${entry.title} ${entry.name}`)
         )
       );
     const filteredBaselineEntries = filterEntries(baselineEntries);
@@ -392,9 +379,7 @@ const main = async () => {
       ...Object.keys(filteredBaselineEntries),
       ...Object.keys(filteredCurrentEntries),
     ]);
-    console.info(
-      `Running visual shard ${shard.index}/${shard.total} with ${filteredIds.size} story ids.`
-    );
+    console.info(`Running ${filteredIds.size} visual story ids.`);
     servers.push(
       ...(await Promise.all([
         startVisualStoryServer({

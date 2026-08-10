@@ -60,10 +60,6 @@ jobs:
       )
     timeout-minutes: 30
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     environment:
       name: development
     steps:
@@ -87,7 +83,7 @@ jobs:
           BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
           APPROVE_VISUAL_CHANGES: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'visual-change-approved' }}
         run: |
-          args=(--base "$BASE_REF" --shard "${{ matrix.shard }}/12")
+          args=(--base "$BASE_REF")
           if [[ "$APPROVE_VISUAL_CHANGES" == "true" ]]; then
             args+=(--approve-visual-changes)
           fi
@@ -101,7 +97,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-regression-report-${{ matrix.shard }}
+          name: visual-regression-report
           path: .visual-regression/report
           if-no-files-found: warn
           retention-days: 14
