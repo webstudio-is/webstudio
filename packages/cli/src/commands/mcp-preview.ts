@@ -11,7 +11,7 @@ import {
 } from "../screenshot";
 import { inspectGeneratedBuildMetrics } from "../generated-build-metrics";
 import { createExclusiveAsyncRunner, withTimeout } from "../async-utils";
-import { defaultScreenshotTimeout } from "@webstudio-is/project-build/visual";
+import { defaultScreenshotTimeout } from "@webstudio-is/project-build/vision";
 import {
   preparePreviewProject,
   previewDefaultTemplate,
