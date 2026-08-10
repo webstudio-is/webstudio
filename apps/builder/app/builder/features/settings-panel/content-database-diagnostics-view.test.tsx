@@ -3,7 +3,7 @@
  */
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
 import { ContentDatabaseDiagnostics } from "./content-database-diagnostics";
@@ -13,6 +13,17 @@ import { ContentDatabaseDiagnostics } from "./content-database-diagnostics";
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 let root: Root | undefined;
+
+beforeEach(() => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+  );
+});
 
 const revision = `sha256:${"a".repeat(64)}`;
 const artifact: ContentArtifactV1 = {
@@ -39,9 +50,15 @@ afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   document.body.innerHTML = "";
+  vi.unstubAllGlobals();
 });
 
 test("orders collapsible sections and opens only database sizes by default", () => {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText },
+  });
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -119,7 +136,7 @@ test("orders collapsible sections and opens only database sizes by default", () 
     "Unresolved query result",
   ];
   const triggers = Array.from(
-    container.querySelectorAll<HTMLButtonElement>("button[data-state]")
+    container.querySelectorAll<HTMLButtonElement>("button[aria-controls]")
   );
   expect(triggers).toHaveLength(sectionLabels.length);
   expect(triggers.map((trigger) => trigger.parentElement?.textContent)).toEqual(
@@ -133,7 +150,37 @@ test("orders collapsible sections and opens only database sizes by default", () 
     "closed",
     "closed",
   ]);
+  const copyButtons = Array.from(
+    container.querySelectorAll<HTMLButtonElement>('button[aria-label^="Copy "]')
+  );
+  expect(
+    Array.from(
+      new Set(copyButtons.map((button) => button.getAttribute("aria-label")))
+    )
+  ).toEqual(sectionLabels.map((label) => `Copy ${label} as JSON`));
   expect(container.textContent).not.toContain("Server duration");
+
+  const timingCopyButton = copyButtons
+    .filter(
+      (button) => button.getAttribute("aria-label") === "Copy Timing as JSON"
+    )
+    .at(-1);
+  act(() => timingCopyButton?.click());
+  expect(triggers[1]?.dataset.state).toBe("closed");
+  expect(writeText).toHaveBeenCalledOnce();
+  expect(JSON.parse(writeText.mock.calls[0]?.[0] ?? "")).toEqual({
+    builderRoundTripMs: 150.25,
+    serverDurationMs: 125.5,
+    phases: {
+      buildPlan: 20,
+      indexPreparation: 80,
+      diagnosticsPreparation: 40,
+      documentGraph: 30,
+      assetReferences: 5,
+      sourceValidation: 10,
+      documentResolution: 15,
+    },
+  });
 
   act(() => {
     triggers[1]?.click();

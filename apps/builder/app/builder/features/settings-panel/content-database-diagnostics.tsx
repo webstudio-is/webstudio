@@ -1,9 +1,21 @@
 import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
-import { PanelBanner, Text } from "@webstudio-is/design-system";
+import {
+  PanelBanner,
+  SectionTitle,
+  SectionTitleButton,
+  SectionTitleLabel,
+  Text,
+} from "@webstudio-is/design-system";
+import { CopyIcon } from "@webstudio-is/icons";
+import type { ReactNode } from "react";
 import prettyBytes from "pretty-bytes";
 import type { ResourcePerformance } from "~/shared/resource-diagnostics";
 import { CodeEditor } from "~/shared/code-editor";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
+import { CopyToClipboard } from "~/shared/copy-to-clipboard";
+import {
+  CollapsibleSectionRoot,
+  useOpenState,
+} from "~/builder/shared/collapsible-section";
 import {
   RequestDiagnosticsRow,
   RequestDiagnosticsSections,
@@ -93,6 +105,48 @@ const compilationWorkLabels = {
   disabled: "Reuse disabled",
 } as const;
 
+const DiagnosticsSection = ({
+  label,
+  data,
+  isOpen,
+  children,
+}: {
+  label: string;
+  data: unknown;
+  isOpen?: boolean;
+  children: ReactNode;
+}) => {
+  const [open, setOpen] = useOpenState(label, isOpen);
+  return (
+    <CollapsibleSectionRoot
+      isOpen={open}
+      onOpenChange={setOpen}
+      trigger={
+        <SectionTitle
+          suffix={
+            <CopyToClipboard
+              text={JSON.stringify(data, undefined, 2) ?? "null"}
+              copyText={`Copy ${label} as JSON`}
+            >
+              <SectionTitleButton
+                type="button"
+                tabIndex={0}
+                aria-label={`Copy ${label} as JSON`}
+                prefix={<CopyIcon />}
+                onPointerDown={(event) => event.stopPropagation()}
+              />
+            </CopyToClipboard>
+          }
+        >
+          <SectionTitleLabel>{label}</SectionTitleLabel>
+        </SectionTitle>
+      }
+    >
+      {children}
+    </CollapsibleSectionRoot>
+  );
+};
+
 const ReadonlyJsonEditor = ({ value }: { value: unknown }) => (
   <CodeEditor
     lang="json"
@@ -152,10 +206,28 @@ const ResourcePerformanceSections = ({
     (value.responseBytes !== undefined ||
       value.assetQuery?.compilerContentBytes !== undefined ||
       value.assetQuery?.documentGraphContentBytes !== undefined);
+  const sizes = {
+    responseBytes: value.responseBytes,
+    compilerContentBytes: value.assetQuery?.compilerContentBytes,
+    documentGraphContentBytes: value.assetQuery?.documentGraphContentBytes,
+  };
+  const timing = {
+    builderRoundTripMs: value.loaderDurationMs,
+    serverDurationMs: value.serverDurationMs,
+    phases: value.assetQuery?.phases,
+  };
+  const queryWork = {
+    compilationWork: value.assetQuery?.compilationCache,
+    compilerContentFetchCount: value.assetQuery?.compilerContentFetchCount,
+    documentGraphContentFetchCount:
+      value.assetQuery?.documentGraphContentFetchCount,
+    resolvedDocumentCount: value.assetQuery?.resolvedDocumentCount,
+    documentFetchCount: value.assetQuery?.documentFetchCount,
+  };
   return (
     <>
       {hasSizes && (
-        <CollapsibleSection label="Sizes" isOpen={openFirst}>
+        <DiagnosticsSection label="Sizes" data={sizes} isOpen={openFirst}>
           <RequestDiagnosticsTable>
             {value.responseBytes !== undefined && (
               <RequestDiagnosticsRow
@@ -179,11 +251,12 @@ const ResourcePerformanceSections = ({
               />
             )}
           </RequestDiagnosticsTable>
-        </CollapsibleSection>
+        </DiagnosticsSection>
       )}
       {hasTiming && (
-        <CollapsibleSection
+        <DiagnosticsSection
           label="Timing"
+          data={timing}
           isOpen={openFirst && hasSizes === false}
         >
           <RequestDiagnosticsTable>
@@ -216,11 +289,12 @@ const ResourcePerformanceSections = ({
               );
             })}
           </RequestDiagnosticsTable>
-        </CollapsibleSection>
+        </DiagnosticsSection>
       )}
       {hasQueryWork && (
-        <CollapsibleSection
+        <DiagnosticsSection
           label="Query work"
+          data={queryWork}
           isOpen={openFirst && hasSizes === false && hasTiming === false}
         >
           <RequestDiagnosticsTable>
@@ -260,7 +334,7 @@ const ResourcePerformanceSections = ({
               />
             )}
           </RequestDiagnosticsTable>
-        </CollapsibleSection>
+        </DiagnosticsSection>
       )}
     </>
   );
@@ -292,9 +366,22 @@ export const ContentDatabaseDiagnostics = ({
     value.database.omittedDocumentCount === 1 ? "file" : "files"
   }`;
   const rows = getContentDatabaseDiagnosticRows(value);
+  const databaseAndSizes = {
+    responseBytes: performance?.responseBytes,
+    compilerContentBytes: performance?.assetQuery?.compilerContentBytes,
+    documentGraphContentBytes:
+      performance?.assetQuery?.documentGraphContentBytes,
+    scope: value.scope,
+    query: value.query,
+    database: value.database,
+  };
   return (
     <RequestDiagnosticsSections>
-      <CollapsibleSection label="Database and sizes" isOpen>
+      <DiagnosticsSection
+        label="Database and sizes"
+        data={databaseAndSizes}
+        isOpen
+      >
         <PanelBanner variant={value.database.truncated ? "warning" : "success"}>
           <Text>
             {value.database.truncated
@@ -357,7 +444,7 @@ export const ContentDatabaseDiagnostics = ({
             description="Number of candidate files omitted from the published content database because of its size limit."
           />
         </RequestDiagnosticsTable>
-      </CollapsibleSection>
+      </DiagnosticsSection>
       {performance !== undefined && (
         <ResourcePerformanceSections
           value={performance}
@@ -367,32 +454,38 @@ export const ContentDatabaseDiagnostics = ({
       )}
       {value.artifacts !== undefined && (
         <>
-          <CollapsibleSection
+          <DiagnosticsSection
             label={
               value.query.truncated
                 ? "Included query database"
                 : "Query database"
             }
+            data={value.artifacts.query}
             isOpen={false}
           >
             <ReadonlyJsonEditor value={value.artifacts.query} />
-          </CollapsibleSection>
-          <CollapsibleSection
+          </DiagnosticsSection>
+          <DiagnosticsSection
             label={
               value.database.truncated
                 ? "Included published database"
                 : "Published database"
             }
+            data={value.artifacts.database}
             isOpen={false}
           >
             <ReadonlyJsonEditor value={value.artifacts.database} />
-          </CollapsibleSection>
+          </DiagnosticsSection>
         </>
       )}
       {value.unresolved !== undefined && (
-        <CollapsibleSection label="Unresolved query result" isOpen={false}>
+        <DiagnosticsSection
+          label="Unresolved query result"
+          data={value.unresolved}
+          isOpen={false}
+        >
           <ReadonlyJsonEditor value={value.unresolved} />
-        </CollapsibleSection>
+        </DiagnosticsSection>
       )}
     </RequestDiagnosticsSections>
   );
