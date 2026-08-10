@@ -32,7 +32,7 @@ jobs:
       name: development
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2 # we need to fetch at least parent commit to satisfy Chromatic
           ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
@@ -47,7 +47,7 @@ jobs:
 
       - name: Chromatic
         id: chromatic
-        uses: chromaui/action@v11.3.0
+        uses: chromaui/action@v16
         with:
           projectToken: bea8dc1981d4
           buildScriptName: storybook:build
