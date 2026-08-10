@@ -34,6 +34,7 @@ const pixelThreshold = 0.1;
 const maxMismatchPercentage = 0;
 const captureConcurrency = Number(process.env.VISUAL_CAPTURE_CONCURRENCY ?? 4);
 const captureStaggerMs = Number(process.env.VISUAL_CAPTURE_STAGGER_MS ?? 500);
+const captureBatchSize = 20;
 
 const args = process.argv.slice(2);
 const getArgument = (name: string) => {
@@ -174,8 +175,8 @@ const captureStories = async ({
       return getCaptureOptions({ browserPath, entry, output, port, revision });
     })
   );
-  if (options.length > 0) {
-    await session.capturePage(options, {
+  for (let index = 0; index < options.length; index += captureBatchSize) {
+    await session.capturePage(options.slice(index, index + captureBatchSize), {
       concurrency: captureConcurrency,
       staggerMs: captureStaggerMs,
     });
