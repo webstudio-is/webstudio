@@ -21,17 +21,18 @@ const getResponseBytes = (value: unknown) => {
   }
 };
 
-const getInternalPerformance = (value: unknown) => {
-  if (
-    typeof value === "object" &&
-    value !== null &&
-    "__performance__" in value &&
-    typeof value.__performance__ === "object" &&
-    value.__performance__ !== null
-  ) {
-    return value.__performance__;
+const separateInternalPerformance = (value: unknown) => {
+  if (typeof value !== "object" || value === null) {
+    return { result: value, performance: {} };
   }
-  return {};
+  const { __performance__, ...result } = value as Record<string, unknown>;
+  return {
+    result,
+    performance:
+      typeof __performance__ === "object" && __performance__ !== null
+        ? __performance__
+        : {},
+  };
 };
 
 export const loadResourceRequestList = async (
@@ -85,14 +86,15 @@ export const loadResourceRequestList = async (
       sourceOrigin,
       { signal: request.signal }
     );
+    const separated = separateInternalPerformance(result);
     return [
       getResourceKey(resource.data),
       {
         ...result,
         __performance__: {
-          ...getInternalPerformance(result),
-          serverDurationMs: resolvedDependencies.now() - startedAt,
-          responseBytes: getResponseBytes(result),
+          ...separated.performance,
+          serverDurationMs: Math.max(0, resolvedDependencies.now() - startedAt),
+          responseBytes: getResponseBytes(separated.result),
         },
       },
     ];

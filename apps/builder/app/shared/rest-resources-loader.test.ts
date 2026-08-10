@@ -99,6 +99,9 @@ test("records non-bindable server duration and response size", async () => {
     status: 200,
     statusText: "OK",
     data: { title: "Post" },
+    __performance__: {
+      assetQuery: { resolvedDocumentCount: 2 },
+    },
   };
   const now = vi.fn().mockReturnValueOnce(10).mockReturnValueOnce(35.5);
 
@@ -123,9 +126,16 @@ test("records non-bindable server duration and response size", async () => {
       {
         ...result,
         __performance__: {
+          ...result.__performance__,
           serverDurationMs: 25.5,
-          responseBytes: new TextEncoder().encode(JSON.stringify(result))
-            .byteLength,
+          responseBytes: new TextEncoder().encode(
+            JSON.stringify({
+              ok: result.ok,
+              status: result.status,
+              statusText: result.statusText,
+              data: result.data,
+            })
+          ).byteLength,
         },
       },
     ],

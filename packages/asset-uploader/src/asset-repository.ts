@@ -109,23 +109,39 @@ import {
 type CreateId = () => Asset["id"];
 type RepositoryObjectStore = AssetObjectReader & Partial<AssetObjectWriter>;
 
-const getContentBytesCacheKey = ({
-  contentRef,
-  revision,
-}: {
+type ContentBytesReference = {
   contentRef: string;
   revision: string;
-}) => JSON.stringify([contentRef, revision]);
-
-const getContentBytesCacheSize = (
-  contentBytesCache: ReadonlyMap<string, Uint8Array>
-) => {
-  let byteLength = 0;
-  for (const bytes of contentBytesCache.values()) {
-    byteLength += bytes.byteLength;
-  }
-  return byteLength;
 };
+
+class RequestContentBytesCache {
+  private values = new Map<string, Uint8Array>();
+  private byteLength = 0;
+
+  private getKey({ contentRef, revision }: ContentBytesReference) {
+    return JSON.stringify([contentRef, revision]);
+  }
+
+  get(reference: ContentBytesReference) {
+    return this.values.get(this.getKey(reference));
+  }
+
+  set({
+    contentRef,
+    revision,
+    bytes,
+  }: ContentBytesReference & { bytes: Uint8Array }) {
+    const key = this.getKey({ contentRef, revision });
+    const previous = this.values.get(key);
+    const nextByteLength =
+      this.byteLength - (previous?.byteLength ?? 0) + bytes.byteLength;
+    if (nextByteLength > contentEngineLimits.hydratedTotalBytes) {
+      return;
+    }
+    this.values.set(key, bytes);
+    this.byteLength = nextByteLength;
+  }
+}
 
 const defaultDependencies = {
   hasProjectPermit: authorizeProject.hasProjectPermit,
@@ -662,7 +678,7 @@ export class PostgresAssetRepository implements AssetRepository {
   private async prepareIndexAfterAuthorization(
     requirements: ContentCompilationPlan | undefined,
     strict: boolean,
-    contentBytesCache = new Map<string, Uint8Array>()
+    contentBytesCache = new RequestContentBytesCache()
   ) {
     const source = this.createContentSource(strict, contentBytesCache);
     const compile = async (
@@ -763,7 +779,7 @@ export class PostgresAssetRepository implements AssetRepository {
 
   private createContentSource(
     strict: boolean,
-    contentBytesCache = new Map<string, Uint8Array>()
+    contentBytesCache = new RequestContentBytesCache()
   ): ContentSource {
     const readFile = this.assetStore.readFile;
     const onPerformanceEvent = this.onPerformanceEvent;
@@ -793,12 +809,10 @@ export class PostgresAssetRepository implements AssetRepository {
                   id: entry.assetId,
                   source: {
                     [Symbol.asyncIterator]: async function* () {
-                      const cached = contentBytesCache.get(
-                        getContentBytesCacheKey({
-                          contentRef: entry.document.contentRef,
-                          revision: entry.revision,
-                        })
-                      );
+                      const cached = contentBytesCache.get({
+                        contentRef: entry.document.contentRef,
+                        revision: entry.revision,
+                      });
                       if (cached !== undefined) {
                         yield cached;
                         return;
@@ -819,19 +833,11 @@ export class PostgresAssetRepository implements AssetRepository {
                           "Asset content does not match its canonical size"
                         );
                       }
-                      if (
-                        getContentBytesCacheSize(contentBytesCache) +
-                          bytes.byteLength <=
-                        contentEngineLimits.hydratedTotalBytes
-                      ) {
-                        contentBytesCache.set(
-                          getContentBytesCacheKey({
-                            contentRef: entry.document.contentRef,
-                            revision: entry.revision,
-                          }),
-                          bytes
-                        );
-                      }
+                      contentBytesCache.set({
+                        contentRef: entry.document.contentRef,
+                        revision: entry.revision,
+                        bytes,
+                      });
                       emitAssetQueryPerformanceEvent(onPerformanceEvent, {
                         type: "content-read",
                         purpose: "document-graph",
@@ -871,7 +877,7 @@ export class PostgresAssetRepository implements AssetRepository {
     requirements?: ContentCompilationPlan;
     strict: boolean;
     maximumContentBytes?: number;
-    contentBytesCache: Map<string, Uint8Array>;
+    contentBytesCache: RequestContentBytesCache;
   }) {
     const candidateBaseEntries =
       requirements === undefined
@@ -956,13 +962,11 @@ export class PostgresAssetRepository implements AssetRepository {
                 "Asset content does not match its canonical size"
               );
             }
-            contentBytesCache.set(
-              getContentBytesCacheKey({
-                contentRef: entry.document.contentRef,
-                revision: entry.revision,
-              }),
-              bytes
-            );
+            contentBytesCache.set({
+              contentRef: entry.document.contentRef,
+              revision: entry.revision,
+              bytes,
+            });
             emitAssetQueryPerformanceEvent(this.onPerformanceEvent, {
               type: "content-read",
               purpose: "compiler-entry",
@@ -1034,7 +1038,7 @@ export class PostgresAssetRepository implements AssetRepository {
   }
 
   private createQueryDocumentLoader(
-    contentBytesCache?: ReadonlyMap<string, Uint8Array>
+    contentBytesCache?: RequestContentBytesCache
   ): DocumentSourceLoader {
     const onEvent = this.onDocumentGraphEvent;
     return observeDocumentSourceLoader({
@@ -1044,12 +1048,10 @@ export class PostgresAssetRepository implements AssetRepository {
         if (node.format === undefined) {
           throw new Error(`Document ${node.id} format is unavailable`);
         }
-        const cached = contentBytesCache?.get(
-          getContentBytesCacheKey({
-            contentRef: node.contentRef,
-            revision: node.revision,
-          })
-        );
+        const cached = contentBytesCache?.get({
+          contentRef: node.contentRef,
+          revision: node.revision,
+        });
         if (cached !== undefined) {
           return {
             format: node.format,
@@ -1119,7 +1121,7 @@ export class PostgresAssetRepository implements AssetRepository {
         ? [index]
         : []
     );
-    const contentBytesCache = new Map<string, Uint8Array>();
+    const contentBytesCache = new RequestContentBytesCache();
     const load = this.createQueryDocumentLoader(contentBytesCache);
     const resolutionSession = createDocumentResolutionSession({
       load,
@@ -1261,7 +1263,7 @@ export class PostgresAssetRepository implements AssetRepository {
     }: AssetQueryPreviewOptions = {}
   ): Promise<AssetQueryExecutionPreviewResult | AssetQueryResultOnly> {
     signal?.throwIfAborted();
-    const contentBytesCache = new Map<string, Uint8Array>();
+    const contentBytesCache = new RequestContentBytesCache();
     const query = assetQuery.parse(request.query);
     const plan = createContentCompilationPlan([
       createLiteralContentCompilationQuery({ id: "preview", query }),

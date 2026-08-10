@@ -190,6 +190,38 @@ export const getContentDatabaseDiagnosticRows = (
   },
 ];
 
+const PerformanceSizeRows = ({ value }: { value: ResourcePerformance }) => (
+  <>
+    {value.responseBytes !== undefined && (
+      <RequestDiagnosticsRow
+        label="Response size"
+        value={prettyBytes(value.responseBytes)}
+        description="Serialized size of the server resource result before performance metadata is attached."
+      />
+    )}
+    {value.assetQuery?.compilerContentBytes !== undefined && (
+      <RequestDiagnosticsRow
+        label="Compiler content read"
+        value={prettyBytes(value.assetQuery.compilerContentBytes)}
+        description="Total bytes read from storage while preparing compiler entries."
+      />
+    )}
+    {value.assetQuery?.documentGraphContentBytes !== undefined && (
+      <RequestDiagnosticsRow
+        label="Document graph content read"
+        value={prettyBytes(value.assetQuery.documentGraphContentBytes)}
+        description="Total bytes read from storage while constructing the document graph."
+      />
+    )}
+  </>
+);
+
+const getPerformanceSizes = (value?: ResourcePerformance) => ({
+  responseBytes: value?.responseBytes,
+  compilerContentBytes: value?.assetQuery?.compilerContentBytes,
+  documentGraphContentBytes: value?.assetQuery?.documentGraphContentBytes,
+});
+
 const ResourcePerformanceSections = ({
   value,
   includeSizes = true,
@@ -211,16 +243,9 @@ const ResourcePerformanceSections = ({
     value.assetQuery?.documentGraphContentFetchCount !== undefined ||
     value.assetQuery?.resolvedDocumentCount !== undefined ||
     value.assetQuery?.documentFetchCount !== undefined;
+  const sizes = getPerformanceSizes(value);
   const hasSizes =
-    includeSizes &&
-    (value.responseBytes !== undefined ||
-      value.assetQuery?.compilerContentBytes !== undefined ||
-      value.assetQuery?.documentGraphContentBytes !== undefined);
-  const sizes = {
-    responseBytes: value.responseBytes,
-    compilerContentBytes: value.assetQuery?.compilerContentBytes,
-    documentGraphContentBytes: value.assetQuery?.documentGraphContentBytes,
-  };
+    includeSizes && Object.values(sizes).some((size) => size !== undefined);
   const timing = {
     builderRoundTripMs: value.loaderDurationMs,
     serverDurationMs: value.serverDurationMs,
@@ -239,27 +264,7 @@ const ResourcePerformanceSections = ({
       {hasSizes && (
         <DiagnosticsSection label="Sizes" data={sizes} isOpen={openFirst}>
           <RequestDiagnosticsTable>
-            {value.responseBytes !== undefined && (
-              <RequestDiagnosticsRow
-                label="Response size"
-                value={prettyBytes(value.responseBytes)}
-                description="Serialized size of the server resource result before performance metadata is attached."
-              />
-            )}
-            {value.assetQuery?.compilerContentBytes !== undefined && (
-              <RequestDiagnosticsRow
-                label="Compiler content read"
-                value={prettyBytes(value.assetQuery.compilerContentBytes)}
-                description="Total bytes read from storage while preparing compiler entries."
-              />
-            )}
-            {value.assetQuery?.documentGraphContentBytes !== undefined && (
-              <RequestDiagnosticsRow
-                label="Document graph content read"
-                value={prettyBytes(value.assetQuery.documentGraphContentBytes)}
-                description="Total bytes read from storage while constructing the document graph."
-              />
-            )}
+            <PerformanceSizeRows value={value} />
           </RequestDiagnosticsTable>
         </DiagnosticsSection>
       )}
@@ -340,7 +345,7 @@ const ResourcePerformanceSections = ({
               <RequestDiagnosticsRow
                 label="Document fetches"
                 value={value.assetQuery.documentFetchCount}
-                description="Number of referenced document contents fetched from storage while resolving the query result."
+                description="Number of referenced documents loaded while resolving the query result, including request-local byte reuse."
               />
             )}
           </RequestDiagnosticsTable>
@@ -377,10 +382,7 @@ export const ContentDatabaseDiagnostics = ({
   }`;
   const rows = getContentDatabaseDiagnosticRows(value);
   const databaseAndSizes = {
-    responseBytes: performance?.responseBytes,
-    compilerContentBytes: performance?.assetQuery?.compilerContentBytes,
-    documentGraphContentBytes:
-      performance?.assetQuery?.documentGraphContentBytes,
+    ...getPerformanceSizes(performance),
     scope: value.scope,
     query: value.query,
     database: value.database,
@@ -402,28 +404,8 @@ export const ContentDatabaseDiagnostics = ({
           </Text>
         </PanelBanner>
         <RequestDiagnosticsTable>
-          {performance?.responseBytes !== undefined && (
-            <RequestDiagnosticsRow
-              label="Response size"
-              value={prettyBytes(performance.responseBytes)}
-              description="Serialized size of the server resource result before performance metadata is attached."
-            />
-          )}
-          {performance?.assetQuery?.compilerContentBytes !== undefined && (
-            <RequestDiagnosticsRow
-              label="Compiler content read"
-              value={prettyBytes(performance.assetQuery.compilerContentBytes)}
-              description="Total bytes read from storage while preparing compiler entries."
-            />
-          )}
-          {performance?.assetQuery?.documentGraphContentBytes !== undefined && (
-            <RequestDiagnosticsRow
-              label="Document graph content read"
-              value={prettyBytes(
-                performance.assetQuery.documentGraphContentBytes
-              )}
-              description="Total bytes read from storage while constructing the document graph."
-            />
+          {performance !== undefined && (
+            <PerformanceSizeRows value={performance} />
           )}
           <RequestDiagnosticsRow
             label="Scope"

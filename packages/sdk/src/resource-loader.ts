@@ -158,6 +158,12 @@ const formatAssetsResourceResult = (value: unknown, body: unknown) => {
       : "many";
   const diagnostics = isRecord(value) ? value.__diagnostics__ : undefined;
   const performance = isRecord(value) ? value.__performance__ : undefined;
+  const internalMetadata = {
+    ...(preview === undefined || diagnostics === undefined
+      ? {}
+      : { __diagnostics__: diagnostics }),
+    ...(performance === undefined ? {} : { __performance__: performance }),
+  };
   if (
     resultMode !== "many" &&
     isRecord(collection) &&
@@ -168,10 +174,7 @@ const formatAssetsResourceResult = (value: unknown, body: unknown) => {
     return {
       data: collection.item,
       meta: { totalCount: collection.totalCount },
-      ...(preview === undefined || diagnostics === undefined
-        ? {}
-        : { __diagnostics__: diagnostics }),
-      ...(performance === undefined ? {} : { __performance__: performance }),
+      ...internalMetadata,
     };
   }
   if (
@@ -197,10 +200,7 @@ const formatAssetsResourceResult = (value: unknown, body: unknown) => {
       totalCount: collection.totalCount,
       hasMore: collection.hasMore,
     },
-    ...(preview === undefined || diagnostics === undefined
-      ? {}
-      : { __diagnostics__: diagnostics }),
-    ...(performance === undefined ? {} : { __performance__: performance }),
+    ...internalMetadata,
   };
 };
 

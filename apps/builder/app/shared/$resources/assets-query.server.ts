@@ -50,8 +50,21 @@ const phaseKeys = {
   "document-resolution": "documentResolution",
 } as const;
 
+type PerformancePhaseKey =
+  | (typeof phaseKeys)[keyof typeof phaseKeys]
+  | "authorization"
+  | "compilerContentRead"
+  | "documentGraphContentRead";
+
+const compilationCacheRank = {
+  hit: 0,
+  coalesced: 1,
+  disabled: 2,
+  miss: 3,
+} as const;
+
 const createPerformanceCollector = () => {
-  const phases: Record<string, number> = {};
+  const phases: Partial<Record<PerformancePhaseKey, number>> = {};
   let compilationCache: "hit" | "coalesced" | "miss" | "disabled" | undefined;
   let resolvedDocumentCount = 0;
   let documentFetchCount = 0;
@@ -79,10 +92,10 @@ const createPerformanceCollector = () => {
       }
       return;
     }
-    const rank = { hit: 0, coalesced: 1, disabled: 2, miss: 3 } as const;
     if (
       compilationCache === undefined ||
-      rank[event.status] > rank[compilationCache]
+      compilationCacheRank[event.status] >
+        compilationCacheRank[compilationCache]
     ) {
       compilationCache = event.status;
     }
@@ -98,7 +111,7 @@ const createPerformanceCollector = () => {
   return {
     onPerformanceEvent,
     onDocumentGraphEvent,
-    addPhase: (key: string, durationMs: number) => {
+    addPhase: (key: PerformancePhaseKey, durationMs: number) => {
       phases[key] = (phases[key] ?? 0) + durationMs;
     },
     getMetrics: () => ({
