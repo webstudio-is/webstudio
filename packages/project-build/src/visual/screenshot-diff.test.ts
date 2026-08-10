@@ -200,6 +200,26 @@ test("can skip OCR while preserving pixel diff evidence", async () => {
   expect(result.warnings).toEqual([]);
 });
 
+test("can skip writing diff artifacts during a detection pass", async () => {
+  const baselinePath = path.join(tempDir, "baseline.png");
+  const currentPath = path.join(tempDir, "current.png");
+
+  await writePng(baselinePath, createPng(2, 2, { r: 255, g: 255, b: 255 }));
+  await writePng(currentPath, createPng(2, 2, { r: 0, g: 0, b: 0 }));
+
+  const result = await diffPngFiles({
+    baselinePath,
+    currentPath,
+    outputDir: path.join(tempDir, "diff"),
+    analyzeText: false,
+    writeArtifacts: false,
+  });
+
+  expect(result.differentPixels).toBe(4);
+  expect(result.diffPath).toBeUndefined();
+  expect(result.contextDiffPath).toBeUndefined();
+});
+
 test("reports dimension mismatch for different aspect ratios", async () => {
   const baselinePath = path.join(tempDir, "baseline.png");
   const currentPath = path.join(tempDir, "current.png");

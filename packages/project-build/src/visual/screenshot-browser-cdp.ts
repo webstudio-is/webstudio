@@ -34,11 +34,14 @@ export type BrowserScreenshotOptions = {
   includeImageMetrics?: boolean;
   includeResourceMetrics?: boolean;
   includeContrastMetrics?: boolean;
+  includeElementGeometry?: boolean;
   url: string;
   httpCredentials?: { username: string; password: string };
   uid?: number;
   waitUntil: ScreenshotWaitUntil;
+  prepareExpression?: string;
   waitForSelector?: string;
+  failForSelector?: string;
   waitForTimeout: number;
   timeout: number;
   format?: "png" | "jpeg" | "webp";
@@ -394,6 +397,19 @@ const waitForSelector = async (
     await delay(Math.min(100, Math.max(0, deadline - Date.now())));
   }
   throw createTimeoutError(`Selector ${selector} was not found`, timeout);
+};
+
+const getSelectorText = async (cdp: CdpSession, selector: string) => {
+  const result = await cdp.send<{ result?: { value?: unknown } }>(
+    "Runtime.evaluate",
+    {
+      expression: `document.querySelector(${JSON.stringify(selector)})?.textContent`,
+      returnByValue: true,
+    }
+  );
+  return typeof result.result?.value === "string"
+    ? result.result.value.trim()
+    : undefined;
 };
 
 type BrowserReadiness = {
@@ -1468,13 +1484,45 @@ const capturePageWithBrowserRuntime = async (
               options.timeout
             );
           }
+          if (options.prepareExpression !== undefined) {
+            try {
+              await send(
+                "Runtime.evaluate",
+                {
+                  expression: options.prepareExpression,
+                  awaitPromise: true,
+                },
+                options.timeout
+              );
+            } catch (cause) {
+              throw new Error(
+                `Screenshot target preparation failed: ${options.url}\nOutput: ${options.output}`,
+                { cause }
+              );
+            }
+          }
           const readinessStartedAt = Date.now();
           if (options.waitForSelector !== undefined) {
-            await waitForSelector(
-              cdp,
-              options.waitForSelector,
-              options.timeout
-            );
+            try {
+              await waitForSelector(
+                cdp,
+                options.waitForSelector,
+                options.timeout
+              );
+            } catch (cause) {
+              throw new Error(
+                `Screenshot target did not become ready: ${options.url}\nOutput: ${options.output}`,
+                { cause }
+              );
+            }
+          }
+          if (options.failForSelector !== undefined) {
+            const failure = await getSelectorText(cdp, options.failForSelector);
+            if (failure !== undefined) {
+              throw new Error(
+                `Screenshot target reported an error: ${failure}\nTarget: ${options.url}`
+              );
+            }
           }
           const readiness = await waitForFontsAndFrames(cdp, options.timeout);
           if (options.waitForTimeout > 0) {
@@ -1498,7 +1546,14 @@ const capturePageWithBrowserRuntime = async (
           );
           const documentMetricsPromise = getBrowserDocumentMetrics(send);
           const elementGeometryPromise =
-            getBrowserScreenshotElementGeometry(send);
+            options.includeElementGeometry === false
+              ? Promise.resolve({
+                  total: 0,
+                  sampled: 0,
+                  truncated: false,
+                  elements: [],
+                })
+              : getBrowserScreenshotElementGeometry(send);
           const imageInspectionPromise = measureDuration(async () =>
             options.includeImageMetrics === true
               ? await getBrowserScreenshotImages(send)
@@ -1614,6 +1669,9 @@ const capturePageWithBrowserRuntime = async (
           if (contrasts === undefined) {
             delete layout.contrasts;
           }
+          if (options.includeElementGeometry === false) {
+            delete layout.elementGeometry;
+          }
           layout.timings = {
             wallMs: Date.now() - viewportStartedAt,
             targetSetupMs: index === 0 ? targetSetupMs : 0,
@@ -1670,7 +1728,7 @@ export type BrowserScreenshotSession = {
   ) => Promise<BrowserScreenshotLayout>;
   capturePage: (
     options: readonly BrowserScreenshotOptions[],
-    sessionOptions?: { concurrency?: number }
+    sessionOptions?: { concurrency?: number; staggerMs?: number }
   ) => Promise<BrowserScreenshotLayout[]>;
   close: () => Promise<void>;
 };
@@ -1740,8 +1798,12 @@ export const createBrowserScreenshotSession = async (
     async capturePage(captureOptions, sessionOptions) {
       return await captureWithRestart(async (activeRuntime) => {
         const concurrency = sessionOptions?.concurrency ?? 1;
+        const staggerMs = sessionOptions?.staggerMs ?? 0;
         if (Number.isInteger(concurrency) === false || concurrency < 1) {
           throw new Error("Screenshot concurrency must be a positive integer.");
+        }
+        if (Number.isFinite(staggerMs) === false || staggerMs < 0) {
+          throw new Error("Screenshot stagger must be a non-negative number.");
         }
         if (concurrency === 1 || captureOptions.length < 2) {
           return await capturePageWithBrowserRuntime(
@@ -1760,14 +1822,19 @@ export const createBrowserScreenshotSession = async (
           groups[index % groups.length].push({ index, options });
         });
         const captures = await Promise.all(
-          groups.map(async (group) => ({
-            group,
-            layouts: await capturePageWithBrowserRuntime(
-              activeRuntime,
-              group.map(({ options }) => options),
-              dependencies
-            ),
-          }))
+          groups.map(async (group, index) => {
+            if (index > 0 && staggerMs > 0) {
+              await delay(index * staggerMs);
+            }
+            return {
+              group,
+              layouts: await capturePageWithBrowserRuntime(
+                activeRuntime,
+                group.map(({ options }) => options),
+                dependencies
+              ),
+            };
+          })
         );
         const layouts = new Array<BrowserScreenshotLayout>(
           captureOptions.length

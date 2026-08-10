@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
+import { readStoryManifest } from "./manifest";
 import {
-  VISUAL_DIFFERENCE_MARKER,
   classifyVisualTestRun,
   getStoryComparisons,
+  type VisualTestReport,
 } from "./shared";
 
 test("classifies common, added, and removed stories", () => {
@@ -40,68 +44,72 @@ test("classifies common, added, and removed stories", () => {
   ]);
 });
 
-test("allows approval only when every failure is a visual difference", () => {
-  const visualFailure = {
-    suites: [
-      {
-        specs: [
-          {
-            tests: [
-              {
-                results: [
-                  {
-                    status: "failed",
-                    errors: [
-                      {
-                        message: `${VISUAL_DIFFERENCE_MARKER}: button changed`,
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  };
+const createReport = (
+  status: VisualTestReport["comparisons"][number]["status"]
+): VisualTestReport => ({
+  baselineCommit: "base",
+  currentCommit: "current",
+  durationMs: 100,
+  comparisons: [{ id: "button", title: "Button", name: "Primary", status }],
+  errors: [],
+});
 
+test("allows approval only for visual differences", () => {
   assert.equal(
-    classifyVisualTestRun({ report: visualFailure, approved: false }),
+    classifyVisualTestRun({ report: createReport("changed"), approved: false }),
     "visual-differences"
   );
   assert.equal(
-    classifyVisualTestRun({ report: visualFailure, approved: true }),
+    classifyVisualTestRun({ report: createReport("added"), approved: true }),
     "approved"
   );
-
-  const infrastructureFailure = structuredClone(visualFailure);
-  infrastructureFailure.suites[0].specs[0].tests[0].results[0].errors = [
-    { message: "Browser crashed" },
-  ];
-
-  assert.equal(
-    classifyVisualTestRun({ report: infrastructureFailure, approved: true }),
-    "test-failure"
-  );
-});
-
-test("passes when the report contains no failed tests", () => {
-  assert.equal(
-    classifyVisualTestRun({ report: { suites: [] }, approved: false }),
-    "passed"
-  );
-});
-
-test("fails when Playwright reports an infrastructure error", () => {
   assert.equal(
     classifyVisualTestRun({
-      report: {
-        errors: [{ message: "Timed out waiting for the Storybook server" }],
-        suites: [],
-      },
-      approved: true,
+      report: createReport("unchanged"),
+      approved: false,
     }),
+    "passed"
+  );
+  assert.equal(
+    classifyVisualTestRun({ report: createReport("error"), approved: true }),
     "test-failure"
   );
+});
+
+test("does not approve infrastructure failures", () => {
+  const report = { ...createReport("unchanged"), errors: ["Browser crashed"] };
+  assert.equal(
+    classifyVisualTestRun({ report, approved: true }),
+    "test-failure"
+  );
+});
+
+test("indexes portable CSF stories with Storybook-compatible ids", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "visual-manifest-"));
+  const file = path.join(root, "apps/builder/example.stories.tsx");
+  await mkdir(path.dirname(file), { recursive: true });
+  await writeFile(
+    file,
+    `export default { title: "Controls/Button" };
+export const Primary = () => null;
+export const WithIcon = { render: () => null, name: "With icon" };
+`
+  );
+  try {
+    const manifest = await readStoryManifest(root);
+    assert.deepEqual(Object.keys(manifest), [
+      "builder-controls-button--primary",
+      "builder-controls-button--with-icon",
+    ]);
+    assert.equal(
+      manifest["builder-controls-button--primary"]?.exportName,
+      "Primary"
+    );
+    assert.equal(
+      manifest["builder-controls-button--with-icon"]?.name,
+      "With icon"
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

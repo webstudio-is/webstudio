@@ -1,4 +1,7 @@
-export const VISUAL_DIFFERENCE_MARKER = "VISUAL_DIFFERENCE";
+import type {
+  ScreenshotDiffRegion,
+  ScreenshotTextAnalysis,
+} from "@webstudio-is/project-build/vision";
 
 export type StoryEntry = {
   id: string;
@@ -6,11 +9,36 @@ export type StoryEntry = {
   name: string;
 };
 
-type StoryComparison = {
+export type StoryComparison = {
   id: string;
   status: "added" | "removed" | "comparable";
   baseline: StoryEntry | undefined;
   current: StoryEntry | undefined;
+};
+
+export type VisualComparisonResult = {
+  id: string;
+  title: string;
+  name: string;
+  status: "unchanged" | "changed" | "added" | "removed" | "error";
+  baselinePath?: string;
+  currentPath?: string;
+  diffPath?: string;
+  contextDiffPath?: string;
+  differentPixels?: number;
+  mismatchPercentage?: number;
+  regions?: readonly ScreenshotDiffRegion[];
+  textAnalysis?: ScreenshotTextAnalysis;
+  warnings?: readonly string[];
+  error?: string;
+};
+
+export type VisualTestReport = {
+  baselineCommit: string;
+  currentCommit: string;
+  durationMs: number;
+  comparisons: readonly VisualComparisonResult[];
+  errors: readonly string[];
 };
 
 export const getStoryComparisons = ({
@@ -39,71 +67,24 @@ export const getStoryComparisons = ({
   });
 };
 
-type JsonTestResult = {
-  status?: string;
-  errors?: Array<{ message?: string }>;
-};
-
-const getFailedResults = (value: unknown): JsonTestResult[] => {
-  if (Array.isArray(value)) {
-    return value.flatMap(getFailedResults);
-  }
-  if (typeof value !== "object" || value === null) {
-    return [];
-  }
-
-  const object = value as Record<string, unknown>;
-  const ownResults = Array.isArray(object.results)
-    ? object.results.filter(
-        (result): result is JsonTestResult =>
-          typeof result === "object" &&
-          result !== null &&
-          "status" in result &&
-          result.status !== "passed" &&
-          result.status !== "skipped"
-      )
-    : [];
-
-  return [
-    ...ownResults,
-    ...Object.entries(object)
-      .filter(([key]) => key !== "results")
-      .flatMap(([, child]) => getFailedResults(child)),
-  ];
-};
-
 export const classifyVisualTestRun = ({
   report,
   approved,
 }: {
-  report: unknown;
+  report: VisualTestReport;
   approved: boolean;
 }): "passed" | "visual-differences" | "approved" | "test-failure" => {
   if (
-    typeof report === "object" &&
-    report !== null &&
-    "errors" in report &&
-    Array.isArray(report.errors) &&
-    report.errors.length > 0
+    report.errors.length > 0 ||
+    report.comparisons.some(({ status }) => status === "error")
   ) {
     return "test-failure";
   }
-
-  const failures = getFailedResults(report);
-  if (failures.length === 0) {
-    return "passed";
-  }
-
-  const hasOnlyVisualDifferences = failures.every(
-    (result) =>
-      result.errors !== undefined &&
-      result.errors.length > 0 &&
-      result.errors.every((error) =>
-        error.message?.includes(VISUAL_DIFFERENCE_MARKER)
-      )
+  const hasDifferences = report.comparisons.some(({ status }) =>
+    ["changed", "added", "removed"].includes(status)
   );
-  if (hasOnlyVisualDifferences === false) {
-    return "test-failure";
+  if (hasDifferences === false) {
+    return "passed";
   }
   return approved ? "approved" : "visual-differences";
 };

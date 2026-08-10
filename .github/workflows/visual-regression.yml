@@ -60,6 +60,10 @@ jobs:
       )
     timeout-minutes: 30
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
     environment:
       name: development
     steps:
@@ -74,16 +78,13 @@ jobs:
 
       - uses: ./.github/actions/ci-setup
 
-      - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Compare Storybook stories
+      - name: Compare portable stories
         id: compare
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
           APPROVE_VISUAL_CHANGES: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'visual-change-approved' }}
         run: |
-          args=(--base "$BASE_REF")
+          args=(--base "$BASE_REF" --shard "${{ matrix.shard }}/6")
           if [[ "$APPROVE_VISUAL_CHANGES" == "true" ]]; then
             args+=(--approve-visual-changes)
           fi
@@ -97,7 +98,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-regression-report
+          name: visual-regression-report-${{ matrix.shard }}
           path: .visual-regression/report
           if-no-files-found: warn
           retention-days: 14

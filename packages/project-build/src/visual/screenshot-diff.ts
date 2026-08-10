@@ -151,6 +151,7 @@ export const diffPngFiles = async ({
   threshold = DEFAULT_THRESHOLD,
   ignoreTopNormalizedY = DEFAULT_IGNORE_TOP_NORMALIZED_Y,
   analyzeText = true,
+  writeArtifacts = true,
   expectedText,
   expectedVisual,
 }: {
@@ -160,6 +161,7 @@ export const diffPngFiles = async ({
   threshold?: number;
   ignoreTopNormalizedY?: number;
   analyzeText?: boolean;
+  writeArtifacts?: boolean;
   expectedText?: readonly string[];
   expectedVisual?: ScreenshotVisualExpectation;
 }): Promise<ScreenshotDiffResult> => {
@@ -236,15 +238,19 @@ export const diffPngFiles = async ({
     current,
   });
   const totalPixels = baseline.width * baseline.height;
-  const artifactPaths = getDiffArtifactPaths({ currentPath, outputDir });
-  await writeDiffArtifacts({
-    baseline,
-    current,
-    mask: pixelDiff.mask,
-    regions,
-    paths: artifactPaths,
-    contextDiffScale: DEFAULT_CONTEXT_DIFF_SCALE,
-  });
+  const artifactPaths = writeArtifacts
+    ? getDiffArtifactPaths({ currentPath, outputDir })
+    : undefined;
+  if (artifactPaths !== undefined) {
+    await writeDiffArtifacts({
+      baseline,
+      current,
+      mask: pixelDiff.mask,
+      regions,
+      paths: artifactPaths,
+      contextDiffScale: DEFAULT_CONTEXT_DIFF_SCALE,
+    });
+  }
   const canAnalyzeText =
     decodedBaseline.width === decodedCurrent.width &&
     decodedBaseline.height === decodedCurrent.height;
@@ -267,8 +273,8 @@ export const diffPngFiles = async ({
     mismatchPercentage:
       totalPixels === 0 ? 0 : (pixelDiff.differentPixels / totalPixels) * 100,
     imageSize: { width: baseline.width, height: baseline.height },
-    diffPath: artifactPaths.diffPath,
-    contextDiffPath: artifactPaths.contextDiffPath,
+    diffPath: artifactPaths?.diffPath,
+    contextDiffPath: artifactPaths?.contextDiffPath,
     regions,
     overallColorChange,
     textAnalysis,
