@@ -10,10 +10,8 @@ import {
   type ContentCompilerInput,
 } from "./asset-index";
 import type { ContentArtifactV1 } from "./schema";
-import {
-  createUniqueAssetIdsByPath,
-  discoverMarkdownAssetReferenceRanges,
-} from "./markdown-assets";
+import { discoverMarkdownAssetReferenceRanges } from "./markdown-assets";
+import { createUniqueAssetIdsByPath } from "./asset-path-resolution";
 import type { MarkdownAssetReferences } from "./markdown-references";
 import {
   discoverAssetValueReferences,

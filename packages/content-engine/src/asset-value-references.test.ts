@@ -63,6 +63,50 @@ describe("structured asset value references", () => {
     ]);
   });
 
+  test("resolves published Asset paths from sibling folders", () => {
+    const properties = {
+      relative: "./assets/inception_TDxBrdPwfoJJe_A-k5jhB.png",
+      rootRelative: "/assets/inception_TDxBrdPwfoJJe_A-k5jhB.png",
+    };
+    const references = discoverAssetValueReferences({
+      properties,
+      sourcePath: "content/data/inception.json",
+      assetIdsByPath: new Map([
+        [
+          "content/images/inception_TDxBrdPwfoJJe_A-k5jhB.png",
+          "inception-image",
+        ],
+      ]),
+    });
+
+    expect(references).toEqual([
+      {
+        path: ["properties", "relative"],
+        assetId: "inception-image",
+      },
+      {
+        path: ["properties", "rootRelative"],
+        assetId: "inception-image",
+      },
+    ]);
+    expect(
+      resolveAssetValueReferences({
+        value: { properties },
+        references,
+        assetUrls: {
+          "inception-image":
+            "/cgi/image/inception_TDxBrdPwfoJJe_A-k5jhB.png?format=raw",
+        },
+      })
+    ).toEqual({
+      properties: {
+        relative: "/cgi/image/inception_TDxBrdPwfoJJe_A-k5jhB.png?format=raw",
+        rootRelative:
+          "/cgi/image/inception_TDxBrdPwfoJJe_A-k5jhB.png?format=raw",
+      },
+    });
+  });
+
   test("resolves without mutating source values and merges URL suffixes", () => {
     const value = {
       properties: {

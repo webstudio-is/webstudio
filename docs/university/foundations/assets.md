@@ -83,10 +83,16 @@ background image, social image, download link, or another URL property. The
 same resolution works for nested properties and values in arrays. JSON files
 can use relative paths in the same way.
 
+Imported content can also use published asset paths such as
+`./assets/hero.png` or `/assets/hero.png`. Webstudio matches the final file name
+across project Asset folders, so the document and referenced asset do not need
+to share the same folder hierarchy. The file name must identify exactly one
+project asset.
+
 Query strings and fragments are preserved, so values such as
 `./images/hero.png?width=1200#cover` remain usable. Webstudio resolves a value
-only when it uniquely matches a project asset. Absolute URLs, root-relative
-URLs, missing paths, and ambiguous paths remain unchanged.
+only when it uniquely matches a project asset. External URLs, other
+root-relative URLs, missing paths, and ambiguous paths remain unchanged.
 
 ## Organizing assets with folders
 

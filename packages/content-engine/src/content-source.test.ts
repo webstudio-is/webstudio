@@ -522,7 +522,7 @@ describe("content source snapshots", () => {
     });
     const portrait = createFile({
       id: "portrait",
-      path: "team/assets/portrait.png",
+      path: "team/images/portrait.png",
       contentType: "image/png",
     });
     const source: ContentSource = {

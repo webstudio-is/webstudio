@@ -1,25 +1,11 @@
 import { parse, postprocess, preprocess } from "micromark";
 import { decodeString } from "micromark-util-decode-string";
-import { createCanonicalAssetPath, encodeAssetPathSegment } from "./asset-path";
+import { createCanonicalAssetPath } from "./asset-path";
+import {
+  createAssetIdResolver,
+  createUniqueAssetIdsByPath,
+} from "./asset-path-resolution";
 import type { MarkdownAssetReference } from "./markdown-references";
-
-export const createUniqueAssetIdsByPath = (
-  assets: Iterable<{ id: string; path: string }>
-) => {
-  const ambiguousPaths = new Set<string>();
-  const assetIdsByPath = new Map<string, string>();
-  for (const { id, path } of assets) {
-    if (assetIdsByPath.has(path)) {
-      ambiguousPaths.add(path);
-      assetIdsByPath.delete(path);
-      continue;
-    }
-    if (ambiguousPaths.has(path) === false) {
-      assetIdsByPath.set(path, id);
-    }
-  }
-  return assetIdsByPath;
-};
 
 const getMarkdownUrlTokens = (markdown: string) => {
   const events = postprocess(
@@ -44,81 +30,6 @@ const getMarkdownUrlTokens = (markdown: string) => {
     });
   }
   return tokens;
-};
-
-const getRelativeAssetPath = ({
-  sourcePath,
-  url,
-}: {
-  sourcePath: string;
-  url: string;
-}) => {
-  if (
-    url.length === 0 ||
-    url.startsWith("#") ||
-    url.startsWith("?") ||
-    url.startsWith("/")
-  ) {
-    return;
-  }
-  const origin = "https://content.webstudio.invalid";
-  let tokenPrefix = "__webstudio_asset_source_";
-  while (sourcePath.includes(tokenPrefix) || url.includes(tokenPrefix)) {
-    tokenPrefix = `_${tokenPrefix}`;
-  }
-  const sourceSegments = sourcePath.split("/");
-  const sourceSegmentByToken = new Map(
-    sourceSegments.map((segment, index) => [
-      `${tokenPrefix}${index}__`,
-      segment,
-    ])
-  );
-  const sourceUrl = Array.from(sourceSegmentByToken.keys()).join("/");
-  let parsed: URL;
-  try {
-    parsed = new URL(url, new URL(sourceUrl, `${origin}/`));
-  } catch {
-    return;
-  }
-  if (parsed.origin !== origin) {
-    return;
-  }
-  const segments: string[] = [];
-  for (const encodedSegment of parsed.pathname.slice(1).split("/")) {
-    let segment: string;
-    try {
-      segment = decodeURIComponent(encodedSegment);
-    } catch {
-      return;
-    }
-    if (segment === "") {
-      continue;
-    }
-    const sourceSegment = sourceSegmentByToken.get(segment);
-    if (sourceSegment !== undefined) {
-      segments.push(sourceSegment);
-      continue;
-    }
-    if (segment.includes("/")) {
-      return;
-    }
-    segments.push(encodeAssetPathSegment(segment));
-  }
-  return segments.join("/");
-};
-
-export const createAssetIdResolver = (
-  assetIdsByPath: ReadonlyMap<string, string>,
-  sourcePath: string
-) => {
-  const assetIds = new Set(assetIdsByPath.values());
-  return (url: string) => {
-    const path = getRelativeAssetPath({ sourcePath, url });
-    return (
-      (path === undefined ? undefined : assetIdsByPath.get(path)) ??
-      (assetIds.has(url) ? url : undefined)
-    );
-  };
 };
 
 export const discoverMarkdownAssetReferenceRanges = ({

@@ -1,4 +1,4 @@
-import { createAssetIdResolver } from "./markdown-assets";
+import { createAssetIdResolver } from "./asset-path-resolution";
 
 export type AssetValueReference = {
   path: Array<string | number>;
