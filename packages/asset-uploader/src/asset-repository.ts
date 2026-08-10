@@ -117,6 +117,16 @@ const getContentBytesCacheKey = ({
   revision: string;
 }) => JSON.stringify([contentRef, revision]);
 
+const getContentBytesCacheSize = (
+  contentBytesCache: ReadonlyMap<string, Uint8Array>
+) => {
+  let byteLength = 0;
+  for (const bytes of contentBytesCache.values()) {
+    byteLength += bytes.byteLength;
+  }
+  return byteLength;
+};
+
 const defaultDependencies = {
   hasProjectPermit: authorizeProject.hasProjectPermit,
   createUploadTicket,
@@ -800,22 +810,35 @@ export class PostgresAssetRepository implements AssetRepository {
                           ? undefined
                           : { offset: 0, length: entry.document.size }
                       );
-                      let readBytes = 0;
-                      for await (const chunk of response.data) {
-                        readBytes += chunk.byteLength;
-                        yield chunk;
-                      }
-                      if (readBytes !== entry.document.size) {
+                      const bytes = await readBoundedBytes(
+                        response.data,
+                        entry.document.size
+                      );
+                      if (bytes.byteLength !== entry.document.size) {
                         throw new Error(
                           "Asset content does not match its canonical size"
+                        );
+                      }
+                      if (
+                        getContentBytesCacheSize(contentBytesCache) +
+                          bytes.byteLength <=
+                        contentEngineLimits.hydratedTotalBytes
+                      ) {
+                        contentBytesCache.set(
+                          getContentBytesCacheKey({
+                            contentRef: entry.document.contentRef,
+                            revision: entry.revision,
+                          }),
+                          bytes
                         );
                       }
                       emitAssetQueryPerformanceEvent(onPerformanceEvent, {
                         type: "content-read",
                         purpose: "document-graph",
-                        byteLength: readBytes,
+                        byteLength: bytes.byteLength,
                         durationMs: Math.max(0, performanceNow() - startedAt),
                       });
+                      yield bytes;
                     },
                   },
                 },

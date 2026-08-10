@@ -2481,6 +2481,7 @@ describe("PostgresAssetRepository", () => {
         format: "webstudio-content-database",
       }),
     });
+    expect(readFile).toHaveBeenCalledTimes(2);
     const artifacts = result.__diagnostics__.artifacts;
     if (artifacts === undefined) {
       throw new Error("Expected database artifacts in diagnostics");
