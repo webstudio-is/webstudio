@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { constants } from "node:fs";
+import { Buffer } from "node:buffer";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -33,7 +34,7 @@ const createDependencies = (
     kill: vi.fn(),
     once: vi.fn(),
   })),
-  readFile: vi.fn(),
+  readFile: vi.fn(async () => Buffer.from("image")) as never,
   writeFile: vi.fn(),
   mkdtemp: vi.fn(
     async () => "/tmp/webstudio-browser"
@@ -43,6 +44,7 @@ const createDependencies = (
   createWebSocket: vi.fn(),
   captureBrowserScreenshot: vi.fn(async () => undefined),
   installCommand: vi.fn(async () => undefined),
+  readArtifactByte: vi.fn(async () => 1),
   getuid: vi.fn(() => 1000),
   now: vi.fn(() => 123),
   ...overrides,
@@ -465,6 +467,37 @@ describe("captureScreenshot", () => {
     expect(mkdir).toHaveBeenCalledWith(expect.stringContaining("nested"), {
       recursive: true,
     });
+  });
+
+  test("rejects an empty screenshot artifact", async () => {
+    const dependencies = createDependencies({
+      which: vi.fn(async (command) =>
+        command === "chromium" ? "/usr/bin/chromium" : undefined
+      ),
+      readArtifactByte: vi.fn(async () => 0),
+      captureBrowserScreenshot: vi.fn(async () => ({
+        viewportWidth: 1440,
+        viewportHeight: 900,
+        contentWidth: 1440,
+        contentHeight: 900,
+        horizontalOverflow: false,
+        images: [],
+        resources: [],
+      })),
+    });
+
+    await expect(
+      captureScreenshot(
+        {
+          url: "https://example.com",
+          output: "empty.png",
+          width: 1440,
+          height: 900,
+          browser: "auto",
+        },
+        dependencies
+      )
+    ).rejects.toThrow("Screenshot artifact is empty");
   });
 });
 

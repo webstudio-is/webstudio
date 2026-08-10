@@ -455,7 +455,10 @@ test("installs isolated generated dependencies when the cli does not ship them",
   expect(execFile).toHaveBeenCalledWith(
     "npm",
     expect.arrayContaining(["install", "--legacy-peer-deps"]),
-    expect.objectContaining({ cwd: "/tmp/project/.webstudio/preview" })
+    expect.objectContaining({
+      cwd: "/tmp/project/.webstudio/preview",
+      timeout: 120_000,
+    })
   );
   expect(writeFile).toHaveBeenCalledWith(
     "/tmp/project/.webstudio/preview/node_modules/.webstudio-preview-dependencies",
@@ -533,7 +536,11 @@ test("uses npm-cli from an npx launcher and forwards a writable npm cache", asyn
       "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
       "install",
     ]),
-    { cwd: "C:/project/.webstudio/preview", env }
+    {
+      cwd: "C:/project/.webstudio/preview",
+      env,
+      timeout: 120_000,
+    }
   );
 });
 
@@ -608,6 +615,7 @@ test("materializes session data before previewing from session source", async ()
   const previousDirectory = cwd();
   const projectDir = join(tmpdir(), `webstudio-preview-test-${randomUUID()}`);
   let expectedPreviewProjectDir = "";
+  const progress: string[] = [];
   const prepareSessionDataFile = vi.fn(async () => {
     await mkdir(join(projectDir, ".webstudio"), { recursive: true });
     await writeFile(join(projectDir, ".webstudio", "data.json"), "{}");
@@ -630,6 +638,7 @@ test("materializes session data before previewing from session source", async ()
         prepareSessionDataFile,
         prebuildProject,
         ensureDependencies: vi.fn(async () => undefined),
+        reportProgress: (message) => progress.push(message),
       })
     ).resolves.toEqual({
       cwd: expectedPreviewProjectDir,
@@ -647,6 +656,12 @@ test("materializes session data before previewing from session source", async ()
     previewIdentity: true,
     sourceAssetsDirectory: join(expectedPreviewProjectDir, "..", "assets"),
   });
+  expect(progress).toEqual([
+    "materializing session project data",
+    "generating preview files",
+    "checking or installing generated preview dependencies (2 minute timeout)",
+    "generated preview project is ready",
+  ]);
 });
 
 test("refreshes an iterative generated project without replacing its directory", async () => {

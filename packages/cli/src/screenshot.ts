@@ -1,5 +1,5 @@
 import { constants } from "node:fs";
-import { access, mkdir, readdir } from "node:fs/promises";
+import { access, mkdir, open, readdir } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { spawn } from "node:child_process";
@@ -64,6 +64,7 @@ export type ScreenshotDependencies = {
       options: BrowserScreenshotOptions
     ) => Promise<BrowserScreenshotLayout | undefined>;
     installCommand: (file: string, args: readonly string[]) => Promise<void>;
+    readArtifactByte: (path: string) => Promise<number>;
     getuid: () => number | undefined;
     now: () => number;
   };
@@ -96,6 +97,15 @@ export const defaultScreenshotDependencies: ScreenshotDependencies = {
         reject(new Error(`${file} ${args.join(" ")} exited with code ${code}`));
       });
     });
+  },
+  async readArtifactByte(path) {
+    const file = await open(path, "r");
+    try {
+      const { bytesRead } = await file.read(new Uint8Array(1), 0, 1, 0);
+      return bytesRead;
+    } finally {
+      await file.close();
+    }
   },
   getuid: () => process.getuid?.(),
   now: () => Date.now(),
@@ -622,6 +632,26 @@ const getBrowserScreenshotOptions = (
   scale: options.scale,
 });
 
+const validateScreenshotArtifact = async (
+  output: string,
+  dependencies: ScreenshotDependencies
+) => {
+  let bytesRead: number;
+  try {
+    bytesRead = await dependencies.readArtifactByte(output);
+  } catch (cause) {
+    throw Object.assign(
+      new Error(`Screenshot artifact is unreadable: ${output}`),
+      { code: "SCREENSHOT_ARTIFACT_UNREADABLE", cause }
+    );
+  }
+  if (bytesRead === 0) {
+    throw Object.assign(new Error(`Screenshot artifact is empty: ${output}`), {
+      code: "SCREENSHOT_ARTIFACT_EMPTY",
+    });
+  }
+};
+
 const captureResolvedScreenshot = async (
   options: CaptureScreenshotOptions,
   browser: BrowserCandidate,
@@ -650,6 +680,7 @@ const captureResolvedScreenshot = async (
             browserScreenshotOptions,
             dependencies
           );
+  await validateScreenshotArtifact(output, dependencies);
   return {
     output,
     browser,
@@ -780,6 +811,11 @@ export const createScreenshotCaptureSession = (
       );
       const layouts = await activeBrowserSession.capturePage(
         captures.map((capture) => capture.browserOptions)
+      );
+      await Promise.all(
+        captures.map(({ output }) =>
+          validateScreenshotArtifact(output, dependencies)
+        )
       );
       return captures.map(({ options, output }, index) => {
         const layout = layouts[index];
