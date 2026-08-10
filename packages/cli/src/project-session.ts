@@ -59,7 +59,7 @@ import { getStableErrorCode } from "./error-codes";
 import { loadJSONFile, withFileLock, writeFileAtomic } from "./fs-utils";
 import { isPlainRecord } from "./type-utils";
 import { createFileSystemContentSource } from "./filesystem-content-source";
-import { LOCAL_ASSETS_DIR } from "./asset-files";
+import { downloadAssetFiles, LOCAL_ASSETS_DIR } from "./asset-files";
 
 export type CliServerApiContract = {
   clientVersion: string;
@@ -573,10 +573,26 @@ export const loadCliProjectSessionAssetIndex = async (
   if (plan === undefined) {
     return;
   }
+  const assets = Array.from(snapshot.state.assets?.values() ?? []);
+  try {
+    await downloadAssetFiles({
+      assets,
+      assetsDirectory,
+      origin: connection.origin,
+    });
+  } catch (error) {
+    throw Object.assign(
+      new Error(
+        "Could not download assets required for preview. Restore network and project asset access, then retry preview.start.",
+        { cause: error }
+      ),
+      { code: "PREVIEW_ASSET_DOWNLOAD_FAILED" }
+    );
+  }
   const { artifact } = await compileContentSource({
     source: createFileSystemContentSource({
       projectId: snapshot.projectId,
-      assets: Array.from(snapshot.state.assets?.values() ?? []),
+      assets,
       folders: snapshot.state.assetFolders ?? new Map(),
       assetsDirectory,
     }),
