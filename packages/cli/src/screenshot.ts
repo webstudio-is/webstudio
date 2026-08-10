@@ -1,4 +1,5 @@
 import { constants } from "node:fs";
+import { Buffer } from "node:buffer";
 import { access, mkdir, readdir } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -622,6 +623,26 @@ const getBrowserScreenshotOptions = (
   scale: options.scale,
 });
 
+const validateScreenshotArtifact = async (
+  output: string,
+  dependencies: ScreenshotDependencies
+) => {
+  let artifact: Buffer;
+  try {
+    artifact = await dependencies.readFile(output);
+  } catch (cause) {
+    throw Object.assign(
+      new Error(`Screenshot artifact is unreadable: ${output}`),
+      { code: "SCREENSHOT_ARTIFACT_UNREADABLE", cause }
+    );
+  }
+  if (artifact.byteLength === 0) {
+    throw Object.assign(new Error(`Screenshot artifact is empty: ${output}`), {
+      code: "SCREENSHOT_ARTIFACT_EMPTY",
+    });
+  }
+};
+
 const captureResolvedScreenshot = async (
   options: CaptureScreenshotOptions,
   browser: BrowserCandidate,
@@ -650,6 +671,7 @@ const captureResolvedScreenshot = async (
             browserScreenshotOptions,
             dependencies
           );
+  await validateScreenshotArtifact(output, dependencies);
   return {
     output,
     browser,
@@ -780,6 +802,11 @@ export const createScreenshotCaptureSession = (
       );
       const layouts = await activeBrowserSession.capturePage(
         captures.map((capture) => capture.browserOptions)
+      );
+      await Promise.all(
+        captures.map(({ output }) =>
+          validateScreenshotArtifact(output, dependencies)
+        )
       );
       return captures.map(({ options, output }, index) => {
         const layout = layouts[index];

@@ -400,6 +400,7 @@ test("passes explicit preview source to preview preparation", async () => {
     {
       preserveGeneratedProject: false,
       prepareForIncrementalGeneration: true,
+      reportProgress: expect.any(Function),
     }
   );
   expect(prepareSessionDataFile).toHaveBeenCalledOnce();

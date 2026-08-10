@@ -1500,9 +1500,14 @@ export const prebuild = async (options: {
     generateRedirectsModule(pages.redirects)
   );
 
-  if (pages.redirects !== undefined && pages.redirects.length > 0) {
+  const redirectFallbackPath = join(routesDir, "$.tsx");
+  if (
+    pages.redirects !== undefined &&
+    pages.redirects.length > 0 &&
+    generatedFiles.has(normalize(redirectFallbackPath)) === false
+  ) {
     await writeGeneratedFile(
-      join(routesDir, "$.tsx"),
+      redirectFallbackPath,
       generateRedirectFallbackRoute(
         options.template.includes("react-router") ? "react-router" : "remix"
       )
