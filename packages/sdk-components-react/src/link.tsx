@@ -47,13 +47,15 @@ const getCurrentUrl = (value: string | URL | undefined) => {
  */
 export const BaseLink = forwardRef<
   HTMLAnchorElement,
-  Props & { $webstudio$canvasOnly$assetId?: string | undefined }
+  Props & {
+    // @todo: This builder-only prop should not be part of the runtime component.
+    $webstudio$canvasOnly$assetId?: string | undefined;
+  }
 >((props, ref) => {
   const currentUrlValue = useContext(LinkCurrentUrlContext);
   const { assetBaseUrl } = useContext(ReactSdkContext);
   const {
     children,
-    // @todo: it's a hack made for Image component for the builder and should't be in the runtime at all.
     $webstudio$canvasOnly$assetId,
     "aria-current": ariaCurrent,
     className,
