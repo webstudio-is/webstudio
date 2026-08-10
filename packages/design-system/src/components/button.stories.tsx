@@ -118,7 +118,3 @@ export const Button = () => (
     </StorySection>
   </>
 );
-
-Button.parameters = {
-  visualRegression: { delay: 500 },
-};

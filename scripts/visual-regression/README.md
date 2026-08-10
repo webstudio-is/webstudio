@@ -3,7 +3,7 @@
 The visual regression runner indexes the existing Storybook CSF files, bundles
 them with a lightweight esbuild harness, and renders the merge base and current
 working tree in Chromium. It compares screenshots with Webstudio's shared
-vision engine and does not require stored baseline images or a hosted service.
+vision engine and does not require a hosted service.
 
 Run the full comparison and open the visual report:
 
@@ -25,18 +25,19 @@ The HTML report shows baseline, current, and diff images for every mismatch,
 plus OCR evidence for changed text. CI uploads the same self-contained report
 as a `visual-regression-report` artifact.
 
-Pixel sensitivity and mismatch tolerance are configured near the top of
-`run.ts`. Viewport and capture settings live in `capture.ts`. Add
-story-specific settling and deterministic rendering options to the story's
+Pixel sensitivity (`0.1`) and mismatch tolerance (`0.001%`) are configured near
+the top of `run.ts`. Viewport and capture settings live in `capture.ts`. Add
+story-specific deterministic rendering options to the story's
 `parameters.visualRegression` object.
 
 Story scopes are data in `.storybook/story-sources.json`. Each compared
 revision loads its own copy so removing or changing a scope remains visible to
 the comparison.
 
-GitHub Actions runs the complete suite in one job. The runner keeps an ignored
-baseline worktree in the operating system's temporary directory so subsequent
-local runs can reuse its dependencies.
+GitHub Actions runs the complete suite in one job and caches screenshots from
+successful revisions for use as PR baselines. The runner produces the baseline
+on the fly when the cache is missing, and keeps both the cache and a reusable
+baseline worktree ignored locally.
 
 Visual differences fail the pull request. After reviewing an intentional
 change, add the `visual-change-approved` label to rerun the same comparison as

@@ -439,10 +439,6 @@ export const PropsSection = () => {
   );
 };
 
-PropsSection.parameters = {
-  visualRegression: { delay: 5000 },
-};
-
 export default {
   title: "Settings panel/Props Section",
   component: PropsSection,

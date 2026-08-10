@@ -6,9 +6,9 @@ import preview from "visual:preview";
 import { modules } from "visual:story-modules";
 
 type VisualRegressionParameters = {
-  delay?: number;
   disableIntervals?: boolean;
   hideSelectors?: readonly string[];
+  settleTime?: number;
 };
 
 type VisualStoryInput = {
@@ -37,6 +37,9 @@ declare global {
 setProjectAnnotations(preview);
 
 const markReady = async () => {
+  await new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve))
+  );
   if (document.activeElement instanceof HTMLElement) {
     document.activeElement.blur();
   }
@@ -68,7 +71,7 @@ const rootElement = document.querySelector("#root");
 if (rootElement === null) {
   throw new Error("Visual story root is missing");
 }
-const root = createRoot(rootElement);
+let root = createRoot(rootElement);
 const originalSetInterval = window.setInterval;
 const originalClearInterval = window.clearInterval;
 const storyIntervals = new Set<number>();
@@ -89,7 +92,9 @@ window.Date = new Proxy(OriginalDate, {
 window.Date.now = () => fixedTime;
 
 window.renderVisualStory = async ({ file, exportName, title }) => {
-  flushSync(() => root.render(null));
+  flushSync(() => root.unmount());
+  rootElement.replaceChildren();
+  root = createRoot(rootElement);
   for (const interval of storyIntervals) {
     originalClearInterval(interval);
   }
@@ -154,8 +159,10 @@ window.renderVisualStory = async ({ file, exportName, title }) => {
   }
 
   flushSync(() => root.render(React.createElement(Story)));
-  if (options.delay !== undefined && options.delay > 0) {
-    await new Promise((resolve) => window.setTimeout(resolve, options.delay));
+  if (options.settleTime !== undefined && options.settleTime > 0) {
+    await new Promise((resolve) =>
+      window.setTimeout(resolve, options.settleTime)
+    );
   }
   await markReady();
 };

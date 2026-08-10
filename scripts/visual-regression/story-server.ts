@@ -206,6 +206,7 @@ export const startVisualStoryServer = async ({
     },
     logLevel: "warning",
     mainFields: ["browser", "module", "main"],
+    minify: true,
     outdir: outputDirectory,
     platform: "browser",
     plugins: [visualModulesPlugin, urlAssetPlugin],

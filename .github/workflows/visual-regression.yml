@@ -77,6 +77,26 @@ jobs:
       - name: Install visual comparison dependencies
         run: sudo apt-get install --no-install-recommends -y tesseract-ocr
 
+      - name: Resolve visual baseline cache key
+        id: visual-cache
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
+        run: |
+          echo "base=$(git merge-base HEAD "$BASE_REF")" >> "$GITHUB_OUTPUT"
+          echo "head=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          browser_path="$(command -v chromium || command -v chromium-browser || command -v google-chrome || true)"
+          if [[ -n "$browser_path" ]]; then
+            "$browser_path" --version | sha256sum | cut -d ' ' -f 1 | sed 's/^/browser=/' >> "$GITHUB_OUTPUT"
+          else
+            echo "browser=auto" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Restore visual baseline screenshots
+        uses: actions/cache/restore@v4
+        with:
+          path: .visual-regression-cache
+          key: visual-baseline-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-${{ hashFiles('.storybook/**', 'scripts/visual-regression/**', 'pnpm-lock.yaml') }}
+
       - name: Compare portable stories
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
@@ -96,3 +116,10 @@ jobs:
           path: .visual-regression/report
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Cache visual screenshots for dependent revisions
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .visual-regression-cache/${{ steps.visual-cache.outputs.head }}-*
+          key: visual-baseline-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.head }}-${{ hashFiles('.storybook/**', 'scripts/visual-regression/**', 'pnpm-lock.yaml') }}

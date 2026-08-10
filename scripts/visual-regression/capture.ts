@@ -5,6 +5,38 @@ import type { VisualStoryEntry } from "./manifest";
 
 const viewport = { width: 1280, height: 800 };
 
+export const orderForGroupedConcurrency = <Value>(
+  values: readonly Value[],
+  concurrency: number
+) => {
+  // The browser session assigns options to pages round-robin. Interleave
+  // contiguous groups so related stories share one page and its module cache.
+  const groupCount = Math.min(concurrency, values.length);
+  if (groupCount < 2) {
+    return [...values];
+  }
+  const minimumGroupSize = Math.floor(values.length / groupCount);
+  const maximumGroupSize = Math.ceil(values.length / groupCount);
+  const largerGroupCount = values.length % groupCount;
+  let start = 0;
+  const groups = Array.from({ length: groupCount }, (_, index) => {
+    const size = minimumGroupSize + (index < largerGroupCount ? 1 : 0);
+    const group = values.slice(start, start + size);
+    start += size;
+    return group;
+  });
+  const ordered: Value[] = [];
+  for (let index = 0; index < maximumGroupSize; index += 1) {
+    for (const group of groups) {
+      const value = group[index];
+      if (value !== undefined) {
+        ordered.push(value);
+      }
+    }
+  }
+  return ordered;
+};
+
 const getCaptureOptions = ({
   browserPath,
   entry,
@@ -33,11 +65,7 @@ const getCaptureOptions = ({
   waitForSelector: "#visual-ready, #visual-error",
   failForSelector: "#visual-error",
   waitForTimeout: 0,
-  finalizeExpression: `(async () => {
-    document.activeElement?.blur();
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-  })()`,
-  timeout: 30_000,
+  timeout: 90_000,
   format: "png",
   scale: 1,
 });
@@ -66,16 +94,19 @@ export const captureStories = async ({
 }) => {
   const paths = new Map<string, string>();
   const errors = new Map<string, string>();
-  const captures = await Promise.all(
-    entries.map(async (entry) => {
-      const output = path.join(assetDirectory, entry.id, `${target}.png`);
-      await mkdir(path.dirname(output), { recursive: true });
-      return {
-        entry,
-        options: getCaptureOptions({ browserPath, entry, output, port }),
-        output,
-      };
-    })
+  const captures = orderForGroupedConcurrency(
+    await Promise.all(
+      entries.map(async (entry) => {
+        const output = path.join(assetDirectory, entry.id, `${target}.png`);
+        await mkdir(path.dirname(output), { recursive: true });
+        return {
+          entry,
+          options: getCaptureOptions({ browserPath, entry, output, port }),
+          output,
+        };
+      })
+    ),
+    concurrency
   );
   const captureBatch = async (batch: typeof captures): Promise<void> => {
     try {
@@ -88,6 +119,10 @@ export const captureStories = async ({
       }
       return;
     } catch (error) {
+      console.warn(
+        `Visual capture failed for ${batch.length} stories; isolating the failure.`,
+        error
+      );
       if (batch.length === 1) {
         const capture = batch[0];
         if (capture !== undefined) {
@@ -102,10 +137,8 @@ export const captureStories = async ({
       }
     }
     const middle = Math.ceil(batch.length / 2);
-    await Promise.all([
-      captureBatch(batch.slice(0, middle)),
-      captureBatch(batch.slice(middle)),
-    ]);
+    await captureBatch(batch.slice(0, middle));
+    await captureBatch(batch.slice(middle));
   };
   await captureBatch(captures);
   return { paths, errors };

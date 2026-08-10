@@ -37,10 +37,6 @@ export const CSSEditor = () => {
   );
 };
 
-CSSEditor.parameters = {
-  visualRegression: { delay: 1000 },
-};
-
 export default {
   title: "Style panel/CSS Editor",
   component: CSSEditor,

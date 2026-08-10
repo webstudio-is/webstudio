@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { access, mkdir, rm } from "node:fs/promises";
+import { access, mkdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
@@ -22,6 +22,10 @@ import { mapWithConcurrency } from "./concurrency";
 import { openVisualReport } from "./open-report";
 import { writeVisualReport } from "./report";
 import {
+  restoreScreenshotCache,
+  writeScreenshotCache,
+} from "./screenshot-cache";
+import {
   classifyVisualTestRun,
   getStoryComparisons,
   type VisualComparisonResult,
@@ -33,11 +37,15 @@ const repositoryRoot = process.cwd();
 const outputRoot = path.join(repositoryRoot, ".visual-regression");
 const reportDirectory = path.join(outputRoot, "report");
 const assetDirectory = path.join(reportDirectory, "assets");
+const screenshotCacheRoot = path.join(
+  repositoryRoot,
+  ".visual-regression-cache"
+);
 const baselinePort = 6101;
 const currentPort = 6102;
 const pixelThreshold = 0.1;
-const maxMismatchPercentage = 0;
-const captureConcurrency = Number(process.env.VISUAL_CAPTURE_CONCURRENCY ?? 10);
+const maxMismatchPercentage = 0.001;
+const captureConcurrency = Number(process.env.VISUAL_CAPTURE_CONCURRENCY ?? 5);
 if (Number.isInteger(captureConcurrency) === false || captureConcurrency < 1) {
   throw new Error("VISUAL_CAPTURE_CONCURRENCY must be a positive integer.");
 }
@@ -105,6 +113,25 @@ const getCommandBuffer = async (command: string, commandArgs: string[]) => {
 
 const getCommandOutput = async (command: string, commandArgs: string[]) =>
   (await getCommandBuffer(command, commandArgs)).toString("utf8").trim();
+
+const getScreenshotRuntimeHash = async (browserPath: string) => {
+  const runtimeHash = createHash("sha256");
+  for (const file of [
+    ".storybook/preview.tsx",
+    ".storybook/story-sources.json",
+    "scripts/visual-regression/capture.ts",
+    "scripts/visual-regression/harness.tsx",
+    "scripts/visual-regression/story-server.ts",
+    "pnpm-lock.yaml",
+  ]) {
+    runtimeHash.update(await readFile(path.join(repositoryRoot, file)));
+  }
+  runtimeHash.update(await getCommandOutput(browserPath, ["--version"]));
+  return runtimeHash.digest("hex").slice(0, 12);
+};
+
+const getScreenshotCacheDirectory = (revision: string, runtimeHash: string) =>
+  path.join(screenshotCacheRoot, `${revision}-${runtimeHash}`);
 
 const compareStories = async ({
   baselineEntries,
@@ -191,6 +218,12 @@ const compareStories = async ({
 
 const main = async () => {
   const startedAt = Date.now();
+  let phaseStartedAt = startedAt;
+  const logPhase = (name: string) => {
+    const now = Date.now();
+    console.info(`${name}: ${((now - phaseStartedAt) / 1000).toFixed(1)}s`);
+    phaseStartedAt = now;
+  };
   const cacheKey = createHash("sha256")
     .update(repositoryRoot)
     .digest("hex")
@@ -217,6 +250,8 @@ const main = async () => {
       getCommandOutput("git", ["merge-base", "HEAD", baseRef]),
       getCommandOutput("git", ["rev-parse", "HEAD"]),
     ]);
+    const currentRevisionIsClean =
+      (await getCommandOutput("git", ["status", "--porcelain"])) === "";
     console.info(`Comparing ${baselineCommit} with ${currentCommit}`);
     const checkoutExists = await access(path.join(checkout, ".git"))
       .then(() => true)
@@ -233,12 +268,6 @@ const main = async () => {
         commandArgs: ["worktree", "add", "--detach", checkout, baselineCommit],
       });
     }
-    await run({
-      command: "pnpm",
-      commandArgs: ["install", "--frozen-lockfile", "--ignore-scripts"],
-      cwd: checkout,
-    });
-
     const currentSubmodules = await getCommandOutput("git", [
       "submodule",
       "status",
@@ -255,7 +284,6 @@ const main = async () => {
         cwd: checkout,
       });
     }
-
     const browser = await resolveScreenshotBrowser(
       { browser: "auto" },
       defaultScreenshotDependencies
@@ -289,16 +317,39 @@ const main = async () => {
       ...Object.keys(filteredCurrentEntries),
     ]);
     console.info(`Running ${filteredIds.size} visual story ids.`);
+    const screenshotRuntimeHash = await getScreenshotRuntimeHash(browser.path);
+    const screenshotCacheDirectory = getScreenshotCacheDirectory(
+      baselineCommit,
+      screenshotRuntimeHash
+    );
+    const cachedBaselinePaths = await restoreScreenshotCache({
+      assetDirectory,
+      directory: screenshotCacheDirectory,
+      storyIds: Object.keys(filteredBaselineEntries),
+    });
+    if (cachedBaselinePaths !== undefined) {
+      console.info(`Reusing baseline screenshots for ${baselineCommit}.`);
+    } else {
+      await run({
+        command: "pnpm",
+        commandArgs: ["install", "--frozen-lockfile", "--ignore-scripts"],
+        cwd: checkout,
+      });
+    }
     servers.push(
       ...(await Promise.all([
-        startVisualStoryServer({
-          root: checkout,
-          port: baselinePort,
-          outputDirectory: baselineBundleDirectory,
-          storyFiles: Object.values(filteredBaselineEntries).map(
-            (entry) => entry.file
-          ),
-        }),
+        ...(cachedBaselinePaths === undefined
+          ? [
+              startVisualStoryServer({
+                root: checkout,
+                port: baselinePort,
+                outputDirectory: baselineBundleDirectory,
+                storyFiles: Object.values(filteredBaselineEntries).map(
+                  (entry) => entry.file
+                ),
+              }),
+            ]
+          : []),
         startVisualStoryServer({
           root: repositoryRoot,
           port: currentPort,
@@ -309,6 +360,7 @@ const main = async () => {
         }),
       ]))
     );
+    logPhase("Setup and bundles");
 
     const firstEntry =
       Object.values(filteredBaselineEntries)[0] ??
@@ -323,6 +375,7 @@ const main = async () => {
     );
     await mkdir(path.dirname(firstOutput), { recursive: true });
     const firstPort =
+      cachedBaselinePaths !== undefined ||
       Object.values(filteredBaselineEntries)[0] === undefined
         ? currentPort
         : baselinePort;
@@ -334,26 +387,53 @@ const main = async () => {
         port: firstPort,
       })
     );
+    const baselineCapturePromise =
+      cachedBaselinePaths === undefined
+        ? captureStories({
+            assetDirectory,
+            browserPath: browser.path,
+            concurrency: captureConcurrency,
+            entries: Object.values(filteredBaselineEntries),
+            port: baselinePort,
+            target: "baseline",
+            session: browserSession,
+          })
+        : Promise.resolve({
+            paths: cachedBaselinePaths,
+            errors: new Map<string, string>(),
+          });
+    const currentCapturePromise = captureStories({
+      assetDirectory,
+      browserPath: browser.path,
+      concurrency: captureConcurrency,
+      entries: Object.values(filteredCurrentEntries),
+      port: currentPort,
+      target: "current",
+      session: browserSession,
+    });
     const [baselineCapture, currentCapture] = await Promise.all([
-      captureStories({
-        assetDirectory,
-        browserPath: browser.path,
-        concurrency: captureConcurrency,
-        entries: Object.values(filteredBaselineEntries),
-        port: baselinePort,
-        target: "baseline",
-        session: browserSession,
-      }),
-      captureStories({
-        assetDirectory,
-        browserPath: browser.path,
-        concurrency: captureConcurrency,
-        entries: Object.values(filteredCurrentEntries),
-        port: currentPort,
-        target: "current",
-        session: browserSession,
-      }),
+      baselineCapturePromise,
+      currentCapturePromise,
     ]);
+    if (
+      cachedBaselinePaths === undefined &&
+      baselineCapture.errors.size === 0
+    ) {
+      await writeScreenshotCache({
+        directory: screenshotCacheDirectory,
+        paths: baselineCapture.paths,
+      });
+    }
+    if (currentRevisionIsClean && currentCapture.errors.size === 0) {
+      await writeScreenshotCache({
+        directory: getScreenshotCacheDirectory(
+          currentCommit,
+          screenshotRuntimeHash
+        ),
+        paths: currentCapture.paths,
+      });
+    }
+    logPhase("Screenshots");
     const comparisons = await compareStories({
       baselineEntries: filteredBaselineEntries,
       currentEntries: filteredCurrentEntries,
@@ -362,6 +442,7 @@ const main = async () => {
       baselineErrors: baselineCapture.errors,
       currentErrors: currentCapture.errors,
     });
+    logPhase("Image comparison");
     report = {
       baselineCommit,
       currentCommit,

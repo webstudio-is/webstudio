@@ -109,7 +109,3 @@ export const PageSettings = () => {
     </StorySection>
   );
 };
-
-PageSettings.parameters = {
-  visualRegression: { delay: 3000 },
-};

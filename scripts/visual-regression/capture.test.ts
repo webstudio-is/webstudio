@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { captureStories } from "./capture";
+import { captureStories, orderForGroupedConcurrency } from "./capture";
 import type { VisualStoryEntry } from "./manifest";
 
 const createEntry = (id: string): VisualStoryEntry => ({
@@ -15,7 +15,15 @@ const createEntry = (id: string): VisualStoryEntry => ({
   titlePrefix: "Design system",
 });
 
-test("captures stories independently and preserves individual errors", async () => {
+test("orders contiguous stories into the same concurrent browser page", () => {
+  assert.deepEqual(
+    orderForGroupedConcurrency([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 3),
+    [0, 4, 7, 1, 5, 8, 2, 6, 9, 3]
+  );
+});
+
+test("captures stories independently and preserves individual errors", async (context) => {
+  context.mock.method(console, "warn", () => {});
   const assetDirectory = await mkdtemp(path.join(tmpdir(), "visual-capture-"));
   try {
     const result = await captureStories({
