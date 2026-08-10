@@ -7,6 +7,7 @@ import {
   PanelTabsList,
   PanelTabsTrigger,
   ScrollAreaNative,
+  styled,
   Text,
   Tooltip,
   theme,
@@ -46,6 +47,15 @@ export const RequestDiagnosticsTable = ({
   </Grid>
 );
 
+const DiagnosticsLabel = styled(Flex, {
+  "& [data-diagnostics-info]": {
+    opacity: 0,
+  },
+  "&:hover [data-diagnostics-info], &:focus-within [data-diagnostics-info]": {
+    opacity: 1,
+  },
+});
+
 export const RequestDiagnosticsRow = ({
   label,
   value,
@@ -66,14 +76,14 @@ export const RequestDiagnosticsRow = ({
       "&:last-child": { borderBottom: 0 },
     }}
   >
-    <Flex align="center" gap={1}>
+    <DiagnosticsLabel align="center" gap={1}>
       <Text color="moreSubtle">{label}</Text>
       {description !== undefined && (
         <Tooltip variant="wrapped" content={description}>
-          <InfoCircleIcon tabIndex={0} />
+          <InfoCircleIcon data-diagnostics-info tabIndex={0} />
         </Tooltip>
       )}
-    </Flex>
+    </DiagnosticsLabel>
     <Text
       color={valueColor}
       userSelect="text"
