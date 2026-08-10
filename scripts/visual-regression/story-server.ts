@@ -83,6 +83,17 @@ if (rootElement === null) {
 }
 const root = createRoot(rootElement);
 const originalSetInterval = window.setInterval;
+const OriginalDate = Date;
+const fixedTime = Date.UTC(2020, 0, 1);
+window.Date = class extends OriginalDate {
+  constructor(...args) {
+    super(...(args.length === 0 ? [fixedTime] : args));
+  }
+
+  static now() {
+    return fixedTime;
+  }
+};
 const visualStyle = document.createElement("style");
 document.head.append(visualStyle);
 
@@ -93,6 +104,11 @@ window.renderVisualStory = async ({
   disableIntervals,
   hideSelectors = [],
 }) => {
+  let randomState = 0x12345678;
+  Math.random = () => {
+    randomState = (randomState * 1664525 + 1013904223) >>> 0;
+    return randomState / 0x100000000;
+  };
   document.querySelector("#visual-ready")?.remove();
   document.querySelector("#visual-error")?.remove();
   document.body.style.background = "";
