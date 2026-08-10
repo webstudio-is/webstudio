@@ -145,8 +145,11 @@ const getCaptureOptions = ({
   waitForSelector: "#visual-ready, #visual-error",
   failForSelector: "#visual-error",
   waitForTimeout: storyOptions[entry.id]?.delay ?? defaultStoryDelay,
-  finalizeExpression:
-    "document.activeElement?.blur(); new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))",
+  finalizeExpression: `(async () => {
+    ${storyOptions[entry.id]?.finalizeExpression ?? ""}
+    document.activeElement?.blur();
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  })()`,
   timeout: 30_000,
   format: "png",
   scale: 1,
