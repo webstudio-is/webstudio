@@ -604,7 +604,7 @@ test("rejects fragment trees that violate the HTML content model", async () => {
       { parentInstanceId: parent.id, fragment },
       { createId: createIdFactory() }
     )
-  ).toThrow("Placing <a> element inside a <span> violates HTML spec.");
+  ).toThrow("Placing <a> element inside a <a> violates HTML spec.");
 });
 
 test("rejects fragments that violate the destination HTML content model", async () => {
@@ -630,7 +630,7 @@ test("rejects fragments that violate the destination HTML content model", async 
       { parentInstanceId: parent.id, fragment },
       { createId: createIdFactory() }
     )
-  ).toThrow("Placing <button> element inside a <span> violates HTML spec.");
+  ).toThrow("Placing <button> element inside a <a> violates HTML spec.");
 });
 
 test("allows legacy invalid fragments when warnings are explicitly enabled", async () => {

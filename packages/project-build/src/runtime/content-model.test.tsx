@@ -280,6 +280,29 @@ test("transparent category should not pass through invalid parent", () => {
   ).toBeFalsy();
 });
 
+test("reports the ancestor that introduces a transparent constraint", () => {
+  const messages: string[] = [];
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="ul" ws:id="listId">
+            <$.Slot>
+              <ws.element ws:tag="div" />
+            </$.Slot>
+          </ws.element>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+      onError: (message) => messages.push(message),
+    })
+  ).toBeFalsy();
+  expect(messages).toEqual([
+    "Placing <div> element inside a <ul> violates HTML spec.",
+  ]);
+});
+
 test("transparent category should pass through category when check deep in the tree", () => {
   expect(
     isTreeSatisfyingContentModel({

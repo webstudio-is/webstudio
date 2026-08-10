@@ -197,6 +197,53 @@ const computeAllowedCategories = ({
   return allowedCategories;
 };
 
+const findHtmlConstraintInstance = ({
+  instances,
+  props,
+  metas,
+  instanceSelector,
+  htmlTagsByInstanceId,
+  tag,
+  component,
+}: {
+  instances: Instances;
+  props: Props;
+  metas: Metas;
+  instanceSelector: InstanceSelector;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
+  tag: undefined | string;
+  component: Instance["component"];
+}) => {
+  let allowedCategories: undefined | string[];
+  let wasSatisfying = true;
+  let constraintInstance: undefined | Instance;
+
+  for (const instanceId of instanceSelector.slice(1).reverse()) {
+    const ancestor = instances.get(instanceId);
+    if (ancestor === undefined) {
+      continue;
+    }
+    const ancestorTag = getTag({
+      instance: ancestor,
+      metas,
+      props,
+      htmlTagsByInstanceId,
+    });
+    allowedCategories = getElementChildren(ancestorTag, allowedCategories);
+    const isSatisfying = isTagSatisfyingContentModel({
+      tag,
+      component,
+      allowedCategories,
+    });
+    if (wasSatisfying && isSatisfying === false) {
+      constraintInstance = ancestor;
+    }
+    wasSatisfying = isSatisfying;
+  }
+
+  return constraintInstance;
+};
+
 const defaultComponentContentModel: ContentModel = {
   category: "instance",
   children: ["rich-text", "instance"],
@@ -412,19 +459,27 @@ export const isTreeSatisfyingContentModel = ({
     allowedCategories,
   });
   if (isTagSatisfying === false) {
-    const parentInstance = instances.get(parentInstanceId);
-    let parentTag: undefined | string;
-    if (parentInstance) {
-      parentTag = getTag({
-        instance: parentInstance,
+    const constraintInstance = findHtmlConstraintInstance({
+      instances,
+      props,
+      metas,
+      instanceSelector,
+      htmlTagsByInstanceId,
+      tag,
+      component: instance.component,
+    });
+    let constraintTag: undefined | string;
+    if (constraintInstance) {
+      constraintTag = getTag({
+        instance: constraintInstance,
         metas,
         props,
         htmlTagsByInstanceId,
       });
     }
-    if (parentTag) {
+    if (constraintTag) {
       onError?.(
-        `Placing <${tag}> element inside a <${parentTag}> violates HTML spec.`,
+        `Placing <${tag}> element inside a <${constraintTag}> violates HTML spec.`,
         instanceSelector
       );
     } else {
