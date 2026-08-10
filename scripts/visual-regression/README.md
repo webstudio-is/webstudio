@@ -29,8 +29,8 @@ Pixel sensitivity, mismatch tolerance, viewport settings, and browser
 concurrency are configured near the top of `run.ts`. Story-specific settling
 delays and deterministic rendering options belong in `story-options.ts`.
 
-GitHub Actions divides the complete suite into ten independent shards so its
-wall-clock critical path stays under one minute. Use `--shard 1/10` to
+GitHub Actions divides the complete suite into twelve independent shards so its
+wall-clock critical path stays under one minute. Use `--shard 1/12` to
 reproduce a CI shard locally, or omit it to run every story in one process. The
 runner keeps
 an ignored baseline worktree in the operating system's temporary directory so

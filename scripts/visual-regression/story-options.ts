@@ -15,8 +15,13 @@ export const storyOptions: Record<
   "builder-dashboard--welcome": { hideSelectors: ["iframe"] },
   "builder-menu--menu-story": {
     delay: 500,
-    finalizeExpression: `for (const trigger of document.querySelectorAll('button[aria-haspopup="menu"]')) {
-      if (trigger.getAttribute("aria-expanded") !== "true") trigger.click();
+    finalizeExpression: `{
+      const triggers = document.querySelectorAll('[aria-label="Menu Button"]');
+      for (const trigger of triggers) {
+        if (trigger.getAttribute("aria-expanded") === "true") trigger.click();
+      }
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      for (const trigger of triggers) trigger.click();
     }`,
   },
   "builder-builder-shared-loading--loading": { disableIntervals: true },
