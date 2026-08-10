@@ -21,8 +21,15 @@ jobs:
     # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
     if: |
       github.event_name == 'push' ||
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      ) ||
+      (
+        github.event_name == 'pull_request_target' &&
+        github.event.action == 'labeled' &&
+        github.event.label.name == 'safe-to-deploy'
+      )
     
     timeout-minutes: 20
 
