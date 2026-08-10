@@ -15,6 +15,24 @@ This guide creates a blog overview at `/blog` and one dynamic article page at
 
 <figure><img src="../../.gitbook/assets/content-engine-assets-structure.png" alt="Assets panel showing Markdown articles and their assets folder"><figcaption><p>Markdown articles stored alongside their assets</p></figcaption></figure>
 
+## Build it with MCP
+
+An AI agent can complete this entire workflow through
+[Webstudio MCP](../mcp.md). It can create the folders and Markdown files, upload
+images, build both pages, configure the Assets resources, add the Collection,
+bind the article directly, set the page metadata, and check the rendered result
+with vision. Everything remains editable in the visual editor.
+
+Give the agent an editable project share link when it asks for one, then make a
+request such as:
+
+> Use Webstudio CLI to build a blog with the Content Engine. Store the articles
+> as Markdown files, create `/blog` and `/blog/:slug`, exclude drafts, and check
+> both pages on desktop and mobile.
+
+The remaining steps explain the same workflow when you want to build or inspect
+it manually.
+
 ## 1. Organize the files
 
 Create this folder structure in the Assets panel:

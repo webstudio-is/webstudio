@@ -4645,14 +4645,21 @@ describe("project session mcp adapter", () => {
               "collectionItem.properties.author.name"
             ),
           }),
-          detailCollection: expect.objectContaining({
-            data: {
-              type: "expression",
-              value: "post.data == null ? [] : [post.data]",
-            },
-            itemFragment: expect.stringContaining(
-              "collectionItem.content.text"
-            ),
+          detailFragment: expect.objectContaining({
+            parentInstanceId: "<detail-root-id>",
+            fragment: expect.stringContaining("post.data?.content?.text"),
+          }),
+          detailPageSettings: expect.objectContaining({
+            pageId: "<detail-page-id>",
+            values: expect.objectContaining({
+              title: expect.stringContaining("post.data?.properties?.title"),
+              meta: expect.objectContaining({
+                description: expect.stringContaining(
+                  "post.data?.properties?.excerpt"
+                ),
+                status: "post.data ? 200 : 404",
+              }),
+            }),
           }),
         }),
         workflow: expect.arrayContaining([
@@ -4663,9 +4670,8 @@ describe("project session mcp adapter", () => {
           expect.stringContaining("create one page per post"),
           expect.stringContaining("exactly one scoped Assets resource"),
           expect.stringContaining("only dynamic value"),
-          expect.stringContaining(
-            "Both bindings must remain editable Collections"
-          ),
+          expect.stringContaining("without a Collection"),
+          expect.stringContaining("page settings"),
           expect.stringContaining("Assets-backed content"),
         ]),
         tools: expect.arrayContaining([
@@ -4673,6 +4679,8 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({ name: "list-pages" }),
           expect.objectContaining({ name: "list-assets" }),
           expect.objectContaining({ name: "insert-collection" }),
+          expect.objectContaining({ name: "insert-fragment" }),
+          expect.objectContaining({ name: "update-page" }),
         ]),
       })
     );

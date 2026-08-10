@@ -1365,6 +1365,7 @@ source of truth. For tools with no required arguments, pass `{}`.
   "scopeInstanceId": "body-id",
   "dataSourceName": "posts",
   "query": {
+    "result": "many",
     "where": {
       "all": [
         {
@@ -1374,18 +1375,17 @@ source of truth. For tools with no required arguments, pass `{}`.
           "operator": "eq",
           "value": {
             "type": "literal",
-            "value": "json"
+            "value": "md"
           }
         },
         {
           "field": [
-            "properties",
-            "kind"
+            "folderId"
           ],
           "operator": "eq",
           "value": {
             "type": "literal",
-            "value": "post"
+            "value": "folder-id"
           }
         },
         {
@@ -1394,7 +1394,10 @@ source of truth. For tools with no required arguments, pass `{}`.
             "draft"
           ],
           "operator": "ne",
-          "value": "true"
+          "value": {
+            "type": "literal",
+            "value": true
+          }
         }
       ]
     },
@@ -1413,7 +1416,39 @@ source of truth. For tools with no required arguments, pass `{}`.
         "direction": "asc"
       }
     ],
-    "limit": "20"
+    "limit": {
+      "type": "literal",
+      "value": 20
+    },
+    "offset": {
+      "type": "literal",
+      "value": 0
+    },
+    "output": {
+      "mode": "fields",
+      "includeMetadata": false,
+      "fields": [
+        [
+          "properties",
+          "title"
+        ],
+        [
+          "properties",
+          "slug"
+        ],
+        [
+          "properties",
+          "publishedAt"
+        ],
+        [
+          "properties",
+          "excerpt"
+        ]
+      ]
+    },
+    "content": {
+      "mode": "none"
+    }
   }
 }
 ```
@@ -1424,6 +1459,7 @@ source of truth. For tools with no required arguments, pass `{}`.
   "scopeInstanceId": "body-id",
   "dataSourceName": "post",
   "query": {
+    "result": "one",
     "where": {
       "all": [
         {
@@ -1433,55 +1469,64 @@ source of truth. For tools with no required arguments, pass `{}`.
           "operator": "eq",
           "value": {
             "type": "literal",
-            "value": "json"
+            "value": "md"
+          }
+        },
+        {
+          "field": [
+            "folderId"
+          ],
+          "operator": "eq",
+          "value": {
+            "type": "literal",
+            "value": "folder-id"
           }
         },
         {
           "field": [
             "properties",
-            "kind"
+            "slug"
           ],
           "operator": "eq",
-          "value": {
-            "type": "literal",
-            "value": "post"
-          }
+          "value": "system.params.slug"
         },
         {
-          "any": [
-            {
-              "field": [
-                "properties",
-                "slug"
-              ],
-              "operator": "eq",
-              "value": "system.params.slug"
-            },
-            {
-              "field": [
-                "properties",
-                "id"
-              ],
-              "operator": "eq",
-              "value": "system.params.slug"
-            }
-          ]
+          "field": [
+            "properties",
+            "draft"
+          ],
+          "operator": "ne",
+          "value": {
+            "type": "literal",
+            "value": true
+          }
         }
       ]
     },
-    "limit": "1",
     "output": {
       "mode": "fields",
       "includeMetadata": false,
       "fields": [
         [
           "properties",
-          "body"
+          "title"
+        ],
+        [
+          "properties",
+          "publishedAt"
+        ],
+        [
+          "properties",
+          "excerpt"
+        ],
+        [
+          "properties",
+          "featureImage"
         ]
       ]
     },
     "content": {
-      "mode": "none"
+      "mode": "markdown-body-ref"
     }
   }
 }
@@ -1536,8 +1581,16 @@ source of truth. For tools with no required arguments, pass `{}`.
 ```json
 {
   "query": {
+    "result": "one",
     "where": {
       "all": [
+        {
+          "field": [
+            "extension"
+          ],
+          "operator": "eq",
+          "value": "md"
+        },
         {
           "field": [
             "properties",
@@ -1548,7 +1601,16 @@ source of truth. For tools with no required arguments, pass `{}`.
         }
       ]
     },
-    "limit": 1,
+    "output": {
+      "mode": "fields",
+      "includeMetadata": false,
+      "fields": [
+        [
+          "properties",
+          "title"
+        ]
+      ]
+    },
     "content": {
       "mode": "markdown-body-ref",
       "maxBytes": 1048576
@@ -1857,7 +1919,7 @@ Inside a long-running MCP server, call preview.start once, then use screenshot({
 ## Related
 
 - [CLI](cli.md) – Install and use the Webstudio command-line interface
+- [Content Engine](foundations/content-engine.md) – Build a file-based site with Markdown and Assets queries
 - [Commands and search](foundations/commands-and-search.md) – Run Builder commands from the keyboard
-- [Shortcuts](foundations/shortcuts.md) – Reorder and edit instances without drag-and-drop
 - [Share links](foundations/share-links.md) – Grant the access used to link a Project
 - [Publishing and custom domains](foundations/publishing-and-custom-domains.md) – Publish the completed Project
