@@ -14,9 +14,9 @@ export default {
   title: "Pages/Page Settings",
   component: PageSettingsComponent,
   parameters: {
-    lostpixel: {
+    chromatic: {
       // this is to fix cutting off the after scroll area in the screenshot
-      waitBeforeScreenshot: 3000,
+      delay: 3000,
     },
   },
 };

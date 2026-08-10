@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # we need to fetch at least parent commit to satisfy Chromatic
+          fetch-depth: 0 # Chromatic needs full history to find baselines and changed stories
           ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
 
       # Storybook with submodules
@@ -47,6 +47,10 @@ jobs:
       - name: Chromatic
         id: chromatic
         uses: chromaui/action@v11.3.0
+        env:
+          VISUAL_TESTING: "true"
         with:
           projectToken: bea8dc1981d4
           buildScriptName: storybook:build
+          onlyChanged: true
+          exitZeroOnChanges: false
