@@ -1696,7 +1696,7 @@ describe("prebuild", () => {
       "utf8"
     );
     expect(runtimeModule).toContain(
-      '"url":"https://assets.example/cgi/asset/post.md"'
+      '"url":"https://assets.example/cgi/asset/post.md?format=raw"'
     );
     expect(runtimeModule).not.toContain('"url":"/assets/post.md"');
 
@@ -1714,7 +1714,7 @@ describe("prebuild", () => {
     );
     expect(materializedRuntimeModule).toContain('"url":"/assets/post.md"');
     expect(materializedRuntimeModule).not.toContain(
-      '"url":"https://assets.example/cgi/asset/post.md"'
+      '"url":"https://assets.example/cgi/asset/post.md?format=raw"'
     );
   });
 

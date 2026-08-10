@@ -129,7 +129,9 @@ describe("Image optimizations applied", () => {
       sizes: "100vw",
       quality: 70,
       loader: (props) =>
-        `${new URL(props.src).pathname}?w=${"width" in props ? props.width : 0}&q=${"quality" in props ? props.quality : 0}`,
+        `${new URL(props.src).pathname}?w=${
+          props.format !== "raw" ? props.width : 0
+        }&q=${props.format !== "raw" ? props.quality : 0}`,
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`
@@ -162,7 +164,7 @@ describe("Image optimizations not applied", () => {
         "alt": "",
         "decoding": "async",
         "loading": "lazy",
-        "src": "/cgi/image/logo.webp",
+        "src": "/cgi/image/logo.webp?format=raw",
         "width": 100,
       }
     `);

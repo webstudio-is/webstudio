@@ -29,11 +29,12 @@ const getImageSource = (src: string) => {
  * https://developers.cloudflare.com/images/image-resizing/url-format/
  **/
 export const wsImageLoader: ImageLoader = (props) => {
-  const shouldTransform = "width" in props;
+  const width = props.format === "raw" ? 16 : props.width;
+  const quality = props.format === "raw" ? 100 : props.quality;
 
-  if (process.env.NODE_ENV !== "production" && shouldTransform) {
+  if (process.env.NODE_ENV !== "production") {
     warnOnce(
-      allSizes.includes(props.width) === false,
+      allSizes.includes(width) === false,
       "Width must be only from allowed values"
     );
   }
@@ -43,9 +44,9 @@ export const wsImageLoader: ImageLoader = (props) => {
 
   const resultUrl = new URL("/cgi/image/", NON_EXISTING_DOMAIN);
 
-  if (shouldTransform) {
-    resultUrl.searchParams.set("width", props.width.toString());
-    resultUrl.searchParams.set("quality", props.quality.toString());
+  if (props.format !== "raw") {
+    resultUrl.searchParams.set("width", width.toString());
+    resultUrl.searchParams.set("quality", quality.toString());
 
     if (props.height != null) {
       resultUrl.searchParams.set("height", props.height.toString());
@@ -54,13 +55,13 @@ export const wsImageLoader: ImageLoader = (props) => {
     if (props.fit != null) {
       resultUrl.searchParams.set("fit", props.fit);
     }
-    resultUrl.searchParams.set("format", props.format ?? "auto");
   }
+  resultUrl.searchParams.set("format", props.format ?? "auto");
 
   resultUrl.pathname = joinPath(resultUrl.pathname, encodePathFragment(src));
 
   if (resultUrl.href.startsWith(NON_EXISTING_DOMAIN)) {
-    return `${resultUrl.pathname}${resultUrl.search}`;
+    return `${resultUrl.pathname}?${resultUrl.searchParams.toString()}`;
   }
 
   // Cloudflare docs say that we don't need to urlencode the path params

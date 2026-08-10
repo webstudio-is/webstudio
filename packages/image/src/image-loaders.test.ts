@@ -41,20 +41,24 @@ describe("Asset image transforms", () => {
     ).toEqual("/cgi/image/my-image.webp?width=128&quality=100&format=auto");
   });
 
-  test("removes legacy raw parameter from an untransformed image", () => {
+  test("strip /cgi/image from src", () => {
     expect(
       wsImageLoader({
+        width: 128,
         src: "/cgi/image/my-image.webp?format=raw",
+        quality: 100,
       })
-    ).toEqual("/cgi/image/my-image.webp");
+    ).toEqual("/cgi/image/my-image.webp?width=128&quality=100&format=auto");
   });
 
-  test("decodes an untransformed proxied asset URL", () => {
+  test("decodes proxied asset src before rebuilding image url", () => {
     expect(
       wsImageLoader({
+        width: 128,
         src: "/cgi/image/my%20image.webp?format=raw",
+        quality: 100,
       })
-    ).toEqual("/cgi/image/my%20image.webp");
+    ).toEqual("/cgi/image/my%20image.webp?width=128&quality=100&format=auto");
   });
 });
 

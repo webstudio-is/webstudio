@@ -609,25 +609,33 @@ describe("allowed-file-types", () => {
           "https://example.com"
         );
 
-        expect(url.href).toBe(`https://example.com/cgi/asset/photo.${format}`);
+        expect(url.href).toBe(
+          `https://example.com/cgi/asset/photo.${format}?format=raw`
+        );
       }
     );
 
     test("generates correct URL for video assets", () => {
       const url = getAssetUrl(mockVideoAsset, "https://example.com");
-      expect(url.href).toBe("https://example.com/cgi/asset/video.mp4");
+      expect(url.href).toBe(
+        "https://example.com/cgi/asset/video.mp4?format=raw"
+      );
       expect(url.pathname).toBe("/cgi/asset/video.mp4");
     });
 
     test("generates correct URL for font assets", () => {
       const url = getAssetUrl(mockFontAsset, "https://example.com");
-      expect(url.href).toBe("https://example.com/cgi/asset/font.woff2");
+      expect(url.href).toBe(
+        "https://example.com/cgi/asset/font.woff2?format=raw"
+      );
       expect(url.pathname).toBe("/cgi/asset/font.woff2");
     });
 
     test("generates correct URL for generic file assets", () => {
       const url = getAssetUrl(mockGenericAsset, "https://example.com");
-      expect(url.href).toBe("https://example.com/cgi/asset/document.pdf");
+      expect(url.href).toBe(
+        "https://example.com/cgi/asset/document.pdf?format=raw"
+      );
       expect(url.pathname).toBe("/cgi/asset/document.pdf");
     });
 
@@ -1047,7 +1055,7 @@ describe("allowed-file-types", () => {
     test("converts static font asset with metadata", () => {
       const result = toRuntimeAsset(mockFontAsset, "https://example.com");
       expect(result).toEqual({
-        url: "/cgi/asset/font.woff2",
+        url: "/cgi/asset/font.woff2?format=raw",
         family: "Arial",
         style: "normal",
         weight: 400,
@@ -1060,7 +1068,7 @@ describe("allowed-file-types", () => {
         "https://example.com"
       );
       expect(result).toEqual({
-        url: "/cgi/asset/variable-font.woff2",
+        url: "/cgi/asset/variable-font.woff2?format=raw",
         family: "Inter",
       });
     });
@@ -1068,7 +1076,7 @@ describe("allowed-file-types", () => {
     test("converts generic file asset with minimal fields", () => {
       const result = toRuntimeAsset(mockGenericAsset, "https://example.com");
       expect(result).toEqual({
-        url: "/cgi/asset/document.pdf",
+        url: "/cgi/asset/document.pdf?format=raw",
       });
     });
 

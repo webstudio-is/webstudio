@@ -2089,7 +2089,7 @@ describe("PostgresAssetRepository", () => {
       },
     });
     expect(urlResult.data.items).toEqual([
-      { id: "asset-1", url: "/cgi/asset/post.md" },
+      { id: "asset-1", url: "/cgi/asset/post.md?format=raw" },
     ]);
     expect(urlResult.__diagnostics__.unresolved).toBeUndefined();
     expect(dependencies.loadAssetsByProjectWithClient).toHaveBeenCalledWith(

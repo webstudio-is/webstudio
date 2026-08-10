@@ -25,9 +25,10 @@ const extractSrcProps = (
     ) {
       try {
         const url = new URL(prop.value);
-        // Upload original images from inception without transformation parameters.
+        // upload raw images from inception
         if (url.hostname === "preview.webstudio.ai") {
           url.search = "";
+          url.searchParams.set("format", "raw");
         }
         srcProps.push([prop.id, url.href]);
       } catch {

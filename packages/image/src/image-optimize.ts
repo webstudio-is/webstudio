@@ -95,7 +95,7 @@ export type ImageLoader = (
         height?: number;
         fit?: "pad";
       }
-    | { src: string }
+    | { src: string; format: "raw" }
 ) => string;
 
 export const imagePlaceholderDataUrl: string = `data:image/svg+xml;base64,${btoa(`<svg
@@ -316,7 +316,7 @@ const getOptimizedImageAttributes = (props: {
     } = {
       src: UrlCanParse(props.src)
         ? props.src
-        : props.loader({ src: props.src }),
+        : props.loader({ src: props.src, format: "raw" }),
     };
 
     if (props.srcSet != null) {

@@ -126,6 +126,7 @@ export const PageSettingsMeta = ({
       content: `${origin}${imageLoader({
         src: `${assetBaseUrl}${pageMeta.socialImageAssetName}`,
         // Do not transform social image (not enough information do we need to do this)
+        format: "raw",
       })}`,
     });
   } else if (pageMeta.socialImageUrl) {
