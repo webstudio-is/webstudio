@@ -50,7 +50,6 @@
     "@fontsource-variable/manrope": "^5.0.20",
     "@fontsource/roboto-mono": "^5.0.18",
     "@modelcontextprotocol/sdk": "^1.10.0",
-    "@playwright/test": "1.50.1",
     "@radix-ui/react-tooltip": "^1.2.4",
     "@storybook/addon-actions": "^8.6.4",
     "@storybook/addon-backgrounds": "^8.6.4",

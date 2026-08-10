@@ -12,13 +12,11 @@ const isFolderEmpty = (folderPath: string) => {
   return contents.length === 0;
 };
 
-const hasPrivateFolders =
-  process.env.VISUAL_TESTING !== "true" &&
-  !isFolderEmpty(
-    path.join(__dirname, "../../packages/sdk-components-animation/private-src")
-  );
+const hasPrivateFolders = !isFolderEmpty(
+  path.join(__dirname, "../../packages/sdk-components-animation/private-src")
+);
 
-const visualTestingStories: StorybookConfig["stories"] = [
+const coreStories: StorybookConfig["stories"] = [
   {
     directory: "../apps/builder",
     titlePrefix: "Builder",
@@ -32,41 +30,39 @@ const visualTestingStories: StorybookConfig["stories"] = [
 ];
 
 export default {
-  stories: process.env.VISUAL_TESTING
-    ? visualTestingStories
-    : [
-        ...visualTestingStories,
-        {
-          directory: "../packages/css-engine/src",
-          titlePrefix: "CSS engine",
-          files: "**/*.stories.tsx",
-        },
-        {
-          directory: "../packages/image/src",
-          titlePrefix: "Image",
-          files: "**/*.stories.tsx",
-        },
-        {
-          directory: "../packages/icons",
-          titlePrefix: "Icons",
-          files: "**/*.stories.tsx",
-        },
-        {
-          directory: "../packages/sdk-components-react",
-          titlePrefix: "SDK components React",
-          files: "**/*.stories.tsx",
-        },
-        {
-          directory: "../packages/sdk-components-react-radix",
-          titlePrefix: "SDK components React Radix",
-          files: "**/*.stories.tsx",
-        },
-        {
-          directory: "../packages/sdk-components-animation",
-          titlePrefix: "SDK components animation",
-          files: "**/*.stories.tsx",
-        },
-      ],
+  stories: [
+    ...coreStories,
+    {
+      directory: "../packages/css-engine/src",
+      titlePrefix: "CSS engine",
+      files: "**/*.stories.tsx",
+    },
+    {
+      directory: "../packages/image/src",
+      titlePrefix: "Image",
+      files: "**/*.stories.tsx",
+    },
+    {
+      directory: "../packages/icons",
+      titlePrefix: "Icons",
+      files: "**/*.stories.tsx",
+    },
+    {
+      directory: "../packages/sdk-components-react",
+      titlePrefix: "SDK components React",
+      files: "**/*.stories.tsx",
+    },
+    {
+      directory: "../packages/sdk-components-react-radix",
+      titlePrefix: "SDK components React Radix",
+      files: "**/*.stories.tsx",
+    },
+    {
+      directory: "../packages/sdk-components-animation",
+      titlePrefix: "SDK components animation",
+      files: "**/*.stories.tsx",
+    },
+  ],
   framework: {
     name: "@storybook/react-vite",
     options: {},
