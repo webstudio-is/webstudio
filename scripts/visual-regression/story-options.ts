@@ -10,5 +10,7 @@ export const storyOptions: Record<
   "builder-builder-shared-loading--loading": { disableIntervals: true },
   "builder-pages-page-settings--page-settings": { delay: 3000 },
   "builder-settings-panel-props-section--props-section": { delay: 5000 },
-  "builder-style-panel-css-editor--css-editor": { delay: 500 },
+  "builder-style-panel-css-editor--css-editor": { delay: 1000 },
+  "design-system-button--button": { delay: 500 },
+  "design-system-color-picker--color-picker": { delay: 500 },
 };

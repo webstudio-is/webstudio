@@ -16,7 +16,9 @@ import { readStoryManifest, type VisualStoryEntry } from "./manifest";
 import { writeVisualReport } from "./report";
 import {
   classifyVisualTestRun,
+  getVisualShardIds,
   getStoryComparisons,
+  parseVisualShard,
   type VisualComparisonResult,
   type VisualTestReport,
 } from "./shared";
@@ -47,27 +49,7 @@ const shardArgument = getArgument("--shard");
 const openReport = args.includes("--open-report");
 const approved = args.includes("--approve-visual-changes");
 
-const parseShard = (value: string | undefined) => {
-  if (value === undefined) {
-    return { index: 1, total: 1 };
-  }
-  const [indexText, totalText, extra] = value.split("/");
-  const index = Number(indexText);
-  const total = Number(totalText);
-  if (
-    extra !== undefined ||
-    Number.isInteger(index) === false ||
-    Number.isInteger(total) === false ||
-    index < 1 ||
-    total < 1 ||
-    index > total
-  ) {
-    throw new Error(`Invalid visual regression shard: ${value}`);
-  }
-  return { index, total };
-};
-
-const shard = parseShard(shardArgument);
+const shard = parseVisualShard(shardArgument);
 
 const run = async ({
   command,
@@ -383,14 +365,11 @@ const main = async () => {
     ]);
     const matches = grep === undefined ? undefined : new RegExp(grep, "i");
     const selectedIds = new Set(
-      [
-        ...new Set([
-          ...Object.keys(baselineEntries),
-          ...Object.keys(currentEntries),
-        ]),
-      ]
-        .sort()
-        .filter((_, index) => index % shard.total === shard.index - 1)
+      getVisualShardIds({
+        baselineIds: Object.keys(baselineEntries),
+        currentIds: Object.keys(currentEntries),
+        shard,
+      })
     );
     const filterEntries = (entries: Record<string, VisualStoryEntry>) =>
       Object.fromEntries(
@@ -403,8 +382,12 @@ const main = async () => {
       );
     const filteredBaselineEntries = filterEntries(baselineEntries);
     const filteredCurrentEntries = filterEntries(currentEntries);
+    const filteredIds = new Set([
+      ...Object.keys(filteredBaselineEntries),
+      ...Object.keys(filteredCurrentEntries),
+    ]);
     console.info(
-      `Running visual shard ${shard.index}/${shard.total} with ${selectedIds.size} story ids.`
+      `Running visual shard ${shard.index}/${shard.total} with ${filteredIds.size} story ids.`
     );
     servers.push(
       ...(await Promise.all([

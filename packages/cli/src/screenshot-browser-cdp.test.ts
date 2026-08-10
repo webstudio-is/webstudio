@@ -675,6 +675,7 @@ test("navigates once while resizing one page through multiple viewports", async 
     url: "https://example.com/responsive",
     browserPath: "/usr/bin/chromium",
     includeImageMetrics: true,
+    includeElementGeometry: false,
     waitUntil: "networkidle" as const,
     waitForTimeout: 0,
     timeout: 1000,
@@ -685,6 +686,7 @@ test("navigates once while resizing one page through multiple viewports", async 
       output: "/tmp/mobile.png",
       width: 375,
       height: 812,
+      prepareExpression: "window.renderStory('mobile')",
     },
     dependencies
   );
@@ -695,12 +697,14 @@ test("navigates once while resizing one page through multiple viewports", async 
       output: "/tmp/mobile.png",
       width: 375,
       height: 812,
+      prepareExpression: "window.renderStory('mobile')",
     },
     {
       ...baseOptions,
       output: "/tmp/desktop.png",
       width: 1440,
       height: 900,
+      prepareExpression: "window.renderStory('desktop')",
     },
   ]);
 
@@ -724,6 +728,18 @@ test("navigates once while resizing one page through multiple viewports", async 
   ).toEqual([375, 1440]);
   expect(dependencies.createWebSocket).toHaveBeenCalledOnce();
   expect(dependencies.writeFile).toHaveBeenCalledTimes(2);
+  expect(
+    layouts.every(({ elementGeometry }) => elementGeometry === undefined)
+  ).toBe(true);
+  expect(
+    socket.sentMessages
+      .filter(
+        (message) =>
+          message.method === "Runtime.evaluate" &&
+          String(message.params?.expression).startsWith("window.renderStory")
+      )
+      .map((message) => message.params?.expression)
+  ).toEqual(["window.renderStory('mobile')", "window.renderStory('desktop')"]);
   expect(
     socket.sentMessages.some(
       (message) =>

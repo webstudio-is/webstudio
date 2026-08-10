@@ -66,9 +66,22 @@ export const writeVisualReport = async ({
   reportDirectory: string;
 }) => {
   await mkdir(reportDirectory, { recursive: true });
+  const portableReport = {
+    ...report,
+    comparisons: report.comparisons.map((comparison) => ({
+      ...comparison,
+      baselinePath: relativeAssetPath(reportDirectory, comparison.baselinePath),
+      currentPath: relativeAssetPath(reportDirectory, comparison.currentPath),
+      diffPath: relativeAssetPath(reportDirectory, comparison.diffPath),
+      contextDiffPath: relativeAssetPath(
+        reportDirectory,
+        comparison.contextDiffPath
+      ),
+    })),
+  };
   await writeFile(
     path.join(reportDirectory, "report.json"),
-    `${JSON.stringify(report, undefined, 2)}\n`
+    `${JSON.stringify(portableReport, undefined, 2)}\n`
   );
   const counts = Object.groupBy(report.comparisons, ({ status }) => status);
   const important = report.comparisons.filter(
