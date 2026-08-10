@@ -40,6 +40,7 @@
     * [↔️ Referenced Images](university/foundations/copy-paste/images.md)
   * [🔍 Commands & search](university/foundations/commands-and-search.md)
   * [🗂️ Assets](university/foundations/assets.md)
+  * [📚 Content Engine](university/foundations/content-engine.md)
   * [🎯 SEO settings](university/foundations/seo-settings.md)
   * [⚡ Performance](university/foundations/performance.md)
   * [⌨️ Shortcuts](university/foundations/shortcuts.md)
