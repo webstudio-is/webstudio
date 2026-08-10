@@ -3,18 +3,8 @@ import path from "node:path";
 import { glob } from "node:fs/promises";
 import { loadCsf } from "storybook/internal/csf-tools";
 import { toId } from "storybook/internal/csf";
+import { storySources } from "../../.storybook/story-sources";
 import type { StoryEntry } from "./shared";
-
-const storyScopes = [
-  {
-    pattern: "apps/builder/**/*.stories.tsx",
-    titlePrefix: "Builder",
-  },
-  {
-    pattern: "packages/design-system/src/components/**/*.stories.tsx",
-    titlePrefix: "Design system",
-  },
-] as const;
 
 export type VisualStoryEntry = StoryEntry & {
   exportName: string;
@@ -66,9 +56,10 @@ const readScopeEntries = async ({
 export const readStoryManifest = async (root: string) => {
   const entries = (
     await Promise.all(
-      storyScopes.map(({ pattern, titlePrefix }) =>
-        readScopeEntries({ root, pattern, titlePrefix })
-      )
+      storySources.map(({ directory, files, titlePrefix }) => {
+        const pattern = path.posix.join(".storybook", directory, files);
+        return readScopeEntries({ root, pattern, titlePrefix });
+      })
     )
   )
     .flat()

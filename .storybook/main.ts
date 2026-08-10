@@ -2,6 +2,7 @@ import * as path from "node:path";
 import { existsSync, readdirSync } from "node:fs";
 import { defaultClientConditions } from "vite";
 import type { StorybookConfig } from "@storybook/react-vite";
+import { storySources } from "./story-sources";
 
 const isFolderEmpty = (folderPath: string) => {
   if (!existsSync(folderPath)) {
@@ -16,53 +17,8 @@ const hasPrivateFolders = !isFolderEmpty(
   path.join(__dirname, "../../packages/sdk-components-animation/private-src")
 );
 
-const coreStories: StorybookConfig["stories"] = [
-  {
-    directory: "../apps/builder",
-    titlePrefix: "Builder",
-    files: "**/*.stories.tsx",
-  },
-  {
-    directory: "../packages/design-system/src/components",
-    titlePrefix: "Design system",
-    files: "**/*.stories.tsx",
-  },
-];
-
 export default {
-  stories: [
-    ...coreStories,
-    {
-      directory: "../packages/css-engine/src",
-      titlePrefix: "CSS engine",
-      files: "**/*.stories.tsx",
-    },
-    {
-      directory: "../packages/image/src",
-      titlePrefix: "Image",
-      files: "**/*.stories.tsx",
-    },
-    {
-      directory: "../packages/icons",
-      titlePrefix: "Icons",
-      files: "**/*.stories.tsx",
-    },
-    {
-      directory: "../packages/sdk-components-react",
-      titlePrefix: "SDK components React",
-      files: "**/*.stories.tsx",
-    },
-    {
-      directory: "../packages/sdk-components-react-radix",
-      titlePrefix: "SDK components React Radix",
-      files: "**/*.stories.tsx",
-    },
-    {
-      directory: "../packages/sdk-components-animation",
-      titlePrefix: "SDK components animation",
-      files: "**/*.stories.tsx",
-    },
-  ],
+  stories: storySources,
   framework: {
     name: "@storybook/react-vite",
     options: {},
