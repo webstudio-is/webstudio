@@ -75,7 +75,9 @@ test("orders collapsible sections and opens only database sizes by default", () 
                 buildPlan: 20,
                 indexPreparation: 80,
                 diagnosticsPreparation: 40,
+                compilerContentRead: 12,
                 documentGraph: 30,
+                documentGraphContentRead: 8,
                 assetReferences: 5,
                 sourceValidation: 10,
                 documentResolution: 15,
@@ -175,7 +177,9 @@ test("orders collapsible sections and opens only database sizes by default", () 
       buildPlan: 20,
       indexPreparation: 80,
       diagnosticsPreparation: 40,
+      compilerContentRead: 12,
       documentGraph: 30,
+      documentGraphContentRead: 8,
       assetReferences: 5,
       sourceValidation: 10,
       documentResolution: 15,
@@ -200,10 +204,12 @@ test("orders collapsible sections and opens only database sizes by default", () 
   expect(container.textContent).toContain("Build plan");
   expect(container.textContent).toContain("Index preparation");
   expect(container.textContent).toContain("Published diagnostics");
+  expect(container.textContent).toContain("Compiler storage reads");
+  expect(container.textContent).toContain("Document graph storage reads");
   expect(container.textContent).toContain("Compilation workCompiled");
   expect(container.textContent).toContain("Resolved documents2");
   expect(container.textContent).toContain("Timing");
   expect(container.textContent).toContain("Query work");
   expect(container.textContent).toContain("Database and sizes");
-  expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(24);
+  expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(26);
 });

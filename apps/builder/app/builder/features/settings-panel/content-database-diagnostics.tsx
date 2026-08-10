@@ -67,9 +67,19 @@ const assetQueryPhaseRows = [
     "Time spent reading and parsing selected asset content into compiler input.",
   ],
   [
+    "compilerContentRead",
+    "Compiler storage reads",
+    "Cumulative time spent on completed storage reads while preparing compiler entries. Concurrent read durations are summed, so this child measurement can exceed wall-clock phase time.",
+  ],
+  [
     "documentGraph",
     "Document graph",
     "Time spent reading supported documents and compiling their cross-document references.",
+  ],
+  [
+    "documentGraphContentRead",
+    "Document graph storage reads",
+    "Cumulative time spent on completed storage reads while constructing the document graph. Cached request-local bytes are excluded, and concurrent read durations are summed.",
   ],
   [
     "assetReferences",

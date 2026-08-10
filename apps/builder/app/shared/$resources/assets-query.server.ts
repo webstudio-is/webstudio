@@ -69,9 +69,13 @@ const createPerformanceCollector = () => {
       if (event.purpose === "compiler-entry") {
         compilerContentFetchCount += 1;
         compilerContentBytes += event.byteLength;
+        phases.compilerContentRead =
+          (phases.compilerContentRead ?? 0) + event.durationMs;
       } else {
         documentGraphContentFetchCount += 1;
         documentGraphContentBytes += event.byteLength;
+        phases.documentGraphContentRead =
+          (phases.documentGraphContentRead ?? 0) + event.durationMs;
       }
       return;
     }

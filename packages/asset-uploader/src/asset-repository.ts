@@ -757,6 +757,7 @@ export class PostgresAssetRepository implements AssetRepository {
   ): ContentSource {
     const readFile = this.assetStore.readFile;
     const onPerformanceEvent = this.onPerformanceEvent;
+    const performanceNow = this.dependencies.performanceNow;
     const loadBaseEntries = () =>
       this.dependencies.loadCanonicalAssetBaseEntries({
         client: this.context.postgrest.client,
@@ -792,6 +793,7 @@ export class PostgresAssetRepository implements AssetRepository {
                         yield cached;
                         return;
                       }
+                      const startedAt = performanceNow();
                       const response = await readFile(
                         entry.document.contentRef,
                         entry.document.size === 0
@@ -812,6 +814,7 @@ export class PostgresAssetRepository implements AssetRepository {
                         type: "content-read",
                         purpose: "document-graph",
                         byteLength: readBytes,
+                        durationMs: Math.max(0, performanceNow() - startedAt),
                       });
                     },
                   },
@@ -916,6 +919,7 @@ export class PostgresAssetRepository implements AssetRepository {
           entries,
           plan: requirements,
           loadContent: async (entry) => {
+            const startedAt = this.dependencies.performanceNow();
             const response = await this.assetStore.readFile(
               entry.document.contentRef,
               { offset: 0, length: entry.document.size }
@@ -940,6 +944,10 @@ export class PostgresAssetRepository implements AssetRepository {
               type: "content-read",
               purpose: "compiler-entry",
               byteLength: bytes.byteLength,
+              durationMs: Math.max(
+                0,
+                this.dependencies.performanceNow() - startedAt
+              ),
             });
             let content: string;
             try {

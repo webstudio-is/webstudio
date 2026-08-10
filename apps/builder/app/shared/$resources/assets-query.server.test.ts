@@ -63,11 +63,13 @@ describe("configured Assets system resource", () => {
           type: "content-read",
           purpose: "compiler-entry",
           byteLength: 1000,
+          durationMs: 12,
         });
         onPerformanceEvent?.({
           type: "content-read",
           purpose: "document-graph",
           byteLength: 750,
+          durationMs: 8,
         });
         onDocumentGraphEvent?.({
           type: "resolution-started",
@@ -114,6 +116,8 @@ describe("configured Assets system resource", () => {
             authorization: expect.any(Number),
             buildPlan: 20,
             documentGraph: 30,
+            compilerContentRead: 12,
+            documentGraphContentRead: 8,
             diagnosticsPreparation: 40,
           },
           compilationCache: "miss",

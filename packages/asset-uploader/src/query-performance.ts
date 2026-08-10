@@ -29,6 +29,7 @@ export type AssetQueryPerformanceEvent =
       type: "content-read";
       purpose: "compiler-entry" | "document-graph";
       byteLength: number;
+      durationMs: number;
     }>;
 
 export type AssetQueryPerformanceObserver = (

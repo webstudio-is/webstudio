@@ -2604,6 +2604,7 @@ describe("PostgresAssetRepository", () => {
           type: "content-read",
           purpose: "compiler-entry",
           byteLength: entry.document.size,
+          durationMs: expect.any(Number),
         },
       ])
     );
