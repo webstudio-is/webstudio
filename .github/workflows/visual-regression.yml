@@ -79,6 +79,19 @@ jobs:
 
       - uses: ./.github/actions/ci-setup
 
+      - name: Cache pinned visual browser
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: visual-playwright-${{ runner.os }}-${{ hashFiles('packages/sdk-components-animation/package.json', 'pnpm-lock.yaml') }}
+
+      - name: Install pinned visual browser
+        run: |
+          pnpm --filter @webstudio-is/sdk-components-animation exec playwright install chromium
+          playwright_browser_path="$(pnpm --filter @webstudio-is/sdk-components-animation exec node -e 'console.log(require("playwright").chromium.executablePath())')"
+          test -x "$playwright_browser_path"
+          echo "WEBSTUDIO_BROWSER_PATH=$playwright_browser_path" >> "$GITHUB_ENV"
+
       - name: Install visual comparison dependencies
         run: sudo apt-get install --no-install-recommends -y tesseract-ocr
 
@@ -90,7 +103,7 @@ jobs:
           echo "base=$(git merge-base HEAD "$BASE_REF")" >> "$GITHUB_OUTPUT"
           echo "head=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           while read -r file; do sha256sum "$file"; done < scripts/visual-regression/screenshot-runtime-files.txt | sha256sum | cut -d ' ' -f 1 | sed 's/^/version=/' >> "$GITHUB_OUTPUT"
-          browser_path="$(command -v chromium || command -v chromium-browser || command -v google-chrome || true)"
+          browser_path="${WEBSTUDIO_BROWSER_PATH:-}"
           if [[ -n "$browser_path" ]]; then
             "$browser_path" --version | sha256sum | cut -d ' ' -f 1 | sed 's/^/browser=/' >> "$GITHUB_OUTPUT"
           else
