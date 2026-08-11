@@ -120,6 +120,29 @@ const getScreenshotRuntimeHash = async (browserPath: string) => {
 const getScreenshotCacheDirectory = (revision: string, runtimeHash: string) =>
   path.join(screenshotCacheRoot, `${revision}-${runtimeHash}`);
 
+type StoryCapture = Awaited<ReturnType<typeof captureStories>>;
+
+const replaceStoryCaptures = ({
+  ids,
+  capture,
+  replacement,
+}: {
+  ids: readonly string[];
+  capture: StoryCapture;
+  replacement: StoryCapture;
+}) => {
+  for (const id of ids) {
+    capture.paths.delete(id);
+    capture.errors.delete(id);
+  }
+  for (const [id, screenshotPath] of replacement.paths) {
+    capture.paths.set(id, screenshotPath);
+  }
+  for (const [id, error] of replacement.errors) {
+    capture.errors.set(id, error);
+  }
+};
+
 const compareStories = async ({
   baselineEntries,
   currentEntries,
@@ -411,6 +434,84 @@ const main = async () => {
       baselineCapturePromise,
       currentCapturePromise,
     ]);
+    logPhase("Screenshots");
+    let comparisons = await compareStories({
+      baselineEntries: filteredBaselineEntries,
+      currentEntries: filteredCurrentEntries,
+      baselinePaths: baselineCapture.paths,
+      currentPaths: currentCapture.paths,
+      baselineErrors: baselineCapture.errors,
+      currentErrors: currentCapture.errors,
+    });
+    logPhase("Image comparison");
+    const changedIds = comparisons
+      .filter(({ status }) => status === "changed")
+      .map(({ id }) => id);
+    if (changedIds.length > 0) {
+      console.info(
+        `Verifying ${changedIds.length} visual differences with serial captures.`
+      );
+      const changedBaselineEntries = changedIds.flatMap((id) => {
+        const entry = filteredBaselineEntries[id];
+        return entry === undefined ? [] : [entry];
+      });
+      const changedCurrentEntries = changedIds.flatMap((id) => {
+        const entry = filteredCurrentEntries[id];
+        return entry === undefined ? [] : [entry];
+      });
+      if (cachedBaselinePaths !== undefined) {
+        await run({
+          command: "pnpm",
+          commandArgs: ["install", "--frozen-lockfile", "--ignore-scripts"],
+          cwd: checkout,
+        });
+        servers.push(
+          await startVisualStoryServer({
+            root: checkout,
+            port: baselinePort,
+            outputDirectory: baselineBundleDirectory,
+            storyFiles: changedBaselineEntries.map((entry) => entry.file),
+          })
+        );
+      }
+      const baselineVerification = await captureStories({
+        assetDirectory,
+        browserPath: browser.path,
+        concurrency: 1,
+        entries: changedBaselineEntries,
+        port: baselinePort,
+        target: "baseline",
+        session: browserSession,
+      });
+      const currentVerification = await captureStories({
+        assetDirectory,
+        browserPath: browser.path,
+        concurrency: 1,
+        entries: changedCurrentEntries,
+        port: currentPort,
+        target: "current",
+        session: browserSession,
+      });
+      replaceStoryCaptures({
+        ids: changedIds,
+        capture: baselineCapture,
+        replacement: baselineVerification,
+      });
+      replaceStoryCaptures({
+        ids: changedIds,
+        capture: currentCapture,
+        replacement: currentVerification,
+      });
+      comparisons = await compareStories({
+        baselineEntries: filteredBaselineEntries,
+        currentEntries: filteredCurrentEntries,
+        baselinePaths: baselineCapture.paths,
+        currentPaths: currentCapture.paths,
+        baselineErrors: baselineCapture.errors,
+        currentErrors: currentCapture.errors,
+      });
+      logPhase("Serial verification");
+    }
     if (
       cachedBaselinePaths === undefined &&
       baselineCapture.errors.size === 0
@@ -429,16 +530,6 @@ const main = async () => {
         paths: currentCapture.paths,
       });
     }
-    logPhase("Screenshots");
-    const comparisons = await compareStories({
-      baselineEntries: filteredBaselineEntries,
-      currentEntries: filteredCurrentEntries,
-      baselinePaths: baselineCapture.paths,
-      currentPaths: currentCapture.paths,
-      baselineErrors: baselineCapture.errors,
-      currentErrors: currentCapture.errors,
-    });
-    logPhase("Image comparison");
     report = {
       baselineCommit,
       currentCommit,
