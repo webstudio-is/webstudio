@@ -1,3 +1,8 @@
+import { createHash } from "node:crypto";
+import path from "node:path";
+import { createScreenshotDiffPool } from "./diff-pool";
+import type { ScreenshotComparisonReportItem } from "./screenshot-report";
+
 export type VisualEntry = {
   id: string;
 };
@@ -117,7 +122,10 @@ export const compareVisualEntries = async <Entry extends VisualReportEntry>({
           const diff = await pool.run({
             baselinePath,
             currentPath,
-            outputDir: path.join(artifactDirectory, comparison.id),
+            outputDir: path.join(
+              artifactDirectory,
+              createHash("sha256").update(comparison.id).digest("hex")
+            ),
             threshold: pixelThreshold,
             analyzeText: "when-different",
             writeArtifacts: "when-different",
@@ -145,6 +153,3 @@ export const compareVisualEntries = async <Entry extends VisualReportEntry>({
     await pool.close();
   }
 };
-import path from "node:path";
-import { createScreenshotDiffPool } from "./diff-pool";
-import type { ScreenshotComparisonReportItem } from "./screenshot-report";

@@ -3,6 +3,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { compareVisualEntries, getVisualComparisons } from "./comparison";
+import { createPng, writePng } from "./screenshot.test-utils";
 
 const createEntry = (id: string) => ({ id, title: id, name: id });
 
@@ -84,6 +85,40 @@ test("compares captured entries and preserves capture failures", async () => {
       { id: "shared", status: "unchanged" },
     ]);
     expect(comparisons[1]?.error).toEqual("Story failed");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("keeps diff artifacts inside the artifact directory", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "visual-comparison-"));
+  const artifactDirectory = path.join(directory, "artifacts");
+  try {
+    const baselinePath = path.join(directory, "baseline.png");
+    const currentPath = path.join(directory, "current.png");
+    await Promise.all([
+      writePng(baselinePath, createPng(10, 10, { r: 0, g: 0, b: 0 })),
+      writePng(currentPath, createPng(10, 10, { r: 255, g: 255, b: 255 })),
+    ]);
+    const [comparison] = await compareVisualEntries({
+      baselineEntries: [createEntry("../outside")],
+      currentEntries: [createEntry("../outside")],
+      baselinePaths: new Map([["../outside", baselinePath]]),
+      currentPaths: new Map([["../outside", currentPath]]),
+      baselineErrors: new Map(),
+      currentErrors: new Map(),
+      artifactDirectory,
+      pixelThreshold: 0.1,
+      maxMismatchPercentage: 0,
+      concurrency: 1,
+    });
+
+    const relativeDiffPath = path.relative(
+      artifactDirectory,
+      comparison?.diffPath ?? ""
+    );
+    expect(relativeDiffPath.startsWith(`..${path.sep}`)).toBe(false);
+    expect(path.isAbsolute(relativeDiffPath)).toBe(false);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
