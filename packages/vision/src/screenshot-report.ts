@@ -164,7 +164,7 @@ export const writeScreenshotComparisonReport = async ({
   ]);
 };
 
-export const openScreenshotComparisonReport = (reportPath: string) => {
+export const openScreenshotComparisonReport = async (reportPath: string) => {
   const command =
     process.platform === "darwin"
       ? { file: "open", args: [reportPath] }
@@ -175,6 +175,10 @@ export const openScreenshotComparisonReport = (reportPath: string) => {
   const child = spawn(command.file, command.args, {
     detached: true,
     stdio: "ignore",
+  });
+  await new Promise<void>((resolve, reject) => {
+    child.once("spawn", resolve);
+    child.once("error", reject);
   });
   child.unref();
 };

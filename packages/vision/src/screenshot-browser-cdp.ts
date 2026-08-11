@@ -1340,8 +1340,14 @@ const startBrowserRuntimeOnce = async (
     return runtime;
   } catch (error) {
     browserProcess.kill();
-    await browserClosed;
-    await dependencies.rm(userDataDir, { recursive: true, force: true });
+    await withDeadline(
+      browserClosed,
+      "Browser process did not exit after failed startup",
+      Math.min(options.timeout, 2000)
+    ).catch(() => undefined);
+    await dependencies
+      .rm(userDataDir, { recursive: true, force: true })
+      .catch(() => undefined);
     throw error;
   }
 };
@@ -1762,9 +1768,13 @@ const capturePageWithBrowserRuntime = async (
     const cleanupStartedAt = Date.now();
     cdp?.close();
     if (targetId !== undefined && runtime.running) {
-      await dependencies
-        .fetch(`http://127.0.0.1:${runtime.port}/json/close/${targetId}`)
-        .catch(() => undefined);
+      await withDeadline(
+        dependencies.fetch(
+          `http://127.0.0.1:${runtime.port}/json/close/${targetId}`
+        ),
+        "Browser page target did not close",
+        Math.min(firstOptions.timeout, 100)
+      ).catch(() => undefined);
     }
     const lastLayout = layouts.at(-1);
     if (lastLayout?.timings !== undefined) {

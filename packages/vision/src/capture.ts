@@ -14,10 +14,17 @@ export type VisualCaptureSession = {
   ) => Promise<unknown>;
 };
 
+const assertCaptureConcurrency = (concurrency: number) => {
+  if (Number.isInteger(concurrency) === false || concurrency < 1) {
+    throw new Error("Capture concurrency must be a positive integer.");
+  }
+};
+
 export const orderForGroupedConcurrency = <Value>(
   values: readonly Value[],
   concurrency: number
 ) => {
+  assertCaptureConcurrency(concurrency);
   // Browser sessions assign options to pages round-robin. Interleave contiguous
   // groups so captures that share resources reuse the same page and its cache.
   const groupCount = Math.min(concurrency, values.length);
@@ -57,6 +64,14 @@ export const captureVisualEntries = async ({
   session: VisualCaptureSession | undefined;
   onBatchFailure?: (error: unknown, count: number) => void;
 }) => {
+  assertCaptureConcurrency(concurrency);
+  const captureIds = new Set<string>();
+  for (const { id } of captures) {
+    if (captureIds.has(id)) {
+      throw new Error(`Duplicate visual capture id ${JSON.stringify(id)}.`);
+    }
+    captureIds.add(id);
+  }
   const paths = new Map<string, string>();
   const errors = new Map<string, string>();
   if (captures.length === 0) {

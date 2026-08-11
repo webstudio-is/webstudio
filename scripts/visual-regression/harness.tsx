@@ -103,8 +103,8 @@ window.Date = new Proxy(OriginalDate, {
       newTarget
     );
   },
-  apply(target, thisArgument, argumentsList) {
-    return Reflect.apply(target, thisArgument, argumentsList);
+  apply() {
+    return new OriginalDate(fixedTime).toString();
   },
 });
 window.Date.now = () => fixedTime;
@@ -169,12 +169,24 @@ window.renderVisualStory = async ({ file, exportName, title }) => {
             return interval;
           },
   });
-  if (options.hideSelectors?.length !== undefined) {
+  if (
+    options.disableAnimations !== false ||
+    options.hideSelectors?.length !== undefined
+  ) {
     const style = document.createElement("style");
     style.dataset.visualRegressionStyle = "";
-    style.textContent = options.hideSelectors
-      .map((selector) => `${selector} { visibility: hidden !important; }`)
-      .join("\n");
+    const rules =
+      options.hideSelectors?.map(
+        (selector) => `${selector} { visibility: hidden !important; }`
+      ) ?? [];
+    if (options.disableAnimations !== false) {
+      rules.push(`*, *::before, *::after {
+  animation-delay: 0s !important;
+  animation-duration: 0s !important;
+  transition: none !important;
+}`);
+    }
+    style.textContent = rules.join("\n");
     document.head.append(style);
   }
 

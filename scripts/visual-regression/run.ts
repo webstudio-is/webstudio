@@ -535,7 +535,9 @@ const main = async () => {
     );
   }
   if (openReport) {
-    openScreenshotComparisonReport(path.join(reportDirectory, "index.html"));
+    await openScreenshotComparisonReport(
+      path.join(reportDirectory, "index.html")
+    );
   }
   process.exitCode = result === "passed" || result === "approved" ? 0 : 1;
 };

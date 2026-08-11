@@ -7,9 +7,26 @@ import { parse, type DefaultTreeAdapterTypes as Html } from "parse5";
 import { expect, test } from "vitest";
 import {
   classifyScreenshotComparisonReport,
+  openScreenshotComparisonReport,
   writeScreenshotComparisonReport,
   type ScreenshotComparisonReport,
 } from "./screenshot-report";
+
+test("reports when the platform cannot open the visual report", async () => {
+  const originalPath = process.env.PATH;
+  process.env.PATH = "";
+  try {
+    await expect(
+      openScreenshotComparisonReport("/tmp/visual-report/index.html")
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  } finally {
+    if (originalPath === undefined) {
+      delete process.env.PATH;
+    } else {
+      process.env.PATH = originalPath;
+    }
+  }
+});
 
 const createReport = (
   status: ScreenshotComparisonReport["comparisons"][number]["status"]

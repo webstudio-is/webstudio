@@ -1521,6 +1521,83 @@ test("stops polling when the browser DevTools port is not created", async () => 
   expect(browserProcess.kill).toHaveBeenCalled();
 });
 
+test("does not wait indefinitely for a failed browser startup to exit", async () => {
+  const browserProcess = new FakeBrowserProcess();
+  browserProcess.kill.mockImplementation(() => true);
+  const dependencies = createDependencies({ browserProcess });
+  vi.mocked(dependencies.readFile).mockRejectedValue(
+    Object.assign(new Error("not ready"), { code: "ENOENT" })
+  );
+
+  const result = await Promise.race([
+    captureBrowserScreenshot(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "load",
+        waitForTimeout: 0,
+        timeout: 10,
+      },
+      dependencies
+    ).then(
+      () => "resolved",
+      (error: unknown) =>
+        error instanceof Error ? error.message : String(error)
+    ),
+    new Promise<string>((resolve) => {
+      setTimeout(() => resolve("startup cleanup hung"), 100).unref();
+    }),
+  ]);
+
+  expect(result).toContain(
+    "Browser DevTools endpoint was not created within 10ms."
+  );
+  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/vision-browser-test", {
+    recursive: true,
+    force: true,
+  });
+});
+
+test("does not wait indefinitely for a page target to close", async () => {
+  const fetch = vi.fn(async (url: string) => {
+    if (url.includes("/json/new?")) {
+      return {
+        json: async () => ({
+          id: "target-1",
+          type: "page",
+          webSocketDebuggerUrl: "ws://127.0.0.1:9222/page/created",
+        }),
+      } as Response;
+    }
+    return await new Promise<Response>(() => undefined);
+  }) as unknown as BrowserScreenshotDependencies["fetch"];
+  const dependencies = createDependencies({ fetch });
+
+  const result = await Promise.race([
+    captureBrowserScreenshot(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "networkidle",
+        waitForTimeout: 0,
+        timeout: 1000,
+      },
+      dependencies
+    ).then(() => "captured"),
+    new Promise<string>((resolve) => {
+      setTimeout(() => resolve("target cleanup hung"), 2000).unref();
+    }),
+  ]);
+
+  expect(result).toBe("captured");
+});
+
 test("reports browser navigation errors directly", async () => {
   const browserProcess = new FakeBrowserProcess();
   const socket = new NavigationErrorWebSocket();

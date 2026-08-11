@@ -6,7 +6,7 @@ if (
   process.argv[1] !== undefined &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
-  openScreenshotComparisonReport(
+  await openScreenshotComparisonReport(
     path.resolve(".visual-regression/report/index.html")
   );
 }

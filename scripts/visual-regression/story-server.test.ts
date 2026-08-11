@@ -32,3 +32,14 @@ test("keeps the bundled story stylesheet outside the disposable body content", (
   );
   assert.equal(stylesheet?.parentNode?.nodeName, "head");
 });
+
+test("does not disable animations before reading the story parameters", () => {
+  const document = parse(visualStoryHtml);
+  const style = findElement(document, (element) => element.tagName === "style");
+  const css = style?.childNodes
+    .filter((node): node is Html.TextNode => node.nodeName === "#text")
+    .map((node) => node.value)
+    .join("");
+
+  assert.doesNotMatch(css ?? "", /animation-(?:delay|duration)|transition/);
+});

@@ -25,6 +25,37 @@ test("orders contiguous stories into the same concurrent browser page", () => {
   );
 });
 
+test("rejects invalid capture concurrency", () => {
+  expect(() => orderForGroupedConcurrency([0, 1], 0)).toThrow(
+    "Capture concurrency must be a positive integer."
+  );
+  expect(() => orderForGroupedConcurrency([0, 1], 1.5)).toThrow(
+    "Capture concurrency must be a positive integer."
+  );
+});
+
+test("rejects duplicate capture identifiers", async () => {
+  const assetDirectory = await mkdtemp(path.join(tmpdir(), "visual-capture-"));
+  try {
+    await expect(
+      captureVisualEntries({
+        captures: [
+          createCapture(assetDirectory, "duplicate"),
+          createCapture(assetDirectory, "duplicate"),
+        ],
+        concurrency: 1,
+        session: {
+          async capturePage() {
+            throw new Error("Browser capture must not start");
+          },
+        },
+      })
+    ).rejects.toThrow('Duplicate visual capture id "duplicate".');
+  } finally {
+    await rm(assetDirectory, { recursive: true, force: true });
+  }
+});
+
 test("captures entries independently and preserves individual errors", async () => {
   const assetDirectory = await mkdtemp(path.join(tmpdir(), "visual-capture-"));
   try {

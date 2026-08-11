@@ -14,10 +14,7 @@ export const visualStoryHtml = `<!doctype html>
       html, body, #root { min-height: 100%; }
       body { margin: 0; pointer-events: none; }
       *, *::before, *::after {
-        animation-delay: 0s !important;
-        animation-duration: 0s !important;
         caret-color: transparent !important;
-        transition: none !important;
       }
       iframe { visibility: hidden !important; }
     </style>
