@@ -667,7 +667,9 @@ const constrainUnconstrainedInputSchemas = <Schema extends InputJsonSchema>(
       schema.additionalProperties
     );
   }
-  if (schema.items !== undefined) {
+  if (schema.type === "array" && schema.items === undefined) {
+    result.items = {};
+  } else if (schema.items !== undefined) {
     result.items = constrainUnconstrainedInputSchemaValue(schema.items);
   }
   for (const key of ["allOf", "anyOf", "oneOf", "prefixItems"] as const) {

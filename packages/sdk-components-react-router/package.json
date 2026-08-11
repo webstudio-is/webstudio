@@ -16,8 +16,7 @@
     ".": {
       "webstudio": "./src/components.ts",
       "types": "./lib/types/components.d.ts",
-      "import": "./lib/components.js",
-      "default": "./lib/components.js"
+      "import": "./lib/components.js"
     }
   },
   "scripts": {

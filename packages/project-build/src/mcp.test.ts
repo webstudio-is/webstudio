@@ -157,9 +157,7 @@ const getArraySchemasWithoutItems = (
   }
   const object = schema as Record<string, unknown>;
   const current =
-    object.type === "array" &&
-    object.items === undefined &&
-    object.prefixItems === undefined
+    object.type === "array" && object.items === undefined
       ? [path.join(".")]
       : [];
   return [
@@ -1298,6 +1296,33 @@ describe("project session mcp adapter", () => {
     expect(updates).toMatchObject({
       type: "array",
       items: {},
+    });
+  });
+
+  test("adds items to tuple input schemas", () => {
+    const operation = publicOperation({
+      command: "tuple-input",
+      id: "test.tupleInput",
+      description: "Accept a structured tuple",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          coordinates: {
+            type: "array",
+            prefixItems: [{ type: "number" }, { type: "number" }],
+          },
+        },
+        required: ["coordinates"],
+      },
+    });
+
+    const [tool] = listProjectSessionMcpTools([operation]);
+
+    expect(tool?.inputSchema.properties?.coordinates).toMatchObject({
+      type: "array",
+      items: {},
+      prefixItems: [{ type: "number" }, { type: "number" }],
     });
   });
 
