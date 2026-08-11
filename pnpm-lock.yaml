@@ -3045,6 +3045,9 @@ importers:
       fastest-levenshtein:
         specifier: ^1.0.16
         version: 1.0.16
+      tsx:
+        specifier: ^4.19.3
+        version: 4.19.3
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*

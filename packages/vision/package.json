@@ -29,6 +29,11 @@
       "import": "./src/diff.ts",
       "default": "./src/diff.ts"
     },
+    "./diff-pool": {
+      "webstudio": "./src/diff-pool.ts",
+      "import": "./src/diff-pool.ts",
+      "default": "./src/diff-pool.ts"
+    },
     "./report": {
       "webstudio": "./src/report.ts",
       "import": "./src/report.ts",
@@ -51,7 +56,8 @@
   },
   "dependencies": {
     "fast-png": "8.0.0",
-    "fastest-levenshtein": "^1.0.16"
+    "fastest-levenshtein": "^1.0.16",
+    "tsx": "^4.19.3"
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",

@@ -48,3 +48,103 @@ export const getVisualComparisons = <Entry extends VisualEntry>({
     return { id, status: "comparable", baseline, current };
   });
 };
+
+export type VisualReportEntry = VisualEntry & {
+  title: string;
+  name: string;
+};
+
+export const compareVisualEntries = async <Entry extends VisualReportEntry>({
+  baselineEntries,
+  currentEntries,
+  baselinePaths,
+  currentPaths,
+  baselineErrors,
+  currentErrors,
+  artifactDirectory,
+  pixelThreshold,
+  maxMismatchPercentage,
+  concurrency,
+}: {
+  baselineEntries: readonly Entry[];
+  currentEntries: readonly Entry[];
+  baselinePaths: ReadonlyMap<string, string>;
+  currentPaths: ReadonlyMap<string, string>;
+  baselineErrors: ReadonlyMap<string, string>;
+  currentErrors: ReadonlyMap<string, string>;
+  artifactDirectory: string;
+  pixelThreshold: number;
+  maxMismatchPercentage: number;
+  concurrency: number;
+}): Promise<ScreenshotComparisonReportItem[]> => {
+  const pool = createScreenshotDiffPool(concurrency);
+  try {
+    const comparisons = getVisualComparisons({
+      baselineEntries,
+      currentEntries,
+    });
+    return await Promise.all(
+      comparisons.map(
+        async (comparison): Promise<ScreenshotComparisonReportItem> => {
+          const entry = comparison.current ?? comparison.baseline;
+          if (entry === undefined) {
+            throw new Error(`Visual comparison has no entry: ${comparison.id}`);
+          }
+          const baselinePath = baselinePaths.get(comparison.id);
+          const currentPath = currentPaths.get(comparison.id);
+          const captureErrors = [
+            baselineErrors.get(comparison.id),
+            currentErrors.get(comparison.id),
+          ].filter((error): error is string => error !== undefined);
+          if (captureErrors.length > 0) {
+            return {
+              ...entry,
+              status: "error",
+              baselinePath,
+              currentPath,
+              error: captureErrors.join("\n\n"),
+            };
+          }
+          if (comparison.status === "added") {
+            return { ...entry, status: "added", currentPath };
+          }
+          if (comparison.status === "removed") {
+            return { ...entry, status: "removed", baselinePath };
+          }
+          if (baselinePath === undefined || currentPath === undefined) {
+            throw new Error(`Screenshot is missing for ${comparison.id}`);
+          }
+          const diff = await pool.run({
+            baselinePath,
+            currentPath,
+            outputDir: path.join(artifactDirectory, comparison.id),
+            threshold: pixelThreshold,
+            analyzeText: "when-different",
+            writeArtifacts: "when-different",
+          });
+          const changed =
+            diff.dimensionMismatch !== undefined ||
+            diff.mismatchPercentage > maxMismatchPercentage;
+          return {
+            ...entry,
+            status: changed ? "changed" : "unchanged",
+            baselinePath,
+            currentPath,
+            diffPath: diff.diffPath,
+            contextDiffPath: diff.contextDiffPath,
+            differentPixels: diff.differentPixels,
+            mismatchPercentage: diff.mismatchPercentage,
+            regions: diff.regions,
+            textAnalysis: diff.textAnalysis,
+            warnings: diff.warnings,
+          };
+        }
+      )
+    );
+  } finally {
+    await pool.close();
+  }
+};
+import path from "node:path";
+import { createScreenshotDiffPool } from "./diff-pool";
+import type { ScreenshotComparisonReportItem } from "./screenshot-report";

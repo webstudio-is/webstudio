@@ -1,9 +1,9 @@
 import { Worker } from "node:worker_threads";
-import {
-  diffPngFiles,
-  type ScreenshotDiffResult,
-} from "@webstudio-is/vision/diff";
-import type { DiffWorkerRequest, DiffWorkerResponse } from "./diff-worker";
+import { diffPngFiles, type ScreenshotDiffResult } from "./screenshot-diff";
+import type {
+  ScreenshotDiffWorkerRequest,
+  ScreenshotDiffWorkerResponse,
+} from "./diff-worker";
 
 type Task = {
   id: number;
@@ -12,7 +12,10 @@ type Task = {
   reject: (error: Error) => void;
 };
 
-export const createDiffPool = (size: number) => {
+export const createScreenshotDiffPool = (size: number) => {
+  if (Number.isInteger(size) === false || size < 1) {
+    throw new Error("Screenshot diff pool size must be a positive integer.");
+  }
   const workers = Array.from(
     { length: size },
     () =>
@@ -29,7 +32,7 @@ export const createDiffPool = (size: number) => {
   let closing = false;
 
   const dispatch = () => {
-    while (idleWorkers.length > 0 && queue.length > 0) {
+    while (closing === false && idleWorkers.length > 0 && queue.length > 0) {
       const worker = idleWorkers.shift();
       const task = queue.shift();
       if (worker === undefined || task === undefined) {
@@ -40,15 +43,19 @@ export const createDiffPool = (size: number) => {
       worker.postMessage({
         id: task.id,
         options: task.options,
-      } satisfies DiffWorkerRequest);
+      } satisfies ScreenshotDiffWorkerRequest);
+    }
+  };
+
+  const rejectQueuedTasks = (error: Error) => {
+    for (const task of queue.splice(0)) {
+      task.reject(error);
     }
   };
 
   const fail = (error: Error) => {
     failure ??= error;
-    for (const task of queue.splice(0)) {
-      task.reject(error);
-    }
+    rejectQueuedTasks(error);
   };
 
   const handleWorkerFailure = (worker: Worker, error: Error) => {
@@ -66,7 +73,7 @@ export const createDiffPool = (size: number) => {
   };
 
   for (const worker of workers) {
-    worker.on("message", (response: DiffWorkerResponse) => {
+    worker.on("message", (response: ScreenshotDiffWorkerResponse) => {
       const task = activeTasks.get(response.id);
       if (task === undefined) {
         return;
@@ -96,6 +103,9 @@ export const createDiffPool = (size: number) => {
 
   return {
     run(options: Parameters<typeof diffPngFiles>[0]) {
+      if (closing) {
+        return Promise.reject(new Error("Screenshot diff pool is closed."));
+      }
       if (failure !== undefined) {
         return Promise.reject(failure);
       }
@@ -106,7 +116,17 @@ export const createDiffPool = (size: number) => {
       });
     },
     async close() {
+      if (closing) {
+        return;
+      }
       closing = true;
+      const error = new Error("Screenshot diff pool is closed.");
+      rejectQueuedTasks(error);
+      for (const task of activeTasks.values()) {
+        task.reject(error);
+      }
+      activeTasks.clear();
+      taskIds.clear();
       await Promise.all(workers.map(async (worker) => worker.terminate()));
     },
   };

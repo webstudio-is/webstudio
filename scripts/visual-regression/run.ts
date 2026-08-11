@@ -12,9 +12,8 @@ import {
   openScreenshotComparisonReport,
   writeScreenshotComparisonReport,
   type ScreenshotComparisonReport,
-  type ScreenshotComparisonReportItem,
 } from "@webstudio-is/vision/report";
-import { getVisualComparisons } from "@webstudio-is/vision/comparison";
+import { compareVisualEntries } from "@webstudio-is/vision/comparison";
 import {
   restoreScreenshotCache,
   writeScreenshotCache,
@@ -33,7 +32,6 @@ import {
   createCaptureSessionOptions,
   getInitialCaptureTarget,
 } from "./capture";
-import { createDiffPool } from "./diff-pool";
 import { classifyVisualTestRun } from "./shared";
 import { startVisualStoryServer } from "./story-server";
 
@@ -165,82 +163,18 @@ const compareStories = async ({
   baselineErrors: Map<string, string>;
   currentErrors: Map<string, string>;
 }) => {
-  const pool = createDiffPool(Math.min(4, os.availableParallelism()));
-  try {
-    const visualComparisons = getVisualComparisons({
-      baselineEntries: Object.values(baselineEntries),
-      currentEntries: Object.values(currentEntries),
-    });
-    return await Promise.all(
-      visualComparisons.map(
-        async (comparison): Promise<ScreenshotComparisonReportItem> => {
-          const entry = comparison.current ?? comparison.baseline;
-          if (entry === undefined) {
-            throw new Error(`Story comparison has no entry: ${comparison.id}`);
-          }
-          const baselinePath = baselinePaths.get(comparison.id);
-          const currentPath = currentPaths.get(comparison.id);
-          const captureErrors = [
-            baselineErrors.get(comparison.id),
-            currentErrors.get(comparison.id),
-          ].filter((error): error is string => error !== undefined);
-          if (captureErrors.length > 0) {
-            return {
-              ...entry,
-              status: "error",
-              baselinePath,
-              currentPath,
-              error: captureErrors.join("\n\n"),
-            };
-          }
-          if (comparison.status === "added") {
-            return {
-              ...entry,
-              status: "added",
-              currentPath,
-            };
-          }
-          if (comparison.status === "removed") {
-            return {
-              ...entry,
-              status: "removed",
-              baselinePath,
-            };
-          }
-          if (baselinePath === undefined || currentPath === undefined) {
-            throw new Error(`Screenshot is missing for ${comparison.id}`);
-          }
-          const outputDir = path.join(assetDirectory, comparison.id);
-          const diff = await pool.run({
-            baselinePath,
-            currentPath,
-            outputDir,
-            threshold: pixelThreshold,
-            analyzeText: "when-different",
-            writeArtifacts: "when-different",
-          });
-          const changed =
-            diff.dimensionMismatch !== undefined ||
-            diff.mismatchPercentage > maxMismatchPercentage;
-          return {
-            ...entry,
-            status: changed ? "changed" : "unchanged",
-            baselinePath,
-            currentPath,
-            diffPath: diff.diffPath,
-            contextDiffPath: diff.contextDiffPath,
-            differentPixels: diff.differentPixels,
-            mismatchPercentage: diff.mismatchPercentage,
-            regions: diff.regions,
-            textAnalysis: diff.textAnalysis,
-            warnings: diff.warnings,
-          };
-        }
-      )
-    );
-  } finally {
-    await pool.close();
-  }
+  return await compareVisualEntries({
+    baselineEntries: Object.values(baselineEntries),
+    currentEntries: Object.values(currentEntries),
+    baselinePaths,
+    currentPaths,
+    baselineErrors,
+    currentErrors,
+    artifactDirectory: assetDirectory,
+    pixelThreshold,
+    maxMismatchPercentage,
+    concurrency: Math.min(4, os.availableParallelism()),
+  });
 };
 
 const main = async () => {
