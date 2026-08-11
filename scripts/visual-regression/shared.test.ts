@@ -4,11 +4,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { readStoryManifest, readStorySources } from "./manifest";
-import {
-  classifyVisualTestRun,
-  getStoryComparisons,
-  type VisualTestReport,
-} from "./shared";
+import { classifyVisualTestRun, getStoryComparisons } from "./shared";
+import type { ScreenshotComparisonReport } from "@webstudio-is/project-build/vision";
 
 test("classifies common, added, and removed stories", () => {
   const comparisons = getStoryComparisons({
@@ -45,10 +42,10 @@ test("classifies common, added, and removed stories", () => {
 });
 
 const createReport = (
-  status: VisualTestReport["comparisons"][number]["status"]
-): VisualTestReport => ({
-  baselineCommit: "base",
-  currentCommit: "current",
+  status: ScreenshotComparisonReport["comparisons"][number]["status"]
+): ScreenshotComparisonReport => ({
+  baselineLabel: "base",
+  currentLabel: "current",
   durationMs: 100,
   comparisons: [{ id: "button", title: "Button", name: "Primary", status }],
   errors: [],
@@ -88,8 +85,8 @@ test("fails when no stories were compared", () => {
   assert.equal(
     classifyVisualTestRun({
       report: {
-        baselineCommit: "base",
-        currentCommit: "current",
+        baselineLabel: "base",
+        currentLabel: "current",
         durationMs: 100,
         comparisons: [],
         errors: [],

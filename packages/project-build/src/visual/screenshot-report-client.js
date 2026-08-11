@@ -15,9 +15,9 @@ const createElement = (tag, options = {}) => {
 
 const revisions = document.querySelector("#revisions");
 revisions.append(
-  createElement("code", { text: report.baselineCommit }),
+  createElement("code", { text: report.baselineLabel }),
   " → ",
-  createElement("code", { text: report.currentCommit }),
+  createElement("code", { text: report.currentLabel }),
   ` in ${(report.durationMs / 1000).toFixed(1)}s`
 );
 

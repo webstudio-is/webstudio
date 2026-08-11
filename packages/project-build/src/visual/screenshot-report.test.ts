@@ -1,10 +1,9 @@
-import assert from "node:assert/strict";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import test from "node:test";
 import { parse, type DefaultTreeAdapterTypes as Html } from "parse5";
-import { writeVisualReport } from "./report";
+import { expect, test } from "vitest";
+import { writeScreenshotComparisonReport } from "./screenshot-report";
 
 const findElement = (
   node: Html.Node,
@@ -28,11 +27,11 @@ test("writes portable JSON data for the static visual report", async () => {
   const reportDirectory = path.join(root, "report");
   const assetDirectory = path.join(reportDirectory, "assets", "button");
   try {
-    await writeVisualReport({
+    await writeScreenshotComparisonReport({
       reportDirectory,
       report: {
-        baselineCommit: "baseline",
-        currentCommit: "current",
+        baselineLabel: "baseline",
+        currentLabel: "current",
         durationMs: 1200,
         errors: [],
         comparisons: [
@@ -54,13 +53,13 @@ test("writes portable JSON data for the static visual report", async () => {
     const json = JSON.parse(
       await readFile(path.join(reportDirectory, "report.json"), "utf8")
     );
-    assert.equal(
-      json.comparisons[0].baselinePath,
+    expect(json.comparisons[0].baselinePath).toEqual(
       "assets/button/baseline.png"
     );
-    assert.equal(json.comparisons[0].currentPath, "assets/button/current.png");
-    assert.equal(
-      json.comparisons[0].diffPath,
+    expect(json.comparisons[0].currentPath).toEqual(
+      "assets/button/current.png"
+    );
+    expect(json.comparisons[0].diffPath).toEqual(
       "assets/button/current-diff.png"
     );
 
@@ -77,15 +76,15 @@ test("writes portable JSON data for the static visual report", async () => {
           ({ name, value }) => name === "id" && value === "visual-report-data"
         )
     );
-    assert.notEqual(data, undefined);
+    expect(data).not.toBeUndefined();
     const embeddedReport = JSON.parse(
       data?.childNodes
         .filter((node): node is Html.TextNode => node.nodeName === "#text")
         .map((node) => node.value)
         .join("") ?? ""
     );
-    assert.deepEqual(embeddedReport, json);
-    assert.equal(html.includes("</script><script>unsafe()"), false);
+    expect(embeddedReport).toEqual(json);
+    expect(html.includes("</script><script>unsafe()")).toEqual(false);
     await Promise.all([
       readFile(path.join(reportDirectory, "report.css"), "utf8"),
       readFile(path.join(reportDirectory, "report.js"), "utf8"),

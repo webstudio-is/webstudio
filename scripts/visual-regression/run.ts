@@ -4,7 +4,13 @@ import { access, mkdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { parseArgs, promisify } from "node:util";
-import { createBrowserScreenshotSession } from "@webstudio-is/project-build/vision";
+import {
+  createBrowserScreenshotSession,
+  openScreenshotComparisonReport,
+  writeScreenshotComparisonReport,
+  type ScreenshotComparisonReport,
+  type ScreenshotComparisonReportItem,
+} from "@webstudio-is/project-build/vision";
 import {
   defaultScreenshotDependencies,
   resolveScreenshotBrowser,
@@ -16,18 +22,11 @@ import {
 } from "./manifest";
 import { captureStories, createCaptureSessionOptions } from "./capture";
 import { createDiffPool } from "./diff-pool";
-import { openVisualReport } from "./open-report";
-import { writeVisualReport } from "./report";
 import {
   restoreScreenshotCache,
   writeScreenshotCache,
 } from "./screenshot-cache";
-import {
-  classifyVisualTestRun,
-  getStoryComparisons,
-  type VisualComparisonResult,
-  type VisualTestReport,
-} from "./shared";
+import { classifyVisualTestRun, getStoryComparisons } from "./shared";
 import { startVisualStoryServer } from "./story-server";
 
 const repositoryRoot = process.cwd();
@@ -162,7 +161,7 @@ const compareStories = async ({
   try {
     return await Promise.all(
       getStoryComparisons({ baselineEntries, currentEntries }).map(
-        async (comparison): Promise<VisualComparisonResult> => {
+        async (comparison): Promise<ScreenshotComparisonReportItem> => {
           const entry = comparison.current ?? comparison.baseline;
           if (entry === undefined) {
             throw new Error(`Story comparison has no entry: ${comparison.id}`);
@@ -255,7 +254,7 @@ const main = async () => {
   let browserSession:
     | Awaited<ReturnType<typeof createBrowserScreenshotSession>>
     | undefined;
-  let report: VisualTestReport | undefined;
+  let report: ScreenshotComparisonReport | undefined;
 
   await rm(outputRoot, { recursive: true, force: true });
   await mkdir(assetDirectory, { recursive: true });
@@ -531,8 +530,8 @@ const main = async () => {
       });
     }
     report = {
-      baselineCommit,
-      currentCommit,
+      baselineLabel: baselineCommit,
+      currentLabel: currentCommit,
       durationMs: Date.now() - startedAt,
       comparisons,
       errors: [],
@@ -541,8 +540,8 @@ const main = async () => {
     const message =
       error instanceof Error ? (error.stack ?? error.message) : String(error);
     report = {
-      baselineCommit: baseRef,
-      currentCommit: "HEAD",
+      baselineLabel: baseRef,
+      currentLabel: "HEAD",
       durationMs: Date.now() - startedAt,
       comparisons: [],
       errors: [message],
@@ -561,7 +560,7 @@ const main = async () => {
   if (report === undefined) {
     throw new Error("Visual comparison did not produce a report.");
   }
-  await writeVisualReport({ report, reportDirectory });
+  await writeScreenshotComparisonReport({ report, reportDirectory });
   const result = classifyVisualTestRun({ report, approved });
   const changed = report.comparisons.filter(
     ({ status }) => status !== "unchanged"
@@ -583,7 +582,7 @@ const main = async () => {
     );
   }
   if (openReport) {
-    openVisualReport(path.join(reportDirectory, "index.html"));
+    openScreenshotComparisonReport(path.join(reportDirectory, "index.html"));
   }
   process.exitCode = result === "passed" || result === "approved" ? 0 : 1;
 };

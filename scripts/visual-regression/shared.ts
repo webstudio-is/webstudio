@@ -1,7 +1,4 @@
-import type {
-  ScreenshotDiffRegion,
-  ScreenshotTextAnalysis,
-} from "@webstudio-is/project-build/vision";
+import type { ScreenshotComparisonReport } from "@webstudio-is/project-build/vision";
 
 export type StoryEntry = {
   id: string;
@@ -14,31 +11,6 @@ export type StoryComparison = {
   status: "added" | "removed" | "comparable";
   baseline: StoryEntry | undefined;
   current: StoryEntry | undefined;
-};
-
-export type VisualComparisonResult = {
-  id: string;
-  title: string;
-  name: string;
-  status: "unchanged" | "changed" | "added" | "removed" | "error";
-  baselinePath?: string;
-  currentPath?: string;
-  diffPath?: string;
-  contextDiffPath?: string;
-  differentPixels?: number;
-  mismatchPercentage?: number;
-  regions?: readonly ScreenshotDiffRegion[];
-  textAnalysis?: ScreenshotTextAnalysis;
-  warnings?: readonly string[];
-  error?: string;
-};
-
-export type VisualTestReport = {
-  baselineCommit: string;
-  currentCommit: string;
-  durationMs: number;
-  comparisons: readonly VisualComparisonResult[];
-  errors: readonly string[];
 };
 
 export const getStoryComparisons = ({
@@ -71,7 +43,7 @@ export const classifyVisualTestRun = ({
   report,
   approved,
 }: {
-  report: VisualTestReport;
+  report: ScreenshotComparisonReport;
   approved: boolean;
 }): "passed" | "visual-differences" | "approved" | "test-failure" => {
   if (

@@ -106,6 +106,7 @@
   "devDependencies": {
     "@types/papaparse": "^5.5.2",
     "@webstudio-is/tsconfig": "workspace:*",
+    "parse5": "7.3.0",
     "vitest": "^3.1.2"
   }
 }

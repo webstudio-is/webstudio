@@ -1,6 +1,33 @@
+import { spawn } from "node:child_process";
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { VisualTestReport } from "./shared";
+import type { ScreenshotDiffRegion } from "./screenshot-diff";
+import type { ScreenshotTextAnalysis } from "./screenshot-text-diff";
+
+export type ScreenshotComparisonReportItem = {
+  id: string;
+  title: string;
+  name: string;
+  status: "unchanged" | "changed" | "added" | "removed" | "error";
+  baselinePath?: string;
+  currentPath?: string;
+  diffPath?: string;
+  contextDiffPath?: string;
+  differentPixels?: number;
+  mismatchPercentage?: number;
+  regions?: readonly ScreenshotDiffRegion[];
+  textAnalysis?: ScreenshotTextAnalysis;
+  warnings?: readonly string[];
+  error?: string;
+};
+
+export type ScreenshotComparisonReport = {
+  baselineLabel: string;
+  currentLabel: string;
+  durationMs: number;
+  comparisons: readonly ScreenshotComparisonReportItem[];
+  errors: readonly string[];
+};
 
 const reportDataMarker = "__VISUAL_REPORT_DATA__";
 
@@ -17,11 +44,11 @@ const serializeEmbeddedJson = (value: unknown) =>
     .replaceAll("\u2028", "\\u2028")
     .replaceAll("\u2029", "\\u2029");
 
-export const writeVisualReport = async ({
+export const writeScreenshotComparisonReport = async ({
   report,
   reportDirectory,
 }: {
-  report: VisualTestReport;
+  report: ScreenshotComparisonReport;
   reportDirectory: string;
 }) => {
   await mkdir(reportDirectory, { recursive: true });
@@ -39,19 +66,21 @@ export const writeVisualReport = async ({
     })),
   };
   const template = await readFile(
-    new URL("./report-template.html", import.meta.url),
+    new URL("./screenshot-report.html", import.meta.url),
     "utf8"
   );
   if (template.includes(reportDataMarker) === false) {
-    throw new Error(`Visual report template is missing ${reportDataMarker}.`);
+    throw new Error(
+      `Screenshot report template is missing ${reportDataMarker}.`
+    );
   }
   await Promise.all([
     copyFile(
-      new URL("./report.css", import.meta.url),
+      new URL("./screenshot-report.css", import.meta.url),
       path.join(reportDirectory, "report.css")
     ),
     copyFile(
-      new URL("./report.js", import.meta.url),
+      new URL("./screenshot-report-client.js", import.meta.url),
       path.join(reportDirectory, "report.js")
     ),
     writeFile(
@@ -63,4 +92,19 @@ export const writeVisualReport = async ({
       template.replace(reportDataMarker, serializeEmbeddedJson(portableReport))
     ),
   ]);
+};
+
+export const openScreenshotComparisonReport = (reportPath: string) => {
+  const command =
+    process.platform === "darwin"
+      ? { file: "open", args: [reportPath] }
+      : process.platform === "win32"
+        ? { file: "cmd", args: ["/c", "start", "", reportPath] }
+        : { file: "xdg-open", args: [reportPath] };
+
+  const child = spawn(command.file, command.args, {
+    detached: true,
+    stdio: "ignore",
+  });
+  child.unref();
 };
