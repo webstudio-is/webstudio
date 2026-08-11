@@ -24,6 +24,6 @@ Examples use an installed `webstudio` command. See [CLI](cli.md) for Node.js and
 
 - [CLI](cli.md) – Install and use the Webstudio command-line interface
 - [Content Engine](foundations/content-engine.md) – Build a file-based site with Markdown and Assets queries
-- [Commands and search](foundations/commands-and-search.md) – Run Builder commands from the keyboard
+- [Content Engine reference](foundations/content-engine-reference.md) – Check query fields, modes, diagnostics, references, and limits
 - [Share links](foundations/share-links.md) – Grant the access used to link a Project
 - [Publishing and custom domains](foundations/publishing-and-custom-domains.md) – Publish the completed Project

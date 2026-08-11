@@ -358,8 +358,8 @@ reference cycles fail instead of returning partial data.
 
 ## Related
 
+- [Content Engine reference](content-engine-reference.md) – Check query fields, modes, diagnostics, references, and limits
 - [Assets](assets.md) – Create, edit, organize, and reference project files
 - [Data variables](variables.md) – Define resources and understand their scope
-- [Expression editor](expression-editor.md) – Bind query results to components
 - [Collection](../core-components/collection.md) – Render article lists
 - [Markdown Embed](../core-components/markdown-embed.md) – Render and style an article body

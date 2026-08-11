@@ -406,6 +406,8 @@ source of truth. For tools with no required arguments, pass `{}`.
 
 {{mcpArgumentExampleIndex}}
 
+{{contentEngineReferenceMarkdown}}
+
 ## Screenshot Verification
 
 {{screenshotVerificationSummary}}

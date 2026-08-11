@@ -41,6 +41,7 @@
   * [🔍 Commands & search](university/foundations/commands-and-search.md)
   * [🗂️ Assets](university/foundations/assets.md)
   * [📚 Content Engine](university/foundations/content-engine.md)
+    * [Content Engine reference](university/foundations/content-engine-reference.md)
   * [🎯 SEO settings](university/foundations/seo-settings.md)
   * [⚡ Performance](university/foundations/performance.md)
   * [⌨️ Shortcuts](university/foundations/shortcuts.md)
