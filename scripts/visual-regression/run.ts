@@ -50,7 +50,7 @@ const baselinePort = 6101;
 const currentPort = 6102;
 const pixelThreshold = 0.1;
 const maxMismatchPercentage = 0.001;
-const captureConcurrency = Number(process.env.VISUAL_CAPTURE_CONCURRENCY ?? 5);
+const captureConcurrency = Number(process.env.VISUAL_CAPTURE_CONCURRENCY ?? 8);
 const execFileAsync = promisify(execFile);
 if (Number.isInteger(captureConcurrency) === false || captureConcurrency < 1) {
   throw new Error("VISUAL_CAPTURE_CONCURRENCY must be a positive integer.");
