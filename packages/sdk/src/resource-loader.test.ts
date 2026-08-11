@@ -245,6 +245,7 @@ describe("loadResource", () => {
             hasMore: true,
           },
           __diagnostics__: { scope: "query-preview" },
+          __performance__: { serverDurationMs: 125.5, responseBytes: 1024 },
         })
       )
     );
@@ -268,6 +269,7 @@ describe("loadResource", () => {
       },
       meta: { totalCount: 5, hasMore: true },
       __diagnostics__: { scope: "query-preview" },
+      __performance__: { serverDurationMs: 125.5, responseBytes: 1024 },
     });
     expect(Object.keys(result.data as Record<string, unknown>)).toEqual([
       "second",

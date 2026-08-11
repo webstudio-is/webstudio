@@ -17,6 +17,32 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
+  ssg-artifact:
+    name: Packaged SSG Assets build
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
+    timeout-minutes: 20
+    runs-on: ubuntu-24.04-arm
+    environment:
+      name: development
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
+
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
+
+      - uses: ./.github/actions/ci-setup
+
+      - name: Build packaged SSG fixture
+        run: pnpm --filter webstudio test:ssg-package
+
   checks:
     # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
     if: |

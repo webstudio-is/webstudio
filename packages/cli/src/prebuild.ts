@@ -35,6 +35,7 @@ import {
   replaceFormActionsWithResources,
   isCoreComponent,
   coreMetas,
+  decodeDataSourceVariable,
   SYSTEM_VARIABLE_ID,
   generateCss,
   ROOT_INSTANCE_ID,
@@ -101,6 +102,7 @@ import { createFramework as createRemixFramework } from "./framework-remix";
 import { createFramework as createReactRouterFramework } from "./framework-react-router";
 import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
 import { routeTemplatesDirectory } from "./framework";
+import { readSsgAssetResourceFetchTemplate } from "./ssg-asset-resource-fetch-template";
 
 export const generatedFilesManifest = join(
   ".webstudio",
@@ -111,10 +113,6 @@ const contentRuntimeBundleUrl = new URL(
   import.meta.url
 );
 const contentRuntimeFile = "$resources.asset-query-vendor.js";
-const ssgAssetResourceFetchTemplateUrl = new URL(
-  "../templates/ssg/app/asset-resource-fetch.ts",
-  import.meta.url
-);
 const appRoot = "app";
 const generatedDir = join(appRoot, "__generated__");
 const routesDir = join(appRoot, "routes");
@@ -138,7 +136,12 @@ type SiteDataByPage = {
 
 const getBoundSystemRouteParameter = (expression: string) => {
   const path = parseStaticMemberPath(expression);
-  return path?.length === 3 && path[0] === "system" && path[1] === "params"
+  const variable = path?.[0];
+  const isSystem =
+    variable === "system" ||
+    (variable !== undefined &&
+      decodeDataSourceVariable(variable) === SYSTEM_VARIABLE_ID);
+  return path?.length === 3 && isSystem && path[1] === "params"
     ? path[2]
     : undefined;
 };
@@ -320,33 +323,37 @@ export const getAssetResourcePrerenderPaths = ({
   });
   let enumerableConfigurations = configurations;
   if (requireCompleteEnumeration && configurations.length > 0) {
-    const configurationsByParameters = configurations.flatMap(
-      (configuration) => {
-        const boundRouteParameters = new Set(
-          getQueryConditions(configuration.where).flatMap((condition) => {
-            const routeParameter = getBoundSystemRouteParameter(
-              condition.value
-            );
-            return routeParameter !== undefined &&
-              routeParameterNames.has(routeParameter)
-              ? [routeParameter]
-              : [];
-          })
-        );
-        return [...routeParameterNames].every((routeParameter) =>
+    const configurationsByParameters = configurations.map((configuration) => {
+      const boundRouteParameters = new Set(
+        getQueryConditions(configuration.where).flatMap((condition) => {
+          const routeParameter = getBoundSystemRouteParameter(condition.value);
+          return routeParameter !== undefined &&
+            routeParameterNames.has(routeParameter)
+            ? [routeParameter]
+            : [];
+        })
+      );
+      return { configuration, boundRouteParameters };
+    });
+    const routeConfigurations = configurationsByParameters.filter(
+      ({ boundRouteParameters }) => boundRouteParameters.size > 0
+    );
+    const completeRouteConfigurations = routeConfigurations.filter(
+      ({ boundRouteParameters }) =>
+        [...routeParameterNames].every((routeParameter) =>
           boundRouteParameters.has(routeParameter)
         )
-          ? [{ configuration, boundRouteParameters }]
-          : [];
-      }
     );
-    if (configurationsByParameters.length === 0) {
+    if (
+      routeConfigurations.length > 0 &&
+      completeRouteConfigurations.length === 0
+    ) {
       throw new Error(
         "Dynamic SSG route parameters must be completely enumerated by one Assets query"
       );
     }
     let firstUnenumerableParameter: string | undefined;
-    enumerableConfigurations = configurationsByParameters.flatMap(
+    enumerableConfigurations = completeRouteConfigurations.flatMap(
       ({ configuration, boundRouteParameters }) => {
         for (const routeParameter of boundRouteParameters) {
           if (
@@ -363,7 +370,10 @@ export const getAssetResourcePrerenderPaths = ({
         return [configuration];
       }
     );
-    if (enumerableConfigurations.length === 0) {
+    if (
+      completeRouteConfigurations.length > 0 &&
+      enumerableConfigurations.length === 0
+    ) {
       throw new Error(
         `Dynamic SSG route parameter ${JSON.stringify(firstUnenumerableParameter)} cannot be completely enumerated from every Assets query branch`
       );
@@ -496,7 +506,7 @@ const configureSsgAssetResourceFetch = async ({
   const ssgFetchPath = join(cwd(), "app", "asset-resource-fetch.ts");
   if (existsSync(ssgFetchPath)) {
     const content = enabled
-      ? await readFile(ssgAssetResourceFetchTemplateUrl, "utf8")
+      ? await readSsgAssetResourceFetchTemplate()
       : `export const createSsgAssetResourceFetch = (_options: unknown) =>
   async (_input: RequestInfo | URL, _init?: RequestInit) => undefined;\n`;
     await writeFileIfChanged(ssgFetchPath, content);

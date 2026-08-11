@@ -31,6 +31,7 @@ import {
   createContentSourceFile,
   computeCanonicalAssetRevision,
   decodeUtf8,
+  fullCanonicalAssetMetadataRequirements,
   materializeContentSource,
   materializeContentSnapshot,
   ContentSourceChangedError,
@@ -75,28 +76,72 @@ import {
 } from "./asset-patch-core";
 import type { UploadTicket } from "./types";
 import {
+  areCanonicalAssetFileEntriesCurrent,
   loadCanonicalAssetBaseEntries,
   synchronizeCanonicalAssets,
 } from "./canonical-metadata-backfill";
-import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
+import {
+  loadCanonicalAssetFileEntries,
+  loadCanonicalAssetFileEntriesForRecovery,
+} from "./canonical-metadata-persistence";
 import {
   deleteAssetFoldersWithClient,
   loadAssetFoldersByProjectWithClient,
   upsertAssetFolderWithClient,
 } from "./folder-persistence";
 import {
+  createContentCompilationCache,
   createContentCompilationCacheKey,
   getContentDatabaseForArtifact,
-  sharedContentCompilationCache,
   type ContentCompilationCache,
 } from "./content-compilation-cache";
 import {
   AssetRepositoryConflictError,
   AssetRepositoryNotFoundError,
 } from "./asset-repository-errors";
+import {
+  emitAssetQueryPerformanceEvent,
+  measureAssetQueryPerformance,
+  type AssetQueryPerformanceObserver,
+  type AssetQueryPerformancePhase,
+} from "./query-performance";
 
 type CreateId = () => Asset["id"];
 type RepositoryObjectStore = AssetObjectReader & Partial<AssetObjectWriter>;
+
+type ContentBytesReference = {
+  contentRef: string;
+  revision: string;
+};
+
+class RequestContentBytesCache {
+  private values = new Map<string, Uint8Array>();
+  private byteLength = 0;
+
+  private getKey({ contentRef, revision }: ContentBytesReference) {
+    return JSON.stringify([contentRef, revision]);
+  }
+
+  get(reference: ContentBytesReference) {
+    return this.values.get(this.getKey(reference));
+  }
+
+  set({
+    contentRef,
+    revision,
+    bytes,
+  }: ContentBytesReference & { bytes: Uint8Array }) {
+    const key = this.getKey({ contentRef, revision });
+    const previous = this.values.get(key);
+    const nextByteLength =
+      this.byteLength - (previous?.byteLength ?? 0) + bytes.byteLength;
+    if (nextByteLength > contentEngineLimits.hydratedTotalBytes) {
+      return;
+    }
+    this.values.set(key, bytes);
+    this.byteLength = nextByteLength;
+  }
+}
 
 const defaultDependencies = {
   hasProjectPermit: authorizeProject.hasProjectPermit,
@@ -114,7 +159,9 @@ const defaultDependencies = {
   loadCanonicalAssetBaseEntries,
   synchronizeCanonicalAssets,
   loadCanonicalAssetFileEntries,
+  loadCanonicalAssetFileEntriesForRecovery,
   createAssetIndex,
+  performanceNow: () => performance.now(),
 };
 
 type AssetRepositoryDependencies = typeof defaultDependencies;
@@ -128,7 +175,14 @@ export class AssetIndexPreparationError extends Error {
     issues: Awaited<ReturnType<typeof synchronizeCanonicalAssets>>["issues"]
   ) {
     super(
-      `Asset index preparation failed for ${issues.length} asset${issues.length === 1 ? "" : "s"}: ${issues.map(({ assetId, storageName, message }) => `${assetId} (${storageName}): ${message}`).join("; ")}`
+      `Asset index preparation failed for ${issues.length} asset${
+        issues.length === 1 ? "" : "s"
+      }: ${issues
+        .map(
+          ({ assetId, storageName, message }) =>
+            `${assetId} (${storageName}): ${message}`
+        )
+        .join("; ")}`
     );
     this.name = "AssetIndexPreparationError";
     this.issues = issues;
@@ -251,6 +305,7 @@ export class PostgresAssetRepository implements AssetRepository {
   private readonly contentDatabaseMaxBytes: number;
   private readonly compilationCache: ContentCompilationCache | undefined;
   private readonly onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
+  private readonly onPerformanceEvent?: AssetQueryPerformanceObserver;
 
   constructor({
     projectId,
@@ -260,14 +315,16 @@ export class PostgresAssetRepository implements AssetRepository {
     contentDatabaseMaxBytes = contentEngineLimits.databaseBytes,
     compilationCache,
     onDocumentGraphEvent,
+    onPerformanceEvent,
   }: {
     projectId: string;
     context: AppContext;
     assetStore: RepositoryObjectStore;
     dependencies?: Partial<AssetRepositoryDependencies>;
     contentDatabaseMaxBytes?: number;
-    compilationCache?: ContentCompilationCache;
+    compilationCache?: ContentCompilationCache | false;
     onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
+    onPerformanceEvent?: AssetQueryPerformanceObserver;
   }) {
     this.projectId = projectId;
     this.context = context;
@@ -275,9 +332,23 @@ export class PostgresAssetRepository implements AssetRepository {
     this.dependencies = { ...defaultDependencies, ...dependencies };
     this.contentDatabaseMaxBytes = contentDatabaseMaxBytes;
     this.compilationCache =
-      compilationCache ??
-      (dependencies === undefined ? sharedContentCompilationCache : undefined);
+      compilationCache === false
+        ? undefined
+        : (compilationCache ?? createContentCompilationCache());
     this.onDocumentGraphEvent = onDocumentGraphEvent;
+    this.onPerformanceEvent = onPerformanceEvent;
+  }
+
+  private measurePerformance<Value>(
+    phase: AssetQueryPerformancePhase,
+    operation: () => Promise<Value>
+  ) {
+    return measureAssetQueryPerformance({
+      phase,
+      operation,
+      observer: this.onPerformanceEvent,
+      now: this.dependencies.performanceNow,
+    });
   }
 
   static async forUpload({
@@ -334,7 +405,9 @@ export class PostgresAssetRepository implements AssetRepository {
     if (this.context.authorization?.type === "service") {
       return;
     }
-    await this.assertCanView();
+    await this.measurePerformance("repository-authorization", () =>
+      this.assertCanView()
+    );
   }
 
   private getWritableStore(): AssetObjectStore {
@@ -604,9 +677,10 @@ export class PostgresAssetRepository implements AssetRepository {
 
   private async prepareIndexAfterAuthorization(
     requirements: ContentCompilationPlan | undefined,
-    strict: boolean
+    strict: boolean,
+    contentBytesCache = new RequestContentBytesCache()
   ) {
-    const source = this.createContentSource(strict);
+    const source = this.createContentSource(strict, contentBytesCache);
     const compile = async (
       entries: Parameters<typeof createAssetIndex>[0]["entries"],
       assetReferences: Parameters<
@@ -617,24 +691,34 @@ export class PostgresAssetRepository implements AssetRepository {
       >[0]["assetValueReferences"],
       documentGraph: Parameters<typeof createAssetIndex>[0]["documentGraph"]
     ) =>
-      await this.dependencies.createAssetIndex({
-        projectId: this.projectId,
-        entries,
-        assetReferences,
-        ...(assetValueReferences === undefined ||
-        Object.keys(assetValueReferences).length === 0
-          ? {}
-          : { assetValueReferences }),
-        documentGraph,
-        maxBytes: this.contentDatabaseMaxBytes,
-        ...(requirements === undefined ? {} : { plan: requirements }),
-      });
+      await this.measurePerformance(
+        "artifact-compilation",
+        async () =>
+          await this.dependencies.createAssetIndex({
+            projectId: this.projectId,
+            entries,
+            assetReferences,
+            ...(assetValueReferences === undefined ||
+            Object.keys(assetValueReferences).length === 0
+              ? {}
+              : { assetValueReferences }),
+            documentGraph,
+            maxBytes: this.contentDatabaseMaxBytes,
+            ...(requirements === undefined ? {} : { plan: requirements }),
+          })
+      );
     if (this.compilationCache === undefined) {
+      emitAssetQueryPerformanceEvent(this.onPerformanceEvent, {
+        type: "compilation-cache",
+        status: "disabled",
+      });
       const { entries, assetReferences, assetValueReferences, documentGraph } =
         await materializeContentSource({
           source,
           plan: requirements,
           maximumContentBytes: this.contentDatabaseMaxBytes,
+          onPerformanceEvent: this.onPerformanceEvent,
+          performanceNow: this.dependencies.performanceNow,
         });
       return await compile(
         entries,
@@ -644,7 +728,10 @@ export class PostgresAssetRepository implements AssetRepository {
       );
     }
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const snapshot = await source.openSnapshot();
+      const snapshot = await this.measurePerformance(
+        "source-snapshot",
+        source.openSnapshot
+      );
       const key = createContentCompilationCacheKey({
         projectId: this.projectId,
         sourceRevision: snapshot.revision,
@@ -653,24 +740,34 @@ export class PostgresAssetRepository implements AssetRepository {
         maxBytes: this.contentDatabaseMaxBytes,
       });
       try {
-        return await this.compilationCache.getOrCreate(key, async () => {
-          const {
-            entries,
-            assetReferences,
-            assetValueReferences,
-            documentGraph,
-          } = await materializeContentSnapshot({
-            snapshot,
-            plan: requirements,
-            maximumContentBytes: this.contentDatabaseMaxBytes,
-          });
-          return await compile(
-            entries,
-            assetReferences,
-            assetValueReferences,
-            documentGraph
-          );
+        const cached = this.compilationCache.getOrCreateWithStatus(
+          key,
+          async () => {
+            const {
+              entries,
+              assetReferences,
+              assetValueReferences,
+              documentGraph,
+            } = await materializeContentSnapshot({
+              snapshot,
+              plan: requirements,
+              maximumContentBytes: this.contentDatabaseMaxBytes,
+              onPerformanceEvent: this.onPerformanceEvent,
+              performanceNow: this.dependencies.performanceNow,
+            });
+            return await compile(
+              entries,
+              assetReferences,
+              assetValueReferences,
+              documentGraph
+            );
+          }
+        );
+        emitAssetQueryPerformanceEvent(this.onPerformanceEvent, {
+          type: "compilation-cache",
+          status: cached.status,
         });
+        return await cached.promise;
       } catch (error) {
         if (error instanceof ContentSourceChangedError === false) {
           throw error;
@@ -680,8 +777,13 @@ export class PostgresAssetRepository implements AssetRepository {
     throw new ContentSourceChangedError();
   }
 
-  private createContentSource(strict: boolean): ContentSource {
+  private createContentSource(
+    strict: boolean,
+    contentBytesCache = new RequestContentBytesCache()
+  ): ContentSource {
     const readFile = this.assetStore.readFile;
+    const onPerformanceEvent = this.onPerformanceEvent;
+    const performanceNow = this.dependencies.performanceNow;
     const loadBaseEntries = () =>
       this.dependencies.loadCanonicalAssetBaseEntries({
         client: this.context.postgrest.client,
@@ -707,22 +809,42 @@ export class PostgresAssetRepository implements AssetRepository {
                   id: entry.assetId,
                   source: {
                     [Symbol.asyncIterator]: async function* () {
+                      const cached = contentBytesCache.get({
+                        contentRef: entry.document.contentRef,
+                        revision: entry.revision,
+                      });
+                      if (cached !== undefined) {
+                        yield cached;
+                        return;
+                      }
+                      const startedAt = performanceNow();
                       const response = await readFile(
                         entry.document.contentRef,
                         entry.document.size === 0
                           ? undefined
                           : { offset: 0, length: entry.document.size }
                       );
-                      let readBytes = 0;
-                      for await (const chunk of response.data) {
-                        readBytes += chunk.byteLength;
-                        yield chunk;
-                      }
-                      if (readBytes !== entry.document.size) {
+                      const bytes = await readBoundedBytes(
+                        response.data,
+                        entry.document.size
+                      );
+                      if (bytes.byteLength !== entry.document.size) {
                         throw new Error(
                           "Asset content does not match its canonical size"
                         );
                       }
+                      contentBytesCache.set({
+                        contentRef: entry.document.contentRef,
+                        revision: entry.revision,
+                        bytes,
+                      });
+                      emitAssetQueryPerformanceEvent(onPerformanceEvent, {
+                        type: "content-read",
+                        purpose: "document-graph",
+                        byteLength: bytes.byteLength,
+                        durationMs: Math.max(0, performanceNow() - startedAt),
+                      });
+                      yield bytes;
                     },
                   },
                 },
@@ -734,6 +856,7 @@ export class PostgresAssetRepository implements AssetRepository {
               requirements: plan,
               strict,
               maximumContentBytes: options?.maximumContentBytes,
+              contentBytesCache,
             }),
           isCurrent: async () =>
             (await computeCanonicalAssetRevision(await loadBaseEntries())) ===
@@ -748,11 +871,13 @@ export class PostgresAssetRepository implements AssetRepository {
     requirements,
     strict,
     maximumContentBytes,
+    contentBytesCache,
   }: {
     baseEntries: Awaited<ReturnType<typeof loadCanonicalAssetBaseEntries>>;
     requirements?: ContentCompilationPlan;
     strict: boolean;
     maximumContentBytes?: number;
+    contentBytesCache: RequestContentBytesCache;
   }) {
     const candidateBaseEntries =
       requirements === undefined
@@ -774,54 +899,104 @@ export class PostgresAssetRepository implements AssetRepository {
       requiresStructuredProperties(requirements) ||
       requirements.excerpt
     ) {
-      const result = await this.synchronizeTrusted(
-        requirements,
-        candidateAssetIds
-      );
-      if (strict && result.issues.length > 0) {
-        throw new AssetIndexPreparationError(result.issues);
-      }
-      entries = await this.dependencies.loadCanonicalAssetFileEntries({
-        client: this.context.postgrest.client,
-        projectId: this.projectId,
-        assetIds: candidateAssetIds,
-      });
-    }
-    return await prepareContentCompilerEntries({
-      entries,
-      plan: requirements,
-      loadContent: async (entry) => {
-        const response = await this.assetStore.readFile(
-          entry.document.contentRef,
-          { offset: 0, length: entry.document.size }
-        );
-        const bytes = await readBoundedBytes(
-          response.data,
-          entry.document.size
-        );
-        if (bytes.byteLength !== entry.document.size) {
-          throw new Error("Asset content does not match its canonical size");
-        }
-        let content: string;
-        try {
-          content = decodeUtf8(bytes);
-        } catch {
-          if (strict) {
-            throw new AssetIndexPreparationError([
-              {
-                assetId: entry.assetId,
-                storageName: entry.document.contentRef,
-                revision: entry.revision,
-                message: "Selected asset content is not valid UTF-8",
-              },
-            ]);
+      entries = await this.measurePerformance(
+        "canonical-metadata",
+        async () => {
+          const metadataRequirements =
+            requirements === undefined
+              ? fullCanonicalAssetMetadataRequirements
+              : {
+                  structuredProperties:
+                    requiresStructuredProperties(requirements),
+                  excerpt: requirements.excerpt,
+                };
+          const current =
+            await this.dependencies.loadCanonicalAssetFileEntriesForRecovery({
+              client: this.context.postgrest.client,
+              projectId: this.projectId,
+              assetIds: candidateAssetIds,
+            });
+          if (
+            current.inconsistentRows.length === 0 &&
+            areCanonicalAssetFileEntriesCurrent({
+              baseEntries: candidateBaseEntries,
+              currentEntries: current.entries,
+              requirements: metadataRequirements,
+            })
+          ) {
+            return current.entries;
           }
-          return;
+          const result = await this.synchronizeTrusted(
+            requirements,
+            candidateAssetIds
+          );
+          if (strict && result.issues.length > 0) {
+            throw new AssetIndexPreparationError(result.issues);
+          }
+          return await this.dependencies.loadCanonicalAssetFileEntries({
+            client: this.context.postgrest.client,
+            projectId: this.projectId,
+            assetIds: candidateAssetIds,
+          });
         }
-        return content;
-      },
-      maximumContentBytes,
-    });
+      );
+    }
+    return await this.measurePerformance(
+      "compiler-entries",
+      async () =>
+        await prepareContentCompilerEntries({
+          entries,
+          plan: requirements,
+          loadContent: async (entry) => {
+            const startedAt = this.dependencies.performanceNow();
+            const response = await this.assetStore.readFile(
+              entry.document.contentRef,
+              { offset: 0, length: entry.document.size }
+            );
+            const bytes = await readBoundedBytes(
+              response.data,
+              entry.document.size
+            );
+            if (bytes.byteLength !== entry.document.size) {
+              throw new Error(
+                "Asset content does not match its canonical size"
+              );
+            }
+            contentBytesCache.set({
+              contentRef: entry.document.contentRef,
+              revision: entry.revision,
+              bytes,
+            });
+            emitAssetQueryPerformanceEvent(this.onPerformanceEvent, {
+              type: "content-read",
+              purpose: "compiler-entry",
+              byteLength: bytes.byteLength,
+              durationMs: Math.max(
+                0,
+                this.dependencies.performanceNow() - startedAt
+              ),
+            });
+            let content: string;
+            try {
+              content = decodeUtf8(bytes);
+            } catch {
+              if (strict) {
+                throw new AssetIndexPreparationError([
+                  {
+                    assetId: entry.assetId,
+                    storageName: entry.document.contentRef,
+                    revision: entry.revision,
+                    message: "Selected asset content is not valid UTF-8",
+                  },
+                ]);
+              }
+              return;
+            }
+            return content;
+          },
+          maximumContentBytes,
+        })
+    );
   }
 
   async readFieldCatalog() {
@@ -862,7 +1037,9 @@ export class PostgresAssetRepository implements AssetRepository {
     );
   }
 
-  private createQueryDocumentLoader(): DocumentSourceLoader {
+  private createQueryDocumentLoader(
+    contentBytesCache?: RequestContentBytesCache
+  ): DocumentSourceLoader {
     const onEvent = this.onDocumentGraphEvent;
     return observeDocumentSourceLoader({
       onEvent,
@@ -870,6 +1047,21 @@ export class PostgresAssetRepository implements AssetRepository {
         signal?.throwIfAborted();
         if (node.format === undefined) {
           throw new Error(`Document ${node.id} format is unavailable`);
+        }
+        const cached = contentBytesCache?.get({
+          contentRef: node.contentRef,
+          revision: node.revision,
+        });
+        if (cached !== undefined) {
+          return {
+            format: node.format,
+            revision: node.revision,
+            source: {
+              [Symbol.asyncIterator]: async function* () {
+                yield cached;
+              },
+            },
+          };
         }
         const response = await this.assetStore.readFile(node.contentRef);
         signal?.throwIfAborted();
@@ -889,7 +1081,9 @@ export class PostgresAssetRepository implements AssetRepository {
     if (requests.length === 0) {
       return [];
     }
-    await this.assertCanView();
+    await this.measurePerformance("repository-authorization", () =>
+      this.assertCanView()
+    );
     signal?.throwIfAborted();
     const executeIndividually = (request: AssetQueryRequestInput) =>
       this.queryAfterAuthorization(request, {
@@ -908,11 +1102,12 @@ export class PostgresAssetRepository implements AssetRepository {
         const query = queries[index];
         return query === undefined ? [] : [query];
       });
-    // Queries covered by the saved plan must use its artifact so published
-    // truncation and revision semantics remain unchanged. Only unpinned,
-    // uncovered queries may use a temporary literal union.
-    const databaseIndexes = requests.flatMap((_request, index) =>
+    // Revision-pinned requests must use the saved plan that produced the
+    // expected artifact. Ordinary Builder previews compile their concrete
+    // query values so a detail page hydrates only the documents it needs.
+    const databaseIndexes = requests.flatMap((request, index) =>
       queries[index] !== undefined &&
+      request.indexRevision !== undefined &&
       databasePlan !== undefined &&
       isAssetQueryCoveredByCompilationPlan({
         plan: databasePlan,
@@ -921,15 +1116,13 @@ export class PostgresAssetRepository implements AssetRepository {
         ? [index]
         : []
     );
-    const databaseIndexSet = new Set(databaseIndexes);
     const literalIndexes = requests.flatMap((request, index) =>
-      databaseIndexSet.has(index) === false &&
-      queries[index] !== undefined &&
-      request.indexRevision === undefined
+      queries[index] !== undefined && request.indexRevision === undefined
         ? [index]
         : []
     );
-    const load = this.createQueryDocumentLoader();
+    const contentBytesCache = new RequestContentBytesCache();
+    const load = this.createQueryDocumentLoader(contentBytesCache);
     const resolutionSession = createDocumentResolutionSession({
       load,
       concurrency: contentEngineLimits.concurrentContentReads,
@@ -951,32 +1144,45 @@ export class PostgresAssetRepository implements AssetRepository {
       }
       try {
         signal?.throwIfAborted();
-        const artifact = await this.prepareIndexAfterAuthorization(
-          artifactPlan,
-          false
+        const artifact = await this.measurePerformance(
+          "index-preparation",
+          () =>
+            this.prepareIndexAfterAuthorization(
+              artifactPlan,
+              false,
+              contentBytesCache
+            )
         );
         signal?.throwIfAborted();
         const database = getContentDatabaseForArtifact(artifact);
         if (preserveTruncation || database.getStats().truncated === false) {
           const runtimePlan = createAssetQueryBatchPlan(selectQueries(indexes));
-          const runtimeAssets = await this.loadQueryRuntimeAssets({
-            artifact,
-            plan: runtimePlan,
-          });
+          const runtimeAssets = await this.measurePerformance(
+            "runtime-assets",
+            () =>
+              this.loadQueryRuntimeAssets({
+                artifact,
+                plan: runtimePlan,
+              })
+          );
           signal?.throwIfAborted();
           let batchExecution:
             | Promise<PromiseSettledResult<AssetQueryExecutionResult>[]>
             | undefined;
           const executeBatch = () => {
-            batchExecution ??= database.queryManyWithDocumentGraph({
-              requests: indexes.map((index) => requests[index]),
-              readContent: this.assetStore.readFile,
-              runtimeAssets,
-              load,
-              resolutionSession,
-              signal,
-              onEvent: this.onDocumentGraphEvent,
-            });
+            batchExecution ??= this.measurePerformance(
+              "document-resolution",
+              () =>
+                database.queryManyWithDocumentGraph({
+                  requests: indexes.map((index) => requests[index]),
+                  readContent: this.assetStore.readFile,
+                  runtimeAssets,
+                  load,
+                  resolutionSession,
+                  signal,
+                  onEvent: this.onDocumentGraphEvent,
+                })
+            );
             return batchExecution;
           };
           for (const [position, index] of indexes.entries()) {
@@ -1040,7 +1246,9 @@ export class PostgresAssetRepository implements AssetRepository {
     request: AssetQueryRequestInput,
     options: AssetQueryPreviewOptions = {}
   ): Promise<AssetQueryExecutionPreviewResult | AssetQueryResultOnly> {
-    await this.assertCanView();
+    await this.measurePerformance("repository-authorization", () =>
+      this.assertCanView()
+    );
     return await this.queryAfterAuthorization(request, options);
   }
 
@@ -1055,40 +1263,40 @@ export class PostgresAssetRepository implements AssetRepository {
     }: AssetQueryPreviewOptions = {}
   ): Promise<AssetQueryExecutionPreviewResult | AssetQueryResultOnly> {
     signal?.throwIfAborted();
+    const contentBytesCache = new RequestContentBytesCache();
     const query = assetQuery.parse(request.query);
     const plan = createContentCompilationPlan([
       createLiteralContentCompilationQuery({ id: "preview", query }),
     ]);
-    // Public REST queries are not necessarily represented by the Builder's
-    // saved compilation plan. Reuse that database only when one of its queries
-    // structurally covers the current runtime values.
+    // Revision-pinned requests must use the saved plan that produced the
+    // expected artifact. Unpinned previews compile the concrete query and only
+    // prepare the saved deployment plan for explicit diagnostics.
     const coveredByDatabasePlan =
       databasePlan !== undefined &&
       isAssetQueryCoveredByCompilationPlan({ plan: databasePlan, query });
-    const index = await this.prepareIndexAfterAuthorization(
-      coveredByDatabasePlan ? databasePlan : plan,
-      false
+    const usePublishedIndex =
+      request.indexRevision !== undefined && coveredByDatabasePlan;
+    const index = await this.measurePerformance("index-preparation", () =>
+      this.prepareIndexAfterAuthorization(
+        usePublishedIndex ? databasePlan : plan,
+        false,
+        contentBytesCache
+      )
     );
     signal?.throwIfAborted();
     const database = getContentDatabaseForArtifact(index);
     const queryIndex =
-      includeDiagnostics && coveredByDatabasePlan
-        ? await this.prepareIndexAfterAuthorization(plan, false)
+      includeDiagnostics && usePublishedIndex
+        ? await this.prepareIndexAfterAuthorization(
+            plan,
+            false,
+            contentBytesCache
+          )
         : index;
     signal?.throwIfAborted();
-    let publishedIndex: typeof index | undefined;
-    if (includeDiagnostics) {
-      const publishedPlan = diagnosticsPlan ?? databasePlan;
-      publishedIndex =
-        publishedPlan === undefined
-          ? queryIndex
-          : await this.prepareIndexAfterAuthorization(publishedPlan, false);
-    }
-    signal?.throwIfAborted();
-    const runtimeAssets = await this.loadQueryRuntimeAssets({
-      artifact: index,
-      plan,
-    });
+    const runtimeAssets = await this.measurePerformance("runtime-assets", () =>
+      this.loadQueryRuntimeAssets({ artifact: index, plan })
+    );
     signal?.throwIfAborted();
     const unresolved = includeUnresolvedDiagnostics
       ? await getContentDatabaseForArtifact(queryIndex).query(
@@ -1100,14 +1308,40 @@ export class PostgresAssetRepository implements AssetRepository {
         )
       : undefined;
     signal?.throwIfAborted();
-    const data = await database.queryWithDocumentGraph({
-      request,
-      readContent: this.assetStore.readFile,
-      runtimeAssets,
-      load: this.createQueryDocumentLoader(),
-      signal,
-      onEvent: this.onDocumentGraphEvent,
-    });
+    const data = await this.measurePerformance("document-resolution", () =>
+      database.queryWithDocumentGraph({
+        request,
+        readContent: this.assetStore.readFile,
+        runtimeAssets,
+        load: this.createQueryDocumentLoader(contentBytesCache),
+        signal,
+        onEvent: this.onDocumentGraphEvent,
+      })
+    );
+    signal?.throwIfAborted();
+    let publishedIndex: typeof index | undefined;
+    if (includeDiagnostics) {
+      const publishedPlan = diagnosticsPlan ?? databasePlan;
+      if (publishedPlan === undefined) {
+        publishedIndex = queryIndex;
+      } else {
+        const diagnosticsRepository = new PostgresAssetRepository({
+          projectId: this.projectId,
+          context: this.context,
+          assetStore: this.assetStore,
+          dependencies: this.dependencies,
+          contentDatabaseMaxBytes: this.contentDatabaseMaxBytes,
+        });
+        publishedIndex = await this.measurePerformance(
+          "diagnostics-preparation",
+          () =>
+            diagnosticsRepository.prepareIndexAfterAuthorization(
+              publishedPlan,
+              false
+            )
+        );
+      }
+    }
     signal?.throwIfAborted();
     const toCapacityStats = ({
       usedBytes,

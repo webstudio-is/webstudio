@@ -4,6 +4,7 @@ import {
   __testing__,
   $hasPendingResources,
   $resourceDiagnosticsCache,
+  $resourcePerformanceCache,
   $resourcesCache,
   getResourceKey,
   loadResourceDiagnostics,
@@ -450,6 +451,40 @@ test("loads detailed Assets diagnostics only on demand", async () => {
   );
   expect(fetch).toHaveBeenCalledOnce();
   expect($resourceDiagnosticsCache.get().get(key)).toEqual(diagnostics);
+});
+
+test("caches performance metrics separately from resource values", async () => {
+  const request: ResourceRequest = {
+    name: "Posts",
+    method: "get",
+    url: "https://example.com/performance",
+    searchParams: [],
+    headers: [],
+  };
+  const key = getResourceKey(request);
+  const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+    Response.json([
+      [
+        key,
+        {
+          data: { title: "Post" },
+          __performance__: { serverDurationMs: 42, responseBytes: 128 },
+        },
+      ],
+    ])
+  );
+
+  queueResources([request]);
+  await loadResources(fetch);
+
+  expect($resourcesCache.get().get(key)).toEqual({
+    data: { title: "Post" },
+  });
+  expect($resourcePerformanceCache.get().get(key)).toMatchObject({
+    serverDurationMs: 42,
+    responseBytes: 128,
+    loaderDurationMs: expect.any(Number),
+  });
 });
 
 test("discards stale diagnostics after invalidation", async () => {

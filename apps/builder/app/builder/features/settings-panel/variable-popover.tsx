@@ -90,6 +90,7 @@ import { generateCurl } from "./curl";
 import {
   $hasPendingResources,
   $resourceDiagnosticsCache,
+  $resourcePerformanceCache,
   $resourcesCache,
   computeResourceRequest,
   getResourceKey,
@@ -102,11 +103,15 @@ import {
   clearSettledDiagnosticsKey,
   RequestInspector,
 } from "./request-inspector";
-import { ContentDatabaseDiagnostics } from "./content-database-diagnostics";
+import {
+  ContentDatabaseDiagnostics,
+  ResourcePerformanceDiagnostics,
+} from "./content-database-diagnostics";
 import {
   getRequestErrorDiagnostics,
   RequestErrorDiagnostics,
 } from "./request-error-diagnostics";
+import type { ResourcePerformance } from "~/shared/resource-diagnostics";
 
 const NameField = ({
   variable,
@@ -700,9 +705,11 @@ const VariablePreview = ({
   const variableValues = useStore($instanceVariableValues);
   const resourcesCache = useStore($resourcesCache);
   const resourceDiagnosticsCache = useStore($resourceDiagnosticsCache);
+  const resourcePerformanceCache = useStore($resourcePerformanceCache);
   const resourceScope = useResourceScope({ variable });
   let computedValue: unknown;
   let resourceDiagnostics: AssetQueryPreviewDiagnostics | undefined;
+  let resourcePerformance: ResourcePerformance | undefined;
   let computedResourceRequest: ResourceRequest | undefined;
   let computedResourceKey: string | undefined;
   if (variableType === "string" || variableType === "boolean") {
@@ -734,6 +741,7 @@ const VariablePreview = ({
       computedResourceKey = resourceKey;
       computedValue = resourcesCache.get(resourceKey);
       resourceDiagnostics = resourceDiagnosticsCache.get(resourceKey);
+      resourcePerformance = resourcePerformanceCache.get(resourceKey);
     }
   }
   const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
@@ -810,7 +818,12 @@ const VariablePreview = ({
         requestErrorDiagnostics !== undefined ? (
           <RequestErrorDiagnostics value={requestErrorDiagnostics} />
         ) : resourceDiagnostics !== undefined ? (
-          <ContentDatabaseDiagnostics value={resourceDiagnostics} />
+          <ContentDatabaseDiagnostics
+            value={resourceDiagnostics}
+            performance={resourcePerformance}
+          />
+        ) : resourcePerformance !== undefined ? (
+          <ResourcePerformanceDiagnostics value={resourcePerformance} />
         ) : undefined
       }
     />

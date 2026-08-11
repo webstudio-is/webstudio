@@ -7,6 +7,7 @@ import { fetch } from "./fetch.client";
 import { getResourceKey } from "./resource-utils";
 import { type AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
 import { separateResourceDiagnostics } from "./resource-diagnostics";
+import type { ResourcePerformance } from "./resource-diagnostics";
 
 const MAX_PENDING_RESOURCES = 5;
 
@@ -21,6 +22,7 @@ const queue = new Map<string, ResourceRequest>();
 const pending = new Map<string, InFlightResourceBatch>();
 const cache = new Map<string, unknown>();
 const diagnosticsCache = new Map<string, AssetQueryPreviewDiagnostics>();
+const performanceCache = new Map<string, ResourcePerformance>();
 const pendingDiagnostics = new Map<string, Promise<void>>();
 const knownRequests = new Map<string, ResourceRequest>();
 const resourceVersions = new Map<string, number>();
@@ -28,10 +30,12 @@ const inFlightBatches = new Set<InFlightResourceBatch>();
 
 export const $resourcesCache = atom(cache);
 export const $resourceDiagnosticsCache = atom(diagnosticsCache);
+export const $resourcePerformanceCache = atom(performanceCache);
 
 const updateCache = () => {
   $resourcesCache.set(new Map(cache));
   $resourceDiagnosticsCache.set(new Map(diagnosticsCache));
+  $resourcePerformanceCache.set(new Map(performanceCache));
 };
 
 const $pendingUpdater = atom({});
@@ -69,6 +73,7 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
   updatePending();
 
   try {
+    const startedAt = performance.now();
     const response = await requestFetch(restResourcesLoader(), {
       method: "POST",
       body: JSON.stringify(list),
@@ -78,6 +83,7 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
       return;
     }
     const results = new Map<string, unknown>(await response.json());
+    const loaderDurationMs = performance.now() - startedAt;
     for (const [key, result] of results) {
       const request = dispatched.get(key);
       if (
@@ -90,6 +96,10 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
       }
       const separated = separateResourceDiagnostics({ request, result });
       cache.set(key, separated.result);
+      performanceCache.set(key, {
+        ...separated.performance,
+        loaderDurationMs,
+      });
       if (separated.diagnostics === undefined) {
         diagnosticsCache.delete(key);
       } else {
@@ -152,6 +162,7 @@ const preloadResource = (resource: ResourceRequest) => {
 
 const invalidateRequestState = (key: string) => {
   diagnosticsCache.delete(key);
+  performanceCache.delete(key);
   pendingDiagnostics.delete(key);
   resourceVersions.set(key, (resourceVersions.get(key) ?? 0) + 1);
 };
@@ -308,6 +319,7 @@ const reset = () => {
   pending.clear();
   cache.clear();
   diagnosticsCache.clear();
+  performanceCache.clear();
   pendingDiagnostics.clear();
   knownRequests.clear();
   resourceVersions.clear();

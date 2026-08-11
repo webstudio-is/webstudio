@@ -219,6 +219,54 @@ const hasMatchingCanonicalDocument = (
   );
 };
 
+export const areCanonicalAssetFileEntriesCurrent = ({
+  baseEntries,
+  currentEntries,
+  requirements,
+}: {
+  baseEntries: readonly CanonicalAssetFileEntry[];
+  currentEntries: readonly CanonicalAssetFileEntry[];
+  requirements: CanonicalAssetMetadataRequirements;
+}) => {
+  if (baseEntries.length !== currentEntries.length) {
+    return false;
+  }
+  const currentByAssetId = new Map(
+    currentEntries.map((entry) => [entry.assetId, entry])
+  );
+  return baseEntries.every((base) => {
+    const current = currentByAssetId.get(base.assetId);
+    if (
+      current === undefined ||
+      current.revision !== base.revision ||
+      satisfiesCanonicalAssetMetadataRequirements({
+        cached: getCanonicalAssetMetadataRequirements(current),
+        required: requirements,
+      }) === false
+    ) {
+      return false;
+    }
+    const {
+      properties: _properties,
+      excerpt: _excerpt,
+      metadataError: _metadataError,
+      ...baseDocument
+    } = base.document;
+    const expected = {
+      ...baseDocument,
+      properties: current.document.properties,
+      ...(base.document.extension === "md" &&
+      current.document.excerpt !== undefined
+        ? { excerpt: current.document.excerpt }
+        : {}),
+      ...(current.document.metadataError === undefined
+        ? {}
+        : { metadataError: current.document.metadataError }),
+    };
+    return hasMatchingCanonicalDocument(current.document, expected);
+  });
+};
+
 const indexCanonicalAsset = async ({
   asset,
   client,

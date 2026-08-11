@@ -12,6 +12,7 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import type { AssetObjectStore } from "./client";
 import {
+  areCanonicalAssetFileEntriesCurrent,
   loadCanonicalAssetBaseEntries,
   synchronizeCanonicalAssets,
 } from "./canonical-metadata-backfill";
@@ -36,6 +37,70 @@ const entryFromReplaceRpc = (value: ReplaceMetadataRpcArgs) => ({
 });
 
 describe("canonical asset metadata synchronization", () => {
+  test("recognizes metadata that already matches the source snapshot", () => {
+    const document = {
+      _id: "post",
+      _type: "asset.file" as const,
+      name: "post.md",
+      path: "post.md",
+      key: "post",
+      extension: "md",
+      mimeType: "text/markdown",
+      size: 20,
+      revision: "revision-1",
+      contentRef: "post.md",
+      properties: {},
+    };
+    const base = createCanonicalAssetFileEntry({
+      projectId: "project-1",
+      document,
+      metadataRequirements: { structuredProperties: false, excerpt: false },
+    });
+    const current = createCanonicalAssetFileEntry({
+      projectId: "project-1",
+      document: {
+        ...document,
+        properties: { title: "Post" },
+        excerpt: "Post body",
+      },
+      metadataRequirements: { structuredProperties: true, excerpt: true },
+    });
+
+    expect(
+      areCanonicalAssetFileEntriesCurrent({
+        baseEntries: [base],
+        currentEntries: [current],
+        requirements: { structuredProperties: true, excerpt: false },
+      })
+    ).toBe(true);
+    expect(
+      areCanonicalAssetFileEntriesCurrent({
+        baseEntries: [{ ...base, revision: "revision-2" }],
+        currentEntries: [current],
+        requirements: { structuredProperties: true, excerpt: false },
+      })
+    ).toBe(false);
+    expect(
+      areCanonicalAssetFileEntriesCurrent({
+        baseEntries: [
+          {
+            ...base,
+            document: { ...base.document, path: "archive/post.md" },
+          },
+        ],
+        currentEntries: [current],
+        requirements: { structuredProperties: true, excerpt: false },
+      })
+    ).toBe(false);
+    expect(
+      areCanonicalAssetFileEntriesCurrent({
+        baseEntries: [base],
+        currentEntries: [],
+        requirements: { structuredProperties: true, excerpt: false },
+      })
+    ).toBe(false);
+  });
+
   test("builds base documents from records without canonical writes or object reads", async () => {
     server.use(
       db.get("Asset", () =>
