@@ -2238,6 +2238,39 @@ describe("prebuild", () => {
     );
   });
 
+  test("ignores Assets queries unrelated to dynamic SSG route parameters", async () => {
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      properties: { slug: "hello-world", draft: false },
+    });
+    const resource = createQueryResource();
+    resource.body = createStructuredAssetQueryResourceBody({
+      where: {
+        all: [
+          {
+            field: ["properties", "draft"],
+            operator: "eq",
+            value: "false",
+          },
+        ],
+      },
+      sort: [],
+      limit: "20",
+      offset: "0",
+      output: { mode: "all", includeMetadata: true },
+      content: { mode: "none" },
+    });
+
+    expect(
+      getAssetResourcePrerenderPaths({
+        pagePath: "/blog/:slug",
+        resources: [["posts", resource]],
+        index,
+        requireCompleteEnumeration: true,
+      })
+    ).toEqual([]);
+  });
+
   test("prerenders asset routes bound with optional member expressions", async () => {
     const index = await createTestAssetIndex({
       ...indexedDocument,

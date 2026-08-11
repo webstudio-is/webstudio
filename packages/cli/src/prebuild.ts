@@ -317,33 +317,37 @@ export const getAssetResourcePrerenderPaths = ({
   });
   let enumerableConfigurations = configurations;
   if (requireCompleteEnumeration && configurations.length > 0) {
-    const configurationsByParameters = configurations.flatMap(
-      (configuration) => {
-        const boundRouteParameters = new Set(
-          getQueryConditions(configuration.where).flatMap((condition) => {
-            const routeParameter = getBoundSystemRouteParameter(
-              condition.value
-            );
-            return routeParameter !== undefined &&
-              routeParameterNames.has(routeParameter)
-              ? [routeParameter]
-              : [];
-          })
-        );
-        return [...routeParameterNames].every((routeParameter) =>
+    const configurationsByParameters = configurations.map((configuration) => {
+      const boundRouteParameters = new Set(
+        getQueryConditions(configuration.where).flatMap((condition) => {
+          const routeParameter = getBoundSystemRouteParameter(condition.value);
+          return routeParameter !== undefined &&
+            routeParameterNames.has(routeParameter)
+            ? [routeParameter]
+            : [];
+        })
+      );
+      return { configuration, boundRouteParameters };
+    });
+    const routeConfigurations = configurationsByParameters.filter(
+      ({ boundRouteParameters }) => boundRouteParameters.size > 0
+    );
+    const completeRouteConfigurations = routeConfigurations.filter(
+      ({ boundRouteParameters }) =>
+        [...routeParameterNames].every((routeParameter) =>
           boundRouteParameters.has(routeParameter)
         )
-          ? [{ configuration, boundRouteParameters }]
-          : [];
-      }
     );
-    if (configurationsByParameters.length === 0) {
+    if (
+      routeConfigurations.length > 0 &&
+      completeRouteConfigurations.length === 0
+    ) {
       throw new Error(
         "Dynamic SSG route parameters must be completely enumerated by one Assets query"
       );
     }
     let firstUnenumerableParameter: string | undefined;
-    enumerableConfigurations = configurationsByParameters.flatMap(
+    enumerableConfigurations = completeRouteConfigurations.flatMap(
       ({ configuration, boundRouteParameters }) => {
         for (const routeParameter of boundRouteParameters) {
           if (
@@ -360,7 +364,10 @@ export const getAssetResourcePrerenderPaths = ({
         return [configuration];
       }
     );
-    if (enumerableConfigurations.length === 0) {
+    if (
+      completeRouteConfigurations.length > 0 &&
+      enumerableConfigurations.length === 0
+    ) {
       throw new Error(
         `Dynamic SSG route parameter ${JSON.stringify(firstUnenumerableParameter)} cannot be completely enumerated from every Assets query branch`
       );
