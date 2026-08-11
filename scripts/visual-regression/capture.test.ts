@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -38,6 +38,9 @@ test("captures stories independently and preserves individual errors", async (co
           if (options.some(({ output }) => output.includes("failure"))) {
             throw new Error("Story failed");
           }
+          await Promise.all(
+            options.map(({ output }) => writeFile(output, "screenshot"))
+          );
           return {};
         },
       },
@@ -46,6 +49,31 @@ test("captures stories independently and preserves individual errors", async (co
     assert.equal(result.paths.has("success"), true);
     assert.equal(result.paths.has("failure"), false);
     assert.match(result.errors.get("failure") ?? "", /Story failed/);
+  } finally {
+    await rm(assetDirectory, { recursive: true, force: true });
+  }
+});
+
+test("fails captures that do not produce screenshots", async (context) => {
+  context.mock.method(console, "warn", () => {});
+  const assetDirectory = await mkdtemp(path.join(tmpdir(), "visual-capture-"));
+  try {
+    const result = await captureStories({
+      assetDirectory,
+      browserPath: "/usr/bin/chromium",
+      concurrency: 1,
+      entries: [createEntry("missing")],
+      port: 6101,
+      target: "baseline",
+      session: {
+        async capturePage() {
+          return {};
+        },
+      },
+    });
+
+    assert.equal(result.paths.size, 0);
+    assert.match(result.errors.get("missing") ?? "", /ENOENT/);
   } finally {
     await rm(assetDirectory, { recursive: true, force: true });
   }

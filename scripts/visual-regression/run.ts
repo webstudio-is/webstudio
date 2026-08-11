@@ -323,6 +323,9 @@ const main = async () => {
     if (cachedBaselinePaths !== undefined) {
       console.info(`Reusing baseline screenshots for ${baselineCommit}.`);
     } else {
+      console.info(
+        `Baseline screenshot cache is unavailable; rendering ${Object.keys(filteredBaselineEntries).length} baseline stories.`
+      );
       await run({
         command: "pnpm",
         commandArgs: ["install", "--frozen-lockfile", "--ignore-scripts"],

@@ -1,4 +1,4 @@
-import { mkdir } from "node:fs/promises";
+import { access, mkdir } from "node:fs/promises";
 import path from "node:path";
 import type { BrowserScreenshotOptions } from "@webstudio-is/project-build/vision";
 import type { VisualStoryEntry } from "./manifest";
@@ -114,6 +114,7 @@ export const captureStories = async ({
         batch.map(({ options }) => options),
         { concurrency }
       );
+      await Promise.all(batch.map(({ output }) => access(output)));
       for (const { entry, output } of batch) {
         paths.set(entry.id, output);
       }

@@ -84,6 +84,22 @@ test("does not approve infrastructure failures", () => {
   );
 });
 
+test("fails when no stories were compared", () => {
+  assert.equal(
+    classifyVisualTestRun({
+      report: {
+        baselineCommit: "base",
+        currentCommit: "current",
+        durationMs: 100,
+        comparisons: [],
+        errors: [],
+      },
+      approved: false,
+    }),
+    "test-failure"
+  );
+});
+
 test("indexes portable CSF stories with Storybook-compatible ids", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "visual-manifest-"));
   const file = path.join(root, "apps/builder/example.stories.tsx");

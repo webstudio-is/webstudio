@@ -96,7 +96,7 @@ jobs:
           fi
 
       - name: Restore visual baseline screenshots
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: .visual-regression-cache
           key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.version }}
@@ -124,14 +124,14 @@ jobs:
 
       - name: Cache visual screenshots for dependent revisions
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: .visual-regression-cache/${{ steps.visual-cache.outputs.head }}-*
           key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.head }}-${{ steps.visual-cache.outputs.version }}
 
       - name: Cache generated baseline screenshots
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: .visual-regression-cache/${{ steps.visual-cache.outputs.base }}-*
           key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.version }}

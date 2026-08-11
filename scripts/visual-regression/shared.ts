@@ -76,6 +76,7 @@ export const classifyVisualTestRun = ({
 }): "passed" | "visual-differences" | "approved" | "test-failure" => {
   if (
     report.errors.length > 0 ||
+    report.comparisons.length === 0 ||
     report.comparisons.some(({ status }) => status === "error")
   ) {
     return "test-failure";
