@@ -6,6 +6,7 @@ import preview from "visual:preview";
 import { modules } from "visual:story-modules";
 
 type VisualRegressionParameters = {
+  disableAnimations?: boolean;
   disableIntervals?: boolean;
   hideSelectors?: readonly string[];
   settleTime?: number;
@@ -36,10 +37,25 @@ declare global {
 
 setProjectAnnotations(preview);
 
-const markReady = async () => {
-  await new Promise((resolve) =>
+const waitForFrames = () =>
+  new Promise((resolve) =>
     requestAnimationFrame(() => requestAnimationFrame(resolve))
   );
+
+const markReady = async (disableAnimations: boolean) => {
+  await waitForFrames();
+  if (disableAnimations) {
+    for (const animation of document.getAnimations()) {
+      animation.cancel();
+    }
+    // Animation components can react to cancellation on the next frame. Wait
+    // for those updates and cancel anything they created in response.
+    await waitForFrames();
+    for (const animation of document.getAnimations()) {
+      animation.cancel();
+    }
+    await waitForFrames();
+  }
   if (document.activeElement instanceof HTMLElement) {
     document.activeElement.blur();
   }
@@ -164,7 +180,7 @@ window.renderVisualStory = async ({ file, exportName, title }) => {
       window.setTimeout(resolve, options.settleTime)
     );
   }
-  await markReady();
+  await markReady(options.disableAnimations !== false);
 };
 
 const params = new URLSearchParams(window.location.search);

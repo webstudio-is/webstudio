@@ -28,7 +28,10 @@ as a `visual-regression-report` artifact.
 Pixel sensitivity (`0.1`) and mismatch tolerance (`0.001%`) are configured near
 the top of `run.ts`. Viewport and capture settings live in `capture.ts`. Add
 story-specific deterministic rendering options to the story's
-`parameters.visualRegression` object.
+`parameters.visualRegression` object. Web Animations are cancelled by default
+after React effects settle so concurrent screenshots cannot capture different
+frames. Set `disableAnimations: false` only when a story establishes its own
+deterministic animation state.
 
 Story scopes are data in `.storybook/story-sources.json`. Each compared
 revision loads its own copy so removing or changing a scope remains visible to
