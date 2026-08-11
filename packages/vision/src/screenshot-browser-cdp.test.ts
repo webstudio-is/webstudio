@@ -8,7 +8,7 @@ import {
 
 class FakeBrowserProcess {
   readonly listeners = new Map<string, Array<(value?: unknown) => void>>();
-  kill = vi.fn(() => {
+  kill = vi.fn((_signal?: NodeJS.Signals | number) => {
     this.emit("exit", 0);
     return true;
   });
@@ -1523,7 +1523,12 @@ test("stops polling when the browser DevTools port is not created", async () => 
 
 test("does not wait indefinitely for a failed browser startup to exit", async () => {
   const browserProcess = new FakeBrowserProcess();
-  browserProcess.kill.mockImplementation(() => true);
+  browserProcess.kill.mockImplementation((signal) => {
+    if (signal === "SIGKILL") {
+      browserProcess.emit("exit", null);
+    }
+    return true;
+  });
   const dependencies = createDependencies({ browserProcess });
   vi.mocked(dependencies.readFile).mockRejectedValue(
     Object.assign(new Error("not ready"), { code: "ENOENT" })
@@ -1559,6 +1564,8 @@ test("does not wait indefinitely for a failed browser startup to exit", async ()
     recursive: true,
     force: true,
   });
+  expect(browserProcess.kill).toHaveBeenNthCalledWith(1);
+  expect(browserProcess.kill).toHaveBeenNthCalledWith(2, "SIGKILL");
 });
 
 test("does not wait indefinitely for a page target to close", async () => {

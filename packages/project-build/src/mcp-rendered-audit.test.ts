@@ -357,7 +357,7 @@ describe("rendered audit evidence", () => {
           verbose: true,
         },
       } as never,
-      input: { rendered: true, verbose: true },
+      input: { rendered: true },
       executeRead,
       startPreview: createStartPreview(),
       stopPreview: vi.fn(),
@@ -394,7 +394,7 @@ describe("rendered audit evidence", () => {
         committed: false,
         result: { scopes: ["accessibility"], manualCheckCount: 0 },
       } as never,
-      input: { rendered: true },
+      input: { rendered: true, verbose: true },
       executeRead: async (command) =>
         ({
           result: command === "list-pages" ? { pages } : { breakpoints: [] },
@@ -1237,6 +1237,44 @@ describe("rendered audit evidence", () => {
         }),
       ],
     });
+    expect(stopPreview).toHaveBeenCalledOnce();
+  });
+
+  test("stops a preview that resolves to an unowned origin", async () => {
+    const stopPreview = vi.fn();
+    const captureScreenshot = vi.fn();
+    const result = await augmentAuditWithRenderedChecks({
+      envelope: {
+        operationId: "project.audit",
+        source: "remote",
+        projectId: "project",
+        buildId: "build",
+        version: 1,
+        committed: false,
+        result: { scopes: ["accessibility"], manualCheckCount: 0 },
+      } as never,
+      input: { rendered: true, verbose: true },
+      executeRead: async (command) =>
+        ({
+          result:
+            command === "list-pages"
+              ? { pages: [{ id: "home", path: "/" }] }
+              : { breakpoints: [] },
+        }) as never,
+      startPreview: vi.fn(async () => ({ url: "http://localhost:5177" })),
+      stopPreview,
+      captureScreenshot,
+    });
+
+    expect(result.result).toMatchObject({
+      renderedState: "failed",
+      renderedFailures: [
+        expect.objectContaining({
+          code: "RENDERED_AUDIT_PREVIEW_START_FAILED",
+        }),
+      ],
+    });
+    expect(captureScreenshot).not.toHaveBeenCalled();
     expect(stopPreview).toHaveBeenCalledOnce();
   });
 

@@ -1253,6 +1253,38 @@ type BrowserRuntime = {
   close: () => Promise<void>;
 };
 
+const stopBrowserProcess = async ({
+  browserProcess,
+  browserClosed,
+  running,
+  gracePeriodMs,
+}: {
+  browserProcess: BrowserProcess;
+  browserClosed: Promise<string | undefined>;
+  running: boolean;
+  gracePeriodMs: number;
+}) => {
+  if (running === false) {
+    return;
+  }
+  browserProcess.kill();
+  try {
+    await withDeadline(
+      browserClosed,
+      "Browser process did not exit after termination",
+      gracePeriodMs
+    );
+    return;
+  } catch {
+    browserProcess.kill("SIGKILL");
+  }
+  await withDeadline(
+    browserClosed,
+    "Browser process did not exit after forced termination",
+    2000
+  ).catch(() => undefined);
+};
+
 const startBrowserRuntimeOnce = async (
   options: BrowserScreenshotOptions,
   dependencies: BrowserScreenshotDependencies
@@ -1321,14 +1353,12 @@ const startBrowserRuntimeOnce = async (
       },
       close: async () => {
         closePromise ??= (async () => {
-          if (running) {
-            browserProcess.kill();
-          }
-          await withDeadline(
+          await stopBrowserProcess({
+            browserProcess,
             browserClosed,
-            "Browser process did not exit after screenshot capture",
-            2000
-          ).catch(() => undefined);
+            running,
+            gracePeriodMs: 2000,
+          });
           await dependencies.rm(userDataDir, {
             recursive: true,
             force: true,
@@ -1339,12 +1369,12 @@ const startBrowserRuntimeOnce = async (
     };
     return runtime;
   } catch (error) {
-    browserProcess.kill();
-    await withDeadline(
+    await stopBrowserProcess({
+      browserProcess,
       browserClosed,
-      "Browser process did not exit after failed startup",
-      Math.min(options.timeout, 2000)
-    ).catch(() => undefined);
+      running,
+      gracePeriodMs: Math.min(options.timeout, 2000),
+    });
     await dependencies
       .rm(userDataDir, { recursive: true, force: true })
       .catch(() => undefined);

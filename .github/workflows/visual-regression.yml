@@ -10,7 +10,9 @@ on:
     types: [labeled, synchronize]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  # A synchronize action emits both pull_request and pull_request_target. Keep
+  # their runs separate so approval cleanup cannot cancel the visual check.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.sha }}
   cancel-in-progress: true
 
 permissions:
@@ -105,7 +107,7 @@ jobs:
       - name: Compare portable stories
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
-          APPROVE_VISUAL_CHANGES: ${{ github.event.action == 'labeled' && github.event.label.name == 'visual-change-approved' }}
+          APPROVE_VISUAL_CHANGES: ${{ github.event_name == 'push' || (github.event.action == 'labeled' && github.event.label.name == 'visual-change-approved') }}
         run: |
           args=(--base "$BASE_REF")
           if [[ "$APPROVE_VISUAL_CHANGES" == "true" ]]; then

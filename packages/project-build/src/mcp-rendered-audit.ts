@@ -878,6 +878,7 @@ export const augmentAuditWithRenderedChecks = async ({
   };
   let generatedBuildMetrics: GeneratedBuildMetrics | undefined;
   let previewOrigin: string | undefined;
+  let previewRunning = false;
   const captureTimeout = timeouts?.capture ?? renderedAuditCaptureTimeout;
   const pageTimeout = timeouts?.page ?? renderedAuditPageTimeout;
   let overallTimeout = getRenderedAuditOverallTimeout(1, timeouts?.overall);
@@ -912,6 +913,27 @@ export const augmentAuditWithRenderedChecks = async ({
           }),
       message: "Rendered audit was cancelled by the caller.",
     });
+  };
+  const stopRenderedPreview = async () => {
+    if (previewRunning === false) {
+      return;
+    }
+    previewRunning = false;
+    const previewStopStartedAt = Date.now();
+    try {
+      await stopPreview();
+    } catch (error) {
+      failures.push({
+        code: "RENDERED_AUDIT_PREVIEW_STOP_FAILED",
+        phase: "preview-stop",
+        retryable: true,
+        remediation:
+          "Run preview.status and preview.stop in the same MCP session before retrying.",
+        message: `Rendered audit could not stop its preview: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    } finally {
+      performance.previewStopMs += Date.now() - previewStopStartedAt;
+    }
   };
   const finish = async () => {
     const completedChecks = addCrossBreakpointGeometryIssues(checks);
@@ -1096,6 +1118,7 @@ export const augmentAuditWithRenderedChecks = async ({
       },
       { report: (message) => reportProgress?.(message) }
     );
+    previewRunning = true;
     const previewUrl = new URL(previewResult.url);
     if (previewUrl.hostname !== "127.0.0.1") {
       throw new Error(
@@ -1120,6 +1143,7 @@ export const augmentAuditWithRenderedChecks = async ({
         "Run preview.start separately to inspect the generated build failure, fix it, then retry the rendered audit.",
       message: `Rendered audit could not start: ${error instanceof Error ? error.message : String(error)}`,
     });
+    await stopRenderedPreview();
     return await finish();
   }
 
@@ -1559,21 +1583,7 @@ export const augmentAuditWithRenderedChecks = async ({
     );
   } finally {
     performance.captureWallMs = Date.now() - captureStartedAt;
-    const previewStopStartedAt = Date.now();
-    try {
-      await stopPreview();
-    } catch (error) {
-      failures.push({
-        code: "RENDERED_AUDIT_PREVIEW_STOP_FAILED",
-        phase: "preview-stop",
-        retryable: true,
-        remediation:
-          "Run preview.status and preview.stop in the same MCP session before retrying.",
-        message: `Rendered audit could not stop its preview: ${error instanceof Error ? error.message : String(error)}`,
-      });
-    } finally {
-      performance.previewStopMs = Date.now() - previewStopStartedAt;
-    }
+    await stopRenderedPreview();
   }
   return await finish();
 };
