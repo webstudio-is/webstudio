@@ -53,6 +53,11 @@
       "webstudio": "./src/screenshot.test-utils.ts",
       "import": "./src/screenshot.test-utils.ts",
       "default": "./src/screenshot.test-utils.ts"
+    },
+    "./viewports": {
+      "webstudio": "./src/viewports.ts",
+      "import": "./src/viewports.ts",
+      "default": "./src/viewports.ts"
     }
   },
   "scripts": {

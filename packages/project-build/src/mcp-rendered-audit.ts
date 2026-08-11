@@ -29,6 +29,10 @@ import {
   findResourceIssues,
   type ScreenshotGeometryIssue,
 } from "@webstudio-is/vision/audit";
+import {
+  selectRepresentativeViewports,
+  type ViewportRange,
+} from "@webstudio-is/vision/viewports";
 
 type Viewport = { width: number; height: number; purposes: string[] };
 type RenderedAuditPlan = z.infer<typeof renderedAuditPlan>;
@@ -293,49 +297,6 @@ const validateRenderedAuditConfirmation = (
 ) => validateConfirmationToken(token, signature);
 
 export const getRenderedAuditViewports = (breakpoints: unknown): Viewport[] => {
-  const popularViewports = [
-    { width: 390, height: 844 },
-    { width: 667, height: 375 },
-    { width: 820, height: 1180 },
-    { width: 1024, height: 768 },
-    { width: 1366, height: 768 },
-    { width: 1440, height: 900 },
-    { width: 1920, height: 1080 },
-  ];
-  const widths = new Map<number, { height: number; purposes: Set<string> }>();
-  const addViewport = (
-    viewport: { width: number; height: number },
-    purpose: string
-  ) => {
-    const purposes = widths.get(viewport.width)?.purposes ?? new Set<string>();
-    purposes.add(purpose);
-    widths.set(viewport.width, { height: viewport.height, purposes });
-  };
-  const addRepresentative = (
-    minimum: number,
-    maximum: number | undefined,
-    purpose: string
-  ) => {
-    const candidates = popularViewports.filter(
-      ({ width }) =>
-        width >= minimum && (maximum === undefined || width <= maximum)
-    );
-    const viewport =
-      maximum === undefined
-        ? candidates[0]
-        : candidates.sort(
-            (left, right) =>
-              Math.abs(left.width - (minimum + maximum) / 2) -
-              Math.abs(right.width - (minimum + maximum) / 2)
-          )[0];
-    addViewport(
-      viewport ?? {
-        width: maximum ?? minimum,
-        height: (maximum ?? minimum) <= 480 ? 844 : 900,
-      },
-      purpose
-    );
-  };
   const records =
     isRecord(breakpoints) && Array.isArray(breakpoints.breakpoints)
       ? breakpoints.breakpoints.flatMap((breakpoint, index) => {
@@ -374,15 +335,22 @@ export const getRenderedAuditViewports = (breakpoints: unknown): Viewport[] => {
     )
     .sort((left, right) => left.maxWidth - right.maxWidth);
   if (minimumBreakpoints.length === 0 && maximumBreakpoints.length === 0) {
-    addViewport(popularViewports[5], "base breakpoint: desktop");
+    return [
+      {
+        width: 1440,
+        height: 900,
+        purposes: ["base breakpoint: desktop"],
+      },
+    ];
   }
+  const ranges: ViewportRange<string>[] = [];
   let previousMaximum = 0;
   for (const breakpoint of maximumBreakpoints) {
-    addRepresentative(
-      previousMaximum + 1,
-      breakpoint.maxWidth,
-      `${breakpoint.label}: representative`
-    );
+    ranges.push({
+      minimumWidth: previousMaximum + 1,
+      maximumWidth: breakpoint.maxWidth,
+      purpose: `${breakpoint.label}: representative`,
+    });
     previousMaximum = breakpoint.maxWidth;
   }
   const firstMinimum = minimumBreakpoints[0]?.minWidth;
@@ -390,29 +358,24 @@ export const getRenderedAuditViewports = (breakpoints: unknown): Viewport[] => {
     const baseMaximum =
       firstMinimum === undefined ? undefined : firstMinimum - 1;
     if (baseMaximum === undefined || previousMaximum < baseMaximum) {
-      addRepresentative(
-        previousMaximum + 1,
-        baseMaximum,
-        "base breakpoint: representative"
-      );
+      ranges.push({
+        minimumWidth: previousMaximum + 1,
+        maximumWidth: baseMaximum,
+        purpose: "base breakpoint: representative",
+      });
     }
   }
   for (const [index, breakpoint] of minimumBreakpoints.entries()) {
     const nextMinimum = minimumBreakpoints[index + 1]?.minWidth;
-    addRepresentative(
-      breakpoint.minWidth,
-      breakpoint.maxWidth ??
+    ranges.push({
+      minimumWidth: breakpoint.minWidth,
+      maximumWidth:
+        breakpoint.maxWidth ??
         (nextMinimum === undefined ? undefined : nextMinimum - 1),
-      `${breakpoint.label}: representative`
-    );
+      purpose: `${breakpoint.label}: representative`,
+    });
   }
-  return [...widths.entries()]
-    .sort(([left], [right]) => left - right)
-    .map(([width, { height, purposes }]) => ({
-      width,
-      height,
-      purposes: [...purposes],
-    }));
+  return selectRepresentativeViewports({ ranges });
 };
 
 type Layout = NonNullable<ProjectSessionScreenshotResult["layout"]> & {

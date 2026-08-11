@@ -1,4 +1,7 @@
-import type { ScreenshotComparisonReport } from "@webstudio-is/vision/report";
+import {
+  classifyScreenshotComparisonReport,
+  type ScreenshotComparisonReport,
+} from "@webstudio-is/vision/report";
 
 export const classifyVisualTestRun = ({
   report,
@@ -7,17 +10,11 @@ export const classifyVisualTestRun = ({
   report: ScreenshotComparisonReport;
   approved: boolean;
 }): "passed" | "visual-differences" | "approved" | "test-failure" => {
-  if (
-    report.errors.length > 0 ||
-    report.comparisons.length === 0 ||
-    report.comparisons.some(({ status }) => status === "error")
-  ) {
+  const result = classifyScreenshotComparisonReport(report);
+  if (result === "failure") {
     return "test-failure";
   }
-  const hasDifferences = report.comparisons.some(({ status }) =>
-    ["changed", "added", "removed"].includes(status)
-  );
-  if (hasDifferences === false) {
+  if (result === "passed") {
     return "passed";
   }
   return approved ? "approved" : "visual-differences";

@@ -5,7 +5,51 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { build } from "esbuild";
 import { parse, type DefaultTreeAdapterTypes as Html } from "parse5";
 import { expect, test } from "vitest";
-import { writeScreenshotComparisonReport } from "./screenshot-report";
+import {
+  classifyScreenshotComparisonReport,
+  writeScreenshotComparisonReport,
+  type ScreenshotComparisonReport,
+} from "./screenshot-report";
+
+const createReport = (
+  status: ScreenshotComparisonReport["comparisons"][number]["status"]
+): ScreenshotComparisonReport => ({
+  baselineLabel: "base",
+  currentLabel: "current",
+  durationMs: 100,
+  comparisons: [{ id: "button", title: "Button", name: "Primary", status }],
+  errors: [],
+});
+
+test("classifies visual differences separately from comparison failures", () => {
+  expect(classifyScreenshotComparisonReport(createReport("unchanged"))).toBe(
+    "passed"
+  );
+  expect(classifyScreenshotComparisonReport(createReport("changed"))).toBe(
+    "differences"
+  );
+  expect(classifyScreenshotComparisonReport(createReport("added"))).toBe(
+    "differences"
+  );
+  expect(classifyScreenshotComparisonReport(createReport("removed"))).toBe(
+    "differences"
+  );
+  expect(classifyScreenshotComparisonReport(createReport("error"))).toBe(
+    "failure"
+  );
+  expect(
+    classifyScreenshotComparisonReport({
+      ...createReport("unchanged"),
+      errors: ["Browser crashed"],
+    })
+  ).toBe("failure");
+  expect(
+    classifyScreenshotComparisonReport({
+      ...createReport("unchanged"),
+      comparisons: [],
+    })
+  ).toBe("failure");
+});
 
 const findElement = (
   node: Html.Node,

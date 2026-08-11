@@ -34,6 +34,26 @@ export type ScreenshotComparisonReport = {
   errors: readonly string[];
 };
 
+export type ScreenshotComparisonReportResult =
+  | "passed"
+  | "differences"
+  | "failure";
+
+export const classifyScreenshotComparisonReport = (
+  report: ScreenshotComparisonReport
+): ScreenshotComparisonReportResult => {
+  if (
+    report.errors.length > 0 ||
+    report.comparisons.length === 0 ||
+    report.comparisons.some(({ status }) => status === "error")
+  ) {
+    return "failure";
+  }
+  return report.comparisons.some(({ status }) => status !== "unchanged")
+    ? "differences"
+    : "passed";
+};
+
 const reportDataMarker = "__VISUAL_REPORT_DATA__";
 
 const toPortablePath = (reportDirectory: string, file: string) =>

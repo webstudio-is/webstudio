@@ -39,30 +39,6 @@ test("allows approval only for visual differences", () => {
   );
 });
 
-test("does not approve infrastructure failures", () => {
-  const report = { ...createReport("unchanged"), errors: ["Browser crashed"] };
-  assert.equal(
-    classifyVisualTestRun({ report, approved: true }),
-    "test-failure"
-  );
-});
-
-test("fails when no stories were compared", () => {
-  assert.equal(
-    classifyVisualTestRun({
-      report: {
-        baselineLabel: "base",
-        currentLabel: "current",
-        durationMs: 100,
-        comparisons: [],
-        errors: [],
-      },
-      approved: false,
-    }),
-    "test-failure"
-  );
-});
-
 test("indexes portable CSF stories with Storybook-compatible ids", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "visual-manifest-"));
   const file = path.join(root, "apps/builder/example.stories.tsx");

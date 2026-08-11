@@ -9,7 +9,11 @@ Import the smallest relevant entry point:
 import { createBrowserScreenshotSession } from "@webstudio-is/vision/browser";
 import { captureVisualEntries } from "@webstudio-is/vision/capture";
 import { diffPngFiles } from "@webstudio-is/vision/diff";
-import { writeScreenshotComparisonReport } from "@webstudio-is/vision/report";
+import {
+  classifyScreenshotComparisonReport,
+  writeScreenshotComparisonReport,
+} from "@webstudio-is/vision/report";
+import { selectRepresentativeViewports } from "@webstudio-is/vision/viewports";
 ```
 
 Consumers own their source-specific orchestration. The visual regression
