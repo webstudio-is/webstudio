@@ -3,7 +3,11 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { captureStories, orderForGroupedConcurrency } from "./capture";
+import {
+  captureStories,
+  getInitialCaptureTarget,
+  orderForGroupedConcurrency,
+} from "./capture";
 import type { VisualStoryEntry } from "./manifest";
 
 const createEntry = (id: string): VisualStoryEntry => ({
@@ -19,6 +23,17 @@ test("orders contiguous stories into the same concurrent browser page", () => {
   assert.deepEqual(
     orderForGroupedConcurrency([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 3),
     [0, 4, 7, 1, 5, 8, 2, 6, 9, 3]
+  );
+});
+
+test("does not initialize a browser for cached removed stories", () => {
+  assert.equal(
+    getInitialCaptureTarget({
+      baselineEntries: [createEntry("removed")],
+      currentEntries: [],
+      hasCachedBaseline: true,
+    }),
+    undefined
   );
 });
 

@@ -113,13 +113,18 @@ jobs:
           fi
           pnpm visual-regression -- "${args[@]}"
 
+      - name: Validate visual comparison report
+        if: always()
+        run: |
+          node -e 'const report = require("./.visual-regression/report/report.json"); if (!Array.isArray(report.comparisons) || report.comparisons.length === 0) throw new Error("Visual comparison report has no story results.")'
+
       - name: Upload visual comparison report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: visual-regression-report
           path: .visual-regression/report
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 14
 
       - name: Cache visual screenshots for dependent revisions

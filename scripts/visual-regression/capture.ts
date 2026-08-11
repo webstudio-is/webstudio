@@ -37,6 +37,25 @@ export const orderForGroupedConcurrency = <Value>(
   return ordered;
 };
 
+export const getInitialCaptureTarget = ({
+  baselineEntries,
+  currentEntries,
+  hasCachedBaseline,
+}: {
+  baselineEntries: readonly VisualStoryEntry[];
+  currentEntries: readonly VisualStoryEntry[];
+  hasCachedBaseline: boolean;
+}) => {
+  const currentEntry = currentEntries[0];
+  if (currentEntry !== undefined) {
+    return { entry: currentEntry, target: "current" as const };
+  }
+  const baselineEntry = baselineEntries[0];
+  if (hasCachedBaseline === false && baselineEntry !== undefined) {
+    return { entry: baselineEntry, target: "baseline" as const };
+  }
+};
+
 const getCaptureOptions = ({
   browserPath,
   entry,
@@ -86,15 +105,23 @@ export const captureStories = async ({
   entries: readonly VisualStoryEntry[];
   port: number;
   target: "baseline" | "current";
-  session: {
-    capturePage: (
-      options: readonly BrowserScreenshotOptions[],
-      sessionOptions: { concurrency: number }
-    ) => Promise<unknown>;
-  };
+  session:
+    | {
+        capturePage: (
+          options: readonly BrowserScreenshotOptions[],
+          sessionOptions: { concurrency: number }
+        ) => Promise<unknown>;
+      }
+    | undefined;
 }) => {
   const paths = new Map<string, string>();
   const errors = new Map<string, string>();
+  if (entries.length === 0) {
+    return { paths, errors };
+  }
+  if (session === undefined) {
+    throw new Error("A browser session is required to capture stories.");
+  }
   const captures = orderForGroupedConcurrency(
     await Promise.all(
       entries.map(async (entry) => {

@@ -1,4 +1,28 @@
-const report = JSON.parse(
+export const screenshotReportHtml = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Webstudio visual comparison</title>
+    <link rel="stylesheet" href="report.css" />
+    <script src="report.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <h1>Visual comparison</h1>
+      <p id="revisions"></p>
+      <div class="summary" id="summary"></div>
+      <div id="errors"></div>
+      <div id="comparisons"></div>
+    </main>
+    <script id="visual-report-data" type="application/json">
+      __VISUAL_REPORT_DATA__
+    </script>
+  </body>
+</html>
+`;
+
+export const screenshotReportClient = `const report = JSON.parse(
   document.querySelector("#visual-report-data").textContent
 );
 
@@ -18,7 +42,7 @@ revisions.append(
   createElement("code", { text: report.baselineLabel }),
   " → ",
   createElement("code", { text: report.currentLabel }),
-  ` in ${(report.durationMs / 1000).toFixed(1)}s`
+  \` in \${(report.durationMs / 1000).toFixed(1)}s\`
 );
 
 const statuses = ["changed", "added", "removed", "error", "unchanged"];
@@ -29,7 +53,7 @@ for (const comparison of report.comparisons) {
 const summary = document.querySelector("#summary");
 for (const status of statuses) {
   summary.append(
-    createElement("span", { text: `${status}: ${counts[status]}` })
+    createElement("span", { text: \`\${status}: \${counts[status]}\` })
   );
 }
 
@@ -56,13 +80,13 @@ const imageLabels = [
 ];
 for (const comparison of important) {
   const article = createElement("article", {
-    className: `comparison ${comparison.status}`,
+    className: \`comparison \${comparison.status}\`,
   });
   const header = createElement("header");
   const identity = createElement("div");
   identity.append(
     createElement("h2", {
-      text: `${comparison.title} › ${comparison.name}`,
+      text: \`\${comparison.title} › \${comparison.name}\`,
     }),
     createElement("code", { text: comparison.id })
   );
@@ -76,7 +100,7 @@ for (const comparison of important) {
   if (comparison.mismatchPercentage !== undefined) {
     result.append(
       createElement("span", {
-        text: `${(comparison.differentPixels ?? 0).toLocaleString()} pixels · ${comparison.mismatchPercentage.toFixed(4)}%`,
+        text: \`\${(comparison.differentPixels ?? 0).toLocaleString()} pixels · \${comparison.mismatchPercentage.toFixed(4)}%\`,
       })
     );
   }
@@ -96,7 +120,7 @@ for (const comparison of important) {
       });
       const text =
         change.text ?? change.currentText ?? change.baselineText ?? "";
-      item.append(label, text === "" ? "" : `: ${text}`);
+      item.append(label, text === "" ? "" : \`: \${text}\`);
       list.append(item);
     }
     article.append(list);
@@ -110,10 +134,119 @@ for (const comparison of important) {
     const figure = createElement("figure");
     const image = createElement("img");
     image.src = comparison[path];
-    image.alt = `${altPrefix} ${comparison.title} ${comparison.name}`;
+    image.alt = \`\${altPrefix} \${comparison.title} \${comparison.name}\`;
     figure.append(createElement("figcaption", { text: label }), image);
     images.append(figure);
   }
   article.append(images);
   comparisonRoot.append(article);
 }
+`;
+
+export const screenshotReportCss = `:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  background: #f6f6f6;
+  color: #181818;
+}
+
+body {
+  margin: 0;
+  padding: 32px;
+}
+
+main {
+  max-width: 1600px;
+  margin: auto;
+}
+
+h1 {
+  margin: 0 0 8px;
+}
+
+.summary {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+
+.summary span,
+.status {
+  border-radius: 999px;
+  background: #e7e7e7;
+  padding: 4px 10px;
+}
+
+.comparison {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  margin: 20px 0;
+  overflow: hidden;
+}
+
+.comparison > header {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+}
+
+.comparison h2 {
+  font-size: 17px;
+  margin: 0 0 5px;
+}
+
+.comparison header > div:last-child {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.changed .status,
+.added .status,
+.removed .status {
+  background: #ffe39c;
+}
+
+.error .status {
+  background: #ffc4c4;
+}
+
+.images {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  border-top: 1px solid #ddd;
+}
+
+figure {
+  margin: 0;
+  min-width: 0;
+  padding: 12px;
+  border-right: 1px solid #ddd;
+}
+
+figcaption {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  border: 1px solid #eee;
+}
+
+pre {
+  overflow: auto;
+  padding: 18px;
+  color: #a40000;
+}
+
+.text-changes {
+  margin: 0 18px 18px;
+}
+`;

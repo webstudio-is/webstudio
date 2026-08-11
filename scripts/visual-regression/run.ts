@@ -20,7 +20,11 @@ import {
   readStorySources,
   type VisualStoryEntry,
 } from "./manifest";
-import { captureStories, createCaptureSessionOptions } from "./capture";
+import {
+  captureStories,
+  createCaptureSessionOptions,
+  getInitialCaptureTarget,
+} from "./capture";
 import { createDiffPool } from "./diff-pool";
 import {
   restoreScreenshotCache,
@@ -346,7 +350,9 @@ const main = async () => {
       console.info(`Reusing baseline screenshots for ${baselineCommit}.`);
     } else {
       console.info(
-        `Baseline screenshot cache is unavailable; rendering ${Object.keys(filteredBaselineEntries).length} baseline stories.`
+        `Baseline screenshot cache is unavailable; rendering ${
+          Object.keys(filteredBaselineEntries).length
+        } baseline stories.`
       );
       await run({
         command: "pnpm",
@@ -380,38 +386,43 @@ const main = async () => {
     );
     logPhase("Setup and bundles");
 
-    const firstEntry =
-      Object.values(filteredBaselineEntries)[0] ??
-      Object.values(filteredCurrentEntries)[0];
-    if (firstEntry === undefined) {
+    const baselineEntriesToCapture = Object.values(filteredBaselineEntries);
+    const currentEntriesToCapture = Object.values(filteredCurrentEntries);
+    if (
+      baselineEntriesToCapture.length === 0 &&
+      currentEntriesToCapture.length === 0
+    ) {
       throw new Error("No stories matched the visual comparison.");
     }
-    const firstOutput = path.join(
-      assetDirectory,
-      firstEntry.id,
-      "browser-session.png"
-    );
-    await mkdir(path.dirname(firstOutput), { recursive: true });
-    const firstPort =
-      cachedBaselinePaths !== undefined ||
-      Object.values(filteredBaselineEntries)[0] === undefined
-        ? currentPort
-        : baselinePort;
-    browserSession = await createBrowserScreenshotSession(
-      createCaptureSessionOptions({
-        browserPath: browser.path,
-        entry: firstEntry,
-        output: firstOutput,
-        port: firstPort,
-      })
-    );
+    const initialCapture = getInitialCaptureTarget({
+      baselineEntries: baselineEntriesToCapture,
+      currentEntries: currentEntriesToCapture,
+      hasCachedBaseline: cachedBaselinePaths !== undefined,
+    });
+    if (initialCapture !== undefined) {
+      const firstOutput = path.join(
+        assetDirectory,
+        initialCapture.entry.id,
+        "browser-session.png"
+      );
+      await mkdir(path.dirname(firstOutput), { recursive: true });
+      browserSession = await createBrowserScreenshotSession(
+        createCaptureSessionOptions({
+          browserPath: browser.path,
+          entry: initialCapture.entry,
+          output: firstOutput,
+          port:
+            initialCapture.target === "baseline" ? baselinePort : currentPort,
+        })
+      );
+    }
     const baselineCapturePromise =
       cachedBaselinePaths === undefined
         ? captureStories({
             assetDirectory,
             browserPath: browser.path,
             concurrency: captureConcurrency,
-            entries: Object.values(filteredBaselineEntries),
+            entries: baselineEntriesToCapture,
             port: baselinePort,
             target: "baseline",
             session: browserSession,
@@ -424,7 +435,7 @@ const main = async () => {
       assetDirectory,
       browserPath: browser.path,
       concurrency: captureConcurrency,
-      entries: Object.values(filteredCurrentEntries),
+      entries: currentEntriesToCapture,
       port: currentPort,
       target: "current",
       session: browserSession,
@@ -566,7 +577,9 @@ const main = async () => {
     ({ status }) => status !== "unchanged"
   ).length;
   console.info(
-    `${report.comparisons.length} stories compared in ${(report.durationMs / 1000).toFixed(1)}s; ${changed} differences.`
+    `${report.comparisons.length} stories compared in ${(
+      report.durationMs / 1000
+    ).toFixed(1)}s; ${changed} differences.`
   );
   if (result === "approved") {
     console.info(

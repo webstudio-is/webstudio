@@ -1,7 +1,12 @@
 import { spawn } from "node:child_process";
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { ScreenshotDiffRegion } from "./screenshot-diff";
+import {
+  screenshotReportClient,
+  screenshotReportCss,
+  screenshotReportHtml,
+} from "./screenshot-report-assets";
 import type { ScreenshotTextAnalysis } from "./screenshot-text-diff";
 
 export type ScreenshotComparisonReportItem = {
@@ -31,10 +36,43 @@ export type ScreenshotComparisonReport = {
 
 const reportDataMarker = "__VISUAL_REPORT_DATA__";
 
-const relativeAssetPath = (reportDirectory: string, file: string | undefined) =>
-  file === undefined
-    ? undefined
-    : path.relative(reportDirectory, file).split(path.sep).join("/");
+const toPortablePath = (reportDirectory: string, file: string) =>
+  path.relative(reportDirectory, file).split(path.sep).join("/");
+
+const materializeAsset = async ({
+  file,
+  index,
+  name,
+  reportDirectory,
+}: {
+  file: string | undefined;
+  index: number;
+  name: string;
+  reportDirectory: string;
+}) => {
+  if (file === undefined) {
+    return;
+  }
+  const relativePath = path.relative(reportDirectory, file);
+  if (
+    relativePath !== "" &&
+    path.isAbsolute(relativePath) === false &&
+    relativePath.startsWith(`..${path.sep}`) === false
+  ) {
+    return toPortablePath(reportDirectory, file);
+  }
+  const extension = path.extname(file) || ".png";
+  const destination = path.join(
+    reportDirectory,
+    "assets",
+    "comparisons",
+    String(index),
+    `${name}${extension}`
+  );
+  await mkdir(path.dirname(destination), { recursive: true });
+  await copyFile(file, destination);
+  return toPortablePath(reportDirectory, destination);
+};
 
 const serializeEmbeddedJson = (value: unknown) =>
   JSON.stringify(value)
@@ -54,42 +92,54 @@ export const writeScreenshotComparisonReport = async ({
   await mkdir(reportDirectory, { recursive: true });
   const portableReport = {
     ...report,
-    comparisons: report.comparisons.map((comparison) => ({
-      ...comparison,
-      baselinePath: relativeAssetPath(reportDirectory, comparison.baselinePath),
-      currentPath: relativeAssetPath(reportDirectory, comparison.currentPath),
-      diffPath: relativeAssetPath(reportDirectory, comparison.diffPath),
-      contextDiffPath: relativeAssetPath(
-        reportDirectory,
-        comparison.contextDiffPath
-      ),
-    })),
+    comparisons: await Promise.all(
+      report.comparisons.map(async (comparison, index) => ({
+        ...comparison,
+        baselinePath: await materializeAsset({
+          file: comparison.baselinePath,
+          index,
+          name: "baseline",
+          reportDirectory,
+        }),
+        currentPath: await materializeAsset({
+          file: comparison.currentPath,
+          index,
+          name: "current",
+          reportDirectory,
+        }),
+        diffPath: await materializeAsset({
+          file: comparison.diffPath,
+          index,
+          name: "diff",
+          reportDirectory,
+        }),
+        contextDiffPath: await materializeAsset({
+          file: comparison.contextDiffPath,
+          index,
+          name: "context-diff",
+          reportDirectory,
+        }),
+      }))
+    ),
   };
-  const template = await readFile(
-    new URL("./screenshot-report.html", import.meta.url),
-    "utf8"
-  );
-  if (template.includes(reportDataMarker) === false) {
+  if (screenshotReportHtml.includes(reportDataMarker) === false) {
     throw new Error(
       `Screenshot report template is missing ${reportDataMarker}.`
     );
   }
   await Promise.all([
-    copyFile(
-      new URL("./screenshot-report.css", import.meta.url),
-      path.join(reportDirectory, "report.css")
-    ),
-    copyFile(
-      new URL("./screenshot-report-client.js", import.meta.url),
-      path.join(reportDirectory, "report.js")
-    ),
+    writeFile(path.join(reportDirectory, "report.css"), screenshotReportCss),
+    writeFile(path.join(reportDirectory, "report.js"), screenshotReportClient),
     writeFile(
       path.join(reportDirectory, "report.json"),
       `${JSON.stringify(portableReport, undefined, 2)}\n`
     ),
     writeFile(
       path.join(reportDirectory, "index.html"),
-      template.replace(reportDataMarker, serializeEmbeddedJson(portableReport))
+      screenshotReportHtml.replace(
+        reportDataMarker,
+        serializeEmbeddedJson(portableReport)
+      )
     ),
   ]);
 };

@@ -1,6 +1,8 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { build } from "esbuild";
 import { parse, type DefaultTreeAdapterTypes as Html } from "parse5";
 import { expect, test } from "vitest";
 import { writeScreenshotComparisonReport } from "./screenshot-report";
@@ -25,8 +27,10 @@ const findElement = (
 test("writes portable JSON data for the static visual report", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "visual-report-"));
   const reportDirectory = path.join(root, "report");
-  const assetDirectory = path.join(reportDirectory, "assets", "button");
+  const sourceImage = path.join(root, "captures", "baseline.png");
   try {
+    await mkdir(path.dirname(sourceImage), { recursive: true });
+    await writeFile(sourceImage, "baseline image");
     await writeScreenshotComparisonReport({
       reportDirectory,
       report: {
@@ -40,9 +44,7 @@ test("writes portable JSON data for the static visual report", async () => {
             title: "Design system/Button </script><script>unsafe()</script>",
             name: "Primary",
             status: "changed",
-            baselinePath: path.join(assetDirectory, "baseline.png"),
-            currentPath: path.join(assetDirectory, "current.png"),
-            diffPath: path.join(assetDirectory, "current-diff.png"),
+            baselinePath: sourceImage,
             differentPixels: 12,
             mismatchPercentage: 0.01,
           },
@@ -54,14 +56,16 @@ test("writes portable JSON data for the static visual report", async () => {
       await readFile(path.join(reportDirectory, "report.json"), "utf8")
     );
     expect(json.comparisons[0].baselinePath).toEqual(
-      "assets/button/baseline.png"
+      "assets/comparisons/0/baseline.png"
     );
-    expect(json.comparisons[0].currentPath).toEqual(
-      "assets/button/current.png"
-    );
-    expect(json.comparisons[0].diffPath).toEqual(
-      "assets/button/current-diff.png"
-    );
+    expect(
+      await readFile(
+        path.join(reportDirectory, json.comparisons[0].baselinePath),
+        "utf8"
+      )
+    ).toEqual("baseline image");
+    expect(json.comparisons[0].currentPath).toBeUndefined();
+    expect(json.comparisons[0].diffPath).toBeUndefined();
 
     const html = await readFile(
       path.join(reportDirectory, "index.html"),
@@ -89,6 +93,38 @@ test("writes portable JSON data for the static visual report", async () => {
       readFile(path.join(reportDirectory, "report.css"), "utf8"),
       readFile(path.join(reportDirectory, "report.js"), "utf8"),
     ]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("writes a report from bundled code", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "visual-report-bundle-"));
+  const output = path.join(root, "screenshot-report.mjs");
+  const reportDirectory = path.join(root, "report");
+  try {
+    await build({
+      entryPoints: [
+        fileURLToPath(new URL("./screenshot-report.ts", import.meta.url)),
+      ],
+      outfile: output,
+      bundle: true,
+      format: "esm",
+      platform: "node",
+      packages: "external",
+    });
+    const bundledModule = await import(pathToFileURL(output).href);
+    await bundledModule.writeScreenshotComparisonReport({
+      reportDirectory,
+      report: {
+        baselineLabel: "baseline",
+        currentLabel: "current",
+        durationMs: 0,
+        comparisons: [],
+        errors: [],
+      },
+    });
+    await readFile(path.join(reportDirectory, "index.html"), "utf8");
   } finally {
     await rm(root, { recursive: true, force: true });
   }
