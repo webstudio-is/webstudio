@@ -6,6 +6,7 @@ import {
   createScreenshotTextAssertions,
   createScreenshotVisualAssertions,
   diffPngFiles,
+  isScreenshotVisualExpectation,
 } from "./screenshot-diff";
 import { createPng, paintRect, writePng } from "./screenshot.test-utils";
 
@@ -17,6 +18,27 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await rm(tempDir, { recursive: true, force: true });
+});
+
+test("validates screenshot visual expectations", () => {
+  expect(
+    isScreenshotVisualExpectation({
+      maxMismatchPercentage: 5,
+      minChangedRegions: 1,
+      dominantColorChange: {
+        channel: "red",
+        direction: "increase",
+        minMagnitude: 2,
+      },
+    })
+  ).toBe(true);
+  expect(isScreenshotVisualExpectation({})).toBe(false);
+  expect(
+    isScreenshotVisualExpectation({
+      minChangedRegions: 2,
+      maxChangedRegions: 1,
+    })
+  ).toBe(false);
 });
 
 test("reports pass/fail expected text assertions from OCR text", () => {

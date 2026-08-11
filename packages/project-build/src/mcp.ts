@@ -31,6 +31,7 @@ import type {
   ScreenshotDiffResult,
   ScreenshotVisualExpectation,
 } from "@webstudio-is/vision/diff";
+import { isScreenshotVisualExpectation } from "@webstudio-is/vision/diff";
 import { isPlainRecord, isRecord } from "./shared/type-utils";
 import {
   augmentAuditWithRenderedChecks,
@@ -40,11 +41,14 @@ import {
   defaultScreenshotTimeout,
   defaultScreenshotWaitForTimeout,
   defaultScreenshotWaitUntil,
+  isScreenshotBrowser,
   isScreenshotWaitUntil,
   screenshotBrowserChoices,
-  type ScreenshotBrowser,
   screenshotWaitUntilValues,
-  type ScreenshotWaitUntil,
+  type BrowserScreenshotLayout,
+  type BrowserScreenshotNavigation,
+  type BrowserScreenshotTimings,
+  type ScreenshotCaptureOptions,
 } from "@webstudio-is/vision/browser";
 import {
   projectPreviewModes,
@@ -146,47 +150,31 @@ export type ProjectSessionPreviewSource = ProjectPreviewSource;
 export const projectSessionPreviewModes = projectPreviewModes;
 export type ProjectSessionPreviewMode = ProjectPreviewMode;
 
-type ProjectSessionScreenshotNavigation = {
-  requestedUrl: string;
-  finalUrl: string;
-  status?: number;
-  statusText?: string;
-  mimeType?: string;
-  redirects: string[];
-  documentReadyState: string;
+type ProjectSessionScreenshotNavigation = Omit<
+  BrowserScreenshotNavigation,
+  "pageMetadata"
+> & {
   generatedSiteRootPresent: boolean;
   projectId?: string;
   projectVersion?: number;
-  layoutStable: boolean;
 };
 
-export type ProjectSessionScreenshotInput = {
+export type ProjectSessionScreenshotInput = ScreenshotCaptureOptions & {
   url?: string;
   baseUrl?: string;
   path?: string;
-  output?: string;
   host?: string;
   port?: number;
   imageDomains?: string[];
   source?: ProjectSessionPreviewSource;
   mode?: ProjectSessionPreviewMode;
-  viewport: {
-    width: number;
-    height: number;
-  };
-  fullPage?: boolean;
-  includeImageMetrics?: boolean;
-  includeResourceMetrics?: boolean;
-  includeContrastMetrics?: boolean;
-  browser: ScreenshotBrowser;
-  browserPath?: string;
-  waitUntil?: ScreenshotWaitUntil;
-  waitForSelector?: string;
-  waitForTimeout?: number;
-  timeout?: number;
-  format?: "png" | "jpeg" | "webp";
-  quality?: number;
-  scale?: number;
+};
+
+type ProjectSessionScreenshotLayout = Omit<
+  BrowserScreenshotLayout,
+  "navigation"
+> & {
+  navigation?: ProjectSessionScreenshotNavigation;
 };
 
 export type ProjectSessionScreenshotResult = {
@@ -208,59 +196,9 @@ export type ProjectSessionScreenshotResult = {
     captureMs: number;
     totalMs: number;
   };
-  timings?: {
-    wallMs: number;
-    targetSetupMs: number;
-    navigationMs: number;
-    readinessMs: number;
-    imageInspectionMs: number;
-    resourceInspectionMs: number;
-    screenshotMs: number;
-    artifactWriteMs: number;
-    targetCleanupMs: number;
-  };
+  timings?: BrowserScreenshotTimings;
   navigation?: ProjectSessionScreenshotNavigation;
-  layout?: {
-    navigation?: ProjectSessionScreenshotNavigation;
-    documentType?: string;
-    viewportWidth: number;
-    viewportHeight: number;
-    contentWidth: number;
-    contentHeight: number;
-    horizontalOverflow: boolean;
-    images?: Array<{
-      instanceId?: string;
-      sourcePathname?: string;
-      loading: string;
-      complete: boolean;
-      naturalWidth: number;
-      naturalHeight: number;
-      selectedSourceWidth?: number;
-      selectedSourceHeight?: number;
-      renderedWidth: number;
-      renderedHeight: number;
-      top: number;
-    }>;
-    resources?: Array<{
-      pathname: string;
-      initiatorType: string;
-      transferSize: number;
-      encodedBodySize: number;
-      decodedBodySize: number;
-      duration: number;
-      renderBlockingStatus?: string;
-    }>;
-    contrasts?: Array<{
-      instanceId: string;
-      tagName: string;
-      foreground: string;
-      background: string;
-      ratio: number;
-      requiredRatio: 3 | 4.5;
-      fontSize: number;
-      fontWeight: number;
-    }>;
-  };
+  layout?: ProjectSessionScreenshotLayout;
 };
 
 type McpToolProgress = {
@@ -367,10 +305,6 @@ export type ProjectSessionMcpGuidance = {
   }) => readonly string[];
   getVisionWorkflowSummary: (options: { includeDiff: boolean }) => string;
 };
-
-const isScreenshotBrowser = (value: unknown): value is ScreenshotBrowser =>
-  typeof value === "string" &&
-  screenshotBrowserChoices.includes(value as ScreenshotBrowser);
 
 const isProjectSessionPreviewSource = (
   value: unknown
@@ -6987,68 +6921,6 @@ const getResponsiveScreenshotInputs = (
   });
 };
 
-const isValidScreenshotDiffVisualExpectation = (
-  value: unknown
-): value is ScreenshotVisualExpectation => {
-  if (isRecord(value) === false || Object.keys(value).length === 0) {
-    return false;
-  }
-  const numericFieldValid = (
-    key: "maxMismatchPercentage" | "minChangedRegions" | "maxChangedRegions"
-  ) => {
-    const field = value[key];
-    if (field === undefined) {
-      return true;
-    }
-    if (typeof field !== "number" || Number.isFinite(field) === false) {
-      return false;
-    }
-    if (key === "maxMismatchPercentage") {
-      return field >= 0 && field <= 100;
-    }
-    return Number.isInteger(field) && field >= 0;
-  };
-  if (
-    numericFieldValid("maxMismatchPercentage") === false ||
-    numericFieldValid("minChangedRegions") === false ||
-    numericFieldValid("maxChangedRegions") === false
-  ) {
-    return false;
-  }
-  if (
-    typeof value.minChangedRegions === "number" &&
-    typeof value.maxChangedRegions === "number" &&
-    value.minChangedRegions > value.maxChangedRegions
-  ) {
-    return false;
-  }
-  const dominantColorChange = value.dominantColorChange;
-  if (dominantColorChange !== undefined) {
-    if (
-      isRecord(dominantColorChange) === false ||
-      (dominantColorChange.channel !== "red" &&
-        dominantColorChange.channel !== "green" &&
-        dominantColorChange.channel !== "blue" &&
-        dominantColorChange.channel !== "luminance") ||
-      (dominantColorChange.direction !== "increase" &&
-        dominantColorChange.direction !== "decrease") ||
-      (dominantColorChange.minMagnitude !== undefined &&
-        (typeof dominantColorChange.minMagnitude !== "number" ||
-          Number.isFinite(dominantColorChange.minMagnitude) === false ||
-          dominantColorChange.minMagnitude < 0))
-    ) {
-      return false;
-    }
-  }
-  return Object.keys(value).every(
-    (key) =>
-      key === "maxMismatchPercentage" ||
-      key === "minChangedRegions" ||
-      key === "maxChangedRegions" ||
-      key === "dominantColorChange"
-  );
-};
-
 const getScreenshotDiffInput = (
   input: unknown
 ): ProjectSessionScreenshotDiffInput => {
@@ -7104,7 +6976,7 @@ const getScreenshotDiffInput = (
   const expectedVisual = input.expectedVisual;
   if (
     expectedVisual !== undefined &&
-    isValidScreenshotDiffVisualExpectation(expectedVisual) === false
+    isScreenshotVisualExpectation(expectedVisual) === false
   ) {
     throw new Error(
       "screenshot.diff expectedVisual must include valid maxMismatchPercentage (0-100), minChangedRegions, or maxChangedRegions values."

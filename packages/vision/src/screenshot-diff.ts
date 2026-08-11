@@ -100,6 +100,81 @@ export type ScreenshotVisualExpectation = {
   };
 };
 
+export const isScreenshotVisualExpectation = (
+  value: unknown
+): value is ScreenshotVisualExpectation => {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    Array.isArray(value) ||
+    Object.keys(value).length === 0
+  ) {
+    return false;
+  }
+  const expectation = value as Record<string, unknown>;
+  const numericFieldValid = (
+    key: "maxMismatchPercentage" | "minChangedRegions" | "maxChangedRegions"
+  ) => {
+    const field = expectation[key];
+    if (field === undefined) {
+      return true;
+    }
+    if (typeof field !== "number" || Number.isFinite(field) === false) {
+      return false;
+    }
+    if (key === "maxMismatchPercentage") {
+      return field >= 0 && field <= 100;
+    }
+    return Number.isInteger(field) && field >= 0;
+  };
+  if (
+    numericFieldValid("maxMismatchPercentage") === false ||
+    numericFieldValid("minChangedRegions") === false ||
+    numericFieldValid("maxChangedRegions") === false
+  ) {
+    return false;
+  }
+  if (
+    typeof expectation.minChangedRegions === "number" &&
+    typeof expectation.maxChangedRegions === "number" &&
+    expectation.minChangedRegions > expectation.maxChangedRegions
+  ) {
+    return false;
+  }
+  const dominantColorChange = expectation.dominantColorChange;
+  if (dominantColorChange !== undefined) {
+    if (
+      typeof dominantColorChange !== "object" ||
+      dominantColorChange === null ||
+      Array.isArray(dominantColorChange)
+    ) {
+      return false;
+    }
+    const colorChange = dominantColorChange as Record<string, unknown>;
+    if (
+      (colorChange.channel !== "red" &&
+        colorChange.channel !== "green" &&
+        colorChange.channel !== "blue" &&
+        colorChange.channel !== "luminance") ||
+      (colorChange.direction !== "increase" &&
+        colorChange.direction !== "decrease") ||
+      (colorChange.minMagnitude !== undefined &&
+        (typeof colorChange.minMagnitude !== "number" ||
+          Number.isFinite(colorChange.minMagnitude) === false ||
+          colorChange.minMagnitude < 0))
+    ) {
+      return false;
+    }
+  }
+  return Object.keys(expectation).every(
+    (key) =>
+      key === "maxMismatchPercentage" ||
+      key === "minChangedRegions" ||
+      key === "maxChangedRegions" ||
+      key === "dominantColorChange"
+  );
+};
+
 export type ScreenshotVisualAssertion = {
   expected: string;
   actual: number | string;
