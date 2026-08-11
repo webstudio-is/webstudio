@@ -70,6 +70,9 @@ describe("project asset query preview", () => {
       previewAssetResourceQueries: vi.fn().mockResolvedValue(result),
     };
     const signal = new AbortController().signal;
+    const performanceEvents: unknown[] = [];
+    const onPerformanceEvent = (event: unknown) =>
+      performanceEvents.push(event);
 
     await expect(
       previewProjectAssetQueries(
@@ -80,6 +83,7 @@ describe("project asset query preview", () => {
           assetClient,
           contentDatabaseMaxBytes: 42,
           signal,
+          onPerformanceEvent,
         },
         dependencies
       )
@@ -98,7 +102,15 @@ describe("project asset query preview", () => {
         queries: [expect.objectContaining({ id: "posts-resource" })],
       }),
       signal,
+      onPerformanceEvent,
     });
+    expect(performanceEvents).toEqual([
+      expect.objectContaining({
+        type: "phase-completed",
+        phase: "build-plan",
+        durationMs: expect.any(Number),
+      }),
+    ]);
   });
 
   test("stops a cancelled batch before loading Build data", async () => {
@@ -136,7 +148,9 @@ describe("project asset query preview", () => {
     const assetClient = { readFile: vi.fn() } as never;
     const result = { data: { items: [] } } as never;
     const dependencies = {
-      loadDevBuildByProjectId: vi.fn().mockResolvedValue(build),
+      loadDevBuildContentEngineDataByProjectId: vi
+        .fn()
+        .mockResolvedValue(build),
       previewAssetResourceQuery: vi.fn().mockResolvedValue(result),
     };
 
@@ -153,11 +167,9 @@ describe("project asset query preview", () => {
       )
     ).resolves.toBe(result);
 
-    expect(dependencies.loadDevBuildByProjectId).toHaveBeenCalledWith(
-      context,
-      "project-1",
-      undefined
-    );
+    expect(
+      dependencies.loadDevBuildContentEngineDataByProjectId
+    ).toHaveBeenCalledWith(context, "project-1", undefined);
     expect(dependencies.previewAssetResourceQuery).toHaveBeenCalledWith({
       projectId: "project-1",
       request: { query: { limit: 5 } },
@@ -176,11 +188,11 @@ describe("project asset query preview", () => {
     });
   });
 
-  test("stops a cancelled query before loading the full Build", async () => {
+  test("stops a cancelled query before loading Build data", async () => {
     const controller = new AbortController();
     controller.abort();
     const dependencies = {
-      loadDevBuildByProjectId: vi
+      loadDevBuildContentEngineDataByProjectId: vi
         .fn()
         .mockResolvedValue({ props: [], dataSources: [], resources: [] }),
       previewAssetResourceQuery: vi.fn().mockResolvedValue({}),
@@ -199,7 +211,9 @@ describe("project asset query preview", () => {
       )
     ).rejects.toMatchObject({ name: "AbortError" });
 
-    expect(dependencies.loadDevBuildByProjectId).not.toHaveBeenCalled();
+    expect(
+      dependencies.loadDevBuildContentEngineDataByProjectId
+    ).not.toHaveBeenCalled();
     expect(dependencies.previewAssetResourceQuery).not.toHaveBeenCalled();
   });
 
@@ -216,7 +230,7 @@ describe("project asset query preview", () => {
         includeUnresolvedDiagnostics: true,
       },
       {
-        loadDevBuildByProjectId: vi
+        loadDevBuildContentEngineDataByProjectId: vi
           .fn()
           .mockResolvedValue({ props: [], dataSources: [], resources: [] }),
         previewAssetResourceQuery,
