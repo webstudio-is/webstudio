@@ -1,6 +1,6 @@
 import { execFile, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { access, mkdir, readFile, rm } from "node:fs/promises";
+import { access, mkdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { parseArgs, promisify } from "node:util";
@@ -33,6 +33,7 @@ import {
   getInitialCaptureTarget,
 } from "./capture";
 import { classifyVisualTestRun } from "./shared";
+import { getScreenshotRuntimeHash } from "./runtime-hash";
 import {
   startVisualStoryServer,
   startVisualStoryServers,
@@ -112,23 +113,6 @@ const getCommandOutput = async (command: string, commandArgs: string[]) => {
     encoding: "utf8",
   });
   return stdout.trim();
-};
-
-const getScreenshotRuntimeHash = async (browserPath: string) => {
-  const runtimeHash = createHash("sha256");
-  const runtimeFiles = (
-    await readFile(
-      new URL("./screenshot-runtime-files.txt", import.meta.url),
-      "utf8"
-    )
-  )
-    .split("\n")
-    .filter((file) => file !== "");
-  for (const file of runtimeFiles) {
-    runtimeHash.update(await readFile(path.join(repositoryRoot, file)));
-  }
-  runtimeHash.update(await getCommandOutput(browserPath, ["--version"]));
-  return runtimeHash.digest("hex").slice(0, 12);
 };
 
 const getScreenshotCacheDirectory = (revision: string, runtimeHash: string) =>
@@ -289,7 +273,10 @@ const main = async () => {
       ...Object.keys(filteredCurrentEntries),
     ]);
     console.info(`Running ${filteredIds.size} visual story ids.`);
-    const screenshotRuntimeHash = await getScreenshotRuntimeHash(browser.path);
+    const screenshotRuntimeHash = await getScreenshotRuntimeHash({
+      root: repositoryRoot,
+      browserVersion: await getCommandOutput(browser.path, ["--version"]),
+    });
     const screenshotCacheDirectory = getScreenshotCacheDirectory(
       baselineCommit,
       screenshotRuntimeHash
@@ -517,7 +504,7 @@ const main = async () => {
     };
   } catch (error) {
     const message =
-      error instanceof Error ? (error.stack ?? error.message) : String(error);
+      error instanceof Error ? error.stack ?? error.message : String(error);
     report = {
       baselineLabel: baseRef,
       currentLabel: "HEAD",

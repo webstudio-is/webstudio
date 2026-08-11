@@ -102,20 +102,15 @@ jobs:
         run: |
           echo "base=$(git merge-base HEAD "$BASE_REF")" >> "$GITHUB_OUTPUT"
           echo "head=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          while read -r file; do sha256sum "$file"; done < scripts/visual-regression/screenshot-runtime-files.txt | sha256sum | cut -d ' ' -f 1 | sed 's/^/version=/' >> "$GITHUB_OUTPUT"
-          browser_path="${WEBSTUDIO_BROWSER_PATH:-}"
-          if [[ -n "$browser_path" ]]; then
-            "$browser_path" --version | sha256sum | cut -d ' ' -f 1 | sed 's/^/browser=/' >> "$GITHUB_OUTPUT"
-          else
-            echo "browser=auto" >> "$GITHUB_OUTPUT"
-          fi
+          browser_version="$("$WEBSTUDIO_BROWSER_PATH" --version)"
+          runtime_hash="$(pnpm tsx scripts/visual-regression/runtime-hash.ts "$browser_version")"
+          echo "runtime=$runtime_hash" >> "$GITHUB_OUTPUT"
 
       - name: Restore visual baseline screenshots
         uses: actions/cache/restore@v5
         with:
           path: .visual-regression-cache/${{ steps.visual-cache.outputs.base }}-*
-          key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.version }}
-          restore-keys: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-
+          key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.runtime }}
 
       - name: Compare portable stories
         env:
@@ -147,11 +142,11 @@ jobs:
         uses: actions/cache/save@v5
         with:
           path: .visual-regression-cache/${{ steps.visual-cache.outputs.head }}-*
-          key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.head }}-${{ steps.visual-cache.outputs.version }}
+          key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.head }}-${{ steps.visual-cache.outputs.runtime }}
 
       - name: Cache generated baseline screenshots
         if: always()
         uses: actions/cache/save@v5
         with:
           path: .visual-regression-cache/${{ steps.visual-cache.outputs.base }}-*
-          key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.version }}
+          key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.runtime }}
