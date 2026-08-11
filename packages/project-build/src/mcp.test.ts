@@ -947,11 +947,6 @@ describe("project session mcp adapter", () => {
       "rendered image in context"
     );
     expect(
-      JSON.stringify(
-        tools.find(({ name }) => name === "update-styles")?.inputSchema
-      )
-    ).toContain("JSON-compatible value.");
-    expect(
       getSuccessfulOutputDataSchema(
         tools.find((tool) => tool.name === "refresh")?.outputSchema
       )
@@ -1162,6 +1157,12 @@ describe("project session mcp adapter", () => {
         properties: expect.objectContaining({
           instanceId: { type: "string" },
           property: { type: "string" },
+          value: expect.objectContaining({
+            anyOf: expect.arrayContaining([
+              { type: "string" },
+              { type: "array", items: {} },
+            ]),
+          }),
         }),
       }),
     });
@@ -1296,7 +1297,7 @@ describe("project session mcp adapter", () => {
     expect(JSON.stringify(tool?.inputSchema).length).toBeLessThan(1_000);
     expect(updates).toMatchObject({
       type: "array",
-      items: expect.any(Object),
+      items: {},
     });
   });
 

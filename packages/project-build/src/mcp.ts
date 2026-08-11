@@ -636,7 +636,6 @@ const jsonCompatibleValueSchema = {
     { type: "array", items: {} },
     { type: "object" },
   ],
-  description: "JSON-compatible value.",
 } as const satisfies InputJsonSchema;
 
 const constrainUnconstrainedInputSchemaValue = (
@@ -701,12 +700,7 @@ const getCompactSchemaProperty = (schema: InputJsonSchema): InputJsonSchema => {
     ...(schema.type === undefined ? {} : { type: schema.type }),
     ...(schema.type === "array"
       ? {
-          items:
-            schema.items === undefined
-              ? jsonCompatibleValueSchema
-              : typeof schema.items === "boolean"
-                ? schema.items
-                : getCompactSchemaProperty(schema.items),
+          items: {},
         }
       : {}),
     ...(description === undefined ? {} : { description }),
