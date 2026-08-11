@@ -55,7 +55,7 @@ import {
   projectPreviewSources,
   type ProjectPreviewMode,
   type ProjectPreviewSource,
-} from "./visual/preview";
+} from "./preview";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";

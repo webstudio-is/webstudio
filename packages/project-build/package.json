@@ -43,8 +43,8 @@
     "./mcp": {
       "webstudio": "./src/mcp.ts"
     },
-    "./vision": {
-      "webstudio": "./src/vision.ts"
+    "./preview": {
+      "webstudio": "./src/preview.ts"
     },
     "./persistence": {
       "webstudio": "./src/persistence.ts",

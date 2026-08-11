@@ -20,7 +20,7 @@ import { log } from "@clack/prompts";
 import {
   projectPreviewSources,
   type ProjectPreviewSource,
-} from "@webstudio-is/project-build/vision";
+} from "@webstudio-is/project-build/preview";
 import { sanitizeValidationDetail } from "@webstudio-is/project-build/runtime";
 import { generatedFilesManifest, prebuild } from "../prebuild";
 import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "../config";
