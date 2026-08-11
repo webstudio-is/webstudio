@@ -5737,15 +5737,15 @@ const metaGoalGuides = [
       detailFragment: {
         parentInstanceId: "<detail-root-id>",
         fragment:
-          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`post.data?.properties?.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`post.data?.properties?.author?.name ?? ""`}</ws.element><$.MarkdownEmbed code={expression`post.data?.content?.text ?? ""`} /></ws.element>',
+          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`post.data.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`post.data.properties.author.name ?? ""`}</ws.element><$.MarkdownEmbed code={expression`post.data.content.text ?? ""`} /></ws.element>',
       },
       detailPageSettings: {
         pageId: "<detail-page-id>",
         values: {
-          title: 'post.data?.properties?.title ?? "Article"',
+          title: 'post.data.properties.title ?? "Article"',
           meta: {
-            description: 'post.data?.properties?.excerpt ?? ""',
-            socialImageUrl: 'post.data?.properties?.featureImage ?? ""',
+            description: 'post.data.properties.excerpt ?? ""',
+            socialImageUrl: 'post.data.properties.featureImage ?? ""',
             status: "post.data ? 200 : 404",
           },
         },

@@ -179,8 +179,9 @@ article just to display a list.
    `Post.value.properties.featureImage`.
 6. Bind the card link to `"/blog/" + Post.value.properties.slug`.
 
-The Assets resource returns many results as an object, so the current article
-inside the Collection is available through the Collection Item's `value`.
+The Assets resource returns many results as an object keyed by asset ID. The
+current article inside the Collection is available through the Collection
+Item's `value`.
 
 ## 5. Create the dynamic article page
 
@@ -218,10 +219,10 @@ Markdown body from Assets.
 
 Bind the article components directly to `post.data`:
 
-- Heading: `post.data?.properties?.title`
-- Author: `post.data?.properties?.author`
-- Image source: `post.data?.properties?.featureImage`
-- Markdown Embed code: `post.data?.content?.text`
+- Heading: `post.data.properties.title`
+- Author: `post.data.properties.author`
+- Image source: `post.data.properties.featureImage`
+- Markdown Embed code: `post.data.content.text`
 
 Add a [Markdown Embed](../core-components/markdown-embed.md) for the body. Style
 its nested headings, paragraphs, links, lists, and images once; the styles apply
@@ -229,9 +230,9 @@ to every article.
 
 In Page Settings, bind the fields needed for search and sharing:
 
-- **Title**: `post.data?.properties?.title`
-- **Description**: `post.data?.properties?.excerpt`
-- **Social image**: `post.data?.properties?.featureImage`
+- **Title**: `post.data.properties.title`
+- **Description**: `post.data.properties.excerpt`
+- **Social image**: `post.data.properties.featureImage`
 - **Status code**: `post.data ? 200 : 404`
 
 The status expression returns a real 404 when no article matches the URL.
@@ -255,33 +256,105 @@ To publish another article, duplicate the Markdown file and change its title,
 slug, publication date, image, and body. The existing overview and dynamic page
 will render it without another page design.
 
-## Reference other content files
+## Connect content with document references
 
-An article can reference data stored in another Markdown or JSON file. For
-example, keep author details in `blog/authors/ada.md` and reference its
-frontmatter from an article:
+The Content Engine calls links between Markdown and JSON files **document
+references**. A document reference replaces an exact `$ref` object with data
+from another content file. This is Webstudio's syntax. It uses URI references
+for file paths and [JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901)
+for values inside JSON files, but it does not implement JSON Schema resolution.
+
+Both supported source formats can reference either target format:
+
+| Source | Where references can appear | JSON target | Markdown target |
+| --- | --- | --- | --- |
+| Markdown | YAML frontmatter | Yes | Yes |
+| JSON | Anywhere in the document | Yes | Yes |
+
+References do not work inside a Markdown body. A `$ref` object can be nested in
+an object or array, including inside a file reached through another reference.
+
+### Reference syntax
+
+A reference is an object with one field:
+
+```json
+{ "$ref": "<relative-path>[#<fragment>]" }
+```
+
+The object must contain only `$ref`, and its value must be a string. An object
+that has `$ref` plus another field remains ordinary content. Resolve the path
+relative to the file containing the reference, not the project root.
+
+The optional fragment selects which value to insert:
+
+| Reference | Value inserted at `$ref` |
+| --- | --- |
+| `../authors/ada.json` | The complete JSON value |
+| `../authors/ada.json#/profile/name` | The value at JSON Pointer `/profile/name` |
+| `../authors/ada.md` | The complete Markdown source, including frontmatter |
+| `../authors/ada.md#frontmatter` | The Markdown frontmatter as an object |
+| `../authors/ada.md#body` | The Markdown body without frontmatter |
+
+JSON Pointer fragments apply only to JSON files. Use `~1` for `/` and `~0` for
+`~` inside a property name. For example, `#/social~1links/0` selects the first
+item in a property named `social/links`. URI-encode characters that belong to a
+filename but have a special meaning in a URL. A file named `draft#1.json`, for
+example, becomes `draft%231.json` in a reference.
+
+### Reference Markdown from Markdown
+
+For example, keep author details in `blog/authors/ada.md` and insert its
+frontmatter into an article in `blog/posts`:
 
 ```yaml
 author:
   $ref: ../authors/ada.md#frontmatter
 ```
 
-The `$ref` object must contain only the `$ref` field. Its path is relative to
-the file containing the reference. The optional fragment chooses which part of
-the target file to use:
+The queried article exposes the result under `properties.author`. Bind the
+author's name with `post.data.properties.author.name`.
 
-| Reference                              | Result                                         |
-| -------------------------------------- | ---------------------------------------------- |
-| `../authors/ada.md#frontmatter`        | The Markdown frontmatter as an object          |
-| `../authors/ada.md#body`               | The Markdown body without frontmatter          |
-| `../authors/ada.md`                    | The complete Markdown source                   |
-| `../authors/ada.json`                  | The complete JSON value                        |
-| `../authors/ada.json#/profile/name`    | One value selected with a JSON Pointer         |
+### Reference JSON from JSON
 
-The Content Engine resolves a reference only when a query uses that data. It
-rejects missing targets and reference cycles instead of returning incomplete
-content. References let several articles share one author record while all
-source files and links remain portable.
+JSON files use the same syntax. This post references one value from an author
+file:
+
+```json
+{
+  "title": "Hello world",
+  "author": { "$ref": "../authors/ada.json#/profile" }
+}
+```
+
+Given this `ada.json` file:
+
+```json
+{
+  "profile": {
+    "name": "Ada Lovelace",
+    "role": "Author"
+  }
+}
+```
+
+the resolved `properties.author` value is:
+
+```json
+{
+  "name": "Ada Lovelace",
+  "role": "Author"
+}
+```
+
+The same rules cover JSON to Markdown and Markdown frontmatter to JSON. A
+referenced file can contain its own references, so shared records can be
+composed across several files.
+
+The Content Engine loads referenced data when a query filters, sorts, or
+returns a field that depends on it. The target must be another Markdown or JSON
+file in the project's compiled Assets. Missing files, invalid fragments, and
+reference cycles fail instead of returning partial data.
 
 ## Related
 

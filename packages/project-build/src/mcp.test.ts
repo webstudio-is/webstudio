@@ -4647,15 +4647,15 @@ describe("project session mcp adapter", () => {
           }),
           detailFragment: expect.objectContaining({
             parentInstanceId: "<detail-root-id>",
-            fragment: expect.stringContaining("post.data?.content?.text"),
+            fragment: expect.stringContaining("post.data.content.text"),
           }),
           detailPageSettings: expect.objectContaining({
             pageId: "<detail-page-id>",
             values: expect.objectContaining({
-              title: expect.stringContaining("post.data?.properties?.title"),
+              title: expect.stringContaining("post.data.properties.title"),
               meta: expect.objectContaining({
                 description: expect.stringContaining(
-                  "post.data?.properties?.excerpt"
+                  "post.data.properties.excerpt"
                 ),
                 status: "post.data ? 200 : 404",
               }),
