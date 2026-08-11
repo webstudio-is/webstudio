@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { createScreenshotDiffPool } from "./diff-pool";
-import { arePngFilesIdentical } from "./screenshot-diff";
+import { arePngFilesIdentical, diffPngFiles } from "./screenshot-diff";
 import type { ScreenshotComparisonReportItem } from "./screenshot-report";
 
 export type VisualEntry = {
@@ -83,12 +83,45 @@ export const compareVisualEntries = async <Entry extends VisualReportEntry>({
   maxMismatchPercentage: number;
   concurrency: number;
 }): Promise<ScreenshotComparisonReportItem[]> => {
-  const pool = createScreenshotDiffPool(concurrency);
+  const comparisons = getVisualComparisons({
+    baselineEntries,
+    currentEntries,
+  });
+  const identical = new Map(
+    await Promise.all(
+      comparisons.flatMap((comparison) => {
+        if (
+          comparison.status !== "comparable" ||
+          baselineErrors.has(comparison.id) ||
+          currentErrors.has(comparison.id)
+        ) {
+          return [];
+        }
+        const baselinePath = baselinePaths.get(comparison.id);
+        const currentPath = currentPaths.get(comparison.id);
+        if (baselinePath === undefined || currentPath === undefined) {
+          return [];
+        }
+        return [
+          arePngFilesIdentical(baselinePath, currentPath).then(
+            (equal) => [comparison.id, equal] as const
+          ),
+        ];
+      })
+    )
+  );
+  const differentCount = [...identical.values()].filter(
+    (equal) => equal === false
+  ).length;
+  const pool =
+    differentCount > 1
+      ? createScreenshotDiffPool(Math.min(concurrency, differentCount))
+      : undefined;
+  const runDiff =
+    pool === undefined
+      ? diffPngFiles
+      : (options: Parameters<typeof diffPngFiles>[0]) => pool.run(options);
   try {
-    const comparisons = getVisualComparisons({
-      baselineEntries,
-      currentEntries,
-    });
     return await Promise.all(
       comparisons.map(
         async (comparison): Promise<ScreenshotComparisonReportItem> => {
@@ -120,7 +153,7 @@ export const compareVisualEntries = async <Entry extends VisualReportEntry>({
           if (baselinePath === undefined || currentPath === undefined) {
             throw new Error(`Screenshot is missing for ${comparison.id}`);
           }
-          if (await arePngFilesIdentical(baselinePath, currentPath)) {
+          if (identical.get(comparison.id) === true) {
             return {
               ...entry,
               status: "unchanged",
@@ -137,7 +170,7 @@ export const compareVisualEntries = async <Entry extends VisualReportEntry>({
               warnings: [],
             };
           }
-          const diff = await pool.run({
+          const diff = await runDiff({
             baselinePath,
             currentPath,
             outputDir: path.join(
@@ -168,6 +201,6 @@ export const compareVisualEntries = async <Entry extends VisualReportEntry>({
       )
     );
   } finally {
-    await pool.close();
+    await pool?.close();
   }
 };
