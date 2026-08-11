@@ -6,11 +6,22 @@ import path from "node:path";
 import { parseArgs, promisify } from "node:util";
 import {
   createBrowserScreenshotSession,
+  type BrowserScreenshotSession,
+} from "@webstudio-is/vision/browser";
+import {
   openScreenshotComparisonReport,
   writeScreenshotComparisonReport,
   type ScreenshotComparisonReport,
   type ScreenshotComparisonReportItem,
-} from "@webstudio-is/project-build/vision";
+} from "@webstudio-is/vision/report";
+import {
+  getInitialCaptureTarget,
+  getVisualComparisons,
+} from "@webstudio-is/vision/comparison";
+import {
+  restoreScreenshotCache,
+  writeScreenshotCache,
+} from "@webstudio-is/vision/screenshot-cache";
 import {
   defaultScreenshotDependencies,
   resolveScreenshotBrowser,
@@ -20,17 +31,9 @@ import {
   readStorySources,
   type VisualStoryEntry,
 } from "./manifest";
-import {
-  captureStories,
-  createCaptureSessionOptions,
-  getInitialCaptureTarget,
-} from "./capture";
+import { captureStories, createCaptureSessionOptions } from "./capture";
 import { createDiffPool } from "./diff-pool";
-import {
-  restoreScreenshotCache,
-  writeScreenshotCache,
-} from "./screenshot-cache";
-import { classifyVisualTestRun, getStoryComparisons } from "./shared";
+import { classifyVisualTestRun } from "./shared";
 import { startVisualStoryServer } from "./story-server";
 
 const repositoryRoot = process.cwd();
@@ -164,7 +167,7 @@ const compareStories = async ({
   const pool = createDiffPool(Math.min(4, os.availableParallelism()));
   try {
     return await Promise.all(
-      getStoryComparisons({ baselineEntries, currentEntries }).map(
+      getVisualComparisons({ baselineEntries, currentEntries }).map(
         async (comparison): Promise<ScreenshotComparisonReportItem> => {
           const entry = comparison.current ?? comparison.baseline;
           if (entry === undefined) {
@@ -255,9 +258,7 @@ const main = async () => {
   const baselineBundleDirectory = path.join(temporaryRoot, "baseline-bundle");
   const currentBundleDirectory = path.join(temporaryRoot, "current-bundle");
   const servers: Array<Awaited<ReturnType<typeof startVisualStoryServer>>> = [];
-  let browserSession:
-    | Awaited<ReturnType<typeof createBrowserScreenshotSession>>
-    | undefined;
+  let browserSession: BrowserScreenshotSession | undefined;
   let report: ScreenshotComparisonReport | undefined;
 
   await rm(outputRoot, { recursive: true, force: true });
@@ -342,9 +343,9 @@ const main = async () => {
       screenshotRuntimeHash
     );
     const cachedBaselinePaths = await restoreScreenshotCache({
-      assetDirectory,
       directory: screenshotCacheDirectory,
-      storyIds: Object.keys(filteredBaselineEntries),
+      ids: Object.keys(filteredBaselineEntries),
+      getOutputPath: (id) => path.join(assetDirectory, id, "baseline.png"),
     });
     if (cachedBaselinePaths !== undefined) {
       console.info(`Reusing baseline screenshots for ${baselineCommit}.`);

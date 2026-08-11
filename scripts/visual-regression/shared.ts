@@ -1,43 +1,4 @@
-import type { ScreenshotComparisonReport } from "@webstudio-is/project-build/vision";
-
-export type StoryEntry = {
-  id: string;
-  title: string;
-  name: string;
-};
-
-export type StoryComparison = {
-  id: string;
-  status: "added" | "removed" | "comparable";
-  baseline: StoryEntry | undefined;
-  current: StoryEntry | undefined;
-};
-
-export const getStoryComparisons = ({
-  baselineEntries,
-  currentEntries,
-}: {
-  baselineEntries: Record<string, StoryEntry>;
-  currentEntries: Record<string, StoryEntry>;
-}): StoryComparison[] => {
-  const ids = new Set([
-    ...Object.keys(baselineEntries),
-    ...Object.keys(currentEntries),
-  ]);
-
-  return [...ids].sort().map((id) => {
-    const baseline = baselineEntries[id];
-    const current = currentEntries[id];
-
-    if (baseline === undefined) {
-      return { id, status: "added", baseline, current };
-    }
-    if (current === undefined) {
-      return { id, status: "removed", baseline, current };
-    }
-    return { id, status: "comparable", baseline, current };
-  });
-};
+import type { ScreenshotComparisonReport } from "@webstudio-is/vision/report";
 
 export const classifyVisualTestRun = ({
   report,

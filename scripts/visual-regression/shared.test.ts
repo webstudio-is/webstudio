@@ -4,42 +4,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { readStoryManifest, readStorySources } from "./manifest";
-import { classifyVisualTestRun, getStoryComparisons } from "./shared";
-import type { ScreenshotComparisonReport } from "@webstudio-is/project-build/vision";
-
-test("classifies common, added, and removed stories", () => {
-  const comparisons = getStoryComparisons({
-    baselineEntries: {
-      shared: { id: "shared", title: "Shared", name: "Shared" },
-      removed: { id: "removed", title: "Removed", name: "Removed" },
-    },
-    currentEntries: {
-      shared: { id: "shared", title: "Shared", name: "Shared" },
-      added: { id: "added", title: "Added", name: "Added" },
-    },
-  });
-
-  assert.deepEqual(comparisons, [
-    {
-      baseline: undefined,
-      current: { id: "added", title: "Added", name: "Added" },
-      id: "added",
-      status: "added",
-    },
-    {
-      baseline: { id: "removed", title: "Removed", name: "Removed" },
-      current: undefined,
-      id: "removed",
-      status: "removed",
-    },
-    {
-      baseline: { id: "shared", title: "Shared", name: "Shared" },
-      current: { id: "shared", title: "Shared", name: "Shared" },
-      id: "shared",
-      status: "comparable",
-    },
-  ]);
-});
+import { classifyVisualTestRun } from "./shared";
+import type { ScreenshotComparisonReport } from "@webstudio-is/vision/report";
 
 const createReport = (
   status: ScreenshotComparisonReport["comparisons"][number]["status"]

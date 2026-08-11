@@ -12,7 +12,7 @@ import { createPng, paintRect, writePng } from "./screenshot.test-utils";
 let tempDir: string;
 
 beforeEach(async () => {
-  tempDir = await mkdtemp(path.join(tmpdir(), "webstudio-screenshot-diff-"));
+  tempDir = await mkdtemp(path.join(tmpdir(), "vision-screenshot-diff-"));
 });
 
 afterEach(async () => {

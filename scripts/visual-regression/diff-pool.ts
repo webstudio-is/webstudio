@@ -2,7 +2,7 @@ import { Worker } from "node:worker_threads";
 import {
   diffPngFiles,
   type ScreenshotDiffResult,
-} from "@webstudio-is/project-build/vision";
+} from "@webstudio-is/vision/diff";
 import type { DiffWorkerRequest, DiffWorkerResponse } from "./diff-worker";
 
 type Task = {

@@ -1,8 +1,7 @@
-import assert from "node:assert/strict";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import test from "node:test";
+import { expect, test } from "vitest";
 import {
   restoreScreenshotCache,
   writeScreenshotCache,
@@ -22,28 +21,25 @@ test("reuses screenshots only when the requested cache is complete", async () =>
       paths: new Map([["button--default", source]]),
     });
 
-    assert.equal(
-      await readFile(path.join(cache, "button--default.png"), "utf8"),
-      "screenshot"
-    );
+    expect(
+      await readFile(path.join(cache, "button--default.png"), "utf8")
+    ).toEqual("screenshot");
     const restoredPath = path.join(assets, "button--default", "baseline.png");
-    assert.deepEqual(
+    expect(
       await restoreScreenshotCache({
-        assetDirectory: assets,
         directory: cache,
-        storyIds: ["button--default"],
-      }),
-      new Map([["button--default", restoredPath]])
-    );
-    assert.equal(await readFile(restoredPath, "utf8"), "screenshot");
-    assert.equal(
+        ids: ["button--default"],
+        getOutputPath: (id) => path.join(assets, id, "baseline.png"),
+      })
+    ).toEqual(new Map([["button--default", restoredPath]]));
+    expect(await readFile(restoredPath, "utf8")).toEqual("screenshot");
+    expect(
       await restoreScreenshotCache({
-        assetDirectory: assets,
         directory: cache,
-        storyIds: ["button--default", "button--secondary"],
-      }),
-      undefined
-    );
+        ids: ["button--default", "button--secondary"],
+        getOutputPath: (id) => path.join(assets, id, "baseline.png"),
+      })
+    ).toBeUndefined();
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });
   }

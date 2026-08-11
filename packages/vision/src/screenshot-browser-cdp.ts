@@ -25,6 +25,12 @@ const withTimeout = async <Result>(
 
 type BrowserProcess = Pick<ChildProcess, "kill" | "once">;
 
+export type BrowserScreenshotPageMetadata = {
+  rootMarkerPresent: boolean;
+  id?: string;
+  version?: number;
+};
+
 export type BrowserScreenshotOptions = {
   browserPath: string;
   output: string;
@@ -35,6 +41,12 @@ export type BrowserScreenshotOptions = {
   includeResourceMetrics?: boolean;
   includeContrastMetrics?: boolean;
   includeElementGeometry?: boolean;
+  pageMetadata?: {
+    rootMarkerAttribute: string;
+    idAttribute?: string;
+    versionAttribute?: string;
+  };
+  instanceIdAttribute?: string;
   url: string;
   httpCredentials?: { username: string; password: string };
   uid?: number;
@@ -416,34 +428,43 @@ const getSelectorText = async (cdp: CdpSession, selector: string) => {
 
 type BrowserReadiness = {
   documentReadyState: string;
-  generatedSiteRootPresent: boolean;
-  projectId?: string;
-  projectVersion?: number;
+  pageMetadata?: BrowserScreenshotPageMetadata;
   layoutStable: boolean;
 };
 
 const waitForFontsAndFrames = async (
   cdp: CdpSession,
-  timeout: number
+  timeout: number,
+  pageMetadata: BrowserScreenshotOptions["pageMetadata"]
 ): Promise<BrowserReadiness> => {
   const measure = async () => {
     const response = await withDeadline(
       cdp.send<{ result?: { value?: unknown } }>("Runtime.evaluate", {
-        expression: `Promise.resolve(document.fonts?.ready).then(() => ({
-          documentReadyState: document.readyState,
-          generatedSiteRootPresent:
-            document.documentElement.hasAttribute("data-ws-project"),
-          projectId:
-            document.documentElement.getAttribute("data-ws-project") ?? undefined,
-          projectVersion: (() => {
-            const attribute = document.documentElement.getAttribute("data-ws-version");
-            if (attribute === null) return undefined;
-            const value = Number(attribute);
-            return Number.isFinite(value) ? value : undefined;
-          })(),
-          width: document.documentElement.scrollWidth,
-          height: document.documentElement.scrollHeight,
-        }))`,
+        expression: `Promise.resolve(document.fonts?.ready).then(() => {
+          const metadata = ${JSON.stringify(pageMetadata)};
+          const root = document.documentElement;
+          const id = metadata?.idAttribute === undefined
+            ? undefined
+            : root.getAttribute(metadata.idAttribute) ?? undefined;
+          const versionAttribute = metadata?.versionAttribute === undefined
+            ? undefined
+            : root.getAttribute(metadata.versionAttribute);
+          const version = versionAttribute === undefined || versionAttribute === null
+            ? undefined
+            : Number(versionAttribute);
+          return {
+            documentReadyState: document.readyState,
+            pageMetadata: metadata === undefined
+              ? undefined
+              : {
+                  rootMarkerPresent: root.hasAttribute(metadata.rootMarkerAttribute),
+                  id,
+                  version: Number.isFinite(version) ? version : undefined,
+                },
+            width: root.scrollWidth,
+            height: root.scrollHeight,
+          };
+        })`,
         awaitPromise: true,
         returnByValue: true,
       }),
@@ -456,9 +477,7 @@ const waitForFontsAndFrames = async (
     value: unknown
   ): value is {
     documentReadyState: string;
-    generatedSiteRootPresent: boolean;
-    projectId?: string;
-    projectVersion?: number;
+    pageMetadata?: BrowserScreenshotPageMetadata;
     width: number;
     height: number;
   } =>
@@ -466,23 +485,25 @@ const waitForFontsAndFrames = async (
     value !== null &&
     "documentReadyState" in value &&
     typeof value.documentReadyState === "string" &&
-    "generatedSiteRootPresent" in value &&
-    typeof value.generatedSiteRootPresent === "boolean" &&
-    ("projectId" in value === false ||
-      value.projectId === undefined ||
-      typeof value.projectId === "string") &&
-    ("projectVersion" in value === false ||
-      value.projectVersion === undefined ||
-      typeof value.projectVersion === "number") &&
+    ("pageMetadata" in value === false ||
+      value.pageMetadata === undefined ||
+      (typeof value.pageMetadata === "object" &&
+        value.pageMetadata !== null &&
+        "rootMarkerPresent" in value.pageMetadata &&
+        typeof value.pageMetadata.rootMarkerPresent === "boolean" &&
+        ("id" in value.pageMetadata === false ||
+          value.pageMetadata.id === undefined ||
+          typeof value.pageMetadata.id === "string") &&
+        ("version" in value.pageMetadata === false ||
+          value.pageMetadata.version === undefined ||
+          typeof value.pageMetadata.version === "number"))) &&
     "width" in value &&
     typeof value.width === "number" &&
     "height" in value &&
     typeof value.height === "number";
   const initial = await measure();
   if (isLayoutSample(initial) === false) {
-    throw new Error(
-      "Browser did not report generated page readiness evidence."
-    );
+    throw new Error("Browser did not report page readiness evidence.");
   }
   let before = initial;
   const deadline = Date.now() + timeout;
@@ -490,33 +511,23 @@ const waitForFontsAndFrames = async (
     await delay(32);
     const value = await measure();
     if (isLayoutSample(value) === false) {
-      throw new Error(
-        "Browser did not report generated page readiness evidence."
-      );
+      throw new Error("Browser did not report page readiness evidence.");
     }
     if (before.width === value.width && before.height === value.height) {
       return {
         documentReadyState: value.documentReadyState,
-        generatedSiteRootPresent: value.generatedSiteRootPresent,
-        ...(value.projectId === undefined
+        ...(value.pageMetadata === undefined
           ? {}
-          : { projectId: value.projectId }),
-        ...(value.projectVersion === undefined
-          ? {}
-          : { projectVersion: value.projectVersion }),
+          : { pageMetadata: value.pageMetadata }),
         layoutStable: true,
       };
     }
     if (Date.now() >= deadline) {
       return {
         documentReadyState: value.documentReadyState,
-        generatedSiteRootPresent: value.generatedSiteRootPresent,
-        ...(value.projectId === undefined
+        ...(value.pageMetadata === undefined
           ? {}
-          : { projectId: value.projectId }),
-        ...(value.projectVersion === undefined
-          ? {}
-          : { projectVersion: value.projectVersion }),
+          : { pageMetadata: value.pageMetadata }),
         layoutStable: false,
       };
     }
@@ -616,9 +627,7 @@ export type BrowserScreenshotNavigation = {
   mimeType?: string;
   redirects: string[];
   documentReadyState: string;
-  generatedSiteRootPresent: boolean;
-  projectId?: string;
-  projectVersion?: number;
+  pageMetadata?: BrowserScreenshotPageMetadata;
   layoutStable: boolean;
 };
 
@@ -664,7 +673,8 @@ const getBrowserScreenshotElementGeometry = async (
   send: <Result = unknown>(
     method: string,
     params?: Record<string, unknown>
-  ) => Promise<Result>
+  ) => Promise<Result>,
+  instanceIdAttribute: string
 ): Promise<BrowserScreenshotElementGeometry> => {
   const response = await send<{
     result?: { value?: unknown };
@@ -672,7 +682,9 @@ const getBrowserScreenshotElementGeometry = async (
     expression: `(() => {
       const limit = ${maxBrowserScreenshotElements};
       const overlapLimit = ${maxBrowserScreenshotOverlapsPerElement};
-      const candidates = Array.from(document.querySelectorAll("[data-ws-id]"));
+      const instanceIdAttribute = ${JSON.stringify(instanceIdAttribute)};
+      const candidates = Array.from(document.querySelectorAll("*"))
+        .filter((element) => element.hasAttribute(instanceIdAttribute));
       const elements = candidates.slice(0, limit).map((element) => {
         const style = getComputedStyle(element);
         const rect = element.getBoundingClientRect();
@@ -686,7 +698,7 @@ const getBrowserScreenshotElementGeometry = async (
         const clipsY = style.overflowY === "hidden" || style.overflowY === "clip";
         return {
           element,
-          instanceId: element.getAttribute("data-ws-id"),
+          instanceId: element.getAttribute(instanceIdAttribute),
           tagName: element.tagName.toLowerCase(),
           x: rect.left + window.scrollX,
           y: rect.top + window.scrollY,
@@ -853,13 +865,15 @@ const getBrowserScreenshotContrasts = async (
   send: <Result = unknown>(
     method: string,
     params?: Record<string, unknown>
-  ) => Promise<Result>
+  ) => Promise<Result>,
+  instanceIdAttribute: string
 ): Promise<BrowserScreenshotContrast[]> => {
   const response = await send<{
     result?: { value?: unknown };
   }>("Runtime.evaluate", {
     expression: `(() => {
       const limit = ${maxBrowserScreenshotElements};
+      const instanceIdAttribute = ${JSON.stringify(instanceIdAttribute)};
       const parseOpaqueRgb = (value) => {
         const match = value.match(/^rgba?\\(\\s*(\\d+(?:\\.\\d+)?)\\D+(\\d+(?:\\.\\d+)?)\\D+(\\d+(?:\\.\\d+)?)(?:\\D+(\\d+(?:\\.\\d+)?))?\\s*\\)$/i);
         if (match === null || (match[4] !== undefined && Number(match[4]) !== 1)) return undefined;
@@ -872,7 +886,8 @@ const getBrowserScreenshotContrasts = async (
         });
         return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
       };
-      const candidates = Array.from(document.querySelectorAll("[data-ws-id]"))
+      const candidates = Array.from(document.querySelectorAll("*"))
+        .filter((element) => element.hasAttribute(instanceIdAttribute))
         .filter((element) => Array.from(element.childNodes).some((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== ""))
         .slice(0, limit);
       return candidates.flatMap((element) => {
@@ -934,7 +949,7 @@ const getBrowserScreenshotContrasts = async (
         const fontWeight = Number.isFinite(parsedWeight) ? parsedWeight : style.fontWeight === "bold" ? 700 : 400;
         const requiredRatio = fontSize >= 24 || (fontSize >= 18.66 && fontWeight >= 700) ? 3 : 4.5;
         return [{
-          instanceId: element.getAttribute("data-ws-id"),
+          instanceId: element.getAttribute(instanceIdAttribute),
           tagName: element.tagName.toLowerCase(),
           foreground: style.color,
           background: background.value,
@@ -975,13 +990,15 @@ const getBrowserScreenshotImages = async (
   send: <Result = unknown>(
     method: string,
     params?: Record<string, unknown>
-  ) => Promise<Result>
+  ) => Promise<Result>,
+  instanceIdAttribute: string
 ): Promise<BrowserScreenshotImage[]> => {
   const response = await send<{
     result?: { value?: unknown };
   }>("Runtime.evaluate", {
     expression: `Promise.all(Array.from(document.images, async (image) => {
-      globalThis.__webstudioImageDimensionCache ??= new Map();
+      globalThis.__visionImageDimensionCache ??= new Map();
+      const instanceIdAttribute = ${JSON.stringify(instanceIdAttribute)};
       const rect = image.getBoundingClientRect();
       let sourcePathname;
       let selectedSourceWidth;
@@ -993,22 +1010,23 @@ const getBrowserScreenshotImages = async (
           : new URL(selectedSource, document.baseURI).pathname;
       } catch {}
       try {
-        let dimensions = globalThis.__webstudioImageDimensionCache.get(selectedSource);
+        let dimensions = globalThis.__visionImageDimensionCache.get(selectedSource);
         if (dimensions === undefined) {
           const response = await fetch(selectedSource);
           const bitmap = await createImageBitmap(await response.blob());
           dimensions = { width: bitmap.width, height: bitmap.height };
           bitmap.close();
-          globalThis.__webstudioImageDimensionCache.set(selectedSource, dimensions);
+          globalThis.__visionImageDimensionCache.set(selectedSource, dimensions);
         }
         selectedSourceWidth = dimensions.width;
         selectedSourceHeight = dimensions.height;
       } catch {}
+      let identifiedElement = image;
+      while (identifiedElement !== null && identifiedElement.hasAttribute(instanceIdAttribute) === false) {
+        identifiedElement = identifiedElement.parentElement;
+      }
       return {
-        instanceId:
-          image.getAttribute("data-ws-id") ||
-          image.closest("[data-ws-id]")?.getAttribute("data-ws-id") ||
-          undefined,
+        instanceId: identifiedElement?.getAttribute(instanceIdAttribute) || undefined,
         sourcePathname,
         loading: image.loading || "eager",
         complete: image.complete,
@@ -1215,7 +1233,7 @@ const getScreenshotCaptureParams = async ({
 class BrowserSessionClosedError extends Error {}
 
 const getBrowserExitMessage = (message: string, reason?: string) =>
-  `${message}${reason === undefined ? "" : ` (${reason})`}. Check the browser installation or set WEBSTUDIO_BROWSER_PATH to a supported Chromium executable.`;
+  `${message}${reason === undefined ? "" : ` (${reason})`}. Check the browser installation or provide a supported Chromium executable.`;
 
 type BrowserRuntime = {
   userDataDir: string;
@@ -1231,7 +1249,7 @@ const startBrowserRuntimeOnce = async (
   dependencies: BrowserScreenshotDependencies
 ): Promise<BrowserRuntime> => {
   const userDataDir = await dependencies.mkdtemp(
-    join(tmpdir(), "webstudio-browser-")
+    join(tmpdir(), "vision-browser-")
   );
   const browserProcess = dependencies.spawnBrowser(
     options.browserPath,
@@ -1530,7 +1548,11 @@ const capturePageWithBrowserRuntime = async (
               );
             }
           }
-          const readiness = await waitForFontsAndFrames(cdp, options.timeout);
+          const readiness = await waitForFontsAndFrames(
+            cdp,
+            options.timeout,
+            options.pageMetadata
+          );
           if (options.waitForTimeout > 0) {
             await delay(options.waitForTimeout);
           }
@@ -1576,10 +1598,16 @@ const capturePageWithBrowserRuntime = async (
                   truncated: false,
                   elements: [],
                 })
-              : getBrowserScreenshotElementGeometry(send);
+              : getBrowserScreenshotElementGeometry(
+                  send,
+                  options.instanceIdAttribute ?? "id"
+                );
           const imageInspectionPromise = measureDuration(async () =>
             options.includeImageMetrics === true
-              ? await getBrowserScreenshotImages(send)
+              ? await getBrowserScreenshotImages(
+                  send,
+                  options.instanceIdAttribute ?? "id"
+                )
               : undefined
           );
           const resourceInspectionPromise = measureDuration(async () =>
@@ -1589,7 +1617,10 @@ const capturePageWithBrowserRuntime = async (
           );
           const contrastInspectionPromise = measureDuration(async () =>
             options.includeContrastMetrics === true
-              ? await getBrowserScreenshotContrasts(send)
+              ? await getBrowserScreenshotContrasts(
+                  send,
+                  options.instanceIdAttribute ?? "id"
+                )
               : undefined
           );
           const screenshotPromise = (async () => {

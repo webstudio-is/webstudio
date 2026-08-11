@@ -2,7 +2,7 @@ import { parentPort } from "node:worker_threads";
 import {
   diffPngFiles,
   type ScreenshotDiffResult,
-} from "@webstudio-is/project-build/vision";
+} from "@webstudio-is/vision/diff";
 
 export type DiffWorkerRequest = {
   id: number;

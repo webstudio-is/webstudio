@@ -11,7 +11,7 @@ import {
   defaultScreenshotWaitUntil,
   type ScreenshotBrowser,
   type ScreenshotWaitUntil,
-} from "@webstudio-is/project-build/vision";
+} from "@webstudio-is/vision/browser";
 import {
   captureBrowserScreenshot,
   createBrowserScreenshotSession,
@@ -19,8 +19,43 @@ import {
   type BrowserScreenshotSession,
   type BrowserScreenshotDependencies,
   type BrowserScreenshotLayout,
+  type BrowserScreenshotNavigation,
   type BrowserScreenshotOptions,
-} from "@webstudio-is/project-build/vision";
+} from "@webstudio-is/vision/browser";
+
+const webstudioPageInstrumentation = {
+  pageMetadata: {
+    rootMarkerAttribute: "data-ws-project",
+    idAttribute: "data-ws-project",
+    versionAttribute: "data-ws-version",
+  },
+  instanceIdAttribute: "data-ws-id",
+} satisfies Pick<
+  BrowserScreenshotOptions,
+  "pageMetadata" | "instanceIdAttribute"
+>;
+
+const toWebstudioNavigation = ({
+  pageMetadata,
+  ...navigation
+}: BrowserScreenshotNavigation) => ({
+  ...navigation,
+  generatedSiteRootPresent: pageMetadata?.rootMarkerPresent ?? false,
+  ...(pageMetadata?.id === undefined ? {} : { projectId: pageMetadata.id }),
+  ...(pageMetadata?.version === undefined
+    ? {}
+    : { projectVersion: pageMetadata.version }),
+});
+
+const toWebstudioLayout = ({
+  navigation,
+  ...layout
+}: BrowserScreenshotLayout) => ({
+  ...layout,
+  ...(navigation === undefined
+    ? {}
+    : { navigation: toWebstudioNavigation(navigation) }),
+});
 
 export type BrowserCandidate = {
   path: string;
@@ -620,6 +655,7 @@ const getBrowserScreenshotOptions = (
   includeImageMetrics: options.includeImageMetrics,
   includeResourceMetrics: options.includeResourceMetrics,
   includeContrastMetrics: options.includeContrastMetrics,
+  ...webstudioPageInstrumentation,
   url: options.url,
   httpCredentials: options.httpCredentials,
   uid: dependencies.getuid(),
@@ -671,7 +707,7 @@ const captureResolvedScreenshot = async (
     output,
     dependencies
   );
-  const layout =
+  const capturedLayout =
     browserSession !== undefined
       ? await browserSession.capture(browserScreenshotOptions)
       : dependencies.captureBrowserScreenshot !== undefined
@@ -680,6 +716,10 @@ const captureResolvedScreenshot = async (
             browserScreenshotOptions,
             dependencies
           );
+  const layout =
+    capturedLayout === undefined
+      ? undefined
+      : toWebstudioLayout(capturedLayout);
   await validateScreenshotArtifact(output, dependencies);
   return {
     output,
@@ -818,10 +858,11 @@ export const createScreenshotCaptureSession = (
         )
       );
       return captures.map(({ options, output }, index) => {
-        const layout = layouts[index];
-        if (layout === undefined) {
+        const capturedLayout = layouts[index];
+        if (capturedLayout === undefined) {
           throw new Error("Browser omitted a resized screenshot result.");
         }
+        const layout = toWebstudioLayout(capturedLayout);
         return {
           output,
           browser: resolvedBrowser,

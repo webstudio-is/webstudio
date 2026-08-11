@@ -3,7 +3,7 @@ import path from "node:path";
 import { glob } from "node:fs/promises";
 import { loadCsf } from "storybook/internal/csf-tools";
 import { toId } from "storybook/internal/csf";
-import type { StoryEntry } from "./shared";
+import type { VisualEntry } from "@webstudio-is/vision/comparison";
 
 export type StorySource = {
   directory: string;
@@ -48,7 +48,9 @@ export const readStorySources = async (
   return value;
 };
 
-export type VisualStoryEntry = StoryEntry & {
+export type VisualStoryEntry = VisualEntry & {
+  title: string;
+  name: string;
   exportName: string;
   file: string;
   titlePrefix: string;

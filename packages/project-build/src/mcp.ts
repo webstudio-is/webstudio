@@ -27,7 +27,10 @@ import {
   type ProjectSessionEnvelope,
   type ProjectSessionRestorePointSummary,
 } from "./project-session";
-import type { ScreenshotVisualExpectation } from "./visual/screenshot-diff";
+import type {
+  ScreenshotDiffResult,
+  ScreenshotVisualExpectation,
+} from "@webstudio-is/vision/diff";
 import { isPlainRecord, isRecord } from "./shared/type-utils";
 import {
   augmentAuditWithRenderedChecks,
@@ -42,8 +45,7 @@ import {
   type ScreenshotBrowser,
   screenshotWaitUntilValues,
   type ScreenshotWaitUntil,
-} from "./visual/screenshot-browser";
-import type { ScreenshotDiffResult } from "./visual/screenshot-diff";
+} from "@webstudio-is/vision/browser";
 import {
   projectPreviewModes,
   projectPreviewSources,

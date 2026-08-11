@@ -1,60 +1,12 @@
-import { access, mkdir } from "node:fs/promises";
 import path from "node:path";
-import type { BrowserScreenshotOptions } from "@webstudio-is/project-build/vision";
+import type { BrowserScreenshotOptions } from "@webstudio-is/vision/browser";
+import {
+  captureVisualEntries,
+  type VisualCaptureSession,
+} from "@webstudio-is/vision/capture";
 import type { VisualStoryEntry } from "./manifest";
 
 const viewport = { width: 1280, height: 800 };
-
-export const orderForGroupedConcurrency = <Value>(
-  values: readonly Value[],
-  concurrency: number
-) => {
-  // The browser session assigns options to pages round-robin. Interleave
-  // contiguous groups so related stories share one page and its module cache.
-  const groupCount = Math.min(concurrency, values.length);
-  if (groupCount < 2) {
-    return [...values];
-  }
-  const minimumGroupSize = Math.floor(values.length / groupCount);
-  const maximumGroupSize = Math.ceil(values.length / groupCount);
-  const largerGroupCount = values.length % groupCount;
-  let start = 0;
-  const groups = Array.from({ length: groupCount }, (_, index) => {
-    const size = minimumGroupSize + (index < largerGroupCount ? 1 : 0);
-    const group = values.slice(start, start + size);
-    start += size;
-    return group;
-  });
-  const ordered: Value[] = [];
-  for (let index = 0; index < maximumGroupSize; index += 1) {
-    for (const group of groups) {
-      const value = group[index];
-      if (value !== undefined) {
-        ordered.push(value);
-      }
-    }
-  }
-  return ordered;
-};
-
-export const getInitialCaptureTarget = ({
-  baselineEntries,
-  currentEntries,
-  hasCachedBaseline,
-}: {
-  baselineEntries: readonly VisualStoryEntry[];
-  currentEntries: readonly VisualStoryEntry[];
-  hasCachedBaseline: boolean;
-}) => {
-  const currentEntry = currentEntries[0];
-  if (currentEntry !== undefined) {
-    return { entry: currentEntry, target: "current" as const };
-  }
-  const baselineEntry = baselineEntries[0];
-  if (hasCachedBaseline === false && baselineEntry !== undefined) {
-    return { entry: baselineEntry, target: "baseline" as const };
-  }
-};
 
 const getCaptureOptions = ({
   browserPath,
@@ -105,73 +57,26 @@ export const captureStories = async ({
   entries: readonly VisualStoryEntry[];
   port: number;
   target: "baseline" | "current";
-  session:
-    | {
-        capturePage: (
-          options: readonly BrowserScreenshotOptions[],
-          sessionOptions: { concurrency: number }
-        ) => Promise<unknown>;
-      }
-    | undefined;
-}) => {
-  const paths = new Map<string, string>();
-  const errors = new Map<string, string>();
-  if (entries.length === 0) {
-    return { paths, errors };
-  }
-  if (session === undefined) {
-    throw new Error("A browser session is required to capture stories.");
-  }
-  const captures = orderForGroupedConcurrency(
-    await Promise.all(
-      entries.map(async (entry) => {
-        const output = path.join(assetDirectory, entry.id, `${target}.png`);
-        await mkdir(path.dirname(output), { recursive: true });
-        return {
-          entry,
-          options: getCaptureOptions({ browserPath, entry, output, port }),
-          output,
-        };
-      })
-    ),
-    concurrency
-  );
-  const captureBatch = async (batch: typeof captures): Promise<void> => {
-    try {
-      await session.capturePage(
-        batch.map(({ options }) => options),
-        { concurrency }
-      );
-      await Promise.all(batch.map(({ output }) => access(output)));
-      for (const { entry, output } of batch) {
-        paths.set(entry.id, output);
-      }
-      return;
-    } catch (error) {
+  session: VisualCaptureSession | undefined;
+}) =>
+  captureVisualEntries({
+    captures: entries.map((entry) => {
+      const output = path.join(assetDirectory, entry.id, `${target}.png`);
+      return {
+        id: entry.id,
+        options: getCaptureOptions({ browserPath, entry, output, port }),
+        output,
+      };
+    }),
+    concurrency,
+    session,
+    onBatchFailure(error, count) {
       console.warn(
-        `Visual capture failed for ${batch.length} stories; isolating the failure.`,
+        `Visual capture failed for ${count} stories; isolating the failure.`,
         error
       );
-      if (batch.length === 1) {
-        const capture = batch[0];
-        if (capture !== undefined) {
-          errors.set(
-            capture.entry.id,
-            error instanceof Error
-              ? (error.stack ?? error.message)
-              : String(error)
-          );
-        }
-        return;
-      }
-    }
-    const middle = Math.ceil(batch.length / 2);
-    await captureBatch(batch.slice(0, middle));
-    await captureBatch(batch.slice(middle));
-  };
-  await captureBatch(captures);
-  return { paths, errors };
-};
+    },
+  });
 
 export const createCaptureSessionOptions = ({
   browserPath,

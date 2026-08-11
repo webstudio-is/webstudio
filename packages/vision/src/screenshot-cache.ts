@@ -1,20 +1,20 @@
 import { access, copyFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 
-const getScreenshotPath = (directory: string, storyId: string) =>
-  path.join(directory, `${storyId}.png`);
+const getCachedScreenshotPath = (directory: string, id: string) =>
+  path.join(directory, `${id}.png`);
 
 export const restoreScreenshotCache = async ({
-  assetDirectory,
   directory,
-  storyIds,
+  ids,
+  getOutputPath,
 }: {
-  assetDirectory: string;
   directory: string;
-  storyIds: readonly string[];
+  ids: readonly string[];
+  getOutputPath: (id: string) => string;
 }) => {
-  const cachedPaths = storyIds.map(
-    (storyId) => [storyId, getScreenshotPath(directory, storyId)] as const
+  const cachedPaths = ids.map(
+    (id) => [id, getCachedScreenshotPath(directory, id)] as const
   );
   const available = await Promise.all(
     cachedPaths.map(async ([, screenshotPath]) => {
@@ -28,11 +28,11 @@ export const restoreScreenshotCache = async ({
   }
   return new Map(
     await Promise.all(
-      cachedPaths.map(async ([storyId, screenshotPath]) => {
-        const output = path.join(assetDirectory, storyId, "baseline.png");
+      cachedPaths.map(async ([id, screenshotPath]) => {
+        const output = getOutputPath(id);
         await mkdir(path.dirname(output), { recursive: true });
         await copyFile(screenshotPath, output);
-        return [storyId, output] as const;
+        return [id, output] as const;
       })
     )
   );
@@ -47,8 +47,8 @@ export const writeScreenshotCache = async ({
 }) => {
   await mkdir(directory, { recursive: true });
   await Promise.all(
-    [...paths].map(async ([storyId, screenshotPath]) =>
-      copyFile(screenshotPath, getScreenshotPath(directory, storyId))
+    [...paths].map(async ([id, screenshotPath]) =>
+      copyFile(screenshotPath, getCachedScreenshotPath(directory, id))
     )
   );
 };

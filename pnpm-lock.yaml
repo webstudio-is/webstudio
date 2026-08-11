@@ -68,6 +68,9 @@ importers:
       '@webstudio-is/project-build':
         specifier: workspace:^
         version: link:packages/project-build
+      '@webstudio-is/vision':
+        specifier: workspace:^
+        version: link:packages/vision
       esbuild:
         specifier: ^0.25.3
         version: 0.25.3
@@ -1457,6 +1460,9 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      '@webstudio-is/vision':
+        specifier: workspace:*
+        version: link:../vision
       '@webstudio-is/wsauth':
         specifier: workspace:*
         version: link:../wsauth
@@ -2234,6 +2240,9 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../trpc-interface
+      '@webstudio-is/vision':
+        specifier: workspace:*
+        version: link:../vision
       '@webstudio-is/wsauth':
         specifier: workspace:*
         version: link:../wsauth
@@ -2258,9 +2267,6 @@ importers:
       fast-deep-equal:
         specifier: ^3.1.3
         version: 3.1.3
-      fast-png:
-        specifier: 8.0.0
-        version: 8.0.0
       fastest-levenshtein:
         specifier: ^1.0.16
         version: 1.0.16
@@ -2295,9 +2301,6 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
-      parse5:
-        specifier: 7.3.0
-        version: 7.3.0
       vitest:
         specifier: ^3.1.2
         version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(lightningcss@1.31.1)(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(tsx@4.19.3)(yaml@2.9.0)
@@ -3033,6 +3036,28 @@ importers:
         version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(lightningcss@1.31.1)(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(tsx@4.19.3)(yaml@2.9.0)
 
   packages/tsconfig: {}
+
+  packages/vision:
+    dependencies:
+      fast-png:
+        specifier: 8.0.0
+        version: 8.0.0
+      fastest-levenshtein:
+        specifier: ^1.0.16
+        version: 1.0.16
+    devDependencies:
+      '@webstudio-is/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      esbuild:
+        specifier: ^0.25.3
+        version: 0.25.3
+      parse5:
+        specifier: 7.3.0
+        version: 7.3.0
+      vitest:
+        specifier: ^3.1.2
+        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(lightningcss@1.31.1)(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(tsx@4.19.3)(yaml@2.9.0)
 
   packages/wsauth:
     dependencies:

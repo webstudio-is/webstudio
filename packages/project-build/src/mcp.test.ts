@@ -34,8 +34,12 @@ import {
   projectSessionBusyMessage,
   type ProjectSessionEnvelope,
 } from "./project-session";
-import { diffPngFiles } from "./visual/screenshot-diff";
-import { createPng, paintRect, writePng } from "./visual/screenshot.test-utils";
+import { diffPngFiles } from "@webstudio-is/vision/diff";
+import {
+  createPng,
+  paintRect,
+  writePng,
+} from "@webstudio-is/vision/test-utils";
 
 type CreateProjectSession = NonNullable<
   Parameters<typeof createProjectSessionMcpCore>[0]["createProjectSession"]

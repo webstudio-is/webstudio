@@ -1,6 +1,6 @@
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { openScreenshotComparisonReport } from "@webstudio-is/project-build/vision";
+import { openScreenshotComparisonReport } from "@webstudio-is/vision/report";
 
 if (
   process.argv[1] !== undefined &&
