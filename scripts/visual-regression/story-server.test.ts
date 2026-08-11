@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { parse, type DefaultTreeAdapterTypes as Html } from "parse5";
 import {
   startVisualStoryServer,
   startVisualStoryServers,
-  visualStoryHtml,
 } from "./story-server";
 
 const findElement = (
@@ -24,8 +24,18 @@ const findElement = (
   }
 };
 
-test("keeps the bundled story stylesheet outside the disposable body content", () => {
-  const document = parse(visualStoryHtml);
+const readVisualStoryDocument = async () =>
+  parse(await readFile(new URL("./index.html", import.meta.url), "utf8"));
+
+test("loads the visual harness from a proper HTML entry", async () => {
+  const document = await readVisualStoryDocument();
+  const root = findElement(document, (element) =>
+    element.attrs.some(({ name, value }) => name === "id" && value === "root")
+  );
+  const script = findElement(
+    document,
+    (element) => element.tagName === "script"
+  );
   const stylesheet = findElement(
     document,
     (element) =>
@@ -34,11 +44,17 @@ test("keeps the bundled story stylesheet outside the disposable body content", (
         ({ name, value }) => name === "href" && value === "/harness.css"
       )
   );
+  assert.equal(root?.parentNode?.nodeName, "body");
   assert.equal(stylesheet?.parentNode?.nodeName, "head");
+  assert.ok(
+    script?.attrs.some(
+      ({ name, value }) => name === "src" && value === "/harness.js"
+    )
+  );
 });
 
-test("does not disable animations before reading the story parameters", () => {
-  const document = parse(visualStoryHtml);
+test("does not disable animations before reading the story parameters", async () => {
+  const document = await readVisualStoryDocument();
   const style = findElement(document, (element) => element.tagName === "style");
   const css = style?.childNodes
     .filter((node): node is Html.TextNode => node.nodeName === "#text")

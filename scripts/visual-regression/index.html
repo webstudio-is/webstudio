@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      html,
+      body,
+      #root {
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        pointer-events: none;
+      }
+
+      *,
+      *::before,
+      *::after {
+        caret-color: transparent !important;
+      }
+
+      iframe {
+        visibility: hidden !important;
+      }
+    </style>
+    <link rel="stylesheet" href="/harness.css" />
+    <script type="module" src="/harness.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

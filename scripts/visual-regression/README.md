@@ -1,9 +1,9 @@
 # Visual regression testing
 
-The visual regression runner indexes the existing Storybook CSF files, bundles
-them with a lightweight esbuild harness, and renders the merge base and current
-working tree in Chromium. It compares screenshots with Webstudio's shared
-vision engine and does not require a hosted service.
+The visual regression runner indexes the existing Storybook CSF files, builds a
+lightweight browser app with esbuild, serves it through Vite, and renders the
+merge base and current working tree in Chromium. It compares screenshots with
+Webstudio's shared vision engine and does not require a hosted service.
 
 Run the full comparison and open the visual report:
 

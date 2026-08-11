@@ -2,8 +2,8 @@ import React from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { composeStories, setProjectAnnotations } from "@storybook/react";
-import preview from "visual:preview";
-import { modules } from "visual:story-modules";
+import preview from "virtual:webstudio-visual-preview";
+import { modules } from "virtual:webstudio-visual-story-modules";
 
 type VisualRegressionParameters = {
   disableAnimations?: boolean;

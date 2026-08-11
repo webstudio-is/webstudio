@@ -43,7 +43,7 @@ const getCaptureOptions = ({
   ...viewport,
   fullPage: true,
   includeElementGeometry: false,
-  url: new URL("/__visual/", `http://127.0.0.1:${port}`).href,
+  url: new URL("/", `http://127.0.0.1:${port}`).href,
   uid: process.getuid?.(),
   disableSandbox: process.env.GITHUB_ACTIONS === "true",
   waitUntil: "load",
