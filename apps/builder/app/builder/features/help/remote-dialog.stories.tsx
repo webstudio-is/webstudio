@@ -17,7 +17,3 @@ export const RemoteDialog = () => (
     <RemoteDialogComponent />
   </StorySection>
 );
-
-RemoteDialog.parameters = {
-  visualRegression: { hideSelectors: ["iframe"] },
-};

@@ -88,10 +88,6 @@ export const Welcome: StoryFn<typeof Dashboard> = () => {
   );
 };
 
-Welcome.parameters = {
-  visualRegression: { hideSelectors: ["iframe"] },
-};
-
 export const Projects: StoryFn<typeof Dashboard> = () => {
   const router = createRouter(
     <>

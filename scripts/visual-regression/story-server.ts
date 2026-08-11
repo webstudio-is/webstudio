@@ -19,6 +19,7 @@ const html = `<!doctype html>
         caret-color: transparent !important;
         transition: none !important;
       }
+      iframe { visibility: hidden !important; }
     </style>
   </head>
   <body>
