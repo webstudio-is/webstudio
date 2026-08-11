@@ -9,6 +9,7 @@ import {
   type BrowserScreenshotSession,
 } from "@webstudio-is/vision/browser";
 import {
+  classifyScreenshotComparisonReport,
   openScreenshotComparisonReport,
   writeScreenshotComparisonReport,
   type ScreenshotComparisonReport,
@@ -29,10 +30,10 @@ import {
 } from "./manifest";
 import {
   captureStories,
-  createCaptureSessionOptions,
+  getStoryCaptureOptions,
   getInitialCaptureTarget,
 } from "./capture";
-import { classifyVisualTestRun } from "./shared";
+import { visualRegressionConfig } from "./config";
 import { getScreenshotRuntimeHash } from "./runtime-hash";
 import {
   startVisualStoryServer,
@@ -47,13 +48,12 @@ const screenshotCacheRoot = path.join(
   repositoryRoot,
   ".visual-regression-cache"
 );
-const baselinePort = 6101;
-const currentPort = 6102;
-const pixelThreshold = 0.1;
-const maxMismatchPercentage = 0.001;
 const defaultCaptureConcurrency = Math.min(
-  8,
-  Math.max(5, os.availableParallelism())
+  visualRegressionConfig.capture.concurrency.maximum,
+  Math.max(
+    visualRegressionConfig.capture.concurrency.minimum,
+    os.availableParallelism()
+  )
 );
 const captureConcurrency = Number(
   process.env.VISUAL_CAPTURE_CONCURRENCY ?? defaultCaptureConcurrency
@@ -166,12 +166,209 @@ const compareStories = async ({
     baselineErrors,
     currentErrors,
     artifactDirectory: assetDirectory,
-    pixelThreshold,
-    maxMismatchPercentage,
-    concurrency: Math.min(4, os.availableParallelism()),
+    pixelThreshold: visualRegressionConfig.comparison.pixelThreshold,
+    maxMismatchPercentage:
+      visualRegressionConfig.comparison.maxMismatchPercentage,
+    concurrency: Math.min(
+      visualRegressionConfig.comparison.concurrency,
+      os.availableParallelism()
+    ),
     analyzeText: analyzeDifferences ? "when-different" : false,
     writeArtifacts: analyzeDifferences ? "when-different" : false,
   });
+};
+
+const prepareBaselineCheckout = async (checkout: string) => {
+  const [baselineCommit, currentCommit] = await Promise.all([
+    getCommandOutput("git", ["merge-base", "HEAD", baseRef]),
+    getCommandOutput("git", ["rev-parse", "HEAD"]),
+  ]);
+  const currentRevisionIsClean =
+    (await getCommandOutput("git", ["status", "--porcelain"])) === "";
+  console.info(`Comparing ${baselineCommit} with ${currentCommit}`);
+
+  const checkoutExists = await access(path.join(checkout, ".git"))
+    .then(() => true)
+    .catch(() => false);
+  await run(
+    checkoutExists
+      ? {
+          command: "git",
+          commandArgs: ["switch", "--detach", baselineCommit],
+          cwd: checkout,
+        }
+      : {
+          command: "git",
+          commandArgs: [
+            "worktree",
+            "add",
+            "--detach",
+            checkout,
+            baselineCommit,
+          ],
+        }
+  );
+
+  const currentSubmodules = await getCommandOutput("git", [
+    "submodule",
+    "status",
+    "--recursive",
+  ]);
+  if (
+    currentSubmodules
+      .split("\n")
+      .some((status) => status !== "" && status.startsWith("-") === false)
+  ) {
+    await run({
+      command: "git",
+      commandArgs: ["submodule", "update", "--init", "--recursive"],
+      cwd: checkout,
+    });
+  }
+  return { baselineCommit, currentCommit, currentRevisionIsClean };
+};
+
+const readComparisonEntries = async (checkout: string) => {
+  const currentStorySources = await readStorySources(repositoryRoot);
+  if (currentStorySources === undefined) {
+    throw new Error("Current story source configuration is missing.");
+  }
+  const baselineStorySources =
+    (await readStorySources(checkout)) ?? currentStorySources;
+  const [baselineEntries, currentEntries] = await Promise.all([
+    readStoryManifest({ root: checkout, storySources: baselineStorySources }),
+    readStoryManifest({
+      root: repositoryRoot,
+      storySources: currentStorySources,
+    }),
+  ]);
+  const matches = grep === undefined ? undefined : new RegExp(grep, "i");
+  const filterEntries = (entries: Record<string, VisualStoryEntry>) =>
+    Object.fromEntries(
+      Object.entries(entries).filter(
+        ([id, entry]) =>
+          matches === undefined ||
+          matches.test(`${id} ${entry.title} ${entry.name}`)
+      )
+    );
+  return {
+    baselineEntries: filterEntries(baselineEntries),
+    currentEntries: filterEntries(currentEntries),
+  };
+};
+
+const verifyChangedCaptures = async ({
+  comparisons,
+  baselineEntries,
+  currentEntries,
+  baselineCapture,
+  currentCapture,
+  cachedBaseline,
+  browserPath,
+  browserSession,
+  checkout,
+  baselineBundleDirectory,
+  servers,
+}: {
+  comparisons: Awaited<ReturnType<typeof compareStories>>;
+  baselineEntries: Record<string, VisualStoryEntry>;
+  currentEntries: Record<string, VisualStoryEntry>;
+  baselineCapture: StoryCapture;
+  currentCapture: StoryCapture;
+  cachedBaseline: boolean;
+  browserPath: string;
+  browserSession: BrowserScreenshotSession | undefined;
+  checkout: string;
+  baselineBundleDirectory: string;
+  servers: Array<Awaited<ReturnType<typeof startVisualStoryServer>>>;
+}) => {
+  const changedIds = comparisons
+    .filter(({ status }) => status === "changed")
+    .map(({ id }) => id);
+  if (changedIds.length === 0) {
+    return { comparisons, performed: false };
+  }
+
+  console.info(
+    `Verifying ${changedIds.length} visual differences with serial captures.`
+  );
+  const currentVerification = await captureStories({
+    assetDirectory,
+    browserPath,
+    concurrency: 1,
+    entries: changedIds.flatMap((id) => {
+      const entry = currentEntries[id];
+      return entry === undefined ? [] : [entry];
+    }),
+    port: visualRegressionConfig.servers.currentPort,
+    target: "current",
+    session: browserSession,
+  });
+  replaceStoryCaptures({
+    ids: changedIds,
+    capture: currentCapture,
+    replacement: currentVerification,
+  });
+  comparisons = await compareStories({
+    baselineEntries,
+    currentEntries,
+    baselinePaths: baselineCapture.paths,
+    currentPaths: currentCapture.paths,
+    baselineErrors: baselineCapture.errors,
+    currentErrors: currentCapture.errors,
+    analyzeDifferences: false,
+  });
+  const remainingChangedIds = comparisons
+    .filter(({ status }) => status === "changed")
+    .map(({ id }) => id);
+  if (remainingChangedIds.length === 0) {
+    return { comparisons, performed: true };
+  }
+
+  const changedBaselineEntries = remainingChangedIds.flatMap((id) => {
+    const entry = baselineEntries[id];
+    return entry === undefined ? [] : [entry];
+  });
+  if (cachedBaseline) {
+    await run({
+      command: "pnpm",
+      commandArgs: ["install", "--frozen-lockfile", "--ignore-scripts"],
+      cwd: checkout,
+    });
+    servers.push(
+      await startVisualStoryServer({
+        root: checkout,
+        port: visualRegressionConfig.servers.baselinePort,
+        outputDirectory: baselineBundleDirectory,
+        storyFiles: changedBaselineEntries.map((entry) => entry.file),
+      })
+    );
+  }
+  const baselineVerification = await captureStories({
+    assetDirectory,
+    browserPath,
+    concurrency: 1,
+    entries: changedBaselineEntries,
+    port: visualRegressionConfig.servers.baselinePort,
+    target: "baseline",
+    session: browserSession,
+  });
+  replaceStoryCaptures({
+    ids: remainingChangedIds,
+    capture: baselineCapture,
+    replacement: baselineVerification,
+  });
+  return {
+    comparisons: await compareStories({
+      baselineEntries,
+      currentEntries,
+      baselinePaths: baselineCapture.paths,
+      currentPaths: currentCapture.paths,
+      baselineErrors: baselineCapture.errors,
+      currentErrors: currentCapture.errors,
+    }),
+    performed: true,
+  };
 };
 
 const main = async () => {
@@ -202,72 +399,16 @@ const main = async () => {
   await mkdir(temporaryRoot, { recursive: true });
 
   try {
-    const [baselineCommit, currentCommit] = await Promise.all([
-      getCommandOutput("git", ["merge-base", "HEAD", baseRef]),
-      getCommandOutput("git", ["rev-parse", "HEAD"]),
-    ]);
-    const currentRevisionIsClean =
-      (await getCommandOutput("git", ["status", "--porcelain"])) === "";
-    console.info(`Comparing ${baselineCommit} with ${currentCommit}`);
-    const checkoutExists = await access(path.join(checkout, ".git"))
-      .then(() => true)
-      .catch(() => false);
-    if (checkoutExists) {
-      await run({
-        command: "git",
-        commandArgs: ["switch", "--detach", baselineCommit],
-        cwd: checkout,
-      });
-    } else {
-      await run({
-        command: "git",
-        commandArgs: ["worktree", "add", "--detach", checkout, baselineCommit],
-      });
-    }
-    const currentSubmodules = await getCommandOutput("git", [
-      "submodule",
-      "status",
-      "--recursive",
-    ]);
-    if (
-      currentSubmodules
-        .split("\n")
-        .some((status) => status !== "" && status.startsWith("-") === false)
-    ) {
-      await run({
-        command: "git",
-        commandArgs: ["submodule", "update", "--init", "--recursive"],
-        cwd: checkout,
-      });
-    }
+    const { baselineCommit, currentCommit, currentRevisionIsClean } =
+      await prepareBaselineCheckout(checkout);
     const browser = await resolveScreenshotBrowser(
       { browser: "auto" },
       defaultScreenshotDependencies
     );
-    const currentStorySources = await readStorySources(repositoryRoot);
-    if (currentStorySources === undefined) {
-      throw new Error("Current story source configuration is missing.");
-    }
-    const baselineStorySources =
-      (await readStorySources(checkout)) ?? currentStorySources;
-    const [baselineEntries, currentEntries] = await Promise.all([
-      readStoryManifest({ root: checkout, storySources: baselineStorySources }),
-      readStoryManifest({
-        root: repositoryRoot,
-        storySources: currentStorySources,
-      }),
-    ]);
-    const matches = grep === undefined ? undefined : new RegExp(grep, "i");
-    const filterEntries = (entries: Record<string, VisualStoryEntry>) =>
-      Object.fromEntries(
-        Object.entries(entries).filter(
-          ([id, entry]) =>
-            matches === undefined ||
-            matches.test(`${id} ${entry.title} ${entry.name}`)
-        )
-      );
-    const filteredBaselineEntries = filterEntries(baselineEntries);
-    const filteredCurrentEntries = filterEntries(currentEntries);
+    const {
+      baselineEntries: filteredBaselineEntries,
+      currentEntries: filteredCurrentEntries,
+    } = await readComparisonEntries(checkout);
     const filteredIds = new Set([
       ...Object.keys(filteredBaselineEntries),
       ...Object.keys(filteredCurrentEntries),
@@ -306,7 +447,7 @@ const main = async () => {
           ? [
               {
                 root: checkout,
-                port: baselinePort,
+                port: visualRegressionConfig.servers.baselinePort,
                 outputDirectory: baselineBundleDirectory,
                 storyFiles: Object.values(filteredBaselineEntries).map(
                   (entry) => entry.file
@@ -316,7 +457,7 @@ const main = async () => {
           : []),
         {
           root: repositoryRoot,
-          port: currentPort,
+          port: visualRegressionConfig.servers.currentPort,
           outputDirectory: currentBundleDirectory,
           storyFiles: Object.values(filteredCurrentEntries).map(
             (entry) => entry.file
@@ -347,12 +488,14 @@ const main = async () => {
       );
       await mkdir(path.dirname(firstOutput), { recursive: true });
       browserSession = await createBrowserScreenshotSession(
-        createCaptureSessionOptions({
+        getStoryCaptureOptions({
           browserPath: browser.path,
           entry: initialCapture.entry,
           output: firstOutput,
           port:
-            initialCapture.target === "baseline" ? baselinePort : currentPort,
+            initialCapture.target === "baseline"
+              ? visualRegressionConfig.servers.baselinePort
+              : visualRegressionConfig.servers.currentPort,
         })
       );
     }
@@ -363,7 +506,7 @@ const main = async () => {
             browserPath: browser.path,
             concurrency: captureConcurrency,
             entries: baselineEntriesToCapture,
-            port: baselinePort,
+            port: visualRegressionConfig.servers.baselinePort,
             target: "baseline",
             session: browserSession,
           })
@@ -376,7 +519,7 @@ const main = async () => {
       browserPath: browser.path,
       concurrency: captureConcurrency,
       entries: currentEntriesToCapture,
-      port: currentPort,
+      port: visualRegressionConfig.servers.currentPort,
       target: "current",
       session: browserSession,
     });
@@ -395,86 +538,21 @@ const main = async () => {
       analyzeDifferences: false,
     });
     logPhase("Image comparison");
-    const changedIds = comparisons
-      .filter(({ status }) => status === "changed")
-      .map(({ id }) => id);
-    if (changedIds.length > 0) {
-      console.info(
-        `Verifying ${changedIds.length} visual differences with serial captures.`
-      );
-      const changedCurrentEntries = changedIds.flatMap((id) => {
-        const entry = filteredCurrentEntries[id];
-        return entry === undefined ? [] : [entry];
-      });
-      const currentVerification = await captureStories({
-        assetDirectory,
-        browserPath: browser.path,
-        concurrency: 1,
-        entries: changedCurrentEntries,
-        port: currentPort,
-        target: "current",
-        session: browserSession,
-      });
-      replaceStoryCaptures({
-        ids: changedIds,
-        capture: currentCapture,
-        replacement: currentVerification,
-      });
-      comparisons = await compareStories({
-        baselineEntries: filteredBaselineEntries,
-        currentEntries: filteredCurrentEntries,
-        baselinePaths: baselineCapture.paths,
-        currentPaths: currentCapture.paths,
-        baselineErrors: baselineCapture.errors,
-        currentErrors: currentCapture.errors,
-        analyzeDifferences: false,
-      });
-      const remainingChangedIds = comparisons
-        .filter(({ status }) => status === "changed")
-        .map(({ id }) => id);
-      if (remainingChangedIds.length > 0) {
-        const changedBaselineEntries = remainingChangedIds.flatMap((id) => {
-          const entry = filteredBaselineEntries[id];
-          return entry === undefined ? [] : [entry];
-        });
-        if (cachedBaselinePaths !== undefined) {
-          await run({
-            command: "pnpm",
-            commandArgs: ["install", "--frozen-lockfile", "--ignore-scripts"],
-            cwd: checkout,
-          });
-          servers.push(
-            await startVisualStoryServer({
-              root: checkout,
-              port: baselinePort,
-              outputDirectory: baselineBundleDirectory,
-              storyFiles: changedBaselineEntries.map((entry) => entry.file),
-            })
-          );
-        }
-        const baselineVerification = await captureStories({
-          assetDirectory,
-          browserPath: browser.path,
-          concurrency: 1,
-          entries: changedBaselineEntries,
-          port: baselinePort,
-          target: "baseline",
-          session: browserSession,
-        });
-        replaceStoryCaptures({
-          ids: remainingChangedIds,
-          capture: baselineCapture,
-          replacement: baselineVerification,
-        });
-        comparisons = await compareStories({
-          baselineEntries: filteredBaselineEntries,
-          currentEntries: filteredCurrentEntries,
-          baselinePaths: baselineCapture.paths,
-          currentPaths: currentCapture.paths,
-          baselineErrors: baselineCapture.errors,
-          currentErrors: currentCapture.errors,
-        });
-      }
+    const verification = await verifyChangedCaptures({
+      comparisons,
+      baselineEntries: filteredBaselineEntries,
+      currentEntries: filteredCurrentEntries,
+      baselineCapture,
+      currentCapture,
+      cachedBaseline: cachedBaselinePaths !== undefined,
+      browserPath: browser.path,
+      browserSession,
+      checkout,
+      baselineBundleDirectory,
+      servers,
+    });
+    comparisons = verification.comparisons;
+    if (verification.performed) {
       logPhase("Serial verification");
     }
     if (
@@ -527,7 +605,15 @@ const main = async () => {
     throw new Error("Visual comparison did not produce a report.");
   }
   await writeScreenshotComparisonReport({ report, reportDirectory });
-  const result = classifyVisualTestRun({ report, approved });
+  const comparisonResult = classifyScreenshotComparisonReport(report);
+  const result =
+    comparisonResult === "failure"
+      ? "test-failure"
+      : comparisonResult === "passed"
+        ? "passed"
+        : approved
+          ? "approved"
+          : "visual-differences";
   const changed = report.comparisons.filter(
     ({ status }) => status !== "unchanged"
   ).length;

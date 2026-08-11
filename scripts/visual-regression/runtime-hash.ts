@@ -2,30 +2,7 @@ import { createHash } from "node:crypto";
 import { glob, readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-
-const runtimeFiles = [
-  ".storybook/preview.tsx",
-  ".storybook/story-settings.ts",
-  ".storybook/story-sources.json",
-  "pnpm-lock.yaml",
-] as const;
-
-const runtimeDirectories = [
-  "packages/vision/src",
-  "scripts/visual-regression",
-] as const;
-
-const isRuntimeFile = (file: string) => {
-  const name = path.basename(file);
-  return (
-    name.includes(".test.") === false &&
-    name.includes(".test-utils.") === false &&
-    name.endsWith(".d.ts") === false &&
-    name.endsWith(".md") === false &&
-    name !== "tsconfig.json" &&
-    file.includes(`${path.sep}__snapshots__${path.sep}`) === false
-  );
-};
+import { visualRegressionConfig } from "./config";
 
 export const getScreenshotRuntimeHash = async ({
   root,
@@ -34,16 +11,16 @@ export const getScreenshotRuntimeHash = async ({
   root: string;
   browserVersion: string;
 }) => {
-  const files: string[] = [...runtimeFiles];
-  for (const directory of runtimeDirectories) {
-    for await (const entry of glob(`${directory}/**/*`, {
-      cwd: root,
-      withFileTypes: true,
-    })) {
-      const file = path.relative(root, path.join(entry.parentPath, entry.name));
-      if (entry.isFile() && isRuntimeFile(file)) {
-        files.push(file);
-      }
+  const files: string[] = [];
+  for await (const file of glob([...visualRegressionConfig.cache.include], {
+    cwd: root,
+  })) {
+    if (
+      visualRegressionConfig.cache.exclude.some((pattern) =>
+        path.matchesGlob(file, pattern)
+      ) === false
+    ) {
+      files.push(file);
     }
   }
   files.sort();

@@ -1,15 +1,19 @@
-import { createRequire } from "node:module";
-import { copyFile, mkdir, readFile, realpath, rm } from "node:fs/promises";
+import { realpath } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { build, type Plugin } from "esbuild";
+import {
+  build,
+  defaultClientConditions,
+  type InlineConfig,
+  type Plugin,
+} from "vite";
 import { hasPrivateStorySources } from "../../.storybook/story-settings";
 
 const visualRoot = path.dirname(fileURLToPath(import.meta.url));
 const previewModuleId = "virtual:webstudio-visual-preview";
 const storyModulesId = "virtual:webstudio-visual-story-modules";
 
-const createVisualModulesPlugin = ({
+const createStoryModulesPlugin = ({
   root,
   storyFiles,
 }: {
@@ -24,7 +28,7 @@ const createVisualModulesPlugin = ({
         )})`
     )
     .join(",\n");
-  const virtualModules = new Map([
+  const sources = new Map([
     [
       previewModuleId,
       `export { default } from ${JSON.stringify(
@@ -33,54 +37,75 @@ const createVisualModulesPlugin = ({
     ],
     [storyModulesId, `export const modules = {${modules}};`],
   ]);
+  const resolvedPrefix = "\0webstudio-visual:";
+
   return {
-    name: "webstudio-visual-modules",
-    setup(esbuild) {
-      esbuild.onResolve({ filter: /^virtual:webstudio-visual-/ }, (args) => ({
-        path: args.path,
-        namespace: "webstudio-visual",
-      }));
-      esbuild.onLoad(
-        { filter: /.*/, namespace: "webstudio-visual" },
-        (args) => ({
-          contents: virtualModules.get(args.path),
-          loader: "js",
-          resolveDir: root,
-        })
-      );
+    name: "webstudio-visual-story-modules",
+    resolveId(id) {
+      if (sources.has(id)) {
+        return `${resolvedPrefix}${id}`;
+      }
+    },
+    load(id) {
+      if (id.startsWith(resolvedPrefix)) {
+        return sources.get(id.slice(resolvedPrefix.length));
+      }
     },
   };
 };
 
-const createUrlAssetPlugin = (root: string): Plugin => {
-  const require = createRequire(path.join(root, "package.json"));
-  return {
-    name: "webstudio-url-assets",
-    setup(esbuild) {
-      esbuild.onResolve({ filter: /\?url$/ }, (args) => {
-        const request = args.path.slice(0, -"?url".length);
-        let file: string;
-        if (request.startsWith("~/")) {
-          file = path.join(root, "apps/builder/app", request.slice(2));
-        } else if (request.startsWith(".")) {
-          file = path.resolve(args.resolveDir, request);
-        } else if (path.isAbsolute(request)) {
-          file = request;
-        } else {
-          file = require.resolve(request, { paths: [args.resolveDir] });
+const createStoryBuildConfig = ({
+  root,
+  outputDirectory,
+  storyFiles,
+}: {
+  root: string;
+  outputDirectory: string;
+  storyFiles: readonly string[];
+}): InlineConfig => ({
+  root: visualRoot,
+  configFile: false,
+  logLevel: "warn",
+  plugins: [
+    createStoryModulesPlugin({
+      root,
+      storyFiles: [...new Set(storyFiles)].sort(),
+    }),
+  ],
+  resolve: {
+    alias: { "~": path.join(root, "apps/builder/app") },
+    dedupe: ["react", "react-dom"],
+    conditions: [
+      ...(hasPrivateStorySources(root) ? ["webstudio-private"] : []),
+      "webstudio",
+      ...defaultClientConditions,
+    ],
+  },
+  define: {
+    "process.env.NODE_DEBUG": "undefined",
+    "process.env.IS_STROYBOOK": "true",
+  },
+  build: {
+    outDir: outputDirectory,
+    emptyOutDir: true,
+    target: "es2022",
+    reportCompressedSize: false,
+    chunkSizeWarningLimit: 5_000,
+    rollupOptions: {
+      input: path.join(visualRoot, "index.html"),
+      onwarn(warning, warn) {
+        if (warning.code !== "MODULE_LEVEL_DIRECTIVE") {
+          warn(warning);
         }
-        return { path: file, namespace: "url-asset" };
-      });
-      esbuild.onLoad(
-        { filter: /.*/, namespace: "url-asset" },
-        async (args) => ({
-          contents: await readFile(args.path),
-          loader: "file",
-        })
-      );
+      },
+      output: {
+        assetFileNames: "assets/[name]-[hash][extname]",
+        chunkFileNames: "chunks/[name]-[hash].js",
+        entryFileNames: "harness-[hash].js",
+      },
     },
-  };
-};
+  },
+});
 
 export const buildVisualStoryApp = async ({
   root,
@@ -92,60 +117,11 @@ export const buildVisualStoryApp = async ({
   storyFiles: readonly string[];
 }) => {
   const resolvedRoot = await realpath(root);
-  await rm(outputDirectory, { recursive: true, force: true });
-  await mkdir(outputDirectory, { recursive: true });
-  await copyFile(
-    path.join(visualRoot, "index.html"),
-    path.join(outputDirectory, "index.html")
+  await build(
+    createStoryBuildConfig({
+      root: resolvedRoot,
+      outputDirectory,
+      storyFiles,
+    })
   );
-  await build({
-    absWorkingDir: resolvedRoot,
-    alias: { "~": path.join(resolvedRoot, "apps/builder/app") },
-    assetNames: "assets/[name]-[hash]",
-    bundle: true,
-    chunkNames: "chunks/[name]-[hash]",
-    conditions: [
-      ...(hasPrivateStorySources(resolvedRoot) ? ["webstudio-private"] : []),
-      "webstudio",
-      "browser",
-    ],
-    define: {
-      "import.meta.env": "{}",
-      "process.env.NODE_DEBUG": "undefined",
-      "process.env.IS_STROYBOOK": "true",
-    },
-    entryNames: "harness",
-    stdin: {
-      contents: await readFile(path.join(visualRoot, "harness.tsx"), "utf8"),
-      loader: "tsx",
-      resolveDir: resolvedRoot,
-      sourcefile: "harness.tsx",
-    },
-    format: "esm",
-    jsx: "automatic",
-    loader: {
-      ".gif": "file",
-      ".jpeg": "file",
-      ".jpg": "file",
-      ".png": "file",
-      ".svg": "file",
-      ".webp": "file",
-      ".woff": "file",
-      ".woff2": "file",
-    },
-    logLevel: "warning",
-    mainFields: ["browser", "module", "main"],
-    minify: true,
-    outdir: outputDirectory,
-    platform: "browser",
-    plugins: [
-      createVisualModulesPlugin({
-        root: resolvedRoot,
-        storyFiles: [...new Set(storyFiles)].sort(),
-      }),
-      createUrlAssetPlugin(resolvedRoot),
-    ],
-    splitting: true,
-    target: "es2022",
-  });
 };

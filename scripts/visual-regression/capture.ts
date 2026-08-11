@@ -4,9 +4,8 @@ import {
   captureVisualEntries,
   type VisualCaptureSession,
 } from "@webstudio-is/vision/capture";
+import { visualRegressionConfig } from "./config";
 import type { VisualStoryEntry } from "./manifest";
-
-const viewport = { width: 1280, height: 800 };
 
 export const getInitialCaptureTarget = ({
   baselineEntries,
@@ -27,7 +26,7 @@ export const getInitialCaptureTarget = ({
   }
 };
 
-const getCaptureOptions = ({
+export const getStoryCaptureOptions = ({
   browserPath,
   entry,
   output,
@@ -40,7 +39,7 @@ const getCaptureOptions = ({
 }): BrowserScreenshotOptions => ({
   browserPath,
   output,
-  ...viewport,
+  ...visualRegressionConfig.capture.viewport,
   fullPage: true,
   includeElementGeometry: false,
   url: new URL("/", `http://127.0.0.1:${port}`).href,
@@ -56,7 +55,7 @@ const getCaptureOptions = ({
   failForSelector: "#visual-error",
   waitForTimeout: 0,
   finalizeExpression: "window.finishVisualStory()",
-  timeout: 90_000,
+  timeout: visualRegressionConfig.capture.timeout,
   format: "png",
   scale: 1,
 });
@@ -83,7 +82,7 @@ export const captureStories = async ({
       const output = path.join(assetDirectory, entry.id, `${target}.png`);
       return {
         id: entry.id,
-        options: getCaptureOptions({ browserPath, entry, output, port }),
+        options: getStoryCaptureOptions({ browserPath, entry, output, port }),
       };
     }),
     concurrency,
@@ -95,15 +94,3 @@ export const captureStories = async ({
       );
     },
   });
-
-export const createCaptureSessionOptions = ({
-  browserPath,
-  entry,
-  output,
-  port,
-}: {
-  browserPath: string;
-  entry: VisualStoryEntry;
-  output: string;
-  port: number;
-}) => getCaptureOptions({ browserPath, entry, output, port });

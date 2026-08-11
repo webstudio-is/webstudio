@@ -1,9 +1,9 @@
 # Visual regression testing
 
-The visual regression runner indexes the existing Storybook CSF files, builds a
-lightweight browser app with esbuild, serves it through Vite, and renders the
-merge base and current working tree in Chromium. It compares screenshots with
-Webstudio's shared vision engine and does not require a hosted service.
+The visual regression runner indexes the existing Storybook CSF files, builds
+and serves a lightweight browser app with Vite, and renders the merge base and
+current working tree in Chromium. It compares screenshots with Webstudio's
+shared vision engine and does not require a hosted service.
 
 Run the full comparison and open the visual report:
 
@@ -25,8 +25,8 @@ The HTML report shows baseline, current, and diff images for every mismatch,
 plus OCR evidence for changed text. CI uploads the same self-contained report
 as a `visual-regression-report` artifact.
 
-Pixel sensitivity (`0.1`) and mismatch tolerance (`0.001%`) are configured near
-the top of `run.ts`. Viewport and capture settings live in `capture.ts`. Add
+Pixel sensitivity (`0.1`), mismatch tolerance (`0.001%`), viewport, capture,
+server, and cache settings live in `config.ts`. Add
 story-specific deterministic rendering options to the story's
 `parameters.visualRegression` object. Intervals and Web Animations are disabled
 by default after React effects settle so concurrent screenshots cannot capture

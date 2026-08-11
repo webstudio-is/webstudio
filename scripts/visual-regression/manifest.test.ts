@@ -4,40 +4,6 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { readStoryManifest, readStorySources } from "./manifest";
-import { classifyVisualTestRun } from "./shared";
-import type { ScreenshotComparisonReport } from "@webstudio-is/vision/report";
-
-const createReport = (
-  status: ScreenshotComparisonReport["comparisons"][number]["status"]
-): ScreenshotComparisonReport => ({
-  baselineLabel: "base",
-  currentLabel: "current",
-  durationMs: 100,
-  comparisons: [{ id: "button", title: "Button", name: "Primary", status }],
-  errors: [],
-});
-
-test("allows approval only for visual differences", () => {
-  assert.equal(
-    classifyVisualTestRun({ report: createReport("changed"), approved: false }),
-    "visual-differences"
-  );
-  assert.equal(
-    classifyVisualTestRun({ report: createReport("added"), approved: true }),
-    "approved"
-  );
-  assert.equal(
-    classifyVisualTestRun({
-      report: createReport("unchanged"),
-      approved: false,
-    }),
-    "passed"
-  );
-  assert.equal(
-    classifyVisualTestRun({ report: createReport("error"), approved: true }),
-    "test-failure"
-  );
-});
 
 test("indexes portable CSF stories with Storybook-compatible ids", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "visual-manifest-"));

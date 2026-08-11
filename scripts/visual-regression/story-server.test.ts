@@ -36,19 +36,10 @@ test("loads the visual harness from a proper HTML entry", async () => {
     document,
     (element) => element.tagName === "script"
   );
-  const stylesheet = findElement(
-    document,
-    (element) =>
-      element.tagName === "link" &&
-      element.attrs.some(
-        ({ name, value }) => name === "href" && value === "/harness.css"
-      )
-  );
   assert.equal(root?.parentNode?.nodeName, "body");
-  assert.equal(stylesheet?.parentNode?.nodeName, "head");
   assert.ok(
     script?.attrs.some(
-      ({ name, value }) => name === "src" && value === "/harness.js"
+      ({ name, value }) => name === "src" && value === "/harness.tsx"
     )
   );
 });
