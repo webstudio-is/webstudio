@@ -1,7 +1,8 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { expect, test } from "vitest";
+import { Worker } from "node:worker_threads";
+import { expect, test, vi } from "vitest";
 import { createScreenshotDiffPool } from "./diff-pool";
 
 const onePixelPng = Buffer.from(
@@ -55,4 +56,33 @@ test("rejects work after the pool closes", async () => {
       outputDir: ".",
     })
   ).rejects.toThrowError("Screenshot diff pool is closed.");
+});
+
+test("waits for worker termination from every concurrent close", async () => {
+  let releaseTermination: () => void = () => undefined;
+  const terminationReleased = new Promise<void>((resolve) => {
+    releaseTermination = resolve;
+  });
+  const terminate = Worker.prototype.terminate;
+  const terminateSpy = vi
+    .spyOn(Worker.prototype, "terminate")
+    .mockImplementation(function (this: Worker) {
+      const terminated = terminate.call(this);
+      return terminationReleased.then(async () => await terminated);
+    });
+  const pool = createScreenshotDiffPool(1);
+  try {
+    const firstClose = pool.close();
+    let secondCloseFinished = false;
+    const secondClose = pool.close().then(() => {
+      secondCloseFinished = true;
+    });
+    await Promise.resolve();
+    expect(secondCloseFinished).toBe(false);
+    releaseTermination();
+    await Promise.all([firstClose, secondClose]);
+  } finally {
+    releaseTermination();
+    terminateSpy.mockRestore();
+  }
 });

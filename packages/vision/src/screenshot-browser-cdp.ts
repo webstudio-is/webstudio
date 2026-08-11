@@ -210,20 +210,29 @@ class CdpSession {
     timeout: number
   ) => {
     const socket = dependencies.createWebSocket(url);
-    await withDeadline(
-      new Promise<void>((resolveConnection, rejectConnection) => {
-        socket.addEventListener("open", () => resolveConnection(), {
-          once: true,
-        });
-        socket.addEventListener(
-          "error",
-          () => rejectConnection(new Error("Could not connect to browser.")),
-          { once: true }
-        );
-      }),
-      "Browser DevTools connection did not open",
-      timeout
-    );
+    try {
+      await withDeadline(
+        new Promise<void>((resolveConnection, rejectConnection) => {
+          socket.addEventListener("open", () => resolveConnection(), {
+            once: true,
+          });
+          socket.addEventListener(
+            "error",
+            () => rejectConnection(new Error("Could not connect to browser.")),
+            { once: true }
+          );
+        }),
+        "Browser DevTools connection did not open",
+        timeout
+      );
+    } catch (error) {
+      try {
+        socket.close();
+      } catch {
+        // Preserve the connection failure when a pending socket cannot close.
+      }
+      throw error;
+    }
     return new CdpSession(socket);
   };
 
@@ -1251,16 +1260,24 @@ const startBrowserRuntimeOnce = async (
   const userDataDir = await dependencies.mkdtemp(
     join(tmpdir(), "vision-browser-")
   );
-  const browserProcess = dependencies.spawnBrowser(
-    options.browserPath,
-    createBrowserLaunchArgs({
-      userDataDir,
-      width: options.width,
-      height: options.height,
-      uid: options.uid,
-      disableSandbox: options.disableSandbox,
-    })
-  );
+  let browserProcess: BrowserProcess;
+  try {
+    browserProcess = dependencies.spawnBrowser(
+      options.browserPath,
+      createBrowserLaunchArgs({
+        userDataDir,
+        width: options.width,
+        height: options.height,
+        uid: options.uid,
+        disableSandbox: options.disableSandbox,
+      })
+    );
+  } catch (error) {
+    await dependencies
+      .rm(userDataDir, { recursive: true, force: true })
+      .catch(() => undefined);
+    throw error;
+  }
   let running = true;
   const browserClosed = new Promise<string | undefined>((resolveClosed) => {
     const close = (reason?: string) => {
@@ -1793,24 +1810,39 @@ export const createBrowserScreenshotSession = async (
 ): Promise<BrowserScreenshotSession> => {
   let runtime = await startBrowserRuntime(options, dependencies);
   let restartPromise: Promise<BrowserRuntime> | undefined;
+  let closePromise: Promise<void> | undefined;
   let closed = false;
   const restart = async (failedRuntime: BrowserRuntime) => {
     if (runtime !== failedRuntime) {
       return runtime;
     }
-    restartPromise ??= (async () => {
-      await failedRuntime.close();
-      if (closed) {
-        throw new BrowserSessionClosedError(
-          "Browser screenshot session was closed."
-        );
+    const pendingRestart =
+      restartPromise ??
+      (async () => {
+        await failedRuntime.close();
+        if (closed) {
+          throw new BrowserSessionClosedError(
+            "Browser screenshot session was closed."
+          );
+        }
+        const next = await startBrowserRuntime(options, dependencies);
+        if (closed) {
+          await next.close();
+          throw new BrowserSessionClosedError(
+            "Browser screenshot session was closed."
+          );
+        }
+        runtime = next;
+        return next;
+      })();
+    restartPromise = pendingRestart;
+    try {
+      return await pendingRestart;
+    } finally {
+      if (restartPromise === pendingRestart) {
+        restartPromise = undefined;
       }
-      const next = await startBrowserRuntime(options, dependencies);
-      runtime = next;
-      restartPromise = undefined;
-      return next;
-    })();
-    return await restartPromise;
+    }
   };
   const captureWithRestart = async <Result>(
     capture: (activeRuntime: BrowserRuntime) => Promise<Result>
@@ -1821,7 +1853,10 @@ export const createBrowserScreenshotSession = async (
       );
     }
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const activeRuntime = runtime;
+      let activeRuntime = runtime;
+      if (activeRuntime.running === false) {
+        activeRuntime = await restart(activeRuntime);
+      }
       try {
         return await capture(activeRuntime);
       } catch (error) {
@@ -1906,7 +1941,11 @@ export const createBrowserScreenshotSession = async (
     },
     async close() {
       closed = true;
-      await runtime.close();
+      closePromise ??= (async () => {
+        await restartPromise?.catch(() => undefined);
+        await runtime.close();
+      })();
+      await closePromise;
     },
   };
 };

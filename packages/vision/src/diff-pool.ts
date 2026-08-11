@@ -30,6 +30,7 @@ export const createScreenshotDiffPool = (size: number) => {
   let nextTaskId = 0;
   let failure: Error | undefined;
   let closing = false;
+  let closePromise: Promise<void> | undefined;
 
   const dispatch = () => {
     while (closing === false && idleWorkers.length > 0 && queue.length > 0) {
@@ -115,9 +116,9 @@ export const createScreenshotDiffPool = (size: number) => {
         dispatch();
       });
     },
-    async close() {
-      if (closing) {
-        return;
+    close() {
+      if (closePromise !== undefined) {
+        return closePromise;
       }
       closing = true;
       const error = new Error("Screenshot diff pool is closed.");
@@ -127,7 +128,10 @@ export const createScreenshotDiffPool = (size: number) => {
       }
       activeTasks.clear();
       taskIds.clear();
-      await Promise.all(workers.map(async (worker) => worker.terminate()));
+      closePromise = Promise.all(
+        workers.map(async (worker) => worker.terminate())
+      ).then(() => undefined);
+      return closePromise;
     },
   };
 };

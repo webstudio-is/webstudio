@@ -51,6 +51,7 @@ export const findGeometryIssues = (
   geometry: BrowserScreenshotElementGeometry
 ): ScreenshotGeometryIssue[] => {
   const issues: ScreenshotGeometryIssue[] = [];
+  const overlapPairs = new Set<string>();
   for (const element of geometry.elements) {
     if (element.clippedX || element.clippedY) {
       issues.push({
@@ -61,13 +62,22 @@ export const findGeometryIssues = (
       });
     }
     for (const relatedInstanceId of element.overlapsWith) {
-      if (element.instanceId.localeCompare(relatedInstanceId) >= 0) {
+      const [instanceId, pairedInstanceId] = [
+        element.instanceId,
+        relatedInstanceId,
+      ].sort((left, right) => left.localeCompare(right));
+      if (instanceId === pairedInstanceId) {
         continue;
       }
+      const pair = JSON.stringify([instanceId, pairedInstanceId]);
+      if (overlapPairs.has(pair)) {
+        continue;
+      }
+      overlapPairs.add(pair);
       issues.push({
         kind: "overlapping-elements",
-        instanceId: element.instanceId,
-        relatedInstanceId,
+        instanceId,
+        relatedInstanceId: pairedInstanceId,
       });
     }
   }

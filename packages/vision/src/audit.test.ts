@@ -133,3 +133,45 @@ test("finds persistent hidden content and cross-viewport layout changes", () => 
     "cross-viewport-layout-change",
   ]);
 });
+
+test("finds overlaps reported by only one element", () => {
+  expect(
+    findGeometryIssues({
+      total: 2,
+      sampled: 2,
+      truncated: false,
+      elements: [
+        {
+          instanceId: "z-card",
+          tagName: "article",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          visible: true,
+          clippedX: false,
+          clippedY: false,
+          overlapsWith: ["a-badge"],
+        },
+        {
+          instanceId: "a-badge",
+          tagName: "div",
+          x: 50,
+          y: 0,
+          width: 100,
+          height: 100,
+          visible: true,
+          clippedX: false,
+          clippedY: false,
+          overlapsWith: [],
+        },
+      ],
+    })
+  ).toEqual([
+    {
+      kind: "overlapping-elements",
+      instanceId: "a-badge",
+      relatedInstanceId: "z-card",
+    },
+  ]);
+});

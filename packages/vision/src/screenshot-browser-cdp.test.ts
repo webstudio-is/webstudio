@@ -430,6 +430,23 @@ class CrashingWebSocket extends FakeWebSocket {
   };
 }
 
+class NeverOpeningWebSocket {
+  readonly listeners = new Map<
+    string,
+    Array<(event: { data?: string }) => void>
+  >();
+  addEventListener = (
+    event: string,
+    listener: (event: { data?: string }) => void
+  ) => {
+    const listeners = this.listeners.get(event) ?? [];
+    listeners.push(listener);
+    this.listeners.set(event, listeners);
+  };
+  close = vi.fn();
+  send = vi.fn();
+}
+
 class NavigationErrorWebSocket extends FakeWebSocket {
   send = (data: string) => {
     const message = JSON.parse(data) as {
@@ -900,6 +917,144 @@ test("restarts the shared browser once after an unexpected exit", async () => {
 
   expect(secondProcess.kill).toHaveBeenCalledOnce();
   expect(dependencies.rm).toHaveBeenCalledTimes(2);
+});
+
+test("retries a browser restart after a transient startup failure", async () => {
+  const firstProcess = new FakeBrowserProcess();
+  const secondProcess = new FakeBrowserProcess();
+  const dependencies = createDependencies();
+  vi.mocked(dependencies.mkdtemp)
+    .mockResolvedValueOnce("/tmp/vision-browser-first")
+    .mockRejectedValueOnce(new Error("Temporary directory unavailable"))
+    .mockResolvedValueOnce("/tmp/vision-browser-second");
+  vi.mocked(dependencies.spawnBrowser)
+    .mockReturnValueOnce(firstProcess as never)
+    .mockReturnValueOnce(secondProcess as never);
+  vi.mocked(dependencies.createWebSocket)
+    .mockImplementationOnce(
+      () => new CrashingWebSocket(firstProcess) as unknown as WebSocket
+    )
+    .mockImplementationOnce(() => new FakeWebSocket() as unknown as WebSocket);
+  const options = {
+    url: "https://example.com",
+    output: "/tmp/restarted.png",
+    width: 800,
+    height: 600,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(options, dependencies);
+
+  await expect(session.capture(options)).rejects.toThrow(
+    "Temporary directory unavailable"
+  );
+  await expect(session.capture(options)).resolves.toMatchObject({
+    viewportWidth: 800,
+    viewportHeight: 600,
+  });
+  await session.close();
+
+  expect(dependencies.mkdtemp).toHaveBeenCalledTimes(3);
+  expect(secondProcess.kill).toHaveBeenCalledOnce();
+});
+
+test("closes a browser that finishes restarting during session cleanup", async () => {
+  const firstProcess = new FakeBrowserProcess();
+  const secondProcess = new FakeBrowserProcess();
+  const dependencies = createDependencies();
+  let resolveRestartDirectory: (directory: string) => void = () => undefined;
+  const restartDirectory = new Promise<string>((resolve) => {
+    resolveRestartDirectory = resolve;
+  });
+  vi.mocked(dependencies.mkdtemp)
+    .mockResolvedValueOnce("/tmp/vision-browser-first")
+    .mockReturnValueOnce(restartDirectory);
+  vi.mocked(dependencies.spawnBrowser)
+    .mockReturnValueOnce(firstProcess as never)
+    .mockReturnValueOnce(secondProcess as never);
+  vi.mocked(dependencies.createWebSocket).mockImplementationOnce(
+    () => new CrashingWebSocket(firstProcess) as unknown as WebSocket
+  );
+  const options = {
+    url: "https://example.com",
+    output: "/tmp/restarted.png",
+    width: 800,
+    height: 600,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(options, dependencies);
+
+  const capture = session.capture(options);
+  await vi.waitFor(() => {
+    expect(dependencies.mkdtemp).toHaveBeenCalledTimes(2);
+  });
+  const close = session.close();
+  resolveRestartDirectory("/tmp/vision-browser-second");
+
+  await expect(capture).rejects.toThrow(
+    "Browser screenshot session was closed."
+  );
+  await close;
+  expect(secondProcess.kill).toHaveBeenCalledOnce();
+  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/vision-browser-second", {
+    recursive: true,
+    force: true,
+  });
+});
+
+test("removes the browser profile when spawning throws", async () => {
+  const dependencies = createDependencies();
+  vi.mocked(dependencies.spawnBrowser).mockImplementationOnce(() => {
+    throw new Error("Browser spawn failed");
+  });
+
+  await expect(
+    createBrowserScreenshotSession(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "load",
+        waitForTimeout: 0,
+        timeout: 1000,
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Browser spawn failed");
+  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/vision-browser-test", {
+    recursive: true,
+    force: true,
+  });
+});
+
+test("closes a DevTools socket that does not open before the deadline", async () => {
+  const socket = new NeverOpeningWebSocket();
+  const dependencies = createDependencies();
+  dependencies.createWebSocket = vi.fn(() => socket as unknown as WebSocket);
+
+  await expect(
+    captureBrowserScreenshot(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "load",
+        waitForTimeout: 0,
+        timeout: 10,
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Browser DevTools connection did not open within 10ms.");
+  expect(socket.close).toHaveBeenCalledOnce();
 });
 
 test("retries browser startup before capturing a viewport batch", async () => {

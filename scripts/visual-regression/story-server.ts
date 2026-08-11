@@ -5,7 +5,7 @@ import path from "node:path";
 import { build, type Plugin } from "esbuild";
 import { hasPrivateStorySources } from "../../.storybook/story-settings";
 
-const html = `<!doctype html>
+export const visualStoryHtml = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -21,10 +21,10 @@ const html = `<!doctype html>
       }
       iframe { visibility: hidden !important; }
     </style>
+    <link rel="stylesheet" href="/harness.css">
   </head>
   <body>
     <div id="root"></div>
-    <link rel="stylesheet" href="/harness.css">
     <script type="module" src="/harness.js"></script>
   </body>
 </html>`;
@@ -113,7 +113,7 @@ export const startVisualStoryServer = async ({
   });
   await writeFile(
     path.join(outputDirectory, ".visual-regression", "harness.html"),
-    html
+    visualStoryHtml
   );
 
   const require = createRequire(path.join(resolvedRoot, "package.json"));
