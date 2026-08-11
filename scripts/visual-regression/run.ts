@@ -164,6 +164,7 @@ const compareStories = async ({
   currentPaths,
   baselineErrors,
   currentErrors,
+  analyzeDifferences = true,
 }: {
   baselineEntries: Record<string, VisualStoryEntry>;
   currentEntries: Record<string, VisualStoryEntry>;
@@ -171,6 +172,7 @@ const compareStories = async ({
   currentPaths: Map<string, string>;
   baselineErrors: Map<string, string>;
   currentErrors: Map<string, string>;
+  analyzeDifferences?: boolean;
 }) => {
   return await compareVisualEntries({
     baselineEntries: Object.values(baselineEntries),
@@ -183,6 +185,8 @@ const compareStories = async ({
     pixelThreshold,
     maxMismatchPercentage,
     concurrency: Math.min(4, os.availableParallelism()),
+    analyzeText: analyzeDifferences ? "when-different" : false,
+    writeArtifacts: analyzeDifferences ? "when-different" : false,
   });
 };
 
@@ -401,6 +405,7 @@ const main = async () => {
       currentPaths: currentCapture.paths,
       baselineErrors: baselineCapture.errors,
       currentErrors: currentCapture.errors,
+      analyzeDifferences: false,
     });
     logPhase("Image comparison");
     const changedIds = comparisons
@@ -435,6 +440,7 @@ const main = async () => {
         currentPaths: currentCapture.paths,
         baselineErrors: baselineCapture.errors,
         currentErrors: currentCapture.errors,
+        analyzeDifferences: false,
       });
       const remainingChangedIds = comparisons
         .filter(({ status }) => status === "changed")

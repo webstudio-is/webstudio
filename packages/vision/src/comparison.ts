@@ -71,6 +71,8 @@ export const compareVisualEntries = async <Entry extends VisualReportEntry>({
   pixelThreshold,
   maxMismatchPercentage,
   concurrency,
+  analyzeText = "when-different",
+  writeArtifacts = "when-different",
 }: {
   baselineEntries: readonly Entry[];
   currentEntries: readonly Entry[];
@@ -82,6 +84,8 @@ export const compareVisualEntries = async <Entry extends VisualReportEntry>({
   pixelThreshold: number;
   maxMismatchPercentage: number;
   concurrency: number;
+  analyzeText?: boolean | "when-different";
+  writeArtifacts?: boolean | "when-different";
 }): Promise<ScreenshotComparisonReportItem[]> => {
   const comparisons = getVisualComparisons({
     baselineEntries,
@@ -178,8 +182,8 @@ export const compareVisualEntries = async <Entry extends VisualReportEntry>({
               createHash("sha256").update(comparison.id).digest("hex")
             ),
             threshold: pixelThreshold,
-            analyzeText: "when-different",
-            writeArtifacts: "when-different",
+            analyzeText,
+            writeArtifacts,
           });
           const changed =
             diff.dimensionMismatch !== undefined ||
