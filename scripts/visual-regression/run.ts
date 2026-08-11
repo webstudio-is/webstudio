@@ -410,37 +410,9 @@ const main = async () => {
       console.info(
         `Verifying ${changedIds.length} visual differences with serial captures.`
       );
-      const changedBaselineEntries = changedIds.flatMap((id) => {
-        const entry = filteredBaselineEntries[id];
-        return entry === undefined ? [] : [entry];
-      });
       const changedCurrentEntries = changedIds.flatMap((id) => {
         const entry = filteredCurrentEntries[id];
         return entry === undefined ? [] : [entry];
-      });
-      if (cachedBaselinePaths !== undefined) {
-        await run({
-          command: "pnpm",
-          commandArgs: ["install", "--frozen-lockfile", "--ignore-scripts"],
-          cwd: checkout,
-        });
-        servers.push(
-          await startVisualStoryServer({
-            root: checkout,
-            port: baselinePort,
-            outputDirectory: baselineBundleDirectory,
-            storyFiles: changedBaselineEntries.map((entry) => entry.file),
-          })
-        );
-      }
-      const baselineVerification = await captureStories({
-        assetDirectory,
-        browserPath: browser.path,
-        concurrency: 1,
-        entries: changedBaselineEntries,
-        port: baselinePort,
-        target: "baseline",
-        session: browserSession,
       });
       const currentVerification = await captureStories({
         assetDirectory,
@@ -450,11 +422,6 @@ const main = async () => {
         port: currentPort,
         target: "current",
         session: browserSession,
-      });
-      replaceStoryCaptures({
-        ids: changedIds,
-        capture: baselineCapture,
-        replacement: baselineVerification,
       });
       replaceStoryCaptures({
         ids: changedIds,
@@ -469,6 +436,52 @@ const main = async () => {
         baselineErrors: baselineCapture.errors,
         currentErrors: currentCapture.errors,
       });
+      const remainingChangedIds = comparisons
+        .filter(({ status }) => status === "changed")
+        .map(({ id }) => id);
+      if (remainingChangedIds.length > 0) {
+        const changedBaselineEntries = remainingChangedIds.flatMap((id) => {
+          const entry = filteredBaselineEntries[id];
+          return entry === undefined ? [] : [entry];
+        });
+        if (cachedBaselinePaths !== undefined) {
+          await run({
+            command: "pnpm",
+            commandArgs: ["install", "--frozen-lockfile", "--ignore-scripts"],
+            cwd: checkout,
+          });
+          servers.push(
+            await startVisualStoryServer({
+              root: checkout,
+              port: baselinePort,
+              outputDirectory: baselineBundleDirectory,
+              storyFiles: changedBaselineEntries.map((entry) => entry.file),
+            })
+          );
+        }
+        const baselineVerification = await captureStories({
+          assetDirectory,
+          browserPath: browser.path,
+          concurrency: 1,
+          entries: changedBaselineEntries,
+          port: baselinePort,
+          target: "baseline",
+          session: browserSession,
+        });
+        replaceStoryCaptures({
+          ids: remainingChangedIds,
+          capture: baselineCapture,
+          replacement: baselineVerification,
+        });
+        comparisons = await compareStories({
+          baselineEntries: filteredBaselineEntries,
+          currentEntries: filteredCurrentEntries,
+          baselinePaths: baselineCapture.paths,
+          currentPaths: currentCapture.paths,
+          baselineErrors: baselineCapture.errors,
+          currentErrors: currentCapture.errors,
+        });
+      }
       logPhase("Serial verification");
     }
     if (
