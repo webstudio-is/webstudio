@@ -107,7 +107,7 @@ test("prints the complete manual as verbose json", () => {
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   expect(output.topic).toBe("all");
-  expect(output.focusedTopics).toEqual(["api", "llm", "mcp"]);
+  expect(output.focusedTopics).toEqual(["api", "llm", "mcp", "content-engine"]);
   expect(output.mcp.discovery).toContain("meta.index");
   expect(output.mcp.resources).toContain("webstudio://project/components");
   expect(output.mcp.capabilities).toEqual(

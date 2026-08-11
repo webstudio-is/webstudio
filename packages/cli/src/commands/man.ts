@@ -11,6 +11,7 @@ import {
   mcpArgumentExamples,
 } from "@webstudio-is/project-build/mcp";
 import { readCliDoc, readCliDocSections, readCliDocTitle } from "../docs";
+import { renderContentEngineReferenceMarkdown } from "../content-engine-reference";
 import {
   generatedAppDependencyNotes,
   getVisionVerificationLoop,
@@ -37,7 +38,8 @@ export const manOptions = (yargs: CommonYargsArgv) =>
   yargs
     .positional("topic", {
       type: "string",
-      describe: "Manual topic to print: all, api, llm, mcp, or project-editing",
+      describe:
+        "Manual topic to print: all, api, llm, mcp, content-engine, or project-editing",
       default: "all",
     })
     .option("json", {
@@ -411,6 +413,10 @@ const mcpGeneratedAppDependencyNotes = generatedAppDependencyNotes
   .map((note) => `- ${note}`)
   .join("\n");
 
+const contentEngineReferenceMarkdown = renderContentEngineReferenceMarkdown({
+  headingLevel: 2,
+});
+
 const useCaseIndex = useCaseScenarios
   .map((scenario) => {
     const commands = scenario.commands.map((command) => `  - ${command}`);
@@ -565,12 +571,14 @@ const manualReplacements = {
   mcpArgumentExampleIndex,
   mcpVisionVerificationLoopMarkdown,
   mcpGeneratedAppDependencyNotes,
+  contentEngineReferenceMarkdown,
   screenshotVerificationSummary,
 };
 
 const apiManual = renderMarkdownTemplate(apiManualMarkdown, manualReplacements);
 const llmManual = renderMarkdownTemplate(llmManualMarkdown, manualReplacements);
 const mcpManual = renderMarkdownTemplate(mcpManualMarkdown, manualReplacements);
+const contentEngineManual = renderContentEngineReferenceMarkdown();
 const mcpCapabilitySummary = [
   "Project discovery and session status",
   "Pages, folders, redirects, and project settings",
@@ -693,7 +701,7 @@ const topics = {
       return {
         topic: "all",
         title: "Webstudio Complete CLI Manual",
-        focusedTopics: ["api", "llm", "mcp"],
+        focusedTopics: ["api", "llm", "mcp", "content-engine"],
         topLevelCommands: topLevelCommandCatalog,
         commands: commandCatalog,
         mcp: {
@@ -801,6 +809,14 @@ const topics = {
       mcpDocSections
     ),
   },
+  "content-engine": {
+    manual: contentEngineManual,
+    json: {
+      topic: "content-engine",
+      title: "Content Engine reference",
+      manual: contentEngineManual,
+    },
+  },
 };
 
 type ManualCatalogItem = {
@@ -837,12 +853,27 @@ const mcpManualItems: ManualCatalogItem[] = listProjectSessionMcpTools(
   use: compactDescription(description),
 }));
 
+const contentEngineToolNames = new Set([
+  "list-assets-resources",
+  "get-assets-resource",
+  "create-assets-resource",
+  "update-assets-resource",
+  "delete-resource",
+  "validate-asset-query",
+  "preview-asset-query",
+  "get-asset-field-catalog",
+]);
+const contentEngineManualItems = mcpManualItems.filter(({ command }) =>
+  contentEngineToolNames.has(command)
+);
+
 const manualItemsByTopic: Record<keyof typeof topics, ManualCatalogItem[]> = {
   all: [...topLevelManualItems, ...apiManualItems, ...mcpManualItems],
   api: [...apiManualItems, ...mcpManualItems],
   llm: [...topLevelManualItems, ...apiManualItems, ...mcpManualItems],
   "project-editing": [...apiManualItems, ...mcpManualItems],
   mcp: mcpManualItems,
+  "content-engine": contentEngineManualItems,
 };
 
 const parseManualCursor = (cursor: string | undefined) => {

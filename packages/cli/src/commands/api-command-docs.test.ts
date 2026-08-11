@@ -215,7 +215,10 @@ test("documents the Assets result shape", () => {
     expect(contents).toContain("<dataSourceName>.meta");
     expect(contents).toContain("posts.data");
     expect(contents).toContain("post.data");
-    expect(contents).toContain("post.data?.content?.text");
+    expect(contents).toContain("post.data.content.text");
+    // Webstudio makes property access safe while compiling expressions, so
+    // agent guidance must use the direct source form instead of optional chains.
+    expect(contents).not.toContain("?.");
   }
 });
 
@@ -238,7 +241,6 @@ test("directs agents to deferred Markdown bodies", () => {
     expect(contents).toContain('content.mode:"markdown-body-ref"');
     expect(contents).toContain("document reference");
     expect(contents).toContain("selected Markdown");
-    expect(contents).toContain("post.data?.content?.text");
   }
 
   const tools = createMetadataOnlyMcpAdapter().listTools();

@@ -2148,22 +2148,23 @@ export const mcpArgumentExamples: Record<
       scopeInstanceId: "body-id",
       dataSourceName: "posts",
       query: {
+        result: "many",
         where: {
           all: [
             {
               field: ["extension"],
               operator: "eq",
-              value: { type: "literal", value: "json" },
+              value: { type: "literal", value: "md" },
             },
             {
-              field: ["properties", "kind"],
+              field: ["folderId"],
               operator: "eq",
-              value: { type: "literal", value: "post" },
+              value: { type: "literal", value: "folder-id" },
             },
             {
               field: ["properties", "draft"],
               operator: "ne",
-              value: "true",
+              value: { type: "literal", value: true },
             },
           ],
         },
@@ -2171,7 +2172,19 @@ export const mcpArgumentExamples: Record<
           { field: ["properties", "publishedAt"], direction: "desc" },
           { field: ["id"], direction: "asc" },
         ],
-        limit: "20",
+        limit: { type: "literal", value: 20 },
+        offset: { type: "literal", value: 0 },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [
+            ["properties", "title"],
+            ["properties", "slug"],
+            ["properties", "publishedAt"],
+            ["properties", "excerpt"],
+          ],
+        },
+        content: { mode: "none" },
       },
     },
     {
@@ -2179,41 +2192,42 @@ export const mcpArgumentExamples: Record<
       scopeInstanceId: "body-id",
       dataSourceName: "post",
       query: {
+        result: "one",
         where: {
           all: [
             {
               field: ["extension"],
               operator: "eq",
-              value: { type: "literal", value: "json" },
+              value: { type: "literal", value: "md" },
             },
             {
-              field: ["properties", "kind"],
+              field: ["folderId"],
               operator: "eq",
-              value: { type: "literal", value: "post" },
+              value: { type: "literal", value: "folder-id" },
             },
             {
-              any: [
-                {
-                  field: ["properties", "slug"],
-                  operator: "eq",
-                  value: "system.params.slug",
-                },
-                {
-                  field: ["properties", "id"],
-                  operator: "eq",
-                  value: "system.params.slug",
-                },
-              ],
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "system.params.slug",
+            },
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: { type: "literal", value: true },
             },
           ],
         },
-        limit: "1",
         output: {
           mode: "fields",
           includeMetadata: false,
-          fields: [["properties", "body"]],
+          fields: [
+            ["properties", "title"],
+            ["properties", "publishedAt"],
+            ["properties", "excerpt"],
+            ["properties", "featureImage"],
+          ],
         },
-        content: { mode: "none" },
+        content: { mode: "markdown-body-ref" },
       },
     },
   ],
@@ -2247,8 +2261,14 @@ export const mcpArgumentExamples: Record<
   "preview-asset-query": [
     {
       query: {
+        result: "one",
         where: {
           all: [
+            {
+              field: ["extension"],
+              operator: "eq",
+              value: "md",
+            },
             {
               field: ["properties", "slug"],
               operator: "eq",
@@ -2256,7 +2276,11 @@ export const mcpArgumentExamples: Record<
             },
           ],
         },
-        limit: 1,
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
         content: { mode: "markdown-body-ref", maxBytes: 1_048_576 },
       },
     },
@@ -5601,6 +5625,8 @@ const metaGoalGuides = [
       "create-page",
       "create-assets-resource",
       "insert-collection",
+      "insert-fragment",
+      "update-page",
       "verify-page-responsive",
     ],
     workflow: [
@@ -5608,8 +5634,9 @@ const metaGoalGuides = [
       'Create one asset folder named exactly "Blog", then call upload-assets exactly once with all Markdown files and assetsDir ".webstudio/assets". Put slug, title, author, publishedAt, excerpt, and draft in frontmatter. Each asset uses {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}; do not create companion files.',
       'Create exactly two pages once: "/blog" and "/blog/:slug". Do not dry-run page creation, create one page per post, or copy Markdown into static page content.',
       "Substitute the returned folder id in both recipe queries. Validate both, then preview the detail query with one concrete slug. Keep overview values literal and keep system.params.slug as the detail query's only dynamic value.",
-      'Create exactly one scoped Assets resource per page by copying recipe.overviewResource and recipe.detailResource unchanged except for id placeholders. Keep the detail query result as "one"; Collection accepts this single-result object. Do not add query defaults or create placeholder resources.',
-      "Insert recipe.overviewCollection under the overview root and recipe.detailCollection under the detail root. Use each object unchanged except for parentInstanceId. Both bindings must remain editable Collections; do not replace the detail Collection with a static fragment.",
+      'Create exactly one scoped Assets resource per page by copying recipe.overviewResource and recipe.detailResource unchanged except for id placeholders. Keep the detail query result as "one" and bind it directly without a Collection. Do not add query defaults or create placeholder resources.',
+      "Insert recipe.overviewCollection under the overview root with insert-collection, then insert recipe.detailFragment under the detail root with insert-fragment. The overview repeats posts; the detail page binds post.data directly.",
+      "Apply the page settings with update-page using recipe.detailPageSettings so the article title, description, social image, and 404 status use the same post resource as the page content.",
       'After both insertions succeed, call verify-page-responsive once for "/blog" and once for one concrete detail path with desktop and mobile viewports. Confirm Assets-backed content and empty/not-found behavior. Stop on an error instead of retrying.',
     ],
     recipe: {
@@ -5681,6 +5708,11 @@ const metaGoalGuides = [
                 operator: "eq",
                 value: "system.params.slug",
               },
+              {
+                field: ["properties", "draft"],
+                operator: "ne",
+                value: { type: "literal", value: true },
+              },
             ],
           },
           output: {
@@ -5689,6 +5721,8 @@ const metaGoalGuides = [
             fields: [
               ["properties", "title"],
               ["properties", "author"],
+              ["properties", "excerpt"],
+              ["properties", "featureImage"],
             ],
           },
           content: { mode: "markdown-body-ref" },
@@ -5700,14 +5734,21 @@ const metaGoalGuides = [
         itemFragment:
           '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">{expression`collectionItem.properties.excerpt ?? ""`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><ws.element ws:tag="time">{expression`collectionItem.properties.publishedAt ?? ""`}</ws.element><ws.element ws:tag="a" href={expression`"/blog/" + collectionItem.properties.slug`}>Read article</ws.element></ws.element>',
       },
-      detailCollection: {
+      detailFragment: {
         parentInstanceId: "<detail-root-id>",
-        data: {
-          type: "expression",
-          value: "post.data == null ? [] : [post.data]",
+        fragment:
+          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`post.data.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`post.data.properties.author.name ?? ""`}</ws.element><$.MarkdownEmbed code={expression`post.data.content.text ?? ""`} /></ws.element>',
+      },
+      detailPageSettings: {
+        pageId: "<detail-page-id>",
+        values: {
+          title: 'post.data.properties.title ?? "Article"',
+          meta: {
+            description: 'post.data.properties.excerpt ?? ""',
+            socialImageUrl: 'post.data.properties.featureImage ?? ""',
+            status: "post.data ? 200 : 404",
+          },
         },
-        itemFragment:
-          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name ?? ""`}</ws.element><$.MarkdownEmbed code={expression`collectionItem.content.text ?? ""`} /></ws.element>',
       },
     },
   },
