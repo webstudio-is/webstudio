@@ -42,7 +42,10 @@ the comparison.
 GitHub Actions runs the complete suite in one job and caches screenshots from
 successful revisions for use as PR baselines. The runner produces the baseline
 on the fly when the cache is missing, and keeps both the cache and a reusable
-baseline worktree ignored locally.
+baseline worktree ignored locally. CI uses the Playwright Chromium version
+pinned by the lockfile so those screenshots remain reusable across hosted
+runners. Capture concurrency adapts to the available CPUs and can be overridden
+with `VISUAL_CAPTURE_CONCURRENCY`.
 
 Visual differences fail the pull request. After reviewing an intentional
 change, add the `visual-change-approved` label to rerun the same comparison as
