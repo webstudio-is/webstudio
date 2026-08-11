@@ -9,6 +9,11 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
+    "./audit": {
+      "webstudio": "./src/audit.ts",
+      "import": "./src/audit.ts",
+      "default": "./src/audit.ts"
+    },
     "./browser": {
       "webstudio": "./src/browser.ts",
       "import": "./src/browser.ts",
