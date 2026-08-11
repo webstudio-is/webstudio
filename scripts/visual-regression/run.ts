@@ -167,8 +167,12 @@ const compareStories = async ({
 }) => {
   const pool = createDiffPool(Math.min(4, os.availableParallelism()));
   try {
+    const visualComparisons = getVisualComparisons({
+      baselineEntries: Object.values(baselineEntries),
+      currentEntries: Object.values(currentEntries),
+    });
     return await Promise.all(
-      getVisualComparisons({ baselineEntries, currentEntries }).map(
+      visualComparisons.map(
         async (comparison): Promise<ScreenshotComparisonReportItem> => {
           const entry = comparison.current ?? comparison.baseline;
           if (entry === undefined) {

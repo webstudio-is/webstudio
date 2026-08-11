@@ -6,14 +6,8 @@ const createEntry = (id: string) => ({ id, title: id, name: id });
 test("classifies common, added, and removed visual entries", () => {
   expect(
     getVisualComparisons({
-      baselineEntries: {
-        shared: createEntry("shared"),
-        removed: createEntry("removed"),
-      },
-      currentEntries: {
-        shared: createEntry("shared"),
-        added: createEntry("added"),
-      },
+      baselineEntries: [createEntry("shared"), createEntry("removed")],
+      currentEntries: [createEntry("shared"), createEntry("added")],
     })
   ).toEqual([
     {
@@ -35,4 +29,13 @@ test("classifies common, added, and removed visual entries", () => {
       status: "comparable",
     },
   ]);
+});
+
+test("rejects duplicate visual entry ids", () => {
+  expect(() =>
+    getVisualComparisons({
+      baselineEntries: [createEntry("duplicate"), createEntry("duplicate")],
+      currentEntries: [],
+    })
+  ).toThrowError('Duplicate baseline visual entry id: "duplicate"');
 });

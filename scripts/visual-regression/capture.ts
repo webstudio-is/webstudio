@@ -84,7 +84,6 @@ export const captureStories = async ({
       return {
         id: entry.id,
         options: getCaptureOptions({ browserPath, entry, output, port }),
-        output,
       };
     }),
     concurrency,

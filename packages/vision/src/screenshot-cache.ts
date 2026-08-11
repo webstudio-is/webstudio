@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
-import { access, copyFile, mkdir } from "node:fs/promises";
+import { createHash, randomUUID } from "node:crypto";
+import { copyFile, mkdir, rename, rm, stat } from "node:fs/promises";
 import path from "node:path";
 
 const getCachedScreenshotPath = (directory: string, id: string) =>
@@ -19,8 +19,8 @@ export const restoreScreenshotCache = async ({
   );
   const available = await Promise.all(
     cachedPaths.map(async ([, screenshotPath]) => {
-      return await access(screenshotPath)
-        .then(() => true)
+      return await stat(screenshotPath)
+        .then(({ size }) => size > 0)
         .catch(() => false);
     })
   );
@@ -48,8 +48,15 @@ export const writeScreenshotCache = async ({
 }) => {
   await mkdir(directory, { recursive: true });
   await Promise.all(
-    [...paths].map(async ([id, screenshotPath]) =>
-      copyFile(screenshotPath, getCachedScreenshotPath(directory, id))
-    )
+    [...paths].map(async ([id, screenshotPath]) => {
+      const destination = getCachedScreenshotPath(directory, id);
+      const temporary = `${destination}.${randomUUID()}.tmp`;
+      try {
+        await copyFile(screenshotPath, temporary);
+        await rename(temporary, destination);
+      } finally {
+        await rm(temporary, { force: true });
+      }
+    })
   );
 };

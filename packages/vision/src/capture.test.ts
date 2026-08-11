@@ -7,7 +7,6 @@ import { captureVisualEntries, orderForGroupedConcurrency } from "./capture";
 
 const createCapture = (directory: string, id: string) => ({
   id,
-  output: path.join(directory, `${id}.png`),
   options: {
     browserPath: "/usr/bin/chromium",
     output: path.join(directory, `${id}.png`),
@@ -71,6 +70,33 @@ test("fails captures that do not produce screenshots", async () => {
 
     expect(result.paths.size).toEqual(0);
     expect(result.errors.get("missing") ?? "").toMatch(/ENOENT/);
+  } finally {
+    await rm(assetDirectory, { recursive: true, force: true });
+  }
+});
+
+test("uses the browser output as the only capture output path", async () => {
+  const assetDirectory = await mkdtemp(path.join(tmpdir(), "visual-capture-"));
+  try {
+    const capture = {
+      ...createCapture(assetDirectory, "expected"),
+      output: path.join(assetDirectory, "stale.png"),
+    };
+    const result = await captureVisualEntries({
+      captures: [capture],
+      concurrency: 1,
+      session: {
+        async capturePage(options) {
+          await writeFile(options[0]?.output ?? "", "screenshot");
+          return {};
+        },
+      },
+    });
+
+    expect(result.paths).toEqual(
+      new Map([["expected", capture.options.output]])
+    );
+    expect(result.errors.size).toEqual(0);
   } finally {
     await rm(assetDirectory, { recursive: true, force: true });
   }

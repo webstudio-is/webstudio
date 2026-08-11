@@ -5,7 +5,6 @@ import type { BrowserScreenshotOptions } from "./screenshot-browser-cdp";
 export type VisualCapture = {
   id: string;
   options: BrowserScreenshotOptions;
-  output: string;
 };
 
 export type VisualCaptureSession = {
@@ -69,7 +68,7 @@ export const captureVisualEntries = async ({
   const ordered = orderForGroupedConcurrency(
     await Promise.all(
       captures.map(async (capture) => {
-        await mkdir(path.dirname(capture.output), { recursive: true });
+        await mkdir(path.dirname(capture.options.output), { recursive: true });
         return capture;
       })
     ),
@@ -81,9 +80,9 @@ export const captureVisualEntries = async ({
         batch.map(({ options }) => options),
         { concurrency }
       );
-      await Promise.all(batch.map(({ output }) => access(output)));
-      for (const { id, output } of batch) {
-        paths.set(id, output);
+      await Promise.all(batch.map(({ options }) => access(options.output)));
+      for (const { id, options } of batch) {
+        paths.set(id, options.output);
       }
       return;
     } catch (error) {

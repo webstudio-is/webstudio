@@ -94,3 +94,31 @@ test("keeps arbitrary cache ids inside the cache directory", async () => {
     await rm(temporaryDirectory, { recursive: true, force: true });
   }
 });
+
+test("rejects an incomplete cached screenshot", async () => {
+  const temporaryDirectory = await mkdtemp(
+    path.join(tmpdir(), "visual-screenshot-cache-")
+  );
+  try {
+    const source = path.join(temporaryDirectory, "source.png");
+    const cache = path.join(temporaryDirectory, "cache");
+    await writeFile(source, "screenshot");
+    await writeScreenshotCache({
+      directory: cache,
+      paths: new Map([["complete", source]]),
+    });
+    const [cacheFile] = await readdir(cache);
+    expect(cacheFile).toBeDefined();
+    await writeFile(path.join(cache, cacheFile ?? ""), "");
+
+    expect(
+      await restoreScreenshotCache({
+        directory: cache,
+        ids: ["complete"],
+        getOutputPath: (id) => path.join(temporaryDirectory, "restored", id),
+      })
+    ).toBeUndefined();
+  } finally {
+    await rm(temporaryDirectory, { recursive: true, force: true });
+  }
+});
