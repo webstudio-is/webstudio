@@ -107,6 +107,18 @@ const run = async ({
   return exitCode;
 };
 
+const installBaselineDependencies = (checkout: string) =>
+  run({
+    command: "pnpm",
+    commandArgs: [
+      "install",
+      "--frozen-lockfile",
+      "--ignore-scripts",
+      "--prod=false",
+    ],
+    cwd: checkout,
+  });
+
 const getCommandOutput = async (command: string, commandArgs: string[]) => {
   const { stdout } = await execFileAsync(command, commandArgs, {
     cwd: repositoryRoot,
@@ -330,11 +342,7 @@ const verifyChangedCaptures = async ({
     return entry === undefined ? [] : [entry];
   });
   if (cachedBaseline) {
-    await run({
-      command: "pnpm",
-      commandArgs: ["install", "--frozen-lockfile", "--ignore-scripts"],
-      cwd: checkout,
-    });
+    await installBaselineDependencies(checkout);
     servers.push(
       await startVisualStoryServer({
         root: checkout,
@@ -435,11 +443,7 @@ const main = async () => {
           Object.keys(filteredBaselineEntries).length
         } baseline stories.`
       );
-      await run({
-        command: "pnpm",
-        commandArgs: ["install", "--frozen-lockfile", "--ignore-scripts"],
-        cwd: checkout,
-      });
+      await installBaselineDependencies(checkout);
     }
     servers.push(
       ...(await startVisualStoryServers([

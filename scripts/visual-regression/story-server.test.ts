@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 import { parse, type DefaultTreeAdapterTypes as Html } from "parse5";
+import { buildVisualStoryApp } from "./story-build";
 import {
   startVisualStoryServer,
   startVisualStoryServers,
@@ -53,6 +56,29 @@ test("does not disable animations before reading the story parameters", async ()
     .join("");
 
   assert.doesNotMatch(css ?? "", /animation-(?:delay|duration)|transition/);
+});
+
+test("does not leak Vite's production environment", async () => {
+  const outputDirectory = await mkdtemp(path.join(tmpdir(), "visual-build-"));
+  const nodeEnvironment = process.env.NODE_ENV;
+  delete process.env.NODE_ENV;
+  try {
+    await buildVisualStoryApp({
+      root: process.cwd(),
+      outputDirectory,
+      storyFiles: [
+        "packages/design-system/src/components/color-picker.stories.tsx",
+      ],
+    });
+    assert.equal(process.env.NODE_ENV, undefined);
+  } finally {
+    if (nodeEnvironment === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = nodeEnvironment;
+    }
+    await rm(outputDirectory, { recursive: true, force: true });
+  }
 });
 
 test("closes servers that started before a concurrent startup failure", async () => {

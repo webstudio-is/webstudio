@@ -116,12 +116,21 @@ export const buildVisualStoryApp = async ({
   outputDirectory: string;
   storyFiles: readonly string[];
 }) => {
-  const resolvedRoot = await realpath(root);
-  await build(
-    createStoryBuildConfig({
-      root: resolvedRoot,
-      outputDirectory,
-      storyFiles,
-    })
-  );
+  const nodeEnvironment = process.env.NODE_ENV;
+  try {
+    const resolvedRoot = await realpath(root);
+    await build(
+      createStoryBuildConfig({
+        root: resolvedRoot,
+        outputDirectory,
+        storyFiles,
+      })
+    );
+  } finally {
+    if (nodeEnvironment === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = nodeEnvironment;
+    }
+  }
 };
