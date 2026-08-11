@@ -33,7 +33,10 @@ import {
   getInitialCaptureTarget,
 } from "./capture";
 import { classifyVisualTestRun } from "./shared";
-import { startVisualStoryServer } from "./story-server";
+import {
+  startVisualStoryServer,
+  startVisualStoryServers,
+} from "./story-server";
 
 const repositoryRoot = process.cwd();
 const outputRoot = path.join(repositoryRoot, ".visual-regression");
@@ -301,27 +304,27 @@ const main = async () => {
       });
     }
     servers.push(
-      ...(await Promise.all([
+      ...(await startVisualStoryServers([
         ...(cachedBaselinePaths === undefined
           ? [
-              startVisualStoryServer({
+              {
                 root: checkout,
                 port: baselinePort,
                 outputDirectory: baselineBundleDirectory,
                 storyFiles: Object.values(filteredBaselineEntries).map(
                   (entry) => entry.file
                 ),
-              }),
+              },
             ]
           : []),
-        startVisualStoryServer({
+        {
           root: repositoryRoot,
           port: currentPort,
           outputDirectory: currentBundleDirectory,
           storyFiles: Object.values(filteredCurrentEntries).map(
             (entry) => entry.file
           ),
-        }),
+        },
       ]))
     );
     logPhase("Setup and bundles");

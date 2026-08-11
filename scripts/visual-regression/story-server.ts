@@ -225,3 +225,19 @@ export const startVisualStoryServer = async ({
     },
   };
 };
+
+export const startVisualStoryServers = async (
+  options: readonly Parameters<typeof startVisualStoryServer>[0][],
+  startServer = startVisualStoryServer
+) => {
+  const results = await Promise.allSettled(options.map(startServer));
+  const servers = results.flatMap((result) =>
+    result.status === "fulfilled" ? [result.value] : []
+  );
+  const failure = results.find((result) => result.status === "rejected");
+  if (failure !== undefined) {
+    await Promise.allSettled(servers.map((server) => server.close()));
+    throw failure.reason;
+  }
+  return servers;
+};

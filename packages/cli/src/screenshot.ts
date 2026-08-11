@@ -755,9 +755,33 @@ export const createScreenshotCaptureSession = (
   let browserPromise: Promise<BrowserCandidate> | undefined;
   let browserSession: BrowserScreenshotSession | undefined;
   let browserSessionPromise: Promise<BrowserScreenshotSession> | undefined;
+  let closePromise: Promise<void> | undefined;
+  let closed = false;
+  const assertOpen = () => {
+    if (closed) {
+      throw new Error("Screenshot capture session is closed.");
+    }
+  };
+  const getBrowser = async (options: CaptureScreenshotOptions) => {
+    assertOpen();
+    const pendingBrowser =
+      browserPromise ?? resolveScreenshotBrowser(options, dependencies);
+    browserPromise = pendingBrowser;
+    try {
+      const browser = await pendingBrowser;
+      assertOpen();
+      return browser;
+    } catch (error) {
+      if (browserPromise === pendingBrowser) {
+        browserPromise = undefined;
+      }
+      throw error;
+    }
+  };
   const getBrowserSession = async (
     options: BrowserScreenshotOptions
   ): Promise<BrowserScreenshotSession> => {
+    assertOpen();
     if (browserSession !== undefined) {
       return browserSession;
     }
@@ -766,8 +790,13 @@ export const createScreenshotCaptureSession = (
       dependencies.createBrowserScreenshotSession(options, dependencies);
     browserSessionPromise = pendingSession;
     try {
-      browserSession = await pendingSession;
-      return browserSession;
+      const session = await pendingSession;
+      if (closed) {
+        await session.close();
+        throw new Error("Screenshot capture session is closed.");
+      }
+      browserSession = session;
+      return session;
     } catch (error) {
       if (browserSessionPromise === pendingSession) {
         browserSessionPromise = undefined;
@@ -777,8 +806,7 @@ export const createScreenshotCaptureSession = (
   };
   return {
     async capture(options: CaptureScreenshotOptions) {
-      browserPromise ??= resolveScreenshotBrowser(options, dependencies);
-      const resolvedBrowser = await browserPromise;
+      const resolvedBrowser = await getBrowser(options);
       if (
         (options.browserPath !== undefined &&
           options.browserPath !== resolvedBrowser.path) ||
@@ -805,12 +833,12 @@ export const createScreenshotCaptureSession = (
       );
     },
     async capturePage(optionsList: readonly CaptureScreenshotOptions[]) {
+      assertOpen();
       const firstOptions = optionsList[0];
       if (firstOptions === undefined) {
         return [];
       }
-      browserPromise ??= resolveScreenshotBrowser(firstOptions, dependencies);
-      const resolvedBrowser = await browserPromise;
+      const resolvedBrowser = await getBrowser(firstOptions);
       if (
         optionsList.some(
           (options) =>
@@ -881,14 +909,12 @@ export const createScreenshotCaptureSession = (
       });
     },
     async close() {
-      try {
+      closed = true;
+      closePromise ??= (async () => {
         browserSession ??= await browserSessionPromise?.catch(() => undefined);
         await browserSession?.close();
-      } finally {
-        browserSession = undefined;
-        browserSessionPromise = undefined;
-        browserPromise = undefined;
-      }
+      })();
+      await closePromise;
     },
   };
 };

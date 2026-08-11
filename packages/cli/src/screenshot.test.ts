@@ -613,6 +613,43 @@ test("resets a reusable capture session after browser startup rejects", async ()
   expect(spawnBrowser).toHaveBeenCalledTimes(4);
 });
 
+test("does not create a browser session after cleanup during discovery", async () => {
+  let resolveBrowser: ((path: string) => void) | undefined;
+  const browserPath = new Promise<string>((resolve) => {
+    resolveBrowser = resolve;
+  });
+  const createBrowserScreenshotSession = vi.fn();
+  const dependencies = createDependencies({
+    which: vi.fn(async (command) =>
+      command === "chromium" ? await browserPath : undefined
+    ),
+    createBrowserScreenshotSession,
+  });
+  const session = createScreenshotCaptureSession(dependencies);
+  const capture = session.capture({
+    url: "https://example.com",
+    width: 800,
+    height: 600,
+    browser: "auto",
+  });
+
+  await session.close();
+  resolveBrowser?.("/usr/bin/chromium");
+
+  await expect(capture).rejects.toThrow(
+    "Screenshot capture session is closed."
+  );
+  await expect(
+    session.capture({
+      url: "https://example.com",
+      width: 800,
+      height: 600,
+      browser: "auto",
+    })
+  ).rejects.toThrow("Screenshot capture session is closed.");
+  expect(createBrowserScreenshotSession).not.toHaveBeenCalled();
+});
+
 describe("browser installation", () => {
   test("does not offer install in json, mcp, ci, or non-interactive contexts", () => {
     expect(
