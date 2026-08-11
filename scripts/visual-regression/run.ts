@@ -504,7 +504,7 @@ const main = async () => {
     };
   } catch (error) {
     const message =
-      error instanceof Error ? error.stack ?? error.message : String(error);
+      error instanceof Error ? (error.stack ?? error.message) : String(error);
     report = {
       baselineLabel: baseRef,
       currentLabel: "HEAD",
