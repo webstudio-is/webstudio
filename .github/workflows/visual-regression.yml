@@ -106,7 +106,6 @@ jobs:
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
           APPROVE_VISUAL_CHANGES: ${{ github.event.action == 'labeled' && github.event.label.name == 'visual-change-approved' }}
-          VISUAL_CAPTURE_CONCURRENCY: 10
         run: |
           args=(--base "$BASE_REF")
           if [[ "$APPROVE_VISUAL_CHANGES" == "true" ]]; then
