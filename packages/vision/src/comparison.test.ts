@@ -44,6 +44,23 @@ test("rejects duplicate visual entry ids", () => {
   ).toThrowError('Duplicate baseline visual entry id: "duplicate"');
 });
 
+test("rejects invalid comparison concurrency without image differences", async () => {
+  await expect(
+    compareVisualEntries({
+      baselineEntries: [],
+      currentEntries: [],
+      baselinePaths: new Map(),
+      currentPaths: new Map(),
+      baselineErrors: new Map(),
+      currentErrors: new Map(),
+      artifactDirectory: "/unused",
+      pixelThreshold: 0.1,
+      maxMismatchPercentage: 0,
+      concurrency: 0,
+    })
+  ).rejects.toThrow("Visual comparison concurrency must be a positive integer");
+});
+
 test("compares captured entries and preserves capture failures", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "visual-comparison-"));
   try {

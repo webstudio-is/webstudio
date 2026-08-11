@@ -87,6 +87,11 @@ export const compareVisualEntries = async <Entry extends VisualReportEntry>({
   analyzeText?: boolean | "when-different";
   writeArtifacts?: boolean | "when-different";
 }): Promise<ScreenshotComparisonReportItem[]> => {
+  if (Number.isInteger(concurrency) === false || concurrency < 1) {
+    throw new Error(
+      "Visual comparison concurrency must be a positive integer."
+    );
+  }
   const comparisons = getVisualComparisons({
     baselineEntries,
     currentEntries,
