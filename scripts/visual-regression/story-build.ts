@@ -92,6 +92,7 @@ const createStoryBuildConfig = ({
     reportCompressedSize: false,
     chunkSizeWarningLimit: 5_000,
     rollupOptions: {
+      treeshake: false,
       input: path.join(visualRoot, "index.html"),
       onwarn(warning, warn) {
         if (warning.code !== "MODULE_LEVEL_DIRECTIVE") {
