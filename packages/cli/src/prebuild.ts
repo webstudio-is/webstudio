@@ -101,6 +101,7 @@ import { createFramework as createRemixFramework } from "./framework-remix";
 import { createFramework as createReactRouterFramework } from "./framework-react-router";
 import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
 import { routeTemplatesDirectory } from "./framework";
+import { readSsgAssetResourceFetchTemplate } from "./ssg-asset-resource-fetch-template";
 
 export const generatedFilesManifest = join(
   ".webstudio",
@@ -111,10 +112,6 @@ const contentRuntimeBundleUrl = new URL(
   import.meta.url
 );
 const contentRuntimeFile = "$resources.asset-query-vendor.js";
-const ssgAssetResourceFetchTemplateUrl = new URL(
-  "../templates/ssg/app/asset-resource-fetch.ts",
-  import.meta.url
-);
 const appRoot = "app";
 const generatedDir = join(appRoot, "__generated__");
 const routesDir = join(appRoot, "routes");
@@ -496,7 +493,7 @@ const configureSsgAssetResourceFetch = async ({
   const ssgFetchPath = join(cwd(), "app", "asset-resource-fetch.ts");
   if (existsSync(ssgFetchPath)) {
     const content = enabled
-      ? await readFile(ssgAssetResourceFetchTemplateUrl, "utf8")
+      ? await readSsgAssetResourceFetchTemplate()
       : `export const createSsgAssetResourceFetch = (_options: unknown) =>
   async (_input: RequestInfo | URL, _init?: RequestInit) => undefined;\n`;
     await writeFileIfChanged(ssgFetchPath, content);
