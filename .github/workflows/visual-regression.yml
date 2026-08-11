@@ -113,7 +113,7 @@ jobs:
       - name: Restore visual baseline screenshots
         uses: actions/cache/restore@v5
         with:
-          path: .visual-regression-cache
+          path: .visual-regression-cache/${{ steps.visual-cache.outputs.base }}-*
           key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.version }}
           restore-keys: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-
 
