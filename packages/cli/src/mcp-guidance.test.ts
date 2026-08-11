@@ -10,6 +10,7 @@ import {
 test("documents generated app setup for visual verification", () => {
   expect(generatedAppDependencyNotes).toEqual([
     expect.stringContaining("install generated app dependencies"),
+    expect.stringContaining("PREVIEW_ASSET_DOWNLOAD_FAILED"),
     expect.stringContaining("npm_config_cache"),
     expect.stringContaining("Do not add generated-preview dependencies"),
     expect.stringContaining("Check the reported npm and network configuration"),

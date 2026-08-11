@@ -100,6 +100,40 @@ describe("Markdown asset references", () => {
     });
   });
 
+  test("resolves published Asset paths by unique asset name", () => {
+    expect(
+      discoverReferences({
+        sourcePath: "blog/posts/inception.md",
+        markdown: `
+![Relative](./assets/inception_TDxBrdPwfoJJe_A-k5jhB.png)
+![Root relative](/assets/inception_TDxBrdPwfoJJe_A-k5jhB.png)
+        `,
+        assetIdsByPath: new Map([
+          [
+            "blog/images/inception_TDxBrdPwfoJJe_A-k5jhB.png",
+            "inception-image",
+          ],
+        ]),
+      })
+    ).toEqual({
+      "./assets/inception_TDxBrdPwfoJJe_A-k5jhB.png": "inception-image",
+      "/assets/inception_TDxBrdPwfoJJe_A-k5jhB.png": "inception-image",
+    });
+  });
+
+  test("leaves published Asset paths with ambiguous names unresolved", () => {
+    expect(
+      discoverReferences({
+        sourcePath: "blog/posts/article.md",
+        markdown: "![Hero](./assets/hero.png)",
+        assetIdsByPath: new Map([
+          ["blog/images/hero.png", "blog-hero"],
+          ["archive/images/hero.png", "archive-hero"],
+        ]),
+      })
+    ).toEqual({});
+  });
+
   test("preserves encoded dot segments in canonical source folders", () => {
     expect(
       discoverReferences({
