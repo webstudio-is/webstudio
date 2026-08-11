@@ -20,7 +20,7 @@ describe("package entrypoints", () => {
   test("does not expose Node-only surfaces through generic conditions", () => {
     for (const entrypoint of [
       "./mcp",
-      "./vision",
+      "./preview",
       "./transfer/server",
       "./server",
     ]) {
