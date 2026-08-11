@@ -143,6 +143,33 @@ const getUnresolvedLocalSchemaRefs = (
   ];
 };
 
+const getArraySchemasWithoutItems = (
+  schema: unknown,
+  path: readonly string[] = []
+): string[] => {
+  if (schema === null || typeof schema !== "object") {
+    return [];
+  }
+  if (Array.isArray(schema)) {
+    return schema.flatMap((value, index) =>
+      getArraySchemasWithoutItems(value, [...path, String(index)])
+    );
+  }
+  const object = schema as Record<string, unknown>;
+  const current =
+    object.type === "array" &&
+    object.items === undefined &&
+    object.prefixItems === undefined
+      ? [path.join(".")]
+      : [];
+  return [
+    ...current,
+    ...Object.entries(object).flatMap(([name, value]) =>
+      getArraySchemasWithoutItems(value, [...path, name])
+    ),
+  ];
+};
+
 const optionalArrayFieldInputSchema = (field: string) =>
   getTestInputSchema(
     z.object({
@@ -896,6 +923,10 @@ describe("project session mcp adapter", () => {
         getUnresolvedLocalSchemaRefs(tool.inputSchema),
         `MCP input schema has unresolved local references for ${tool.name}`
       ).toEqual([]);
+      expect(
+        getArraySchemasWithoutItems(tool.inputSchema),
+        `MCP input schema has array parameters without items for ${tool.name}`
+      ).toEqual([]);
       if (tool.outputSchema !== undefined) {
         expect(
           tool.outputSchema.type,
@@ -1234,6 +1265,39 @@ describe("project session mcp adapter", () => {
     expect(JSON.stringify(details.structuredContent.data)).toContain(
       description
     );
+  });
+
+  test("keeps array items valid when deferring an oversized schema", () => {
+    const operation = publicOperation({
+      command: "large-array-input",
+      id: "test.largeArrayInput",
+      description: "Accept a large structured array",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          updates: {
+            type: "array",
+            items: {
+              type: "object",
+              description: "x".repeat(25_000),
+            },
+          },
+        },
+        required: ["updates"],
+      },
+    });
+
+    const [tool] = listProjectSessionMcpTools([operation]);
+    const updates = tool?.inputSchema.properties?.updates as
+      | Record<string, unknown>
+      | undefined;
+
+    expect(JSON.stringify(tool?.inputSchema).length).toBeLessThan(1_000);
+    expect(updates).toMatchObject({
+      type: "array",
+      items: expect.any(Object),
+    });
   });
 
   test("downloads assets through the MCP host", async () => {

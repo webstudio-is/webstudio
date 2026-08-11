@@ -85,6 +85,24 @@ afterEach(async () => {
   );
 });
 
+const getArraySchemasWithoutItems = (schema: unknown): unknown[] => {
+  if (schema === null || typeof schema !== "object") {
+    return [];
+  }
+  if (Array.isArray(schema)) {
+    return schema.flatMap(getArraySchemasWithoutItems);
+  }
+  const object = schema as Record<string, unknown>;
+  return [
+    ...(object.type === "array" &&
+    object.items === undefined &&
+    object.prefixItems === undefined
+      ? [object]
+      : []),
+    ...Object.values(object).flatMap(getArraySchemasWithoutItems),
+  ];
+};
+
 test("documents MCP stdio startup and discovery tools", () => {
   const yargs = {
     command: vi.fn(() => yargs),
@@ -1022,4 +1040,13 @@ test("exposes asset content editing through MCP discovery", () => {
       },
     },
   });
+});
+
+test("exposes a client-valid update-props schema", () => {
+  const tool = listProjectSessionMcpTools(publicApiOperations).find(
+    ({ name }) => name === "update-props"
+  );
+
+  expect(tool).toBeDefined();
+  expect(getArraySchemasWithoutItems(tool?.inputSchema)).toEqual([]);
 });

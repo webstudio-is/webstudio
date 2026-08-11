@@ -633,7 +633,7 @@ const jsonCompatibleValueSchema = {
     { type: "number" },
     { type: "boolean" },
     { type: "null" },
-    { type: "array" },
+    { type: "array", items: {} },
     { type: "object" },
   ],
   description: "JSON-compatible value.",
@@ -699,6 +699,16 @@ const getCompactSchemaProperty = (schema: InputJsonSchema): InputJsonSchema => {
         : `${schema.description.slice(0, 239)}…`;
   const compact = {
     ...(schema.type === undefined ? {} : { type: schema.type }),
+    ...(schema.type === "array"
+      ? {
+          items:
+            schema.items === undefined
+              ? jsonCompatibleValueSchema
+              : typeof schema.items === "boolean"
+                ? schema.items
+                : getCompactSchemaProperty(schema.items),
+        }
+      : {}),
     ...(description === undefined ? {} : { description }),
     ...(schema.enum === undefined ? {} : { enum: schema.enum }),
   };
