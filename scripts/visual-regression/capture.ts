@@ -65,6 +65,7 @@ const getCaptureOptions = ({
   waitForSelector: "#visual-ready, #visual-error",
   failForSelector: "#visual-error",
   waitForTimeout: 0,
+  finalizeExpression: "window.finishVisualStory()",
   timeout: 90_000,
   format: "png",
   scale: 1,

@@ -30,6 +30,7 @@ type ComposedStory = React.ComponentType & {
 
 declare global {
   interface Window {
+    finishVisualStory: () => Promise<void>;
     renderVisualStory: (input: VisualStoryInput) => Promise<void>;
     showVisualError: (error: unknown) => void;
   }
@@ -54,10 +55,6 @@ const markReady = async (disableAnimations: boolean) => {
     for (const animation of document.getAnimations()) {
       animation.cancel();
     }
-    for (const frame of storyAnimationFrames) {
-      originalCancelAnimationFrame(frame);
-    }
-    storyAnimationFrames.clear();
     await waitForFrames();
   }
   if (document.activeElement instanceof HTMLElement) {
@@ -94,22 +91,8 @@ if (rootElement === null) {
 let root = createRoot(rootElement);
 const originalSetInterval = window.setInterval;
 const originalClearInterval = window.clearInterval;
-const originalRequestAnimationFrame = window.requestAnimationFrame;
-const originalCancelAnimationFrame = window.cancelAnimationFrame;
 const storyIntervals = new Set<number>();
-const storyAnimationFrames = new Set<number>();
-window.requestAnimationFrame = (callback) => {
-  const id = originalRequestAnimationFrame((time) => {
-    storyAnimationFrames.delete(id);
-    callback(time);
-  });
-  storyAnimationFrames.add(id);
-  return id;
-};
-window.cancelAnimationFrame = (id) => {
-  storyAnimationFrames.delete(id);
-  originalCancelAnimationFrame(id);
-};
+let disableCurrentAnimations = true;
 const OriginalDate = Date;
 const fixedTime = Date.UTC(2020, 0, 1);
 window.Date = new Proxy(OriginalDate, {
@@ -134,10 +117,6 @@ window.renderVisualStory = async ({ file, exportName, title }) => {
     originalClearInterval(interval);
   }
   storyIntervals.clear();
-  for (const frame of storyAnimationFrames) {
-    originalCancelAnimationFrame(frame);
-  }
-  storyAnimationFrames.clear();
   for (const element of document.querySelectorAll(
     "body > :not(#root), [data-visual-regression-style]"
   )) {
@@ -170,6 +149,7 @@ window.renderVisualStory = async ({ file, exportName, title }) => {
   }
   const options = (Story.parameters?.visualRegression ??
     {}) as VisualRegressionParameters;
+  disableCurrentAnimations = options.disableAnimations !== false;
   Object.defineProperty(window, "setInterval", {
     configurable: true,
     value:
@@ -213,6 +193,22 @@ window.renderVisualStory = async ({ file, exportName, title }) => {
     );
   }
   await markReady(options.disableAnimations !== false);
+};
+
+window.finishVisualStory = async () => {
+  if (disableCurrentAnimations === false) {
+    return;
+  }
+  // The browser calls this after fonts and component frames settle. Give
+  // animation consumers one frame to react, then freeze the final static state
+  // immediately before screenshot capture.
+  for (const animation of document.getAnimations()) {
+    animation.cancel();
+  }
+  await waitForFrames();
+  for (const animation of document.getAnimations()) {
+    animation.cancel();
+  }
 };
 
 const params = new URLSearchParams(window.location.search);
