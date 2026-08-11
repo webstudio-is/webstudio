@@ -41,16 +41,7 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - name: Build packaged SSG fixture
-        shell: bash
-        run: |
-          fixture_directory="$(mktemp -d)"
-          pnpm --filter 'ssg-cloudflare-pages^...' run build
-          pnpm --filter ssg-cloudflare-pages deploy "$fixture_directory"
-          find "$fixture_directory/pages" -depth -mindepth 1 -delete
-          pnpm --filter webstudio exec tsx scripts/create-ssg-assets-smoke-fixture.ts "$fixture_directory/.webstudio/data.json"
-          pnpm -C "$fixture_directory" exec webstudio build --no-assets --template ssg --template internal
-          pnpm -C "$fixture_directory" build
-          test -f "$fixture_directory/dist/client/posts/hello-world/index.html"
+        run: pnpm --filter webstudio test:ssg-package
 
   checks:
     # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)

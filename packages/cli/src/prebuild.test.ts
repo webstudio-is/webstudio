@@ -35,6 +35,8 @@ import {
 import { createPublishedAssetResourceFetch } from "@webstudio-is/content-engine/runtime";
 import {
   createStructuredAssetQueryResourceBody,
+  encodeDataSourceVariable,
+  SYSTEM_VARIABLE_ID,
   type Resource,
 } from "@webstudio-is/sdk";
 import {
@@ -2284,6 +2286,38 @@ describe("prebuild", () => {
             field: ["properties", "slug"],
             operator: "eq",
             value: 'system?.params?.["slug"]',
+          },
+        ],
+      },
+      sort: [],
+      limit: "1",
+      offset: "0",
+      output: { mode: "all", includeMetadata: true },
+      content: { mode: "none" },
+    });
+
+    expect(
+      getAssetResourcePrerenderPaths({
+        pagePath: "/blog/:slug",
+        resources: [["post", resource]],
+        index,
+      })
+    ).toEqual(["/blog/hello-world"]);
+  });
+
+  test("prerenders asset routes bound with the persisted system variable", async () => {
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      properties: { slug: "hello-world" },
+    });
+    const resource = createQueryResource();
+    resource.body = createStructuredAssetQueryResourceBody({
+      where: {
+        all: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: `${encodeDataSourceVariable(SYSTEM_VARIABLE_ID)}.params.slug`,
           },
         ],
       },

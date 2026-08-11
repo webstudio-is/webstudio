@@ -35,6 +35,7 @@ import {
   replaceFormActionsWithResources,
   isCoreComponent,
   coreMetas,
+  decodeDataSourceVariable,
   SYSTEM_VARIABLE_ID,
   generateCss,
   ROOT_INSTANCE_ID,
@@ -135,7 +136,12 @@ type SiteDataByPage = {
 
 const getBoundSystemRouteParameter = (expression: string) => {
   const path = parseStaticMemberPath(expression);
-  return path?.length === 3 && path[0] === "system" && path[1] === "params"
+  const variable = path?.[0];
+  const isSystem =
+    variable === "system" ||
+    (variable !== undefined &&
+      decodeDataSourceVariable(variable) === SYSTEM_VARIABLE_ID);
+  return path?.length === 3 && isSystem && path[1] === "params"
     ? path[2]
     : undefined;
 };
