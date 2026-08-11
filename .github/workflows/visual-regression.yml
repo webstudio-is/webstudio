@@ -99,8 +99,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .visual-regression-cache
-          key: visual-baseline-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.version }}
-          restore-keys: visual-baseline-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-
+          key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.version }}
+          restore-keys: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-
 
       - name: Compare portable stories
         env:
@@ -127,11 +127,11 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: .visual-regression-cache/${{ steps.visual-cache.outputs.head }}-*
-          key: visual-baseline-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.head }}-${{ steps.visual-cache.outputs.version }}
+          key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.head }}-${{ steps.visual-cache.outputs.version }}
 
       - name: Cache generated baseline screenshots
         if: always()
         uses: actions/cache/save@v4
         with:
           path: .visual-regression-cache/${{ steps.visual-cache.outputs.base }}-*
-          key: visual-baseline-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.version }}
+          key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.browser }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.version }}
