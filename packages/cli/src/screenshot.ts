@@ -14,7 +14,7 @@ import {
 } from "@webstudio-is/vision/browser";
 import {
   captureBrowserScreenshot,
-  createBrowserScreenshotSession,
+  createBrowserScreenshotSession as createVisionBrowserScreenshotSession,
   defaultBrowserScreenshotDependencies,
   type BrowserScreenshotSession,
   type BrowserScreenshotDependencies,
@@ -98,6 +98,7 @@ export type ScreenshotDependencies = {
     captureBrowserScreenshot?: (
       options: BrowserScreenshotOptions
     ) => Promise<BrowserScreenshotLayout | undefined>;
+    createBrowserScreenshotSession: typeof createVisionBrowserScreenshotSession;
     installCommand: (file: string, args: readonly string[]) => Promise<void>;
     readArtifactByte: (path: string) => Promise<number>;
     getuid: () => number | undefined;
@@ -120,6 +121,7 @@ export const defaultScreenshotDependencies: ScreenshotDependencies = {
   },
   getPlaywrightInstallations: () => getPlaywrightInstallations(),
   ...defaultBrowserScreenshotDependencies,
+  createBrowserScreenshotSession: createVisionBrowserScreenshotSession,
   async installCommand(file, args) {
     await new Promise<void>((resolve, reject) => {
       const child = spawn(file, [...args], { stdio: "inherit" });
@@ -761,7 +763,7 @@ export const createScreenshotCaptureSession = (
     }
     const pendingSession =
       browserSessionPromise ??
-      createBrowserScreenshotSession(options, dependencies);
+      dependencies.createBrowserScreenshotSession(options, dependencies);
     browserSessionPromise = pendingSession;
     try {
       browserSession = await pendingSession;

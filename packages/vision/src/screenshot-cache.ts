@@ -1,8 +1,9 @@
+import { createHash } from "node:crypto";
 import { access, copyFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 
 const getCachedScreenshotPath = (directory: string, id: string) =>
-  path.join(directory, `${id}.png`);
+  path.join(directory, `${createHash("sha256").update(id).digest("hex")}.png`);
 
 export const restoreScreenshotCache = async ({
   directory,

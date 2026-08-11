@@ -14,10 +14,7 @@ import {
   type ScreenshotComparisonReport,
   type ScreenshotComparisonReportItem,
 } from "@webstudio-is/vision/report";
-import {
-  getInitialCaptureTarget,
-  getVisualComparisons,
-} from "@webstudio-is/vision/comparison";
+import { getVisualComparisons } from "@webstudio-is/vision/comparison";
 import {
   restoreScreenshotCache,
   writeScreenshotCache,
@@ -31,7 +28,11 @@ import {
   readStorySources,
   type VisualStoryEntry,
 } from "./manifest";
-import { captureStories, createCaptureSessionOptions } from "./capture";
+import {
+  captureStories,
+  createCaptureSessionOptions,
+  getInitialCaptureTarget,
+} from "./capture";
 import { createDiffPool } from "./diff-pool";
 import { classifyVisualTestRun } from "./shared";
 import { startVisualStoryServer } from "./story-server";

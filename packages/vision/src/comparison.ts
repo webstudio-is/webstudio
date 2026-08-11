@@ -33,22 +33,3 @@ export const getVisualComparisons = <Entry extends VisualEntry>({
     return { id, status: "comparable", baseline, current };
   });
 };
-
-export const getInitialCaptureTarget = <Entry extends VisualEntry>({
-  baselineEntries,
-  currentEntries,
-  hasCachedBaseline,
-}: {
-  baselineEntries: readonly Entry[];
-  currentEntries: readonly Entry[];
-  hasCachedBaseline: boolean;
-}) => {
-  const currentEntry = currentEntries[0];
-  if (currentEntry !== undefined) {
-    return { entry: currentEntry, target: "current" as const };
-  }
-  const baselineEntry = baselineEntries[0];
-  if (hasCachedBaseline === false && baselineEntry !== undefined) {
-    return { entry: baselineEntry, target: "baseline" as const };
-  }
-};

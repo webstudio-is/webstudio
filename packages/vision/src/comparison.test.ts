@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { getInitialCaptureTarget, getVisualComparisons } from "./comparison";
+import { getVisualComparisons } from "./comparison";
 
 const createEntry = (id: string) => ({ id, title: id, name: id });
 
@@ -35,14 +35,4 @@ test("classifies common, added, and removed visual entries", () => {
       status: "comparable",
     },
   ]);
-});
-
-test("does not initialize a browser for cached removed entries", () => {
-  expect(
-    getInitialCaptureTarget({
-      baselineEntries: [createEntry("removed")],
-      currentEntries: [],
-      hasCachedBaseline: true,
-    })
-  ).toBeUndefined();
 });

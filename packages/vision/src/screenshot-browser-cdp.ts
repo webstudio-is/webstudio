@@ -683,8 +683,8 @@ const getBrowserScreenshotElementGeometry = async (
       const limit = ${maxBrowserScreenshotElements};
       const overlapLimit = ${maxBrowserScreenshotOverlapsPerElement};
       const instanceIdAttribute = ${JSON.stringify(instanceIdAttribute)};
-      const candidates = Array.from(document.querySelectorAll("*"))
-        .filter((element) => element.hasAttribute(instanceIdAttribute));
+      const instanceSelector = "[" + CSS.escape(instanceIdAttribute) + "]";
+      const candidates = Array.from(document.querySelectorAll(instanceSelector));
       const elements = candidates.slice(0, limit).map((element) => {
         const style = getComputedStyle(element);
         const rect = element.getBoundingClientRect();
@@ -874,6 +874,7 @@ const getBrowserScreenshotContrasts = async (
     expression: `(() => {
       const limit = ${maxBrowserScreenshotElements};
       const instanceIdAttribute = ${JSON.stringify(instanceIdAttribute)};
+      const instanceSelector = "[" + CSS.escape(instanceIdAttribute) + "]";
       const parseOpaqueRgb = (value) => {
         const match = value.match(/^rgba?\\(\\s*(\\d+(?:\\.\\d+)?)\\D+(\\d+(?:\\.\\d+)?)\\D+(\\d+(?:\\.\\d+)?)(?:\\D+(\\d+(?:\\.\\d+)?))?\\s*\\)$/i);
         if (match === null || (match[4] !== undefined && Number(match[4]) !== 1)) return undefined;
@@ -886,8 +887,7 @@ const getBrowserScreenshotContrasts = async (
         });
         return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
       };
-      const candidates = Array.from(document.querySelectorAll("*"))
-        .filter((element) => element.hasAttribute(instanceIdAttribute))
+      const candidates = Array.from(document.querySelectorAll(instanceSelector))
         .filter((element) => Array.from(element.childNodes).some((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== ""))
         .slice(0, limit);
       return candidates.flatMap((element) => {

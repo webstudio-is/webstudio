@@ -1142,6 +1142,22 @@ test("captures full page and returns DevTools layout metrics", async () => {
     expect.arrayContaining(["Page.getLayoutMetrics", "Page.captureScreenshot"])
   );
   expect(socket.screenshotStartedBeforeImageInspectionFinished).toBe(true);
+  const inspectionExpressions = socket.sentMessages.flatMap((message) =>
+    message.method === "Runtime.evaluate" &&
+    typeof message.params?.expression === "string" &&
+    (message.params.expression.includes("const overlapLimit") ||
+      message.params.expression.includes("const parseOpaqueRgb"))
+      ? [message.params.expression]
+      : []
+  );
+  expect(inspectionExpressions).toHaveLength(2);
+  expect(inspectionExpressions).toEqual([
+    expect.stringContaining("CSS.escape(instanceIdAttribute)"),
+    expect.stringContaining("CSS.escape(instanceIdAttribute)"),
+  ]);
+  expect(inspectionExpressions.join("\n")).not.toContain(
+    'document.querySelectorAll("*")'
+  );
   expect(
     socket.sentMessages.find(
       (message) => message.method === "Page.captureScreenshot"

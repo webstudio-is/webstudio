@@ -8,6 +8,25 @@ import type { VisualStoryEntry } from "./manifest";
 
 const viewport = { width: 1280, height: 800 };
 
+export const getInitialCaptureTarget = ({
+  baselineEntries,
+  currentEntries,
+  hasCachedBaseline,
+}: {
+  baselineEntries: readonly VisualStoryEntry[];
+  currentEntries: readonly VisualStoryEntry[];
+  hasCachedBaseline: boolean;
+}) => {
+  const currentEntry = currentEntries[0];
+  if (currentEntry !== undefined) {
+    return { entry: currentEntry, target: "current" as const };
+  }
+  const baselineEntry = baselineEntries[0];
+  if (hasCachedBaseline === false && baselineEntry !== undefined) {
+    return { entry: baselineEntry, target: "baseline" as const };
+  }
+};
+
 const getCaptureOptions = ({
   browserPath,
   entry,
