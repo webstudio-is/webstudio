@@ -54,7 +54,3 @@ export const ColorPicker = () => {
     </>
   );
 };
-
-ColorPicker.parameters = {
-  visualRegression: { settleTime: 500 },
-};

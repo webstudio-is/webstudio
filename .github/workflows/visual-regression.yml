@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
   pull_request_target:
     types: [labeled, synchronize]
 
@@ -42,7 +43,11 @@ jobs:
       github.event_name == 'push' ||
       (
         github.event_name == 'pull_request' &&
-        github.event.pull_request.head.repo.full_name == github.repository
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        (
+          github.event.action != 'labeled' ||
+          github.event.label.name == 'visual-change-approved'
+        )
       ) ||
       (
         github.event_name == 'pull_request_target' &&
@@ -51,10 +56,8 @@ jobs:
           github.event.label.name == 'safe-to-deploy' ||
           (
             github.event.label.name == 'visual-change-approved' &&
-            (
-              github.event.pull_request.head.repo.full_name == github.repository ||
-              contains(github.event.pull_request.labels.*.name, 'safe-to-deploy')
-            )
+            github.event.pull_request.head.repo.full_name != github.repository &&
+            contains(github.event.pull_request.labels.*.name, 'safe-to-deploy')
           )
         )
       )
@@ -102,7 +105,7 @@ jobs:
       - name: Compare portable stories
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
-          APPROVE_VISUAL_CHANGES: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'visual-change-approved' }}
+          APPROVE_VISUAL_CHANGES: ${{ github.event.action == 'labeled' && github.event.label.name == 'visual-change-approved' }}
         run: |
           args=(--base "$BASE_REF")
           if [[ "$APPROVE_VISUAL_CHANGES" == "true" ]]; then

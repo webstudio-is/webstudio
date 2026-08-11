@@ -89,12 +89,3 @@ export const MenuStory = () => (
     </Flex>
   </StorySection>
 );
-
-MenuStory.parameters = {
-  visualRegression: {
-    hideSelectors: [
-      '[aria-label="Menu Button"]',
-      "[data-radix-popper-content-wrapper]",
-    ],
-  },
-};
