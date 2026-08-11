@@ -1437,6 +1437,7 @@ const capturePageWithBrowserRuntime = async (
           send("Page.enable"),
           send("Network.enable"),
           send("Runtime.enable"),
+          send("Emulation.setFocusEmulationEnabled", { enabled: true }),
           send("Page.setLifecycleEventsEnabled", { enabled: true }),
         ]);
         const targetSetupMs = Date.now() - setupStartedAt;

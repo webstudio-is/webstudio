@@ -724,6 +724,11 @@ test("navigates once while resizing one page through multiple viewports", async 
     socket.sentMessages.filter((message) => message.method === "Page.navigate")
   ).toHaveLength(1);
   expect(
+    socket.sentMessages.filter(
+      (message) => message.method === "Emulation.setFocusEmulationEnabled"
+    )
+  ).toEqual([expect.objectContaining({ params: { enabled: true } })]);
+  expect(
     socket.sentMessages
       .filter(
         (message) => message.method === "Emulation.setDeviceMetricsOverride"
