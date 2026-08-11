@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { createScreenshotDiffPool } from "./diff-pool";
+import { arePngFilesIdentical } from "./screenshot-diff";
 import type { ScreenshotComparisonReportItem } from "./screenshot-report";
 
 export type VisualEntry = {
@@ -118,6 +119,23 @@ export const compareVisualEntries = async <Entry extends VisualReportEntry>({
           }
           if (baselinePath === undefined || currentPath === undefined) {
             throw new Error(`Screenshot is missing for ${comparison.id}`);
+          }
+          if (await arePngFilesIdentical(baselinePath, currentPath)) {
+            return {
+              ...entry,
+              status: "unchanged",
+              baselinePath,
+              currentPath,
+              differentPixels: 0,
+              mismatchPercentage: 0,
+              regions: [],
+              textAnalysis: {
+                status: "skipped",
+                provider: "tesseract",
+                changes: [],
+              },
+              warnings: [],
+            };
           }
           const diff = await pool.run({
             baselinePath,

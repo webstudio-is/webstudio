@@ -6,6 +6,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
+import { crc32 } from "node:zlib";
 import { decode, encode, type DecodedPng, type ImageData } from "fast-png";
 import {
   normalizeToCommonSize,
@@ -16,6 +17,65 @@ import {
   analyzeScreenshotTextChanges,
   type ScreenshotTextAnalysis,
 } from "./screenshot-text-diff";
+
+const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+const assertPngIntegrity = (contents: Buffer, file: string) => {
+  if (
+    contents.length < pngSignature.length ||
+    contents.subarray(0, pngSignature.length).equals(pngSignature) === false
+  ) {
+    throw new Error(`Invalid PNG signature: ${file}`);
+  }
+  let offset = pngSignature.length;
+  let chunkIndex = 0;
+  let hasImageData = false;
+  let complete = false;
+  while (offset < contents.length) {
+    if (contents.length - offset < 12) {
+      throw new Error(`Truncated PNG chunk: ${file}`);
+    }
+    const length = contents.readUInt32BE(offset);
+    if (length > contents.length - offset - 12) {
+      throw new Error(`Truncated PNG chunk data: ${file}`);
+    }
+    const typeStart = offset + 4;
+    const dataEnd = typeStart + 4 + length;
+    const type = contents.toString("ascii", typeStart, typeStart + 4);
+    const expectedCrc = contents.readUInt32BE(dataEnd);
+    const actualCrc = crc32(contents.subarray(typeStart, dataEnd)) >>> 0;
+    if (actualCrc !== expectedCrc) {
+      throw new Error(`Invalid PNG chunk checksum: ${file}`);
+    }
+    if (chunkIndex === 0 && (type !== "IHDR" || length !== 13)) {
+      throw new Error(`Invalid PNG header chunk: ${file}`);
+    }
+    if (type === "IDAT") {
+      hasImageData = true;
+    }
+    offset = dataEnd + 4;
+    chunkIndex += 1;
+    if (type === "IEND") {
+      complete = length === 0 && offset === contents.length;
+      break;
+    }
+  }
+  if (hasImageData === false || complete === false) {
+    throw new Error(`Incomplete PNG image: ${file}`);
+  }
+};
+
+export const arePngFilesIdentical = async (left: string, right: string) => {
+  const [leftContents, rightContents] = await Promise.all([
+    fs.readFile(left),
+    fs.readFile(right),
+  ]);
+  if (leftContents.equals(rightContents) === false) {
+    return false;
+  }
+  assertPngIntegrity(leftContents, left);
+  return true;
+};
 
 export type ScreenshotDiffSize = {
   width: number;

@@ -1,8 +1,9 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import {
+  arePngFilesIdentical,
   createScreenshotTextAssertions,
   createScreenshotVisualAssertions,
   diffPngFiles,
@@ -18,6 +19,22 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await rm(tempDir, { recursive: true, force: true });
+});
+
+test("recognizes identical PNG files and rejects corrupt matches", async () => {
+  const left = path.join(tempDir, "left.png");
+  const right = path.join(tempDir, "right.png");
+  await writePng(left, createPng(2, 2, { r: 20, g: 40, b: 60 }));
+  await writePng(right, createPng(2, 2, { r: 20, g: 40, b: 60 }));
+
+  await expect(arePngFilesIdentical(left, right)).resolves.toBe(true);
+
+  const corrupted = Buffer.from(await readFile(left));
+  corrupted[20] = (corrupted[20] ?? 0) ^ 1;
+  await Promise.all([writeFile(left, corrupted), writeFile(right, corrupted)]);
+  await expect(arePngFilesIdentical(left, right)).rejects.toThrow(
+    "Invalid PNG chunk checksum"
+  );
 });
 
 test("validates screenshot visual expectations", () => {
