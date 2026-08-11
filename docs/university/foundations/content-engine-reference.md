@@ -112,15 +112,15 @@ Choose `fields` and disable `includeMetadata` when the page needs only selected 
 | Value | Behavior |
 | --- | --- |
 | `none` | Returns no file content. Use this for listings and any query that only needs fields or metadata. |
-| `full` | Embeds the complete UTF-8 file content, up to `maxBytes`, in the content database. |
-| `range` | Embeds a byte range selected by `offset` and `length` in the content database. |
-| `markdown-body-ref` | Stores a reference to a Markdown body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. |
+| `full` | Embeds the complete UTF-8 file content in the content database. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected file is larger. |
+| `range` | Embeds a byte range selected by `offset` and `length` in the content database. `length` cannot exceed 256 KiB. |
+| `markdown-body-ref` | Stores a reference to a Markdown body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected source file is larger. |
 
 Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for article pages. It keeps article bodies out of the published content database and resolves relative Markdown links when the selected body is loaded.
 
 ## Preview diagnostics
 
-`preview-asset-query` returns bindable results in `data` and non-bindable statistics in `__diagnostics__`. Read the two diagnostic scopes separately:
+`preview-asset-query` returns renderable results in `data` and non-bindable statistics in `__diagnostics__`. The diagnostic `scope` is always `query-preview`. Read the two capacity scopes separately:
 
 - `query` measures the temporary database for the query being previewed.
 - `database` measures the merged database for all reachable Assets resources in the project.

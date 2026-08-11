@@ -16,6 +16,9 @@ This guide creates a blog overview at `/blog` and one dynamic article page at
 To see the finished setup first, start with the
 [Markdown Blog marketplace template](https://webstudio.is/marketplace/templates/markdown-blog).
 
+The screenshots use the Webstudio Updates project as a working example. Its
+filenames, fields, and category filter differ from the tutorial values below.
+
 <figure><img src="../../.gitbook/assets/content-engine-assets-structure.png" alt="Assets panel showing Markdown articles and their assets folder"><figcaption><p>Markdown articles stored alongside their assets</p></figcaption></figure>
 
 ## Build it with MCP
@@ -162,7 +165,7 @@ page-level **Dynamic data**:
    order as a second sort so articles with the same publication date keep a
    stable order.
 
-<figure><img src="../../.gitbook/assets/content-engine-overview-query.png" alt="Assets overview query filtering Markdown files and drafts, then sorting by publication date and ID"><figcaption><p>The Webstudio Updates query also filters articles by category</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/content-engine-overview-query.png" alt="Assets overview query filtering Markdown files and drafts, then sorting by publication date and ID"><figcaption><p>An overview query for the Webstudio Updates project</p></figcaption></figure>
 
 Choosing only the fields the page renders keeps the published content data
 small. Leaving article bodies out of the overview also avoids loading every

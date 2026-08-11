@@ -13,6 +13,16 @@ type ReferenceRow = Readonly<{
   description: string;
 }>;
 
+const formatBytes = (bytes: number) => {
+  if (bytes % (1024 * 1024) === 0) {
+    return `${bytes / (1024 * 1024)} MiB`;
+  }
+  if (bytes % 1024 === 0) {
+    return `${bytes / 1024} KiB`;
+  }
+  return `${bytes} bytes`;
+};
+
 const resultRows = [
   {
     value: "many",
@@ -62,18 +72,15 @@ const contentRows = [
   },
   {
     value: "full",
-    description:
-      "Embeds the complete UTF-8 file content, up to `maxBytes`, in the content database.",
+    description: `Embeds the complete UTF-8 file content in the content database. \`maxBytes\` defaults to ${formatBytes(contentEngineLimits.hydratedFileBytes)} and cannot be set higher. The query fails if a selected file is larger.`,
   },
   {
     value: "range",
-    description:
-      "Embeds a byte range selected by `offset` and `length` in the content database.",
+    description: `Embeds a byte range selected by \`offset\` and \`length\` in the content database. \`length\` cannot exceed ${formatBytes(contentEngineLimits.hydratedRangeBytes)}.`,
   },
   {
     value: "markdown-body-ref",
-    description:
-      "Stores a reference to a Markdown body. Webstudio filters and paginates first, then reads only the selected bodies from Assets.",
+    description: `Stores a reference to a Markdown body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. \`maxBytes\` defaults to ${formatBytes(contentEngineLimits.hydratedFileBytes)} and cannot be set higher. The query fails if a selected source file is larger.`,
   },
 ] as const satisfies readonly ReferenceRow[];
 
@@ -184,16 +191,6 @@ export const assertContentEngineReferenceCoverage = () => {
     documented: documentedLimitKeys,
     implemented: Object.keys(contentEngineLimits),
   });
-};
-
-const formatBytes = (bytes: number) => {
-  if (bytes % (1024 * 1024) === 0) {
-    return `${bytes / (1024 * 1024)} MiB`;
-  }
-  if (bytes % 1024 === 0) {
-    return `${bytes / 1024} KiB`;
-  }
-  return `${bytes} bytes`;
 };
 
 const table = ({
@@ -371,7 +368,7 @@ export const renderContentEngineReferenceMarkdown = ({
     "",
     heading(1, "Preview diagnostics"),
     "",
-    "`preview-asset-query` returns bindable results in `data` and non-bindable statistics in `__diagnostics__`. Read the two diagnostic scopes separately:",
+    "`preview-asset-query` returns renderable results in `data` and non-bindable statistics in `__diagnostics__`. The diagnostic `scope` is always `query-preview`. Read the two capacity scopes separately:",
     "",
     "- `query` measures the temporary database for the query being previewed.",
     "- `database` measures the merged database for all reachable Assets resources in the project.",
