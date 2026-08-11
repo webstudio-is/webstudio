@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
-import { getInitialCaptureTarget } from "./capture";
+import { captureStoryPairs, getInitialCaptureTarget } from "./capture";
 import type { VisualStoryEntry } from "./manifest";
 
 const createEntry = (id: string): VisualStoryEntry => ({
@@ -21,4 +24,40 @@ test("does not initialize a browser for cached removed stories", () => {
     }),
     undefined
   );
+});
+
+test("recaptures baseline and current stories on the same browser page", async () => {
+  const assetDirectory = await mkdtemp(path.join(tmpdir(), "visual-pairs-"));
+  const calls: string[][] = [];
+  try {
+    const result = await captureStoryPairs({
+      assetDirectory,
+      browserPath: "/browser",
+      pairs: [
+        {
+          baseline: createEntry("button"),
+          current: createEntry("button"),
+        },
+      ],
+      baselinePort: 6101,
+      currentPort: 6102,
+      session: {
+        async capturePage(options, { concurrency }) {
+          assert.equal(concurrency, 1);
+          calls.push(options.map(({ url }) => url));
+          await Promise.all(
+            options.map(({ output }) => writeFile(output, "screenshot"))
+          );
+        },
+      },
+    });
+
+    assert.deepEqual(calls, [
+      ["http://127.0.0.1:6102/", "http://127.0.0.1:6101/"],
+    ]);
+    assert.equal(result.current.paths.has("button"), true);
+    assert.equal(result.baseline.paths.has("button"), true);
+  } finally {
+    await rm(assetDirectory, { recursive: true, force: true });
+  }
 });

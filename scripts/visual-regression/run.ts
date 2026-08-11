@@ -29,6 +29,7 @@ import {
   type VisualStoryEntry,
 } from "./manifest";
 import {
+  captureStoryPairs,
   captureStories,
   getStoryCaptureOptions,
   getInitialCaptureTarget,
@@ -337,9 +338,12 @@ const verifyChangedCaptures = async ({
     return { comparisons, performed: true };
   }
 
-  const changedBaselineEntries = remainingChangedIds.flatMap((id) => {
-    const entry = baselineEntries[id];
-    return entry === undefined ? [] : [entry];
+  const changedPairs = remainingChangedIds.flatMap((id) => {
+    const baseline = baselineEntries[id];
+    const current = currentEntries[id];
+    return baseline === undefined || current === undefined
+      ? []
+      : [{ baseline, current }];
   });
   if (cachedBaseline) {
     await installBaselineDependencies(checkout);
@@ -348,23 +352,27 @@ const verifyChangedCaptures = async ({
         root: checkout,
         port: visualRegressionConfig.servers.baselinePort,
         outputDirectory: baselineBundleDirectory,
-        storyFiles: changedBaselineEntries.map((entry) => entry.file),
+        storyFiles: changedPairs.map(({ baseline }) => baseline.file),
       })
     );
   }
-  const baselineVerification = await captureStories({
+  const pairedVerification = await captureStoryPairs({
     assetDirectory,
     browserPath,
-    concurrency: 1,
-    entries: changedBaselineEntries,
-    port: visualRegressionConfig.servers.baselinePort,
-    target: "baseline",
+    pairs: changedPairs,
+    baselinePort: visualRegressionConfig.servers.baselinePort,
+    currentPort: visualRegressionConfig.servers.currentPort,
     session: browserSession,
   });
   replaceStoryCaptures({
     ids: remainingChangedIds,
     capture: baselineCapture,
-    replacement: baselineVerification,
+    replacement: pairedVerification.baseline,
+  });
+  replaceStoryCaptures({
+    ids: remainingChangedIds,
+    capture: currentCapture,
+    replacement: pairedVerification.current,
   });
   return {
     comparisons: await compareStories({

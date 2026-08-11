@@ -7,6 +7,13 @@ import {
 import { visualRegressionConfig } from "./config";
 import type { VisualStoryEntry } from "./manifest";
 
+const onBatchFailure = (error: unknown, count: number) => {
+  console.warn(
+    `Visual capture failed for ${count} stories; isolating the failure.`,
+    error
+  );
+};
+
 export const getInitialCaptureTarget = ({
   baselineEntries,
   currentEntries,
@@ -87,10 +94,71 @@ export const captureStories = async ({
     }),
     concurrency,
     session,
-    onBatchFailure(error, count) {
-      console.warn(
-        `Visual capture failed for ${count} stories; isolating the failure.`,
-        error
-      );
-    },
+    onBatchFailure,
   });
+
+export const captureStoryPairs = async ({
+  assetDirectory,
+  browserPath,
+  pairs,
+  baselinePort,
+  currentPort,
+  session,
+}: {
+  assetDirectory: string;
+  browserPath: string;
+  pairs: readonly {
+    baseline: VisualStoryEntry;
+    current: VisualStoryEntry;
+  }[];
+  baselinePort: number;
+  currentPort: number;
+  session: VisualCaptureSession | undefined;
+}) => {
+  const targets = new Map<
+    string,
+    { id: string; target: "baseline" | "current" }
+  >();
+  const captures = pairs.flatMap(({ baseline, current }) =>
+    [
+      { entry: current, port: currentPort, target: "current" as const },
+      { entry: baseline, port: baselinePort, target: "baseline" as const },
+    ].map(({ entry, port, target }) => {
+      const captureId = `${target}:${entry.id}`;
+      const output = path.join(assetDirectory, entry.id, `${target}.png`);
+      targets.set(captureId, { id: entry.id, target });
+      return {
+        id: captureId,
+        options: getStoryCaptureOptions({ browserPath, entry, output, port }),
+      };
+    })
+  );
+  const result = await captureVisualEntries({
+    captures,
+    concurrency: 1,
+    session,
+    onBatchFailure,
+  });
+  const capturesByTarget = {
+    baseline: {
+      paths: new Map<string, string>(),
+      errors: new Map<string, string>(),
+    },
+    current: {
+      paths: new Map<string, string>(),
+      errors: new Map<string, string>(),
+    },
+  };
+  for (const [captureId, { id, target }] of targets) {
+    const capture = capturesByTarget[target];
+    const capturePath = result.paths.get(captureId);
+    if (capturePath !== undefined) {
+      capture.paths.set(id, capturePath);
+    }
+    const error = result.errors.get(captureId);
+    if (error !== undefined) {
+      capture.errors.set(id, error);
+    }
+  }
+  return capturesByTarget;
+};
