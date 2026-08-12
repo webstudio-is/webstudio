@@ -18,12 +18,15 @@ import {
 } from "~/builder/shared/collapsible-section";
 import {
   RequestDiagnosticsRow,
-  RequestDiagnosticsSections,
+  RequestDiagnosticsContent,
   RequestDiagnosticsTable,
 } from "./request-inspector";
 
 const runtimeContentNote =
   "Referenced documents fetched from storage at runtime are not included.";
+
+const assetBatchTimingNote =
+  "When one Builder request contains multiple Assets resources, this duration covers their combined batch.";
 
 const assetQueryPhaseRows = [
   [
@@ -203,14 +206,14 @@ const PerformanceSizeRows = ({ value }: { value: ResourcePerformance }) => (
       <RequestDiagnosticsRow
         label="Compiler content read"
         value={prettyBytes(value.assetQuery.compilerContentBytes)}
-        description="Total bytes read from storage while preparing compiler entries."
+        description="Total bytes read from storage while preparing compiler entries for the Assets batch."
       />
     )}
     {value.assetQuery?.documentGraphContentBytes !== undefined && (
       <RequestDiagnosticsRow
         label="Document graph content read"
         value={prettyBytes(value.assetQuery.documentGraphContentBytes)}
-        description="Total bytes read from storage while constructing the document graph."
+        description="Total bytes read from storage while constructing document graphs for the Assets batch."
       />
     )}
   </>
@@ -222,6 +225,9 @@ const getPerformanceSizes = (value?: ResourcePerformance) => ({
   documentGraphContentBytes: value?.assetQuery?.documentGraphContentBytes,
 });
 
+const hasDefinedValue = (value: Record<string, unknown>) =>
+  Object.values(value).some((item) => item !== undefined);
+
 const ResourcePerformanceSections = ({
   value,
   includeSizes = true,
@@ -231,21 +237,7 @@ const ResourcePerformanceSections = ({
   includeSizes?: boolean;
   openFirst?: boolean;
 }) => {
-  const hasTiming =
-    value.loaderDurationMs !== undefined ||
-    value.serverDurationMs !== undefined ||
-    assetQueryPhaseRows.some(
-      ([key]) => value.assetQuery?.phases?.[key] !== undefined
-    );
-  const hasQueryWork =
-    value.assetQuery?.compilationCache !== undefined ||
-    value.assetQuery?.compilerContentFetchCount !== undefined ||
-    value.assetQuery?.documentGraphContentFetchCount !== undefined ||
-    value.assetQuery?.resolvedDocumentCount !== undefined ||
-    value.assetQuery?.documentFetchCount !== undefined;
   const sizes = getPerformanceSizes(value);
-  const hasSizes =
-    includeSizes && Object.values(sizes).some((size) => size !== undefined);
   const timing = {
     builderRoundTripMs: value.loaderDurationMs,
     serverDurationMs: value.serverDurationMs,
@@ -259,6 +251,12 @@ const ResourcePerformanceSections = ({
     resolvedDocumentCount: value.assetQuery?.resolvedDocumentCount,
     documentFetchCount: value.assetQuery?.documentFetchCount,
   };
+  const hasSizes = includeSizes && hasDefinedValue(sizes);
+  const hasTiming =
+    timing.builderRoundTripMs !== undefined ||
+    timing.serverDurationMs !== undefined ||
+    hasDefinedValue(timing.phases ?? {});
+  const hasQueryWork = hasDefinedValue(queryWork);
   return (
     <>
       {hasSizes && (
@@ -299,7 +297,7 @@ const ResourcePerformanceSections = ({
                   key={key}
                   label={label}
                   value={`${durationMs.toFixed(1)} ms`}
-                  description={description}
+                  description={`${description} ${assetBatchTimingNote}`}
                 />
               );
             })}
@@ -308,7 +306,7 @@ const ResourcePerformanceSections = ({
       )}
       {hasQueryWork && (
         <DiagnosticsSection
-          label="Query work"
+          label="Assets batch work"
           data={queryWork}
           isOpen={openFirst && hasSizes === false && hasTiming === false}
         >
@@ -317,35 +315,35 @@ const ResourcePerformanceSections = ({
               <RequestDiagnosticsRow
                 label="Compilation work"
                 value={compilationWorkLabels[value.assetQuery.compilationCache]}
-                description="Whether this Assets request reused an artifact compiled earlier in the same request, joined matching in-progress work, compiled it on a miss, or ran with reuse disabled."
+                description="Whether this Assets batch reused an artifact compiled earlier in the same request, joined matching in-progress work, compiled it on a miss, or ran with reuse disabled."
               />
             )}
             {value.assetQuery?.compilerContentFetchCount !== undefined && (
               <RequestDiagnosticsRow
                 label="Compiler content fetches"
                 value={value.assetQuery.compilerContentFetchCount}
-                description="Number of asset contents read from storage while preparing compiler entries."
+                description="Number of asset contents read from storage while preparing compiler entries for the Assets batch."
               />
             )}
             {value.assetQuery?.documentGraphContentFetchCount !== undefined && (
               <RequestDiagnosticsRow
                 label="Document graph content fetches"
                 value={value.assetQuery.documentGraphContentFetchCount}
-                description="Number of document contents read from storage while constructing the document graph."
+                description="Number of document contents read from storage while constructing document graphs for the Assets batch."
               />
             )}
             {value.assetQuery?.resolvedDocumentCount !== undefined && (
               <RequestDiagnosticsRow
                 label="Resolved documents"
                 value={value.assetQuery.resolvedDocumentCount}
-                description="Number of query result documents passed through document-reference resolution."
+                description="Number of query result documents passed through document-reference resolution across the Assets batch."
               />
             )}
             {value.assetQuery?.documentFetchCount !== undefined && (
               <RequestDiagnosticsRow
                 label="Document fetches"
                 value={value.assetQuery.documentFetchCount}
-                description="Number of referenced documents loaded while resolving the query result, including request-local byte reuse."
+                description="Number of referenced documents loaded while resolving the Assets batch, including request-local byte reuse."
               />
             )}
           </RequestDiagnosticsTable>
@@ -360,9 +358,9 @@ export const ResourcePerformanceDiagnostics = ({
 }: {
   value: ResourcePerformance;
 }) => (
-  <RequestDiagnosticsSections>
+  <RequestDiagnosticsContent padded={false}>
     <ResourcePerformanceSections value={value} />
-  </RequestDiagnosticsSections>
+  </RequestDiagnosticsContent>
 );
 
 export const ContentDatabaseDiagnostics = ({
@@ -388,7 +386,7 @@ export const ContentDatabaseDiagnostics = ({
     database: value.database,
   };
   return (
-    <RequestDiagnosticsSections>
+    <RequestDiagnosticsContent padded={false}>
       <DiagnosticsSection
         label="Database and sizes"
         data={databaseAndSizes}
@@ -479,6 +477,6 @@ export const ContentDatabaseDiagnostics = ({
           <ReadonlyJsonEditor value={value.unresolved} />
         </DiagnosticsSection>
       )}
-    </RequestDiagnosticsSections>
+    </RequestDiagnosticsContent>
   );
 };

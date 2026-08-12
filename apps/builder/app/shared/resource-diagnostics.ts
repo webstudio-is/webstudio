@@ -3,14 +3,14 @@ import type { ResourceRequest } from "@webstudio-is/sdk";
 import { isAssetsResourceRequest } from "@webstudio-is/sdk/runtime";
 import { z } from "zod";
 
-export const resourcePerformance = z.strictObject({
+export const resourcePerformance = z.object({
   serverDurationMs: z.number().nonnegative().optional(),
   loaderDurationMs: z.number().nonnegative().optional(),
   responseBytes: z.number().int().nonnegative().optional(),
   assetQuery: z
-    .strictObject({
+    .object({
       phases: z
-        .strictObject({
+        .object({
           authorization: z.number().nonnegative().optional(),
           buildPlan: z.number().nonnegative().optional(),
           repositoryAuthorization: z.number().nonnegative().optional(),
