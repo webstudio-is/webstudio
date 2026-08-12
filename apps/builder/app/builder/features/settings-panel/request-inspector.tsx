@@ -21,23 +21,19 @@ export const clearSettledDiagnosticsKey = (
 
 export const RequestDiagnosticsContent = ({
   children,
+  padded = true,
 }: {
   children: ReactNode;
+  padded?: boolean;
 }) => (
   <ScrollAreaNative css={{ height: "100%", overflow: "auto" }}>
-    <Flex direction="column" gap={3} css={{ padding: theme.panel.padding }}>
-      {children}
-    </Flex>
-  </ScrollAreaNative>
-);
-
-export const RequestDiagnosticsSections = ({
-  children,
-}: {
-  children: ReactNode;
-}) => (
-  <ScrollAreaNative css={{ height: "100%", overflow: "auto" }}>
-    {children}
+    {padded ? (
+      <Flex direction="column" gap={3} css={{ padding: theme.panel.padding }}>
+        {children}
+      </Flex>
+    ) : (
+      children
+    )}
   </ScrollAreaNative>
 );
 
