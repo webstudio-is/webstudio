@@ -43,8 +43,7 @@ Use an external CMS, commerce backend, or media service when you need:
 ### Limits that affect this choice
 
 Queries can consider and return at most 1,000 documents. All reachable Assets
-resources share a 500 KiB published content database. One query can load up to
-20 files and 2 MiB of content, with a 1 MiB limit per file. **Markdown body
+resources share a 500 KiB published content database. **Markdown body
 reference** keeps article bodies out of the database.
 
 Images and videos remain separate Assets, but the Content Engine does not
