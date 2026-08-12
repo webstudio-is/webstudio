@@ -58,8 +58,6 @@ const createDependencies = (
   readFile: vi.fn(async () => "") as never,
   writeFile: vi.fn(async () => undefined) as never,
   sleep: vi.fn(async () => undefined),
-  killProcess: vi.fn(() => true),
-  killWindowsProcessTree: vi.fn(async () => true),
   parentProcess: {
     pid: 456,
     once: vi.fn(),
@@ -68,6 +66,8 @@ const createDependencies = (
   },
   nodeExecPath: "/usr/bin/node",
   npmExecPath: undefined,
+  processExecArgv: [],
+  supervisorPath: "/tmp/preview-process-supervisor.js",
   platform: "linux",
   ...overrides,
 });
@@ -80,7 +80,9 @@ const createPreviewProcess = (
     killed: false,
     exitCode: null,
     signalCode: null,
+    connected: true,
     once: vi.fn(),
+    disconnect: vi.fn(),
     kill: vi.fn(() => true),
     ...overrides,
   }) as ReturnType<typeof startPreviewServer>["process"];
@@ -280,15 +282,27 @@ test("starts generated project production server with inherited stdio", () => {
     url: "http://127.0.0.1:5173/",
     process,
   });
-  expect(spawn).toHaveBeenCalledWith("npm", ["run", "start"], {
-    cwd: "/tmp/preview",
-    stdio: "inherit",
-    env: expect.objectContaining({
-      HOST: "127.0.0.1",
-      PORT: "5173",
-      NODE_ENV: "production",
-    }),
-  });
+  expect(spawn).toHaveBeenCalledWith(
+    "/usr/bin/node",
+    [
+      "/tmp/preview-process-supervisor.js",
+      JSON.stringify({
+        command: "npm",
+        args: ["run", "start"],
+        cwd: "/tmp/preview",
+        ownerFile: "/tmp/preview-process.json",
+      }),
+    ],
+    {
+      cwd: "/tmp/preview",
+      stdio: ["inherit", "inherit", "inherit", "ipc"],
+      env: expect.objectContaining({
+        HOST: "127.0.0.1",
+        PORT: "5173",
+        NODE_ENV: "production",
+      }),
+    }
+  );
 });
 
 test("passes explicit external image domains to the preview optimizer", () => {
@@ -306,8 +320,8 @@ test("passes explicit external image domains to the preview optimizer", () => {
   );
 
   expect(spawn).toHaveBeenCalledWith(
-    "npm",
-    ["run", "start"],
+    "/usr/bin/node",
+    ["/tmp/preview-process-supervisor.js", expect.any(String)],
     expect.objectContaining({
       env: expect.objectContaining({
         DOMAINS: "storage.example.com,images.example.org",
@@ -340,13 +354,21 @@ test("starts generated project production server through windows npm-cli", () =>
   expect(spawn).toHaveBeenCalledWith(
     "C:\\Program Files\\nodejs\\node.exe",
     [
-      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
-      "run",
-      "start",
+      "/tmp/preview-process-supervisor.js",
+      JSON.stringify({
+        command: "C:\\Program Files\\nodejs\\node.exe",
+        args: [
+          "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+          "run",
+          "start",
+        ],
+        cwd: "C:/project/.webstudio/preview",
+        ownerFile: "C:/project/.webstudio/preview-process.json",
+      }),
     ],
     {
       cwd: "C:/project/.webstudio/preview",
-      stdio: "inherit",
+      stdio: ["inherit", "inherit", "inherit", "ipc"],
       env: expect.objectContaining({
         HOST: "127.0.0.1",
         PORT: "5173",
@@ -384,16 +406,28 @@ test("preview controller builds once and reuses a running server", async () => {
     "http://127.0.0.1:5173/pricing"
   );
   expect(spawn).toHaveBeenCalledTimes(2);
-  expect(spawn).toHaveBeenLastCalledWith("npm", ["run", "start"], {
-    cwd: "/tmp/preview",
-    detached: true,
-    stdio: ["ignore", "pipe", "pipe"],
-    env: expect.objectContaining({
-      HOST: "127.0.0.1",
-      PORT: "5173",
-      NODE_ENV: "production",
-    }),
-  });
+  expect(spawn).toHaveBeenLastCalledWith(
+    "/usr/bin/node",
+    [
+      "/tmp/preview-process-supervisor.js",
+      JSON.stringify({
+        command: "npm",
+        args: ["run", "start"],
+        cwd: "/tmp/preview",
+        ownerFile: "/tmp/preview-process.json",
+      }),
+    ],
+    {
+      cwd: "/tmp/preview",
+      detached: true,
+      stdio: ["ignore", "pipe", "pipe", "ipc"],
+      env: expect.objectContaining({
+        HOST: "127.0.0.1",
+        PORT: "5173",
+        NODE_ENV: "production",
+      }),
+    }
+  );
 });
 
 test("iterative preview starts without a production build", async () => {
@@ -415,16 +449,24 @@ test("iterative preview starts without a production build", async () => {
   });
   expect(spawn).toHaveBeenCalledOnce();
   expect(spawn).toHaveBeenCalledWith(
-    "npm",
+    "/usr/bin/node",
     [
-      "run",
-      "dev",
-      "--",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      "5173",
-      "--strictPort",
+      "/tmp/preview-process-supervisor.js",
+      JSON.stringify({
+        command: "npm",
+        args: [
+          "run",
+          "dev",
+          "--",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "5173",
+          "--strictPort",
+        ],
+        cwd: "/tmp/preview",
+        ownerFile: "/tmp/preview-process.json",
+      }),
     ],
     expect.objectContaining({
       env: expect.objectContaining({
@@ -459,20 +501,28 @@ test("starts a managed Windows preview through npm-cli with supported spawn opti
   expect(spawn).toHaveBeenCalledWith(
     "C:\\Program Files\\nodejs\\node.exe",
     [
-      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
-      "run",
-      "dev",
-      "--",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      "5173",
-      "--strictPort",
+      "/tmp/preview-process-supervisor.js",
+      JSON.stringify({
+        command: "C:\\Program Files\\nodejs\\node.exe",
+        args: [
+          "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+          "run",
+          "dev",
+          "--",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "5173",
+          "--strictPort",
+        ],
+        cwd: "C:/project/.webstudio/preview",
+        ownerFile: "C:/project/.webstudio/preview-process.json",
+      }),
     ],
     expect.objectContaining({
       cwd: "C:/project/.webstudio/preview",
       detached: false,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ["ignore", "pipe", "pipe", "ipc"],
     })
   );
 });
@@ -512,8 +562,8 @@ test("preview controller reuses a matching persisted production build", async ()
   );
   expect(spawn).toHaveBeenCalledOnce();
   expect(spawn).toHaveBeenCalledWith(
-    "npm",
-    ["run", "start"],
+    "/usr/bin/node",
+    ["/tmp/preview-process-supervisor.js", expect.any(String)],
     expect.any(Object)
   );
   expect(writeFile).not.toHaveBeenCalled();
@@ -577,57 +627,17 @@ test("preview controller passes image domains to the managed server", async () =
   );
 
   expect(spawn).toHaveBeenLastCalledWith(
-    "npm",
-    ["run", "start"],
+    "/usr/bin/node",
+    ["/tmp/preview-process-supervisor.js", expect.any(String)],
     expect.objectContaining({
       env: expect.objectContaining({ DOMAINS: "images.example.com" }),
     })
   );
 });
 
-test("preview controller stops the Windows preview process tree", async () => {
+test("preview controller disconnects the owned preview supervisor", async () => {
   const process = createPreviewProcess();
-  const buildProcess = createPreviewProcess();
   let exitListener: (() => void) | undefined;
-  const killWindowsProcessTree = vi.fn(async () => {
-    exitListener?.();
-    return true;
-  });
-  const controller = createPreviewController(
-    { host: "127.0.0.1", port: 5173, cwd: "/tmp/preview" },
-    createDependencies({
-      platform: "win32",
-      killWindowsProcessTree,
-      spawn: vi
-        .fn()
-        .mockReturnValueOnce(buildProcess)
-        .mockReturnValueOnce(process) as never,
-    })
-  );
-  resolveProcessExit(buildProcess);
-  vi.mocked(
-    process.once as (event: string, callback: unknown) => unknown
-  ).mockImplementation((event, callback) => {
-    if (event === "exit" && typeof callback === "function") {
-      exitListener = callback as () => void;
-    }
-    return process;
-  });
-  await controller.start();
-
-  await expect(controller.stop()).resolves.toEqual({
-    running: false,
-  });
-  expect(killWindowsProcessTree).toHaveBeenCalledWith(123);
-  expect(process.kill).not.toHaveBeenCalled();
-  await expect(controller.stop()).resolves.toEqual({
-    running: false,
-  });
-});
-
-test("preview controller stops the entire POSIX preview process group", async () => {
-  const process = createPreviewProcess();
-  const killProcess = vi.fn(() => true);
   const controller = createPreviewController(
     {
       host: "127.0.0.1",
@@ -637,10 +647,8 @@ test("preview controller stops the entire POSIX preview process group", async ()
     },
     createDependencies({
       spawn: vi.fn(() => process) as never,
-      killProcess,
     })
   );
-  let exitListener: (() => void) | undefined;
   vi.mocked(
     process.once as (event: string, callback: unknown) => unknown
   ).mockImplementation((event, callback) => {
@@ -649,21 +657,19 @@ test("preview controller stops the entire POSIX preview process group", async ()
     }
     return process;
   });
-  killProcess.mockImplementation(() => {
+  vi.mocked(process.disconnect).mockImplementation(() => {
     exitListener?.();
-    return true;
   });
 
   await controller.start();
   await controller.stop();
 
-  expect(killProcess).toHaveBeenCalledWith(-123, "SIGTERM");
+  expect(process.disconnect).toHaveBeenCalledOnce();
   expect(process.kill).not.toHaveBeenCalled();
 });
 
-test("preview controller stops its process group before propagating termination", async () => {
+test("preview controller disconnects its supervisor before propagating termination", async () => {
   const process = createPreviewProcess();
-  const killProcess = vi.fn(() => true);
   const parentProcess = {
     pid: 456,
     once: vi.fn(),
@@ -679,7 +685,6 @@ test("preview controller stops its process group before propagating termination"
     },
     createDependencies({
       spawn: vi.fn(() => process) as never,
-      killProcess,
       parentProcess,
     })
   );
@@ -696,7 +701,7 @@ test("preview controller stops its process group before propagating termination"
     expect(parentProcess.kill).toHaveBeenCalledWith(456, "SIGTERM");
   });
 
-  expect(killProcess).toHaveBeenCalledWith(-123, "SIGTERM");
+  expect(process.disconnect).toHaveBeenCalledOnce();
   expect(controller.status().running).toBe(false);
 });
 
@@ -766,13 +771,12 @@ test("preview controller can restart a running server after rebuilding", async (
     .mockReturnValueOnce(firstProcess)
     .mockReturnValueOnce(secondBuildProcess)
     .mockReturnValueOnce(secondProcess);
-  const killProcess = vi.fn(() => true);
   resolveProcessExit(firstBuildProcess);
   resolveProcessExit(secondBuildProcess);
 
   const controller = createPreviewController(
     { host: "127.0.0.1", port: 5173, cwd: "/tmp/preview" },
-    createDependencies({ spawn: spawn as never, killProcess })
+    createDependencies({ spawn: spawn as never })
   );
 
   await expect(controller.start()).resolves.toEqual({
@@ -789,13 +793,14 @@ test("preview controller can restart a running server after rebuilding", async (
     mode: "production",
   });
 
-  expect(killProcess).toHaveBeenCalledWith(-123, "SIGTERM");
+  expect(firstProcess.disconnect).toHaveBeenCalledOnce();
   expect(spawn).toHaveBeenCalledTimes(4);
 });
 
 test("ignores a delayed exit from a previously owned preview server", async () => {
   let firstExit: (() => void) | undefined;
   const firstProcess = createPreviewProcess({
+    connected: false,
     once: vi.fn((event: string, callback: () => void) => {
       if (event === "exit") {
         firstExit = callback;
@@ -816,10 +821,7 @@ test("ignores a delayed exit from a previously owned preview server", async () =
       cwd: "/tmp/preview",
       mode: "iterative",
     },
-    createDependencies({
-      spawn: spawn as never,
-      killProcess: vi.fn(() => false),
-    })
+    createDependencies({ spawn: spawn as never })
   );
 
   await controller.start();

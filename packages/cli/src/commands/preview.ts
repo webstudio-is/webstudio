@@ -29,6 +29,7 @@ import {
   getPreviewUrl,
   getNpmInvocation,
   previewBuildCacheMarker,
+  previewProcessOwnerFile,
   runPreviewBuild,
   startPreviewServer,
   waitForPreviewExit,
@@ -211,6 +212,46 @@ const getPreviewInstallFailureDiagnostics = (error: unknown) => {
 export const getPreviewProjectDir = (projectDir = cwd()) =>
   join(projectDir, ".webstudio", "preview");
 
+type PreviewProcessOwner = {
+  supervisorPid?: unknown;
+  previewPid?: unknown;
+};
+
+export const createPreviewCleanupError = async ({
+  previewProjectDir,
+  lockedPath,
+  cause,
+  readOwnerFile = readFile,
+}: {
+  previewProjectDir: string;
+  lockedPath: string;
+  cause: unknown;
+  readOwnerFile?: (path: string, encoding: "utf8") => Promise<string>;
+}) => {
+  const owner = await readOwnerFile(
+    join(previewProjectDir, "..", previewProcessOwnerFile),
+    "utf8"
+  )
+    .then((value) => JSON.parse(value) as PreviewProcessOwner)
+    .catch(() => undefined);
+  const pids = [owner?.supervisorPid, owner?.previewPid].filter(
+    (value): value is number =>
+      typeof value === "number" && Number.isInteger(value) && value > 0
+  );
+  const ownerHint =
+    pids.length === 0
+      ? "No owned preview PID was recorded."
+      : `Recorded owned preview PIDs: ${pids.join(", ")}.`;
+  const recovery =
+    pids.length === 0
+      ? "Stop the CLI/MCP process that started preview. On WSL/Windows, use PowerShell Get-CimInstance Win32_Process to find a command whose path is inside the locked preview directory, verify it belongs to this project, and stop only that PID."
+      : `Stop preview from its owning CLI/MCP session. If that owner is gone, verify the recorded PID belongs to this project, then terminate only its tree (WSL/Windows: taskkill.exe /pid ${pids.at(-1)} /t /f; Linux/macOS: kill -- -${pids.at(-1)}).`;
+  return new Error(
+    `PREVIEW_CLEANUP_FAILED: Could not remove generated preview path ${lockedPath}. A preview process may still have it open. ${ownerHint} ${recovery}`,
+    { cause }
+  );
+};
+
 export const ensurePreviewDependencies = async (
   previewProjectDir: string,
   dependencies: Partial<PreviewDependencyOperations> = {}
@@ -279,8 +320,23 @@ export const ensurePreviewDependencies = async (
         return;
       }
     }
-    await operations.rm(previewNodeModules, { recursive: true, force: true });
-  } catch {
+    try {
+      await operations.rm(previewNodeModules, { recursive: true, force: true });
+    } catch (error) {
+      throw await createPreviewCleanupError({
+        previewProjectDir,
+        lockedPath: previewNodeModules,
+        cause: error,
+        readOwnerFile: operations.readFile,
+      });
+    }
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.startsWith("PREVIEW_CLEANUP_FAILED:")
+    ) {
+      throw error;
+    }
     // Continue with the CLI dependency tree or an isolated install.
   }
 
@@ -388,9 +444,18 @@ const preparePreviewDirectory = async (
     await Promise.all(
       entries
         .filter((entry) => entry !== "node_modules")
-        .map((entry) =>
-          rm(join(previewProjectDir, entry), { recursive: true, force: true })
-        )
+        .map(async (entry) => {
+          const entryPath = join(previewProjectDir, entry);
+          try {
+            await rm(entryPath, { recursive: true, force: true });
+          } catch (error) {
+            throw await createPreviewCleanupError({
+              previewProjectDir,
+              lockedPath: entryPath,
+              cause: error,
+            });
+          }
+        })
     );
   }
   await copyPreviewProjectFiles(projectDir, previewProjectDir);
