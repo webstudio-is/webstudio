@@ -1242,7 +1242,9 @@ describe("project session", () => {
       expect.objectContaining({ code: "CONFLICT_REFRESHED" }),
       expect.objectContaining({ code: "CONFLICT_RETRY" }),
     ]);
-    expect(transport.loadedNamespaces).toEqual([["pages"]]);
+    expect(transport.loadedNamespaces).toEqual([
+      ["pages", "instances", "dataSources"],
+    ]);
     expect(transport.commits).toHaveLength(2);
   });
 
