@@ -18,7 +18,22 @@ describe("Parse CSS", () => {
     ).toBe(false);
     expect(
       hasUnsupportedCssTemplateRules(
+        "@MEDIA (min-width: 768px) { color: blue }"
+      )
+    ).toBe(false);
+    expect(
+      hasUnsupportedCssTemplateRules(
         "@keyframes fade { from { opacity: 0 } to { opacity: 1 } }"
+      )
+    ).toBe(true);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "@media (min-width: 768px) { .child { color: blue } }"
+      )
+    ).toBe(true);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "@media (min-width: 768px) { @keyframes fade { from { opacity: 0 } } }"
       )
     ).toBe(true);
   });
@@ -772,6 +787,11 @@ test("parse media queries", () => {
           color: green;
         }
       }
+      @MEDIA (min-width: 1024px) {
+        a {
+          color: blue;
+        }
+      }
    `,
       new Map()
     ).styles
@@ -787,6 +807,12 @@ test("parse media queries", () => {
       selector: "a",
       property: "color",
       value: { type: "keyword", value: "green" },
+    },
+    {
+      breakpoint: `(min-width:1024px)`,
+      selector: "a",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
     },
   ]);
 });

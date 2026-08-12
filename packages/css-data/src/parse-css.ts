@@ -30,11 +30,18 @@ export type ParsedStyleDecl = {
 export const hasUnsupportedCssTemplateRules = (source: string): boolean => {
   try {
     const ast = csstree.parse(source, { context: "declarationList" });
-    return [...ast.children].some(
-      (node) =>
+    let unsupported = false;
+    csstree.walk(ast, (node) => {
+      if (
         node.type === "Rule" ||
-        (node.type === "Atrule" && node.name !== "media")
-    );
+        node.type === "Raw" ||
+        (node.type === "Atrule" && node.name.toLowerCase() !== "media")
+      ) {
+        unsupported = true;
+        return walkSkip;
+      }
+    });
+    return unsupported;
   } catch {
     return false;
   }
@@ -778,7 +785,7 @@ export const parseCss = (
       }
 
       // All enclosing at-rules must be @media — reject @supports, @keyframes, etc.
-      if (atruleStack.some((atrule) => atrule.name !== "media")) {
+      if (atruleStack.some((atrule) => atrule.name.toLowerCase() !== "media")) {
         return;
       }
 
