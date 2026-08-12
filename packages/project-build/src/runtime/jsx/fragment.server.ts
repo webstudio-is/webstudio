@@ -3,9 +3,8 @@ import type { WebstudioFragment } from "@webstudio-is/sdk";
 import { renderTemplate } from "@webstudio-is/template";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
-  webstudioJsxFragmentBuiltInHelpers,
-  webstudioJsxComponentNamespaceNames,
-  webstudioJsxHelperNames,
+  webstudioJsxAnimationGuidance,
+  webstudioJsxBindingGuidance,
   webstudioJsxRuntimeBindings,
 } from "./bindings";
 import { evaluateJsx } from "./evaluate.server";
@@ -19,6 +18,7 @@ const templateValidationMessagePrefixes = [
   "token()",
   "ws:style",
   "ws:tokens",
+  "css templates",
 ];
 
 const isTemplateValidationMessage = (message: string) =>
@@ -47,13 +47,19 @@ export const evaluateWebstudioJsxFragment = async (
       ...webstudioJsxRuntimeBindings,
     },
     parseErrorMessage: (error) =>
-      `Could not parse JSX fragment. Pass Webstudio JSX such as <$.Box><$.Heading>Title</$.Heading></$.Box>. ${getErrorMessage(error)}`,
+      `Could not parse JSX fragment. Pass Webstudio JSX such as <$.Box><$.Heading>Title</$.Heading></$.Box>. ${getErrorMessage(
+        error
+      )}`,
     evaluationErrorMessage: (error) => {
       const message = getErrorMessage(error);
       if (isTemplateValidationMessage(message)) {
         return message;
       }
-      return `Could not evaluate JSX fragment. Use component namespaces ${webstudioJsxComponentNamespaceNames} and value helpers ${webstudioJsxHelperNames}. The animation namespace is not callable; use animation.ComponentName in JSX. Available built-ins: ${webstudioJsxFragmentBuiltInHelpers}. ${message}`;
+      const animationGuidance =
+        message === "animation is not a function"
+          ? ` ${webstudioJsxAnimationGuidance}`
+          : "";
+      return `Could not evaluate JSX fragment. Use ${webstudioJsxBindingGuidance}.${animationGuidance} ${message}`;
     },
     missingResultMessage: "JSX fragment did not produce Webstudio data.",
   });

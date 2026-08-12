@@ -28,27 +28,6 @@ export const assetDataOverride = z.object({
 });
 export type AssetDataOverride = z.infer<typeof assetDataOverride>;
 
-const getCompatibleFontMetaOverride = ({
-  detected,
-  override,
-}: {
-  detected: FontMeta;
-  override: Record<string, unknown>;
-}) => {
-  const { style, weight, variationAxes, ...shared } = override;
-  if ("variationAxes" in detected) {
-    return {
-      ...shared,
-      ...(variationAxes === undefined ? {} : { variationAxes }),
-    };
-  }
-  return {
-    ...shared,
-    ...(style === undefined ? {} : { style }),
-    ...(weight === undefined ? {} : { weight }),
-  };
-};
-
 export const applyAssetDataOverride = (
   detected: AssetData,
   override?: AssetDataOverride
@@ -57,16 +36,9 @@ export const applyAssetDataOverride = (
     "family" in detected.meta
       ? "font"
       : "width" in detected.meta && "height" in detected.meta
-        ? "image"
-        : "file";
-  const metaOverride =
-    type === "font"
-      ? getCompatibleFontMetaOverride({
-          detected: detected.meta as FontMeta,
-          override: override?.meta ?? {},
-        })
-      : (override?.meta ?? {});
-  const meta = mergeAssetMeta(type, detected.meta, metaOverride);
+      ? "image"
+      : "file";
+  const meta = mergeAssetMeta(type, detected.meta, override?.meta ?? {});
   if (meta === undefined) {
     throw new Error("Asset metadata override is invalid");
   }
@@ -76,7 +48,7 @@ export const applyAssetDataOverride = (
     format:
       "family" in detected.meta
         ? detected.format
-        : (override?.format ?? detected.format),
+        : override?.format ?? detected.format,
     meta,
   };
 };

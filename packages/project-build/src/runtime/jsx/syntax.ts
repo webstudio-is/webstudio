@@ -1,7 +1,6 @@
 import { Parser } from "acorn";
 import jsx from "acorn-jsx";
-import * as csstree from "css-tree";
-import { webstudioJsxFragmentBuiltInHelpers } from "./bindings";
+import { webstudioJsxBindingGuidance } from "./bindings";
 import { getErrorMessage, throwWebstudioJsxValidationError } from "./errors";
 
 const JsxParser = Parser.extend(jsx());
@@ -171,56 +170,14 @@ const parseJsxModule = (source: string) =>
     sourceType: "module",
   }) as unknown as AstNode;
 
-const getStaticCssTemplateSource = (node: AstNode) => {
-  if (node.type !== "TaggedTemplateExpression") {
-    return;
-  }
-  if (
-    isAstNode(node.tag) === false ||
-    node.tag.type !== "Identifier" ||
-    node.tag.name !== "css" ||
-    isAstNode(node.quasi) === false ||
-    Array.isArray(node.quasi.quasis) === false
-  ) {
-    return;
-  }
-  return node.quasi.quasis
-    .map((quasi) => {
-      if (
-        isAstNode(quasi) &&
-        typeof quasi.value === "object" &&
-        quasi.value !== null &&
-        "raw" in quasi.value &&
-        typeof quasi.value.raw === "string"
-      ) {
-        return quasi.value.raw;
-      }
-      return "";
-    })
-    .join("var(--webstudio-expression)");
-};
-
-const getUnsupportedCssTemplateRule = (source: string) => {
-  try {
-    const ast = csstree.parse(source, { context: "declarationList" });
-    return [...ast.children].find(
-      (node) =>
-        node.type === "Rule" ||
-        (node.type === "Atrule" && node.name !== "media")
-    );
-  } catch {
-    return;
-  }
-};
-
 const hasModuleSyntax = (source: string) => {
   try {
     const ast = parseJsxModule(source);
     const body = Array.isArray(ast.body)
       ? ast.body
       : isAstNode(ast.program) && Array.isArray(ast.program.body)
-        ? ast.program.body
-        : undefined;
+      ? ast.program.body
+      : undefined;
     if (body === undefined) {
       return false;
     }
@@ -240,7 +197,7 @@ const hasModuleSyntax = (source: string) => {
 export const inspectWebstudioJsxFragmentSyntax = (source: string) => {
   if (hasModuleSyntax(source)) {
     return throwWebstudioJsxValidationError(
-      `Do not use import or export in JSX fragments. Use the built-in ${webstudioJsxFragmentBuiltInHelpers} helpers.`,
+      `Do not use import or export in JSX fragments. Use ${webstudioJsxBindingGuidance}.`,
       "declarative_jsx_without_modules"
     );
   }
@@ -261,27 +218,19 @@ export const inspectWebstudioJsxFragmentSyntax = (source: string) => {
     );
   }
   const error = visitAst(ast, (node, context) => {
-    const cssTemplateSource = getStaticCssTemplateSource(node);
-    if (cssTemplateSource !== undefined) {
-      const unsupportedRule = getUnsupportedCssTemplateRule(cssTemplateSource);
-      if (unsupportedRule === undefined) {
-        return;
-      }
-      return "Do not put selectors or unsupported at-rules such as @keyframes inside css templates. css templates accept declarations and @media rules only. Use Webstudio Animation components for editable animations.";
-    }
     if (node.type === "ImportExpression" || node.type === "Import") {
-      return `Do not use dynamic import() in JSX fragments. JSX fragments are declarative Webstudio project data; use the built-in ${webstudioJsxFragmentBuiltInHelpers} helpers.`;
+      return `Do not use dynamic import() in JSX fragments. JSX fragments are declarative Webstudio project data; use ${webstudioJsxBindingGuidance}.`;
     }
     if (node.type === "Identifier" && typeof node.name === "string") {
       if (
         restrictedRuntimeIdentifiers.has(node.name) &&
         isNonExecutingPropertyName(context) === false
       ) {
-        return `Do not access "${node.name}" in JSX fragments. JSX fragments are declarative Webstudio project data; use the built-in ${webstudioJsxFragmentBuiltInHelpers} helpers.`;
+        return `Do not access "${node.name}" in JSX fragments. JSX fragments are declarative Webstudio project data; use ${webstudioJsxBindingGuidance}.`;
       }
     }
     if (getMemberPropertyName(node) === "constructor") {
-      return `Do not access "constructor" in JSX fragments. JSX fragments are declarative Webstudio project data; use the built-in ${webstudioJsxFragmentBuiltInHelpers} helpers.`;
+      return `Do not access "constructor" in JSX fragments. JSX fragments are declarative Webstudio project data; use ${webstudioJsxBindingGuidance}.`;
     }
   });
   if (error !== undefined) {

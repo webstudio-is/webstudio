@@ -27,6 +27,19 @@ export type ParsedStyleDecl = {
   value: StyleValue;
 };
 
+export const hasUnsupportedCssTemplateRules = (source: string): boolean => {
+  try {
+    const ast = csstree.parse(source, { context: "declarationList" });
+    return [...ast.children].some(
+      (node) =>
+        node.type === "Rule" ||
+        (node.type === "Atrule" && node.name !== "media")
+    );
+  } catch {
+    return false;
+  }
+};
+
 // @todo we don't parse correctly most of them if not all
 const prefixedProperties = [
   "-webkit-box-orient",
