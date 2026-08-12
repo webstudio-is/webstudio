@@ -76,8 +76,8 @@ export const isAggregateTokenBaselineNonRegressed = (
     if (baseline === undefined) {
       continue;
     }
-    const currentTokens = result.metrics.tokens?.total;
-    const baselineTokens = baseline.metrics.tokens?.total;
+    const currentTokens = result.metrics.tokens?.output;
+    const baselineTokens = baseline.metrics.tokens?.output;
     if (currentTokens === undefined || baselineTokens === undefined) {
       return false;
     }
@@ -89,7 +89,7 @@ export const isAggregateTokenBaselineNonRegressed = (
 };
 
 const gatedMetricPaths = new Set([
-  "metrics.tokens.total",
+  "metrics.tokens.output",
   "metrics.mcpCatalog.latestResponseBytes",
   "metrics.mcpCatalog.latestInputSchemaBytes",
   "metrics.toolCalls.total",
@@ -171,7 +171,7 @@ export const compareEvaluationResult = (
       continue;
     }
     const regressionPercent =
-      metric === "metrics.tokens.total"
+      metric === "metrics.tokens.output"
         ? maxTokenRegressionPercent
         : maxMetricRegressionPercent;
     const relativeIncrease = Math.floor(

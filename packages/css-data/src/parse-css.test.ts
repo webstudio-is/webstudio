@@ -18,6 +18,11 @@ describe("Parse CSS", () => {
     ).toBe(false);
     expect(
       hasUnsupportedCssTemplateRules(
+        "--brand: red; color: var(--brand, currentColor)"
+      )
+    ).toBe(false);
+    expect(
+      hasUnsupportedCssTemplateRules(
         "@MEDIA (min-width: 768px) { color: blue }"
       )
     ).toBe(false);

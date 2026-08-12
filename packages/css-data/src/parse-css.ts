@@ -31,15 +31,26 @@ export const hasUnsupportedCssTemplateRules = (source: string): boolean => {
   try {
     const ast = csstree.parse(source, { context: "declarationList" });
     let unsupported = false;
-    csstree.walk(ast, (node) => {
-      if (
-        node.type === "Rule" ||
-        node.type === "Raw" ||
-        (node.type === "Atrule" && node.name.toLowerCase() !== "media")
-      ) {
-        unsupported = true;
-        return walkSkip;
-      }
+    let declarationDepth = 0;
+    csstree.walk(ast, {
+      enter(node) {
+        if (node.type === "Declaration") {
+          declarationDepth += 1;
+        }
+        if (
+          node.type === "Rule" ||
+          (node.type === "Raw" && declarationDepth === 0) ||
+          (node.type === "Atrule" && node.name.toLowerCase() !== "media")
+        ) {
+          unsupported = true;
+          return walkSkip;
+        }
+      },
+      leave(node) {
+        if (node.type === "Declaration") {
+          declarationDepth -= 1;
+        }
+      },
     });
     return unsupported;
   } catch {

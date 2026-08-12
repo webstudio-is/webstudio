@@ -2886,6 +2886,57 @@ describe("project session mcp adapter", () => {
     );
   });
 
+  test("unwraps a redundantly nested create-resource input", async () => {
+    const executeOperation = createExecuteOperation();
+    const createResourceOperation = publicOperation({
+      command: "create-resource",
+      id: "resources.create",
+      method: "mutation",
+      permit: "edit",
+      description: "Create resource",
+      inputSchema: getTestInputSchema(
+        z.object({
+          scopeInstanceId: z.string(),
+          dataSourceName: z.string(),
+          resource: z.object({
+            name: z.string(),
+            method: z.enum(["get", "post"]),
+            url: z.string(),
+            headers: z.array(z.unknown()),
+            searchParams: z.array(z.unknown()).optional(),
+          }),
+        })
+      ),
+      writeNamespaces: ["resources"],
+      invalidatesNamespaces: ["resources"],
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: [createResourceOperation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const input = {
+      scopeInstanceId: "root",
+      dataSourceName: "accountSession",
+      resource: {
+        name: "Account session via server",
+        method: "get",
+        url: "/api/auth/session",
+        headers: [],
+        searchParams: [],
+      },
+    };
+
+    await adapter.callTool({
+      name: "create-resource",
+      input: { resource: input },
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ command: "create-resource", input })
+    );
+  });
+
   test("suggests page structure tools when page detail input is unsupported", async () => {
     const executeOperation: ExecuteOperation = vi.fn();
     const adapter = createProjectSessionMcpCore({
@@ -4790,6 +4841,19 @@ describe("project session mcp adapter", () => {
     );
     expect(authenticatedPageGuide.structuredContent.data).toEqual(
       expect.objectContaining({
+        recipe: {
+          createResourceInput: {
+            scopeInstanceId: "<account-root-id>",
+            dataSourceName: "accountSession",
+            resource: {
+              name: "Account session via server",
+              method: "get",
+              url: "/api/auth/session",
+              headers: [],
+              searchParams: [],
+            },
+          },
+        },
         workflow: expect.arrayContaining([
           expect.stringContaining("existing auth resources"),
           expect.stringContaining("Call inspect-auth-context exactly once"),
@@ -4808,10 +4872,8 @@ describe("project session mcp adapter", () => {
           expect.stringContaining(
             "Do not repeat list-variables when the fixture variable is not referenced"
           ),
-          expect.stringContaining("copy its fixed request URL exactly"),
-          expect.stringContaining(
-            'url:"/api/auth/session",headers:[],searchParams:[]'
-          ),
+          expect.stringContaining("recipe.createResourceInput"),
+          expect.stringContaining("entire create-resource tool input"),
           expect.stringContaining(
             "Do not call selector-based structural tools"
           ),

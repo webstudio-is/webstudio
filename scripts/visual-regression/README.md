@@ -23,7 +23,9 @@ most recent report without rerunning the comparison with
 
 The HTML report shows baseline, current, and diff images for every mismatch,
 plus OCR evidence for changed text. CI uploads the same self-contained report
-as a `visual-regression-report` artifact.
+as a `visual-regression-report` artifact. When a comparison fails, the CI log
+also lists each affected story, source file, pixel mismatch, changed regions,
+warnings, errors, and report artifact paths.
 
 Pixel sensitivity (`0.1`), mismatch tolerance (`0.001%`), viewport, capture,
 server, and cache settings live in `config.ts`. Add
