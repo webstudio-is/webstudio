@@ -32,6 +32,17 @@ const isProcessRunning = (pid: number) => {
   }
 };
 
+const stopProcess = (pid: number | undefined) => {
+  if (pid === undefined) {
+    return;
+  }
+  try {
+    process.kill(pid, "SIGKILL");
+  } catch {
+    // The process already stopped.
+  }
+};
+
 const getLifecycleTestRoot = async () => {
   if (process.env.WEBSTUDIO_WSL_9P_TEST_ROOT !== undefined) {
     return process.env.WEBSTUDIO_WSL_9P_TEST_ROOT;
@@ -42,19 +53,45 @@ const getLifecycleTestRoot = async () => {
   return isWsl && cwd().startsWith("/mnt/") ? cwd() : tmpdir();
 };
 
-test.each(["disconnect", "SIGTERM"] as const)(
-  "stops the complete preview process tree on owner %s",
-  async (stopMethod) => {
+type LifecycleCase = {
+  name: string;
+  stopMethod: "disconnect" | "SIGHUP" | "SIGTERM";
+  resistSigterm?: boolean;
+};
+
+const lifecycleCases = (
+  [
+    { name: "owner disconnect", stopMethod: "disconnect" },
+    { name: "owner SIGTERM", stopMethod: "SIGTERM" },
+    { name: "owner SIGHUP", stopMethod: "SIGHUP" },
+    {
+      name: "owner disconnect with a SIGTERM-resistant descendant",
+      stopMethod: "disconnect",
+      resistSigterm: true,
+    },
+  ] satisfies LifecycleCase[]
+).filter(
+  ({ stopMethod }) => process.platform !== "win32" || stopMethod !== "SIGHUP"
+);
+
+test.each(lifecycleCases)(
+  "stops the complete preview process tree on $name",
+  async ({ stopMethod, resistSigterm = false }) => {
     const directory = await mkdtemp(
       join(await getLifecycleTestRoot(), "webstudio-preview-owner-")
     );
     const processFile = join(directory, "processes.json");
     const ownerFile = join(directory, "preview-process.json");
+    const descendantScript = [
+      ...(resistSigterm ? ['process.on("SIGTERM", () => {});'] : []),
+      'process.send?.("ready");',
+      "setInterval(() => {}, 1000);",
+    ].join("\n");
     const childScript = [
       'const { spawn } = require("node:child_process");',
       'const { writeFileSync } = require("node:fs");',
-      'const descendant = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore" });',
-      `writeFileSync(${JSON.stringify(processFile)}, JSON.stringify({ launcher: process.pid, descendant: descendant.pid }));`,
+      `const descendant = spawn(process.execPath, ["-e", ${JSON.stringify(descendantScript)}], { stdio: ["ignore", "ignore", "ignore", "ipc"] });`,
+      `descendant.once("message", () => writeFileSync(${JSON.stringify(processFile)}, JSON.stringify({ launcher: process.pid, descendant: descendant.pid })));`,
       "setInterval(() => {}, 1000);",
     ].join("\n");
     const supervisor = spawn(
@@ -76,9 +113,9 @@ test.each(["disconnect", "SIGTERM"] as const)(
     const supervisorExit = new Promise<void>((resolve) => {
       supervisor.once("exit", () => resolve());
     });
+    let ownedProcesses: { launcher: number; descendant: number } | undefined;
 
     try {
-      let ownedProcesses: { launcher: number; descendant: number } | undefined;
       await waitFor(async () => {
         ownedProcesses = await readFile(processFile, "utf8")
           .then((value) => JSON.parse(value))
@@ -93,15 +130,14 @@ test.each(["disconnect", "SIGTERM"] as const)(
       } else {
         supervisor.kill(stopMethod);
       }
-      await waitFor(
-        () =>
-          isProcessRunning(ownedProcesses!.launcher) === false &&
-          isProcessRunning(ownedProcesses!.descendant) === false
-      );
       await supervisorExit;
+      await waitFor(() => isProcessRunning(ownedProcesses!.launcher) === false);
+      expect(isProcessRunning(ownedProcesses!.descendant)).toBe(false);
       await expect(access(ownerFile)).rejects.toMatchObject({ code: "ENOENT" });
     } finally {
       supervisor.kill("SIGKILL");
+      stopProcess(ownedProcesses?.launcher);
+      stopProcess(ownedProcesses?.descendant);
       await rm(directory, { recursive: true, force: true });
     }
   }

@@ -58,8 +58,6 @@ const createDependencies = (
   readFile: vi.fn(async () => "") as never,
   writeFile: vi.fn(async () => undefined) as never,
   sleep: vi.fn(async () => undefined),
-  killProcess: vi.fn(() => true),
-  killWindowsProcessTree: vi.fn(async () => true),
   parentProcess: {
     pid: 456,
     once: vi.fn(),
@@ -82,7 +80,9 @@ const createPreviewProcess = (
     killed: false,
     exitCode: null,
     signalCode: null,
+    connected: true,
     once: vi.fn(),
+    disconnect: vi.fn(),
     kill: vi.fn(() => true),
     ...overrides,
   }) as ReturnType<typeof startPreviewServer>["process"];
@@ -635,49 +635,9 @@ test("preview controller passes image domains to the managed server", async () =
   );
 });
 
-test("preview controller stops the Windows preview process tree", async () => {
+test("preview controller disconnects the owned preview supervisor", async () => {
   const process = createPreviewProcess();
-  const buildProcess = createPreviewProcess();
   let exitListener: (() => void) | undefined;
-  const killWindowsProcessTree = vi.fn(async () => {
-    exitListener?.();
-    return true;
-  });
-  const controller = createPreviewController(
-    { host: "127.0.0.1", port: 5173, cwd: "/tmp/preview" },
-    createDependencies({
-      platform: "win32",
-      killWindowsProcessTree,
-      spawn: vi
-        .fn()
-        .mockReturnValueOnce(buildProcess)
-        .mockReturnValueOnce(process) as never,
-    })
-  );
-  resolveProcessExit(buildProcess);
-  vi.mocked(
-    process.once as (event: string, callback: unknown) => unknown
-  ).mockImplementation((event, callback) => {
-    if (event === "exit" && typeof callback === "function") {
-      exitListener = callback as () => void;
-    }
-    return process;
-  });
-  await controller.start();
-
-  await expect(controller.stop()).resolves.toEqual({
-    running: false,
-  });
-  expect(killWindowsProcessTree).toHaveBeenCalledWith(123);
-  expect(process.kill).not.toHaveBeenCalled();
-  await expect(controller.stop()).resolves.toEqual({
-    running: false,
-  });
-});
-
-test("preview controller stops the entire POSIX preview process group", async () => {
-  const process = createPreviewProcess();
-  const killProcess = vi.fn(() => true);
   const controller = createPreviewController(
     {
       host: "127.0.0.1",
@@ -687,10 +647,8 @@ test("preview controller stops the entire POSIX preview process group", async ()
     },
     createDependencies({
       spawn: vi.fn(() => process) as never,
-      killProcess,
     })
   );
-  let exitListener: (() => void) | undefined;
   vi.mocked(
     process.once as (event: string, callback: unknown) => unknown
   ).mockImplementation((event, callback) => {
@@ -699,21 +657,19 @@ test("preview controller stops the entire POSIX preview process group", async ()
     }
     return process;
   });
-  killProcess.mockImplementation(() => {
+  vi.mocked(process.disconnect).mockImplementation(() => {
     exitListener?.();
-    return true;
   });
 
   await controller.start();
   await controller.stop();
 
-  expect(killProcess).toHaveBeenCalledWith(-123, "SIGTERM");
+  expect(process.disconnect).toHaveBeenCalledOnce();
   expect(process.kill).not.toHaveBeenCalled();
 });
 
-test("preview controller stops its process group before propagating termination", async () => {
+test("preview controller disconnects its supervisor before propagating termination", async () => {
   const process = createPreviewProcess();
-  const killProcess = vi.fn(() => true);
   const parentProcess = {
     pid: 456,
     once: vi.fn(),
@@ -729,7 +685,6 @@ test("preview controller stops its process group before propagating termination"
     },
     createDependencies({
       spawn: vi.fn(() => process) as never,
-      killProcess,
       parentProcess,
     })
   );
@@ -746,7 +701,7 @@ test("preview controller stops its process group before propagating termination"
     expect(parentProcess.kill).toHaveBeenCalledWith(456, "SIGTERM");
   });
 
-  expect(killProcess).toHaveBeenCalledWith(-123, "SIGTERM");
+  expect(process.disconnect).toHaveBeenCalledOnce();
   expect(controller.status().running).toBe(false);
 });
 
@@ -816,13 +771,12 @@ test("preview controller can restart a running server after rebuilding", async (
     .mockReturnValueOnce(firstProcess)
     .mockReturnValueOnce(secondBuildProcess)
     .mockReturnValueOnce(secondProcess);
-  const killProcess = vi.fn(() => true);
   resolveProcessExit(firstBuildProcess);
   resolveProcessExit(secondBuildProcess);
 
   const controller = createPreviewController(
     { host: "127.0.0.1", port: 5173, cwd: "/tmp/preview" },
-    createDependencies({ spawn: spawn as never, killProcess })
+    createDependencies({ spawn: spawn as never })
   );
 
   await expect(controller.start()).resolves.toEqual({
@@ -839,13 +793,14 @@ test("preview controller can restart a running server after rebuilding", async (
     mode: "production",
   });
 
-  expect(killProcess).toHaveBeenCalledWith(-123, "SIGTERM");
+  expect(firstProcess.disconnect).toHaveBeenCalledOnce();
   expect(spawn).toHaveBeenCalledTimes(4);
 });
 
 test("ignores a delayed exit from a previously owned preview server", async () => {
   let firstExit: (() => void) | undefined;
   const firstProcess = createPreviewProcess({
+    connected: false,
     once: vi.fn((event: string, callback: () => void) => {
       if (event === "exit") {
         firstExit = callback;
@@ -866,10 +821,7 @@ test("ignores a delayed exit from a previously owned preview server", async () =
       cwd: "/tmp/preview",
       mode: "iterative",
     },
-    createDependencies({
-      spawn: spawn as never,
-      killProcess: vi.fn(() => false),
-    })
+    createDependencies({ spawn: spawn as never })
   );
 
   await controller.start();

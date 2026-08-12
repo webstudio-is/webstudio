@@ -1,5 +1,4 @@
 import {
-  execFile,
   spawn,
   type ChildProcess,
   type StdioOptions,
@@ -30,8 +29,6 @@ export type PreviewServerResult = {
 
 export type PreviewServerDependencies = {
   spawn: typeof spawn;
-  killProcess: (pid: number, signal: NodeJS.Signals) => boolean;
-  killWindowsProcessTree: (pid: number) => Promise<boolean>;
   parentProcess: {
     pid: number;
     once: (signal: NodeJS.Signals, handler: () => void) => unknown;
@@ -63,26 +60,6 @@ const supervisorPath = fileURLToPath(
 
 export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   spawn,
-  killProcess: process.kill,
-  killWindowsProcessTree: (pid) =>
-    new Promise((resolve, reject) => {
-      execFile(
-        "taskkill.exe",
-        ["/pid", String(pid), "/T", "/F"],
-        { windowsHide: true },
-        (error) => {
-          if (error === null) {
-            resolve(true);
-            return;
-          }
-          if (error.code === 128) {
-            resolve(false);
-            return;
-          }
-          reject(error);
-        }
-      );
-    }),
   parentProcess: process,
   fetch,
   cp,
@@ -334,25 +311,12 @@ export const startPreviewServer = (
   };
 };
 
-const killPreviewProcess = async (
-  previewProcess: ChildProcess,
-  signal: NodeJS.Signals,
-  dependencies: PreviewServerDependencies
-) => {
-  if (dependencies.platform === "win32" && previewProcess.pid !== undefined) {
-    return await dependencies.killWindowsProcessTree(previewProcess.pid);
+const stopPreviewProcess = (previewProcess: ChildProcess) => {
+  if (previewProcess.connected) {
+    previewProcess.disconnect();
+    return true;
   }
-  if (dependencies.platform !== "win32" && previewProcess.pid !== undefined) {
-    try {
-      return dependencies.killProcess(-previewProcess.pid, signal);
-    } catch (error) {
-      if (error instanceof Error && "code" in error && error.code === "ESRCH") {
-        return false;
-      }
-      throw error;
-    }
-  }
-  return previewProcess.kill(signal);
+  return previewProcess.kill("SIGTERM");
 };
 
 export const waitForPreviewExit = async (process: ChildProcess) => {
@@ -614,14 +578,14 @@ export const createPreviewController = (
           );
           return;
         }
-        void killPreviewProcess(activeServer.process, "SIGTERM", dependencies)
-          .catch(() => undefined)
-          .finally(() => {
-            dependencies.parentProcess.kill(
-              dependencies.parentProcess.pid,
-              signal
-            );
-          });
+        try {
+          stopPreviewProcess(activeServer.process);
+        } finally {
+          dependencies.parentProcess.kill(
+            dependencies.parentProcess.pid,
+            signal
+          );
+        }
       };
       terminationHandlers.set(signal, handler);
       dependencies.parentProcess.once(signal, handler);
@@ -697,9 +661,7 @@ export const createPreviewController = (
       process.once("error", reject);
       process.once("exit", () => resolve());
     });
-    if (
-      (await killPreviewProcess(process, "SIGTERM", dependencies)) === false
-    ) {
+    if (stopPreviewProcess(process) === false) {
       return;
     }
     await exited;
