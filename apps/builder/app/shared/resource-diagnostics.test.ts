@@ -117,4 +117,31 @@ describe("resource diagnostics", () => {
     expect(separated.result).toEqual({ data: { items: [] } });
     expect(separated.performance).toBeUndefined();
   });
+
+  test("preserves known performance metrics when the server adds fields", () => {
+    const separated = separateResourceDiagnostics({
+      request: assetsRequest,
+      result: {
+        data: { items: [] },
+        __performance__: {
+          serverDurationMs: 125.5,
+          futureMetric: 10,
+          assetQuery: {
+            futureMetric: 20,
+            phases: {
+              buildPlan: 30,
+              futurePhase: 40,
+            },
+          },
+        },
+      },
+    });
+
+    expect(separated.performance).toEqual({
+      serverDurationMs: 125.5,
+      assetQuery: {
+        phases: { buildPlan: 30 },
+      },
+    });
+  });
 });

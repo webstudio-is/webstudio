@@ -398,6 +398,12 @@ export class PostgresAssetRepository implements AssetRepository {
     await this.assertPermit("view", "view this project assets");
   }
 
+  private async assertCanViewWithPerformance() {
+    await this.measurePerformance("repository-authorization", () =>
+      this.assertCanView()
+    );
+  }
+
   private async assertCanBuild() {
     // Index preparation only reads asset data and produces a derived artifact.
     // Callers that perform an actual build or publish enforce the stronger
@@ -405,9 +411,7 @@ export class PostgresAssetRepository implements AssetRepository {
     if (this.context.authorization?.type === "service") {
       return;
     }
-    await this.measurePerformance("repository-authorization", () =>
-      this.assertCanView()
-    );
+    await this.assertCanViewWithPerformance();
   }
 
   private getWritableStore(): AssetObjectStore {
@@ -1081,9 +1085,7 @@ export class PostgresAssetRepository implements AssetRepository {
     if (requests.length === 0) {
       return [];
     }
-    await this.measurePerformance("repository-authorization", () =>
-      this.assertCanView()
-    );
+    await this.assertCanViewWithPerformance();
     signal?.throwIfAborted();
     const executeIndividually = (request: AssetQueryRequestInput) =>
       this.queryAfterAuthorization(request, {
@@ -1246,9 +1248,7 @@ export class PostgresAssetRepository implements AssetRepository {
     request: AssetQueryRequestInput,
     options: AssetQueryPreviewOptions = {}
   ): Promise<AssetQueryExecutionPreviewResult | AssetQueryResultOnly> {
-    await this.measurePerformance("repository-authorization", () =>
-      this.assertCanView()
-    );
+    await this.assertCanViewWithPerformance();
     return await this.queryAfterAuthorization(request, options);
   }
 

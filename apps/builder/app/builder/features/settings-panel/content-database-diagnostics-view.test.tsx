@@ -132,7 +132,7 @@ test("orders collapsible sections and opens only database sizes by default", () 
   const sectionLabels = [
     "Database and sizes",
     "Timing",
-    "Query work",
+    "Assets batch work",
     "Query database",
     "Published database",
     "Unresolved query result",
@@ -209,7 +209,7 @@ test("orders collapsible sections and opens only database sizes by default", () 
   expect(container.textContent).toContain("Compilation workCompiled");
   expect(container.textContent).toContain("Resolved documents2");
   expect(container.textContent).toContain("Timing");
-  expect(container.textContent).toContain("Query work");
+  expect(container.textContent).toContain("Assets batch work");
   expect(container.textContent).toContain("Database and sizes");
   expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(26);
 });
