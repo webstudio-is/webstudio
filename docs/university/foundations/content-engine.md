@@ -23,48 +23,34 @@ filenames, fields, and category filter differ from the tutorial values below.
 
 ## Decide if the Content Engine fits
 
-The Content Engine works best for a bounded collection of portable,
-file-based content. It keeps the content and the site together, without adding
-an external database or CMS to operate.
+Use the Content Engine for bounded, file-based content that should live with
+the site and remain portable as Markdown or JSON.
 
-Good uses include:
+Good fits include:
 
-- A small-business blog with dozens or hundreds of text-led posts and images.
-- A portfolio, team directory, resource library, or collection of case studies.
-- A small product catalogue whose descriptions, prices, and other display data
-  change infrequently. Keep orders, inventory, and payments in an ecommerce
-  system.
-- Content that benefits from living in Markdown or JSON and moving between
-  projects without an export step.
+- Small blogs with text and images.
+- Portfolios, team directories, resource libraries, and case studies.
+- Small product catalogues with infrequently changed display data. Keep orders,
+  inventory, and payments in an ecommerce system.
 
 Use an external CMS, commerce backend, or media service when you need:
 
-- A blog, directory, or product catalogue with several thousand entries.
-- Large image or video galleries that need media transformations, streaming,
-  or digital asset management.
-- Live inventory, customer-specific prices, faceted search, or other queries
-  over a large, frequently changing catalogue.
-- Editorial roles, review and approval workflows, scheduled publishing, or
-  one content source shared across many sites and applications.
+- Several thousand entries or complex search and filtering.
+- Large image or video galleries, media processing, or streaming.
+- Live inventory, customer-specific prices, editorial workflows, scheduled
+  publishing, or content shared across many applications.
 
 ### Limits that affect this choice
 
-A query can consider at most 1,000 candidate Markdown or JSON documents and
-return at most 1,000 results. All reachable Assets resources share a 500 KiB
-published content database. Returning only the fields a page renders helps
-keep that database small, and **Markdown body reference** keeps article bodies
-out of it.
+Queries can consider and return at most 1,000 documents. All reachable Assets
+resources share a 500 KiB published content database. One query can load up to
+20 files and 2 MiB of content, with a 1 MiB limit per file. **Markdown body
+reference** keeps article bodies out of the database.
 
-When a published page loads file content, one query can load at most 20 files
-and 2 MiB in total, with a 1 MiB limit per file. Pagination helps present a
-bounded collection, but it does not turn the Content Engine into an unbounded
-content store.
-
-These limits apply to queryable Markdown, JSON, metadata, and loaded text
-content. Referenced images and videos remain separate Assets, but the Content
-Engine does not provide the media processing and delivery workflows of a
-dedicated media platform. See the complete [query and content limits](content-engine-reference.md#query-limits)
-before choosing it for a content-heavy project.
+Images and videos remain separate Assets, but the Content Engine does not
+provide media processing or streaming. Review the complete
+[query and content limits](content-engine-reference.md#query-limits) before
+using it for a content-heavy project.
 
 ## Build it with MCP
 
