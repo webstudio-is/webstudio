@@ -510,6 +510,12 @@ const insertFragmentMcpInputSchema = {
       type: "string",
       description: webstudioJsxFragmentInputDescription,
     },
+    conflictResolution: {
+      type: "string",
+      enum: ["ours", "theirs", "merge"],
+      description:
+        'How to resolve incoming design tokens that share a name with an existing token. "ours" keeps the existing token styles and id, "theirs" uses incoming styles, and "merge" combines both.',
+    },
     mode: {
       type: "string",
       enum: ["append", "prepend", "replace"],
@@ -3879,6 +3885,17 @@ const getInsertFragmentInput = async (input: unknown) => {
     );
   }
   const fragment = await parseWebstudioJsxFragment(input.fragment);
+  const conflictResolution = input.conflictResolution;
+  if (
+    conflictResolution !== undefined &&
+    conflictResolution !== "ours" &&
+    conflictResolution !== "theirs" &&
+    conflictResolution !== "merge"
+  ) {
+    throw new Error(
+      'insert-fragment conflictResolution must be "ours", "theirs", or "merge".'
+    );
+  }
   const mode = input.mode;
   if (
     mode !== undefined &&
@@ -3897,6 +3914,7 @@ const getInsertFragmentInput = async (input: unknown) => {
   return {
     parentInstanceId: input.parentInstanceId,
     fragment,
+    conflictResolution,
     mode,
     insertIndex,
   };

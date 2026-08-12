@@ -323,6 +323,7 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
       z.object({
         parentInstanceId: z.string(),
         fragment: z.unknown(),
+        conflictResolution: z.enum(["ours", "theirs", "merge"]).optional(),
         mode: z.enum(["append", "prepend", "replace"]).optional(),
         insertIndex: z.number().optional(),
       })
@@ -1034,6 +1035,7 @@ describe("project session mcp adapter", () => {
     ).toEqual([
       "parentInstanceId",
       "fragment",
+      "conflictResolution",
       "mode",
       "insertIndex",
       "dryRun",
@@ -2412,12 +2414,22 @@ describe("project session mcp adapter", () => {
       executeOperation,
     });
 
+    expect(
+      adapter.listTools().find(({ name }) => name === "insert-fragment")
+        ?.inputSchema.properties?.conflictResolution
+    ).toEqual({
+      type: "string",
+      enum: ["ours", "theirs", "merge"],
+      description: expect.any(String),
+    });
+
     await adapter.callTool({
       name: "insert-fragment",
       input: {
         parentInstanceId: "body",
         fragment:
           '<ws.element ws:tag="section"><ws.element ws:tag="h2">Title</ws.element></ws.element>',
+        conflictResolution: "ours",
       },
     });
 
@@ -2432,6 +2444,7 @@ describe("project session mcp adapter", () => {
             expect.objectContaining({ component: "ws:element" }),
           ]),
         }),
+        conflictResolution: "ours",
         mode: undefined,
         insertIndex: undefined,
       },
@@ -2465,12 +2478,23 @@ describe("project session mcp adapter", () => {
     expect(adapter.listTools().map(({ name }) => name)).toContain(
       "insert-fragment-verified"
     );
+    expect(
+      adapter
+        .listTools()
+        .find(({ name }) => name === "insert-fragment-verified")?.inputSchema
+        .properties?.conflictResolution
+    ).toEqual({
+      type: "string",
+      enum: ["ours", "theirs", "merge"],
+      description: expect.any(String),
+    });
     const result = await adapter.callTool({
       name: "insert-fragment-verified",
       input: {
         parentInstanceId: "root-id",
         pagePath: "/account",
         fragment: '<ws.element ws:tag="section" />',
+        conflictResolution: "merge",
       },
     });
 
@@ -2478,6 +2502,7 @@ describe("project session mcp adapter", () => {
       1,
       expect.objectContaining({
         command: "insert-fragment",
+        input: expect.objectContaining({ conflictResolution: "merge" }),
         dryRun: false,
       })
     );
