@@ -362,24 +362,27 @@ export const getProjectPublishJob = async (
   }
 
   const deployment = parseDeployment(publishJob.deployment);
+  const status =
+    deployment === undefined
+      ? "removed"
+      : publishJob.publishStatus === "PUBLISHED"
+        ? "succeeded"
+        : publishJob.publishStatus === "FAILED"
+          ? "failed"
+          : "pending";
   return {
     id: publishJob.id,
     version: publishJob.version,
-    status:
-      deployment === undefined
-        ? "removed"
-        : publishJob.publishStatus === "FAILED"
-          ? "failed"
-          : publishJob.publishStatus === "PENDING"
-            ? "building"
-            : "succeeded",
+    status,
     domains:
       deployment !== undefined && deployment.destination !== "static"
         ? deployment.domains
         : [],
     createdAt: publishJob.createdAt,
     completedAt:
-      publishJob.publishStatus === "PENDING" ? undefined : publishJob.updatedAt,
+      status === "succeeded" || status === "failed"
+        ? publishJob.updatedAt
+        : undefined,
   };
 };
 

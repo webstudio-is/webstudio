@@ -86,7 +86,7 @@ const checkHtmlContentModel: PrePublishAuditCheck = ({
       onError: (error, instanceSelector) => {
         pageFindings.push({
           ruleId: "html-content-model",
-          severity: "error",
+          severity: "warning",
           message: error,
           location: {
             pageId: page.id,
@@ -105,7 +105,7 @@ const checkHtmlContentModel: PrePublishAuditCheck = ({
           : [
               {
                 ruleId: "html-content-model",
-                severity: "error" as const,
+                severity: "warning" as const,
                 message: "The page contains invalid element nesting.",
                 location: {
                   pageId: page.id,
@@ -113,7 +113,7 @@ const checkHtmlContentModel: PrePublishAuditCheck = ({
                   pagePath: getPagePath(page.id, pages) || "/",
                 },
               },
-          ])
+            ])
       );
     }
   }

@@ -41,10 +41,15 @@ import {
   SmallIconButton,
 } from "@webstudio-is/design-system";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
-import { selectInstance } from "~/shared/nano-states";
+import {
+  $registeredComponentMetas,
+  selectInstance,
+} from "~/shared/nano-states";
 import { $selectedPageId } from "~/shared/nano-states";
 import {
+  $authToken,
   $authTokenPermissions,
+  $builderMode,
   $editingPageId,
   $permissions,
   $stagingUsername,
@@ -77,11 +82,14 @@ import {
   $instances,
   $pages,
   $projectSettings,
+  $props,
+  $resources,
 } from "~/shared/sync/data-stores";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
+import { builderUrl } from "~/shared/router-utils";
 import {
   getRestrictedFeatures,
   type RestrictedFeature,
@@ -90,9 +98,97 @@ import {
   invalidatePublishActivity,
   PublishStatusButton,
 } from "./publish-details-dialog";
+import {
+  findPageAndSelectorByInstanceId,
+  formatPrePublishAuditFinding,
+  runPrePublishAudit,
+  type PrePublishAuditFinding,
+} from "@webstudio-is/project-build/runtime";
+import { showContentDatabasePublishWarning } from "./content-database-publish-warning";
+import { showPublishWarning } from "./publish-warning";
 
 const getShortPublishError = (message: string) =>
   message.length <= 200 ? message : `${message.slice(0, 197)}…`;
+
+const PrePublishAuditMessage = ({
+  finding,
+}: {
+  finding: PrePublishAuditFinding;
+}) => {
+  const message = formatPrePublishAuditFinding(finding);
+  const { instanceId } = finding.location;
+  const pages = $pages.get();
+  const instances = $instances.get();
+  const project = $project.get();
+
+  if (
+    instanceId === undefined ||
+    pages === undefined ||
+    project === undefined ||
+    instances.has(instanceId) === false
+  ) {
+    return message;
+  }
+
+  const { pageId, instanceSelector } = findPageAndSelectorByInstanceId(
+    pages,
+    instances,
+    instanceId
+  );
+  const href = builderUrl({
+    projectId: project.id,
+    pageId: pageId === pages.homePageId ? undefined : pageId,
+    instanceSelector,
+    origin: window.location.origin,
+    authToken: $authToken.get(),
+    mode: $builderMode.get(),
+  });
+
+  return (
+    <>
+      {message}{" "}
+      <Link
+        href={href}
+        onClick={(event) => {
+          if (
+            event.button !== 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey
+          ) {
+            return;
+          }
+          event.preventDefault();
+          $selectedPageId.set(pageId);
+          selectInstance(instanceSelector);
+          $publishDialog.set("none");
+        }}
+      >
+        Show element
+      </Link>
+    </>
+  );
+};
+
+const getPrePublishAuditMessages = () => {
+  const findings = runPrePublishAudit({
+    pages: $pages.get(),
+    instances: $instances.get(),
+    props: $props.get(),
+    dataSources: $dataSources.get(),
+    resources: $resources.get(),
+    metas: $registeredComponentMetas.get(),
+  });
+  const getMessage = (severity: PrePublishAuditFinding["severity"]) => {
+    const finding = findings.find((item) => item.severity === severity);
+    return finding && <PrePublishAuditMessage finding={finding} />;
+  };
+  return {
+    error: getMessage("error"),
+    warning: getMessage("warning"),
+  };
+};
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -374,6 +470,12 @@ const Publish = ({
 }) => {
   const { maxDailyPublishesPerUser } = useStore($permissions);
   const { userPublishCount } = useUserPublishCount();
+  const [publishError, setPublishError] = useState<
+    undefined | JSX.Element | string
+  >();
+  const [publishWarning, setPublishWarning] = useState<
+    undefined | JSX.Element | string
+  >();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
@@ -422,20 +524,7 @@ const Publish = ({
     };
   }, [project.domain]);
 
-  const handlePublish = async (formData: FormData) => {
-    // Custom domain checkboxes are disabled on free plan so they are never
-    // submitted — only the staging (wstd.io) domain can appear in formData.
-    const domains = formData
-      .getAll(domainToPublishName)
-      .map((domainEntry) => domainEntry.toString());
-
-    if (domains.length === 0) {
-      toast.error("Please select at least one domain to publish");
-      return;
-    }
-
-    setIsPublishing(true);
-
+  const publish = async (domains: string[]) => {
     const publishResult = await nativeClient.domain.publish.mutate({
       projectId: project.id,
       domains,
@@ -467,6 +556,7 @@ const Publish = ({
           </>
         );
       }
+      setPublishError(error);
       if (publishResult.error === "NOT_IMPLEMENTED") {
         toast.info(error);
       } else {
@@ -522,6 +612,7 @@ const Publish = ({
 
       if (status === "FAILED") {
         toast.error(statusText);
+        setPublishError(statusText);
         break;
       }
 
@@ -591,6 +682,13 @@ const Publish = ({
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
+      {publishError && <Text color="destructive">{publishError}</Text>}
+      {publishWarning && (
+        <PanelBanner variant="warning">
+          <Text>{publishWarning}</Text>
+        </PanelBanner>
+      )}
+
       <Tooltip
         content={
           isPublishInProgress
@@ -668,6 +766,8 @@ const PublishStatic = ({
 }) => {
   const project = useStore($project);
   const [_, startTransition] = useTransition();
+  const [publishError, setPublishError] = useState<JSX.Element | string>();
+  const [publishWarning, setPublishWarning] = useState<JSX.Element | string>();
 
   if (project == null) {
     throw new Error("Project not found");
@@ -684,6 +784,12 @@ const PublishStatic = ({
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
+      {publishError && <Text color="destructive">{publishError}</Text>}
+      {publishWarning && (
+        <PanelBanner variant="warning">
+          <Text>{publishWarning}</Text>
+        </PanelBanner>
+      )}
       <Flex gap="2" align="center">
         <PublishStatusButton
           label="Static export"
@@ -707,9 +813,30 @@ const PublishStatic = ({
             color="positive"
             state={isPublishInProgress ? "pending" : undefined}
             onClick={() => {
+              setPublishError(undefined);
+              setPublishWarning(undefined);
+              const { error: auditError, warning: auditWarning } =
+                getPrePublishAuditMessages();
+              if (auditError !== undefined) {
+                toast.error(auditError);
+                setPublishError(auditError);
+                return;
+              }
+              if (auditWarning !== undefined) {
+                showPublishWarning({
+                  message: auditWarning,
+                  setWarning: setPublishWarning,
+                });
+              }
+
               startTransition(async () => {
                 try {
                   setIsPendingOptimistic(true);
+
+                  await showContentDatabasePublishWarning({
+                    projectId,
+                    setWarning: setPublishWarning,
+                  });
 
                   const result = await nativeClient.domain.publish.mutate({
                     projectId,
@@ -719,7 +846,9 @@ const PublishStatic = ({
                   invalidatePublishActivity(projectId);
 
                   if (result.success === false) {
-                    toast.error(getShortPublishError(result.error));
+                    const message = getShortPublishError(result.error);
+                    toast.error(message);
+                    setPublishError(message);
                     return;
                   }
 
