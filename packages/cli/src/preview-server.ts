@@ -10,7 +10,7 @@ import detectPort from "detect-port";
 import getPort from "get-port";
 import pathKey from "path-key";
 import { parse as parseHtml, type DefaultTreeAdapterMap } from "parse5";
-import type { ProjectPreviewMode } from "@webstudio-is/project-build/visual";
+import type { ProjectPreviewMode } from "@webstudio-is/project-build/preview";
 
 export type PreviewMode = ProjectPreviewMode;
 

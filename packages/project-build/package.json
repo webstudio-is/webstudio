@@ -43,8 +43,8 @@
     "./mcp": {
       "webstudio": "./src/mcp.ts"
     },
-    "./visual": {
-      "webstudio": "./src/visual.ts"
+    "./preview": {
+      "webstudio": "./src/preview.ts"
     },
     "./persistence": {
       "webstudio": "./src/persistence.ts",
@@ -83,6 +83,7 @@
     "@webstudio-is/sdk-components-registry": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
+    "@webstudio-is/vision": "workspace:*",
     "@webstudio-is/wsauth": "workspace:*",
     "acorn": "^8.14.1",
     "acorn-jsx": "^5.3.2",
@@ -92,11 +93,9 @@
     "esbuild": "^0.25.3",
     "fast-deep-equal": "^3.1.3",
     "fastest-levenshtein": "^1.0.16",
-    "fast-png": "8.0.0",
     "immer": "^10.1.1",
     "nanoid": "^5.1.5",
     "papaparse": "^5.5.3",
-    "parse5": "7.3.0",
     "slugify": "^1.6.6",
     "title-case": "^4.3.2",
     "urlpattern-polyfill": "^10.1.0",

@@ -51,6 +51,8 @@ yarn-error.log*
 packages/**/lib
 generated
 storybook-static
+.visual-regression
+.visual-regression-cache
 tsconfig.tsbuildinfo
 
 # to save thunder https://marketplace.visualstudio.com/items?itemName=rangav.vscode-thunder-client files

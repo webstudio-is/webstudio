@@ -4,11 +4,11 @@ import {
   captureBrowserScreenshot,
   createBrowserScreenshotSession,
   type BrowserScreenshotDependencies,
-} from "./screenshot-browser-cdp";
+} from "./browser";
 
 class FakeBrowserProcess {
   readonly listeners = new Map<string, Array<(value?: unknown) => void>>();
-  kill = vi.fn(() => {
+  kill = vi.fn((_signal?: NodeJS.Signals | number) => {
     this.emit("exit", 0);
     return true;
   });
@@ -89,15 +89,26 @@ class FakeWebSocket {
     if (
       message.method === "Runtime.evaluate" &&
       typeof message.params?.expression === "string" &&
-      message.params.expression.includes("generatedSiteRootPresent")
+      message.params.expression.includes("rootMarkerPresent")
     ) {
+      const hasPageMetadata = message.params.expression.includes(
+        '"rootMarkerAttribute":"data-site"'
+      );
       setTimeout(
         () =>
           respond({
             result: {
               value: {
                 documentReadyState: "complete",
-                generatedSiteRootPresent: true,
+                ...(hasPageMetadata
+                  ? {
+                      pageMetadata: {
+                        rootMarkerPresent: true,
+                        id: "site",
+                        version: 2,
+                      },
+                    }
+                  : {}),
                 width: this.readinessWidths?.shift() ?? 813,
                 height: 2346,
               },
@@ -165,9 +176,7 @@ class FakeWebSocket {
     if (
       message.method === "Runtime.evaluate" &&
       typeof message.params?.expression === "string" &&
-      message.params.expression.includes(
-        'document.querySelectorAll("[data-ws-id]")'
-      )
+      message.params.expression.includes("const overlapLimit")
     ) {
       setTimeout(
         () =>
@@ -421,6 +430,23 @@ class CrashingWebSocket extends FakeWebSocket {
   };
 }
 
+class NeverOpeningWebSocket {
+  readonly listeners = new Map<
+    string,
+    Array<(event: { data?: string }) => void>
+  >();
+  addEventListener = (
+    event: string,
+    listener: (event: { data?: string }) => void
+  ) => {
+    const listeners = this.listeners.get(event) ?? [];
+    listeners.push(listener);
+    this.listeners.set(event, listeners);
+  };
+  close = vi.fn();
+  send = vi.fn();
+}
+
 class NavigationErrorWebSocket extends FakeWebSocket {
   send = (data: string) => {
     const message = JSON.parse(data) as {
@@ -476,7 +502,7 @@ const createDependencies = ({
       () => browserProcess
     ) as unknown as BrowserScreenshotDependencies["spawnBrowser"],
     mkdtemp: vi.fn(
-      async () => "/tmp/webstudio-browser-test"
+      async () => "/tmp/vision-browser-test"
     ) as unknown as BrowserScreenshotDependencies["mkdtemp"],
     readFile: vi.fn(
       async () => "9222\n/devtools/browser/1\n"
@@ -500,9 +526,16 @@ test("captures through DevTools with lifecycle and selector waits", async () => 
       width: 800,
       height: 600,
       browserPath: "/usr/bin/chromium",
-      uid: 0,
+      uid: 1000,
+      disableSandbox: true,
       waitUntil: "networkidle",
       waitForSelector: "#ready",
+      pageMetadata: {
+        rootMarkerAttribute: "data-site",
+        idAttribute: "data-site",
+        versionAttribute: "data-site-version",
+      },
+      instanceIdAttribute: "data-instance-id",
       waitForTimeout: 0,
       timeout: 1000,
     },
@@ -517,7 +550,7 @@ test("captures through DevTools with lifecycle and selector waits", async () => 
       "--disable-backgrounding-occluded-windows",
       "--disable-renderer-backgrounding",
       "--remote-debugging-port=0",
-      "--user-data-dir=/tmp/webstudio-browser-test",
+      "--user-data-dir=/tmp/vision-browser-test",
       "--window-size=800,600",
       "--no-sandbox",
       "about:blank",
@@ -546,7 +579,7 @@ test("captures through DevTools with lifecycle and selector waits", async () => 
       (message) =>
         message.method === "Runtime.evaluate" &&
         String(message.params?.expression).includes(
-          'document.documentElement.hasAttribute("data-ws-project")'
+          '"rootMarkerAttribute":"data-site"'
         )
     )
   ).toBe(true);
@@ -556,7 +589,7 @@ test("captures through DevTools with lifecycle and selector waits", async () => 
   );
   expect(socket.close).toHaveBeenCalled();
   expect(browserProcess.kill).toHaveBeenCalled();
-  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/webstudio-browser-test", {
+  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/vision-browser-test", {
     recursive: true,
     force: true,
   });
@@ -675,6 +708,7 @@ test("navigates once while resizing one page through multiple viewports", async 
     url: "https://example.com/responsive",
     browserPath: "/usr/bin/chromium",
     includeImageMetrics: true,
+    includeElementGeometry: false,
     waitUntil: "networkidle" as const,
     waitForTimeout: 0,
     timeout: 1000,
@@ -685,6 +719,8 @@ test("navigates once while resizing one page through multiple viewports", async 
       output: "/tmp/mobile.png",
       width: 375,
       height: 812,
+      prepareExpression: "window.renderStory('mobile')",
+      finalizeExpression: "window.finishStory('mobile')",
     },
     dependencies
   );
@@ -695,12 +731,16 @@ test("navigates once while resizing one page through multiple viewports", async 
       output: "/tmp/mobile.png",
       width: 375,
       height: 812,
+      prepareExpression: "window.renderStory('mobile')",
+      finalizeExpression: "window.finishStory('mobile')",
     },
     {
       ...baseOptions,
       output: "/tmp/desktop.png",
       width: 1440,
       height: 900,
+      prepareExpression: "window.renderStory('desktop')",
+      finalizeExpression: "window.finishStory('desktop')",
     },
   ]);
 
@@ -716,6 +756,11 @@ test("navigates once while resizing one page through multiple viewports", async 
     socket.sentMessages.filter((message) => message.method === "Page.navigate")
   ).toHaveLength(1);
   expect(
+    socket.sentMessages.filter(
+      (message) => message.method === "Emulation.setFocusEmulationEnabled"
+    )
+  ).toEqual([expect.objectContaining({ params: { enabled: true } })]);
+  expect(
     socket.sentMessages
       .filter(
         (message) => message.method === "Emulation.setDeviceMetricsOverride"
@@ -725,11 +770,32 @@ test("navigates once while resizing one page through multiple viewports", async 
   expect(dependencies.createWebSocket).toHaveBeenCalledOnce();
   expect(dependencies.writeFile).toHaveBeenCalledTimes(2);
   expect(
+    layouts.every(({ elementGeometry }) => elementGeometry === undefined)
+  ).toBe(true);
+  expect(
+    socket.sentMessages
+      .filter(
+        (message) =>
+          message.method === "Runtime.evaluate" &&
+          String(message.params?.expression).startsWith("window.renderStory")
+      )
+      .map((message) => message.params?.expression)
+  ).toEqual(["window.renderStory('mobile')", "window.renderStory('desktop')"]);
+  expect(
+    socket.sentMessages
+      .filter(
+        (message) =>
+          message.method === "Runtime.evaluate" &&
+          String(message.params?.expression).startsWith("window.finishStory")
+      )
+      .map((message) => message.params?.expression)
+  ).toEqual(["window.finishStory('mobile')", "window.finishStory('desktop')"]);
+  expect(
     socket.sentMessages.some(
       (message) =>
         message.method === "Runtime.evaluate" &&
         String(message.params?.expression).includes(
-          "__webstudioImageDimensionCache"
+          "__visionImageDimensionCache"
         )
     )
   ).toBe(true);
@@ -853,6 +919,144 @@ test("restarts the shared browser once after an unexpected exit", async () => {
   expect(dependencies.rm).toHaveBeenCalledTimes(2);
 });
 
+test("retries a browser restart after a transient startup failure", async () => {
+  const firstProcess = new FakeBrowserProcess();
+  const secondProcess = new FakeBrowserProcess();
+  const dependencies = createDependencies();
+  vi.mocked(dependencies.mkdtemp)
+    .mockResolvedValueOnce("/tmp/vision-browser-first")
+    .mockRejectedValueOnce(new Error("Temporary directory unavailable"))
+    .mockResolvedValueOnce("/tmp/vision-browser-second");
+  vi.mocked(dependencies.spawnBrowser)
+    .mockReturnValueOnce(firstProcess as never)
+    .mockReturnValueOnce(secondProcess as never);
+  vi.mocked(dependencies.createWebSocket)
+    .mockImplementationOnce(
+      () => new CrashingWebSocket(firstProcess) as unknown as WebSocket
+    )
+    .mockImplementationOnce(() => new FakeWebSocket() as unknown as WebSocket);
+  const options = {
+    url: "https://example.com",
+    output: "/tmp/restarted.png",
+    width: 800,
+    height: 600,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(options, dependencies);
+
+  await expect(session.capture(options)).rejects.toThrow(
+    "Temporary directory unavailable"
+  );
+  await expect(session.capture(options)).resolves.toMatchObject({
+    viewportWidth: 800,
+    viewportHeight: 600,
+  });
+  await session.close();
+
+  expect(dependencies.mkdtemp).toHaveBeenCalledTimes(3);
+  expect(secondProcess.kill).toHaveBeenCalledOnce();
+});
+
+test("closes a browser that finishes restarting during session cleanup", async () => {
+  const firstProcess = new FakeBrowserProcess();
+  const secondProcess = new FakeBrowserProcess();
+  const dependencies = createDependencies();
+  let resolveRestartDirectory: (directory: string) => void = () => undefined;
+  const restartDirectory = new Promise<string>((resolve) => {
+    resolveRestartDirectory = resolve;
+  });
+  vi.mocked(dependencies.mkdtemp)
+    .mockResolvedValueOnce("/tmp/vision-browser-first")
+    .mockReturnValueOnce(restartDirectory);
+  vi.mocked(dependencies.spawnBrowser)
+    .mockReturnValueOnce(firstProcess as never)
+    .mockReturnValueOnce(secondProcess as never);
+  vi.mocked(dependencies.createWebSocket).mockImplementationOnce(
+    () => new CrashingWebSocket(firstProcess) as unknown as WebSocket
+  );
+  const options = {
+    url: "https://example.com",
+    output: "/tmp/restarted.png",
+    width: 800,
+    height: 600,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(options, dependencies);
+
+  const capture = session.capture(options);
+  await vi.waitFor(() => {
+    expect(dependencies.mkdtemp).toHaveBeenCalledTimes(2);
+  });
+  const close = session.close();
+  resolveRestartDirectory("/tmp/vision-browser-second");
+
+  await expect(capture).rejects.toThrow(
+    "Browser screenshot session was closed."
+  );
+  await close;
+  expect(secondProcess.kill).toHaveBeenCalledOnce();
+  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/vision-browser-second", {
+    recursive: true,
+    force: true,
+  });
+});
+
+test("removes the browser profile when spawning throws", async () => {
+  const dependencies = createDependencies();
+  vi.mocked(dependencies.spawnBrowser).mockImplementationOnce(() => {
+    throw new Error("Browser spawn failed");
+  });
+
+  await expect(
+    createBrowserScreenshotSession(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "load",
+        waitForTimeout: 0,
+        timeout: 1000,
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Browser spawn failed");
+  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/vision-browser-test", {
+    recursive: true,
+    force: true,
+  });
+});
+
+test("closes a DevTools socket that does not open before the deadline", async () => {
+  const socket = new NeverOpeningWebSocket();
+  const dependencies = createDependencies();
+  dependencies.createWebSocket = vi.fn(() => socket as unknown as WebSocket);
+
+  await expect(
+    captureBrowserScreenshot(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "load",
+        waitForTimeout: 0,
+        timeout: 10,
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Browser DevTools connection did not open within 10ms.");
+  expect(socket.close).toHaveBeenCalledOnce();
+});
+
 test("retries browser startup before capturing a viewport batch", async () => {
   const failedBrowser = new FakeBrowserProcess();
   const activeBrowser = new FakeBrowserProcess();
@@ -920,7 +1124,7 @@ test("reports browser startup exit diagnostics without local paths", async () =>
     )
   ).rejects.toMatchObject({
     message:
-      "Browser exited before its DevTools endpoint became ready (exit code 21). Check the browser installation or set WEBSTUDIO_BROWSER_PATH to a supported Chromium executable.",
+      "Browser exited before its DevTools endpoint became ready (exit code 21). Check the browser installation or provide a supported Chromium executable.",
   });
 });
 
@@ -961,6 +1165,12 @@ test("captures full page and returns DevTools layout metrics", async () => {
       includeImageMetrics: true,
       includeResourceMetrics: true,
       includeContrastMetrics: true,
+      pageMetadata: {
+        rootMarkerAttribute: "data-site",
+        idAttribute: "data-site",
+        versionAttribute: "data-site-version",
+      },
+      instanceIdAttribute: "data-instance-id",
       browserPath: "/usr/bin/chromium",
       uid: 1000,
       waitUntil: "networkidle",
@@ -979,7 +1189,11 @@ test("captures full page and returns DevTools layout metrics", async () => {
       mimeType: "text/html",
       redirects: [],
       documentReadyState: "complete",
-      generatedSiteRootPresent: true,
+      pageMetadata: {
+        rootMarkerPresent: true,
+        id: "site",
+        version: 2,
+      },
       layoutStable: true,
     },
     documentType: "text/html",
@@ -1083,6 +1297,22 @@ test("captures full page and returns DevTools layout metrics", async () => {
     expect.arrayContaining(["Page.getLayoutMetrics", "Page.captureScreenshot"])
   );
   expect(socket.screenshotStartedBeforeImageInspectionFinished).toBe(true);
+  const inspectionExpressions = socket.sentMessages.flatMap((message) =>
+    message.method === "Runtime.evaluate" &&
+    typeof message.params?.expression === "string" &&
+    (message.params.expression.includes("const overlapLimit") ||
+      message.params.expression.includes("const parseOpaqueRgb"))
+      ? [message.params.expression]
+      : []
+  );
+  expect(inspectionExpressions).toHaveLength(2);
+  expect(inspectionExpressions).toEqual([
+    expect.stringContaining("CSS.escape(instanceIdAttribute)"),
+    expect.stringContaining("CSS.escape(instanceIdAttribute)"),
+  ]);
+  expect(inspectionExpressions.join("\n")).not.toContain(
+    'document.querySelectorAll("*")'
+  );
   expect(
     socket.sentMessages.find(
       (message) => message.method === "Page.captureScreenshot"
@@ -1126,7 +1356,6 @@ test("returns final URL, redirects, and HTTP error status", async () => {
     mimeType: "text/html",
     redirects: ["https://example.com/old"],
     documentReadyState: "complete",
-    generatedSiteRootPresent: true,
     layoutStable: true,
   });
 });
@@ -1199,7 +1428,7 @@ test("times out when browser DevTools commands stop responding", async () => {
   ).rejects.toThrow("Browser command Page.enable did not finish within 10ms.");
 
   expect(browserProcess.kill).toHaveBeenCalled();
-  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/webstudio-browser-test", {
+  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/vision-browser-test", {
     recursive: true,
     force: true,
   });
@@ -1257,7 +1486,7 @@ test("times out when browser page target creation does not respond", async () =>
   ).rejects.toThrow("Browser page target could not be created within 10ms.");
 
   expect(browserProcess.kill).toHaveBeenCalled();
-  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/webstudio-browser-test", {
+  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/vision-browser-test", {
     recursive: true,
     force: true,
   });
@@ -1292,6 +1521,90 @@ test("stops polling when the browser DevTools port is not created", async () => 
   expect(browserProcess.kill).toHaveBeenCalled();
 });
 
+test("does not wait indefinitely for a failed browser startup to exit", async () => {
+  const browserProcess = new FakeBrowserProcess();
+  browserProcess.kill.mockImplementation((signal) => {
+    if (signal === "SIGKILL") {
+      browserProcess.emit("exit", null);
+    }
+    return true;
+  });
+  const dependencies = createDependencies({ browserProcess });
+  vi.mocked(dependencies.readFile).mockRejectedValue(
+    Object.assign(new Error("not ready"), { code: "ENOENT" })
+  );
+
+  const result = await Promise.race([
+    captureBrowserScreenshot(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "load",
+        waitForTimeout: 0,
+        timeout: 10,
+      },
+      dependencies
+    ).then(
+      () => "resolved",
+      (error: unknown) =>
+        error instanceof Error ? error.message : String(error)
+    ),
+    new Promise<string>((resolve) => {
+      setTimeout(() => resolve("startup cleanup hung"), 100).unref();
+    }),
+  ]);
+
+  expect(result).toContain(
+    "Browser DevTools endpoint was not created within 10ms."
+  );
+  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/vision-browser-test", {
+    recursive: true,
+    force: true,
+  });
+  expect(browserProcess.kill).toHaveBeenNthCalledWith(1);
+  expect(browserProcess.kill).toHaveBeenNthCalledWith(2, "SIGKILL");
+});
+
+test("does not wait indefinitely for a page target to close", async () => {
+  const fetch = vi.fn(async (url: string) => {
+    if (url.includes("/json/new?")) {
+      return {
+        json: async () => ({
+          id: "target-1",
+          type: "page",
+          webSocketDebuggerUrl: "ws://127.0.0.1:9222/page/created",
+        }),
+      } as Response;
+    }
+    return await new Promise<Response>(() => undefined);
+  }) as unknown as BrowserScreenshotDependencies["fetch"];
+  const dependencies = createDependencies({ fetch });
+
+  const result = await Promise.race([
+    captureBrowserScreenshot(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "networkidle",
+        waitForTimeout: 0,
+        timeout: 1000,
+      },
+      dependencies
+    ).then(() => "captured"),
+    new Promise<string>((resolve) => {
+      setTimeout(() => resolve("target cleanup hung"), 2000).unref();
+    }),
+  ]);
+
+  expect(result).toBe("captured");
+});
+
 test("reports browser navigation errors directly", async () => {
   const browserProcess = new FakeBrowserProcess();
   const socket = new NavigationErrorWebSocket();
@@ -1316,7 +1629,7 @@ test("reports browser navigation errors directly", async () => {
   );
 
   expect(browserProcess.kill).toHaveBeenCalled();
-  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/webstudio-browser-test", {
+  expect(dependencies.rm).toHaveBeenCalledWith("/tmp/vision-browser-test", {
     recursive: true,
     force: true,
   });

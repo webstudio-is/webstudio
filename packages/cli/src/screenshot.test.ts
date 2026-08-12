@@ -10,6 +10,7 @@ import {
   captureScreenshot,
   captureScreenshotWithBrowserInstall,
   createScreenshotCaptureSession,
+  defaultScreenshotDependencies,
   getChromiumInstallCommand,
   getNoBrowserFoundMessage,
   getPlaywrightInstallations,
@@ -43,12 +44,38 @@ const createDependencies = (
   fetch: vi.fn(),
   createWebSocket: vi.fn(),
   captureBrowserScreenshot: vi.fn(async () => undefined),
+  createBrowserScreenshotSession:
+    defaultScreenshotDependencies.createBrowserScreenshotSession,
   installCommand: vi.fn(async () => undefined),
   readArtifactByte: vi.fn(async () => 1),
   getuid: vi.fn(() => 1000),
   now: vi.fn(() => 123),
   ...overrides,
 });
+
+const genericNavigation = {
+  requestedUrl: "https://example.com",
+  finalUrl: "https://example.com/home",
+  redirects: [],
+  documentReadyState: "complete",
+  pageMetadata: {
+    rootMarkerPresent: true,
+    id: "project-1",
+    version: 7,
+  },
+  layoutStable: true,
+};
+
+const webstudioNavigation = {
+  requestedUrl: "https://example.com",
+  finalUrl: "https://example.com/home",
+  redirects: [],
+  documentReadyState: "complete",
+  generatedSiteRootPresent: true,
+  projectId: "project-1",
+  projectVersion: 7,
+  layoutStable: true,
+};
 
 describe("resolveScreenshotBrowser", () => {
   test("finds Playwright Chromium executables in the configured cache", async () => {
@@ -317,6 +344,7 @@ test("formats actionable browser installation guidance", () => {
 describe("captureScreenshot", () => {
   test("captures with browser readiness defaults", async () => {
     const captureBrowserScreenshot = vi.fn(async () => ({
+      navigation: genericNavigation,
       viewportWidth: 1440,
       viewportHeight: 900,
       contentWidth: 1440,
@@ -350,7 +378,9 @@ describe("captureScreenshot", () => {
       fullPage: false,
       elapsedMs: 0,
       warnings: [],
+      navigation: webstudioNavigation,
       layout: {
+        navigation: webstudioNavigation,
         viewportWidth: 1440,
         viewportHeight: 900,
         contentWidth: 1440,
@@ -366,8 +396,19 @@ describe("captureScreenshot", () => {
       width: 1440,
       height: 900,
       fullPage: undefined,
+      format: undefined,
+      httpCredentials: undefined,
+      includeContrastMetrics: undefined,
       includeImageMetrics: undefined,
       includeResourceMetrics: undefined,
+      instanceIdAttribute: "data-ws-id",
+      pageMetadata: {
+        rootMarkerAttribute: "data-ws-project",
+        idAttribute: "data-ws-project",
+        versionAttribute: "data-ws-version",
+      },
+      quality: undefined,
+      scale: undefined,
       url: "https://example.com",
       uid: 1000,
       waitUntil: "load",
@@ -501,6 +542,43 @@ describe("captureScreenshot", () => {
   });
 });
 
+test("maps page metadata from reusable capture sessions", async () => {
+  const genericLayout = {
+    navigation: genericNavigation,
+    viewportWidth: 800,
+    viewportHeight: 600,
+    contentWidth: 800,
+    contentHeight: 600,
+    horizontalOverflow: false,
+  };
+  const browserSession = {
+    capture: vi.fn(async () => genericLayout),
+    capturePage: vi.fn(async () => [genericLayout]),
+    close: vi.fn(async () => undefined),
+  };
+  const dependencies = createDependencies({
+    which: vi.fn(async (command) =>
+      command === "chromium" ? "/usr/bin/chromium" : undefined
+    ),
+    createBrowserScreenshotSession: vi.fn(async () => browserSession),
+  });
+  const session = createScreenshotCaptureSession(dependencies);
+
+  const [capture] = await session.capturePage([
+    {
+      url: "https://example.com",
+      output: "page.png",
+      width: 800,
+      height: 600,
+      browser: "auto",
+    },
+  ]);
+
+  expect(capture?.navigation).toEqual(webstudioNavigation);
+  expect(capture?.layout.navigation).toEqual(capture?.navigation);
+  await session.close();
+});
+
 test("resets a reusable capture session after browser startup rejects", async () => {
   const spawnBrowser = vi.fn(() => ({
     kill: vi.fn(() => true),
@@ -533,6 +611,43 @@ test("resets a reusable capture session after browser startup rejects", async ()
   );
   await session.close();
   expect(spawnBrowser).toHaveBeenCalledTimes(4);
+});
+
+test("does not create a browser session after cleanup during discovery", async () => {
+  let resolveBrowser: ((path: string) => void) | undefined;
+  const browserPath = new Promise<string>((resolve) => {
+    resolveBrowser = resolve;
+  });
+  const createBrowserScreenshotSession = vi.fn();
+  const dependencies = createDependencies({
+    which: vi.fn(async (command) =>
+      command === "chromium" ? await browserPath : undefined
+    ),
+    createBrowserScreenshotSession,
+  });
+  const session = createScreenshotCaptureSession(dependencies);
+  const capture = session.capture({
+    url: "https://example.com",
+    width: 800,
+    height: 600,
+    browser: "auto",
+  });
+
+  await session.close();
+  resolveBrowser?.("/usr/bin/chromium");
+
+  await expect(capture).rejects.toThrow(
+    "Screenshot capture session is closed."
+  );
+  await expect(
+    session.capture({
+      url: "https://example.com",
+      width: 800,
+      height: 600,
+      browser: "auto",
+    })
+  ).rejects.toThrow("Screenshot capture session is closed.");
+  expect(createBrowserScreenshotSession).not.toHaveBeenCalled();
 });
 
 describe("browser installation", () => {

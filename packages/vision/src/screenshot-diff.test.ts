@@ -1,22 +1,61 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import {
+  arePngFilesIdentical,
   createScreenshotTextAssertions,
   createScreenshotVisualAssertions,
   diffPngFiles,
+  isScreenshotVisualExpectation,
 } from "./screenshot-diff";
 import { createPng, paintRect, writePng } from "./screenshot.test-utils";
 
 let tempDir: string;
 
 beforeEach(async () => {
-  tempDir = await mkdtemp(path.join(tmpdir(), "webstudio-screenshot-diff-"));
+  tempDir = await mkdtemp(path.join(tmpdir(), "vision-screenshot-diff-"));
 });
 
 afterEach(async () => {
   await rm(tempDir, { recursive: true, force: true });
+});
+
+test("recognizes identical PNG files and rejects corrupt matches", async () => {
+  const left = path.join(tempDir, "left.png");
+  const right = path.join(tempDir, "right.png");
+  await writePng(left, createPng(2, 2, { r: 20, g: 40, b: 60 }));
+  await writePng(right, createPng(2, 2, { r: 20, g: 40, b: 60 }));
+
+  await expect(arePngFilesIdentical(left, right)).resolves.toBe(true);
+
+  const corrupted = Buffer.from(await readFile(left));
+  corrupted[20] = (corrupted[20] ?? 0) ^ 1;
+  await Promise.all([writeFile(left, corrupted), writeFile(right, corrupted)]);
+  await expect(arePngFilesIdentical(left, right)).rejects.toThrow(
+    "Invalid PNG chunk checksum"
+  );
+});
+
+test("validates screenshot visual expectations", () => {
+  expect(
+    isScreenshotVisualExpectation({
+      maxMismatchPercentage: 5,
+      minChangedRegions: 1,
+      dominantColorChange: {
+        channel: "red",
+        direction: "increase",
+        minMagnitude: 2,
+      },
+    })
+  ).toBe(true);
+  expect(isScreenshotVisualExpectation({})).toBe(false);
+  expect(
+    isScreenshotVisualExpectation({
+      minChangedRegions: 2,
+      maxChangedRegions: 1,
+    })
+  ).toBe(false);
 });
 
 test("reports pass/fail expected text assertions from OCR text", () => {
@@ -175,6 +214,80 @@ test("normalizes same-aspect screenshots before comparing", async () => {
   expect(result.textAnalysis.status).toBe("skipped");
   expect(result.warnings).toEqual(["ocr_skipped_size_normalized"]);
   expect(result.summary).toContain("status: unchanged");
+});
+
+test("can skip OCR while preserving pixel diff evidence", async () => {
+  const baselinePath = path.join(tempDir, "baseline.png");
+  const currentPath = path.join(tempDir, "current.png");
+
+  await writePng(baselinePath, createPng(2, 2, { r: 255, g: 255, b: 255 }));
+  await writePng(currentPath, createPng(2, 2, { r: 0, g: 0, b: 0 }));
+
+  const result = await diffPngFiles({
+    baselinePath,
+    currentPath,
+    outputDir: path.join(tempDir, "diff"),
+    analyzeText: false,
+  });
+
+  expect(result.differentPixels).toBe(4);
+  expect(result.textAnalysis).toEqual({
+    status: "skipped",
+    provider: "tesseract",
+    changes: [],
+  });
+  expect(result.warnings).toEqual([]);
+});
+
+test("can skip writing diff artifacts during a detection pass", async () => {
+  const baselinePath = path.join(tempDir, "baseline.png");
+  const currentPath = path.join(tempDir, "current.png");
+
+  await writePng(baselinePath, createPng(2, 2, { r: 255, g: 255, b: 255 }));
+  await writePng(currentPath, createPng(2, 2, { r: 0, g: 0, b: 0 }));
+
+  const result = await diffPngFiles({
+    baselinePath,
+    currentPath,
+    outputDir: path.join(tempDir, "diff"),
+    analyzeText: false,
+    writeArtifacts: false,
+  });
+
+  expect(result.differentPixels).toBe(4);
+  expect(result.diffPath).toBeUndefined();
+  expect(result.contextDiffPath).toBeUndefined();
+});
+
+test("writes diff artifacts conditionally without a second comparison", async () => {
+  const baselinePath = path.join(tempDir, "baseline.png");
+  const unchangedPath = path.join(tempDir, "unchanged.png");
+  const changedPath = path.join(tempDir, "changed.png");
+  const white = createPng(2, 2, { r: 255, g: 255, b: 255 });
+
+  await writePng(baselinePath, white);
+  await writePng(unchangedPath, white);
+  await writePng(changedPath, createPng(2, 2, { r: 0, g: 0, b: 0 }));
+
+  const unchanged = await diffPngFiles({
+    baselinePath,
+    currentPath: unchangedPath,
+    outputDir: path.join(tempDir, "unchanged-diff"),
+    analyzeText: false,
+    writeArtifacts: "when-different",
+  });
+  const changed = await diffPngFiles({
+    baselinePath,
+    currentPath: changedPath,
+    outputDir: path.join(tempDir, "changed-diff"),
+    analyzeText: false,
+    writeArtifacts: "when-different",
+  });
+
+  expect(unchanged.diffPath).toBeUndefined();
+  await expect(readFile(changed.diffPath ?? "")).resolves.toBeInstanceOf(
+    Buffer
+  );
 });
 
 test("reports dimension mismatch for different aspect ratios", async () => {

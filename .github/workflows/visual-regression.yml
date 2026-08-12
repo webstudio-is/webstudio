@@ -1,0 +1,152 @@
+name: Visual regression
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  pull_request_target:
+    types: [labeled, synchronize]
+
+concurrency:
+  # A synchronize action emits both pull_request and pull_request_target. Keep
+  # their runs separate so approval cleanup cannot cancel the visual check.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  remove-approval:
+    if: github.event_name == 'pull_request_target' && github.event.action == 'synchronize'
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove visual change approval
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(({ name }) => name);
+            if (labels.includes('visual-change-approved')) {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: 'visual-change-approved',
+              });
+            }
+
+  visual-regression:
+    if: |
+      github.event_name == 'push' ||
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        (
+          github.event.action != 'labeled' ||
+          github.event.label.name == 'visual-change-approved'
+        )
+      ) ||
+      (
+        github.event_name == 'pull_request_target' &&
+        github.event.action == 'labeled' &&
+        (
+          github.event.label.name == 'safe-to-deploy' ||
+          (
+            github.event.label.name == 'visual-change-approved' &&
+            github.event.pull_request.head.repo.full_name != github.repository &&
+            contains(github.event.pull_request.labels.*.name, 'safe-to-deploy')
+          )
+        )
+      )
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    environment:
+      name: development
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
+
+      - uses: ./.github/actions/ci-setup
+
+      - name: Cache pinned visual browser
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: visual-playwright-${{ runner.os }}-${{ hashFiles('packages/sdk-components-animation/package.json', 'pnpm-lock.yaml') }}
+
+      - name: Install pinned visual browser
+        run: |
+          pnpm --filter @webstudio-is/sdk-components-animation exec playwright install chromium
+          playwright_browser_path="$(pnpm --filter @webstudio-is/sdk-components-animation exec node -e 'console.log(require("playwright").chromium.executablePath())')"
+          test -x "$playwright_browser_path"
+          echo "WEBSTUDIO_BROWSER_PATH=$playwright_browser_path" >> "$GITHUB_ENV"
+
+      - name: Install visual comparison dependencies
+        run: sudo apt-get install --no-install-recommends -y tesseract-ocr
+
+      - name: Resolve visual baseline cache key
+        id: visual-cache
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
+        run: |
+          echo "base=$(git merge-base HEAD "$BASE_REF")" >> "$GITHUB_OUTPUT"
+          echo "head=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          browser_version="$("$WEBSTUDIO_BROWSER_PATH" --version)"
+          runtime_hash="$(pnpm tsx scripts/visual-regression/runtime-hash.ts "$browser_version")"
+          echo "runtime=$runtime_hash" >> "$GITHUB_OUTPUT"
+
+      - name: Restore visual baseline screenshots
+        uses: actions/cache/restore@v5
+        with:
+          path: .visual-regression-cache/${{ steps.visual-cache.outputs.base }}-*
+          key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.runtime }}
+
+      - name: Compare portable stories
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
+          APPROVE_VISUAL_CHANGES: ${{ github.event_name == 'push' || (github.event.action == 'labeled' && github.event.label.name == 'visual-change-approved') }}
+        run: |
+          args=(--base "$BASE_REF")
+          if [[ "$APPROVE_VISUAL_CHANGES" == "true" ]]; then
+            args+=(--approve-visual-changes)
+          fi
+          pnpm visual-regression -- "${args[@]}"
+
+      - name: Validate visual comparison report
+        if: always()
+        run: |
+          node -e 'const report = require("./.visual-regression/report/report.json"); if (!Array.isArray(report.comparisons) || report.comparisons.length === 0) throw new Error("Visual comparison report has no story results.")'
+
+      - name: Upload visual comparison report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-regression-report
+          path: .visual-regression/report
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Cache visual screenshots for dependent revisions
+        if: always()
+        uses: actions/cache/save@v5
+        with:
+          path: .visual-regression-cache/${{ steps.visual-cache.outputs.head }}-*
+          key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.head }}-${{ steps.visual-cache.outputs.runtime }}
+
+      - name: Cache generated baseline screenshots
+        if: always()
+        uses: actions/cache/save@v5
+        with:
+          path: .visual-regression-cache/${{ steps.visual-cache.outputs.base }}-*
+          key: visual-baseline-v1-${{ runner.os }}-${{ steps.visual-cache.outputs.base }}-${{ steps.visual-cache.outputs.runtime }}

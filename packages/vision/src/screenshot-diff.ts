@@ -6,6 +6,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
+import { crc32 } from "node:zlib";
 import { decode, encode, type DecodedPng, type ImageData } from "fast-png";
 import {
   normalizeToCommonSize,
@@ -16,6 +17,65 @@ import {
   analyzeScreenshotTextChanges,
   type ScreenshotTextAnalysis,
 } from "./screenshot-text-diff";
+
+const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+const assertPngIntegrity = (contents: Buffer, file: string) => {
+  if (
+    contents.length < pngSignature.length ||
+    contents.subarray(0, pngSignature.length).equals(pngSignature) === false
+  ) {
+    throw new Error(`Invalid PNG signature: ${file}`);
+  }
+  let offset = pngSignature.length;
+  let chunkIndex = 0;
+  let hasImageData = false;
+  let complete = false;
+  while (offset < contents.length) {
+    if (contents.length - offset < 12) {
+      throw new Error(`Truncated PNG chunk: ${file}`);
+    }
+    const length = contents.readUInt32BE(offset);
+    if (length > contents.length - offset - 12) {
+      throw new Error(`Truncated PNG chunk data: ${file}`);
+    }
+    const typeStart = offset + 4;
+    const dataEnd = typeStart + 4 + length;
+    const type = contents.toString("ascii", typeStart, typeStart + 4);
+    const expectedCrc = contents.readUInt32BE(dataEnd);
+    const actualCrc = crc32(contents.subarray(typeStart, dataEnd)) >>> 0;
+    if (actualCrc !== expectedCrc) {
+      throw new Error(`Invalid PNG chunk checksum: ${file}`);
+    }
+    if (chunkIndex === 0 && (type !== "IHDR" || length !== 13)) {
+      throw new Error(`Invalid PNG header chunk: ${file}`);
+    }
+    if (type === "IDAT") {
+      hasImageData = true;
+    }
+    offset = dataEnd + 4;
+    chunkIndex += 1;
+    if (type === "IEND") {
+      complete = length === 0 && offset === contents.length;
+      break;
+    }
+  }
+  if (hasImageData === false || complete === false) {
+    throw new Error(`Incomplete PNG image: ${file}`);
+  }
+};
+
+export const arePngFilesIdentical = async (left: string, right: string) => {
+  const [leftContents, rightContents] = await Promise.all([
+    fs.readFile(left),
+    fs.readFile(right),
+  ]);
+  if (leftContents.equals(rightContents) === false) {
+    return false;
+  }
+  assertPngIntegrity(leftContents, left);
+  return true;
+};
 
 export type ScreenshotDiffSize = {
   width: number;
@@ -100,6 +160,81 @@ export type ScreenshotVisualExpectation = {
   };
 };
 
+export const isScreenshotVisualExpectation = (
+  value: unknown
+): value is ScreenshotVisualExpectation => {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    Array.isArray(value) ||
+    Object.keys(value).length === 0
+  ) {
+    return false;
+  }
+  const expectation = value as Record<string, unknown>;
+  const numericFieldValid = (
+    key: "maxMismatchPercentage" | "minChangedRegions" | "maxChangedRegions"
+  ) => {
+    const field = expectation[key];
+    if (field === undefined) {
+      return true;
+    }
+    if (typeof field !== "number" || Number.isFinite(field) === false) {
+      return false;
+    }
+    if (key === "maxMismatchPercentage") {
+      return field >= 0 && field <= 100;
+    }
+    return Number.isInteger(field) && field >= 0;
+  };
+  if (
+    numericFieldValid("maxMismatchPercentage") === false ||
+    numericFieldValid("minChangedRegions") === false ||
+    numericFieldValid("maxChangedRegions") === false
+  ) {
+    return false;
+  }
+  if (
+    typeof expectation.minChangedRegions === "number" &&
+    typeof expectation.maxChangedRegions === "number" &&
+    expectation.minChangedRegions > expectation.maxChangedRegions
+  ) {
+    return false;
+  }
+  const dominantColorChange = expectation.dominantColorChange;
+  if (dominantColorChange !== undefined) {
+    if (
+      typeof dominantColorChange !== "object" ||
+      dominantColorChange === null ||
+      Array.isArray(dominantColorChange)
+    ) {
+      return false;
+    }
+    const colorChange = dominantColorChange as Record<string, unknown>;
+    if (
+      (colorChange.channel !== "red" &&
+        colorChange.channel !== "green" &&
+        colorChange.channel !== "blue" &&
+        colorChange.channel !== "luminance") ||
+      (colorChange.direction !== "increase" &&
+        colorChange.direction !== "decrease") ||
+      (colorChange.minMagnitude !== undefined &&
+        (typeof colorChange.minMagnitude !== "number" ||
+          Number.isFinite(colorChange.minMagnitude) === false ||
+          colorChange.minMagnitude < 0))
+    ) {
+      return false;
+    }
+  }
+  return Object.keys(expectation).every(
+    (key) =>
+      key === "maxMismatchPercentage" ||
+      key === "minChangedRegions" ||
+      key === "maxChangedRegions" ||
+      key === "dominantColorChange"
+  );
+};
+
 export type ScreenshotVisualAssertion = {
   expected: string;
   actual: number | string;
@@ -150,6 +285,8 @@ export const diffPngFiles = async ({
   outputDir,
   threshold = DEFAULT_THRESHOLD,
   ignoreTopNormalizedY = DEFAULT_IGNORE_TOP_NORMALIZED_Y,
+  analyzeText = true,
+  writeArtifacts = true,
   expectedText,
   expectedVisual,
 }: {
@@ -158,6 +295,8 @@ export const diffPngFiles = async ({
   outputDir: string;
   threshold?: number;
   ignoreTopNormalizedY?: number;
+  analyzeText?: boolean | "when-different";
+  writeArtifacts?: boolean | "when-different";
   expectedText?: readonly string[];
   expectedVisual?: ScreenshotVisualExpectation;
 }): Promise<ScreenshotDiffResult> => {
@@ -234,29 +373,41 @@ export const diffPngFiles = async ({
     current,
   });
   const totalPixels = baseline.width * baseline.height;
-  const artifactPaths = getDiffArtifactPaths({ currentPath, outputDir });
-  await writeDiffArtifacts({
-    baseline,
-    current,
-    mask: pixelDiff.mask,
-    regions,
-    paths: artifactPaths,
-    contextDiffScale: DEFAULT_CONTEXT_DIFF_SCALE,
-  });
+  const hasPixelDifference = pixelDiff.differentPixels > 0;
+  const shouldWriteArtifacts =
+    writeArtifacts === true ||
+    (writeArtifacts === "when-different" && hasPixelDifference);
+  const artifactPaths = shouldWriteArtifacts
+    ? getDiffArtifactPaths({ currentPath, outputDir })
+    : undefined;
+  if (artifactPaths !== undefined) {
+    await writeDiffArtifacts({
+      baseline,
+      current,
+      mask: pixelDiff.mask,
+      regions,
+      paths: artifactPaths,
+      contextDiffScale: DEFAULT_CONTEXT_DIFF_SCALE,
+    });
+  }
   const canAnalyzeText =
     decodedBaseline.width === decodedCurrent.width &&
     decodedBaseline.height === decodedCurrent.height;
-  const textAnalysis: ScreenshotTextAnalysis = canAnalyzeText
-    ? await analyzeScreenshotTextChanges({
-        baselinePath,
-        currentPath,
-        hasPixelDiff: pixelDiff.differentPixels > 0,
-        baselineImage: baseline,
-        currentImage: current,
-        ignoreTopPixels: Math.ceil(baseline.height * ignoreTopNormalizedY),
-        includeObservedText: expectedText !== undefined,
-      })
-    : createSkippedTextAnalysis();
+  const shouldAnalyzeText =
+    analyzeText === true ||
+    (analyzeText === "when-different" && hasPixelDifference);
+  const textAnalysis: ScreenshotTextAnalysis =
+    canAnalyzeText && shouldAnalyzeText
+      ? await analyzeScreenshotTextChanges({
+          baselinePath,
+          currentPath,
+          hasPixelDiff: hasPixelDifference,
+          baselineImage: baseline,
+          currentImage: current,
+          ignoreTopPixels: Math.ceil(baseline.height * ignoreTopNormalizedY),
+          includeObservedText: expectedText !== undefined,
+        })
+      : createSkippedTextAnalysis();
 
   return summarizeResult({
     totalPixels,
@@ -264,8 +415,8 @@ export const diffPngFiles = async ({
     mismatchPercentage:
       totalPixels === 0 ? 0 : (pixelDiff.differentPixels / totalPixels) * 100,
     imageSize: { width: baseline.width, height: baseline.height },
-    diffPath: artifactPaths.diffPath,
-    contextDiffPath: artifactPaths.contextDiffPath,
+    diffPath: artifactPaths?.diffPath,
+    contextDiffPath: artifactPaths?.contextDiffPath,
     regions,
     overallColorChange,
     textAnalysis,

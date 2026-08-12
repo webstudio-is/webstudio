@@ -9,6 +9,11 @@
     "webstudio-cli": "./bin.js",
     "webstudio": "./bin.js"
   },
+  "exports": {
+    "./vision": {
+      "webstudio": "./src/vision.ts"
+    }
+  },
   "files": [
     "lib/*",
     "templates/*",
@@ -105,6 +110,7 @@
     "@webstudio-is/sdk-components-react-router": "workspace:*",
     "@webstudio-is/sdk-components-registry": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "@webstudio-is/vision": "workspace:*",
     "@webstudio-is/wsauth": "workspace:*",
     "h3": "^1.15.1",
     "ipx": "^3.0.3",

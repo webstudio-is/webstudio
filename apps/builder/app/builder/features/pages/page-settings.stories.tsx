@@ -13,12 +13,6 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 export default {
   title: "Pages/Page Settings",
   component: PageSettingsComponent,
-  parameters: {
-    lostpixel: {
-      // this is to fix cutting off the after scroll area in the screenshot
-      waitBeforeScreenshot: 3000,
-    },
-  },
 };
 
 $assets.set(

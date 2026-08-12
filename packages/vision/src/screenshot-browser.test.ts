@@ -3,6 +3,7 @@ import {
   defaultScreenshotTimeout,
   defaultScreenshotWaitForTimeout,
   defaultScreenshotWaitUntil,
+  isScreenshotBrowser,
   isScreenshotWaitUntil,
   screenshotBrowserChoices,
   screenshotWaitUntilValues,
@@ -16,6 +17,8 @@ test("defines supported screenshot browser choices in preference order", () => {
     "edge",
     "brave",
   ]);
+  expect(isScreenshotBrowser("chromium")).toBe(true);
+  expect(isScreenshotBrowser("firefox")).toBe(false);
 });
 
 test("defines supported screenshot readiness events in lifecycle order", () => {

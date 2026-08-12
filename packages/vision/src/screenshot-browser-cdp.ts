@@ -3,10 +3,33 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn, type ChildProcess } from "node:child_process";
-import type { ScreenshotWaitUntil } from "@webstudio-is/project-build/visual";
-import { withTimeout } from "./async-utils";
+import type { ScreenshotWaitUntil } from "./screenshot-browser";
+
+const withTimeout = async <Result>(
+  operation: Promise<Result>,
+  timeout: number,
+  createTimeoutError: () => Error
+) => {
+  let timeoutId: NodeJS.Timeout | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(createTimeoutError()), timeout);
+  });
+  try {
+    return await Promise.race([operation, timeoutPromise]);
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
 
 type BrowserProcess = Pick<ChildProcess, "kill" | "once">;
+
+export type BrowserScreenshotPageMetadata = {
+  rootMarkerPresent: boolean;
+  id?: string;
+  version?: number;
+};
 
 export type BrowserScreenshotOptions = {
   browserPath: string;
@@ -17,12 +40,23 @@ export type BrowserScreenshotOptions = {
   includeImageMetrics?: boolean;
   includeResourceMetrics?: boolean;
   includeContrastMetrics?: boolean;
+  includeElementGeometry?: boolean;
+  pageMetadata?: {
+    rootMarkerAttribute: string;
+    idAttribute?: string;
+    versionAttribute?: string;
+  };
+  instanceIdAttribute?: string;
   url: string;
   httpCredentials?: { username: string; password: string };
   uid?: number;
+  disableSandbox?: boolean;
   waitUntil: ScreenshotWaitUntil;
+  prepareExpression?: string;
   waitForSelector?: string;
+  failForSelector?: string;
   waitForTimeout: number;
+  finalizeExpression?: string;
   timeout: number;
   format?: "png" | "jpeg" | "webp";
   quality?: number;
@@ -176,20 +210,29 @@ class CdpSession {
     timeout: number
   ) => {
     const socket = dependencies.createWebSocket(url);
-    await withDeadline(
-      new Promise<void>((resolveConnection, rejectConnection) => {
-        socket.addEventListener("open", () => resolveConnection(), {
-          once: true,
-        });
-        socket.addEventListener(
-          "error",
-          () => rejectConnection(new Error("Could not connect to browser.")),
-          { once: true }
-        );
-      }),
-      "Browser DevTools connection did not open",
-      timeout
-    );
+    try {
+      await withDeadline(
+        new Promise<void>((resolveConnection, rejectConnection) => {
+          socket.addEventListener("open", () => resolveConnection(), {
+            once: true,
+          });
+          socket.addEventListener(
+            "error",
+            () => rejectConnection(new Error("Could not connect to browser.")),
+            { once: true }
+          );
+        }),
+        "Browser DevTools connection did not open",
+        timeout
+      );
+    } catch (error) {
+      try {
+        socket.close();
+      } catch {
+        // Preserve the connection failure when a pending socket cannot close.
+      }
+      throw error;
+    }
     return new CdpSession(socket);
   };
 
@@ -379,36 +422,58 @@ const waitForSelector = async (
   throw createTimeoutError(`Selector ${selector} was not found`, timeout);
 };
 
+const getSelectorText = async (cdp: CdpSession, selector: string) => {
+  const result = await cdp.send<{ result?: { value?: unknown } }>(
+    "Runtime.evaluate",
+    {
+      expression: `document.querySelector(${JSON.stringify(selector)})?.textContent`,
+      returnByValue: true,
+    }
+  );
+  return typeof result.result?.value === "string"
+    ? result.result.value.trim()
+    : undefined;
+};
+
 type BrowserReadiness = {
   documentReadyState: string;
-  generatedSiteRootPresent: boolean;
-  projectId?: string;
-  projectVersion?: number;
+  pageMetadata?: BrowserScreenshotPageMetadata;
   layoutStable: boolean;
 };
 
 const waitForFontsAndFrames = async (
   cdp: CdpSession,
-  timeout: number
+  timeout: number,
+  pageMetadata: BrowserScreenshotOptions["pageMetadata"]
 ): Promise<BrowserReadiness> => {
   const measure = async () => {
     const response = await withDeadline(
       cdp.send<{ result?: { value?: unknown } }>("Runtime.evaluate", {
-        expression: `Promise.resolve(document.fonts?.ready).then(() => ({
-          documentReadyState: document.readyState,
-          generatedSiteRootPresent:
-            document.documentElement.hasAttribute("data-ws-project"),
-          projectId:
-            document.documentElement.getAttribute("data-ws-project") ?? undefined,
-          projectVersion: (() => {
-            const attribute = document.documentElement.getAttribute("data-ws-version");
-            if (attribute === null) return undefined;
-            const value = Number(attribute);
-            return Number.isFinite(value) ? value : undefined;
-          })(),
-          width: document.documentElement.scrollWidth,
-          height: document.documentElement.scrollHeight,
-        }))`,
+        expression: `Promise.resolve(document.fonts?.ready).then(() => {
+          const metadata = ${JSON.stringify(pageMetadata)};
+          const root = document.documentElement;
+          const id = metadata?.idAttribute === undefined
+            ? undefined
+            : root.getAttribute(metadata.idAttribute) ?? undefined;
+          const versionAttribute = metadata?.versionAttribute === undefined
+            ? undefined
+            : root.getAttribute(metadata.versionAttribute);
+          const version = versionAttribute === undefined || versionAttribute === null
+            ? undefined
+            : Number(versionAttribute);
+          return {
+            documentReadyState: document.readyState,
+            pageMetadata: metadata === undefined
+              ? undefined
+              : {
+                  rootMarkerPresent: root.hasAttribute(metadata.rootMarkerAttribute),
+                  id,
+                  version: Number.isFinite(version) ? version : undefined,
+                },
+            width: root.scrollWidth,
+            height: root.scrollHeight,
+          };
+        })`,
         awaitPromise: true,
         returnByValue: true,
       }),
@@ -421,9 +486,7 @@ const waitForFontsAndFrames = async (
     value: unknown
   ): value is {
     documentReadyState: string;
-    generatedSiteRootPresent: boolean;
-    projectId?: string;
-    projectVersion?: number;
+    pageMetadata?: BrowserScreenshotPageMetadata;
     width: number;
     height: number;
   } =>
@@ -431,23 +494,25 @@ const waitForFontsAndFrames = async (
     value !== null &&
     "documentReadyState" in value &&
     typeof value.documentReadyState === "string" &&
-    "generatedSiteRootPresent" in value &&
-    typeof value.generatedSiteRootPresent === "boolean" &&
-    ("projectId" in value === false ||
-      value.projectId === undefined ||
-      typeof value.projectId === "string") &&
-    ("projectVersion" in value === false ||
-      value.projectVersion === undefined ||
-      typeof value.projectVersion === "number") &&
+    ("pageMetadata" in value === false ||
+      value.pageMetadata === undefined ||
+      (typeof value.pageMetadata === "object" &&
+        value.pageMetadata !== null &&
+        "rootMarkerPresent" in value.pageMetadata &&
+        typeof value.pageMetadata.rootMarkerPresent === "boolean" &&
+        ("id" in value.pageMetadata === false ||
+          value.pageMetadata.id === undefined ||
+          typeof value.pageMetadata.id === "string") &&
+        ("version" in value.pageMetadata === false ||
+          value.pageMetadata.version === undefined ||
+          typeof value.pageMetadata.version === "number"))) &&
     "width" in value &&
     typeof value.width === "number" &&
     "height" in value &&
     typeof value.height === "number";
   const initial = await measure();
   if (isLayoutSample(initial) === false) {
-    throw new Error(
-      "Browser did not report generated page readiness evidence."
-    );
+    throw new Error("Browser did not report page readiness evidence.");
   }
   let before = initial;
   const deadline = Date.now() + timeout;
@@ -455,33 +520,23 @@ const waitForFontsAndFrames = async (
     await delay(32);
     const value = await measure();
     if (isLayoutSample(value) === false) {
-      throw new Error(
-        "Browser did not report generated page readiness evidence."
-      );
+      throw new Error("Browser did not report page readiness evidence.");
     }
     if (before.width === value.width && before.height === value.height) {
       return {
         documentReadyState: value.documentReadyState,
-        generatedSiteRootPresent: value.generatedSiteRootPresent,
-        ...(value.projectId === undefined
+        ...(value.pageMetadata === undefined
           ? {}
-          : { projectId: value.projectId }),
-        ...(value.projectVersion === undefined
-          ? {}
-          : { projectVersion: value.projectVersion }),
+          : { pageMetadata: value.pageMetadata }),
         layoutStable: true,
       };
     }
     if (Date.now() >= deadline) {
       return {
         documentReadyState: value.documentReadyState,
-        generatedSiteRootPresent: value.generatedSiteRootPresent,
-        ...(value.projectId === undefined
+        ...(value.pageMetadata === undefined
           ? {}
-          : { projectId: value.projectId }),
-        ...(value.projectVersion === undefined
-          ? {}
-          : { projectVersion: value.projectVersion }),
+          : { pageMetadata: value.pageMetadata }),
         layoutStable: false,
       };
     }
@@ -494,11 +549,13 @@ const createBrowserLaunchArgs = ({
   width,
   height,
   uid,
+  disableSandbox,
 }: {
   userDataDir: string;
   width: number;
   height: number;
   uid?: number;
+  disableSandbox?: boolean;
 }) => [
   "--headless=new",
   "--disable-gpu",
@@ -511,7 +568,7 @@ const createBrowserLaunchArgs = ({
   `--window-size=${width},${height}`,
   "--no-first-run",
   "--no-default-browser-check",
-  ...(uid === 0 ? ["--no-sandbox"] : []),
+  ...(uid === 0 || disableSandbox === true ? ["--no-sandbox"] : []),
   "about:blank",
 ];
 
@@ -579,9 +636,7 @@ export type BrowserScreenshotNavigation = {
   mimeType?: string;
   redirects: string[];
   documentReadyState: string;
-  generatedSiteRootPresent: boolean;
-  projectId?: string;
-  projectVersion?: number;
+  pageMetadata?: BrowserScreenshotPageMetadata;
   layoutStable: boolean;
 };
 
@@ -627,7 +682,8 @@ const getBrowserScreenshotElementGeometry = async (
   send: <Result = unknown>(
     method: string,
     params?: Record<string, unknown>
-  ) => Promise<Result>
+  ) => Promise<Result>,
+  instanceIdAttribute: string
 ): Promise<BrowserScreenshotElementGeometry> => {
   const response = await send<{
     result?: { value?: unknown };
@@ -635,7 +691,9 @@ const getBrowserScreenshotElementGeometry = async (
     expression: `(() => {
       const limit = ${maxBrowserScreenshotElements};
       const overlapLimit = ${maxBrowserScreenshotOverlapsPerElement};
-      const candidates = Array.from(document.querySelectorAll("[data-ws-id]"));
+      const instanceIdAttribute = ${JSON.stringify(instanceIdAttribute)};
+      const instanceSelector = "[" + CSS.escape(instanceIdAttribute) + "]";
+      const candidates = Array.from(document.querySelectorAll(instanceSelector));
       const elements = candidates.slice(0, limit).map((element) => {
         const style = getComputedStyle(element);
         const rect = element.getBoundingClientRect();
@@ -649,7 +707,7 @@ const getBrowserScreenshotElementGeometry = async (
         const clipsY = style.overflowY === "hidden" || style.overflowY === "clip";
         return {
           element,
-          instanceId: element.getAttribute("data-ws-id"),
+          instanceId: element.getAttribute(instanceIdAttribute),
           tagName: element.tagName.toLowerCase(),
           x: rect.left + window.scrollX,
           y: rect.top + window.scrollY,
@@ -816,13 +874,16 @@ const getBrowserScreenshotContrasts = async (
   send: <Result = unknown>(
     method: string,
     params?: Record<string, unknown>
-  ) => Promise<Result>
+  ) => Promise<Result>,
+  instanceIdAttribute: string
 ): Promise<BrowserScreenshotContrast[]> => {
   const response = await send<{
     result?: { value?: unknown };
   }>("Runtime.evaluate", {
     expression: `(() => {
       const limit = ${maxBrowserScreenshotElements};
+      const instanceIdAttribute = ${JSON.stringify(instanceIdAttribute)};
+      const instanceSelector = "[" + CSS.escape(instanceIdAttribute) + "]";
       const parseOpaqueRgb = (value) => {
         const match = value.match(/^rgba?\\(\\s*(\\d+(?:\\.\\d+)?)\\D+(\\d+(?:\\.\\d+)?)\\D+(\\d+(?:\\.\\d+)?)(?:\\D+(\\d+(?:\\.\\d+)?))?\\s*\\)$/i);
         if (match === null || (match[4] !== undefined && Number(match[4]) !== 1)) return undefined;
@@ -835,7 +896,7 @@ const getBrowserScreenshotContrasts = async (
         });
         return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
       };
-      const candidates = Array.from(document.querySelectorAll("[data-ws-id]"))
+      const candidates = Array.from(document.querySelectorAll(instanceSelector))
         .filter((element) => Array.from(element.childNodes).some((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== ""))
         .slice(0, limit);
       return candidates.flatMap((element) => {
@@ -897,7 +958,7 @@ const getBrowserScreenshotContrasts = async (
         const fontWeight = Number.isFinite(parsedWeight) ? parsedWeight : style.fontWeight === "bold" ? 700 : 400;
         const requiredRatio = fontSize >= 24 || (fontSize >= 18.66 && fontWeight >= 700) ? 3 : 4.5;
         return [{
-          instanceId: element.getAttribute("data-ws-id"),
+          instanceId: element.getAttribute(instanceIdAttribute),
           tagName: element.tagName.toLowerCase(),
           foreground: style.color,
           background: background.value,
@@ -938,13 +999,15 @@ const getBrowserScreenshotImages = async (
   send: <Result = unknown>(
     method: string,
     params?: Record<string, unknown>
-  ) => Promise<Result>
+  ) => Promise<Result>,
+  instanceIdAttribute: string
 ): Promise<BrowserScreenshotImage[]> => {
   const response = await send<{
     result?: { value?: unknown };
   }>("Runtime.evaluate", {
     expression: `Promise.all(Array.from(document.images, async (image) => {
-      globalThis.__webstudioImageDimensionCache ??= new Map();
+      globalThis.__visionImageDimensionCache ??= new Map();
+      const instanceIdAttribute = ${JSON.stringify(instanceIdAttribute)};
       const rect = image.getBoundingClientRect();
       let sourcePathname;
       let selectedSourceWidth;
@@ -956,22 +1019,23 @@ const getBrowserScreenshotImages = async (
           : new URL(selectedSource, document.baseURI).pathname;
       } catch {}
       try {
-        let dimensions = globalThis.__webstudioImageDimensionCache.get(selectedSource);
+        let dimensions = globalThis.__visionImageDimensionCache.get(selectedSource);
         if (dimensions === undefined) {
           const response = await fetch(selectedSource);
           const bitmap = await createImageBitmap(await response.blob());
           dimensions = { width: bitmap.width, height: bitmap.height };
           bitmap.close();
-          globalThis.__webstudioImageDimensionCache.set(selectedSource, dimensions);
+          globalThis.__visionImageDimensionCache.set(selectedSource, dimensions);
         }
         selectedSourceWidth = dimensions.width;
         selectedSourceHeight = dimensions.height;
       } catch {}
+      let identifiedElement = image;
+      while (identifiedElement !== null && identifiedElement.hasAttribute(instanceIdAttribute) === false) {
+        identifiedElement = identifiedElement.parentElement;
+      }
       return {
-        instanceId:
-          image.getAttribute("data-ws-id") ||
-          image.closest("[data-ws-id]")?.getAttribute("data-ws-id") ||
-          undefined,
+        instanceId: identifiedElement?.getAttribute(instanceIdAttribute) || undefined,
         sourcePathname,
         loading: image.loading || "eager",
         complete: image.complete,
@@ -1178,7 +1242,7 @@ const getScreenshotCaptureParams = async ({
 class BrowserSessionClosedError extends Error {}
 
 const getBrowserExitMessage = (message: string, reason?: string) =>
-  `${message}${reason === undefined ? "" : ` (${reason})`}. Check the browser installation or set WEBSTUDIO_BROWSER_PATH to a supported Chromium executable.`;
+  `${message}${reason === undefined ? "" : ` (${reason})`}. Check the browser installation or provide a supported Chromium executable.`;
 
 type BrowserRuntime = {
   userDataDir: string;
@@ -1189,22 +1253,63 @@ type BrowserRuntime = {
   close: () => Promise<void>;
 };
 
+const stopBrowserProcess = async ({
+  browserProcess,
+  browserClosed,
+  running,
+  gracePeriodMs,
+}: {
+  browserProcess: BrowserProcess;
+  browserClosed: Promise<string | undefined>;
+  running: boolean;
+  gracePeriodMs: number;
+}) => {
+  if (running === false) {
+    return;
+  }
+  browserProcess.kill();
+  try {
+    await withDeadline(
+      browserClosed,
+      "Browser process did not exit after termination",
+      gracePeriodMs
+    );
+    return;
+  } catch {
+    browserProcess.kill("SIGKILL");
+  }
+  await withDeadline(
+    browserClosed,
+    "Browser process did not exit after forced termination",
+    2000
+  ).catch(() => undefined);
+};
+
 const startBrowserRuntimeOnce = async (
   options: BrowserScreenshotOptions,
   dependencies: BrowserScreenshotDependencies
 ): Promise<BrowserRuntime> => {
   const userDataDir = await dependencies.mkdtemp(
-    join(tmpdir(), "webstudio-browser-")
+    join(tmpdir(), "vision-browser-")
   );
-  const browserProcess = dependencies.spawnBrowser(
-    options.browserPath,
-    createBrowserLaunchArgs({
-      userDataDir,
-      width: options.width,
-      height: options.height,
-      uid: options.uid,
-    })
-  );
+  let browserProcess: BrowserProcess;
+  try {
+    browserProcess = dependencies.spawnBrowser(
+      options.browserPath,
+      createBrowserLaunchArgs({
+        userDataDir,
+        width: options.width,
+        height: options.height,
+        uid: options.uid,
+        disableSandbox: options.disableSandbox,
+      })
+    );
+  } catch (error) {
+    await dependencies
+      .rm(userDataDir, { recursive: true, force: true })
+      .catch(() => undefined);
+    throw error;
+  }
   let running = true;
   const browserClosed = new Promise<string | undefined>((resolveClosed) => {
     const close = (reason?: string) => {
@@ -1248,14 +1353,12 @@ const startBrowserRuntimeOnce = async (
       },
       close: async () => {
         closePromise ??= (async () => {
-          if (running) {
-            browserProcess.kill();
-          }
-          await withDeadline(
+          await stopBrowserProcess({
+            browserProcess,
             browserClosed,
-            "Browser process did not exit after screenshot capture",
-            2000
-          ).catch(() => undefined);
+            running,
+            gracePeriodMs: 2000,
+          });
           await dependencies.rm(userDataDir, {
             recursive: true,
             force: true,
@@ -1266,9 +1369,15 @@ const startBrowserRuntimeOnce = async (
     };
     return runtime;
   } catch (error) {
-    browserProcess.kill();
-    await browserClosed;
-    await dependencies.rm(userDataDir, { recursive: true, force: true });
+    await stopBrowserProcess({
+      browserProcess,
+      browserClosed,
+      running,
+      gracePeriodMs: Math.min(options.timeout, 2000),
+    });
+    await dependencies
+      .rm(userDataDir, { recursive: true, force: true })
+      .catch(() => undefined);
     throw error;
   }
 };
@@ -1399,6 +1508,7 @@ const capturePageWithBrowserRuntime = async (
           send("Page.enable"),
           send("Network.enable"),
           send("Runtime.enable"),
+          send("Emulation.setFocusEmulationEnabled", { enabled: true }),
           send("Page.setLifecycleEventsEnabled", { enabled: true }),
         ]);
         const targetSetupMs = Date.now() - setupStartedAt;
@@ -1451,17 +1561,70 @@ const capturePageWithBrowserRuntime = async (
               options.timeout
             );
           }
+          if (options.prepareExpression !== undefined) {
+            try {
+              await send(
+                "Runtime.evaluate",
+                {
+                  expression: options.prepareExpression,
+                  awaitPromise: true,
+                },
+                options.timeout
+              );
+            } catch (cause) {
+              throw new Error(
+                `Screenshot target preparation failed: ${options.url}\nOutput: ${options.output}`,
+                { cause }
+              );
+            }
+          }
           const readinessStartedAt = Date.now();
           if (options.waitForSelector !== undefined) {
-            await waitForSelector(
-              cdp,
-              options.waitForSelector,
-              options.timeout
-            );
+            try {
+              await waitForSelector(
+                cdp,
+                options.waitForSelector,
+                options.timeout
+              );
+            } catch (cause) {
+              throw new Error(
+                `Screenshot target did not become ready: ${options.url}\nOutput: ${options.output}`,
+                { cause }
+              );
+            }
           }
-          const readiness = await waitForFontsAndFrames(cdp, options.timeout);
+          if (options.failForSelector !== undefined) {
+            const failure = await getSelectorText(cdp, options.failForSelector);
+            if (failure !== undefined) {
+              throw new Error(
+                `Screenshot target reported an error: ${failure}\nTarget: ${options.url}`
+              );
+            }
+          }
+          const readiness = await waitForFontsAndFrames(
+            cdp,
+            options.timeout,
+            options.pageMetadata
+          );
           if (options.waitForTimeout > 0) {
             await delay(options.waitForTimeout);
+          }
+          if (options.finalizeExpression !== undefined) {
+            try {
+              await send(
+                "Runtime.evaluate",
+                {
+                  expression: options.finalizeExpression,
+                  awaitPromise: true,
+                },
+                options.timeout
+              );
+            } catch (cause) {
+              throw new Error(
+                `Screenshot target finalization failed: ${options.url}\nOutput: ${options.output}`,
+                { cause }
+              );
+            }
           }
           const readinessMs = Date.now() - readinessStartedAt;
           const locationPromise = send<{
@@ -1481,10 +1644,23 @@ const capturePageWithBrowserRuntime = async (
           );
           const documentMetricsPromise = getBrowserDocumentMetrics(send);
           const elementGeometryPromise =
-            getBrowserScreenshotElementGeometry(send);
+            options.includeElementGeometry === false
+              ? Promise.resolve({
+                  total: 0,
+                  sampled: 0,
+                  truncated: false,
+                  elements: [],
+                })
+              : getBrowserScreenshotElementGeometry(
+                  send,
+                  options.instanceIdAttribute ?? "id"
+                );
           const imageInspectionPromise = measureDuration(async () =>
             options.includeImageMetrics === true
-              ? await getBrowserScreenshotImages(send)
+              ? await getBrowserScreenshotImages(
+                  send,
+                  options.instanceIdAttribute ?? "id"
+                )
               : undefined
           );
           const resourceInspectionPromise = measureDuration(async () =>
@@ -1494,7 +1670,10 @@ const capturePageWithBrowserRuntime = async (
           );
           const contrastInspectionPromise = measureDuration(async () =>
             options.includeContrastMetrics === true
-              ? await getBrowserScreenshotContrasts(send)
+              ? await getBrowserScreenshotContrasts(
+                  send,
+                  options.instanceIdAttribute ?? "id"
+                )
               : undefined
           );
           const screenshotPromise = (async () => {
@@ -1597,6 +1776,9 @@ const capturePageWithBrowserRuntime = async (
           if (contrasts === undefined) {
             delete layout.contrasts;
           }
+          if (options.includeElementGeometry === false) {
+            delete layout.elementGeometry;
+          }
           layout.timings = {
             wallMs: Date.now() - viewportStartedAt,
             targetSetupMs: index === 0 ? targetSetupMs : 0,
@@ -1616,9 +1798,13 @@ const capturePageWithBrowserRuntime = async (
     const cleanupStartedAt = Date.now();
     cdp?.close();
     if (targetId !== undefined && runtime.running) {
-      await dependencies
-        .fetch(`http://127.0.0.1:${runtime.port}/json/close/${targetId}`)
-        .catch(() => undefined);
+      await withDeadline(
+        dependencies.fetch(
+          `http://127.0.0.1:${runtime.port}/json/close/${targetId}`
+        ),
+        "Browser page target did not close",
+        Math.min(firstOptions.timeout, 100)
+      ).catch(() => undefined);
     }
     const lastLayout = layouts.at(-1);
     if (lastLayout?.timings !== undefined) {
@@ -1652,7 +1838,8 @@ export type BrowserScreenshotSession = {
     options: BrowserScreenshotOptions
   ) => Promise<BrowserScreenshotLayout>;
   capturePage: (
-    options: readonly BrowserScreenshotOptions[]
+    options: readonly BrowserScreenshotOptions[],
+    sessionOptions?: { concurrency?: number; staggerMs?: number }
   ) => Promise<BrowserScreenshotLayout[]>;
   close: () => Promise<void>;
 };
@@ -1663,24 +1850,39 @@ export const createBrowserScreenshotSession = async (
 ): Promise<BrowserScreenshotSession> => {
   let runtime = await startBrowserRuntime(options, dependencies);
   let restartPromise: Promise<BrowserRuntime> | undefined;
+  let closePromise: Promise<void> | undefined;
   let closed = false;
   const restart = async (failedRuntime: BrowserRuntime) => {
     if (runtime !== failedRuntime) {
       return runtime;
     }
-    restartPromise ??= (async () => {
-      await failedRuntime.close();
-      if (closed) {
-        throw new BrowserSessionClosedError(
-          "Browser screenshot session was closed."
-        );
+    const pendingRestart =
+      restartPromise ??
+      (async () => {
+        await failedRuntime.close();
+        if (closed) {
+          throw new BrowserSessionClosedError(
+            "Browser screenshot session was closed."
+          );
+        }
+        const next = await startBrowserRuntime(options, dependencies);
+        if (closed) {
+          await next.close();
+          throw new BrowserSessionClosedError(
+            "Browser screenshot session was closed."
+          );
+        }
+        runtime = next;
+        return next;
+      })();
+    restartPromise = pendingRestart;
+    try {
+      return await pendingRestart;
+    } finally {
+      if (restartPromise === pendingRestart) {
+        restartPromise = undefined;
       }
-      const next = await startBrowserRuntime(options, dependencies);
-      runtime = next;
-      restartPromise = undefined;
-      return next;
-    })();
-    return await restartPromise;
+    }
   };
   const captureWithRestart = async <Result>(
     capture: (activeRuntime: BrowserRuntime) => Promise<Result>
@@ -1691,7 +1893,10 @@ export const createBrowserScreenshotSession = async (
       );
     }
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const activeRuntime = runtime;
+      let activeRuntime = runtime;
+      if (activeRuntime.running === false) {
+        activeRuntime = await restart(activeRuntime);
+      }
       try {
         return await capture(activeRuntime);
       } catch (error) {
@@ -1719,19 +1924,68 @@ export const createBrowserScreenshotSession = async (
           )
       );
     },
-    async capturePage(captureOptions) {
-      return await captureWithRestart(
-        async (activeRuntime) =>
-          await capturePageWithBrowserRuntime(
+    async capturePage(captureOptions, sessionOptions) {
+      return await captureWithRestart(async (activeRuntime) => {
+        const concurrency = sessionOptions?.concurrency ?? 1;
+        const staggerMs = sessionOptions?.staggerMs ?? 0;
+        if (Number.isInteger(concurrency) === false || concurrency < 1) {
+          throw new Error("Screenshot concurrency must be a positive integer.");
+        }
+        if (Number.isFinite(staggerMs) === false || staggerMs < 0) {
+          throw new Error("Screenshot stagger must be a non-negative number.");
+        }
+        if (concurrency === 1 || captureOptions.length < 2) {
+          return await capturePageWithBrowserRuntime(
             activeRuntime,
             captureOptions,
             dependencies
-          )
-      );
+          );
+        }
+
+        const groups = Array.from(
+          { length: Math.min(concurrency, captureOptions.length) },
+          () =>
+            [] as Array<{ index: number; options: BrowserScreenshotOptions }>
+        );
+        captureOptions.forEach((options, index) => {
+          groups[index % groups.length].push({ index, options });
+        });
+        const captures = await Promise.all(
+          groups.map(async (group, index) => {
+            if (index > 0 && staggerMs > 0) {
+              await delay(index * staggerMs);
+            }
+            return {
+              group,
+              layouts: await capturePageWithBrowserRuntime(
+                activeRuntime,
+                group.map(({ options }) => options),
+                dependencies
+              ),
+            };
+          })
+        );
+        const layouts = new Array<BrowserScreenshotLayout>(
+          captureOptions.length
+        );
+        for (const capture of captures) {
+          capture.group.forEach(({ index }, groupIndex) => {
+            const layout = capture.layouts[groupIndex];
+            if (layout !== undefined) {
+              layouts[index] = layout;
+            }
+          });
+        }
+        return layouts;
+      });
     },
     async close() {
       closed = true;
-      await runtime.close();
+      closePromise ??= (async () => {
+        await restartPromise?.catch(() => undefined);
+        await runtime.close();
+      })();
+      await closePromise;
     },
   };
 };

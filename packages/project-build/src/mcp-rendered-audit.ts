@@ -21,6 +21,18 @@ import {
   createConfirmationToken,
   validateConfirmationToken,
 } from "./confirmation-token";
+import {
+  findContrastIssues,
+  findCrossViewportGeometryIssues,
+  findGeometryIssues,
+  findImageIssues,
+  findResourceIssues,
+  type ScreenshotGeometryIssue,
+} from "@webstudio-is/vision/audit";
+import {
+  selectRepresentativeViewports,
+  type ViewportRange,
+} from "@webstudio-is/vision/viewports";
 
 type Viewport = { width: number; height: number; purposes: string[] };
 type RenderedAuditPlan = z.infer<typeof renderedAuditPlan>;
@@ -285,49 +297,6 @@ const validateRenderedAuditConfirmation = (
 ) => validateConfirmationToken(token, signature);
 
 export const getRenderedAuditViewports = (breakpoints: unknown): Viewport[] => {
-  const popularViewports = [
-    { width: 390, height: 844 },
-    { width: 667, height: 375 },
-    { width: 820, height: 1180 },
-    { width: 1024, height: 768 },
-    { width: 1366, height: 768 },
-    { width: 1440, height: 900 },
-    { width: 1920, height: 1080 },
-  ];
-  const widths = new Map<number, { height: number; purposes: Set<string> }>();
-  const addViewport = (
-    viewport: { width: number; height: number },
-    purpose: string
-  ) => {
-    const purposes = widths.get(viewport.width)?.purposes ?? new Set<string>();
-    purposes.add(purpose);
-    widths.set(viewport.width, { height: viewport.height, purposes });
-  };
-  const addRepresentative = (
-    minimum: number,
-    maximum: number | undefined,
-    purpose: string
-  ) => {
-    const candidates = popularViewports.filter(
-      ({ width }) =>
-        width >= minimum && (maximum === undefined || width <= maximum)
-    );
-    const viewport =
-      maximum === undefined
-        ? candidates[0]
-        : candidates.sort(
-            (left, right) =>
-              Math.abs(left.width - (minimum + maximum) / 2) -
-              Math.abs(right.width - (minimum + maximum) / 2)
-          )[0];
-    addViewport(
-      viewport ?? {
-        width: maximum ?? minimum,
-        height: (maximum ?? minimum) <= 480 ? 844 : 900,
-      },
-      purpose
-    );
-  };
   const records =
     isRecord(breakpoints) && Array.isArray(breakpoints.breakpoints)
       ? breakpoints.breakpoints.flatMap((breakpoint, index) => {
@@ -366,15 +335,22 @@ export const getRenderedAuditViewports = (breakpoints: unknown): Viewport[] => {
     )
     .sort((left, right) => left.maxWidth - right.maxWidth);
   if (minimumBreakpoints.length === 0 && maximumBreakpoints.length === 0) {
-    addViewport(popularViewports[5], "base breakpoint: desktop");
+    return [
+      {
+        width: 1440,
+        height: 900,
+        purposes: ["base breakpoint: desktop"],
+      },
+    ];
   }
+  const ranges: ViewportRange<string>[] = [];
   let previousMaximum = 0;
   for (const breakpoint of maximumBreakpoints) {
-    addRepresentative(
-      previousMaximum + 1,
-      breakpoint.maxWidth,
-      `${breakpoint.label}: representative`
-    );
+    ranges.push({
+      minimumWidth: previousMaximum + 1,
+      maximumWidth: breakpoint.maxWidth,
+      purpose: `${breakpoint.label}: representative`,
+    });
     previousMaximum = breakpoint.maxWidth;
   }
   const firstMinimum = minimumBreakpoints[0]?.minWidth;
@@ -382,29 +358,24 @@ export const getRenderedAuditViewports = (breakpoints: unknown): Viewport[] => {
     const baseMaximum =
       firstMinimum === undefined ? undefined : firstMinimum - 1;
     if (baseMaximum === undefined || previousMaximum < baseMaximum) {
-      addRepresentative(
-        previousMaximum + 1,
-        baseMaximum,
-        "base breakpoint: representative"
-      );
+      ranges.push({
+        minimumWidth: previousMaximum + 1,
+        maximumWidth: baseMaximum,
+        purpose: "base breakpoint: representative",
+      });
     }
   }
   for (const [index, breakpoint] of minimumBreakpoints.entries()) {
     const nextMinimum = minimumBreakpoints[index + 1]?.minWidth;
-    addRepresentative(
-      breakpoint.minWidth,
-      breakpoint.maxWidth ??
+    ranges.push({
+      minimumWidth: breakpoint.minWidth,
+      maximumWidth:
+        breakpoint.maxWidth ??
         (nextMinimum === undefined ? undefined : nextMinimum - 1),
-      `${breakpoint.label}: representative`
-    );
+      purpose: `${breakpoint.label}: representative`,
+    });
   }
-  return [...widths.entries()]
-    .sort(([left], [right]) => left - right)
-    .map(([width, { height, purposes }]) => ({
-      width,
-      height,
-      purposes: [...purposes],
-    }));
+  return selectRepresentativeViewports({ ranges });
 };
 
 type Layout = NonNullable<ProjectSessionScreenshotResult["layout"]> & {
@@ -432,37 +403,62 @@ const emptyElementGeometry: GeometryLayout["elementGeometry"] = {
 
 export const getRenderedGeometryIssues = (
   layout: GeometryLayout
-): RenderedAuditCheck["geometryIssues"] => {
-  const issues: RenderedAuditCheck["geometryIssues"] = [];
-  for (const element of layout.elementGeometry.elements) {
-    if (element.clippedX || element.clippedY) {
-      issues.push({
+): RenderedAuditCheck["geometryIssues"] =>
+  findGeometryIssues(layout.elementGeometry).map(toRenderedGeometryIssue);
+
+const toRenderedGeometryIssue = (
+  issue: ScreenshotGeometryIssue
+): RenderedAuditCheck["geometryIssues"][number] => {
+  switch (issue.kind) {
+    case "clipped-content":
+      return {
         kind: "clipped-content",
         confidence: "exact",
-        instanceId: element.instanceId,
+        instanceId: issue.instanceId,
         message: "Rendered content exceeds a clipping boundary.",
         evidence: {
-          clippedX: element.clippedX,
-          clippedY: element.clippedY,
+          clippedX: issue.clippedX,
+          clippedY: issue.clippedY,
         },
-      });
-    }
-    for (const relatedInstanceId of element.overlapsWith) {
-      if (element.instanceId.localeCompare(relatedInstanceId) >= 0) {
-        continue;
-      }
-      issues.push({
+      };
+    case "overlapping-elements":
+      return {
         kind: "overlapping-elements",
         confidence: "advisory",
-        instanceId: element.instanceId,
-        relatedInstanceId,
+        instanceId: issue.instanceId,
+        relatedInstanceId: issue.relatedInstanceId,
         message:
           "Rendered element bounds overlap; inspect the screenshot to determine whether this is intentional.",
         evidence: {},
-      });
-    }
+      };
+    case "hidden-content":
+      return {
+        kind: "hidden-content",
+        confidence: "advisory",
+        instanceId: issue.instanceId,
+        message:
+          "This element is hidden at every audited viewport; verify that it is intentionally unreachable.",
+        evidence: { hiddenReason: issue.hiddenReason },
+      };
+    case "cross-viewport-layout-change":
+      return {
+        kind: "cross-breakpoint-layout-change",
+        confidence: "advisory",
+        instanceId: issue.instanceId,
+        message:
+          "This element changes visibility, position, size, or overlap state between audited breakpoints; inspect both screenshots.",
+        evidence: {
+          sourceViewportWidth: issue.sourceViewportWidth,
+          targetViewportWidth: issue.targetViewportWidth,
+          sourceVisible: issue.sourceVisible,
+          targetVisible: issue.targetVisible,
+          sourceX: issue.sourceX,
+          targetX: issue.targetX,
+          sourceWidth: issue.sourceWidth,
+          targetWidth: issue.targetWidth,
+        },
+      };
   }
-  return issues;
 };
 
 const addCrossBreakpointGeometryIssues = (
@@ -474,97 +470,21 @@ const addCrossBreakpointGeometryIssues = (
     pages.set(check.pageId, pageChecks);
     return pages;
   }, new Map<string, RenderedAuditCheck[]>());
-  const additions = new Map<
-    RenderedAuditCheck,
-    RenderedAuditCheck["geometryIssues"]
-  >();
+  const additions = new Map<RenderedAuditCheck, ScreenshotGeometryIssue[]>();
   for (const pageChecks of checksByPage.values()) {
-    pageChecks.sort(
-      (left, right) => left.viewport.width - right.viewport.width
-    );
-    const elementsByCheck = pageChecks.map(
-      (check) =>
-        new Map(
-          check.layout.elementGeometry.elements.map((element) => [
-            element.instanceId,
-            element,
-          ])
-        )
-    );
-    const firstCheck = pageChecks[0];
-    const firstElements = elementsByCheck[0];
-    if (firstCheck !== undefined && firstElements !== undefined) {
-      const hiddenIssues = additions.get(firstCheck) ?? [];
-      for (const [instanceId, element] of firstElements) {
-        if (
-          elementsByCheck.every(
-            (elements) => elements.get(instanceId)?.visible === false
-          )
-        ) {
-          hiddenIssues.push({
-            kind: "hidden-content",
-            confidence: "advisory",
-            instanceId,
-            message:
-              "This element is hidden at every audited viewport; verify that it is intentionally unreachable.",
-            evidence: { hiddenReason: element.hiddenReason },
-          });
-        }
-      }
-      additions.set(firstCheck, hiddenIssues);
-    }
-    for (let index = 1; index < pageChecks.length; index++) {
-      const previous = pageChecks[index - 1]!;
-      const check = pageChecks[index]!;
-      const previousElements = elementsByCheck[index - 1]!;
-      const geometryIssues = additions.get(check) ?? [];
-      for (const element of check.layout.elementGeometry.elements) {
-        const previousElement = previousElements.get(element.instanceId);
-        if (previousElement === undefined) {
-          continue;
-        }
-        const normalizedXChange = Math.abs(
-          previousElement.x / previous.viewport.width -
-            element.x / check.viewport.width
-        );
-        const normalizedWidthChange = Math.abs(
-          previousElement.width / previous.viewport.width -
-            element.width / check.viewport.width
-        );
-        const overlapChanged =
-          [...previousElement.overlapsWith].sort().join("\n") !==
-          [...element.overlapsWith].sort().join("\n");
-        if (
-          previousElement.visible === element.visible &&
-          normalizedXChange <= 0.35 &&
-          normalizedWidthChange <= 0.6 &&
-          overlapChanged === false
-        ) {
-          continue;
-        }
-        geometryIssues.push({
-          kind: "cross-breakpoint-layout-change",
-          confidence: "advisory",
-          instanceId: element.instanceId,
-          message:
-            "This element changes visibility, position, size, or overlap state between audited breakpoints; inspect both screenshots.",
-          evidence: {
-            sourceViewportWidth: previous.viewport.width,
-            targetViewportWidth: check.viewport.width,
-            sourceVisible: previousElement.visible,
-            targetVisible: element.visible,
-            sourceX: previousElement.x,
-            targetX: element.x,
-            sourceWidth: previousElement.width,
-            targetWidth: element.width,
-          },
-        });
-      }
-      additions.set(check, geometryIssues);
+    const captures = pageChecks.map((check) => ({
+      check,
+      viewportWidth: check.viewport.width,
+      elementGeometry: check.layout.elementGeometry,
+    }));
+    for (const [capture, issues] of findCrossViewportGeometryIssues(captures)) {
+      additions.set(capture.check, issues);
     }
   }
   return checks.map((check) => {
-    const addedIssues = additions.get(check) ?? [];
+    const addedIssues = (additions.get(check) ?? []).map(
+      toRenderedGeometryIssue
+    );
     return {
       ...check,
       geometryIssues: [...check.geometryIssues, ...addedIssues],
@@ -575,80 +495,27 @@ const addCrossBreakpointGeometryIssues = (
 
 export const getRenderedImageIssues = (
   layout: Layout
-): RenderedAuditCheck["imageIssues"] => {
-  const eagerSourcesAboveFold = new Set(
-    layout.images.flatMap((image) =>
-      image.loading !== "lazy" &&
-      image.top < layout.viewportHeight &&
-      image.sourcePathname !== undefined
-        ? [image.sourcePathname]
-        : []
-    )
-  );
-  return layout.images.flatMap((image) => {
-    const sourceWidth = image.selectedSourceWidth ?? image.naturalWidth;
-    const sourceHeight = image.selectedSourceHeight ?? image.naturalHeight;
-    let kind: RenderedAuditCheck["imageIssues"][number]["kind"] | undefined;
-    if (
-      image.complete &&
-      image.naturalWidth === 0 &&
-      image.renderedWidth > 0 &&
-      image.renderedHeight > 0
-    ) {
-      kind = "broken-image";
-    } else if (
-      image.top >= layout.viewportHeight &&
-      image.loading !== "lazy" &&
-      (image.sourcePathname === undefined ||
-        eagerSourcesAboveFold.has(image.sourcePathname) === false)
-    ) {
-      kind = "eager-below-fold-image";
-    } else if (
-      image.sourcePathname?.toLowerCase().endsWith(".svg") !== true &&
-      image.sourcePathname?.toLowerCase().startsWith("data:image/svg+xml") !==
-        true &&
-      image.renderedWidth > 0 &&
-      image.renderedHeight > 0 &&
-      sourceWidth > image.renderedWidth * 2 &&
-      sourceHeight > image.renderedHeight * 2
-    ) {
-      kind = "oversized-image";
-    }
-    return kind === undefined ? [] : [{ kind, ...image }];
+): RenderedAuditCheck["imageIssues"] =>
+  findImageIssues({
+    images: layout.images,
+    viewportHeight: layout.viewportHeight,
   });
-};
 
 export const getRenderedResourceIssues = (
   layout: Layout
 ): RenderedAuditCheck["resourceIssues"] =>
-  layout.resources.flatMap((resource) => {
-    const issues: RenderedAuditCheck["resourceIssues"] = [];
-    if (
-      resource.renderBlockingStatus === "blocking" &&
-      /^\/assets\/index-[a-zA-Z0-9_-]+\.css$/.test(resource.pathname) === false
-    ) {
-      issues.push({ kind: "render-blocking-resource", ...resource });
-    }
-    if (/\.(?:ttf|otf|woff)$/i.test(resource.pathname)) {
-      issues.push({ kind: "legacy-font-format", ...resource });
-    }
-    return issues;
+  findResourceIssues(layout.resources, {
+    ignoreRenderBlocking: ({ pathname }) =>
+      /^\/assets\/index-[a-zA-Z0-9_-]+\.css$/.test(pathname),
   });
 
 export const getRenderedContrastIssues = (
   layout: Layout
 ): NonNullable<RenderedAuditCheck["contrastIssues"]> =>
-  layout.contrasts.flatMap((contrast) =>
-    contrast.ratio < contrast.requiredRatio
-      ? [
-          {
-            kind: "low-text-contrast" as const,
-            confidence: "exact" as const,
-            ...contrast,
-          },
-        ]
-      : []
-  );
+  findContrastIssues(layout.contrasts).map((issue) => ({
+    ...issue,
+    confidence: "exact",
+  }));
 
 const getRenderedAuditPlan = (
   pagesResult: unknown,
@@ -1011,6 +878,7 @@ export const augmentAuditWithRenderedChecks = async ({
   };
   let generatedBuildMetrics: GeneratedBuildMetrics | undefined;
   let previewOrigin: string | undefined;
+  let previewRunning = false;
   const captureTimeout = timeouts?.capture ?? renderedAuditCaptureTimeout;
   const pageTimeout = timeouts?.page ?? renderedAuditPageTimeout;
   let overallTimeout = getRenderedAuditOverallTimeout(1, timeouts?.overall);
@@ -1045,6 +913,27 @@ export const augmentAuditWithRenderedChecks = async ({
           }),
       message: "Rendered audit was cancelled by the caller.",
     });
+  };
+  const stopRenderedPreview = async () => {
+    if (previewRunning === false) {
+      return;
+    }
+    previewRunning = false;
+    const previewStopStartedAt = Date.now();
+    try {
+      await stopPreview();
+    } catch (error) {
+      failures.push({
+        code: "RENDERED_AUDIT_PREVIEW_STOP_FAILED",
+        phase: "preview-stop",
+        retryable: true,
+        remediation:
+          "Run preview.status and preview.stop in the same MCP session before retrying.",
+        message: `Rendered audit could not stop its preview: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    } finally {
+      performance.previewStopMs += Date.now() - previewStopStartedAt;
+    }
   };
   const finish = async () => {
     const completedChecks = addCrossBreakpointGeometryIssues(checks);
@@ -1229,6 +1118,7 @@ export const augmentAuditWithRenderedChecks = async ({
       },
       { report: (message) => reportProgress?.(message) }
     );
+    previewRunning = true;
     const previewUrl = new URL(previewResult.url);
     if (previewUrl.hostname !== "127.0.0.1") {
       throw new Error(
@@ -1253,6 +1143,7 @@ export const augmentAuditWithRenderedChecks = async ({
         "Run preview.start separately to inspect the generated build failure, fix it, then retry the rendered audit.",
       message: `Rendered audit could not start: ${error instanceof Error ? error.message : String(error)}`,
     });
+    await stopRenderedPreview();
     return await finish();
   }
 
@@ -1692,21 +1583,7 @@ export const augmentAuditWithRenderedChecks = async ({
     );
   } finally {
     performance.captureWallMs = Date.now() - captureStartedAt;
-    const previewStopStartedAt = Date.now();
-    try {
-      await stopPreview();
-    } catch (error) {
-      failures.push({
-        code: "RENDERED_AUDIT_PREVIEW_STOP_FAILED",
-        phase: "preview-stop",
-        retryable: true,
-        remediation:
-          "Run preview.status and preview.stop in the same MCP session before retrying.",
-        message: `Rendered audit could not stop its preview: ${error instanceof Error ? error.message : String(error)}`,
-      });
-    } finally {
-      performance.previewStopMs = Date.now() - previewStopStartedAt;
-    }
+    await stopRenderedPreview();
   }
   return await finish();
 };

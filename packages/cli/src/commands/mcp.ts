@@ -11,7 +11,7 @@ import {
   getProjectBasicAuthCredentials,
   type BuilderNamespace,
 } from "@webstudio-is/project-build/contracts";
-import { diffPngFiles } from "@webstudio-is/project-build/visual";
+import { diffPngFiles } from "@webstudio-is/vision/diff";
 import {
   publicApiOperationRequiresServerSupport,
   publicApiOperations,

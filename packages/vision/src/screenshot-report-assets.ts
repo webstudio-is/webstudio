@@ -1,0 +1,252 @@
+export const screenshotReportHtml = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visual comparison</title>
+    <link rel="stylesheet" href="report.css" />
+    <script src="report.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <h1>Visual comparison</h1>
+      <p id="revisions"></p>
+      <div class="summary" id="summary"></div>
+      <div id="errors"></div>
+      <div id="comparisons"></div>
+    </main>
+    <script id="visual-report-data" type="application/json">
+      __VISUAL_REPORT_DATA__
+    </script>
+  </body>
+</html>
+`;
+
+export const screenshotReportClient = `const report = JSON.parse(
+  document.querySelector("#visual-report-data").textContent
+);
+
+const createElement = (tag, options = {}) => {
+  const element = document.createElement(tag);
+  if (options.className !== undefined) {
+    element.className = options.className;
+  }
+  if (options.text !== undefined) {
+    element.textContent = options.text;
+  }
+  return element;
+};
+
+const revisions = document.querySelector("#revisions");
+revisions.append(
+  createElement("code", { text: report.baselineLabel }),
+  " → ",
+  createElement("code", { text: report.currentLabel }),
+  \` in \${(report.durationMs / 1000).toFixed(1)}s\`
+);
+
+const statuses = ["changed", "added", "removed", "error", "unchanged"];
+const counts = Object.fromEntries(statuses.map((status) => [status, 0]));
+for (const comparison of report.comparisons) {
+  counts[comparison.status] += 1;
+}
+const summary = document.querySelector("#summary");
+for (const status of statuses) {
+  summary.append(
+    createElement("span", { text: \`\${status}: \${counts[status]}\` })
+  );
+}
+
+const errors = document.querySelector("#errors");
+for (const error of report.errors) {
+  errors.append(createElement("pre", { text: error }));
+}
+
+const comparisonRoot = document.querySelector("#comparisons");
+const important = report.comparisons.filter(
+  ({ status }) => status !== "unchanged"
+);
+if (important.length === 0) {
+  comparisonRoot.append(
+    createElement("p", { text: "No visual differences detected." })
+  );
+}
+
+const imageLabels = [
+  ["baselinePath", "Baseline", "Baseline for"],
+  ["currentPath", "Current", "Current rendering for"],
+  ["diffPath", "Diff", "Visual difference for"],
+  ["contextDiffPath", "Context diff", "Contextual visual difference for"],
+];
+for (const comparison of important) {
+  const article = createElement("article", {
+    className: \`comparison \${comparison.status}\`,
+  });
+  const header = createElement("header");
+  const identity = createElement("div");
+  identity.append(
+    createElement("h2", {
+      text: \`\${comparison.title} › \${comparison.name}\`,
+    }),
+    createElement("code", { text: comparison.id })
+  );
+  const result = createElement("div");
+  result.append(
+    createElement("span", {
+      className: "status",
+      text: comparison.status,
+    })
+  );
+  if (comparison.mismatchPercentage !== undefined) {
+    result.append(
+      createElement("span", {
+        text: \`\${(comparison.differentPixels ?? 0).toLocaleString()} pixels · \${comparison.mismatchPercentage.toFixed(4)}%\`,
+      })
+    );
+  }
+  header.append(identity, result);
+  article.append(header);
+  if (comparison.error !== undefined) {
+    article.append(createElement("pre", { text: comparison.error }));
+  }
+
+  const changes = comparison.textAnalysis?.changes ?? [];
+  if (changes.length > 0) {
+    const list = createElement("ul", { className: "text-changes" });
+    for (const change of changes) {
+      const item = createElement("li");
+      const label = createElement("strong", {
+        text: change.kind.replaceAll("_", " "),
+      });
+      const text =
+        change.text ?? change.currentText ?? change.baselineText ?? "";
+      item.append(label, text === "" ? "" : \`: \${text}\`);
+      list.append(item);
+    }
+    article.append(list);
+  }
+
+  const images = createElement("div", { className: "images" });
+  for (const [path, label, altPrefix] of imageLabels) {
+    if (comparison[path] === undefined) {
+      continue;
+    }
+    const figure = createElement("figure");
+    const image = createElement("img");
+    image.src = comparison[path];
+    image.alt = \`\${altPrefix} \${comparison.title} \${comparison.name}\`;
+    figure.append(createElement("figcaption", { text: label }), image);
+    images.append(figure);
+  }
+  article.append(images);
+  comparisonRoot.append(article);
+}
+`;
+
+export const screenshotReportCss = `:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  background: #f6f6f6;
+  color: #181818;
+}
+
+body {
+  margin: 0;
+  padding: 32px;
+}
+
+main {
+  max-width: 1600px;
+  margin: auto;
+}
+
+h1 {
+  margin: 0 0 8px;
+}
+
+.summary {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+
+.summary span,
+.status {
+  border-radius: 999px;
+  background: #e7e7e7;
+  padding: 4px 10px;
+}
+
+.comparison {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  margin: 20px 0;
+  overflow: hidden;
+}
+
+.comparison > header {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+}
+
+.comparison h2 {
+  font-size: 17px;
+  margin: 0 0 5px;
+}
+
+.comparison header > div:last-child {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.changed .status,
+.added .status,
+.removed .status {
+  background: #ffe39c;
+}
+
+.error .status {
+  background: #ffc4c4;
+}
+
+.images {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  border-top: 1px solid #ddd;
+}
+
+figure {
+  margin: 0;
+  min-width: 0;
+  padding: 12px;
+  border-right: 1px solid #ddd;
+}
+
+figcaption {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  border: 1px solid #eee;
+}
+
+pre {
+  overflow: auto;
+  padding: 18px;
+  color: #a40000;
+}
+
+.text-changes {
+  margin: 0 18px 18px;
+}
+`;
