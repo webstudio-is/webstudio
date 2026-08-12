@@ -36,8 +36,8 @@ export const applyAssetDataOverride = (
     "family" in detected.meta
       ? "font"
       : "width" in detected.meta && "height" in detected.meta
-      ? "image"
-      : "file";
+        ? "image"
+        : "file";
   const meta = mergeAssetMeta(type, detected.meta, override?.meta ?? {});
   if (meta === undefined) {
     throw new Error("Asset metadata override is invalid");
@@ -48,7 +48,7 @@ export const applyAssetDataOverride = (
     format:
       "family" in detected.meta
         ? detected.format
-        : override?.format ?? detected.format,
+        : (override?.format ?? detected.format),
     meta,
   };
 };

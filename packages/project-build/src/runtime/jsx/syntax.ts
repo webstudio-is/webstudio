@@ -176,8 +176,8 @@ const hasModuleSyntax = (source: string) => {
     const body = Array.isArray(ast.body)
       ? ast.body
       : isAstNode(ast.program) && Array.isArray(ast.program.body)
-      ? ast.program.body
-      : undefined;
+        ? ast.program.body
+        : undefined;
     if (body === undefined) {
       return false;
     }
