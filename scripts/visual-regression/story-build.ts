@@ -90,7 +90,7 @@ const createStoryBuildConfig = ({
     emptyOutDir: true,
     target: "es2022",
     reportCompressedSize: false,
-    chunkSizeWarningLimit: 5_000,
+    chunkSizeWarningLimit: 25_000,
     rollupOptions: {
       treeshake: false,
       input: path.join(visualRoot, "index.html"),
@@ -101,8 +101,8 @@ const createStoryBuildConfig = ({
       },
       output: {
         assetFileNames: "assets/[name]-[hash][extname]",
-        chunkFileNames: "chunks/[name]-[hash].js",
         entryFileNames: "harness-[hash].js",
+        inlineDynamicImports: true,
       },
     },
   },
