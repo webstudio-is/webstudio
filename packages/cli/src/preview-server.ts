@@ -6,6 +6,7 @@ import {
 } from "node:child_process";
 import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { basename, delimiter, dirname, join, parse, win32 } from "node:path";
+import { fileURLToPath } from "node:url";
 import detectPort from "detect-port";
 import getPort from "get-port";
 import pathKey from "path-key";
@@ -46,8 +47,19 @@ export type PreviewServerDependencies = {
   sleep: (ms: number) => Promise<void>;
   nodeExecPath: string;
   npmExecPath?: string;
+  processExecArgv: string[];
+  supervisorPath: string;
   platform: typeof process.platform;
 };
+
+const supervisorPath = fileURLToPath(
+  new URL(
+    import.meta.url.includes("/src/")
+      ? "./preview-process-supervisor.ts"
+      : "./preview-process-supervisor.js",
+    import.meta.url
+  )
+);
 
 export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   spawn,
@@ -81,6 +93,8 @@ export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   nodeExecPath: process.execPath,
   npmExecPath: process.env.npm_execpath,
+  processExecArgv: process.execArgv,
+  supervisorPath,
   platform: process.platform,
 };
 
@@ -269,13 +283,37 @@ export const startPreviewServer = (
     getPreviewStartArgs(options),
     dependencies
   );
+  const stdio = options.stdio ?? "inherit";
+  const supervisorStdio: StdioOptions = Array.isArray(stdio)
+    ? [...stdio.slice(0, 3), "ipc"]
+    : [stdio, stdio, stdio, "ipc"];
+  const supervisorExecArgv = dependencies.supervisorPath.endsWith(".ts")
+    ? dependencies.processExecArgv.filter(
+        (argument) =>
+          argument.startsWith("--conditions=") ||
+          argument.startsWith("--import=")
+      )
+    : [];
   const previewProcess = dependencies.spawn(
-    invocation.command,
-    invocation.args,
+    dependencies.nodeExecPath,
+    [
+      ...supervisorExecArgv,
+      dependencies.supervisorPath,
+      JSON.stringify({
+        command: invocation.command,
+        args: invocation.args,
+        cwd: options.cwd,
+        ...(options.cwd === undefined
+          ? {}
+          : {
+              ownerFile: join(dirname(options.cwd), previewProcessOwnerFile),
+            }),
+      }),
+    ],
     {
       cwd: options.cwd,
       ...(options.detached === undefined ? {} : { detached: options.detached }),
-      stdio: options.stdio ?? "inherit",
+      stdio: supervisorStdio,
       env: getPreviewEnv(options.cwd, {
         ...processEnv(),
         HOST: options.host,
@@ -350,6 +388,7 @@ export const arePreviewImageDomainsEqual = (
     left.every((value, index) => value === right[index]));
 
 export const previewBuildCacheMarker = ".webstudio-preview-build";
+export const previewProcessOwnerFile = "preview-process.json";
 
 const getPreviewProjectIdentity = async (
   cwd: string | undefined,

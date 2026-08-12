@@ -17,6 +17,7 @@ import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixt
 import {
   ensurePreviewDependencies,
   buildPreparedPreview,
+  createPreviewCleanupError,
   getNodeModulesSearchPaths,
   getPreviewBuildCacheKey,
   getPreviewProjectDir,
@@ -834,4 +835,22 @@ test("documents generated app dependency setup", () => {
   expect(epilogueText).toContain("reused across regenerations");
   expect(epilogueText).toContain("Do not add generated-preview dependencies");
   expect(epilogueText).toContain("check npm and network configuration");
+});
+
+test("reports the locked preview path, owned PID, and scoped recovery", async () => {
+  const error = await createPreviewCleanupError({
+    previewProjectDir: "/project/.webstudio/preview",
+    lockedPath: "/project/.webstudio/preview/app/routes.tsx",
+    cause: Object.assign(new Error("operation not permitted"), {
+      code: "EPERM",
+    }),
+    readOwnerFile: vi.fn(async () =>
+      JSON.stringify({ supervisorPid: 120, previewPid: 121 })
+    ) as never,
+  });
+
+  expect(error.message).toContain("/project/.webstudio/preview/app/routes.tsx");
+  expect(error.message).toContain("Recorded owned preview PIDs: 120, 121");
+  expect(error.message).toContain("taskkill.exe /pid 121 /t /f");
+  expect(error.message).toContain("kill -- -121");
 });

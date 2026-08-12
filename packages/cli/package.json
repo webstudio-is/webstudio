@@ -57,6 +57,7 @@
     "env-paths": "^3.0.0",
     "esbuild": "^0.25.3",
     "fast-deep-equal": "^3.1.3",
+    "fkill": "^10.0.3",
     "get-port": "^7.2.0",
     "immer": "^10.1.1",
     "nanoid": "^5.1.5",
