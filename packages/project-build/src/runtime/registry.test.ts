@@ -240,6 +240,17 @@ test("keeps generated runtime contracts in sync with the registry", () => {
   );
 });
 
+test.each(["pages.create", "pages.update", "pages.updateSettings"])(
+  "%s loads the page expression scope",
+  (operationId) => {
+    expect(getBuilderRuntimeOperation(operationId).readNamespaces).toEqual([
+      "pages",
+      "instances",
+      "dataSources",
+    ]);
+  }
+);
+
 test("requires an output schema for every runtime operation", () => {
   expect(
     builderRuntimeOperations

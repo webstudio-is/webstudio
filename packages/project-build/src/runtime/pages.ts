@@ -45,6 +45,7 @@ import {
   type SemanticValidationIssue,
 } from "./errors";
 import { getNamedExpressionValidationIssues } from "./expression-validation";
+import { bindExpressionInput } from "./expression-scope";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { paginateOutput, type PaginatedOutputInput } from "./output";
 import {
@@ -1032,6 +1033,37 @@ const normalizePageFieldsExpressionInputs = <
   meta: normalizePageMetaExpressionInputs(input.meta),
 });
 
+const bindPageFieldsExpressionInputs = <Input extends PageFieldsPatchInput>({
+  state,
+  input,
+  rootInstanceId,
+}: {
+  state: Pick<BuilderState, "instances" | "dataSources">;
+  input: Input;
+  rootInstanceId: string;
+}): Input => {
+  const bound: Input = { ...input };
+  if (typeof input.title === "string") {
+    bound.title = bindExpressionInput(state, rootInstanceId, input.title);
+  }
+  if (input.meta === undefined) {
+    return bound;
+  }
+  const meta: PageMetaPatchInput = { ...input.meta };
+  for (const name of pageMetaExpressionFields) {
+    const value = meta[name];
+    if (typeof value === "string") {
+      meta[name] = bindExpressionInput(state, rootInstanceId, value);
+    }
+  }
+  meta.custom = meta.custom?.map((customMeta) => ({
+    ...customMeta,
+    content: bindExpressionInput(state, rootInstanceId, customMeta.content),
+  }));
+  bound.meta = meta;
+  return bound;
+};
+
 const pageMetaInputBase = z.object({
   description: pageExpressionStringInput.optional(),
   language: pageExpressionStringInput.optional(),
@@ -1847,7 +1879,7 @@ export const createPageUpdatePayload = (
 };
 
 export const createPage = (
-  state: Pick<BuilderState, "pages">,
+  state: Pick<BuilderState, "pages" | "instances" | "dataSources">,
   input: z.infer<typeof pageCreateInput>,
   context: BuilderRuntimeContext
 ) => {
@@ -1888,16 +1920,21 @@ export const createPage = (
     );
   }
   const rootInstanceId = context.createId();
+  const boundInput = bindPageFieldsExpressionInputs({
+    state,
+    input: normalizedInput,
+    rootInstanceId,
+  });
   const page = createPageValue({
     pageId,
-    name: normalizedInput.name ?? input.name,
-    path: normalizedInput.path ?? input.path,
-    title: normalizedInput.title,
+    name: boundInput.name ?? input.name,
+    path: boundInput.path ?? input.path,
+    title: boundInput.title,
     rootInstanceId,
     meta:
-      normalizedInput.meta === undefined
+      boundInput.meta === undefined
         ? {}
-        : (pageMetaToPatchValue(normalizedInput.meta) as Page["meta"]),
+        : (pageMetaToPatchValue(boundInput.meta) as Page["meta"]),
   });
   const rootInstance = createPageRootInstance(rootInstanceId);
   return createRuntimeMutation({
@@ -1913,7 +1950,7 @@ export const createPage = (
 };
 
 export const updatePage = (
-  state: Pick<BuilderState, "pages">,
+  state: Pick<BuilderState, "pages" | "instances" | "dataSources">,
   input: z.infer<typeof pageUpdateInput>
 ) => {
   const pages = getRequiredPages(state);
@@ -1970,9 +2007,14 @@ export const updatePage = (
     getFolderOrThrow(pages, normalizedValues.parentFolderId);
     getParentFolderIdOrThrow(pages, page.id);
   }
+  const boundValues = bindPageFieldsExpressionInputs({
+    state,
+    input: normalizedValues,
+    rootInstanceId: page.rootInstanceId,
+  });
   return createRuntimeMutation({
     payload: createPageUpdatePayload({
-      input: normalizedValues,
+      input: boundValues,
       page,
       pages,
     }),
@@ -2065,7 +2107,7 @@ export const getPageSettingsUpdateData = ({
 };
 
 export const updatePageSettings = (
-  state: Pick<BuilderState, "pages">,
+  state: Pick<BuilderState, "pages" | "instances" | "dataSources">,
   input: z.infer<typeof pageSettingsUpdateInput>
 ) => {
   const pages = getRequiredPages(state);
