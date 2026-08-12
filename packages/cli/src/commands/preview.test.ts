@@ -1,5 +1,14 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  lstat,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chdir, cwd } from "node:process";
@@ -8,6 +17,7 @@ import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixt
 import {
   ensurePreviewDependencies,
   buildPreparedPreview,
+  createPreviewCleanupError,
   getNodeModulesSearchPaths,
   getPreviewBuildCacheKey,
   getPreviewProjectDir,
@@ -391,7 +401,10 @@ test("does not relink generated preview dependencies when already present", asyn
   await ensurePreviewDependencies("/tmp/project/.webstudio/preview", {
     access,
     lstat: vi.fn(async () => ({ isSymbolicLink: () => true })) as never,
-    readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+    readFile: vi.fn(
+      async () =>
+        '{"dependencies":{"@webstudio-is/sdk":"0.0.0-webstudio-version"}}'
+    ),
     symlink,
     platform: "linux",
   });
@@ -416,7 +429,10 @@ test("uses junctions for generated preview dependencies on windows", async () =>
     lstat: vi.fn(async () => {
       throw Object.assign(new Error("missing"), { code: "ENOENT" });
     }),
-    readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+    readFile: vi.fn(
+      async () =>
+        '{"dependencies":{"@webstudio-is/sdk":"0.0.0-webstudio-version"}}'
+    ),
     symlink,
     platform: "win32",
   });
@@ -455,12 +471,71 @@ test("installs isolated generated dependencies when the cli does not ship them",
   expect(execFile).toHaveBeenCalledWith(
     "npm",
     expect.arrayContaining(["install", "--legacy-peer-deps"]),
-    { cwd: "/tmp/project/.webstudio/preview" }
+    expect.objectContaining({
+      cwd: "/tmp/project/.webstudio/preview",
+      timeout: 120_000,
+    })
   );
   expect(writeFile).toHaveBeenCalledWith(
     "/tmp/project/.webstudio/preview/node_modules/.webstudio-preview-dependencies",
     expect.stringMatching(/^[a-f0-9]{64}$/)
   );
+});
+
+test("replaces a parent workspace dependency link for published previews", async () => {
+  const parentDir = await mkdtemp(
+    join(tmpdir(), "webstudio-parent-workspace-")
+  );
+  const previewProjectDir = join(parentDir, "task", ".webstudio", "preview");
+  const parentNodeModules = join(parentDir, "node_modules");
+  const packagePath = join(
+    "@webstudio-is",
+    "sdk-components-react-router",
+    "package.json"
+  );
+  const execFile = vi.fn(async (_command, args: string[]) => {
+    expect(args).toContain("--workspaces=false");
+    await mkdir(join(previewProjectDir, "node_modules", packagePath, ".."), {
+      recursive: true,
+    });
+    await writeFile(
+      join(previewProjectDir, "node_modules", packagePath),
+      '{"version":"0.289.0"}'
+    );
+    return { stdout: "", stderr: "" };
+  });
+
+  try {
+    await mkdir(join(parentNodeModules, packagePath, ".."), {
+      recursive: true,
+    });
+    await writeFile(
+      join(parentNodeModules, packagePath),
+      '{"version":"0.0.0-webstudio-version"}'
+    );
+    await mkdir(previewProjectDir, { recursive: true });
+    await writeFile(
+      join(previewProjectDir, "package.json"),
+      '{"dependencies":{"@webstudio-is/sdk-components-react-router":"0.289.0"}}'
+    );
+    await symlink(
+      parentNodeModules,
+      join(previewProjectDir, "node_modules"),
+      "dir"
+    );
+
+    await ensurePreviewDependencies(previewProjectDir, { execFile });
+
+    expect(await realpath(join(previewProjectDir, "node_modules"))).not.toBe(
+      await realpath(parentNodeModules)
+    );
+    expect(
+      (await lstat(join(previewProjectDir, "node_modules"))).isSymbolicLink()
+    ).toBe(false);
+    expect(execFile).toHaveBeenCalledOnce();
+  } finally {
+    await rm(parentDir, { recursive: true, force: true });
+  }
 });
 
 test("reuses the npm cli that launched webstudio on windows", async () => {
@@ -495,7 +570,49 @@ test("reuses the npm cli that launched webstudio on windows", async () => {
       "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
       "install",
     ]),
-    { cwd: "/tmp/project/.webstudio/preview" }
+    expect.objectContaining({ cwd: "/tmp/project/.webstudio/preview" })
+  );
+});
+
+test("uses npm-cli from an npx launcher and forwards a writable npm cache", async () => {
+  let installed = false;
+  const execFile = vi.fn(async () => {
+    installed = true;
+    return { stdout: "", stderr: "" };
+  });
+  const env = { npm_config_cache: "C:\\workspace\\.npm-cache" };
+
+  await ensurePreviewDependencies("C:/project/.webstudio/preview", {
+    access: vi.fn(async (path) => {
+      if (installed && path.startsWith("C:/project/.webstudio/preview")) {
+        return;
+      }
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    execFile,
+    lstat: vi.fn(async () => {
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+    nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+    npmExecPath:
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
+    platform: "win32",
+    env,
+    writeFile: vi.fn(async () => undefined),
+  });
+
+  expect(execFile).toHaveBeenCalledWith(
+    "C:\\Program Files\\nodejs\\node.exe",
+    expect.arrayContaining([
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "install",
+    ]),
+    {
+      cwd: "C:/project/.webstudio/preview",
+      env,
+      timeout: 120_000,
+    }
   );
 });
 
@@ -522,6 +639,32 @@ test("reports an actionable error when generated dependencies cannot install", a
   );
 });
 
+test("reports sanitized package-manager diagnostics for preview install failures", async () => {
+  const installError = Object.assign(new Error("npm install failed"), {
+    code: 1,
+    stderr:
+      "npm error code EACCES\nnpm error cache C:\\Users\\agent\\.npm authToken=private-token",
+  });
+
+  const promise = ensurePreviewDependencies("C:/project/.webstudio/preview", {
+    access: vi.fn(async () => {
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    execFile: vi.fn(async () => {
+      throw installError;
+    }),
+    lstat: vi.fn(async () => {
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+    platform: "win32",
+  });
+
+  await expect(promise).rejects.toThrow("npm error code EACCES");
+  await expect(promise).rejects.toThrow("authToken=[redacted]");
+  await expect(promise).rejects.not.toThrow("private-token");
+});
+
 test("rejects an incomplete generated dependency tree", async () => {
   await expect(
     ensurePreviewDependencies("/tmp/project/.webstudio/preview", {
@@ -544,6 +687,7 @@ test("materializes session data before previewing from session source", async ()
   const previousDirectory = cwd();
   const projectDir = join(tmpdir(), `webstudio-preview-test-${randomUUID()}`);
   let expectedPreviewProjectDir = "";
+  const progress: string[] = [];
   const prepareSessionDataFile = vi.fn(async () => {
     await mkdir(join(projectDir, ".webstudio"), { recursive: true });
     await writeFile(join(projectDir, ".webstudio", "data.json"), "{}");
@@ -566,6 +710,7 @@ test("materializes session data before previewing from session source", async ()
         prepareSessionDataFile,
         prebuildProject,
         ensureDependencies: vi.fn(async () => undefined),
+        reportProgress: (message) => progress.push(message),
       })
     ).resolves.toEqual({
       cwd: expectedPreviewProjectDir,
@@ -583,6 +728,12 @@ test("materializes session data before previewing from session source", async ()
     previewIdentity: true,
     sourceAssetsDirectory: join(expectedPreviewProjectDir, "..", "assets"),
   });
+  expect(progress).toEqual([
+    "materializing session project data",
+    "generating preview files",
+    "checking or installing generated preview dependencies (2 minute timeout)",
+    "generated preview project is ready",
+  ]);
 });
 
 test("refreshes an iterative generated project without replacing its directory", async () => {
@@ -684,4 +835,22 @@ test("documents generated app dependency setup", () => {
   expect(epilogueText).toContain("reused across regenerations");
   expect(epilogueText).toContain("Do not add generated-preview dependencies");
   expect(epilogueText).toContain("check npm and network configuration");
+});
+
+test("reports the locked preview path, owned PID, and scoped recovery", async () => {
+  const error = await createPreviewCleanupError({
+    previewProjectDir: "/project/.webstudio/preview",
+    lockedPath: "/project/.webstudio/preview/app/routes.tsx",
+    cause: Object.assign(new Error("operation not permitted"), {
+      code: "EPERM",
+    }),
+    readOwnerFile: vi.fn(async () =>
+      JSON.stringify({ supervisorPid: 120, previewPid: 121 })
+    ) as never,
+  });
+
+  expect(error.message).toContain("/project/.webstudio/preview/app/routes.tsx");
+  expect(error.message).toContain("Recorded owned preview PIDs: 120, 121");
+  expect(error.message).toContain("taskkill.exe /pid 121 /t /f");
+  expect(error.message).toContain("kill -- -121");
 });

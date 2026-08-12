@@ -87,7 +87,7 @@ webstudio insert-fragment --input-file .temp/insert-fragment.json
 
 ### Tool name convention
 
-MCP tool names are opaque strings, not JavaScript property access. A dot separates a namespace from its tool name, and every segment uses lowercase kebab-case. For example, `components.coverage-insert-next` is the `coverage-insert-next` tool in the `components` namespace. Pass the complete name as one CLI argument: `webstudio components.coverage-insert-next`.
+MCP tool names are opaque strings, not JavaScript property access. A dot separates a namespace from its tool name, and every segment uses lowercase kebab-case. For example, `components.coverage-insert-next` is the `coverage-insert-next` tool in the `components` namespace. Pass the complete name as one CLI argument: `webstudio components.coverage-insert-next`. Batch `mcp run` calls also accept the underscore form advertised by MCP protocol discovery, such as `components_coverage_insert_next`. Unknown names return near matches and direct you to `meta.index`.
 
 ### Readable fragment inputs
 
@@ -139,6 +139,7 @@ Rules:
 - Inside the Webstudio monorepo, replace `webstudio` in the examples above with `node packages/cli/local.js`, for example `node packages/cli/local.js meta.index`.
 - For a simple authored/styled section, run `meta.index`, then `meta.get-more-tools '{"tools":["insert-fragment"]}'`, then `insert-fragment`. Do not grep source files, dump full MCP resources, or write parser scripts first.
 - In `insert-fragment` JSX, use ``ws:style={css`...`}`` for Webstudio-native CSS, or use React-style object syntax such as `style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
+- `css` templates accept declarations and `@media` rules. Do not put selectors or unsupported at-rules such as `@keyframes` inside them. `animation` is the component namespace for JSX such as `<animation.AnimateChildren>`; it is not a callable CSS keyframes helper.
 - Do not access host globals or dynamic code APIs in JSX fragments, including `process`, `globalThis`, `eval`, `Function`, or `constructor`.
 - Use Webstudio prop names such as `class` and `for`; do not use React aliases `className` or `htmlFor`.
 - Use Webstudio actions for event/action props, for example `onClick={new ActionValue(["event"], expression\`console.log(event)\`)}`. Do not pass JavaScript functions such as `onClick={() => ...}`.
@@ -402,7 +403,7 @@ Use `node packages/cli/local.js mcp` from the Webstudio monorepo root for local 
 - Read ids before writing.
 - Prefer semantic tools over `apply-patch`.
 - Use `status` and `refresh` when cached namespaces may be stale. Pass `status {"verbose":true}` only when debugging full namespace arrays, freshness, compatibility, or diagnostic details.
-- A mutation is durable only when `meta.session.committed` is true.
+- Read `meta.session.commitStatus` before interpreting durability. Read-only results report `not-applicable` and retain `committed:false` for compatibility; dry-run plans report `planned`; failed mutations report `failed`; no-op mutations report `unchanged`; durable mutations report `committed` with `meta.session.committed:true`.
 - For visual/design work, verify the rendered result with vision before finishing.
 
 ## Vision Verification Loop
@@ -411,23 +412,31 @@ Vision-capable AI can use MCP to see what it is building:
 
 1. Make focused page/content/style changes with semantic MCP tools.
 2. Call preview.start once to keep the iterative generated site running. In shell-driven workflows, run preview.start, screenshot, and preview.stop inside one `webstudio mcp run` call so they share the same preview owner.
-3. `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
-4. Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
-5. If dependency installation fails, check npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
-6. After MCP mutations, path-based screenshots regenerate the current session in place, wait for its exact project version, and normally reload the route. The server and browser remain alive. From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running generated site without starting it. Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview; a separate one-shot `single-op-call` process does not own another process's preview controller.
-7. For multi-page work, capture each changed page by path through the same preview server, for example screenshot({ path: "/" }), screenshot({ path: "/pricing" }), and screenshot({ path: "/about" }). The screenshot tool navigates directly to the requested route; no browser click navigation is required.
-8. For responsive work, call list-breakpoints first, then capture screenshots at viewport widths based on the Builder breakpoints plus a narrow mobile and desktop width.
-9. Call screenshot with { path: "/" } or the changed page path and viewport such as { width: 375, height: 812 } and { width: 1440, height: 900 }. For an existing preview in another process, call screenshot with { baseUrl: "http://127.0.0.1:5177", path: "/" }. Use waitForSelector when the page has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
-10. When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir for each page/viewport pair. Add expectedText when a specific visible phrase must be present; its assertions report pass/fail plus found and missing text. Add expectedVisual to set pass/fail limits for mismatch percentage, the number of changed regions, or an overall dominant color/brightness direction.
-11. Read screenshot.diff textAnalysis: it reports OCR status plus text that appeared, disappeared, moved, changed content, or changed font/style geometry. If OCR is unavailable, expectedText assertions fail and textAnalysis reports why; ask the user for permission to install Tesseract, then call vision.install-ocr with { "confirm": true }, or rely on visual inspection.
-12. Inspect every viewport PNG and any diff artifacts with vision, then compare layout, OCR text evidence, color, spacing, imagery, and responsive framing against the user intent.
-13. If the screenshot does not match, apply another focused mutation and repeat screenshot verification.
+3. Read `preview.status.stale` before relying on generated output. When present, `renderedProjectVersion` identifies the last project version materialized into the preview; a stale preview refreshes automatically on the next managed screenshot or `preview.start` call.
+4. `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
+5. Session previews download missing project assets into `.webstudio/assets`. If `PREVIEW_ASSET_DOWNLOAD_FAILED` occurs, restore network and project asset access, then retry `preview.start`.
+6. Dependency installation honors `npm_config_cache`, including a caller-provided writable cache on Windows.
+7. Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
+8. If dependency installation fails, the error includes sanitized npm diagnostics. Check the reported npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
+9. After MCP mutations, path-based screenshots regenerate the current session in place, wait for its exact project version, and normally reload the route. The server and browser remain alive. From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running generated site without starting it. Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview; a separate one-shot `single-op-call` process does not own another process's preview controller.
+10. For multi-page work, capture each changed page by path through the same preview server, for example screenshot({ path: "/" }), screenshot({ path: "/pricing" }), and screenshot({ path: "/about" }). The screenshot tool navigates directly to the requested route; no browser click navigation is required.
+11. For responsive work, call list-breakpoints first, then capture screenshots at viewport widths based on the Builder breakpoints plus a narrow mobile and desktop width.
+12. Call screenshot with { path: "/" } or the changed page path and viewport such as { width: 375, height: 812 } and { width: 1440, height: 900 }. For an existing preview in another process, call screenshot with { baseUrl: "http://127.0.0.1:5177", path: "/" }. Use waitForSelector when the page has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
+13. An explicit occupied `port` fails immediately with `PREVIEW_PORT_IN_USE`. To capture a generated site already running in another process, pass its `baseUrl` with `path`; otherwise choose another port.
+14. Automatic browser discovery checks system installations, configured browser paths, and Chromium installations in the Playwright browser cache.
+15. The screenshot timeout bounds browser capture after the preview is ready. A timeout returns `SCREENSHOT_TIMEOUT`, resets the reusable browser session, and releases the shared preview lifecycle for cleanup.
+16. When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir for each page/viewport pair. Add expectedText when a specific visible phrase must be present; its assertions report pass/fail plus found and missing text. Add expectedVisual to set pass/fail limits for mismatch percentage, the number of changed regions, or an overall dominant color/brightness direction.
+17. Read screenshot.diff textAnalysis: it reports OCR status plus text that appeared, disappeared, moved, changed content, or changed font/style geometry. If OCR is unavailable, expectedText assertions fail and textAnalysis reports why; ask the user for permission to install Tesseract, then call vision.install-ocr with { "confirm": true }, or rely on visual inspection.
+18. Inspect every viewport PNG and any diff artifacts with vision, then compare layout, OCR text evidence, color, spacing, imagery, and responsive framing against the user intent.
+19. If the screenshot does not match, apply another focused mutation and repeat screenshot verification.
 
 Generated app setup:
 
 - `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
+- Session previews download missing project assets into `.webstudio/assets`. If `PREVIEW_ASSET_DOWNLOAD_FAILED` occurs, restore network and project asset access, then retry `preview.start`.
+- Dependency installation honors `npm_config_cache`, including a caller-provided writable cache on Windows.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
-- If dependency installation fails, check npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
+- If dependency installation fails, the error includes sanitized npm diagnostics. Check the reported npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
 
 ## MCP argument examples
 
@@ -874,6 +883,42 @@ source of truth. For tools with no required arguments, pass `{}`.
 }
 ```
 
+### report-issue
+
+```json
+{
+  "trigger": "user-requested",
+  "category": "schema-or-docs-mismatch",
+  "deduplicationKey": "update-props-input-contract",
+  "title": "fix: Clarify the update-props input contract",
+  "agent": {
+    "client": "Codex",
+    "provider": "OpenAI",
+    "model": "gpt-5.6-sol",
+    "reasoningEffort": "medium"
+  },
+  "report": {
+    "userStory": "As a Webstudio user, I want routine MCP edits to complete without corrective retries.",
+    "summary": "A documented operation required a corrected retry.",
+    "attemptedWorkflow": [
+      "Inspect the target component.",
+      "Attempt the update with the advertised tool."
+    ],
+    "expectedBehavior": "The documented input should be accepted.",
+    "actualResult": "The initial call returned BAD_REQUEST.",
+    "recoveryAttempts": [
+      "Inspect the schema and retry with corrected input nesting."
+    ],
+    "userImpact": "The edit required extra tool calls.",
+    "technicalContext": "The update-props input shape was ambiguous.",
+    "acceptanceCriteria": [
+      "The exposed schema matches runtime validation.",
+      "A regression test covers the workflow."
+    ]
+  }
+}
+```
+
 ### insert-component
 
 ```json
@@ -1073,6 +1118,40 @@ source of truth. For tools with no required arguments, pass `{}`.
       }
     }
   ]
+}
+```
+
+### list-css-variables
+
+```json
+{
+  "withUsage": true
+}
+```
+
+### define-css-variable
+
+```json
+{
+  "vars": {
+    "--color-primary": "#2d3748",
+    "--color-accent": "#e53e3e",
+    "--space-card": "1.5rem"
+  },
+  "overwrite": true
+}
+```
+
+### delete-css-variable
+
+```json
+{
+  "names": [
+    "--color-primary",
+    "--color-accent",
+    "--space-card"
+  ],
+  "force": true
 }
 ```
 
@@ -1287,6 +1366,7 @@ source of truth. For tools with no required arguments, pass `{}`.
   "scopeInstanceId": "body-id",
   "dataSourceName": "posts",
   "query": {
+    "result": "many",
     "where": {
       "all": [
         {
@@ -1296,18 +1376,17 @@ source of truth. For tools with no required arguments, pass `{}`.
           "operator": "eq",
           "value": {
             "type": "literal",
-            "value": "json"
+            "value": "md"
           }
         },
         {
           "field": [
-            "properties",
-            "kind"
+            "folderId"
           ],
           "operator": "eq",
           "value": {
             "type": "literal",
-            "value": "post"
+            "value": "folder-id"
           }
         },
         {
@@ -1316,7 +1395,10 @@ source of truth. For tools with no required arguments, pass `{}`.
             "draft"
           ],
           "operator": "ne",
-          "value": "true"
+          "value": {
+            "type": "literal",
+            "value": true
+          }
         }
       ]
     },
@@ -1335,7 +1417,39 @@ source of truth. For tools with no required arguments, pass `{}`.
         "direction": "asc"
       }
     ],
-    "limit": "20"
+    "limit": {
+      "type": "literal",
+      "value": 20
+    },
+    "offset": {
+      "type": "literal",
+      "value": 0
+    },
+    "output": {
+      "mode": "fields",
+      "includeMetadata": false,
+      "fields": [
+        [
+          "properties",
+          "title"
+        ],
+        [
+          "properties",
+          "slug"
+        ],
+        [
+          "properties",
+          "publishedAt"
+        ],
+        [
+          "properties",
+          "excerpt"
+        ]
+      ]
+    },
+    "content": {
+      "mode": "none"
+    }
   }
 }
 ```
@@ -1346,6 +1460,7 @@ source of truth. For tools with no required arguments, pass `{}`.
   "scopeInstanceId": "body-id",
   "dataSourceName": "post",
   "query": {
+    "result": "one",
     "where": {
       "all": [
         {
@@ -1355,55 +1470,64 @@ source of truth. For tools with no required arguments, pass `{}`.
           "operator": "eq",
           "value": {
             "type": "literal",
-            "value": "json"
+            "value": "md"
+          }
+        },
+        {
+          "field": [
+            "folderId"
+          ],
+          "operator": "eq",
+          "value": {
+            "type": "literal",
+            "value": "folder-id"
           }
         },
         {
           "field": [
             "properties",
-            "kind"
+            "slug"
           ],
           "operator": "eq",
-          "value": {
-            "type": "literal",
-            "value": "post"
-          }
+          "value": "system.params.slug"
         },
         {
-          "any": [
-            {
-              "field": [
-                "properties",
-                "slug"
-              ],
-              "operator": "eq",
-              "value": "system.params.slug"
-            },
-            {
-              "field": [
-                "properties",
-                "id"
-              ],
-              "operator": "eq",
-              "value": "system.params.slug"
-            }
-          ]
+          "field": [
+            "properties",
+            "draft"
+          ],
+          "operator": "ne",
+          "value": {
+            "type": "literal",
+            "value": true
+          }
         }
       ]
     },
-    "limit": "1",
     "output": {
       "mode": "fields",
       "includeMetadata": false,
       "fields": [
         [
           "properties",
-          "body"
+          "title"
+        ],
+        [
+          "properties",
+          "publishedAt"
+        ],
+        [
+          "properties",
+          "excerpt"
+        ],
+        [
+          "properties",
+          "featureImage"
         ]
       ]
     },
     "content": {
-      "mode": "none"
+      "mode": "markdown-body-ref"
     }
   }
 }
@@ -1458,8 +1582,16 @@ source of truth. For tools with no required arguments, pass `{}`.
 ```json
 {
   "query": {
+    "result": "one",
     "where": {
       "all": [
+        {
+          "field": [
+            "extension"
+          ],
+          "operator": "eq",
+          "value": "md"
+        },
         {
           "field": [
             "properties",
@@ -1470,7 +1602,16 @@ source of truth. For tools with no required arguments, pass `{}`.
         }
       ]
     },
-    "limit": 1,
+    "output": {
+      "mode": "fields",
+      "includeMetadata": false,
+      "fields": [
+        [
+          "properties",
+          "title"
+        ]
+      ]
+    },
     "content": {
       "mode": "markdown-body-ref",
       "maxBytes": 1048576
@@ -1772,6 +1913,200 @@ source of truth. For tools with no required arguments, pass `{}`.
 }
 ```
 
+## Content Engine reference
+
+Assets resources query Markdown and JSON files stored in the Assets panel. The Builder and Webstudio MCP use the same structured query contract.
+
+### MCP workflow
+
+Use these tools in order when creating or changing an Assets resource:
+
+1. Call `get-asset-field-catalog` to inspect standard fields and the fields currently observed in Markdown frontmatter and JSON files.
+2. Call `validate-asset-query` to check the query structure, field paths, operators, and bounded operation counts.
+3. Call `preview-asset-query` with concrete values and inspect its results and diagnostics.
+4. Save the query with `create-assets-resource` or `update-assets-resource`.
+5. Inspect saved queries with `list-assets-resources` or `get-assets-resource`. Use `delete-resource` to remove an obsolete resource.
+
+Omit `query` when creating a resource to use the default many-result query for asset URLs and image dimensions. Set `values.query` to `null` when updating a resource to restore that default.
+
+### Fields
+
+Every asset has the standard fields below. Markdown frontmatter and JSON root fields appear under `properties`, for example `properties.slug` or `properties.author.name`. The field catalog reports their observed types, occurrence counts, optionality, and mixed-type state. A JSON content file must contain an object at its root.
+
+| Field | Observed type |
+| --- | --- |
+| `id` | `string` |
+| `url` | `string` |
+| `width` | `number` |
+| `height` | `number` |
+| `name` | `string` |
+| `description` | `string` |
+| `path` | `string` |
+| `key` | `string` |
+| `folderId` | `string` |
+| `extension` | `string` |
+| `mimeType` | `string` |
+| `size` | `number` |
+| `createdAt` | `string` |
+| `revision` | `string` |
+| `excerpt` | `string` |
+
+### Filters
+
+Put conditions under `where.all` when every condition must match, or under `where.any` when at least one condition must match. Groups can be nested. A field path is an array such as `["properties", "slug"]`.
+
+| Operator | Builder label | Compatible observed types |
+| --- | --- | --- |
+| `eq` | equals | `null`, `boolean`, `number`, `string`, `object`, `array` |
+| `ne` | does not equal | `null`, `boolean`, `number`, `string`, `object`, `array` |
+| `contains` | contains | `string`, `array` |
+| `startsWith` | starts with | `string` |
+| `endsWith` | ends with | `string` |
+| `gt` | greater than | `number`, `string` |
+| `gte` | greater than or equal | `number`, `string` |
+| `lt` | less than | `number`, `string` |
+| `lte` | less than or equal | `number`, `string` |
+| `in` | is one of | `null`, `boolean`, `number`, `string`, `object`, `array` |
+| `exists` | exists | `null`, `boolean`, `number`, `string`, `object`, `array` |
+| `isEmpty` | is empty | `string`, `object`, `array` |
+
+The field catalog determines which operators fit a schemaless `properties` field. `exists` and `isEmpty` take a boolean. `in` takes an array. Other operators take one JSON value.
+
+### Saved values and preview values
+
+Queries saved with `create-assets-resource` or `update-assets-resource` accept expressions for filter values, limits, and offsets. Wrap fixed values as literals. Pass a JavaScript expression string only when the value must be resolved at runtime:
+
+```json
+{
+  "where": {
+    "all": [
+      { "field": ["extension"], "operator": "eq", "value": { "type": "literal", "value": "md" } },
+      { "field": ["properties", "slug"], "operator": "eq", "value": "system.params.slug" }
+    ]
+  },
+  "limit": { "type": "literal", "value": 1 },
+  "offset": { "type": "literal", "value": 0 }
+}
+```
+
+`validate-asset-query` and `preview-asset-query` execute a concrete query. Pass resolved JSON values such as `"hello-world"` and `1`, not expression wrappers or expression code.
+
+### Sorting and pagination
+
+Each sort has a field path and an `asc` or `desc` direction. Add `id` as the final sort when equal values must keep a stable order. `limit` defaults to 20 and `offset` defaults to 0. Static filters, limits, and offsets should use literal values. Use expressions only for runtime values such as `system.params.slug`.
+
+### Result modes
+
+| Value | Behavior |
+| --- | --- |
+| `many` | Returns every matching item up to the limit. Use it for listings. |
+| `one` | Returns one item or `null`. It fails when more than one document matches. |
+| `first` | Returns the first sorted item or `null`. The query must include an explicit sort. |
+| `last` | Returns the last sorted item or `null`. The query must include an explicit sort. |
+
+Every returned item includes `id`. In `preview-asset-query`, a many result has `data.items`, `data.totalCount`, and `data.hasMore`; a single result has `data.item` and `data.totalCount`. A saved Assets resource exposes a many result as an ID-keyed map at `<dataSource>.data`, with `totalCount` and `hasMore` at `<dataSource>.meta`. It exposes a single result as the item or `null` directly at `<dataSource>.data`, with `totalCount` at `<dataSource>.meta`.
+
+### Output modes
+
+| Value | Behavior |
+| --- | --- |
+| `all` | Returns every indexed property and the excerpt. Use selected fields when the page needs only part of a document. |
+| `base` | Returns no `properties` or excerpt. Set `includeMetadata` to include the standard file metadata. |
+| `fields` | Returns the paths in `fields`. Set `includeMetadata` separately when the page also needs standard file metadata. |
+
+Choose `fields` and disable `includeMetadata` when the page needs only selected values. Fields used only for static filtering or sorting do not need to be returned. When enabled, `includeMetadata` adds `name`, `description`, `path`, `key`, `folderId`, `extension`, `mimeType`, `size`, `createdAt`, `revision`. Every result includes `id`.
+
+### Content modes
+
+| Value | Behavior |
+| --- | --- |
+| `none` | Returns no file content. Use this for listings and any query that only needs fields or metadata. |
+| `full` | Embeds the complete UTF-8 file content in the content database. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected file is larger. |
+| `range` | Embeds a byte range selected by `offset` and `length` in the content database. `length` cannot exceed 256 KiB. |
+| `markdown-body-ref` | Stores a reference to a Markdown body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected source file is larger. |
+
+Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for article pages. It keeps article bodies out of the published content database and resolves relative Markdown links when the selected body is loaded.
+
+### Preview diagnostics
+
+`preview-asset-query` returns renderable results in `data` and non-bindable statistics in `__diagnostics__`. The diagnostic `scope` is always `query-preview`. Read the two capacity scopes separately:
+
+- `query` measures the temporary database for the query being previewed.
+- `database` measures the merged database for all reachable Assets resources in the project.
+
+Only `database.usedBytes` counts toward `database.maxBytes`. Do not add the query and database sizes together.
+
+| Diagnostic | Meaning |
+| --- | --- |
+| `usedBytes` | Bytes included after applying the database limit. |
+| `maxBytes` | Maximum bytes allowed for the scope. |
+| `unboundedBytes` | Bytes the scope would use without the database limit. |
+| `includedDocumentCount` | Documents included in the compiled database. |
+| `omittedDocumentCount` | Documents omitted from the compiled database. |
+| `omissionReason` | Why documents were omitted: `size` or `unavailable`. |
+| `truncated` | Whether the compiled database omitted content. |
+| `artifacts` | Optional query and merged compiled artifacts used by detailed Builder diagnostics. |
+| `unresolved` | Optional query result before document references are resolved. It helps inspect the authored `$ref` values behind resolved output. |
+
+If the merged database approaches its limit, remove duplicate reachable resources first. Then remove unused output fields or narrow the candidate documents. Prefer `markdown-body-ref` over embedded `full` content for Markdown articles.
+
+### Document references
+
+A document reference is an exact object with one string field:
+
+```json
+{ "$ref": "<relative-path>[#<fragment>]" }
+```
+
+Markdown references can appear in YAML frontmatter. JSON references can appear anywhere in the document. Either format can reference Markdown or JSON. References do not run inside a Markdown body.
+
+| Reference | Inserted value |
+| --- | --- |
+| `../authors/ada.json` | The complete JSON value. |
+| `../authors/ada.json#/profile/name` | The value at JSON Pointer `/profile/name`. |
+| `../authors/ada.md` | The complete Markdown source, including frontmatter. |
+| `../authors/ada.md#frontmatter` | The Markdown frontmatter object. |
+| `../authors/ada.md#body` | The Markdown body without frontmatter. |
+
+Resolve paths relative to the file containing the reference. JSON Pointer uses `~1` for `/` and `~0` for `~` in property names. URI-encode filename characters that have URL syntax, such as `%23` for `#`. Missing files, invalid fragments, and reference cycles fail instead of returning partial data.
+
+### Query limits
+
+| Limit | Value |
+| --- | --- |
+| Query request | 512 KiB |
+| Filter conditions | 32 |
+| Filter nesting depth | 8 |
+| Sort fields | 8 |
+| Selected output fields | 256 |
+| Field path depth | 9 |
+| Default result count | 20 |
+| Maximum result count | 1000 |
+| Candidate documents | 1000 |
+| Serialized query result | 16 MiB |
+| Published content database | 500 KiB |
+
+### Content limits
+
+| Limit | Value |
+| --- | --- |
+| Markdown frontmatter | 64 KiB |
+| Frontmatter nesting depth | 8 |
+| Frontmatter fields | 256 |
+| Frontmatter string | 16 KiB |
+| JSON file | 1 MiB |
+| JSON nesting depth | 8 |
+| JSON fields | 256 |
+| JSON string | 16 KiB |
+| Indexed properties per document | 64 KiB |
+| Generated excerpt | 2 KiB |
+| Loaded file | 1 MiB |
+| Loaded content per query | 2 MiB |
+| Loaded files per query | 20 |
+| Loaded range | 256 KiB |
+| Concurrent content reads | 8 |
+
+
 ## Screenshot Verification
 
 Inside a long-running MCP server, call preview.start once, then use screenshot({ path, viewport }) for fast repeated checks across multiple pages. Iterative mode is the default: after MCP mutations, path screenshots regenerate changed files and reload the requested route while keeping the server and browser alive. Use mode: "production" only for release-like verification. From one-shot shell calls or another process, use screenshot({ baseUrl, path, viewport }) to capture an already-running preview/site without generating, building, starting, or restarting preview. Use path values such as "/", "/pricing", or "/about" to capture specific generated routes. For responsive work, read list-breakpoints and capture one familiar device viewport inside each Builder breakpoint range before using vision. Screenshot waits for load by default, then fonts and two layout frames; pass waitForSelector for app readiness, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout for final settling. When a baseline exists, use screenshot.diff for changed regions, OCR textAnalysis, and diff artifacts on each baseline/current screenshot pair. Outside MCP, use `webstudio screenshot --path /pricing --output pricing.png` for one temporary generated preview capture, or keep `webstudio preview` running and pass its absolute URL to `webstudio screenshot` for repeated captures.
@@ -1779,7 +2114,7 @@ Inside a long-running MCP server, call preview.start once, then use screenshot({
 ## Related
 
 - [CLI](cli.md) – Install and use the Webstudio command-line interface
-- [Commands and search](foundations/commands-and-search.md) – Run Builder commands from the keyboard
-- [Shortcuts](foundations/shortcuts.md) – Reorder and edit instances without drag-and-drop
+- [Content Engine](foundations/content-engine.md) – Build a file-based site with Markdown and Assets queries
+- [Content Engine reference](foundations/content-engine-reference.md) – Check query fields, modes, diagnostics, references, and limits
 - [Share links](foundations/share-links.md) – Grant the access used to link a Project
 - [Publishing and custom domains](foundations/publishing-and-custom-domains.md) – Publish the completed Project

@@ -4,6 +4,7 @@ import {
   __testing__,
   $hasPendingResources,
   $resourceDiagnosticsCache,
+  $resourcePerformanceCache,
   $resourcesCache,
   getResourceKey,
   loadResourceDiagnostics,
@@ -39,10 +40,14 @@ test("removes obsolete queued requests but keeps cached results", () => {
   $resourcesCache.get().set(key, { stale: true });
   expect($hasPendingResources.get()).toBe(true);
 
+  const resourceCacheListener = vi.fn();
+  const unlisten = $resourcesCache.listen(resourceCacheListener);
   queueResources([]);
 
   expect($resourcesCache.get().has(key)).toBe(true);
   expect($hasPendingResources.get()).toBe(false);
+  expect(resourceCacheListener).not.toHaveBeenCalled();
+  unlisten();
 });
 
 test("dispatches resources synchronously", async () => {
@@ -405,7 +410,7 @@ test("drains bounded batches without an additional delay", async () => {
   expect(JSON.parse(String(fetch.mock.calls[1][1]?.body))).toHaveLength(1);
 });
 
-test("loads detailed Assets diagnostics only on demand", async () => {
+test("loads detailed Assets diagnostics and performance only on demand", async () => {
   const request: ResourceRequest = {
     name: "assets",
     method: "post",
@@ -436,8 +441,24 @@ test("loads detailed Assets diagnostics only on demand", async () => {
     unresolved: { items: [], totalCount: 0, hasMore: false },
   };
   const fetch = vi.fn<typeof globalThis.fetch>(async () =>
-    Response.json([[key, { data: {}, __diagnostics__: diagnostics }]])
+    Response.json([
+      [
+        key,
+        {
+          data: {},
+          __diagnostics__: diagnostics,
+          __performance__: {
+            serverDurationMs: 75,
+            assetQuery: {
+              phases: { diagnosticsPreparation: 50 },
+            },
+          },
+        },
+      ],
+    ])
   );
+  const resourceCacheListener = vi.fn();
+  const unlisten = $resourcesCache.listen(resourceCacheListener);
 
   const first = loadResourceDiagnostics(request, fetch);
   const second = loadResourceDiagnostics(request, fetch);
@@ -450,6 +471,49 @@ test("loads detailed Assets diagnostics only on demand", async () => {
   );
   expect(fetch).toHaveBeenCalledOnce();
   expect($resourceDiagnosticsCache.get().get(key)).toEqual(diagnostics);
+  expect($resourcePerformanceCache.get().get(key)).toMatchObject({
+    serverDurationMs: 75,
+    loaderDurationMs: expect.any(Number),
+    assetQuery: {
+      phases: { diagnosticsPreparation: 50 },
+    },
+  });
+  expect(resourceCacheListener).not.toHaveBeenCalled();
+  unlisten();
+});
+
+test("caches performance metrics separately from resource values", async () => {
+  const request: ResourceRequest = {
+    name: "Posts",
+    method: "get",
+    url: "https://example.com/performance",
+    searchParams: [],
+    headers: [],
+  };
+  const key = getResourceKey(request);
+  const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+    Response.json([
+      [
+        key,
+        {
+          data: { title: "Post" },
+          __performance__: { serverDurationMs: 42, responseBytes: 128 },
+        },
+      ],
+    ])
+  );
+
+  queueResources([request]);
+  await loadResources(fetch);
+
+  expect($resourcesCache.get().get(key)).toEqual({
+    data: { title: "Post" },
+  });
+  expect($resourcePerformanceCache.get().get(key)).toMatchObject({
+    serverDurationMs: 42,
+    responseBytes: 128,
+    loaderDurationMs: expect.any(Number),
+  });
 });
 
 test("discards stale diagnostics after invalidation", async () => {
@@ -467,10 +531,16 @@ test("discards stale diagnostics after invalidation", async () => {
   const firstResponse = new Promise<Response>((resolve) => {
     resolveFirst = resolve;
   });
-  const firstFetch = vi.fn<typeof globalThis.fetch>(() => firstResponse);
+  let firstSignal: AbortSignal | undefined;
+  const firstFetch = vi.fn<typeof globalThis.fetch>((_input, init) => {
+    firstSignal = init?.signal ?? undefined;
+    return firstResponse;
+  });
   const first = loadResourceDiagnostics(request, firstFetch);
+  await Promise.resolve();
 
   queueInvalidatedResource(request);
+  expect(firstSignal?.aborted).toBe(true);
   const freshDiagnostics = {
     scope: "query-preview",
     query: {
@@ -503,6 +573,79 @@ test("discards stale diagnostics after invalidation", async () => {
   await second;
 
   expect($resourceDiagnosticsCache.get().get(key)).toEqual(freshDiagnostics);
+});
+
+test("does not retain a diagnostics request after a synchronous fetch failure", async () => {
+  const request: ResourceRequest = {
+    name: "assets",
+    method: "post",
+    url: "/$resources/assets",
+    searchParams: [],
+    headers: [],
+    body: { query: {} },
+  };
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  const fetch = vi.fn<typeof globalThis.fetch>(() => {
+    throw new Error("failed synchronously");
+  });
+
+  await loadResourceDiagnostics(request, fetch);
+  await loadResourceDiagnostics(request, fetch);
+
+  expect(fetch).toHaveBeenCalledTimes(2);
+  error.mockRestore();
+});
+
+test("discards detailed diagnostics that settle after reset", async () => {
+  const request: ResourceRequest = {
+    name: "assets",
+    method: "post",
+    url: "/$resources/assets",
+    searchParams: [],
+    headers: [],
+    body: { query: {} },
+  };
+  const key = getResourceKey(request);
+  let resolveResponse: (response: Response) => void = () => {};
+  const response = new Promise<Response>((resolve) => {
+    resolveResponse = resolve;
+  });
+  const fetch = vi.fn<typeof globalThis.fetch>(() => response);
+  const pending = loadResourceDiagnostics(request, fetch);
+
+  reset();
+  resolveResponse(
+    Response.json([
+      [
+        key,
+        {
+          data: {},
+          __diagnostics__: {
+            scope: "query-preview",
+            query: {
+              usedBytes: 1,
+              maxBytes: 1,
+              unboundedBytes: 1,
+              includedDocumentCount: 1,
+              omittedDocumentCount: 0,
+              truncated: false,
+            },
+            database: {
+              usedBytes: 1,
+              maxBytes: 1,
+              unboundedBytes: 1,
+              includedDocumentCount: 1,
+              omittedDocumentCount: 0,
+              truncated: false,
+            },
+          },
+        },
+      ],
+    ])
+  );
+  await pending;
+
+  expect($resourceDiagnosticsCache.get().has(key)).toBe(false);
 });
 
 test("keeps loading distinct from a confirmed empty Assets result", async () => {

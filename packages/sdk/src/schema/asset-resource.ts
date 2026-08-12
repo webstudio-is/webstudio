@@ -6,6 +6,7 @@ import {
 import { isQueryExpression } from "@webstudio-is/query-builder";
 import {
   assetQueryFieldPath,
+  assetQueryResultMode,
   assetQueryOperators,
   assetQuerySort,
   defaultAssetResourceOutputSelection,
@@ -75,6 +76,7 @@ export const assetQueryOffsetExpression = z.union([
 ]);
 
 export const assetQueryResourceConfigurationInput = z.strictObject({
+  result: assetQueryResultMode.default("many"),
   where: assetQueryWhereExpression
     .describe(
       "A boolean filter tree. Use { all: [...] } for AND and { any: [...] } for OR; leaves contain field, operator, and value."
@@ -98,6 +100,9 @@ export const assetQueryResourceConfigurationInput = z.strictObject({
 });
 
 export const assetQueryResourceConfigurationPatchInput = z.strictObject({
+  result: assetQueryResourceConfigurationInput.shape.result
+    .removeDefault()
+    .optional(),
   where: assetQueryResourceConfigurationInput.shape.where
     .removeDefault()
     .optional(),

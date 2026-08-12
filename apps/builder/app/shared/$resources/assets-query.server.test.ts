@@ -38,11 +38,56 @@ describe("configured Assets system resource", () => {
     const last = {
       data: { items: [{ id: "updates" }], totalCount: 1, hasMore: false },
     };
-    dependencies.previewProjectAssetQueries.mockResolvedValue([
-      { status: "fulfilled", value: first },
-      { status: "rejected", reason: new AssetIndexRevisionError() },
-      { status: "fulfilled", value: last },
-    ]);
+    dependencies.previewProjectAssetQueries.mockImplementation(
+      async ({ onPerformanceEvent, onDocumentGraphEvent }) => {
+        onPerformanceEvent?.({
+          type: "phase-completed",
+          phase: "build-plan",
+          durationMs: 20,
+        });
+        onPerformanceEvent?.({
+          type: "compilation-cache",
+          status: "miss",
+        });
+        onPerformanceEvent?.({
+          type: "phase-completed",
+          phase: "document-graph",
+          durationMs: 30,
+        });
+        onPerformanceEvent?.({
+          type: "phase-completed",
+          phase: "diagnostics-preparation",
+          durationMs: 40,
+        });
+        onPerformanceEvent?.({
+          type: "content-read",
+          purpose: "compiler-entry",
+          byteLength: 1000,
+          durationMs: 12,
+        });
+        onPerformanceEvent?.({
+          type: "content-read",
+          purpose: "document-graph",
+          byteLength: 750,
+          durationMs: 8,
+        });
+        onDocumentGraphEvent?.({
+          type: "resolution-started",
+          rootCount: 1,
+          documentCount: 2,
+        });
+        onDocumentGraphEvent?.({
+          type: "document-fetch-started",
+          documentId: "post",
+          revision: "revision",
+        });
+        return [
+          { status: "fulfilled", value: first },
+          { status: "rejected", reason: new AssetIndexRevisionError() },
+          { status: "fulfilled", value: last },
+        ];
+      }
+    );
     const controller = new AbortController();
     const requests = [
       innerRequest({ query: { limit: 1 } }),
@@ -63,7 +108,28 @@ describe("configured Assets system resource", () => {
     );
 
     expect(responses.map(({ status }) => status)).toEqual([200, 400, 409, 200]);
-    await expect(responses[0].json()).resolves.toEqual(first);
+    await expect(responses[0].json()).resolves.toEqual({
+      ...first,
+      __performance__: {
+        assetQuery: {
+          phases: {
+            authorization: expect.any(Number),
+            buildPlan: 20,
+            documentGraph: 30,
+            compilerContentRead: 12,
+            documentGraphContentRead: 8,
+            diagnosticsPreparation: 40,
+          },
+          compilationCache: "miss",
+          resolvedDocumentCount: 2,
+          documentFetchCount: 1,
+          compilerContentFetchCount: 1,
+          compilerContentBytes: 1000,
+          documentGraphContentFetchCount: 1,
+          documentGraphContentBytes: 750,
+        },
+      },
+    });
     await expect(responses[1].json()).resolves.toMatchObject({
       ok: false,
       error: { code: "INVALID_REQUEST" },
@@ -72,7 +138,10 @@ describe("configured Assets system resource", () => {
       ok: false,
       error: { code: "STALE_INDEX" },
     });
-    await expect(responses[3].json()).resolves.toEqual(last);
+    await expect(responses[3].json()).resolves.toEqual({
+      ...last,
+      __performance__: expect.any(Object),
+    });
     expect(dependencies.preventCrossOriginCookie).toHaveBeenCalledOnce();
     expect(dependencies.authorizeApiProject).toHaveBeenCalledOnce();
     expect(dependencies.previewProjectAssetQueries).toHaveBeenCalledWith({
@@ -90,6 +159,8 @@ describe("configured Assets system resource", () => {
       ],
       context: expect.anything(),
       signal: expect.any(AbortSignal),
+      onPerformanceEvent: expect.any(Function),
+      onDocumentGraphEvent: expect.any(Function),
     });
   });
 
@@ -169,7 +240,18 @@ describe("configured Assets system resource", () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual(responseBody);
+    await expect(response.json()).resolves.toMatchObject({
+      ...responseBody,
+      __performance__: {
+        assetQuery: {
+          phases: { authorization: expect.any(Number) },
+          compilerContentFetchCount: 0,
+          compilerContentBytes: 0,
+          documentGraphContentFetchCount: 0,
+          documentGraphContentBytes: 0,
+        },
+      },
+    });
     expect(dependencies.authorizeApiProject).toHaveBeenCalledWith(
       expect.any(Request),
       projectId,
@@ -189,6 +271,8 @@ describe("configured Assets system resource", () => {
       ],
       context: expect.anything(),
       signal: expect.any(AbortSignal),
+      onPerformanceEvent: expect.any(Function),
+      onDocumentGraphEvent: expect.any(Function),
     });
   });
 

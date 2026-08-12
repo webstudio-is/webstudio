@@ -10,10 +10,8 @@ import {
   type ContentCompilerInput,
 } from "./asset-index";
 import type { ContentArtifactV1 } from "./schema";
-import {
-  createUniqueAssetIdsByPath,
-  discoverMarkdownAssetReferenceRanges,
-} from "./markdown-assets";
+import { discoverMarkdownAssetReferenceRanges } from "./markdown-assets";
+import { createUniqueAssetIdsByPath } from "./asset-path-resolution";
 import type { MarkdownAssetReferences } from "./markdown-references";
 import {
   discoverAssetValueReferences,
@@ -58,6 +56,44 @@ export type ContentSourceDocument = Readonly<{
 export interface ContentSource {
   openSnapshot(): Promise<ContentSourceSnapshot>;
 }
+
+export type ContentSourcePerformancePhase =
+  | "document-graph"
+  | "asset-references"
+  | "source-validation";
+
+export type ContentSourcePerformanceObserver = (event: {
+  type: "phase-completed";
+  phase: ContentSourcePerformancePhase;
+  durationMs: number;
+}) => void;
+
+const measureContentSourcePerformance = async <Value>({
+  phase,
+  operation,
+  observer,
+  now,
+}: {
+  phase: ContentSourcePerformancePhase;
+  operation: () => Promise<Value> | Value;
+  observer?: ContentSourcePerformanceObserver;
+  now: () => number;
+}) => {
+  const startedAt = now();
+  try {
+    return await operation();
+  } finally {
+    try {
+      observer?.({
+        type: "phase-completed",
+        phase,
+        durationMs: Math.max(0, now() - startedAt),
+      });
+    } catch {
+      // Observability must not change compilation behavior.
+    }
+  }
+};
 
 export const createContentSourceFile = ({
   assetId,
@@ -297,30 +333,44 @@ export const materializeContentSnapshot = async ({
   snapshot,
   plan,
   maximumContentBytes = contentEngineLimits.databaseBytes,
+  onPerformanceEvent,
+  performanceNow = () => performance.now(),
 }: {
   snapshot: ContentSourceSnapshot;
   plan?: ContentCompilationPlan;
   maximumContentBytes?: number;
+  onPerformanceEvent?: ContentSourcePerformanceObserver;
+  performanceNow?: () => number;
 }) => {
   validateSnapshot(snapshot);
   try {
     const entries = await snapshot.loadEntries(plan, { maximumContentBytes });
     validateEntries({ snapshot, entries });
-    const documentGraph = await discoverSnapshotDocumentGraph(
-      snapshot,
-      entries,
-      plan
-    );
-    const assetReferences = await discoverSnapshotAssetReferences({
-      snapshot,
-      entries,
-      plan,
+    const documentGraph = await measureContentSourcePerformance({
+      phase: "document-graph",
+      observer: onPerformanceEvent,
+      now: performanceNow,
+      operation: () => discoverSnapshotDocumentGraph(snapshot, entries, plan),
+    });
+    const assetReferences = await measureContentSourcePerformance({
+      phase: "asset-references",
+      observer: onPerformanceEvent,
+      now: performanceNow,
+      operation: () =>
+        discoverSnapshotAssetReferences({ snapshot, entries, plan }),
     });
     const assetValueReferences = discoverSnapshotAssetValueReferences({
       snapshot,
       entries,
     });
-    if (await snapshot.isCurrent()) {
+    if (
+      await measureContentSourcePerformance({
+        phase: "source-validation",
+        observer: onPerformanceEvent,
+        now: performanceNow,
+        operation: () => snapshot.isCurrent(),
+      })
+    ) {
       return {
         sourceRevision: snapshot.revision,
         entries,
@@ -330,7 +380,14 @@ export const materializeContentSnapshot = async ({
       };
     }
   } catch (error) {
-    if (await snapshot.isCurrent()) {
+    if (
+      await measureContentSourcePerformance({
+        phase: "source-validation",
+        observer: onPerformanceEvent,
+        now: performanceNow,
+        operation: () => snapshot.isCurrent(),
+      })
+    ) {
       throw error;
     }
   }
@@ -342,11 +399,15 @@ export const compileContentSource = async ({
   projectId,
   plan,
   maxBytes,
+  onPerformanceEvent,
+  performanceNow,
 }: {
   source: ContentSource;
   projectId: string;
   plan?: ContentCompilationPlan;
   maxBytes?: number;
+  onPerformanceEvent?: ContentSourcePerformanceObserver;
+  performanceNow?: () => number;
 }): Promise<{
   sourceRevision: string;
   documentGraph?: DocumentGraph;
@@ -363,6 +424,8 @@ export const compileContentSource = async ({
     source,
     plan,
     maximumContentBytes: maxBytes,
+    onPerformanceEvent,
+    performanceNow,
   });
   const compiled = await compileContentArtifact({
     projectId,
@@ -380,10 +443,14 @@ export const materializeContentSource = async ({
   source,
   plan,
   maximumContentBytes,
+  onPerformanceEvent,
+  performanceNow,
 }: {
   source: ContentSource;
   plan?: ContentCompilationPlan;
   maximumContentBytes?: number;
+  onPerformanceEvent?: ContentSourcePerformanceObserver;
+  performanceNow?: () => number;
 }): Promise<{
   sourceRevision: string;
   entries: readonly ContentCompilerInput[];
@@ -398,6 +465,8 @@ export const materializeContentSource = async ({
         snapshot,
         plan,
         maximumContentBytes,
+        onPerformanceEvent,
+        performanceNow,
       });
     } catch (error) {
       if (error instanceof ContentSourceChangedError === false) {

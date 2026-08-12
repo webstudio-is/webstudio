@@ -59,6 +59,8 @@ describe("high-impact agent runner", () => {
       "call get-project-settings, list-pages, list-resources, and list-variables"
     );
     expect(authConstraints).toContain("call create-page exactly once");
+    expect(authConstraints).toContain("copy recipe.createResourceInput");
+    expect(authConstraints).toContain("entire create-resource tool input");
     expect(authConstraints).toContain(
       '"value":{"type":"string","value":"signed-out"}'
     );
@@ -193,6 +195,15 @@ describe("high-impact agent runner", () => {
     expect(discoveryPrompt).not.toContain("collectionItem");
     expect(discoveryPrompt).toContain("Do not dry-run or plan mutations");
     expect(discoveryPrompt).toContain("without reshaping its fields");
+    expect(discoveryPrompt).toContain(
+      "reuse that returned folder id for every uploaded article"
+    );
+    expect(discoveryPrompt).toContain(
+      "exactly two create-assets-resource calls"
+    );
+    expect(discoveryPrompt).toContain(
+      "wrap the one-result detail data as a zero-or-one-item array"
+    );
     expect(discoveryPrompt).toContain(
       'exactly once with {\\"tools\\":[\\"create-assets-resource\\"]}'
     );

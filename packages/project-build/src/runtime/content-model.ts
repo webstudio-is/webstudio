@@ -197,6 +197,53 @@ const computeAllowedCategories = ({
   return allowedCategories;
 };
 
+const findHtmlConstraintInstance = ({
+  instances,
+  props,
+  metas,
+  instanceSelector,
+  htmlTagsByInstanceId,
+  tag,
+  component,
+}: {
+  instances: Instances;
+  props: Props;
+  metas: Metas;
+  instanceSelector: InstanceSelector;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
+  tag: undefined | string;
+  component: Instance["component"];
+}) => {
+  let allowedCategories: undefined | string[];
+  let wasSatisfying = true;
+  let constraintInstance: undefined | Instance;
+
+  for (const instanceId of instanceSelector.slice(1).reverse()) {
+    const ancestor = instances.get(instanceId);
+    if (ancestor === undefined) {
+      continue;
+    }
+    const ancestorTag = getTag({
+      instance: ancestor,
+      metas,
+      props,
+      htmlTagsByInstanceId,
+    });
+    allowedCategories = getElementChildren(ancestorTag, allowedCategories);
+    const isSatisfying = isTagSatisfyingContentModel({
+      tag,
+      component,
+      allowedCategories,
+    });
+    if (wasSatisfying && isSatisfying === false) {
+      constraintInstance = ancestor;
+    }
+    wasSatisfying = isSatisfying;
+  }
+
+  return constraintInstance;
+};
+
 const defaultComponentContentModel: ContentModel = {
   category: "instance",
   children: ["rich-text", "instance"],
@@ -218,12 +265,14 @@ const isTextContentCapableInstance = ({
 }) => {
   const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
   const elementContentModel = getElementContentModel(tag);
+  const componentChildren = getComponentContentModel(
+    metas.get(instance.component)
+  ).children;
   return (
     (elementContentModel === undefined ||
       elementContentModel.children.length > 0) &&
-    getComponentContentModel(metas.get(instance.component)).children.includes(
-      "rich-text"
-    )
+    (componentChildren.includes("rich-text") ||
+      componentChildren.includes("text"))
   );
 };
 
@@ -410,19 +459,27 @@ export const isTreeSatisfyingContentModel = ({
     allowedCategories,
   });
   if (isTagSatisfying === false) {
-    const parentInstance = instances.get(parentInstanceId);
-    let parentTag: undefined | string;
-    if (parentInstance) {
-      parentTag = getTag({
-        instance: parentInstance,
+    const constraintInstance = findHtmlConstraintInstance({
+      instances,
+      props,
+      metas,
+      instanceSelector,
+      htmlTagsByInstanceId,
+      tag,
+      component: instance.component,
+    });
+    let constraintTag: undefined | string;
+    if (constraintInstance) {
+      constraintTag = getTag({
+        instance: constraintInstance,
         metas,
         props,
         htmlTagsByInstanceId,
       });
     }
-    if (parentTag) {
+    if (constraintTag) {
       onError?.(
-        `Placing <${tag}> element inside a <${parentTag}> violates HTML spec.`,
+        `Placing <${tag}> element inside a <${constraintTag}> violates HTML spec.`,
         instanceSelector
       );
     } else {
@@ -459,6 +516,22 @@ export const isTreeSatisfyingContentModel = ({
     }
   }
   let isSatisfying = isTagSatisfying && isComponentSatisfying;
+  if (
+    instance.children.some((child) => child.type !== "id") &&
+    isTextContentCapableInstance({
+      instance,
+      props,
+      metas,
+      htmlTagsByInstanceId,
+    }) === false
+  ) {
+    const [, name] = parseComponentName(instance.component);
+    onError?.(
+      `"${name}" does not accept text content. Insert an element child instead.`,
+      instanceSelector
+    );
+    isSatisfying = false;
+  }
   const contentModel = getComponentContentModel(metas.get(instance.component));
   allowedCategories = getElementChildren(tag, allowedCategories);
   allowedParentCategories = contentModel.children;

@@ -630,6 +630,29 @@ describe("project session", () => {
     expect(storage.saved).toHaveLength(1);
   });
 
+  test("describes commit status as not applicable for read operations", async () => {
+    const session = createSession({
+      storage: createStorage(createPersistedSnapshot()),
+    });
+    const result = await session.read("breakpoints.list", {});
+
+    expect(serializeProjectSessionMeta(result)).toMatchObject({
+      source: "local",
+      commitStatus: "not-applicable",
+      committed: false,
+    });
+
+    const serverResult = await session.executeServerOperation(
+      { id: "auth.me", method: "query" },
+      {}
+    );
+    expect(serializeProjectSessionMeta(serverResult)).toMatchObject({
+      source: "server",
+      commitStatus: "not-applicable",
+      committed: false,
+    });
+  });
+
   test("reports persistent session write conflicts as transient busy errors", async () => {
     const storage: ProjectSessionStorage = {
       async load() {
@@ -667,6 +690,8 @@ describe("project session", () => {
     expect(result.transaction?.payload).toHaveLength(1);
     expect(serializeProjectSessionMeta(result)).toMatchObject({
       diagnosticCount: 1,
+      commitStatus: "planned",
+      committed: false,
       transaction: result.transaction,
       diagnostics: [
         {
@@ -920,6 +945,7 @@ describe("project session", () => {
     });
     expect(serializeProjectSessionMeta(result)).toMatchObject({
       source: "local",
+      commitStatus: "committed",
       committed: true,
     });
     expect(storage.saved.at(-1)?.freshness.instances).toEqual({
@@ -1136,6 +1162,10 @@ describe("project session", () => {
     });
 
     expect(result.state.committed).toBe(false);
+    expect(serializeProjectSessionMeta(result)).toMatchObject({
+      commitStatus: "failed",
+      committed: false,
+    });
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
         code: "INVALID_INPUT",
@@ -1212,7 +1242,9 @@ describe("project session", () => {
       expect.objectContaining({ code: "CONFLICT_REFRESHED" }),
       expect.objectContaining({ code: "CONFLICT_RETRY" }),
     ]);
-    expect(transport.loadedNamespaces).toEqual([["pages"]]);
+    expect(transport.loadedNamespaces).toEqual([
+      ["pages", "instances", "dataSources"],
+    ]);
     expect(transport.commits).toHaveLength(2);
   });
 
@@ -1341,7 +1373,11 @@ describe("project session", () => {
 
     await session.initialize();
     const result = await session.executeServerOperation(
-      { id: "upload-asset", invalidatesNamespaces: ["assets"] },
+      {
+        id: "upload-asset",
+        method: "mutation",
+        invalidatesNamespaces: ["assets"],
+      },
       { file: "image.png" }
     );
 
@@ -1359,6 +1395,7 @@ describe("project session", () => {
     const result = await session.executeServerOperation(
       {
         id: "upload-asset",
+        method: "mutation",
         invalidatesNamespaces: ["assets"],
         refetchInvalidatedNamespaces: true,
       },

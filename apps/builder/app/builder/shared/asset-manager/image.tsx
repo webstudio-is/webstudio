@@ -1,4 +1,4 @@
-import { Image as WebstudioImage, wsImageLoader } from "@webstudio-is/image";
+import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
 
 type ImageProps = {
   assetId: string;
@@ -26,7 +26,8 @@ export const Image = ({
   const src = objectURL ?? name;
 
   return (
-    <WebstudioImage
+    <img
+      key={assetId}
       className={className}
       style={{
         // Prevent native image drag in Image Manager to avoid issues with monitorForExternal
@@ -37,13 +38,14 @@ export const Image = ({
         WebkitUserDrag: "none",
         maxWidth: "100%",
       }}
-      key={assetId}
-      loader={wsImageLoader}
-      decoding={decoding}
-      src={src}
-      width={width}
-      optimize={optimize}
-      alt={alt}
+      {...getImageAttributes({
+        loader: wsImageLoader,
+        decoding,
+        src,
+        width,
+        optimize,
+        alt,
+      })}
     />
   );
 };

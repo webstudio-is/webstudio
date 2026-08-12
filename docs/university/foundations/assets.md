@@ -52,41 +52,12 @@ Edits save when the editor loses focus or when you press `Command + S` on
 macOS, `Ctrl + S` on Windows, or `Command/Ctrl + Enter`. The file extension is
 fixed, but you can rename its basename in Asset settings.
 
-### Reference assets from structured content
+### Use assets as content
 
-Markdown frontmatter and JSON files can use relative paths to reference other
-project assets. When an **Assets** resource queries the structured content,
-Webstudio returns the referenced asset's published URL while keeping the
-portable relative path in the source file.
-
-For example, given these assets:
-
-```text
-blog/
-  posts/
-    article.md
-    images/
-      hero.png
-```
-
-The frontmatter in `article.md` can reference the image relative to the
-document:
-
-```yaml
----
-featureImage: ./images/hero.png
----
-```
-
-Bind the queried `properties.featureImage` value directly to an image,
-background image, social image, download link, or another URL property. The
-same resolution works for nested properties and values in arrays. JSON files
-can use relative paths in the same way.
-
-Query strings and fragments are preserved, so values such as
-`./images/hero.png?width=1200#cover` remain usable. Webstudio resolves a value
-only when it uniquely matches a project asset. Absolute URLs, root-relative
-URLs, missing paths, and ambiguous paths remain unchanged.
+Markdown and JSON files in Assets can be the source of truth for a site. The
+Content Engine reads their structured fields, queries the files, and resolves
+links between them. See [Content Engine](content-engine.md) for the supported
+file structure and a complete article workflow.
 
 ## Organizing assets with folders
 
@@ -180,6 +151,7 @@ Builder.
 
 ## Related
 
+- [Content Engine](content-engine.md) – Build sites from Markdown and JSON files in Assets
 - [Anatomy of the builder](anatomy-of-the-webstudio-builder.md) – Overview of all builder panels
 - [Image](../core-components/image.md) – Display images from assets or external URLs
 - [Commands & search](commands-and-search.md) – Quickly find and delete unused assets

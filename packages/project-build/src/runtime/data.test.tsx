@@ -693,6 +693,141 @@ test("update data variable converts resource data source and deletes resource", 
   ]);
 });
 
+test("renames a resource-backed variable without replacing its value", () => {
+  const dataSource: DataSource = {
+    id: "data-source-id",
+    scopeInstanceId: "body",
+    name: "ficheMoto",
+    type: "resource",
+    resourceId: "resource-id",
+  };
+  const resource: Resource = {
+    id: "resource-id",
+    name: "Motorcycles",
+    method: "get",
+    url: `"https://example.com/motorcycles"`,
+    headers: [],
+  };
+
+  expect(
+    updateDataVariable(
+      {
+        pages: createDefaultPages({ rootInstanceId: "body" }),
+        instances: new Map(),
+        props: new Map(),
+        dataSources: new Map([[dataSource.id, dataSource]]),
+        resources: new Map([[resource.id, resource]]),
+      },
+      {
+        dataSourceId: dataSource.id,
+        values: { name: "ficheQuad" },
+      }
+    ).payload
+  ).toEqual([
+    {
+      namespace: "dataSources",
+      patches: [
+        {
+          op: "replace",
+          path: ["data-source-id", "name"],
+          value: "ficheQuad",
+        },
+      ],
+    },
+  ]);
+});
+
+test("rebinds expressions when moving a resource-backed variable", () => {
+  const dataSource: DataSource = {
+    id: "data-source-id",
+    scopeInstanceId: "old-scope",
+    name: "records",
+    type: "resource",
+    resourceId: "resource-id",
+  };
+  const resource: Resource = {
+    id: "resource-id",
+    name: "Records",
+    method: "get",
+    url: `"https://example.com/records"`,
+    headers: [],
+  };
+
+  expect(
+    updateDataVariable(
+      {
+        pages: createDefaultPages({ rootInstanceId: "body" }),
+        instances: new Map([
+          [
+            "body",
+            {
+              type: "instance",
+              id: "body",
+              component: "Body",
+              children: [
+                { type: "id", value: "new-scope" },
+                { type: "id", value: "old-scope" },
+              ],
+            },
+          ],
+          [
+            "new-scope",
+            {
+              type: "instance",
+              id: "new-scope",
+              component: "Box",
+              children: [{ type: "expression", value: "records" }],
+            },
+          ],
+          [
+            "old-scope",
+            {
+              type: "instance",
+              id: "old-scope",
+              component: "Box",
+              children: [],
+            },
+          ],
+        ]),
+        props: new Map(),
+        dataSources: new Map([[dataSource.id, dataSource]]),
+        resources: new Map([[resource.id, resource]]),
+      },
+      {
+        dataSourceId: dataSource.id,
+        values: { scopeInstanceId: "new-scope" },
+      }
+    ).payload
+  ).toEqual([
+    {
+      namespace: "instances",
+      patches: [
+        {
+          op: "replace",
+          path: ["new-scope", "children", 0, "value"],
+          value: encodeDataVariableId("data-source-id"),
+        },
+      ],
+    },
+    {
+      namespace: "dataSources",
+      patches: [
+        {
+          op: "replace",
+          path: ["data-source-id"],
+          value: {
+            id: "data-source-id",
+            scopeInstanceId: "new-scope",
+            name: "records",
+            type: "resource",
+            resourceId: "resource-id",
+          },
+        },
+      ],
+    },
+  ]);
+});
+
 test("dencode data variable name with dollar sign", () => {
   expect(
     decodeDataVariableName(encodeDataVariableName("$my$Variable"))

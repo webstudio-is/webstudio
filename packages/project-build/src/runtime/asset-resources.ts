@@ -64,6 +64,7 @@ const createAssetResourceBody = (
   configuration: z.output<typeof assetQueryResourceConfigurationInput>
 ) =>
   createStructuredAssetQueryResourceBody({
+    result: configuration.result,
     where: normalizeWhere(configuration.where),
     sort: configuration.sort,
     limit: normalizeResourceExpressionInput(configuration.limit),
@@ -114,6 +115,7 @@ const serializeAssetResource = ({
         }
       : {
           query: {
+            result: configuration.result,
             where: serializeWhere(configuration.where, unsetNameById),
             sort: configuration.sort,
             limit: unsetExpressionVariables({

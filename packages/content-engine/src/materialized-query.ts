@@ -6,7 +6,7 @@ import { serializeJsonDeterministically, sha256 } from "./canonical-json";
 import type { ContentCompilationQuery } from "./compilation-plan";
 import {
   assetQuery,
-  assetQueryResult,
+  assetQueryCollectionResult,
   isAssetQueryRuntimeField,
   materializedAssetQuery,
   type AssetQuery,
@@ -14,6 +14,7 @@ import {
   type AssetQueryInput,
   type AssetQueryItem,
   type AssetQueryResult,
+  type AssetQueryExecutionResult,
   type BuilderAssetFieldCatalog,
   type ContentDatabaseDocument,
   type MaterializedAssetQuery,
@@ -42,6 +43,7 @@ const getMaterializedFields = (
   query: ContentCompilationQuery
 ): AssetQueryFieldPath[] | undefined => {
   if (
+    (query.result ?? "many") !== "many" ||
     query.content.mode !== "none" ||
     query.output.mode !== "fields" ||
     query.output.includeMetadata
@@ -142,7 +144,7 @@ const materializeQuery = async ({
   if (fields === undefined || literalQuery === undefined) {
     return;
   }
-  let result: AssetQueryResult;
+  let result: AssetQueryExecutionResult;
   try {
     result = await executeAssetQuery({
       query: literalQuery,
@@ -154,6 +156,9 @@ const materializeQuery = async ({
       return;
     }
     throw error;
+  }
+  if ("items" in result === false) {
+    return;
   }
   const rows = result.items.map((item) =>
     fields.map((field) => getItemFieldValue(item, field))
@@ -239,7 +244,7 @@ const setItemFieldValue = ({
 const hydrateMaterializedQuery = (
   query: MaterializedAssetQuery
 ): AssetQueryResult =>
-  assetQueryResult.parse({
+  assetQueryCollectionResult.parse({
     items: query.rows.map((row) => {
       const item: Record<string, unknown> = {};
       for (const [index, field] of query.fields.entries()) {

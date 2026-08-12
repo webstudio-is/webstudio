@@ -769,7 +769,7 @@ export const runtimeOperationContractData = [
       required: ["pageId", "rootInstanceId"],
       additionalProperties: {},
     },
-    readNamespaces: ["pages"],
+    readNamespaces: ["pages", "instances", "dataSources"],
     writeNamespaces: ["pages", "instances"],
     invalidatesNamespaces: ["pages", "instances"],
     retryOnConflict: false,
@@ -948,7 +948,7 @@ export const runtimeOperationContractData = [
       required: ["pageId"],
       additionalProperties: {},
     },
-    readNamespaces: ["pages"],
+    readNamespaces: ["pages", "instances", "dataSources"],
     writeNamespaces: ["pages"],
     invalidatesNamespaces: ["pages"],
     retryOnConflict: true,
@@ -1068,7 +1068,7 @@ export const runtimeOperationContractData = [
       required: ["pageId"],
       additionalProperties: {},
     },
-    readNamespaces: ["pages"],
+    readNamespaces: ["pages", "instances", "dataSources"],
     writeNamespaces: ["pages"],
     invalidatesNamespaces: ["pages"],
     retryOnConflict: true,
@@ -62024,6 +62024,9 @@ export const runtimeOperationContractData = [
               },
               state: {
                 type: "string",
+                minLength: 1,
+                description:
+                  "Exact state selector to delete. An invalid selector is accepted only when it identifies an existing declaration with the same style source, breakpoint, property, and state.",
               },
             },
             required: ["instanceId", "property"],
@@ -62162,6 +62165,9 @@ export const runtimeOperationContractData = [
               },
               state: {
                 type: "string",
+                minLength: 1,
+                description:
+                  "Exact state selector to delete. An invalid selector is accepted only when it identifies an existing declaration with the same style source, breakpoint, property, and state.",
               },
               styleSourceId: {
                 type: "string",
@@ -62986,6 +62992,9 @@ export const runtimeOperationContractData = [
               },
               state: {
                 type: "string",
+                minLength: 1,
+                description:
+                  "Exact state selector to delete. An invalid selector is accepted only when it identifies an existing declaration with the same style source, breakpoint, property, and state.",
               },
             },
             required: ["property"],
@@ -63475,7 +63484,7 @@ export const runtimeOperationContractData = [
                 maximum: 9007199254740991,
               },
             },
-            required: ["name", "valueLength", "scope"],
+            required: ["name", "value", "valueLength", "scope"],
             additionalProperties: {},
           },
         },
@@ -67016,6 +67025,10 @@ export const runtimeOperationContractData = [
               query: {
                 type: "object",
                 properties: {
+                  result: {
+                    type: "string",
+                    enum: ["many", "one", "first", "last"],
+                  },
                   where: {
                     $ref: "#/$defs/__schema1",
                   },
@@ -67180,7 +67193,14 @@ export const runtimeOperationContractData = [
                     ],
                   },
                 },
-                required: ["where", "sort", "limit", "offset", "content"],
+                required: [
+                  "result",
+                  "where",
+                  "sort",
+                  "limit",
+                  "offset",
+                  "content",
+                ],
                 additionalProperties: {},
               },
               configurationError: {
@@ -67402,6 +67422,10 @@ export const runtimeOperationContractData = [
             query: {
               type: "object",
               properties: {
+                result: {
+                  type: "string",
+                  enum: ["many", "one", "first", "last"],
+                },
                 where: {
                   $ref: "#/$defs/__schema1",
                 },
@@ -67566,7 +67590,14 @@ export const runtimeOperationContractData = [
                   ],
                 },
               },
-              required: ["where", "sort", "limit", "offset", "content"],
+              required: [
+                "result",
+                "where",
+                "sort",
+                "limit",
+                "offset",
+                "content",
+              ],
               additionalProperties: {},
             },
             configurationError: {
@@ -67723,6 +67754,11 @@ export const runtimeOperationContractData = [
         query: {
           type: "object",
           properties: {
+            result: {
+              default: "many",
+              type: "string",
+              enum: ["many", "one", "first", "last"],
+            },
             where: {
               default: {
                 all: [],
@@ -68294,6 +68330,10 @@ export const runtimeOperationContractData = [
                 {
                   type: "object",
                   properties: {
+                    result: {
+                      type: "string",
+                      enum: ["many", "one", "first", "last"],
+                    },
                     where: {
                       description:
                         "A boolean filter tree. Use { all: [...] } for AND and { any: [...] } for OR; leaves contain field, operator, and value.",

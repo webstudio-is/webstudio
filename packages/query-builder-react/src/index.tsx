@@ -1155,6 +1155,43 @@ export const StructuredQueryBuilder = <
             />
           );
         }
+        if (control.type === "select") {
+          const selected =
+            control.options.find(
+              ({ value: option }) =>
+                option === (value[control.key] ?? control.defaultValue)
+            ) ?? control.options[0];
+          return (
+            <Grid
+              key={control.key}
+              gap={2}
+              css={{
+                paddingInline: sectionPaddingInline,
+                borderTop: `1px solid ${theme.colors.borderMain}`,
+                paddingTop: theme.spacing[7],
+              }}
+            >
+              {control.sectionLabel === undefined ? null : (
+                <Label text="title">{control.sectionLabel}</Label>
+              )}
+              <Grid gap={1}>
+                {control.sectionLabel === undefined ? (
+                  <Label>{control.label}</Label>
+                ) : null}
+                <Select<(typeof control.options)[number]>
+                  aria-label={control.label}
+                  options={control.options}
+                  getLabel={(option) => option.label}
+                  getValue={(option) => option.value}
+                  value={selected}
+                  onChange={(option) =>
+                    commit({ ...value, [control.key]: option.value } as Query)
+                  }
+                />
+              </Grid>
+            </Grid>
+          );
+        }
         const controlIndex = capabilities.source.controls.indexOf(control);
         let expressionRunStart = controlIndex;
         while (

@@ -245,6 +245,7 @@ describe("loadResource", () => {
             hasMore: true,
           },
           __diagnostics__: { scope: "query-preview" },
+          __performance__: { serverDurationMs: 125.5, responseBytes: 1024 },
         })
       )
     );
@@ -268,8 +269,12 @@ describe("loadResource", () => {
       },
       meta: { totalCount: 5, hasMore: true },
       __diagnostics__: { scope: "query-preview" },
+      __performance__: { serverDurationMs: 125.5, responseBytes: 1024 },
     });
-    expect(Object.keys(result.data)).toEqual(["second", "first"]);
+    expect(Object.keys(result.data as Record<string, unknown>)).toEqual([
+      "second",
+      "first",
+    ]);
   });
 
   test("retains ID in Assets values only when selected", async () => {
@@ -301,6 +306,38 @@ describe("loadResource", () => {
     });
 
     expect(result.data).toEqual({ asset: { id: "asset", name: "Asset" } });
+  });
+
+  test("exposes a single Assets result as a direct item with identity", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            item: { id: "post", properties: { title: "Post" } },
+            totalCount: 1,
+          },
+          __diagnostics__: { scope: "query-preview" },
+        })
+      )
+    );
+
+    const result = await loadResource(mockFetch, {
+      name: "assets",
+      url: "/$resources/assets",
+      searchParams: [],
+      method: "post",
+      headers: [],
+      body: { query: { result: "one" } },
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      status: 200,
+      statusText: "",
+      data: { id: "post", properties: { title: "Post" } },
+      meta: { totalCount: 1 },
+      __diagnostics__: { scope: "query-preview" },
+    });
   });
 
   test("does not reshape arbitrary POST resources", async () => {

@@ -59,7 +59,6 @@ export const SocialImageSection = ({
         expression={values.socialImageUrl}
         value={socialImageUrl}
         bound={isLiteralExpression(values.socialImageUrl) === false}
-        allowBindingOverwrite={false}
         showBinding={showBindingControls}
         scope={scope}
         aliases={aliases}

@@ -44,6 +44,8 @@ import {
   isPublicApiRemoteErrorCode,
   type PublishedProjectBundle,
   type PublicApiCommand,
+  type IssueReportInput,
+  type IssueReportResult,
 } from "@webstudio-is/protocol";
 export { getBundleVersion, bundleVersion } from "@webstudio-is/protocol";
 export { parseBuilderUrl } from "@webstudio-is/protocol";
@@ -719,6 +721,32 @@ const requestAssetRest = async (
   return response;
 };
 
+const toAssetContentBytes = async (data: AssetContentData) =>
+  new Uint8Array(await new Response(data).arrayBuffer());
+
+const hasEqualAssetContent = async (
+  response: Response,
+  expected: AssetContentData
+) => {
+  const [actualBytes, expectedBytes] = await Promise.all([
+    response.arrayBuffer().then((buffer) => new Uint8Array(buffer)),
+    toAssetContentBytes(expected),
+  ]);
+  return (
+    actualBytes.byteLength === expectedBytes.byteLength &&
+    actualBytes.every((byte, index) => byte === expectedBytes[index])
+  );
+};
+
+const createUncertainAssetUpdateError = (cause: unknown) =>
+  Object.assign(
+    new Error(
+      "ASSET_UPDATE_COMMIT_UNCERTAIN: The asset update response failed and the saved content could not be confirmed. Do not retry with the previous expectedName. Read the current asset and download its content before deciding whether another update is needed.",
+      { cause }
+    ),
+    { code: "ASSET_UPDATE_COMMIT_UNCERTAIN" }
+  );
+
 export const updateProjectAssetContent = async (
   params: Omit<AuthProjectParams, "authToken"> & {
     authToken?: string;
@@ -730,16 +758,46 @@ export const updateProjectAssetContent = async (
   }
 ): Promise<{ asset: Asset }> => {
   const request = params.request ?? fetch;
+  const data = await params.readAssetData();
   const url = createAssetRestUrl({
     ...params,
     path: getAssetContentApiUrl(params.assetId),
   });
   url.searchParams.set("expectedName", params.expectedName);
-  return await requestAssetRestJson(request, url, {
-    method: "PUT",
-    body: await params.readAssetData(),
-    headers: createAssetRestHeaders(params, "application/octet-stream"),
-  });
+  try {
+    return await requestAssetRestJson(request, url, {
+      method: "PUT",
+      body: data,
+      headers: createAssetRestHeaders(params, "application/octet-stream"),
+    });
+  } catch (error) {
+    const status =
+      typeof error === "object" && error !== null && "status" in error
+        ? error.status
+        : undefined;
+    if (typeof status === "number" && status < 500) {
+      throw error;
+    }
+    try {
+      const { asset: before } = await getProjectAsset({ ...params, request });
+      const content = await readProjectAssetContent({
+        ...params,
+        request,
+        assetId: params.assetId,
+      });
+      const { asset } = await getProjectAsset({ ...params, request });
+      if (
+        asset.name === before.name &&
+        asset.name !== params.expectedName &&
+        (await hasEqualAssetContent(content, data))
+      ) {
+        return { asset };
+      }
+    } catch {
+      // Fall through to an explicit ambiguous-result error.
+    }
+    throw createUncertainAssetUpdateError(error);
+  }
 };
 
 export const updateProjectAsset = async (
@@ -795,7 +853,8 @@ export const listProjectAssets = async (
   );
 
 export const getProjectAsset = async (
-  params: AuthProjectParams & {
+  params: Omit<AuthProjectParams, "authToken"> & {
+    authToken?: string;
     assetId: string;
     request?: typeof fetch;
     requestOrigin?: string;
@@ -808,7 +867,8 @@ export const getProjectAsset = async (
   );
 
 export const readProjectAssetContent = async (
-  params: AuthProjectParams & {
+  params: Omit<AuthProjectParams, "authToken"> & {
+    authToken?: string;
     assetId: string;
     range?: { offset: number; length: number };
     request?: typeof fetch;
@@ -1461,6 +1521,11 @@ export const searchProject = projectQueryInput<
 export const audit = projectQueryInput<
   AuthProjectParams & Record<string, unknown>
 >("audit");
+
+export const reportIssue = projectMutationInput<
+  AuthProjectParams & IssueReportInput,
+  IssueReportResult
+>("report-issue");
 
 export const verifyBindings = projectQueryInput<
   AuthProjectParams & PaginatedQueryInput & Record<string, unknown>

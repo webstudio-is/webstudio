@@ -45,7 +45,7 @@
     "webstudio": "workspace:*"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12.0"
   },
   "name": "webstudio-features",
   "version": "0.0.1",
@@ -53,5 +53,12 @@
   "main": "index.js",
   "keywords": [],
   "author": "",
-  "license": "AGPL-3.0-or-later"
+  "license": "AGPL-3.0-or-later",
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=22.12.0",
+      "onFail": "error"
+    }
+  }
 }

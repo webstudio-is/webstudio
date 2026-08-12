@@ -20,14 +20,12 @@ export const projectRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // @todo pass ctx for authorization
       return await projectApi.rename(input, ctx);
     }),
 
   delete: procedure
     .input(z.object({ projectId: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      // @todo pass ctx for authorization
       return await projectApi.markAsDeleted(input.projectId, ctx);
     }),
 

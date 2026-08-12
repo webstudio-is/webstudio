@@ -145,13 +145,18 @@ Commands:
 
 Notes:
 
+- `preview.status` reports whether generated output is `stale`. When no preview is running, `url`, `pid`, and `mode` are omitted. When present, `renderedProjectVersion` is the last project version materialized into the preview.
+- A managed `screenshot` or another `preview.start` refreshes stale generated output before capture.
+
 - Use this after page/content/style mutations so a vision-capable AI can see the generated site from the current MCP session. Use `path`; never pass a Webstudio Builder/share URL or capture Builder chrome.
 - For multi-page work, capture every changed page by `path` through the same preview server; no click navigation is required.
 - Iterative mode is the default: after MCP mutations, path screenshots ensure generated project files are current, wait for the exact session version, and perform an ordinary page reload without Vite HMR. The preview server and browser stay alive. Use `{"mode":"production"}` only for release-like verification; rendered audit does this automatically.
+- Calling `preview.start` after a committed mutation restarts a stale iterative server so external browsers and HTTP clients receive the newly generated project.
 - Do not call `preview.start` through one-shot `webstudio mcp single-op-call`: it is long-lived. From a shell, use `webstudio mcp run` with preview.start, screenshot, and preview.stop in one shared process, or use a real long-running MCP client.
 - From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running preview/site without generating, building, starting, or restarting preview.
 - Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview. A separate one-shot `single-op-call` process does not own another process's preview controller.
 - Use waitForSelector when the rendered app has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
+- The screenshot timeout bounds browser capture after the preview is ready. A timeout returns `SCREENSHOT_TIMEOUT`, resets the reusable browser session, and releases the shared preview lifecycle for cleanup.
 - Preview installs generated app dependencies under `.webstudio/preview` and reuses them across regenerations.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
 - If dependency installation fails, check npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
@@ -641,13 +646,22 @@ Commands:
 
 Commands:
 
-- MCP tool: define-css-variable {"vars":"vars.json contents"}
+- MCP tool: define-css-variable {"vars":{"--color-primary":"#2d3748","--color-accent":"#e53e3e","--space-card":"1.5rem"},"overwrite":true}
+
+Notes:
+
+- Define or overwrite multiple CSS variables atomically by including every name and value in one `vars` object.
+- Pass colors as CSS strings. Structured `hex` color components use normalized values from `0` to `1`, not `0` to `255`.
 
 ## Delete CSS variables
 
 Commands:
 
-- MCP tool: delete-css-variable {"names":"names.json contents","force":true}
+- MCP tool: delete-css-variable {"names":["--color-primary","--color-accent","--space-card"],"force":true}
+
+Notes:
+
+- Delete multiple CSS variables atomically by including every name in one `names` array. Destructive MCP calls still require the returned confirmation token before they commit.
 
 ## Rewrite CSS variable references
 
@@ -737,12 +751,12 @@ Commands:
 - MCP tool: get-asset-field-catalog {}
 - MCP tool: validate-asset-query {"query":{"where":{"all":[{"field":["extension"],"operator":"eq","value":"md"},{"field":["properties","draft"],"operator":"ne","value":true}]},"limit":20}}
 - MCP tool: create-assets-resource {"name":"All assets","scopeInstanceId":"<instanceId>","dataSourceName":"assets"}
-- MCP tool: create-assets-resource {"name":"Published posts","scopeInstanceId":"<instanceId>","dataSourceName":"posts","query":{"where":{"all":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"field":["properties","draft"],"operator":"ne","value":{"type":"literal","value":true}}]},"sort":[{"field":["properties","publishedAt"],"direction":"desc"}],"limit":{"type":"literal","value":20},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","slug"],["properties","publishedAt"],["properties","excerpt"]]},"content":{"mode":"none"}}}
-- MCP tool: create-assets-resource {"name":"Post by slug or ID","scopeInstanceId":"<instanceId>","dataSourceName":"post","query":{"where":{"all":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"field":["properties","slug"],"operator":"eq","value":"system.params.slug"}]},"limit":{"type":"literal","value":1},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","publishedAt"]]},"content":{"mode":"markdown-body-ref"}}}
+- MCP tool: create-assets-resource {"name":"Published posts","scopeInstanceId":"<instanceId>","dataSourceName":"posts","query":{"result":"many","where":{"all":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"field":["properties","draft"],"operator":"ne","value":{"type":"literal","value":true}}]},"sort":[{"field":["properties","publishedAt"],"direction":"desc"}],"limit":{"type":"literal","value":20},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","slug"],["properties","publishedAt"],["properties","excerpt"]]},"content":{"mode":"none"}}}
+- MCP tool: create-assets-resource {"name":"Post by slug or ID","scopeInstanceId":"<instanceId>","dataSourceName":"post","query":{"result":"one","where":{"all":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"field":["properties","slug"],"operator":"eq","value":"system.params.slug"}]},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","publishedAt"]]},"content":{"mode":"markdown-body-ref"}}}
 - MCP tool: list-assets-resources {}
 - MCP tool: get-assets-resource {"resourceId":"<resourceId>"}
 - MCP tool: update-assets-resource {"resourceId":"<resourceId>","values":{"query":null}}
-- MCP tool: preview-asset-query {"query":{"where":{"all":[{"field":["extension"],"operator":"eq","value":"md"},{"field":["properties","slug"],"operator":"eq","value":"hello-world"}]},"limit":1,"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"]]},"content":{"mode":"markdown-body-ref"}}}
+- MCP tool: preview-asset-query {"query":{"result":"one","where":{"all":[{"field":["extension"],"operator":"eq","value":"md"},{"field":["properties","slug"],"operator":"eq","value":"hello-world"}]},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"]]},"content":{"mode":"markdown-body-ref"}}}
 
 Notes:
 
@@ -756,8 +770,9 @@ Notes:
 - In Markdown, reference sibling Assets with conventional relative URLs such as `../images/hero.png`. Deferred `markdown-body-ref` content resolves matching files against the Markdown file's folder and emits the correct Builder or published Asset URL. Keep external URLs absolute.
 - Markdown Embed renders sanitized authored HTML for figures, captions, audio, video, and iframes. Scripts, inline event handlers, `srcdoc`, and unsafe URL protocols are removed. Executable component composition remains separate future MDX work.
 - Preview each query with concrete values before saving it. Inspect `__diagnostics__.query` for the temporary query-only footprint and `__diagnostics__.database` for the merged database built from all reachable Assets queries. Only `database.usedBytes` counts toward `database.maxBytes`; query sizes must not be summed and are not separate allowances. Compare `usedBytes`, `unboundedBytes`, and `truncated` within both scopes. A completed Markdown blog should include every source document without truncation, contain no embedded Markdown bodies, and retain only its intended materialized overview query. When merged usage approaches the limit, remove duplicate reachable resources first, then unused output fields, then narrow candidate files.
-- Read Assets from the ID-keyed map at `<dataSourceName>.data`, with collection information such as `totalCount` and `hasMore` at `<dataSourceName>.meta`. Bind a listing Collection to `posts.data` and a one-result detail Collection to `post.data`. On each value, selected file fields such as `id`, `name`, and `extension` are top-level, Markdown frontmatter and JSON fields are under `properties`, and a resolved Markdown body is at `content.text`.
-- Assets has one response shape and always executes a structured query. Omit `query` to use the default query, which selects URL and optional image dimensions. Provide query configuration to control filtering, sorting, pagination, selected fields, or file content. Set `values.query:null` to restore the default query.
+- Use `result:"many"` for listings. It returns the ID-keyed map at `<dataSourceName>.data`, with `totalCount` and `hasMore` at `<dataSourceName>.meta`, and remains the default for existing queries. Bind a listing Collection to `posts.data`.
+- Use `result:"one"` for a unique detail route. It returns the selected item or `null` directly at `post.data`, always includes its `id`, and omits pagination. Bind components and page settings directly with expressions such as `post.data.properties.title`, `post.data.content.text`, and `post.data ? 200 : 404`. `result:"first"` and `result:"last"` also return a direct item or `null` but require explicit sorting.
+- Assets always executes a structured query. Omit `query` to use the default many-result query, which selects URL and optional image dimensions. Set `values.query:null` to restore it.
 - `create-assets-resource` and `update-assets-resource` are the semantic authoring path. Do not construct the internal query URL, headers, or body expression manually.
 - The shared metadata index is maintained automatically and is emitted only when a configured Assets resource is reachable.
 

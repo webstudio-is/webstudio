@@ -13,6 +13,7 @@ import {
   instance,
 } from "@webstudio-is/sdk";
 import {
+  assetQueryResultMode,
   assetQuerySort,
   assetResourceContentOptions,
   assetResourceOutputSelection,
@@ -174,7 +175,7 @@ const token = looseObject({
 });
 const cssVariable = looseObject({
   name: z.string(),
-  value: z.string().optional(),
+  value: z.string(),
   valueLength: z.number().int().nonnegative(),
   scope: z.string(),
   usageCount: z.number().int().optional(),
@@ -196,6 +197,7 @@ const resource = looseObject({
   dataSourceId: id.optional(),
 });
 const assetResourceConfiguration = looseObject({
+  result: assetQueryResultMode,
   where: assetQueryWhereExpression,
   sort: z.array(assetQuerySort),
   limit: z.string(),

@@ -10,12 +10,22 @@ export default defineConfig({
     hmr: process.env.WEBSTUDIO_PREVIEW_HMR === "disabled" ? false : undefined,
   },
   resolve: {
-    conditions: [...sourceConditions, "browser", "development|production"],
+    conditions: [
+      ...sourceConditions,
+      "import",
+      "browser",
+      "development|production",
+    ],
   },
   ssr: {
     noExternal: ["nanoid"],
     resolve: {
-      conditions: [...sourceConditions, "node", "development|production"],
+      conditions: [
+        ...sourceConditions,
+        "import",
+        "node",
+        "development|production",
+      ],
     },
   },
 });

@@ -24,6 +24,7 @@ import {
 import { getZodValidationIssues } from "./errors";
 import { getComponentTemplates } from "./component-templates";
 import { createEmptyWebstudioFragment } from "./component-template";
+import { insertCollectionInput } from "./collection";
 import { isLikelyWebstudioJsxFragment, parseWebstudioJsxFragment } from "./jsx";
 import { inspectWebstudioJsxFragmentSyntax } from "./jsx/syntax";
 
@@ -603,7 +604,7 @@ test("rejects fragment trees that violate the HTML content model", async () => {
       { parentInstanceId: parent.id, fragment },
       { createId: createIdFactory() }
     )
-  ).toThrow("Placing <a> element inside a <span> violates HTML spec.");
+  ).toThrow("Placing <a> element inside a <a> violates HTML spec.");
 });
 
 test("rejects fragments that violate the destination HTML content model", async () => {
@@ -629,7 +630,7 @@ test("rejects fragments that violate the destination HTML content model", async 
       { parentInstanceId: parent.id, fragment },
       { createId: createIdFactory() }
     )
-  ).toThrow("Placing <button> element inside a <span> violates HTML spec.");
+  ).toThrow("Placing <button> element inside a <a> violates HTML spec.");
 });
 
 test("allows legacy invalid fragments when warnings are explicitly enabled", async () => {
@@ -1310,6 +1311,31 @@ test("inspects webstudio jsx fragment syntax without evaluation", () => {
   ).not.toThrow();
 });
 
+test("rejects unsupported css rules after interpolation", async () => {
+  await expect(
+    parseWebstudioJsxFragment(
+      '<ws.element ws:tag="div" ws:style={css`${"@keyframes pulse { 0% { opacity: 0; } 100% { opacity: 1; } }"} animation-name: pulse;`} />'
+    )
+  ).rejects.toThrow(
+    "css templates do not support selectors or at-rules such as @keyframes"
+  );
+});
+
+test("explains unmatched jsx without implying session state", async () => {
+  const validFragment = `<$.Box><$.Heading>Title</$.Heading></$.Box>`;
+  await expect(parseWebstudioJsxFragment(validFragment)).resolves.toEqual(
+    expect.objectContaining({ children: expect.any(Array) })
+  );
+  await expect(
+    parseWebstudioJsxFragment(`<$.Box><$.Heading>Title</$.Box>`)
+  ).rejects.toThrow(
+    "Every opening element must use the same closing tag or end with />. Fragment parsing is stateless"
+  );
+  await expect(parseWebstudioJsxFragment(validFragment)).resolves.toEqual(
+    expect.objectContaining({ children: expect.any(Array) })
+  );
+});
+
 test("inserts bare template-backed components from webstudio jsx fragments", async () => {
   const parent = createParent();
   const fragment = await parseWebstudioJsxFragment(`<radix.Switch />`);
@@ -1413,6 +1439,77 @@ test("rejects invalid token syntax in webstudio jsx fragments", async () => {
     )
   ).rejects.toThrow(
     /^token\(\) styles must include at least one valid CSS declaration/
+  );
+});
+
+test("rejects unsupported expressions in shared fragment inputs", async () => {
+  const fragment = await parseWebstudioJsxFragment(
+    `<$.Text>{expression\`items.map(item => item.title).join(", ")\`}</$.Text>`
+  );
+  const result = insertFragmentInput.safeParse({
+    parentInstanceId: "parent",
+    fragment,
+  });
+  if (result.success) {
+    throw new Error("Expected fragment expression validation to fail");
+  }
+  const issues = getZodValidationIssues(result.error);
+  expect(issues).toHaveLength(2);
+  expect(issues).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        code: "invalid_expression",
+        path: ["fragment", "instances", "0", "children", "0", "value"],
+        detail: "Functions are not supported",
+      }),
+      expect.objectContaining({
+        code: "invalid_expression",
+        path: ["fragment", "instances", "0", "children", "0", "value"],
+        detail: '"map" function is not supported',
+      }),
+    ])
+  );
+  expect(
+    insertCollectionInput.safeParse({
+      parentInstanceId: "parent",
+      data: { type: "json", value: [] },
+      itemFragment: fragment,
+    }).success
+  ).toBe(false);
+});
+
+test("uses component content models to require element children", async () => {
+  const parent = createParent();
+  const invalidFragment = await parseWebstudioJsxFragment(
+    `<radix.Collapsible><radix.CollapsibleTrigger>Open</radix.CollapsibleTrigger></radix.Collapsible>`
+  );
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      { parentInstanceId: parent.id, fragment: invalidFragment },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).toThrow('"CollapsibleTrigger" does not accept text content');
+
+  const fragment = await parseWebstudioJsxFragment(
+    `<radix.Collapsible><radix.CollapsibleTrigger><ws.element ws:tag="span">Open</ws.element></radix.CollapsibleTrigger></radix.Collapsible>`
+  );
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).not.toThrow();
+});
+
+test("reports unsupported existing resource references in jsx", async () => {
+  await expect(
+    parseWebstudioJsxFragment(
+      `<$.Form action={new ResourceValue("resource-id")} />`
+    )
+  ).rejects.toThrow(
+    "ResourceValue requires a resource definition. Existing resource ids are not supported in JSX"
   );
 });
 
@@ -1788,7 +1885,17 @@ test("allows html and fragment syntax inside text values", async () => {
 
 test("suggests built-in helpers for unknown jsx identifiers", async () => {
   await expect(parseWebstudioJsxFragment(`<Box />`)).rejects.toThrow(
-    "Use built-in helpers only: $, ws, radix, animation, css, token, expression, Variable, Parameter, ResourceValue, ActionValue, AssetValue, PageValue, and PlaceholderValue. Box is not defined"
+    "Use component namespaces $, ws, radix, and animation and value helpers css, token, expression, Variable, Parameter, ResourceValue, ActionValue, AssetValue, PageValue, and PlaceholderValue. Box is not defined"
+  );
+});
+
+test("explains that animation is a component namespace", async () => {
+  await expect(
+    parseWebstudioJsxFragment(
+      '<$.Box data-animation={animation("pulse", css`opacity: 1;`)} />'
+    )
+  ).rejects.toThrow(
+    "animation is a component namespace such as <animation.AnimateChildren>; it is not a callable CSS keyframes helper."
   );
 });
 

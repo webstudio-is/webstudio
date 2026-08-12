@@ -221,6 +221,9 @@ const createParentIdsByInstance = (
   return parentIdsByInstance;
 };
 
+const getLabelTargetId = (props: ReadonlyMap<string, unknown> | undefined) =>
+  props?.get("for") ?? props?.get("htmlFor");
+
 const hasAssociatedFormLabel = ({
   instanceId,
   instances,
@@ -245,7 +248,7 @@ const hasAssociatedFormLabel = ({
     }
     if (
       id !== undefined &&
-      propsByInstance.get(label.id)?.get("for") === id &&
+      getLabelTargetId(propsByInstance.get(label.id)) === id &&
       hasAccessibleName({
         instanceId: label.id,
         instances,
@@ -833,6 +836,7 @@ export const analyzeProject = (
           instanceId: instance.id,
           instances: state.instances,
           propsByInstance,
+          propTypesByInstance,
         }) === false
       ) {
         matches.push({
@@ -857,6 +861,7 @@ export const analyzeProject = (
           instanceId: instance.id,
           instances: state.instances,
           propsByInstance,
+          propTypesByInstance,
         }) === false &&
         hasAssociatedFormLabel({
           instanceId: instance.id,
@@ -1059,7 +1064,7 @@ export const analyzeProject = (
       ) {
         continue;
       }
-      const htmlFor = propsByInstance.get(instance.id)?.get("for");
+      const htmlFor = getLabelTargetId(propsByInstance.get(instance.id));
       if (typeof htmlFor !== "string" || htmlFor.trim().length === 0) {
         continue;
       }

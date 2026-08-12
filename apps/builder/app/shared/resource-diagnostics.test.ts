@@ -81,4 +81,67 @@ describe("resource diagnostics", () => {
       })
     ).toEqual({ result, diagnostics: undefined });
   });
+
+  test("keeps Builder performance metrics outside resource values", () => {
+    const separated = separateResourceDiagnostics({
+      request: { ...assetsRequest, name: "API", url: "/api/items" },
+      result: {
+        ok: true,
+        data: { items: [] },
+        __performance__: {
+          serverDurationMs: 125.5,
+          loaderDurationMs: 150.25,
+          responseBytes: 1024,
+        },
+      },
+    });
+
+    expect(separated.result).toEqual({ ok: true, data: { items: [] } });
+    expect(separated.result).not.toHaveProperty("__performance__");
+    expect(separated.performance).toEqual({
+      serverDurationMs: 125.5,
+      loaderDurationMs: 150.25,
+      responseBytes: 1024,
+    });
+  });
+
+  test("strips malformed Builder performance metrics", () => {
+    const separated = separateResourceDiagnostics({
+      request: assetsRequest,
+      result: {
+        data: { items: [] },
+        __performance__: { serverDurationMs: "slow" },
+      },
+    });
+
+    expect(separated.result).toEqual({ data: { items: [] } });
+    expect(separated.performance).toBeUndefined();
+  });
+
+  test("preserves known performance metrics when the server adds fields", () => {
+    const separated = separateResourceDiagnostics({
+      request: assetsRequest,
+      result: {
+        data: { items: [] },
+        __performance__: {
+          serverDurationMs: 125.5,
+          futureMetric: 10,
+          assetQuery: {
+            futureMetric: 20,
+            phases: {
+              buildPlan: 30,
+              futurePhase: 40,
+            },
+          },
+        },
+      },
+    });
+
+    expect(separated.performance).toEqual({
+      serverDurationMs: 125.5,
+      assetQuery: {
+        phases: { buildPlan: 30 },
+      },
+    });
+  });
 });

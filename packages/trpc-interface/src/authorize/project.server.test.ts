@@ -243,6 +243,76 @@ describe("checkProjectPermit — user direct owner (msw)", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Legacy template allowlist no longer bypasses auth
+// ---------------------------------------------------------------------------
+
+// One of the project IDs that used to be hardcoded in the allowlist.
+const legacyTemplateId = "5e086cf4-4293-471c-8eab-ddca8b5cd4db";
+
+describe("checkProjectPermit — template projects no longer bypass auth", () => {
+  test("denies view without a real owner, workspace, or token relation", async () => {
+    server.use(
+      db.get("Project", () => json(null)),
+      db.get("WorkspaceProjectAuthorization", () => json([]))
+    );
+    const allowed = await checkProjectPermit({
+      projectId: legacyTemplateId,
+      permit: "view",
+      authInfo: { type: "user", userId: "unrelated-user" },
+      postgrestClient: testContext.postgrest.client,
+    });
+    expect(allowed).toBe(false);
+  });
+
+  test("denies edit for an unrelated user on a template project", async () => {
+    server.use(
+      db.get("Project", () => json(null)),
+      db.get("WorkspaceProjectAuthorization", () => json([]))
+    );
+    const allowed = await checkProjectPermit({
+      projectId: legacyTemplateId,
+      permit: "edit",
+      authInfo: { type: "user", userId: "unrelated-user" },
+      postgrestClient: testContext.postgrest.client,
+    });
+    expect(allowed).toBe(false);
+  });
+
+  test("allows view when a real token grants it", async () => {
+    server.use(
+      db.get("AuthorizationToken", ({ request }) => {
+        const url = new URL(request.url);
+        // The token branch must filter by the relations that grant "view".
+        // A regression in this gate (e.g. dropping the .in("relation") filter)
+        // would let any existing token succeed, so we assert the filter is sent.
+        expect(url.searchParams.get("relation")).toContain(
+          "in.(viewers,editors,builders,administrators)"
+        );
+        return json({ token: "template-tok" });
+      })
+    );
+    const allowed = await checkProjectPermit({
+      projectId: legacyTemplateId,
+      permit: "view",
+      authInfo: { type: "token", authToken: "template-tok" },
+      postgrestClient: testContext.postgrest.client,
+    });
+    expect(allowed).toBe(true);
+  });
+
+  test("denies view when the token does not exist", async () => {
+    server.use(db.get("AuthorizationToken", () => json(null)));
+    const allowed = await checkProjectPermit({
+      projectId: legacyTemplateId,
+      permit: "view",
+      authInfo: { type: "token", authToken: "missing-tok" },
+      postgrestClient: testContext.postgrest.client,
+    });
+    expect(allowed).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // checkProjectPermit — token auth
 // ---------------------------------------------------------------------------
 
@@ -266,6 +336,26 @@ describe("checkProjectPermit — token auth (msw)", () => {
       projectId,
       permit: "view",
       authInfo: { type: "token", authToken: "tok-missing" },
+      postgrestClient: testContext.postgrest.client,
+    });
+    expect(allowed).toBe(false);
+  });
+
+  test("denies when token belongs to another project", async () => {
+    const projectId = uid();
+    server.use(
+      db.get("AuthorizationToken", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("projectId") === `eq.${projectId}`) {
+          return json(null);
+        }
+        return json({ token: "other-project-token" });
+      })
+    );
+    const allowed = await checkProjectPermit({
+      projectId,
+      permit: "view",
+      authInfo: { type: "token", authToken: "other-project-token" },
       postgrestClient: testContext.postgrest.client,
     });
     expect(allowed).toBe(false);

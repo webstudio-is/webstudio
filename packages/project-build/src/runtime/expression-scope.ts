@@ -3,7 +3,7 @@ import { bindExpressionToInstanceScope, findAvailableVariables } from "./data";
 import { getExpressionWarnings } from "./expression-validation";
 
 export const bindExpressionInput = (
-  state: BuilderState,
+  state: Pick<BuilderState, "instances" | "dataSources">,
   instanceId: string,
   expression: string
 ) => {

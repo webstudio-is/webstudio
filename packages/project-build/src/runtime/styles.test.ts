@@ -444,6 +444,57 @@ describe("css variable usage", () => {
     });
   });
 
+  test("rejects structured hex colors outside the normalized range", () => {
+    const result = cssVariableValueInput.safeParse({
+      type: "color",
+      colorSpace: "hex",
+      components: [45, 55, 72],
+      alpha: 1,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success === false) {
+      expect(result.error.issues).toEqual([
+        expect.objectContaining({
+          path: ["components"],
+          message:
+            'Hex color components must be numbers from 0 to 1. Pass a CSS string such as "#2d3748" when using 0-255 hex values.',
+        }),
+      ]);
+    }
+  });
+
+  test("accepts normalized structured hex colors and CSS color strings", () => {
+    expect(
+      cssVariableValueInput.safeParse({
+        type: "color",
+        colorSpace: "hex",
+        components: [45 / 255, 55 / 255, 72 / 255],
+        alpha: 1,
+      }).success
+    ).toBe(true);
+    expect(cssVariableValueInput.safeParse("#2d3748").success).toBe(true);
+  });
+
+  test("rejects structured hex alpha outside the normalized range", () => {
+    const result = cssVariableValueInput.safeParse({
+      type: "color",
+      colorSpace: "hex",
+      components: [0.1, 0.2, 0.3],
+      alpha: 255,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success === false) {
+      expect(result.error.issues).toEqual([
+        expect.objectContaining({
+          path: ["alpha"],
+          message: "Hex color alpha must be a number from 0 to 1.",
+        }),
+      ]);
+    }
+  });
+
   test("finds defined css variable names", () => {
     expect(
       getDefinedCssVariableNames([
@@ -1017,20 +1068,13 @@ const instance = (id: string): Instance => ({
 
 describe("runtime style operations", () => {
   test.each([":hover, body", ":hover > div", "body:hover"])(
-    "rejects state selectors that escape the styled element: %s",
+    "rejects state selectors that escape the styled element when writing: %s",
     (state) => {
       expect(
         styleUpdateInput.safeParse({
           instanceId: "box",
           property: "color",
           value: { type: "keyword", value: "red" },
-          state,
-        })
-      ).toMatchObject({ success: false });
-      expect(
-        styleDeleteInput.safeParse({
-          instanceId: "box",
-          property: "color",
           state,
         })
       ).toMatchObject({ success: false });
@@ -1048,6 +1092,16 @@ describe("runtime style operations", () => {
       ).toMatchObject({ success: false });
     }
   );
+
+  test("accepts an invalid state as an existing declaration deletion coordinate", () => {
+    expect(
+      styleDeleteInput.safeParse({
+        instanceId: "box",
+        property: "color",
+        state: "::-webkit-search-cancel-button",
+      })
+    ).toMatchObject({ success: true });
+  });
 
   test("preserves an editable compound state through mutation and generated CSS", () => {
     const state = ":hover:focus-visible";
@@ -1304,6 +1358,40 @@ describe("runtime style operations", () => {
             type: "unit",
             value: 24,
             unit: "px",
+          }),
+        },
+      ],
+    });
+  });
+
+  test("parses CSS strings when updating design token styles", () => {
+    const mutation = updateDesignTokenStyles(
+      {
+        breakpoints: runtimeBreakpoints,
+        styles: new Map(),
+        styleSources: sources([token("token", "Layout")]),
+        styleSourceSelections: new Map(),
+      },
+      {
+        designTokenId: "token",
+        updates: [
+          {
+            property: "max-width",
+            value: "max(var(--x), calc(50% - 40rem))",
+          },
+        ],
+      }
+    );
+
+    expect(mutation.payload).toContainEqual({
+      namespace: "styles",
+      patches: [
+        {
+          op: "add",
+          path: ["token:desktop:maxWidth:"],
+          value: createStyleDecl("token", "desktop", "maxWidth", {
+            type: "unparsed",
+            value: "max(var(--x), calc(50% - 40rem))",
           }),
         },
       ],
@@ -2182,6 +2270,28 @@ describe("style declaration helpers", () => {
         value: { type: "unparsed", value: "1px /" },
       })
     ).toThrow('Invalid value for shorthand CSS property "inset"');
+  });
+
+  test("expands unresolved variable shorthand values", () => {
+    expect(
+      createStyleDeclsFromInput({
+        styleSourceId: "token",
+        property: "borderRadius",
+        value: { type: "var", value: "radius" },
+      })
+    ).toEqual(
+      [
+        "borderTopLeftRadius",
+        "borderTopRightRadius",
+        "borderBottomRightRadius",
+        "borderBottomLeftRadius",
+      ].map((property) => ({
+        styleSourceId: "token",
+        breakpointId: "base",
+        property,
+        value: { type: "var", value: "radius" },
+      }))
+    );
   });
 
   test("creates style declaration keys from user input with base breakpoint default", () => {

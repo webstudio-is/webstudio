@@ -17,6 +17,32 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
+  ssg-artifact:
+    name: Packaged SSG Assets build
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
+    timeout-minutes: 20
+    runs-on: ubuntu-24.04-arm
+    environment:
+      name: development
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
+
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
+
+      - uses: ./.github/actions/ci-setup
+
+      - name: Build packaged SSG fixture
+        run: pnpm --filter webstudio test:ssg-package
+
   checks:
     # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
     if: |
@@ -42,18 +68,19 @@ jobs:
     runs-on: ubuntu-24.04-arm
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       # Will not checkout submodules on empty environment, and will on development
       - uses: ./.github/actions/submodules-checkout
         with:
           submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm
@@ -84,7 +111,7 @@ jobs:
           pnpm check:generated-docs
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
@@ -105,15 +132,22 @@ jobs:
           pnpm -r typecheck
 
   check-size:
+    # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
+
     runs-on: ubuntu-24.04-arm
 
     environment:
       name: development
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       - uses: ./.github/actions/submodules-checkout
         with:
@@ -123,7 +157,7 @@ jobs:
 
       - run: pnpm --filter "{./fixtures/*}..." build
 
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         with:
           script: |
             const assertSize = async (directory, maxSize) => {
@@ -181,9 +215,10 @@ jobs:
       shards: ${{ steps.shards.outputs.value }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       - uses: ./.github/actions/submodules-checkout
         with:
@@ -206,10 +241,10 @@ jobs:
         run: pnpm e2e:builder:refresh-schema-cache
 
       - name: Upload builder e2e prerequisites
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: builder-e2e-build
-          retention-days: 1
+          retention-days: 7
           path: |
             apps/builder/build/server
             apps/builder/build/client/assets
@@ -241,9 +276,10 @@ jobs:
       BUILDER_E2E_COMPOSE_ARGS: "--env-file apps/builder/.env -f apps/builder/docker-compose.yaml -f apps/builder/docker-compose.e2e.yaml"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       - uses: ./.github/actions/submodules-checkout
         with:
@@ -254,13 +290,13 @@ jobs:
           run-scripts: "true"
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: builder-e2e-playwright-${{ runner.os }}-${{ hashFiles('apps/builder/package.json', 'pnpm-lock.yaml') }}
 
       - name: Download builder e2e build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: builder-e2e-build
           path: .

@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
+  encodeDataVariableId,
   elementComponent,
   isRootFolder,
   ROOT_FOLDER_ID,
@@ -1936,6 +1937,57 @@ describe("createPage", () => {
 });
 
 describe("updatePage", () => {
+  test("binds readable page metadata variables to the page scope", () => {
+    const pages = createPages();
+    const instances = new Map([
+      ["pageBody", createPageRootInstance("pageBody")],
+    ]);
+    const dataSources = new Map([
+      [
+        "postForSlugId",
+        {
+          id: "postForSlugId",
+          scopeInstanceId: "pageBody",
+          name: "postForSlug",
+          type: "resource" as const,
+          resourceId: "postResourceId",
+        },
+      ],
+    ]);
+
+    expect(
+      updatePage(
+        { pages, instances, dataSources },
+        {
+          pageId: "page",
+          values: {
+            title: '"Slug: " + system.params.slug',
+            meta: {
+              description:
+                "postForSlug.data.at(0).field.Slug === system.params.slug ? postForSlug.data.at(0).field.Description : undefined",
+            },
+          },
+        }
+      ).payload
+    ).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "replace",
+            path: ["pages", "page", "title"],
+            value: `"Slug: " + ${encodeDataVariableId(":system")}.params.slug`,
+          },
+          {
+            op: "add",
+            path: ["pages", "page", "meta", "description"],
+            value: `${encodeDataVariableId("postForSlugId")}.data.at(0).field.Slug === ${encodeDataVariableId(":system")}.params.slug ? ${encodeDataVariableId("postForSlugId")}.data.at(0).field.Description : undefined`,
+          },
+        ],
+      },
+    ]);
+  });
+
   test("sets and clears draft", () => {
     const pages = createPages();
 

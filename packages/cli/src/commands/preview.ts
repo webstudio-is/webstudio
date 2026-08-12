@@ -17,11 +17,11 @@ import { join } from "node:path";
 import { chdir, cwd } from "node:process";
 import { promisify } from "node:util";
 import { log } from "@clack/prompts";
-import { builderNamespaces } from "@webstudio-is/project-build/contracts";
 import {
   projectPreviewSources,
   type ProjectPreviewSource,
-} from "@webstudio-is/project-build/visual";
+} from "@webstudio-is/project-build/preview";
+import { sanitizeValidationDetail } from "@webstudio-is/project-build/runtime";
 import { generatedFilesManifest, prebuild } from "../prebuild";
 import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "../config";
 import { HandledCliError } from "../errors";
@@ -29,6 +29,7 @@ import {
   getPreviewUrl,
   getNpmInvocation,
   previewBuildCacheMarker,
+  previewProcessOwnerFile,
   runPreviewBuild,
   startPreviewServer,
   waitForPreviewExit,
@@ -42,8 +43,7 @@ import { sync, defaultSyncDependencies, type SyncDependencies } from "./sync";
 import { resolveApiConnection } from "../api-connection";
 import {
   createCliProjectSession,
-  loadCliProjectSessionAssetIndex,
-  writeCliProjectSessionDataFile,
+  writeCliProjectSessionPreviewDataFile,
 } from "../project-session";
 import { LOCAL_ASSETS_DIR } from "../asset-files";
 import packageJson from "../../package.json" with { type: "json" };
@@ -159,12 +159,17 @@ const cliNodeModulesCandidates = getNodeModulesSearchPaths(import.meta.url);
 const execFileAsync = promisify(execFile);
 const dependencyMarker = ".webstudio-preview-dependencies";
 const developmentCliVersion = "0.0.0-webstudio-version";
+const previewDependencyInstallTimeout = 2 * 60_000;
 type PreviewDependencyOperations = {
   access: (path: string) => Promise<void>;
   execFile: (
     file: string,
     args: string[],
-    options: { cwd: string }
+    options: {
+      cwd: string;
+      env: NodeJS.ProcessEnv;
+      timeout: number;
+    }
   ) => Promise<unknown>;
   lstat: (path: string) => Promise<{ isSymbolicLink: () => boolean }>;
   readFile: (path: string, encoding: "utf8") => Promise<string>;
@@ -181,10 +186,71 @@ type PreviewDependencyOperations = {
   nodeExecPath: string;
   npmExecPath?: string;
   platform: NodeJS.Platform;
+  env: NodeJS.ProcessEnv;
+};
+
+const getPreviewInstallFailureDiagnostics = (error: unknown) => {
+  if (typeof error !== "object" || error === null) {
+    return sanitizeValidationDetail(String(error)).trim().slice(-2000);
+  }
+  const record = error as Record<string, unknown>;
+  const output = [record.stderr, record.stdout, record.message].find(
+    (value) => typeof value === "string" && value.trim().length > 0
+  );
+  const diagnostics = sanitizeValidationDetail(
+    typeof output === "string" ? output : String(error)
+  )
+    .trim()
+    .slice(-2000);
+  const code =
+    typeof record.code === "string" || typeof record.code === "number"
+      ? String(record.code)
+      : undefined;
+  return `${code === undefined ? "" : `npm exit code ${code}. `}${diagnostics}`;
 };
 
 export const getPreviewProjectDir = (projectDir = cwd()) =>
   join(projectDir, ".webstudio", "preview");
+
+type PreviewProcessOwner = {
+  supervisorPid?: unknown;
+  previewPid?: unknown;
+};
+
+export const createPreviewCleanupError = async ({
+  previewProjectDir,
+  lockedPath,
+  cause,
+  readOwnerFile = readFile,
+}: {
+  previewProjectDir: string;
+  lockedPath: string;
+  cause: unknown;
+  readOwnerFile?: (path: string, encoding: "utf8") => Promise<string>;
+}) => {
+  const owner = await readOwnerFile(
+    join(previewProjectDir, "..", previewProcessOwnerFile),
+    "utf8"
+  )
+    .then((value) => JSON.parse(value) as PreviewProcessOwner)
+    .catch(() => undefined);
+  const pids = [owner?.supervisorPid, owner?.previewPid].filter(
+    (value): value is number =>
+      typeof value === "number" && Number.isInteger(value) && value > 0
+  );
+  const ownerHint =
+    pids.length === 0
+      ? "No owned preview PID was recorded."
+      : `Recorded owned preview PIDs: ${pids.join(", ")}.`;
+  const recovery =
+    pids.length === 0
+      ? "Stop the CLI/MCP process that started preview. On WSL/Windows, use PowerShell Get-CimInstance Win32_Process to find a command whose path is inside the locked preview directory, verify it belongs to this project, and stop only that PID."
+      : `Stop preview from its owning CLI/MCP session. If that owner is gone, verify the recorded PID belongs to this project, then terminate only its tree (WSL/Windows: taskkill.exe /pid ${pids.at(-1)} /t /f; Linux/macOS: kill -- -${pids.at(-1)}).`;
+  return new Error(
+    `PREVIEW_CLEANUP_FAILED: Could not remove generated preview path ${lockedPath}. A preview process may still have it open. ${ownerHint} ${recovery}`,
+    { cause }
+  );
+};
 
 export const ensurePreviewDependencies = async (
   previewProjectDir: string,
@@ -201,6 +267,7 @@ export const ensurePreviewDependencies = async (
     nodeExecPath: process.execPath,
     npmExecPath: process.env.npm_execpath,
     platform: process.platform,
+    env: process.env,
     ...dependencies,
   };
   const previewNodeModules = join(previewProjectDir, "node_modules");
@@ -214,6 +281,9 @@ export const ensurePreviewDependencies = async (
     ...packageJson.dependencies,
     ...packageJson.devDependencies,
   };
+  const usesDevelopmentDependencies = Object.values(
+    requiredDependencies
+  ).includes(developmentCliVersion);
   const manifestHash = createHash("sha256")
     .update(JSON.stringify(requiredDependencies))
     .digest("hex");
@@ -234,6 +304,7 @@ export const ensurePreviewDependencies = async (
     const previewNodeModulesStat = await operations.lstat(previewNodeModules);
     if (
       previewNodeModulesStat.isSymbolicLink() &&
+      usesDevelopmentDependencies &&
       (await hasRequiredDependencies(previewNodeModules))
     ) {
       return;
@@ -249,19 +320,36 @@ export const ensurePreviewDependencies = async (
         return;
       }
     }
-    await operations.rm(previewNodeModules, { recursive: true, force: true });
-  } catch {
+    try {
+      await operations.rm(previewNodeModules, { recursive: true, force: true });
+    } catch (error) {
+      throw await createPreviewCleanupError({
+        previewProjectDir,
+        lockedPath: previewNodeModules,
+        cause: error,
+        readOwnerFile: operations.readFile,
+      });
+    }
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.startsWith("PREVIEW_CLEANUP_FAILED:")
+    ) {
+      throw error;
+    }
     // Continue with the CLI dependency tree or an isolated install.
   }
 
-  for (const cliNodeModules of cliNodeModulesCandidates) {
-    if (await hasRequiredDependencies(cliNodeModules)) {
-      await operations.symlink(
-        cliNodeModules,
-        previewNodeModules,
-        operations.platform === "win32" ? "junction" : "dir"
-      );
-      return;
+  if (usesDevelopmentDependencies) {
+    for (const cliNodeModules of cliNodeModulesCandidates) {
+      if (await hasRequiredDependencies(cliNodeModules)) {
+        await operations.symlink(
+          cliNodeModules,
+          previewNodeModules,
+          operations.platform === "win32" ? "junction" : "dir"
+        );
+        return;
+      }
     }
   }
 
@@ -272,16 +360,19 @@ export const ensurePreviewDependencies = async (
     "--no-fund",
     "--package-lock=false",
     "--loglevel=error",
+    "--workspaces=false",
   ];
   const invocation = getNpmInvocation(installArgs, operations);
 
   try {
     await operations.execFile(invocation.command, invocation.args, {
       cwd: previewProjectDir,
+      env: operations.env,
+      timeout: previewDependencyInstallTimeout,
     });
   } catch (error) {
     throw new Error(
-      "PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies. Check the npm/network configuration, then reinstall or update webstudio if the problem persists.",
+      `PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies. Check the npm/network configuration, then reinstall or update webstudio if the problem persists.\n\nPackage-manager diagnostics:\n${getPreviewInstallFailureDiagnostics(error)}`,
       { cause: error }
     );
   }
@@ -353,9 +444,18 @@ const preparePreviewDirectory = async (
     await Promise.all(
       entries
         .filter((entry) => entry !== "node_modules")
-        .map((entry) =>
-          rm(join(previewProjectDir, entry), { recursive: true, force: true })
-        )
+        .map(async (entry) => {
+          const entryPath = join(previewProjectDir, entry);
+          try {
+            await rm(entryPath, { recursive: true, force: true });
+          } catch (error) {
+            throw await createPreviewCleanupError({
+              previewProjectDir,
+              lockedPath: entryPath,
+              cause: error,
+            });
+          }
+        })
     );
   }
   await copyPreviewProjectFiles(projectDir, previewProjectDir);
@@ -443,19 +543,15 @@ export const preparePreviewProject = async ({
   includeDraftPages = false,
   preserveGeneratedProject = false,
   prepareForIncrementalGeneration = false,
+  reportProgress,
   prepareSessionDataFile = async () => {
     const connection = await resolveApiConnection();
     const session = createCliProjectSession({ connection });
     await session.initialize();
-    const snapshot = await session.ensureNamespaces(builderNamespaces);
-    const assetIndex = await loadCliProjectSessionAssetIndex(
-      snapshot,
+    await writeCliProjectSessionPreviewDataFile({
+      session,
       connection,
-      join(cwd(), LOCAL_ASSETS_DIR)
-    );
-    await writeCliProjectSessionDataFile(snapshot, undefined, {
-      origin: connection.origin,
-      assetIndex,
+      assetsDirectory: join(cwd(), LOCAL_ASSETS_DIR),
     });
   },
 }: {
@@ -473,6 +569,7 @@ export const preparePreviewProject = async ({
   includeDraftPages?: boolean;
   preserveGeneratedProject?: boolean;
   prepareForIncrementalGeneration?: boolean;
+  reportProgress?: (message: string) => void;
   prepareSessionDataFile?: () => Promise<void>;
 }): Promise<{
   cwd: string;
@@ -481,6 +578,7 @@ export const preparePreviewProject = async ({
 }> => {
   const projectDir = cwd();
   if (source === "session") {
+    reportProgress?.("materializing session project data");
     await prepareSessionDataFile();
   }
   try {
@@ -510,6 +608,13 @@ export const preparePreviewProject = async ({
   if (generate === false) {
     return { cwd: projectDir };
   }
+  const prepareDependencies = async () => {
+    reportProgress?.(
+      `checking or installing generated preview dependencies (${previewDependencyInstallTimeout / 60_000} minute timeout)`
+    );
+    await ensureDependencies(previewProjectDir);
+    reportProgress?.("generated preview project is ready");
+  };
 
   const buildCacheKey = await getBuildCacheKey({
     projectDir,
@@ -527,33 +632,32 @@ export const preparePreviewProject = async ({
       "utf8"
     ).catch(() => undefined);
     if (cachedBuildKey === buildCacheKey && canReuseCachedProject) {
-      await ensureDependencies(previewProjectDir);
+      await prepareDependencies();
       return { cwd: previewProjectDir, buildCacheKey, buildRequired: false };
     }
   }
 
-  if (generate) {
-    await runExclusive(async () => {
-      const reuseGeneratedProject =
-        preserveGeneratedProject && hasIncrementalInputs;
-      await preparePreviewDirectory(projectDir, reuseGeneratedProject);
-      await runInDirectory(previewProjectDir, async () => {
-        await prebuildProject({
-          assets,
-          template: getPreviewTemplates(template),
-          previewIdentity: true,
-          sourceAssetsDirectory: join(projectDir, LOCAL_ASSETS_DIR),
-          ...(silent ? { silent: true } : {}),
-          ...(includeDraftPages ? { includeDraftPages: true } : {}),
-          ...(reuseGeneratedProject ? { incremental: true } : {}),
-          ...(prepareForIncrementalGeneration
-            ? { preserveRouteTemplates: true }
-            : {}),
-        });
+  await runExclusive(async () => {
+    const reuseGeneratedProject =
+      preserveGeneratedProject && hasIncrementalInputs;
+    await preparePreviewDirectory(projectDir, reuseGeneratedProject);
+    await runInDirectory(previewProjectDir, async () => {
+      reportProgress?.("generating preview files");
+      await prebuildProject({
+        assets,
+        template: getPreviewTemplates(template),
+        previewIdentity: true,
+        sourceAssetsDirectory: join(projectDir, LOCAL_ASSETS_DIR),
+        ...(silent ? { silent: true } : {}),
+        ...(includeDraftPages ? { includeDraftPages: true } : {}),
+        ...(reuseGeneratedProject ? { incremental: true } : {}),
+        ...(prepareForIncrementalGeneration
+          ? { preserveRouteTemplates: true }
+          : {}),
       });
-      await ensureDependencies(previewProjectDir);
     });
-  }
+    await prepareDependencies();
+  });
 
   return {
     cwd: previewProjectDir,

@@ -1,0 +1,78 @@
+{
+  "name": "@webstudio-is/vision",
+  "version": "0.0.0",
+  "description": "Browser capture and visual comparison tooling",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./audit": {
+      "webstudio": "./src/audit.ts",
+      "import": "./src/audit.ts",
+      "default": "./src/audit.ts"
+    },
+    "./browser": {
+      "webstudio": "./src/browser.ts",
+      "import": "./src/browser.ts",
+      "default": "./src/browser.ts"
+    },
+    "./capture": {
+      "webstudio": "./src/capture.ts",
+      "import": "./src/capture.ts",
+      "default": "./src/capture.ts"
+    },
+    "./comparison": {
+      "webstudio": "./src/comparison.ts",
+      "import": "./src/comparison.ts",
+      "default": "./src/comparison.ts"
+    },
+    "./diff": {
+      "webstudio": "./src/diff.ts",
+      "import": "./src/diff.ts",
+      "default": "./src/diff.ts"
+    },
+    "./diff-pool": {
+      "webstudio": "./src/diff-pool.ts",
+      "import": "./src/diff-pool.ts",
+      "default": "./src/diff-pool.ts"
+    },
+    "./report": {
+      "webstudio": "./src/report.ts",
+      "import": "./src/report.ts",
+      "default": "./src/report.ts"
+    },
+    "./screenshot-cache": {
+      "webstudio": "./src/screenshot-cache.ts",
+      "import": "./src/screenshot-cache.ts",
+      "default": "./src/screenshot-cache.ts"
+    },
+    "./test-utils": {
+      "webstudio": "./src/screenshot.test-utils.ts",
+      "import": "./src/screenshot.test-utils.ts",
+      "default": "./src/screenshot.test-utils.ts"
+    },
+    "./viewports": {
+      "webstudio": "./src/viewports.ts",
+      "import": "./src/viewports.ts",
+      "default": "./src/viewports.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "fast-png": "8.0.0",
+    "fastest-levenshtein": "^1.0.16",
+    "tsx": "^4.19.3"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*",
+    "esbuild": "^0.25.3",
+    "parse5": "7.3.0",
+    "vitest": "^3.1.2"
+  }
+}

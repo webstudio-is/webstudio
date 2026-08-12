@@ -16,8 +16,10 @@ import {
   allowedArrayMethods,
   allowedStringMethods,
 } from "@webstudio-is/expression";
+import { distance as getLevenshteinDistance } from "fastest-levenshtein";
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
+import { Transform } from "node:stream";
 import {
   projectSessionRestorePointSummarySchema,
   projectSessionBusyMessage,
@@ -25,7 +27,11 @@ import {
   type ProjectSessionEnvelope,
   type ProjectSessionRestorePointSummary,
 } from "./project-session";
-import type { ScreenshotVisualExpectation } from "./visual/screenshot-diff";
+import type {
+  ScreenshotDiffResult,
+  ScreenshotVisualExpectation,
+} from "@webstudio-is/vision/diff";
+import { isScreenshotVisualExpectation } from "@webstudio-is/vision/diff";
 import { isPlainRecord, isRecord } from "./shared/type-utils";
 import {
   augmentAuditWithRenderedChecks,
@@ -35,19 +41,21 @@ import {
   defaultScreenshotTimeout,
   defaultScreenshotWaitForTimeout,
   defaultScreenshotWaitUntil,
+  isScreenshotBrowser,
   isScreenshotWaitUntil,
   screenshotBrowserChoices,
-  type ScreenshotBrowser,
   screenshotWaitUntilValues,
-  type ScreenshotWaitUntil,
-} from "./visual/screenshot-browser";
-import type { ScreenshotDiffResult } from "./visual/screenshot-diff";
+  type BrowserScreenshotLayout,
+  type BrowserScreenshotNavigation,
+  type BrowserScreenshotTimings,
+  type ScreenshotCaptureOptions,
+} from "@webstudio-is/vision/browser";
 import {
   projectPreviewModes,
   projectPreviewSources,
   type ProjectPreviewMode,
   type ProjectPreviewSource,
-} from "./visual/preview";
+} from "./preview";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
@@ -142,47 +150,31 @@ export type ProjectSessionPreviewSource = ProjectPreviewSource;
 export const projectSessionPreviewModes = projectPreviewModes;
 export type ProjectSessionPreviewMode = ProjectPreviewMode;
 
-type ProjectSessionScreenshotNavigation = {
-  requestedUrl: string;
-  finalUrl: string;
-  status?: number;
-  statusText?: string;
-  mimeType?: string;
-  redirects: string[];
-  documentReadyState: string;
+type ProjectSessionScreenshotNavigation = Omit<
+  BrowserScreenshotNavigation,
+  "pageMetadata"
+> & {
   generatedSiteRootPresent: boolean;
   projectId?: string;
   projectVersion?: number;
-  layoutStable: boolean;
 };
 
-export type ProjectSessionScreenshotInput = {
+export type ProjectSessionScreenshotInput = ScreenshotCaptureOptions & {
   url?: string;
   baseUrl?: string;
   path?: string;
-  output?: string;
   host?: string;
   port?: number;
   imageDomains?: string[];
   source?: ProjectSessionPreviewSource;
   mode?: ProjectSessionPreviewMode;
-  viewport: {
-    width: number;
-    height: number;
-  };
-  fullPage?: boolean;
-  includeImageMetrics?: boolean;
-  includeResourceMetrics?: boolean;
-  includeContrastMetrics?: boolean;
-  browser: ScreenshotBrowser;
-  browserPath?: string;
-  waitUntil?: ScreenshotWaitUntil;
-  waitForSelector?: string;
-  waitForTimeout?: number;
-  timeout?: number;
-  format?: "png" | "jpeg" | "webp";
-  quality?: number;
-  scale?: number;
+};
+
+type ProjectSessionScreenshotLayout = Omit<
+  BrowserScreenshotLayout,
+  "navigation"
+> & {
+  navigation?: ProjectSessionScreenshotNavigation;
 };
 
 export type ProjectSessionScreenshotResult = {
@@ -204,59 +196,9 @@ export type ProjectSessionScreenshotResult = {
     captureMs: number;
     totalMs: number;
   };
-  timings?: {
-    wallMs: number;
-    targetSetupMs: number;
-    navigationMs: number;
-    readinessMs: number;
-    imageInspectionMs: number;
-    resourceInspectionMs: number;
-    screenshotMs: number;
-    artifactWriteMs: number;
-    targetCleanupMs: number;
-  };
+  timings?: BrowserScreenshotTimings;
   navigation?: ProjectSessionScreenshotNavigation;
-  layout?: {
-    navigation?: ProjectSessionScreenshotNavigation;
-    documentType?: string;
-    viewportWidth: number;
-    viewportHeight: number;
-    contentWidth: number;
-    contentHeight: number;
-    horizontalOverflow: boolean;
-    images?: Array<{
-      instanceId?: string;
-      sourcePathname?: string;
-      loading: string;
-      complete: boolean;
-      naturalWidth: number;
-      naturalHeight: number;
-      selectedSourceWidth?: number;
-      selectedSourceHeight?: number;
-      renderedWidth: number;
-      renderedHeight: number;
-      top: number;
-    }>;
-    resources?: Array<{
-      pathname: string;
-      initiatorType: string;
-      transferSize: number;
-      encodedBodySize: number;
-      decodedBodySize: number;
-      duration: number;
-      renderBlockingStatus?: string;
-    }>;
-    contrasts?: Array<{
-      instanceId: string;
-      tagName: string;
-      foreground: string;
-      background: string;
-      ratio: number;
-      requiredRatio: 3 | 4.5;
-      fontSize: number;
-      fontWeight: number;
-    }>;
-  };
+  layout?: ProjectSessionScreenshotLayout;
 };
 
 type McpToolProgress = {
@@ -313,12 +255,19 @@ export type ProjectSessionPreviewResult = {
   mode: ProjectSessionPreviewMode;
 };
 
+export type ProjectSessionPreviewStatusResult = {
+  url?: string;
+  pid?: number;
+  running: boolean;
+  mode?: ProjectSessionPreviewMode;
+};
+
 type StartPreview = (
   input: ProjectSessionPreviewInput,
   progress?: McpToolProgress
 ) => Promise<ProjectSessionPreviewResult>;
-type GetPreviewStatus = () => Promise<ProjectSessionPreviewResult>;
-type StopPreview = () => Promise<ProjectSessionPreviewResult>;
+type GetPreviewStatus = () => Promise<ProjectSessionPreviewStatusResult>;
+type StopPreview = () => Promise<ProjectSessionPreviewStatusResult>;
 
 export type ProjectSessionImportInput = {
   to: string;
@@ -356,10 +305,6 @@ export type ProjectSessionMcpGuidance = {
   }) => readonly string[];
   getVisionWorkflowSummary: (options: { includeDiff: boolean }) => string;
 };
-
-const isScreenshotBrowser = (value: unknown): value is ScreenshotBrowser =>
-  typeof value === "string" &&
-  screenshotBrowserChoices.includes(value as ScreenshotBrowser);
 
 const isProjectSessionPreviewSource = (
   value: unknown
@@ -688,10 +633,9 @@ const jsonCompatibleValueSchema = {
     { type: "number" },
     { type: "boolean" },
     { type: "null" },
-    { type: "array" },
+    { type: "array", items: {} },
     { type: "object" },
   ],
-  description: "JSON-compatible value.",
 } as const satisfies InputJsonSchema;
 
 const constrainUnconstrainedInputSchemaValue = (
@@ -723,7 +667,9 @@ const constrainUnconstrainedInputSchemas = <Schema extends InputJsonSchema>(
       schema.additionalProperties
     );
   }
-  if (schema.items !== undefined) {
+  if (schema.type === "array" && schema.items === undefined) {
+    result.items = {};
+  } else if (schema.items !== undefined) {
     result.items = constrainUnconstrainedInputSchemaValue(schema.items);
   }
   for (const key of ["allOf", "anyOf", "oneOf", "prefixItems"] as const) {
@@ -754,6 +700,11 @@ const getCompactSchemaProperty = (schema: InputJsonSchema): InputJsonSchema => {
         : `${schema.description.slice(0, 239)}…`;
   const compact = {
     ...(schema.type === undefined ? {} : { type: schema.type }),
+    ...(schema.type === "array"
+      ? {
+          items: {},
+        }
+      : {}),
     ...(description === undefined ? {} : { description }),
     ...(schema.enum === undefined ? {} : { enum: schema.enum }),
   };
@@ -824,7 +775,7 @@ const insertCollectionMcpInputSchema = getOperationInputSchema({
 });
 
 const assetsResourceResultDescription =
-  "Pass query as structured tool input using Webstudio JavaScript expressions rather than a JSON-stringified expression or manually authored resource body. Every reachable Assets resource contributes to one shared published database, so create only one final resource per rendered query; update an existing resource instead of creating a replacement, and remove obsolete duplicates. Keep static filters, limits, and offsets literal so bounded overview queries can be materialized. Use output mode fields, select only rendered fields, keep includeMetadata false, and use content mode none when file content is not rendered. For a Markdown detail page, query the Markdown asset directly and use content mode markdown-body-ref; compilation keeps only its document reference in the bundle and fetches the selected body from Asset storage at runtime. Bind the resolved body from item.content.text. Assets expose an ID-keyed map at <dataSourceName>.data and collection information at <dataSourceName>.meta.";
+  "Pass query as structured tool input with Webstudio JavaScript expressions. Keep one final resource per rendered query and remove obsolete duplicates. Use result many for listings and result one for unique details; first and last require sorting. Keep static filters, limits, and offsets literal; single modes omit pagination. Select only rendered fields, keep includeMetadata false, and use content mode none unless file content is rendered. For Markdown details, use markdown-body-ref; compilation keeps a document reference and fetches the body at runtime. Bind <dataSourceName>.data, including id and content.text. Many returns an ID map plus totalCount and hasMore at <dataSourceName>.meta; single modes return an item or null plus totalCount.";
 
 const mcpOperationOverrides = new Map<
   string,
@@ -1082,6 +1033,16 @@ const normalizeOperationInputAliases = ({
   command: string;
   input: unknown;
 }) => {
+  if (
+    command === "create-resource" &&
+    isPlainRecord(input) &&
+    Object.keys(input).length === 1 &&
+    isPlainRecord(input.resource) &&
+    isPlainRecord(input.resource.resource) &&
+    typeof input.resource.scopeInstanceId === "string"
+  ) {
+    return input.resource;
+  }
   if (command === "create-page" && isPlainRecord(input)) {
     const normalizedInput: Record<string, unknown> =
       "description" in input
@@ -1295,7 +1256,8 @@ const screenshotInputSchema = {
     timeout: {
       type: "number",
       default: defaultScreenshotTimeout,
-      description: "Maximum milliseconds to wait for page readiness.",
+      description:
+        "Maximum milliseconds for browser capture after preview is ready.",
     },
     source: {
       type: "string",
@@ -1841,6 +1803,40 @@ export const mcpArgumentExamples: Record<
     { pagePath: "/pricing", severities: ["error", "warning"] },
     { scopes: ["accessibility"], verbose: true },
   ],
+  "report-issue": [
+    {
+      trigger: "user-requested",
+      category: "schema-or-docs-mismatch",
+      deduplicationKey: "update-props-input-contract",
+      title: "fix: Clarify the update-props input contract",
+      agent: {
+        client: "Codex",
+        provider: "OpenAI",
+        model: "gpt-5.6-sol",
+        reasoningEffort: "medium",
+      },
+      report: {
+        userStory:
+          "As a Webstudio user, I want routine MCP edits to complete without corrective retries.",
+        summary: "A documented operation required a corrected retry.",
+        attemptedWorkflow: [
+          "Inspect the target component.",
+          "Attempt the update with the advertised tool.",
+        ],
+        expectedBehavior: "The documented input should be accepted.",
+        actualResult: "The initial call returned BAD_REQUEST.",
+        recoveryAttempts: [
+          "Inspect the schema and retry with corrected input nesting.",
+        ],
+        userImpact: "The edit required extra tool calls.",
+        technicalContext: "The update-props input shape was ambiguous.",
+        acceptanceCriteria: [
+          "The exposed schema matches runtime validation.",
+          "A regression test covers the workflow.",
+        ],
+      },
+    },
+  ],
   "insert-component": [
     {
       parentInstanceId: "parent-id",
@@ -1976,6 +1972,23 @@ export const mcpArgumentExamples: Record<
       ],
     },
   ],
+  "list-css-variables": [{ withUsage: true }],
+  "define-css-variable": [
+    {
+      vars: {
+        "--color-primary": "#2d3748",
+        "--color-accent": "#e53e3e",
+        "--space-card": "1.5rem",
+      },
+      overwrite: true,
+    },
+  ],
+  "delete-css-variable": [
+    {
+      names: ["--color-primary", "--color-accent", "--space-card"],
+      force: true,
+    },
+  ],
   "create-variable": [
     {
       scopeInstanceId: "body-id",
@@ -2087,22 +2100,23 @@ export const mcpArgumentExamples: Record<
       scopeInstanceId: "body-id",
       dataSourceName: "posts",
       query: {
+        result: "many",
         where: {
           all: [
             {
               field: ["extension"],
               operator: "eq",
-              value: { type: "literal", value: "json" },
+              value: { type: "literal", value: "md" },
             },
             {
-              field: ["properties", "kind"],
+              field: ["folderId"],
               operator: "eq",
-              value: { type: "literal", value: "post" },
+              value: { type: "literal", value: "folder-id" },
             },
             {
               field: ["properties", "draft"],
               operator: "ne",
-              value: "true",
+              value: { type: "literal", value: true },
             },
           ],
         },
@@ -2110,7 +2124,19 @@ export const mcpArgumentExamples: Record<
           { field: ["properties", "publishedAt"], direction: "desc" },
           { field: ["id"], direction: "asc" },
         ],
-        limit: "20",
+        limit: { type: "literal", value: 20 },
+        offset: { type: "literal", value: 0 },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [
+            ["properties", "title"],
+            ["properties", "slug"],
+            ["properties", "publishedAt"],
+            ["properties", "excerpt"],
+          ],
+        },
+        content: { mode: "none" },
       },
     },
     {
@@ -2118,41 +2144,42 @@ export const mcpArgumentExamples: Record<
       scopeInstanceId: "body-id",
       dataSourceName: "post",
       query: {
+        result: "one",
         where: {
           all: [
             {
               field: ["extension"],
               operator: "eq",
-              value: { type: "literal", value: "json" },
+              value: { type: "literal", value: "md" },
             },
             {
-              field: ["properties", "kind"],
+              field: ["folderId"],
               operator: "eq",
-              value: { type: "literal", value: "post" },
+              value: { type: "literal", value: "folder-id" },
             },
             {
-              any: [
-                {
-                  field: ["properties", "slug"],
-                  operator: "eq",
-                  value: "system.params.slug",
-                },
-                {
-                  field: ["properties", "id"],
-                  operator: "eq",
-                  value: "system.params.slug",
-                },
-              ],
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "system.params.slug",
+            },
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: { type: "literal", value: true },
             },
           ],
         },
-        limit: "1",
         output: {
           mode: "fields",
           includeMetadata: false,
-          fields: [["properties", "body"]],
+          fields: [
+            ["properties", "title"],
+            ["properties", "publishedAt"],
+            ["properties", "excerpt"],
+            ["properties", "featureImage"],
+          ],
         },
-        content: { mode: "none" },
+        content: { mode: "markdown-body-ref" },
       },
     },
   ],
@@ -2186,8 +2213,14 @@ export const mcpArgumentExamples: Record<
   "preview-asset-query": [
     {
       query: {
+        result: "one",
         where: {
           all: [
+            {
+              field: ["extension"],
+              operator: "eq",
+              value: "md",
+            },
             {
               field: ["properties", "slug"],
               operator: "eq",
@@ -2195,7 +2228,11 @@ export const mcpArgumentExamples: Record<
             },
           ],
         },
-        limit: 1,
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
         content: { mode: "markdown-body-ref", maxBytes: 1_048_576 },
       },
     },
@@ -2407,16 +2444,26 @@ const refreshDataSchema = {
   additionalProperties: false,
 } as const satisfies InputJsonSchema;
 
-const previewDataSchema = {
+const previewStatusDataSchema = {
   type: "object",
   properties: {
     url: { type: "string" },
     pid: { type: "integer" },
     running: { type: "boolean" },
-    mode: { type: "string", enum: projectSessionPreviewModes },
+    mode: {
+      type: "string",
+      enum: projectSessionPreviewModes,
+    },
+    stale: { type: "boolean" },
+    renderedProjectVersion: { type: "integer" },
   },
-  required: ["url", "running", "mode"],
+  required: ["running"],
   additionalProperties: false,
+} as const satisfies InputJsonSchema;
+
+const previewDataSchema = {
+  ...previewStatusDataSchema,
+  required: ["url", "running", "mode"],
 } as const satisfies InputJsonSchema;
 
 const restorePointSummaryDataSchema = getZodObjectSchema(
@@ -3253,7 +3300,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Return the active generated-site preview server URL and process state for screenshot-based verification.",
     inputSchema: emptyInputSchema,
-    outputSchema: getMcpOutputSchema(previewDataSchema),
+    outputSchema: getMcpOutputSchema(previewStatusDataSchema),
     mcpExamples: getMcpExamples("preview.status"),
     annotations: {
       command: "preview.status",
@@ -3273,7 +3320,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Stop the active generated-site preview server owned by this MCP session.",
     inputSchema: emptyInputSchema,
-    outputSchema: getMcpOutputSchema(previewDataSchema),
+    outputSchema: getMcpOutputSchema(previewStatusDataSchema),
     mcpExamples: getMcpExamples("preview.stop"),
     annotations: {
       command: "preview.stop",
@@ -3545,6 +3592,11 @@ const capabilityAreas = [
       "whoami",
       "inspect",
     ],
+  },
+  {
+    area: "reporting",
+    goal: "Report anonymous, actionable CLI and MCP product issues without requiring the user to authenticate with GitHub.",
+    tools: ["report-issue"],
   },
   {
     area: "project-lifecycle",
@@ -5524,21 +5576,20 @@ const metaGoalGuides = [
       "preview-asset-query",
       "create-page",
       "create-assets-resource",
-      "insert-fragment-verified",
       "insert-collection",
+      "insert-fragment",
+      "update-page",
       "verify-page-responsive",
     ],
     workflow: [
-      'Call meta.get-more-tools with {"tools":["create-assets-resource"]} once for the complete nested query contract. Use exact tool names, not brief search, and do not repeat discovery for this workflow.',
-      'Create one Blog asset folder. Upload all Markdown source files together in one upload-assets call with assetsDir ".webstudio/assets". Put queryable metadata such as slug, title, author, publishedAt, excerpt, and draft in each file\'s frontmatter. Every file must use {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}. Do not create companion JSON descriptors, use a combined format value, or retry a failed mutation; report its actionable error instead.',
-      'Ensure the blog has exactly two Builder pages: an overview at the fixed path "/blog" and one detail page at the dynamic path "/blog/:slug". Create each page once with a committed call; do not dry-run it. Both pages load their content from Assets resources. Do not create one page per post or copy Markdown content into page-specific static structures.',
-      "Every reachable Assets data source contributes its query to one shared published database. Keep exactly one final Assets resource for the overview and one for the detail page. Never create a placeholder, preview copy, or repair replacement; update the existing scoped resource when requirements change and remove obsolete duplicates.",
-      'Field paths are arrays of segments, for example field:["extension"]. Literal query values use {"type":"literal","value":"..."}; raw strings are runtime expressions. Keep every overview filter value, limit, and offset literal so the bounded metadata-only result can be materialized instead of retaining its fields across every article. Use a deterministic secondary ID sort. Query Markdown posts with static extension and blog-folder constraints before any dynamic condition. Use output.mode:"fields", includeMetadata:false, and only fields rendered by that route.',
-      'Keep content.mode:"none" on the overview and use content.mode:"markdown-body-ref" only on the detail route. The detail query should have exactly one dynamic value, system.params.slug, a literal limit of 1, and only the title and author metadata rendered above Markdown Embed. The published database keeps only the Markdown document reference and fetches the selected body from Asset storage at runtime.',
-      "Call create-assets-resource exactly once with recipe.overviewResource after substituting the returned /blog root id and Blog folder id. Then call it exactly once with recipe.detailResource after substituting the returned /blog/:slug root id and the same Blog folder id.",
-      'Call insert-collection exactly once with the entire recipe.overviewCollection object and exactly once with the entire recipe.detailCollection object, changing only parentInstanceId to the returned root id. Do not reshape or stringify any field: data must remain the recipe object {"type":"expression","value":"posts.data"} or {"type":"expression","value":"post.data"}. Do not improvise another fragment or call meta.get-more-tools again.',
-      "Validate both queries and preview the detail query with one concrete slug before saving dynamic expressions. Query-preview diagnostics report this query separately from the merged published database; use the merged database measurement when checking the deployment limit. The merged database must contain every source document without truncation, no embedded Markdown contents, and only one materialized overview query.",
-      "Verify only after both Collections succeed and confirm that both pages load their content from Assets. Call verify-page-responsive once for /blog and once for one concrete detail route, including empty/not-found behavior, before finishing. If any call fails, stop and report it without retrying.",
+      'Call meta.get-more-tools once with {"tools":["create-assets-resource"]}; the recipe below supplies the remaining inputs.',
+      'Create one asset folder named exactly "Blog", then call upload-assets exactly once with all Markdown files and assetsDir ".webstudio/assets". Put slug, title, author, publishedAt, excerpt, and draft in frontmatter. Each asset uses {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}; do not create companion files.',
+      'Create exactly two pages once: "/blog" and "/blog/:slug". Do not dry-run page creation, create one page per post, or copy Markdown into static page content.',
+      "Substitute the returned folder id in both recipe queries. Validate both, then preview the detail query with one concrete slug. Keep overview values literal and keep system.params.slug as the detail query's only dynamic value.",
+      'Create exactly one scoped Assets resource per page by copying recipe.overviewResource and recipe.detailResource unchanged except for id placeholders. Keep the detail query result as "one" and bind it directly without a Collection. Do not add query defaults or create placeholder resources.',
+      "Insert recipe.overviewCollection under the overview root with insert-collection, then insert recipe.detailFragment under the detail root with insert-fragment. The overview repeats posts; the detail page binds post.data directly.",
+      "Apply the page settings with update-page using recipe.detailPageSettings so the article title, description, social image, and 404 status use the same post resource as the page content.",
+      'After both insertions succeed, call verify-page-responsive once for "/blog" and once for one concrete detail path with desktop and mobile viewports. Confirm Assets-backed content and empty/not-found behavior. Stop on an error instead of retrying.',
     ],
     recipe: {
       overviewResource: {
@@ -5546,6 +5597,7 @@ const metaGoalGuides = [
         scopeInstanceId: "<overview-root-id>",
         dataSourceName: "posts",
         query: {
+          result: "many",
           where: {
             all: [
               {
@@ -5590,6 +5642,7 @@ const metaGoalGuides = [
         scopeInstanceId: "<detail-root-id>",
         dataSourceName: "post",
         query: {
+          result: "one",
           where: {
             all: [
               {
@@ -5607,16 +5660,21 @@ const metaGoalGuides = [
                 operator: "eq",
                 value: "system.params.slug",
               },
+              {
+                field: ["properties", "draft"],
+                operator: "ne",
+                value: { type: "literal", value: true },
+              },
             ],
           },
-          limit: { type: "literal", value: 1 },
-          offset: { type: "literal", value: 0 },
           output: {
             mode: "fields",
             includeMetadata: false,
             fields: [
               ["properties", "title"],
               ["properties", "author"],
+              ["properties", "excerpt"],
+              ["properties", "featureImage"],
             ],
           },
           content: { mode: "markdown-body-ref" },
@@ -5628,11 +5686,21 @@ const metaGoalGuides = [
         itemFragment:
           '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">{expression`collectionItem.properties.excerpt ?? ""`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><ws.element ws:tag="time">{expression`collectionItem.properties.publishedAt ?? ""`}</ws.element><ws.element ws:tag="a" href={expression`"/blog/" + collectionItem.properties.slug`}>Read article</ws.element></ws.element>',
       },
-      detailCollection: {
+      detailFragment: {
         parentInstanceId: "<detail-root-id>",
-        data: { type: "expression", value: "post.data" },
-        itemFragment:
-          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><$.MarkdownEmbed code={expression`collectionItem.content.text`} /></ws.element>',
+        fragment:
+          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`post.data.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`post.data.properties.author.name ?? ""`}</ws.element><$.MarkdownEmbed code={expression`post.data.content.text ?? ""`} /></ws.element>',
+      },
+      detailPageSettings: {
+        pageId: "<detail-page-id>",
+        values: {
+          title: 'post.data.properties.title ?? "Article"',
+          meta: {
+            description: 'post.data.properties.excerpt ?? ""',
+            socialImageUrl: 'post.data.properties.featureImage ?? ""',
+            status: "post.data ? 200 : 404",
+          },
+        },
       },
     },
   },
@@ -5737,13 +5805,26 @@ const metaGoalGuides = [
       "Keep all four auth states in the editable component structure even when bindings select only one at runtime. Give each state a visible label using the exact terms signed-out, loading, signed-in, and failed-auth so authors can inspect and verify every state. Use page basic auth only when the user asks for Webstudio's fixed login/password gate; it is not Supabase or Firebase authentication.",
       "Use focused resources and variables for public client configuration and session-shaped data. Keep authorization enforcement and privileged provider calls server-side; a hidden Builder element is not an authorization boundary.",
       "When fixture/session data must feed a resource, create the page and scoped fixture variables there. Use create-page's returned rootInstanceId directly instead of listing instances to rediscover it. Call list-variables after creation only when a resource expression actually needs the returned encoded name. Do not repeat list-variables when the fixture variable is not referenced, as in the expression-free state gallery, and do not guess or reference variables before they exist.",
-      'Create resources only after their scope and referenced variables exist. When reusing an existing server-mediated auth convention, copy its fixed request URL exactly into resource.url; resource.url is the HTTP request target, not a provider call or session-state expression. For the discovered /api/auth/session convention, use create-resource with resource:{name:"Account session via server",method:"get",url:"/api/auth/session",headers:[],searchParams:[]}, the new page root as scopeInstanceId, and a descriptive dataSourceName. Use literal wrappers only for fixed header, search-parameter, and body text.',
+      "Create resources only after their scope and referenced variables exist. When reusing the discovered /api/auth/session convention, pass recipe.createResourceInput directly as the entire create-resource tool input, unchanged except for its account root id placeholder. Do not wrap it in another resource object. Keep every request field nested under resource. resource.url is the HTTP request target, not a provider call or session-state expression. Use literal wrappers only for fixed header, search-parameter, and body text.",
       "Keep the server-mediated session resource as provider-convention evidence, but use only non-secret scoped fixture variables to drive local auth-state visibility. Do not bind that server-only resource into local preview rendering: its endpoint is intentionally absent locally and can recurse through the generated route.",
       'Insert signed-out, loading, signed-in, and failed-auth panels together as one expression-free semantic fragment that acts as a state gallery. Keep all four panels visible together for local visual verification; do not add conditional visibility bindings or mutate fixture state solely to capture more screenshots. Use that exact fragment verbatim without adding styles, props, expressions, components, or changing its nesting: <ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-out</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Loading</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-in</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Failed-auth</ws.element></ws.element></ws.element>.',
       "Do not call selector-based structural tools such as wrap-instance unless a focused list-instances result supplied the complete non-empty selector from the target through its page root. Prefer direct style, prop, or binding corrections when the structure is already sound.",
       'Insert the complete account fragment with insert-fragment-verified and {"pagePath":"/account"} so persisted bindings are checked in the same call. Resolve every returned validity, scope, and reference finding before previewing. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /account. Updating only a fixture variable\'s literal state does not require another binding verification.',
       'Call verify-page-responsive once with path "/account" and the required desktop and mobile viewports; it starts or refreshes the session preview, captures both viewports in one browser session, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately. Do not run discovery, inspect-instance, mutate, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
     ],
+    recipe: {
+      createResourceInput: {
+        scopeInstanceId: "<account-root-id>",
+        dataSourceName: "accountSession",
+        resource: {
+          name: "Account session via server",
+          method: "get",
+          url: "/api/auth/session",
+          headers: [],
+          searchParams: [],
+        },
+      },
+    },
   },
   {
     pattern:
@@ -5857,25 +5938,25 @@ const getMetaGuide = (
   const canDiffScreenshots = tools.some(
     (tool) => tool.name === "screenshot.diff"
   );
+  const generalWorkflow = [
+    "Use the fewest discovery calls needed for the immediate action.",
+    "Call permissions or status only when the task depends on capabilities or local session freshness.",
+    matches.some((tool) => tool.annotations.localCapable) &&
+    matches.some((tool) => tool.name === "verify-font-assets") === false
+      ? "Call refresh if cached namespaces may be stale."
+      : undefined,
+    "Use focused read tools to collect ids and current values.",
+    "Use the smallest semantic mutation tool that matches the requested change.",
+    valuesVsBindingsRule,
+    "Use apply-patch only when no semantic mutation tool fits.",
+    canVerifyVisually && guidance !== undefined
+      ? guidance.getVisionWorkflowSummary({ includeDiff: canDiffScreenshots })
+      : undefined,
+  ].filter(Boolean);
   return {
     delegatedAgentRule:
       "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
-    workflow: [
-      ...(goalGuide?.workflow ?? []),
-      "Use the fewest discovery calls needed for the immediate action.",
-      "Call permissions or status only when the task depends on capabilities or local session freshness.",
-      matches.some((tool) => tool.annotations.localCapable) &&
-      matches.some((tool) => tool.name === "verify-font-assets") === false
-        ? "Call refresh if cached namespaces may be stale."
-        : undefined,
-      "Use focused read tools to collect ids and current values.",
-      "Use the smallest semantic mutation tool that matches the requested change.",
-      valuesVsBindingsRule,
-      "Use apply-patch only when no semantic mutation tool fits.",
-      canVerifyVisually && guidance !== undefined
-        ? guidance.getVisionWorkflowSummary({ includeDiff: canDiffScreenshots })
-        : undefined,
-    ].filter(Boolean),
+    workflow: goalGuide?.workflow ?? generalWorkflow,
     tools: matches.map((tool) =>
       serializeMetaGuideTool(tool, goalGuide === undefined)
     ),
@@ -5885,7 +5966,7 @@ const getMetaGuide = (
     more:
       goalGuide === undefined
         ? "The MCP handshake provides top-level argument contracts and required fields, while this guide includes exact examples plus complete schemas for selected complex tools. Call meta.get-more-tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover."
-        : "The MCP client loads each named tool's exact argument contract before calling it. This guide includes a complete schema only for selected complex inputs. Call meta.get-more-tools once with all needed tool names only when the client does not expose a nested input shape or when you need server/local behavior that the guide does not cover.",
+        : "Follow this workflow and recipe without additional discovery unless the workflow explicitly requests it.",
   };
 };
 
@@ -6065,25 +6146,27 @@ const getWorkflowNext = (input: unknown) => {
   };
 };
 
+const toUnderscoredToolName = (name: string) =>
+  name.replace(/[^a-zA-Z0-9_]/g, "_");
+
 const getExactToolSelection = (
   toolNames: readonly string[],
   tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const toolByName = new Map(tools.map((tool) => [tool.name, tool]));
+  const toolNameIndex = createToolNameIndex(tools);
   const selectedTools: ProjectSessionMcpTool[] = [];
   const missingTools: string[] = [];
   const includedToolNames = new Set<string>();
   for (const requestedName of toolNames) {
-    const resolvedName = resolveToolName(requestedName);
-    const tool = toolByName.get(resolvedName);
+    const tool = toolNameIndex.get(requestedName);
     if (tool === undefined) {
       missingTools.push(requestedName);
       continue;
     }
-    if (includedToolNames.has(resolvedName)) {
+    if (includedToolNames.has(tool.name)) {
       continue;
     }
-    includedToolNames.add(resolvedName);
+    includedToolNames.add(tool.name);
     selectedTools.push(tool);
   }
   return { tools: selectedTools, missingTools };
@@ -6212,7 +6295,72 @@ const toolAliases = new Map([
   ["meta.get_more_tools", "meta.get-more-tools"],
 ]);
 
-const resolveToolName = (name: string) => toolAliases.get(name) ?? name;
+const createToolNameIndex = (tools: readonly ProjectSessionMcpTool[]) => {
+  const toolByAcceptedName = new Map(
+    tools.map((tool) => [tool.name, tool] as const)
+  );
+  const canonicalNamesByUnderscoredName = new Map<string, string[]>();
+  for (const tool of tools) {
+    const underscoredName = toUnderscoredToolName(tool.name);
+    const canonicalNames =
+      canonicalNamesByUnderscoredName.get(underscoredName) ?? [];
+    canonicalNames.push(tool.name);
+    canonicalNamesByUnderscoredName.set(underscoredName, canonicalNames);
+  }
+  for (const [
+    underscoredName,
+    canonicalNames,
+  ] of canonicalNamesByUnderscoredName) {
+    if (
+      canonicalNames.length === 1 &&
+      toolByAcceptedName.has(underscoredName) === false
+    ) {
+      const tool = toolByAcceptedName.get(canonicalNames[0] ?? "");
+      if (tool !== undefined) {
+        toolByAcceptedName.set(underscoredName, tool);
+      }
+    }
+  }
+  const getAcceptedName = (name: string) => toolAliases.get(name) ?? name;
+  const get = (name: string) => toolByAcceptedName.get(getAcceptedName(name));
+  return {
+    canonicalNamesByUnderscoredName,
+    get,
+    resolve: (name: string) => get(name)?.name ?? getAcceptedName(name),
+  };
+};
+
+const getUnknownToolMessage = (
+  requestedName: string,
+  tools: readonly ProjectSessionMcpTool[]
+) => {
+  const normalizedRequestedName = toUnderscoredToolName(
+    requestedName.toLowerCase()
+  );
+  const suggestions = tools
+    .map((tool) => ({
+      name: tool.name,
+      distance: getLevenshteinDistance(
+        normalizedRequestedName,
+        toUnderscoredToolName(tool.name.toLowerCase())
+      ),
+    }))
+    .filter(
+      ({ distance }) =>
+        distance <= Math.max(2, Math.floor(normalizedRequestedName.length / 3))
+    )
+    .sort(
+      (left, right) =>
+        left.distance - right.distance || left.name.localeCompare(right.name)
+    )
+    .slice(0, 3)
+    .map(({ name }) => name);
+  const suggestion =
+    suggestions.length === 0
+      ? ""
+      : ` Did you mean ${suggestions.map((name) => `"${name}"`).join(", ")}?`;
+  return `Unknown MCP tool "${requestedName}".${suggestion} Use meta.index to list available tools.`;
+};
 
 export const isReadOnlyProjectSessionMcpTool = (tool: ProjectSessionMcpTool) =>
   tool.annotations.method === "query" ||
@@ -6223,11 +6371,8 @@ export const isReadOnlyProjectSessionMcpToolCall = (
   name: string,
   tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const resolvedName = resolveToolName(name);
-  return tools.some(
-    (tool) =>
-      tool.name === resolvedName && isReadOnlyProjectSessionMcpTool(tool)
-  );
+  const tool = createToolNameIndex(tools).get(name);
+  return tool !== undefined && isReadOnlyProjectSessionMcpTool(tool);
 };
 
 const sdkScalarSchemaKeys = new Set([
@@ -6249,11 +6394,10 @@ const sdkScalarSchemaKeys = new Set([
   "uniqueItems",
 ]);
 
-const sdkDetailedOptionalSchemaProperties = new Set([
-  "dryRun",
-  "confirmDestructive",
-  "confirmationToken",
-]);
+const sdkDetailedOptionalSchemaProperties = new Set(["confirmationToken"]);
+
+const isSdkBooleanSchemaProperty = (value: InputJsonSchemaValue) =>
+  typeof value !== "boolean" && value.type === "boolean";
 
 const getSdkSchemaProperty = (
   value: InputJsonSchemaValue,
@@ -6306,7 +6450,8 @@ const getSdkInputSchema = (
     Object.entries(schema.properties ?? {}).flatMap(([name, value]) =>
       required.has(name) ||
       includeOptionalProperties ||
-      sdkDetailedOptionalSchemaProperties.has(name)
+      sdkDetailedOptionalSchemaProperties.has(name) ||
+      isSdkBooleanSchemaProperty(value)
         ? [[name, getSdkSchemaProperty(value)]]
         : []
     )
@@ -6335,11 +6480,15 @@ const getSdkInputSchema = (
   };
 };
 
-const sdkDescribedToolNames = new Set([
+const sdkDetailedInputToolNames = new Set([
   "meta.index",
   "meta.guide",
   "meta.get-more-tools",
   "workflow.next",
+]);
+
+const sdkDescribedToolNames = new Set([
+  ...sdkDetailedInputToolNames,
   ...metaGoalGuides.flatMap(({ tools }) => tools),
 ]);
 
@@ -6369,7 +6518,7 @@ const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => {
       : {}),
     inputSchema: getSdkInputSchema(
       tool.inputSchema,
-      sdkDescribedToolNames.has(tool.name)
+      sdkDetailedInputToolNames.has(tool.name)
     ),
     ...(annotations === undefined ? {} : { annotations }),
   };
@@ -6842,68 +6991,6 @@ const getResponsiveScreenshotInputs = (
   });
 };
 
-const isValidScreenshotDiffVisualExpectation = (
-  value: unknown
-): value is ScreenshotVisualExpectation => {
-  if (isRecord(value) === false || Object.keys(value).length === 0) {
-    return false;
-  }
-  const numericFieldValid = (
-    key: "maxMismatchPercentage" | "minChangedRegions" | "maxChangedRegions"
-  ) => {
-    const field = value[key];
-    if (field === undefined) {
-      return true;
-    }
-    if (typeof field !== "number" || Number.isFinite(field) === false) {
-      return false;
-    }
-    if (key === "maxMismatchPercentage") {
-      return field >= 0 && field <= 100;
-    }
-    return Number.isInteger(field) && field >= 0;
-  };
-  if (
-    numericFieldValid("maxMismatchPercentage") === false ||
-    numericFieldValid("minChangedRegions") === false ||
-    numericFieldValid("maxChangedRegions") === false
-  ) {
-    return false;
-  }
-  if (
-    typeof value.minChangedRegions === "number" &&
-    typeof value.maxChangedRegions === "number" &&
-    value.minChangedRegions > value.maxChangedRegions
-  ) {
-    return false;
-  }
-  const dominantColorChange = value.dominantColorChange;
-  if (dominantColorChange !== undefined) {
-    if (
-      isRecord(dominantColorChange) === false ||
-      (dominantColorChange.channel !== "red" &&
-        dominantColorChange.channel !== "green" &&
-        dominantColorChange.channel !== "blue" &&
-        dominantColorChange.channel !== "luminance") ||
-      (dominantColorChange.direction !== "increase" &&
-        dominantColorChange.direction !== "decrease") ||
-      (dominantColorChange.minMagnitude !== undefined &&
-        (typeof dominantColorChange.minMagnitude !== "number" ||
-          Number.isFinite(dominantColorChange.minMagnitude) === false ||
-          dominantColorChange.minMagnitude < 0))
-    ) {
-      return false;
-    }
-  }
-  return Object.keys(value).every(
-    (key) =>
-      key === "maxMismatchPercentage" ||
-      key === "minChangedRegions" ||
-      key === "maxChangedRegions" ||
-      key === "dominantColorChange"
-  );
-};
-
 const getScreenshotDiffInput = (
   input: unknown
 ): ProjectSessionScreenshotDiffInput => {
@@ -6959,7 +7046,7 @@ const getScreenshotDiffInput = (
   const expectedVisual = input.expectedVisual;
   if (
     expectedVisual !== undefined &&
-    isValidScreenshotDiffVisualExpectation(expectedVisual) === false
+    isScreenshotVisualExpectation(expectedVisual) === false
   ) {
     throw new Error(
       "screenshot.diff expectedVisual must include valid maxMismatchPercentage (0-100), minChangedRegions, or maxChangedRegions values."
@@ -7138,18 +7225,19 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   const operationByCommand = new Map(
     operations.map((operation) => [operation.command, operation])
   );
-  const listTools = () =>
-    listProjectSessionMcpTools(operations, {
-      includeImport: importProject !== undefined,
-      includeDownloadAsset: downloadAsset !== undefined,
-      includeScreenshot: captureScreenshot !== undefined,
-      includeResponsiveScreenshot: capturePageScreenshots !== undefined,
-      includeScreenshotDiff: diffScreenshots !== undefined,
-      includeInstallOcr: installOcr !== undefined,
-      includePreview:
-        startPreview !== undefined && getPreviewStatus !== undefined,
-      includeRestorePoints: restorePoints !== undefined,
-    });
+  const tools = listProjectSessionMcpTools(operations, {
+    includeImport: importProject !== undefined,
+    includeDownloadAsset: downloadAsset !== undefined,
+    includeScreenshot: captureScreenshot !== undefined,
+    includeResponsiveScreenshot: capturePageScreenshots !== undefined,
+    includeScreenshotDiff: diffScreenshots !== undefined,
+    includeInstallOcr: installOcr !== undefined,
+    includePreview:
+      startPreview !== undefined && getPreviewStatus !== undefined,
+    includeRestorePoints: restorePoints !== undefined,
+  });
+  const listTools = () => [...tools];
+  const toolNameIndex = createToolNameIndex(tools);
   const getSession = () => {
     session ??= createProjectSession();
     return session;
@@ -7368,7 +7456,8 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       dryRun?: boolean;
       signal?: AbortSignal;
     }): Promise<ProjectSessionMcpToolResult> {
-      name = resolveToolName(name);
+      const requestedName = name;
+      name = toolNameIndex.resolve(name);
       if (name === "checkpoint.ack") {
         if (
           isRecord(input) === false ||
@@ -7493,11 +7582,15 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         return toCheckpointedMetaResult(name, getWorkflowNext(input));
       }
       if (name === "meta.get-more-tools") {
+        const normalizedInput = parseStringifiedJsonInputFields(
+          input,
+          toolDetailsInputSchema
+        );
         return toMetaResult(
           getMoreTools(
-            getBrief(input, "meta.get-more-tools"),
-            getToolNamesInput(input),
-            listTools()
+            getBrief(normalizedInput, "meta.get-more-tools"),
+            getToolNamesInput(normalizedInput),
+            tools
           )
         );
       }
@@ -7837,7 +7930,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       }
       const operation = operationByCommand.get(name as Command);
       if (operation === undefined) {
-        throw new Error(`Unknown MCP tool "${name}".`);
+        throw new Error(getUnknownToolMessage(requestedName, tools));
       }
       const transportInput = getToolCallInput(input, operation.requiresConfirm);
       const toolInput = transportInput.input;
@@ -8195,28 +8288,28 @@ export const createProjectSessionMcpServer = async <
       sendLog("info", message);
     },
   });
-  const exposedTools = core.listTools().map((tool) => ({
+  const tools = core.listTools();
+  const toolNameIndex = createToolNameIndex(tools);
+  const exposedTools = tools.map((tool) => ({
     ...tool,
     name:
       toolNameFormat === "underscores"
-        ? tool.name.replace(/[^a-zA-Z0-9_]/g, "_")
+        ? toUnderscoredToolName(tool.name)
         : tool.name,
   }));
-  const canonicalToolNameByExposedName = new Map<string, string>();
-  for (const [index, tool] of core.listTools().entries()) {
-    const exposedName = exposedTools[index]?.name;
-    if (exposedName === undefined) {
-      continue;
-    }
-    const existingName = canonicalToolNameByExposedName.get(exposedName);
-    if (existingName !== undefined && existingName !== tool.name) {
+  if (toolNameFormat === "underscores") {
+    for (const [
+      exposedName,
+      canonicalNames,
+    ] of toolNameIndex.canonicalNamesByUnderscoredName) {
+      if (canonicalNames.length < 2) {
+        continue;
+      }
       throw new Error(
-        `MCP tool names ${existingName} and ${tool.name} both map to ${exposedName}.`
+        `MCP tool names ${canonicalNames.join(" and ")} both map to ${exposedName}.`
       );
     }
-    canonicalToolNameByExposedName.set(exposedName, tool.name);
   }
-
   server.oninitialized = () => {
     onInitialized?.(server.getClientVersion()?.name);
     sendLog(
@@ -8270,7 +8363,7 @@ export const createProjectSessionMcpServer = async <
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const params = getRequestParams(request);
     const exposedName = typeof params.name === "string" ? params.name : "";
-    const name = canonicalToolNameByExposedName.get(exposedName) ?? exposedName;
+    const name = toolNameIndex.resolve(exposedName);
     const { input, dryRun } = getToolCallInput(params.arguments ?? {});
     const startedAt = Date.now();
     sendLog("info", `tool ${name} started${dryRun ? " (dry run)" : ""}`);
@@ -8328,9 +8421,72 @@ export const connectProjectSessionMcpServer = async <Command extends string>({
 export const createMcpStdioTransport = async ({
   stdin,
   stdout,
+  partialFrameTimeoutMs = 5_000,
 }: {
-  stdin: ConstructorParameters<typeof StdioServerTransport>[0];
+  stdin: NonNullable<ConstructorParameters<typeof StdioServerTransport>[0]>;
   stdout: ConstructorParameters<typeof StdioServerTransport>[1];
+  partialFrameTimeoutMs?: number;
 }): Promise<McpTransport> => {
-  return new StdioServerTransport(stdin, stdout);
+  let partialFrame: Buffer | undefined;
+  let discardTimer: ReturnType<typeof setTimeout> | undefined;
+  const clearDiscardTimer = () => {
+    if (discardTimer !== undefined) {
+      clearTimeout(discardTimer);
+      discardTimer = undefined;
+    }
+  };
+  const scheduleDiscard = () => {
+    clearDiscardTimer();
+    if (partialFrame === undefined || partialFrameTimeoutMs <= 0) {
+      return;
+    }
+    discardTimer = setTimeout(() => {
+      partialFrame = undefined;
+      discardTimer = undefined;
+    }, partialFrameTimeoutMs);
+    discardTimer.unref?.();
+  };
+  const recoveringInput = new Transform({
+    transform(chunk: Buffer | string, encoding: BufferEncoding, callback) {
+      const nextChunk = Buffer.isBuffer(chunk)
+        ? chunk
+        : Buffer.from(chunk, encoding);
+      const buffered =
+        partialFrame === undefined
+          ? nextChunk
+          : Buffer.concat([partialFrame, nextChunk]);
+      const lastNewline = buffered.lastIndexOf(10);
+      if (lastNewline === -1) {
+        partialFrame = buffered;
+        scheduleDiscard();
+        callback();
+        return;
+      }
+      clearDiscardTimer();
+      this.push(buffered.subarray(0, lastNewline + 1));
+      const remainder = buffered.subarray(lastNewline + 1);
+      partialFrame = remainder.length === 0 ? undefined : remainder;
+      scheduleDiscard();
+      callback();
+    },
+    flush(callback) {
+      clearDiscardTimer();
+      partialFrame = undefined;
+      callback();
+    },
+    destroy(error, callback) {
+      clearDiscardTimer();
+      partialFrame = undefined;
+      callback(error);
+    },
+  });
+  stdin.pipe(recoveringInput);
+  const transport = new StdioServerTransport(recoveringInput, stdout);
+  const closeTransport = transport.close.bind(transport);
+  transport.close = async () => {
+    await closeTransport();
+    stdin.unpipe(recoveringInput);
+    recoveringInput.destroy();
+  };
+  return transport;
 };

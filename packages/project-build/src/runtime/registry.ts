@@ -308,6 +308,7 @@ const mutationContract = (input: {
 }): MutationContract => ({ kind: "mutation", ...input });
 
 const pageNamespaces = ["pages", "instances"] as const;
+const pageExpressionNamespaces = ["pages", "instances", "dataSources"] as const;
 const instanceReadNamespaces = ["pages", "instances", "props"] as const;
 const styleNamespaces = [
   "styles",
@@ -440,7 +441,7 @@ export const builderRuntimeOperations = [
     "pages.create",
     api("create-page", "createPage"),
     mutationContract({
-      readNamespaces: ["pages"],
+      readNamespaces: pageExpressionNamespaces,
       writeNamespaces: pageNamespaces,
     }),
     pages.pageCreateInput,
@@ -450,7 +451,7 @@ export const builderRuntimeOperations = [
     "pages.update",
     api("update-page", "updatePage"),
     mutationContract({
-      readNamespaces: ["pages"],
+      readNamespaces: pageExpressionNamespaces,
       writeNamespaces: ["pages"],
       retryOnConflict: true,
     }),
@@ -461,7 +462,7 @@ export const builderRuntimeOperations = [
     "pages.updateSettings",
     api("update-page-settings", "updatePageSettings"),
     mutationContract({
-      readNamespaces: ["pages"],
+      readNamespaces: pageExpressionNamespaces,
       writeNamespaces: ["pages"],
       retryOnConflict: true,
     }),

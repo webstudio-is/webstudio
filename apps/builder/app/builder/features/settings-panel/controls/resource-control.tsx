@@ -287,7 +287,6 @@ export const ResourceControl = ({
         expression={urlExpression}
         value={localValue.value}
         bound={bound}
-        allowBindingOverwrite={false}
         scope={scope}
         aliases={aliases}
         validate={(value) => validatePrimitiveValue(value, "URL")}

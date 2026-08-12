@@ -7,6 +7,7 @@ import {
   PanelTabsList,
   PanelTabsTrigger,
   ScrollAreaNative,
+  styled,
   Text,
   Tooltip,
   theme,
@@ -20,13 +21,19 @@ export const clearSettledDiagnosticsKey = (
 
 export const RequestDiagnosticsContent = ({
   children,
+  padded = true,
 }: {
   children: ReactNode;
+  padded?: boolean;
 }) => (
   <ScrollAreaNative css={{ height: "100%", overflow: "auto" }}>
-    <Flex direction="column" gap={3} css={{ padding: theme.panel.padding }}>
-      {children}
-    </Flex>
+    {padded ? (
+      <Flex direction="column" gap={3} css={{ padding: theme.panel.padding }}>
+        {children}
+      </Flex>
+    ) : (
+      children
+    )}
   </ScrollAreaNative>
 );
 
@@ -45,6 +52,15 @@ export const RequestDiagnosticsTable = ({
     {children}
   </Grid>
 );
+
+const DiagnosticsLabel = styled(Flex, {
+  "& [data-diagnostics-info]": {
+    opacity: 0,
+  },
+  "&:hover [data-diagnostics-info], &:focus-within [data-diagnostics-info]": {
+    opacity: 1,
+  },
+});
 
 export const RequestDiagnosticsRow = ({
   label,
@@ -66,14 +82,14 @@ export const RequestDiagnosticsRow = ({
       "&:last-child": { borderBottom: 0 },
     }}
   >
-    <Flex align="center" gap={1}>
+    <DiagnosticsLabel align="center" gap={1}>
       <Text color="moreSubtle">{label}</Text>
       {description !== undefined && (
         <Tooltip variant="wrapped" content={description}>
-          <InfoCircleIcon tabIndex={0} />
+          <InfoCircleIcon data-diagnostics-info tabIndex={0} />
         </Tooltip>
       )}
-    </Flex>
+    </DiagnosticsLabel>
     <Text
       color={valueColor}
       userSelect="text"

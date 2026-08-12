@@ -3,6 +3,7 @@ import { AssetResourceHydrationError } from "./hydration";
 import {
   AssetIndexRevisionError,
   AssetQueryExecutionError,
+  AssetQueryMultipleResultsError,
 } from "./structured-query";
 import { DocumentResolutionLimitError } from "./document-graph/document-resolution";
 import { CachedDocumentLoaderError } from "./document-graph/cached-document-loader";
@@ -24,6 +25,15 @@ export const getAssetResourceQueryError = (
       code: "STALE_INDEX",
       message: error.message,
       retryable: false,
+      status: 409,
+    };
+  }
+  if (error instanceof AssetQueryMultipleResultsError) {
+    return {
+      code: error.code,
+      message: error.message,
+      retryable: false,
+      details: { matchedCount: error.matchedCount },
       status: 409,
     };
   }

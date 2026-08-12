@@ -1,32 +1,71 @@
 import { constants } from "node:fs";
-import { access, mkdir } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { dirname, resolve } from "node:path";
-import { execFile, spawn } from "node:child_process";
-import { promisify } from "node:util";
+import { access, mkdir, open, readdir } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { spawn } from "node:child_process";
 import { Launcher } from "chrome-launcher";
+import which from "which";
 import {
   defaultScreenshotTimeout,
   defaultScreenshotWaitForTimeout,
   defaultScreenshotWaitUntil,
   type ScreenshotBrowser,
   type ScreenshotWaitUntil,
-} from "@webstudio-is/project-build/visual";
+} from "@webstudio-is/vision/browser";
 import {
   captureBrowserScreenshot,
-  createBrowserScreenshotSession,
+  createBrowserScreenshotSession as createVisionBrowserScreenshotSession,
   defaultBrowserScreenshotDependencies,
   type BrowserScreenshotSession,
   type BrowserScreenshotDependencies,
   type BrowserScreenshotLayout,
+  type BrowserScreenshotNavigation,
   type BrowserScreenshotOptions,
-} from "./screenshot-browser-cdp";
+} from "@webstudio-is/vision/browser";
 
-const execFileAsync = promisify(execFile);
+const webstudioPageInstrumentation = {
+  pageMetadata: {
+    rootMarkerAttribute: "data-ws-project",
+    idAttribute: "data-ws-project",
+    versionAttribute: "data-ws-version",
+  },
+  instanceIdAttribute: "data-ws-id",
+} satisfies Pick<
+  BrowserScreenshotOptions,
+  "pageMetadata" | "instanceIdAttribute"
+>;
+
+const toWebstudioNavigation = ({
+  pageMetadata,
+  ...navigation
+}: BrowserScreenshotNavigation) => ({
+  ...navigation,
+  generatedSiteRootPresent: pageMetadata?.rootMarkerPresent ?? false,
+  ...(pageMetadata?.id === undefined ? {} : { projectId: pageMetadata.id }),
+  ...(pageMetadata?.version === undefined
+    ? {}
+    : { projectVersion: pageMetadata.version }),
+});
+
+const toWebstudioLayout = ({
+  navigation,
+  ...layout
+}: BrowserScreenshotLayout) => ({
+  ...layout,
+  ...(navigation === undefined
+    ? {}
+    : { navigation: toWebstudioNavigation(navigation) }),
+});
 
 export type BrowserCandidate = {
   path: string;
-  source: "option" | "env" | "path" | "platform" | "chrome-launcher";
+  source:
+    | "option"
+    | "env"
+    | "path"
+    | "platform"
+    | "playwright"
+    | "chrome-launcher";
   browser: Exclude<ScreenshotBrowser, "auto">;
 };
 
@@ -54,11 +93,14 @@ export type ScreenshotDependencies = {
   mkdir: (path: string, options: { recursive: true }) => Promise<unknown>;
   which: (command: string) => Promise<string | undefined>;
   getChromeLauncherInstallations: () => string[];
+  getPlaywrightInstallations: () => Promise<string[]>;
 } & BrowserScreenshotDependencies & {
     captureBrowserScreenshot?: (
       options: BrowserScreenshotOptions
     ) => Promise<BrowserScreenshotLayout | undefined>;
+    createBrowserScreenshotSession: typeof createVisionBrowserScreenshotSession;
     installCommand: (file: string, args: readonly string[]) => Promise<void>;
+    readArtifactByte: (path: string) => Promise<number>;
     getuid: () => number | undefined;
     now: () => number;
   };
@@ -68,15 +110,8 @@ export const defaultScreenshotDependencies: ScreenshotDependencies = {
   platform: process.platform,
   access,
   mkdir,
-  async which(command) {
-    const lookup = process.platform === "win32" ? "where" : "which";
-    try {
-      const { stdout } = await execFileAsync(lookup, [command]);
-      return stdout.split(/\r?\n/).find((path) => path.length > 0);
-    } catch {
-      return undefined;
-    }
-  },
+  which: async (command) =>
+    (await which(command, { nothrow: true })) ?? undefined,
   getChromeLauncherInstallations() {
     try {
       return Launcher.getInstallations();
@@ -84,7 +119,9 @@ export const defaultScreenshotDependencies: ScreenshotDependencies = {
       return [];
     }
   },
+  getPlaywrightInstallations: () => getPlaywrightInstallations(),
   ...defaultBrowserScreenshotDependencies,
+  createBrowserScreenshotSession: createVisionBrowserScreenshotSession,
   async installCommand(file, args) {
     await new Promise<void>((resolve, reject) => {
       const child = spawn(file, [...args], { stdio: "inherit" });
@@ -97,6 +134,15 @@ export const defaultScreenshotDependencies: ScreenshotDependencies = {
         reject(new Error(`${file} ${args.join(" ")} exited with code ${code}`));
       });
     });
+  },
+  async readArtifactByte(path) {
+    const file = await open(path, "r");
+    try {
+      const { bytesRead } = await file.read(new Uint8Array(1), 0, 1, 0);
+      return bytesRead;
+    } finally {
+      await file.close();
+    }
   },
   getuid: () => process.getuid?.(),
   now: () => Date.now(),
@@ -120,6 +166,69 @@ const pathCommandCandidates = [
   { command: "brave-browser", browser: "brave" },
   { command: "brave", browser: "brave" },
 ] as const;
+
+export const getPlaywrightInstallations = async ({
+  env = process.env,
+  platform = process.platform,
+  homeDirectory = homedir(),
+}: {
+  env?: NodeJS.ProcessEnv;
+  platform?: NodeJS.Platform;
+  homeDirectory?: string;
+} = {}) => {
+  const configuredCache = env.PLAYWRIGHT_BROWSERS_PATH;
+  const defaultCacheDirectory =
+    platform === "darwin"
+      ? join(homeDirectory, "Library", "Caches", "ms-playwright")
+      : platform === "win32"
+        ? join(
+            env.LOCALAPPDATA ?? join(homeDirectory, "AppData", "Local"),
+            "ms-playwright"
+          )
+        : join(
+            env.XDG_CACHE_HOME ?? join(homeDirectory, ".cache"),
+            "ms-playwright"
+          );
+  const cacheDirectory =
+    configuredCache === undefined || configuredCache === ""
+      ? defaultCacheDirectory
+      : configuredCache === "0"
+        ? undefined
+        : resolve(configuredCache);
+  if (cacheDirectory === undefined) {
+    return [];
+  }
+  const entries = await readdir(cacheDirectory, { withFileTypes: true }).catch(
+    () => []
+  );
+  const executablePaths =
+    platform === "win32"
+      ? [["chrome-win", "chrome.exe"]]
+      : platform === "darwin"
+        ? [
+            ["chrome-mac", "Chromium.app", "Contents", "MacOS", "Chromium"],
+            [
+              "chrome-mac-arm64",
+              "Chromium.app",
+              "Contents",
+              "MacOS",
+              "Chromium",
+            ],
+          ]
+        : [
+            ["chrome-linux64", "chrome"],
+            ["chrome-linux", "chrome"],
+          ];
+  return entries
+    .filter(
+      (entry) => entry.isDirectory() && entry.name.startsWith("chromium-")
+    )
+    .flatMap((entry) =>
+      executablePaths.map((segments) =>
+        join(cacheDirectory, entry.name, ...segments)
+      )
+    );
+};
 
 const platformPathCandidates: Record<
   NodeJS.Platform,
@@ -297,6 +406,16 @@ export const resolveScreenshotBrowser = async (
       (candidate) => matchesBrowser(candidate, options.browser)
     )
   );
+
+  if (options.browser === "auto" || options.browser === "chromium") {
+    candidates.push(
+      ...(await dependencies.getPlaywrightInstallations()).map((path) => ({
+        path,
+        source: "playwright" as const,
+        browser: "chromium" as const,
+      }))
+    );
+  }
 
   candidates.push(
     ...dependencies
@@ -538,6 +657,7 @@ const getBrowserScreenshotOptions = (
   includeImageMetrics: options.includeImageMetrics,
   includeResourceMetrics: options.includeResourceMetrics,
   includeContrastMetrics: options.includeContrastMetrics,
+  ...webstudioPageInstrumentation,
   url: options.url,
   httpCredentials: options.httpCredentials,
   uid: dependencies.getuid(),
@@ -549,6 +669,26 @@ const getBrowserScreenshotOptions = (
   quality: options.quality,
   scale: options.scale,
 });
+
+const validateScreenshotArtifact = async (
+  output: string,
+  dependencies: ScreenshotDependencies
+) => {
+  let bytesRead: number;
+  try {
+    bytesRead = await dependencies.readArtifactByte(output);
+  } catch (cause) {
+    throw Object.assign(
+      new Error(`Screenshot artifact is unreadable: ${output}`),
+      { code: "SCREENSHOT_ARTIFACT_UNREADABLE", cause }
+    );
+  }
+  if (bytesRead === 0) {
+    throw Object.assign(new Error(`Screenshot artifact is empty: ${output}`), {
+      code: "SCREENSHOT_ARTIFACT_EMPTY",
+    });
+  }
+};
 
 const captureResolvedScreenshot = async (
   options: CaptureScreenshotOptions,
@@ -569,7 +709,7 @@ const captureResolvedScreenshot = async (
     output,
     dependencies
   );
-  const layout =
+  const capturedLayout =
     browserSession !== undefined
       ? await browserSession.capture(browserScreenshotOptions)
       : dependencies.captureBrowserScreenshot !== undefined
@@ -578,6 +718,11 @@ const captureResolvedScreenshot = async (
             browserScreenshotOptions,
             dependencies
           );
+  const layout =
+    capturedLayout === undefined
+      ? undefined
+      : toWebstudioLayout(capturedLayout);
+  await validateScreenshotArtifact(output, dependencies);
   return {
     output,
     browser,
@@ -610,19 +755,48 @@ export const createScreenshotCaptureSession = (
   let browserPromise: Promise<BrowserCandidate> | undefined;
   let browserSession: BrowserScreenshotSession | undefined;
   let browserSessionPromise: Promise<BrowserScreenshotSession> | undefined;
+  let closePromise: Promise<void> | undefined;
+  let closed = false;
+  const assertOpen = () => {
+    if (closed) {
+      throw new Error("Screenshot capture session is closed.");
+    }
+  };
+  const getBrowser = async (options: CaptureScreenshotOptions) => {
+    assertOpen();
+    const pendingBrowser =
+      browserPromise ?? resolveScreenshotBrowser(options, dependencies);
+    browserPromise = pendingBrowser;
+    try {
+      const browser = await pendingBrowser;
+      assertOpen();
+      return browser;
+    } catch (error) {
+      if (browserPromise === pendingBrowser) {
+        browserPromise = undefined;
+      }
+      throw error;
+    }
+  };
   const getBrowserSession = async (
     options: BrowserScreenshotOptions
   ): Promise<BrowserScreenshotSession> => {
+    assertOpen();
     if (browserSession !== undefined) {
       return browserSession;
     }
     const pendingSession =
       browserSessionPromise ??
-      createBrowserScreenshotSession(options, dependencies);
+      dependencies.createBrowserScreenshotSession(options, dependencies);
     browserSessionPromise = pendingSession;
     try {
-      browserSession = await pendingSession;
-      return browserSession;
+      const session = await pendingSession;
+      if (closed) {
+        await session.close();
+        throw new Error("Screenshot capture session is closed.");
+      }
+      browserSession = session;
+      return session;
     } catch (error) {
       if (browserSessionPromise === pendingSession) {
         browserSessionPromise = undefined;
@@ -632,8 +806,7 @@ export const createScreenshotCaptureSession = (
   };
   return {
     async capture(options: CaptureScreenshotOptions) {
-      browserPromise ??= resolveScreenshotBrowser(options, dependencies);
-      const resolvedBrowser = await browserPromise;
+      const resolvedBrowser = await getBrowser(options);
       if (
         (options.browserPath !== undefined &&
           options.browserPath !== resolvedBrowser.path) ||
@@ -660,12 +833,12 @@ export const createScreenshotCaptureSession = (
       );
     },
     async capturePage(optionsList: readonly CaptureScreenshotOptions[]) {
+      assertOpen();
       const firstOptions = optionsList[0];
       if (firstOptions === undefined) {
         return [];
       }
-      browserPromise ??= resolveScreenshotBrowser(firstOptions, dependencies);
-      const resolvedBrowser = await browserPromise;
+      const resolvedBrowser = await getBrowser(firstOptions);
       if (
         optionsList.some(
           (options) =>
@@ -709,11 +882,17 @@ export const createScreenshotCaptureSession = (
       const layouts = await activeBrowserSession.capturePage(
         captures.map((capture) => capture.browserOptions)
       );
+      await Promise.all(
+        captures.map(({ output }) =>
+          validateScreenshotArtifact(output, dependencies)
+        )
+      );
       return captures.map(({ options, output }, index) => {
-        const layout = layouts[index];
-        if (layout === undefined) {
+        const capturedLayout = layouts[index];
+        if (capturedLayout === undefined) {
           throw new Error("Browser omitted a resized screenshot result.");
         }
+        const layout = toWebstudioLayout(capturedLayout);
         return {
           output,
           browser: resolvedBrowser,
@@ -730,14 +909,12 @@ export const createScreenshotCaptureSession = (
       });
     },
     async close() {
-      try {
+      closed = true;
+      closePromise ??= (async () => {
         browserSession ??= await browserSessionPromise?.catch(() => undefined);
         await browserSession?.close();
-      } finally {
-        browserSession = undefined;
-        browserSessionPromise = undefined;
-        browserPromise = undefined;
-      }
+      })();
+      await closePromise;
     },
   };
 };

@@ -11,6 +11,7 @@ import {
   mcpArgumentExamples,
 } from "@webstudio-is/project-build/mcp";
 import { readCliDoc, readCliDocSections, readCliDocTitle } from "../docs";
+import { renderContentEngineReferenceMarkdown } from "../content-engine-reference";
 import {
   generatedAppDependencyNotes,
   getVisionVerificationLoop,
@@ -23,7 +24,11 @@ import {
   mcpOnlyApiCommandMetadata,
   topLevelCliCommandMetadata,
 } from "./api-command-metadata";
-import { knownCliGaps, useCaseScenarios } from "./api-command-docs";
+import {
+  knownCliGaps,
+  projectSessionResultMetadataDescription,
+  useCaseScenarios,
+} from "./api-command-docs";
 
 const apiManualMarkdown = readCliDoc("manual-api");
 const llmManualMarkdown = readCliDoc("manual-llm");
@@ -33,7 +38,8 @@ export const manOptions = (yargs: CommonYargsArgv) =>
   yargs
     .positional("topic", {
       type: "string",
-      describe: "Manual topic to print: all, api, llm, mcp, or project-editing",
+      describe:
+        "Manual topic to print: all, api, llm, mcp, content-engine, or project-editing",
       default: "all",
     })
     .option("json", {
@@ -407,6 +413,10 @@ const mcpGeneratedAppDependencyNotes = generatedAppDependencyNotes
   .map((note) => `- ${note}`)
   .join("\n");
 
+const contentEngineReferenceMarkdown = renderContentEngineReferenceMarkdown({
+  headingLevel: 2,
+});
+
 const useCaseIndex = useCaseScenarios
   .map((scenario) => {
     const commands = scenario.commands.map((command) => `  - ${command}`);
@@ -561,12 +571,14 @@ const manualReplacements = {
   mcpArgumentExampleIndex,
   mcpVisionVerificationLoopMarkdown,
   mcpGeneratedAppDependencyNotes,
+  contentEngineReferenceMarkdown,
   screenshotVerificationSummary,
 };
 
 const apiManual = renderMarkdownTemplate(apiManualMarkdown, manualReplacements);
 const llmManual = renderMarkdownTemplate(llmManualMarkdown, manualReplacements);
 const mcpManual = renderMarkdownTemplate(mcpManualMarkdown, manualReplacements);
+const contentEngineManual = renderContentEngineReferenceMarkdown();
 const mcpCapabilitySummary = [
   "Project discovery and session status",
   "Pages, folders, redirects, and project settings",
@@ -659,10 +671,11 @@ const createLlmManualJson = (
       writeCommands,
       sessionBehavior: [
         "Read meta.session.source and meta.session.namespaceCounts to understand whether data came from local cache, remote refresh, dry-run, or server-only execution.",
+        'Read meta.session.commitStatus to distinguish read-only results ("not-applicable"), dry-run plans ("planned"), failed mutations ("failed"), no-op mutations ("unchanged"), and durable mutations ("committed").',
         "For a dry-run mutation, inspect meta.session.transaction for the computed Builder patch; meta.session.version is its base build version.",
         "Use status with { verbose: true } only when debugging full namespace arrays, freshness, compatibility, or diagnostic details.",
         "Use --refresh before a local-capable command when the cached snapshot may be stale.",
-        "A mutation is durable only when meta.session.committed is true.",
+        'A mutation is durable only when meta.session.commitStatus is "committed" and meta.session.committed is true. Read operations retain committed:false for compatibility, but durability does not apply.',
       ],
       writes: [
         "Use MCP tools for fine-grained project edits.",
@@ -688,7 +701,7 @@ const topics = {
       return {
         topic: "all",
         title: "Webstudio Complete CLI Manual",
-        focusedTopics: ["api", "llm", "mcp"],
+        focusedTopics: ["api", "llm", "mcp", "content-engine"],
         topLevelCommands: topLevelCommandCatalog,
         commands: commandCatalog,
         mcp: {
@@ -751,8 +764,7 @@ const topics = {
             "Run remotely and invalidate/refetch namespaces declared by the public operation catalog.",
           refreshFlag:
             "Use --refresh to refresh required namespaces before local-capable commands.",
-          metadata:
-            "Successful command JSON includes compact meta.session with operationId, buildId, version, source, committed, namespaceCounts, diagnosticCount, non-empty diagnostic summaries, and optional compatibilityVersion.",
+          metadata: projectSessionResultMetadataDescription,
         },
       },
       apiDocSections
@@ -797,6 +809,14 @@ const topics = {
       mcpDocSections
     ),
   },
+  "content-engine": {
+    manual: contentEngineManual,
+    json: {
+      topic: "content-engine",
+      title: "Content Engine reference",
+      manual: contentEngineManual,
+    },
+  },
 };
 
 type ManualCatalogItem = {
@@ -833,12 +853,27 @@ const mcpManualItems: ManualCatalogItem[] = listProjectSessionMcpTools(
   use: compactDescription(description),
 }));
 
+const contentEngineToolNames = new Set([
+  "list-assets-resources",
+  "get-assets-resource",
+  "create-assets-resource",
+  "update-assets-resource",
+  "delete-resource",
+  "validate-asset-query",
+  "preview-asset-query",
+  "get-asset-field-catalog",
+]);
+const contentEngineManualItems = mcpManualItems.filter(({ command }) =>
+  contentEngineToolNames.has(command)
+);
+
 const manualItemsByTopic: Record<keyof typeof topics, ManualCatalogItem[]> = {
   all: [...topLevelManualItems, ...apiManualItems, ...mcpManualItems],
   api: [...apiManualItems, ...mcpManualItems],
   llm: [...topLevelManualItems, ...apiManualItems, ...mcpManualItems],
   "project-editing": [...apiManualItems, ...mcpManualItems],
   mcp: mcpManualItems,
+  "content-engine": contentEngineManualItems,
 };
 
 const parseManualCursor = (cursor: string | undefined) => {

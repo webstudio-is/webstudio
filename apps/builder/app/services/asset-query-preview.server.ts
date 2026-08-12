@@ -1,4 +1,8 @@
 import type { AssetQueryRequestInput } from "@webstudio-is/content-engine";
+import type {
+  AssetQueryDocumentGraphObserver,
+  AssetQueryPerformanceObserver,
+} from "@webstudio-is/asset-uploader/server";
 import {
   previewProjectAssetQueries as previewSharedProjectAssetQueries,
   previewProjectAssetQuery as previewSharedProjectAssetQuery,
@@ -25,6 +29,8 @@ export const previewProjectAssetQueries = async (
     requests: readonly AssetQueryRequestInput[];
     context: AppContext;
     signal?: AbortSignal;
+    onPerformanceEvent?: AssetQueryPerformanceObserver;
+    onDocumentGraphEvent?: AssetQueryDocumentGraphObserver;
   },
   dependencies = defaultBatchDependencies
 ) => {
@@ -44,6 +50,8 @@ export const previewProjectAssetQuery = async (
     includeDiagnostics?: boolean;
     includeUnresolvedDiagnostics?: boolean;
     signal?: AbortSignal;
+    onPerformanceEvent?: AssetQueryPerformanceObserver;
+    onDocumentGraphEvent?: AssetQueryDocumentGraphObserver;
   },
   dependencies = defaultQueryDependencies
 ) => {

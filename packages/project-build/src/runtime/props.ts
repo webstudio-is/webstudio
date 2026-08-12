@@ -9,9 +9,10 @@ import {
 } from "@webstudio-is/sdk";
 import { validateJsonLd } from "@webstudio-is/sdk/runtime";
 import type { BuilderState } from "../state/builder-state";
-import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
+import { throwBuilderRuntimeError } from "./errors";
 import { replaceTextValue } from "./text-replacement";
 import {
+  addExpressionValidationIssues,
   getExpressionErrorMessages,
   getExpressionErrors,
 } from "./expression-validation";
@@ -148,23 +149,6 @@ export const validatePrimitiveValue = (value: unknown, label: string) => {
   }
 };
 
-const addExpressionIssues = (
-  context: z.RefinementCtx,
-  errors: readonly string[],
-  path: (string | number)[] = []
-) => {
-  for (const message of errors) {
-    addZodValidationIssue(context, {
-      code: "invalid_expression",
-      path: path.map(String),
-      message: "Invalid Webstudio expression",
-      constraint: "valid_webstudio_expression",
-      example: "item.title",
-      detail: message,
-    });
-  }
-};
-
 const propValueBaseInput = {
   propId: runtimeGeneratedIdInput,
   instanceId: z.string().describe("Instance id that owns the prop."),
@@ -261,7 +245,9 @@ export const propValueInput = z
     'Direct prop value update. Match value to type: use type "string" for fixed text attributes such as placeholder, aria-label, alt, id, class, href, and title; use bind-props for dynamic expressions/resources/actions.'
   )
   .superRefine((value, context) => {
-    addExpressionIssues(context, getPropValueErrors(value), ["value"]);
+    addExpressionValidationIssues(context, getPropValueErrors(value), [
+      "value",
+    ]);
   });
 
 export const dataPropBindingInput = z.discriminatedUnion("type", [
@@ -299,7 +285,7 @@ export const propBindingInput = z
     ]),
   })
   .superRefine((value, context) => {
-    addExpressionIssues(
+    addExpressionValidationIssues(
       context,
       getPropValueErrors({
         type: value.binding.type,

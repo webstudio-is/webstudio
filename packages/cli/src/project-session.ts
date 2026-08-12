@@ -1,4 +1,5 @@
 import { rm } from "node:fs/promises";
+import { release } from "node:os";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
@@ -14,8 +15,11 @@ import {
   publicApiContractVersion,
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
+  type IssueReportRuntime,
+  type PublicApiCommand,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
+import packageJson from "../package.json";
 import {
   createReachableAssetContentCompilationPlan,
   getHomePage,
@@ -33,12 +37,17 @@ import {
   type ProjectSessionStorage,
   type ProjectSessionTransport,
 } from "@webstudio-is/project-build/project-session";
-import type { BuilderNamespace } from "@webstudio-is/project-build/contracts";
+import {
+  builderNamespaces,
+  webstudioDataNamespaces,
+  type BuilderNamespace,
+} from "@webstudio-is/project-build/contracts";
 import {
   createBuilderStateFromBuildData,
   createBuilderStateFromSerializedSnapshot,
   createSerializedBuilderBuildDataFromState,
   createSerializedBuilderStateSnapshotFromState,
+  getMissingBuilderStateNamespaces,
   type BuilderBuildDataSnapshot,
   type SerializedBuilderStateSnapshot,
 } from "@webstudio-is/project-build/state";
@@ -50,7 +59,7 @@ import { getStableErrorCode } from "./error-codes";
 import { loadJSONFile, withFileLock, writeFileAtomic } from "./fs-utils";
 import { isPlainRecord } from "./type-utils";
 import { createFileSystemContentSource } from "./filesystem-content-source";
-import { LOCAL_ASSETS_DIR } from "./asset-files";
+import { downloadAssetFiles, LOCAL_ASSETS_DIR } from "./asset-files";
 
 export type CliServerApiContract = {
   clientVersion: string;
@@ -224,6 +233,27 @@ const publicOperationById = new Map(
   publicApiOperations.map((operation) => [operation.id, operation])
 );
 
+const getIssueReportRuntime = (): IssueReportRuntime => ({
+  cliVersion: packageJson.version,
+  nodeVersion: process.versions.node,
+  os: process.platform,
+  osVersion: release().split(".")[0] ?? "unknown",
+  architecture: process.arch,
+  executionMode: "mcp",
+  apiContractVersion: publicApiContractVersion,
+});
+
+export const addIssueReportRuntime = (
+  command: PublicApiCommand,
+  input: unknown,
+  runtime: IssueReportRuntime = getIssueReportRuntime()
+) => {
+  if (command !== "report-issue" || isPlainRecord(input) === false) {
+    return input;
+  }
+  return { ...input, runtime };
+};
+
 const executePublicServerOperation = async ({
   connection,
   operationId,
@@ -247,7 +277,10 @@ const executePublicServerOperation = async ({
   }
   return await client({
     ...connection,
-    ...(input as Record<string, unknown>),
+    ...(addIssueReportRuntime(operation.command, input) as Record<
+      string,
+      unknown
+    >),
     projectId: connection.projectId,
   });
 };
@@ -540,10 +573,26 @@ export const loadCliProjectSessionAssetIndex = async (
   if (plan === undefined) {
     return;
   }
+  const assets = Array.from(snapshot.state.assets?.values() ?? []);
+  try {
+    await downloadAssetFiles({
+      assets,
+      assetsDirectory,
+      origin: connection.origin,
+    });
+  } catch (error) {
+    throw Object.assign(
+      new Error(
+        "Could not download assets required for preview. Restore network and project asset access, then retry preview.start.",
+        { cause: error }
+      ),
+      { code: "PREVIEW_ASSET_DOWNLOAD_FAILED" }
+    );
+  }
   const { artifact } = await compileContentSource({
     source: createFileSystemContentSource({
       projectId: snapshot.projectId,
-      assets: Array.from(snapshot.state.assets?.values() ?? []),
+      assets,
       folders: snapshot.state.assetFolders ?? new Map(),
       assetsDirectory,
     }),
@@ -563,6 +612,15 @@ export const createLocalProjectBundleFromSessionSnapshot = (
     assetIndex?: PublishedProjectBundle["assetIndex"];
   } = {}
 ): PublishedProjectBundle => {
+  const missing = getMissingBuilderStateNamespaces(
+    snapshot.state,
+    webstudioDataNamespaces
+  );
+  if (missing.length > 0) {
+    throw new Error(
+      `Project session is missing preview data: ${missing.join(", ")}`
+    );
+  }
   const pages = snapshot.state.pages;
   if (pages === undefined) {
     throw new Error("Project session pages namespace is missing.");
@@ -610,4 +668,27 @@ export const writeCliProjectSessionDataFile = async (
 ) => {
   const data = createLocalProjectBundleFromSessionSnapshot(snapshot, options);
   await writeFileAtomic(path, `${JSON.stringify(data, undefined, 2)}\n`);
+};
+
+export const writeCliProjectSessionPreviewDataFile = async ({
+  session,
+  connection,
+  path,
+  assetsDirectory = LOCAL_ASSETS_DIR,
+}: {
+  session: Pick<CliProjectSession, "ensureNamespaces">;
+  connection: ApiConnection;
+  path?: string;
+  assetsDirectory?: string;
+}) => {
+  const snapshot = await session.ensureNamespaces(builderNamespaces);
+  const assetIndex = await loadCliProjectSessionAssetIndex(
+    snapshot,
+    connection,
+    assetsDirectory
+  );
+  await writeCliProjectSessionDataFile(snapshot, path, {
+    origin: connection.origin,
+    assetIndex,
+  });
 };

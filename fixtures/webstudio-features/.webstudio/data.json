@@ -6882,7 +6882,7 @@
               "value": "\"application/json\""
             }
           ],
-          "body": "{\n  query: ({\n    output: {\n      mode: \"fields\",\n      includeMetadata: false,\n      fields: [[\"url\"], [\"width\"], [\"height\"]],\n    },\n    content: {\n      mode: \"none\",\n    },\n    where: {\n      all: [],\n    },\n    sort: [],\n    limit: 1000,\n    offset: 0,\n  }),\n}"
+          "body": "{\n  query: ({\n    output: {\n        mode: \"fields\",\n        includeMetadata: false,\n        fields: [[\"url\"], [\"width\"], [\"height\"]],\n      },\n    content: {\n        mode: \"none\",\n      },\n    result: \"many\",\n    where: {\n        all: [],\n      },\n    sort: [],\n    limit: 1000,\n    offset: 0,\n  }),\n}"
         }
       ]
     ],

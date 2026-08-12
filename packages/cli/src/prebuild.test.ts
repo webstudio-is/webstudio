@@ -21,6 +21,7 @@ import {
   type DefaultTreeAdapterMap,
 } from "parse5";
 import { build } from "esbuild";
+import { loadConfigFromFile } from "vite";
 import { bundleVersion } from "@webstudio-is/protocol";
 import type { Asset, Instance, Prop } from "@webstudio-is/sdk";
 import {
@@ -35,6 +36,8 @@ import {
 import { createPublishedAssetResourceFetch } from "@webstudio-is/content-engine/runtime";
 import {
   createStructuredAssetQueryResourceBody,
+  encodeDataSourceVariable,
+  SYSTEM_VARIABLE_ID,
   type Resource,
 } from "@webstudio-is/sdk";
 import {
@@ -82,6 +85,57 @@ const runGeneratedCommand = async (
   await execFileAsync(join(originalCwd, `node_modules/.bin/${command}`), args, {
     cwd: tempDir,
     env,
+  });
+};
+
+const linkPackagedPreviewDependencies = async () => {
+  const sourceNodeModules = join(originalCwd, "node_modules");
+  const targetNodeModules = join(tempDir, "node_modules");
+  const webstudioScope = "@webstudio-is";
+  const routerPackage = "sdk-components-react-router";
+
+  await mkdir(targetNodeModules, { recursive: true });
+  for (const entry of await readdir(sourceNodeModules)) {
+    if (entry === webstudioScope) {
+      continue;
+    }
+    await symlink(
+      join(sourceNodeModules, entry),
+      join(targetNodeModules, entry),
+      "dir"
+    );
+  }
+
+  const targetScope = join(targetNodeModules, webstudioScope);
+  await mkdir(targetScope, { recursive: true });
+  for (const entry of await readdir(join(sourceNodeModules, webstudioScope))) {
+    if (entry === routerPackage) {
+      continue;
+    }
+    await symlink(
+      join(sourceNodeModules, webstudioScope, entry),
+      join(targetScope, entry),
+      "dir"
+    );
+  }
+
+  const sourcePackage = join(originalCwd, "..", "sdk-components-react-router");
+  const targetPackage = join(targetScope, routerPackage);
+  await mkdir(join(targetPackage, "lib"), { recursive: true });
+  const packageJson = JSON.parse(
+    await readFile(join(sourcePackage, "package.json"), "utf8")
+  ) as { exports: { ".": Record<string, string> } };
+  delete packageJson.exports["."].webstudio;
+  await writeFile(
+    join(targetPackage, "package.json"),
+    JSON.stringify(packageJson)
+  );
+  await build({
+    entryPoints: [join(sourcePackage, "src", "components.ts")],
+    outfile: join(targetPackage, "lib", "components.js"),
+    bundle: true,
+    format: "esm",
+    packages: "external",
   });
 };
 
@@ -1293,6 +1347,17 @@ describe("prebuild", () => {
       "ENOENT"
     );
     const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+    expect(packageJson.engines).toEqual({ node: ">=22.12.0" });
+    expect(packageJson.devEngines).toEqual({
+      runtime: {
+        name: "node",
+        version: ">=22.12.0",
+        onFail: "error",
+      },
+    });
+    await expect(readFile(".npmrc", "utf8")).resolves.toContain(
+      "engine-strict=true"
+    );
     expect(packageJson.dependencies).not.toHaveProperty(
       "@webstudio-is/asset-resource"
     );
@@ -1361,6 +1426,89 @@ describe("prebuild", () => {
       readFile("app/routes/[blog].$slug._index.tsx", "utf8")
     ).resolves.toContain("../__generated__/[blog].$slug._index");
     await expectGeneratedRedirectFallback("app/routes/$.tsx");
+  });
+
+  test("builds a generated dynamic route with the packaged React Router SDK", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "post",
+            name: "Post",
+            title: "Post",
+            path: "/blog/:slug",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+      })
+    );
+
+    await prebuild({ assets: false, template: ["react-router"] });
+    await linkPackagedPreviewDependencies();
+    const loadedConfig = await loadConfigFromFile(
+      { command: "build", mode: "production" },
+      join(tempDir, "vite.config.ts")
+    );
+    expect(loadedConfig?.config.resolve?.conditions).toContain("import");
+    expect(loadedConfig?.config.ssr?.resolve?.conditions).toContain("import");
+    await runGeneratedCommand("react-router", ["build"]);
+
+    await expect(
+      getFilePaths(join(tempDir, "build", "server"))
+    ).resolves.not.toHaveLength(0);
+  }, 30_000);
+
+  test("preserves an authored catch-all page when redirects are configured", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "not-found",
+            name: "Not found",
+            title: "Not found",
+            path: "/*",
+            rootInstanceId: "root",
+            meta: { status: "404" },
+          },
+        ],
+      })
+    );
+
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      incremental: true,
+    });
+
+    const route = await readFile("app/routes/$.tsx", "utf8");
+    expect(route).toContain("../__generated__/$");
+    expect(route).toContain("../__generated__/$.server");
+    expect(route).not.toContain('new Response("Not Found"');
+    await expect(
+      readFile("app/__generated__/$.server.tsx", "utf8")
+    ).resolves.toContain("status: 404");
   });
 
   test("ignores the catch-all fallback when generating an SSG site", async () => {
@@ -2183,6 +2331,39 @@ describe("prebuild", () => {
     );
   });
 
+  test("ignores Assets queries unrelated to dynamic SSG route parameters", async () => {
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      properties: { slug: "hello-world", draft: false },
+    });
+    const resource = createQueryResource();
+    resource.body = createStructuredAssetQueryResourceBody({
+      where: {
+        all: [
+          {
+            field: ["properties", "draft"],
+            operator: "eq",
+            value: "false",
+          },
+        ],
+      },
+      sort: [],
+      limit: "20",
+      offset: "0",
+      output: { mode: "all", includeMetadata: true },
+      content: { mode: "none" },
+    });
+
+    expect(
+      getAssetResourcePrerenderPaths({
+        pagePath: "/blog/:slug",
+        resources: [["posts", resource]],
+        index,
+        requireCompleteEnumeration: true,
+      })
+    ).toEqual([]);
+  });
+
   test("prerenders asset routes bound with optional member expressions", async () => {
     const index = await createTestAssetIndex({
       ...indexedDocument,
@@ -2196,6 +2377,38 @@ describe("prebuild", () => {
             field: ["properties", "slug"],
             operator: "eq",
             value: 'system?.params?.["slug"]',
+          },
+        ],
+      },
+      sort: [],
+      limit: "1",
+      offset: "0",
+      output: { mode: "all", includeMetadata: true },
+      content: { mode: "none" },
+    });
+
+    expect(
+      getAssetResourcePrerenderPaths({
+        pagePath: "/blog/:slug",
+        resources: [["post", resource]],
+        index,
+      })
+    ).toEqual(["/blog/hello-world"]);
+  });
+
+  test("prerenders asset routes bound with the persisted system variable", async () => {
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      properties: { slug: "hello-world" },
+    });
+    const resource = createQueryResource();
+    resource.body = createStructuredAssetQueryResourceBody({
+      where: {
+        all: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: `${encodeDataSourceVariable(SYSTEM_VARIABLE_ID)}.params.slug`,
           },
         ],
       },

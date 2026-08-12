@@ -10,6 +10,29 @@ import { getResourceKey } from "~/shared/resource-utils";
 const defaultDependencies = {
   executeAssetQueries,
   loadResource,
+  now: () => performance.now(),
+};
+
+const getResponseBytes = (value: unknown) => {
+  try {
+    return new TextEncoder().encode(JSON.stringify(value)).byteLength;
+  } catch {
+    return 0;
+  }
+};
+
+const separateInternalPerformance = (value: unknown) => {
+  if (typeof value !== "object" || value === null) {
+    return { result: value, performance: {} };
+  }
+  const { __performance__, ...result } = value as Record<string, unknown>;
+  return {
+    result,
+    performance:
+      typeof __performance__ === "object" && __performance__ !== null
+        ? __performance__
+        : {},
+  };
 };
 
 export const loadResourceRequestList = async (
@@ -26,8 +49,9 @@ export const loadResourceRequestList = async (
     includeDiagnostics: boolean;
     customFetch: typeof fetch;
   },
-  dependencies = defaultDependencies
+  dependencies: Partial<typeof defaultDependencies> = {}
 ) => {
+  const resolvedDependencies = { ...defaultDependencies, ...dependencies };
   const assetProvider = includeDiagnostics
     ? undefined
     : createResourceFetchBatchProvider({
@@ -35,7 +59,10 @@ export const loadResourceRequestList = async (
         shouldBatch: (input) =>
           typeof input === "string" && isLocalResource(input, "assets"),
         execute: (resourceRequests) =>
-          dependencies.executeAssetQueries({ request, resourceRequests }),
+          resolvedDependencies.executeAssetQueries({
+            request,
+            resourceRequests,
+          }),
       });
   const providerFetch: typeof fetch = (input, init) =>
     assetProvider?.fetch(input, init) ?? customFetch(input, init);
@@ -52,14 +79,24 @@ export const loadResourceRequestList = async (
         },
       ];
     }
+    const startedAt = resolvedDependencies.now();
+    const result = await resolvedDependencies.loadResource(
+      providerFetch,
+      resource.data,
+      sourceOrigin,
+      { signal: request.signal }
+    );
+    const separated = separateInternalPerformance(result);
     return [
       getResourceKey(resource.data),
-      await dependencies.loadResource(
-        providerFetch,
-        resource.data,
-        sourceOrigin,
-        { signal: request.signal }
-      ),
+      {
+        ...result,
+        __performance__: {
+          ...separated.performance,
+          serverDurationMs: Math.max(0, resolvedDependencies.now() - startedAt),
+          responseBytes: getResponseBytes(separated.result),
+        },
+      },
     ];
   });
   await assetProvider?.flush();

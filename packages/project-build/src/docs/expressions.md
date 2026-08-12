@@ -51,9 +51,13 @@ containing the field path, source range, affected record, and remediation.
 
 ## Supported Syntax
 
-Expressions support literals, arrays, objects, property and index access,
-optional chaining, unary and arithmetic operators, comparisons, logical
-operators, nullish coalescing, ternaries, and template literals.
+Expressions support literals, arrays, objects, property and index access, unary
+and arithmetic operators, comparisons, logical operators, nullish coalescing,
+ternaries, and template literals.
+
+Webstudio automatically makes property and index access safe when an
+intermediate value is missing. Write direct access such as `post.author.name`.
+Use nullish coalescing when the expression needs a fallback value.
 
 Supported string methods:
 
@@ -84,7 +88,7 @@ inside actions. Use an explicit assignment there rather than `++` or `--`.
   function calls are forbidden; use `(filters.page ?? 1).toString()` instead.
 - Resource body: `{ query: queryText, variables: { slug: system.params.slug } }`
 - Conditional: `featured ? "Featured" : "Standard"`
-- Safe nested access: `post.author?.name ?? "Unknown author"`
+- Nested access with a fallback: `post.author.name ?? "Unknown author"`
 
 ## Collections
 

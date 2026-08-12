@@ -1573,6 +1573,115 @@ test("surfaces asset content revision conflicts", async () => {
   ).rejects.toMatchObject({ message: "File changed", status: 409 });
 });
 
+test("reports an asset update as successful when the committed content can be confirmed", async () => {
+  const revision = {
+    ...createImageAssetFixture({ id: "asset-id", name: "new_hash.json" }),
+    type: "file" as const,
+    format: "json",
+    meta: {},
+  };
+  const request = vi.fn(
+    async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = new URL(input.toString());
+      if (init?.method === "PUT") {
+        return new Response("response failed after commit", { status: 500 });
+      }
+      if (url.pathname.endsWith("/content")) {
+        return new Response('{"theme":"dark"}');
+      }
+      return new Response(JSON.stringify({ asset: revision }), {
+        headers: { "content-type": "application/json" },
+      });
+    }
+  );
+
+  await expect(
+    updateProjectAssetContent({
+      ...apiParams,
+      assetId: "asset-id",
+      expectedName: "old_hash.json",
+      readAssetData: async () => '{"theme":"dark"}',
+      request,
+    })
+  ).resolves.toEqual({ asset: revision });
+  expect(request).toHaveBeenCalledTimes(4);
+});
+
+test("does not confirm an asset update while its revision is changing", async () => {
+  const revisions = ["first_hash.json", "second_hash.json"];
+  const request = vi.fn(
+    async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = new URL(input.toString());
+      if (init?.method === "PUT") {
+        return new Response("response failed after commit", { status: 500 });
+      }
+      if (url.pathname.endsWith("/content")) {
+        return new Response('{"theme":"dark"}');
+      }
+      const name = revisions.shift() ?? "second_hash.json";
+      return new Response(
+        JSON.stringify({
+          asset: {
+            ...createImageAssetFixture({ id: "asset-id", name }),
+            type: "file",
+            format: "json",
+            meta: {},
+          },
+        }),
+        { headers: { "content-type": "application/json" } }
+      );
+    }
+  );
+
+  await expect(
+    updateProjectAssetContent({
+      ...apiParams,
+      assetId: "asset-id",
+      expectedName: "old_hash.json",
+      readAssetData: async () => '{"theme":"dark"}',
+      request,
+    })
+  ).rejects.toMatchObject({ code: "ASSET_UPDATE_COMMIT_UNCERTAIN" });
+});
+
+test("reports recovery guidance when an asset update commit cannot be confirmed", async () => {
+  const current = {
+    ...createImageAssetFixture({ id: "asset-id", name: "old_hash.json" }),
+    type: "file" as const,
+    format: "json",
+    meta: {},
+  };
+  const request = vi.fn(
+    async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = new URL(input.toString());
+      if (init?.method === "PUT") {
+        return new Response("response failed", { status: 500 });
+      }
+      if (url.pathname.endsWith("/content")) {
+        return new Response('{"theme":"light"}');
+      }
+      return new Response(JSON.stringify({ asset: current }), {
+        headers: { "content-type": "application/json" },
+      });
+    }
+  );
+
+  await expect(
+    updateProjectAssetContent({
+      ...apiParams,
+      assetId: "asset-id",
+      expectedName: "old_hash.json",
+      readAssetData: async () => '{"theme":"dark"}',
+      request,
+    })
+  ).rejects.toMatchObject({
+    code: "ASSET_UPDATE_COMMIT_UNCERTAIN",
+    message: expect.stringContaining(
+      "Read the current asset and download its content"
+    ),
+  });
+});
+
 test("updates asset metadata through the unified Assets endpoint", async () => {
   const updated = createImageAssetFixture({ id: "asset-id" });
   const request = vi.fn(

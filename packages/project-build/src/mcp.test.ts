@@ -1,6 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { PassThrough } from "node:stream";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
@@ -19,6 +20,7 @@ import { BuilderRuntimeError } from "./runtime/errors";
 import {
   createProjectSessionMcpCore,
   createProjectSessionMcpServer,
+  createMcpStdioTransport,
   hiddenMcpOperationCommands,
   listProjectSessionMcpResources,
   listProjectSessionMcpTools,
@@ -32,8 +34,12 @@ import {
   projectSessionBusyMessage,
   type ProjectSessionEnvelope,
 } from "./project-session";
-import { diffPngFiles } from "./visual/screenshot-diff";
-import { createPng, paintRect, writePng } from "./visual/screenshot.test-utils";
+import { diffPngFiles } from "@webstudio-is/vision/diff";
+import {
+  createPng,
+  paintRect,
+  writePng,
+} from "@webstudio-is/vision/test-utils";
 
 type CreateProjectSession = NonNullable<
   Parameters<typeof createProjectSessionMcpCore>[0]["createProjectSession"]
@@ -133,6 +139,31 @@ const getUnresolvedLocalSchemaRefs = (
     ...unresolved,
     ...Object.entries(object).flatMap(([key, value]) =>
       getUnresolvedLocalSchemaRefs(value, root, [...path, key])
+    ),
+  ];
+};
+
+const getArraySchemasWithoutItems = (
+  schema: unknown,
+  path: readonly string[] = []
+): string[] => {
+  if (schema === null || typeof schema !== "object") {
+    return [];
+  }
+  if (Array.isArray(schema)) {
+    return schema.flatMap((value, index) =>
+      getArraySchemasWithoutItems(value, [...path, String(index)])
+    );
+  }
+  const object = schema as Record<string, unknown>;
+  const current =
+    object.type === "array" && object.items === undefined
+      ? [path.join(".")]
+      : [];
+  return [
+    ...current,
+    ...Object.entries(object).flatMap(([name, value]) =>
+      getArraySchemasWithoutItems(value, [...path, name])
     ),
   ];
 };
@@ -890,6 +921,10 @@ describe("project session mcp adapter", () => {
         getUnresolvedLocalSchemaRefs(tool.inputSchema),
         `MCP input schema has unresolved local references for ${tool.name}`
       ).toEqual([]);
+      expect(
+        getArraySchemasWithoutItems(tool.inputSchema),
+        `MCP input schema has array parameters without items for ${tool.name}`
+      ).toEqual([]);
       if (tool.outputSchema !== undefined) {
         expect(
           tool.outputSchema.type,
@@ -909,11 +944,6 @@ describe("project session mcp adapter", () => {
     expect(JSON.stringify(imageDescriptionsTool?.inputSchema)).toContain(
       "rendered image in context"
     );
-    expect(
-      JSON.stringify(
-        tools.find(({ name }) => name === "update-styles")?.inputSchema
-      )
-    ).toContain("JSON-compatible value.");
     expect(
       getSuccessfulOutputDataSchema(
         tools.find((tool) => tool.name === "refresh")?.outputSchema
@@ -970,14 +1000,18 @@ describe("project session mcp adapter", () => {
       })
     ).not.toThrow();
     for (const command of ["preview.start", "preview.status", "preview.stop"]) {
+      const outputSchema = getSuccessfulOutputDataSchema(
+        visualTools.find((tool) => tool.name === command)?.outputSchema
+      );
       expect(
-        getSuccessfulOutputDataSchema(
-          visualTools.find((tool) => tool.name === command)?.outputSchema
-        ),
+        outputSchema,
         `Missing MCP output schema for ${command}`
       ).toMatchObject({
         type: "object",
-        required: ["url", "running", "mode"],
+        required:
+          command === "preview.start"
+            ? ["url", "running", "mode"]
+            : ["running"],
         properties: {
           url: { type: "string" },
           pid: { type: "integer" },
@@ -1121,6 +1155,12 @@ describe("project session mcp adapter", () => {
         properties: expect.objectContaining({
           instanceId: { type: "string" },
           property: { type: "string" },
+          value: expect.objectContaining({
+            anyOf: expect.arrayContaining([
+              { type: "string" },
+              { type: "array", items: {} },
+            ]),
+          }),
         }),
       }),
     });
@@ -1178,7 +1218,8 @@ describe("project session mcp adapter", () => {
       expect(tool.description).toContain("<dataSourceName>.meta");
       expect(tool.description).toContain("markdown-body-ref");
       expect(tool.description).toContain("document reference");
-      expect(tool.description).toContain("item.content.text");
+      expect(tool.description).toContain("content.text");
+      expect(tool.description).toContain("result one");
       expect(tool.description).toContain(
         "one final resource per rendered query"
       );
@@ -1223,6 +1264,66 @@ describe("project session mcp adapter", () => {
     expect(JSON.stringify(details.structuredContent.data)).toContain(
       description
     );
+  });
+
+  test("keeps array items valid when deferring an oversized schema", () => {
+    const operation = publicOperation({
+      command: "large-array-input",
+      id: "test.largeArrayInput",
+      description: "Accept a large structured array",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          updates: {
+            type: "array",
+            items: {
+              type: "object",
+              description: "x".repeat(25_000),
+            },
+          },
+        },
+        required: ["updates"],
+      },
+    });
+
+    const [tool] = listProjectSessionMcpTools([operation]);
+    const updates = tool?.inputSchema.properties?.updates as
+      | Record<string, unknown>
+      | undefined;
+
+    expect(JSON.stringify(tool?.inputSchema).length).toBeLessThan(1_000);
+    expect(updates).toMatchObject({
+      type: "array",
+      items: {},
+    });
+  });
+
+  test("adds items to tuple input schemas", () => {
+    const operation = publicOperation({
+      command: "tuple-input",
+      id: "test.tupleInput",
+      description: "Accept a structured tuple",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          coordinates: {
+            type: "array",
+            prefixItems: [{ type: "number" }, { type: "number" }],
+          },
+        },
+        required: ["coordinates"],
+      },
+    });
+
+    const [tool] = listProjectSessionMcpTools([operation]);
+
+    expect(tool?.inputSchema.properties?.coordinates).toMatchObject({
+      type: "array",
+      items: {},
+      prefixItems: [{ type: "number" }, { type: "number" }],
+    });
   });
 
   test("downloads assets through the MCP host", async () => {
@@ -2785,6 +2886,57 @@ describe("project session mcp adapter", () => {
     );
   });
 
+  test("unwraps a redundantly nested create-resource input", async () => {
+    const executeOperation = createExecuteOperation();
+    const createResourceOperation = publicOperation({
+      command: "create-resource",
+      id: "resources.create",
+      method: "mutation",
+      permit: "edit",
+      description: "Create resource",
+      inputSchema: getTestInputSchema(
+        z.object({
+          scopeInstanceId: z.string(),
+          dataSourceName: z.string(),
+          resource: z.object({
+            name: z.string(),
+            method: z.enum(["get", "post"]),
+            url: z.string(),
+            headers: z.array(z.unknown()),
+            searchParams: z.array(z.unknown()).optional(),
+          }),
+        })
+      ),
+      writeNamespaces: ["resources"],
+      invalidatesNamespaces: ["resources"],
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: [createResourceOperation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const input = {
+      scopeInstanceId: "root",
+      dataSourceName: "accountSession",
+      resource: {
+        name: "Account session via server",
+        method: "get",
+        url: "/api/auth/session",
+        headers: [],
+        searchParams: [],
+      },
+    };
+
+    await adapter.callTool({
+      name: "create-resource",
+      input: { resource: input },
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ command: "create-resource", input })
+    );
+  });
+
   test("suggests page structure tools when page detail input is unsupported", async () => {
     const executeOperation: ExecuteOperation = vi.fn();
     const adapter = createProjectSessionMcpCore({
@@ -3873,6 +4025,14 @@ describe("project session mcp adapter", () => {
       name: "meta.get_more_tools",
       input: { tools: ["meta.get_more_tools", "meta.get-more-tools"] },
     });
+    const underscoreToolDetails = await adapter.callTool({
+      name: "meta.get-more-tools",
+      input: { tools: ["insert_fragment"] },
+    });
+    const stringifiedToolDetails = await adapter.callTool({
+      name: "meta.get-more-tools",
+      input: { tools: '["insert-fragment"]' },
+    });
     const insertFragmentDetails = await adapter.callTool({
       name: "meta.get-more-tools",
       input: { tools: ["insert-fragment"] },
@@ -3883,6 +4043,22 @@ describe("project session mcp adapter", () => {
     });
 
     expect(session.initialize).not.toHaveBeenCalled();
+    expect(underscoreToolDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        missingTools: [],
+        count: 1,
+        tools: expect.arrayContaining([
+          expect.objectContaining({ name: "insert-fragment" }),
+        ]),
+      })
+    );
+    expect(stringifiedToolDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        requestedTools: ["insert-fragment"],
+        missingTools: [],
+        count: 1,
+      })
+    );
     expect(index.structuredContent.data).toEqual(
       expect.objectContaining({
         readThisFirst: expect.stringContaining(
@@ -4597,6 +4773,7 @@ describe("project session mcp adapter", () => {
           overviewResource: expect.objectContaining({
             dataSourceName: "posts",
             query: expect.objectContaining({
+              result: "many",
               limit: { type: "literal", value: 20 },
               offset: { type: "literal", value: 0 },
             }),
@@ -4604,8 +4781,7 @@ describe("project session mcp adapter", () => {
           detailResource: expect.objectContaining({
             dataSourceName: "post",
             query: expect.objectContaining({
-              limit: { type: "literal", value: 1 },
-              offset: { type: "literal", value: 0 },
+              result: "one",
               content: { mode: "markdown-body-ref" },
             }),
           }),
@@ -4614,43 +4790,42 @@ describe("project session mcp adapter", () => {
               "collectionItem.properties.author.name"
             ),
           }),
-          detailCollection: expect.objectContaining({
-            itemFragment: expect.stringContaining(
-              "collectionItem.content.text"
-            ),
+          detailFragment: expect.objectContaining({
+            parentInstanceId: "<detail-root-id>",
+            fragment: expect.stringContaining("post.data.content.text"),
+          }),
+          detailPageSettings: expect.objectContaining({
+            pageId: "<detail-page-id>",
+            values: expect.objectContaining({
+              title: expect.stringContaining("post.data.properties.title"),
+              meta: expect.objectContaining({
+                description: expect.stringContaining(
+                  "post.data.properties.excerpt"
+                ),
+                status: "post.data ? 200 : 404",
+              }),
+            }),
           }),
         }),
         workflow: expect.arrayContaining([
-          expect.stringContaining(
-            'meta.get-more-tools with {"tools":["create-assets-resource"]}'
-          ),
-          expect.stringContaining(
-            "Upload all Markdown source files together in one upload-assets call"
-          ),
+          expect.stringContaining("meta.get-more-tools once"),
           expect.stringContaining('"format":"md"'),
-          expect.stringContaining("Do not create companion JSON descriptors"),
-          expect.stringContaining("exactly two Builder pages"),
-          expect.stringContaining("do not dry-run it"),
-          expect.stringContaining('fixed path "/blog"'),
-          expect.stringContaining('dynamic path "/blog/:slug"'),
-          expect.stringContaining("Do not create one page per post"),
-          expect.stringContaining("exactly one final Assets resource"),
-          expect.stringContaining(
-            "bounded metadata-only result can be materialized"
-          ),
-          expect.stringContaining("only one materialized overview query"),
-          expect.stringContaining('content.mode:"markdown-body-ref"'),
-          expect.stringContaining("Do not reshape or stringify any field"),
-          expect.stringContaining('"value":"posts.data"'),
-          expect.stringContaining("only the Markdown document reference"),
-          expect.stringContaining('field:["extension"]'),
-          expect.stringContaining("both pages load their content from Assets"),
+          expect.stringContaining("do not create companion files"),
+          expect.stringContaining('"/blog/:slug"'),
+          expect.stringContaining("create one page per post"),
+          expect.stringContaining("exactly one scoped Assets resource"),
+          expect.stringContaining("only dynamic value"),
+          expect.stringContaining("without a Collection"),
+          expect.stringContaining("page settings"),
+          expect.stringContaining("Assets-backed content"),
         ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "upload-assets" }),
           expect.objectContaining({ name: "list-pages" }),
           expect.objectContaining({ name: "list-assets" }),
           expect.objectContaining({ name: "insert-collection" }),
+          expect.objectContaining({ name: "insert-fragment" }),
+          expect.objectContaining({ name: "update-page" }),
         ]),
       })
     );
@@ -4666,6 +4841,19 @@ describe("project session mcp adapter", () => {
     );
     expect(authenticatedPageGuide.structuredContent.data).toEqual(
       expect.objectContaining({
+        recipe: {
+          createResourceInput: {
+            scopeInstanceId: "<account-root-id>",
+            dataSourceName: "accountSession",
+            resource: {
+              name: "Account session via server",
+              method: "get",
+              url: "/api/auth/session",
+              headers: [],
+              searchParams: [],
+            },
+          },
+        },
         workflow: expect.arrayContaining([
           expect.stringContaining("existing auth resources"),
           expect.stringContaining("Call inspect-auth-context exactly once"),
@@ -4684,10 +4872,8 @@ describe("project session mcp adapter", () => {
           expect.stringContaining(
             "Do not repeat list-variables when the fixture variable is not referenced"
           ),
-          expect.stringContaining("copy its fixed request URL exactly"),
-          expect.stringContaining(
-            'url:"/api/auth/session",headers:[],searchParams:[]'
-          ),
+          expect.stringContaining("recipe.createResourceInput"),
+          expect.stringContaining("entire create-resource tool input"),
           expect.stringContaining(
             "Do not call selector-based structural tools"
           ),
@@ -7042,10 +7228,40 @@ describe("project session mcp adapter", () => {
     });
 
     await expect(adapter.callTool({ name: "unknown-tool" })).rejects.toThrow(
-      'Unknown MCP tool "unknown-tool".'
+      'Unknown MCP tool "unknown-tool". Use meta.index to list available tools.'
+    );
+    await expect(adapter.callTool({ name: "updat_styles" })).rejects.toThrow(
+      'Unknown MCP tool "updat_styles". Did you mean "update-styles"? Use meta.index to list available tools.'
     );
     expect(createProjectSession).not.toHaveBeenCalled();
     expect(executeOperation).not.toHaveBeenCalled();
+  });
+
+  test("accepts exposed underscore spellings in direct MCP calls", async () => {
+    const executeOperation = createExecuteOperation();
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await adapter.callTool({
+      name: "update_styles",
+      input: {
+        updates: [
+          {
+            instanceId: "body",
+            breakpointId: "base",
+            property: "display",
+            value: "grid",
+          },
+        ],
+      },
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ command: "update-styles" })
+    );
   });
 
   test.each([
@@ -7375,8 +7591,54 @@ describe("project session mcp adapter", () => {
       writeNamespaces: ["instances"],
       invalidatesNamespaces: ["instances"],
     });
+    const defineCssVariablesOperation = styleOperation({
+      command: "define-css-variable",
+      id: "cssVariables.define",
+      description: "Define CSS variables",
+      inputSchema: getTestInputSchema(
+        z.object({
+          vars: z.record(z.string(), z.string()),
+          overwrite: z.boolean().optional(),
+        })
+      ),
+      readNamespaces: ["styles"],
+    });
+    const listCssVariablesOperation = publicOperation({
+      command: "list-css-variables",
+      id: "cssVariables.list",
+      method: "query",
+      permit: "view",
+      description: "List CSS variables",
+      inputSchema: getTestInputSchema(
+        z.object({
+          withUsage: z.boolean().optional(),
+          verbose: z.boolean().optional(),
+        })
+      ),
+      readNamespaces: ["styles"],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+    });
+    const deleteCssVariablesOperation = styleOperation({
+      command: "delete-css-variable",
+      id: "cssVariables.delete",
+      description: "Delete CSS variables",
+      inputSchema: getTestInputSchema(
+        z.object({
+          names: z.array(z.string()),
+          force: z.boolean().optional(),
+        })
+      ),
+      readNamespaces: ["styles"],
+    });
     const server = await createProjectSessionMcpServer({
-      operations: [...publicMcpOperations, setTextContentOperation],
+      operations: [
+        ...publicMcpOperations,
+        setTextContentOperation,
+        listCssVariablesOperation,
+        defineCssVariablesOperation,
+        deleteCssVariablesOperation,
+      ],
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
     });
@@ -7423,6 +7685,13 @@ describe("project session mcp adapter", () => {
             required: ["operation", "instanceId"],
           },
         ],
+      });
+      expect(
+        listedTools.tools.find(({ name }) => name === "list-css-variables")
+          ?.inputSchema.properties
+      ).toMatchObject({
+        withUsage: { type: "boolean" },
+        verbose: { type: "boolean" },
       });
       expect(listedTools).toEqual({
         tools: expect.arrayContaining([
@@ -7487,17 +7756,25 @@ describe("project session mcp adapter", () => {
         getSchemaProperties(
           listedTools.tools.find(({ name }) => name === "audit")?.inputSchema
         )
-      ).toMatchObject({
-        cursor: { type: "string" },
-        limit: { type: "integer", minimum: 1, maximum: 200 },
-        verbose: { type: "boolean" },
-      });
+      ).toEqual({ verbose: { type: "boolean" } });
+      expect(
+        getSchemaProperties(
+          listedTools.tools.find(({ name }) => name === "define-css-variable")
+            ?.inputSchema
+        ).overwrite
+      ).toEqual({ type: "boolean" });
+      expect(
+        getSchemaProperties(
+          listedTools.tools.find(({ name }) => name === "delete-css-variable")
+            ?.inputSchema
+        ).force
+      ).toEqual({ type: "boolean" });
       expect(
         getSchemaProperties(
           listedTools.tools.find(({ name }) => name === "list-instances")
             ?.inputSchema
         ).maxDepth
-      ).toMatchObject({ type: "integer", minimum: 0 });
+      ).toBeUndefined();
       expect(
         getSchemaProperties(
           listedTools.tools.find(({ name }) => name === "publish")?.inputSchema
@@ -7692,6 +7969,33 @@ describe("project session mcp adapter", () => {
     } finally {
       await close();
     }
+  });
+
+  test("recovers stdio transport after an idle partial JSON-RPC frame", async () => {
+    const stdin = new PassThrough();
+    const stdout = new PassThrough();
+    const transport = await createMcpStdioTransport({
+      stdin,
+      stdout,
+      partialFrameTimeoutMs: 10,
+    });
+    const messages: unknown[] = [];
+    const errors: Error[] = [];
+    transport.onmessage = (message) => messages.push(message);
+    transport.onerror = (error) => errors.push(error);
+    await transport.start();
+
+    stdin.write('{"jsonrpc":"2.0","id":1,"method":"tools/call"');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    stdin.write(
+      `${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "ping" })}\n`
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(messages).toEqual([{ jsonrpc: "2.0", id: 2, method: "ping" }]);
+    expect(errors).toEqual([]);
+
+    await transport.close();
   });
 
   test("sends sparse protocol-native startup logging after initialization", async () => {

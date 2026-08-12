@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   camelCaseProperty,
+  hasUnsupportedCssTemplateRules,
   parseClassBasedSelector,
   parseCss,
   parseMediaQuery,
@@ -8,6 +9,40 @@ import {
 import { propertyVarTestFixtures } from "./__generated__/property-var-test-fixtures";
 
 describe("Parse CSS", () => {
+  test("detects rules unsupported by template CSS", () => {
+    expect(hasUnsupportedCssTemplateRules("color: red")).toBe(false);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "@media (min-width: 768px) { color: blue }"
+      )
+    ).toBe(false);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "--brand: red; color: var(--brand, currentColor)"
+      )
+    ).toBe(false);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "@MEDIA (min-width: 768px) { color: blue }"
+      )
+    ).toBe(false);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "@keyframes fade { from { opacity: 0 } to { opacity: 1 } }"
+      )
+    ).toBe(true);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "@media (min-width: 768px) { .child { color: blue } }"
+      )
+    ).toBe(true);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "@media (min-width: 768px) { @keyframes fade { from { opacity: 0 } } }"
+      )
+    ).toBe(true);
+  });
+
   test("longhand property name with keyword value", () => {
     expect(
       parseCss(`.test { background-color: red }`, new Map()).styles
@@ -757,6 +792,11 @@ test("parse media queries", () => {
           color: green;
         }
       }
+      @MEDIA (min-width: 1024px) {
+        a {
+          color: blue;
+        }
+      }
    `,
       new Map()
     ).styles
@@ -772,6 +812,12 @@ test("parse media queries", () => {
       selector: "a",
       property: "color",
       value: { type: "keyword", value: "green" },
+    },
+    {
+      breakpoint: `(min-width:1024px)`,
+      selector: "a",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
     },
   ]);
 });

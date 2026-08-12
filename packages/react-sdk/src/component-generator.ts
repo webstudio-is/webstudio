@@ -405,7 +405,7 @@ export const generateJsxChildren = ({
         usedDataSources,
         scope,
       });
-      generatedChildren = `{renderText(${expression})}\n`;
+      generatedChildren += `{renderText(${expression})}\n`;
       continue;
     }
     if (child.type === "id") {

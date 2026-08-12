@@ -77,6 +77,7 @@ export type ContentCompilationWhere = QueryWhereTree<{
 
 export type ContentCompilationQuery = {
   id: string;
+  result?: AssetQuery["result"];
   where: ContentCompilationWhere;
   sort: AssetQuery["sort"];
   limit: ContentCompilationValue;
@@ -519,6 +520,7 @@ export const createLiteralContentCompilationQuery = ({
   query: AssetQuery;
 }): ContentCompilationQuery => ({
   id,
+  result: query.result ?? "many",
   where: toLiteralWhere(query.where),
   sort: query.sort,
   limit: { type: "literal", value: query.limit },

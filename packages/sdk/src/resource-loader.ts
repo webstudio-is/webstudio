@@ -150,6 +150,33 @@ const formatAssetsResourceResult = (value: unknown, body: unknown) => {
   const preview =
     isRecord(value) && isRecord(value.data) ? value.data : undefined;
   const collection = preview ?? value;
+  const resultMode =
+    isRecord(body) &&
+    isRecord(body.query) &&
+    typeof body.query.result === "string"
+      ? body.query.result
+      : "many";
+  const diagnostics = isRecord(value) ? value.__diagnostics__ : undefined;
+  const performance = isRecord(value) ? value.__performance__ : undefined;
+  const internalMetadata = {
+    ...(preview === undefined || diagnostics === undefined
+      ? {}
+      : { __diagnostics__: diagnostics }),
+    ...(performance === undefined ? {} : { __performance__: performance }),
+  };
+  if (
+    resultMode !== "many" &&
+    isRecord(collection) &&
+    Object.hasOwn(collection, "item") &&
+    (collection.item === null || isRecord(collection.item)) &&
+    typeof collection.totalCount === "number"
+  ) {
+    return {
+      data: collection.item,
+      meta: { totalCount: collection.totalCount },
+      ...internalMetadata,
+    };
+  }
   if (
     isRecord(collection) === false ||
     Array.isArray(collection.items) === false ||
@@ -159,7 +186,6 @@ const formatAssetsResourceResult = (value: unknown, body: unknown) => {
     return;
   }
   const includeId = includesAssetId(body);
-  const diagnostics = isRecord(value) ? value.__diagnostics__ : undefined;
   const entries: Array<[string, Record<string, unknown>]> = [];
   for (const item of collection.items) {
     if (isRecord(item) === false || typeof item.id !== "string") {
@@ -174,9 +200,7 @@ const formatAssetsResourceResult = (value: unknown, body: unknown) => {
       totalCount: collection.totalCount,
       hasMore: collection.hasMore,
     },
-    ...(preview === undefined || diagnostics === undefined
-      ? {}
-      : { __diagnostics__: diagnostics }),
+    ...internalMetadata,
   };
 };
 
