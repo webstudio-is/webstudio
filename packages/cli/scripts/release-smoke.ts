@@ -64,10 +64,10 @@ const createdPageInputs = [
 ] as const;
 const additionalPageCount = 1 + createdPageInputs.length;
 const agentSmokeClients = [
-  { connect: "claude", name: "claude-code" },
-  { connect: "codex", name: "codex" },
-  { connect: "cursor", name: "cursor" },
-  { connect: "vscode", name: "vscode" },
+  { connect: "claude", name: "claude-code", print: false },
+  { connect: "codex", name: "codex", print: true },
+  { connect: "cursor", name: "cursor", print: false },
+  { connect: "vscode", name: "vscode", print: false },
 ] as const;
 
 const configuredTokenBudget = Number(
@@ -1337,12 +1337,20 @@ const run = async () => {
       "Verify the share link has API access, then run webstudio sync again.",
       ["sync"]
     );
-    for (const { connect: client } of agentSmokeClients) {
-      await runCliStep(
+    for (const { connect: client, print } of agentSmokeClients) {
+      const connected = await runCliStep(
         `connect ${client}`,
         `Run webstudio connect ${client} again and reload ${client}.`,
-        ["connect", client]
+        ["connect", client, ...(print ? ["--print"] : [])]
       );
+      if (
+        client === "codex" &&
+        connected.stdout.includes("codex mcp add webstudio --") === false
+      ) {
+        throw new Error(
+          "Codex connection smoke did not print its registration command."
+        );
+      }
     }
 
     const builderState = state.createBuilderStateFromBuildData({
