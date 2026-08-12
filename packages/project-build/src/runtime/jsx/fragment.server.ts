@@ -4,6 +4,8 @@ import { renderTemplate } from "@webstudio-is/template";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
   webstudioJsxFragmentBuiltInHelpers,
+  webstudioJsxComponentNamespaceNames,
+  webstudioJsxHelperNames,
   webstudioJsxRuntimeBindings,
 } from "./bindings";
 import { evaluateJsx } from "./evaluate.server";
@@ -51,7 +53,7 @@ export const evaluateWebstudioJsxFragment = async (
       if (isTemplateValidationMessage(message)) {
         return message;
       }
-      return `Could not evaluate JSX fragment. Use built-in helpers only: ${webstudioJsxFragmentBuiltInHelpers}. ${message}`;
+      return `Could not evaluate JSX fragment. Use component namespaces ${webstudioJsxComponentNamespaceNames} and value helpers ${webstudioJsxHelperNames}. The animation namespace is not callable; use animation.ComponentName in JSX. Available built-ins: ${webstudioJsxFragmentBuiltInHelpers}. ${message}`;
     },
     missingResultMessage: "JSX fragment did not produce Webstudio data.",
   });

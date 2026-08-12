@@ -1309,6 +1309,24 @@ test("inspects webstudio jsx fragment syntax without evaluation", () => {
   expect(() =>
     inspectWebstudioJsxFragmentSyntax(`<div>Hello</div>`)
   ).not.toThrow();
+  expect(() =>
+    inspectWebstudioJsxFragmentSyntax(
+      '<ws.element ws:tag="div" ws:style={css`@keyframes pulse { 0% { opacity: 0; } 100% { opacity: 1; } } animation-name: pulse;`} />'
+    )
+  ).toThrow(
+    "Do not put selectors or unsupported at-rules such as @keyframes inside css templates"
+  );
+});
+
+test("explains unmatched jsx without implying session state", async () => {
+  await expect(
+    parseWebstudioJsxFragment(`<$.Box><$.Heading>Title</$.Box>`)
+  ).rejects.toThrow(
+    "Every opening element must use the same closing tag or end with />. Fragment parsing is stateless"
+  );
+  await expect(
+    parseWebstudioJsxFragment(`<$.Box><$.Heading>Title</$.Heading></$.Box>`)
+  ).resolves.toEqual(expect.objectContaining({ children: expect.any(Array) }));
 });
 
 test("inserts bare template-backed components from webstudio jsx fragments", async () => {
@@ -1860,7 +1878,17 @@ test("allows html and fragment syntax inside text values", async () => {
 
 test("suggests built-in helpers for unknown jsx identifiers", async () => {
   await expect(parseWebstudioJsxFragment(`<Box />`)).rejects.toThrow(
-    "Use built-in helpers only: $, ws, radix, animation, css, token, expression, Variable, Parameter, ResourceValue, ActionValue, AssetValue, PageValue, and PlaceholderValue. Box is not defined"
+    "Use component namespaces $, ws, radix, and animation and value helpers css, token, expression, Variable, Parameter, ResourceValue, ActionValue, AssetValue, PageValue, and PlaceholderValue. The animation namespace is not callable; use animation.ComponentName in JSX."
+  );
+});
+
+test("explains that animation is a component namespace", async () => {
+  await expect(
+    parseWebstudioJsxFragment(
+      '<$.Box data-animation={animation("pulse", css`opacity: 1;`)} />'
+    )
+  ).rejects.toThrow(
+    "The animation namespace is not callable; use animation.ComponentName in JSX."
   );
 });
 

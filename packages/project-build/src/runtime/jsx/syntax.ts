@@ -1,5 +1,6 @@
 import { Parser } from "acorn";
 import jsx from "acorn-jsx";
+import * as csstree from "css-tree";
 import { webstudioJsxFragmentBuiltInHelpers } from "./bindings";
 import { getErrorMessage, throwWebstudioJsxValidationError } from "./errors";
 
@@ -170,6 +171,48 @@ const parseJsxModule = (source: string) =>
     sourceType: "module",
   }) as unknown as AstNode;
 
+const getStaticCssTemplateSource = (node: AstNode) => {
+  if (node.type !== "TaggedTemplateExpression") {
+    return;
+  }
+  if (
+    isAstNode(node.tag) === false ||
+    node.tag.type !== "Identifier" ||
+    node.tag.name !== "css" ||
+    isAstNode(node.quasi) === false ||
+    Array.isArray(node.quasi.quasis) === false
+  ) {
+    return;
+  }
+  return node.quasi.quasis
+    .map((quasi) => {
+      if (
+        isAstNode(quasi) &&
+        typeof quasi.value === "object" &&
+        quasi.value !== null &&
+        "raw" in quasi.value &&
+        typeof quasi.value.raw === "string"
+      ) {
+        return quasi.value.raw;
+      }
+      return "";
+    })
+    .join("var(--webstudio-expression)");
+};
+
+const getUnsupportedCssTemplateRule = (source: string) => {
+  try {
+    const ast = csstree.parse(source, { context: "declarationList" });
+    return [...ast.children].find(
+      (node) =>
+        node.type === "Rule" ||
+        (node.type === "Atrule" && node.name !== "media")
+    );
+  } catch {
+    return;
+  }
+};
+
 const hasModuleSyntax = (source: string) => {
   try {
     const ast = parseJsxModule(source);
@@ -205,13 +248,27 @@ export const inspectWebstudioJsxFragmentSyntax = (source: string) => {
   try {
     ast = parseWebstudioJsxFragmentExpression(source);
   } catch (error) {
+    const message = getErrorMessage(error);
+    const recovery = message.startsWith(
+      "Expected corresponding JSX closing tag"
+    )
+      ? " Every opening element must use the same closing tag or end with />. Fragment parsing is stateless, so refresh cannot repair unmatched JSX."
+      : "";
     return throwWebstudioJsxValidationError(
-      `Could not parse JSX fragment. Pass Webstudio JSX such as <$.Box><$.Heading>Title</$.Heading></$.Box>. ${getErrorMessage(error)}`,
+      `Could not parse JSX fragment. Pass Webstudio JSX such as <$.Box><$.Heading>Title</$.Heading></$.Box>. ${message}${recovery}`,
       "valid_webstudio_jsx_syntax",
-      getErrorMessage(error)
+      message
     );
   }
   const error = visitAst(ast, (node, context) => {
+    const cssTemplateSource = getStaticCssTemplateSource(node);
+    if (cssTemplateSource !== undefined) {
+      const unsupportedRule = getUnsupportedCssTemplateRule(cssTemplateSource);
+      if (unsupportedRule === undefined) {
+        return;
+      }
+      return "Do not put selectors or unsupported at-rules such as @keyframes inside css templates. css templates accept declarations and @media rules only. Use Webstudio Animation components for editable animations.";
+    }
     if (node.type === "ImportExpression" || node.type === "Import") {
       return `Do not use dynamic import() in JSX fragments. JSX fragments are declarative Webstudio project data; use the built-in ${webstudioJsxFragmentBuiltInHelpers} helpers.`;
     }

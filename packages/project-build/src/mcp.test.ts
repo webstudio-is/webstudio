@@ -1053,6 +1053,8 @@ describe("project session mcp adapter", () => {
     expect(jsxDescription).toContain("not React aliases className or htmlFor");
     expect(jsxDescription).toContain("Use ws:style");
     expect(jsxDescription).toContain("style={{ padding: 24 }}");
+    expect(jsxDescription).toContain("animation name is a component namespace");
+    expect(jsxDescription).toContain("not a callable CSS keyframes helper");
     expect(jsxDescription).toContain("include required child/part components");
     expect(jsxDescription).toContain("same parent structure");
     expect(jsxDescription).toContain("use insert-component");
