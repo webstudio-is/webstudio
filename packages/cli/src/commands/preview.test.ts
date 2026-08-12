@@ -1,5 +1,14 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  lstat,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chdir, cwd } from "node:process";
@@ -391,7 +400,10 @@ test("does not relink generated preview dependencies when already present", asyn
   await ensurePreviewDependencies("/tmp/project/.webstudio/preview", {
     access,
     lstat: vi.fn(async () => ({ isSymbolicLink: () => true })) as never,
-    readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+    readFile: vi.fn(
+      async () =>
+        '{"dependencies":{"@webstudio-is/sdk":"0.0.0-webstudio-version"}}'
+    ),
     symlink,
     platform: "linux",
   });
@@ -416,7 +428,10 @@ test("uses junctions for generated preview dependencies on windows", async () =>
     lstat: vi.fn(async () => {
       throw Object.assign(new Error("missing"), { code: "ENOENT" });
     }),
-    readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+    readFile: vi.fn(
+      async () =>
+        '{"dependencies":{"@webstudio-is/sdk":"0.0.0-webstudio-version"}}'
+    ),
     symlink,
     platform: "win32",
   });
@@ -464,6 +479,62 @@ test("installs isolated generated dependencies when the cli does not ship them",
     "/tmp/project/.webstudio/preview/node_modules/.webstudio-preview-dependencies",
     expect.stringMatching(/^[a-f0-9]{64}$/)
   );
+});
+
+test("replaces a parent workspace dependency link for published previews", async () => {
+  const parentDir = await mkdtemp(
+    join(tmpdir(), "webstudio-parent-workspace-")
+  );
+  const previewProjectDir = join(parentDir, "task", ".webstudio", "preview");
+  const parentNodeModules = join(parentDir, "node_modules");
+  const packagePath = join(
+    "@webstudio-is",
+    "sdk-components-react-router",
+    "package.json"
+  );
+  const execFile = vi.fn(async (_command, args: string[]) => {
+    expect(args).toContain("--workspaces=false");
+    await mkdir(join(previewProjectDir, "node_modules", packagePath, ".."), {
+      recursive: true,
+    });
+    await writeFile(
+      join(previewProjectDir, "node_modules", packagePath),
+      '{"version":"0.289.0"}'
+    );
+    return { stdout: "", stderr: "" };
+  });
+
+  try {
+    await mkdir(join(parentNodeModules, packagePath, ".."), {
+      recursive: true,
+    });
+    await writeFile(
+      join(parentNodeModules, packagePath),
+      '{"version":"0.0.0-webstudio-version"}'
+    );
+    await mkdir(previewProjectDir, { recursive: true });
+    await writeFile(
+      join(previewProjectDir, "package.json"),
+      '{"dependencies":{"@webstudio-is/sdk-components-react-router":"0.289.0"}}'
+    );
+    await symlink(
+      parentNodeModules,
+      join(previewProjectDir, "node_modules"),
+      "dir"
+    );
+
+    await ensurePreviewDependencies(previewProjectDir, { execFile });
+
+    expect(await realpath(join(previewProjectDir, "node_modules"))).not.toBe(
+      await realpath(parentNodeModules)
+    );
+    expect(
+      (await lstat(join(previewProjectDir, "node_modules"))).isSymbolicLink()
+    ).toBe(false);
+    expect(execFile).toHaveBeenCalledOnce();
+  } finally {
+    await rm(parentDir, { recursive: true, force: true });
+  }
 });
 
 test("reuses the npm cli that launched webstudio on windows", async () => {

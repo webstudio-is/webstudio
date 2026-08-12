@@ -211,6 +211,7 @@ export const runPreviewBuild = async (
     stdio,
     env: getPreviewEnv(cwd, {
       ...processEnv(),
+      CI: "1",
       NODE_ENV: "production",
     }),
   });

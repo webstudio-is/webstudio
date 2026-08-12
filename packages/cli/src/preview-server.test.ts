@@ -203,7 +203,7 @@ test("runs generated project production build", async () => {
   expect(spawn).toHaveBeenCalledWith("npm", ["run", "build"], {
     cwd: "/tmp/preview",
     stdio: "inherit",
-    env: expect.objectContaining({ NODE_ENV: "production" }),
+    env: expect.objectContaining({ CI: "1", NODE_ENV: "production" }),
   });
 });
 

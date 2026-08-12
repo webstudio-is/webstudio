@@ -134,6 +134,17 @@ describe("registerCommands", () => {
     ]);
     expect(
       getTopLevelMcpToolForwardArgs([
+        "download-asset",
+        '{"assetId":"asset-id"}',
+      ])
+    ).toEqual([
+      "mcp",
+      "single-op-call",
+      "download-asset",
+      '{"assetId":"asset-id"}',
+    ]);
+    expect(
+      getTopLevelMcpToolForwardArgs([
         "insert-fragment",
         '{"parentInstanceId":"parent-id","fragment":"<$.Box />"}',
         "--dry-run",

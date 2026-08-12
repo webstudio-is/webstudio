@@ -240,6 +240,9 @@ export const ensurePreviewDependencies = async (
     ...packageJson.dependencies,
     ...packageJson.devDependencies,
   };
+  const usesDevelopmentDependencies = Object.values(
+    requiredDependencies
+  ).includes(developmentCliVersion);
   const manifestHash = createHash("sha256")
     .update(JSON.stringify(requiredDependencies))
     .digest("hex");
@@ -260,6 +263,7 @@ export const ensurePreviewDependencies = async (
     const previewNodeModulesStat = await operations.lstat(previewNodeModules);
     if (
       previewNodeModulesStat.isSymbolicLink() &&
+      usesDevelopmentDependencies &&
       (await hasRequiredDependencies(previewNodeModules))
     ) {
       return;
@@ -280,14 +284,16 @@ export const ensurePreviewDependencies = async (
     // Continue with the CLI dependency tree or an isolated install.
   }
 
-  for (const cliNodeModules of cliNodeModulesCandidates) {
-    if (await hasRequiredDependencies(cliNodeModules)) {
-      await operations.symlink(
-        cliNodeModules,
-        previewNodeModules,
-        operations.platform === "win32" ? "junction" : "dir"
-      );
-      return;
+  if (usesDevelopmentDependencies) {
+    for (const cliNodeModules of cliNodeModulesCandidates) {
+      if (await hasRequiredDependencies(cliNodeModules)) {
+        await operations.symlink(
+          cliNodeModules,
+          previewNodeModules,
+          operations.platform === "win32" ? "junction" : "dir"
+        );
+        return;
+      }
     }
   }
 
@@ -298,6 +304,7 @@ export const ensurePreviewDependencies = async (
     "--no-fund",
     "--package-lock=false",
     "--loglevel=error",
+    "--workspaces=false",
   ];
   const invocation = getNpmInvocation(installArgs, operations);
 
