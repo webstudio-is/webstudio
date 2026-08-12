@@ -49,6 +49,33 @@ describe("asset data overrides", () => {
     });
   });
 
+  test("keeps variable axes when upload metadata describes a static font", () => {
+    const variationAxes = {
+      wght: { name: "Weight", min: 100, default: 400, max: 900 },
+    };
+    expect(
+      applyAssetDataOverride(
+        {
+          size: 100,
+          format: "woff2",
+          meta: { family: "Detected Family", variationAxes },
+        },
+        {
+          format: "woff2",
+          meta: {
+            family: "Configured Family",
+            style: "normal",
+            weight: 400,
+          },
+        }
+      )
+    ).toEqual({
+      size: 100,
+      format: "woff2",
+      meta: { family: "Configured Family", variationAxes },
+    });
+  });
+
   test("rejects unsupported metadata overrides", () => {
     expect(() =>
       applyAssetDataOverride(

@@ -27,6 +27,37 @@ export type ParsedStyleDecl = {
   value: StyleValue;
 };
 
+export const hasUnsupportedCssTemplateRules = (source: string): boolean => {
+  try {
+    const ast = csstree.parse(source, { context: "declarationList" });
+    let unsupported = false;
+    let declarationDepth = 0;
+    csstree.walk(ast, {
+      enter(node) {
+        if (node.type === "Declaration") {
+          declarationDepth += 1;
+        }
+        if (
+          node.type === "Rule" ||
+          (node.type === "Raw" && declarationDepth === 0) ||
+          (node.type === "Atrule" && node.name.toLowerCase() !== "media")
+        ) {
+          unsupported = true;
+          return walkSkip;
+        }
+      },
+      leave(node) {
+        if (node.type === "Declaration") {
+          declarationDepth -= 1;
+        }
+      },
+    });
+    return unsupported;
+  } catch {
+    return false;
+  }
+};
+
 // @todo we don't parse correctly most of them if not all
 const prefixedProperties = [
   "-webkit-box-orient",
@@ -765,7 +796,7 @@ export const parseCss = (
       }
 
       // All enclosing at-rules must be @media — reject @supports, @keyframes, etc.
-      if (atruleStack.some((atrule) => atrule.name !== "media")) {
+      if (atruleStack.some((atrule) => atrule.name.toLowerCase() !== "media")) {
         return;
       }
 

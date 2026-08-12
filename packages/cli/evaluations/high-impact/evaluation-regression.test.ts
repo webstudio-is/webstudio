@@ -75,7 +75,14 @@ describe("evaluation regression comparison", () => {
       metrics: {
         ...baseline.metrics,
         durationMs: 1_100,
-        tokens: { ...baselineTokens, total: 1_600 },
+        tokens: {
+          ...baselineTokens,
+          input: 1_400,
+          cachedInput: 400,
+          uncachedInput: 1_000,
+          output: 600,
+          total: 2_000,
+        },
       },
     });
     const comparison = compareEvaluationResult(current, baseline);
@@ -88,20 +95,22 @@ describe("evaluation regression comparison", () => {
           current: 1_100,
         }),
         expect.objectContaining({
-          metric: "metrics.tokens.total",
-          baseline: 1_000,
-          current: 1_600,
+          metric: "metrics.tokens.output",
+          baseline: 200,
+          current: 600,
         }),
       ])
     );
     expect(comparison.regressions).toEqual([
       expect.objectContaining({
-        metric: "metrics.tokens.total",
-        allowed: 1_500,
+        metric: "metrics.tokens.output",
+        allowed: 300,
       }),
     ]);
 
     const noisyCurrent = structuredClone(baseline);
+    noisyCurrent.metrics.tokens!.input = 1_200;
+    noisyCurrent.metrics.tokens!.cachedInput = 800;
     noisyCurrent.metrics.tokens!.total = 1_400;
     expect(compareEvaluationResult(noisyCurrent, baseline)).toMatchObject({
       status: "passed",
@@ -277,6 +286,10 @@ describe("evaluation regression comparison", () => {
     if (regressionCurrent.metrics.tokens === undefined) {
       throw new Error("Expected token metrics");
     }
+    regressionCurrent.metrics.tokens.input = 1_800;
+    regressionCurrent.metrics.tokens.cachedInput = 400;
+    regressionCurrent.metrics.tokens.uncachedInput = 1_400;
+    regressionCurrent.metrics.tokens.output = 1_000;
     regressionCurrent.metrics.tokens.total = 2_000;
     const regressed = compareEvaluationResult(
       regressionCurrent,
@@ -357,7 +370,14 @@ describe("evaluation regression comparison", () => {
         ...result,
         metrics: {
           ...result.metrics,
-          tokens: { ...result.metrics.tokens!, total },
+          tokens: {
+            ...result.metrics.tokens!,
+            input: total,
+            cachedInput: 0,
+            uncachedInput: total,
+            output: total,
+            total,
+          },
         },
       };
     };

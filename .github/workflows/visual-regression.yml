@@ -7,7 +7,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
   pull_request_target:
-    types: [labeled, synchronize]
+    types: [opened, synchronize, reopened, labeled]
 
 concurrency:
   # A synchronize action emits both pull_request and pull_request_target. Keep
@@ -41,6 +41,8 @@ jobs:
             }
 
   visual-regression:
+    # Same-repository PRs use the unprivileged event. Organization members'
+    # fork PRs are trusted; every other fork revision needs safe-to-deploy.
     if: |
       github.event_name == 'push' ||
       (
@@ -53,13 +55,24 @@ jobs:
       ) ||
       (
         github.event_name == 'pull_request_target' &&
-        github.event.action == 'labeled' &&
+        github.event.pull_request.head.repo.full_name != github.repository &&
         (
-          github.event.label.name == 'safe-to-deploy' ||
           (
-            github.event.label.name == 'visual-change-approved' &&
-            github.event.pull_request.head.repo.full_name != github.repository &&
-            contains(github.event.pull_request.labels.*.name, 'safe-to-deploy')
+            contains(fromJSON('["OWNER", "MEMBER"]'), github.event.pull_request.author_association) &&
+            (
+              github.event.action != 'labeled' ||
+              github.event.label.name == 'visual-change-approved'
+            )
+          ) ||
+          (
+            github.event.action == 'labeled' &&
+            (
+              github.event.label.name == 'safe-to-deploy' ||
+              (
+                github.event.label.name == 'visual-change-approved' &&
+                contains(github.event.pull_request.labels.*.name, 'safe-to-deploy')
+              )
+            )
           )
         )
       )
@@ -72,6 +85,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
 
       - uses: ./.github/actions/submodules-checkout
         with:

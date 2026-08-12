@@ -1311,6 +1311,31 @@ test("inspects webstudio jsx fragment syntax without evaluation", () => {
   ).not.toThrow();
 });
 
+test("rejects unsupported css rules after interpolation", async () => {
+  await expect(
+    parseWebstudioJsxFragment(
+      '<ws.element ws:tag="div" ws:style={css`${"@keyframes pulse { 0% { opacity: 0; } 100% { opacity: 1; } }"} animation-name: pulse;`} />'
+    )
+  ).rejects.toThrow(
+    "css templates do not support selectors or at-rules such as @keyframes"
+  );
+});
+
+test("explains unmatched jsx without implying session state", async () => {
+  const validFragment = `<$.Box><$.Heading>Title</$.Heading></$.Box>`;
+  await expect(parseWebstudioJsxFragment(validFragment)).resolves.toEqual(
+    expect.objectContaining({ children: expect.any(Array) })
+  );
+  await expect(
+    parseWebstudioJsxFragment(`<$.Box><$.Heading>Title</$.Box>`)
+  ).rejects.toThrow(
+    "Every opening element must use the same closing tag or end with />. Fragment parsing is stateless"
+  );
+  await expect(parseWebstudioJsxFragment(validFragment)).resolves.toEqual(
+    expect.objectContaining({ children: expect.any(Array) })
+  );
+});
+
 test("inserts bare template-backed components from webstudio jsx fragments", async () => {
   const parent = createParent();
   const fragment = await parseWebstudioJsxFragment(`<radix.Switch />`);
@@ -1860,7 +1885,17 @@ test("allows html and fragment syntax inside text values", async () => {
 
 test("suggests built-in helpers for unknown jsx identifiers", async () => {
   await expect(parseWebstudioJsxFragment(`<Box />`)).rejects.toThrow(
-    "Use built-in helpers only: $, ws, radix, animation, css, token, expression, Variable, Parameter, ResourceValue, ActionValue, AssetValue, PageValue, and PlaceholderValue. Box is not defined"
+    "Use component namespaces $, ws, radix, and animation and value helpers css, token, expression, Variable, Parameter, ResourceValue, ActionValue, AssetValue, PageValue, and PlaceholderValue. Box is not defined"
+  );
+});
+
+test("explains that animation is a component namespace", async () => {
+  await expect(
+    parseWebstudioJsxFragment(
+      '<$.Box data-animation={animation("pulse", css`opacity: 1;`)} />'
+    )
+  ).rejects.toThrow(
+    "animation is a component namespace such as <animation.AnimateChildren>; it is not a callable CSS keyframes helper."
   );
 });
 

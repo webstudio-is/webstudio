@@ -58,3 +58,31 @@ export const fontMetaUpdate = z.union([
 ]);
 
 export type FontMeta = z.infer<typeof fontMeta>;
+
+export const mergeFontMeta = (
+  current: FontMeta,
+  override: unknown
+): FontMeta | undefined => {
+  const result = fontMetaUpdate.safeParse(override);
+  if (result.success === false) {
+    return;
+  }
+  const { family } = result.data;
+  if ("variationAxes" in current) {
+    const variationAxes =
+      "variationAxes" in result.data ? result.data.variationAxes : undefined;
+    return {
+      ...current,
+      ...(family === undefined ? {} : { family }),
+      ...(variationAxes === undefined ? {} : { variationAxes }),
+    };
+  }
+  const style = "style" in result.data ? result.data.style : undefined;
+  const weight = "weight" in result.data ? result.data.weight : undefined;
+  return {
+    ...current,
+    ...(family === undefined ? {} : { family }),
+    ...(style === undefined ? {} : { style }),
+    ...(weight === undefined ? {} : { weight }),
+  };
+};

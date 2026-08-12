@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { assetFolderId } from "./asset-folders";
-import { fontFormat, fontMeta, fontMetaUpdate } from "@webstudio-is/fonts";
+import {
+  fontFormat,
+  fontMeta,
+  fontMetaUpdate,
+  mergeFontMeta,
+} from "@webstudio-is/fonts";
 
 const assetId = z.string();
 
@@ -59,16 +64,22 @@ export const asset = z.union([fontAsset, imageAsset, fileAsset]);
 export type Asset = z.infer<typeof asset>;
 
 const assetMetaSchemas = {
-  font: fontMeta,
   image: imageMeta,
   file: z.object({}),
-} as const satisfies Record<AssetType, z.ZodType>;
+} as const satisfies Record<Exclude<AssetType, "font">, z.ZodType>;
 
 export const mergeAssetMeta = (
   type: AssetType,
   current: object,
   override: Record<string, unknown>
 ): Asset["meta"] | undefined => {
+  if (type === "font") {
+    const result = fontMeta.safeParse(current);
+    if (result.success === false) {
+      return;
+    }
+    return mergeFontMeta(result.data, override);
+  }
   const merged = { ...current, ...override };
   const result = assetMetaSchemas[type].safeParse(merged);
   if (

@@ -633,10 +633,9 @@ const jsonCompatibleValueSchema = {
     { type: "number" },
     { type: "boolean" },
     { type: "null" },
-    { type: "array" },
+    { type: "array", items: {} },
     { type: "object" },
   ],
-  description: "JSON-compatible value.",
 } as const satisfies InputJsonSchema;
 
 const constrainUnconstrainedInputSchemaValue = (
@@ -668,7 +667,9 @@ const constrainUnconstrainedInputSchemas = <Schema extends InputJsonSchema>(
       schema.additionalProperties
     );
   }
-  if (schema.items !== undefined) {
+  if (schema.type === "array" && schema.items === undefined) {
+    result.items = {};
+  } else if (schema.items !== undefined) {
     result.items = constrainUnconstrainedInputSchemaValue(schema.items);
   }
   for (const key of ["allOf", "anyOf", "oneOf", "prefixItems"] as const) {
@@ -699,6 +700,11 @@ const getCompactSchemaProperty = (schema: InputJsonSchema): InputJsonSchema => {
         : `${schema.description.slice(0, 239)}…`;
   const compact = {
     ...(schema.type === undefined ? {} : { type: schema.type }),
+    ...(schema.type === "array"
+      ? {
+          items: {},
+        }
+      : {}),
     ...(description === undefined ? {} : { description }),
     ...(schema.enum === undefined ? {} : { enum: schema.enum }),
   };
@@ -1027,6 +1033,16 @@ const normalizeOperationInputAliases = ({
   command: string;
   input: unknown;
 }) => {
+  if (
+    command === "create-resource" &&
+    isPlainRecord(input) &&
+    Object.keys(input).length === 1 &&
+    isPlainRecord(input.resource) &&
+    isPlainRecord(input.resource.resource) &&
+    typeof input.resource.scopeInstanceId === "string"
+  ) {
+    return input.resource;
+  }
   if (command === "create-page" && isPlainRecord(input)) {
     const normalizedInput: Record<string, unknown> =
       "description" in input
@@ -5789,13 +5805,26 @@ const metaGoalGuides = [
       "Keep all four auth states in the editable component structure even when bindings select only one at runtime. Give each state a visible label using the exact terms signed-out, loading, signed-in, and failed-auth so authors can inspect and verify every state. Use page basic auth only when the user asks for Webstudio's fixed login/password gate; it is not Supabase or Firebase authentication.",
       "Use focused resources and variables for public client configuration and session-shaped data. Keep authorization enforcement and privileged provider calls server-side; a hidden Builder element is not an authorization boundary.",
       "When fixture/session data must feed a resource, create the page and scoped fixture variables there. Use create-page's returned rootInstanceId directly instead of listing instances to rediscover it. Call list-variables after creation only when a resource expression actually needs the returned encoded name. Do not repeat list-variables when the fixture variable is not referenced, as in the expression-free state gallery, and do not guess or reference variables before they exist.",
-      'Create resources only after their scope and referenced variables exist. When reusing an existing server-mediated auth convention, copy its fixed request URL exactly into resource.url; resource.url is the HTTP request target, not a provider call or session-state expression. For the discovered /api/auth/session convention, use create-resource with resource:{name:"Account session via server",method:"get",url:"/api/auth/session",headers:[],searchParams:[]}, the new page root as scopeInstanceId, and a descriptive dataSourceName. Use literal wrappers only for fixed header, search-parameter, and body text.',
+      "Create resources only after their scope and referenced variables exist. When reusing the discovered /api/auth/session convention, pass recipe.createResourceInput directly as the entire create-resource tool input, unchanged except for its account root id placeholder. Do not wrap it in another resource object. Keep every request field nested under resource. resource.url is the HTTP request target, not a provider call or session-state expression. Use literal wrappers only for fixed header, search-parameter, and body text.",
       "Keep the server-mediated session resource as provider-convention evidence, but use only non-secret scoped fixture variables to drive local auth-state visibility. Do not bind that server-only resource into local preview rendering: its endpoint is intentionally absent locally and can recurse through the generated route.",
       'Insert signed-out, loading, signed-in, and failed-auth panels together as one expression-free semantic fragment that acts as a state gallery. Keep all four panels visible together for local visual verification; do not add conditional visibility bindings or mutate fixture state solely to capture more screenshots. Use that exact fragment verbatim without adding styles, props, expressions, components, or changing its nesting: <ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-out</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Loading</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-in</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Failed-auth</ws.element></ws.element></ws.element>.',
       "Do not call selector-based structural tools such as wrap-instance unless a focused list-instances result supplied the complete non-empty selector from the target through its page root. Prefer direct style, prop, or binding corrections when the structure is already sound.",
       'Insert the complete account fragment with insert-fragment-verified and {"pagePath":"/account"} so persisted bindings are checked in the same call. Resolve every returned validity, scope, and reference finding before previewing. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /account. Updating only a fixture variable\'s literal state does not require another binding verification.',
       'Call verify-page-responsive once with path "/account" and the required desktop and mobile viewports; it starts or refreshes the session preview, captures both viewports in one browser session, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately. Do not run discovery, inspect-instance, mutate, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
     ],
+    recipe: {
+      createResourceInput: {
+        scopeInstanceId: "<account-root-id>",
+        dataSourceName: "accountSession",
+        resource: {
+          name: "Account session via server",
+          method: "get",
+          url: "/api/auth/session",
+          headers: [],
+          searchParams: [],
+        },
+      },
+    },
   },
   {
     pattern:

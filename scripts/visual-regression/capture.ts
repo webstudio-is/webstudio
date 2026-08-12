@@ -60,7 +60,7 @@ export const getStoryCaptureOptions = ({
   })}).catch(window.showVisualError)`,
   waitForSelector: "#visual-ready, #visual-error",
   failForSelector: "#visual-error",
-  waitForTimeout: 0,
+  waitForTimeout: visualRegressionConfig.capture.settleTime,
   finalizeExpression: "window.finishVisualStory()",
   timeout: visualRegressionConfig.capture.timeout,
   format: "png",

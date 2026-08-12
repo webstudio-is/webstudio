@@ -3,7 +3,11 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { captureStoryPairs, getInitialCaptureTarget } from "./capture";
+import {
+  captureStoryPairs,
+  getInitialCaptureTarget,
+  getStoryCaptureOptions,
+} from "./capture";
 import type { VisualStoryEntry } from "./manifest";
 
 const createEntry = (id: string): VisualStoryEntry => ({
@@ -23,6 +27,18 @@ test("does not initialize a browser for cached removed stories", () => {
       hasCachedBaseline: true,
     }),
     undefined
+  );
+});
+
+test("waits for asynchronous canvas paints before capturing", () => {
+  assert.equal(
+    getStoryCaptureOptions({
+      browserPath: "/browser",
+      entry: createEntry("canvas"),
+      output: "/canvas.png",
+      port: 6101,
+    }).waitForTimeout,
+    250
   );
 });
 

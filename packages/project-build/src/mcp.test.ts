@@ -143,6 +143,31 @@ const getUnresolvedLocalSchemaRefs = (
   ];
 };
 
+const getArraySchemasWithoutItems = (
+  schema: unknown,
+  path: readonly string[] = []
+): string[] => {
+  if (schema === null || typeof schema !== "object") {
+    return [];
+  }
+  if (Array.isArray(schema)) {
+    return schema.flatMap((value, index) =>
+      getArraySchemasWithoutItems(value, [...path, String(index)])
+    );
+  }
+  const object = schema as Record<string, unknown>;
+  const current =
+    object.type === "array" && object.items === undefined
+      ? [path.join(".")]
+      : [];
+  return [
+    ...current,
+    ...Object.entries(object).flatMap(([name, value]) =>
+      getArraySchemasWithoutItems(value, [...path, name])
+    ),
+  ];
+};
+
 const optionalArrayFieldInputSchema = (field: string) =>
   getTestInputSchema(
     z.object({
@@ -896,6 +921,10 @@ describe("project session mcp adapter", () => {
         getUnresolvedLocalSchemaRefs(tool.inputSchema),
         `MCP input schema has unresolved local references for ${tool.name}`
       ).toEqual([]);
+      expect(
+        getArraySchemasWithoutItems(tool.inputSchema),
+        `MCP input schema has array parameters without items for ${tool.name}`
+      ).toEqual([]);
       if (tool.outputSchema !== undefined) {
         expect(
           tool.outputSchema.type,
@@ -915,11 +944,6 @@ describe("project session mcp adapter", () => {
     expect(JSON.stringify(imageDescriptionsTool?.inputSchema)).toContain(
       "rendered image in context"
     );
-    expect(
-      JSON.stringify(
-        tools.find(({ name }) => name === "update-styles")?.inputSchema
-      )
-    ).toContain("JSON-compatible value.");
     expect(
       getSuccessfulOutputDataSchema(
         tools.find((tool) => tool.name === "refresh")?.outputSchema
@@ -1131,6 +1155,12 @@ describe("project session mcp adapter", () => {
         properties: expect.objectContaining({
           instanceId: { type: "string" },
           property: { type: "string" },
+          value: expect.objectContaining({
+            anyOf: expect.arrayContaining([
+              { type: "string" },
+              { type: "array", items: {} },
+            ]),
+          }),
         }),
       }),
     });
@@ -1234,6 +1264,66 @@ describe("project session mcp adapter", () => {
     expect(JSON.stringify(details.structuredContent.data)).toContain(
       description
     );
+  });
+
+  test("keeps array items valid when deferring an oversized schema", () => {
+    const operation = publicOperation({
+      command: "large-array-input",
+      id: "test.largeArrayInput",
+      description: "Accept a large structured array",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          updates: {
+            type: "array",
+            items: {
+              type: "object",
+              description: "x".repeat(25_000),
+            },
+          },
+        },
+        required: ["updates"],
+      },
+    });
+
+    const [tool] = listProjectSessionMcpTools([operation]);
+    const updates = tool?.inputSchema.properties?.updates as
+      | Record<string, unknown>
+      | undefined;
+
+    expect(JSON.stringify(tool?.inputSchema).length).toBeLessThan(1_000);
+    expect(updates).toMatchObject({
+      type: "array",
+      items: {},
+    });
+  });
+
+  test("adds items to tuple input schemas", () => {
+    const operation = publicOperation({
+      command: "tuple-input",
+      id: "test.tupleInput",
+      description: "Accept a structured tuple",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          coordinates: {
+            type: "array",
+            prefixItems: [{ type: "number" }, { type: "number" }],
+          },
+        },
+        required: ["coordinates"],
+      },
+    });
+
+    const [tool] = listProjectSessionMcpTools([operation]);
+
+    expect(tool?.inputSchema.properties?.coordinates).toMatchObject({
+      type: "array",
+      items: {},
+      prefixItems: [{ type: "number" }, { type: "number" }],
+    });
   });
 
   test("downloads assets through the MCP host", async () => {
@@ -2793,6 +2883,57 @@ describe("project session mcp adapter", () => {
           },
         },
       })
+    );
+  });
+
+  test("unwraps a redundantly nested create-resource input", async () => {
+    const executeOperation = createExecuteOperation();
+    const createResourceOperation = publicOperation({
+      command: "create-resource",
+      id: "resources.create",
+      method: "mutation",
+      permit: "edit",
+      description: "Create resource",
+      inputSchema: getTestInputSchema(
+        z.object({
+          scopeInstanceId: z.string(),
+          dataSourceName: z.string(),
+          resource: z.object({
+            name: z.string(),
+            method: z.enum(["get", "post"]),
+            url: z.string(),
+            headers: z.array(z.unknown()),
+            searchParams: z.array(z.unknown()).optional(),
+          }),
+        })
+      ),
+      writeNamespaces: ["resources"],
+      invalidatesNamespaces: ["resources"],
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: [createResourceOperation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const input = {
+      scopeInstanceId: "root",
+      dataSourceName: "accountSession",
+      resource: {
+        name: "Account session via server",
+        method: "get",
+        url: "/api/auth/session",
+        headers: [],
+        searchParams: [],
+      },
+    };
+
+    await adapter.callTool({
+      name: "create-resource",
+      input: { resource: input },
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ command: "create-resource", input })
     );
   });
 
@@ -4700,6 +4841,19 @@ describe("project session mcp adapter", () => {
     );
     expect(authenticatedPageGuide.structuredContent.data).toEqual(
       expect.objectContaining({
+        recipe: {
+          createResourceInput: {
+            scopeInstanceId: "<account-root-id>",
+            dataSourceName: "accountSession",
+            resource: {
+              name: "Account session via server",
+              method: "get",
+              url: "/api/auth/session",
+              headers: [],
+              searchParams: [],
+            },
+          },
+        },
         workflow: expect.arrayContaining([
           expect.stringContaining("existing auth resources"),
           expect.stringContaining("Call inspect-auth-context exactly once"),
@@ -4718,10 +4872,8 @@ describe("project session mcp adapter", () => {
           expect.stringContaining(
             "Do not repeat list-variables when the fixture variable is not referenced"
           ),
-          expect.stringContaining("copy its fixed request URL exactly"),
-          expect.stringContaining(
-            'url:"/api/auth/session",headers:[],searchParams:[]'
-          ),
+          expect.stringContaining("recipe.createResourceInput"),
+          expect.stringContaining("entire create-resource tool input"),
           expect.stringContaining(
             "Do not call selector-based structural tools"
           ),
