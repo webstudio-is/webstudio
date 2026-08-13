@@ -1291,12 +1291,31 @@ export class ProjectSession {
         input
       );
     }
-    const commit = await this.#options.transport.commitPatch({
+    const commitInput = {
       projectId: snapshot.projectId,
       buildId: snapshot.buildId,
       baseVersion: snapshot.version,
       transactions: [transaction],
-    });
+    };
+    let commit: { version: number };
+    let commitDiagnostics = diagnostics;
+    try {
+      commit = await this.#options.transport.commitPatch(commitInput);
+    } catch (error) {
+      if (isVersionConflictError(error) === false) {
+        throw error;
+      }
+      commit = await this.#options.transport.commitPatch(commitInput);
+      commitDiagnostics = [
+        ...diagnostics,
+        {
+          level: "info",
+          code: "COMMIT_RETRY_CONFIRMED",
+          message:
+            "The transaction was confirmed committed after retrying the same transaction ID.",
+        },
+      ];
+    }
     const applied = applyBuilderPatchTransactions(snapshot.state, [
       transaction,
     ]);
@@ -1328,7 +1347,7 @@ export class ProjectSession {
         contract.writeNamespaces,
         mutation.invalidatesNamespaces
       ),
-      diagnostics,
+      diagnostics: commitDiagnostics,
     });
     return this.createEnvelope({
       source: "local",

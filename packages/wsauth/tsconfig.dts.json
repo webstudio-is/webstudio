@@ -1,10 +1,9 @@
 {
-  "extends": "@webstudio-is/tsconfig/base.json",
+  "extends": "./tsconfig.json",
   "include": ["src"],
+  "exclude": ["**/*.test.ts"],
   "compilerOptions": {
-    "emitDeclarationOnly": true,
-    "declaration": true,
-    "outDir": "lib/types",
+    "declarationDir": "lib/types",
     "rootDir": "./src"
   }
 }

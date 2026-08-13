@@ -1220,7 +1220,7 @@ describe("project session", () => {
     transport.commitPatch = async (input) => {
       attempts += 1;
       transport.commits.push([...input.transactions]);
-      if (attempts === 1) {
+      if (attempts <= 2) {
         throw Object.assign(new Error("Build version mismatch"), {
           code: "CONFLICT",
         });
@@ -1245,7 +1245,40 @@ describe("project session", () => {
     expect(transport.loadedNamespaces).toEqual([
       ["pages", "instances", "dataSources"],
     ]);
+    expect(transport.commits).toHaveLength(3);
+  });
+
+  test("confirms an ambiguous commit with the same transaction", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport();
+    let committedTransactionId: string | undefined;
+    transport.commitPatch = async (input) => {
+      transport.commits.push([...input.transactions]);
+      const transactionId = input.transactions[0]?.id;
+      if (transactionId === committedTransactionId) {
+        return { version: input.baseVersion + 1 };
+      }
+      committedTransactionId = transactionId;
+      throw Object.assign(new Error("Build version mismatch"), {
+        code: "CONFLICT",
+      });
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: "Home updated" },
+    });
+
+    expect(result.state.committed).toBe(true);
+    expect(result.version).toBe(2);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: "COMMIT_RETRY_CONFIRMED" }),
+    ]);
+    expect(transport.loadedNamespaces).toEqual([]);
     expect(transport.commits).toHaveLength(2);
+    expect(transport.commits[0]?.[0]?.id).toBe(transport.commits[1]?.[0]?.id);
   });
 
   test("checks and caches permissions for local runtime mutations", async () => {

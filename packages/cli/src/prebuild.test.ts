@@ -70,7 +70,7 @@ const elementComponent = "ws:element";
 const slowPrebuildTestTimeout = 15_000;
 
 const runGeneratedCommand = async (
-  command: "react-router" | "vite" | "vike",
+  command: "react-router" | "tsc" | "vite" | "vike",
   args: string[]
 ) => {
   const env = { ...process.env };
@@ -1166,6 +1166,51 @@ describe("prebuild", () => {
       readFile("app/__generated__/$resources.sitemap.xml.ts", "utf8")
     ).resolves.not.toContain('"path": "/draft"');
   });
+
+  test(
+    "types an empty generated sitemap",
+    async () => {
+      await writeSiteData(
+        createSiteData({
+          pages: [
+            {
+              id: "draft",
+              name: "Draft",
+              title: "Draft",
+              path: "/draft",
+              rootInstanceId: "root",
+              meta: {},
+              isDraft: true,
+            },
+          ],
+        })
+      );
+
+      await prebuild({
+        assets: false,
+        template: ["react-router"],
+      });
+      await writeFile(
+        "sitemap-typecheck.ts",
+        `import { sitemap } from "./app/__generated__/$resources.sitemap.xml";
+sitemap.map((page) => page.path);`
+      );
+      await runGeneratedCommand("tsc", [
+        "--ignoreConfig",
+        "--noEmit",
+        "--strict",
+        "--skipLibCheck",
+        "--moduleResolution",
+        "bundler",
+        "--module",
+        "esnext",
+        "--target",
+        "es2022",
+        "sitemap-typecheck.ts",
+      ]);
+    },
+    slowPrebuildTestTimeout
+  );
 
   test("generates draft routes for local verification without publishing them", async () => {
     await writeSiteData(
