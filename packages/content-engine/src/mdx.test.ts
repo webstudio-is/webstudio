@@ -5,7 +5,22 @@ import {
   discoverMdxAssetReferences,
   MdxDocumentError,
   parseMdxDocument,
+  serializeMdxDocument,
 } from "./mdx";
+
+const omitSourceRanges = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(omitSourceRanges);
+  }
+  if (typeof value !== "object" || value === null) {
+    return value;
+  }
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([key, item]) =>
+      key === "sourceRange" ? [] : [[key, omitSourceRanges(item)]]
+    )
+  );
+};
 
 describe("parseMdxDocument", () => {
   test("parses Markdown-only input identically through Markdown and MDX", () => {
@@ -431,6 +446,86 @@ cover: ./cover.png?size=2
       ],
     });
     expect(document.frontmatter.properties.cover).toBe("./cover.png?size=2");
+  });
+
+  test("serializes supported documents deterministically with semantic round trips", async () => {
+    const document = await parseMdxDocument({
+      source: `---
+title: Example
+author:
+  $ref: ./author.json
+---
+# Hello **world**
+
+- [x] Ready
+
+| Name | State |
+| --- | --- |
+| Ada | ~~Done~~ |
+
+<ws.element ws:tag="section" data-kind="hero">
+  <ws.element ws:name="Hero Card" tone="quiet">
+    ## Nested title
+  </ws.element>
+</ws.element>
+
+Paragraph with <ws.element ws:tag="span">inline</ws.element> content.
+
+{/* keep this note */}
+`,
+    });
+
+    const serialized = serializeMdxDocument(document);
+    expect(serializeMdxDocument(document)).toBe(serialized);
+    expect(serialized).toContain("$ref: ./author.json");
+    expect(serialized.indexOf("author:")).toBeLessThan(
+      serialized.indexOf("title:")
+    );
+    expect(serialized).toContain('<ws.element ws:tag="section"');
+    expect(serialized).toContain('<ws.element ws:name="Hero Card"');
+    expect(serialized).toContain("{/* keep this note */}");
+
+    const reparsed = await parseMdxDocument({ source: serialized });
+    expect(omitSourceRanges(reparsed)).toEqual(omitSourceRanges(document));
+  });
+
+  test("preserves elements that Markdown cannot represent losslessly", async () => {
+    const document = await parseMdxDocument({
+      source: `<ws.element ws:tag="input" type="checkbox" disabled />
+
+<ws.element ws:tag="code" class="custom">
+  <ws.element ws:tag="strong">Nested</ws.element>
+</ws.element>
+
+<ws.element ws:tag="ul">
+  <ws.element ws:tag="div">Not a list item</ws.element>
+</ws.element>
+
+<ws.element ws:tag="p" />
+
+<ws.element ws:tag="table" />
+`,
+    });
+
+    const serialized = serializeMdxDocument(document);
+    const reparsed = await parseMdxDocument({ source: serialized });
+    expect(omitSourceRanges(reparsed)).toEqual(omitSourceRanges(document));
+  });
+
+  test.each([
+    ["empty content", ""],
+    ["ordered task lists", "1. [x] Done\n2. [ ] Pending\n"],
+    ["loose task lists", "- [x] Done\n\n- [ ] Pending\n"],
+    ["nested lists", "- Parent\n  1. Child\n"],
+    ["ordered list starts", "7. Seven\n8. Eight\n"],
+    ["fenced code without a language", "```\nvalue\n```\n"],
+  ])("round trips %s", async (_name, source) => {
+    const document = await parseMdxDocument({ source });
+    const reparsed = await parseMdxDocument({
+      source: serializeMdxDocument(document),
+    });
+
+    expect(omitSourceRanges(reparsed)).toEqual(omitSourceRanges(document));
   });
 
   test.each([

@@ -673,3 +673,5 @@ export const parseMdxDocument = async ({
     children: mapAuthoredChildren(root),
   };
 };
+
+export { serializeMdxDocument } from "./mdx-serialization";
