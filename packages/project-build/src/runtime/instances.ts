@@ -1,6 +1,7 @@
 import {
   blockTemplateComponent,
   elementComponent,
+  findParentInstanceReference,
   findTreeInstanceIds,
   getHtmlTagsFromProps,
   getStyleDeclKey,
@@ -74,7 +75,7 @@ import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk/standard
 import equal from "fast-deep-equal";
 import { z } from "zod";
 import {
-  assignUniqueBlockTemplateNameMutable,
+  assignUniqueBlockTemplateNamesMutable,
   findBlockTemplateNameCollision,
 } from "./block";
 
@@ -687,18 +688,6 @@ export const getSameParentAdjustedInsertIndex = ({
   requestedIndex: number;
 }) => (requestedIndex > currentIndex ? requestedIndex - 1 : requestedIndex);
 
-export const findParentInstanceReference = (
-  instances: Instances,
-  instanceId: Instance["id"]
-) => {
-  for (const instance of instances.values()) {
-    const childIndex = findChildReferenceIndex(instance.children, instanceId);
-    if (childIndex !== -1) {
-      return { instance, childIndex };
-    }
-  }
-};
-
 export const getInstanceDepths = (
   instances: Pick<Instances, "get" | "values">,
   rootInstanceIds?: Instance["id"][]
@@ -1090,8 +1079,8 @@ export const createInstanceMovePatches = ({
         : requestedInsertIndex;
     if (parent.instance.id !== nextParent.id) {
       const previousLabel = instance.label;
-      assignUniqueBlockTemplateNameMutable({
-        instanceId: instance.id,
+      assignUniqueBlockTemplateNamesMutable({
+        instanceIds: [instance.id],
         parent: nextParent,
         instances: mutableInstances,
       });
@@ -1811,8 +1800,8 @@ const moveInstanceToParentMutable = (
   const newParent = data.instances.get(newParentId);
   const newChild = createInstanceChild(rootInstanceId);
   if (newParent !== undefined) {
-    assignUniqueBlockTemplateNameMutable({
-      instanceId: rootInstanceId,
+    assignUniqueBlockTemplateNamesMutable({
+      instanceIds: [rootInstanceId],
       parent: newParent,
       instances: data.instances,
     });
@@ -1998,10 +1987,9 @@ export const wrapInstance = (
       selectedItem.instance.id,
       wrapperInstanceId
     );
-    assignUniqueBlockTemplateNameMutable({
-      instanceId: wrapperInstanceId,
+    assignUniqueBlockTemplateNamesMutable({
+      instanceIds: [wrapperInstanceId],
       parent: parentInstance,
-      replacedInstanceId: wrapperInstanceId,
       instances: nextInstances,
     });
     const wrapperSelector = [wrapperInstanceId, ...parentItem.instanceSelector];
@@ -2077,10 +2065,10 @@ export const wrapInstance = (
     createInstanceChild(wrapperInstanceId);
   nextInstances.set(parentInstanceId, nextParentInstance);
   nextInstances.set(wrapperInstanceId, wrapperInstance);
-  assignUniqueBlockTemplateNameMutable({
-    instanceId: wrapperInstanceId,
+  assignUniqueBlockTemplateNamesMutable({
+    instanceIds: [wrapperInstanceId],
     parent: parentInstance,
-    replacedInstanceId: instanceId,
+    replacedInstanceIds: [instanceId],
     instances: nextInstances,
   });
   const wrapperSelector = [
@@ -2249,10 +2237,10 @@ const unwrapInstanceMutable = ({
   if (grandparentInstance === undefined) {
     return { success: false, error: "Grandparent instance not found" };
   }
-  assignUniqueBlockTemplateNameMutable({
-    instanceId: selectedInstance.id,
+  assignUniqueBlockTemplateNamesMutable({
+    instanceIds: [selectedInstance.id],
     parent: grandparentInstance,
-    replacedInstanceId: parentInstance.id,
+    replacedInstanceIds: [parentInstance.id],
     instances,
   });
 
@@ -2803,10 +2791,10 @@ export const unwrapInstance = (
   if (grandparentInstance.component === blockTemplateComponent) {
     nextSelectedInstance = { ...selectedInstance };
     nextInstances.set(instanceId, nextSelectedInstance);
-    assignUniqueBlockTemplateNameMutable({
-      instanceId,
+    assignUniqueBlockTemplateNamesMutable({
+      instanceIds: [instanceId],
       parent: grandparentInstance,
-      replacedInstanceId: parentInstanceId,
+      replacedInstanceIds: [parentInstanceId],
       instances: nextInstances,
     });
   }

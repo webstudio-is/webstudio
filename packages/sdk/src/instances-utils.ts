@@ -50,6 +50,20 @@ export const findTreeInstanceIdsExcludingSlotDescendants = (
   return ids;
 };
 
+export const findParentInstanceReference = (
+  instances: Instances,
+  instanceId: Instance["id"]
+) => {
+  for (const instance of instances.values()) {
+    const childIndex = instance.children.findIndex(
+      (child) => child.type === "id" && child.value === instanceId
+    );
+    if (childIndex !== -1) {
+      return { instance, childIndex };
+    }
+  }
+};
+
 export const parseComponentName = (componentName: string) => {
   const parts = componentName.split(":");
   let namespace: undefined | string;
@@ -69,10 +83,12 @@ export const parseComponentName = (componentName: string) => {
  */
 export const getInstanceName = ({
   instance,
-  componentLabel,
+  metas,
+  fallbackName,
 }: {
   instance: Pick<Instance, "component" | "label" | "tag">;
-  componentLabel?: string;
+  metas?: ReadonlyMap<Instance["component"], Pick<WsComponentMeta, "label">>;
+  fallbackName?: string;
 }) => {
   if (instance.label) {
     return instance.label;
@@ -80,7 +96,11 @@ export const getInstanceName = ({
   if (instance.component === elementComponent && instance.tag) {
     return `<${instance.tag}>`;
   }
-  return componentLabel || parseComponentName(instance.component)[1];
+  return (
+    metas?.get(instance.component)?.label ||
+    fallbackName ||
+    parseComponentName(instance.component)[1]
+  );
 };
 
 export const getHtmlTagsFromProps = (props: Props) => {

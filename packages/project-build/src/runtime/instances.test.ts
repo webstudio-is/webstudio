@@ -33,7 +33,6 @@ import {
   createTextContentUpdatePayload,
   findChildReferenceIndex,
   findLocalStyleSourcesWithinInstances,
-  findParentInstanceReference,
   fillGrid,
   findTextContentChild,
   getInstanceDepths,
@@ -2236,25 +2235,6 @@ test("adjusts same-parent insert index after removal", () => {
       requestedIndex: 1,
     })
   ).toBe(1);
-});
-
-test("finds parent instance reference", () => {
-  const instances = new Map([
-    [
-      "parent",
-      createInstance("parent", elementComponent, [
-        { type: "text", value: "before" },
-        { type: "id", value: "child" },
-      ]),
-    ],
-    ["child", createInstance("child", elementComponent)],
-  ]);
-
-  expect(findParentInstanceReference(instances, "child")).toEqual({
-    instance: instances.get("parent"),
-    childIndex: 1,
-  });
-  expect(findParentInstanceReference(instances, "missing")).toBeUndefined();
 });
 
 test("creates instance move patches", () => {

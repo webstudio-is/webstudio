@@ -1,67 +1,15 @@
 import {
   blockComponent,
   blockTemplateComponent,
+  findParentInstanceReference,
   getInstanceName,
-  type ContentBlockExternalContentIdentity,
   type Instance,
   type Instances,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import type { InstanceSelector } from "./tree";
 
-const findDirectParent = ({
-  childInstanceId,
-  component,
-  instances,
-}: {
-  childInstanceId: Instance["id"];
-  component: Instance["component"];
-  instances: Instances;
-}) =>
-  Array.from(instances.values()).find(
-    (instance) =>
-      instance.component === component &&
-      instance.children.some(
-        (child) => child.type === "id" && child.value === childInstanceId
-      )
-  );
-
-export const findBlockTemplateOwner = ({
-  templateInstanceId,
-  instances,
-}: {
-  templateInstanceId: Instance["id"];
-  instances: Instances;
-}) => {
-  const templateContainer = findDirectParent({
-    childInstanceId: templateInstanceId,
-    component: blockTemplateComponent,
-    instances,
-  });
-  if (templateContainer === undefined) {
-    return;
-  }
-  const blockInstance = findDirectParent({
-    childInstanceId: templateContainer.id,
-    component: blockComponent,
-    instances,
-  });
-  if (blockInstance === undefined) {
-    return;
-  }
-  return {
-    blockInstanceId: blockInstance.id,
-    templateContainerId: templateContainer.id,
-  };
-};
-
-const getBlockTemplateName = (instance: Instance) =>
-  getInstanceName({
-    instance,
-    componentLabel: componentMetas.get(instance.component)?.label,
-  });
-
-export const allocateUniqueBlockTemplateName = ({
+const allocateUniqueName = ({
   name,
   existingNames,
 }: {
@@ -86,31 +34,36 @@ export const allocateUniqueBlockTemplateName = ({
 };
 
 export const assignUniqueBlockTemplateNamesMutable = ({
-  newChildren,
-  existingChildren,
+  instanceIds,
+  parent,
+  replacedInstanceIds = [],
   instances,
 }: {
-  newChildren: Instance["children"];
-  existingChildren: Instance["children"];
+  instanceIds: readonly Instance["id"][];
+  parent: Instance;
+  replacedInstanceIds?: readonly Instance["id"][];
   instances: Instances;
 }) => {
+  if (parent.component !== blockTemplateComponent) {
+    return;
+  }
+  const ignoredIds = new Set([...instanceIds, ...replacedInstanceIds]);
   const existingNames = new Set<string>();
-  for (const child of existingChildren) {
+  for (const child of parent.children) {
     const instance =
       child.type === "id" ? instances.get(child.value) : undefined;
-    if (instance !== undefined) {
-      existingNames.add(getBlockTemplateName(instance));
+    if (instance !== undefined && ignoredIds.has(instance.id) === false) {
+      existingNames.add(getInstanceName({ instance, metas: componentMetas }));
     }
   }
 
-  for (const child of newChildren) {
-    const instance =
-      child.type === "id" ? instances.get(child.value) : undefined;
+  for (const instanceId of instanceIds) {
+    const instance = instances.get(instanceId);
     if (instance === undefined) {
       continue;
     }
-    const currentName = getBlockTemplateName(instance);
-    const uniqueName = allocateUniqueBlockTemplateName({
+    const currentName = getInstanceName({ instance, metas: componentMetas });
+    const uniqueName = allocateUniqueName({
       name: currentName,
       existingNames,
     });
@@ -119,29 +72,6 @@ export const assignUniqueBlockTemplateNamesMutable = ({
     }
     existingNames.add(uniqueName);
   }
-};
-
-export const assignUniqueBlockTemplateNameMutable = ({
-  instanceId,
-  parent,
-  replacedInstanceId,
-  instances,
-}: {
-  instanceId: Instance["id"];
-  parent: Instance;
-  replacedInstanceId?: Instance["id"];
-  instances: Instances;
-}) => {
-  if (parent.component !== blockTemplateComponent) {
-    return;
-  }
-  assignUniqueBlockTemplateNamesMutable({
-    newChildren: [{ type: "id", value: instanceId }],
-    existingChildren: parent.children.filter(
-      (child) => child.type !== "id" || child.value !== replacedInstanceId
-    ),
-    instances,
-  });
 };
 
 export const findBlockTemplateNameCollision = ({
@@ -153,56 +83,29 @@ export const findBlockTemplateNameCollision = ({
   nextInstance: Instance;
   instances: Instances;
 }) => {
-  const name = getBlockTemplateName(nextInstance);
-  if (name === getBlockTemplateName(instance)) {
+  const name = getInstanceName({
+    instance: nextInstance,
+    metas: componentMetas,
+  });
+  if (name === getInstanceName({ instance, metas: componentMetas })) {
     return;
   }
-  const templateContainer = findDirectParent({
-    childInstanceId: instance.id,
-    component: blockTemplateComponent,
-    instances,
-  });
-  for (const child of templateContainer?.children ?? []) {
+  const parent = findParentInstanceReference(instances, instance.id)?.instance;
+  if (parent?.component !== blockTemplateComponent) {
+    return;
+  }
+  for (const child of parent.children) {
     if (child.type !== "id" || child.value === instance.id) {
       continue;
     }
     const sibling = instances.get(child.value);
-    if (sibling !== undefined && getBlockTemplateName(sibling) === name) {
+    if (
+      sibling !== undefined &&
+      getInstanceName({ instance: sibling, metas: componentMetas }) === name
+    ) {
       return { instance: sibling, name };
     }
   }
-};
-
-export const getBlockTemplateNameChangeImpact = ({
-  templateInstanceId,
-  nextLabel,
-  externalContent,
-  instances,
-}: {
-  templateInstanceId: Instance["id"];
-  nextLabel: string;
-  externalContent?: ContentBlockExternalContentIdentity;
-  instances: Instances;
-}) => {
-  const instance = instances.get(templateInstanceId);
-  const owner = findBlockTemplateOwner({ templateInstanceId, instances });
-  if (instance === undefined || owner === undefined) {
-    return;
-  }
-  const previousName = getBlockTemplateName(instance);
-  const nextName = getBlockTemplateName({
-    ...instance,
-    label: nextLabel.trim(),
-  });
-  return {
-    ...owner,
-    previousName,
-    nextName,
-    externalContent,
-    requiresConfirmation:
-      externalContent?.blockInstanceId === owner.blockInstanceId &&
-      previousName !== nextName,
-  };
 };
 
 export const findBlockChildSelector = ({

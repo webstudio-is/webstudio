@@ -1,6 +1,5 @@
 import equal from "fast-deep-equal";
 import {
-  blockTemplateComponent,
   elementComponent,
   instanceComponent,
   ROOT_INSTANCE_ID,
@@ -780,13 +779,19 @@ const createInsertFragmentMutation = <
       return child;
     }
   );
-  if (parent.component === blockTemplateComponent) {
-    assignUniqueBlockTemplateNamesMutable({
-      newChildren: insertedChildren,
-      existingChildren: mode === "replace" ? [] : parentChildren,
-      instances: nextData.instances,
-    });
-  }
+  assignUniqueBlockTemplateNamesMutable({
+    instanceIds: insertedChildren.flatMap((child) =>
+      child.type === "id" ? [child.value] : []
+    ),
+    parent,
+    replacedInstanceIds:
+      mode === "replace"
+        ? parentChildren.flatMap((child) =>
+            child.type === "id" ? [child.value] : []
+          )
+        : [],
+    instances: nextData.instances,
+  });
 
   if (validateContentModel) {
     const validationInstances = new Map(nextData.instances);

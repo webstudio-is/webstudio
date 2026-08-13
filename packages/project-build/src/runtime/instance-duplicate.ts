@@ -12,7 +12,7 @@ import { isAutoGridPlacement, resetGridChildPlacement } from "./style-utils";
 import { createRuntimeMutation } from "./mutation";
 import { getSlotFragmentDropTargetMutable } from "./slot";
 import { z } from "zod";
-import { assignUniqueBlockTemplateNameMutable } from "./block";
+import { assignUniqueBlockTemplateNamesMutable } from "./block";
 
 export const duplicateInstanceAfterItselfInput = z.object({
   sourceInstanceId: z.string(),
@@ -105,8 +105,8 @@ export const duplicateInstanceAfterItselfMutable = ({
   if (indexWithinChildren === -1) {
     return;
   }
-  assignUniqueBlockTemplateNameMutable({
-    instanceId: newRootInstanceId,
+  assignUniqueBlockTemplateNamesMutable({
+    instanceIds: [newRootInstanceId],
     parent: parentInstance,
     instances: data.instances,
   });

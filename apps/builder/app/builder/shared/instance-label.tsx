@@ -121,12 +121,9 @@ export const getInstanceLabel = (
     return "Unknown";
   }
 
-  const meta = $registeredComponentMetas
-    .get()
-    .get(instanceOrInstanceId.component);
   return getInstanceName({
     instance: instanceOrInstanceId,
-    componentLabel:
-      meta?.label || getLabelFromComponentName(instanceOrInstanceId.component),
+    metas: $registeredComponentMetas.get(),
+    fallbackName: getLabelFromComponentName(instanceOrInstanceId.component),
   });
 };

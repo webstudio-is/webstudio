@@ -3,6 +3,7 @@ import { $, renderData, ws } from "@webstudio-is/template";
 import {
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
+  findParentInstanceReference,
   getHtmlTagsFromProps,
   getHtmlTagFromInstance,
   getIndexesWithinAncestors,
@@ -52,6 +53,38 @@ test("include not existing/virtual instance", () => {
   ).toEqual(new Set([":root"]));
 });
 
+test("finds the direct parent instance reference", () => {
+  const instances = new Map<Instance["id"], Instance>([
+    [
+      "parent",
+      {
+        type: "instance",
+        id: "parent",
+        component: "Box",
+        children: [
+          { type: "text", value: "before" },
+          { type: "id", value: "child" },
+        ],
+      },
+    ],
+    [
+      "child",
+      {
+        type: "instance",
+        id: "child",
+        component: "Box",
+        children: [],
+      },
+    ],
+  ]);
+
+  expect(findParentInstanceReference(instances, "child")).toEqual({
+    instance: instances.get("parent"),
+    childIndex: 1,
+  });
+  expect(findParentInstanceReference(instances, "missing")).toBeUndefined();
+});
+
 test("extract short name and namespace from component name", () => {
   expect(parseComponentName("Box")).toEqual([undefined, "Box"]);
   expect(parseComponentName("radix:Box")).toEqual(["radix", "Box"]);
@@ -61,13 +94,13 @@ test("gets the instance name from user label, element tag, or component", () => 
   expect(
     getInstanceName({
       instance: { component: "Box", label: "Hero Card" },
-      componentLabel: "Box",
+      metas: new Map([["Box", { label: "Box" }]]),
     })
   ).toBe("Hero Card");
   expect(
     getInstanceName({
       instance: { component: "ws:element", tag: "article" },
-      componentLabel: "Element",
+      metas: new Map([["ws:element", { label: "Element" }]]),
     })
   ).toBe("<article>");
   expect(
