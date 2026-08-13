@@ -88,7 +88,10 @@ import {
   type ComponentRegistryItem,
 } from "./runtime/component-catalog";
 import { parseWebstudioJsxFragment } from "./runtime/jsx";
-import { webstudioJsxFragmentInputDescription } from "./runtime/jsx/bindings";
+import {
+  getWebstudioJsxComponentName,
+  webstudioJsxFragmentInputDescription,
+} from "./runtime/jsx/bindings";
 import {
   formatValidationErrorMessage,
   getValidationIssues,
@@ -4593,12 +4596,10 @@ const getComponentSummaryEntry = ({
   }
   const [parsedNamespace, exportName] = parseComponentName(component);
   const namespace = parsedNamespace ?? "global";
-  const jsxNamespace =
-    parsedNamespace === "@webstudio-is/sdk-components-react-radix"
-      ? "radix"
-      : parsedNamespace === "@webstudio-is/sdk-components-animation"
-        ? "animation"
-        : "$";
+  const jsxComponentName = getWebstudioJsxComponentName({
+    namespace: parsedNamespace,
+    exportName,
+  });
   const template = templateMeta?.template;
   const hasTemplate = template !== undefined;
   const instancesById = new Map(
@@ -4642,7 +4643,7 @@ const getComponentSummaryEntry = ({
     component,
     exportName,
     namespace,
-    jsxElement: `<${jsxNamespace}.${exportName} />`,
+    jsxElement: `<${jsxComponentName} />`,
     label: meta.label,
     category: visibleCategory,
     contentCategory: meta.contentModel?.category,
