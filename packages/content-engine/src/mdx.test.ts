@@ -504,6 +504,29 @@ Paragraph with <ws.element ws:tag="span">inline</ws.element> content.
 <ws.element ws:tag="p" />
 
 <ws.element ws:tag="table" />
+
+<ws.element ws:tag="li">Standalone item</ws.element>
+
+<ws.element ws:tag="div">line
+next</ws.element>
+
+<ws.element ws:tag="div">before {/* inline */} after</ws.element>
+
+<ws.element ws:tag="pre"><ws.element ws:tag="code" /></ws.element>
+
+<ws.element ws:tag="ol" start="007">
+  <ws.element ws:tag="li">Leading zero</ws.element>
+</ws.element>
+
+<ws.element ws:tag="table">
+  <ws.element ws:tag="thead">
+    <ws.element ws:tag="tr">
+      <ws.element ws:tag="th">
+        <ws.element ws:tag="p">Invalid cell block</ws.element>
+      </ws.element>
+    </ws.element>
+  </ws.element>
+</ws.element>
 `,
     });
 

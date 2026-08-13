@@ -19,6 +19,7 @@ import type { MdxAuthoredNode, MdxAuthoredProp, MdxDocument } from "./mdx";
 type SerializationMode = "flow" | "text";
 type SerializationContext =
   | SerializationMode
+  | "code"
   | "jsx-text"
   | "list"
   | "pre"
@@ -37,6 +38,7 @@ type SerializationNode = {
     listItemSpread?: boolean;
     mode?: SerializationMode;
     props?: readonly MdxAuthoredProp[];
+    rawText?: string;
   };
 };
 
@@ -79,6 +81,16 @@ const nonEmptyMarkdownTags = new Set([
   "strong",
 ]);
 
+const isPhrasingNode = (node: MdxAuthoredNode): boolean => {
+  if (node.type === "text" || node.type === "comment") {
+    return true;
+  }
+  if (node.type === "element" && flowTags.has(node.tag)) {
+    return false;
+  }
+  return node.children.every(isPhrasingNode);
+};
+
 const getProp = (node: ElementNode, name: string) =>
   node.props.find((prop) => prop.name === name)?.value;
 
@@ -88,6 +100,11 @@ const hasOnlyProps = (node: ElementNode, names: readonly string[]) =>
 
 const hasOnlyTextChildren = (node: ElementNode) =>
   node.children.every((child) => child.type === "text");
+
+// `hast-util-to-mdast` minimizes HAST whitespace before invoking handlers.
+// Protect authored whitespace until `mapText` restores the original value.
+const protectTextWhitespace = (value: string) =>
+  value.replace(/[\t\n\v\f\r ]/g, "\uE000");
 
 const isTaskInput = (node: ElementNode) =>
   node.tag === "input" &&
@@ -141,7 +158,8 @@ const isTableCell = (node: MdxAuthoredNode, tag: "td" | "th") => {
       align === "left" ||
       align === "center" ||
       align === "right") &&
-    hasOnlyProps(node, ["align"])
+    hasOnlyProps(node, ["align"]) &&
+    node.children.every(isPhrasingNode)
   );
 };
 
@@ -236,6 +254,7 @@ const isMarkdownElement = (
   if (node.tag === "code") {
     const className = getProp(node, "class");
     return (
+      node.children.length === 1 &&
       hasOnlyTextChildren(node) &&
       (context === "text"
         ? node.props.length === 0
@@ -249,7 +268,9 @@ const isMarkdownElement = (
     const start = getProp(node, "start");
     return (
       (start === undefined ||
-        (typeof start === "string" && /^\d{1,9}$/.test(start))) &&
+        (typeof start === "string" &&
+          /^\d{1,9}$/.test(start) &&
+          String(Number(start)) === start)) &&
       hasOnlyProps(node, ["class", "start"]) &&
       hasMatchingTaskListClass(node) &&
       node.children.length > 0 &&
@@ -309,36 +330,20 @@ const isMarkdownElement = (
     );
   }
   if (node.tag === "td" || node.tag === "th") {
-    const align = getProp(node, "align");
-    return (
-      (align === undefined ||
-        align === "left" ||
-        align === "center" ||
-        align === "right") &&
-      hasOnlyProps(node, ["align"])
-    );
+    return isTableCell(node, node.tag);
   }
   return false;
 };
 
 const getMode = (context: SerializationContext): SerializationMode =>
   context === "text" ||
+  context === "code" ||
   context === "jsx-text" ||
   context === "pre" ||
   context === "table-cell" ||
   context === "task"
     ? "text"
     : "flow";
-
-const isPhrasingNode = (node: MdxAuthoredNode): boolean => {
-  if (node.type === "text" || node.type === "comment") {
-    return true;
-  }
-  if (node.type === "element" && flowTags.has(node.tag)) {
-    return false;
-  }
-  return node.children.every(isPhrasingNode);
-};
 
 const getChildContext = (
   node: ElementNode,
@@ -359,10 +364,12 @@ const getChildContext = (
   if (node.tag === "pre") {
     return "pre";
   }
+  if (node.tag === "code") {
+    return "code";
+  }
   if (
     context === "table-cell" ||
     node.tag === "a" ||
-    node.tag === "code" ||
     node.tag === "del" ||
     node.tag === "em" ||
     node.tag.startsWith("h") ||
@@ -397,7 +404,7 @@ const toWebstudioElement = ({
     tagName: "ws.element",
     properties: {},
     children: children.map((child) => toSerializationNode(child, childContext)),
-    data: { mode, props },
+    data: { mode: childContext === "jsx-text" ? "text" : mode, props },
   };
 };
 
@@ -407,7 +414,13 @@ const toSerializationNode = (
 ): SerializationNode => {
   const mode = getMode(context);
   if (node.type === "text") {
-    return { type: "text", value: node.value };
+    return context === "code"
+      ? { type: "text", value: node.value }
+      : {
+          type: "text",
+          value: protectTextWhitespace(node.value),
+          data: { rawText: node.value },
+        };
   }
   if (node.type === "comment") {
     return { type: "comment", value: node.value, data: { mode } };
@@ -491,6 +504,13 @@ const mapComment: NodeHandle = (_state, node) => ({
   value: typeof node.value === "string" ? node.value : "",
 });
 
+const mapText: NodeHandle = (_state, node) => ({
+  type: "text",
+  value:
+    getSerializationData(node)?.rawText ??
+    (typeof node.value === "string" ? node.value : ""),
+});
+
 const mapListItem: Handle = (state, node) => {
   const result = defaultHandlers.li(state, node);
   const spread = getSerializationData(node)?.listItemSpread;
@@ -530,7 +550,7 @@ export const serializeMdxDocument = (document: MdxDocument) => {
   const mdast = toMdast(hast, {
     document: true,
     handlers: { li: mapListItem, "ws.element": mapWebstudioElement },
-    nodeHandlers: { comment: mapComment },
+    nodeHandlers: { comment: mapComment, text: mapText },
   });
   return (
     serializeFrontmatter(document) +
