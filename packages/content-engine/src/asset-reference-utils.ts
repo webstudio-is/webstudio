@@ -1,5 +1,10 @@
 import { createAssetIdResolver } from "./asset-path-resolution";
 
+export type ResolvedAssetReference = {
+  assetId: string;
+  suffix?: string;
+};
+
 const getAssetReferenceSuffix = (value: string) => {
   let parsed: URL;
   try {
@@ -19,7 +24,7 @@ export const createAssetReferenceResolver = ({
   assetIdsByPath: ReadonlyMap<string, string>;
 }) => {
   const resolveAssetId = createAssetIdResolver(assetIdsByPath, sourcePath);
-  return (value: string) => {
+  return (value: string): ResolvedAssetReference | undefined => {
     const assetId = resolveAssetId(value);
     if (assetId === undefined) {
       return;
