@@ -1,8 +1,10 @@
 import { expect, test } from "vitest";
 import type { Resource } from "./schema/resources";
 import {
+  getPageResourceRootIds,
+  getResourceCycleDataSourceIds,
   getResourceDataSourceIds,
-  getTransitiveResourceDataSourceIds,
+  getTransitiveResourceIds,
 } from "./resource-dependencies";
 
 test("extracts unique data source dependencies from every resource expression", () => {
@@ -35,6 +37,38 @@ test("ignores malformed legacy resource expressions", () => {
       method: "get",
       url: "https://example.com/plain-url",
       headers: [],
+    })
+  ).toEqual(new Set());
+});
+
+test("does not load a resource used only by ignored custom metadata", () => {
+  expect(
+    getPageResourceRootIds({
+      page: {
+        rootInstanceId: "body",
+        title: '"Page"',
+        meta: {
+          custom: [
+            {
+              property: " ",
+              content: "$ws$dataSource$resourceDataSource.data.title",
+            },
+          ],
+        },
+      },
+      instances: new Map(),
+      props: new Map(),
+      dataSources: new Map([
+        [
+          "resourceDataSource",
+          {
+            type: "resource",
+            id: "resourceDataSource",
+            name: "Resource",
+            resourceId: "resource",
+          },
+        ],
+      ]),
     })
   ).toEqual(new Set());
 });
@@ -103,10 +137,72 @@ test("finds transitive resource dependencies for editor cycle prevention", () =>
   ]);
 
   expect(
-    getTransitiveResourceDataSourceIds({
+    getTransitiveResourceIds({
       resourceId: "thirdResource",
       resources,
       dataSources,
     })
-  ).toEqual(new Set(["secondDataSource", "firstDataSource"]));
+  ).toEqual(new Set(["secondResource", "firstResource"]));
+});
+
+test("prevents resource cycles through aliases of the edited resource", () => {
+  const resources = new Map<string, Resource>([
+    [
+      "editedResource",
+      {
+        id: "editedResource",
+        name: "Edited",
+        method: "get",
+        url: '"/edited"',
+        headers: [],
+      },
+    ],
+    [
+      "dependentResource",
+      {
+        id: "dependentResource",
+        name: "Dependent",
+        method: "get",
+        url: "$ws$dataSource$editedAlias.data.url",
+        headers: [],
+      },
+    ],
+  ]);
+  const resourceDataSource = {
+    type: "resource" as const,
+    id: "editedDataSource",
+    name: "Edited",
+    resourceId: "editedResource",
+  };
+  const dataSources = new Map([
+    [resourceDataSource.id, resourceDataSource],
+    [
+      "editedAlias",
+      {
+        type: "resource" as const,
+        id: "editedAlias",
+        name: "Edited alias",
+        resourceId: "editedResource",
+      },
+    ],
+    [
+      "dependentDataSource",
+      {
+        type: "resource" as const,
+        id: "dependentDataSource",
+        name: "Dependent",
+        resourceId: "dependentResource",
+      },
+    ],
+  ]);
+
+  expect(
+    getResourceCycleDataSourceIds({
+      resourceDataSource,
+      resources,
+      dataSources,
+    })
+  ).toEqual(
+    new Set(["editedDataSource", "editedAlias", "dependentDataSource"])
+  );
 });
