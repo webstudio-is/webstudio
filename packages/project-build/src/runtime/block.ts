@@ -1,4 +1,5 @@
 import {
+  allocateUniqueContentBlockTemplateName,
   blockComponent,
   blockTemplateComponent,
   findParentInstanceReference,
@@ -8,30 +9,6 @@ import {
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import type { InstanceSelector } from "./tree";
-
-const allocateUniqueName = ({
-  name,
-  existingNames,
-}: {
-  name: string;
-  existingNames: ReadonlySet<string>;
-}) => {
-  const normalizedName = name.trim();
-  if (existingNames.has(normalizedName) === false) {
-    return normalizedName;
-  }
-
-  const suffixMatch = /^(.*) (\d+)$/.exec(normalizedName);
-  const suffix = Number(suffixMatch?.[2]);
-  const baseName = suffix >= 2 && suffixMatch ? suffixMatch[1] : normalizedName;
-  let index = suffix >= 2 ? suffix + 1 : 2;
-  let candidate = `${baseName} ${index}`;
-  while (existingNames.has(candidate)) {
-    index += 1;
-    candidate = `${baseName} ${index}`;
-  }
-  return candidate;
-};
 
 export const assignUniqueBlockTemplateNamesMutable = ({
   instanceIds,
@@ -63,7 +40,7 @@ export const assignUniqueBlockTemplateNamesMutable = ({
       continue;
     }
     const currentName = getInstanceName({ instance, metas: componentMetas });
-    const uniqueName = allocateUniqueName({
+    const uniqueName = allocateUniqueContentBlockTemplateName({
       name: currentName,
       existingNames,
     });
