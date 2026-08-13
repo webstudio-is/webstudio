@@ -1479,6 +1479,52 @@ describe("project session", () => {
     expect(transport.restoreCommits).toHaveLength(1);
   });
 
+  test("confirms an ambiguous restore with the same transaction", async () => {
+    const target = createPersistedSnapshot();
+    const current = structuredClone(target);
+    current.version = 2;
+    current.revision = "rev-2";
+    const currentHome = current.state.pages?.pages.get("page-home");
+    if (currentHome === undefined) {
+      throw new Error("Home page fixture is missing");
+    }
+    currentHome.name = "Edited after restore point";
+    const storage = createStorage(current);
+    const transport = createTransport({
+      projectId: current.projectId,
+      buildId: current.buildId,
+      version: current.version,
+      state: current.state,
+    });
+    let committedTransactionId: string | undefined;
+    transport.commitRestorePoint = async (input) => {
+      transport.commits.push([...input.transactions]);
+      transport.restoreCommits.push([...input.transactions]);
+      const transactionId = input.transactions[0]?.id;
+      if (transactionId === committedTransactionId) {
+        return { version: input.baseVersion + 1 };
+      }
+      committedTransactionId = transactionId;
+      throw Object.assign(new Error("Build version mismatch"), {
+        code: "CONFLICT",
+      });
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const restored = await session.restoreSnapshot(target);
+
+    expect(restored.state.committed).toBe(true);
+    expect(restored.version).toBe(3);
+    expect(restored.diagnostics).toEqual([
+      expect.objectContaining({ code: "COMMIT_RETRY_CONFIRMED" }),
+    ]);
+    expect(transport.restoreCommits).toHaveLength(2);
+    expect(transport.restoreCommits[0]?.[0]?.id).toBe(
+      transport.restoreCommits[1]?.[0]?.id
+    );
+  });
+
   test("keeps separately persisted assets outside restore points", async () => {
     const current = createPersistedSnapshot();
     current.state.assets = new Map([

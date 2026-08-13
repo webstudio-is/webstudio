@@ -585,6 +585,42 @@ const shouldRefreshPermissionsAfterError = (error: unknown) => {
 const isVersionConflictError = (error: unknown) =>
   getProjectSessionErrorCode(error) === "CONFLICT";
 
+type ProjectSessionCommitInput = Parameters<
+  ProjectSessionTransport["commitPatch"]
+>[0];
+
+const commitWithConflictConfirmation = async ({
+  commit,
+  input,
+}: {
+  commit: (
+    input: ProjectSessionCommitInput
+  ) => Promise<ProjectSessionCommitResult>;
+  input: ProjectSessionCommitInput;
+}) => {
+  try {
+    return {
+      result: await commit(input),
+      confirmedAfterRetry: false,
+    };
+  } catch (error) {
+    if (isVersionConflictError(error) === false) {
+      throw error;
+    }
+    return {
+      result: await commit(input),
+      confirmedAfterRetry: true,
+    };
+  }
+};
+
+const commitRetryConfirmedDiagnostic: ProjectSessionDiagnostic = {
+  level: "info",
+  code: "COMMIT_RETRY_CONFIRMED",
+  message:
+    "The transaction was confirmed committed after retrying the same transaction ID.",
+};
+
 const isProjectSessionBusyError = (error: unknown) =>
   getProjectSessionErrorCode(error) === "PROJECT_SESSION_BUSY";
 
@@ -822,12 +858,19 @@ export class ProjectSession {
           transaction,
         });
       }
-      const commit = await this.#options.transport.commitRestorePoint({
-        projectId: snapshot.projectId,
-        buildId: snapshot.buildId,
-        baseVersion: snapshot.version,
-        transactions: [transaction],
-      });
+      const { result: commit, confirmedAfterRetry } =
+        await commitWithConflictConfirmation({
+          commit: (input) => this.#options.transport.commitRestorePoint(input),
+          input: {
+            projectId: snapshot.projectId,
+            buildId: snapshot.buildId,
+            baseVersion: snapshot.version,
+            transactions: [transaction],
+          },
+        });
+      const diagnostics = confirmedAfterRetry
+        ? [commitRetryConfirmedDiagnostic]
+        : [];
       const applied = applyBuilderPatchTransactions(snapshot.state, [
         transaction,
       ]);
@@ -847,7 +890,7 @@ export class ProjectSession {
       const persisted = await this.#synchronizeAfterCommit({
         snapshot: committedSnapshot,
         namespaces: restorePointNamespaces,
-        diagnostics: [],
+        diagnostics,
       });
       return this.createEnvelope({
         source: "local",
@@ -1297,25 +1340,14 @@ export class ProjectSession {
       baseVersion: snapshot.version,
       transactions: [transaction],
     };
-    let commit: { version: number };
-    let commitDiagnostics = diagnostics;
-    try {
-      commit = await this.#options.transport.commitPatch(commitInput);
-    } catch (error) {
-      if (isVersionConflictError(error) === false) {
-        throw error;
-      }
-      commit = await this.#options.transport.commitPatch(commitInput);
-      commitDiagnostics = [
-        ...diagnostics,
-        {
-          level: "info",
-          code: "COMMIT_RETRY_CONFIRMED",
-          message:
-            "The transaction was confirmed committed after retrying the same transaction ID.",
-        },
-      ];
-    }
+    const { result: commit, confirmedAfterRetry } =
+      await commitWithConflictConfirmation({
+        commit: (input) => this.#options.transport.commitPatch(input),
+        input: commitInput,
+      });
+    const commitDiagnostics = confirmedAfterRetry
+      ? [...diagnostics, commitRetryConfirmedDiagnostic]
+      : diagnostics;
     const applied = applyBuilderPatchTransactions(snapshot.state, [
       transaction,
     ]);
