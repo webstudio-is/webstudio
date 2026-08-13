@@ -2614,6 +2614,8 @@ describe("project session mcp adapter", () => {
         data: { type: "expression", value: "Posts.data.items" },
         itemFragment:
           '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.title`}</ws.element></ws.element>',
+        mode: "prepend",
+        insertIndex: 2,
       },
     });
 
@@ -2631,8 +2633,8 @@ describe("project session mcp adapter", () => {
             expect.objectContaining({ component: "ws:element", tag: "h2" }),
           ]),
         }),
-        mode: undefined,
-        insertIndex: undefined,
+        mode: "prepend",
+        insertIndex: 2,
       },
       dryRun: false,
     });

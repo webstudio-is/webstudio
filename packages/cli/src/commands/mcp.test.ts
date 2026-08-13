@@ -2,8 +2,11 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
+import { getInputJsonSchemaMetadata } from "@webstudio-is/sdk";
 import {
   createProjectSessionMcpCore,
+  getDetailedProjectSessionMcpInputSchema,
+  hiddenMcpOperationCommands,
   listProjectSessionMcpTools,
 } from "@webstudio-is/project-build/mcp";
 import { publicApiOperations } from "@webstudio-is/protocol";
@@ -77,6 +80,57 @@ test("classifies structured MCP tool failures for nonzero CLI exit", () => {
 const tempDirs: string[] = [];
 type CommandBuilder = (yargs: unknown) => unknown;
 type CommandCall = [readonly string[], string, CommandBuilder, unknown];
+
+test("keeps every MCP API tool aligned with its public API contract", () => {
+  const toolsByName = new Map(
+    listProjectSessionMcpTools(publicApiOperations).map((tool) => [
+      tool.name,
+      tool,
+    ])
+  );
+
+  for (const operation of publicApiOperations) {
+    if (hiddenMcpOperationCommands.has(operation.command)) {
+      expect(toolsByName.has(operation.command), operation.command).toBe(false);
+      continue;
+    }
+
+    const tool = toolsByName.get(operation.command);
+    expect(tool, operation.command).toBeDefined();
+    if (tool === undefined) {
+      continue;
+    }
+
+    const schema = getDetailedProjectSessionMcpInputSchema(tool);
+    const transportFields = [
+      ...(operation.method === "mutation" && operation.localCapable
+        ? ["dryRun"]
+        : []),
+      ...(operation.requiresConfirm && operation.localCapable
+        ? ["confirmDestructive", "confirmationToken"]
+        : []),
+    ];
+    const schemaMetadata = getInputJsonSchemaMetadata(schema);
+    const semanticFields = schemaMetadata.inputFields.filter(
+      (field) => transportFields.includes(field) === false
+    );
+    expect(new Set(semanticFields), operation.command).toEqual(
+      new Set(operation.inputFields)
+    );
+
+    const requiredFields = [...operation.requiredInputFields];
+    if (
+      operation.command === "insert-fragment" &&
+      requiredFields.includes("parentInstanceId") === false
+    ) {
+      requiredFields.push("parentInstanceId");
+    }
+    expect(
+      new Set(schemaMetadata.requiredInputFields),
+      operation.command
+    ).toEqual(new Set(requiredFields));
+  }
+});
 
 afterEach(async () => {
   vi.restoreAllMocks();
