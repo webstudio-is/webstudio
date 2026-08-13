@@ -22,7 +22,12 @@ export const allocateUniqueContentBlockTemplateName = ({
   }
   let candidate = `${baseName} ${index}`;
   while (existingNames.has(candidate)) {
-    index += 1;
+    if (Number.isSafeInteger(index + 1) === false) {
+      baseName = candidate;
+      index = 2;
+    } else {
+      index += 1;
+    }
     candidate = `${baseName} ${index}`;
   }
   return candidate;

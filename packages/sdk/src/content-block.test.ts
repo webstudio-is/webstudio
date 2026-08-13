@@ -88,6 +88,12 @@ describe("allocateUniqueContentBlockTemplateName", () => {
       reason: "does not increment past the safe integer range",
     },
     {
+      name: "Card 9007199254740990",
+      existingNames: ["Card 9007199254740990", "Card 9007199254740991"],
+      expected: "Card 9007199254740991 2",
+      reason: "falls back after colliding at the safe integer boundary",
+    },
+    {
       name: "Card 02",
       existingNames: ["Card 02"],
       expected: "Card 3",

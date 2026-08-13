@@ -2237,13 +2237,6 @@ const unwrapInstanceMutable = ({
   if (grandparentInstance === undefined) {
     return { success: false, error: "Grandparent instance not found" };
   }
-  assignUniqueBlockTemplateNamesMutable({
-    instanceIds: [selectedInstance.id],
-    parent: grandparentInstance,
-    replacedInstanceIds: [parentInstance.id],
-    instances,
-  });
-
   const selectedParentId = selectedItem.instanceSelector[1];
   const selectedParentInstance = instances.get(selectedParentId);
   if (
@@ -2301,6 +2294,13 @@ const unwrapInstanceMutable = ({
     parentInstance.children,
     selectedItem.instance.id
   );
+  assignUniqueBlockTemplateNamesMutable({
+    instanceIds: [selectedInstance.id],
+    parent: grandparentInstance,
+    replacedInstanceIds:
+      parentInstance.children.length === 0 ? [parentInstance.id] : [],
+    instances,
+  });
   if (parentInstance.children.length === 0) {
     instances.delete(parentItem.instance.id);
   }
@@ -2381,6 +2381,7 @@ export const convertInstance = (
       );
       const [selectedItem] = nextInstancePath;
       const selectedInstance = selectedItem.instance;
+      const previousInstance = { ...selectedInstance };
       if (selectedInstance.component === "Slot" && input.component !== "Slot") {
         detachSharedSlotChildrenMutable({
           data: draft,
@@ -2430,7 +2431,7 @@ export const convertInstance = (
         }
       }
       const collision = findBlockTemplateNameCollision({
-        instance: selectedInstance,
+        instance: previousInstance,
         nextInstance,
         instances: draft.instances,
       });
@@ -2794,7 +2795,8 @@ export const unwrapInstance = (
     assignUniqueBlockTemplateNamesMutable({
       instanceIds: [instanceId],
       parent: grandparentInstance,
-      replacedInstanceIds: [parentInstanceId],
+      replacedInstanceIds:
+        nextParentInstance.children.length === 0 ? [parentInstanceId] : [],
       instances: nextInstances,
     });
   }
@@ -3042,11 +3044,15 @@ export const setInstanceLabel = (
         )
       : [instance];
 
+  const prospectiveInstances = new Map(instances);
+  for (const targetInstance of targetInstances) {
+    prospectiveInstances.set(targetInstance.id, { ...targetInstance, label });
+  }
   for (const targetInstance of targetInstances) {
     const collision = findBlockTemplateNameCollision({
       instance: targetInstance,
       nextInstance: { ...targetInstance, label },
-      instances,
+      instances: prospectiveInstances,
     });
     if (collision) {
       return throwDuplicateBlockTemplateName({

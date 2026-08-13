@@ -1466,6 +1466,40 @@ describe("convertInstance", () => {
     ]);
   });
 
+  test("rejects converting a direct Slot template to a duplicate name", () => {
+    expect(() =>
+      convertInstance(
+        {
+          pages: createDefaultPages({ rootInstanceId: "templates" }),
+          instances: new Map([
+            [
+              "templates",
+              createInstance("templates", blockTemplateComponent, [
+                { type: "id", value: "box" },
+                { type: "id", value: "slot" },
+              ]),
+            ],
+            ["box", createInstance("box", "Box")],
+            ["slot", createInstance("slot", "Slot")],
+          ]),
+          props: new Map(),
+          dataSources: new Map(),
+          resources: new Map(),
+          styleSources: new Map(),
+          styleSourceSelections: new Map(),
+          styles: new Map(),
+          breakpoints: new Map(),
+          assets: new Map(),
+        },
+        {
+          instanceSelector: ["slot", "templates"],
+          component: "Box",
+        },
+        runtimeContext
+      )
+    ).toThrow("Template name must be unique");
+  });
+
   test("rejects conversion that violates content model", () => {
     expect(() =>
       convertInstance(
@@ -1565,6 +1599,39 @@ describe("unwrapInstance", () => {
             ]),
           ],
           ["selected", createInstance("selected", "Box")],
+        ]),
+        props: new Map(),
+      },
+      { instanceSelector: ["selected", "parent", "templates"] },
+      runtimeContext
+    );
+
+    expect(result.payload[0]?.patches).toContainEqual({
+      op: "add",
+      path: ["selected", "label"],
+      value: "Box 2",
+    });
+  });
+
+  test("includes a retained wrapper when naming an unwrapped template", () => {
+    const result = unwrapInstance(
+      {
+        instances: new Map([
+          [
+            "templates",
+            createInstance("templates", blockTemplateComponent, [
+              { type: "id", value: "parent" },
+            ]),
+          ],
+          [
+            "parent",
+            createInstance("parent", "Box", [
+              { type: "id", value: "selected" },
+              { type: "id", value: "sibling" },
+            ]),
+          ],
+          ["selected", createInstance("selected", "Box")],
+          ["sibling", createInstance("sibling", "Image")],
         ]),
         props: new Map(),
       },
@@ -2047,6 +2114,32 @@ describe("setInstanceLabel", () => {
         ],
       },
     ]);
+  });
+
+  test("rejects mirrored Slot labels that collide in one Templates list", () => {
+    const templates = createInstance("templates", blockTemplateComponent, [
+      { type: "id", value: "slot" },
+      { type: "id", value: "matching-slot" },
+    ]);
+    const slot = createInstance("slot", "Slot", [
+      { type: "id", value: "child" },
+    ]);
+    const matchingSlot = createInstance("matching-slot", "Slot", [
+      { type: "id", value: "child" },
+    ]);
+
+    expect(() =>
+      setInstanceLabel(
+        {
+          instances: new Map([
+            ["templates", templates],
+            ["slot", slot],
+            ["matching-slot", matchingSlot],
+          ]),
+        },
+        { instanceId: "slot", label: "Shared slot" }
+      )
+    ).toThrow("Template name must be unique");
   });
 
   test("does not mutate unchanged label", () => {
