@@ -8,6 +8,7 @@ import { serializeValue } from "./to-string";
 
 const LOCAL_RESOURCE_PREFIX = "$resources";
 const RESOURCE_ERROR_DETAIL_LIMIT = 2000;
+export const resourceLoadConcurrency = 20;
 
 const formatResourceErrorDetail = (data: unknown) => {
   let detail = "";
@@ -281,6 +282,9 @@ export const loadResource = async (
     options.timeoutMs === undefined
       ? undefined
       : setTimeout(() => {
+          if (controller.signal.aborted) {
+            return;
+          }
           didTimeout = true;
           controller.abort();
         }, options.timeoutMs);
@@ -393,50 +397,46 @@ export const loadResources = async (
   baseUrl?: string | URL,
   options?: ResourceLoadOptions
 ) => {
-  if (requests instanceof Map === false) {
-    const resources: Resource<unknown>[] = requests.resources.map(
-      (resource) => ({
-        id: resource.id,
-        dependencies: resource.dependencies,
-        resolve: ({ documents, signal }) =>
-          loadResource(
-            customFetch,
-            resource.createRequest(documents),
-            baseUrl,
-            { ...options, signal }
-          ),
-      })
-    );
-    const resolved = await resolveResourceGraph({
-      resources,
-      rootIds: requests.rootIds,
-      concurrency: Math.max(1, resources.length),
-      signal: options?.signal,
-    });
-    const output = new Map<string, unknown>();
-    const resourcesById = new Map(
-      requests.resources.map((resource) => [resource.id, resource])
-    );
-    for (const resourceId of requests.rootIds) {
-      const resource = resourcesById.get(resourceId);
-      if (resource !== undefined && resolved.documents.has(resourceId)) {
-        output.set(resource.outputName, resolved.documents.get(resourceId));
+  const isLegacyMap = requests instanceof Map;
+  const graph: ResourceRequestGraph = isLegacyMap
+    ? {
+        resources: Array.from(requests, ([name, request]) => ({
+          id: name,
+          outputName: name,
+          dependencies: [],
+          createRequest: () => request,
+        })),
+        rootIds: Array.from(requests.keys()),
       }
-    }
-    return Object.fromEntries(output);
-  }
-  return Object.fromEntries(
-    await Promise.all(
-      Array.from(
-        requests,
-        async ([name, request]) =>
-          [
-            name,
-            await loadResource(customFetch, request, baseUrl, options),
-          ] as const
-      )
-    )
+    : requests;
+  const resources: Resource<unknown>[] = graph.resources.map((resource) => ({
+    id: resource.id,
+    dependencies: resource.dependencies,
+    resolve: ({ documents, signal }) =>
+      loadResource(customFetch, resource.createRequest(documents), baseUrl, {
+        ...options,
+        signal: signal ?? options?.signal,
+      }),
+  }));
+  const resolved = await resolveResourceGraph({
+    resources,
+    rootIds: graph.rootIds,
+    concurrency: resourceLoadConcurrency,
+    // Legacy maps expose cancellation as a structured transport document.
+    // Graph callers use resolver-level cancellation instead.
+    signal: isLegacyMap ? undefined : options?.signal,
+  });
+  const resourcesById = new Map(
+    graph.resources.map((resource) => [resource.id, resource])
   );
+  const output = new Map<string, unknown>();
+  for (const resourceId of graph.rootIds) {
+    const resource = resourcesById.get(resourceId);
+    if (resource !== undefined && resolved.documents.has(resourceId)) {
+      output.set(resource.outputName, resolved.documents.get(resourceId));
+    }
+  }
+  return Object.fromEntries(output);
 };
 
 /**
