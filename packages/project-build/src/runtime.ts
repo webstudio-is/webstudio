@@ -26,6 +26,7 @@ export * from "./runtime/instance-duplicate";
 export * from "./runtime/instances";
 export * from "./runtime/lookup";
 export * from "./runtime/matcher";
+export * from "./runtime/mdx-template-resolution";
 export * from "./runtime/mutation";
 export * from "./runtime/output";
 export * from "./runtime/page-copy";
