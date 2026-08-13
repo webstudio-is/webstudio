@@ -2,7 +2,10 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
-import { getInputJsonSchemaMetadata } from "@webstudio-is/sdk";
+import {
+  getInputJsonSchemaMetadata,
+  getInputJsonSchemaProperties,
+} from "@webstudio-is/sdk";
 import {
   createProjectSessionMcpCore,
   getDetailedProjectSessionMcpInputSchema,
@@ -81,6 +84,44 @@ const tempDirs: string[] = [];
 type CommandBuilder = (yargs: unknown) => unknown;
 type CommandCall = [readonly string[], string, CommandBuilder, unknown];
 
+const normalizeMcpJsonValueSchemas = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(normalizeMcpJsonValueSchemas);
+  }
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+  const object = value as Record<string, unknown>;
+  if (
+    Object.keys(object).length === 1 &&
+    Array.isArray(object.anyOf) &&
+    JSON.stringify(object.anyOf) ===
+      JSON.stringify([
+        { type: "string" },
+        { type: "number" },
+        { type: "boolean" },
+        { type: "null" },
+        { type: "array", items: {} },
+        { type: "object" },
+      ])
+  ) {
+    return {};
+  }
+  const omitSyntheticTupleItems =
+    Array.isArray(object.prefixItems) &&
+    object.items !== null &&
+    typeof object.items === "object" &&
+    Object.keys(object.items).length === 0;
+  return Object.fromEntries(
+    Object.entries(object)
+      .filter(([key]) => omitSyntheticTupleItems === false || key !== "items")
+      .map(([key, nestedValue]) => [
+        key,
+        normalizeMcpJsonValueSchemas(nestedValue),
+      ])
+  );
+};
+
 test("keeps every MCP API tool aligned with its public API contract", () => {
   const toolsByName = new Map(
     listProjectSessionMcpTools(publicApiOperations).map((tool) => [
@@ -117,6 +158,22 @@ test("keeps every MCP API tool aligned with its public API contract", () => {
     expect(new Set(semanticFields), operation.command).toEqual(
       new Set(operation.inputFields)
     );
+
+    const apiProperties = getInputJsonSchemaProperties(operation.inputSchema);
+    const mcpProperties = getInputJsonSchemaProperties(schema);
+    for (const field of operation.inputFields) {
+      const isRepresentationOverride =
+        (operation.command === "insert-fragment" &&
+          ["parentInstanceId", "fragment"].includes(field)) ||
+        (operation.command === "insert-collection" && field === "itemFragment");
+      if (isRepresentationOverride) {
+        continue;
+      }
+      expect(
+        normalizeMcpJsonValueSchemas(mcpProperties?.[field]),
+        `${operation.command}.${field}`
+      ).toEqual(apiProperties?.[field]);
+    }
 
     const requiredFields = [...operation.requiredInputFields];
     if (
