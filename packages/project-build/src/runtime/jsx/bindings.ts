@@ -25,53 +25,11 @@ const css = (strings: TemplateStringsArray, ...values: string[]) => {
   return parseTemplateCss(source);
 };
 
-const wsComponentPropertyAliases = {
-  blockTemplate: "block-template",
-} as const;
-
-const wsBinding = new Proxy(ws, {
-  get: (target, property, receiver) => {
-    if (
-      typeof property === "string" &&
-      Object.hasOwn(wsComponentPropertyAliases, property)
-    ) {
-      return target[
-        wsComponentPropertyAliases[
-          property as keyof typeof wsComponentPropertyAliases
-        ]
-      ];
-    }
-    return Reflect.get(target, property, receiver);
-  },
-});
-
 const componentBindings = {
   $,
-  ws: wsBinding,
+  ws,
   radix: createProxy("@webstudio-is/sdk-components-react-radix:"),
   animation: createProxy("@webstudio-is/sdk-components-animation:"),
-};
-
-export const getWebstudioJsxComponentName = ({
-  namespace,
-  exportName,
-}: {
-  namespace: string | undefined;
-  exportName: string;
-}) => {
-  if (namespace === "@webstudio-is/sdk-components-react-radix") {
-    return `radix.${exportName}`;
-  }
-  if (namespace === "@webstudio-is/sdk-components-animation") {
-    return `animation.${exportName}`;
-  }
-  if (namespace === "ws") {
-    const alias = Object.entries(wsComponentPropertyAliases).find(
-      ([, componentName]) => componentName === exportName
-    )?.[0];
-    return `ws.${alias ?? exportName}`;
-  }
-  return `$.${exportName}`;
 };
 
 const helperBindings = {

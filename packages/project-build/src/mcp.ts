@@ -66,7 +66,12 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import {
+  animationComponentNamespace,
+  componentMetas,
+  radixComponentNamespace,
+} from "@webstudio-is/sdk-components-registry/metas";
+import { camelCase } from "change-case";
 import { readProjectBuildDoc } from "./docs";
 import type { ComponentTemplateRegistry } from "./runtime/component-template";
 import {
@@ -88,10 +93,7 @@ import {
   type ComponentRegistryItem,
 } from "./runtime/component-catalog";
 import { parseWebstudioJsxFragment } from "./runtime/jsx";
-import {
-  getWebstudioJsxComponentName,
-  webstudioJsxFragmentInputDescription,
-} from "./runtime/jsx/bindings";
+import { webstudioJsxFragmentInputDescription } from "./runtime/jsx/bindings";
 import {
   formatValidationErrorMessage,
   getValidationIssues,
@@ -4596,10 +4598,16 @@ const getComponentSummaryEntry = ({
   }
   const [parsedNamespace, exportName] = parseComponentName(component);
   const namespace = parsedNamespace ?? "global";
-  const jsxComponentName = getWebstudioJsxComponentName({
-    namespace: parsedNamespace,
-    exportName,
-  });
+  const jsxNamespace =
+    parsedNamespace === radixComponentNamespace
+      ? "radix"
+      : parsedNamespace === animationComponentNamespace
+        ? "animation"
+        : parsedNamespace === "ws"
+          ? "ws"
+          : "$";
+  const jsxExportName =
+    parsedNamespace === "ws" ? camelCase(exportName) : exportName;
   const template = templateMeta?.template;
   const hasTemplate = template !== undefined;
   const instancesById = new Map(
@@ -4643,7 +4651,7 @@ const getComponentSummaryEntry = ({
     component,
     exportName,
     namespace,
-    jsxElement: `<${jsxComponentName} />`,
+    jsxElement: `<${jsxNamespace}.${jsxExportName} />`,
     label: meta.label,
     category: visibleCategory,
     contentCategory: meta.contentModel?.category,

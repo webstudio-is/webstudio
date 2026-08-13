@@ -1144,3 +1144,16 @@ test("render ws:element with ws:tag prop", () => {
   ]);
   expect(props).toEqual([]);
 });
+
+test("render camel-cased ws component as canonical kebab-case", () => {
+  const { instances } = renderTemplate(<ws.blockTemplate />);
+
+  expect(instances).toEqual([
+    {
+      type: "instance",
+      id: "0",
+      component: "ws:block-template",
+      children: [],
+    },
+  ]);
+});

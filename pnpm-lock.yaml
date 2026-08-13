@@ -2261,6 +2261,9 @@ importers:
       bcp-47:
         specifier: ^2.1.0
         version: 2.1.0
+      change-case:
+        specifier: ^5.4.4
+        version: 5.4.4
       css-tree:
         specifier: ^3.1.0
         version: 3.1.0
@@ -2996,6 +2999,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      change-case:
+        specifier: ^5.4.4
+        version: 5.4.4
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
