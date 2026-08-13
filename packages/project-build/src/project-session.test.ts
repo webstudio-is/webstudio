@@ -1281,6 +1281,83 @@ describe("project session", () => {
     expect(transport.commits[0]?.[0]?.id).toBe(transport.commits[1]?.[0]?.id);
   });
 
+  test("refreshes without replaying after confirmation fails", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport();
+    let attempts = 0;
+    transport.commitPatch = async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        throw Object.assign(new Error("Build version mismatch"), {
+          code: "CONFLICT",
+        });
+      }
+      throw Object.assign(new Error("Connection reset"), {
+        code: "ECONNRESET",
+      });
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: "Conflict" },
+    });
+
+    expect(result.state.committed).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "CONFLICT",
+        details: expect.objectContaining({
+          confirmationFailure: {
+            code: "ECONNRESET",
+            message: "Connection reset",
+          },
+        }),
+      }),
+      expect.objectContaining({ code: "CONFLICT_REFRESHED" }),
+    ]);
+    expect(transport.loadedNamespaces).toEqual([
+      ["pages", "instances", "dataSources"],
+    ]);
+    expect(attempts).toBe(2);
+  });
+
+  test("clears cached permissions after authorization confirmation failure", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport();
+    let attempts = 0;
+    transport.commitPatch = async (input) => {
+      attempts += 1;
+      if (attempts === 1) {
+        throw Object.assign(new Error("Build version mismatch"), {
+          code: "CONFLICT",
+        });
+      }
+      if (attempts === 2) {
+        throw Object.assign(new Error("Token expired"), {
+          code: "UNAUTHORIZED",
+        });
+      }
+      return { version: input.baseVersion + 1 };
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    await session.mutate(
+      "pages.update",
+      { pageId: "page-home", values: { name: "First" } },
+      { permit: "build" }
+    );
+    await session.mutate(
+      "pages.update",
+      { pageId: "page-home", values: { name: "Second" } },
+      { permit: "build" }
+    );
+
+    expect(transport.permissionReads).toBe(2);
+  });
+
   test("checks and caches permissions for local runtime mutations", async () => {
     const storage = createStorage(createPersistedSnapshot());
     const transport = createTransport();

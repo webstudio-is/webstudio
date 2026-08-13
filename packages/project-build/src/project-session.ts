@@ -96,6 +96,13 @@ export type ProjectSessionCommitResult = {
   version: number;
 };
 
+type ProjectSessionCommitInput = {
+  projectId: string;
+  buildId: string;
+  baseVersion: number;
+  transactions: readonly BuilderPatchTransaction[];
+};
+
 export type ProjectSessionPermissions = {
   canView: boolean;
   canEdit: boolean;
@@ -119,18 +126,12 @@ export type ProjectSessionTransport = {
     projectId: string;
     namespaces: readonly BuilderNamespace[];
   }) => Promise<ProjectSessionRemoteSnapshot>;
-  commitPatch: (input: {
-    projectId: string;
-    buildId: string;
-    baseVersion: number;
-    transactions: readonly BuilderPatchTransaction[];
-  }) => Promise<ProjectSessionCommitResult>;
-  commitRestorePoint: (input: {
-    projectId: string;
-    buildId: string;
-    baseVersion: number;
-    transactions: readonly BuilderPatchTransaction[];
-  }) => Promise<ProjectSessionCommitResult>;
+  commitPatch: (
+    input: ProjectSessionCommitInput
+  ) => Promise<ProjectSessionCommitResult>;
+  commitRestorePoint: (
+    input: ProjectSessionCommitInput
+  ) => Promise<ProjectSessionCommitResult>;
   executeServerOperation?: <Result>(input: {
     operationId: string;
     input: unknown;
@@ -575,19 +576,64 @@ const errorDiagnostic = (error: unknown): ProjectSessionDiagnostic => {
   };
 };
 
+const getCommitConfirmationFailureCode = (error: unknown) => {
+  if (
+    typeof error !== "object" ||
+    error === null ||
+    !("confirmationFailure" in error)
+  ) {
+    return;
+  }
+  const failure = error.confirmationFailure;
+  if (
+    typeof failure !== "object" ||
+    failure === null ||
+    !("code" in failure) ||
+    typeof failure.code !== "string"
+  ) {
+    return;
+  }
+  return failure.code;
+};
+
+const isAuthorizationErrorCode = (code: string | undefined) =>
+  code === "UNAUTHORIZED" || code === "FORBIDDEN" || code === "PLAN_REQUIRED";
+
 const shouldRefreshPermissionsAfterError = (error: unknown) => {
-  const code = getProjectSessionErrorCode(error);
   return (
-    code === "UNAUTHORIZED" || code === "FORBIDDEN" || code === "PLAN_REQUIRED"
+    isAuthorizationErrorCode(getProjectSessionErrorCode(error)) ||
+    isAuthorizationErrorCode(getCommitConfirmationFailureCode(error))
   );
 };
 
 const isVersionConflictError = (error: unknown) =>
   getProjectSessionErrorCode(error) === "CONFLICT";
 
-type ProjectSessionCommitInput = Parameters<
-  ProjectSessionTransport["commitPatch"]
->[0];
+const createCommitConfirmationConflictError = ({
+  conflictError,
+  confirmationError,
+}: {
+  conflictError: unknown;
+  confirmationError: unknown;
+}) =>
+  Object.assign(
+    new Error(
+      conflictError instanceof Error
+        ? conflictError.message
+        : "Build version conflict",
+      { cause: confirmationError }
+    ),
+    {
+      code: "CONFLICT",
+      confirmationFailure: {
+        code: getProjectSessionErrorCode(confirmationError),
+        message:
+          confirmationError instanceof Error
+            ? confirmationError.message
+            : "Unknown error",
+      },
+    }
+  );
 
 const commitWithConflictConfirmation = async ({
   commit,
@@ -603,14 +649,24 @@ const commitWithConflictConfirmation = async ({
       result: await commit(input),
       confirmedAfterRetry: false,
     };
-  } catch (error) {
-    if (isVersionConflictError(error) === false) {
-      throw error;
+  } catch (conflictError) {
+    if (isVersionConflictError(conflictError) === false) {
+      throw conflictError;
     }
-    return {
-      result: await commit(input),
-      confirmedAfterRetry: true,
-    };
+    try {
+      return {
+        result: await commit(input),
+        confirmedAfterRetry: true,
+      };
+    } catch (confirmationError) {
+      if (isVersionConflictError(confirmationError)) {
+        throw confirmationError;
+      }
+      throw createCommitConfirmationConflictError({
+        conflictError,
+        confirmationError,
+      });
+    }
   }
 };
 
@@ -1230,7 +1286,11 @@ export class ProjectSession {
             message:
               "Remote build changed. Required namespaces were refreshed; rerun the operation against the latest snapshot.",
           });
-          if (contract.retryOnConflict && options.dryRun !== true) {
+          if (
+            contract.retryOnConflict &&
+            options.dryRun !== true &&
+            getCommitConfirmationFailureCode(error) === undefined
+          ) {
             return await this.commitMutation({
               operationId,
               input,
