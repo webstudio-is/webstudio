@@ -31,7 +31,7 @@
     }
   },
   "files": [
-    "lib/*",
+    "lib/**/*",
     "README.md",
     "!*.{test,stories}.*"
   ],

@@ -96,6 +96,13 @@ export type ProjectSessionCommitResult = {
   version: number;
 };
 
+type ProjectSessionCommitInput = {
+  projectId: string;
+  buildId: string;
+  baseVersion: number;
+  transactions: readonly BuilderPatchTransaction[];
+};
+
 export type ProjectSessionPermissions = {
   canView: boolean;
   canEdit: boolean;
@@ -119,18 +126,12 @@ export type ProjectSessionTransport = {
     projectId: string;
     namespaces: readonly BuilderNamespace[];
   }) => Promise<ProjectSessionRemoteSnapshot>;
-  commitPatch: (input: {
-    projectId: string;
-    buildId: string;
-    baseVersion: number;
-    transactions: readonly BuilderPatchTransaction[];
-  }) => Promise<ProjectSessionCommitResult>;
-  commitRestorePoint: (input: {
-    projectId: string;
-    buildId: string;
-    baseVersion: number;
-    transactions: readonly BuilderPatchTransaction[];
-  }) => Promise<ProjectSessionCommitResult>;
+  commitPatch: (
+    input: ProjectSessionCommitInput
+  ) => Promise<ProjectSessionCommitResult>;
+  commitRestorePoint: (
+    input: ProjectSessionCommitInput
+  ) => Promise<ProjectSessionCommitResult>;
   executeServerOperation?: <Result>(input: {
     operationId: string;
     input: unknown;
@@ -575,15 +576,106 @@ const errorDiagnostic = (error: unknown): ProjectSessionDiagnostic => {
   };
 };
 
+const getCommitConfirmationFailureCode = (error: unknown) => {
+  if (
+    typeof error !== "object" ||
+    error === null ||
+    !("confirmationFailure" in error)
+  ) {
+    return;
+  }
+  const failure = error.confirmationFailure;
+  if (
+    typeof failure !== "object" ||
+    failure === null ||
+    !("code" in failure) ||
+    typeof failure.code !== "string"
+  ) {
+    return;
+  }
+  return failure.code;
+};
+
+const isAuthorizationErrorCode = (code: string | undefined) =>
+  code === "UNAUTHORIZED" || code === "FORBIDDEN" || code === "PLAN_REQUIRED";
+
 const shouldRefreshPermissionsAfterError = (error: unknown) => {
-  const code = getProjectSessionErrorCode(error);
   return (
-    code === "UNAUTHORIZED" || code === "FORBIDDEN" || code === "PLAN_REQUIRED"
+    isAuthorizationErrorCode(getProjectSessionErrorCode(error)) ||
+    isAuthorizationErrorCode(getCommitConfirmationFailureCode(error))
   );
 };
 
 const isVersionConflictError = (error: unknown) =>
   getProjectSessionErrorCode(error) === "CONFLICT";
+
+const createCommitConfirmationConflictError = ({
+  conflictError,
+  confirmationError,
+}: {
+  conflictError: unknown;
+  confirmationError: unknown;
+}) =>
+  Object.assign(
+    new Error(
+      conflictError instanceof Error
+        ? conflictError.message
+        : "Build version conflict",
+      { cause: confirmationError }
+    ),
+    {
+      code: "CONFLICT",
+      confirmationFailure: {
+        code: getProjectSessionErrorCode(confirmationError),
+        message:
+          confirmationError instanceof Error
+            ? confirmationError.message
+            : "Unknown error",
+      },
+    }
+  );
+
+const commitWithConflictConfirmation = async ({
+  commit,
+  input,
+}: {
+  commit: (
+    input: ProjectSessionCommitInput
+  ) => Promise<ProjectSessionCommitResult>;
+  input: ProjectSessionCommitInput;
+}) => {
+  try {
+    return {
+      result: await commit(input),
+      confirmedAfterRetry: false,
+    };
+  } catch (conflictError) {
+    if (isVersionConflictError(conflictError) === false) {
+      throw conflictError;
+    }
+    try {
+      return {
+        result: await commit(input),
+        confirmedAfterRetry: true,
+      };
+    } catch (confirmationError) {
+      if (isVersionConflictError(confirmationError)) {
+        throw confirmationError;
+      }
+      throw createCommitConfirmationConflictError({
+        conflictError,
+        confirmationError,
+      });
+    }
+  }
+};
+
+const commitRetryConfirmedDiagnostic: ProjectSessionDiagnostic = {
+  level: "info",
+  code: "COMMIT_RETRY_CONFIRMED",
+  message:
+    "The transaction was confirmed committed after retrying the same transaction ID.",
+};
 
 const isProjectSessionBusyError = (error: unknown) =>
   getProjectSessionErrorCode(error) === "PROJECT_SESSION_BUSY";
@@ -822,12 +914,19 @@ export class ProjectSession {
           transaction,
         });
       }
-      const commit = await this.#options.transport.commitRestorePoint({
-        projectId: snapshot.projectId,
-        buildId: snapshot.buildId,
-        baseVersion: snapshot.version,
-        transactions: [transaction],
-      });
+      const { result: commit, confirmedAfterRetry } =
+        await commitWithConflictConfirmation({
+          commit: (input) => this.#options.transport.commitRestorePoint(input),
+          input: {
+            projectId: snapshot.projectId,
+            buildId: snapshot.buildId,
+            baseVersion: snapshot.version,
+            transactions: [transaction],
+          },
+        });
+      const diagnostics = confirmedAfterRetry
+        ? [commitRetryConfirmedDiagnostic]
+        : [];
       const applied = applyBuilderPatchTransactions(snapshot.state, [
         transaction,
       ]);
@@ -847,7 +946,7 @@ export class ProjectSession {
       const persisted = await this.#synchronizeAfterCommit({
         snapshot: committedSnapshot,
         namespaces: restorePointNamespaces,
-        diagnostics: [],
+        diagnostics,
       });
       return this.createEnvelope({
         source: "local",
@@ -1187,7 +1286,11 @@ export class ProjectSession {
             message:
               "Remote build changed. Required namespaces were refreshed; rerun the operation against the latest snapshot.",
           });
-          if (contract.retryOnConflict && options.dryRun !== true) {
+          if (
+            contract.retryOnConflict &&
+            options.dryRun !== true &&
+            getCommitConfirmationFailureCode(error) === undefined
+          ) {
             return await this.commitMutation({
               operationId,
               input,
@@ -1291,12 +1394,20 @@ export class ProjectSession {
         input
       );
     }
-    const commit = await this.#options.transport.commitPatch({
+    const commitInput = {
       projectId: snapshot.projectId,
       buildId: snapshot.buildId,
       baseVersion: snapshot.version,
       transactions: [transaction],
-    });
+    };
+    const { result: commit, confirmedAfterRetry } =
+      await commitWithConflictConfirmation({
+        commit: (input) => this.#options.transport.commitPatch(input),
+        input: commitInput,
+      });
+    const commitDiagnostics = confirmedAfterRetry
+      ? [...diagnostics, commitRetryConfirmedDiagnostic]
+      : diagnostics;
     const applied = applyBuilderPatchTransactions(snapshot.state, [
       transaction,
     ]);
@@ -1328,7 +1439,7 @@ export class ProjectSession {
         contract.writeNamespaces,
         mutation.invalidatesNamespaces
       ),
-      diagnostics,
+      diagnostics: commitDiagnostics,
     });
     return this.createEnvelope({
       source: "local",
