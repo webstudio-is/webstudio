@@ -30,6 +30,7 @@ import {
   type ProjectSessionScreenshotInput,
 } from "./mcp";
 import { getComponentTemplates } from "./runtime/component-templates";
+import { insertFragmentInput } from "./runtime/components";
 import { createEmptyWebstudioFragment } from "./runtime/component-template";
 import {
   projectSessionBusyMessage,
@@ -320,15 +321,7 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     method: "mutation",
     permit: "build",
     description: "Insert fragment",
-    inputSchema: getTestInputSchema(
-      z.object({
-        parentInstanceId: z.string(),
-        fragment: z.unknown(),
-        conflictResolution: z.enum(["ours", "theirs", "merge"]).optional(),
-        mode: z.enum(["append", "prepend", "replace"]).optional(),
-        insertIndex: z.number().optional(),
-      })
-    ),
+    inputSchema: getTestInputSchema(insertFragmentInput),
     readNamespaces: ["pages", "instances"],
     writeNamespaces: ["instances", "props", "styles"],
     invalidatesNamespaces: ["instances", "props", "styles"],
@@ -1027,6 +1020,18 @@ describe("project session mcp adapter", () => {
     const insertFragmentTool = tools.find(
       (tool) => tool.name === "insert-fragment"
     );
+    const runtimeInsertFragmentProperties = Object.keys(
+      getInputSchemaMetadata(insertFragmentInput).inputJsonSchema.properties ??
+        {}
+    );
+    expect(
+      Object.keys(
+        insertFragmentTool === undefined
+          ? {}
+          : (getDetailedProjectSessionMcpInputSchema(insertFragmentTool)
+              .properties ?? {})
+      ).filter((property) => property !== "dryRun")
+    ).toEqual(runtimeInsertFragmentProperties);
     expect(insertFragmentTool?.inputSchema.required).toEqual([
       "parentInstanceId",
       "fragment",
@@ -1037,6 +1042,7 @@ describe("project session mcp adapter", () => {
       "parentInstanceId",
       "fragment",
       "conflictResolution",
+      "contentMode",
       "mode",
       "insertIndex",
       "dryRun",
@@ -2436,6 +2442,7 @@ describe("project session mcp adapter", () => {
         fragment:
           '<ws.element ws:tag="section"><ws.element ws:tag="h2">Title</ws.element></ws.element>',
         conflictResolution: "ours",
+        contentMode: true,
       },
     });
 
@@ -2451,6 +2458,7 @@ describe("project session mcp adapter", () => {
           ]),
         }),
         conflictResolution: "ours",
+        contentMode: true,
         mode: undefined,
         insertIndex: undefined,
       },

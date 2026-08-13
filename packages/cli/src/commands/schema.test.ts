@@ -246,6 +246,7 @@ test("prints full mcp tool input schemas when requested", () => {
     "parentInstanceId",
     "fragment",
     "conflictResolution",
+    "contentMode",
     "mode",
     "insertIndex",
     "dryRun",
