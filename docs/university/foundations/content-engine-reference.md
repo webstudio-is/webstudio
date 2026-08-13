@@ -191,6 +191,9 @@ Resolve paths relative to the file containing the reference. JSON Pointer uses `
 | JSON string | 16 KiB |
 | Indexed properties per document | 64 KiB |
 | Generated excerpt | 2 KiB |
+| MDX nesting depth | 100 |
+| MDX nodes | 20000 |
+| MDX JSX props | 4000 |
 | Loaded file | 1 MiB |
 | Loaded content per query | 2 MiB |
 | Loaded files per query | 20 |
