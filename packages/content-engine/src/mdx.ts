@@ -35,6 +35,13 @@ export type MdxAuthoredProp = Readonly<{
   value: string | true;
 }>;
 
+export type MdxMode = "flow" | "text";
+
+export type MdxMarkdownListItem = Readonly<{
+  checked?: boolean;
+  spread: boolean;
+}>;
+
 export type MdxAuthoredNode =
   | Readonly<{
       type: "text";
@@ -44,13 +51,26 @@ export type MdxAuthoredNode =
   | Readonly<{
       type: "comment";
       value: string;
+      mdxMode: MdxMode;
       sourceRange?: MdxSourceRange;
     }>
   | Readonly<{
       type: "element";
+      syntax: "markdown";
       tag: string;
       props: readonly MdxAuthoredProp[];
       children: readonly MdxAuthoredNode[];
+      markdownListItem?: MdxMarkdownListItem;
+      preserveTextWhitespace?: true;
+      sourceRange?: MdxSourceRange;
+    }>
+  | Readonly<{
+      type: "element";
+      syntax: "mdx";
+      tag: string;
+      props: readonly MdxAuthoredProp[];
+      children: readonly MdxAuthoredNode[];
+      mdxMode: MdxMode;
       sourceRange?: MdxSourceRange;
     }>
   | Readonly<{
@@ -58,6 +78,7 @@ export type MdxAuthoredNode =
       name: string;
       props: readonly MdxAuthoredProp[];
       children: readonly MdxAuthoredNode[];
+      mdxMode: MdxMode;
       sourceRange?: MdxSourceRange;
     }>;
 
@@ -290,18 +311,50 @@ const createElement = ({
   tag,
   props = [],
   children,
+  mdxMode,
+  markdownListItem,
+  preserveTextWhitespace,
 }: {
   node: SyntaxTreeNode;
   tag: string;
   props?: readonly MdxAuthoredProp[];
   children: readonly MdxAuthoredNode[];
-}): MdxAuthoredNode => ({
-  type: "element",
-  tag,
-  props,
-  children,
-  sourceRange: toSourceRange(node.position),
-});
+  mdxMode?: MdxMode;
+  markdownListItem?: MdxMarkdownListItem;
+  preserveTextWhitespace?: true;
+}): MdxAuthoredNode => {
+  const sourceRange = toSourceRange(node.position);
+  if (mdxMode !== undefined) {
+    return {
+      type: "element",
+      syntax: "mdx",
+      tag,
+      props,
+      children,
+      mdxMode,
+      sourceRange,
+    };
+  }
+  return {
+    type: "element",
+    syntax: "markdown",
+    tag,
+    props,
+    children,
+    ...(markdownListItem === undefined ? {} : { markdownListItem }),
+    ...(preserveTextWhitespace === undefined ? {} : { preserveTextWhitespace }),
+    sourceRange,
+  };
+};
+
+const getMdxMode = (node: SyntaxTreeNode): MdxMode =>
+  node.type === "mdxJsxTextElement" || node.type === "mdxTextExpression"
+    ? "text"
+    : "flow";
+
+const setHastData = (node: SyntaxTreeNode, data: Record<string, unknown>) => {
+  node.data = { ...(isRecord(node.data) ? node.data : {}), ...data };
+};
 
 const isCommentExpression = (node: SyntaxTreeNode) => {
   if (isRecord(node.data) === false || isRecord(node.data.estree) === false) {
@@ -377,6 +430,7 @@ const mapMdxExpression: Handler = (state, value) => {
     const comment = {
       type: "comment",
       value: node.value,
+      data: { mdxMode: getMdxMode(node) },
     } as const;
     state.patch(value, comment);
     return comment;
@@ -395,8 +449,38 @@ const mapMdxJsxElement: Handler = (state, value) => {
   const properties = Object.fromEntries(
     mapStaticProps(node).map((prop) => [prop.name, prop.value])
   );
-  return state(value, "ws.element", properties, state.all(value));
+  const result = state(value, "ws.element", properties, state.all(value));
+  if (isSyntaxTreeNode(result)) {
+    setHastData(result, { mdxMode: getMdxMode(node) });
+  }
+  return result;
 };
+
+const mapListItem: Handler = (state, value, parent) => {
+  const node = value as SyntaxTreeNode;
+  const result = defaultHandlers.listItem(state, value, parent);
+  if (isSyntaxTreeNode(result)) {
+    setHastData(result, {
+      markdownListItem: {
+        ...(typeof node.checked === "boolean" ? { checked: node.checked } : {}),
+        spread:
+          node.spread === true ||
+          (isSyntaxTreeNode(parent) && parent.spread === true),
+      },
+    });
+  }
+  return result;
+};
+
+const preserveWhitespace =
+  (handler: Handler): Handler =>
+  (state, value, parent) => {
+    const result = handler(state, value, parent);
+    if (isSyntaxTreeNode(result)) {
+      setHastData(result, { preserveTextWhitespace: true });
+    }
+    return result;
+  };
 
 const mapParagraph: Handler = (state, value) => {
   const children = getSyntaxTreeChildren(value as SyntaxTreeNode);
@@ -412,12 +496,15 @@ const rejectUnsupportedNode: Handler = (_state, value) => {
 };
 
 const mdxHandlers: Handlers = {
+  code: preserveWhitespace(defaultHandlers.code),
   html: rejectUnsupportedNode,
+  inlineCode: preserveWhitespace(defaultHandlers.inlineCode),
   mdxFlowExpression: mapMdxExpression,
   mdxJsxFlowElement: mapMdxJsxElement,
   mdxJsxTextElement: mapMdxJsxElement,
   mdxTextExpression: mapMdxExpression,
   mdxjsEsm: rejectUnsupportedNode,
+  listItem: mapListItem,
   paragraph: mapParagraph,
 };
 
@@ -472,6 +559,41 @@ const mapHastChildren = (node: SyntaxTreeNode): MdxAuthoredNode[] =>
     )
     .map(mapHastNode);
 
+const getHastMdxMode = (node: SyntaxTreeNode) => {
+  if (
+    isRecord(node.data) &&
+    (node.data.mdxMode === "flow" || node.data.mdxMode === "text")
+  ) {
+    return node.data.mdxMode;
+  }
+  return throwUnsafeNode(node, "MDX node mode is missing");
+};
+
+const getMarkdownListItem = (
+  node: SyntaxTreeNode
+): MdxMarkdownListItem | undefined => {
+  if (isRecord(node.data) === false) {
+    return;
+  }
+  const value = node.data.markdownListItem;
+  if (
+    isRecord(value) === false ||
+    typeof value.spread !== "boolean" ||
+    (value.checked !== undefined && typeof value.checked !== "boolean")
+  ) {
+    return;
+  }
+  return {
+    ...(typeof value.checked === "boolean" ? { checked: value.checked } : {}),
+    spread: value.spread,
+  };
+};
+
+const preservesTextWhitespace = (node: SyntaxTreeNode) =>
+  isRecord(node.data) && node.data.preserveTextWhitespace === true
+    ? true
+    : undefined;
+
 const mapWebstudioElement = (
   node: SyntaxTreeNode,
   props: readonly MdxAuthoredProp[]
@@ -490,6 +612,7 @@ const mapWebstudioElement = (
       name: nameProp.value,
       props: props.filter((prop) => prop.name !== "ws:name"),
       children: mapHastChildren(node),
+      mdxMode: getHastMdxMode(node),
       sourceRange: toSourceRange(node.position),
     };
   }
@@ -512,6 +635,7 @@ const mapWebstudioElement = (
     tag,
     props: props.filter((prop) => prop.name !== "ws:tag"),
     children: mapHastChildren(node),
+    mdxMode: getHastMdxMode(node),
   });
 };
 
@@ -533,6 +657,7 @@ const mapHastNode = (node: SyntaxTreeNode): MdxAuthoredNode => {
     return {
       type: "comment",
       value: node.value,
+      mdxMode: getHastMdxMode(node),
       sourceRange: toSourceRange(node.position),
     };
   }
@@ -551,6 +676,8 @@ const mapHastNode = (node: SyntaxTreeNode): MdxAuthoredNode => {
     tag: node.tagName,
     props,
     children: mapHastChildren(node),
+    markdownListItem: getMarkdownListItem(node),
+    preserveTextWhitespace: preservesTextWhitespace(node),
   });
 };
 

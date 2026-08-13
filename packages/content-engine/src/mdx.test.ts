@@ -85,6 +85,7 @@ author:
     expect(document.children).toEqual([
       {
         type: "element",
+        syntax: "markdown",
         tag: "h1",
         props: [],
         children: [
@@ -98,6 +99,7 @@ author:
           },
           {
             type: "element",
+            syntax: "markdown",
             tag: "strong",
             props: [],
             children: [
@@ -116,11 +118,13 @@ author:
       },
       {
         type: "element",
+        syntax: "markdown",
         tag: "p",
         props: [],
         children: [
           {
             type: "element",
+            syntax: "markdown",
             tag: "a",
             props: [{ name: "href", value: "/docs" }],
             children: [
@@ -213,6 +217,8 @@ author:
     expect(document.children).toEqual([
       expect.objectContaining({
         type: "element",
+        syntax: "mdx",
+        mdxMode: "flow",
         tag: "section",
         props: [
           { name: "data-kind", value: "hero" },
@@ -221,6 +227,7 @@ author:
         children: [
           expect.objectContaining({
             type: "template",
+            mdxMode: "flow",
             name: "Hero Card",
             props: [{ name: "tone", value: "quiet" }],
             children: [expect.objectContaining({ type: "element", tag: "h2" })],
@@ -241,6 +248,7 @@ author:
     expect(document.children).toEqual([
       expect.objectContaining({
         type: "comment",
+        mdxMode: "flow",
         value: "/* keep this note */",
       }),
       expect.objectContaining({
@@ -250,6 +258,7 @@ author:
           expect.objectContaining({ type: "text", value: "Text " }),
           expect.objectContaining({
             type: "comment",
+            mdxMode: "text",
             value: "/* inline note */",
           }),
         ],
@@ -354,8 +363,10 @@ const ready = true;
         children: [
           {
             type: "element",
+            syntax: "markdown",
             tag: "li",
             props: [{ name: "class", value: "task-list-item" }],
+            markdownListItem: { checked: true, spread: false },
             children: [
               { type: "element", tag: "input" },
               { type: "text", value: " " },
