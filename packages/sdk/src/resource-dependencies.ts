@@ -5,7 +5,7 @@ import type { DataSource, DataSources } from "./schema/data-sources";
 import type { Instances } from "./schema/instances";
 import type { Page } from "./schema/pages";
 import type { Props } from "./schema/props";
-import type { Resource, Resources } from "./schema/resources";
+import type { Resource } from "./schema/resources";
 
 export const getExpressionDataSourceIds = (
   expressions: Iterable<string | undefined>
@@ -56,7 +56,9 @@ export const getPageResourceRootIds = ({
     page.meta?.status,
     page.meta?.redirect,
     page.meta?.content,
-    ...(page.meta?.custom ?? []).map(({ content }) => content),
+    ...(page.meta?.custom ?? [])
+      .filter(({ property }) => property.trim().length > 0)
+      .map(({ content }) => content),
   ];
   for (const prop of props.values()) {
     if (instances.size > 0 && instanceIds.has(prop.instanceId) === false) {
@@ -92,16 +94,16 @@ export const getPageResourceRootIds = ({
   return resourceIds;
 };
 
-export const getTransitiveResourceDataSourceIds = ({
+export const getTransitiveResourceIds = ({
   resourceId,
   resources,
   dataSources,
 }: {
   resourceId: Resource["id"];
-  resources: Resources;
+  resources: ReadonlyMap<Resource["id"], Resource>;
   dataSources: DataSources;
 }) => {
-  const dependencies = new Set<DataSource["id"]>();
+  const dependencies = new Set<Resource["id"]>();
   const visitedResourceIds = new Set<Resource["id"]>();
   const visit = (currentResourceId: Resource["id"]) => {
     if (visitedResourceIds.has(currentResourceId)) {
@@ -117,10 +119,36 @@ export const getTransitiveResourceDataSourceIds = ({
       if (dataSource?.type !== "resource") {
         continue;
       }
-      dependencies.add(dataSourceId);
+      dependencies.add(dataSource.resourceId);
       visit(dataSource.resourceId);
     }
   };
   visit(resourceId);
   return dependencies;
+};
+
+export const getResourceCycleDataSourceIds = ({
+  resourceDataSource,
+  resources,
+  dataSources,
+}: {
+  resourceDataSource: Extract<DataSource, { type: "resource" }>;
+  resources: ReadonlyMap<Resource["id"], Resource>;
+  dataSources: DataSources;
+}) => {
+  const dataSourceIds = new Set<DataSource["id"]>([resourceDataSource.id]);
+  for (const candidate of dataSources.values()) {
+    if (
+      candidate.type === "resource" &&
+      (candidate.resourceId === resourceDataSource.resourceId ||
+        getTransitiveResourceIds({
+          resourceId: candidate.resourceId,
+          resources,
+          dataSources,
+        }).has(resourceDataSource.resourceId))
+    ) {
+      dataSourceIds.add(candidate.id);
+    }
+  }
+  return dataSourceIds;
 };

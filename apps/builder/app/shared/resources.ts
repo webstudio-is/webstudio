@@ -7,7 +7,10 @@ import {
   type ResourceRequest,
   type Resources,
 } from "@webstudio-is/sdk";
-import { isAssetsResourceRequest } from "@webstudio-is/sdk/runtime";
+import {
+  isAssetsResourceRequest,
+  resourceLoadConcurrency,
+} from "@webstudio-is/sdk/runtime";
 import { restResourcesLoader } from "./router-utils";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { fetch } from "./fetch.client";
@@ -15,8 +18,6 @@ import { getResourceKey } from "./resource-utils";
 import { type AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
 import { separateResourceDiagnostics } from "./resource-diagnostics";
 import type { ResourcePerformance } from "./resource-diagnostics";
-
-const MAX_PENDING_RESOURCES = 5;
 
 type InFlightResourceBatch = {
   controller: AbortController;
@@ -90,7 +91,7 @@ export const $hasPendingResources = computed(
 );
 
 const loadResources = async (requestFetch: typeof fetch = fetch) => {
-  const availableSlots = MAX_PENDING_RESOURCES - pending.size;
+  const availableSlots = resourceLoadConcurrency - pending.size;
   if (availableSlots <= 0) {
     return;
   }
@@ -165,7 +166,7 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
 };
 
 const startLoading = (requestFetch: typeof fetch = fetch) => {
-  if (pending.size >= MAX_PENDING_RESOURCES || queue.size === 0) {
+  if (pending.size >= resourceLoadConcurrency || queue.size === 0) {
     return;
   }
   void loadResources(requestFetch);

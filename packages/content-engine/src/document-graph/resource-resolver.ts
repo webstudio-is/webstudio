@@ -151,9 +151,28 @@ export const resolveResources = async <Document>({
     const resource = resourcesById.get(resourceId) as Resource<Document>;
     const resolution = (async () => {
       const dependencyDocuments = new Map<string, Document>();
-      const dependencyValues = await Promise.all(
-        resource.dependencies.map(resolveResource)
-      );
+      let dependencyValues: Document[];
+      try {
+        dependencyValues = await Promise.all(
+          resource.dependencies.map(resolveResource)
+        );
+      } catch (cause) {
+        if (
+          cause instanceof ResourceResolutionError &&
+          cause.code === "RESOLUTION_FAILED"
+        ) {
+          throw new ResourceResolutionError({
+            code: cause.code,
+            message: `Resource dependency path ${[
+              resource.id,
+              ...cause.resourceIds,
+            ].join(" -> ")} could not be resolved`,
+            resourceIds: [resource.id, ...cause.resourceIds],
+            cause: cause.cause,
+          });
+        }
+        throw cause;
+      }
       for (const [index, dependencyId] of resource.dependencies.entries()) {
         dependencyDocuments.set(
           dependencyId,
@@ -164,10 +183,12 @@ export const resolveResources = async <Document>({
       try {
         return await limit(async () => {
           assertActive(signal);
-          return await resource.resolve({
+          const document = await resource.resolve({
             documents: dependencyDocuments,
             signal,
           });
+          assertActive(signal);
+          return document;
         });
       } catch (cause) {
         if (signal?.aborted) {

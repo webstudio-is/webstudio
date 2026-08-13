@@ -14,7 +14,7 @@ import {
 import { useStore } from "@nanostores/react";
 import {
   encodeDataVariableId,
-  getTransitiveResourceDataSourceIds,
+  getResourceCycleDataSourceIds,
   isAssetsResource as isAssetsResourceRecord,
   SYSTEM_VARIABLE_ID,
   systemParameter,
@@ -492,31 +492,24 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
                 variableValuesByInstanceSelector,
                 includeResourceDataSources: true,
               });
-            // prevent showing currently edited variable in suggestions
-            // to avoid cirular dependeny
+            // Prevent showing dependencies that would create a cycle.
             const newScope = { ...scope };
             const newAliases = new Map(aliases);
             const newVariableValues = new Map(variableValues);
             if (variable) {
-              const key = encodeDataVariableId(variable.id);
-              delete newScope[key];
-              newAliases.delete(key);
-              newVariableValues.delete(variable.id);
-              for (const dataSource of dataSources.values()) {
-                if (
-                  dataSource.type !== "resource" ||
-                  getTransitiveResourceDataSourceIds({
-                    resourceId: dataSource.resourceId,
-                    resources,
-                    dataSources,
-                  }).has(variable.id) === false
-                ) {
-                  continue;
-                }
-                const dependencyKey = encodeDataVariableId(dataSource.id);
-                delete newScope[dependencyKey];
-                newAliases.delete(dependencyKey);
-                newVariableValues.delete(dataSource.id);
+              const hiddenDataSourceIds =
+                variable.type === "resource"
+                  ? getResourceCycleDataSourceIds({
+                      resourceDataSource: variable,
+                      resources,
+                      dataSources,
+                    })
+                  : [variable.id];
+              for (const dataSourceId of hiddenDataSourceIds) {
+                const key = encodeDataVariableId(dataSourceId);
+                delete newScope[key];
+                newAliases.delete(key);
+                newVariableValues.delete(dataSourceId);
               }
             }
             return {
