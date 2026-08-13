@@ -21,6 +21,7 @@ import {
   createProjectSessionMcpCore,
   createProjectSessionMcpServer,
   createMcpStdioTransport,
+  getDetailedProjectSessionMcpInputSchema,
   hiddenMcpOperationCommands,
   listProjectSessionMcpResources,
   listProjectSessionMcpTools,
@@ -1042,15 +1043,20 @@ describe("project session mcp adapter", () => {
     ]);
     const fragmentSchema = insertFragmentTool?.inputSchema.properties?.fragment;
     expect(fragmentSchema).toEqual(expect.objectContaining({ type: "string" }));
+    const detailedFragmentSchema =
+      insertFragmentTool === undefined
+        ? undefined
+        : getDetailedProjectSessionMcpInputSchema(insertFragmentTool).properties
+            ?.fragment;
     expect(
       tools.find((tool) => tool.name === "insert-fragment-verified")
         ?.inputSchema.required
     ).toEqual(["parentInstanceId", "fragment", "pagePath"]);
     const jsxDescription =
-      typeof fragmentSchema === "object" &&
-      "description" in fragmentSchema &&
-      typeof fragmentSchema.description === "string"
-        ? fragmentSchema.description
+      typeof detailedFragmentSchema === "object" &&
+      "description" in detailedFragmentSchema &&
+      typeof detailedFragmentSchema.description === "string"
+        ? detailedFragmentSchema.description
         : undefined;
     expect(jsxDescription).toContain("not React aliases className or htmlFor");
     expect(jsxDescription).toContain("Use ws:style");

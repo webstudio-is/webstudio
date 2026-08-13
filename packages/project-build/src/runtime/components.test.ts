@@ -1100,6 +1100,17 @@ test("honors fragment token conflict resolution", async () => {
   ).filter((styleSource) => styleSource.type === "token");
   expect(addedTokenSources).toEqual([]);
   expect(
+    getAddedValues<{ instanceId: string; values: string[] }>(
+      mutation,
+      "styleSourceSelections"
+    )
+  ).toEqual([
+    {
+      instanceId: "generated-1",
+      values: [existingFragment.styleSources[0]?.id],
+    },
+  ]);
+  expect(
     getAddedValues<{ property: string; value: unknown }>(mutation, "styles")
   ).not.toContainEqual(
     expect.objectContaining({

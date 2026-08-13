@@ -3413,11 +3413,12 @@ export const hiddenMcpOperationCommands = new Set<string>([
   "copy-page",
 ]);
 
-const compactMcpOperationCommands = new Set([
-  "create-assets-resource",
-  "update-assets-resource",
-  "validate-asset-query",
-  "preview-asset-query",
+const mcpOperationSchemaInlineSizes = new Map<string, number>([
+  ["insert-fragment", 1_000],
+  ["create-assets-resource", 2_500],
+  ["update-assets-resource", 2_500],
+  ["validate-asset-query", 2_500],
+  ["preview-asset-query", 2_500],
 ]);
 
 const detailedMcpInputSchemas = new WeakMap<
@@ -3455,7 +3456,7 @@ export const listProjectSessionMcpTools = (
       });
       const { inputSchema, detailedInputSchema } = getHandshakeInputSchema(
         operationInputSchema,
-        compactMcpOperationCommands.has(operation.command) ? 2_500 : undefined
+        mcpOperationSchemaInlineSizes.get(operation.command)
       );
       const tool = createProjectSessionMcpTool({
         name: operation.command,
