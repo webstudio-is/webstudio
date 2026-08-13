@@ -1,5 +1,6 @@
 import equal from "fast-deep-equal";
 import {
+  blockTemplateComponent,
   elementComponent,
   instanceComponent,
   ROOT_INSTANCE_ID,
@@ -66,6 +67,7 @@ import {
   getNewFragmentContentModelWarnings,
 } from "./matcher";
 import { z } from "zod";
+import { assignUniqueBlockTemplateNamesMutable } from "./block";
 
 const conflictResolutionInput = z.enum(["ours", "theirs", "merge"]);
 
@@ -778,6 +780,13 @@ const createInsertFragmentMutation = <
       return child;
     }
   );
+  if (parent.component === blockTemplateComponent) {
+    assignUniqueBlockTemplateNamesMutable({
+      newChildren: insertedChildren,
+      existingChildren: mode === "replace" ? [] : parentChildren,
+      instances: nextData.instances,
+    });
+  }
 
   if (validateContentModel) {
     const validationInstances = new Map(nextData.instances);

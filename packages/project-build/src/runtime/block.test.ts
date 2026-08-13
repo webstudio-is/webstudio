@@ -5,10 +5,15 @@ import {
   type Instance,
 } from "@webstudio-is/sdk";
 import {
+  allocateUniqueBlockTemplateName,
+  assignUniqueBlockTemplateNamesMutable,
   canDeleteInstanceInContentMode,
+  findBlockTemplateNameCollision,
+  findBlockTemplateOwner,
   findBlockChildSelector,
   findBlockSelector,
   findBlockTemplates,
+  getBlockTemplateNameChangeImpact,
   getBlockTemplateInsertionIndex,
 } from "./block";
 
@@ -157,5 +162,119 @@ describe("block tree helpers", () => {
         instances,
       })
     ).toBe(false);
+  });
+});
+
+describe("block template names", () => {
+  const createBlockInstances = () =>
+    new Map<Instance["id"], Instance>([
+      [
+        "block",
+        createInstance("block", blockComponent, [
+          { type: "id", value: "templates" },
+        ]),
+      ],
+      [
+        "templates",
+        createInstance("templates", blockTemplateComponent, [
+          { type: "id", value: "hero" },
+          { type: "id", value: "card" },
+        ]),
+      ],
+      ["hero", { ...createInstance("hero", "Box"), label: "Hero Card" }],
+      ["card", createInstance("card", "Box")],
+    ]);
+  test("finds only direct template entries and their owning block", () => {
+    const instances = createBlockInstances();
+    instances.set("nested", createInstance("nested", "Box"));
+    instances.get("hero")?.children.push({ type: "id", value: "nested" });
+
+    expect(
+      findBlockTemplateOwner({ templateInstanceId: "hero", instances })
+    ).toEqual({
+      blockInstanceId: "block",
+      templateContainerId: "templates",
+    });
+    expect(
+      findBlockTemplateOwner({ templateInstanceId: "nested", instances })
+    ).toBeUndefined();
+  });
+
+  test("allocates readable numeric suffixes", () => {
+    const existingNames = new Set(["Card", "Card 2", "Card 4"]);
+
+    expect(
+      allocateUniqueBlockTemplateName({ name: "Card", existingNames })
+    ).toBe("Card 3");
+    expect(
+      allocateUniqueBlockTemplateName({ name: "Card 2", existingNames })
+    ).toBe("Card 3");
+    expect(
+      allocateUniqueBlockTemplateName({ name: "card", existingNames })
+    ).toBe("card");
+  });
+
+  test("assigns unique names to newly inserted template entries", () => {
+    const instances = createBlockInstances();
+    instances.set("card-copy", createInstance("card-copy", "Box"));
+    instances.set("card-copy-2", createInstance("card-copy-2", "Box"));
+
+    assignUniqueBlockTemplateNamesMutable({
+      newChildren: [
+        { type: "id", value: "card-copy" },
+        { type: "id", value: "card-copy-2" },
+      ],
+      existingChildren: [
+        { type: "id", value: "hero" },
+        { type: "id", value: "card" },
+      ],
+      instances,
+    });
+
+    expect(instances.get("card-copy")?.label).toBe("Box 2");
+    expect(instances.get("card-copy-2")?.label).toBe("Box 3");
+  });
+
+  test("finds exact name collisions in the same flat list", () => {
+    const instances = createBlockInstances();
+
+    expect(
+      findBlockTemplateNameCollision({
+        instance: instances.get("card")!,
+        nextInstance: { ...instances.get("card")!, label: "Hero Card" },
+        instances,
+      })?.instance.id
+    ).toBe("hero");
+    expect(
+      findBlockTemplateNameCollision({
+        instance: instances.get("card")!,
+        nextInstance: { ...instances.get("card")!, label: "hero card" },
+        instances,
+      })
+    ).toBeUndefined();
+  });
+
+  test("reports whether a name change needs source confirmation", () => {
+    const instances = createBlockInstances();
+    expect(
+      getBlockTemplateNameChangeImpact({
+        templateInstanceId: "hero",
+        nextLabel: "Feature Card",
+        externalContent: {
+          blockInstanceId: "block",
+          assetId: "post-asset",
+          revision: "revision-1",
+          contentRef: "posts/hello.mdx",
+          format: "mdx",
+          renderScope: "route:/posts/hello",
+        },
+        instances,
+      })
+    ).toMatchObject({
+      blockInstanceId: "block",
+      previousName: "Hero Card",
+      nextName: "Feature Card",
+      requiresConfirmation: true,
+    });
   });
 });

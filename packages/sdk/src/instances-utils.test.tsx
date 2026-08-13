@@ -6,6 +6,7 @@ import {
   getHtmlTagsFromProps,
   getHtmlTagFromInstance,
   getIndexesWithinAncestors,
+  getInstanceName,
   parseComponentName,
 } from "./instances-utils";
 import type { WsComponentMeta } from "./schema/component-meta";
@@ -54,6 +55,26 @@ test("include not existing/virtual instance", () => {
 test("extract short name and namespace from component name", () => {
   expect(parseComponentName("Box")).toEqual([undefined, "Box"]);
   expect(parseComponentName("radix:Box")).toEqual(["radix", "Box"]);
+});
+
+test("gets the instance name from user label, element tag, or component", () => {
+  expect(
+    getInstanceName({
+      instance: { component: "Box", label: "Hero Card" },
+      componentLabel: "Box",
+    })
+  ).toBe("Hero Card");
+  expect(
+    getInstanceName({
+      instance: { component: "ws:element", tag: "article" },
+      componentLabel: "Element",
+    })
+  ).toBe("<article>");
+  expect(
+    getInstanceName({
+      instance: { component: "custom:HeroCard" },
+    })
+  ).toBe("HeroCard");
 });
 
 test("get html tag from instance", () => {

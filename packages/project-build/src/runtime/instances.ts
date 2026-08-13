@@ -1,4 +1,5 @@
 import {
+  blockTemplateComponent,
   elementComponent,
   findTreeInstanceIds,
   getHtmlTagsFromProps,
@@ -72,6 +73,27 @@ import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk/standard-attributes";
 import equal from "fast-deep-equal";
 import { z } from "zod";
+import {
+  assignUniqueBlockTemplateNameMutable,
+  findBlockTemplateNameCollision,
+} from "./block";
+
+const throwDuplicateBlockTemplateName = ({
+  name,
+  path,
+}: {
+  name: string;
+  path: "component" | "label" | "tag";
+}): never =>
+  throwBuilderValidationError("Template name must be unique", [
+    {
+      code: "duplicate_template_name",
+      path: [path],
+      message: `Template name "${name}" is already in use.`,
+      constraint: "unique_within:block_templates",
+      example: `${name} 2`,
+    },
+  ]);
 
 export const insertIndexInput = z.number().int().nonnegative();
 const instanceEndPositionInput = z.literal("end");
@@ -1066,6 +1088,21 @@ export const createInstanceMovePatches = ({
             requestedIndex: requestedInsertIndex,
           })
         : requestedInsertIndex;
+    if (parent.instance.id !== nextParent.id) {
+      const previousLabel = instance.label;
+      assignUniqueBlockTemplateNameMutable({
+        instanceId: instance.id,
+        parent: nextParent,
+        instances: mutableInstances,
+      });
+      if (instance.label !== previousLabel && instance.label !== undefined) {
+        patches.push({
+          op: previousLabel === undefined ? "add" : "replace",
+          path: [instance.id, "label"],
+          value: instance.label,
+        });
+      }
+    }
     patches.push({
       op: "remove" as const,
       path: [parent.instance.id, "children", parent.childIndex] as [
@@ -1773,6 +1810,13 @@ const moveInstanceToParentMutable = (
   const [newParentId] = dropTarget.parentSelector;
   const newParent = data.instances.get(newParentId);
   const newChild = createInstanceChild(rootInstanceId);
+  if (newParent !== undefined) {
+    assignUniqueBlockTemplateNameMutable({
+      instanceId: rootInstanceId,
+      parent: newParent,
+      instances: data.instances,
+    });
+  }
   if (dropTarget.position === "end") {
     newParent?.children.push(newChild);
   } else {
@@ -1954,6 +1998,12 @@ export const wrapInstance = (
       selectedItem.instance.id,
       wrapperInstanceId
     );
+    assignUniqueBlockTemplateNameMutable({
+      instanceId: wrapperInstanceId,
+      parent: parentInstance,
+      replacedInstanceId: wrapperInstanceId,
+      instances: nextInstances,
+    });
     const wrapperSelector = [wrapperInstanceId, ...parentItem.instanceSelector];
     const isSatisfying = isTreeSatisfyingContentModel({
       instances: nextInstances,
@@ -2027,6 +2077,12 @@ export const wrapInstance = (
     createInstanceChild(wrapperInstanceId);
   nextInstances.set(parentInstanceId, nextParentInstance);
   nextInstances.set(wrapperInstanceId, wrapperInstance);
+  assignUniqueBlockTemplateNameMutable({
+    instanceId: wrapperInstanceId,
+    parent: parentInstance,
+    replacedInstanceId: instanceId,
+    instances: nextInstances,
+  });
   const wrapperSelector = [
     wrapperInstanceId,
     ...input.instanceSelector.slice(1),
@@ -2193,6 +2249,12 @@ const unwrapInstanceMutable = ({
   if (grandparentInstance === undefined) {
     return { success: false, error: "Grandparent instance not found" };
   }
+  assignUniqueBlockTemplateNameMutable({
+    instanceId: selectedInstance.id,
+    parent: grandparentInstance,
+    replacedInstanceId: parentInstance.id,
+    instances,
+  });
 
   const selectedParentId = selectedItem.instanceSelector[1];
   const selectedParentInstance = instances.get(selectedParentId);
@@ -2379,6 +2441,17 @@ export const convertInstance = (
           nextInstance.tag = defaultTag;
         }
       }
+      const collision = findBlockTemplateNameCollision({
+        instance: selectedInstance,
+        nextInstance,
+        instances: draft.instances,
+      });
+      if (collision) {
+        return throwDuplicateBlockTemplateName({
+          name: collision.name,
+          path: "component",
+        });
+      }
       const isSatisfying = isTreeSatisfyingContentModel({
         instances: draft.instances,
         props: draft.props,
@@ -2487,6 +2560,18 @@ export const convertInstance = (
         });
       }
     }
+  }
+
+  const collision = findBlockTemplateNameCollision({
+    instance,
+    nextInstance,
+    instances,
+  });
+  if (collision) {
+    return throwDuplicateBlockTemplateName({
+      name: collision.name,
+      path: "component",
+    });
   }
 
   const isSatisfying = canConvertInstance({
@@ -2714,6 +2799,17 @@ export const unwrapInstance = (
     );
   }
   nextInstances.set(grandparentInstanceId, nextGrandparentInstance);
+  let nextSelectedInstance = selectedInstance;
+  if (grandparentInstance.component === blockTemplateComponent) {
+    nextSelectedInstance = { ...selectedInstance };
+    nextInstances.set(instanceId, nextSelectedInstance);
+    assignUniqueBlockTemplateNameMutable({
+      instanceId,
+      parent: grandparentInstance,
+      replacedInstanceId: parentInstanceId,
+      instances: nextInstances,
+    });
+  }
   const nextInstanceSelector = [instanceId, ...input.instanceSelector.slice(2)];
   const isSatisfying = isTreeSatisfyingContentModel({
     instances: nextInstances,
@@ -2726,6 +2822,13 @@ export const unwrapInstance = (
   }
 
   const patches: BuilderPatchChange["patches"] = [];
+  if (nextSelectedInstance.label !== selectedInstance.label) {
+    patches.push({
+      op: selectedInstance.label === undefined ? "add" : "replace",
+      path: [instanceId, "label"],
+      value: nextSelectedInstance.label,
+    });
+  }
   if (nextParentInstance.children.length === 0) {
     patches.push({ op: "remove", path: [parentInstanceId] });
   } else {
@@ -2883,6 +2986,17 @@ export const setInstanceTag = (
   if (instance === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }
+  const collision = findBlockTemplateNameCollision({
+    instance,
+    nextInstance: { ...instance, tag: input.tag },
+    instances,
+  });
+  if (collision) {
+    return throwDuplicateBlockTemplateName({
+      name: collision.name,
+      path: "tag",
+    });
+  }
 
   const payload: BuilderPatchChange[] = [];
   if (input.legacyPropName !== undefined) {
@@ -2939,6 +3053,20 @@ export const setInstanceLabel = (
               getSlotChildrenSignature(instance)
         )
       : [instance];
+
+  for (const targetInstance of targetInstances) {
+    const collision = findBlockTemplateNameCollision({
+      instance: targetInstance,
+      nextInstance: { ...targetInstance, label },
+      instances,
+    });
+    if (collision) {
+      return throwDuplicateBlockTemplateName({
+        name: collision.name,
+        path: "label",
+      });
+    }
+  }
 
   const patches: BuilderPatchChange["patches"] = [];
   for (const targetInstance of targetInstances) {

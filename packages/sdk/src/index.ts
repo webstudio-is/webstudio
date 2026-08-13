@@ -14,6 +14,7 @@ export * from "./schema/deployment";
 export * from "./schema/webstudio";
 export * from "./schema/prop-meta";
 export * from "./schema/component-meta";
+export * from "./schema/content-block";
 
 export * from "./assets";
 export * from "./asset-folder-hierarchy";

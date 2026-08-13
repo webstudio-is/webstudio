@@ -1,7 +1,7 @@
 import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance, Instances } from "./schema/instances";
 import type { Props } from "./schema/props";
-import { blockTemplateComponent } from "./core-metas";
+import { blockTemplateComponent, elementComponent } from "./core-metas";
 
 export const ROOT_INSTANCE_ID = ":root";
 
@@ -60,6 +60,27 @@ export const parseComponentName = (componentName: string) => {
     [namespace, name] = parts;
   }
   return [namespace, name] as const;
+};
+
+/**
+ * Returns the instance name shown to users. The component or tag supplies the
+ * default name; `instance.label` is the user-defined override created by
+ * renaming the instance.
+ */
+export const getInstanceName = ({
+  instance,
+  componentLabel,
+}: {
+  instance: Pick<Instance, "component" | "label" | "tag">;
+  componentLabel?: string;
+}) => {
+  if (instance.label) {
+    return instance.label;
+  }
+  if (instance.component === elementComponent && instance.tag) {
+    return `<${instance.tag}>`;
+  }
+  return componentLabel || parseComponentName(instance.component)[1];
 };
 
 export const getHtmlTagsFromProps = (props: Props) => {

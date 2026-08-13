@@ -1,4 +1,4 @@
-import type { Instance, WebstudioData } from "@webstudio-is/sdk";
+import { type Instance, type WebstudioData } from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { findAvailableVariables, produceWebstudioDataMutation } from "./data";
@@ -12,6 +12,7 @@ import { isAutoGridPlacement, resetGridChildPlacement } from "./style-utils";
 import { createRuntimeMutation } from "./mutation";
 import { getSlotFragmentDropTargetMutable } from "./slot";
 import { z } from "zod";
+import { assignUniqueBlockTemplateNameMutable } from "./block";
 
 export const duplicateInstanceAfterItselfInput = z.object({
   sourceInstanceId: z.string(),
@@ -104,6 +105,11 @@ export const duplicateInstanceAfterItselfMutable = ({
   if (indexWithinChildren === -1) {
     return;
   }
+  assignUniqueBlockTemplateNameMutable({
+    instanceId: newRootInstanceId,
+    parent: parentInstance,
+    instances: data.instances,
+  });
   parentInstance.children.splice(indexWithinChildren + 1, 0, {
     type: "id",
     value: newRootInstanceId,

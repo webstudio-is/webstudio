@@ -21,6 +21,9 @@ export const instanceTag = z
 export const instanceAttributes = z.object({
   component: instanceComponent,
   tag: instanceTag.optional(),
+  // An instance gets its default name from its component (or tag). Renaming the
+  // instance stores this user-defined label, which becomes its displayed name
+  // without changing the underlying component identity.
   label: z.string().optional(),
 });
 

@@ -1,10 +1,209 @@
 import {
   blockComponent,
   blockTemplateComponent,
+  getInstanceName,
+  type ContentBlockExternalContentIdentity,
   type Instance,
   type Instances,
 } from "@webstudio-is/sdk";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import type { InstanceSelector } from "./tree";
+
+const findDirectParent = ({
+  childInstanceId,
+  component,
+  instances,
+}: {
+  childInstanceId: Instance["id"];
+  component: Instance["component"];
+  instances: Instances;
+}) =>
+  Array.from(instances.values()).find(
+    (instance) =>
+      instance.component === component &&
+      instance.children.some(
+        (child) => child.type === "id" && child.value === childInstanceId
+      )
+  );
+
+export const findBlockTemplateOwner = ({
+  templateInstanceId,
+  instances,
+}: {
+  templateInstanceId: Instance["id"];
+  instances: Instances;
+}) => {
+  const templateContainer = findDirectParent({
+    childInstanceId: templateInstanceId,
+    component: blockTemplateComponent,
+    instances,
+  });
+  if (templateContainer === undefined) {
+    return;
+  }
+  const blockInstance = findDirectParent({
+    childInstanceId: templateContainer.id,
+    component: blockComponent,
+    instances,
+  });
+  if (blockInstance === undefined) {
+    return;
+  }
+  return {
+    blockInstanceId: blockInstance.id,
+    templateContainerId: templateContainer.id,
+  };
+};
+
+const getBlockTemplateName = (instance: Instance) =>
+  getInstanceName({
+    instance,
+    componentLabel: componentMetas.get(instance.component)?.label,
+  });
+
+export const allocateUniqueBlockTemplateName = ({
+  name,
+  existingNames,
+}: {
+  name: string;
+  existingNames: ReadonlySet<string>;
+}) => {
+  const normalizedName = name.trim();
+  if (existingNames.has(normalizedName) === false) {
+    return normalizedName;
+  }
+
+  const suffixMatch = /^(.*) (\d+)$/.exec(normalizedName);
+  const suffix = Number(suffixMatch?.[2]);
+  const baseName = suffix >= 2 && suffixMatch ? suffixMatch[1] : normalizedName;
+  let index = suffix >= 2 ? suffix + 1 : 2;
+  let candidate = `${baseName} ${index}`;
+  while (existingNames.has(candidate)) {
+    index += 1;
+    candidate = `${baseName} ${index}`;
+  }
+  return candidate;
+};
+
+export const assignUniqueBlockTemplateNamesMutable = ({
+  newChildren,
+  existingChildren,
+  instances,
+}: {
+  newChildren: Instance["children"];
+  existingChildren: Instance["children"];
+  instances: Instances;
+}) => {
+  const existingNames = new Set<string>();
+  for (const child of existingChildren) {
+    const instance =
+      child.type === "id" ? instances.get(child.value) : undefined;
+    if (instance !== undefined) {
+      existingNames.add(getBlockTemplateName(instance));
+    }
+  }
+
+  for (const child of newChildren) {
+    const instance =
+      child.type === "id" ? instances.get(child.value) : undefined;
+    if (instance === undefined) {
+      continue;
+    }
+    const currentName = getBlockTemplateName(instance);
+    const uniqueName = allocateUniqueBlockTemplateName({
+      name: currentName,
+      existingNames,
+    });
+    if (uniqueName !== currentName) {
+      instance.label = uniqueName;
+    }
+    existingNames.add(uniqueName);
+  }
+};
+
+export const assignUniqueBlockTemplateNameMutable = ({
+  instanceId,
+  parent,
+  replacedInstanceId,
+  instances,
+}: {
+  instanceId: Instance["id"];
+  parent: Instance;
+  replacedInstanceId?: Instance["id"];
+  instances: Instances;
+}) => {
+  if (parent.component !== blockTemplateComponent) {
+    return;
+  }
+  assignUniqueBlockTemplateNamesMutable({
+    newChildren: [{ type: "id", value: instanceId }],
+    existingChildren: parent.children.filter(
+      (child) => child.type !== "id" || child.value !== replacedInstanceId
+    ),
+    instances,
+  });
+};
+
+export const findBlockTemplateNameCollision = ({
+  instance,
+  nextInstance,
+  instances,
+}: {
+  instance: Instance;
+  nextInstance: Instance;
+  instances: Instances;
+}) => {
+  const name = getBlockTemplateName(nextInstance);
+  if (name === getBlockTemplateName(instance)) {
+    return;
+  }
+  const templateContainer = findDirectParent({
+    childInstanceId: instance.id,
+    component: blockTemplateComponent,
+    instances,
+  });
+  for (const child of templateContainer?.children ?? []) {
+    if (child.type !== "id" || child.value === instance.id) {
+      continue;
+    }
+    const sibling = instances.get(child.value);
+    if (sibling !== undefined && getBlockTemplateName(sibling) === name) {
+      return { instance: sibling, name };
+    }
+  }
+};
+
+export const getBlockTemplateNameChangeImpact = ({
+  templateInstanceId,
+  nextLabel,
+  externalContent,
+  instances,
+}: {
+  templateInstanceId: Instance["id"];
+  nextLabel: string;
+  externalContent?: ContentBlockExternalContentIdentity;
+  instances: Instances;
+}) => {
+  const instance = instances.get(templateInstanceId);
+  const owner = findBlockTemplateOwner({ templateInstanceId, instances });
+  if (instance === undefined || owner === undefined) {
+    return;
+  }
+  const previousName = getBlockTemplateName(instance);
+  const nextName = getBlockTemplateName({
+    ...instance,
+    label: nextLabel.trim(),
+  });
+  return {
+    ...owner,
+    previousName,
+    nextName,
+    externalContent,
+    requiresConfirmation:
+      externalContent?.blockInstanceId === owner.blockInstanceId &&
+      previousName !== nextName,
+  };
+};
 
 export const findBlockChildSelector = ({
   instanceSelector,

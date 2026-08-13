@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  blockTemplateComponent,
   encodeDataVariableId,
   type DataSource,
   elementComponent,
@@ -47,6 +48,7 @@ import {
   deleteInstances,
   moveInstancesInput,
   moveInstances,
+  reparentInstanceMutable,
   replaceTextInput,
   serializeTextNodes,
   setInstanceLabel,
@@ -1093,6 +1095,41 @@ describe("wrapInstance", () => {
     ]);
   });
 
+  test("assigns a unique name to a wrapper in Templates", () => {
+    const result = wrapInstance(
+      {
+        instances: new Map([
+          [
+            "templates",
+            createInstance("templates", blockTemplateComponent, [
+              { type: "id", value: "existing" },
+              { type: "id", value: "selected" },
+            ]),
+          ],
+          ["existing", createInstance("existing", "Box")],
+          ["selected", createInstance("selected", "Section")],
+        ]),
+        props: new Map(),
+      },
+      {
+        instanceSelector: ["selected", "templates"],
+        component: "Box",
+      },
+      { createId: () => "wrapper" }
+    );
+
+    expect(result.payload[0]?.patches).toContainEqual({
+      op: "add",
+      path: ["wrapper"],
+      value: {
+        ...createInstance("wrapper", "Box", [
+          { type: "id", value: "selected" },
+        ]),
+        label: "Box 2",
+      },
+    });
+  });
+
   test("wraps selected instance inside shared Slot content", () => {
     const result = wrapInstance(
       {
@@ -1261,6 +1298,34 @@ describe("convertInstance", () => {
         ],
       },
     ]);
+  });
+
+  test("rejects conversion that duplicates a template name", () => {
+    const card = createInstance("card", "Box");
+
+    expect(() =>
+      convertInstance(
+        {
+          instances: new Map([
+            [
+              "templates",
+              createInstance("templates", blockTemplateComponent, [
+                { type: "id", value: "card" },
+                { type: "id", value: "section" },
+              ]),
+            ],
+            [card.id, card],
+            ["section", createInstance("section", "Section")],
+          ]),
+          props: new Map(),
+        },
+        {
+          instanceSelector: ["section", "templates"],
+          component: "Box",
+        },
+        runtimeContext
+      )
+    ).toThrow("Template name must be unique");
   });
 
   test("removes legacy tag prop and renames React props when converting to element", () => {
@@ -1480,6 +1545,39 @@ describe("unwrapInstance", () => {
         ],
       },
     ]);
+  });
+
+  test("assigns a unique name when unwrapping into Templates", () => {
+    const result = unwrapInstance(
+      {
+        instances: new Map([
+          [
+            "templates",
+            createInstance("templates", blockTemplateComponent, [
+              { type: "id", value: "existing" },
+              { type: "id", value: "parent" },
+            ]),
+          ],
+          ["existing", createInstance("existing", "Box")],
+          [
+            "parent",
+            createInstance("parent", "Section", [
+              { type: "id", value: "selected" },
+            ]),
+          ],
+          ["selected", createInstance("selected", "Box")],
+        ]),
+        props: new Map(),
+      },
+      { instanceSelector: ["selected", "parent", "templates"] },
+      runtimeContext
+    );
+
+    expect(result.payload[0]?.patches).toContainEqual({
+      op: "add",
+      path: ["selected", "label"],
+      value: "Box 2",
+    });
   });
 
   test("moves selected instance after parent when parent keeps siblings", () => {
@@ -1846,6 +1944,31 @@ describe("setInstanceTag", () => {
     expect(result.noop).toEqual(true);
     expect(result.payload).toEqual([]);
   });
+
+  test("rejects a tag that duplicates a template name", () => {
+    const templates = createInstance("templates", blockTemplateComponent, [
+      { type: "id", value: "heading" },
+      { type: "id", value: "paragraph" },
+    ]);
+    const heading = createInstance("heading", elementComponent);
+    heading.tag = "h2";
+    const paragraph = createInstance("paragraph", elementComponent);
+    paragraph.tag = "p";
+
+    expect(() =>
+      setInstanceTag(
+        {
+          instances: new Map([
+            ["templates", templates],
+            ["heading", heading],
+            ["paragraph", paragraph],
+          ]),
+          props: new Map(),
+        },
+        { instanceId: "paragraph", tag: "h2" }
+      )
+    ).toThrow("Template name must be unique");
+  });
 });
 
 describe("setInstanceLabel", () => {
@@ -1942,6 +2065,28 @@ describe("setInstanceLabel", () => {
 
     expect(result.noop).toEqual(true);
     expect(result.payload).toEqual([]);
+  });
+
+  test("rejects a duplicate name in the same Content Block Templates list", () => {
+    const templates = createInstance("templates", blockTemplateComponent, [
+      { type: "id", value: "hero" },
+      { type: "id", value: "card" },
+    ]);
+    const hero = createInstance("hero", "Box");
+    hero.label = "Hero Card";
+
+    expect(() =>
+      setInstanceLabel(
+        {
+          instances: new Map([
+            ["templates", templates],
+            ["hero", hero],
+            ["card", createInstance("card", "Box")],
+          ]),
+        },
+        { instanceId: "card", label: "Hero Card" }
+      )
+    ).toThrow("Template name must be unique");
   });
 });
 
@@ -2142,6 +2287,71 @@ test("creates instance move patches", () => {
       },
     ],
   });
+});
+
+const createTemplateMoveInstances = () => {
+  const moving = createInstance("moving", "Box");
+  moving.label = "Hero Card";
+  const existing = createInstance("existing", "Box");
+  existing.label = "Hero Card";
+  return {
+    moving,
+    instances: new Map([
+      [
+        "source",
+        createInstance("source", elementComponent, [
+          { type: "id", value: moving.id },
+        ]),
+      ],
+      [
+        "templates",
+        createInstance("templates", blockTemplateComponent, [
+          { type: "id", value: existing.id },
+        ]),
+      ],
+      [moving.id, moving],
+      [existing.id, existing],
+    ]),
+  };
+};
+
+test("assigns a unique template name when moving between parents", () => {
+  const { instances, moving } = createTemplateMoveInstances();
+
+  expect(
+    createInstanceMovePatches({
+      instances,
+      moves: [{ instanceId: moving.id, parentInstanceId: "templates" }],
+    }).patches
+  ).toContainEqual({
+    op: "replace",
+    path: [moving.id, "label"],
+    value: "Hero Card 2",
+  });
+});
+
+test("assigns a unique template name when reparenting in the Builder", () => {
+  const { instances, moving } = createTemplateMoveInstances();
+  const data = {
+    instances,
+    props: new Map(),
+    dataSources: new Map(),
+    resources: new Map(),
+    styleSources: new Map(),
+    styleSourceSelections: new Map(),
+    styles: new Map(),
+    breakpoints: new Map(),
+    assets: new Map(),
+  };
+
+  reparentInstanceMutable({
+    data,
+    sourceInstanceSelector: [moving.id, "source"],
+    dropTarget: { parentSelector: ["templates"], position: "end" },
+    createId: () => "generated",
+  });
+
+  expect(data.instances.get(moving.id)?.label).toBe("Hero Card 2");
 });
 
 test("creates instance move payload", () => {

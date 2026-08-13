@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import {
+  blockTemplateComponent,
   collectionComponent,
   elementComponent,
   encodeDataVariableId,
@@ -573,6 +574,37 @@ test("inserts fragment into page template", async () => {
     expect.objectContaining({
       id: "generated-0",
       component: "Box",
+    })
+  );
+});
+
+test("assigns a unique name when inserting into a Content Block Templates list", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "templates",
+    component: blockTemplateComponent,
+    children: [{ type: "id", value: "existing" }],
+  };
+  const state = createState(parent);
+  state.instances.set("existing", {
+    type: "instance",
+    id: "existing",
+    component: "Box",
+    children: [],
+  });
+  const fragment = await parseWebstudioJsxFragment("<$.Box />");
+
+  const mutation = insertFragment(
+    state,
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory() }
+  );
+
+  expect(getAddedValues<Instance>(mutation, "instances")).toContainEqual(
+    expect.objectContaining({
+      id: "generated-0",
+      component: "Box",
+      label: "Box 2",
     })
   );
 });
