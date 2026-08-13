@@ -66,7 +66,12 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import {
+  animationComponentNamespace,
+  componentMetas,
+  radixComponentNamespace,
+} from "@webstudio-is/sdk-components-registry/metas";
+import { camelCase } from "change-case";
 import { readProjectBuildDoc } from "./docs";
 import type { ComponentTemplateRegistry } from "./runtime/component-template";
 import {
@@ -4594,11 +4599,15 @@ const getComponentSummaryEntry = ({
   const [parsedNamespace, exportName] = parseComponentName(component);
   const namespace = parsedNamespace ?? "global";
   const jsxNamespace =
-    parsedNamespace === "@webstudio-is/sdk-components-react-radix"
+    parsedNamespace === radixComponentNamespace
       ? "radix"
-      : parsedNamespace === "@webstudio-is/sdk-components-animation"
+      : parsedNamespace === animationComponentNamespace
         ? "animation"
-        : "$";
+        : parsedNamespace === "ws"
+          ? "ws"
+          : "$";
+  const jsxExportName =
+    parsedNamespace === "ws" ? camelCase(exportName) : exportName;
   const template = templateMeta?.template;
   const hasTemplate = template !== undefined;
   const instancesById = new Map(
@@ -4642,7 +4651,7 @@ const getComponentSummaryEntry = ({
     component,
     exportName,
     namespace,
-    jsxElement: `<${jsxNamespace}.${exportName} />`,
+    jsxElement: `<${jsxNamespace}.${jsxExportName} />`,
     label: meta.label,
     category: visibleCategory,
     contentCategory: meta.contentModel?.category,

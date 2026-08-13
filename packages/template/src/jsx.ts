@@ -1,4 +1,5 @@
 import { Fragment, type JSX, type ReactNode } from "react";
+import { kebabCase } from "change-case";
 import { hyphenateProperty } from "@webstudio-is/css-engine";
 import {
   animationAction,
@@ -846,13 +847,16 @@ type Component = { displayName: string } & ((
   props: ComponentProps
 ) => ReactNode);
 
-export const createProxy = (prefix: string): Record<string, Component> => {
+export const createProxy = (
+  prefix: string,
+  transformName: (name: string) => string = (name) => name
+): Record<string, Component> => {
   return new Proxy(
     {},
     {
       get(_target, prop) {
         const component: Component = () => undefined;
-        component.displayName = `${prefix}${prop as string}`;
+        component.displayName = `${prefix}${transformName(String(prop))}`;
         return component;
       },
     }
@@ -861,4 +865,4 @@ export const createProxy = (prefix: string): Record<string, Component> => {
 
 export const $: Record<string, Component> = createProxy("");
 
-export const ws: Record<string, Component> = createProxy("ws:");
+export const ws: Record<string, Component> = createProxy("ws:", kebabCase);

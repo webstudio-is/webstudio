@@ -1402,6 +1402,38 @@ test("inserts authored template part structure from webstudio jsx fragments", as
   ]);
 });
 
+test("inserts authored Content Block template structure from webstudio jsx fragments", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.block><ws.blockTemplate><ws.element ws:tag="section"><ws.element ws:tag="h2">Title</ws.element></ws.element></ws.blockTemplate></ws.block>`
+  );
+
+  const mutation = insertFragment(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      fragment,
+    },
+    {
+      createId: createIdFactory(),
+      projectId: "project-id",
+    }
+  );
+
+  const instances = getAddedValues<Instance>(mutation, "instances");
+  expect(instances).toEqual([
+    expect.objectContaining({ component: "ws:block" }),
+    expect.objectContaining({ component: "ws:block-template" }),
+    expect.objectContaining({ component: elementComponent, tag: "section" }),
+    expect.objectContaining({ component: elementComponent, tag: "h2" }),
+  ]);
+  const [block, blockTemplate, section, heading] = instances;
+  expect(block.children).toEqual([{ type: "id", value: blockTemplate.id }]);
+  expect(blockTemplate.children).toEqual([{ type: "id", value: section.id }]);
+  expect(section.children).toEqual([{ type: "id", value: heading.id }]);
+  expect(heading.children).toEqual([{ type: "text", value: "Title" }]);
+});
+
 test("supports react style props in webstudio jsx fragments", async () => {
   const fragment = await parseWebstudioJsxFragment(
     `<$.Box style={{ padding: 24 }}>Hello</$.Box>`

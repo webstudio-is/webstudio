@@ -5254,6 +5254,10 @@ describe("project session mcp adapter", () => {
       name: "components.get",
       input: { component: "ws:collection" },
     });
+    const blockTemplateDetails = await adapter.callTool({
+      name: "components.get",
+      input: { component: "ws:block-template" },
+    });
     const italicDetails = await adapter.callTool({
       name: "components.get",
       input: { component: "Italic" },
@@ -5738,6 +5742,7 @@ describe("project session mcp adapter", () => {
     expect(collectionDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "ws:collection",
+        jsxElement: "<ws.collection />",
         description: expect.stringContaining("array or object"),
         collectionUsage: expect.stringMatching(
           /insert-collection.*private item\/itemKey parameters.*atomically/
@@ -5748,6 +5753,13 @@ describe("project session mcp adapter", () => {
           item: expect.objectContaining({ type: "string" }),
           itemKey: expect.objectContaining({ type: "string" }),
         }),
+      })
+    );
+    expect(blockTemplateDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        component: "ws:block-template",
+        jsxElement: "<ws.blockTemplate />",
+        standaloneInsertable: false,
       })
     );
     expect(selectTemplateDetails.structuredContent.data).toEqual(
