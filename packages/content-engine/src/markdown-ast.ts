@@ -1,6 +1,6 @@
 import remarkFrontmatter from "remark-frontmatter";
 import remarkGfm from "remark-gfm";
-import remarkMdx from "remark-mdx";
+import remarkMdx, { type Options as RemarkMdxOptions } from "remark-mdx";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 
@@ -29,7 +29,15 @@ const createMarkdownAstParser = () =>
   unified().use(remarkParse).use(remarkFrontmatter, ["yaml"]).use(remarkGfm);
 
 const markdownAstParser = createMarkdownAstParser();
-const mdxAstParser = createMarkdownAstParser().use(remarkMdx);
+// Match standalone Webstudio JSX. remark-mdx 2 exposes obsolete types but
+// uses Acorn 8 at runtime.
+const mdxOptions = {
+  acornOptions: {
+    ecmaVersion: "latest",
+    sourceType: "module",
+  },
+} as unknown as RemarkMdxOptions;
+const mdxAstParser = createMarkdownAstParser().use(remarkMdx, mdxOptions);
 
 /**
  * Parses CommonMark, GFM, and frontmatter consistently. MDX syntax additionally

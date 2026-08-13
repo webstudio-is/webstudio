@@ -1343,6 +1343,21 @@ test("inspects webstudio jsx fragment syntax without evaluation", () => {
   ).not.toThrow();
 });
 
+test("preserves standalone JSX grammar and security inspection", async () => {
+  await expect(parseWebstudioJsxFragment("< $ . Box />")).resolves.toEqual(
+    expect.objectContaining({ children: expect.any(Array) })
+  );
+  await expect(
+    parseWebstudioJsxFragment("<$.Box data-count={1_000} />")
+  ).resolves.toEqual(expect.objectContaining({ children: expect.any(Array) }));
+  await expect(
+    parseWebstudioJsxFragment("< $ . Box data-secret={process.env} />")
+  ).rejects.toThrow('Do not access "process" in JSX fragments');
+  await expect(
+    parseWebstudioJsxFragment("`{process.env}`<$.Box />")
+  ).rejects.toThrow('Do not access "process" in JSX fragments');
+});
+
 test("rejects unsupported css rules after interpolation", async () => {
   await expect(
     parseWebstudioJsxFragment(

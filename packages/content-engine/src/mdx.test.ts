@@ -618,7 +618,7 @@ next</ws.element>
     ["text expressions", "Hello {name}", "mdxTextExpression"],
     [
       "attribute expressions",
-      '<ws.element ws:tag="div" value={3} />',
+      '<ws.element ws:tag="div" value={1_000} />',
       "mdxJsxAttributeValueExpression",
     ],
     [
