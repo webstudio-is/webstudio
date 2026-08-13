@@ -91,6 +91,74 @@ test("resolves request resources after their dependency documents", async () => 
   ]);
 });
 
+test.each(["legacy map", "request graph"] as const)(
+  "bounds concurrent resource requests from a %s",
+  async (inputType) => {
+    let active = 0;
+    let maximumActive = 0;
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => {
+      active += 1;
+      maximumActive = Math.max(maximumActive, active);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      active -= 1;
+      return Response.json({});
+    });
+    const requests = new Map<string, ResourceRequest>();
+    for (let index = 0; index < 21; index += 1) {
+      requests.set(`resource-${index}`, {
+        name: `Resource ${index}`,
+        method: "get",
+        url: `https://example.com/${index}`,
+        searchParams: [],
+        headers: [],
+      });
+    }
+    const graph: ResourceRequestGraph = {
+      resources: Array.from(requests, ([id, request]) => ({
+        id,
+        outputName: id,
+        dependencies: [],
+        createRequest: () => request,
+      })),
+      rootIds: Array.from(requests.keys()),
+    };
+
+    await loadResources(fetch, inputType === "legacy map" ? requests : graph);
+
+    expect(maximumActive).toBe(20);
+  }
+);
+
+test("preserves structured cancellation results for legacy request maps", async () => {
+  const controller = new AbortController();
+  controller.abort(new Error("cancelled"));
+  const fetch = vi.fn<typeof globalThis.fetch>(async (_input, init) => {
+    init?.signal?.throwIfAborted();
+    return Response.json({});
+  });
+  const request: ResourceRequest = {
+    name: "Resource",
+    method: "get",
+    url: "https://example.com/resource",
+    searchParams: [],
+    headers: [],
+  };
+
+  await expect(
+    loadResources(fetch, new Map([["Resource", request]]), undefined, {
+      signal: controller.signal,
+    })
+  ).resolves.toMatchObject({
+    Resource: {
+      ok: false,
+      data: {
+        error: { code: "REQUEST_CANCELLED" },
+      },
+      status: 499,
+    },
+  });
+});
+
 test("builds canonical Assets command URLs", () => {
   expect(assetsUploadsApiUrl).toBe("/rest/assets/uploads");
   expect(getAssetUploadApiUrl("folder/name.png")).toBe(
@@ -578,6 +646,39 @@ describe("loadResource", () => {
       },
       status: 499,
       statusText: "Resource request was cancelled",
+    });
+  });
+
+  test("preserves the first abort reason when cancellation precedes timeout", async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    let rejectFetch = () => {};
+    mockFetch.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectFetch = () => reject(new DOMException("Aborted", "AbortError"));
+        })
+    );
+    const pending = loadResource(
+      mockFetch,
+      {
+        name: "resource",
+        url: "https://example.com/resource",
+        searchParams: [],
+        method: "get",
+        headers: [],
+      },
+      undefined,
+      { signal: controller.signal, timeoutMs: 100 }
+    );
+
+    controller.abort();
+    await vi.advanceTimersByTimeAsync(100);
+    rejectFetch();
+
+    await expect(pending).resolves.toMatchObject({
+      data: { error: { code: "REQUEST_CANCELLED" } },
+      status: 499,
     });
   });
 

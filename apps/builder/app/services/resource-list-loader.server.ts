@@ -1,8 +1,10 @@
+import { z } from "zod";
 import { type ResourceRequest, resourceRequest } from "@webstudio-is/sdk";
 import {
   createResourceFetchBatchProvider,
   isLocalResource,
   loadResource,
+  resourceLoadConcurrency,
 } from "@webstudio-is/sdk/runtime";
 import { executeAssetQueries } from "~/shared/$resources/assets-query.server";
 import { getResourceKey } from "~/shared/resource-utils";
@@ -12,6 +14,10 @@ const defaultDependencies = {
   loadResource,
   now: () => performance.now(),
 };
+
+export const resourceRequestListSchema = z
+  .array(z.unknown())
+  .max(resourceLoadConcurrency);
 
 const getResponseBytes = (value: unknown) => {
   try {

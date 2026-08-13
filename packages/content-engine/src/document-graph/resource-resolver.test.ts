@@ -114,6 +114,27 @@ describe("resource resolver", () => {
     } satisfies Partial<ResourceResolutionError>);
   });
 
+  test("reports the dependency path and original cause", async () => {
+    const failure = new Error("offline");
+    const resolution = resolveResources({
+      resources: [
+        resource("root", ["middle"], async () => "root"),
+        resource("middle", ["leaf"], async () => "middle"),
+        resource("leaf", [], async () => {
+          throw failure;
+        }),
+      ],
+      rootIds: ["root"],
+      concurrency: 1,
+    });
+
+    await expect(resolution).rejects.toMatchObject({
+      code: "RESOLUTION_FAILED",
+      resourceIds: ["root", "middle", "leaf"],
+      cause: failure,
+    } satisfies Partial<ResourceResolutionError>);
+  });
+
   test("passes cancellation to resource resolution", async () => {
     const controller = new AbortController();
     controller.abort(new Error("cancelled"));
@@ -131,5 +152,38 @@ describe("resource resolver", () => {
       resourceIds: [],
     } satisfies Partial<ResourceResolutionError>);
     expect(resolve).not.toHaveBeenCalled();
+  });
+
+  test("rejects when cancelled while a resource is resolving", async () => {
+    const controller = new AbortController();
+    let finish = () => {};
+    let markStarted = () => {};
+    const started = new Promise<void>((resolve) => {
+      markStarted = resolve;
+    });
+    const resolution = resolveResources({
+      resources: [
+        resource(
+          "root",
+          [],
+          () =>
+            new Promise<string>((resolve) => {
+              finish = () => resolve("document");
+              markStarted();
+            })
+        ),
+      ],
+      rootIds: ["root"],
+      concurrency: 1,
+      signal: controller.signal,
+    });
+
+    await started;
+    controller.abort(new Error("cancelled"));
+    finish();
+
+    await expect(resolution).rejects.toMatchObject({
+      code: "REQUEST_CANCELLED",
+    } satisfies Partial<ResourceResolutionError>);
   });
 });

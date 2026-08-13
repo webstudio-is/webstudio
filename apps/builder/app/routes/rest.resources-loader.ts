@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { type ActionFunctionArgs, data, json } from "@remix-run/server-runtime";
 import { isLocalResource } from "@webstudio-is/sdk/runtime";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
@@ -10,7 +9,10 @@ import { loader as assetsOpenApiLoader } from "./rest.assets.openapi[.]json";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import { loadResourceRequestList } from "~/services/resource-list-loader.server";
+import {
+  loadResourceRequestList,
+  resourceRequestListSchema,
+} from "~/services/resource-list-loader.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
@@ -54,10 +56,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const requestJson = await request.json();
   const { sourceOrigin } = parseBuilderUrl(request.url);
-  const requestList = z.array(z.unknown()).safeParse(requestJson);
+  const requestList = resourceRequestListSchema.safeParse(requestJson);
 
   if (requestList.success === false) {
-    console.error("data:", requestJson);
     throw data(requestList.error, {
       status: 400,
       headers: privateNoStoreResponseHeaders,

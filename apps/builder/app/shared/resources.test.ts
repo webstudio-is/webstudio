@@ -487,13 +487,16 @@ test("fills capacity freed by obsolete resources in a mixed batch", async () => 
 
 test("drains bounded batches without an additional delay", async () => {
   vi.useFakeTimers();
-  const requests: ResourceRequest[] = Array.from({ length: 6 }, (_, index) => ({
-    name: `Resource ${index}`,
-    method: "get",
-    url: `https://example.com/resource-${index}`,
-    searchParams: [],
-    headers: [],
-  }));
+  const requests: ResourceRequest[] = Array.from(
+    { length: 21 },
+    (_, index) => ({
+      name: `Resource ${index}`,
+      method: "get",
+      url: `https://example.com/resource-${index}`,
+      searchParams: [],
+      headers: [],
+    })
+  );
   const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json([]));
 
   queueResources(requests);
@@ -503,7 +506,7 @@ test("drains bounded batches without an additional delay", async () => {
   });
 
   expect(fetch).toHaveBeenCalledTimes(2);
-  expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toHaveLength(5);
+  expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toHaveLength(20);
   expect(JSON.parse(String(fetch.mock.calls[1][1]?.body))).toHaveLength(1);
 });
 
