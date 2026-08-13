@@ -75,6 +75,7 @@ import {
 } from "./runtime/component-templates";
 import {
   getTemplateRequiredStructure,
+  insertFragmentInput,
   parseComponentEdge,
 } from "./runtime/components";
 import { getInputSchemaMetadata } from "./contracts/input-schema";
@@ -496,49 +497,6 @@ const workflowNextInputSchema = {
   required: [],
 } as const satisfies ProjectSessionMcpInputSchema;
 
-const insertFragmentMcpInputSchema = {
-  ...emptyInputSchema,
-  description:
-    "Insert a Webstudio fragment from a Webstudio JSX string. The CLI converts JSX into structured Webstudio data before mutation.",
-  additionalProperties: false,
-  properties: {
-    parentInstanceId: {
-      type: "string",
-      description: "Parent instance id where the fragment is inserted.",
-    },
-    fragment: {
-      type: "string",
-      description: webstudioJsxFragmentInputDescription,
-    },
-    mode: {
-      type: "string",
-      enum: ["append", "prepend", "replace"],
-      description:
-        "Append, prepend, or replace parent children before inserting the fragment.",
-    },
-    insertIndex: {
-      type: "number",
-      description: "Zero-based child index for insertion.",
-    },
-  },
-  required: ["parentInstanceId", "fragment"],
-} as const satisfies ProjectSessionMcpInputSchema;
-
-const insertFragmentVerifiedMcpInputSchema = {
-  ...insertFragmentMcpInputSchema,
-  description:
-    "Insert a Webstudio fragment and immediately verify its persisted bindings in one call.",
-  properties: {
-    ...insertFragmentMcpInputSchema.properties,
-    pagePath: {
-      type: "string",
-      description:
-        "Concrete page path used for post-commit binding verification, for example /account.",
-    },
-  },
-  required: ["parentInstanceId", "fragment", "pagePath"],
-} as const satisfies ProjectSessionMcpInputSchema;
-
 const insertCollectionMcpInput = insertCollectionInput
   .omit({ itemFragment: true })
   .extend({
@@ -769,6 +727,35 @@ const getZodObjectSchema = (schema: z.ZodTypeAny) => {
 
 const getZodMcpInputSchema = (schema: z.ZodTypeAny) =>
   getHandshakeInputSchema(getZodObjectSchema(schema)).inputSchema;
+
+const insertFragmentMcpInput = z
+  .object({
+    ...insertFragmentInput.shape,
+    parentInstanceId: insertFragmentInput.shape.parentInstanceId
+      .unwrap()
+      .describe("Parent instance id where the fragment is inserted."),
+    fragment: z.string().describe(webstudioJsxFragmentInputDescription),
+  })
+  .describe(
+    "Insert a Webstudio fragment from a Webstudio JSX string. The CLI converts JSX into structured Webstudio data before mutation."
+  );
+
+const insertFragmentMcpInputSchema = getZodObjectSchema(insertFragmentMcpInput);
+
+const insertFragmentVerifiedMcpInputSchema = {
+  ...insertFragmentMcpInputSchema,
+  description:
+    "Insert a Webstudio fragment and immediately verify its persisted bindings in one call.",
+  properties: {
+    ...insertFragmentMcpInputSchema.properties,
+    pagePath: {
+      type: "string",
+      description:
+        "Concrete page path used for post-commit binding verification, for example /account.",
+    },
+  },
+  required: ["parentInstanceId", "fragment", "pagePath"],
+} as const satisfies ProjectSessionMcpInputSchema;
 
 const insertCollectionMcpInputSchema = getOperationInputSchema({
   inputSchema: getInputSchemaMetadata(insertCollectionMcpInput).inputJsonSchema,
@@ -3407,11 +3394,12 @@ export const hiddenMcpOperationCommands = new Set<string>([
   "copy-page",
 ]);
 
-const compactMcpOperationCommands = new Set([
-  "create-assets-resource",
-  "update-assets-resource",
-  "validate-asset-query",
-  "preview-asset-query",
+const mcpOperationSchemaInlineSizes = new Map<string, number>([
+  ["insert-fragment", 1_000],
+  ["create-assets-resource", 2_500],
+  ["update-assets-resource", 2_500],
+  ["validate-asset-query", 2_500],
+  ["preview-asset-query", 2_500],
 ]);
 
 const detailedMcpInputSchemas = new WeakMap<
@@ -3449,7 +3437,7 @@ export const listProjectSessionMcpTools = (
       });
       const { inputSchema, detailedInputSchema } = getHandshakeInputSchema(
         operationInputSchema,
-        compactMcpOperationCommands.has(operation.command) ? 2_500 : undefined
+        mcpOperationSchemaInlineSizes.get(operation.command)
       );
       const tool = createProjectSessionMcpTool({
         name: operation.command,
@@ -3878,28 +3866,12 @@ const getInsertFragmentInput = async (input: unknown) => {
       'insert-fragment requires fragment as a Webstudio JSX string, for example {"fragment":"<ws.element ws:tag=\'section\' />"}.'
     );
   }
-  const fragment = await parseWebstudioJsxFragment(input.fragment);
-  const mode = input.mode;
-  if (
-    mode !== undefined &&
-    mode !== "append" &&
-    mode !== "prepend" &&
-    mode !== "replace"
-  ) {
-    throw new Error(
-      'insert-fragment mode must be "append", "prepend", or "replace".'
-    );
-  }
-  const insertIndex = input.insertIndex;
-  if (insertIndex !== undefined && typeof insertIndex !== "number") {
-    throw new Error("insert-fragment insertIndex must be a number.");
-  }
-  return {
-    parentInstanceId: input.parentInstanceId,
-    fragment,
-    mode,
-    insertIndex,
-  };
+  const { fragment: fragmentSource, ...runtimeInput } =
+    insertFragmentMcpInput.parse(input);
+  return insertFragmentInput.parse({
+    ...runtimeInput,
+    fragment: await parseWebstudioJsxFragment(fragmentSource),
+  });
 };
 
 const getInsertCollectionInput = async (input: unknown) => {

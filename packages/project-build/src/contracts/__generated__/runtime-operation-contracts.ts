@@ -39616,8 +39616,12 @@ export const runtimeOperationContractData = [
                 conflictResolution: {
                   type: "string",
                   enum: ["ours", "theirs", "merge"],
+                  description:
+                    'How to resolve incoming design tokens that share a name with an existing token. "ours" keeps the existing token styles and id, "theirs" uses incoming styles, and "merge" combines both.',
                 },
                 contentMode: {
+                  description:
+                    "Apply content-mode copy restrictions to props and styles while reusing existing tokens and breakpoints.",
                   type: "boolean",
                 },
                 mode: {
@@ -54817,8 +54821,12 @@ export const runtimeOperationContractData = [
         conflictResolution: {
           type: "string",
           enum: ["ours", "theirs", "merge"],
+          description:
+            'How to resolve incoming design tokens that share a name with an existing token. "ours" keeps the existing token styles and id, "theirs" uses incoming styles, and "merge" combines both.',
         },
         contentMode: {
+          description:
+            "Apply content-mode copy restrictions to props and styles while reusing existing tokens and breakpoints.",
           type: "boolean",
         },
         mode: {
