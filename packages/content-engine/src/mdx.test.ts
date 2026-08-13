@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
+import { resolveAssetValueReferences } from "./asset-value-references";
 import { parseMarkdownAst } from "./markdown-ast";
-import { MdxDocumentError, parseMdxDocument } from "./mdx";
+import {
+  discoverMdxAssetReferences,
+  MdxDocumentError,
+  parseMdxDocument,
+} from "./mdx";
 
 describe("parseMdxDocument", () => {
   test("parses Markdown-only input identically through Markdown and MDX", () => {
@@ -357,6 +362,75 @@ const ready = true;
         ],
       },
     ]);
+  });
+
+  test("discovers and rewrites frontmatter and authored prop Asset references", async () => {
+    const document = await parseMdxDocument({
+      source: `---
+cover: ./cover.png?size=2
+---
+![Hero](./hero.png#crop)
+
+<ws.element ws:name="Card" poster="./video.jpg">
+  Text containing ./ignored.png
+</ws.element>
+`,
+    });
+    const references = discoverMdxAssetReferences({
+      document,
+      sourcePath: "posts/post.mdx",
+      assetIdsByPath: new Map([
+        ["posts/cover.png", "cover"],
+        ["posts/hero.png", "hero"],
+        ["posts/video.jpg", "video"],
+        ["posts/ignored.png", "ignored"],
+      ]),
+    });
+
+    expect(references).toEqual([
+      {
+        path: ["frontmatter", "properties", "cover"],
+        assetId: "cover",
+        suffix: "?size=2",
+      },
+      {
+        path: ["children", 0, "children", 0, "props", 0, "value"],
+        assetId: "hero",
+        suffix: "#crop",
+      },
+      {
+        path: ["children", 1, "props", 0, "value"],
+        assetId: "video",
+      },
+    ]);
+
+    expect(
+      resolveAssetValueReferences({
+        value: document,
+        references,
+        assetUrls: {
+          cover: "/assets/cover.png",
+          hero: "/assets/hero.png",
+          video: "/assets/video.jpg",
+        },
+      })
+    ).toMatchObject({
+      frontmatter: { properties: { cover: "/assets/cover.png?size=2" } },
+      children: [
+        {
+          children: [
+            {
+              props: [
+                { name: "src", value: "/assets/hero.png#crop" },
+                { name: "alt", value: "Hero" },
+              ],
+            },
+          ],
+        },
+        { props: [{ name: "poster", value: "/assets/video.jpg" }] },
+      ],
+    });
+    expect(document.frontmatter.properties.cover).toBe("./cover.png?size=2");
   });
 
   test.each([

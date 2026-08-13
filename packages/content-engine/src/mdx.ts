@@ -4,6 +4,11 @@ import {
   type Handler,
   type Handlers,
 } from "mdast-util-to-hast";
+import {
+  discoverAssetValueReferences,
+  type AssetValueReference,
+} from "./asset-value-references";
+import { createAssetReferenceResolver } from "./asset-reference-utils";
 import { getUtf8ByteLength } from "./byte-stream";
 import { extractMarkdownFrontmatter } from "./frontmatter";
 import { contentEngineLimits } from "./limits";
@@ -558,6 +563,56 @@ const mapAuthoredChildren = (root: SyntaxTreeNode) => {
     return throwUnsafeNode(root, "MDX did not produce an HTML document");
   }
   return mapHastChildren(hast);
+};
+
+export const discoverMdxAssetReferences = ({
+  document,
+  sourcePath,
+  assetIdsByPath,
+}: {
+  document: MdxDocument;
+  sourcePath: string;
+  assetIdsByPath: ReadonlyMap<string, string>;
+}): AssetValueReference[] => {
+  const references = discoverAssetValueReferences({
+    properties: document.frontmatter.properties,
+    sourcePath,
+    assetIdsByPath,
+    rootPath: ["frontmatter", "properties"],
+  });
+  const resolveAssetReference = createAssetReferenceResolver({
+    sourcePath,
+    assetIdsByPath,
+  });
+  const visit = (
+    nodes: readonly MdxAuthoredNode[],
+    parentPath: Array<string | number>
+  ) => {
+    for (const [nodeIndex, node] of nodes.entries()) {
+      if (node.type === "text" || node.type === "comment") {
+        continue;
+      }
+      const nodePath = [...parentPath, nodeIndex];
+      for (const [propIndex, prop] of node.props.entries()) {
+        if (
+          typeof prop.value !== "string" ||
+          urlPropNames.has(prop.name.toLowerCase()) === false
+        ) {
+          continue;
+        }
+        const reference = resolveAssetReference(prop.value);
+        if (reference !== undefined) {
+          references.push({
+            path: [...nodePath, "props", propIndex, "value"],
+            ...reference,
+          });
+        }
+      }
+      visit(node.children, [...nodePath, "children"]);
+    }
+  };
+  visit(document.children, ["children"]);
+  return references;
 };
 
 export const parseMdxDocument = async ({

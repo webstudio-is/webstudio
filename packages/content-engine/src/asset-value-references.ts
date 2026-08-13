@@ -1,4 +1,4 @@
-import { createAssetIdResolver } from "./asset-path-resolution";
+import { createAssetReferenceResolver } from "./asset-reference-utils";
 
 export type AssetValueReference = {
   path: Array<string | number>;
@@ -15,38 +15,27 @@ export const getRuntimeAssetUrls = (
     Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [id, asset.url])
   );
 
-const getUrlSuffix = (value: string) => {
-  let parsed: URL;
-  try {
-    parsed = new URL(value, "https://content.webstudio.invalid/");
-  } catch {
-    return;
-  }
-  const suffix = `${parsed.search}${parsed.hash}`;
-  return suffix === "" ? undefined : suffix;
-};
-
 export const discoverAssetValueReferences = ({
   properties,
   sourcePath,
   assetIdsByPath,
+  rootPath = ["properties"],
 }: {
   properties: Readonly<Record<string, unknown>>;
   sourcePath: string;
   assetIdsByPath: ReadonlyMap<string, string>;
+  rootPath?: Array<string | number>;
 }): AssetValueReference[] => {
-  const resolveAssetId = createAssetIdResolver(assetIdsByPath, sourcePath);
+  const resolveAssetReference = createAssetReferenceResolver({
+    sourcePath,
+    assetIdsByPath,
+  });
   const references: AssetValueReference[] = [];
   const visit = (value: unknown, path: Array<string | number>) => {
     if (typeof value === "string") {
-      const assetId = resolveAssetId(value);
-      if (assetId !== undefined) {
-        const suffix = getUrlSuffix(value);
-        references.push({
-          path,
-          assetId,
-          ...(suffix === undefined ? {} : { suffix }),
-        });
+      const reference = resolveAssetReference(value);
+      if (reference !== undefined) {
+        references.push({ path, ...reference });
       }
       return;
     }
@@ -63,7 +52,7 @@ export const discoverAssetValueReferences = ({
       visit(item, [...path, key]);
     }
   };
-  visit(properties, ["properties"]);
+  visit(properties, rootPath);
   return references;
 };
 
