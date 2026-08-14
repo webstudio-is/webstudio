@@ -4,6 +4,7 @@ import { Buffer } from "node:buffer";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { BrowserStartupError } from "@webstudio-is/vision/browser";
 import {
   BrowserNotFoundError,
   BrowserInstallUnavailableError,
@@ -342,6 +343,41 @@ test("formats actionable browser installation guidance", () => {
 });
 
 describe("captureScreenshot", () => {
+  test("falls back when the preferred browser fails during startup", async () => {
+    const captureBrowserScreenshot = vi.fn(async ({ browserPath }) => {
+      if (browserPath === "/usr/bin/chromium") {
+        throw new BrowserStartupError("Chromium exited with signal SIGABRT.");
+      }
+      return undefined;
+    });
+    const dependencies = createDependencies({
+      which: vi.fn(async (command) => {
+        if (command === "chromium") {
+          return "/usr/bin/chromium";
+        }
+        if (command === "google-chrome") {
+          return "/usr/bin/google-chrome";
+        }
+      }),
+      captureBrowserScreenshot,
+    });
+
+    await expect(
+      captureScreenshot(
+        {
+          url: "https://example.com",
+          width: 800,
+          height: 600,
+          browser: "auto",
+        },
+        dependencies
+      )
+    ).resolves.toMatchObject({
+      browser: { path: "/usr/bin/google-chrome" },
+    });
+    expect(captureBrowserScreenshot).toHaveBeenCalledTimes(2);
+  });
+
   test("captures with browser readiness defaults", async () => {
     const captureBrowserScreenshot = vi.fn(async () => ({
       navigation: genericNavigation,
@@ -579,7 +615,7 @@ test("maps page metadata from reusable capture sessions", async () => {
   await session.close();
 });
 
-test("resets a reusable capture session after browser startup rejects", async () => {
+test("reports failed browser startup without relaunching the same executable", async () => {
   const spawnBrowser = vi.fn(() => ({
     kill: vi.fn(() => true),
     once: vi.fn((event: string, listener: (error: Error) => void) => {
@@ -589,6 +625,12 @@ test("resets a reusable capture session after browser startup rejects", async ()
     }),
   }));
   const dependencies = createDependencies({
+    access: vi.fn(async (path) => {
+      if (path === "/usr/bin/chromium") {
+        return;
+      }
+      throw new Error("missing");
+    }),
     which: vi.fn(async (command) =>
       command === "chromium" ? "/usr/bin/chromium" : undefined
     ),
@@ -603,14 +645,197 @@ test("resets a reusable capture session after browser startup rejects", async ()
     timeout: 100,
   };
 
-  await expect(session.capture(options)).rejects.toThrow(
-    "Browser exited before its DevTools endpoint became ready."
-  );
-  await expect(session.capture(options)).rejects.toThrow(
-    "Browser exited before its DevTools endpoint became ready."
-  );
+  await expect(session.capture(options)).rejects.toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
+    message: expect.stringContaining("/usr/bin/chromium"),
+  });
+  await expect(session.capture(options)).rejects.toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
+    message: expect.stringContaining("/usr/bin/chromium"),
+  });
   await session.close();
-  expect(spawnBrowser).toHaveBeenCalledTimes(4);
+  expect(spawnBrowser).toHaveBeenCalledTimes(2);
+});
+
+test.each(["capture", "capturePage"] as const)(
+  "falls back for %s when the preferred browser exits during startup",
+  async (method) => {
+    const browserSession = {
+      capture: vi.fn(),
+      capturePage: vi.fn(async () => [
+        {
+          navigation: genericNavigation,
+          viewportWidth: 800,
+          viewportHeight: 600,
+          contentWidth: 800,
+          contentHeight: 600,
+          horizontalOverflow: false,
+        },
+      ]),
+      close: vi.fn(async () => undefined),
+    };
+    const createBrowserScreenshotSession = vi.fn(async (options) => {
+      if (options.browserPath === "/usr/bin/chromium") {
+        throw new BrowserStartupError(
+          "Browser exited before its DevTools endpoint became ready (signal SIGABRT)."
+        );
+      }
+      return browserSession;
+    });
+    const dependencies = createDependencies({
+      which: vi.fn(async (command) => {
+        if (command === "chromium") {
+          return "/usr/bin/chromium";
+        }
+        if (command === "google-chrome") {
+          return "/usr/bin/google-chrome";
+        }
+      }),
+      createBrowserScreenshotSession,
+    });
+    const session = createScreenshotCaptureSession(dependencies);
+
+    const options = {
+      url: "https://example.com",
+      width: 800,
+      height: 600,
+      browser: "auto" as const,
+    };
+    const result =
+      method === "capture"
+        ? await session.capture(options)
+        : (await session.capturePage([options]))[0];
+
+    expect(result.browser.path).toBe("/usr/bin/google-chrome");
+    expect(createBrowserScreenshotSession).toHaveBeenCalledTimes(2);
+    await session.close();
+  }
+);
+
+test("does not start a fallback browser for an explicit browser path", async () => {
+  const createBrowserScreenshotSession = vi.fn(async () => {
+    throw new BrowserStartupError("Chromium exited with signal SIGABRT.");
+  });
+  const dependencies = createDependencies({
+    which: vi.fn(async (command) =>
+      command === "google-chrome" ? "/usr/bin/google-chrome" : undefined
+    ),
+    createBrowserScreenshotSession,
+  });
+  const session = createScreenshotCaptureSession(dependencies);
+
+  await expect(
+    session.capture({
+      url: "https://example.com",
+      width: 800,
+      height: 600,
+      browser: "auto",
+      browserPath: "/usr/bin/chromium",
+    })
+  ).rejects.toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
+    message: expect.stringContaining("/usr/bin/chromium"),
+  });
+  expect(createBrowserScreenshotSession).toHaveBeenCalledTimes(1);
+  await session.close();
+});
+
+test("reports every browser that failed during startup", async () => {
+  const createBrowserScreenshotSession = vi.fn(async (options) => {
+    throw new BrowserStartupError(
+      `Startup timed out for ${options.browserPath}`
+    );
+  });
+  const dependencies = createDependencies({
+    access: vi.fn(async (path) => {
+      if (path === "/usr/bin/chromium" || path === "/usr/bin/google-chrome") {
+        return;
+      }
+      throw new Error("missing");
+    }),
+    which: vi.fn(async (command) => {
+      if (command === "chromium") {
+        return "/usr/bin/chromium";
+      }
+      if (command === "google-chrome") {
+        return "/usr/bin/google-chrome";
+      }
+    }),
+    createBrowserScreenshotSession,
+  });
+  const session = createScreenshotCaptureSession(dependencies);
+
+  await expect(
+    session.capture({
+      url: "https://example.com",
+      width: 800,
+      height: 600,
+      browser: "auto",
+    })
+  ).rejects.toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
+    message: [
+      "Unable to start any discovered Chromium-family browser.",
+      "- chromium (path): /usr/bin/chromium: Startup timed out for /usr/bin/chromium",
+      "- chrome (path): /usr/bin/google-chrome: Startup timed out for /usr/bin/google-chrome",
+    ].join("\n"),
+  });
+  expect(createBrowserScreenshotSession).toHaveBeenCalledTimes(2);
+  await session.close();
+});
+
+test("reports concurrent browser startup failures once per executable", async () => {
+  const createBrowserScreenshotSession = vi.fn(async (options) => {
+    throw new BrowserStartupError(`Startup failed for ${options.browserPath}`);
+  });
+  const dependencies = createDependencies({
+    access: vi.fn(async (path) => {
+      if (path === "/usr/bin/chromium" || path === "/usr/bin/google-chrome") {
+        return;
+      }
+      throw new Error("missing");
+    }),
+    which: vi.fn(async (command) => {
+      if (command === "chromium") {
+        return "/usr/bin/chromium";
+      }
+      if (command === "google-chrome") {
+        return "/usr/bin/google-chrome";
+      }
+    }),
+    createBrowserScreenshotSession,
+  });
+  const session = createScreenshotCaptureSession(dependencies);
+  const options = {
+    url: "https://example.com",
+    width: 800,
+    height: 600,
+    browser: "auto" as const,
+  };
+
+  const results = await Promise.allSettled([
+    session.capture(options),
+    session.capture(options),
+  ]);
+  const messages = results.map((result) =>
+    result.status === "rejected" && result.reason instanceof Error
+      ? result.reason.message
+      : undefined
+  );
+  expect(messages).toEqual([
+    [
+      "Unable to start any discovered Chromium-family browser.",
+      "- chromium (path): /usr/bin/chromium: Startup failed for /usr/bin/chromium",
+      "- chrome (path): /usr/bin/google-chrome: Startup failed for /usr/bin/google-chrome",
+    ].join("\n"),
+    [
+      "Unable to start any discovered Chromium-family browser.",
+      "- chromium (path): /usr/bin/chromium: Startup failed for /usr/bin/chromium",
+      "- chrome (path): /usr/bin/google-chrome: Startup failed for /usr/bin/google-chrome",
+    ].join("\n"),
+  ]);
+  expect(createBrowserScreenshotSession).toHaveBeenCalledTimes(2);
+  await session.close();
 });
 
 test("does not create a browser session after cleanup during discovery", async () => {

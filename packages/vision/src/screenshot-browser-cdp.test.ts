@@ -1027,7 +1027,10 @@ test("removes the browser profile when spawning throws", async () => {
       },
       dependencies
     )
-  ).rejects.toThrow("Browser spawn failed");
+  ).rejects.toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
+    message: "Browser spawn failed",
+  });
   expect(dependencies.rm).toHaveBeenCalledWith("/tmp/vision-browser-test", {
     recursive: true,
     force: true,
@@ -1123,6 +1126,7 @@ test("reports browser startup exit diagnostics without local paths", async () =>
       dependencies
     )
   ).rejects.toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
     message:
       "Browser exited before its DevTools endpoint became ready (exit code 21). Check the browser installation or provide a supported Chromium executable.",
   });
@@ -1513,7 +1517,10 @@ test("stops polling when the browser DevTools port is not created", async () => 
       },
       dependencies
     )
-  ).rejects.toThrow("Browser DevTools endpoint was not created within 10ms.");
+  ).rejects.toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
+    message: "Browser DevTools endpoint was not created within 10ms.",
+  });
 
   const callsAfterTimeout = vi.mocked(dependencies.readFile).mock.calls.length;
   await new Promise((resolve) => setTimeout(resolve, 75));
