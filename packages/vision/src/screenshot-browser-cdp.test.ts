@@ -1528,6 +1528,34 @@ test("stops polling when the browser DevTools port is not created", async () => 
   expect(browserProcess.kill).toHaveBeenCalled();
 });
 
+test("uses a separate browser startup timeout", async () => {
+  const browserProcess = new FakeBrowserProcess();
+  const dependencies = createDependencies({ browserProcess });
+  vi.mocked(dependencies.readFile).mockRejectedValue(
+    Object.assign(new Error("not ready"), { code: "ENOENT" })
+  );
+
+  await expect(
+    createBrowserScreenshotSession(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "load",
+        waitForTimeout: 0,
+        timeout: 100,
+        startupTimeout: 5,
+      },
+      dependencies
+    )
+  ).rejects.toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
+    message: "Browser DevTools endpoint was not created within 5ms.",
+  });
+});
+
 test("does not wait indefinitely for a failed browser startup to exit", async () => {
   const browserProcess = new FakeBrowserProcess();
   browserProcess.kill.mockImplementation((signal) => {

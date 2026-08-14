@@ -54,6 +54,39 @@ const createDependencies = (
   ...overrides,
 });
 
+const chromiumPath = "/usr/bin/chromium";
+const chromePath = "/usr/bin/google-chrome";
+
+const createDiscoveredBrowserDependencies = (
+  overrides: Partial<ScreenshotDependencies> = {}
+) =>
+  createDependencies({
+    access: vi.fn(async (path) => {
+      if (path === chromiumPath || path === chromePath) {
+        return;
+      }
+      throw new Error("missing");
+    }),
+    which: vi.fn(async (command) => {
+      if (command === "chromium") {
+        return chromiumPath;
+      }
+      if (command === "google-chrome") {
+        return chromePath;
+      }
+    }),
+    ...overrides,
+  });
+
+const getBrowserStartupFailureMessage = (
+  getFailure: (path: string) => string
+) =>
+  [
+    "Unable to start any discovered Chromium-family browser.",
+    `- chromium (path): ${chromiumPath}: ${getFailure(chromiumPath)}`,
+    `- chrome (path): ${chromePath}: ${getFailure(chromePath)}`,
+  ].join("\n");
+
 const genericNavigation = {
   requestedUrl: "https://example.com",
   finalUrl: "https://example.com/home",
@@ -257,6 +290,38 @@ describe("resolveScreenshotBrowser", () => {
       ]),
     });
   });
+
+  test("does not discover a fallback for an explicit browser path", async () => {
+    const captureBrowserScreenshot = vi.fn(async () => undefined);
+    const dependencies = createDependencies({
+      access: vi.fn(async (path) => {
+        if (path === "/usr/bin/google-chrome") {
+          return;
+        }
+        throw new Error("missing");
+      }),
+      which: vi.fn(async (command) =>
+        command === "google-chrome" ? "/usr/bin/google-chrome" : undefined
+      ),
+      captureBrowserScreenshot,
+    });
+
+    await expect(
+      captureScreenshot(
+        {
+          url: "https://example.com",
+          width: 800,
+          height: 600,
+          browser: "auto",
+          browserPath: "/missing/chromium",
+        },
+        dependencies
+      )
+    ).rejects.toMatchObject({
+      checked: ["/missing/chromium"],
+    });
+    expect(captureBrowserScreenshot).not.toHaveBeenCalled();
+  });
 });
 
 describe("OCR installation", () => {
@@ -451,6 +516,7 @@ describe("captureScreenshot", () => {
       waitForSelector: undefined,
       waitForTimeout: 250,
       timeout: 30000,
+      startupTimeout: 10000,
     });
     expect(dependencies.mkdir).toHaveBeenCalledWith(tmpdir(), {
       recursive: true,
@@ -682,15 +748,7 @@ test.each(["capture", "capturePage"] as const)(
       }
       return browserSession;
     });
-    const dependencies = createDependencies({
-      which: vi.fn(async (command) => {
-        if (command === "chromium") {
-          return "/usr/bin/chromium";
-        }
-        if (command === "google-chrome") {
-          return "/usr/bin/google-chrome";
-        }
-      }),
+    const dependencies = createDiscoveredBrowserDependencies({
       createBrowserScreenshotSession,
     });
     const session = createScreenshotCaptureSession(dependencies);
@@ -706,7 +764,7 @@ test.each(["capture", "capturePage"] as const)(
         ? await session.capture(options)
         : (await session.capturePage([options]))[0];
 
-    expect(result.browser.path).toBe("/usr/bin/google-chrome");
+    expect(result.browser.path).toBe(chromePath);
     expect(createBrowserScreenshotSession).toHaveBeenCalledTimes(2);
     await session.close();
   }
@@ -746,21 +804,7 @@ test("reports every browser that failed during startup", async () => {
       `Startup timed out for ${options.browserPath}`
     );
   });
-  const dependencies = createDependencies({
-    access: vi.fn(async (path) => {
-      if (path === "/usr/bin/chromium" || path === "/usr/bin/google-chrome") {
-        return;
-      }
-      throw new Error("missing");
-    }),
-    which: vi.fn(async (command) => {
-      if (command === "chromium") {
-        return "/usr/bin/chromium";
-      }
-      if (command === "google-chrome") {
-        return "/usr/bin/google-chrome";
-      }
-    }),
+  const dependencies = createDiscoveredBrowserDependencies({
     createBrowserScreenshotSession,
   });
   const session = createScreenshotCaptureSession(dependencies);
@@ -774,11 +818,9 @@ test("reports every browser that failed during startup", async () => {
     })
   ).rejects.toMatchObject({
     code: "BROWSER_STARTUP_FAILED",
-    message: [
-      "Unable to start any discovered Chromium-family browser.",
-      "- chromium (path): /usr/bin/chromium: Startup timed out for /usr/bin/chromium",
-      "- chrome (path): /usr/bin/google-chrome: Startup timed out for /usr/bin/google-chrome",
-    ].join("\n"),
+    message: getBrowserStartupFailureMessage(
+      (path) => `Startup timed out for ${path}`
+    ),
   });
   expect(createBrowserScreenshotSession).toHaveBeenCalledTimes(2);
   await session.close();
@@ -788,21 +830,7 @@ test("reports concurrent browser startup failures once per executable", async ()
   const createBrowserScreenshotSession = vi.fn(async (options) => {
     throw new BrowserStartupError(`Startup failed for ${options.browserPath}`);
   });
-  const dependencies = createDependencies({
-    access: vi.fn(async (path) => {
-      if (path === "/usr/bin/chromium" || path === "/usr/bin/google-chrome") {
-        return;
-      }
-      throw new Error("missing");
-    }),
-    which: vi.fn(async (command) => {
-      if (command === "chromium") {
-        return "/usr/bin/chromium";
-      }
-      if (command === "google-chrome") {
-        return "/usr/bin/google-chrome";
-      }
-    }),
+  const dependencies = createDiscoveredBrowserDependencies({
     createBrowserScreenshotSession,
   });
   const session = createScreenshotCaptureSession(dependencies);
@@ -822,18 +850,10 @@ test("reports concurrent browser startup failures once per executable", async ()
       ? result.reason.message
       : undefined
   );
-  expect(messages).toEqual([
-    [
-      "Unable to start any discovered Chromium-family browser.",
-      "- chromium (path): /usr/bin/chromium: Startup failed for /usr/bin/chromium",
-      "- chrome (path): /usr/bin/google-chrome: Startup failed for /usr/bin/google-chrome",
-    ].join("\n"),
-    [
-      "Unable to start any discovered Chromium-family browser.",
-      "- chromium (path): /usr/bin/chromium: Startup failed for /usr/bin/chromium",
-      "- chrome (path): /usr/bin/google-chrome: Startup failed for /usr/bin/google-chrome",
-    ].join("\n"),
-  ]);
+  const failureMessage = getBrowserStartupFailureMessage(
+    (path) => `Startup failed for ${path}`
+  );
+  expect(messages).toEqual([failureMessage, failureMessage]);
   expect(createBrowserScreenshotSession).toHaveBeenCalledTimes(2);
   await session.close();
 });

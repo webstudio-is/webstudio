@@ -6,6 +6,7 @@ import { spawn } from "node:child_process";
 import { Launcher } from "chrome-launcher";
 import which from "which";
 import {
+  defaultBrowserStartupTimeout,
   defaultScreenshotTimeout,
   defaultScreenshotWaitForTimeout,
   defaultScreenshotWaitUntil,
@@ -377,6 +378,7 @@ const getScreenshotBrowserCandidates = async (
           ? inferBrowser(options.browserPath)
           : options.browser,
     });
+    return candidates;
   }
 
   const envBrowserPath = dependencies.env.WEBSTUDIO_BROWSER_PATH;
@@ -675,27 +677,34 @@ const getBrowserScreenshotOptions = (
   browserPath: string,
   output: string,
   dependencies: ScreenshotDependencies
-): BrowserScreenshotOptions => ({
-  browserPath,
-  output,
-  width: options.width,
-  height: options.height,
-  fullPage: options.fullPage,
-  includeImageMetrics: options.includeImageMetrics,
-  includeResourceMetrics: options.includeResourceMetrics,
-  includeContrastMetrics: options.includeContrastMetrics,
-  ...webstudioPageInstrumentation,
-  url: options.url,
-  httpCredentials: options.httpCredentials,
-  uid: dependencies.getuid(),
-  waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
-  waitForSelector: options.waitForSelector,
-  waitForTimeout: options.waitForTimeout ?? defaultScreenshotWaitForTimeout,
-  timeout: options.timeout ?? defaultScreenshotTimeout,
-  format: options.format,
-  quality: options.quality,
-  scale: options.scale,
-});
+): BrowserScreenshotOptions => {
+  const timeout = options.timeout ?? defaultScreenshotTimeout;
+  return {
+    browserPath,
+    output,
+    width: options.width,
+    height: options.height,
+    fullPage: options.fullPage,
+    includeImageMetrics: options.includeImageMetrics,
+    includeResourceMetrics: options.includeResourceMetrics,
+    includeContrastMetrics: options.includeContrastMetrics,
+    ...webstudioPageInstrumentation,
+    url: options.url,
+    httpCredentials: options.httpCredentials,
+    uid: dependencies.getuid(),
+    waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
+    waitForSelector: options.waitForSelector,
+    waitForTimeout: options.waitForTimeout ?? defaultScreenshotWaitForTimeout,
+    timeout,
+    startupTimeout: Math.max(
+      1,
+      Math.min(defaultBrowserStartupTimeout, Math.floor(timeout / 2))
+    ),
+    format: options.format,
+    quality: options.quality,
+    scale: options.scale,
+  };
+};
 
 const validateScreenshotArtifact = async (
   output: string,
