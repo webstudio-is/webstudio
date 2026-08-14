@@ -13,8 +13,10 @@ import {
 import {
   createMdxDocumentFromMarkdown,
   MdxDocumentError,
+  parseMdxDocument,
   type MdxDocument,
   type MdxMode,
+  type MdxSourceRange,
 } from "./mdx";
 import { serializeMdxDocument } from "./mdx-serialization";
 
@@ -127,6 +129,13 @@ const restoreMarkdownElements = (
 export type MarkdownToMdxConversionPreview = Readonly<{
   source: string;
   document: MdxDocument;
+  omissions: readonly MarkdownToMdxConversionOmission[];
+}>;
+
+export type MarkdownToMdxConversionOmission = Readonly<{
+  nodeType: string;
+  reason: string;
+  sourceRange: MdxSourceRange;
 }>;
 
 /** Converts Markdown without writing or allocating a destination Asset. */
@@ -137,7 +146,8 @@ export const previewMarkdownToMdxConversion = async ({
   source: string;
   maximumBytes?: number;
 }): Promise<MarkdownToMdxConversionPreview> => {
-  const document = await createMdxDocumentFromMarkdown({
+  const omissions: MarkdownToMdxConversionOmission[] = [];
+  const convertedDocument = await createMdxDocumentFromMarkdown({
     source,
     maximumBytes,
     transformHast: ({ sourceRoot, hastRoot }) => {
@@ -156,9 +166,29 @@ export const previewMarkdownToMdxConversion = async ({
       restoreMarkdownElements(parsed);
       return parsed;
     },
+    shouldOmitUnsafePart: (error) => {
+      if (
+        error.nodeType === undefined ||
+        error.reason === undefined ||
+        error.sourceRange === undefined
+      ) {
+        return false;
+      }
+      omissions.push({
+        nodeType: error.nodeType,
+        reason: error.reason,
+        sourceRange: error.sourceRange,
+      });
+      return true;
+    },
   });
+  const convertedSource = serializeMdxDocument(convertedDocument);
   return {
-    source: serializeMdxDocument(document),
-    document,
+    source: convertedSource,
+    document: await parseMdxDocument({
+      source: convertedSource,
+      maximumBytes,
+    }),
+    omissions,
   };
 };

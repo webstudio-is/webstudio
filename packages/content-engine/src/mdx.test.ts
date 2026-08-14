@@ -724,18 +724,15 @@ Before <span class="accent">inline</span> after.
     expect(source).toContain('<span class="accent">');
   });
 
-  test("rejects unsafe embedded HTML through shared MDX validation", async () => {
+  test("rejects source-level errors that cannot be isolated", async () => {
     await expect(
       previewMarkdownToMdxConversion({
-        source: "Before\n\n<script>alert(1)</script>\n\nAfter",
+        source: "too large",
+        maximumBytes: 1,
       })
     ).rejects.toMatchObject({
-      code: "unsafe-mdx",
-      reason: "Webstudio element tag script is not supported",
-      sourceRange: {
-        start: { line: 3, column: 1, offset: 8 },
-        end: { line: 3, column: 26, offset: 33 },
-      },
+      code: "invalid-mdx",
+      message: "MDX content exceeds the byte limit",
     } satisfies Partial<MdxDocumentError>);
   });
 
@@ -748,5 +745,147 @@ Before <span class="accent">inline</span> after.
 | ------------------------------------------- |
 | <ws.element ws:tag="span">Cell</ws.element> |
 `);
+  });
+
+  test("omits isolatable unsafe HTML subtrees and reports their locations", async () => {
+    const source = `---
+title: Existing post
+---
+# Kept
+
+<script>alert(1)</script>
+
+Before <span onclick="alert(1)">omitted</span> after.
+
+<footer>Also kept</footer>
+`;
+
+    const preview = await previewMarkdownToMdxConversion({ source });
+
+    expect(preview.document.frontmatter.properties).toEqual({
+      title: "Existing post",
+    });
+    expect(omitSourceRanges(preview.document.children)).toEqual([
+      {
+        type: "element",
+        syntax: "markdown",
+        tag: "h1",
+        props: [],
+        children: [{ type: "text", value: "Kept" }],
+      },
+      {
+        type: "element",
+        syntax: "markdown",
+        tag: "p",
+        props: [],
+        children: [
+          { type: "text", value: "Before " },
+          {
+            type: "element",
+            syntax: "mdx",
+            tag: "span",
+            props: [],
+            children: [{ type: "text", value: "omitted" }],
+            mdxMode: "text",
+          },
+          { type: "text", value: " after." },
+        ],
+      },
+      {
+        type: "element",
+        syntax: "mdx",
+        tag: "footer",
+        props: [],
+        children: [
+          {
+            type: "element",
+            syntax: "markdown",
+            tag: "p",
+            props: [],
+            children: [{ type: "text", value: "Also kept" }],
+          },
+        ],
+        mdxMode: "flow",
+      },
+    ]);
+    expect(preview.omissions).toEqual([
+      {
+        nodeType: "element",
+        reason: "Webstudio element tag script is not supported",
+        sourceRange: {
+          start: { line: 6, column: 1, offset: 37 },
+          end: { line: 6, column: 26, offset: 62 },
+        },
+      },
+      {
+        nodeType: "element",
+        reason: "MDX JSX prop onclick is not supported",
+        sourceRange: {
+          start: { line: 8, column: 8, offset: 71 },
+          end: { line: 8, column: 47, offset: 110 },
+        },
+      },
+    ]);
+    expect(
+      omitSourceRanges(await parseMdxDocument({ source: preview.source }))
+    ).toEqual(omitSourceRanges(preview.document));
+  });
+
+  test("preserves Markdown link and image nodes after omitting unsafe destinations", async () => {
+    const preview = await previewMarkdownToMdxConversion({
+      source:
+        "[Unsafe link](javascript:alert(1))\n\n![Unsafe image](data:text/html,bad)\n",
+    });
+
+    expect(omitSourceRanges(preview.document.children)).toEqual([
+      {
+        type: "element",
+        syntax: "mdx",
+        tag: "p",
+        props: [],
+        children: [
+          {
+            type: "element",
+            syntax: "mdx",
+            tag: "a",
+            props: [],
+            children: [{ type: "text", value: "Unsafe link" }],
+            mdxMode: "text",
+          },
+        ],
+        mdxMode: "flow",
+      },
+      {
+        type: "element",
+        syntax: "mdx",
+        tag: "p",
+        props: [],
+        children: [
+          {
+            type: "element",
+            syntax: "mdx",
+            tag: "img",
+            props: [{ name: "alt", value: "Unsafe image" }],
+            children: [],
+            mdxMode: "flow",
+          },
+        ],
+        mdxMode: "flow",
+      },
+    ]);
+    expect(preview.omissions.map(({ reason }) => reason)).toEqual([
+      "MDX JSX prop href contains an unsafe URL",
+      "MDX JSX prop src contains an unsafe URL",
+    ]);
+  });
+
+  test("reports an omitted subtree once without nested property omissions", async () => {
+    const preview = await previewMarkdownToMdxConversion({
+      source: '<script onclick="alert(1)">unsafe</script>\n',
+    });
+
+    expect(preview.omissions.map(({ reason }) => reason)).toEqual([
+      "Webstudio element tag script is not supported",
+    ]);
   });
 });

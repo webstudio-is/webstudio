@@ -533,63 +533,98 @@ const findHastMdxMode = (node: SyntaxTreeNode): MdxMode | undefined => {
   }
 };
 
-const mapHastProperties = (node: SyntaxTreeNode) => {
+type MapHastOptions = {
+  shouldOmitUnsafePart?: (error: MdxDocumentError) => boolean;
+};
+
+const canOmitUnsafePart = (error: unknown, options: MapHastOptions) =>
+  error instanceof MdxDocumentError &&
+  error.code === "unsafe-mdx" &&
+  options.shouldOmitUnsafePart?.(error) === true;
+
+const mapHastProperties = (node: SyntaxTreeNode, options: MapHastOptions) => {
   if (node.properties === undefined) {
-    return [];
+    return { props: [], requiresMdxFallback: false };
   }
   if (isRecord(node.properties) === false) {
     return throwUnsafeNode(node, "HTML properties must be an object");
   }
   const props: MdxAuthoredProp[] = [];
   const propertyNames = new Set<string>();
+  let requiresMdxFallback = false;
   for (const [propertyName, value] of Object.entries(node.properties)) {
-    if (value === undefined || value === null || value === false) {
-      continue;
+    try {
+      if (value === undefined || value === null || value === false) {
+        continue;
+      }
+      let propValue: MdxAuthoredProp["value"];
+      if (value === true) {
+        propValue = true;
+      } else if (typeof value === "string" || typeof value === "number") {
+        propValue = String(value);
+      } else if (
+        Array.isArray(value) &&
+        value.every(
+          (item) => typeof item === "string" || typeof item === "number"
+        )
+      ) {
+        propValue = value.join(" ");
+      } else {
+        return throwUnsafeNode(
+          node,
+          `HTML property ${propertyName} is invalid`
+        );
+      }
+      const name = propertyName === "className" ? "class" : propertyName;
+      if (propertyNames.has(name)) {
+        return throwUnsafeNode(node, "HTML properties must be unique");
+      }
+      const prop: MdxAuthoredProp = { name, value: propValue };
+      validateStaticProp(node, prop);
+      propertyNames.add(name);
+      props.push(prop);
+    } catch (error) {
+      if (canOmitUnsafePart(error, options)) {
+        requiresMdxFallback ||=
+          (node.tagName === "a" && propertyName === "href") ||
+          (node.tagName === "img" && propertyName === "src");
+        continue;
+      }
+      throw error;
     }
-    let propValue: MdxAuthoredProp["value"];
-    if (value === true) {
-      propValue = true;
-    } else if (typeof value === "string" || typeof value === "number") {
-      propValue = String(value);
-    } else if (
-      Array.isArray(value) &&
-      value.every(
-        (item) => typeof item === "string" || typeof item === "number"
-      )
-    ) {
-      propValue = value.join(" ");
-    } else {
-      return throwUnsafeNode(node, `HTML property ${propertyName} is invalid`);
-    }
-    const name = propertyName === "className" ? "class" : propertyName;
-    if (propertyNames.has(name)) {
-      return throwUnsafeNode(node, "HTML properties must be unique");
-    }
-    propertyNames.add(name);
-    const prop: MdxAuthoredProp = { name, value: propValue };
-    validateStaticProp(node, prop);
-    props.push(prop);
   }
-  return props;
+  return { props, requiresMdxFallback };
 };
 
-const mapHastChildren = (node: SyntaxTreeNode): MdxAuthoredNode[] =>
-  getSyntaxTreeChildren(node)
-    .filter(
-      (child) =>
-        child.position !== undefined ||
-        child.type !== "text" ||
-        typeof child.value !== "string" ||
-        child.value !== "\n"
-    )
-    .map(mapHastNode);
+const mapHastChildren = (
+  node: SyntaxTreeNode,
+  options: MapHastOptions = {}
+): MdxAuthoredNode[] => {
+  const children: MdxAuthoredNode[] = [];
+  for (const child of getSyntaxTreeChildren(node)) {
+    if (
+      child.position === undefined &&
+      child.type === "text" &&
+      child.value === "\n"
+    ) {
+      continue;
+    }
+    try {
+      children.push(mapHastNode(child, options));
+    } catch (error) {
+      if (canOmitUnsafePart(error, options)) {
+        continue;
+      }
+      throw error;
+    }
+  }
+  return children;
+};
 
 const getHastMdxMode = (node: SyntaxTreeNode) => {
-  if (
-    isRecord(node.data) &&
-    (node.data.mdxMode === "flow" || node.data.mdxMode === "text")
-  ) {
-    return node.data.mdxMode;
+  const mode = findHastMdxMode(node);
+  if (mode !== undefined) {
+    return mode;
   }
   return throwUnsafeNode(node, "MDX node mode is missing");
 };
@@ -621,7 +656,8 @@ const preservesTextWhitespace = (node: SyntaxTreeNode) =>
 
 const mapWebstudioElement = (
   node: SyntaxTreeNode,
-  props: readonly MdxAuthoredProp[]
+  props: readonly MdxAuthoredProp[],
+  options: MapHastOptions
 ): MdxAuthoredNode => {
   const nameProp = props.find((prop) => prop.name === "ws:name");
   const tagProp = props.find((prop) => prop.name === "ws:tag");
@@ -636,7 +672,7 @@ const mapWebstudioElement = (
       type: "template",
       name: nameProp.value,
       props: props.filter((prop) => prop.name !== "ws:name"),
-      children: mapHastChildren(node),
+      children: mapHastChildren(node, options),
       mdxMode: getHastMdxMode(node),
       sourceRange: toSourceRange(node.position),
     };
@@ -659,12 +695,15 @@ const mapWebstudioElement = (
     node,
     tag,
     props: props.filter((prop) => prop.name !== "ws:tag"),
-    children: mapHastChildren(node),
+    children: mapHastChildren(node, options),
     mdxMode: getHastMdxMode(node),
   });
 };
 
-const mapHastNode = (node: SyntaxTreeNode): MdxAuthoredNode => {
+const mapHastNode = (
+  node: SyntaxTreeNode,
+  options: MapHastOptions
+): MdxAuthoredNode => {
   if (node.type === "text") {
     if (typeof node.value !== "string") {
       return throwUnsafeNode(node, "HTML text must contain a string value");
@@ -692,13 +731,10 @@ const mapHastNode = (node: SyntaxTreeNode): MdxAuthoredNode => {
       `HTML node type ${node.type} is not supported`
     );
   }
-  const props = mapHastProperties(node);
-  if (node.tagName === "ws.element") {
-    return mapWebstudioElement(node, props);
-  }
-  const mdxMode = findHastMdxMode(node);
+  const authoredMdxMode = findHastMdxMode(node);
   if (
-    mdxMode !== undefined &&
+    node.tagName !== "ws.element" &&
+    authoredMdxMode !== undefined &&
     unsupportedElementTags.has(node.tagName.toLowerCase())
   ) {
     return throwUnsafeNode(
@@ -706,11 +742,30 @@ const mapHastNode = (node: SyntaxTreeNode): MdxAuthoredNode => {
       `Webstudio element tag ${node.tagName} is not supported`
     );
   }
+  const { props, requiresMdxFallback } = mapHastProperties(node, options);
+  if (node.tagName === "ws.element") {
+    return mapWebstudioElement(node, props, options);
+  }
+  let mdxMode = authoredMdxMode ?? (requiresMdxFallback ? "text" : undefined);
+  const children = mapHastChildren(node, options);
+  const onlyChild = children.length === 1 ? children[0] : undefined;
+  if (
+    mdxMode === undefined &&
+    node.tagName === "p" &&
+    onlyChild !== undefined &&
+    ((onlyChild.type === "element" &&
+      onlyChild.syntax === "mdx" &&
+      onlyChild.mdxMode === "text") ||
+      (onlyChild.type === "template" && onlyChild.mdxMode === "text") ||
+      (onlyChild.type === "comment" && onlyChild.mdxMode === "text"))
+  ) {
+    mdxMode = "flow";
+  }
   return createElement({
     node,
     tag: node.tagName,
     props,
-    children: mapHastChildren(node),
+    children,
     mdxMode,
     markdownListItem: getMarkdownListItem(node),
     preserveTextWhitespace: preservesTextWhitespace(node),
@@ -775,6 +830,7 @@ export const createMdxDocumentFromMarkdown = async ({
   source,
   maximumBytes = contentEngineLimits.hydratedFileBytes,
   transformHast,
+  shouldOmitUnsafePart,
 }: {
   source: string;
   maximumBytes?: number;
@@ -782,6 +838,7 @@ export const createMdxDocumentFromMarkdown = async ({
     sourceRoot: SyntaxTreeNode;
     hastRoot: SyntaxTreeNode;
   }) => SyntaxTreeNode | Promise<SyntaxTreeNode>;
+  shouldOmitUnsafePart?: (error: MdxDocumentError) => boolean;
 }): Promise<MdxDocument> => {
   validateMdxSourceBytes({ source, maximumBytes });
   const sourceRoot = parseMarkdownAst(source);
@@ -793,7 +850,7 @@ export const createMdxDocumentFromMarkdown = async ({
   validateAstLimits(hastRoot);
   return {
     frontmatter: await parseMdxFrontmatter(sourceRoot, source),
-    children: mapHastChildren(hastRoot),
+    children: mapHastChildren(hastRoot, { shouldOmitUnsafePart }),
   };
 };
 
