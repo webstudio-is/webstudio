@@ -8,22 +8,12 @@ export const fontFormat = z.union([
 ]);
 export type FontFormat = z.infer<typeof fontFormat>;
 
-const axisName = z.enum([
-  "wght",
-  "wdth",
-  "slnt",
-  "opsz",
-  "ital",
-  "GRAD",
-  "XTRA",
-  "XOPQ",
-  "YOPQ",
-  "YTLC",
-  "YTUC",
-  "YTAS",
-  "YTDE",
-  "YTFI",
-]);
+// OpenType variation axis tags contain four ASCII characters. Registered tags
+// and foundry-defined custom tags use the same identifier format.
+const axisName = z
+  .string()
+  .regex(/^[A-Za-z][A-Za-z0-9]* *$/)
+  .length(4);
 
 const variationAxes = z.partialRecord(
   axisName,
