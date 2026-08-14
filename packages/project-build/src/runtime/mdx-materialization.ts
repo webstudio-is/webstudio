@@ -1,10 +1,12 @@
 import hash from "@emotion/hash";
-import type {
-  ContentBlockDiagnostic,
-  ContentBlockExternalContentIdentity,
-  WebstudioData,
-  WebstudioFragment,
-  WsComponentMeta,
+import {
+  getAssetContentHash,
+  type ContentBlockDiagnostic,
+  type ContentBlockExternalContentIdentity,
+  type Instance,
+  type WebstudioData,
+  type WebstudioFragment,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
   getContentModeCapabilities,
@@ -33,9 +35,19 @@ export type MaterializedMdxTemplate =
       markerId: string;
     }>;
 
+export type MdxTemplateDependency = Readonly<{
+  templateInstanceId: Instance["id"];
+  templateName: string;
+  revision: `sha256:${string}`;
+}>;
+
 export type MdxTemplateMaterialization = Readonly<{
   templates: readonly MaterializedMdxTemplate[];
   diagnostics: readonly ContentBlockDiagnostic[];
+  dependencies: Readonly<{
+    templateNames: readonly string[];
+    templates: readonly MdxTemplateDependency[];
+  }>;
 }>;
 
 const createEmptyFragmentData = (): Omit<WebstudioData, "pages"> => ({
@@ -71,7 +83,7 @@ const createScopeIdGenerator = ({
   return () => `mdx-${scope}-${index++}`;
 };
 
-export const materializeMdxTemplates = ({
+export const materializeMdxTemplates = async ({
   identity,
   resolution,
   data,
@@ -83,9 +95,16 @@ export const materializeMdxTemplates = ({
   data: Omit<WebstudioData, "pages">;
   metas: Map<string, WsComponentMeta>;
   projectId: string;
-}): MdxTemplateMaterialization => {
+}): Promise<MdxTemplateMaterialization> => {
   const materializedTemplates: MaterializedMdxTemplate[] = [];
   const diagnostics: ContentBlockDiagnostic[] = [...resolution.diagnostics];
+  const sourceTemplates = new Map<
+    Instance["id"],
+    {
+      fragment: WebstudioFragment;
+      dependency: MdxTemplateDependency;
+    }
+  >();
   for (const reference of resolution.references) {
     if (reference.type === "unresolved-template") {
       materializedTemplates.push({
@@ -104,10 +123,25 @@ export const materializeMdxTemplates = ({
       );
     }
 
-    const sourceFragment = extractWebstudioFragment(
-      data,
-      reference.templateInstanceId
-    );
+    let sourceTemplate = sourceTemplates.get(reference.templateInstanceId);
+    if (sourceTemplate === undefined) {
+      const fragment = extractWebstudioFragment(
+        data,
+        reference.templateInstanceId
+      );
+      sourceTemplate = {
+        fragment,
+        dependency: {
+          templateInstanceId: reference.templateInstanceId,
+          templateName: reference.templateName,
+          revision: `sha256:${await getAssetContentHash(
+            new TextEncoder().encode(JSON.stringify(fragment))
+          )}`,
+        },
+      };
+      sourceTemplates.set(reference.templateInstanceId, sourceTemplate);
+    }
+    const sourceFragment = sourceTemplate.fragment;
     const materializedData = createEmptyFragmentData();
     const createId = createScopeIdGenerator({
       identity,
@@ -193,5 +227,15 @@ export const materializeMdxTemplates = ({
       fragment: extractWebstudioFragment(materializedData, materializedRootId),
     });
   }
-  return { templates: materializedTemplates, diagnostics };
+  return {
+    templates: materializedTemplates,
+    diagnostics,
+    dependencies: {
+      templateNames: resolution.templateNames,
+      templates: Array.from(
+        sourceTemplates.values(),
+        ({ dependency }) => dependency
+      ),
+    },
+  };
 };

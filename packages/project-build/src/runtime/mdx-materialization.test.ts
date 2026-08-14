@@ -24,6 +24,7 @@ const identity: ContentBlockExternalContentIdentity = {
 };
 
 const resolution: MdxTemplateResolution = {
+  templateNames: ["Hero Card"],
   references: [
     {
       type: "resolved-template",
@@ -212,10 +213,10 @@ const getUnresolvedTemplate = (
 };
 
 describe("materializeMdxTemplates", () => {
-  test("copies resolved fragments and represents unresolved usages", () => {
+  test("copies resolved fragments and represents unresolved usages", async () => {
     const data = createData();
     const originalData = structuredClone(data);
-    const materialization = materializeMdxTemplates({
+    const materialization = await materializeMdxTemplates({
       identity,
       resolution,
       data,
@@ -285,11 +286,11 @@ describe("materializeMdxTemplates", () => {
     ]);
   });
 
-  test("rejects a resolved reference when its template was removed", () => {
+  test("rejects a resolved reference when its template was removed", async () => {
     const data = createData();
     data.instances.delete("hero");
 
-    expect(() =>
+    await expect(
       materializeMdxTemplates({
         identity,
         resolution,
@@ -297,10 +298,10 @@ describe("materializeMdxTemplates", () => {
         metas,
         projectId: "target-project",
       })
-    ).toThrow('Resolved MDX template instance "hero" is missing');
+    ).rejects.toThrow('Resolved MDX template instance "hero" is missing');
   });
 
-  test("generates stable IDs scoped by revision, render scope, and usage path", () => {
+  test("generates stable IDs scoped by revision, render scope, and usage path", async () => {
     const materialize = (
       nextIdentity: ContentBlockExternalContentIdentity,
       nextResolution: MdxTemplateResolution = resolution
@@ -312,34 +313,37 @@ describe("materializeMdxTemplates", () => {
         metas,
         projectId: "target-project",
       });
-    const materializeRootId = (
+    const materializeRootId = async (
       nextIdentity: ContentBlockExternalContentIdentity,
       nextResolution: MdxTemplateResolution = resolution
     ) =>
-      getResolvedTemplate(materialize(nextIdentity, nextResolution).templates)
-        .fragment.children[0];
-    const materializeMarkerId = (
+      getResolvedTemplate(
+        (await materialize(nextIdentity, nextResolution)).templates
+      ).fragment.children[0];
+    const materializeMarkerId = async (
       nextIdentity: ContentBlockExternalContentIdentity
-    ) => getUnresolvedTemplate(materialize(nextIdentity).templates).markerId;
+    ) =>
+      getUnresolvedTemplate((await materialize(nextIdentity)).templates)
+        .markerId;
 
-    const first = materializeRootId(identity);
-    expect(materializeRootId(identity)).toEqual(first);
+    const first = await materializeRootId(identity);
+    expect(await materializeRootId(identity)).toEqual(first);
     expect(
-      materializeRootId({ ...identity, revision: "revision-2" })
+      await materializeRootId({ ...identity, revision: "revision-2" })
     ).not.toEqual(first);
     expect(
-      materializeRootId({ ...identity, renderScope: "route:/other" })
+      await materializeRootId({ ...identity, renderScope: "route:/other" })
     ).not.toEqual(first);
-    const markerId = materializeMarkerId(identity);
-    expect(materializeMarkerId(identity)).toBe(markerId);
+    const markerId = await materializeMarkerId(identity);
+    expect(await materializeMarkerId(identity)).toBe(markerId);
     expect(
-      materializeMarkerId({ ...identity, revision: "revision-2" })
+      await materializeMarkerId({ ...identity, revision: "revision-2" })
     ).not.toBe(markerId);
     expect(
-      materializeMarkerId({ ...identity, renderScope: "route:/other" })
+      await materializeMarkerId({ ...identity, renderScope: "route:/other" })
     ).not.toBe(markerId);
     expect(
-      materializeRootId(identity, {
+      await materializeRootId(identity, {
         references: [
           {
             type: "resolved-template",
@@ -350,14 +354,16 @@ describe("materializeMdxTemplates", () => {
           },
         ],
         diagnostics: [],
+        templateNames: ["Hero Card"],
       })
     ).not.toEqual(first);
   });
 
-  test("applies Content-mode props and diagnoses ignored props", () => {
-    const materialization = materializeMdxTemplates({
+  test("applies Content-mode props and diagnoses ignored props", async () => {
+    const materialization = await materializeMdxTemplates({
       identity,
       resolution: {
+        templateNames: ["Hero Card"],
         references: [
           {
             type: "resolved-template",
@@ -416,5 +422,57 @@ describe("materializeMdxTemplates", () => {
         reason: "unknown",
       }),
     ]);
+  });
+
+  test("tracks effective names and deduplicated template revisions", async () => {
+    const data = createData();
+    const originalData = structuredClone(data);
+    const materialize = () =>
+      materializeMdxTemplates({
+        identity,
+        resolution: {
+          ...resolution,
+          references: [
+            resolution.references[0],
+            {
+              type: "resolved-template",
+              path: [2],
+              templateName: "Hero Card",
+              templateInstanceId: "hero",
+              props: [],
+            },
+          ],
+          diagnostics: [],
+        },
+        data,
+        metas,
+        projectId: "target-project",
+      });
+
+    const firstMaterialization = await materialize();
+    expect(data).toEqual(originalData);
+    const first = firstMaterialization.dependencies;
+    expect(first.templateNames).toEqual(["Hero Card"]);
+    expect(first.templates).toEqual([
+      {
+        templateInstanceId: "hero",
+        templateName: "Hero Card",
+        revision: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
+      },
+    ]);
+    const rootIds = firstMaterialization.templates.flatMap((template) =>
+      template.type === "resolved-template"
+        ? template.fragment.children.map((child) => child.value)
+        : []
+    );
+    expect(new Set(rootIds).size).toBe(2);
+
+    data.instances.get("heading")?.children.push({
+      type: "text",
+      value: "Changed",
+    });
+    expect((await materialize()).dependencies.templates[0].revision).not.toBe(
+      first.templates[0].revision
+    );
   });
 });

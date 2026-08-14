@@ -31,6 +31,7 @@ export type MdxTemplateReference = Readonly<{
   );
 
 export type MdxTemplateResolution = Readonly<{
+  templateNames: readonly string[];
   references: readonly MdxTemplateReference[];
   diagnostics: readonly ContentBlockDiagnostic[];
 }>;
@@ -47,11 +48,13 @@ export const resolveMdxTemplates = ({
   metas: ReadonlyMap<Instance["component"], WsComponentMeta>;
 }): MdxTemplateResolution => {
   const templateIdsByName = new Map<string, Instance["id"][]>();
+  const templateNames: string[] = [];
   for (const [template] of findBlockTemplates({
     anchor: [identity.blockInstanceId],
     instances,
   }) ?? []) {
     const name = getInstanceName({ instance: template, metas });
+    templateNames.push(name);
     const templateIds = templateIdsByName.get(name) ?? [];
     templateIds.push(template.id);
     templateIdsByName.set(name, templateIds);
@@ -107,5 +110,5 @@ export const resolveMdxTemplates = ({
   };
 
   visit(document.children, []);
-  return { references, diagnostics };
+  return { templateNames, references, diagnostics };
 };

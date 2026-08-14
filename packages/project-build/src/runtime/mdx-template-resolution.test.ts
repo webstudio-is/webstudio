@@ -98,6 +98,7 @@ describe("resolveMdxTemplates", () => {
       }),
     ]);
     expect(result.diagnostics).toEqual([]);
+    expect(result.templateNames).toEqual(["Hero Card", "Card"]);
   });
 
   test("does not resolve descendants of a template entry or inexact names", async () => {
@@ -140,6 +141,7 @@ describe("resolveMdxTemplates", () => {
         templateName: " Hero Card ",
       }),
     ]);
+    expect(result.templateNames).toEqual(["Hero Card", "Card"]);
   });
 
   test("keeps ambiguous duplicate displayed names unresolved", async () => {
@@ -176,6 +178,7 @@ describe("resolveMdxTemplates", () => {
         templateName: "Hero Card",
       }),
     ]);
+    expect(result.templateNames).toEqual(["Hero Card", "Card", "Hero Card"]);
     expect(document.children[0]).toMatchObject({
       type: "template",
       name: "Hero Card",
