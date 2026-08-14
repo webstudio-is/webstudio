@@ -10,7 +10,7 @@
   "scripts": {
     "benchmark:index": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-index.mjs",
     "benchmark:scale": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-scale.mjs",
-    "build": "rm -rf lib && esbuild src/index.ts src/compiler.ts src/limits.ts src/markdown-assets.ts src/markdown-references.ts src/mdx.ts src/published-runtime.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/compiler.ts src/limits.ts src/markdown-assets.ts src/markdown-references.ts src/mdx.ts src/mdx-conversion.ts src/published-runtime.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -20,6 +20,7 @@
     "@webstudio-is/expression": "workspace:*",
     "@webstudio-is/query-builder": "workspace:*",
     "canonicalize": "3.0.0",
+    "hast-util-raw": "7.2.3",
     "hast-util-to-mdast": "9.0.0",
     "lru-cache": "10.4.3",
     "mdast-util-gfm": "2.0.2",
@@ -29,11 +30,13 @@
     "mdast-util-to-markdown": "1.5.0",
     "micromark": "4.0.2",
     "micromark-util-decode-string": "2.0.1",
+    "property-information": "6.2.0",
     "remark-frontmatter": "4.0.1",
     "remark-gfm": "3.0.1",
     "remark-mdx": "2.3.0",
     "remark-parse": "10.0.2",
     "unified": "10.1.2",
+    "vfile": "5.3.6",
     "yaml": "2.9.0",
     "zod": "^4.4.3"
   },
@@ -84,6 +87,12 @@
       "types": "./lib/types/mdx.d.ts",
       "import": "./lib/mdx.js",
       "default": "./src/mdx.ts"
+    },
+    "./mdx-conversion": {
+      "webstudio": "./src/mdx-conversion.ts",
+      "types": "./lib/types/mdx-conversion.d.ts",
+      "import": "./lib/mdx-conversion.js",
+      "default": "./src/mdx-conversion.ts"
     }
   },
   "files": [

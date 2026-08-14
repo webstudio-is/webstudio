@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { resolveAssetValueReferences } from "./asset-value-references";
 import { parseMarkdownAst } from "./markdown-ast";
+import { previewMarkdownToMdxConversion } from "./mdx-conversion";
 import {
   discoverMdxAssetReferences,
   MdxDocumentError,
@@ -648,5 +649,104 @@ next</ws.element>
         end: { line: 1, column: 1 },
       },
     } satisfies Partial<MdxDocumentError>);
+  });
+});
+
+describe("previewMarkdownToMdxConversion", () => {
+  test("converts Markdown and embedded HTML through the shared authored tree", async () => {
+    const source = `---
+title: Existing post
+cover: ./cover.png
+---
+# Heading
+
+Before <span class="accent">inline</span> after.
+
+<figure data-kind="hero"><img src="./hero.png" alt="Hero"></figure>
+`;
+
+    const preview = await previewMarkdownToMdxConversion({ source });
+
+    expect(preview.document.frontmatter.properties).toEqual({
+      title: "Existing post",
+      cover: "./cover.png",
+    });
+    expect(omitSourceRanges(preview.document.children)).toEqual([
+      {
+        type: "element",
+        syntax: "markdown",
+        tag: "h1",
+        props: [],
+        children: [{ type: "text", value: "Heading" }],
+      },
+      {
+        type: "element",
+        syntax: "markdown",
+        tag: "p",
+        props: [],
+        children: [
+          { type: "text", value: "Before " },
+          {
+            type: "element",
+            syntax: "mdx",
+            tag: "span",
+            props: [{ name: "class", value: "accent" }],
+            children: [{ type: "text", value: "inline" }],
+            mdxMode: "text",
+          },
+          { type: "text", value: " after." },
+        ],
+      },
+      {
+        type: "element",
+        syntax: "mdx",
+        tag: "figure",
+        props: [{ name: "data-kind", value: "hero" }],
+        children: [
+          {
+            type: "element",
+            syntax: "mdx",
+            tag: "img",
+            props: [
+              { name: "src", value: "./hero.png" },
+              { name: "alt", value: "Hero" },
+            ],
+            children: [],
+            mdxMode: "flow",
+          },
+        ],
+        mdxMode: "flow",
+      },
+    ]);
+    expect(
+      omitSourceRanges(await parseMdxDocument({ source: preview.source }))
+    ).toEqual(omitSourceRanges(preview.document));
+    expect(source).toContain('<span class="accent">');
+  });
+
+  test("rejects unsafe embedded HTML through shared MDX validation", async () => {
+    await expect(
+      previewMarkdownToMdxConversion({
+        source: "Before\n\n<script>alert(1)</script>\n\nAfter",
+      })
+    ).rejects.toMatchObject({
+      code: "unsafe-mdx",
+      reason: "Webstudio element tag script is not supported",
+      sourceRange: {
+        start: { line: 3, column: 1, offset: 8 },
+        end: { line: 3, column: 26, offset: 33 },
+      },
+    } satisfies Partial<MdxDocumentError>);
+  });
+
+  test("keeps embedded HTML inline inside GFM table cells", async () => {
+    const preview = await previewMarkdownToMdxConversion({
+      source: "| Value |\n| --- |\n| <span>Cell</span> |\n",
+    });
+
+    expect(preview.source).toBe(`| Value                                       |
+| ------------------------------------------- |
+| <ws.element ws:tag="span">Cell</ws.element> |
+`);
   });
 });

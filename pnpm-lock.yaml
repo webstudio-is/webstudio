@@ -1538,6 +1538,9 @@ importers:
       canonicalize:
         specifier: 3.0.0
         version: 3.0.0
+      hast-util-raw:
+        specifier: 7.2.3
+        version: 7.2.3
       hast-util-to-mdast:
         specifier: 9.0.0
         version: 9.0.0
@@ -1565,6 +1568,9 @@ importers:
       micromark-util-decode-string:
         specifier: 2.0.1
         version: 2.0.1
+      property-information:
+        specifier: 6.2.0
+        version: 6.2.0
       remark-frontmatter:
         specifier: 4.0.1
         version: 4.0.1
@@ -1580,6 +1586,9 @@ importers:
       unified:
         specifier: 10.1.2
         version: 10.1.2
+      vfile:
+        specifier: 5.3.6
+        version: 5.3.6
       yaml:
         specifier: 2.9.0
         version: 2.9.0

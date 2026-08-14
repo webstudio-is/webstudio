@@ -508,6 +508,31 @@ const mdxHandlers: Handlers = {
   paragraph: mapParagraph,
 };
 
+const createMarkdownHastForMdx = (root: SyntaxTreeNode) => {
+  const hast = toHast(root as Parameters<typeof toHast>[0], {
+    allowDangerousHtml: true,
+    handlers: {
+      code: mdxHandlers.code,
+      inlineCode: mdxHandlers.inlineCode,
+      listItem: mdxHandlers.listItem,
+    },
+    unknownHandler: rejectUnsupportedNode,
+  });
+  if (isSyntaxTreeNode(hast) === false) {
+    return throwUnsafeNode(root, "Markdown did not produce an HTML document");
+  }
+  return hast;
+};
+
+const findHastMdxMode = (node: SyntaxTreeNode): MdxMode | undefined => {
+  if (
+    isRecord(node.data) &&
+    (node.data.mdxMode === "flow" || node.data.mdxMode === "text")
+  ) {
+    return node.data.mdxMode;
+  }
+};
+
 const mapHastProperties = (node: SyntaxTreeNode) => {
   if (node.properties === undefined) {
     return [];
@@ -671,11 +696,22 @@ const mapHastNode = (node: SyntaxTreeNode): MdxAuthoredNode => {
   if (node.tagName === "ws.element") {
     return mapWebstudioElement(node, props);
   }
+  const mdxMode = findHastMdxMode(node);
+  if (
+    mdxMode !== undefined &&
+    unsupportedElementTags.has(node.tagName.toLowerCase())
+  ) {
+    return throwUnsafeNode(
+      node,
+      `Webstudio element tag ${node.tagName} is not supported`
+    );
+  }
   return createElement({
     node,
     tag: node.tagName,
     props,
     children: mapHastChildren(node),
+    mdxMode,
     markdownListItem: getMarkdownListItem(node),
     preserveTextWhitespace: preservesTextWhitespace(node),
   });
@@ -690,6 +726,75 @@ const mapAuthoredChildren = (root: SyntaxTreeNode) => {
     return throwUnsafeNode(root, "MDX did not produce an HTML document");
   }
   return mapHastChildren(hast);
+};
+
+const validateMdxSourceBytes = ({
+  source,
+  maximumBytes,
+}: {
+  source: string;
+  maximumBytes: number;
+}) => {
+  if (
+    Number.isInteger(maximumBytes) === false ||
+    maximumBytes <= 0 ||
+    maximumBytes > contentEngineLimits.hydratedFileBytes ||
+    getUtf8ByteLength(source) > maximumBytes
+  ) {
+    throw new MdxDocumentError({
+      code: "invalid-mdx",
+      message: "MDX content exceeds the byte limit",
+    });
+  }
+};
+
+const parseMdxFrontmatter = async (
+  root: SyntaxTreeNode,
+  source: string
+): Promise<MdxDocument["frontmatter"]> => {
+  const frontmatterNode = getSyntaxTreeChildren(root).find(
+    (node) => node.type === "yaml"
+  );
+  try {
+    return {
+      properties: (await extractMarkdownFrontmatter(source)).properties,
+      sourceRange: toSourceRange(frontmatterNode?.position),
+    };
+  } catch (cause) {
+    throw new MdxDocumentError({
+      code: "invalid-mdx",
+      message: getErrorMessage(cause),
+      sourceRange: toSourceRange(frontmatterNode?.position),
+      cause,
+    });
+  }
+};
+
+/** Converts bounded Markdown through a caller-supplied structural HAST transform. */
+export const createMdxDocumentFromMarkdown = async ({
+  source,
+  maximumBytes = contentEngineLimits.hydratedFileBytes,
+  transformHast,
+}: {
+  source: string;
+  maximumBytes?: number;
+  transformHast: (input: {
+    sourceRoot: SyntaxTreeNode;
+    hastRoot: SyntaxTreeNode;
+  }) => SyntaxTreeNode | Promise<SyntaxTreeNode>;
+}): Promise<MdxDocument> => {
+  validateMdxSourceBytes({ source, maximumBytes });
+  const sourceRoot = parseMarkdownAst(source);
+  validateAstLimits(sourceRoot);
+  const hastRoot = await transformHast({
+    sourceRoot,
+    hastRoot: createMarkdownHastForMdx(sourceRoot),
+  });
+  validateAstLimits(hastRoot);
+  return {
+    frontmatter: await parseMdxFrontmatter(sourceRoot, source),
+    children: mapHastChildren(hastRoot),
+  };
 };
 
 export const discoverMdxBodyAssetReferences = ({
@@ -766,17 +871,7 @@ export const parseMdxDocument = async ({
   source: string;
   maximumBytes?: number;
 }): Promise<MdxDocument> => {
-  if (
-    Number.isInteger(maximumBytes) === false ||
-    maximumBytes <= 0 ||
-    maximumBytes > contentEngineLimits.hydratedFileBytes ||
-    getUtf8ByteLength(source) > maximumBytes
-  ) {
-    throw new MdxDocumentError({
-      code: "invalid-mdx",
-      message: "MDX content exceeds the byte limit",
-    });
-  }
+  validateMdxSourceBytes({ source, maximumBytes });
 
   let root: SyntaxTreeNode;
   try {
@@ -791,29 +886,8 @@ export const parseMdxDocument = async ({
   }
   validateAstLimits(root);
 
-  let properties: Record<string, unknown>;
-  try {
-    properties = (await extractMarkdownFrontmatter(source)).properties;
-  } catch (cause) {
-    throw new MdxDocumentError({
-      code: "invalid-mdx",
-      message: getErrorMessage(cause),
-      sourceRange: toSourceRange(
-        getSyntaxTreeChildren(root).find((node) => node.type === "yaml")
-          ?.position
-      ),
-      cause,
-    });
-  }
-
-  const frontmatterNode = getSyntaxTreeChildren(root).find(
-    (node) => node.type === "yaml"
-  );
   return {
-    frontmatter: {
-      properties,
-      sourceRange: toSourceRange(frontmatterNode?.position),
-    },
+    frontmatter: await parseMdxFrontmatter(root, source),
     children: mapAuthoredChildren(root),
   };
 };
