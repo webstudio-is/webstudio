@@ -1,4 +1,5 @@
 import type {
+  MdxAuthoredProp,
   MdxAuthoredNode,
   MdxDocument,
 } from "@webstudio-is/content-engine/mdx";
@@ -22,6 +23,7 @@ export type MdxTemplateReference = Readonly<{
     | Readonly<{
         type: "resolved-template";
         templateInstanceId: Instance["id"];
+        props: readonly MdxAuthoredProp[];
       }>
     | Readonly<{
         type: "unresolved-template";
@@ -71,6 +73,7 @@ export const resolveMdxTemplates = ({
             type: "resolved-template",
             path,
             templateName: node.name,
+            props: node.props,
             templateInstanceId: templateIds[0],
             sourceRange: node.sourceRange,
           });

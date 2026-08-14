@@ -1,9 +1,15 @@
 import hash from "@emotion/hash";
 import type {
+  ContentBlockDiagnostic,
   ContentBlockExternalContentIdentity,
   WebstudioData,
   WebstudioFragment,
+  WsComponentMeta,
 } from "@webstudio-is/sdk";
+import {
+  getContentModeCapabilities,
+  getContentModePropEligibility,
+} from "./content-mode-permissions";
 import { findAvailableVariables } from "./data";
 import {
   extractWebstudioFragment,
@@ -13,10 +19,12 @@ import type {
   MdxTemplateReference,
   MdxTemplateResolution,
 } from "./mdx-template-resolution";
+import { createPropValue, findProp } from "./props";
 
 export type MaterializedMdxTemplate = Readonly<{
   reference: Extract<MdxTemplateReference, { type: "resolved-template" }>;
   fragment: WebstudioFragment;
+  diagnostics: readonly ContentBlockDiagnostic[];
 }>;
 
 const createEmptyFragmentData = (): Omit<WebstudioData, "pages"> => ({
@@ -56,11 +64,13 @@ export const materializeMdxTemplates = ({
   identity,
   resolution,
   data,
+  metas,
   projectId,
 }: {
   identity: ContentBlockExternalContentIdentity;
   resolution: MdxTemplateResolution;
   data: Omit<WebstudioData, "pages">;
+  metas: Map<string, WsComponentMeta>;
   projectId: string;
 }): readonly MaterializedMdxTemplate[] => {
   const materializedTemplates: MaterializedMdxTemplate[] = [];
@@ -79,6 +89,10 @@ export const materializeMdxTemplates = ({
       reference.templateInstanceId
     );
     const materializedData = createEmptyFragmentData();
+    const createId = createScopeIdGenerator({
+      identity,
+      path: reference.path,
+    });
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data: materializedData,
       fragment: sourceFragment,
@@ -88,7 +102,7 @@ export const materializeMdxTemplates = ({
         dataSources: data.dataSources,
       }),
       projectId,
-      createId: createScopeIdGenerator({ identity, path: reference.path }),
+      createId,
     });
     const materializedRootId = newInstanceIds.get(reference.templateInstanceId);
     if (materializedRootId === undefined) {
@@ -96,10 +110,68 @@ export const materializeMdxTemplates = ({
         `Materialized MDX template instance "${reference.templateInstanceId}" is missing`
       );
     }
+    const rootInstance = materializedData.instances.get(materializedRootId);
+    if (rootInstance === undefined) {
+      throw new Error(
+        `Materialized MDX template root "${materializedRootId}" is missing`
+      );
+    }
+    const capabilities = getContentModeCapabilities({
+      instances: materializedData.instances,
+      metas,
+      props: materializedData.props,
+      styleSources: materializedData.styleSources,
+      styleSourceSelections: materializedData.styleSourceSelections,
+      styles: materializedData.styles,
+      breakpoints: materializedData.breakpoints,
+      contentRootIds: new Set([materializedRootId]),
+    });
+    const diagnostics: ContentBlockDiagnostic[] = [];
+    for (const authoredProp of reference.props) {
+      const existingProp = findProp(
+        materializedData.props.values(),
+        materializedRootId,
+        authoredProp.name
+      );
+      const propType = authoredProp.value === true ? "boolean" : "string";
+      const eligibility = getContentModePropEligibility({
+        capabilities,
+        instance: rootInstance,
+        prop: {
+          name: authoredProp.name,
+          type: propType,
+        },
+      });
+      if (eligibility.editable) {
+        const prop = createPropValue({
+          id: existingProp?.id ?? createId(),
+          instanceId: materializedRootId,
+          name: authoredProp.name,
+          type: propType,
+          value: authoredProp.value,
+          required: existingProp?.required,
+        });
+        materializedData.props.set(prop.id, prop);
+        continue;
+      }
+      diagnostics.push({
+        code: "ignored-template-prop",
+        severity: "warning",
+        blockInstanceId: identity.blockInstanceId,
+        assetId: identity.assetId,
+        contentRef: identity.contentRef,
+        renderScope: identity.renderScope,
+        templateName: reference.templateName,
+        propName: authoredProp.name,
+        reason: eligibility.reason,
+        sourceRange: reference.sourceRange,
+      });
+    }
 
     materializedTemplates.push({
       reference,
       fragment: extractWebstudioFragment(materializedData, materializedRootId),
+      diagnostics,
     });
   }
   return materializedTemplates;

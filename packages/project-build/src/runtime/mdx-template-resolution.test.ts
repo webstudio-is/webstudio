@@ -67,7 +67,7 @@ const createInstances = (): Instances =>
 describe("resolveMdxTemplates", () => {
   test("resolves exact displayed names from the direct flat Templates list", async () => {
     const document = await parseMdxDocument({
-      source: `<ws.element ws:name="Hero Card" />
+      source: `<ws.element ws:name="Hero Card" tone="quiet" />
 
 <ws.element ws:tag="section">
   <ws.element ws:name="Card" />
@@ -86,12 +86,14 @@ describe("resolveMdxTemplates", () => {
         type: "resolved-template",
         path: [0],
         templateName: "Hero Card",
+        props: [{ name: "tone", value: "quiet" }],
         templateInstanceId: "hero",
       }),
       expect.objectContaining({
         type: "resolved-template",
         path: [1, 0],
         templateName: "Card",
+        props: [],
         templateInstanceId: "card",
       }),
     ]);
