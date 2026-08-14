@@ -1,7 +1,6 @@
 import hash from "@emotion/hash";
 import type {
   ContentBlockExternalContentIdentity,
-  Instance,
   WebstudioData,
   WebstudioFragment,
 } from "@webstudio-is/sdk";
@@ -9,7 +8,6 @@ import { findAvailableVariables } from "./data";
 import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-  mapFragmentChildrenToCopiedChildren,
 } from "./fragment";
 import type {
   MdxTemplateReference,
@@ -31,25 +29,6 @@ const createEmptyFragmentData = (): Omit<WebstudioData, "pages"> => ({
   styles: new Map(),
   breakpoints: new Map(),
   assets: new Map(),
-});
-
-const toFragment = ({
-  children,
-  data,
-}: {
-  children: Instance["children"];
-  data: Omit<WebstudioData, "pages">;
-}): WebstudioFragment => ({
-  children,
-  instances: Array.from(data.instances.values()),
-  props: Array.from(data.props.values()),
-  dataSources: Array.from(data.dataSources.values()),
-  resources: Array.from(data.resources.values()),
-  styleSources: Array.from(data.styleSources.values()),
-  styleSourceSelections: Array.from(data.styleSourceSelections.values()),
-  styles: Array.from(data.styles.values()),
-  breakpoints: Array.from(data.breakpoints.values()),
-  assets: Array.from(data.assets.values()),
 });
 
 const createScopeIdGenerator = ({
@@ -111,16 +90,16 @@ export const materializeMdxTemplates = ({
       projectId,
       createId: createScopeIdGenerator({ identity, path: reference.path }),
     });
+    const materializedRootId = newInstanceIds.get(reference.templateInstanceId);
+    if (materializedRootId === undefined) {
+      throw new Error(
+        `Materialized MDX template instance "${reference.templateInstanceId}" is missing`
+      );
+    }
 
     materializedTemplates.push({
       reference,
-      fragment: toFragment({
-        children: mapFragmentChildrenToCopiedChildren({
-          children: sourceFragment.children,
-          newInstanceIds,
-        }),
-        data: materializedData,
-      }),
+      fragment: extractWebstudioFragment(materializedData, materializedRootId),
     });
   }
   return materializedTemplates;

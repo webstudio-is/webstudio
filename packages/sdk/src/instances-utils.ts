@@ -50,14 +50,20 @@ export const findTreeInstanceIdsExcludingSlotDescendants = (
   return ids;
 };
 
+export const findChildReferenceIndex = (
+  children: Instance["children"],
+  instanceId: Instance["id"]
+) =>
+  children.findIndex(
+    (child) => child.type === "id" && child.value === instanceId
+  );
+
 export const findParentInstanceReference = (
   instances: Instances,
   instanceId: Instance["id"]
 ) => {
   for (const instance of instances.values()) {
-    const childIndex = instance.children.findIndex(
-      (child) => child.type === "id" && child.value === instanceId
-    );
+    const childIndex = findChildReferenceIndex(instance.children, instanceId);
     if (childIndex !== -1) {
       return { instance, childIndex };
     }

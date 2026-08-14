@@ -1,6 +1,7 @@
 import {
   blockTemplateComponent,
   elementComponent,
+  findChildReferenceIndex,
   findParentInstanceReference,
   findTreeInstanceIds,
   getHtmlTagsFromProps,
@@ -18,6 +19,8 @@ import {
   type WebstudioData,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
+// Preserve the project-build runtime API while instance-tree utilities move to SDK.
+export { findChildReferenceIndex } from "@webstudio-is/sdk";
 import {
   compactBuilderPatchPayload,
   type BuilderPatchChange,
@@ -508,14 +511,6 @@ const getRequiredInstances = (
   }
   return state.instances;
 };
-
-export const findChildReferenceIndex = (
-  children: Instance["children"],
-  instanceId: Instance["id"]
-) =>
-  children.findIndex(
-    (child) => child.type === "id" && child.value === instanceId
-  );
 
 export const createInstanceChild = (instanceId: Instance["id"]) =>
   ({ type: "id", value: instanceId }) as const;

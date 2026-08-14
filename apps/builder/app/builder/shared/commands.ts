@@ -96,7 +96,7 @@ import {
 import { getDirectSharedSlotChildBoundary } from "~/shared/instance-utils/slot";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import { areInstanceSelectorsEqual } from "@webstudio-is/project-build/runtime";
-import { findChildReferenceIndex } from "@webstudio-is/project-build/runtime";
+import { findChildReferenceIndex } from "@webstudio-is/sdk";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,

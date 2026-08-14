@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import { $, renderData, ws } from "@webstudio-is/template";
 import {
+  findChildReferenceIndex,
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
   findParentInstanceReference,
@@ -83,6 +84,22 @@ test("finds the direct parent instance reference", () => {
     childIndex: 1,
   });
   expect(findParentInstanceReference(instances, "missing")).toBeUndefined();
+});
+
+test("finds child reference index", () => {
+  expect(
+    findChildReferenceIndex(
+      [
+        { type: "text", value: "before" },
+        { type: "id", value: "child" },
+        { type: "text", value: "after" },
+      ],
+      "child"
+    )
+  ).toBe(1);
+  expect(
+    findChildReferenceIndex([{ type: "text", value: "only" }], "child")
+  ).toBe(-1);
 });
 
 test("extract short name and namespace from component name", () => {

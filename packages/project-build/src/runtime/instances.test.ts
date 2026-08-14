@@ -31,7 +31,6 @@ import {
   createTextContentResetPayload,
   createTextContentSetPayload,
   createTextContentUpdatePayload,
-  findChildReferenceIndex,
   findLocalStyleSourcesWithinInstances,
   fillGrid,
   findTextContentChild,
@@ -2293,22 +2292,6 @@ test("gets instance depths from root ids", () => {
       ["child", 1],
     ])
   );
-});
-
-test("finds child reference index", () => {
-  expect(
-    findChildReferenceIndex(
-      [
-        { type: "text", value: "before" },
-        { type: "id", value: "child" },
-        { type: "text", value: "after" },
-      ],
-      "child"
-    )
-  ).toBe(1);
-  expect(
-    findChildReferenceIndex([{ type: "text", value: "only" }], "child")
-  ).toBe(-1);
 });
 
 test("creates instance child references", () => {

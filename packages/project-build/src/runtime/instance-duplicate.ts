@@ -1,4 +1,8 @@
-import { type Instance, type WebstudioData } from "@webstudio-is/sdk";
+import {
+  findChildReferenceIndex,
+  type Instance,
+  type WebstudioData,
+} from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { findAvailableVariables, produceWebstudioDataMutation } from "./data";
@@ -7,7 +11,6 @@ import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
 } from "./fragment";
-import { findChildReferenceIndex } from "./instances";
 import { isAutoGridPlacement, resetGridChildPlacement } from "./style-utils";
 import { createRuntimeMutation } from "./mutation";
 import { getSlotFragmentDropTargetMutable } from "./slot";
