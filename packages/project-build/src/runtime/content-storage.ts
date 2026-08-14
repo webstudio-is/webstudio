@@ -12,7 +12,10 @@ import type { BuilderState } from "../state/builder-state";
 import equal from "fast-deep-equal";
 import type { BuilderRuntimeMutation } from "./mutation";
 import type { BuilderPatchChange } from "../contracts/patch";
-import type { ContentStoragePatchChange } from "./mutation";
+import type {
+  ContentStorageChange,
+  ContentStoragePatchChange,
+} from "./mutation";
 import {
   getContentModeCapabilities,
   validateContentModeTransaction,
@@ -50,6 +53,71 @@ export type ContentStorageProjection = Readonly<{
     ContentBlockExternalContentIdentity
   >;
 }>;
+
+export const projectContentStorageChanges = ({
+  state,
+  changes,
+}: {
+  state: BuilderState;
+  changes: readonly ContentStorageChange[];
+}): BuilderPatchChange[] =>
+  changes.flatMap(({ root, payload }) =>
+    payload.map((change) => {
+      if (change.namespace !== "fragment") {
+        return change;
+      }
+      if (root.type !== "external") {
+        throw new Error("Fragment changes require external storage");
+      }
+      const block = state.instances?.get(root.identity.blockInstanceId);
+      if (block === undefined) {
+        throw new Error(
+          `Materialized content block "${root.identity.blockInstanceId}" is missing`
+        );
+      }
+      const templateChildren = block.children.filter(
+        (child) =>
+          child.type === "id" &&
+          state.instances?.get(child.value)?.component ===
+            blockTemplateComponent
+      );
+      return {
+        namespace: "instances" as const,
+        patches: change.patches.map<BuilderPatchChange["patches"][number]>(
+          (patch) => {
+            const [field, childIndex] = patch.path;
+            if (
+              field === "children" &&
+              patch.path.length === 2 &&
+              typeof childIndex === "number"
+            ) {
+              return {
+                ...patch,
+                path: [
+                  block.id,
+                  "children",
+                  templateChildren.length + childIndex,
+                ],
+              };
+            }
+            if (
+              field === "children" &&
+              patch.path.length === 1 &&
+              patch.op !== "remove" &&
+              Array.isArray(patch.value)
+            ) {
+              return {
+                ...patch,
+                path: [block.id, "children"],
+                value: [...templateChildren, ...patch.value],
+              };
+            }
+            throw new Error("Unsupported fragment storage patch");
+          }
+        ),
+      };
+    })
+  );
 
 const projectItemsById = <Item extends { id: string }>({
   current,
@@ -348,6 +416,27 @@ const prepareExternalMutationPayload = ({
     for (const patch of change.patches) {
       const [instanceId, field, childIndex] = patch.path;
       if (
+        change.namespace === "instances" &&
+        typeof instanceId === "string" &&
+        projection.state.instances?.has(instanceId)
+      ) {
+        const patchRoot = resolveContentStorageRoot(
+          projection,
+          field === "children"
+            ? { type: "children", parentInstanceId: instanceId }
+            : { type: "instance", instanceId }
+        );
+        if (
+          patchRoot.type !== "external" ||
+          patchRoot.identity.blockInstanceId !== root.identity.blockInstanceId
+        ) {
+          return throwBuilderRuntimeError(
+            "BAD_REQUEST",
+            "Mutation crosses an authored storage boundary."
+          );
+        }
+      }
+      if (
         change.namespace !== "instances" ||
         instanceId !== block.id ||
         field !== "children"
@@ -415,6 +504,42 @@ const prepareExternalMutationPayload = ({
   return { validationPayload, storagePayload };
 };
 
+const createExternalStorageChange = ({
+  projection,
+  root,
+  payload,
+}: {
+  projection: ContentStorageProjection;
+  root: Extract<ContentStorageRoot, { type: "external" }>;
+  payload: BuilderPatchChange[];
+}) => {
+  const { validationPayload, storagePayload } = prepareExternalMutationPayload({
+    projection,
+    root,
+    payload,
+  });
+  const validation = validateContentModeTransaction({
+    capabilities: getContentModeCapabilities({
+      instances: projection.state.instances ?? new Map(),
+      metas: componentMetas,
+      props: projection.state.props ?? new Map(),
+      styleSources: projection.state.styleSources ?? new Map(),
+      styleSourceSelections:
+        projection.state.styleSourceSelections ?? new Map(),
+      styles: projection.state.styles ?? new Map(),
+      breakpoints: projection.state.breakpoints,
+      contentRootIds: new Set([root.identity.blockInstanceId]),
+    }),
+    transaction: { payload: validationPayload },
+  });
+  if (validation.success === false) {
+    return throwBuilderRuntimeError("BAD_REQUEST", validation.error);
+  }
+  return storagePayload.length === 0
+    ? undefined
+    : { root, payload: storagePayload };
+};
+
 export const executeContentStorageMutation = <
   Mutation extends BuilderRuntimeMutation,
 >({
@@ -449,36 +574,111 @@ export const executeContentStorageMutation = <
   }
 
   const mutation = execute(projection.state);
-  const { validationPayload, storagePayload } = prepareExternalMutationPayload({
+  const storageChange = createExternalStorageChange({
     projection,
     root,
     payload: mutation.payload,
   });
-  const validation = validateContentModeTransaction({
-    capabilities: getContentModeCapabilities({
-      instances: projection.state.instances ?? new Map(),
-      metas: componentMetas,
-      props: projection.state.props ?? new Map(),
-      styleSources: projection.state.styleSources ?? new Map(),
-      styleSourceSelections:
-        projection.state.styleSourceSelections ?? new Map(),
-      styles: projection.state.styles ?? new Map(),
-      breakpoints: projection.state.breakpoints,
-      contentRootIds: new Set([root.identity.blockInstanceId]),
-    }),
-    transaction: { payload: validationPayload },
-  });
-  if (validation.success === false) {
-    return throwBuilderRuntimeError("BAD_REQUEST", validation.error);
-  }
   const storageChanges =
-    storagePayload.length === 0
+    storageChange === undefined
       ? mutation.storageChanges
-      : [...(mutation.storageChanges ?? []), { root, payload: storagePayload }];
+      : [...(mutation.storageChanges ?? []), storageChange];
   return {
     ...mutation,
     payload: [],
     storageChanges,
     noop: storageChanges?.some((change) => change.payload.length > 0) !== true,
+  } as Mutation;
+};
+
+export const executeContentStorageTextReplacement = <
+  Mutation extends BuilderRuntimeMutation,
+>({
+  state,
+  materializedRoots,
+  returnStorageChanges,
+  execute,
+}: {
+  state: BuilderState;
+  materializedRoots?: readonly MaterializedContentRoot[];
+  returnStorageChanges?: boolean;
+  execute: (state: BuilderState) => Mutation;
+}): Mutation => {
+  if (materializedRoots === undefined || materializedRoots.length === 0) {
+    return execute(state);
+  }
+  const projection = createContentStorageProjection({
+    state,
+    materializedRoots,
+  });
+  const mutation = execute(projection.state);
+  const projectPatches: BuilderPatchChange["patches"] = [];
+  const externalPatches = new Map<
+    Instance["id"],
+    {
+      root: Extract<ContentStorageRoot, { type: "external" }>;
+      patches: BuilderPatchChange["patches"];
+    }
+  >();
+  for (const change of mutation.payload) {
+    if (change.namespace !== "instances") {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Text replacement produced an unsupported patch."
+      );
+    }
+    for (const patch of change.patches) {
+      const [instanceId, field] = patch.path;
+      if (typeof instanceId !== "string" || field !== "children") {
+        return throwBuilderRuntimeError(
+          "BAD_REQUEST",
+          "Text replacement produced an unsupported patch."
+        );
+      }
+      const root = resolveContentStorageRoot(projection, {
+        type: "children",
+        parentInstanceId: instanceId,
+      });
+      if (root.type === "project") {
+        projectPatches.push(patch);
+        continue;
+      }
+      const group = externalPatches.get(root.identity.blockInstanceId) ?? {
+        root,
+        patches: [],
+      };
+      group.patches.push(patch);
+      externalPatches.set(root.identity.blockInstanceId, group);
+    }
+  }
+  if (externalPatches.size > 0 && returnStorageChanges !== true) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "The caller must handle authored storage changes."
+    );
+  }
+  const storageChanges = Array.from(externalPatches.values()).flatMap(
+    ({ root, patches }) => {
+      const change = createExternalStorageChange({
+        projection,
+        root,
+        payload: [{ namespace: "instances", patches }],
+      });
+      return change === undefined ? [] : [change];
+    }
+  );
+  const combinedStorageChanges = [
+    ...(mutation.storageChanges ?? []),
+    ...storageChanges,
+  ];
+  return {
+    ...mutation,
+    payload:
+      projectPatches.length === 0
+        ? []
+        : [{ namespace: "instances", patches: projectPatches }],
+    storageChanges:
+      combinedStorageChanges.length === 0 ? undefined : combinedStorageChanges,
+    noop: projectPatches.length === 0 && combinedStorageChanges.length === 0,
   } as Mutation;
 };

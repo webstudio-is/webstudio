@@ -54,6 +54,7 @@ import {
 import {
   createContentStorageProjection,
   executeContentStorageMutation,
+  executeContentStorageTextReplacement,
 } from "./content-storage";
 
 export type BuilderRuntimeOperation<
@@ -1312,12 +1313,25 @@ export const builderRuntimeOperations = [
     "instances.replaceText",
     api("replace-text", "replaceText", "edit"),
     mutationContract({
-      readNamespaces: ["pages", "instances"],
+      readNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        "dataSources",
+        ...styleNamespaces,
+        "breakpoints",
+      ],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),
     instances.replaceTextInput,
-    ({ state, input }) => instances.replaceText(state, input)
+    ({ state, input, context }) =>
+      executeContentStorageTextReplacement({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        execute: (mutationState) => instances.replaceText(mutationState, input),
+      })
   ),
   runtimeOperation(
     "instances.setTextContent",
@@ -1383,6 +1397,7 @@ export const builderRuntimeOperations = [
         "styleSources",
         "styleSourceSelections",
         "styles",
+        "breakpoints",
       ],
       writeNamespaces: [
         "instances",
@@ -1397,7 +1412,17 @@ export const builderRuntimeOperations = [
     }),
     instances.updateTextTreeInput,
     ({ state, input, context }) =>
-      instances.updateTextTree(state, input, context)
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target: {
+          type: "children",
+          parentInstanceId: input.rootInstanceId,
+        },
+        execute: (mutationState) =>
+          instances.updateTextTree(mutationState, input, context),
+      })
   ),
   runtimeOperation(
     "instances.setTag",

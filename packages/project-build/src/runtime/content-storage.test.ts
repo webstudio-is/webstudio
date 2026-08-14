@@ -91,8 +91,14 @@ const createNestedMaterializedContent = () => {
     "nested-article"
   );
   const parentFragment: WebstudioFragment = {
-    ...fragment("nested-block"),
+    ...fragment("outer-rich-text"),
     instances: [
+      {
+        type: "instance",
+        id: "outer-rich-text",
+        component: elementComponent,
+        children: [{ type: "id", value: "nested-block" }],
+      },
       {
         type: "instance",
         id: "nested-block",
@@ -819,4 +825,154 @@ test("routes inline-expression conversion without mutating materialized input", 
   expect(externalFragment.instances[0].children).toEqual([
     { type: "expression", value: "$ws$data$title" },
   ]);
+});
+
+test("partitions bulk text replacement between project and external storage", () => {
+  const state = createState();
+  state.instances?.set("body", {
+    type: "instance",
+    id: "body",
+    component: elementComponent,
+    children: [
+      { type: "id", value: "block" },
+      { type: "id", value: "ordinary" },
+    ],
+  });
+  state.instances?.set("ordinary", {
+    type: "instance",
+    id: "ordinary",
+    component: elementComponent,
+    children: [{ type: "text", value: "Replace me" }],
+  });
+  state.pages = createDefaultPages({ rootInstanceId: "body" });
+  const externalIdentity = identity("page:/post");
+  const externalFragment = fragment("external");
+  externalFragment.instances[0].children = [
+    { type: "text", value: "Replace me" },
+  ];
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.replaceText",
+      state,
+      input: { find: "Replace me", replace: "Replaced", match: "exact" },
+      context: {
+        createId: () => "unused",
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [
+      {
+        namespace: "instances",
+        patches: [{ path: ["ordinary", "children", 0] }],
+      },
+    ],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: [
+          {
+            namespace: "instances",
+            patches: [{ path: ["external", "children", 0] }],
+          },
+        ],
+      },
+    ],
+    result: { changedCount: 2, matchingChildCount: 2 },
+  });
+});
+
+test("routes rich-text tree updates and preserves authored siblings", () => {
+  const state = createState();
+  const externalIdentity = identity("page:/post");
+  const externalFragment = fragment("rich-text");
+  externalFragment.children.push({ type: "id", value: "unresolved-marker" });
+  externalFragment.instances.push({
+    type: "instance",
+    id: "unresolved-marker",
+    component: elementComponent,
+    children: [{ type: "text", value: "Preserve me" }],
+  });
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.updateTextTree",
+      state,
+      input: {
+        rootInstanceId: "rich-text",
+        instances: [
+          {
+            type: "instance",
+            id: "rich-text",
+            component: elementComponent,
+            tag: "p",
+            children: [{ type: "text", value: "Updated rich text" }],
+          },
+        ],
+      },
+      context: {
+        createId: () => "unused",
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                path: ["rich-text"],
+                value: expect.objectContaining({
+                  children: [{ type: "text", value: "Updated rich text" }],
+                }),
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  expect(externalFragment.instances.at(-1)?.id).toBe("unresolved-marker");
+  expect(externalFragment.children.at(-1)).toEqual({
+    type: "id",
+    value: "unresolved-marker",
+  });
+});
+
+test("rejects rich-text updates that cross a nested storage boundary", () => {
+  const { roots } = createNestedMaterializedContent();
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.updateTextTree",
+      state: createState(),
+      input: {
+        rootInstanceId: "outer-rich-text",
+        instances: [
+          {
+            type: "instance",
+            id: "outer-rich-text",
+            component: elementComponent,
+            children: [{ type: "text", value: "Remove nested content" }],
+          },
+        ],
+      },
+      context: {
+        createId: () => "unused",
+        returnStorageChanges: true,
+        materializedContent: roots,
+      },
+    })
+  ).toThrow("storage boundary");
 });

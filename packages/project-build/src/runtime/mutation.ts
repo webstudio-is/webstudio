@@ -2,12 +2,14 @@ import type { BuilderNamespace } from "../contracts/namespaces";
 import type { BuilderPatchChange } from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
 import { applyBuilderPatchTransactions } from "../state/patch";
-import type { ContentStorageRoot } from "./content-storage";
-import type { Patch } from "immer";
+import {
+  projectContentStorageChanges,
+  type ContentStorageRoot,
+} from "./content-storage";
 
 export type ContentStoragePatchChange =
   | BuilderPatchChange
-  | { namespace: "fragment"; patches: Patch[] };
+  | { namespace: "fragment"; patches: BuilderPatchChange["patches"] };
 
 export type ContentStorageChange = {
   root: ContentStorageRoot;
@@ -74,9 +76,16 @@ export const createRuntimeMutationAccumulator = (
       invalidatesNamespaces.add(namespace);
     }
     storageChanges.push(...(mutation.storageChanges ?? []));
-    if (mutation.payload.length > 0) {
+    const stagedPayload = [
+      ...mutation.payload,
+      ...projectContentStorageChanges({
+        state,
+        changes: mutation.storageChanges ?? [],
+      }),
+    ];
+    if (stagedPayload.length > 0) {
       state = applyBuilderPatchTransactions(state, [
-        { id: "runtime-mutation-stage", payload: mutation.payload },
+        { id: "runtime-mutation-stage", payload: stagedPayload },
       ]).state;
     }
     return mutation.result;

@@ -1,6 +1,11 @@
 import { expect, test } from "vitest";
 import { createDefaultPages } from "../shared/pages-utils";
 import {
+  blockComponent,
+  blockTemplateComponent,
+  type Instance,
+} from "@webstudio-is/sdk";
+import {
   createRuntimeMutation,
   createRuntimeMutationAccumulator,
 } from "./mutation";
@@ -79,7 +84,25 @@ test("stages mutations against the latest state and combines their contract", ()
 });
 
 test("preserves multiple authored storage changes and their noop semantics", () => {
-  const accumulator = createRuntimeMutationAccumulator({});
+  const instances = new Map<Instance["id"], Instance>();
+  for (const id of ["first", "second"]) {
+    instances.set(id, {
+      type: "instance",
+      id,
+      component: blockComponent,
+      children: [
+        { type: "id", value: `${id}-templates` },
+        { type: "text", value: "Before" },
+      ],
+    });
+    instances.set(`${id}-templates`, {
+      type: "instance",
+      id: `${id}-templates`,
+      component: blockTemplateComponent,
+      children: [],
+    });
+  }
+  const accumulator = createRuntimeMutationAccumulator({ instances });
   const firstRoot = {
     type: "external" as const,
     identity: {
@@ -127,6 +150,15 @@ test("preserves multiple authored storage changes and their noop semantics", () 
       })
     );
   }
+
+  expect(accumulator.state.instances?.get("first")?.children[1]).toEqual({
+    type: "text",
+    value: "first-asset",
+  });
+  expect(accumulator.state.instances?.get("second")?.children[1]).toEqual({
+    type: "text",
+    value: "second-asset",
+  });
 
   expect(accumulator.complete({})).toMatchObject({
     noop: false,
