@@ -30,13 +30,7 @@ const createMdxAdaptedDocument = ({
 }): MdxAdaptedDocument =>
   Object.freeze({
     ...markdown,
-    authored: Object.freeze({
-      ...authored,
-      frontmatter: Object.freeze({
-        ...authored.frontmatter,
-        properties: markdown.frontmatter,
-      }),
-    }),
+    authored,
   });
 
 const parseAuthoredDocument = async (

@@ -33,10 +33,7 @@ import {
   hydrateAssetResourceResult,
   type AssetResourceContentReader,
 } from "./hydration";
-import {
-  getDocumentFormatByContentType,
-  isMarkdownSyntaxDocumentFormat,
-} from "./document-graph/document-format";
+import { getDocumentFormatByContentType } from "./document-graph/document-format";
 import { appendAssetFieldPath } from "./canonical";
 import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
 import { getUtf8ByteLength } from "./byte-stream";
@@ -321,13 +318,11 @@ export const supportsAssetQueryContent = ({
   if (content.mode !== "markdown-body-ref") {
     return true;
   }
-  if (
-    isMarkdownSyntaxDocumentFormat(
-      document.mimeType === undefined
-        ? undefined
-        : getDocumentFormatByContentType(document.mimeType)
-    )
-  ) {
+  const format =
+    document.mimeType === undefined
+      ? undefined
+      : getDocumentFormatByContentType(document.mimeType);
+  if (format === "markdown" || format === "mdx") {
     return true;
   }
   // Preserve extension fallback for legacy documents with missing MIME metadata.

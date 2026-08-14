@@ -125,7 +125,7 @@ describe("document adapter", () => {
     ).toBe('<ws.element ws:name="Hero">Body</ws.element>\n');
   });
 
-  test("keeps assembled MDX frontmatter and the authored tree in sync", async () => {
+  test("resolves MDX frontmatter without changing the authored tree", async () => {
     const analyzed = await analyzeDocumentSource({
       format: "mdx",
       source: "---\nauthor:\n  $ref: ../authors/ada.json\n---\n# Hello\n",
@@ -142,8 +142,8 @@ describe("document adapter", () => {
       throw new Error("Expected an MDX document");
     }
     expect(assembled.value.frontmatter).toEqual({ author: { name: "Ada" } });
-    expect(assembled.value.authored.frontmatter.properties).toBe(
-      assembled.value.frontmatter
-    );
+    expect(assembled.value.authored.frontmatter.properties).toEqual({
+      author: { $ref: "../authors/ada.json" },
+    });
   });
 });
