@@ -1,4 +1,10 @@
 import { expect, test, vi } from "vitest";
+import { BrowserStartupError } from "@webstudio-is/vision/browser";
+import {
+  createScreenshotCaptureSession,
+  defaultScreenshotDependencies,
+  type ScreenshotDependencies,
+} from "../screenshot";
 import {
   createMcpPreviewHandlers,
   createPreviewFreshness,
@@ -682,6 +688,86 @@ test("times out a stalled screenshot after preview start and releases its sessio
 
   await expect(handlers.stopPreview()).resolves.toEqual({ running: false });
   expect(stop).toHaveBeenCalledOnce();
+});
+
+test("leaves time to start a fallback browser within the MCP timeout", async () => {
+  const createBrowserScreenshotSession = vi.fn(async (options) => {
+    if (options.browserPath === "/usr/bin/chromium") {
+      await new Promise((resolve) =>
+        setTimeout(resolve, options.startupTimeout ?? options.timeout)
+      );
+      throw new BrowserStartupError("Chromium startup timed out.");
+    }
+    return {
+      capture: vi.fn(async () => ({
+        navigation: {
+          requestedUrl: options.url,
+          finalUrl: options.url,
+          redirects: [],
+          documentReadyState: "complete" as const,
+          pageMetadata: { rootMarkerPresent: true },
+          layoutStable: true,
+        },
+        viewportWidth: options.width,
+        viewportHeight: options.height,
+        contentWidth: options.width,
+        contentHeight: options.height,
+        horizontalOverflow: false,
+      })),
+      capturePage: vi.fn(async () => []),
+      close: vi.fn(async () => undefined),
+    };
+  });
+  const dependencies: ScreenshotDependencies = {
+    ...defaultScreenshotDependencies,
+    env: {},
+    platform: "linux",
+    access: vi.fn(async (path) => {
+      if (path === "/usr/bin/chromium" || path === "/usr/bin/google-chrome") {
+        return;
+      }
+      throw new Error("missing");
+    }),
+    which: vi.fn(async (command) => {
+      if (command === "chromium") {
+        return "/usr/bin/chromium";
+      }
+      if (command === "google-chrome") {
+        return "/usr/bin/google-chrome";
+      }
+    }),
+    getChromeLauncherInstallations: vi.fn(() => []),
+    getPlaywrightInstallations: vi.fn(async () => []),
+    mkdir: vi.fn(async () => undefined),
+    createBrowserScreenshotSession,
+    readArtifactByte: vi.fn(async () => 1),
+  };
+  const preview = {
+    status: vi.fn(() => ({
+      url: "http://127.0.0.1:3000/",
+      running: true,
+      mode: "iterative" as const,
+    })),
+    startAndWait: vi.fn(),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+  };
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => false,
+    createCaptureSession: () => createScreenshotCaptureSession(dependencies),
+  });
+
+  await expect(
+    handlers.captureScreenshot({
+      path: "/",
+      source: "session",
+      viewport: { width: 800, height: 600 },
+      timeout: 200,
+    })
+  ).resolves.toMatchObject({
+    browser: { path: "/usr/bin/google-chrome" },
+  });
+  expect(createBrowserScreenshotSession).toHaveBeenCalledTimes(2);
 });
 
 test("applies internal page credentials only to owned preview captures", async () => {
