@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { createCanonicalAssetFileEntry } from "./canonical";
+import { getContentArtifactReferencedAssetIds } from "./content-artifact";
 import {
   compileContentSource,
   ContentSourceChangedError,
@@ -646,6 +647,89 @@ describe("content source snapshots", () => {
         },
       ],
     });
+  });
+
+  test("exposes MDX frontmatter and authored Asset references", async () => {
+    const mdx = createFile({
+      id: "post",
+      path: "blog/post.mdx",
+      contentType: "text/mdx",
+      contentRef: "revisions/post.mdx",
+    });
+    const cover = createFile({
+      id: "cover",
+      path: "blog/cover.png",
+      contentType: "image/png",
+    });
+    const hero = createFile({
+      id: "hero",
+      path: "blog/hero.png",
+      contentType: "image/png",
+    });
+    const video = createFile({
+      id: "video",
+      path: "blog/video.jpg",
+      contentType: "image/jpeg",
+    });
+    const content = `---
+cover: ./cover.png
+---
+![Hero](./hero.png#crop)
+
+<ws.element ws:name="Card" poster="./video.jpg" />
+`;
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [mdx, cover, hero, video],
+          async loadEntries() {
+            const entry = createEntry(mdx);
+            return [
+              {
+                ...entry,
+                document: {
+                  ...entry.document,
+                  properties: { cover: "./cover.png" },
+                },
+                content,
+              } as typeof entry & { content: string },
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+
+    expect(result.artifact.documents[0]?.properties).toEqual({
+      cover: "./cover.png",
+    });
+    expect(result.artifact.assetValueReferences).toEqual({
+      post: [
+        {
+          path: ["properties", "cover"],
+          assetId: "cover",
+        },
+        {
+          path: ["children", 0, "children", 0, "props", 0, "value"],
+          assetId: "hero",
+          suffix: "#crop",
+        },
+        {
+          path: ["children", 1, "props", 0, "value"],
+          assetId: "video",
+        },
+      ],
+    });
+    expect(getContentArtifactReferencedAssetIds(result.artifact)).toEqual([
+      "cover",
+      "hero",
+      "video",
+    ]);
   });
 
   test("resolves the same relative URL independently for each Markdown folder", async () => {

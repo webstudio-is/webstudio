@@ -692,7 +692,7 @@ const mapAuthoredChildren = (root: SyntaxTreeNode) => {
   return mapHastChildren(hast);
 };
 
-export const discoverMdxAssetReferences = ({
+export const discoverMdxBodyAssetReferences = ({
   document,
   sourcePath,
   assetIdsByPath,
@@ -701,12 +701,7 @@ export const discoverMdxAssetReferences = ({
   sourcePath: string;
   assetIdsByPath: ReadonlyMap<string, string>;
 }): AssetValueReference[] => {
-  const references = discoverAssetValueReferences({
-    properties: document.frontmatter.properties,
-    sourcePath,
-    assetIdsByPath,
-    rootPath: ["frontmatter", "properties"],
-  });
+  const references: AssetValueReference[] = [];
   const resolveAssetReference = createAssetReferenceResolver({
     sourcePath,
     assetIdsByPath,
@@ -741,6 +736,28 @@ export const discoverMdxAssetReferences = ({
   visit(document.children, ["children"]);
   return references;
 };
+
+export const discoverMdxAssetReferences = ({
+  document,
+  sourcePath,
+  assetIdsByPath,
+}: {
+  document: MdxDocument;
+  sourcePath: string;
+  assetIdsByPath: ReadonlyMap<string, string>;
+}): AssetValueReference[] => [
+  ...discoverAssetValueReferences({
+    properties: document.frontmatter.properties,
+    sourcePath,
+    assetIdsByPath,
+    rootPath: ["frontmatter", "properties"],
+  }),
+  ...discoverMdxBodyAssetReferences({
+    document,
+    sourcePath,
+    assetIdsByPath,
+  }),
+];
 
 export const parseMdxDocument = async ({
   source,
