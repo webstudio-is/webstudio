@@ -51,6 +51,7 @@ import {
   bindExpressionInput,
   getScopedExpressionWarnings,
 } from "./expression-scope";
+import { createContentStorageProjection } from "./content-storage";
 
 export type BuilderRuntimeOperation<
   Id extends string = string,
@@ -256,8 +257,17 @@ const runtimeOperation = <
           isDestructiveRuntimeCommand(publicApi.command))
         : false,
     execute: ({ state, input, context }) => {
+      const executionState =
+        contract.kind === "read" &&
+        state.instances !== undefined &&
+        context.materializedContent !== undefined
+          ? createContentStorageProjection({
+              state,
+              materializedRoots: context.materializedContent,
+            }).state
+          : state;
       const result = execute({
-        state,
+        state: executionState,
         input: parseOperationInput(inputSchema, input, inputJsonSchema),
         context,
       });

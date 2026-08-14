@@ -1,10 +1,12 @@
 import { nanoid } from "nanoid";
+import type { MaterializedContentRoot } from "./content-storage";
 
 export type BuilderRuntimeContext = {
   createId: () => string;
   projectId?: string;
   projectVersion?: number;
   allowLegacyContentModelWarnings?: boolean;
+  materializedContent?: readonly MaterializedContentRoot[];
 };
 
 export const builderRuntimeContext: BuilderRuntimeContext = {
