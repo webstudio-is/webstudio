@@ -19,6 +19,8 @@ import {
   findPageByIdOrPath,
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
+  formatContentBlockSourceIntegrityIssue,
+  getContentBlockSourceIntegrityIssues,
   getHomePage,
   portalComponent,
   webstudioFragment,
@@ -51,6 +53,7 @@ import {
   collectFontFamiliesFromStyleValue,
   traverseStyleValue,
 } from "./style-utils";
+import { addZodValidationIssue } from "./errors";
 
 export type ContentModeCopyableProp = (input: {
   prop: Prop;
@@ -103,6 +106,28 @@ export const webstudioFragmentMutationInput = webstudioFragment.superRefine(
         availableVariables: new Set(entry.variables),
       });
       addExpressionValidationIssues(context, errors, entry.path);
+    }
+    const propIndexById = new Map(
+      fragment.props.map((prop, index) => [prop.id, index])
+    );
+    for (const issue of getContentBlockSourceIntegrityIssues({
+      instances: fragment.instances,
+      props: fragment.props,
+      assets: fragment.assets,
+    })) {
+      const propId =
+        issue.type === "duplicateContentBlockSource"
+          ? issue.propIds[0]
+          : issue.propId;
+      addZodValidationIssue(context, {
+        code: issue.type,
+        path:
+          propId === undefined
+            ? []
+            : ["props", String(propIndexById.get(propId) ?? 0)],
+        message: formatContentBlockSourceIntegrityIssue(issue),
+        constraint: "valid_content_block_source",
+      });
     }
   }
 );

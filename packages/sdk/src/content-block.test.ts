@@ -1,5 +1,136 @@
 import { describe, expect, test } from "vitest";
-import { allocateUniqueContentBlockTemplateName } from "./content-block";
+import { blockComponent } from "./core-metas";
+import type { FileAsset } from "./schema/assets";
+import type { Instance } from "./schema/instances";
+import type { Prop } from "./schema/props";
+import {
+  allocateUniqueContentBlockTemplateName,
+  getContentBlockSourceIntegrityIssues,
+  parseContentBlockSourceProp,
+} from "./content-block";
+
+const block: Instance = {
+  type: "instance",
+  id: "block",
+  component: blockComponent,
+  children: [],
+};
+
+const sourceProp = (values: Partial<Prop> = {}): Prop =>
+  ({
+    id: "source-prop",
+    instanceId: block.id,
+    name: "src",
+    type: "asset",
+    value: "post",
+    ...values,
+  }) as Prop;
+
+const mdxAsset: FileAsset = {
+  id: "post",
+  projectId: "project",
+  type: "file",
+  name: "post_hash.mdx",
+  filename: "post",
+  format: "mdx",
+  size: 1,
+  meta: {},
+  description: null,
+  createdAt: "2026-08-14T00:00:00.000Z",
+};
+
+describe("Content Block source", () => {
+  test("keeps the source optional for existing Content Blocks", () => {
+    expect(
+      getContentBlockSourceIntegrityIssues({
+        instances: [block],
+        props: [],
+        assets: [],
+      })
+    ).toEqual([]);
+  });
+
+  test("maps persisted Asset and expression props to the source contract", () => {
+    expect(parseContentBlockSourceProp(sourceProp())).toEqual({
+      type: "asset",
+      assetId: "post",
+    });
+    expect(
+      parseContentBlockSourceProp(
+        sourceProp({ type: "expression", value: "post.body" })
+      )
+    ).toEqual({ type: "expression", value: "post.body" });
+    expect(
+      parseContentBlockSourceProp(sourceProp({ type: "string", value: "post" }))
+    ).toBeUndefined();
+  });
+
+  test("diagnoses duplicate, invalid, missing, and incompatible sources", () => {
+    expect(
+      getContentBlockSourceIntegrityIssues({
+        instances: [block],
+        props: [sourceProp(), sourceProp({ id: "other-source" })],
+        assets: [mdxAsset],
+      })
+    ).toEqual([
+      {
+        type: "duplicateContentBlockSource",
+        blockInstanceId: "block",
+        propIds: ["source-prop", "other-source"],
+      },
+    ]);
+    expect(
+      getContentBlockSourceIntegrityIssues({
+        instances: [block],
+        props: [sourceProp({ type: "string" })],
+        assets: [mdxAsset],
+      })
+    ).toEqual([
+      {
+        type: "invalidContentBlockSource",
+        blockInstanceId: "block",
+        propId: "source-prop",
+        propType: "string",
+      },
+    ]);
+    expect(
+      getContentBlockSourceIntegrityIssues({
+        instances: [block],
+        props: [sourceProp()],
+        assets: [],
+      })
+    ).toEqual([
+      {
+        type: "missingContentBlockSourceAsset",
+        blockInstanceId: "block",
+        propId: "source-prop",
+        assetId: "post",
+      },
+    ]);
+    expect(
+      getContentBlockSourceIntegrityIssues({
+        instances: [block],
+        props: [sourceProp()],
+        assets: [{ ...mdxAsset, name: "post_hash.md", format: "md" }],
+      })
+    ).toEqual([
+      {
+        type: "incompatibleContentBlockSourceAsset",
+        blockInstanceId: "block",
+        propId: "source-prop",
+        assetId: "post",
+        assetName: "post_hash.md",
+      },
+    ]);
+    expect(
+      getContentBlockSourceIntegrityIssues({
+        instances: [block],
+        props: [sourceProp()],
+        assets: [mdxAsset],
+      })
+    ).toEqual([]);
+  });
+});
 
 describe("allocateUniqueContentBlockTemplateName", () => {
   test.each([

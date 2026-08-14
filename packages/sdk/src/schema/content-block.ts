@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { prop } from "./props";
 
 export const contentBlockSourceProp = "src";
 
@@ -14,6 +15,13 @@ export const contentBlockSource = z.discriminatedUnion("type", [
 ]);
 
 export type ContentBlockSource = z.infer<typeof contentBlockSource>;
+
+export const contentBlockSourcePropSchema = prop.refine(
+  (value) =>
+    value.name === contentBlockSourceProp &&
+    (value.type === "asset" || value.type === "expression") &&
+    value.value.length > 0
+);
 
 export const contentBlockExternalContentIdentity = z.strictObject({
   blockInstanceId: z.string().min(1),

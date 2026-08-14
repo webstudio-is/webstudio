@@ -3,6 +3,7 @@ import {
   contentBlockDiagnostic,
   contentBlockExternalContentIdentity,
   contentBlockSource,
+  contentBlockSourcePropSchema,
 } from "./content-block";
 
 describe("content block source", () => {
@@ -24,6 +25,36 @@ describe("content block source", () => {
         type: "asset",
         assetId: "asset-id",
         value: "post.body",
+      }).success
+    ).toBe(false);
+  });
+
+  test("parses persisted source props without accepting other prop types", () => {
+    expect(
+      contentBlockSourcePropSchema.parse({
+        id: "source-prop",
+        instanceId: "block",
+        name: "src",
+        type: "asset",
+        value: "asset-id",
+      })
+    ).toMatchObject({ type: "asset", value: "asset-id" });
+    expect(
+      contentBlockSourcePropSchema.parse({
+        id: "source-prop",
+        instanceId: "block",
+        name: "src",
+        type: "expression",
+        value: "post.body",
+      })
+    ).toMatchObject({ type: "expression", value: "post.body" });
+    expect(
+      contentBlockSourcePropSchema.safeParse({
+        id: "source-prop",
+        instanceId: "block",
+        name: "src",
+        type: "string",
+        value: "asset-id",
       }).success
     ).toBe(false);
   });
