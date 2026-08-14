@@ -8,7 +8,10 @@ import {
   type WebstudioData,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { materializeMdxTemplates } from "./mdx-materialization";
+import {
+  materializeMdxTemplates,
+  type MaterializedMdxTemplate,
+} from "./mdx-materialization";
 import type { MdxTemplateResolution } from "./mdx-template-resolution";
 
 const identity: ContentBlockExternalContentIdentity = {
@@ -35,7 +38,17 @@ const resolution: MdxTemplateResolution = {
       templateName: "Missing",
     },
   ],
-  diagnostics: [],
+  diagnostics: [
+    {
+      code: "unresolved-template",
+      severity: "warning",
+      blockInstanceId: "block",
+      assetId: "article",
+      contentRef: "articles/hello.mdx",
+      renderScope: "route:/hello",
+      templateName: "Missing",
+    },
+  ],
 };
 
 const metas = new Map<string, WsComponentMeta>([
@@ -176,20 +189,43 @@ const createData = (): Omit<WebstudioData, "pages"> => {
   };
 };
 
+const getResolvedTemplate = (
+  templates: readonly MaterializedMdxTemplate[]
+): Extract<MaterializedMdxTemplate, { type: "resolved-template" }> => {
+  for (const template of templates) {
+    if (template.type === "resolved-template") {
+      return template;
+    }
+  }
+  throw new Error("Expected a resolved template");
+};
+
+const getUnresolvedTemplate = (
+  templates: readonly MaterializedMdxTemplate[]
+): Extract<MaterializedMdxTemplate, { type: "unresolved-template" }> => {
+  for (const template of templates) {
+    if (template.type === "unresolved-template") {
+      return template;
+    }
+  }
+  throw new Error("Expected an unresolved template");
+};
+
 describe("materializeMdxTemplates", () => {
-  test("copies complete resolved template fragments and skips unresolved usages", () => {
+  test("copies resolved fragments and represents unresolved usages", () => {
     const data = createData();
     const originalData = structuredClone(data);
-    const materializedTemplates = materializeMdxTemplates({
+    const materialization = materializeMdxTemplates({
       identity,
       resolution,
       data,
       metas,
       projectId: "target-project",
     });
-    const [materialized] = materializedTemplates;
+    const materializedTemplates = materialization.templates;
+    const materialized = getResolvedTemplate(materializedTemplates);
 
-    expect(materializedTemplates).toHaveLength(1);
+    expect(materializedTemplates).toHaveLength(2);
     expect(materialized.reference.templateName).toBe("Hero Card");
     expect(materialized.fragment.children).toEqual([
       { type: "id", value: expect.stringMatching(/^mdx-/) },
@@ -231,6 +267,22 @@ describe("materializeMdxTemplates", () => {
       expect.objectContaining({ id: "image", projectId: "target-project" }),
     ]);
     expect(data).toEqual(originalData);
+    expect(materializedTemplates[1]).toEqual(
+      expect.objectContaining({
+        type: "unresolved-template",
+        markerId: expect.stringMatching(/^mdx-/),
+        reference: expect.objectContaining({
+          type: "unresolved-template",
+          templateName: "Missing",
+        }),
+      })
+    );
+    expect(materialization.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "unresolved-template",
+        templateName: "Missing",
+      }),
+    ]);
   });
 
   test("rejects a resolved reference when its template was removed", () => {
@@ -249,7 +301,7 @@ describe("materializeMdxTemplates", () => {
   });
 
   test("generates stable IDs scoped by revision, render scope, and usage path", () => {
-    const materializeRootId = (
+    const materialize = (
       nextIdentity: ContentBlockExternalContentIdentity,
       nextResolution: MdxTemplateResolution = resolution
     ) =>
@@ -259,7 +311,16 @@ describe("materializeMdxTemplates", () => {
         data: createData(),
         metas,
         projectId: "target-project",
-      })[0].fragment.children[0];
+      });
+    const materializeRootId = (
+      nextIdentity: ContentBlockExternalContentIdentity,
+      nextResolution: MdxTemplateResolution = resolution
+    ) =>
+      getResolvedTemplate(materialize(nextIdentity, nextResolution).templates)
+        .fragment.children[0];
+    const materializeMarkerId = (
+      nextIdentity: ContentBlockExternalContentIdentity
+    ) => getUnresolvedTemplate(materialize(nextIdentity).templates).markerId;
 
     const first = materializeRootId(identity);
     expect(materializeRootId(identity)).toEqual(first);
@@ -269,9 +330,16 @@ describe("materializeMdxTemplates", () => {
     expect(
       materializeRootId({ ...identity, renderScope: "route:/other" })
     ).not.toEqual(first);
+    const markerId = materializeMarkerId(identity);
+    expect(materializeMarkerId(identity)).toBe(markerId);
+    expect(
+      materializeMarkerId({ ...identity, revision: "revision-2" })
+    ).not.toBe(markerId);
+    expect(
+      materializeMarkerId({ ...identity, renderScope: "route:/other" })
+    ).not.toBe(markerId);
     expect(
       materializeRootId(identity, {
-        ...resolution,
         references: [
           {
             type: "resolved-template",
@@ -281,12 +349,13 @@ describe("materializeMdxTemplates", () => {
             templateInstanceId: "hero",
           },
         ],
+        diagnostics: [],
       })
     ).not.toEqual(first);
   });
 
   test("applies Content-mode props and diagnoses ignored props", () => {
-    const [materialized] = materializeMdxTemplates({
+    const materialization = materializeMdxTemplates({
       identity,
       resolution: {
         references: [
@@ -311,6 +380,7 @@ describe("materializeMdxTemplates", () => {
       metas,
       projectId: "target-project",
     });
+    const materialized = getResolvedTemplate(materialization.templates);
 
     expect(materialized.fragment.props).toEqual(
       expect.arrayContaining([
@@ -329,7 +399,7 @@ describe("materializeMdxTemplates", () => {
         ["count", "layout", "missing"].includes(prop.name)
       )
     ).toEqual([]);
-    expect(materialized.diagnostics).toEqual([
+    expect(materialization.diagnostics).toEqual([
       expect.objectContaining({
         code: "ignored-template-prop",
         propName: "count",

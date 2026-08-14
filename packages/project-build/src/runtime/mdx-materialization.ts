@@ -21,9 +21,20 @@ import type {
 } from "./mdx-template-resolution";
 import { createPropValue, findProp } from "./props";
 
-export type MaterializedMdxTemplate = Readonly<{
-  reference: Extract<MdxTemplateReference, { type: "resolved-template" }>;
-  fragment: WebstudioFragment;
+export type MaterializedMdxTemplate =
+  | Readonly<{
+      type: "resolved-template";
+      reference: Extract<MdxTemplateReference, { type: "resolved-template" }>;
+      fragment: WebstudioFragment;
+    }>
+  | Readonly<{
+      type: "unresolved-template";
+      reference: Extract<MdxTemplateReference, { type: "unresolved-template" }>;
+      markerId: string;
+    }>;
+
+export type MdxTemplateMaterialization = Readonly<{
+  templates: readonly MaterializedMdxTemplate[];
   diagnostics: readonly ContentBlockDiagnostic[];
 }>;
 
@@ -72,10 +83,19 @@ export const materializeMdxTemplates = ({
   data: Omit<WebstudioData, "pages">;
   metas: Map<string, WsComponentMeta>;
   projectId: string;
-}): readonly MaterializedMdxTemplate[] => {
+}): MdxTemplateMaterialization => {
   const materializedTemplates: MaterializedMdxTemplate[] = [];
+  const diagnostics: ContentBlockDiagnostic[] = [...resolution.diagnostics];
   for (const reference of resolution.references) {
     if (reference.type === "unresolved-template") {
+      materializedTemplates.push({
+        type: "unresolved-template",
+        reference,
+        markerId: createScopeIdGenerator({
+          identity,
+          path: reference.path,
+        })(),
+      });
       continue;
     }
     if (data.instances.has(reference.templateInstanceId) === false) {
@@ -126,7 +146,6 @@ export const materializeMdxTemplates = ({
       breakpoints: materializedData.breakpoints,
       contentRootIds: new Set([materializedRootId]),
     });
-    const diagnostics: ContentBlockDiagnostic[] = [];
     for (const authoredProp of reference.props) {
       const existingProp = findProp(
         materializedData.props.values(),
@@ -169,10 +188,10 @@ export const materializeMdxTemplates = ({
     }
 
     materializedTemplates.push({
+      type: "resolved-template",
       reference,
       fragment: extractWebstudioFragment(materializedData, materializedRootId),
-      diagnostics,
     });
   }
-  return materializedTemplates;
+  return { templates: materializedTemplates, diagnostics };
 };
