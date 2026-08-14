@@ -66,9 +66,8 @@ export const mergeFontMeta = (
   if (result.success === false) {
     return;
   }
-  const { family } = result.data;
+  const { family, style } = result.data;
   if ("variationAxes" in current) {
-    const style = "style" in result.data ? result.data.style : undefined;
     const variationAxes =
       "variationAxes" in result.data ? result.data.variationAxes : undefined;
     return {
@@ -78,7 +77,6 @@ export const mergeFontMeta = (
       ...(variationAxes === undefined ? {} : { variationAxes }),
     };
   }
-  const style = "style" in result.data ? result.data.style : undefined;
   const weight = "weight" in result.data ? result.data.weight : undefined;
   return {
     ...current,

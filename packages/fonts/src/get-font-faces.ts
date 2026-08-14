@@ -27,29 +27,31 @@ const getFontFormat = (asset: PartialFontAsset): string => {
     : (FONT_FORMATS.get(asset.format) ?? asset.format);
 };
 
-const formatFace = (
-  asset: PartialFontAsset,
-  format: string,
-  url: string,
-  style: FontStyle
-): FontFace => {
+type FontSource = {
+  asset: PartialFontAsset;
+  format: string;
+  style: FontStyle;
+  url: string;
+};
+
+const formatFace = ({ asset, format, style, url }: FontSource): FontFace => {
+  const face = {
+    fontFamily: asset.meta.family,
+    fontStyle: style,
+    fontDisplay: "swap" as const,
+    src: `url(${sanitizeCssUrl(url)}) format("${format}")`,
+  };
   if ("variationAxes" in asset.meta) {
-    const { wght, wdth } = asset.meta?.variationAxes ?? {};
+    const { wght, wdth } = asset.meta.variationAxes;
     return {
-      fontFamily: asset.meta.family,
-      fontStyle: style,
-      fontDisplay: "swap",
-      src: `url(${sanitizeCssUrl(url)}) format("${format}")`,
+      ...face,
       fontStretch: wdth ? `${wdth.min}% ${wdth.max}%` : undefined,
       fontWeight: wght ? `${wght.min} ${wght.max}` : undefined,
     };
   }
   return {
-    fontFamily: asset.meta.family,
-    fontStyle: style,
+    ...face,
     fontWeight: asset.meta.weight,
-    fontDisplay: "swap",
-    src: `url(${sanitizeCssUrl(url)}) format("${format}")`,
   };
 };
 
@@ -89,18 +91,7 @@ export const getFontFaces = (
   }
 ): Array<FontFace> => {
   const { assetBaseUrl } = options;
-  const faces = new Map<
-    string,
-    Map<
-      string,
-      {
-        asset: PartialFontAsset;
-        format: string;
-        style: FontStyle;
-        url: string;
-      }
-    >
-  >();
+  const faces = new Map<string, Map<string, FontSource>>();
   const seenSources = new Set<string>();
   for (const asset of assets) {
     const url = `${assetBaseUrl}${asset.name}`;
@@ -121,14 +112,12 @@ export const getFontFaces = (
     }
   }
   return Array.from(faces.values(), (sources) => {
-    const [{ asset, format, style, url }, ...fallbacks] = Array.from(
-      sources.values()
-    ).sort(
+    const [source, ...fallbacks] = Array.from(sources.values()).sort(
       (left, right) =>
         fontFormatOrder.indexOf(left.format) -
         fontFormatOrder.indexOf(right.format)
     );
-    const face = formatFace(asset, format, url, style);
+    const face = formatFace(source);
     face.src += fallbacks
       .map(
         ({ format: fallbackFormat, url: fallbackUrl }) =>
