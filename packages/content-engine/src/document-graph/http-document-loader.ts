@@ -1,4 +1,5 @@
 import { enum as zEnum, strictObject, string } from "zod";
+import { documentFormats } from "./document-format";
 import type { DocumentGraphNode } from "./graph";
 import type { DocumentSourceLoader } from "./document-source";
 import {
@@ -7,7 +8,7 @@ import {
 } from "./observability";
 
 const documentSourceMetadata = strictObject({
-  format: zEnum(["json", "markdown"]),
+  format: zEnum(documentFormats),
   revision: string().min(1),
 });
 
