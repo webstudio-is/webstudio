@@ -344,6 +344,10 @@ describe("Assets OpenAPI description", () => {
         .responses[200].content
     ).toHaveProperty("*/*");
     expect(
+      document.paths[assetResourceApiOperations.replaceAssetContent.path].put
+        .requestBody.content
+    ).toHaveProperty("text/mdx", { schema: { type: "string" } });
+    expect(
       document.paths[assetResourceApiOperations.createAssetFolder.path].post
         .responses[201]
     ).toBeDefined();

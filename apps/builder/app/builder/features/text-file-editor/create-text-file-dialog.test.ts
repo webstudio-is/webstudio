@@ -18,6 +18,9 @@ test("accepts supported text names and rejects invalid or duplicate names", () =
   expect(
     getTextFileNameError({ name: "data.json", assets: [existing] })
   ).toBeUndefined();
+  expect(
+    getTextFileNameError({ name: "component.mdx", assets: [] })
+  ).toBeUndefined();
   expect(getTextFileNameError({ name: "image.png", assets: [] })).toBe(
     "Use a supported editable text extension."
   );

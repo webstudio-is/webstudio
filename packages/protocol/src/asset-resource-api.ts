@@ -1125,6 +1125,7 @@ export const createAssetResourceOpenApi = ({
                 schema: binarySchema,
               },
               "text/markdown": { schema: { type: "string" } },
+              "text/mdx": { schema: { type: "string" } },
               "application/json": { schema: {} },
             },
           },
