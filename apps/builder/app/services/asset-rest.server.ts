@@ -8,6 +8,7 @@ import {
   AssetRepositoryConflictError,
   AssetRepositoryNotFoundError,
   AssetRevisionConflictError,
+  AssetUploadCountLimitError,
   AssetUploadSizeLimitError,
   PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/server";
@@ -184,7 +185,8 @@ const getAssetRestErrorStatus = (error: unknown) => {
   }
   if (
     error instanceof AssetRepositoryConflictError ||
-    error instanceof AssetRevisionConflictError
+    error instanceof AssetRevisionConflictError ||
+    error instanceof AssetUploadCountLimitError
   ) {
     return 409;
   }
