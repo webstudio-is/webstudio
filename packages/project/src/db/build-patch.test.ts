@@ -395,6 +395,103 @@ describe("patchBuild", () => {
     ).toBe("/company");
   });
 
+  test("persists folder index paths for page updates and duplicates", async () => {
+    const buildWithFolder = {
+      ...buildRow,
+      pages: JSON.stringify({
+        meta: {},
+        homePage: {
+          id: "page-1",
+          name: "Home",
+          path: "",
+          title: "Home",
+          meta: {},
+          rootInstanceId: "body-1",
+        },
+        pages: [
+          {
+            id: "page-2",
+            name: "Landing",
+            path: "/landing",
+            title: "Landing",
+            meta: {},
+            rootInstanceId: "body-2",
+          },
+        ],
+        folders: [
+          {
+            id: "root",
+            name: "Root",
+            slug: "",
+            children: ["page-1", "folder-1"],
+          },
+          {
+            id: "folder-1",
+            name: "Folder",
+            slug: "folder",
+            children: ["page-2"],
+          },
+        ],
+      }),
+    };
+
+    const updated = await createBuildPatchUpdate({
+      build: buildWithFolder,
+      clientVersion: 3,
+      transactions: [
+        transaction({
+          payload: [
+            {
+              namespace: "pages",
+              patches: [
+                {
+                  op: "replace",
+                  path: ["pages", "page-2", "path"],
+                  value: "",
+                },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+    expect(updated.status).toBe("ok");
+
+    const duplicated = await createBuildPatchUpdate({
+      build: buildWithFolder,
+      clientVersion: 3,
+      transactions: [
+        transaction({
+          payload: [
+            {
+              namespace: "pages",
+              patches: [
+                {
+                  op: "add",
+                  path: ["pages", "page-copy"],
+                  value: {
+                    id: "page-copy",
+                    name: "Copy",
+                    path: "",
+                    title: "Copy",
+                    meta: {},
+                    rootInstanceId: "body-copy",
+                  },
+                },
+                {
+                  op: "add",
+                  path: ["folders", "folder-1", "children", 1],
+                  value: "page-copy",
+                },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+    expect(duplicated.status).toBe("ok");
+  });
+
   test("applies data source variable additions", async () => {
     const result = await createBuildPatchUpdate({
       build: buildRow,
