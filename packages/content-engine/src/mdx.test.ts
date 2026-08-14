@@ -747,6 +747,24 @@ Before <span class="accent">inline</span> after.
 `);
   });
 
+  test("repairs malformed embedded HTML with the HTML parser", async () => {
+    const preview = await previewMarkdownToMdxConversion({
+      source: "<section><strong>Kept</section>\n\nAfter\n",
+    });
+
+    expect(preview.source).toBe(`<ws.element ws:tag="section">
+  <ws.element ws:tag="strong">
+    Kept
+  </ws.element>
+</ws.element>
+
+<ws.element ws:tag="strong">
+  After
+</ws.element>
+`);
+    expect(preview.omissions).toEqual([]);
+  });
+
   test("omits isolatable unsafe HTML subtrees and reports their locations", async () => {
     const source = `---
 title: Existing post

@@ -379,6 +379,56 @@ describe("PostgresAssetRepository", () => {
     expect(dependencies.uploadFile).not.toHaveBeenCalled();
   });
 
+  test("cleans up only the reserved Asset when upload completion fails", async () => {
+    const dependencies = createDependencies();
+    const deleteAssetByProject = vi.fn(async () => ({ error: null }));
+    const deleteAssetById = vi.fn(() => ({ eq: deleteAssetByProject }));
+    const deleteFileByName = vi.fn(async () => ({ error: null }));
+    const client = {
+      from: vi.fn((table: string) => ({
+        delete: () => ({
+          eq: table === "Asset" ? deleteAssetById : deleteFileByName,
+        }),
+      })),
+    };
+    const uploadContext = {
+      postgrest: { client },
+    } as unknown as AppContext;
+    dependencies.uploadFile.mockImplementation(
+      async (
+        name,
+        _data,
+        _assetStore,
+        callContext,
+        _assetInfoFallback,
+        _assetDataOverride,
+        onUploadError
+      ) => {
+        await onUploadError?.(name, callContext);
+        throw new Error("Storage upload failed");
+      }
+    );
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context: uploadContext,
+      assetStore: assetClient,
+      dependencies,
+    });
+
+    await expect(
+      repository.completeUpload({
+        name: "post_reserved.mdx",
+        data: new Blob(["post"]).stream(),
+        assetInfoFallback: undefined,
+        assetId: "destination-1",
+      })
+    ).rejects.toThrow("Storage upload failed");
+
+    expect(deleteAssetById).toHaveBeenCalledWith("id", "destination-1");
+    expect(deleteAssetByProject).toHaveBeenCalledWith("projectId", "project-1");
+    expect(deleteFileByName).toHaveBeenCalledWith("name", "post_reserved.mdx");
+  });
+
   test("does not read or parse stored content during ordinary mutations", async () => {
     const dependencies = createDependencies();
     const asset = {
