@@ -1,5 +1,5 @@
-import { FONT_FORMATS } from "./constants";
-import type { FontMeta, FontFormat, FontMetaStatic } from "./schema";
+import { FONT_FORMATS, type FontStyle } from "./constants";
+import type { FontMeta, FontFormat } from "./schema";
 
 export type PartialFontAsset = {
   format: FontFormat;
@@ -11,7 +11,7 @@ export type FontFace = {
   fontFamily: string;
   fontDisplay: "swap" | "auto" | "block" | "fallback" | "optional";
   src: string;
-  fontStyle?: FontMetaStatic["style"];
+  fontStyle?: FontStyle;
   fontWeight?: number | string;
   fontStretch?: string;
 };
@@ -30,13 +30,14 @@ const getFontFormat = (asset: PartialFontAsset): string => {
 const formatFace = (
   asset: PartialFontAsset,
   format: string,
-  url: string
+  url: string,
+  style: FontStyle
 ): FontFace => {
   if ("variationAxes" in asset.meta) {
     const { wght, wdth } = asset.meta?.variationAxes ?? {};
     return {
       fontFamily: asset.meta.family,
-      fontStyle: "normal",
+      fontStyle: style,
       fontDisplay: "swap",
       src: `url(${sanitizeCssUrl(url)}) format("${format}")`,
       fontStretch: wdth ? `${wdth.min}% ${wdth.max}%` : undefined,
@@ -45,18 +46,40 @@ const formatFace = (
   }
   return {
     fontFamily: asset.meta.family,
-    fontStyle: asset.meta.style,
+    fontStyle: style,
     fontWeight: asset.meta.weight,
     fontDisplay: "swap",
     src: `url(${sanitizeCssUrl(url)}) format("${format}")`,
   };
 };
 
-const getKey = (asset: PartialFontAsset) => {
+const getKey = (asset: PartialFontAsset, style: FontStyle) => {
   if ("variationAxes" in asset.meta) {
-    return asset.meta.family + Object.values(asset.meta.variationAxes).join("");
+    const { wght, wdth } = asset.meta.variationAxes;
+    return JSON.stringify([asset.meta.family, style, wght, wdth]);
   }
-  return asset.meta.family + asset.meta.style + asset.meta.weight;
+  return JSON.stringify([asset.meta.family, style, asset.meta.weight]);
+};
+
+const getStyles = (meta: FontMeta): FontStyle[] => {
+  const styles = new Set<FontStyle>([meta.style]);
+  if ("variationAxes" in meta) {
+    const { ital, slnt } = meta.variationAxes;
+    if (ital !== undefined && ital.min <= 0 && ital.max >= 1) {
+      styles.add("normal");
+      styles.add("italic");
+    }
+    if (
+      slnt !== undefined &&
+      slnt.min < slnt.max &&
+      slnt.min <= 0 &&
+      slnt.max >= 0
+    ) {
+      styles.add("normal");
+      styles.add("oblique");
+    }
+  }
+  return Array.from(styles);
 };
 
 export const getFontFaces = (
@@ -68,33 +91,44 @@ export const getFontFaces = (
   const { assetBaseUrl } = options;
   const faces = new Map<
     string,
-    Map<string, { asset: PartialFontAsset; format: string; url: string }>
+    Map<
+      string,
+      {
+        asset: PartialFontAsset;
+        format: string;
+        style: FontStyle;
+        url: string;
+      }
+    >
   >();
-  const seenUrls = new Set<string>();
+  const seenSources = new Set<string>();
   for (const asset of assets) {
     const url = `${assetBaseUrl}${asset.name}`;
-    const assetKey = getKey(asset);
-    if (seenUrls.has(url)) {
-      continue;
+    for (const style of getStyles(asset.meta)) {
+      const sourceKey = JSON.stringify([url, style]);
+      if (seenSources.has(sourceKey)) {
+        continue;
+      }
+      seenSources.add(sourceKey);
+      const assetKey = getKey(asset, style);
+      const format = getFontFormat(asset);
+      const sources = faces.get(assetKey) ?? new Map();
+      const existing = sources.get(format);
+      if (existing === undefined || url < existing.url) {
+        sources.set(format, { asset, format, style, url });
+      }
+      faces.set(assetKey, sources);
     }
-    seenUrls.add(url);
-    const format = getFontFormat(asset);
-    const sources = faces.get(assetKey) ?? new Map();
-    const existing = sources.get(format);
-    if (existing === undefined || url < existing.url) {
-      sources.set(format, { asset, format, url });
-    }
-    faces.set(assetKey, sources);
   }
   return Array.from(faces.values(), (sources) => {
-    const [{ asset, format, url }, ...fallbacks] = Array.from(
+    const [{ asset, format, style, url }, ...fallbacks] = Array.from(
       sources.values()
     ).sort(
       (left, right) =>
         fontFormatOrder.indexOf(left.format) -
         fontFormatOrder.indexOf(right.format)
     );
-    const face = formatFace(asset, format, url);
+    const face = formatFace(asset, format, url, style);
     face.src += fallbacks
       .map(
         ({ format: fallbackFormat, url: fallbackUrl }) =>
