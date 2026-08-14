@@ -83,6 +83,49 @@ const createState = (source: Prop = assetSource()): BuilderState => ({
   props: new Map([[source.id, source]]),
 });
 
+const createNestedMaterializedContent = () => {
+  const parentIdentity = identity("page:/post");
+  const nestedIdentity = identity(
+    "page:/post:nested",
+    "nested-block",
+    "nested-article"
+  );
+  const parentFragment: WebstudioFragment = {
+    ...fragment("nested-block"),
+    instances: [
+      {
+        type: "instance",
+        id: "nested-block",
+        component: blockComponent,
+        children: [{ type: "id", value: "nested-templates" }],
+      },
+      {
+        type: "instance",
+        id: "nested-templates",
+        component: blockTemplateComponent,
+        children: [],
+      },
+    ],
+    props: [
+      {
+        id: "nested-src",
+        instanceId: "nested-block",
+        name: "src",
+        type: "asset",
+        value: "nested-article",
+      },
+    ],
+  };
+  return {
+    parentIdentity,
+    nestedIdentity,
+    roots: [
+      { identity: nestedIdentity, fragment: fragment("nested-content") },
+      { identity: parentIdentity, fragment: parentFragment },
+    ],
+  };
+};
+
 describe.each([
   {
     sourceType: "direct",
@@ -281,44 +324,11 @@ test("projects reads whose contract does not load source props", () => {
 
 test("projects nested storage roots regardless of input order", () => {
   const state = createState();
-  const parentIdentity = identity("page:/post");
-  const nestedIdentity = identity(
-    "page:/post:nested",
-    "nested-block",
-    "nested-article"
-  );
-  const parentFragment: WebstudioFragment = {
-    ...fragment("nested-block"),
-    instances: [
-      {
-        type: "instance",
-        id: "nested-block",
-        component: blockComponent,
-        children: [{ type: "id", value: "nested-templates" }],
-      },
-      {
-        type: "instance",
-        id: "nested-templates",
-        component: blockTemplateComponent,
-        children: [],
-      },
-    ],
-    props: [
-      {
-        id: "nested-src",
-        instanceId: "nested-block",
-        name: "src",
-        type: "asset",
-        value: "nested-article",
-      },
-    ],
-  };
+  const { parentIdentity, nestedIdentity, roots } =
+    createNestedMaterializedContent();
   const projection = createContentStorageProjection({
     state,
-    materializedRoots: [
-      { identity: nestedIdentity, fragment: fragment("nested-content") },
-      { identity: parentIdentity, fragment: parentFragment },
-    ],
+    materializedRoots: roots,
   });
 
   expect(projection.state.instances?.get("nested-block")?.children).toEqual([
@@ -421,4 +431,392 @@ test("requires materialized local style sources to be scope-local", () => {
       ],
     })
   ).toThrow("not scope-local");
+});
+
+test("routes external text updates without patching persisted instances", () => {
+  const state = createState();
+  const externalIdentity = identity("page:/post");
+  const externalFragment = fragment("external");
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state,
+      input: {
+        instanceId: "external",
+        childIndex: 0,
+        text: "Updated content",
+      },
+      context: {
+        createId: () => "unused",
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                op: "replace",
+                path: ["external", "children", 0],
+                value: { type: "text", value: "Updated content" },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  expect(state.instances?.has("external")).toBe(false);
+  expect(externalFragment.instances[0].children).toEqual([
+    { type: "text", value: "External content" },
+  ]);
+});
+
+test("keeps ordinary text updates on the project patch path", () => {
+  const state = createState();
+  state.instances?.set("ordinary", {
+    type: "instance",
+    id: "ordinary",
+    component: elementComponent,
+    children: [{ type: "text", value: "Before" }],
+  });
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state,
+      input: { instanceId: "ordinary", childIndex: 0, text: "After" },
+      context: { createId: () => "unused" },
+    })
+  ).toMatchObject({
+    payload: [
+      {
+        namespace: "instances",
+        patches: [
+          {
+            op: "replace",
+            path: ["ordinary", "children", 0],
+            value: { type: "text", value: "After" },
+          },
+        ],
+      },
+    ],
+  });
+});
+
+test("validates external text updates with Content-mode permissions", () => {
+  const state = createState();
+  const protectedFragment = fragment("external-template");
+  protectedFragment.instances[0].component = blockTemplateComponent;
+
+  try {
+    executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state,
+      input: {
+        instanceId: "external-template",
+        childIndex: 0,
+        text: "Blocked",
+      },
+      context: {
+        createId: () => "unused",
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: identity("page:/post"),
+            fragment: protectedFragment,
+          },
+        ],
+      },
+    });
+    throw new Error("Expected Content-mode validation to reject the update");
+  } catch (error) {
+    expect(error).toMatchObject({ code: "BAD_REQUEST" });
+  }
+  expect(protectedFragment.instances[0].children).toEqual([
+    { type: "text", value: "External content" },
+  ]);
+});
+
+test("routes direct Content Block text children to external storage", () => {
+  const state = createState();
+  const externalIdentity = identity("page:/post");
+  const externalFragment = fragment("unused");
+  externalFragment.children = [
+    { type: "text", value: "Direct external content" },
+  ];
+  externalFragment.instances = [];
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state,
+      input: { instanceId: "block", childIndex: 1, text: "Updated direct" },
+      context: {
+        createId: () => "unused",
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: [
+          {
+            namespace: "fragment",
+            patches: [
+              {
+                path: ["children", 0],
+                value: { type: "text", value: "Updated direct" },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+});
+
+test("routes text updates to the innermost nested storage scope", () => {
+  const state = createState();
+  const { nestedIdentity, roots } = createNestedMaterializedContent();
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state,
+      input: {
+        instanceId: "nested-content",
+        childIndex: 0,
+        text: "Nested update",
+      },
+      context: {
+        createId: () => "unused",
+        returnStorageChanges: true,
+        materializedContent: roots,
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: nestedIdentity },
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                path: ["nested-content", "children", 0],
+                value: { type: "text", value: "Nested update" },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+});
+
+test("routes external whole-text mutations through the same storage contract", () => {
+  const state = createState();
+  const externalIdentity = identity("page:/post");
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.setTextContent",
+      state,
+      input: {
+        operation: "set",
+        instanceId: "external",
+        text: "Replacement",
+        mode: "text",
+      },
+      context: {
+        createId: () => "unused",
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: fragment("external") },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                path: ["external", "children"],
+                value: [{ type: "text", value: "Replacement" }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+});
+
+test("preserves Templates when replacing direct Content Block text", () => {
+  const state = createState();
+  const externalIdentity = identity("page:/post");
+  const externalFragment = fragment("unused");
+  externalFragment.children = [{ type: "text", value: "Before" }];
+  externalFragment.instances = [];
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.setTextContent",
+      state,
+      input: {
+        operation: "set",
+        instanceId: "block",
+        text: "After",
+        mode: "text",
+      },
+      context: {
+        createId: () => "unused",
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: [
+          {
+            namespace: "fragment",
+            patches: [
+              {
+                path: ["children"],
+                value: [{ type: "text", value: "After" }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  expect(state.instances?.get("block")?.children).toEqual([
+    { type: "id", value: "templates" },
+  ]);
+});
+
+test("requires callers to opt into handling authored storage changes", () => {
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state: createState(),
+      input: { instanceId: "external", childIndex: 0, text: "Update" },
+      context: {
+        createId: () => "unused",
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: fragment("external") },
+        ],
+      },
+    })
+  ).toThrow("storage changes");
+});
+
+test("returns an external noop after a repeated text update", () => {
+  const externalFragment = fragment("external");
+  externalFragment.instances[0].children = [
+    { type: "text", value: "Already updated" },
+  ];
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state: createState(),
+      input: {
+        instanceId: "external",
+        childIndex: 0,
+        text: "Already updated",
+      },
+      context: {
+        createId: () => "unused",
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: identity("page:/post"),
+            fragment: externalFragment,
+          },
+        ],
+      },
+    })
+  ).toMatchObject({ payload: [], noop: true });
+});
+
+test("routes inline-expression conversion without mutating materialized input", () => {
+  const externalFragment = fragment("external");
+  externalFragment.instances[0].children = [
+    { type: "expression", value: "$ws$data$title" },
+  ];
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.setTextContent",
+      state: createState(),
+      input: {
+        operation: "inlineExpressions",
+        instanceId: "external",
+        replacements: [
+          {
+            childIndex: 0,
+            expression: "$ws$data$title",
+            text: "Resolved title",
+          },
+        ],
+      },
+      context: {
+        createId: () => "unused",
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: identity("page:/post"),
+            fragment: externalFragment,
+          },
+        ],
+      },
+    })
+  ).toMatchObject({
+    storageChanges: [
+      {
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                path: ["external", "children"],
+                value: [{ type: "text", value: "Resolved title" }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  expect(externalFragment.instances[0].children).toEqual([
+    { type: "expression", value: "$ws$data$title" },
+  ]);
 });

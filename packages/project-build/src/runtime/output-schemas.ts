@@ -11,6 +11,7 @@ import {
   projectMeta,
   prop,
   instance,
+  contentBlockExternalContentIdentity,
 } from "@webstudio-is/sdk";
 import {
   assetQueryResultMode,
@@ -46,6 +47,21 @@ const patchChange = z.object({
   namespace: z.enum(builderNamespaces),
   patches: z.array(builderPatchSchema),
 });
+const contentStoragePatchChange = z.union([
+  patchChange,
+  z.object({
+    namespace: z.literal("fragment"),
+    patches: z.array(builderPatchSchema),
+  }),
+]);
+
+const contentStorageRoot = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("project") }),
+  z.object({
+    type: z.literal("external"),
+    identity: contentBlockExternalContentIdentity,
+  }),
+]);
 
 export const pageDraftOutputHint =
   "True when the page is a draft. Missing or false means the page is publishable.";
@@ -60,6 +76,14 @@ export const createRuntimeMutationExecutionSchema = <
     payload: z.array(patchChange),
     result,
     invalidatesNamespaces: z.array(z.enum(builderNamespaces)),
+    storageChanges: z
+      .array(
+        z.object({
+          root: contentStorageRoot,
+          payload: z.array(contentStoragePatchChange),
+        })
+      )
+      .optional(),
     noop: z.boolean(),
   });
 

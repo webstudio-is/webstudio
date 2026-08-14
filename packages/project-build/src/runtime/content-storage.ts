@@ -10,6 +10,15 @@ import {
 } from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
 import equal from "fast-deep-equal";
+import type { BuilderRuntimeMutation } from "./mutation";
+import type { BuilderPatchChange } from "../contracts/patch";
+import type { ContentStoragePatchChange } from "./mutation";
+import {
+  getContentModeCapabilities,
+  validateContentModeTransaction,
+} from "./content-mode-permissions";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { throwBuilderRuntimeError } from "./errors";
 
 export type MaterializedContentRoot = Readonly<{
   identity: ContentBlockExternalContentIdentity;
@@ -307,4 +316,169 @@ export const resolveContentStorageRoot = (
   return identity === undefined
     ? projectStorageRoot
     : { type: "external", identity };
+};
+
+const prepareExternalMutationPayload = ({
+  projection,
+  root,
+  payload,
+}: {
+  projection: ContentStorageProjection;
+  root: Extract<ContentStorageRoot, { type: "external" }>;
+  payload: BuilderPatchChange[];
+}) => {
+  const validationPayload: BuilderPatchChange[] = [];
+  const storagePayload: ContentStoragePatchChange[] = [];
+  const block = projection.state.instances?.get(root.identity.blockInstanceId);
+  if (block === undefined) {
+    throw new Error(
+      `Materialized content block "${root.identity.blockInstanceId}" is missing`
+    );
+  }
+  const templateChildren = block.children.filter(
+    (child) =>
+      child.type === "id" &&
+      projection.state.instances?.get(child.value)?.component ===
+        blockTemplateComponent
+  );
+  for (const change of payload) {
+    const validationPatches = [];
+    const namespacePatches = [];
+    const fragmentPatches = [];
+    for (const patch of change.patches) {
+      const [instanceId, field, childIndex] = patch.path;
+      if (
+        change.namespace !== "instances" ||
+        instanceId !== block.id ||
+        field !== "children"
+      ) {
+        validationPatches.push(patch);
+        namespacePatches.push(patch);
+        continue;
+      }
+      if (patch.path.length === 3 && typeof childIndex === "number") {
+        const externalIndex = childIndex - templateChildren.length;
+        if (externalIndex < 0) {
+          return throwBuilderRuntimeError(
+            "BAD_REQUEST",
+            "Templates content is not editable in content mode."
+          );
+        }
+        validationPatches.push(patch);
+        fragmentPatches.push({
+          ...patch,
+          path: ["children", externalIndex],
+        });
+        continue;
+      }
+      if (
+        patch.path.length === 2 &&
+        patch.op !== "remove" &&
+        Array.isArray(patch.value)
+      ) {
+        const externalChildren = patch.value.filter(
+          (child) =>
+            typeof child !== "object" ||
+            child === null ||
+            !("type" in child) ||
+            child.type !== "id" ||
+            !("value" in child) ||
+            projection.state.instances?.get(String(child.value))?.component !==
+              blockTemplateComponent
+        );
+        validationPatches.push({
+          ...patch,
+          value: [...templateChildren, ...externalChildren],
+        });
+        fragmentPatches.push({
+          ...patch,
+          path: ["children"],
+          value: externalChildren,
+        });
+        continue;
+      }
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Content Block root mutation is not supported."
+      );
+    }
+    if (validationPatches.length > 0) {
+      validationPayload.push({ ...change, patches: validationPatches });
+    }
+    if (namespacePatches.length > 0) {
+      storagePayload.push({ ...change, patches: namespacePatches });
+    }
+    if (fragmentPatches.length > 0) {
+      storagePayload.push({ namespace: "fragment", patches: fragmentPatches });
+    }
+  }
+  return { validationPayload, storagePayload };
+};
+
+export const executeContentStorageMutation = <
+  Mutation extends BuilderRuntimeMutation,
+>({
+  state,
+  materializedRoots,
+  returnStorageChanges,
+  target,
+  execute,
+}: {
+  state: BuilderState;
+  materializedRoots?: readonly MaterializedContentRoot[];
+  returnStorageChanges?: boolean;
+  target: ContentStorageTarget;
+  execute: (state: BuilderState) => Mutation;
+}): Mutation => {
+  if (materializedRoots === undefined || materializedRoots.length === 0) {
+    return execute(state);
+  }
+  const projection = createContentStorageProjection({
+    state,
+    materializedRoots,
+  });
+  const root = resolveContentStorageRoot(projection, target);
+  if (root.type === "project") {
+    return execute(state);
+  }
+  if (returnStorageChanges !== true) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "The caller must handle authored storage changes."
+    );
+  }
+
+  const mutation = execute(projection.state);
+  const { validationPayload, storagePayload } = prepareExternalMutationPayload({
+    projection,
+    root,
+    payload: mutation.payload,
+  });
+  const validation = validateContentModeTransaction({
+    capabilities: getContentModeCapabilities({
+      instances: projection.state.instances ?? new Map(),
+      metas: componentMetas,
+      props: projection.state.props ?? new Map(),
+      styleSources: projection.state.styleSources ?? new Map(),
+      styleSourceSelections:
+        projection.state.styleSourceSelections ?? new Map(),
+      styles: projection.state.styles ?? new Map(),
+      breakpoints: projection.state.breakpoints,
+      contentRootIds: new Set([root.identity.blockInstanceId]),
+    }),
+    transaction: { payload: validationPayload },
+  });
+  if (validation.success === false) {
+    return throwBuilderRuntimeError("BAD_REQUEST", validation.error);
+  }
+  const storageChanges =
+    storagePayload.length === 0
+      ? mutation.storageChanges
+      : [...(mutation.storageChanges ?? []), { root, payload: storagePayload }];
+  return {
+    ...mutation,
+    payload: [],
+    storageChanges,
+    noop: storageChanges?.some((change) => change.payload.length > 0) !== true,
+  } as Mutation;
 };

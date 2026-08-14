@@ -51,7 +51,10 @@ import {
   bindExpressionInput,
   getScopedExpressionWarnings,
 } from "./expression-scope";
-import { createContentStorageProjection } from "./content-storage";
+import {
+  createContentStorageProjection,
+  executeContentStorageMutation,
+} from "./content-storage";
 
 export type BuilderRuntimeOperation<
   Id extends string = string,
@@ -1256,34 +1259,54 @@ export const builderRuntimeOperations = [
     "instances.updateText",
     api("update-text", "updateText", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "dataSources"],
+      readNamespaces: [
+        "instances",
+        "props",
+        "dataSources",
+        ...styleNamespaces,
+        "breakpoints",
+      ],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),
     instances.updateTextInstanceInput,
-    ({ state, input }) => {
-      const warnings =
-        input.mode === "expression"
-          ? getScopedExpressionWarnings(
-              state,
-              input.instanceId,
-              ["text"],
-              input.text
-            )
-          : [];
-      return withExpressionWarnings(
-        instances.updateTextInstance(
-          state,
-          input.mode === "expression"
-            ? {
-                ...input,
-                text: bindExpressionInput(state, input.instanceId, input.text),
-              }
-            : input
-        ),
-        warnings
-      );
-    }
+    ({ state, input, context }) =>
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target: {
+          type: "children",
+          parentInstanceId: input.instanceId,
+        },
+        execute: (mutationState) => {
+          const warnings =
+            input.mode === "expression"
+              ? getScopedExpressionWarnings(
+                  mutationState,
+                  input.instanceId,
+                  ["text"],
+                  input.text
+                )
+              : [];
+          return withExpressionWarnings(
+            instances.updateTextInstance(
+              mutationState,
+              input.mode === "expression"
+                ? {
+                    ...input,
+                    text: bindExpressionInput(
+                      mutationState,
+                      input.instanceId,
+                      input.text
+                    ),
+                  }
+                : input
+            ),
+            warnings
+          );
+        },
+      })
   ),
   runtimeOperation(
     "instances.replaceText",
@@ -1300,34 +1323,54 @@ export const builderRuntimeOperations = [
     "instances.setTextContent",
     api("set-text-content", "setTextContent", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "dataSources"],
+      readNamespaces: [
+        "instances",
+        "props",
+        "dataSources",
+        ...styleNamespaces,
+        "breakpoints",
+      ],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),
     instances.setTextContentInput,
-    ({ state, input }) => {
-      const warnings =
-        input.operation === "set" && input.mode === "expression"
-          ? getScopedExpressionWarnings(
-              state,
-              input.instanceId,
-              ["text"],
-              input.text
-            )
-          : [];
-      return withExpressionWarnings(
-        instances.setTextContent(
-          state,
-          input.operation === "set" && input.mode === "expression"
-            ? {
-                ...input,
-                text: bindExpressionInput(state, input.instanceId, input.text),
-              }
-            : input
-        ),
-        warnings
-      );
-    }
+    ({ state, input, context }) =>
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target: {
+          type: "children",
+          parentInstanceId: input.instanceId,
+        },
+        execute: (mutationState) => {
+          const warnings =
+            input.operation === "set" && input.mode === "expression"
+              ? getScopedExpressionWarnings(
+                  mutationState,
+                  input.instanceId,
+                  ["text"],
+                  input.text
+                )
+              : [];
+          return withExpressionWarnings(
+            instances.setTextContent(
+              mutationState,
+              input.operation === "set" && input.mode === "expression"
+                ? {
+                    ...input,
+                    text: bindExpressionInput(
+                      mutationState,
+                      input.instanceId,
+                      input.text
+                    ),
+                  }
+                : input
+            ),
+            warnings
+          );
+        },
+      })
   ),
   runtimeOperation(
     "instances.updateTextTree",

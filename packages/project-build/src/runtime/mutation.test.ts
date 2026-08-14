@@ -77,3 +77,59 @@ test("stages mutations against the latest state and combines their contract", ()
     ],
   });
 });
+
+test("preserves multiple authored storage changes and their noop semantics", () => {
+  const accumulator = createRuntimeMutationAccumulator({});
+  const firstRoot = {
+    type: "external" as const,
+    identity: {
+      blockInstanceId: "first",
+      assetId: "first-asset",
+      revision: "first-revision",
+      contentRef: "first.mdx",
+      format: "mdx" as const,
+      renderScope: "page:/first",
+    },
+  };
+  const secondRoot = {
+    type: "external" as const,
+    identity: {
+      ...firstRoot.identity,
+      blockInstanceId: "second",
+      assetId: "second-asset",
+      contentRef: "second.mdx",
+      renderScope: "page:/second",
+    },
+  };
+  for (const root of [firstRoot, secondRoot]) {
+    accumulator.stage(
+      createRuntimeMutation({
+        payload: [],
+        storageChanges: [
+          {
+            root,
+            payload: [
+              {
+                namespace: "fragment",
+                patches: [
+                  {
+                    op: "replace",
+                    path: ["children", 0],
+                    value: { type: "text", value: root.identity.assetId },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        result: {},
+        invalidatesNamespaces: ["instances"],
+      })
+    );
+  }
+
+  expect(accumulator.complete({})).toMatchObject({
+    noop: false,
+    storageChanges: [{ root: firstRoot }, { root: secondRoot }],
+  });
+});

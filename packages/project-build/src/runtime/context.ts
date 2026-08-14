@@ -7,6 +7,7 @@ export type BuilderRuntimeContext = {
   projectVersion?: number;
   allowLegacyContentModelWarnings?: boolean;
   materializedContent?: readonly MaterializedContentRoot[];
+  returnStorageChanges?: boolean;
 };
 
 export const builderRuntimeContext: BuilderRuntimeContext = {
