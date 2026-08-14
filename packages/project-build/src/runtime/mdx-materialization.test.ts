@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
 import {
+  parseMdxDocument,
+  serializeMdxDocument,
+} from "@webstudio-is/content-engine/mdx";
+import {
+  blockComponent,
+  blockTemplateComponent,
   encodeDataVariableId,
   type Asset,
   type ContentBlockExternalContentIdentity,
@@ -12,7 +18,10 @@ import {
   materializeMdxTemplates,
   type MaterializedMdxTemplate,
 } from "./mdx-materialization";
-import type { MdxTemplateResolution } from "./mdx-template-resolution";
+import {
+  resolveMdxTemplates,
+  type MdxTemplateResolution,
+} from "./mdx-template-resolution";
 
 const identity: ContentBlockExternalContentIdentity = {
   blockInstanceId: "block",
@@ -112,6 +121,11 @@ const createData = (): Omit<WebstudioData, "pages"> => {
     type: "string",
     value: "strong",
   };
+  const duplicateToneProp: Prop = {
+    ...prop,
+    id: "hero:tone-duplicate",
+    value: "duplicate",
+  };
   const imageProp: Prop = {
     id: "hero:image",
     instanceId: "hero",
@@ -126,6 +140,27 @@ const createData = (): Omit<WebstudioData, "pages"> => {
     type: "expression",
     value: encodeDataVariableId("site-title"),
   };
+  const countProp: Prop = {
+    id: "hero:count",
+    instanceId: "hero",
+    name: "count",
+    type: "number",
+    value: 1,
+  };
+  const layoutProp: Prop = {
+    id: "hero:layout",
+    instanceId: "hero",
+    name: "layout",
+    type: "string",
+    value: "contained",
+  };
+  const legacyProp: Prop = {
+    id: "hero:legacy",
+    instanceId: "hero",
+    name: "legacy",
+    type: "string",
+    value: "Template legacy",
+  };
   const asset: Asset = {
     id: "image",
     projectId: "source-project",
@@ -138,13 +173,35 @@ const createData = (): Omit<WebstudioData, "pages"> => {
   };
   return {
     instances: new Map([
+      [
+        "block",
+        {
+          type: "instance",
+          id: "block",
+          component: blockComponent,
+          children: [{ type: "id", value: "templates" }],
+        },
+      ],
+      [
+        "templates",
+        {
+          type: "instance",
+          id: "templates",
+          component: blockTemplateComponent,
+          children: [{ type: "id", value: hero.id }],
+        },
+      ],
       [hero.id, hero],
       [heading.id, heading],
     ]),
     props: new Map<Prop["id"], Prop>([
       [prop.id, prop],
+      [duplicateToneProp.id, duplicateToneProp],
       [imageProp.id, imageProp],
       [expressionProp.id, expressionProp],
+      [countProp.id, countProp],
+      [layoutProp.id, layoutProp],
+      [legacyProp.id, legacyProp],
     ]),
     dataSources: new Map([
       [
@@ -359,30 +416,21 @@ describe("materializeMdxTemplates", () => {
     ).not.toEqual(first);
   });
 
-  test("applies Content-mode props and diagnoses ignored props", async () => {
+  test("applies valid props and preserves ignored authored props", async () => {
+    const source = `<ws.element ws:name="Card" tone="quiet" featured title="Authored title" count="2" layout="wide" legacy="Authored legacy" missing="preserved" />`;
+    const document = await parseMdxDocument({ source });
+    const authoredDocument = structuredClone(document);
+    const data = createData();
+    const originalData = structuredClone(data);
     const materialization = await materializeMdxTemplates({
       identity,
-      resolution: {
-        templateNames: ["Hero Card"],
-        references: [
-          {
-            type: "resolved-template",
-            path: [0],
-            templateName: "Hero Card",
-            templateInstanceId: "hero",
-            props: [
-              { name: "tone", value: "quiet" },
-              { name: "featured", value: true },
-              { name: "title", value: "Authored title" },
-              { name: "count", value: "2" },
-              { name: "layout", value: "wide" },
-              { name: "missing", value: "preserved" },
-            ],
-          },
-        ],
-        diagnostics: [],
-      },
-      data: createData(),
+      resolution: resolveMdxTemplates({
+        document,
+        identity,
+        instances: data.instances,
+        metas,
+      }),
+      data,
       metas,
       projectId: "target-project",
     });
@@ -397,14 +445,35 @@ describe("materializeMdxTemplates", () => {
           type: "string",
           value: "Authored title",
         }),
+        expect.objectContaining({ name: "count", type: "number", value: 1 }),
+        expect.objectContaining({ name: "layout", value: "contained" }),
+        expect.objectContaining({ name: "legacy", value: "Template legacy" }),
       ])
     );
     expect(materialized.fragment.dataSources).toEqual([]);
     expect(
-      materialized.fragment.props.filter((prop) =>
-        ["count", "layout", "missing"].includes(prop.name)
-      )
-    ).toEqual([]);
+      materialized.fragment.props.filter((prop) => prop.name === "tone")
+    ).toEqual([expect.objectContaining({ type: "string", value: "quiet" })]);
+    expect(
+      materialized.fragment.props.find((prop) => prop.name === "missing")
+    ).toBeUndefined();
+    expect(document).toEqual(authoredDocument);
+    expect(data).toEqual(originalData);
+    expect(
+      (await parseMdxDocument({ source: serializeMdxDocument(document) }))
+        .children[0]
+    ).toMatchObject({
+      type: "template",
+      props: [
+        { name: "tone", value: "quiet" },
+        { name: "featured", value: true },
+        { name: "title", value: "Authored title" },
+        { name: "count", value: "2" },
+        { name: "layout", value: "wide" },
+        { name: "legacy", value: "Authored legacy" },
+        { name: "missing", value: "preserved" },
+      ],
+    });
     expect(materialization.diagnostics).toEqual([
       expect.objectContaining({
         code: "ignored-template-prop",
@@ -415,6 +484,11 @@ describe("materializeMdxTemplates", () => {
         code: "ignored-template-prop",
         propName: "layout",
         reason: "design-only",
+      }),
+      expect.objectContaining({
+        code: "ignored-template-prop",
+        propName: "legacy",
+        reason: "stale",
       }),
       expect.objectContaining({
         code: "ignored-template-prop",

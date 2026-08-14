@@ -205,8 +205,24 @@ export const materializeMdxTemplates = async ({
           required: existingProp?.required,
         });
         materializedData.props.set(prop.id, prop);
+        for (const candidate of materializedData.props.values()) {
+          if (
+            candidate.id !== prop.id &&
+            candidate.instanceId === materializedRootId &&
+            candidate.name === authoredProp.name
+          ) {
+            materializedData.props.delete(candidate.id);
+          }
+        }
         continue;
       }
+      // A persisted prop that is no longer recognized by the root's current
+      // component/tag contract is stale in this template revision. An
+      // authored name with no persisted history remains unknown.
+      const reason =
+        eligibility.reason === "unknown" && existingProp !== undefined
+          ? "stale"
+          : eligibility.reason;
       diagnostics.push({
         code: "ignored-template-prop",
         severity: "warning",
@@ -216,7 +232,7 @@ export const materializeMdxTemplates = async ({
         renderScope: identity.renderScope,
         templateName: reference.templateName,
         propName: authoredProp.name,
-        reason: eligibility.reason,
+        reason,
         sourceRange: reference.sourceRange,
       });
     }
