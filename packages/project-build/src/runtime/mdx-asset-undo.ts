@@ -80,6 +80,7 @@ export type MdxAssetUndoResult =
           | "unresolved-write"
           | "source-mismatch"
           | "identity-mismatch"
+          | "unauthorized"
           | "session-unavailable";
         currentSource?: string;
         error?: Error;

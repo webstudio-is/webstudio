@@ -643,6 +643,47 @@ describe("MDX Asset editing session", () => {
     expect(writable.updates).toHaveLength(0);
   });
 
+  test("authorizes the exact pinned Asset before preparing a source replacement", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: ({ operation, assetId, identity }) => {
+        if (
+          operation === "write" &&
+          assetId === "post" &&
+          identity?.contentRef === "post_hash.mdx"
+        ) {
+          throw new Error("Authorization service unavailable");
+        }
+        return operation === "read";
+      },
+    });
+    const loaded = expectStatus(
+      await session.open({
+        blockInstanceId: "block",
+        source: { type: "asset", assetId: "post" },
+        renderScope: "page:/one",
+        state: createState(),
+        projectId: "project",
+      }),
+      "saved"
+    );
+
+    expect(
+      await session.prepareSourceRestore({
+        key: loaded.key,
+        expectedSource: loaded.source,
+        source: "After",
+      })
+    ).toMatchObject({
+      status: "blocked",
+      reason: "unauthorized",
+      currentSource: "Before",
+    });
+    expect(session.get(loaded.key)).toBe(loaded);
+    expect(writable.updates).toHaveLength(0);
+  });
+
   test("rejects a prepared restore after the session changes", async () => {
     const writable = createWritableRepository(new Map([["post", "Before"]]));
     const session = createMdxAssetEditingSession({

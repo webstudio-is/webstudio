@@ -111,7 +111,8 @@ export type MdxAssetSourceRestoreResult =
         | "in-flight"
         | "unresolved-write"
         | "source-mismatch"
-        | "identity-mismatch";
+        | "identity-mismatch"
+        | "unauthorized";
       currentSource?: string;
     }>;
 
@@ -1030,6 +1031,26 @@ export const createMdxAssetEditingSession = ({
         status: "blocked",
         state: current,
         reason: "unresolved-write",
+        currentSource: preflight.currentSource,
+      };
+    }
+    let writeAuthorized = false;
+    try {
+      writeAuthorized =
+        (await authorizeAsset({
+          assetId: identity.assetId,
+          operation: "write",
+          identity,
+        })) === true;
+    } catch {
+      // Authorization failures are stable preflight blockers. They must not
+      // advance the session or expose transport-specific errors to undo/lifecycle callers.
+    }
+    if (writeAuthorized === false) {
+      return {
+        status: "blocked",
+        state: current,
+        reason: "unauthorized",
         currentSource: preflight.currentSource,
       };
     }
