@@ -46,7 +46,7 @@ const createRepository = (sources: Map<string, string>) =>
         contentLength: bytes.byteLength,
       };
     },
-  } satisfies Pick<AssetRepository, "readContent">);
+  }) satisfies Pick<AssetRepository, "readContent">;
 
 const readStream = async (stream: ReadableStream<Uint8Array>) => {
   const reader = stream.getReader();

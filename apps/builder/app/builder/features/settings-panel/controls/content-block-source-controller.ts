@@ -23,7 +23,7 @@ import {
   getContentBlockSource,
   type ContentBlockSource,
 } from "@webstudio-is/sdk";
-import { createBuilderHttpAssetContentRepository } from "~/builder/shared/assets/mdx-content-repository";
+import { createBuilderHttpAssetContentRepository } from "~/builder/shared/assets/builder-mdx-content-repository.client";
 import {
   $variableValuesByInstanceSelector,
   getInstanceKeyWithRoot,

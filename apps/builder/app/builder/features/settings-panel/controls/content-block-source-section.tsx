@@ -15,7 +15,7 @@ import {
   type ContentBlockSource,
 } from "@webstudio-is/sdk";
 import { TextFileEditor } from "~/builder/features/text-file-editor/text-file-editor";
-import { createBuilderHttpAssetContentRepository } from "~/builder/shared/assets/mdx-content-repository";
+import { createBuilderHttpAssetContentRepository } from "~/builder/shared/assets/builder-mdx-content-repository.client";
 import { uploadSingleAsset } from "~/builder/shared/assets/upload-assets";
 import { $authPermit } from "~/shared/nano-states";
 import {

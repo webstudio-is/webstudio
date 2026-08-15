@@ -1,12 +1,10 @@
 import type { AssetContentRepository } from "@webstudio-is/asset-uploader/content-repository";
-import { createHttpAssetContentRepository as createSharedRepository } from "@webstudio-is/project-build/runtime";
+import { createHttpAssetContentRepository as createSharedRepository } from "@webstudio-is/project-build/runtime/http-asset-content-repository";
 import {
   readProjectAssetContent,
   updateProjectAssetContent,
 } from "@webstudio-is/http-client";
 import { assetContentDescriptor } from "@webstudio-is/protocol/asset-resource-api";
-import { $authToken } from "~/shared/nano-states";
-import { getAssetContentBridge } from "~/shared/asset-content-bridge.client";
 
 type HttpAssetContentRepositoryDependencies = Readonly<{
   projectId: string;
@@ -48,29 +46,3 @@ export const createHttpAssetContentRepository = ({
       return assetContentDescriptor.parse(asset);
     },
   });
-
-export const createBuilderHttpAssetContentRepository = ({
-  projectId,
-  origin,
-}: {
-  projectId: string;
-  origin?: string;
-}): AssetContentRepository => {
-  const getRepository = () => {
-    const requestOrigin = origin ?? globalThis.location?.origin;
-    if (requestOrigin === undefined) {
-      throw new Error("Asset content requests require a browser origin");
-    }
-    return createHttpAssetContentRepository({
-      projectId,
-      origin: requestOrigin,
-      authToken: () => $authToken.get(),
-      request: (input, init) =>
-        getAssetContentBridge().request(String(input), init),
-    });
-  };
-  return {
-    readContent: (input) => getRepository().readContent(input),
-    updateContent: (input) => getRepository().updateContent(input),
-  };
-};

@@ -315,12 +315,12 @@ export const ContentBlockSourceControl = ({
                 {resolvedAsset
                   ? formatAssetName(resolvedAsset)
                   : loading
-                  ? "Loading content source…"
-                  : source?.type === "expression"
-                  ? "Dynamic content source"
-                  : source?.type === "asset"
-                  ? "Missing MDX Asset"
-                  : "No content source"}
+                    ? "Loading content source…"
+                    : source?.type === "expression"
+                      ? "Dynamic content source"
+                      : source?.type === "asset"
+                        ? "Missing MDX Asset"
+                        : "No content source"}
               </Text>
               {resolvedAsset !== undefined && (
                 <Button

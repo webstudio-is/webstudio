@@ -9,10 +9,8 @@ import {
 } from "@webstudio-is/protocol/asset-resource-api";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { getMdxContentPersistencePlan } from "@webstudio-is/project-build/runtime";
-import {
-  createBuilderHttpAssetContentRepository,
-  createHttpAssetContentRepository,
-} from "./mdx-content-repository";
+import { createHttpAssetContentRepository } from "./mdx-content-repository";
+import { createBuilderHttpAssetContentRepository } from "./builder-mdx-content-repository.client";
 
 const asset = {
   id: "asset-1",

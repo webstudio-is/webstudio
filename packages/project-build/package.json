@@ -22,6 +22,11 @@
       "import": "./src/runtime.ts",
       "default": "./src/runtime.ts"
     },
+    "./runtime/http-asset-content-repository": {
+      "webstudio": "./src/runtime/http-asset-content-repository.ts",
+      "import": "./src/runtime/http-asset-content-repository.ts",
+      "default": "./src/runtime/http-asset-content-repository.ts"
+    },
     "./transfer": {
       "webstudio": "./src/transfer.ts",
       "import": "./src/transfer.ts",
