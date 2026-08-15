@@ -245,6 +245,8 @@ test("prints full mcp tool input schemas when requested", () => {
   expect(Object.keys(insertFragmentTool.inputSchema.properties)).toEqual([
     "parentInstanceId",
     "fragment",
+    "conflictResolution",
+    "contentMode",
     "mode",
     "insertIndex",
     "dryRun",

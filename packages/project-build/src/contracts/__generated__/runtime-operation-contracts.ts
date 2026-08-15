@@ -3741,26 +3741,18 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
                                           type: "string",
-                                          enum: [
-                                            "wght",
-                                            "wdth",
-                                            "slnt",
-                                            "opsz",
-                                            "ital",
-                                            "GRAD",
-                                            "XTRA",
-                                            "XOPQ",
-                                            "YOPQ",
-                                            "YTLC",
-                                            "YTUC",
-                                            "YTAS",
-                                            "YTDE",
-                                            "YTFI",
-                                          ],
+                                          minLength: 4,
+                                          maxLength: 4,
+                                          pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                         },
                                         additionalProperties: {
                                           type: "object",
@@ -6871,26 +6863,18 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
                                           type: "string",
-                                          enum: [
-                                            "wght",
-                                            "wdth",
-                                            "slnt",
-                                            "opsz",
-                                            "ital",
-                                            "GRAD",
-                                            "XTRA",
-                                            "XOPQ",
-                                            "YOPQ",
-                                            "YTLC",
-                                            "YTUC",
-                                            "YTAS",
-                                            "YTDE",
-                                            "YTFI",
-                                          ],
+                                          minLength: 4,
+                                          maxLength: 4,
+                                          pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                         },
                                         additionalProperties: {
                                           type: "object",
@@ -10012,26 +9996,18 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
                                           type: "string",
-                                          enum: [
-                                            "wght",
-                                            "wdth",
-                                            "slnt",
-                                            "opsz",
-                                            "ital",
-                                            "GRAD",
-                                            "XTRA",
-                                            "XOPQ",
-                                            "YOPQ",
-                                            "YTLC",
-                                            "YTUC",
-                                            "YTAS",
-                                            "YTDE",
-                                            "YTFI",
-                                          ],
+                                          minLength: 4,
+                                          maxLength: 4,
+                                          pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                         },
                                         additionalProperties: {
                                           type: "object",
@@ -13142,26 +13118,18 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
                                           type: "string",
-                                          enum: [
-                                            "wght",
-                                            "wdth",
-                                            "slnt",
-                                            "opsz",
-                                            "ital",
-                                            "GRAD",
-                                            "XTRA",
-                                            "XOPQ",
-                                            "YOPQ",
-                                            "YTLC",
-                                            "YTUC",
-                                            "YTAS",
-                                            "YTDE",
-                                            "YTFI",
-                                          ],
+                                          minLength: 4,
+                                          maxLength: 4,
+                                          pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                         },
                                         additionalProperties: {
                                           type: "object",
@@ -18981,26 +18949,23 @@ export const runtimeOperationContractData = [
                                             family: {
                                               type: "string",
                                             },
+                                            style: {
+                                              default: "normal",
+                                              type: "string",
+                                              enum: [
+                                                "normal",
+                                                "italic",
+                                                "oblique",
+                                              ],
+                                            },
                                             variationAxes: {
                                               type: "object",
                                               propertyNames: {
                                                 type: "string",
-                                                enum: [
-                                                  "wght",
-                                                  "wdth",
-                                                  "slnt",
-                                                  "opsz",
-                                                  "ital",
-                                                  "GRAD",
-                                                  "XTRA",
-                                                  "XOPQ",
-                                                  "YOPQ",
-                                                  "YTLC",
-                                                  "YTUC",
-                                                  "YTAS",
-                                                  "YTDE",
-                                                  "YTFI",
-                                                ],
+                                                minLength: 4,
+                                                maxLength: 4,
+                                                pattern:
+                                                  "^[A-Za-z][A-Za-z0-9]* *$",
                                               },
                                               additionalProperties: {
                                                 type: "object",
@@ -22314,26 +22279,23 @@ export const runtimeOperationContractData = [
                                             family: {
                                               type: "string",
                                             },
+                                            style: {
+                                              default: "normal",
+                                              type: "string",
+                                              enum: [
+                                                "normal",
+                                                "italic",
+                                                "oblique",
+                                              ],
+                                            },
                                             variationAxes: {
                                               type: "object",
                                               propertyNames: {
                                                 type: "string",
-                                                enum: [
-                                                  "wght",
-                                                  "wdth",
-                                                  "slnt",
-                                                  "opsz",
-                                                  "ital",
-                                                  "GRAD",
-                                                  "XTRA",
-                                                  "XOPQ",
-                                                  "YOPQ",
-                                                  "YTLC",
-                                                  "YTUC",
-                                                  "YTAS",
-                                                  "YTDE",
-                                                  "YTFI",
-                                                ],
+                                                minLength: 4,
+                                                maxLength: 4,
+                                                pattern:
+                                                  "^[A-Za-z][A-Za-z0-9]* *$",
                                               },
                                               additionalProperties: {
                                                 type: "object",
@@ -36691,26 +36653,18 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
                                           type: "string",
-                                          enum: [
-                                            "wght",
-                                            "wdth",
-                                            "slnt",
-                                            "opsz",
-                                            "ital",
-                                            "GRAD",
-                                            "XTRA",
-                                            "XOPQ",
-                                            "YOPQ",
-                                            "YTLC",
-                                            "YTUC",
-                                            "YTAS",
-                                            "YTDE",
-                                            "YTFI",
-                                          ],
+                                          minLength: 4,
+                                          maxLength: 4,
+                                          pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                         },
                                         additionalProperties: {
                                           type: "object",
@@ -39616,8 +39570,12 @@ export const runtimeOperationContractData = [
                 conflictResolution: {
                   type: "string",
                   enum: ["ours", "theirs", "merge"],
+                  description:
+                    'How to resolve incoming design tokens that share a name with an existing token. "ours" keeps the existing token styles and id, "theirs" uses incoming styles, and "merge" combines both.',
                 },
                 contentMode: {
+                  description:
+                    "Apply content-mode copy restrictions to props and styles while reusing existing tokens and breakpoints.",
                   type: "boolean",
                 },
                 mode: {
@@ -39896,26 +39854,18 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
                                           type: "string",
-                                          enum: [
-                                            "wght",
-                                            "wdth",
-                                            "slnt",
-                                            "opsz",
-                                            "ital",
-                                            "GRAD",
-                                            "XTRA",
-                                            "XOPQ",
-                                            "YOPQ",
-                                            "YTLC",
-                                            "YTUC",
-                                            "YTAS",
-                                            "YTDE",
-                                            "YTFI",
-                                          ],
+                                          minLength: 4,
+                                          maxLength: 4,
+                                          pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                         },
                                         additionalProperties: {
                                           type: "object",
@@ -46217,26 +46167,18 @@ export const runtimeOperationContractData = [
                               family: {
                                 type: "string",
                               },
+                              style: {
+                                default: "normal",
+                                type: "string",
+                                enum: ["normal", "italic", "oblique"],
+                              },
                               variationAxes: {
                                 type: "object",
                                 propertyNames: {
                                   type: "string",
-                                  enum: [
-                                    "wght",
-                                    "wdth",
-                                    "slnt",
-                                    "opsz",
-                                    "ital",
-                                    "GRAD",
-                                    "XTRA",
-                                    "XOPQ",
-                                    "YOPQ",
-                                    "YTLC",
-                                    "YTUC",
-                                    "YTAS",
-                                    "YTDE",
-                                    "YTFI",
-                                  ],
+                                  minLength: 4,
+                                  maxLength: 4,
+                                  pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                 },
                                 additionalProperties: {
                                   type: "object",
@@ -52036,26 +51978,18 @@ export const runtimeOperationContractData = [
                               family: {
                                 type: "string",
                               },
+                              style: {
+                                default: "normal",
+                                type: "string",
+                                enum: ["normal", "italic", "oblique"],
+                              },
                               variationAxes: {
                                 type: "object",
                                 propertyNames: {
                                   type: "string",
-                                  enum: [
-                                    "wght",
-                                    "wdth",
-                                    "slnt",
-                                    "opsz",
-                                    "ital",
-                                    "GRAD",
-                                    "XTRA",
-                                    "XOPQ",
-                                    "YOPQ",
-                                    "YTLC",
-                                    "YTUC",
-                                    "YTAS",
-                                    "YTDE",
-                                    "YTFI",
-                                  ],
+                                  minLength: 4,
+                                  maxLength: 4,
+                                  pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                 },
                                 additionalProperties: {
                                   type: "object",
@@ -54817,8 +54751,12 @@ export const runtimeOperationContractData = [
         conflictResolution: {
           type: "string",
           enum: ["ours", "theirs", "merge"],
+          description:
+            'How to resolve incoming design tokens that share a name with an existing token. "ours" keeps the existing token styles and id, "theirs" uses incoming styles, and "merge" combines both.',
         },
         contentMode: {
+          description:
+            "Apply content-mode copy restrictions to props and styles while reusing existing tokens and breakpoints.",
           type: "boolean",
         },
         mode: {
@@ -70776,26 +70714,17 @@ export const runtimeOperationContractData = [
                         family: {
                           type: "string",
                         },
+                        style: {
+                          type: "string",
+                          enum: ["normal", "italic", "oblique"],
+                        },
                         variationAxes: {
                           type: "object",
                           propertyNames: {
                             type: "string",
-                            enum: [
-                              "wght",
-                              "wdth",
-                              "slnt",
-                              "opsz",
-                              "ital",
-                              "GRAD",
-                              "XTRA",
-                              "XOPQ",
-                              "YOPQ",
-                              "YTLC",
-                              "YTUC",
-                              "YTAS",
-                              "YTDE",
-                              "YTFI",
-                            ],
+                            minLength: 4,
+                            maxLength: 4,
+                            pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                           },
                           additionalProperties: {
                             type: "object",
@@ -70843,7 +70772,7 @@ export const runtimeOperationContractData = [
                 },
               ],
               description:
-                "Type-specific metadata: family/style/weight or variationAxes for fonts, width/height for images, and no fields for generic files.",
+                "Type-specific metadata: family and style plus weight for static fonts or variationAxes for variable fonts, width/height for images, and no fields for generic files.",
             },
           },
           required: [],
@@ -71039,26 +70968,18 @@ export const runtimeOperationContractData = [
                         family: {
                           type: "string",
                         },
+                        style: {
+                          default: "normal",
+                          type: "string",
+                          enum: ["normal", "italic", "oblique"],
+                        },
                         variationAxes: {
                           type: "object",
                           propertyNames: {
                             type: "string",
-                            enum: [
-                              "wght",
-                              "wdth",
-                              "slnt",
-                              "opsz",
-                              "ital",
-                              "GRAD",
-                              "XTRA",
-                              "XOPQ",
-                              "YOPQ",
-                              "YTLC",
-                              "YTUC",
-                              "YTAS",
-                              "YTDE",
-                              "YTFI",
-                            ],
+                            minLength: 4,
+                            maxLength: 4,
+                            pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                           },
                           additionalProperties: {
                             type: "object",

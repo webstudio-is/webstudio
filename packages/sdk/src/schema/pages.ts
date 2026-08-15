@@ -287,6 +287,17 @@ export const pages = z
   .superRefine((pages, context) => {
     const homePage = pages.pages.get(pages.homePageId);
     const rootFolder = pages.folders.get(pages.rootFolderId);
+    const folderIndexPageIds = new Set<Page["id"]>();
+    for (const [folderId, folder] of pages.folders) {
+      if (folderId === pages.rootFolderId) {
+        continue;
+      }
+      for (const childId of folder.children) {
+        if (pages.pages.has(childId)) {
+          folderIndexPageIds.add(childId);
+        }
+      }
+    }
     if (homePage === undefined) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
@@ -316,7 +327,11 @@ export const pages = z
           message: "Page id must match its record key",
         });
       }
-      if (pageId !== pages.homePageId && page.path === "") {
+      if (
+        pageId !== pages.homePageId &&
+        page.path === "" &&
+        folderIndexPageIds.has(pageId) === false
+      ) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["pages", pageId, "path"],

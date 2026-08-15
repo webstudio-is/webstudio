@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import {
   AssetRepositoryConflictError,
   AssetRepositoryNotFoundError,
+  AssetUploadCountLimitError,
 } from "@webstudio-is/asset-uploader/server";
 import { assetFolders } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
@@ -30,6 +31,7 @@ describe("Assets REST responses", () => {
     [new TRPCError({ code: "FORBIDDEN" }), 403],
     [new AssetRepositoryNotFoundError("missing"), 404],
     [new AssetRepositoryConflictError("conflict"), 409],
+    [new AssetUploadCountLimitError(50), 409],
     [new AssetRestRangeError("bad range"), 416],
     [new AssetRestPayloadTooLargeError("too large"), 413],
     [new AssetUploadSizeLimitError("post.md", 10), 413],

@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import {
+  defaultBrowserStartupTimeout,
   defaultScreenshotTimeout,
   defaultScreenshotWaitForTimeout,
   defaultScreenshotWaitUntil,
@@ -36,4 +37,5 @@ test("defines screenshot readiness defaults", () => {
   expect(defaultScreenshotWaitUntil).toBe("load");
   expect(defaultScreenshotWaitForTimeout).toBe(250);
   expect(defaultScreenshotTimeout).toBe(30000);
+  expect(defaultBrowserStartupTimeout).toBe(10000);
 });
