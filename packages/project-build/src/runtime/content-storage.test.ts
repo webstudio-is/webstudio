@@ -1950,3 +1950,169 @@ test("rejects generated grid cell id collisions", () => {
     })
   ).toThrow("Instance patch is not editable in content mode");
 });
+
+test.each([
+  {
+    operation: "tag",
+    id: "instances.setTag" as const,
+    input: { instanceId: "external", tag: "section" },
+  },
+  {
+    operation: "label",
+    id: "instances.setLabel" as const,
+    input: { instanceId: "external", label: "Article body" },
+  },
+])("rejects authored instance $operation metadata", ({ id, input }) => {
+  const state = createStructuralState();
+  const externalIdentity = identity("page:/post");
+  const materializedContent = [
+    { identity: externalIdentity, fragment: fragment("external") },
+  ];
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id,
+      state,
+      input,
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent,
+      },
+    })
+  ).toThrow("Instance patch is not editable in content mode");
+  expect(state.instances?.has("external")).toEqual(false);
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id,
+      state,
+      input,
+      context: {
+        createId: createIdFactory(),
+        materializedContent,
+      },
+    })
+  ).toThrow("must handle authored storage changes");
+});
+
+test("rejects nested authored metadata in its own storage scope", () => {
+  const { roots } = createNestedMaterializedContent();
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.setLabel",
+      state: createStructuralState(),
+      input: { instanceId: "nested-content", label: "Nested article" },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: roots,
+      },
+    })
+  ).toThrow("Instance patch is not editable in content mode");
+});
+
+test.each([
+  {
+    operation: "tag",
+    id: "instances.setTag" as const,
+    input: { instanceId: "external", tag: "p" },
+    result: { instanceId: "external", tag: "p" },
+  },
+  {
+    operation: "label",
+    id: "instances.setLabel" as const,
+    input: { instanceId: "external", label: "Article body" },
+    result: { instanceIds: ["external"], label: "Article body" },
+  },
+])("keeps repeated authored $operation metadata as a noop", (testCase) => {
+  const externalFragment = fragment("external");
+  externalFragment.instances[0].label = "Article body";
+  const materializedContent = [
+    { identity: identity("page:/post"), fragment: externalFragment },
+  ];
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: testCase.id,
+      state: createStructuralState(),
+      input: testCase.input,
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent,
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: undefined,
+    noop: true,
+    result: testCase.result,
+  });
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: testCase.id,
+      state: createStructuralState(),
+      input: testCase.input,
+      context: {
+        createId: createIdFactory(),
+        materializedContent,
+      },
+    })
+  ).toThrow("must handle authored storage changes");
+});
+
+test("keeps Content Block and Templates metadata project-owned", () => {
+  const state = createStructuralState();
+  state.instances?.get("templates")?.children.push({
+    type: "id",
+    value: "template",
+  });
+  state.instances?.set("template", {
+    type: "instance",
+    id: "template",
+    component: elementComponent,
+    tag: "section",
+    children: [],
+  });
+  const materializedContent = [
+    {
+      identity: identity("page:/post"),
+      fragment: fragment("external"),
+    },
+  ];
+
+  for (const instanceId of ["block", "templates", "template"]) {
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "instances.setLabel",
+        state,
+        input: { instanceId, label: `Renamed ${instanceId}` },
+        context: {
+          createId: createIdFactory(),
+          returnStorageChanges: true,
+          materializedContent,
+        },
+      })
+    ).toMatchObject({
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              path: [instanceId, "label"],
+              value: `Renamed ${instanceId}`,
+            },
+          ],
+        },
+      ],
+      storageChanges: undefined,
+      result: {
+        instanceIds: [instanceId],
+        label: `Renamed ${instanceId}`,
+      },
+    });
+  }
+});

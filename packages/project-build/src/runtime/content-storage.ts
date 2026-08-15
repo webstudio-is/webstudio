@@ -614,12 +614,14 @@ export const executeContentStorageMutation = <
   materializedRoots,
   returnStorageChanges,
   target,
+  protectTemplatesList,
   execute,
 }: {
   state: BuilderState;
   materializedRoots?: readonly MaterializedContentRoot[];
   returnStorageChanges?: boolean;
   target: ContentStorageTarget;
+  protectTemplatesList?: boolean;
   execute: (state: BuilderState, root: ContentStorageRoot) => Mutation;
 }): Mutation => {
   if (materializedRoots === undefined || materializedRoots.length === 0) {
@@ -630,6 +632,7 @@ export const executeContentStorageMutation = <
     materializedRoots,
   });
   if (
+    protectTemplatesList === true &&
     target.type === "instance" &&
     materializedRoots.some(({ identity }) =>
       projection.state.instances

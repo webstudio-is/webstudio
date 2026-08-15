@@ -1148,6 +1148,7 @@ export const builderRuntimeOperations = [
         state,
         materializedRoots: context.materializedContent,
         returnStorageChanges: context.returnStorageChanges,
+        protectTemplatesList: true,
         target: {
           type: "instance",
           instanceId: input.instanceSelector[0],
@@ -1228,6 +1229,7 @@ export const builderRuntimeOperations = [
         state,
         materializedRoots: context.materializedContent,
         returnStorageChanges: context.returnStorageChanges,
+        protectTemplatesList: true,
         target: {
           type: "instance",
           instanceId: input.instanceSelector[0],
@@ -1548,7 +1550,15 @@ export const builderRuntimeOperations = [
       retryOnConflict: true,
     }),
     instances.setInstanceTagInput,
-    ({ state, input }) => instances.setInstanceTag(state, input)
+    ({ state, input, context }) =>
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target: { type: "instance", instanceId: input.instanceId },
+        execute: (mutationState) =>
+          instances.setInstanceTag(mutationState, input),
+      })
   ),
   runtimeOperation(
     "instances.setLabel",
@@ -1559,7 +1569,15 @@ export const builderRuntimeOperations = [
       retryOnConflict: true,
     }),
     instances.setInstanceLabelInput,
-    ({ state, input }) => instances.setInstanceLabel(state, input)
+    ({ state, input, context }) =>
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target: { type: "instance", instanceId: input.instanceId },
+        execute: (mutationState) =>
+          instances.setInstanceLabel(mutationState, input),
+      })
   ),
   runtimeOperation(
     "styles.getDeclarations",
