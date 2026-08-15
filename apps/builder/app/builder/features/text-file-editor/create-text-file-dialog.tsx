@@ -25,16 +25,22 @@ import { uploadSingleAsset } from "~/builder/shared/assets/upload-assets";
 export const getTextFileNameError = ({
   name,
   assets,
+  allowedExtensions,
 }: {
   name: string;
   assets: Iterable<Asset>;
+  allowedExtensions?: readonly string[];
 }) => {
   if (isValidFilename(name) === false) {
     return "Enter a valid file name.";
   }
+  const extension = getFileExtension(name)?.toLowerCase() ?? "";
   if (
-    isTextFileAsset({ format: getFileExtension(name)?.toLowerCase() ?? "" }) ===
-    false
+    isTextFileAsset({ format: extension }) === false ||
+    (allowedExtensions !== undefined &&
+      allowedExtensions.some(
+        (allowedExtension) => allowedExtension.toLowerCase() === extension
+      ) === false)
   ) {
     return "Use a supported editable text extension.";
   }
@@ -71,34 +77,43 @@ const stopEscapePropagation = (event: KeyboardEvent) => {
 export const CreateTextFileDialog = ({
   open,
   folderId,
+  defaultName = "untitled.md",
+  allowedExtensions,
+  title = "New text file",
+  disabled = false,
   onOpenChange,
   onCreated,
 }: {
   open: boolean;
   folderId?: string;
+  defaultName?: string;
+  allowedExtensions?: readonly string[];
+  title?: string;
+  disabled?: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: (assetId: string) => void;
 }) => {
-  const [name, setName] = useState("untitled.md");
+  const [name, setName] = useState(defaultName);
   const [error, setError] = useState<string>();
   const [creating, setCreating] = useState(false);
 
   useLayoutEffect(() => {
     if (open) {
-      setName("untitled.md");
+      setName(defaultName);
       setError(undefined);
       setCreating(false);
     }
-  }, [open]);
+  }, [defaultName, open]);
 
   const normalizedName = name.trim();
   const submit = async () => {
-    if (creating) {
+    if (creating || disabled) {
       return;
     }
     const validationError = getTextFileNameError({
       name: normalizedName,
       assets: $assets.get().values(),
+      allowedExtensions,
     });
     setError(validationError);
     if (validationError !== undefined) {
@@ -131,14 +146,14 @@ export const CreateTextFileDialog = ({
         aria-describedby={undefined}
         onKeyDown={stopEscapePropagation}
       >
-        <DialogTitle>New text file</DialogTitle>
+        <DialogTitle>{title}</DialogTitle>
         <Grid gap={3} css={{ padding: theme.panel.padding }}>
           <Grid gap={1}>
             <Label htmlFor="asset-text-file-name">File name</Label>
             <InputField
               id="asset-text-file-name"
               autoFocus
-              disabled={creating}
+              disabled={creating || disabled}
               value={name}
               color={error === undefined ? undefined : "error"}
               onChange={(event) => {
@@ -158,7 +173,10 @@ export const CreateTextFileDialog = ({
             )}
           </Grid>
           <Flex justify="end">
-            <Button disabled={creating} onClick={() => void submit()}>
+            <Button
+              disabled={creating || disabled}
+              onClick={() => void submit()}
+            >
               {creating ? "Creating…" : "Create file"}
             </Button>
           </Flex>
