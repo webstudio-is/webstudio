@@ -62,7 +62,7 @@ const createEmptyFragmentData = (): Omit<WebstudioData, "pages"> => ({
   assets: new Map(),
 });
 
-const createScopeIdGenerator = ({
+export const createMdxScopeIdGenerator = ({
   identity,
   path,
 }: {
@@ -110,7 +110,7 @@ export const materializeMdxTemplates = async ({
       materializedTemplates.push({
         type: "unresolved-template",
         reference,
-        markerId: createScopeIdGenerator({
+        markerId: createMdxScopeIdGenerator({
           identity,
           path: reference.path,
         })(),
@@ -143,7 +143,7 @@ export const materializeMdxTemplates = async ({
     }
     const sourceFragment = sourceTemplate.fragment;
     const materializedData = createEmptyFragmentData();
-    const createId = createScopeIdGenerator({
+    const createId = createMdxScopeIdGenerator({
       identity,
       path: reference.path,
     });
