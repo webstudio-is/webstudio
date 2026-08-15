@@ -25,14 +25,11 @@ import {
 } from "@webstudio-is/sdk";
 import { createBuilderHttpAssetContentRepository } from "~/builder/shared/assets/mdx-content-repository";
 import {
-  $authPermit,
   $variableValuesByInstanceSelector,
+  getInstanceKeyWithRoot,
 } from "~/shared/nano-states";
-import {
-  $assets,
-  $project,
-  readBuilderStateStores,
-} from "~/shared/sync/data-stores";
+import { $project, readBuilderStateStores } from "~/shared/sync/data-stores";
+import { getAssetContentBridge } from "~/shared/asset-content-bridge.client";
 import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
 import { getWebstudioData } from "~/shared/instance-utils/data";
 import { invalidateAssets } from "~/shared/resources";
@@ -682,18 +679,27 @@ export const createBuilderContentBlockSourceController = ({
   const repository = createBuilderHttpAssetContentRepository({ projectId });
   const session = createMdxAssetEditingSession({
     repository,
-    authorizeAsset: ({ assetId, operation, identity }) => {
-      const project = $project.get();
-      const asset = $assets.get().get(assetId);
-      return (
-        project?.id === projectId &&
-        asset?.projectId === projectId &&
-        (identity === undefined || identity.assetId === assetId) &&
-        (operation === "read" || $authPermit.get() !== "view")
-      );
-    },
+    authorizeAsset: ({ assetId, operation, identity }) =>
+      getAssetContentBridge().authorize({
+        projectId,
+        assetId,
+        identityAssetId: identity?.assetId,
+        operation,
+      }),
     resolveExpressionAssetId: ({ expression, renderScope: scope }) => {
-      const variables = $variableValuesByInstanceSelector.get().get(scope);
+      const values = $variableValuesByInstanceSelector.get();
+      let selector: unknown;
+      try {
+        selector = JSON.parse(scope);
+      } catch {
+        selector = undefined;
+      }
+      const variables =
+        values.get(scope) ??
+        (Array.isArray(selector) &&
+        selector.every((instanceId) => typeof instanceId === "string")
+          ? values.get(getInstanceKeyWithRoot(selector))
+          : undefined);
       const value = computeExpression(expression, variables ?? new Map());
       return typeof value === "string" && value !== "" ? value : undefined;
     },

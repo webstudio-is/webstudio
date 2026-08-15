@@ -104,17 +104,20 @@ export const $materializedContentRoots = atom<
 export const $materializedContentViewStates = atom<
   ReadonlyMap<string, MaterializedContentViewState>
 >(new Map());
+const $switchingContentScopes = atom<ReadonlySet<string>>(new Set());
 export const $materializedContentStatuses = computed(
-  $materializedContentViewStates,
-  (states) =>
+  [$materializedContentViewStates, $switchingContentScopes],
+  (states, switchingScopes) =>
     new Map(
       Array.from(states, ([key, state]) => [
         key,
-        state.status === "ready" || state.status === "empty"
-          ? ("ready" as const)
-          : state.status === "loading" || state.status === "pending"
+        switchingScopes.has(key)
           ? ("loading" as const)
-          : ("failed" as const),
+          : state.status === "ready" || state.status === "empty"
+            ? ("ready" as const)
+            : state.status === "loading" || state.status === "pending"
+              ? ("loading" as const)
+              : ("failed" as const),
       ])
     )
 );
@@ -433,8 +436,8 @@ const $contentStorageProjection = computed(
               viewState.status === "conflicting"
                 ? "MDX conflict"
                 : viewState.status === "recoverable"
-                ? "Repair MDX file"
-                : "MDX unavailable",
+                  ? "Repair MDX file"
+                  : "MDX unavailable",
             message:
               viewState.message ?? "The connected MDX file is unavailable.",
             assetId: identity?.assetId ?? viewState.assetId,
@@ -547,9 +550,9 @@ const $contentStorageProjection = computed(
           const parentPath =
             parentId === blockInstanceId
               ? []
-              : root.provenance.nodes.find(
+              : (root.provenance.nodes.find(
                   (node) => node.instanceId === parentId
-                )?.path ?? [];
+                )?.path ?? []);
           const authoredChildren = getAuthoredChildren(root, parentPath);
           const parent = instances.get(parentId);
           if (authoredChildren === undefined || parent === undefined) {
@@ -699,7 +702,7 @@ export const getMaterializedContentViewState = ({
     .get()
     .get(JSON.stringify([blockInstanceId, renderScope]));
 
-export const isMaterializedInstanceEditable = ({
+export const getMaterializedInstanceEditability = ({
   instanceSelector,
   instances,
 }: {
@@ -714,7 +717,7 @@ export const isMaterializedInstanceEditable = ({
     instances,
   });
   if (blockSelector === undefined) {
-    return true;
+    return;
   }
   const root = $activeMaterializedContentRoots
     .get()
@@ -724,7 +727,14 @@ export const isMaterializedInstanceEditable = ({
     root.fragment.instances.some(({ id }) => id === instanceSelector[0]) ===
       false
   ) {
-    return true;
+    return;
+  }
+  const scopeKey = JSON.stringify([
+    root.identity.blockInstanceId,
+    root.identity.renderScope,
+  ]);
+  if ($switchingContentScopes.get().has(scopeKey)) {
+    return false;
   }
   const status = getMaterializedContentStatus({
     blockInstanceId: root.identity.blockInstanceId,
@@ -732,6 +742,30 @@ export const isMaterializedInstanceEditable = ({
   });
   return status === "ready" || status === "empty" || status === "pending";
 };
+
+export const setContentBlockSourceSwitching = ({
+  blockInstanceId,
+  renderScope,
+  switching,
+}: {
+  blockInstanceId: string;
+  renderScope: string;
+  switching: boolean;
+}) => {
+  const key = JSON.stringify([blockInstanceId, renderScope]);
+  const scopes = new Set($switchingContentScopes.get());
+  if (switching) {
+    scopes.add(key);
+  } else {
+    scopes.delete(key);
+  }
+  $switchingContentScopes.set(scopes);
+};
+
+export const isMaterializedInstanceEditable = (input: {
+  instanceSelector: InstanceSelector;
+  instances: Instances;
+}) => getMaterializedInstanceEditability(input) ?? true;
 
 const storageSavers = new Map<string, StorageSaverEntry>();
 const presentationActions = new Map<string, ContentBlockPresentationActions>();
@@ -809,7 +843,7 @@ export const setMaterializedContentStatus = ({
     status,
     identity: sourceChanged ? undefined : current?.identity,
     assetId: assetId ?? current?.assetId,
-    diagnostics: sourceChanged ? [] : current?.diagnostics ?? [],
+    diagnostics: sourceChanged ? [] : (current?.diagnostics ?? []),
     message:
       status === "failed"
         ? "The connected MDX file could not be loaded."
@@ -961,6 +995,11 @@ export const removeMaterializedContentRoot = ({
   const states = new Map($materializedContentViewStates.get());
   states.delete(JSON.stringify([blockInstanceId, renderScope]));
   $materializedContentViewStates.set(states);
+  setContentBlockSourceSwitching({
+    blockInstanceId,
+    renderScope,
+    switching: false,
+  });
 };
 
 export const registerContentStorageSaver = ({
@@ -1068,6 +1107,7 @@ export const getMaterializedContentSaveBlocker = (
 export const resetMaterializedContent = () => {
   $materializedContentRoots.set(new Map());
   $materializedContentViewStates.set(new Map());
+  $switchingContentScopes.set(new Set());
   storageSavers.clear();
   presentationActions.clear();
   notifiedDiagnosticKeys.clear();

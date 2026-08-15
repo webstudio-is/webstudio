@@ -26,6 +26,7 @@ import {
   $materializedContentViewStates,
   $runtimeInstances,
   formatContentBlockDiagnostic,
+  getMaterializedInstanceEditability,
   getMaterializedContentViewStateFromSession,
   getRuntimeInstanceChildren,
   publishMaterializedContentRoot,
@@ -33,6 +34,7 @@ import {
   $materializedContentRoots,
   resetMaterializedContent,
   setMaterializedContentStatus,
+  setContentBlockSourceSwitching,
   takeNewContentBlockDiagnostics,
 } from "./content-block-content";
 
@@ -205,6 +207,67 @@ test("projects repeated MDX roots by selector without changing persisted instanc
 
   $project.set({ id: "other-project" } as Project);
   expect($runtimeInstances.get().has("first-content")).toBe(false);
+});
+
+test("keeps previous materialized content read-only while its source switches", () => {
+  $project.set({ id: "project" } as Project);
+  const renderScope = JSON.stringify(["block"]);
+  const block = {
+    type: "instance" as const,
+    id: "block",
+    component: blockComponent,
+    children: [{ type: "id" as const, value: "templates" }],
+  };
+  $instances.set(
+    new Map([
+      [block.id, block],
+      [
+        "templates",
+        {
+          type: "instance" as const,
+          id: "templates",
+          component: blockTemplateComponent,
+          children: [],
+        },
+      ],
+    ])
+  );
+  $props.set(
+    new Map([
+      [
+        "source",
+        {
+          id: "source",
+          instanceId: block.id,
+          name: "src",
+          type: "asset" as const,
+          value: "source",
+        },
+      ],
+    ])
+  );
+  publishMaterializedContentRoot({
+    identity: identity(renderScope),
+    fragment: fragment("content"),
+  });
+  const input = {
+    instanceSelector: ["content", "block"],
+    instances: $runtimeInstances.get(),
+  };
+
+  expect(getMaterializedInstanceEditability(input)).toBe(true);
+  setContentBlockSourceSwitching({
+    blockInstanceId: block.id,
+    renderScope,
+    switching: true,
+  });
+  expect(getMaterializedInstanceEditability(input)).toBe(false);
+  setContentBlockSourceSwitching({
+    blockInstanceId: block.id,
+    renderScope,
+    switching: false,
+  });
+  expect(getMaterializedInstanceEditability(input)).toBe(true);
 });
 
 test("projects selectable Builder-only loading and unresolved-template notices per exact scope", () => {

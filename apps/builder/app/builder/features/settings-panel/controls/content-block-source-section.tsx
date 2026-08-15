@@ -30,6 +30,7 @@ import {
   $materializedContentViewStates,
   formatContentBlockDiagnostic,
 } from "~/shared/content-block-content";
+import { $publisher } from "~/shared/pubsub";
 
 const getSource = (
   blockInstanceId: string,
@@ -172,13 +173,45 @@ export const ContentBlockSourceSection = ({
     source: ContentBlockSource;
     authority?: Parameters<typeof controller.requestSource>[0]["authority"];
   }) => {
-    const result = await controller.requestSource(input);
-    if (result.status === "applied") {
-      setError(
-        result.state === undefined ? undefined : getStateError(result.state)
-      );
+    const isSwitch = source !== undefined;
+    const sourceChanged =
+      source === undefined ||
+      (source.type === "asset"
+        ? input.source.type !== "asset" ||
+          source.assetId !== input.source.assetId
+        : input.source.type !== "expression" ||
+          source.value !== input.source.value);
+    const publishStatus = (status: "loading" | "ready") => {
+      if (isSwitch) {
+        $publisher.get().publish?.({
+          type: "contentBlockSourceStatus",
+          payload: {
+            projectId: project.id,
+            blockInstanceId,
+            renderScope,
+            status,
+          },
+        });
+      }
+    };
+    publishStatus("loading");
+    try {
+      const result = await controller.requestSource(input);
+      if (result.status === "applied") {
+        setError(
+          result.state === undefined ? undefined : getStateError(result.state)
+        );
+        if (sourceChanged === false) {
+          publishStatus("ready");
+        }
+      } else {
+        publishStatus("ready");
+      }
+      return result;
+    } catch (error) {
+      publishStatus("ready");
+      throw error;
     }
-    return result;
   };
 
   return (

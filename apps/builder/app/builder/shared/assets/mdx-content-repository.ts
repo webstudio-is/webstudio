@@ -5,8 +5,8 @@ import {
   updateProjectAssetContent,
 } from "@webstudio-is/http-client";
 import { assetContentDescriptor } from "@webstudio-is/protocol/asset-resource-api";
-import { fetch as builderFetch } from "~/shared/fetch.client";
 import { $authToken } from "~/shared/nano-states";
+import { getAssetContentBridge } from "~/shared/asset-content-bridge.client";
 
 type HttpAssetContentRepositoryDependencies = Readonly<{
   projectId: string;
@@ -65,7 +65,8 @@ export const createBuilderHttpAssetContentRepository = ({
       projectId,
       origin: requestOrigin,
       authToken: () => $authToken.get(),
-      request: builderFetch,
+      request: (input, init) =>
+        getAssetContentBridge().request(String(input), init),
     });
   };
   return {

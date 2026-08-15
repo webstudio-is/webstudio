@@ -76,7 +76,11 @@ import { findBlockSelector } from "@webstudio-is/project-build/runtime";
 import { inflateInstance } from "~/canvas/inflator";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { TextEditor } from "../text-editor";
-import { $selectedPage, getInstanceKey } from "~/shared/nano-states";
+import {
+  $selectedPage,
+  getInstanceKey,
+  getInstanceKeyWithRoot,
+} from "~/shared/nano-states";
 import { selectInstance } from "~/shared/nano-states";
 import { $currentSystem } from "~/shared/system";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
@@ -93,7 +97,11 @@ import {
 import { richTextPlaceholders } from "@webstudio-is/project-build/runtime";
 import { $project } from "~/shared/sync/data-stores";
 import { createBuilderContentBlockSourceController } from "~/builder/features/settings-panel/controls/content-block-source-controller";
-import { setMaterializedContentStatus } from "~/shared/content-block-content";
+import {
+  setContentBlockSourceSwitching,
+  setMaterializedContentStatus,
+} from "~/shared/content-block-content";
+import { subscribe } from "~/shared/pubsub";
 
 const computeComponentKey = (props: Record<string, unknown>) => {
   const assetId = props.$webstudio$canvasOnly$assetId;
@@ -414,6 +422,33 @@ const useContentBlockMaterialization = ({
   const assets = useStore($assets);
   const variableValues = useStore($variableValuesByInstanceSelector);
   const renderScope = getInstanceKey(instanceSelector);
+  const rootedRenderScope = getInstanceKeyWithRoot(instanceSelector);
+  useEffect(() => {
+    if (instance.component !== blockComponent || project === undefined) {
+      return;
+    }
+    const unsubscribe = subscribe("contentBlockSourceStatus", (message) => {
+      if (
+        message.projectId === project.id &&
+        message.blockInstanceId === instance.id &&
+        message.renderScope === renderScope
+      ) {
+        setContentBlockSourceSwitching({
+          blockInstanceId: instance.id,
+          renderScope,
+          switching: message.status === "loading",
+        });
+      }
+    });
+    return () => {
+      unsubscribe();
+      setContentBlockSourceSwitching({
+        blockInstanceId: instance.id,
+        renderScope,
+        switching: false,
+      });
+    };
+  }, [instance.component, instance.id, project, renderScope]);
   const source = useMemo(() => {
     if (instance.component !== blockComponent) {
       return;
@@ -434,13 +469,13 @@ const useContentBlockMaterialization = ({
     try {
       const value = computeExpression(
         source.value,
-        variableValues.get(renderScope) ?? new Map()
+        variableValues.get(rootedRenderScope) ?? new Map()
       );
       return typeof value === "string" ? value : undefined;
     } catch {
       return;
     }
-  }, [renderScope, source, variableValues]);
+  }, [rootedRenderScope, source, variableValues]);
   const resolvedAsset =
     resolvedAssetId === undefined ? undefined : assets.get(resolvedAssetId);
   const resolvedAssetVersion =
@@ -480,6 +515,11 @@ const useContentBlockMaterialization = ({
       return;
     }
     let active = true;
+    setContentBlockSourceSwitching({
+      blockInstanceId: instance.id,
+      renderScope,
+      switching: false,
+    });
     setMaterializedContentStatus({
       blockInstanceId: instance.id,
       renderScope,
