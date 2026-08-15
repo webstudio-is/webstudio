@@ -38,7 +38,11 @@ import * as slot from "./slot";
 import * as designTokenImport from "./design-token-import";
 import * as audit from "./audit";
 import * as styles from "./styles";
-import { getZodValidationIssues, throwBuilderValidationError } from "./errors";
+import {
+  getZodValidationIssues,
+  throwBuilderRuntimeError,
+  throwBuilderValidationError,
+} from "./errors";
 import {
   createRuntimeMutationExecutionSchema,
   getRuntimeOutputSchema,
@@ -1055,11 +1059,20 @@ export const builderRuntimeOperations = [
         state,
         materializedRoots: context.materializedContent,
         returnStorageChanges: context.returnStorageChanges,
-        protectedInstanceIds: input.moves.map(({ instanceId }) => instanceId),
+        protectedInstanceIds: input.moves.flatMap(
+          ({ instanceId, parentInstanceId }) => [instanceId, parentInstanceId]
+        ),
         rootPairs: input.moves.map(({ instanceId, parentInstanceId }) => ({
           source: { type: "instance", instanceId },
           target: { type: "children", parentInstanceId },
         })),
+        ownershipTransfers: input.moves.map(
+          ({ instanceId, parentInstanceId }) => ({
+            rootInstanceId: instanceId,
+            source: { type: "instance", instanceId },
+            target: { type: "children", parentInstanceId },
+          })
+        ),
         execute: (mutationState) =>
           instances.moveInstances(mutationState, input),
       })
@@ -1093,9 +1106,25 @@ export const builderRuntimeOperations = [
         state,
         materializedRoots: context.materializedContent,
         returnStorageChanges: context.returnStorageChanges,
-        protectedInstanceIds: [input.sourceInstanceSelector[0]],
+        protectedInstanceIds: [
+          input.sourceInstanceSelector[0],
+          input.dropTarget.parentSelector[0],
+        ],
         rootPairs: [
           {
+            source: {
+              type: "instance",
+              instanceId: input.sourceInstanceSelector[0],
+            },
+            target: {
+              type: "children",
+              parentInstanceId: input.dropTarget.parentSelector[0],
+            },
+          },
+        ],
+        ownershipTransfers: [
+          {
+            rootInstanceId: input.sourceInstanceSelector[0],
             source: {
               type: "instance",
               instanceId: input.sourceInstanceSelector[0],
@@ -1234,8 +1263,8 @@ export const builderRuntimeOperations = [
     "instances.clone",
     api("clone-instance", "cloneInstance"),
     mutationContract({
-      readNamespaces: treeMutationNamespaces,
-      writeNamespaces: treeMutationNamespaces,
+      readNamespaces: components.componentInsertReadNamespaces,
+      writeNamespaces: components.componentInsertReadNamespaces,
     }),
     instances.cloneInstanceInput,
     ({ state, input, context }) =>
@@ -1244,6 +1273,8 @@ export const builderRuntimeOperations = [
         materializedRoots: context.materializedContent,
         returnStorageChanges: context.returnStorageChanges,
         protectTemplatesList: true,
+        allowCrossRoot: true,
+        validationSkippedNamespaces: ["dataSources", "resources"],
         crossRootError:
           "Copying content across authored storage roots is not supported.",
         source: { type: "instance", instanceId: input.sourceInstanceId },
@@ -1262,8 +1293,58 @@ export const builderRuntimeOperations = [
                 type: "children",
                 parentInstanceId: input.targetParentInstanceId,
               },
-        execute: (mutationState) =>
-          instances.cloneInstance(mutationState, input, context),
+        execute: (mutationState, targetRoot, sourceRoot) => {
+          const isSameRoot =
+            sourceRoot === undefined ||
+            (sourceRoot.type === targetRoot.type &&
+              (sourceRoot.type === "project" ||
+                (targetRoot.type === "external" &&
+                  sourceRoot.identity.blockInstanceId ===
+                    targetRoot.identity.blockInstanceId)));
+          if (isSameRoot) {
+            return instances.cloneInstance(mutationState, input, context);
+          }
+          const targetParentInstanceId =
+            input.targetParentInstanceId ??
+            instances.findInstanceCloneTargetParent({
+              instances: mutationState.instances ?? new Map(),
+              sourceInstanceId: input.sourceInstanceId,
+            })?.id;
+          if (targetParentInstanceId === undefined) {
+            return throwBuilderRuntimeError(
+              "BAD_REQUEST",
+              "Clone target parent is missing."
+            );
+          }
+          const mutation = components.insertInstanceCopy(
+            mutationState,
+            {
+              sourceInstanceId: input.sourceInstanceId,
+              parentInstanceId: targetParentInstanceId,
+              insertIndex: input.insertIndex,
+              contentMode: targetRoot.type === "external",
+            },
+            context,
+            {
+              protectedChildCount: getContentStorageProtectedChildCount({
+                state: mutationState,
+                root: targetRoot,
+                parentInstanceId: targetParentInstanceId,
+              }),
+            }
+          );
+          const instanceId = mutation.result.rootInstanceIds[0];
+          if (instanceId === undefined) {
+            return throwBuilderRuntimeError(
+              "BAD_REQUEST",
+              "Cloned fragment has no root instance."
+            );
+          }
+          return {
+            ...mutation,
+            result: { instanceId, instanceIds: mutation.result.instanceIds },
+          };
+        },
       })
   ),
   runtimeOperation(

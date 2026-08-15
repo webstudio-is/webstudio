@@ -3,6 +3,8 @@ import {
   blockComponent,
   blockTemplateComponent,
   elementComponent,
+  encodeDataVariableId,
+  portalComponent,
 } from "@webstudio-is/sdk";
 import type {
   ContentBlockExternalContentIdentity,
@@ -2328,43 +2330,65 @@ test("orders independent batched moves by their authored roots", () => {
   });
 });
 
-test.each([
-  {
-    destination: "project",
-    configure: (state: BuilderState) => state,
-    materializedContent: [
-      {
-        identity: identity("page:/post"),
-        fragment: siblingFragment("parent", ["first"]),
-      },
-    ],
-    targetParentId: "templates",
-  },
-  {
-    destination: "another authored root",
-    configure: addSecondSourceBlock,
-    materializedContent: [
-      {
-        identity: identity("page:/post"),
-        fragment: siblingFragment("parent", ["first"]),
-      },
-      {
-        identity: identity("page:/second", "second-block", "second"),
-        fragment: siblingFragment("second-parent", ["second"]),
-      },
-    ],
-    targetParentId: "second-parent",
-  },
-])("rejects moving authored content to $destination", (testCase) => {
-  expect(() =>
+test("moves authored content into project ownership atomically", () => {
+  const state = createStructuralState();
+  state.instances?.set("project-parent", {
+    type: "instance",
+    id: "project-parent",
+    component: elementComponent,
+    tag: "div",
+    children: [],
+  });
+  const externalFragment = siblingFragment("parent", ["first"]);
+  externalFragment.props = [
+    {
+      id: "first-asset",
+      instanceId: "first",
+      name: "src",
+      type: "asset",
+      value: "article",
+    },
+  ];
+  externalFragment.dataSources = [
+    {
+      id: "first-data",
+      scopeInstanceId: "first",
+      name: "Posts",
+      type: "resource",
+      resourceId: "first-resource",
+    },
+  ];
+  externalFragment.resources = [
+    {
+      id: "first-resource",
+      name: "Posts",
+      method: "get",
+      url: '"/posts"',
+      headers: [],
+    },
+  ];
+  externalFragment.styleSources = [{ type: "local", id: "first-style" }];
+  externalFragment.styleSourceSelections = [
+    { instanceId: "first", values: ["first-style"] },
+  ];
+  externalFragment.styles = [
+    {
+      styleSourceId: "first-style",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+  ];
+
+  expect(
     executeBuilderRuntimeOperation({
       id: "instances.move",
-      state: testCase.configure(createStructuralState()),
+      state,
       input: {
         moves: [
           {
             instanceId: "first",
-            parentInstanceId: testCase.targetParentId,
+            parentInstanceId: "project-parent",
             position: "end",
           },
         ],
@@ -2372,10 +2396,539 @@ test.each([
       context: {
         createId: createIdFactory(),
         returnStorageChanges: true,
-        materializedContent: testCase.materializedContent,
+        materializedContent: [
+          {
+            identity: identity("page:/post"),
+            fragment: externalFragment,
+          },
+        ],
       },
     })
-  ).toThrow("Moving content across authored storage roots is not supported");
+  ).toMatchObject({
+    payload: expect.arrayContaining([
+      expect.objectContaining({ namespace: "instances" }),
+      expect.objectContaining({ namespace: "props" }),
+      expect.objectContaining({ namespace: "dataSources" }),
+      expect.objectContaining({ namespace: "resources" }),
+      expect.objectContaining({ namespace: "styleSourceSelections" }),
+      expect.objectContaining({ namespace: "styleSources" }),
+      expect.objectContaining({ namespace: "styles" }),
+    ]),
+    storageChanges: [
+      { root: { type: "external", identity: identity("page:/post") } },
+    ],
+    result: { instanceIds: ["first"] },
+  });
+});
+
+test("moves content between authored storage roots atomically", () => {
+  const sourceIdentity = identity("page:/post");
+  const targetIdentity = identity("page:/second", "second-block", "second");
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.move",
+      state: addSecondSourceBlock(createStructuralState()),
+      input: {
+        moves: [
+          {
+            instanceId: "first",
+            parentInstanceId: "second-parent",
+            position: "end",
+          },
+        ],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: sourceIdentity,
+            fragment: siblingFragment("parent", ["first"]),
+          },
+          {
+            identity: targetIdentity,
+            fragment: siblingFragment("second-parent", ["second"]),
+          },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      { root: { type: "external", identity: sourceIdentity } },
+      { root: { type: "external", identity: targetIdentity } },
+    ],
+    result: { instanceIds: ["first"] },
+  });
+});
+
+test("rejects overlapping cross-root subtree transfers atomically", () => {
+  const sourceFragment = siblingFragment("parent", ["wrapper"]);
+  const wrapper = sourceFragment.instances.find(
+    (instance) => instance.id === "wrapper"
+  );
+  if (wrapper !== undefined) {
+    wrapper.children = [{ type: "id", value: "child" }];
+  }
+  sourceFragment.instances.push({
+    type: "instance",
+    id: "child",
+    component: elementComponent,
+    tag: "span",
+    children: [],
+  });
+  const targetFragment = siblingFragment("second-parent", ["second"]);
+  const state = addSecondSourceBlock(createStructuralState());
+  const beforeState = structuredClone(state);
+  const beforeSource = structuredClone(sourceFragment);
+  const beforeTarget = structuredClone(targetFragment);
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.move",
+      state,
+      input: {
+        moves: [
+          {
+            instanceId: "wrapper",
+            parentInstanceId: "second-parent",
+            position: "end",
+          },
+          {
+            instanceId: "child",
+            parentInstanceId: "second-parent",
+            position: "end",
+          },
+        ],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: sourceFragment },
+          {
+            identity: identity("page:/second", "second-block", "second"),
+            fragment: targetFragment,
+          },
+        ],
+      },
+    })
+  ).toThrow("Overlapping cross-root ownership transfers");
+  expect(state).toEqual(beforeState);
+  expect(sourceFragment).toEqual(beforeSource);
+  expect(targetFragment).toEqual(beforeTarget);
+});
+
+test("keeps a repeated cross-root move as a noop after ownership changes", () => {
+  const sourceIdentity = identity("page:/post");
+  const targetIdentity = identity("page:/second", "second-block", "second");
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.move",
+      state: addSecondSourceBlock(createStructuralState()),
+      input: {
+        moves: [
+          {
+            instanceId: "first",
+            parentInstanceId: "second-parent",
+            position: "end",
+          },
+        ],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: sourceIdentity,
+            fragment: siblingFragment("parent", []),
+          },
+          {
+            identity: targetIdentity,
+            fragment: siblingFragment("second-parent", ["second", "first"]),
+          },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: undefined,
+    noop: true,
+    result: { instanceIds: ["first"] },
+  });
+});
+
+test("reparents content between authored storage roots atomically", () => {
+  const sourceIdentity = identity("page:/post");
+  const targetIdentity = identity("page:/second", "second-block", "second");
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.reparent",
+      state: addSecondSourceBlock(createStructuralState()),
+      input: {
+        sourceInstanceSelector: ["first", "parent", "block"],
+        dropTarget: {
+          parentSelector: ["second-parent", "second-block"],
+          position: "end",
+        },
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: sourceIdentity,
+            fragment: siblingFragment("parent", ["first"]),
+          },
+          {
+            identity: targetIdentity,
+            fragment: siblingFragment("second-parent", ["second"]),
+          },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      { root: { type: "external", identity: sourceIdentity } },
+      { root: { type: "external", identity: targetIdentity } },
+    ],
+    result: {
+      instanceSelector: ["first", "second-parent", "second-block"],
+    },
+  });
+});
+
+test("moves project content into authored storage atomically", () => {
+  const state = createStructuralState();
+  state.instances?.set("project-parent", {
+    type: "instance",
+    id: "project-parent",
+    component: elementComponent,
+    tag: "div",
+    children: [{ type: "id", value: "project-child" }],
+  });
+  state.instances?.set("project-child", {
+    type: "instance",
+    id: "project-child",
+    component: elementComponent,
+    tag: "p",
+    children: [{ type: "text", value: "Project" }],
+  });
+  const targetIdentity = identity("page:/post");
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.move",
+      state,
+      input: {
+        moves: [
+          {
+            instanceId: "project-child",
+            parentInstanceId: "parent",
+            position: "end",
+          },
+        ],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: targetIdentity,
+            fragment: siblingFragment("parent", ["first"]),
+          },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [
+      {
+        namespace: "instances",
+        patches: expect.arrayContaining([
+          { op: "remove", path: ["project-child"] },
+          { op: "remove", path: ["project-parent", "children", 0] },
+        ]),
+      },
+    ],
+    storageChanges: [{ root: { type: "external", identity: targetIdentity } }],
+    result: { instanceIds: ["project-child"] },
+  });
+});
+
+test("moves content across nested authored ownership boundaries", () => {
+  const { parentIdentity, nestedIdentity, roots } =
+    createNestedMaterializedContent();
+  roots[0].fragment.instances[0].tag = "p";
+  roots[1].fragment.instances[0].tag = "div";
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.move",
+      state: createStructuralState(),
+      input: {
+        moves: [
+          {
+            instanceId: "nested-content",
+            parentInstanceId: "outer-rich-text",
+            position: "end",
+          },
+        ],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: roots,
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      { root: { type: "external", identity: nestedIdentity } },
+      { root: { type: "external", identity: parentIdentity } },
+    ],
+    result: { instanceIds: ["nested-content"] },
+  });
+});
+
+test("rejects moving a data source referenced outside its subtree atomically", () => {
+  const state = createStructuralState();
+  state.instances?.set("project-parent", {
+    type: "instance",
+    id: "project-parent",
+    component: elementComponent,
+    tag: "div",
+    children: [],
+  });
+  const externalFragment = siblingFragment("parent", ["first", "outside"]);
+  externalFragment.dataSources = [
+    {
+      id: "first-data",
+      scopeInstanceId: "first",
+      name: "First",
+      type: "variable",
+      value: { type: "string", value: "First" },
+    },
+  ];
+  const outside = externalFragment.instances.find(
+    (instance) => instance.id === "outside"
+  );
+  if (outside !== undefined) {
+    outside.children = [
+      { type: "expression", value: encodeDataVariableId("first-data") },
+    ];
+  }
+  const beforeState = structuredClone(state);
+  const beforeFragment = structuredClone(externalFragment);
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.move",
+      state,
+      input: {
+        moves: [
+          {
+            instanceId: "first",
+            parentInstanceId: "project-parent",
+            position: "end",
+          },
+        ],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: externalFragment },
+        ],
+      },
+    })
+  ).toThrow("data source referenced outside the moved subtree");
+  expect(state).toEqual(beforeState);
+  expect(externalFragment).toEqual(beforeFragment);
+});
+
+test.each([
+  {
+    reference: "text expression",
+    configure: (externalFragment: WebstudioFragment) => {
+      const moved = externalFragment.instances.find(
+        (instance) => instance.id === "first"
+      );
+      if (moved !== undefined) {
+        moved.children = [
+          { type: "expression", value: encodeDataVariableId("outside-data") },
+        ];
+      }
+    },
+  },
+  {
+    reference: "parameter prop",
+    configure: (externalFragment: WebstudioFragment) => {
+      externalFragment.props.push({
+        id: "first-parameter",
+        instanceId: "first",
+        name: "value",
+        type: "parameter",
+        value: "outside-data",
+      });
+    },
+  },
+  {
+    reference: "action prop",
+    configure: (externalFragment: WebstudioFragment) => {
+      externalFragment.props.push({
+        id: "first-action",
+        instanceId: "first",
+        name: "onClick",
+        type: "action",
+        value: [
+          {
+            type: "execute",
+            args: [],
+            code: encodeDataVariableId("outside-data"),
+          },
+        ],
+      });
+    },
+  },
+  {
+    reference: "resource expression",
+    configure: (externalFragment: WebstudioFragment) => {
+      externalFragment.props.push({
+        id: "first-resource-prop",
+        instanceId: "first",
+        name: "resource",
+        type: "resource",
+        value: "first-resource",
+      });
+      externalFragment.resources.push({
+        id: "first-resource",
+        name: "First",
+        method: "get",
+        url: encodeDataVariableId("outside-data"),
+        headers: [],
+      });
+    },
+  },
+  {
+    reference: "page prop instance",
+    configure: (externalFragment: WebstudioFragment) => {
+      externalFragment.props.push({
+        id: "first-page",
+        instanceId: "first",
+        name: "href",
+        type: "page",
+        value: { pageId: "page", instanceId: "outside" },
+      });
+    },
+  },
+])(
+  "rejects a moved $reference that would cross storage roots",
+  ({ configure }) => {
+    const state = addSecondSourceBlock(createStructuralState());
+    const sourceFragment = siblingFragment("parent", ["first", "outside"]);
+    sourceFragment.dataSources.push({
+      id: "outside-data",
+      scopeInstanceId: "outside",
+      name: "Outside",
+      type: "variable",
+      value: { type: "string", value: "Outside" },
+    });
+    configure(sourceFragment);
+    const targetFragment = siblingFragment("second-parent", ["second"]);
+    const beforeState = structuredClone(state);
+    const beforeSource = structuredClone(sourceFragment);
+    const beforeTarget = structuredClone(targetFragment);
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "instances.move",
+        state,
+        input: {
+          moves: [
+            {
+              instanceId: "first",
+              parentInstanceId: "second-parent",
+              position: "end",
+            },
+          ],
+        },
+        context: {
+          createId: createIdFactory(),
+          returnStorageChanges: true,
+          materializedContent: [
+            { identity: identity("page:/post"), fragment: sourceFragment },
+            {
+              identity: identity("page:/second", "second-block", "second"),
+              fragment: targetFragment,
+            },
+          ],
+        },
+      })
+    ).toThrow("reference crosses an authored storage boundary");
+    expect(state).toEqual(beforeState);
+    expect(sourceFragment).toEqual(beforeSource);
+    expect(targetFragment).toEqual(beforeTarget);
+  }
+);
+
+test.each([
+  {
+    reference: "instance child",
+    configure: (externalFragment: WebstudioFragment) => {
+      const outside = externalFragment.instances.find(
+        (instance) => instance.id === "outside"
+      );
+      if (outside !== undefined) {
+        outside.children = [{ type: "id", value: "first" }];
+      }
+    },
+  },
+  {
+    reference: "page prop",
+    configure: (externalFragment: WebstudioFragment) => {
+      externalFragment.props.push({
+        id: "outside-page",
+        instanceId: "outside",
+        name: "href",
+        type: "page",
+        value: { pageId: "page", instanceId: "first" },
+      });
+    },
+  },
+])("rejects a $reference left behind by a cross-root move", ({ configure }) => {
+  const sourceFragment = siblingFragment("parent", ["first", "outside"]);
+  configure(sourceFragment);
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.move",
+      state: addSecondSourceBlock(createStructuralState()),
+      input: {
+        moves: [
+          {
+            instanceId: "first",
+            parentInstanceId: "second-parent",
+            position: "end",
+          },
+        ],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: sourceFragment },
+          {
+            identity: identity("page:/second", "second-block", "second"),
+            fragment: siblingFragment("second-parent", ["second"]),
+          },
+        ],
+      },
+    })
+  ).toThrow("reference crosses an authored storage boundary");
 });
 
 test("partitions deletion across project and authored roots", () => {
@@ -2818,49 +3371,219 @@ test("copies content in the innermost nested storage root", () => {
   });
 });
 
-test.each([
-  {
-    destination: "project",
-    state: createStructuralState(),
-    materializedContent: [
-      {
-        identity: identity("page:/post"),
-        fragment: siblingFragment("parent", ["selected"]),
-      },
+test("copies authored content into project ownership", () => {
+  const state = createStructuralState();
+  state.instances?.set("project-root", {
+    type: "instance",
+    id: "project-root",
+    component: elementComponent,
+    tag: "main",
+    children: [
+      { type: "id", value: "block" },
+      { type: "id", value: "project-parent" },
     ],
-    targetParentInstanceId: "templates",
-  },
-  {
-    destination: "another authored root",
-    state: addSecondSourceBlock(createStructuralState()),
-    materializedContent: [
-      {
-        identity: identity("page:/post"),
-        fragment: siblingFragment("parent", ["selected"]),
-      },
-      {
-        identity: identity("page:/second", "second-block", "second"),
-        fragment: siblingFragment("second-parent", ["second"]),
-      },
-    ],
-    targetParentInstanceId: "second-parent",
-  },
-])("rejects copying authored content to $destination", (testCase) => {
-  expect(() =>
+  });
+  state.instances?.set("project-parent", {
+    type: "instance",
+    id: "project-parent",
+    component: elementComponent,
+    tag: "div",
+    children: [],
+  });
+  state.pages = createDefaultPages({ rootInstanceId: "project-root" });
+
+  expect(
     executeBuilderRuntimeOperation({
       id: "instances.clone",
-      state: testCase.state,
+      state,
       input: {
         sourceInstanceId: "selected",
-        targetParentInstanceId: testCase.targetParentInstanceId,
+        targetParentInstanceId: "project-parent",
       },
       context: {
         createId: createIdFactory(),
         returnStorageChanges: true,
-        materializedContent: testCase.materializedContent,
+        materializedContent: [
+          {
+            identity: identity("page:/post"),
+            fragment: siblingFragment("parent", ["selected"]),
+          },
+        ],
       },
     })
-  ).toThrow("Copying content across authored storage roots is not supported");
+  ).toMatchObject({
+    payload: [expect.objectContaining({ namespace: "instances" })],
+    storageChanges: undefined,
+    result: { instanceId: "generated-0" },
+  });
+});
+
+test("copies content between authored storage roots", () => {
+  const state = addSecondSourceBlock(createStructuralState());
+  state.instances?.set("project-root", {
+    type: "instance",
+    id: "project-root",
+    component: elementComponent,
+    tag: "main",
+    children: [
+      { type: "id", value: "block" },
+      { type: "id", value: "second-block" },
+    ],
+  });
+  state.pages = createDefaultPages({ rootInstanceId: "project-root" });
+  const targetIdentity = identity("page:/second", "second-block", "second");
+  const sourceFragment = siblingFragment("parent", ["selected"]);
+  sourceFragment.dataSources = [
+    {
+      id: "selected-data",
+      scopeInstanceId: "selected",
+      name: "Posts",
+      type: "resource",
+      resourceId: "selected-resource",
+    },
+  ];
+  sourceFragment.resources = [
+    {
+      id: "selected-resource",
+      name: "Posts",
+      method: "get",
+      url: '"/posts"',
+      headers: [],
+    },
+  ];
+  sourceFragment.props = [
+    {
+      id: "selected-asset",
+      instanceId: "selected",
+      name: "src",
+      type: "asset",
+      value: "article",
+    },
+  ];
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.clone",
+      state,
+      input: {
+        sourceInstanceId: "selected",
+        targetParentInstanceId: "second-parent",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: identity("page:/post"),
+            fragment: sourceFragment,
+          },
+          {
+            identity: targetIdentity,
+            fragment: siblingFragment("second-parent", ["second"]),
+          },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: targetIdentity },
+        payload: expect.arrayContaining([
+          expect.objectContaining({ namespace: "instances" }),
+          expect.objectContaining({
+            namespace: "props",
+            patches: expect.arrayContaining([
+              expect.objectContaining({
+                value: expect.objectContaining({ value: "article" }),
+              }),
+            ]),
+          }),
+          expect.objectContaining({ namespace: "dataSources" }),
+          expect.objectContaining({ namespace: "resources" }),
+        ]),
+      },
+    ],
+    result: { instanceId: "generated-0" },
+  });
+});
+
+test("remaps portal content when copying across storage roots", () => {
+  const state = addSecondSourceBlock(createStructuralState());
+  state.instances?.set("project-root", {
+    type: "instance",
+    id: "project-root",
+    component: elementComponent,
+    tag: "main",
+    children: [
+      { type: "id", value: "block" },
+      { type: "id", value: "second-block" },
+    ],
+  });
+  state.pages = createDefaultPages({ rootInstanceId: "project-root" });
+  const sourceFragment = siblingFragment("parent", ["first"]);
+  const source = sourceFragment.instances.find(
+    (instance) => instance.id === "first"
+  );
+  if (source !== undefined) {
+    source.component = portalComponent;
+    source.tag = "div";
+    source.children = [{ type: "id", value: "portal-content" }];
+  }
+  sourceFragment.instances.push({
+    type: "instance",
+    id: "portal-content",
+    component: elementComponent,
+    tag: "p",
+    children: [{ type: "text", value: "Portal" }],
+  });
+  const targetIdentity = identity("page:/second", "second-block", "second");
+  const targetFragment = siblingFragment("second-parent", ["second"]);
+  targetFragment.instances[0].tag = "div";
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.clone",
+      state,
+      input: {
+        sourceInstanceId: "first",
+        targetParentInstanceId: "second-parent",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: sourceFragment },
+          {
+            identity: targetIdentity,
+            fragment: targetFragment,
+          },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: targetIdentity },
+        payload: [
+          {
+            namespace: "instances",
+            patches: expect.arrayContaining([
+              expect.objectContaining({
+                path: ["generated-0"],
+                value: expect.objectContaining({
+                  children: [{ type: "id", value: "generated-1" }],
+                }),
+              }),
+              expect.objectContaining({ path: ["generated-1"] }),
+            ]),
+          },
+        ],
+      },
+    ],
+    result: { instanceId: "generated-0" },
+  });
 });
 
 test("rejects duplicating authored content into another storage root", () => {
@@ -2890,7 +3613,7 @@ test("rejects duplicating authored content into another storage root", () => {
   ).toThrow("Copying content across authored storage roots is not supported");
 });
 
-test("rejects copying project content into authored storage", () => {
+test("copies project content into authored storage", () => {
   const state = createStructuralState();
   state.instances?.set("project-parent", {
     type: "instance",
@@ -2906,8 +3629,23 @@ test("rejects copying project content into authored storage", () => {
     tag: "p",
     children: [{ type: "text", value: "Project" }],
   });
+  state.dataSources?.set("project-data", {
+    id: "project-data",
+    scopeInstanceId: "project-selected",
+    name: "Posts",
+    type: "resource",
+    resourceId: "project-resource",
+  });
+  state.resources?.set("project-resource", {
+    id: "project-resource",
+    name: "Posts",
+    method: "get",
+    url: '"/posts"',
+    headers: [],
+  });
+  const beforeState = structuredClone(state);
 
-  expect(() =>
+  expect(
     executeBuilderRuntimeOperation({
       id: "instances.clone",
       state,
@@ -2926,11 +3664,85 @@ test("rejects copying project content into authored storage", () => {
         ],
       },
     })
-  ).toThrow("Copying content across authored storage roots is not supported");
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: identity("page:/post") },
+        payload: expect.arrayContaining([
+          expect.objectContaining({ namespace: "instances" }),
+          expect.objectContaining({
+            namespace: "dataSources",
+            patches: expect.arrayContaining([
+              expect.objectContaining({
+                path: ["generated-1"],
+                value: expect.objectContaining({
+                  scopeInstanceId: "generated-0",
+                  resourceId: "generated-2",
+                }),
+              }),
+            ]),
+          }),
+          expect.objectContaining({
+            namespace: "resources",
+            patches: expect.arrayContaining([
+              expect.objectContaining({ path: ["generated-2"] }),
+            ]),
+          }),
+        ]),
+      },
+    ],
+    result: { instanceId: "generated-0" },
+  });
+  expect(state).toEqual(beforeState);
 });
 
-test("preflights the implicit clone parent across storage roots", () => {
+test("rejects cross-root clone id collisions without changing either root", () => {
   const state = createStructuralState();
+  state.instances?.set("project-selected", {
+    type: "instance",
+    id: "project-selected",
+    component: elementComponent,
+    tag: "p",
+    children: [{ type: "text", value: "Project" }],
+  });
+  const externalFragment = siblingFragment("parent", ["selected"]);
+  const beforeState = structuredClone(state);
+  const beforeFragment = structuredClone(externalFragment);
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.clone",
+      state,
+      input: {
+        sourceInstanceId: "project-selected",
+        targetParentInstanceId: "parent",
+      },
+      context: {
+        createId: () => "parent",
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: externalFragment },
+        ],
+      },
+    })
+  ).toThrow('Generated instance id "parent" already exists');
+  expect(state).toEqual(beforeState);
+  expect(externalFragment).toEqual(beforeFragment);
+});
+
+test("uses the resolved implicit parent for a cross-root clone", () => {
+  const state = createStructuralState();
+  state.instances?.set("project-root", {
+    type: "instance",
+    id: "project-root",
+    component: elementComponent,
+    tag: "main",
+    children: [
+      { type: "id", value: "project-parent" },
+      { type: "id", value: "block" },
+    ],
+  });
   state.instances?.set("project-parent", {
     type: "instance",
     id: "project-parent",
@@ -2938,8 +3750,9 @@ test("preflights the implicit clone parent across storage roots", () => {
     tag: "div",
     children: [{ type: "id", value: "selected" }],
   });
+  state.pages = createDefaultPages({ rootInstanceId: "project-root" });
 
-  expect(() =>
+  expect(
     executeBuilderRuntimeOperation({
       id: "instances.clone",
       state,
@@ -2955,7 +3768,11 @@ test("preflights the implicit clone parent across storage roots", () => {
         ],
       },
     })
-  ).toThrow("Copying content across authored storage roots is not supported");
+  ).toMatchObject({
+    payload: [expect.objectContaining({ namespace: "instances" })],
+    storageChanges: undefined,
+    result: { instanceId: "generated-0" },
+  });
 });
 
 test("rejects copying the protected Templates list", () => {

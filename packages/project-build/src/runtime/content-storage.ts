@@ -9,10 +9,12 @@ import {
   type ContentBlockExternalContentIdentity,
   type Instance,
   type Prop,
+  type Resource,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import { getExpressionIdentifiers } from "@webstudio-is/expression";
 import type { BuilderState } from "../state/builder-state";
+import { applyBuilderPatchTransactions } from "../state/patch";
 import equal from "fast-deep-equal";
 import type { BuilderRuntimeMutation } from "./mutation";
 import type { BuilderPatchChange } from "../contracts/patch";
@@ -46,6 +48,12 @@ export type ContentStorageTarget =
       type: "children";
       parentInstanceId: Instance["id"];
     }>;
+
+export type ContentStorageOwnershipTransfer = Readonly<{
+  rootInstanceId: Instance["id"];
+  source: ContentStorageTarget;
+  target: ContentStorageTarget;
+}>;
 
 type ContentStorageTargetResolver =
   | ContentStorageTarget
@@ -489,10 +497,20 @@ const prepareExternalMutationPayload = ({
   projection,
   root,
   payload,
+  transferredRecordIds = new Map(),
+  validationSkippedRecordIds = transferredRecordIds,
 }: {
   projection: ContentStorageProjection;
   root: Extract<ContentStorageRoot, { type: "external" }>;
   payload: BuilderPatchChange[];
+  transferredRecordIds?: ReadonlyMap<
+    BuilderPatchChange["namespace"],
+    ReadonlySet<string>
+  >;
+  validationSkippedRecordIds?: ReadonlyMap<
+    BuilderPatchChange["namespace"],
+    ReadonlySet<string>
+  >;
 }) => {
   const validationPayload: BuilderPatchChange[] = [];
   const storagePayload: ContentStoragePatchChange[] = [];
@@ -514,10 +532,16 @@ const prepareExternalMutationPayload = ({
     const fragmentPatches = [];
     for (const patch of change.patches) {
       const [instanceId, field, childIndex] = patch.path;
+      const isTransferredRecord =
+        typeof instanceId === "string" &&
+        patch.path.length === 1 &&
+        validationSkippedRecordIds.get(change.namespace)?.has(instanceId) ===
+          true;
       if (
         change.namespace === "instances" &&
         typeof instanceId === "string" &&
-        projection.state.instances?.has(instanceId)
+        projection.state.instances?.has(instanceId) &&
+        transferredRecordIds.get("instances")?.has(instanceId) !== true
       ) {
         const patchRoot = resolveContentStorageRoot(
           projection,
@@ -540,7 +564,9 @@ const prepareExternalMutationPayload = ({
         instanceId !== block.id ||
         field !== "children"
       ) {
-        validationPatches.push(patch);
+        if (isTransferredRecord === false) {
+          validationPatches.push(patch);
+        }
         namespacePatches.push(patch);
         continue;
       }
@@ -607,26 +633,39 @@ const createExternalStorageChange = ({
   projection,
   root,
   payload,
+  transferredRecordIds,
+  validationSkippedRecordIds,
+  validationState = projection.state,
 }: {
   projection: ContentStorageProjection;
   root: Extract<ContentStorageRoot, { type: "external" }>;
   payload: BuilderPatchChange[];
+  transferredRecordIds?: ReadonlyMap<
+    BuilderPatchChange["namespace"],
+    ReadonlySet<string>
+  >;
+  validationSkippedRecordIds?: ReadonlyMap<
+    BuilderPatchChange["namespace"],
+    ReadonlySet<string>
+  >;
+  validationState?: BuilderState;
 }) => {
   const { validationPayload, storagePayload } = prepareExternalMutationPayload({
     projection,
     root,
     payload,
+    transferredRecordIds,
+    validationSkippedRecordIds,
   });
   const validation = validateContentModeTransaction({
     capabilities: getContentModeCapabilities({
-      instances: projection.state.instances ?? new Map(),
+      instances: validationState.instances ?? new Map(),
       metas: componentMetas,
-      props: projection.state.props ?? new Map(),
-      styleSources: projection.state.styleSources ?? new Map(),
-      styleSourceSelections:
-        projection.state.styleSourceSelections ?? new Map(),
-      styles: projection.state.styles ?? new Map(),
-      breakpoints: projection.state.breakpoints,
+      props: validationState.props ?? new Map(),
+      styleSources: validationState.styleSources ?? new Map(),
+      styleSourceSelections: validationState.styleSourceSelections ?? new Map(),
+      styles: validationState.styles ?? new Map(),
+      breakpoints: validationState.breakpoints,
       contentRootIds: new Set([root.identity.blockInstanceId]),
     }),
     transaction: { payload: validationPayload },
@@ -671,6 +710,8 @@ export const executeContentStorageMutation = <
   protectTemplatesList,
   protectedInstanceIds = [],
   crossRootError = "Mutation crosses an authored storage boundary.",
+  allowCrossRoot = false,
+  validationSkippedNamespaces = [],
   execute,
 }: {
   state: BuilderState;
@@ -681,7 +722,13 @@ export const executeContentStorageMutation = <
   protectTemplatesList?: boolean;
   protectedInstanceIds?: readonly Instance["id"][];
   crossRootError?: string;
-  execute: (state: BuilderState, root: ContentStorageRoot) => Mutation;
+  allowCrossRoot?: boolean;
+  validationSkippedNamespaces?: readonly BuilderPatchChange["namespace"][];
+  execute: (
+    state: BuilderState,
+    root: ContentStorageRoot,
+    sourceRoot?: ContentStorageRoot
+  ) => Mutation;
 }): Mutation => {
   if (materializedRoots === undefined || materializedRoots.length === 0) {
     return execute(state, projectStorageRoot);
@@ -717,17 +764,23 @@ export const executeContentStorageMutation = <
     );
   }
   const root = resolveContentStorageRoot(projection, resolvedTarget);
+  const sourceRoot =
+    source === undefined
+      ? undefined
+      : resolveContentStorageRoot(projection, source);
   if (
-    source !== undefined &&
-    isSameContentStorageRoot(
-      resolveContentStorageRoot(projection, source),
-      root
-    ) === false
+    sourceRoot !== undefined &&
+    isSameContentStorageRoot(sourceRoot, root) === false &&
+    allowCrossRoot === false
   ) {
     return throwBuilderRuntimeError("BAD_REQUEST", crossRootError);
   }
   if (root.type === "project") {
-    return execute(state, root);
+    const executionState =
+      allowCrossRoot && sourceRoot?.type === "external"
+        ? projection.state
+        : state;
+    return execute(executionState, root, sourceRoot);
   }
   if (returnStorageChanges !== true) {
     return throwBuilderRuntimeError(
@@ -736,11 +789,31 @@ export const executeContentStorageMutation = <
     );
   }
 
-  const mutation = execute(projection.state, root);
+  const mutation = execute(projection.state, root, sourceRoot);
+  const validationSkippedRecordIds = new Map<
+    BuilderPatchChange["namespace"],
+    Set<string>
+  >();
+  for (const change of mutation.payload) {
+    if (validationSkippedNamespaces.includes(change.namespace) === false) {
+      continue;
+    }
+    const ids = new Set<string>();
+    for (const patch of change.patches) {
+      const [id] = patch.path;
+      if (typeof id === "string" && patch.path.length === 1) {
+        ids.add(id);
+      }
+    }
+    if (ids.size > 0) {
+      validationSkippedRecordIds.set(change.namespace, ids);
+    }
+  }
   const storageChange = createExternalStorageChange({
     projection,
     root,
     payload: mutation.payload,
+    validationSkippedRecordIds,
   });
   const storageChanges =
     storageChange === undefined
@@ -901,29 +974,116 @@ const getPropStorageRoot = (
   return root;
 };
 
+const validateExternalReferenceOwnership = ({
+  root,
+  referenceRoot,
+  error,
+}: {
+  root: ContentStorageRoot;
+  referenceRoot: ContentStorageRoot;
+  error: string;
+}) => {
+  if (
+    referenceRoot.type === "external" &&
+    isSameContentStorageRoot(root, referenceRoot) === false
+  ) {
+    return throwBuilderRuntimeError("BAD_REQUEST", error);
+  }
+};
+
+const getDataSourceReferenceRoot = ({
+  projection,
+  root,
+  dataSourceId,
+  ownedDataSourceIds,
+}: {
+  projection: ContentStorageProjection;
+  root: ContentStorageRoot;
+  dataSourceId: string;
+  ownedDataSourceIds: ReadonlySet<string>;
+}): ContentStorageRoot => {
+  if (ownedDataSourceIds.has(dataSourceId)) {
+    return root;
+  }
+  const identity = projection.externalRootByDataSourceId.get(dataSourceId);
+  return identity === undefined
+    ? projectStorageRoot
+    : { type: "external", identity };
+};
+
+const validateExpressionReferenceOwnership = ({
+  projection,
+  root,
+  expression,
+  ownedDataSourceIds = new Set(),
+  error,
+}: {
+  projection: ContentStorageProjection;
+  root: ContentStorageRoot;
+  expression: string;
+  ownedDataSourceIds?: ReadonlySet<string>;
+  error: string;
+}) => {
+  for (const identifier of getExpressionIdentifiers(expression)) {
+    const dataSourceId = decodeDataVariableId(identifier);
+    if (dataSourceId === undefined) {
+      continue;
+    }
+    validateExternalReferenceOwnership({
+      root,
+      referenceRoot: getDataSourceReferenceRoot({
+        projection,
+        root,
+        dataSourceId,
+        ownedDataSourceIds,
+      }),
+      error,
+    });
+  }
+};
+
+const listResourceExpressions = (resource: Resource) => [
+  resource.url,
+  ...resource.headers.map(({ value }) => value),
+  ...(resource.searchParams?.map(({ value }) => value) ?? []),
+  ...(resource.body === undefined ? [] : [resource.body]),
+];
+
 const validatePropReferenceOwnership = ({
   projection,
   root,
   prop,
+  ownedInstanceIds = new Set(),
+  ownedDataSourceIds = new Set(),
+  ownedResourceIds = new Set(),
+  error = "Prop reference crosses an authored storage boundary.",
 }: {
   projection: ContentStorageProjection;
   root: ContentStorageRoot;
   prop: Prop;
+  ownedInstanceIds?: ReadonlySet<string>;
+  ownedDataSourceIds?: ReadonlySet<string>;
+  ownedResourceIds?: ReadonlySet<string>;
+  error?: string;
 }) => {
   const referenceRoots: ContentStorageRoot[] = [];
   if (prop.type === "parameter") {
-    const identity = projection.externalRootByDataSourceId.get(prop.value);
     referenceRoots.push(
-      identity === undefined
-        ? projectStorageRoot
-        : { type: "external", identity }
+      getDataSourceReferenceRoot({
+        projection,
+        root,
+        dataSourceId: prop.value,
+        ownedDataSourceIds,
+      })
     );
   } else if (prop.type === "resource") {
     const identity = projection.externalRootByResourceId.get(prop.value);
     referenceRoots.push(
-      identity === undefined
-        ? projectStorageRoot
-        : { type: "external", identity }
+      ownedResourceIds.has(prop.value)
+        ? root
+        : identity === undefined
+          ? projectStorageRoot
+          : { type: "external", identity }
     );
   } else if (
     prop.type === "page" &&
@@ -931,36 +1091,25 @@ const validatePropReferenceOwnership = ({
     prop.value !== null
   ) {
     referenceRoots.push(
-      resolveContentStorageRoot(projection, {
-        type: "instance",
-        instanceId: prop.value.instanceId,
-      })
+      ownedInstanceIds.has(prop.value.instanceId)
+        ? root
+        : resolveContentStorageRoot(projection, {
+            type: "instance",
+            instanceId: prop.value.instanceId,
+          })
     );
   }
   for (const { expression } of listPropExpressions(prop)) {
-    for (const identifier of getExpressionIdentifiers(expression)) {
-      const dataSourceId = decodeDataVariableId(identifier);
-      if (dataSourceId === undefined) {
-        continue;
-      }
-      const identity = projection.externalRootByDataSourceId.get(dataSourceId);
-      referenceRoots.push(
-        identity === undefined
-          ? projectStorageRoot
-          : { type: "external", identity }
-      );
-    }
+    validateExpressionReferenceOwnership({
+      projection,
+      root,
+      expression,
+      ownedDataSourceIds,
+      error,
+    });
   }
   for (const referenceRoot of referenceRoots) {
-    if (
-      referenceRoot.type === "external" &&
-      isSameContentStorageRoot(root, referenceRoot) === false
-    ) {
-      return throwBuilderRuntimeError(
-        "BAD_REQUEST",
-        "Prop reference crosses an authored storage boundary."
-      );
-    }
+    validateExternalReferenceOwnership({ root, referenceRoot, error });
   }
 };
 
@@ -1173,6 +1322,7 @@ export const executeContentStorageStructuralMutation = <
   returnStorageChanges,
   protectedInstanceIds = [],
   rootPairs = [],
+  ownershipTransfers = [],
   execute,
 }: {
   state: BuilderState;
@@ -1183,6 +1333,7 @@ export const executeContentStorageStructuralMutation = <
     source: ContentStorageTarget;
     target: ContentStorageTarget;
   }>[];
+  ownershipTransfers?: readonly ContentStorageOwnershipTransfer[];
   execute: (state: BuilderState) => Mutation;
 }): Mutation => {
   if (materializedRoots === undefined || materializedRoots.length === 0) {
@@ -1210,18 +1361,111 @@ export const executeContentStorageStructuralMutation = <
   for (const pair of rootPairs) {
     const sourceRoot = resolveContentStorageRoot(projection, pair.source);
     const targetRoot = resolveContentStorageRoot(projection, pair.target);
-    if (isSameContentStorageRoot(sourceRoot, targetRoot) === false) {
+    if (
+      isSameContentStorageRoot(sourceRoot, targetRoot) === false &&
+      ownershipTransfers.some(
+        (transfer) =>
+          isSameContentStorageRoot(
+            resolveContentStorageRoot(projection, transfer.source),
+            sourceRoot
+          ) &&
+          isSameContentStorageRoot(
+            resolveContentStorageRoot(projection, transfer.target),
+            targetRoot
+          )
+      ) === false
+    ) {
       return throwBuilderRuntimeError(
         "BAD_REQUEST",
         "Moving content across authored storage roots is not supported."
       );
     }
-    hasExternalPair ||= sourceRoot.type === "external";
+    hasExternalPair ||=
+      sourceRoot.type === "external" || targetRoot.type === "external";
   }
   if (rootPairs.length > 0 && hasExternalPair === false) {
     return execute(state);
   }
+  const ownershipTransferPlans = ownershipTransfers.flatMap((transfer) => {
+    const sourceRoot = resolveContentStorageRoot(projection, transfer.source);
+    const targetRoot = resolveContentStorageRoot(projection, transfer.target);
+    if (isSameContentStorageRoot(sourceRoot, targetRoot)) {
+      return [];
+    }
+    const instanceIds = new Set<Instance["id"]>();
+    const visit = (instanceId: Instance["id"]) => {
+      if (instanceIds.has(instanceId)) {
+        return;
+      }
+      const instance = projection.state.instances?.get(instanceId);
+      if (
+        instance === undefined ||
+        isSameContentStorageRoot(
+          resolveContentStorageRoot(projection, {
+            type: "instance",
+            instanceId,
+          }),
+          sourceRoot
+        ) === false
+      ) {
+        return;
+      }
+      instanceIds.add(instanceId);
+      for (const child of instance.children) {
+        if (child.type === "id") {
+          visit(child.value);
+        }
+      }
+    };
+    visit(transfer.rootInstanceId);
+    if (instanceIds.size === 0) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Transferred subtree is missing from its authored storage root."
+      );
+    }
+    if (
+      Array.from(instanceIds).some(
+        (instanceId) =>
+          projection.state.instances?.get(instanceId)?.component ===
+          blockTemplateComponent
+      )
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "A subtree containing Content Block Templates cannot change storage ownership."
+      );
+    }
+    return [{ transfer, sourceRoot, targetRoot, instanceIds }];
+  });
+  const transferredInstanceIds = new Set<Instance["id"]>();
+  for (const { instanceIds } of ownershipTransferPlans) {
+    for (const instanceId of instanceIds) {
+      if (transferredInstanceIds.has(instanceId)) {
+        return throwBuilderRuntimeError(
+          "BAD_REQUEST",
+          "Overlapping cross-root ownership transfers are not supported."
+        );
+      }
+      transferredInstanceIds.add(instanceId);
+    }
+  }
+  for (const { transfer } of ownershipTransferPlans) {
+    const targetInstanceId =
+      transfer.target.type === "children"
+        ? transfer.target.parentInstanceId
+        : transfer.target.instanceId;
+    if (transferredInstanceIds.has(targetInstanceId)) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "A cross-root transfer target cannot change ownership in the same mutation."
+      );
+    }
+  }
   const mutation = execute(projection.state);
+  const afterState = applyBuilderPatchTransactions(projection.state, [
+    { id: "content-storage-ownership-transfer", payload: mutation.payload },
+  ]).state;
   const projectChanges = new Map<
     BuilderPatchChange["namespace"],
     BuilderPatchChange
@@ -1233,23 +1477,410 @@ export const executeContentStorageStructuralMutation = <
       changes: Map<BuilderPatchChange["namespace"], BuilderPatchChange>;
     }
   >();
+  const addPatch = (
+    root: ContentStorageRoot,
+    namespace: BuilderPatchChange["namespace"],
+    patch: BuilderPatchChange["patches"][number]
+  ) => {
+    const changes =
+      root.type === "project"
+        ? projectChanges
+        : (externalChanges.get(root.identity.blockInstanceId)?.changes ??
+          new Map());
+    const accumulated = changes.get(namespace) ?? { namespace, patches: [] };
+    accumulated.patches.push(patch);
+    changes.set(namespace, accumulated);
+    if (root.type === "external") {
+      externalChanges.set(root.identity.blockInstanceId, { root, changes });
+    }
+  };
+  const transferredRecordIds = new Map<
+    BuilderPatchChange["namespace"],
+    Set<string>
+  >();
+  const validationRemovedRecordIdsByBlockId = new Map<
+    Instance["id"],
+    Map<BuilderPatchChange["namespace"], Set<string>>
+  >();
+  const validationSkippedRecordIdsByBlockId = new Map<
+    Instance["id"],
+    Map<BuilderPatchChange["namespace"], Set<string>>
+  >();
+  const incomingInstanceIdsByBlockId = new Map<
+    Instance["id"],
+    Set<Instance["id"]>
+  >();
+  const markTransferred = (
+    namespace: BuilderPatchChange["namespace"],
+    id: string
+  ) => {
+    const ids = transferredRecordIds.get(namespace) ?? new Set();
+    ids.add(id);
+    transferredRecordIds.set(namespace, ids);
+  };
+  for (const {
+    sourceRoot,
+    targetRoot,
+    instanceIds,
+  } of ownershipTransferPlans) {
+    const recordIds = new Map<BuilderPatchChange["namespace"], Set<string>>([
+      ["instances", instanceIds],
+    ]);
+    const collect = (
+      namespace: BuilderPatchChange["namespace"],
+      entries: Iterable<readonly [string, unknown]>,
+      include: (value: never) => boolean
+    ) => {
+      const ids = new Set<string>();
+      for (const [id, value] of entries) {
+        if (include(value as never)) {
+          ids.add(id);
+        }
+      }
+      if (ids.size > 0) {
+        recordIds.set(namespace, ids);
+      }
+    };
+    collect("props", projection.state.props ?? [], (prop: Prop) =>
+      instanceIds.has(prop.instanceId)
+    );
+    collect(
+      "dataSources",
+      projection.state.dataSources ?? [],
+      (
+        dataSource: NonNullable<BuilderState["dataSources"]> extends Map<
+          string,
+          infer Value
+        >
+          ? Value
+          : never
+      ) => instanceIds.has(dataSource.scopeInstanceId ?? "")
+    );
+    const transferredDataSourceIds = recordIds.get("dataSources") ?? new Set();
+    const referencesTransferredDataSource = (expression: string) =>
+      Array.from(getExpressionIdentifiers(expression)).some((identifier) => {
+        const dataSourceId = decodeDataVariableId(identifier);
+        return (
+          dataSourceId !== undefined &&
+          transferredDataSourceIds.has(dataSourceId)
+        );
+      });
+    if (transferredDataSourceIds.size > 0) {
+      for (const instance of projection.state.instances?.values() ?? []) {
+        if (instanceIds.has(instance.id)) {
+          continue;
+        }
+        if (
+          instance.children.some(
+            (child) =>
+              child.type === "expression" &&
+              referencesTransferredDataSource(child.value)
+          )
+        ) {
+          return throwBuilderRuntimeError(
+            "BAD_REQUEST",
+            "A data source referenced outside the moved subtree cannot change storage ownership."
+          );
+        }
+      }
+      for (const prop of projection.state.props?.values() ?? []) {
+        if (instanceIds.has(prop.instanceId)) {
+          continue;
+        }
+        if (
+          (prop.type === "parameter" &&
+            transferredDataSourceIds.has(prop.value)) ||
+          listPropExpressions(prop).some(({ expression }) =>
+            referencesTransferredDataSource(expression)
+          )
+        ) {
+          return throwBuilderRuntimeError(
+            "BAD_REQUEST",
+            "A data source referenced outside the moved subtree cannot change storage ownership."
+          );
+        }
+      }
+    }
+    collect(
+      "styleSourceSelections",
+      projection.state.styleSourceSelections ?? [],
+      (
+        selection: NonNullable<
+          BuilderState["styleSourceSelections"]
+        > extends Map<string, infer Value>
+          ? Value
+          : never
+      ) => instanceIds.has(selection.instanceId)
+    );
+    const localStyleSourceIds = new Set<string>();
+    for (const instanceId of instanceIds) {
+      for (const styleSourceId of projection.state.styleSourceSelections?.get(
+        instanceId
+      )?.values ?? []) {
+        if (
+          projection.state.styleSources?.get(styleSourceId)?.type === "local"
+        ) {
+          localStyleSourceIds.add(styleSourceId);
+        }
+      }
+    }
+    if (localStyleSourceIds.size > 0) {
+      for (const selection of projection.state.styleSourceSelections?.values() ??
+        []) {
+        if (
+          instanceIds.has(selection.instanceId) === false &&
+          selection.values.some((id) => localStyleSourceIds.has(id))
+        ) {
+          return throwBuilderRuntimeError(
+            "BAD_REQUEST",
+            "A local style shared outside the moved subtree cannot change storage ownership."
+          );
+        }
+      }
+      recordIds.set("styleSources", localStyleSourceIds);
+      recordIds.set(
+        "styles",
+        new Set(
+          Array.from(projection.state.styles ?? [])
+            .filter(([, style]) => localStyleSourceIds.has(style.styleSourceId))
+            .map(([id]) => id)
+        )
+      );
+    }
+    const resourceIds = new Set<string>();
+    for (const propId of recordIds.get("props") ?? []) {
+      const prop = projection.state.props?.get(propId);
+      if (prop?.type === "resource") {
+        resourceIds.add(prop.value);
+      }
+    }
+    for (const dataSourceId of recordIds.get("dataSources") ?? []) {
+      const dataSource = projection.state.dataSources?.get(dataSourceId);
+      if (dataSource?.type === "resource") {
+        resourceIds.add(dataSource.resourceId);
+      }
+    }
+    for (const resourceId of resourceIds) {
+      const resourceRoot = getExistingRecordStorageRoot({
+        identity: projection.externalRootByResourceId.get(resourceId),
+        exists: projection.state.resources?.has(resourceId) === true,
+      });
+      if (isSameContentStorageRoot(resourceRoot, sourceRoot) === false) {
+        resourceIds.delete(resourceId);
+      }
+    }
+    if (transferredDataSourceIds.size > 0) {
+      for (const resource of projection.state.resources?.values() ?? []) {
+        if (resourceIds.has(resource.id)) {
+          continue;
+        }
+        if (
+          listResourceExpressions(resource).some(
+            referencesTransferredDataSource
+          )
+        ) {
+          return throwBuilderRuntimeError(
+            "BAD_REQUEST",
+            "A data source referenced outside the moved subtree cannot change storage ownership."
+          );
+        }
+      }
+    }
+    if (resourceIds.size > 0) {
+      for (const prop of projection.state.props?.values() ?? []) {
+        if (
+          instanceIds.has(prop.instanceId) === false &&
+          prop.type === "resource" &&
+          resourceIds.has(prop.value)
+        ) {
+          return throwBuilderRuntimeError(
+            "BAD_REQUEST",
+            "A resource shared outside the moved subtree cannot change storage ownership."
+          );
+        }
+      }
+      for (const dataSource of projection.state.dataSources?.values() ?? []) {
+        if (
+          instanceIds.has(dataSource.scopeInstanceId ?? "") === false &&
+          dataSource.type === "resource" &&
+          resourceIds.has(dataSource.resourceId)
+        ) {
+          return throwBuilderRuntimeError(
+            "BAD_REQUEST",
+            "A resource shared outside the moved subtree cannot change storage ownership."
+          );
+        }
+      }
+      recordIds.set("resources", resourceIds);
+    }
+    const movedReferenceError =
+      "Moved content reference crosses an authored storage boundary.";
+    for (const instance of afterState.instances?.values() ?? []) {
+      if (instanceIds.has(instance.id)) {
+        continue;
+      }
+      const referencesMovedInstance = instance.children.some(
+        (child) => child.type === "id" && instanceIds.has(child.value)
+      );
+      if (referencesMovedInstance === false) {
+        continue;
+      }
+      const instanceRoot = resolveContentStorageRoot(projection, {
+        type: "instance",
+        instanceId: instance.id,
+      });
+      if (isSameContentStorageRoot(instanceRoot, targetRoot) === false) {
+        return throwBuilderRuntimeError("BAD_REQUEST", movedReferenceError);
+      }
+    }
+    for (const prop of afterState.props?.values() ?? []) {
+      if (
+        instanceIds.has(prop.instanceId) ||
+        prop.type !== "page" ||
+        typeof prop.value !== "object" ||
+        prop.value === null ||
+        instanceIds.has(prop.value.instanceId) === false
+      ) {
+        continue;
+      }
+      validateExternalReferenceOwnership({
+        root: resolveContentStorageRoot(projection, {
+          type: "instance",
+          instanceId: prop.instanceId,
+        }),
+        referenceRoot: targetRoot,
+        error: movedReferenceError,
+      });
+    }
+    for (const instanceId of instanceIds) {
+      const instance = projection.state.instances?.get(instanceId);
+      for (const child of instance?.children ?? []) {
+        if (child.type === "expression") {
+          validateExpressionReferenceOwnership({
+            projection,
+            root: targetRoot,
+            expression: child.value,
+            ownedDataSourceIds: transferredDataSourceIds,
+            error: movedReferenceError,
+          });
+        }
+      }
+    }
+    for (const propId of recordIds.get("props") ?? []) {
+      const prop = projection.state.props?.get(propId);
+      if (prop !== undefined) {
+        validatePropReferenceOwnership({
+          projection,
+          root: targetRoot,
+          prop,
+          ownedInstanceIds: instanceIds,
+          ownedDataSourceIds: transferredDataSourceIds,
+          ownedResourceIds: resourceIds,
+          error: movedReferenceError,
+        });
+      }
+    }
+    for (const resourceId of resourceIds) {
+      const resource = projection.state.resources?.get(resourceId);
+      if (resource === undefined) {
+        continue;
+      }
+      for (const expression of listResourceExpressions(resource)) {
+        validateExpressionReferenceOwnership({
+          projection,
+          root: targetRoot,
+          expression,
+          ownedDataSourceIds: transferredDataSourceIds,
+          error: movedReferenceError,
+        });
+      }
+    }
+    for (const [namespace, ids] of recordIds) {
+      const afterNamespace = afterState[namespace];
+      if (!(afterNamespace instanceof Map)) {
+        return throwBuilderRuntimeError(
+          "BAD_REQUEST",
+          `Transferred namespace "${namespace}" is missing.`
+        );
+      }
+      for (const id of ids) {
+        const value = afterNamespace.get(id);
+        if (value === undefined) {
+          return throwBuilderRuntimeError(
+            "BAD_REQUEST",
+            `Transferred ${namespace} record "${id}" is missing.`
+          );
+        }
+        markTransferred(namespace, id);
+        addPatch(sourceRoot, namespace, { op: "remove", path: [id] });
+        addPatch(targetRoot, namespace, { op: "add", path: [id], value });
+        for (const externalRoot of [sourceRoot, targetRoot]) {
+          if (externalRoot.type !== "external") {
+            continue;
+          }
+          const removedByNamespace =
+            validationRemovedRecordIdsByBlockId.get(
+              externalRoot.identity.blockInstanceId
+            ) ?? new Map();
+          const removedIds = removedByNamespace.get(namespace) ?? new Set();
+          removedIds.add(id);
+          removedByNamespace.set(namespace, removedIds);
+          validationRemovedRecordIdsByBlockId.set(
+            externalRoot.identity.blockInstanceId,
+            removedByNamespace
+          );
+        }
+        if (sourceRoot.type === "external") {
+          const skippedByNamespace =
+            validationSkippedRecordIdsByBlockId.get(
+              sourceRoot.identity.blockInstanceId
+            ) ?? new Map();
+          const skippedIds = skippedByNamespace.get(namespace) ?? new Set();
+          skippedIds.add(id);
+          skippedByNamespace.set(namespace, skippedIds);
+          validationSkippedRecordIdsByBlockId.set(
+            sourceRoot.identity.blockInstanceId,
+            skippedByNamespace
+          );
+        }
+        if (targetRoot.type === "external" && namespace !== "instances") {
+          const skippedByNamespace =
+            validationSkippedRecordIdsByBlockId.get(
+              targetRoot.identity.blockInstanceId
+            ) ?? new Map();
+          const skippedIds = skippedByNamespace.get(namespace) ?? new Set();
+          skippedIds.add(id);
+          skippedByNamespace.set(namespace, skippedIds);
+          validationSkippedRecordIdsByBlockId.set(
+            targetRoot.identity.blockInstanceId,
+            skippedByNamespace
+          );
+        }
+        if (targetRoot.type === "external" && namespace === "instances") {
+          const incomingIds =
+            incomingInstanceIdsByBlockId.get(
+              targetRoot.identity.blockInstanceId
+            ) ?? new Set();
+          incomingIds.add(id);
+          incomingInstanceIdsByBlockId.set(
+            targetRoot.identity.blockInstanceId,
+            incomingIds
+          );
+        }
+      }
+    }
+  }
   for (const change of mutation.payload) {
     for (const patch of change.patches) {
-      const root = getStructuralPatchRoot({ projection, change, patch });
-      const changes =
-        root.type === "project"
-          ? projectChanges
-          : (externalChanges.get(root.identity.blockInstanceId)?.changes ??
-            new Map());
-      const accumulated = changes.get(change.namespace) ?? {
-        namespace: change.namespace,
-        patches: [],
-      };
-      accumulated.patches.push(patch);
-      changes.set(change.namespace, accumulated);
-      if (root.type === "external") {
-        externalChanges.set(root.identity.blockInstanceId, { root, changes });
+      const [recordId] = patch.path;
+      if (
+        typeof recordId === "string" &&
+        transferredRecordIds.get(change.namespace)?.has(recordId)
+      ) {
+        continue;
       }
+      const root = getStructuralPatchRoot({ projection, change, patch });
+      addPatch(root, change.namespace, patch);
     }
   }
   if (externalChanges.size > 0 && returnStorageChanges !== true) {
@@ -1260,10 +1891,55 @@ export const executeContentStorageStructuralMutation = <
   }
   const storageChanges = Array.from(externalChanges.values()).flatMap(
     ({ root, changes }) => {
+      const removedByNamespace = validationRemovedRecordIdsByBlockId.get(
+        root.identity.blockInstanceId
+      );
+      const validationState = { ...projection.state };
+      if (removedByNamespace !== undefined) {
+        for (const [namespace, ids] of removedByNamespace) {
+          const namespaceState = projection.state[namespace];
+          if (!(namespaceState instanceof Map)) {
+            continue;
+          }
+          const values = new Map(
+            namespaceState as ReadonlyMap<string, unknown>
+          );
+          for (const id of ids) {
+            values.delete(id);
+          }
+          (validationState as Record<string, unknown>)[namespace] = values;
+        }
+      }
+      const incomingInstanceIds = incomingInstanceIdsByBlockId.get(
+        root.identity.blockInstanceId
+      );
+      if (incomingInstanceIds !== undefined && validationState.instances) {
+        validationState.instances = new Map(
+          Array.from(validationState.instances, ([id, instance]) => [
+            id,
+            incomingInstanceIds.has(id)
+              ? instance
+              : {
+                  ...instance,
+                  children: instance.children.filter(
+                    (child) =>
+                      child.type !== "id" ||
+                      incomingInstanceIds.has(child.value) === false
+                  ),
+                },
+          ])
+        );
+      }
       const storageChange = createExternalStorageChange({
         projection,
         root,
         payload: Array.from(changes.values()),
+        transferredRecordIds,
+        validationSkippedRecordIds:
+          validationSkippedRecordIdsByBlockId.get(
+            root.identity.blockInstanceId
+          ) ?? new Map(),
+        validationState,
       });
       return storageChange === undefined ? [] : [storageChange];
     }

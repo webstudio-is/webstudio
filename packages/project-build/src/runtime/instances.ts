@@ -1072,6 +1072,12 @@ export const createInstanceMovePatches = ({
             requestedIndex: requestedInsertIndex,
           })
         : requestedInsertIndex;
+    if (
+      parent.instance.id === nextParent.id &&
+      insertIndex === parent.childIndex
+    ) {
+      continue;
+    }
     if (parent.instance.id !== nextParent.id) {
       const previousLabel = instance.label;
       assignUniqueBlockTemplateNamesMutable({

@@ -1,5 +1,6 @@
 import equal from "fast-deep-equal";
 import {
+  blockTemplateComponent,
   elementComponent,
   instanceComponent,
   ROOT_INSTANCE_ID,
@@ -47,6 +48,7 @@ import { findAvailableVariables } from "./data";
 import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
 import {
   detectFragmentTokenConflicts,
+  extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   webstudioFragmentMutationInput,
 } from "./fragment";
@@ -676,6 +678,8 @@ const createInsertFragmentMutation = <
   insertIndex: explicitInsertIndex,
   conflictResolution,
   contentMode = false,
+  includeDataResources,
+  reusePortalContent,
   additionalAvailableVariables = [],
   getResultDetails,
   validateContentModel = true,
@@ -690,6 +694,8 @@ const createInsertFragmentMutation = <
   insertIndex?: z.infer<typeof insertIndexInput>;
   conflictResolution?: ConflictResolution;
   contentMode?: boolean;
+  includeDataResources?: boolean;
+  reusePortalContent?: boolean;
   additionalAvailableVariables?: DataSource[];
   getResultDetails?: (ids: {
     newInstanceIds: Map<string, string>;
@@ -761,6 +767,8 @@ const createInsertFragmentMutation = <
       metas: componentMetas,
       contentModeCopyableProp: isFragmentContentModeCopyableProp,
       contentMode,
+      includeDataResources,
+      reusePortalContent,
     });
   for (const instanceId of newInstanceIds.values()) {
     if (
@@ -1161,6 +1169,50 @@ export const insertFragment = (
     insertIndex: input.insertIndex,
     conflictResolution: input.conflictResolution,
     contentMode: input.contentMode,
+    protectedChildCount: options.protectedChildCount,
+    context,
+  });
+};
+
+export const insertInstanceCopy = (
+  state: ComponentInsertState,
+  input: {
+    sourceInstanceId: Instance["id"];
+    parentInstanceId: Instance["id"];
+    insertIndex?: number;
+    contentMode?: boolean;
+  },
+  context: BuilderRuntimeContext,
+  options: { protectedChildCount?: number } = {}
+) => {
+  const mutationState = getRequiredComponentInsertState(state);
+  if (mutationState.instances.has(input.sourceInstanceId) === false) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  const fragment = extractWebstudioFragment(
+    mutationState,
+    input.sourceInstanceId
+  );
+  if (
+    fragment.instances.some(
+      (instance) => instance.component === blockTemplateComponent
+    )
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "A subtree containing Content Block Templates cannot be copied across storage roots."
+    );
+  }
+  return createInsertFragmentMutation({
+    state: mutationState,
+    parentInstanceId: input.parentInstanceId,
+    fragment,
+    templates: getComponentTemplates(),
+    insertIndex: input.insertIndex,
+    conflictResolution: "ours",
+    contentMode: input.contentMode,
+    includeDataResources: true,
+    reusePortalContent: false,
     protectedChildCount: options.protectedChildCount,
     context,
   });
