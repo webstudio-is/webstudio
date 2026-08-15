@@ -117,7 +117,7 @@ export const builderRuntimeCutoverManifests = [
       "contentBlocks.semanticEdit",
     ] as const,
     callers: [
-      "Builder Content Block controls",
+      "Builder stateful Content Block adapter using shared application policy",
       "MCP/CLI content editing",
     ] as const,
   },

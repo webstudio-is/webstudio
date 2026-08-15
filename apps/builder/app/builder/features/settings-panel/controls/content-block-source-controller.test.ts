@@ -204,7 +204,7 @@ const createController = ({
     renderScope: "scope",
     projectId: "project",
     session,
-    getState: () => ({ ...state } as never),
+    getState: () => ({ ...state }) as never,
     commitProjectPayload,
     invalidateAssets,
     publishSessionState,
@@ -218,6 +218,7 @@ const createController = ({
     commitProjectPayload,
     invalidateAssets,
     publishSessionState,
+    session,
     storage,
   };
 };
@@ -253,12 +254,34 @@ test("blocks combined project and Asset replacement without a partial write", as
 
   expect(result).toEqual({
     status: "blocked",
+    code: "content-source-atomic-persistence-unavailable",
     message:
       "Replacing file content while changing the Content Block source requires atomic project and Asset persistence, which is not available yet.",
   });
   expect(setup.commitProjectPayload).not.toHaveBeenCalled();
   expect(setup.storage.updateContent).not.toHaveBeenCalled();
   expect(setup.storage.reads).toBe(1);
+  expect(setup.publishSessionState).toHaveBeenLastCalledWith(
+    expect.objectContaining({ status: "saved", source: "# File body" })
+  );
+});
+
+test("rolls back lifecycle preparation that finishes after disposal", async () => {
+  const setup = createController({ state: createState() });
+  const request = setup.controller.requestSource({
+    source: { type: "asset", assetId: "post" },
+    authority: "replace-file-body-with-block-content",
+  });
+  setup.controller.dispose();
+
+  await expect(request).resolves.toMatchObject({
+    status: "blocked",
+    message: "The MDX Asset session is closed.",
+  });
+  expect(setup.storage.updateContent).not.toHaveBeenCalled();
+  expect(setup.session.list()).toEqual([
+    expect.objectContaining({ status: "saved", source: "# File body" }),
+  ]);
 });
 
 test("disconnects by copying loaded file content into one project transaction", async () => {
@@ -293,6 +316,7 @@ test("rejects stale project preparation before committing a patch", async () => 
 
   await expect(pending).resolves.toEqual({
     status: "blocked",
+    code: "content-source-session-failed",
     message: "The project changed while preparing this source update.",
   });
   expect(setup.commitProjectPayload).not.toHaveBeenCalled();
@@ -367,7 +391,9 @@ test("requires explicit remote reload instead of blindly retrying a conflict", a
 
   await expect(controller.retry()).resolves.toEqual({
     status: "blocked",
-    message: "Reload the remote MDX file before retrying this change.",
+    code: "content-source-session-failed",
+    message:
+      "Retry is not available while the MDX Asset session is conflicting",
   });
   expect(retry).not.toHaveBeenCalled();
 });

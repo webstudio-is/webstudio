@@ -6,7 +6,6 @@ import {
 } from "@webstudio-is/content-engine/compiler";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { previewMarkdownToMdxConversion } from "@webstudio-is/content-engine/mdx-conversion";
-import { computeExpression } from "@webstudio-is/project-build/runtime";
 import {
   formatAssetName,
   formatContentBlockSourceIntegrityIssue,
@@ -18,10 +17,7 @@ import {
 import { TextFileEditor } from "~/builder/features/text-file-editor/text-file-editor";
 import { createBuilderHttpAssetContentRepository } from "~/builder/shared/assets/mdx-content-repository";
 import { uploadSingleAsset } from "~/builder/shared/assets/upload-assets";
-import {
-  $authPermit,
-  $variableValuesByInstanceSelector,
-} from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 import {
   $assets,
   $instances,
@@ -71,7 +67,6 @@ export const ContentBlockSourceSection = ({
   const assets = useStore($assets);
   const instances = useStore($instances);
   const authPermit = useStore($authPermit);
-  const variableValues = useStore($variableValuesByInstanceSelector);
   const materializedViewStates = useStore($materializedContentViewStates);
   const viewState = materializedViewStates.get(
     JSON.stringify([blockInstanceId, renderScope])
@@ -83,19 +78,7 @@ export const ContentBlockSourceSection = ({
   const resolvedAssetId =
     source?.type === "asset"
       ? source.assetId
-      : source?.type === "expression"
-        ? (() => {
-            try {
-              const value = computeExpression(
-                source.value,
-                variableValues.get(renderScope) ?? new Map()
-              );
-              return typeof value === "string" ? value : undefined;
-            } catch {
-              return;
-            }
-          })()
-        : undefined;
+      : (viewState?.identity?.assetId ?? viewState?.assetId);
   const resolvedAsset =
     resolvedAssetId === undefined ? undefined : assets.get(resolvedAssetId);
   const blockInstance = instances.get(blockInstanceId);

@@ -11,7 +11,11 @@ import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
 import { describe, expect, test, vi } from "vitest";
 import type { BuilderState } from "../state/builder-state";
 import { createDefaultPages } from "../shared/pages-utils";
-import { createContentBlockApplicationOperations } from "./content-block-application";
+import {
+  createContentBlockApplicationOperations,
+  recoverContentBlockSession,
+  rollbackPreparedContentBlockLifecycle,
+} from "./content-block-application";
 import { createMdxAssetEditingSession } from "./mdx-asset-session";
 
 const encoder = new TextEncoder();
@@ -147,10 +151,74 @@ const createRepository = (initialSource = "# Original") => {
     },
     updateContent,
     getSource: () => source,
+    setSource: (value: string) => {
+      source = value;
+    },
   };
 };
 
 describe("Content Block application operations", () => {
+  test("attempts every prepared rollback when one root is already stale", async () => {
+    const staleRestore = vi.fn(async () => ({
+      status: "blocked" as const,
+      reason: "source-mismatch",
+    }));
+    const pendingRestore = vi.fn(async () => ({
+      status: "applied" as const,
+      state: {},
+    }));
+
+    await expect(
+      rollbackPreparedContentBlockLifecycle({
+        undoEntry: {
+          storage: [
+            {
+              session: { restoreSource: staleRestore },
+              key: "stale",
+              beforeSource: "before-stale",
+              afterSource: "after-stale",
+            },
+            {
+              session: { restoreSource: pendingRestore },
+              key: "pending",
+              beforeSource: "before-pending",
+              afterSource: "after-pending",
+            },
+          ],
+        },
+      } as never)
+    ).resolves.toBe("Prepared MDX rollback is blocked: source-mismatch");
+    expect(pendingRestore).toHaveBeenCalledTimes(1);
+  });
+
+  test("marks successful remote recovery as an Asset refresh", async () => {
+    const conflicting = {
+      status: "conflicting",
+      key: "article",
+      diagnostics: [],
+    } as const;
+    const saved = {
+      status: "saved",
+      key: "article-remote",
+      source: "# Remote",
+      diagnostics: [],
+    } as const;
+
+    await expect(
+      recoverContentBlockSession({
+        session: {
+          reloadRemote: vi.fn(async () => saved),
+        } as never,
+        state: conflicting as never,
+        action: "reload-remote",
+      })
+    ).resolves.toEqual({
+      status: "complete",
+      state: saved,
+      changedAsset: true,
+    });
+  });
+
   test("discovers exact dynamic render scopes and their repair capabilities", async () => {
     const { repository } = createRepository();
     const resolveExpressionAssetId = vi.fn(() => "article");
@@ -233,6 +301,57 @@ describe("Content Block application operations", () => {
     expect(commitProjectPayload).not.toHaveBeenCalled();
     expect(getSource()).toContain("# Updated");
     expect(state.instances?.has(headingId)).toBe(false);
+  });
+
+  test("reports a committed semantic edit when projection recovery is needed", async () => {
+    const storage = createRepository();
+    const state = createState();
+    const updateContent = storage.repository.updateContent;
+    const session = createMdxAssetEditingSession({
+      repository: {
+        ...storage.repository,
+        updateContent: async (input) => {
+          const result = await updateContent(input);
+          state.assets = undefined;
+          return result;
+        },
+      },
+      authorizeAsset: () => true,
+      debounceMilliseconds: 0,
+    });
+    const operations = createContentBlockApplicationOperations({
+      projectId: "project",
+      session,
+      getState: () => state,
+      context: { createId: () => "generated" },
+    });
+    await operations.inspectSource({
+      blockInstanceId: "block",
+      renderScope: "page:/",
+    });
+    const loaded = session.list()[0];
+    if (!("root" in loaded)) {
+      throw new Error("Expected loaded root");
+    }
+
+    await expect(
+      operations.semanticEdit({
+        operationId: "instances.updateText",
+        input: {
+          instanceId: loaded.root.fragment.instances[0].id,
+          childIndex: 0,
+          text: "Updated",
+        },
+        blockInstanceId: "block",
+        renderScope: "page:/",
+      })
+    ).resolves.toMatchObject({ status: "complete" });
+    expect(session.list()).toEqual([
+      expect.objectContaining({
+        status: "recoverable",
+        committedSource: expect.stringContaining("Updated"),
+      }),
+    ]);
   });
 
   test("returns a stale-safe confirmation before replacing persisted body", async () => {
@@ -363,6 +482,39 @@ describe("Content Block application operations", () => {
     expect(commitProjectPayload).toHaveBeenCalledTimes(1);
   });
 
+  test("retries a recoverable parse failure through the configured source", async () => {
+    const { repository, setSource } = createRepository('{alert("unsafe")}');
+    const state = createState();
+    const session = createMdxAssetEditingSession({
+      repository,
+      authorizeAsset: () => true,
+    });
+    const operations = createContentBlockApplicationOperations({
+      projectId: "project",
+      session,
+      getState: () => state,
+      context: { createId: () => "generated" },
+    });
+    await expect(
+      operations.inspectSource({
+        blockInstanceId: "block",
+        renderScope: "page:/",
+      })
+    ).resolves.toMatchObject({ sessionStatus: "recoverable" });
+    setSource("# Repaired");
+
+    await expect(
+      operations.recover({
+        blockInstanceId: "block",
+        renderScope: "page:/",
+        action: "retry",
+      })
+    ).resolves.toMatchObject({
+      status: "complete",
+      result: { inspection: { sessionStatus: "saved" } },
+    });
+  });
+
   test("rolls back prepared file state when atomic connect persistence is unavailable", async () => {
     const { repository, updateContent } = createRepository();
     const state = createState("asset", true);
@@ -389,6 +541,8 @@ describe("Content Block application operations", () => {
     ).resolves.toMatchObject({
       status: "blocked",
       code: "content-source-atomic-persistence-unavailable",
+      message:
+        "Replacing file content while changing the Content Block source requires atomic project and Asset persistence, which is not available yet.",
     });
     expect(session.list()).toEqual([
       expect.objectContaining({ status: "saved", source: "# Original" }),

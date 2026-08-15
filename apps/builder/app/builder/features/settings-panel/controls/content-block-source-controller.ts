@@ -3,11 +3,17 @@ import {
   builderRuntimeContext,
   computeExpression,
   createMdxAssetEditingSession,
+  getContentBlockSessionErrorCode,
+  getContentBlockSessionMessage,
+  getContentBlockSessionSource,
   getContentStorageIdentityKey,
-  getMdxContentPersistencePlan,
+  persistPreparedContentBlockLifecycle,
   prepareContentBlockConnect,
   prepareContentBlockDisconnect,
   prepareContentBlockSwitch,
+  recoverContentBlockSession,
+  isContentBlockSessionSourceCommitted,
+  rollbackPreparedContentBlockLifecycle,
   type ContentBlockSourceAuthority,
   type ContentStorageChange,
   type MaterializedContentRoot,
@@ -49,7 +55,7 @@ export type ContentBlockSourceControllerResult =
       state?: MdxAssetEditingSessionState;
     }>
   | Readonly<{ status: "requires-authority" }>
-  | Readonly<{ status: "blocked"; message: string }>;
+  | Readonly<{ status: "blocked"; code?: string; message: string }>;
 
 type ContentBlockSourceControllerDependencies = Readonly<{
   blockInstanceId: string;
@@ -72,13 +78,6 @@ type ContentBlockSourceControllerDependencies = Readonly<{
   disposeStorageHistory?: typeof disposeMdxAssetHistory;
 }>;
 
-const getEditableSource = (state: MdxAssetEditingSessionState | undefined) =>
-  state !== undefined && "localSource" in state
-    ? state.localSource
-    : state !== undefined && "source" in state
-      ? state.source
-      : undefined;
-
 const getConfiguredSource = ({
   state,
   blockInstanceId,
@@ -92,22 +91,6 @@ const getConfiguredSource = ({
   });
 };
 
-const blockedMessage = {
-  "atomic-project-and-asset-unavailable":
-    "Replacing file content while changing the Content Block source requires atomic project and Asset persistence, which is not available yet.",
-  "atomic-multiple-assets-unavailable":
-    "This change requires atomic updates to multiple Assets, which are not available yet.",
-} as const;
-
-const getStorageSaveError = (state: MdxAssetEditingSessionState) =>
-  state.status === "conflicting"
-    ? "The MDX file changed remotely. Reload it before saving."
-    : state.status === "recoverable"
-      ? "The MDX file still could not be rendered."
-      : state.status === "failed" && "localSource" in state
-        ? "The MDX file could not be saved."
-        : "The MDX file could not be loaded.";
-
 const hasSameBuilderState = (
   left: ReturnType<typeof readBuilderStateStores>,
   right: ReturnType<typeof readBuilderStateStores>
@@ -118,6 +101,10 @@ const hasSameBuilderState = (
       right[namespace as keyof typeof right]
   );
 
+// Builder retains a long-lived session for canvas projection and undo history.
+// Lifecycle persistence and recovery policy stay in project-build so the
+// generated application operations and this stateful adapter make the same
+// authorization, conflict, and atomicity decisions.
 export const createContentBlockSourceController = ({
   blockInstanceId,
   renderScope,
@@ -174,14 +161,6 @@ export const createContentBlockSourceController = ({
     return state;
   };
 
-  const discardBlockedPreparation = (
-    state: MdxAssetEditingSessionState | undefined
-  ) => {
-    if (state?.status === "pending") {
-      session.cancel(state.key);
-    }
-  };
-
   const applyPrepared = async (
     prepared: Awaited<
       ReturnType<
@@ -193,57 +172,54 @@ export const createContentBlockSourceController = ({
     expectedState: ReturnType<typeof readBuilderStateStores>
   ): Promise<ContentBlockSourceControllerResult> => {
     if (disposed) {
-      discardBlockedPreparation(prepared.sourceState);
-      return { status: "blocked", message: "The MDX Asset session is closed." };
+      const rollbackError =
+        await rollbackPreparedContentBlockLifecycle(prepared);
+      return {
+        status: "blocked",
+        code:
+          rollbackError === undefined
+            ? undefined
+            : "content-source-session-failed",
+        message: rollbackError ?? "The MDX Asset session is closed.",
+      };
     }
-    const plan = getMdxContentPersistencePlan(prepared);
-    if (plan.status === "blocked") {
-      discardBlockedPreparation(prepared.sourceState);
-      return { status: "blocked", message: blockedMessage[plan.reason] };
+    const persisted = await persistPreparedContentBlockLifecycle({
+      prepared,
+      session,
+      commitProjectPayload: (payload) => commitProjectPayload([...payload]),
+      canCommitProjectPayload: () =>
+        hasSameBuilderState(expectedState, getState()),
+    });
+    if (persisted.status === "blocked") {
+      if (persisted.state !== undefined) {
+        publishSessionState?.(persisted.state);
+      }
+      return {
+        status: "blocked",
+        code: persisted.code,
+        message: persisted.message,
+      };
     }
-    if (plan.mode === "single-asset") {
-      const sourceState = prepared.sourceState;
-      if (sourceState === undefined || !("key" in sourceState)) {
-        return { status: "blocked", message: "The MDX Asset is not loaded." };
+    if (disposed) {
+      return { status: "applied", state: persisted.state };
+    }
+    if (persisted.state !== undefined) {
+      publishSessionState?.(persisted.state);
+      if ("key" in persisted.state) {
+        currentSessionKey = persisted.state.key;
       }
-      const saved = await session.flush(sourceState.key);
-      if (disposed) {
-        return {
-          status: "blocked",
-          message: "The MDX Asset session is closed.",
-        };
+      if (persisted.state.status === "saved") {
+        publishMaterializedRoot?.(persisted.state.root);
       }
-      publishSessionState?.(saved);
-      if (saved.status !== "saved") {
-        return {
-          status: "blocked",
-          message: getStorageSaveError(saved),
-        };
-      }
-      currentSessionKey = saved.key;
-      publishMaterializedRoot?.(saved.root);
+    }
+    if (prepared.storageWrites.length > 0) {
       invalidate();
-      return { status: "applied", state: saved };
-    }
-    if (plan.mode === "project") {
-      if (hasSameBuilderState(expectedState, getState()) === false) {
-        return {
-          status: "blocked",
-          message: "The project changed while preparing this source update.",
-        };
-      }
-      commitProjectPayload([...prepared.projectPayload]);
     }
     if (prepared.action === "disconnect") {
       currentSessionKey = undefined;
       removeMaterializedRoot?.();
-    } else if (
-      prepared.sourceState !== undefined &&
-      "key" in prepared.sourceState
-    ) {
-      currentSessionKey = prepared.sourceState.key;
     }
-    return { status: "applied", state: prepared.sourceState };
+    return { status: "applied", state: persisted.state };
   };
 
   const requestSource = async ({
@@ -340,11 +316,14 @@ export const createContentBlockSourceController = ({
   const saveStorageChanges = async (
     changes: readonly ContentStorageChange[]
   ): Promise<ContentBlockSourceControllerResult> => {
+    // Builder brackets the shared session write with its global undo journal.
+    // Keep these queue/flush steps explicit so history is recorded only after
+    // durability; commit classification and errors still use shared policy.
     if (disposed || currentSessionKey === undefined) {
       return { status: "blocked", message: "The MDX Asset is not loaded." };
     }
     const key = currentSessionKey;
-    const beforeSource = getEditableSource(session.get(key));
+    const beforeSource = getContentBlockSessionSource(session.get(key));
     if (beforeSource === undefined) {
       return {
         status: "blocked",
@@ -378,7 +357,8 @@ export const createContentBlockSourceController = ({
       dropPendingHistory();
       return {
         status: "blocked",
-        message: getStorageSaveError(pending),
+        code: getContentBlockSessionErrorCode(pending),
+        message: getContentBlockSessionMessage(pending),
       };
     }
     if (disposed) {
@@ -391,7 +371,7 @@ export const createContentBlockSourceController = ({
         message: "The MDX Asset editing session was closed.",
       };
     }
-    const afterSource = getEditableSource(pending);
+    const afterSource = getContentBlockSessionSource(pending);
     if (afterSource === undefined) {
       dropPendingHistory();
       return {
@@ -409,13 +389,18 @@ export const createContentBlockSourceController = ({
     if (disposed === false && currentSessionKey === key) {
       publishSessionState?.(saved);
     }
+    const committed = isContentBlockSessionSourceCommitted({
+      state: saved,
+      source: afterSource,
+    });
     const committedWithProjectionError =
-      saved.status === "recoverable" && saved.committedSource === afterSource;
-    if (saved.status !== "saved" && committedWithProjectionError === false) {
+      committed && saved.status === "recoverable";
+    if (committed === false) {
       dropPendingHistory();
       return {
         status: "blocked",
-        message: getStorageSaveError(saved),
+        code: getContentBlockSessionErrorCode(saved),
+        message: getContentBlockSessionMessage(saved),
       };
     }
     if (disposed) {
@@ -457,8 +442,11 @@ export const createContentBlockSourceController = ({
     if (historyResult?.status === "blocked") {
       return historyResult;
     }
-    if (saved.status === "saved" && currentSessionKey === key) {
+    const savedCurrentSource = currentSessionKey === key;
+    if (savedCurrentSource && "key" in saved) {
       currentSessionKey = saved.key;
+    }
+    if (saved.status === "saved" && savedCurrentSource) {
       publishMaterializedRoot?.(saved.root);
     }
     if (
@@ -478,39 +466,62 @@ export const createContentBlockSourceController = ({
       currentSessionKey === undefined
         ? undefined
         : session.get(currentSessionKey);
-    if (current?.status === "conflicting") {
+    if (current === undefined || currentSessionKey === undefined) {
+      const source = getConfiguredSource({
+        state: getState(),
+        blockInstanceId,
+      });
+      if (source === undefined) {
+        return {
+          status: "blocked",
+          message: "The MDX source is disconnected.",
+        };
+      }
+      const state = await open(source);
+      return state.status === "saved" || state.status === "pending"
+        ? { status: "applied", state }
+        : {
+            status: "blocked",
+            message: getContentBlockSessionMessage(state),
+          };
+    }
+    const key = currentSessionKey;
+    const source = getConfiguredSource({ state: getState(), blockInstanceId });
+    const recovered = await recoverContentBlockSession({
+      session,
+      state: current,
+      action: "retry",
+      reopen:
+        source === undefined
+          ? undefined
+          : () =>
+              session.open({
+                blockInstanceId,
+                source,
+                renderScope,
+                state: getState(),
+                projectId,
+              }),
+    });
+    if (disposed || currentSessionKey !== key) {
+      return { status: "blocked", message: "The MDX Asset session changed." };
+    }
+    publishSessionState?.(recovered.state);
+    if (recovered.status === "blocked") {
       return {
         status: "blocked",
-        message: "Reload the remote MDX file before retrying this change.",
+        code: recovered.code,
+        message: recovered.message,
       };
     }
-    if (
-      currentSessionKey !== undefined &&
-      current?.status === "failed" &&
-      "localSource" in current
-    ) {
-      const key = currentSessionKey;
-      const state = await session.retry(key);
-      if (disposed || currentSessionKey !== key) {
-        return { status: "blocked", message: "The MDX Asset session changed." };
-      }
-      publishSessionState?.(state);
-      if (state.status !== "saved") {
-        return { status: "blocked", message: getStorageSaveError(state) };
-      }
-      currentSessionKey = state.key;
-      publishMaterializedRoot?.(state.root);
+    if (recovered.state.status === "saved") {
+      currentSessionKey = recovered.state.key;
+      publishMaterializedRoot?.(recovered.state.root);
+    }
+    if (recovered.changedAsset) {
       invalidate();
-      return { status: "applied", state };
     }
-    const source = getConfiguredSource({ state: getState(), blockInstanceId });
-    if (source === undefined) {
-      return { status: "blocked", message: "The MDX source is disconnected." };
-    }
-    const state = await open(source);
-    return state.status === "saved" || state.status === "pending"
-      ? { status: "applied", state }
-      : { status: "blocked", message: getStorageSaveError(state) };
+    return { status: "applied", state: recovered.state };
   };
 
   const reloadRemote =
@@ -519,21 +530,34 @@ export const createContentBlockSourceController = ({
         return { status: "blocked", message: "The MDX Asset is not loaded." };
       }
       const key = currentSessionKey;
-      const state = await session.reloadRemote(key);
+      const current = session.get(key);
+      if (current === undefined) {
+        return { status: "blocked", message: "The MDX Asset is not loaded." };
+      }
+      const recovered = await recoverContentBlockSession({
+        session,
+        state: current,
+        action: "reload-remote",
+      });
       if (disposed || currentSessionKey !== key) {
         return { status: "blocked", message: "The MDX Asset session changed." };
       }
+      const state = recovered.state;
       if ("key" in state) {
         currentSessionKey = state.key;
       }
       publishSessionState?.(state);
-      if (state.status === "saved") {
+      if (recovered.status === "complete" && state.status === "saved") {
         publishMaterializedRoot?.(state.root);
         invalidate();
       }
-      return state.status === "saved"
+      return recovered.status === "complete"
         ? { status: "applied", state }
-        : { status: "blocked", message: getStorageSaveError(state) };
+        : {
+            status: "blocked",
+            code: recovered.code,
+            message: recovered.message,
+          };
     };
 
   const copyUnsavedSource = () =>
