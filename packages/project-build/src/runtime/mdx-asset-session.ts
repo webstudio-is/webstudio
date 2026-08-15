@@ -41,6 +41,7 @@ type SessionBase = Readonly<{
 type LoadedSessionBase = SessionBase &
   Readonly<{
     root: ReturnType<typeof materializeMdxAuthoredContent>;
+    source: string;
   }>;
 
 type UnsavedSessionBase = LoadedSessionBase &
@@ -93,8 +94,57 @@ type MdxAssetSessionQueueEntry = {
   timer?: unknown;
   inFlight?: Promise<MdxAssetEditingSessionState>;
   unsavedSource?: string;
+  persisted?: LoadedSessionBase;
   cancelled: boolean;
+  remoteStateUnknown: boolean;
 };
+
+export type MdxAssetSourceRestoreResult =
+  | Readonly<{
+      status: "applied";
+      state: MdxAssetEditingSessionState;
+    }>
+  | Readonly<{
+      status: "blocked";
+      state: MdxAssetEditingSessionState;
+      reason:
+        | "in-flight"
+        | "unresolved-write"
+        | "source-mismatch"
+        | "identity-mismatch";
+      currentSource?: string;
+    }>;
+
+export type MdxAssetSourceRestorePreflight =
+  | Readonly<{ status: "ready"; currentSource: string }>
+  | Extract<MdxAssetSourceRestoreResult, { status: "blocked" }>;
+
+export type MdxAssetPreparedSourceRestore =
+  | Extract<MdxAssetSourceRestoreResult, { status: "blocked" }>
+  | Readonly<{
+      status: "ready";
+      canApply: () => MdxAssetSourceRestorePreflight;
+      apply: (options?: {
+        schedule?: boolean;
+      }) => Extract<MdxAssetSourceRestoreResult, { status: "applied" }>;
+    }>;
+
+export type MdxAssetSourceController = Readonly<{
+  canRestoreSource: (input: {
+    key: string;
+    expectedSource: string;
+  }) => MdxAssetSourceRestorePreflight;
+  restoreSource: (input: {
+    key: string;
+    expectedSource: string;
+    source: string;
+  }) => Promise<MdxAssetSourceRestoreResult>;
+  prepareSourceRestore: (input: {
+    key: string;
+    expectedSource: string;
+    source: string;
+  }) => Promise<MdxAssetPreparedSourceRestore>;
+}>;
 
 const toParserDiagnostic = ({
   error,
@@ -219,6 +269,7 @@ export const createMdxAssetEditingSession = ({
     return {
       key: getContentStorageIdentityKey(identity),
       identity,
+      source,
       root: materializeMdxAuthoredContent({
         identity,
         document,
@@ -277,6 +328,7 @@ export const createMdxAssetEditingSession = ({
       });
     if (existing !== undefined) {
       existing.input = input;
+      existing.version += 1;
       setQueueEntryKey(existing, key);
       return existing;
     }
@@ -286,6 +338,7 @@ export const createMdxAssetEditingSession = ({
       assetId,
       version: 0,
       cancelled: false,
+      remoteStateUnknown: false,
     };
     queueEntries.set(key, entry);
     return entry;
@@ -501,7 +554,11 @@ export const createMdxAssetEditingSession = ({
         status: "saved" as const,
       };
       states.set(key, saved);
-      getOrCreateQueueEntry({ key, input, assetId });
+      const entry = getOrCreateQueueEntry({ key, input, assetId });
+      entry.persisted = loaded;
+      entry.unsavedSource = undefined;
+      entry.cancelled = false;
+      entry.remoteStateUnknown = false;
       return saved;
     } catch (error) {
       if (error instanceof MdxDocumentError) {
@@ -696,17 +753,25 @@ export const createMdxAssetEditingSession = ({
           }),
           contentRef: asset.name,
         };
+        const persisted = await materializeSource({
+          identity,
+          source: unsaved.localSource,
+          input: entry.input,
+        });
+        entry.persisted = persisted;
         const latest = getUnsavedState(states.get(entry.key));
         const hasNewerChanges =
           entry.version !== flushVersion && latest !== undefined;
         const localSource = hasNewerChanges
           ? latest.localSource
           : unsaved.localSource;
-        const loaded = await materializeSource({
-          identity,
-          source: localSource,
-          input: entry.input,
-        });
+        const loaded = hasNewerChanges
+          ? await materializeSource({
+              identity,
+              source: localSource,
+              input: entry.input,
+            })
+          : persisted;
         setQueueEntryKey(entry, loaded.key);
         if (hasNewerChanges) {
           const pending = {
@@ -759,6 +824,16 @@ export const createMdxAssetEditingSession = ({
     return result;
   };
 
+  const scheduleEntry = (entry: MdxAssetSessionQueueEntry) => {
+    if (entry.timer !== undefined) {
+      cancelScheduled(entry.timer);
+    }
+    entry.timer = schedule(() => {
+      entry.timer = undefined;
+      void flushOne(entry.key);
+    }, debounceMilliseconds);
+  };
+
   const queueSave = async ({
     key,
     changes,
@@ -774,13 +849,7 @@ export const createMdxAssetEditingSession = ({
     if (entry === undefined) {
       throw new Error("MDX Asset editing session does not exist");
     }
-    if (entry.timer !== undefined) {
-      cancelScheduled(entry.timer);
-    }
-    entry.timer = schedule(() => {
-      entry.timer = undefined;
-      void flushOne(entry.key);
-    }, debounceMilliseconds);
+    scheduleEntry(entry);
     return state;
   };
 
@@ -818,6 +887,203 @@ export const createMdxAssetEditingSession = ({
   const copyUnsavedSource = (key: string) =>
     queueEntries.get(resolveKey(key))?.unsavedSource;
 
+  const canRestoreSource = ({
+    key,
+    expectedSource,
+  }: {
+    key: string;
+    expectedSource: string;
+  }): MdxAssetSourceRestorePreflight => {
+    const resolvedKey = resolveKey(key);
+    const entry = queueEntries.get(resolvedKey);
+    const state = states.get(resolvedKey);
+    if (entry === undefined || state === undefined) {
+      throw new Error("MDX Asset editing session does not exist");
+    }
+    const currentSource =
+      getUnsavedState(state)?.localSource ??
+      (state.status === "saved"
+        ? state.source
+        : (entry.unsavedSource ?? entry.persisted?.source));
+    if (entry.inFlight !== undefined) {
+      return { status: "blocked", state, reason: "in-flight", currentSource };
+    }
+    if (entry.remoteStateUnknown) {
+      return {
+        status: "blocked",
+        state,
+        reason: "unresolved-write",
+        currentSource,
+      };
+    }
+    if (
+      state.status === "failed" ||
+      state.status === "conflicting" ||
+      state.status === "recoverable"
+    ) {
+      return {
+        status: "blocked",
+        state,
+        reason: "unresolved-write",
+        currentSource,
+      };
+    }
+    if (currentSource !== expectedSource) {
+      return {
+        status: "blocked",
+        state,
+        reason: "source-mismatch",
+        currentSource,
+      };
+    }
+    return { status: "ready", currentSource };
+  };
+
+  const prepareSourceRestore = async ({
+    key,
+    expectedSource,
+    source,
+  }: {
+    key: string;
+    expectedSource: string;
+    source: string;
+  }): Promise<MdxAssetPreparedSourceRestore> => {
+    const preflight = canRestoreSource({ key, expectedSource });
+    if (preflight.status === "blocked") {
+      return preflight;
+    }
+    const resolvedKey = resolveKey(key);
+    const entry = queueEntries.get(resolvedKey)!;
+    const current = states.get(resolvedKey)!;
+    const preparedVersion = entry.version;
+    const preparedIdentityKey =
+      "identity" in current
+        ? getContentStorageIdentityKey(current.identity)
+        : undefined;
+    const canApply = () => {
+      const latest = canRestoreSource({ key, expectedSource });
+      if (latest.status === "blocked") {
+        return latest;
+      }
+      const latestState = states.get(resolveKey(key))!;
+      const latestIdentityKey =
+        "identity" in latestState
+          ? getContentStorageIdentityKey(latestState.identity)
+          : undefined;
+      if (latestIdentityKey !== preparedIdentityKey) {
+        return {
+          status: "blocked" as const,
+          state: latestState,
+          reason: "identity-mismatch" as const,
+          currentSource: latest.currentSource,
+        };
+      }
+      if (entry.version !== preparedVersion) {
+        return {
+          status: "blocked" as const,
+          state: states.get(resolveKey(key))!,
+          reason: "source-mismatch" as const,
+          currentSource: latest.currentSource,
+        };
+      }
+      return latest;
+    };
+    const assertCanApply = () => {
+      if (canApply().status === "blocked") {
+        throw new Error("Prepared MDX Asset source restore is stale");
+      }
+    };
+    if (source === preflight.currentSource) {
+      return {
+        status: "ready",
+        canApply,
+        apply: () => {
+          assertCanApply();
+          return { status: "applied", state: current };
+        },
+      };
+    }
+    if (source === entry.persisted?.source) {
+      const persisted = entry.persisted;
+      return {
+        status: "ready",
+        canApply,
+        apply: () => {
+          assertCanApply();
+          if (entry.timer !== undefined) {
+            cancelScheduled(entry.timer);
+            entry.timer = undefined;
+          }
+          entry.unsavedSource = undefined;
+          entry.cancelled = false;
+          entry.version += 1;
+          const saved = { ...persisted, status: "saved" as const };
+          states.set(resolveKey(key), saved);
+          return { status: "applied", state: saved };
+        },
+      };
+    }
+    const identity =
+      "identity" in current ? current.identity : entry.persisted?.identity;
+    if (identity === undefined) {
+      return {
+        status: "blocked",
+        state: current,
+        reason: "unresolved-write",
+        currentSource: preflight.currentSource,
+      };
+    }
+    const loaded = await materializeSource({
+      identity,
+      source,
+      input: entry.input,
+    });
+    return {
+      status: "ready",
+      canApply,
+      apply: ({ schedule: shouldSchedule = true } = {}) => {
+        assertCanApply();
+        if (entry.timer !== undefined) {
+          cancelScheduled(entry.timer);
+          entry.timer = undefined;
+        }
+        const pending = {
+          ...loaded,
+          status: "pending" as const,
+          localSource: source,
+          writes: [
+            {
+              root: { type: "external" as const, identity },
+              expectedRevision: identity.revision,
+              source,
+            },
+          ],
+        };
+        entry.version += 1;
+        entry.unsavedSource = source;
+        entry.cancelled = false;
+        states.set(resolveKey(key), pending);
+        if (shouldSchedule) {
+          scheduleEntry(entry);
+        }
+        return { status: "applied", state: pending };
+      },
+    };
+  };
+
+  const restoreSource = async (input: {
+    key: string;
+    expectedSource: string;
+    source: string;
+  }): Promise<MdxAssetSourceRestoreResult> => {
+    const prepared = await prepareSourceRestore(input);
+    if (prepared.status === "blocked") {
+      return prepared;
+    }
+    const preflight = prepared.canApply();
+    return preflight.status === "ready" ? prepared.apply() : preflight;
+  };
+
   const cancel = (key: string): MdxAssetEditingSessionState => {
     const resolvedKey = resolveKey(key);
     const current = states.get(resolvedKey);
@@ -830,6 +1096,8 @@ export const createMdxAssetEditingSession = ({
       entry.timer = undefined;
     }
     entry.cancelled = true;
+    entry.remoteStateUnknown =
+      entry.inFlight !== undefined || current.status === "conflicting";
     entry.version += 1;
     const cancelled = {
       status: "cancelled" as const,
@@ -849,6 +1117,9 @@ export const createMdxAssetEditingSession = ({
     retry,
     reloadRemote,
     copyUnsavedSource,
+    canRestoreSource,
+    prepareSourceRestore,
+    restoreSource,
     cancel,
     get: (key: string) => states.get(resolveKey(key)),
     list: () => Array.from(states.values()),

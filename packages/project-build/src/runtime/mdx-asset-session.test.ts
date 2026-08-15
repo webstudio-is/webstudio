@@ -499,6 +499,278 @@ describe("MDX Asset editing session", () => {
     expect(writable.updates).toHaveLength(1);
   });
 
+  test("undoes pending source locally and redoes it through the write queue", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    const tasks = new Set<() => void>();
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: () => true,
+      schedule: (callback) => {
+        tasks.add(callback);
+        return callback;
+      },
+      cancelScheduled: (callback) => tasks.delete(callback as () => void),
+    });
+    const loaded = expectStatus(
+      await session.open({
+        blockInstanceId: "block",
+        source: { type: "asset", assetId: "post" },
+        renderScope: "page:/one",
+        state: createState(),
+        projectId: "project",
+      }),
+      "saved"
+    );
+    const pending = expectStatus(
+      await session.queueSave({
+        key: loaded.key,
+        changes: [textChange(loaded, "After")],
+      }),
+      "pending"
+    );
+
+    const undone = await session.restoreSource({
+      key: loaded.key,
+      expectedSource: pending.localSource,
+      source: loaded.source,
+    });
+    expect(undone).toMatchObject({
+      status: "applied",
+      state: { status: "saved" },
+    });
+    expect(tasks.size).toBe(0);
+    expect(writable.updates).toHaveLength(0);
+
+    const redone = await session.restoreSource({
+      key: loaded.key,
+      expectedSource: loaded.source,
+      source: pending.localSource,
+    });
+    expect(redone).toMatchObject({
+      status: "applied",
+      state: { status: "pending" },
+    });
+    expectStatus(await session.flush(loaded.key), "saved");
+    expect(writable.sources.get("post")).toContain("After");
+  });
+
+  test("treats restoring the current source as an idempotent no-op", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    const tasks = new Set<() => void>();
+    let scheduledCalls = 0;
+    let cancelledCalls = 0;
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: () => true,
+      schedule: (callback) => {
+        scheduledCalls += 1;
+        tasks.add(callback);
+        return callback;
+      },
+      cancelScheduled: (callback) => {
+        cancelledCalls += 1;
+        tasks.delete(callback as () => void);
+      },
+    });
+    const loaded = expectStatus(
+      await session.open({
+        blockInstanceId: "block",
+        source: { type: "asset", assetId: "post" },
+        renderScope: "page:/one",
+        state: createState(),
+        projectId: "project",
+      }),
+      "saved"
+    );
+    const pending = expectStatus(
+      await session.queueSave({
+        key: loaded.key,
+        changes: [textChange(loaded, "After")],
+      }),
+      "pending"
+    );
+
+    expect(
+      await session.restoreSource({
+        key: loaded.key,
+        expectedSource: pending.localSource,
+        source: pending.localSource,
+      })
+    ).toMatchObject({ status: "applied", state: { status: "pending" } });
+    expect(scheduledCalls).toBe(1);
+    expect(cancelledCalls).toBe(0);
+    expect(tasks.size).toBe(1);
+    expect(writable.updates).toHaveLength(0);
+  });
+
+  test("prepares a multi-root restore without scheduling independent persistence", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    const tasks = new Set<() => void>();
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: () => true,
+      schedule: (callback) => {
+        tasks.add(callback);
+        return callback;
+      },
+      cancelScheduled: (callback) => tasks.delete(callback as () => void),
+    });
+    const loaded = expectStatus(
+      await session.open({
+        blockInstanceId: "block",
+        source: { type: "asset", assetId: "post" },
+        renderScope: "page:/one",
+        state: createState(),
+        projectId: "project",
+      }),
+      "saved"
+    );
+    const prepared = await session.prepareSourceRestore({
+      key: loaded.key,
+      expectedSource: loaded.source,
+      source: "After",
+    });
+    if (prepared.status !== "ready") {
+      throw new Error("Expected source restore to be ready");
+    }
+
+    expect(prepared.canApply().status).toBe("ready");
+    expect(prepared.apply({ schedule: false })).toMatchObject({
+      status: "applied",
+      state: { status: "pending", localSource: "After" },
+    });
+    expect(tasks.size).toBe(0);
+    expect(writable.updates).toHaveLength(0);
+  });
+
+  test("rejects a prepared restore after the session changes", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: () => true,
+      schedule: () => 0,
+      cancelScheduled: () => {},
+    });
+    const loaded = expectStatus(
+      await session.open({
+        blockInstanceId: "block",
+        source: { type: "asset", assetId: "post" },
+        renderScope: "page:/one",
+        state: createState(),
+        projectId: "project",
+      }),
+      "saved"
+    );
+    const prepared = await session.prepareSourceRestore({
+      key: loaded.key,
+      expectedSource: loaded.source,
+      source: "After",
+    });
+    if (prepared.status !== "ready") {
+      throw new Error("Expected source restore to be ready");
+    }
+
+    session.cancel(loaded.key);
+
+    expect(prepared.canApply()).toMatchObject({
+      status: "blocked",
+      reason: "source-mismatch",
+    });
+    expect(() => prepared.apply()).toThrowError();
+    expect(writable.updates).toHaveLength(0);
+  });
+
+  test("rejects a prepared restore after the pinned Asset revision changes", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: () => true,
+      schedule: () => 0,
+      cancelScheduled: () => {},
+    });
+    const input = {
+      blockInstanceId: "block",
+      source: { type: "asset" as const, assetId: "post" },
+      renderScope: "page:/one",
+      state: createState(),
+      projectId: "project",
+    };
+    const loaded = expectStatus(await session.open(input), "saved");
+    const prepared = await session.prepareSourceRestore({
+      key: loaded.key,
+      expectedSource: loaded.source,
+      source: "After",
+    });
+    if (prepared.status !== "ready") {
+      throw new Error("Expected source restore to be ready");
+    }
+    await writable.repository.updateContent({
+      assetId: "post",
+      expectedName: loaded.identity.contentRef,
+      data: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(encoder.encode(loaded.source));
+          controller.close();
+        },
+      }),
+    });
+
+    const reopened = expectStatus(await session.open(input), "saved");
+    expect(reopened.identity.contentRef).not.toBe(loaded.identity.contentRef);
+    expect(prepared.canApply()).toMatchObject({
+      status: "blocked",
+      reason: "identity-mismatch",
+    });
+    expect(() => prepared.apply()).toThrowError();
+  });
+
+  test("undoes and redoes saved content against each latest revision", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: () => true,
+      schedule: () => 0,
+      cancelScheduled: () => {},
+    });
+    const loaded = expectStatus(
+      await session.open({
+        blockInstanceId: "block",
+        source: { type: "asset", assetId: "post" },
+        renderScope: "page:/one",
+        state: createState(),
+        projectId: "project",
+      }),
+      "saved"
+    );
+    await session.queueSave({
+      key: loaded.key,
+      changes: [textChange(loaded, "After")],
+    });
+    const savedAfter = expectStatus(await session.flush(loaded.key), "saved");
+
+    expect(
+      await session.restoreSource({
+        key: loaded.key,
+        expectedSource: savedAfter.source,
+        source: loaded.source,
+      })
+    ).toMatchObject({ status: "applied", state: { status: "pending" } });
+    const savedBefore = expectStatus(await session.flush(loaded.key), "saved");
+    expect(savedBefore.identity.contentRef).toBe("post_revision_2.mdx");
+    expect(writable.sources.get("post")).toBe("Before");
+
+    expect(
+      await session.restoreSource({
+        key: loaded.key,
+        expectedSource: savedBefore.source,
+        source: savedAfter.source,
+      })
+    ).toMatchObject({ status: "applied", state: { status: "pending" } });
+    const redone = expectStatus(await session.flush(loaded.key), "saved");
+    expect(redone.identity.contentRef).toBe("post_revision_3.mdx");
+    expect(writable.sources.get("post")).toContain("After");
+  });
+
   test("serializes an edit queued while a write is in flight", async () => {
     const writable = createWritableRepository(new Map([["post", "Before"]]));
     const updateContent = writable.repository.updateContent;
@@ -668,6 +940,22 @@ describe("MDX Asset editing session", () => {
     const failed = expectStatus(await session.flush(loaded.key), "failed");
     expect(failed.error.message).toBe("Offline");
     expect(session.copyUnsavedSource(loaded.key)).toContain("After");
+    if (!("localSource" in failed)) {
+      throw new Error("Expected failed write state");
+    }
+    expect(
+      session.canRestoreSource({
+        key: loaded.key,
+        expectedSource: failed.localSource,
+      })
+    ).toMatchObject({ status: "blocked", reason: "unresolved-write" });
+    expect(
+      await session.restoreSource({
+        key: loaded.key,
+        expectedSource: failed.localSource,
+        source: loaded.source,
+      })
+    ).toMatchObject({ status: "blocked", reason: "unresolved-write" });
     expect(await session.open(input)).toBe(failed);
     expectStatus(await session.retry(loaded.key), "saved");
     expect(writable.sources.get("post")).toContain("After");
@@ -804,14 +1092,24 @@ describe("MDX Asset editing session", () => {
       projectId: "project",
     };
     const loaded = expectStatus(await session.open(input), "saved");
-    await session.queueSave({
-      key: loaded.key,
-      changes: [textChange(loaded, "Cancelled")],
-    });
+    const pending = expectStatus(
+      await session.queueSave({
+        key: loaded.key,
+        changes: [textChange(loaded, "Cancelled")],
+      }),
+      "pending"
+    );
     expect(session.cancel(loaded.key).status).toBe("cancelled");
     expect(tasks.size).toBe(0);
     expectStatus(await session.flush(loaded.key), "cancelled");
     expect(writable.updates).toHaveLength(0);
+    expect(
+      await session.restoreSource({
+        key: loaded.key,
+        expectedSource: pending.localSource,
+        source: loaded.source,
+      })
+    ).toMatchObject({ status: "applied", state: { status: "saved" } });
 
     const stale = createMdxAssetEditingSession({
       repository: {
@@ -842,6 +1140,13 @@ describe("MDX Asset editing session", () => {
       "Asset repository returned a stale MDX revision"
     );
     expect(stale.copyUnsavedSource(staleLoaded.key)).toContain("Stale");
+    stale.cancel(staleLoaded.key);
+    expect(
+      stale.canRestoreSource({
+        key: staleLoaded.key,
+        expectedSource: stale.copyUnsavedSource(staleLoaded.key)!,
+      })
+    ).toMatchObject({ status: "blocked", reason: "unresolved-write" });
   });
 
   test("cancels an in-flight flush before storage starts", async () => {
@@ -927,11 +1232,16 @@ describe("MDX Asset editing session", () => {
     const flushing = session.flush(loaded.key);
     await storageStarted;
     session.cancel(loaded.key);
-    const reopening = session.open(input);
-    setTimeout(release, 0);
+    release();
 
     expectStatus(await flushing, "cancelled");
-    const reopened = expectStatus(await reopening, "saved");
+    expect(
+      session.canRestoreSource({
+        key: loaded.key,
+        expectedSource: loaded.source,
+      })
+    ).toMatchObject({ status: "blocked", reason: "unresolved-write" });
+    const reopened = expectStatus(await session.open(input), "saved");
     expect(reopened.identity.contentRef).toBe("post_revision_1.mdx");
     expect(reopened.root.fragment.instances[0].children).toEqual([
       { type: "text", value: "After" },
