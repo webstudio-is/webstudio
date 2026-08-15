@@ -75,6 +75,10 @@ import { RootStyleConflictDialog } from "~/shared/root-style-conflict-dialog";
 import { DesignTokenImportDialog } from "~/shared/design-token-import-dialog";
 import type { User } from "~/shared/db/user.server";
 import { TemplateNameConfirmationDialog } from "./features/template-name-confirmation-dialog";
+import {
+  initializeMdxHistoryBridge,
+  resetBuilderMdxHistory,
+} from "~/shared/content-block-history-bridge";
 
 import {
   initCopyPaste,
@@ -318,6 +322,7 @@ export const Builder = (props: BuilderProps) => {
   });
 
   useToastErrors();
+  useEffect(() => initializeMdxHistoryBridge(), []);
   useEffect(subscribeCommands, []);
   useEffect(subscribeResources, []);
   useEffect(() => {
@@ -329,6 +334,7 @@ export const Builder = (props: BuilderProps) => {
   useUnmount(() => {
     $pages.set(undefined);
     abortPendingTemplateNameConfirmation();
+    resetBuilderMdxHistory();
   });
 
   const dataLoadingState = useStore($dataLoadingState);

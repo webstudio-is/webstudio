@@ -38,6 +38,12 @@ import {
   removeMaterializedContentRoot,
   registerContentBlockPresentationActions,
 } from "~/shared/content-block-content";
+import {
+  beginMdxAssetHistory,
+  disposeMdxAssetHistory,
+  dropMdxAssetHistory,
+  recordMdxAssetHistory,
+} from "~/shared/content-block-history-bridge";
 
 export type ContentBlockSourceControllerResult =
   | Readonly<{
@@ -62,7 +68,18 @@ type ContentBlockSourceControllerDependencies = Readonly<{
   publishMaterializedRoot?: (root: MaterializedContentRoot) => void;
   publishSessionState?: (state: MdxAssetEditingSessionState) => void;
   removeMaterializedRoot?: () => void;
+  recordStorageHistory?: typeof recordMdxAssetHistory;
+  beginStorageHistory?: typeof beginMdxAssetHistory;
+  dropStorageHistory?: typeof dropMdxAssetHistory;
+  disposeStorageHistory?: typeof disposeMdxAssetHistory;
 }>;
+
+const getEditableSource = (state: MdxAssetEditingSessionState | undefined) =>
+  state !== undefined && "localSource" in state
+    ? state.localSource
+    : state !== undefined && "source" in state
+    ? state.source
+    : undefined;
 
 const getConfiguredSource = ({
   state,
@@ -88,10 +105,10 @@ const getStorageSaveError = (state: MdxAssetEditingSessionState) =>
   state.status === "conflicting"
     ? "The MDX file changed remotely. Reload it before saving."
     : state.status === "recoverable"
-      ? "The MDX file still could not be rendered."
-      : state.status === "failed" && "localSource" in state
-        ? "The MDX file could not be saved."
-        : "The MDX file could not be loaded.";
+    ? "The MDX file still could not be rendered."
+    : state.status === "failed" && "localSource" in state
+    ? "The MDX file could not be saved."
+    : "The MDX file could not be loaded.";
 
 const hasSameBuilderState = (
   left: ReturnType<typeof readBuilderStateStores>,
@@ -114,10 +131,29 @@ export const createContentBlockSourceController = ({
   publishMaterializedRoot,
   publishSessionState,
   removeMaterializedRoot,
+  recordStorageHistory,
+  beginStorageHistory,
+  dropStorageHistory,
+  disposeStorageHistory,
 }: ContentBlockSourceControllerDependencies) => {
   let currentSessionKey: string | undefined;
   let openVersion = 0;
   let disposed = false;
+  const storageHistoryIds = new Set<string>();
+  const isCurrentSessionKey = (key: string) => {
+    if (disposed || currentSessionKey === undefined) {
+      return false;
+    }
+    const candidate = session.get(key);
+    const current = session.get(currentSessionKey);
+    return (
+      candidate !== undefined &&
+      current !== undefined &&
+      "key" in candidate &&
+      "key" in current &&
+      candidate.key === current.key
+    );
+  };
 
   const open = async (source: ContentBlockSource) => {
     const version = ++openVersion;
@@ -310,35 +346,127 @@ export const createContentBlockSourceController = ({
       return { status: "blocked", message: "The MDX Asset is not loaded." };
     }
     const key = currentSessionKey;
-    const pending = await session.queueSave({
-      key,
-      changes,
-    });
+    const beforeSource = getEditableSource(session.get(key));
+    if (beforeSource === undefined) {
+      return {
+        status: "blocked",
+        message: "The current MDX source cannot be added to history.",
+      };
+    }
+    const historyId =
+      recordStorageHistory === undefined ? undefined : beginStorageHistory?.();
+    if (historyId !== undefined) {
+      storageHistoryIds.add(historyId);
+    }
+    const dropPendingHistory = () => {
+      if (historyId !== undefined && storageHistoryIds.delete(historyId)) {
+        dropStorageHistory?.(historyId);
+      }
+    };
+    let pending: Awaited<ReturnType<typeof session.queueSave>>;
+    try {
+      pending = await session.queueSave({
+        key,
+        changes,
+      });
+    } catch (error) {
+      dropPendingHistory();
+      throw error;
+    }
     if (disposed === false && currentSessionKey === key) {
       publishSessionState?.(pending);
     }
     if (pending.status !== "pending" && pending.status !== "saved") {
+      dropPendingHistory();
       return {
         status: "blocked",
         message: getStorageSaveError(pending),
       };
     }
-    const saved =
-      pending.status === "pending" ? await session.flush(key) : pending;
+    if (disposed) {
+      dropPendingHistory();
+      if (pending.status === "pending") {
+        session.cancel(key);
+      }
+      return {
+        status: "blocked",
+        message: "The MDX Asset editing session was closed.",
+      };
+    }
+    const afterSource = getEditableSource(pending);
+    if (afterSource === undefined) {
+      dropPendingHistory();
+      return {
+        status: "blocked",
+        message: "The updated MDX source cannot be added to history.",
+      };
+    }
+    let saved: Awaited<ReturnType<typeof session.flush>>;
+    try {
+      saved = pending.status === "pending" ? await session.flush(key) : pending;
+    } catch (error) {
+      dropPendingHistory();
+      throw error;
+    }
     if (disposed === false && currentSessionKey === key) {
       publishSessionState?.(saved);
     }
-    if (saved.status !== "saved") {
+    const committedWithProjectionError =
+      saved.status === "recoverable" && saved.committedSource === afterSource;
+    if (saved.status !== "saved" && committedWithProjectionError === false) {
+      dropPendingHistory();
       return {
         status: "blocked",
         message: getStorageSaveError(saved),
       };
     }
-    if (disposed === false && currentSessionKey === key) {
+    if (disposed) {
+      dropPendingHistory();
+      return {
+        status: "blocked",
+        message: "The MDX Asset editing session was closed.",
+      };
+    }
+    const historyResult = recordStorageHistory?.({
+      id: historyId,
+      state: getState(),
+      mutation: { payload: [] },
+      session,
+      key,
+      beforeSource,
+      afterSource,
+      isCurrent: () => isCurrentSessionKey(key),
+      publishState: (historyState) => {
+        if (
+          historyState.status === "saved" ||
+          (historyState.status === "recoverable" &&
+            historyState.committedSource !== undefined)
+        ) {
+          invalidate();
+        }
+        if (isCurrentSessionKey(key) === false) {
+          return;
+        }
+        publishSessionState?.(historyState);
+        if (historyState.status === "saved") {
+          publishMaterializedRoot?.(historyState.root);
+        }
+      },
+    });
+    if (historyId !== undefined) {
+      storageHistoryIds.delete(historyId);
+    }
+    if (historyResult?.status === "blocked") {
+      return historyResult;
+    }
+    if (saved.status === "saved" && currentSessionKey === key) {
       currentSessionKey = saved.key;
       publishMaterializedRoot?.(saved.root);
     }
-    if (disposed === false && currentSessionKey === saved.key) {
+    if (
+      (saved.status === "saved" && currentSessionKey === saved.key) ||
+      committedWithProjectionError
+    ) {
       invalidate();
     }
     return { status: "applied", state: saved };
@@ -435,6 +563,11 @@ export const createContentBlockSourceController = ({
     disposed = true;
     openVersion += 1;
     currentSessionKey = undefined;
+    disposeStorageHistory?.(session);
+    for (const entryId of storageHistoryIds) {
+      dropStorageHistory?.(entryId);
+    }
+    storageHistoryIds.clear();
     for (const state of session.list()) {
       if (state.status === "pending") {
         session.cancel(state.key);
@@ -564,6 +697,10 @@ export const createBuilderContentBlockSourceController = ({
         });
       }
     },
+    recordStorageHistory: recordMdxAssetHistory,
+    beginStorageHistory: beginMdxAssetHistory,
+    dropStorageHistory: dropMdxAssetHistory,
+    disposeStorageHistory: disposeMdxAssetHistory,
     removeMaterializedRoot: () =>
       removeMaterializedContentRoot({ blockInstanceId, renderScope }),
   });

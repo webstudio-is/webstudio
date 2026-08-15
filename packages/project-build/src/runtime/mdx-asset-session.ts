@@ -56,7 +56,12 @@ export type MdxAssetEditingSessionState =
   | (SessionBase & Readonly<{ status: "conflicting" }>)
   | (UnsavedSessionBase & Readonly<{ status: "conflicting"; error: Error }>)
   | (SessionBase & Readonly<{ status: "cancelled" }>)
-  | (SessionBase & Readonly<{ status: "recoverable"; error: Error }>)
+  | (SessionBase &
+      Readonly<{
+        status: "recoverable";
+        error: Error;
+        committedSource?: string;
+      }>)
   | Readonly<{
       status: "failed";
       blockInstanceId: string;
@@ -145,6 +150,12 @@ export type MdxAssetSourceController = Readonly<{
     expectedSource: string;
     source: string;
   }) => Promise<MdxAssetPreparedSourceRestore>;
+  persistSourceRestore: (input: {
+    key: string;
+    expectedSource: string;
+    source: string;
+    isCurrent?: () => boolean;
+  }) => Promise<MdxAssetSourceRestoreResult>;
 }>;
 
 const toParserDiagnostic = ({
@@ -711,6 +722,12 @@ export const createMdxAssetEditingSession = ({
     const flushKey = entry.key;
     const operation = (async (): Promise<MdxAssetEditingSessionState> => {
       let storageCommitted = false;
+      let committed:
+        | Readonly<{
+            identity: ContentBlockExternalContentIdentity;
+            source: string;
+          }>
+        | undefined;
       try {
         const writeAuthorized = await authorizeAsset({
           assetId: unsaved.identity.assetId,
@@ -765,6 +782,7 @@ export const createMdxAssetEditingSession = ({
           }),
           contentRef: asset.name,
         };
+        committed = { identity, source: unsaved.localSource };
         const persisted = await materializeSource({
           identity,
           source: unsaved.localSource,
@@ -808,6 +826,21 @@ export const createMdxAssetEditingSession = ({
       } catch (error) {
         if (entry.cancelled) {
           return states.get(entry.key) ?? initial;
+        }
+        if (committed !== undefined) {
+          entry.persisted = undefined;
+          entry.unsavedSource = undefined;
+          entry.remoteStateUnknown = false;
+          const recoverable = {
+            ...createRecoverableState({
+              error,
+              identity: committed.identity,
+            }),
+            committedSource: committed.source,
+          };
+          setQueueEntryKey(entry, recoverable.key);
+          states.set(entry.key, recoverable);
+          return recoverable;
         }
         const latest = getUnsavedState(states.get(entry.key)) ?? unsaved;
         const writeError =
@@ -916,7 +949,9 @@ export const createMdxAssetEditingSession = ({
       getUnsavedState(state)?.localSource ??
       (state.status === "saved"
         ? state.source
-        : (entry.unsavedSource ?? entry.persisted?.source));
+        : state.status === "recoverable" && state.committedSource !== undefined
+        ? state.committedSource
+        : entry.unsavedSource ?? entry.persisted?.source);
     if (entry.inFlight !== undefined) {
       return { status: "blocked", state, reason: "in-flight", currentSource };
     }
@@ -931,7 +966,7 @@ export const createMdxAssetEditingSession = ({
     if (
       state.status === "failed" ||
       state.status === "conflicting" ||
-      state.status === "recoverable"
+      (state.status === "recoverable" && state.committedSource === undefined)
     ) {
       return {
         status: "blocked",
@@ -1116,6 +1151,97 @@ export const createMdxAssetEditingSession = ({
     return preflight.status === "ready" ? prepared.apply() : preflight;
   };
 
+  const persistSourceRestore = async (input: {
+    key: string;
+    expectedSource: string;
+    source: string;
+    isCurrent?: () => boolean;
+  }): Promise<MdxAssetSourceRestoreResult> => {
+    const isPersistedSource = (
+      state: MdxAssetEditingSessionState,
+      source: string
+    ) =>
+      (state.status === "saved" && state.source === source) ||
+      (state.status === "recoverable" && state.committedSource === source);
+    const current = states.get(resolveKey(input.key));
+    if (
+      current?.status === "recoverable" &&
+      current.committedSource === input.source
+    ) {
+      return input.isCurrent?.() === false
+        ? {
+            status: "blocked",
+            state: current,
+            reason: "source-mismatch",
+            currentSource: current.committedSource,
+          }
+        : { status: "applied", state: current };
+    }
+    if (
+      current !== undefined &&
+      (current.status === "failed" || current.status === "pending") &&
+      "localSource" in current &&
+      current.localSource === input.source
+    ) {
+      if (input.isCurrent?.() === false) {
+        return {
+          status: "blocked",
+          state: current,
+          reason: "source-mismatch",
+          currentSource: current.localSource,
+        };
+      }
+      const persisted = await flushOne(input.key);
+      return isPersistedSource(persisted, input.source)
+        ? { status: "applied", state: persisted }
+        : {
+            status: "blocked",
+            state: persisted,
+            reason: "unresolved-write",
+            currentSource:
+              "localSource" in persisted
+                ? persisted.localSource
+                : "source" in persisted
+                ? persisted.source
+                : undefined,
+          };
+    }
+    const prepared = await prepareSourceRestore(input);
+    if (prepared.status === "blocked") {
+      return prepared;
+    }
+    const preflight = prepared.canApply();
+    if (preflight.status === "blocked") {
+      return preflight;
+    }
+    if (input.isCurrent?.() === false) {
+      return {
+        status: "blocked",
+        state: states.get(resolveKey(input.key))!,
+        reason: "source-mismatch",
+        currentSource: preflight.currentSource,
+      };
+    }
+    const restored = prepared.apply({ schedule: false });
+    if (restored.state.status !== "pending") {
+      return restored;
+    }
+    const persisted = await flushOne(restored.state.key);
+    return isPersistedSource(persisted, input.source)
+      ? { status: "applied", state: persisted }
+      : {
+          status: "blocked",
+          state: persisted,
+          reason: "unresolved-write",
+          currentSource:
+            "localSource" in persisted
+              ? persisted.localSource
+              : "source" in persisted
+              ? persisted.source
+              : undefined,
+        };
+  };
+
   const cancel = (key: string): MdxAssetEditingSessionState => {
     const resolvedKey = resolveKey(key);
     const current = states.get(resolvedKey);
@@ -1151,6 +1277,7 @@ export const createMdxAssetEditingSession = ({
     copyUnsavedSource,
     canRestoreSource,
     prepareSourceRestore,
+    persistSourceRestore,
     restoreSource,
     cancel,
     get: (key: string) => states.get(resolveKey(key)),

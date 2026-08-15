@@ -10,7 +10,7 @@ import { createContentBlockSourceController } from "./content-block-source-contr
 
 const encoder = new TextEncoder();
 
-const createRepository = (source: string) => {
+const createRepository = (source: string, updateError?: Error) => {
   let reads = 0;
   let currentSource = source;
   let revision = 0;
@@ -22,6 +22,9 @@ const createRepository = (source: string) => {
       assetId: string;
       data: ReadableStream<Uint8Array>;
     }) => {
+      if (updateError !== undefined) {
+        throw updateError;
+      }
       currentSource = await new Response(data).text();
       revision += 1;
       return {
@@ -165,12 +168,30 @@ const createController = ({
   state,
   fileSource = "# File body",
   authorizeAsset = () => true,
+  recordStorageHistory,
+  beginStorageHistory,
+  dropStorageHistory,
+  disposeStorageHistory,
+  updateError,
 }: {
   state: ReturnType<typeof createState>;
   fileSource?: string;
   authorizeAsset?: () => boolean;
+  recordStorageHistory?: Parameters<
+    typeof createContentBlockSourceController
+  >[0]["recordStorageHistory"];
+  beginStorageHistory?: Parameters<
+    typeof createContentBlockSourceController
+  >[0]["beginStorageHistory"];
+  dropStorageHistory?: Parameters<
+    typeof createContentBlockSourceController
+  >[0]["dropStorageHistory"];
+  disposeStorageHistory?: Parameters<
+    typeof createContentBlockSourceController
+  >[0]["disposeStorageHistory"];
+  updateError?: Error;
 }) => {
-  const storage = createRepository(fileSource);
+  const storage = createRepository(fileSource, updateError);
   const session = createMdxAssetEditingSession({
     repository: storage.repository,
     authorizeAsset,
@@ -187,6 +208,10 @@ const createController = ({
     commitProjectPayload,
     invalidateAssets,
     publishSessionState,
+    recordStorageHistory,
+    beginStorageHistory,
+    dropStorageHistory,
+    disposeStorageHistory,
   });
   return {
     controller,
@@ -405,9 +430,26 @@ test("does not publish a retry that finishes after the source changes", async ()
 });
 
 test("persists a single-Asset content edit and invalidates Asset resources", async () => {
+  const recordStorageHistory = vi.fn(
+    (
+      _input: Parameters<
+        NonNullable<
+          Parameters<
+            typeof createContentBlockSourceController
+          >[0]["recordStorageHistory"]
+        >
+      >[0]
+    ) => ({
+      status: "applied" as const,
+      entryId: "history",
+    })
+  );
+  const beginStorageHistory = vi.fn(() => "history");
   const setup = createController({
     state: createState({ body: false }),
     fileSource: "Before",
+    recordStorageHistory,
+    beginStorageHistory,
   });
   const loaded = await setup.controller.open({
     type: "asset",
@@ -450,6 +492,82 @@ test("persists a single-Asset content edit and invalidates Asset resources", asy
   expect(setup.storage.updateContent).toHaveBeenCalledTimes(1);
   expect(setup.invalidateAssets).toHaveBeenCalledTimes(1);
   expect(setup.commitProjectPayload).not.toHaveBeenCalled();
+  expect(recordStorageHistory).toHaveBeenCalledOnce();
+  expect(beginStorageHistory).toHaveBeenCalledOnce();
+  expect(recordStorageHistory).toHaveBeenCalledWith(
+    expect.objectContaining({
+      beforeSource: "Before",
+      afterSource: "After\n",
+      id: "history",
+      mutation: { payload: [] },
+      isCurrent: expect.any(Function),
+    })
+  );
+  const historyInput = recordStorageHistory.mock.calls[0][0];
+  expect(historyInput.isCurrent?.()).toBe(true);
+  await setup.controller.open({ type: "asset", assetId: "other" });
+  expect(historyInput.isCurrent?.()).toBe(false);
+});
+
+test("removes its storage history when disposed", () => {
+  const disposeStorageHistory = vi.fn();
+  const setup = createController({
+    state: createState({ body: false }),
+    disposeStorageHistory,
+  });
+
+  setup.controller.dispose();
+  setup.controller.dispose();
+
+  expect(disposeStorageHistory).toHaveBeenCalledOnce();
+});
+
+test("drops pending history when the Asset save fails", async () => {
+  const recordStorageHistory = vi.fn();
+  const beginStorageHistory = vi.fn(() => "failed-history");
+  const dropStorageHistory = vi.fn();
+  const setup = createController({
+    state: createState({ body: false }),
+    fileSource: "Before",
+    updateError: new Error("write failed"),
+    recordStorageHistory,
+    beginStorageHistory,
+    dropStorageHistory,
+  });
+  const loaded = await setup.controller.open({
+    type: "asset",
+    assetId: "post",
+  });
+  if (loaded.status !== "saved") {
+    throw new Error("Expected saved state");
+  }
+
+  expect(
+    await setup.controller.saveStorageChanges([
+      {
+        root: { type: "external", identity: loaded.identity },
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                op: "replace",
+                path: [
+                  loaded.root.fragment.instances[0].id,
+                  "children",
+                  0,
+                  "value",
+                ],
+                value: "After",
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  ).toMatchObject({ status: "blocked" });
+  expect(recordStorageHistory).not.toHaveBeenCalled();
+  expect(dropStorageHistory).toHaveBeenCalledWith("failed-history");
 });
 
 test("keeps the newest source when an older load finishes last", async () => {
@@ -459,6 +577,7 @@ test("keeps the newest source when an older load finishes last", async () => {
     identity: { assetId },
     root: {},
     diagnostics: [],
+    source: assetId,
   });
   let finishFirstLoad:
     | ((state: ReturnType<typeof createLoadedState>) => void)
@@ -474,6 +593,7 @@ test("keeps the newest source when an older load finishes last", async () => {
     queueSave: vi.fn(({ key }: { key: string }) =>
       Promise.resolve(createLoadedState(key))
     ),
+    get: (key: string) => createLoadedState(key),
     list: () => [],
   };
   const controller = createContentBlockSourceController({
@@ -505,6 +625,7 @@ test("finishes an in-flight save against its pinned source after switching", asy
     identity: { assetId },
     root: {},
     diagnostics: [],
+    source: assetId,
   });
   let finishQueue: ((state: unknown) => void) | undefined;
   const queueSave = vi
@@ -529,6 +650,7 @@ test("finishes an in-flight save against its pinned source after switching", asy
     ),
     queueSave,
     flush,
+    get: (key: string) => createLoadedState(key),
     list: () => [],
   };
   const controller = createContentBlockSourceController({

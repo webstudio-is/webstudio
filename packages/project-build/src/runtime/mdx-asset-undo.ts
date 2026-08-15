@@ -12,6 +12,7 @@ export type MdxAssetUndoStorageSnapshot = Readonly<{
   key: string;
   beforeSource: string;
   afterSource: string;
+  isCurrent?: () => boolean;
 }>;
 
 export type MdxAssetUndoEntry = Readonly<{
@@ -81,7 +82,8 @@ export type MdxAssetUndoResult =
           | "source-mismatch"
           | "identity-mismatch"
           | "unauthorized"
-          | "session-unavailable";
+          | "session-unavailable"
+          | "atomic-persistence-unavailable";
         currentSource?: string;
         error?: Error;
       }>[];
@@ -91,10 +93,7 @@ export type MdxAssetUndoResult =
       entryId: string;
       projectPayload: readonly BuilderPatchChange[];
       storageStates: readonly MdxAssetEditingSessionState[];
-      persistence:
-        | "project-only"
-        | "single-root"
-        | "requires-multi-root-coordinator";
+      persistence: "project-only" | "single-root";
     }>;
 
 const getSources = (
@@ -105,19 +104,8 @@ const getSources = (
     ? { expectedSource: snapshot.afterSource, source: snapshot.beforeSource }
     : { expectedSource: snapshot.beforeSource, source: snapshot.afterSource };
 
-const getPersistence = (
-  storageCount: number
-): Extract<MdxAssetUndoResult, { status: "applied" }>["persistence"] => {
-  if (storageCount === 0) {
-    return "project-only";
-  }
-  if (storageCount === 1) {
-    return "single-root";
-  }
-  return "requires-multi-root-coordinator";
-};
-
 export const createMdxAssetUndoJournal = () => {
+  const maxEntries = 100;
   const undoEntries: MdxAssetUndoEntry[] = [];
   const redoEntries: MdxAssetUndoEntry[] = [];
   let pendingOperation: Promise<void> = Promise.resolve();
@@ -131,69 +119,79 @@ export const createMdxAssetUndoJournal = () => {
     if (entry === undefined) {
       return { status: "noop" };
     }
-    const blockers: Extract<
-      MdxAssetUndoResult,
-      { status: "blocked" }
-    >["blockers"][number][] = [];
-    const preparedRestores: Array<
-      Extract<
-        Awaited<ReturnType<MdxAssetSourceController["prepareSourceRestore"]>>,
-        { status: "ready" }
-      >
-    > = [];
-    for (const snapshot of entry.storage) {
+    if (
+      entry.storage.length > 1 ||
+      (entry.storage.length > 0 &&
+        entry.project.redo.some(({ patches }) => patches.length > 0))
+    ) {
+      return {
+        status: "blocked",
+        entryId: entry.id,
+        blockers: entry.storage.map(({ key }) => ({
+          key,
+          reason: "atomic-persistence-unavailable" as const,
+        })),
+      };
+    }
+    if (entry.storage.length === 1) {
+      const snapshot = entry.storage[0];
       const sources = getSources(snapshot, direction);
+      let restored: Awaited<
+        ReturnType<MdxAssetSourceController["persistSourceRestore"]>
+      >;
       try {
-        const prepared = await snapshot.session.prepareSourceRestore({
+        restored = await snapshot.session.persistSourceRestore({
           key: snapshot.key,
           ...sources,
+          isCurrent: () =>
+            source.at(-1) === entry && snapshot.isCurrent?.() !== false,
         });
-        if (prepared.status === "blocked") {
-          blockers.push({
-            key: snapshot.key,
-            reason: prepared.reason,
-            currentSource: prepared.currentSource,
-          });
-        } else {
-          preparedRestores.push(prepared);
-        }
       } catch (error) {
-        blockers.push({
-          key: snapshot.key,
-          reason: "session-unavailable",
-          error:
-            error instanceof Error ? error : new Error("Session unavailable"),
-        });
+        return {
+          status: "blocked",
+          entryId: entry.id,
+          blockers: [
+            {
+              key: snapshot.key,
+              reason: "session-unavailable",
+              error:
+                error instanceof Error
+                  ? error
+                  : new Error("Session unavailable"),
+            },
+          ],
+        };
       }
-    }
-    if (blockers.length > 0) {
-      return { status: "blocked", entryId: entry.id, blockers };
-    }
-
-    // Preparing a restore parses and materializes MDX asynchronously. A session
-    // may be disposed or a newer edit may be recorded while that work runs.
-    // In that case the original user action is no longer the top history entry.
-    if (source.at(-1) !== entry) {
-      return { status: "noop" };
-    }
-
-    for (let index = 0; index < entry.storage.length; index += 1) {
-      const snapshot = entry.storage[index];
-      const preflight = preparedRestores[index].canApply();
-      if (preflight.status === "blocked") {
-        blockers.push({
-          key: snapshot.key,
-          reason: preflight.reason,
-          currentSource: preflight.currentSource,
-        });
+      if (restored.status === "blocked") {
+        if (source.at(-1) !== entry) {
+          return { status: "noop" };
+        }
+        return {
+          status: "blocked",
+          entryId: entry.id,
+          blockers: [
+            {
+              key: snapshot.key,
+              reason: restored.reason,
+              currentSource: restored.currentSource,
+            },
+          ],
+        };
       }
+      if (source.at(-1) !== entry) {
+        return { status: "noop" };
+      }
+      source.pop();
+      destination.push(entry);
+      return {
+        status: "applied",
+        entryId: entry.id,
+        projectPayload:
+          direction === "undo" ? entry.project.undo : entry.project.redo,
+        storageStates: [restored.state],
+        persistence: "single-root",
+      };
     }
-    if (blockers.length > 0) {
-      return { status: "blocked", entryId: entry.id, blockers };
-    }
-    const storageStates = preparedRestores.map(
-      ({ apply }) => apply({ schedule: entry.storage.length === 1 }).state
-    );
     source.pop();
     destination.push(entry);
     return {
@@ -201,8 +199,8 @@ export const createMdxAssetUndoJournal = () => {
       entryId: entry.id,
       projectPayload:
         direction === "undo" ? entry.project.undo : entry.project.redo,
-      storageStates,
-      persistence: getPersistence(entry.storage.length),
+      storageStates: [],
+      persistence: "project-only",
     };
   };
 
@@ -217,21 +215,65 @@ export const createMdxAssetUndoJournal = () => {
 
   return {
     record: (entry: MdxAssetUndoEntry) => {
+      if (
+        undoEntries.some(({ id }) => id === entry.id) ||
+        redoEntries.some(({ id }) => id === entry.id)
+      ) {
+        return { discardedEntryIds: [] };
+      }
+      const discardedEntryIds = redoEntries.map(({ id }) => id);
       undoEntries.push(entry);
       redoEntries.length = 0;
+      if (undoEntries.length > maxEntries) {
+        discardedEntryIds.push(undoEntries.shift()!.id);
+      }
+      return { discardedEntryIds };
     },
     undo: () => enqueue(() => apply("undo")),
     redo: () => enqueue(() => apply("redo")),
     disposeSession: (session: MdxAssetSourceController) => {
+      const discardedEntryIds: string[] = [];
       const removeSessionEntries = (entries: MdxAssetUndoEntry[]) => {
         for (let index = entries.length - 1; index >= 0; index -= 1) {
           if (entries[index].storage.some((item) => item.session === session)) {
+            discardedEntryIds.push(entries[index].id);
             entries.splice(index, 1);
           }
         }
       };
       removeSessionEntries(undoEntries);
       removeSessionEntries(redoEntries);
+      return discardedEntryIds;
+    },
+    discardRedo: () => {
+      const entryIds = redoEntries.map(({ id }) => id);
+      redoEntries.length = 0;
+      return entryIds;
+    },
+    discardEntries: (entryIds: readonly string[]) => {
+      const ids = new Set(entryIds);
+      const discardedEntryIds: string[] = [];
+      for (const entries of [undoEntries, redoEntries]) {
+        for (let index = entries.length - 1; index >= 0; index -= 1) {
+          if (ids.has(entries[index].id)) {
+            discardedEntryIds.push(entries[index].id);
+            entries.splice(index, 1);
+          }
+        }
+      }
+      return discardedEntryIds;
+    },
+    clear: () => {
+      const entryIds = [...undoEntries, ...redoEntries].map(({ id }) => id);
+      undoEntries.length = 0;
+      redoEntries.length = 0;
+      return entryIds;
+    },
+    get nextUndoEntryId() {
+      return undoEntries.at(-1)?.id;
+    },
+    get nextRedoEntryId() {
+      return redoEntries.at(-1)?.id;
     },
     get canUndo() {
       return undoEntries.length > 0;

@@ -46,7 +46,7 @@ const createRepository = (sources: Map<string, string>) =>
         contentLength: bytes.byteLength,
       };
     },
-  }) satisfies Pick<AssetRepository, "readContent">;
+  } satisfies Pick<AssetRepository, "readContent">);
 
 const readStream = async (stream: ReadableStream<Uint8Array>) => {
   const reader = stream.getReader();
@@ -552,6 +552,47 @@ describe("MDX Asset editing session", () => {
     });
     expectStatus(await session.flush(loaded.key), "saved");
     expect(writable.sources.get("post")).toContain("After");
+  });
+
+  test("reports a committed restore when rematerialization fails after writing", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    const state = createState();
+    const updateContent = writable.repository.updateContent;
+    const session = createMdxAssetEditingSession({
+      repository: {
+        ...writable.repository,
+        updateContent: async (input) => {
+          const result = await updateContent(input);
+          state.assets = undefined;
+          return result;
+        },
+      },
+      authorizeAsset: () => true,
+      schedule: () => 0,
+      cancelScheduled: () => {},
+    });
+    const loaded = expectStatus(
+      await session.open({
+        blockInstanceId: "block",
+        source: { type: "asset", assetId: "post" },
+        renderScope: "page:/one",
+        state,
+        projectId: "project",
+      }),
+      "saved"
+    );
+
+    const restored = await session.persistSourceRestore({
+      key: loaded.key,
+      expectedSource: loaded.source,
+      source: "After",
+    });
+
+    expect(restored).toMatchObject({
+      status: "applied",
+      state: { status: "recoverable", committedSource: "After" },
+    });
+    expect(writable.sources.get("post")).toBe("After");
   });
 
   test("treats restoring the current source as an idempotent no-op", async () => {

@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { blockComponent, type Instance } from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
-import { applyBuilderPatchTransactions } from "../state/patch";
 import {
   createMdxAssetUndoEntry,
   createMdxAssetUndoJournal,
@@ -38,6 +37,7 @@ const createSourceController = (
     | "unresolved-write"
     | "source-mismatch"
     | undefined;
+  let persistenceBlocked = false;
   const controller: MdxAssetSourceController = {
     canRestoreSource: ({ expectedSource }) => {
       if (blockedReason !== undefined) {
@@ -93,6 +93,40 @@ const createSourceController = (
       const preflight = prepared.canApply();
       return preflight.status === "ready" ? prepared.apply() : preflight;
     },
+    persistSourceRestore: async ({
+      expectedSource,
+      source: nextSource,
+      isCurrent,
+    }) => {
+      const prepared = await controller.prepareSourceRestore({
+        key: "session",
+        expectedSource,
+        source: nextSource,
+      });
+      if (prepared.status === "blocked") {
+        return prepared;
+      }
+      if (isCurrent?.() === false) {
+        return {
+          status: "blocked",
+          state: placeholderState,
+          reason: "source-mismatch",
+          currentSource: source,
+        };
+      }
+      if (persistenceBlocked) {
+        return {
+          status: "blocked",
+          state: placeholderState,
+          reason: "unresolved-write",
+          currentSource: source,
+        };
+      }
+      const preflight = prepared.canApply();
+      return preflight.status === "ready"
+        ? prepared.apply({ schedule: false })
+        : preflight;
+    },
   };
   return {
     controller,
@@ -102,6 +136,9 @@ const createSourceController = (
     applyOptions,
     block: (reason: "in-flight" | "unresolved-write" | "source-mismatch") => {
       blockedReason = reason;
+    },
+    blockPersistence: () => {
+      persistenceBlocked = true;
     },
   };
 };
@@ -155,13 +192,12 @@ describe("MDX Asset undo journal", () => {
     ).toThrowError();
   });
 
-  test("groups project and storage undo and redo deterministically", async () => {
+  test("rejects grouped project and storage history before restoring", async () => {
     const source = createSourceController("After source");
-    const mutableMutation = structuredClone(mutation);
     const entry = createMdxAssetUndoEntry({
       id: "edit",
       state: createState(),
-      mutation: mutableMutation,
+      mutation,
       storage: [
         {
           session: source.controller,
@@ -171,58 +207,17 @@ describe("MDX Asset undo journal", () => {
         },
       ],
     });
-    mutableMutation.payload[0].patches[0].value = "mutated input";
     const journal = createMdxAssetUndoJournal();
     journal.record(entry);
 
-    const undone = await journal.undo();
-    expect(undone).toMatchObject({
-      status: "applied",
+    expect(await journal.undo()).toMatchObject({
+      status: "blocked",
       entryId: "edit",
-      persistence: "single-root",
-      projectPayload: [
-        {
-          namespace: "instances",
-          patches: [
-            {
-              op: "replace",
-              path: ["instance", "children", 0, "value"],
-              value: "Before",
-            },
-          ],
-        },
-      ],
-    });
-    expect(source.source).toBe("Before source");
-    expect(journal.canRedo).toBe(true);
-    if (undone.status !== "applied") {
-      throw new Error("Expected undo to apply");
-    }
-    const afterState = applyBuilderPatchTransactions(createState(), [
-      { id: "apply", payload: mutation.payload },
-    ]).state;
-    const restoredState = applyBuilderPatchTransactions(afterState, [
-      {
-        id: "undo",
-        payload: undone.projectPayload.map((change) => structuredClone(change)),
-      },
-    ]).state;
-    expect(restoredState.instances?.get("instance")?.children).toEqual([
-      { type: "text", value: "Before" },
-    ]);
-
-    const redone = await journal.redo();
-    expect(redone).toMatchObject({
-      status: "applied",
-      projectPayload: [
-        {
-          namespace: "instances",
-          patches: [{ value: "After" }],
-        },
-      ],
+      blockers: [{ reason: "atomic-persistence-unavailable" }],
     });
     expect(source.source).toBe("After source");
-    expect(await journal.redo()).toEqual({ status: "noop" });
+    expect(journal.canUndo).toBe(true);
+    expect(journal.canRedo).toBe(false);
   });
 
   test("invalidates redo history when a new mutation is recorded", async () => {
@@ -251,45 +246,60 @@ describe("MDX Asset undo journal", () => {
     expect(await journal.redo()).toEqual({ status: "noop" });
   });
 
-  test("leaves grouped state untouched when any storage root is blocked", async () => {
-    const first = createSourceController("After one");
-    const second = createSourceController("After two");
-    second.block("unresolved-write");
+  test("ignores a duplicated history entry", async () => {
+    const source = createSourceController("After");
+    const journal = createMdxAssetUndoJournal();
+    const entry = createMdxAssetUndoEntry({
+      id: "duplicate-message",
+      state: createState(),
+      mutation: { payload: [] },
+      storage: [
+        {
+          session: source.controller,
+          key: "session",
+          beforeSource: "Before",
+          afterSource: "After",
+        },
+      ],
+    });
+    journal.record(entry);
+    journal.record(entry);
+
+    expect((await journal.undo()).status).toBe("applied");
+    expect(await journal.undo()).toEqual({ status: "noop" });
+  });
+
+  test("exposes the next entries and can discard redo without changing undo", async () => {
+    const source = createSourceController("After");
     const journal = createMdxAssetUndoJournal();
     journal.record(
       createMdxAssetUndoEntry({
-        id: "multi",
+        id: "edit",
         state: createState(),
-        mutation,
+        mutation: { payload: [] },
         storage: [
           {
-            session: first.controller,
-            key: "first",
-            beforeSource: "Before one",
-            afterSource: "After one",
-          },
-          {
-            session: second.controller,
-            key: "second",
-            beforeSource: "Before two",
-            afterSource: "After two",
+            session: source.controller,
+            key: "session",
+            beforeSource: "Before",
+            afterSource: "After",
           },
         ],
       })
     );
 
-    expect(await journal.undo()).toMatchObject({
-      status: "blocked",
-      entryId: "multi",
-      blockers: [{ key: "second", reason: "unresolved-write" }],
-    });
-    expect(first.source).toBe("After one");
-    expect(second.source).toBe("After two");
-    expect(journal.canUndo).toBe(true);
+    expect(journal.nextUndoEntryId).toBe("edit");
+    expect(journal.nextRedoEntryId).toBeUndefined();
+    expect((await journal.undo()).status).toBe("applied");
+    expect(journal.nextUndoEntryId).toBeUndefined();
+    expect(journal.nextRedoEntryId).toBe("edit");
+
+    expect(journal.discardRedo()).toEqual(["edit"]);
+    expect(journal.nextRedoEntryId).toBeUndefined();
     expect(journal.canRedo).toBe(false);
   });
 
-  test("marks prepared multi-root undo as requiring a persistence coordinator", async () => {
+  test("rejects multi-root history before changing any session", async () => {
     const first = createSourceController("After one");
     const second = createSourceController("After two");
     const journal = createMdxAssetUndoJournal();
@@ -316,12 +326,84 @@ describe("MDX Asset undo journal", () => {
     );
 
     expect(await journal.undo()).toMatchObject({
-      status: "applied",
-      persistence: "requires-multi-root-coordinator",
-      storageStates: [{ status: "cancelled" }, { status: "cancelled" }],
+      status: "blocked",
+      entryId: "multi",
+      blockers: [
+        { key: "first", reason: "atomic-persistence-unavailable" },
+        { key: "second", reason: "atomic-persistence-unavailable" },
+      ],
     });
-    expect(first.applyOptions).toEqual([{ schedule: false }]);
-    expect(second.applyOptions).toEqual([{ schedule: false }]);
+    expect(first.source).toBe("After one");
+    expect(second.source).toBe("After two");
+    expect(journal.canUndo).toBe(true);
+    expect(journal.canRedo).toBe(false);
+  });
+
+  test("does not advance single-root history when durable persistence fails", async () => {
+    const source = createSourceController("After");
+    source.blockPersistence();
+    const journal = createMdxAssetUndoJournal();
+    journal.record(
+      createMdxAssetUndoEntry({
+        id: "edit",
+        state: createState(),
+        mutation: { payload: [] },
+        storage: [
+          {
+            session: source.controller,
+            key: "session",
+            beforeSource: "Before",
+            afterSource: "After",
+          },
+        ],
+      })
+    );
+
+    expect(await journal.undo()).toMatchObject({
+      status: "blocked",
+      entryId: "edit",
+      blockers: [{ reason: "unresolved-write" }],
+    });
+    expect(source.source).toBe("After");
+    expect(journal.nextUndoEntryId).toBe("edit");
+    expect(journal.nextRedoEntryId).toBeUndefined();
+  });
+
+  test("never prepares independent writes for multi-root undo", async () => {
+    const first = createSourceController("After one");
+    const second = createSourceController("After two");
+    const journal = createMdxAssetUndoJournal();
+    journal.record(
+      createMdxAssetUndoEntry({
+        id: "multi",
+        state: createState(),
+        mutation: { payload: [] },
+        storage: [
+          {
+            session: first.controller,
+            key: "first",
+            beforeSource: "Before one",
+            afterSource: "After one",
+          },
+          {
+            session: second.controller,
+            key: "second",
+            beforeSource: "Before two",
+            afterSource: "After two",
+          },
+        ],
+      })
+    );
+
+    expect(await journal.undo()).toMatchObject({
+      status: "blocked",
+      blockers: [
+        { reason: "atomic-persistence-unavailable" },
+        { reason: "atomic-persistence-unavailable" },
+      ],
+    });
+    expect(first.applyOptions).toEqual([]);
+    expect(second.applyOptions).toEqual([]);
   });
 
   test("drops history owned by a disposed session", async () => {
@@ -382,6 +464,38 @@ describe("MDX Asset undo journal", () => {
     expect(await undo).toEqual({ status: "noop" });
     expect(source.source).toBe("After");
     expect(journal.canUndo).toBe(false);
+    expect(journal.canRedo).toBe(false);
+  });
+
+  test("blocks restore after the source binding changes", async () => {
+    const source = createSourceController("After");
+    const journal = createMdxAssetUndoJournal();
+    let isCurrent = true;
+    journal.record(
+      createMdxAssetUndoEntry({
+        id: "changed-binding",
+        state: createState(),
+        mutation: { payload: [] },
+        storage: [
+          {
+            session: source.controller,
+            key: "session",
+            beforeSource: "Before",
+            afterSource: "After",
+            isCurrent: () => isCurrent,
+          },
+        ],
+      })
+    );
+
+    isCurrent = false;
+
+    expect(await journal.undo()).toMatchObject({
+      status: "blocked",
+      blockers: [{ reason: "source-mismatch" }],
+    });
+    expect(source.source).toBe("After");
+    expect(journal.canUndo).toBe(true);
     expect(journal.canRedo).toBe(false);
   });
 
