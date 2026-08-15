@@ -1,10 +1,16 @@
-import type { AssetContentRepository } from "@webstudio-is/asset-uploader/content-repository";
-import { createHttpAssetContentRepository as createSharedRepository } from "@webstudio-is/project-build/runtime/http-asset-content-repository";
+import {
+  createHttpAssetContentRepository as createSharedRepository,
+  type AssetContentRepository,
+} from "@webstudio-is/asset-uploader/content-repository";
 import {
   readProjectAssetContent,
   updateProjectAssetContent,
 } from "@webstudio-is/http-client";
-import { assetContentDescriptor } from "@webstudio-is/protocol/asset-resource-api";
+import {
+  assetContentDescriptor,
+  assetContentDescriptorHeader,
+  parseAssetContentDescriptor,
+} from "@webstudio-is/protocol/asset-resource-api";
 
 type HttpAssetContentRepositoryDependencies = Readonly<{
   projectId: string;
@@ -45,4 +51,8 @@ export const createHttpAssetContentRepository = ({
       });
       return assetContentDescriptor.parse(asset);
     },
+    parseAsset: (response) =>
+      parseAssetContentDescriptor(
+        response.headers.get(assetContentDescriptorHeader)
+      ),
   });

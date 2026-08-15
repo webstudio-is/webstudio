@@ -28,6 +28,36 @@ filenames, fields, and category filter differ from the tutorial values below.
 
 <figure><img src="../../.gitbook/assets/content-engine-assets-structure.png" alt="Assets panel showing Markdown articles and their assets folder"><figcaption><p>Markdown articles stored alongside their assets</p></figcaption></figure>
 
+## Decide if the Content Engine fits
+
+Use the Content Engine for bounded, file-based content that should live with
+the site and remain portable as Markdown or JSON.
+
+Good fits include:
+
+- Small blogs with text and images.
+- Portfolios, team directories, resource libraries, and case studies.
+- Small product catalogues with infrequently changed display data. Keep orders,
+  inventory, and payments in an ecommerce system.
+
+Use an external CMS, commerce backend, or media service when you need:
+
+- Several thousand entries or complex search and filtering.
+- Large image or video galleries, media processing, or streaming.
+- Live inventory, customer-specific prices, editorial workflows, scheduled
+  publishing, or content shared across many applications.
+
+### Limits that affect this choice
+
+Queries can consider and return at most 1,000 documents. All reachable Assets
+resources share a 500 KiB published content database. **Markdown body
+reference** keeps article bodies out of the database.
+
+Images and videos remain separate Assets, but the Content Engine does not
+provide media processing or streaming. Review the complete
+[query and content limits](content-engine-reference.md#query-limits) before
+using it for a content-heavy project.
+
 ## Build it with MCP
 
 An AI agent can complete this entire workflow through

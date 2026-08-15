@@ -9,7 +9,11 @@ import {
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
 import * as httpClient from "@webstudio-is/http-client";
-import { assetContentDescriptor } from "@webstudio-is/protocol/asset-resource-api";
+import {
+  assetContentDescriptor,
+  assetContentDescriptorHeader,
+  parseAssetContentDescriptor,
+} from "@webstudio-is/protocol/asset-resource-api";
 import {
   bundleVersion,
   getPublicBuildIncludes,
@@ -65,9 +69,9 @@ import {
 import {
   computeExpression,
   createContentBlockApplicationOperations,
-  createHttpAssetContentRepository,
   createMdxAssetEditingSession,
 } from "@webstudio-is/project-build/runtime";
+import { createHttpAssetContentRepository } from "@webstudio-is/asset-uploader/content-repository";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
 import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "./config";
 import type { ApiConnection } from "./api-connection";
@@ -559,6 +563,10 @@ export const createCliAssetContentRepository = ({
       });
       return assetContentDescriptor.parse(asset);
     },
+    parseAsset: (response) =>
+      parseAssetContentDescriptor(
+        response.headers.get(assetContentDescriptorHeader)
+      ),
   });
 
 export const createCliProjectSession = ({

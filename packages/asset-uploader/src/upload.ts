@@ -30,6 +30,14 @@ export type CreateUploadTicketInput = {
   contentHash?: string;
 };
 
+export class AssetUploadCountLimitError extends Error {
+  constructor(maxAssetsPerProject: number) {
+    super(
+      `The maximum number of assets per project is ${maxAssetsPerProject}.`
+    );
+  }
+}
+
 const UPLOADING_STALE_TIMEOUT = 1000 * 60 * 30; // 30 minutes
 const maxCreateUploadTicketAttempts = 3;
 const contentHashUploadPollInterval = 100;
@@ -81,9 +89,7 @@ const assertAssetCapacity = async (projectId: string, context: AppContext) => {
     );
   const count = (assetCount.count ?? 0) + (uploadingCount.count ?? 0);
   if (count >= maxAssetsPerProject) {
-    throw new Error(
-      `The maximum number of assets per project is ${maxAssetsPerProject}.`
-    );
+    throw new AssetUploadCountLimitError(maxAssetsPerProject);
   }
 };
 

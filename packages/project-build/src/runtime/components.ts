@@ -76,7 +76,11 @@ import {
   type BlockTemplateNameConfirmation,
 } from "./block";
 
-const conflictResolutionInput = z.enum(["ours", "theirs", "merge"]);
+const conflictResolutionInput = z
+  .enum(["ours", "theirs", "merge"])
+  .describe(
+    'How to resolve incoming design tokens that share a name with an existing token. "ours" keeps the existing token styles and id, "theirs" uses incoming styles, and "merge" combines both.'
+  );
 
 export const insertComponentInput = z.object({
   parentInstanceId: z.string(),
@@ -100,7 +104,12 @@ export const insertFragmentInput = z
       "Structured Webstudio fragment produced by Webstudio JSX/template helpers. Runtime remaps fragment ids to generated project ids."
     ),
     conflictResolution: conflictResolutionInput.optional(),
-    contentMode: z.boolean().optional(),
+    contentMode: z
+      .boolean()
+      .optional()
+      .describe(
+        "Apply content-mode copy restrictions to props and styles while reusing existing tokens and breakpoints."
+      ),
     mode: instanceInsertModeInput.optional(),
     insertIndex: insertIndexInput.optional(),
     templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),

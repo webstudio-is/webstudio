@@ -1210,6 +1210,17 @@ test("honors fragment token conflict resolution", async () => {
   ).filter((styleSource) => styleSource.type === "token");
   expect(addedTokenSources).toEqual([]);
   expect(
+    getAddedValues<{ instanceId: string; values: string[] }>(
+      mutation,
+      "styleSourceSelections"
+    )
+  ).toEqual([
+    {
+      instanceId: "generated-1",
+      values: [existingFragment.styleSources[0]?.id],
+    },
+  ]);
+  expect(
     getAddedValues<{ property: string; value: unknown }>(mutation, "styles")
   ).not.toContainEqual(
     expect.objectContaining({
@@ -1514,6 +1525,38 @@ test("inserts authored template part structure from webstudio jsx fragments", as
       component: "@webstudio-is/sdk-components-react-radix:SwitchThumb",
     }),
   ]);
+});
+
+test("inserts authored Content Block template structure from webstudio jsx fragments", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.block><ws.blockTemplate><ws.element ws:tag="section"><ws.element ws:tag="h2">Title</ws.element></ws.element></ws.blockTemplate></ws.block>`
+  );
+
+  const mutation = insertFragment(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      fragment,
+    },
+    {
+      createId: createIdFactory(),
+      projectId: "project-id",
+    }
+  );
+
+  const instances = getAddedValues<Instance>(mutation, "instances");
+  expect(instances).toEqual([
+    expect.objectContaining({ component: "ws:block" }),
+    expect.objectContaining({ component: "ws:block-template" }),
+    expect.objectContaining({ component: elementComponent, tag: "section" }),
+    expect.objectContaining({ component: elementComponent, tag: "h2" }),
+  ]);
+  const [block, blockTemplate, section, heading] = instances;
+  expect(block.children).toEqual([{ type: "id", value: blockTemplate.id }]);
+  expect(blockTemplate.children).toEqual([{ type: "id", value: section.id }]);
+  expect(section.children).toEqual([{ type: "id", value: heading.id }]);
+  expect(heading.children).toEqual([{ type: "text", value: "Title" }]);
 });
 
 test("supports react style props in webstudio jsx fragments", async () => {

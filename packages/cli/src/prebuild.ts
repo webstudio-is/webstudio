@@ -1766,7 +1766,7 @@ export const prebuild = async (options: {
   await writeGeneratedFile(
     join(generatedDir, "$resources.sitemap.xml.ts"),
     `
-      export const sitemap = ${JSON.stringify(sitemap, null, 2)};
+      export const sitemap: Array<{ path: string; lastModified: string }> = ${JSON.stringify(sitemap, null, 2)};
     `
   );
 

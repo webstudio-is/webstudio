@@ -66,7 +66,12 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import {
+  animationComponentNamespace,
+  componentMetas,
+  radixComponentNamespace,
+} from "@webstudio-is/sdk-components-registry/metas";
+import { camelCase } from "change-case";
 import { readProjectBuildDoc } from "./docs";
 import type { ComponentTemplateRegistry } from "./runtime/component-template";
 import {
@@ -75,6 +80,7 @@ import {
 } from "./runtime/component-templates";
 import {
   getTemplateRequiredStructure,
+  insertFragmentInput,
   parseComponentEdge,
 } from "./runtime/components";
 import { getInputSchemaMetadata } from "./contracts/input-schema";
@@ -496,49 +502,6 @@ const workflowNextInputSchema = {
   required: [],
 } as const satisfies ProjectSessionMcpInputSchema;
 
-const insertFragmentMcpInputSchema = {
-  ...emptyInputSchema,
-  description:
-    "Insert a Webstudio fragment from a Webstudio JSX string. The CLI converts JSX into structured Webstudio data before mutation.",
-  additionalProperties: false,
-  properties: {
-    parentInstanceId: {
-      type: "string",
-      description: "Parent instance id where the fragment is inserted.",
-    },
-    fragment: {
-      type: "string",
-      description: webstudioJsxFragmentInputDescription,
-    },
-    mode: {
-      type: "string",
-      enum: ["append", "prepend", "replace"],
-      description:
-        "Append, prepend, or replace parent children before inserting the fragment.",
-    },
-    insertIndex: {
-      type: "number",
-      description: "Zero-based child index for insertion.",
-    },
-  },
-  required: ["parentInstanceId", "fragment"],
-} as const satisfies ProjectSessionMcpInputSchema;
-
-const insertFragmentVerifiedMcpInputSchema = {
-  ...insertFragmentMcpInputSchema,
-  description:
-    "Insert a Webstudio fragment and immediately verify its persisted bindings in one call.",
-  properties: {
-    ...insertFragmentMcpInputSchema.properties,
-    pagePath: {
-      type: "string",
-      description:
-        "Concrete page path used for post-commit binding verification, for example /account.",
-    },
-  },
-  required: ["parentInstanceId", "fragment", "pagePath"],
-} as const satisfies ProjectSessionMcpInputSchema;
-
 const insertCollectionMcpInput = insertCollectionInput
   .omit({ itemFragment: true })
   .extend({
@@ -769,6 +732,35 @@ const getZodObjectSchema = (schema: z.ZodTypeAny) => {
 
 const getZodMcpInputSchema = (schema: z.ZodTypeAny) =>
   getHandshakeInputSchema(getZodObjectSchema(schema)).inputSchema;
+
+const insertFragmentMcpInput = z
+  .object({
+    ...insertFragmentInput.shape,
+    parentInstanceId: insertFragmentInput.shape.parentInstanceId
+      .unwrap()
+      .describe("Parent instance id where the fragment is inserted."),
+    fragment: z.string().describe(webstudioJsxFragmentInputDescription),
+  })
+  .describe(
+    "Insert a Webstudio fragment from a Webstudio JSX string. The CLI converts JSX into structured Webstudio data before mutation."
+  );
+
+const insertFragmentMcpInputSchema = getZodObjectSchema(insertFragmentMcpInput);
+
+const insertFragmentVerifiedMcpInputSchema = {
+  ...insertFragmentMcpInputSchema,
+  description:
+    "Insert a Webstudio fragment and immediately verify its persisted bindings in one call.",
+  properties: {
+    ...insertFragmentMcpInputSchema.properties,
+    pagePath: {
+      type: "string",
+      description:
+        "Concrete page path used for post-commit binding verification, for example /account.",
+    },
+  },
+  required: ["parentInstanceId", "fragment", "pagePath"],
+} as const satisfies ProjectSessionMcpInputSchema;
 
 const insertCollectionMcpInputSchema = getOperationInputSchema({
   inputSchema: getInputSchemaMetadata(insertCollectionMcpInput).inputJsonSchema,
@@ -1569,6 +1561,22 @@ const previewInputSchema = {
       description:
         "External image hostnames allowed by the generated preview optimizer, for example storage.example.com.",
       items: { type: "string" },
+    },
+    maxDurationMs: {
+      type: "integer",
+      minimum: 1,
+      description:
+        "Maximum acceptable duration. Slow work returns a confirmation preflight instead of starting when it cannot reasonably fit this budget.",
+    },
+    confirmSlow: {
+      type: "boolean",
+      description:
+        "Must be true after explicit user consent for the unchanged slow-operation preflight.",
+    },
+    confirmationToken: {
+      type: "string",
+      description:
+        "Short-lived token returned by the unchanged slow-operation preflight.",
     },
   },
 } as const satisfies ProjectSessionMcpInputSchema;
@@ -2463,7 +2471,25 @@ const previewStatusDataSchema = {
 
 const previewDataSchema = {
   ...previewStatusDataSchema,
-  required: ["url", "running", "mode"],
+  properties: {
+    ...previewStatusDataSchema.properties,
+    confirmationRequired: { type: "boolean" },
+    operation: { type: "string" },
+    estimatedDuration: { type: "string" },
+    reason: { type: "string" },
+    confirmationToken: { type: "string" },
+    fasterAlternative: {
+      type: "object",
+      properties: {
+        operation: { type: "string" },
+        estimatedDuration: { type: "string" },
+        limitations: { type: "string" },
+      },
+      required: ["operation", "estimatedDuration", "limitations"],
+      additionalProperties: false,
+    },
+  },
+  required: ["running", "mode"],
 } as const satisfies InputJsonSchema;
 
 const restorePointSummaryDataSchema = getZodObjectSchema(
@@ -3407,12 +3433,12 @@ export const hiddenMcpOperationCommands = new Set<string>([
   "copy-page",
 ]);
 
-const mcpInlineSchemaSizeOverrides = new Map([
+const mcpOperationSchemaInlineSizes = new Map<string, number>([
+  ["insert-fragment", 2_500],
   ["create-assets-resource", 2_500],
   ["update-assets-resource", 2_500],
   ["validate-asset-query", 2_500],
   ["preview-asset-query", 2_500],
-  ["insert-fragment", 2_500],
   ["create-page", 15_000],
 ]);
 
@@ -3451,7 +3477,7 @@ export const listProjectSessionMcpTools = (
       });
       const { inputSchema, detailedInputSchema } = getHandshakeInputSchema(
         operationInputSchema,
-        mcpInlineSchemaSizeOverrides.get(operation.command)
+        mcpOperationSchemaInlineSizes.get(operation.command)
       );
       const tool = createProjectSessionMcpTool({
         name: operation.command,
@@ -3880,28 +3906,12 @@ const getInsertFragmentInput = async (input: unknown) => {
       'insert-fragment requires fragment as a Webstudio JSX string, for example {"fragment":"<ws.element ws:tag=\'section\' />"}.'
     );
   }
-  const fragment = await parseWebstudioJsxFragment(input.fragment);
-  const mode = input.mode;
-  if (
-    mode !== undefined &&
-    mode !== "append" &&
-    mode !== "prepend" &&
-    mode !== "replace"
-  ) {
-    throw new Error(
-      'insert-fragment mode must be "append", "prepend", or "replace".'
-    );
-  }
-  const insertIndex = input.insertIndex;
-  if (insertIndex !== undefined && typeof insertIndex !== "number") {
-    throw new Error("insert-fragment insertIndex must be a number.");
-  }
-  return {
-    parentInstanceId: input.parentInstanceId,
-    fragment,
-    mode,
-    insertIndex,
-  };
+  const { fragment: fragmentSource, ...runtimeInput } =
+    insertFragmentMcpInput.parse(input);
+  return insertFragmentInput.parse({
+    ...runtimeInput,
+    fragment: await parseWebstudioJsxFragment(fragmentSource),
+  });
 };
 
 const getInsertCollectionInput = async (input: unknown) => {
@@ -4430,7 +4440,7 @@ const filterCapabilities = (tools: readonly ProjectSessionMcpTool[]) => {
 };
 
 const startupGuidance = [
-  "For any multi-step authoring task, first call meta.guide with the user's objective and follow its complete workflow, including final audit, preview, and screenshot steps.",
+  "For any multi-step authoring task, first call meta.guide with the user's objective and follow its proportional workflow. Small corrections stop after focused assertions; preview and screenshots are required only when the requested outcome is visual or runtime-dependent.",
   "Mutation responses can include meta.next. Treat those steps as required before reporting completion.",
   "Every local-capable mutation exposes dryRun. Destructive delete, replace, and replace-all calls plan first; review the transaction, ask the user to confirm, then retry the unchanged call with confirmDestructive: true and meta.confirmation.token. Never retry blindly because changed input, version, or plan invalidates the short-lived token.",
   readProjectBuildDoc("mcp-startup-guidance").trim(),
@@ -4624,11 +4634,15 @@ const getComponentSummaryEntry = ({
   const [parsedNamespace, exportName] = parseComponentName(component);
   const namespace = parsedNamespace ?? "global";
   const jsxNamespace =
-    parsedNamespace === "@webstudio-is/sdk-components-react-radix"
+    parsedNamespace === radixComponentNamespace
       ? "radix"
-      : parsedNamespace === "@webstudio-is/sdk-components-animation"
+      : parsedNamespace === animationComponentNamespace
         ? "animation"
-        : "$";
+        : parsedNamespace === "ws"
+          ? "ws"
+          : "$";
+  const jsxExportName =
+    parsedNamespace === "ws" ? camelCase(exportName) : exportName;
   const template = templateMeta?.template;
   const hasTemplate = template !== undefined;
   const instancesById = new Map(
@@ -4672,7 +4686,7 @@ const getComponentSummaryEntry = ({
     component,
     exportName,
     namespace,
-    jsxElement: `<${jsxNamespace}.${exportName} />`,
+    jsxElement: `<${jsxNamespace}.${jsxExportName} />`,
     label: meta.label,
     category: visibleCategory,
     contentCategory: meta.contentModel?.category,
@@ -5897,6 +5911,48 @@ const metaGoalGuides = [
 const metaGuideDetailedInputSchemaTools = new Set(["update-styles"]);
 const metaGuideExampleTools = new Set(["upload-assets"]);
 
+const taskScopes = [
+  "small-value-or-reference-correction",
+  "focused-page-change",
+  "visual-change",
+  "structural-project-change",
+  "project-wide-migration",
+] as const;
+
+type TaskScope = (typeof taskScopes)[number];
+
+const classifyTaskScope = (brief: string): TaskScope => {
+  if (
+    /\b(project[- ]wide|site[- ]wide|all pages|every page|migration|migrate)\b/i.test(
+      brief
+    )
+  ) {
+    return "project-wide-migration";
+  }
+  if (
+    /\b(visual|layout|responsive|screenshot|typography|spacing|color|design)\b/i.test(
+      brief
+    )
+  ) {
+    return "visual-change";
+  }
+  if (
+    /\b(create|insert|delete|remove|move|wrap|unwrap|duplicate|reparent)\b.*\b(page|section|component|instance|element|tree|folder)\b/i.test(
+      brief
+    )
+  ) {
+    return "structural-project-change";
+  }
+  if (
+    /\b(correct|correction|fix|replace|update|change|typo)\b.*\b(value|text|copy|reference|asset|url|link|title|description|metadata|prop|binding)\b/i.test(
+      brief
+    )
+  ) {
+    return "small-value-or-reference-correction";
+  }
+  return "focused-page-change";
+};
+
 const serializeMetaGuideTool = (
   tool: ProjectSessionMcpTool,
   includeHandshakeFields: boolean
@@ -5929,6 +5985,7 @@ const getMetaGuide = (
   tools: readonly ProjectSessionMcpTool[],
   guidance: ProjectSessionMcpGuidance | undefined
 ) => {
+  const taskScope = classifyTaskScope(brief);
   const goalGuide = metaGoalGuides.find(({ pattern }) => pattern.test(brief));
   const matches =
     goalGuide === undefined
@@ -5940,7 +5997,12 @@ const getMetaGuide = (
   const canDiffScreenshots = tools.some(
     (tool) => tool.name === "screenshot.diff"
   );
+  const isSmallCorrection = taskScope === "small-value-or-reference-correction";
+  const needsVisualVerification = taskScope === "visual-change";
   const generalWorkflow = [
+    isSmallCorrection
+      ? "Focused search → atomic edit → targeted assertions."
+      : undefined,
     "Use the fewest discovery calls needed for the immediate action.",
     "Call permissions or status only when the task depends on capabilities or local session freshness.",
     matches.some((tool) => tool.annotations.localCapable) &&
@@ -5951,14 +6013,33 @@ const getMetaGuide = (
     "Use the smallest semantic mutation tool that matches the requested change.",
     valuesVsBindingsRule,
     "Use apply-patch only when no semantic mutation tool fits.",
-    canVerifyVisually && guidance !== undefined
+    needsVisualVerification && canVerifyVisually && guidance !== undefined
       ? guidance.getVisionWorkflowSummary({ includeDiff: canDiffScreenshots })
       : undefined,
   ].filter(Boolean);
   return {
+    taskScope,
     delegatedAgentRule:
       "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
     workflow: goalGuide?.workflow ?? generalWorkflow,
+    visionLoop:
+      needsVisualVerification && canVerifyVisually && guidance !== undefined
+        ? guidance.getVisionVerificationLoop({
+            includeDiff: canDiffScreenshots,
+          })
+        : [],
+    slowOperation: {
+      confirmationRequired: true,
+      operation: "full production preview",
+      estimatedDuration: "30–60 seconds",
+      reason:
+        "Builds complete rendered output and is unnecessary for a focused value correction unless the requested outcome depends on layout or runtime behavior.",
+      fasterAlternative: {
+        operation: "targeted route validation",
+        estimatedDuration: "2–5 seconds",
+        limitations: "Does not visually inspect layout.",
+      },
+    },
     tools: matches.map((tool) =>
       serializeMetaGuideTool(tool, goalGuide === undefined)
     ),
@@ -7125,6 +7206,55 @@ const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
   };
 };
 
+const slowOperationConfirmationTtlMs = 5 * 60 * 1000;
+
+const getProductionPreviewPreflight = async (input: unknown) => {
+  if (isRecord(input) === false || input.mode !== "production") {
+    return;
+  }
+  const previewInput = getPreviewInput(input);
+  const confirmationPayload = {
+    operation: "production preview build",
+    input: previewInput,
+    maxDurationMs:
+      typeof input.maxDurationMs === "number" ? input.maxDurationMs : undefined,
+  };
+  if (
+    input.confirmSlow === true &&
+    (await validateConfirmationToken(
+      typeof input.confirmationToken === "string"
+        ? input.confirmationToken
+        : undefined,
+      confirmationPayload
+    ))
+  ) {
+    return;
+  }
+  const { token } = await createConfirmationToken(
+    confirmationPayload,
+    slowOperationConfirmationTtlMs
+  );
+  const maxDurationMs =
+    typeof input.maxDurationMs === "number" ? input.maxDurationMs : undefined;
+  return {
+    running: false,
+    mode: "production" as const,
+    confirmationRequired: true,
+    operation: "production preview build",
+    estimatedDuration: "30–60 seconds",
+    reason:
+      maxDurationMs !== undefined && maxDurationMs < 30_000
+        ? `A full production preview cannot reasonably finish within the ${maxDurationMs}ms budget.`
+        : "A full production preview builds complete rendered output and is expected to exceed 10 seconds.",
+    confirmationToken: token,
+    fasterAlternative: {
+      operation: "targeted route validation",
+      estimatedDuration: "2–5 seconds",
+      limitations: "Does not visually inspect layout.",
+    },
+  };
+};
+
 const getImportInput = (input: unknown): ProjectSessionImportInput => {
   if (isRecord(input) === false) {
     throw new Error("import input must be an object.");
@@ -7785,6 +7915,10 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         return toMetaResult(await installOcr());
       }
       if (name === "preview.start" && startPreview !== undefined) {
+        const preflight = await getProductionPreviewPreflight(input);
+        if (preflight !== undefined) {
+          return toMetaResult(preflight);
+        }
         return toMetaResult(
           await startPreview(getPreviewInput(input), {
             report: (message) => {
@@ -8108,10 +8242,10 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           : []),
         ...(needsVisualVerification
           ? [
-              "Before reporting completion, run audit for the changed page or project.",
+              "For a small fixed-value or reference correction, re-read the changed value and run only relevant focused assertions; stop when they pass. Run audit when the change is structural or broader.",
               ...(startPreview !== undefined && captureScreenshot !== undefined
                 ? [
-                    "For visual changes, start a session preview and capture desktop and mobile screenshots before reporting completion.",
+                    "Only when the requested outcome is visual or runtime-dependent, start a session preview and capture the necessary screenshots. Production preview requires a slow-operation preflight and explicit confirmation.",
                   ]
                 : []),
             ]

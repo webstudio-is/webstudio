@@ -7,7 +7,11 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { createUploadTicket, uploadFile } from "./upload";
+import {
+  AssetUploadCountLimitError,
+  createUploadTicket,
+  uploadFile,
+} from "./upload";
 import { PostgresAssetRepository } from "./asset-repository";
 
 const server = createTestServer();
@@ -426,7 +430,7 @@ describe("createUploadTicket", () => {
         },
         createContext()
       )
-    ).rejects.toThrow("The maximum number of assets per project is 350.");
+    ).rejects.toBeInstanceOf(AssetUploadCountLimitError);
     expect(insertedAsset).toBe(false);
     expect(restoredFile).toBe(false);
   });
@@ -591,7 +595,7 @@ describe("createUploadTicket", () => {
         createContext(),
         () => "asset-2"
       )
-    ).rejects.toThrow("The maximum number of assets per project is 350.");
+    ).rejects.toBeInstanceOf(AssetUploadCountLimitError);
   });
 
   test("uses project owner's asset limit for shared workspace projects", async () => {

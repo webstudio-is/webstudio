@@ -22,11 +22,6 @@
       "import": "./src/runtime.ts",
       "default": "./src/runtime.ts"
     },
-    "./runtime/http-asset-content-repository": {
-      "webstudio": "./src/runtime/http-asset-content-repository.ts",
-      "import": "./src/runtime/http-asset-content-repository.ts",
-      "default": "./src/runtime/http-asset-content-repository.ts"
-    },
     "./transfer": {
       "webstudio": "./src/transfer.ts",
       "import": "./src/transfer.ts",
@@ -96,6 +91,7 @@
     "acorn-jsx": "^5.3.2",
     "allof-merge": "^0.6.8",
     "bcp-47": "^2.1.0",
+    "change-case": "^5.4.4",
     "css-tree": "^3.1.0",
     "esbuild": "^0.25.3",
     "fast-deep-equal": "^3.1.3",

@@ -58,6 +58,7 @@ export type BrowserScreenshotOptions = {
   waitForTimeout: number;
   finalizeExpression?: string;
   timeout: number;
+  startupTimeout?: number;
   format?: "png" | "jpeg" | "webp";
   quality?: number;
   scale?: number;
@@ -1239,6 +1240,15 @@ const getScreenshotCaptureParams = async ({
   };
 };
 
+export class BrowserStartupError extends Error {
+  readonly code = "BROWSER_STARTUP_FAILED";
+
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "BrowserStartupError";
+  }
+}
+
 class BrowserSessionClosedError extends Error {}
 
 const getBrowserExitMessage = (message: string, reason?: string) =>
@@ -1289,6 +1299,7 @@ const startBrowserRuntimeOnce = async (
   options: BrowserScreenshotOptions,
   dependencies: BrowserScreenshotDependencies
 ): Promise<BrowserRuntime> => {
+  const startupTimeout = options.startupTimeout ?? options.timeout;
   const userDataDir = await dependencies.mkdtemp(
     join(tmpdir(), "vision-browser-")
   );
@@ -1332,7 +1343,7 @@ const startBrowserRuntimeOnce = async (
   });
   try {
     const { port } = await Promise.race([
-      waitForDevToolsPort(userDataDir, dependencies, options.timeout),
+      waitForDevToolsPort(userDataDir, dependencies, startupTimeout),
       browserClosed.then((reason) => {
         throw new BrowserSessionClosedError(
           getBrowserExitMessage(
@@ -1373,7 +1384,7 @@ const startBrowserRuntimeOnce = async (
       browserProcess,
       browserClosed,
       running,
-      gracePeriodMs: Math.min(options.timeout, 2000),
+      gracePeriodMs: Math.min(startupTimeout, 2000),
     });
     await dependencies
       .rm(userDataDir, { recursive: true, force: true })
@@ -1390,10 +1401,20 @@ const startBrowserRuntime = async (
     return await startBrowserRuntimeOnce(options, dependencies);
   } catch (error) {
     if (error instanceof BrowserSessionClosedError === false) {
-      throw error;
+      throw new BrowserStartupError(
+        error instanceof Error ? error.message : String(error),
+        { cause: error }
+      );
     }
   }
-  return await startBrowserRuntimeOnce(options, dependencies);
+  try {
+    return await startBrowserRuntimeOnce(options, dependencies);
+  } catch (error) {
+    throw new BrowserStartupError(
+      error instanceof Error ? error.message : String(error),
+      { cause: error }
+    );
+  }
 };
 
 const capturePageWithBrowserRuntime = async (

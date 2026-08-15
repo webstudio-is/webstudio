@@ -1,5 +1,17 @@
 import { describe, expect, test } from "vitest";
-import { mergeFontMeta } from "./schema";
+import { fontMeta, mergeFontMeta } from "./schema";
+
+test("accepts custom variation axes", () => {
+  const meta = {
+    family: "Antarctica",
+    variationAxes: {
+      wght: { name: "Weight", min: 100, default: 400, max: 950 },
+      CNTR: { name: "Contrast", min: 0, default: 0, max: 100 },
+    },
+  };
+
+  expect(fontMeta.parse(meta)).toEqual(meta);
+});
 
 describe("mergeFontMeta", () => {
   test("keeps the detected font shape", () => {
