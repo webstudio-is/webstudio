@@ -1091,7 +1091,18 @@ export const builderRuntimeOperations = [
       ],
     }),
     instances.fillGridInput,
-    ({ state, input, context }) => instances.fillGrid(state, input, context)
+    ({ state, input, context }) =>
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target: {
+          type: "children",
+          parentInstanceId: input.parentInstanceId,
+        },
+        execute: (mutationState) =>
+          instances.fillGrid(mutationState, input, context),
+      })
   ),
   runtimeOperation(
     "instances.wrap",
@@ -1133,7 +1144,17 @@ export const builderRuntimeOperations = [
     }),
     instances.convertInstanceInput,
     ({ state, input, context }) =>
-      instances.convertInstance(state, input, context)
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target: {
+          type: "instance",
+          instanceId: input.instanceSelector[0],
+        },
+        execute: (mutationState) =>
+          instances.convertInstance(mutationState, input, context),
+      })
   ),
   runtimeOperation(
     "instances.unwrap",
@@ -1203,7 +1224,17 @@ export const builderRuntimeOperations = [
     }),
     instances.deleteInstanceBySelectorInput,
     ({ state, input, context }) =>
-      instances.deleteInstanceBySelector(state, input, context)
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target: {
+          type: "instance",
+          instanceId: input.instanceSelector[0],
+        },
+        execute: (mutationState) =>
+          instances.deleteInstanceBySelector(mutationState, input, context),
+      })
   ),
   runtimeOperation(
     "instances.updateProps",

@@ -629,6 +629,25 @@ export const executeContentStorageMutation = <
     state,
     materializedRoots,
   });
+  if (
+    target.type === "instance" &&
+    materializedRoots.some(({ identity }) =>
+      projection.state.instances
+        ?.get(identity.blockInstanceId)
+        ?.children.some(
+          (child) =>
+            child.type === "id" &&
+            child.value === target.instanceId &&
+            projection.state.instances?.get(child.value)?.component ===
+              blockTemplateComponent
+        )
+    )
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "The source-backed Content Block Templates list cannot be changed."
+    );
+  }
   const root = resolveContentStorageRoot(projection, target);
   if (root.type === "project") {
     return execute(state, root);

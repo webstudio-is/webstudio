@@ -91,7 +91,7 @@ const createStructuralState = () => ({
   styleSources: new Map(),
   styleSourceSelections: new Map(),
   styles: new Map(),
-  breakpoints: new Map(),
+  breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
   assets: new Map(),
 });
 
@@ -1634,4 +1634,319 @@ test("routes collection insertion through Content-mode validation", () => {
       },
     })
   ).toThrow("not editable in content mode");
+});
+
+test("deletes an authored instance without changing persisted children", () => {
+  const state = createStructuralState();
+  const externalIdentity = identity("page:/post");
+
+  const mutation = executeBuilderRuntimeOperation({
+    id: "instances.deleteBySelector",
+    state,
+    input: { instanceSelector: ["external", "block"] },
+    context: {
+      createId: createIdFactory(),
+      returnStorageChanges: true,
+      materializedContent: [
+        { identity: externalIdentity, fragment: fragment("external") },
+      ],
+    },
+  });
+
+  expect(mutation).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: expect.arrayContaining([
+          expect.objectContaining({ namespace: "fragment" }),
+          expect.objectContaining({ namespace: "instances" }),
+        ]),
+      },
+    ],
+    result: { instanceIds: ["external"] },
+  });
+  expect(state.instances?.get("block")?.children).toEqual([
+    { type: "id", value: "templates" },
+  ]);
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.deleteBySelector",
+      state,
+      input: { instanceSelector: ["external", "block"] },
+      context: {
+        createId: createIdFactory(),
+        materializedContent: [
+          { identity: externalIdentity, fragment: fragment("external") },
+        ],
+      },
+    })
+  ).toThrow("must handle authored storage changes");
+});
+
+test("deletes from the innermost nested storage scope", () => {
+  const { nestedIdentity, roots } = createNestedMaterializedContent();
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.deleteBySelector",
+      state: createStructuralState(),
+      input: { instanceSelector: ["nested-content", "nested-block"] },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: roots,
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [{ root: { type: "external", identity: nestedIdentity } }],
+    result: { instanceIds: ["nested-content"] },
+  });
+});
+
+test.each([
+  {
+    operation: "delete",
+    id: "instances.deleteBySelector" as const,
+    input: { instanceSelector: ["templates", "block"] },
+  },
+  {
+    operation: "convert",
+    id: "instances.convert" as const,
+    input: {
+      instanceSelector: ["templates", "block"],
+      component: elementComponent,
+      tag: "div",
+    },
+  },
+])("protects the Templates list from $operation", ({ id, input }) => {
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id,
+      state: createStructuralState(),
+      input,
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: fragment("external") },
+        ],
+      },
+    })
+  ).toThrow("Templates list cannot be changed");
+});
+
+test("protects a nested source-backed Templates list", () => {
+  const { roots } = createNestedMaterializedContent();
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.deleteBySelector",
+      state: createStructuralState(),
+      input: {
+        instanceSelector: [
+          "nested-templates",
+          "nested-block",
+          "outer-rich-text",
+          "block",
+        ],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: roots,
+      },
+    })
+  ).toThrow("Templates list cannot be changed");
+});
+
+test("rejects converting authored component and tag metadata", () => {
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.convert",
+      state: createStructuralState(),
+      input: {
+        instanceSelector: ["external", "block"],
+        component: elementComponent,
+        tag: "section",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: fragment("external") },
+        ],
+      },
+    })
+  ).toThrow("Instance patch is not editable in content mode");
+});
+
+test("fills an authored grid in cell order", () => {
+  const state = createStructuralState();
+  const externalIdentity = identity("page:/post");
+  const externalFragment = fragment("grid");
+  externalFragment.instances[0].tag = "div";
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.fillGrid",
+      state,
+      input: {
+        parentInstanceId: "grid",
+        totalCells: 2,
+        breakpointId: "base",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: [
+          {
+            namespace: "instances",
+            patches: expect.arrayContaining([
+              expect.objectContaining({
+                path: ["grid", "children", 1],
+                value: { type: "id", value: "generated-0" },
+              }),
+              expect.objectContaining({
+                path: ["grid", "children", 2],
+                value: { type: "id", value: "generated-2" },
+              }),
+            ]),
+          },
+          expect.objectContaining({ namespace: "styleSources" }),
+          expect.objectContaining({ namespace: "styleSourceSelections" }),
+          expect.objectContaining({ namespace: "styles" }),
+        ],
+      },
+    ],
+    result: {
+      instanceIds: ["generated-0", "generated-2"],
+      styleSourceIds: ["generated-1", "generated-3"],
+    },
+  });
+  expect(state.instances?.get("block")?.children).toEqual([
+    { type: "id", value: "templates" },
+  ]);
+});
+
+test("fills a grid in the innermost nested storage scope", () => {
+  const { nestedIdentity, roots } = createNestedMaterializedContent();
+  roots[0].fragment.instances[0].tag = "div";
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.fillGrid",
+      state: createStructuralState(),
+      input: {
+        parentInstanceId: "nested-content",
+        totalCells: 1,
+        breakpointId: "base",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: roots,
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [{ root: { type: "external", identity: nestedIdentity } }],
+    result: {
+      instanceIds: ["generated-0"],
+      styleSourceIds: ["generated-1"],
+    },
+  });
+});
+
+test("keeps a complete authored grid as a storage noop", () => {
+  const externalFragment = fragment("grid");
+  externalFragment.instances[0].tag = "div";
+  externalFragment.instances[0].children = [
+    { type: "id", value: "existing-cell" },
+  ];
+  externalFragment.instances.push({
+    type: "instance",
+    id: "existing-cell",
+    component: elementComponent,
+    tag: "div",
+    children: [],
+  });
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.fillGrid",
+      state: createStructuralState(),
+      input: {
+        parentInstanceId: "grid",
+        totalCells: 1,
+        breakpointId: "base",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: externalFragment },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: undefined,
+    noop: true,
+    result: { instanceIds: [], styleSourceIds: [] },
+  });
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.fillGrid",
+      state: createStructuralState(),
+      input: {
+        parentInstanceId: "grid",
+        totalCells: 1,
+        breakpointId: "base",
+      },
+      context: {
+        createId: createIdFactory(),
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: externalFragment },
+        ],
+      },
+    })
+  ).toThrow("must handle authored storage changes");
+});
+
+test("rejects generated grid cell id collisions", () => {
+  const externalFragment = fragment("grid");
+  externalFragment.instances[0].tag = "div";
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.fillGrid",
+      state: createStructuralState(),
+      input: {
+        parentInstanceId: "grid",
+        totalCells: 1,
+        breakpointId: "base",
+      },
+      context: {
+        createId: () => "grid",
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: externalFragment },
+        ],
+      },
+    })
+  ).toThrow("Instance patch is not editable in content mode");
 });
