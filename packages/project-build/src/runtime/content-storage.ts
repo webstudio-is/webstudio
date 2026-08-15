@@ -47,6 +47,10 @@ export type ContentStorageTarget =
       parentInstanceId: Instance["id"];
     }>;
 
+type ContentStorageTargetResolver =
+  | ContentStorageTarget
+  | ((state: BuilderState) => ContentStorageTarget);
+
 export type ContentStorageProjection = Readonly<{
   state: BuilderState;
   externalRootByBlockId: ReadonlyMap<
@@ -663,14 +667,20 @@ export const executeContentStorageMutation = <
   materializedRoots,
   returnStorageChanges,
   target,
+  source,
   protectTemplatesList,
+  protectedInstanceIds = [],
+  crossRootError = "Mutation crosses an authored storage boundary.",
   execute,
 }: {
   state: BuilderState;
   materializedRoots?: readonly MaterializedContentRoot[];
   returnStorageChanges?: boolean;
-  target: ContentStorageTarget;
+  target: ContentStorageTargetResolver;
+  source?: ContentStorageTarget;
   protectTemplatesList?: boolean;
+  protectedInstanceIds?: readonly Instance["id"][];
+  crossRootError?: string;
   execute: (state: BuilderState, root: ContentStorageRoot) => Mutation;
 }): Mutation => {
   if (materializedRoots === undefined || materializedRoots.length === 0) {
@@ -680,21 +690,42 @@ export const executeContentStorageMutation = <
     state,
     materializedRoots,
   });
+  const resolvedTarget =
+    typeof target === "function" ? target(projection.state) : target;
   if (
     protectTemplatesList === true &&
-    target.type === "instance" &&
-    isProtectedTemplatesList({
-      projection,
-      materializedRoots,
-      instanceId: target.instanceId,
-    })
+    [
+      resolvedTarget,
+      source,
+      ...protectedInstanceIds.map(
+        (instanceId) =>
+          ({ type: "instance", instanceId }) satisfies ContentStorageTarget
+      ),
+    ].some(
+      (candidate) =>
+        candidate?.type === "instance" &&
+        isProtectedTemplatesList({
+          projection,
+          materializedRoots,
+          instanceId: candidate.instanceId,
+        })
+    )
   ) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "The source-backed Content Block Templates list cannot be changed."
     );
   }
-  const root = resolveContentStorageRoot(projection, target);
+  const root = resolveContentStorageRoot(projection, resolvedTarget);
+  if (
+    source !== undefined &&
+    isSameContentStorageRoot(
+      resolveContentStorageRoot(projection, source),
+      root
+    ) === false
+  ) {
+    return throwBuilderRuntimeError("BAD_REQUEST", crossRootError);
+  }
   if (root.type === "project") {
     return execute(state, root);
   }

@@ -3286,6 +3286,24 @@ export const updateTextTree = (
   });
 };
 
+export const findInstanceCloneTargetParent = ({
+  instances,
+  sourceInstanceId,
+  targetParentInstanceId,
+}: {
+  instances: Instances;
+  sourceInstanceId: Instance["id"];
+  targetParentInstanceId?: Instance["id"];
+}) => {
+  if (targetParentInstanceId !== undefined) {
+    return instances.get(targetParentInstanceId);
+  }
+  const source = instances.get(sourceInstanceId);
+  return source === undefined
+    ? undefined
+    : findParentInstanceReference(instances, source.id)?.instance;
+};
+
 export const cloneInstance = (
   state: TreeMutationState,
   input: z.infer<typeof cloneInstanceInput>,
@@ -3296,11 +3314,11 @@ export const cloneInstance = (
   if (source === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }
-  const targetParent =
-    input.targetParentInstanceId === undefined
-      ? findParentInstanceReference(mutationState.instances, source.id)
-          ?.instance
-      : mutationState.instances.get(input.targetParentInstanceId);
+  const targetParent = findInstanceCloneTargetParent({
+    instances: mutationState.instances,
+    sourceInstanceId: source.id,
+    targetParentInstanceId: input.targetParentInstanceId,
+  });
   if (targetParent === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }

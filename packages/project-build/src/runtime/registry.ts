@@ -1144,7 +1144,19 @@ export const builderRuntimeOperations = [
       writeNamespaces: ["instances"],
     }),
     instances.wrapInstanceInput,
-    ({ state, input, context }) => instances.wrapInstance(state, input, context)
+    ({ state, input, context }) =>
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        protectTemplatesList: true,
+        target: {
+          type: "instance",
+          instanceId: input.instanceSelector[0],
+        },
+        execute: (mutationState) =>
+          instances.wrapInstance(mutationState, input, context),
+      })
   ),
   runtimeOperation(
     "instances.convert",
@@ -1198,7 +1210,25 @@ export const builderRuntimeOperations = [
     }),
     instances.unwrapInstanceInput,
     ({ state, input, context }) =>
-      instances.unwrapInstance(state, input, context)
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        protectedInstanceIds: [input.instanceSelector[1]],
+        protectTemplatesList: true,
+        source: {
+          type: "children",
+          parentInstanceId: input.instanceSelector[2],
+        },
+        target: {
+          type: "instance",
+          instanceId: input.instanceSelector[0],
+        },
+        crossRootError:
+          "Moving content across authored storage roots is not supported.",
+        execute: (mutationState) =>
+          instances.unwrapInstance(mutationState, input, context),
+      })
   ),
   runtimeOperation(
     "instances.clone",
@@ -1209,7 +1239,32 @@ export const builderRuntimeOperations = [
     }),
     instances.cloneInstanceInput,
     ({ state, input, context }) =>
-      instances.cloneInstance(state, input, context)
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        protectTemplatesList: true,
+        crossRootError:
+          "Copying content across authored storage roots is not supported.",
+        source: { type: "instance", instanceId: input.sourceInstanceId },
+        target:
+          input.targetParentInstanceId === undefined
+            ? (mutationState) => {
+                const parent = instances.findInstanceCloneTargetParent({
+                  instances: mutationState.instances ?? new Map(),
+                  sourceInstanceId: input.sourceInstanceId,
+                });
+                return parent === undefined
+                  ? { type: "instance", instanceId: input.sourceInstanceId }
+                  : { type: "children", parentInstanceId: parent.id };
+              }
+            : {
+                type: "children",
+                parentInstanceId: input.targetParentInstanceId,
+              },
+        execute: (mutationState) =>
+          instances.cloneInstance(mutationState, input, context),
+      })
   ),
   runtimeOperation(
     "instances.duplicateAfterItself",
@@ -1220,7 +1275,25 @@ export const builderRuntimeOperations = [
     }),
     instanceDuplicate.duplicateInstanceAfterItselfInput,
     ({ state, input, context }) =>
-      instanceDuplicate.duplicateInstanceAfterItself(state, input, context)
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        protectTemplatesList: true,
+        crossRootError:
+          "Copying content across authored storage roots is not supported.",
+        source: { type: "instance", instanceId: input.sourceInstanceId },
+        target: {
+          type: "children",
+          parentInstanceId: input.parentInstanceId,
+        },
+        execute: (mutationState) =>
+          instanceDuplicate.duplicateInstanceAfterItself(
+            mutationState,
+            input,
+            context
+          ),
+      })
   ),
   runtimeOperation(
     "instances.delete",

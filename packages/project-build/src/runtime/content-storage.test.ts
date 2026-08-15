@@ -2547,3 +2547,454 @@ test("rejects moving the protected Templates list through project storage", () =
     { type: "id", value: "templates" },
   ]);
 });
+
+test("wraps authored content within its storage root", () => {
+  const externalIdentity = identity("page:/post");
+  const externalFragment = siblingFragment("parent", ["selected"]);
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.wrap",
+      state: createStructuralState(),
+      input: {
+        instanceSelector: ["selected", "parent", "block"],
+        component: elementComponent,
+        tag: "section",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      { root: { type: "external", identity: externalIdentity } },
+    ],
+    result: { instanceSelector: ["generated-0", "parent", "block"] },
+  });
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.wrap",
+      state: createStructuralState(),
+      input: {
+        instanceSelector: ["selected", "parent", "block"],
+        component: elementComponent,
+        tag: "section",
+      },
+      context: {
+        createId: createIdFactory(),
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toThrow("must handle authored storage changes");
+});
+
+test("normalizes an authored legacy Slot before wrapping its child", () => {
+  const externalIdentity = identity("page:/post");
+  const externalFragment = siblingFragment("body", []);
+  externalFragment.instances[0].children = [{ type: "id", value: "slot" }];
+  externalFragment.instances.push(
+    {
+      type: "instance",
+      id: "slot",
+      component: "Slot",
+      children: [{ type: "id", value: "selected" }],
+    },
+    {
+      type: "instance",
+      id: "selected",
+      component: elementComponent,
+      tag: "p",
+      children: [{ type: "text", value: "Selected" }],
+    }
+  );
+
+  const mutation = executeBuilderRuntimeOperation({
+    id: "instances.wrap",
+    state: createStructuralState(),
+    input: {
+      instanceSelector: ["selected", "slot", "body", "block"],
+      component: elementComponent,
+      tag: "section",
+    },
+    context: {
+      createId: createIdFactory(),
+      returnStorageChanges: true,
+      materializedContent: [
+        { identity: externalIdentity, fragment: externalFragment },
+      ],
+    },
+  });
+
+  expect(mutation).toMatchObject({
+    payload: [],
+    storageChanges: [
+      { root: { type: "external", identity: externalIdentity } },
+    ],
+    result: {
+      instanceSelector: ["generated-1", "generated-0", "slot", "body", "block"],
+    },
+  });
+});
+
+test("unwraps authored content within its storage root", () => {
+  const externalIdentity = identity("page:/post");
+  const externalFragment = siblingFragment("grandparent", []);
+  externalFragment.instances[0].children = [{ type: "id", value: "wrapper" }];
+  externalFragment.instances.push(
+    {
+      type: "instance",
+      id: "wrapper",
+      component: elementComponent,
+      tag: "div",
+      children: [{ type: "id", value: "selected" }],
+    },
+    {
+      type: "instance",
+      id: "selected",
+      component: elementComponent,
+      tag: "p",
+      children: [{ type: "text", value: "Selected" }],
+    }
+  );
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.unwrap",
+      state: createStructuralState(),
+      input: {
+        instanceSelector: ["selected", "wrapper", "grandparent", "block"],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      { root: { type: "external", identity: externalIdentity } },
+    ],
+    result: { instanceSelector: ["selected", "grandparent", "block"] },
+  });
+});
+
+test("keeps an authored wrapper when unwrapping one of multiple children", () => {
+  const externalIdentity = identity("page:/post");
+  const externalFragment = siblingFragment("grandparent", []);
+  externalFragment.instances[0].children = [{ type: "id", value: "wrapper" }];
+  externalFragment.instances.push(
+    {
+      type: "instance",
+      id: "wrapper",
+      component: elementComponent,
+      tag: "div",
+      children: [
+        { type: "id", value: "selected" },
+        { type: "id", value: "sibling" },
+      ],
+    },
+    {
+      type: "instance",
+      id: "selected",
+      component: elementComponent,
+      tag: "p",
+      children: [{ type: "text", value: "Selected" }],
+    },
+    {
+      type: "instance",
+      id: "sibling",
+      component: elementComponent,
+      tag: "p",
+      children: [{ type: "text", value: "Sibling" }],
+    }
+  );
+
+  const mutation = executeBuilderRuntimeOperation({
+    id: "instances.unwrap",
+    state: createStructuralState(),
+    input: {
+      instanceSelector: ["selected", "wrapper", "grandparent", "block"],
+    },
+    context: {
+      createId: createIdFactory(),
+      returnStorageChanges: true,
+      materializedContent: [
+        { identity: externalIdentity, fragment: externalFragment },
+      ],
+    },
+  });
+
+  expect(mutation).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              { op: "remove", path: ["wrapper", "children", 0] },
+              {
+                op: "add",
+                path: ["grandparent", "children", 1],
+                value: { type: "id", value: "selected" },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    result: { instanceSelector: ["selected", "grandparent", "block"] },
+  });
+});
+
+test.each([
+  { operation: "clone", id: "instances.clone" as const },
+  {
+    operation: "duplicate",
+    id: "instances.duplicateAfterItself" as const,
+  },
+])("copies authored content with $operation in the same root", ({ id }) => {
+  const externalIdentity = identity("page:/post");
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id,
+      state: createStructuralState(),
+      input:
+        id === "instances.clone"
+          ? { sourceInstanceId: "selected", targetParentInstanceId: "parent" }
+          : { sourceInstanceId: "selected", parentInstanceId: "parent" },
+      context: {
+        createId: createIdFactory(),
+        projectId: "project",
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: externalIdentity,
+            fragment: siblingFragment("parent", ["selected"]),
+          },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      { root: { type: "external", identity: externalIdentity } },
+    ],
+    result: { instanceId: "generated-0" },
+  });
+});
+
+test("copies content in the innermost nested storage root", () => {
+  const { nestedIdentity, roots } = createNestedMaterializedContent();
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.clone",
+      state: createStructuralState(),
+      input: { sourceInstanceId: "nested-content" },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: roots,
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [{ root: { type: "external", identity: nestedIdentity } }],
+    result: { instanceId: "generated-0" },
+  });
+});
+
+test.each([
+  {
+    destination: "project",
+    state: createStructuralState(),
+    materializedContent: [
+      {
+        identity: identity("page:/post"),
+        fragment: siblingFragment("parent", ["selected"]),
+      },
+    ],
+    targetParentInstanceId: "templates",
+  },
+  {
+    destination: "another authored root",
+    state: addSecondSourceBlock(createStructuralState()),
+    materializedContent: [
+      {
+        identity: identity("page:/post"),
+        fragment: siblingFragment("parent", ["selected"]),
+      },
+      {
+        identity: identity("page:/second", "second-block", "second"),
+        fragment: siblingFragment("second-parent", ["second"]),
+      },
+    ],
+    targetParentInstanceId: "second-parent",
+  },
+])("rejects copying authored content to $destination", (testCase) => {
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.clone",
+      state: testCase.state,
+      input: {
+        sourceInstanceId: "selected",
+        targetParentInstanceId: testCase.targetParentInstanceId,
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: testCase.materializedContent,
+      },
+    })
+  ).toThrow("Copying content across authored storage roots is not supported");
+});
+
+test("rejects duplicating authored content into another storage root", () => {
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.duplicateAfterItself",
+      state: addSecondSourceBlock(createStructuralState()),
+      input: {
+        sourceInstanceId: "selected",
+        parentInstanceId: "second-parent",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: identity("page:/post"),
+            fragment: siblingFragment("parent", ["selected"]),
+          },
+          {
+            identity: identity("page:/second", "second-block", "second"),
+            fragment: siblingFragment("second-parent", ["second"]),
+          },
+        ],
+      },
+    })
+  ).toThrow("Copying content across authored storage roots is not supported");
+});
+
+test("rejects copying project content into authored storage", () => {
+  const state = createStructuralState();
+  state.instances?.set("project-parent", {
+    type: "instance",
+    id: "project-parent",
+    component: elementComponent,
+    tag: "div",
+    children: [{ type: "id", value: "project-selected" }],
+  });
+  state.instances?.set("project-selected", {
+    type: "instance",
+    id: "project-selected",
+    component: elementComponent,
+    tag: "p",
+    children: [{ type: "text", value: "Project" }],
+  });
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.clone",
+      state,
+      input: {
+        sourceInstanceId: "project-selected",
+        targetParentInstanceId: "parent",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: identity("page:/post"),
+            fragment: siblingFragment("parent", ["selected"]),
+          },
+        ],
+      },
+    })
+  ).toThrow("Copying content across authored storage roots is not supported");
+});
+
+test("preflights the implicit clone parent across storage roots", () => {
+  const state = createStructuralState();
+  state.instances?.set("project-parent", {
+    type: "instance",
+    id: "project-parent",
+    component: elementComponent,
+    tag: "div",
+    children: [{ type: "id", value: "selected" }],
+  });
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.clone",
+      state,
+      input: { sourceInstanceId: "selected" },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: identity("page:/post"),
+            fragment: siblingFragment("external-parent", ["selected"]),
+          },
+        ],
+      },
+    })
+  ).toThrow("Copying content across authored storage roots is not supported");
+});
+
+test("rejects copying the protected Templates list", () => {
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.clone",
+      state: createStructuralState(),
+      input: {
+        sourceInstanceId: "templates",
+        targetParentInstanceId: "block",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: fragment("external") },
+        ],
+      },
+    })
+  ).toThrow("Templates list cannot be changed");
+});
+
+test("rejects wrapping the protected Templates list", () => {
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.wrap",
+      state: createStructuralState(),
+      input: {
+        instanceSelector: ["templates", "block"],
+        component: elementComponent,
+        tag: "div",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: fragment("external") },
+        ],
+      },
+    })
+  ).toThrow("Templates list cannot be changed");
+});
