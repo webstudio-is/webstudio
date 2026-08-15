@@ -93,9 +93,9 @@ const renderControl = ({
   loading = false,
   diagnostics,
 }: {
-  onDisconnect?: () => Promise<
-    { status: "applied" } | { status: "blocked"; message: string }
-  >;
+  onDisconnect?: ComponentProps<
+    typeof ContentBlockSourceControl
+  >["onDisconnect"];
   source?:
     | { type: "asset"; assetId: string }
     | { type: "expression"; value: string };
@@ -181,11 +181,11 @@ test("requires copying loaded file content before disconnecting", async () => {
   );
 });
 
-test("keeps a blocked lifecycle result visible without claiming success", async () => {
+test("keeps a partial lifecycle result visible without claiming complete success", async () => {
   renderControl({
     onDisconnect: async () => ({
-      status: "blocked",
-      message: "Atomic persistence is not available.",
+      status: "partial",
+      message: "The file was saved, but the Content Block was not connected.",
     }),
   });
 
@@ -195,7 +195,7 @@ test("keeps a blocked lifecycle result visible without claiming success", async 
   });
 
   expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-    "Atomic persistence is not available."
+    "The file was saved, but the Content Block was not connected."
   );
   expect(document.body.textContent).toContain("Disconnect content source");
 });

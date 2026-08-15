@@ -43,6 +43,7 @@ import * as search from "./search";
 import * as slot from "./slot";
 import * as designTokenImport from "./design-token-import";
 import * as audit from "./audit";
+import type { ContentBlockPersistenceResult } from "./content-block-application";
 import * as styles from "./styles";
 import {
   getZodValidationIssues,
@@ -792,39 +793,37 @@ export const builderRuntimeOperations = [
         mutation === undefined
           ? undefined
           : {
-              ...mutation,
-              payload: mutation.payload.map((change) => ({
-                ...change,
-                patches: [...change.patches],
-              })),
-              invalidatesNamespaces: [...mutation.invalidatesNamespaces],
-              storageChanges: mutation.storageChanges?.map((change) => ({
-                ...change,
-                copySource:
-                  change.copySource === undefined
-                    ? undefined
-                    : { ...change.copySource },
-                mdxInsert:
-                  change.mdxInsert === undefined
-                    ? undefined
-                    : {
-                        ...change.mdxInsert,
-                        instanceIds: [...change.mdxInsert.instanceIds],
-                        rootInstanceIds: [...change.mdxInsert.rootInstanceIds],
-                      },
-                payload: change.payload.map((payload) => ({
-                  ...payload,
-                  patches: [...payload.patches],
-                })),
-              })),
+              result: { ...mutation.result },
+              noop: mutation.noop,
             };
       return {
         ...result,
         result: serializedMutation,
+        persistence:
+          mutation === undefined || !("persistence" in mutation)
+            ? undefined
+            : (() => {
+                const persistence =
+                  mutation.persistence as ContentBlockPersistenceResult;
+                return {
+                  ...persistence,
+                  steps: persistence.steps.map((step) => ({ ...step })),
+                  retry: {
+                    ...persistence.retry,
+                    roots: persistence.retry.roots.map((root) => ({ ...root })),
+                  },
+                };
+              })(),
         changedAsset:
           dryRun === false &&
-          result.status === "complete" &&
-          (mutation?.storageChanges?.length ?? 0) > 0,
+          (result.status === "complete" || result.status === "partial") &&
+          (mutation !== undefined && "persistence" in mutation
+            ? (
+                mutation.persistence as ContentBlockPersistenceResult
+              ).steps.some(
+                (step) => step.type === "asset" && step.status === "saved"
+              )
+            : (mutation?.storageChanges?.length ?? 0) > 0),
       };
     }
   ),

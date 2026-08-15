@@ -1206,7 +1206,7 @@ export const runtimeOperationContractData = [
       properties: {
         status: {
           type: "string",
-          enum: ["complete", "confirmation-required", "blocked"],
+          enum: ["complete", "partial", "confirmation-required", "blocked"],
         },
         code: {
           type: "string",
@@ -3168,6 +3168,131 @@ export const runtimeOperationContractData = [
             persistenceOrder: {
               type: "string",
               enum: ["none", "storage-before-project"],
+            },
+            persistence: {
+              type: "object",
+              properties: {
+                status: {
+                  type: "string",
+                  enum: ["complete", "partial", "failed"],
+                },
+                steps: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        enum: ["asset", "project"],
+                      },
+                      status: {
+                        type: "string",
+                        enum: ["saved", "failed", "not-attempted"],
+                      },
+                      root: {
+                        type: "object",
+                        properties: {
+                          blockInstanceId: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          assetId: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          revision: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          contentRef: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          format: {
+                            type: "string",
+                            const: "mdx",
+                          },
+                          renderScope: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                        },
+                        required: [
+                          "blockInstanceId",
+                          "assetId",
+                          "revision",
+                          "contentRef",
+                          "format",
+                          "renderScope",
+                        ],
+                        additionalProperties: false,
+                      },
+                      code: {
+                        type: "string",
+                      },
+                      message: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "status"],
+                  },
+                },
+                retry: {
+                  type: "object",
+                  properties: {
+                    replan: {
+                      type: "boolean",
+                      const: true,
+                    },
+                    roots: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          blockInstanceId: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          assetId: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          revision: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          contentRef: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          format: {
+                            type: "string",
+                            const: "mdx",
+                          },
+                          renderScope: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                        },
+                        required: [
+                          "blockInstanceId",
+                          "assetId",
+                          "revision",
+                          "contentRef",
+                          "format",
+                          "renderScope",
+                        ],
+                        additionalProperties: false,
+                      },
+                    },
+                    project: {
+                      type: "boolean",
+                    },
+                  },
+                  required: ["replan", "roots", "project"],
+                },
+              },
+              required: ["status", "steps", "retry"],
             },
           },
           required: [
@@ -3345,7 +3470,7 @@ export const runtimeOperationContractData = [
       properties: {
         status: {
           type: "string",
-          enum: ["complete", "confirmation-required", "blocked"],
+          enum: ["complete", "partial", "confirmation-required", "blocked"],
         },
         code: {
           type: "string",
@@ -5307,6 +5432,131 @@ export const runtimeOperationContractData = [
             persistenceOrder: {
               type: "string",
               enum: ["none", "storage-before-project"],
+            },
+            persistence: {
+              type: "object",
+              properties: {
+                status: {
+                  type: "string",
+                  enum: ["complete", "partial", "failed"],
+                },
+                steps: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        enum: ["asset", "project"],
+                      },
+                      status: {
+                        type: "string",
+                        enum: ["saved", "failed", "not-attempted"],
+                      },
+                      root: {
+                        type: "object",
+                        properties: {
+                          blockInstanceId: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          assetId: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          revision: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          contentRef: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          format: {
+                            type: "string",
+                            const: "mdx",
+                          },
+                          renderScope: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                        },
+                        required: [
+                          "blockInstanceId",
+                          "assetId",
+                          "revision",
+                          "contentRef",
+                          "format",
+                          "renderScope",
+                        ],
+                        additionalProperties: false,
+                      },
+                      code: {
+                        type: "string",
+                      },
+                      message: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "status"],
+                  },
+                },
+                retry: {
+                  type: "object",
+                  properties: {
+                    replan: {
+                      type: "boolean",
+                      const: true,
+                    },
+                    roots: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          blockInstanceId: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          assetId: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          revision: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          contentRef: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          format: {
+                            type: "string",
+                            const: "mdx",
+                          },
+                          renderScope: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                        },
+                        required: [
+                          "blockInstanceId",
+                          "assetId",
+                          "revision",
+                          "contentRef",
+                          "format",
+                          "renderScope",
+                        ],
+                        additionalProperties: false,
+                      },
+                    },
+                    project: {
+                      type: "boolean",
+                    },
+                  },
+                  required: ["replan", "roots", "project"],
+                },
+              },
+              required: ["status", "steps", "retry"],
             },
           },
           required: [
@@ -5446,7 +5696,7 @@ export const runtimeOperationContractData = [
       properties: {
         status: {
           type: "string",
-          enum: ["complete", "confirmation-required", "blocked"],
+          enum: ["complete", "partial", "confirmation-required", "blocked"],
         },
         code: {
           type: "string",
@@ -7409,6 +7659,131 @@ export const runtimeOperationContractData = [
               type: "string",
               enum: ["none", "storage-before-project"],
             },
+            persistence: {
+              type: "object",
+              properties: {
+                status: {
+                  type: "string",
+                  enum: ["complete", "partial", "failed"],
+                },
+                steps: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        enum: ["asset", "project"],
+                      },
+                      status: {
+                        type: "string",
+                        enum: ["saved", "failed", "not-attempted"],
+                      },
+                      root: {
+                        type: "object",
+                        properties: {
+                          blockInstanceId: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          assetId: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          revision: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          contentRef: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          format: {
+                            type: "string",
+                            const: "mdx",
+                          },
+                          renderScope: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                        },
+                        required: [
+                          "blockInstanceId",
+                          "assetId",
+                          "revision",
+                          "contentRef",
+                          "format",
+                          "renderScope",
+                        ],
+                        additionalProperties: false,
+                      },
+                      code: {
+                        type: "string",
+                      },
+                      message: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "status"],
+                  },
+                },
+                retry: {
+                  type: "object",
+                  properties: {
+                    replan: {
+                      type: "boolean",
+                      const: true,
+                    },
+                    roots: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          blockInstanceId: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          assetId: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          revision: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          contentRef: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          format: {
+                            type: "string",
+                            const: "mdx",
+                          },
+                          renderScope: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                        },
+                        required: [
+                          "blockInstanceId",
+                          "assetId",
+                          "revision",
+                          "contentRef",
+                          "format",
+                          "renderScope",
+                        ],
+                        additionalProperties: false,
+                      },
+                    },
+                    project: {
+                      type: "boolean",
+                    },
+                  },
+                  required: ["replan", "roots", "project"],
+                },
+              },
+              required: ["status", "steps", "retry"],
+            },
           },
           required: [
             "action",
@@ -7501,7 +7876,7 @@ export const runtimeOperationContractData = [
       properties: {
         status: {
           type: "string",
-          enum: ["complete", "blocked"],
+          enum: ["complete", "partial", "blocked"],
         },
         code: {
           type: "string",
@@ -8958,7 +9333,7 @@ export const runtimeOperationContractData = [
       properties: {
         status: {
           type: "string",
-          enum: ["complete", "blocked"],
+          enum: ["complete", "partial", "blocked"],
         },
         code: {
           type: "string",
@@ -8969,536 +9344,93 @@ export const runtimeOperationContractData = [
         result: {
           type: "object",
           properties: {
-            kind: {
-              type: "string",
-              const: "mutation",
-            },
-            payload: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  namespace: {
-                    type: "string",
-                    enum: [
-                      "pages",
-                      "instances",
-                      "props",
-                      "styles",
-                      "styleSources",
-                      "styleSourceSelections",
-                      "dataSources",
-                      "resources",
-                      "assets",
-                      "assetFolders",
-                      "breakpoints",
-                      "projectSettings",
-                      "marketplaceProduct",
-                    ],
-                  },
-                  patches: {
-                    type: "array",
-                    items: {
-                      anyOf: [
-                        {
-                          type: "object",
-                          properties: {
-                            op: {
-                              type: "string",
-                              const: "add",
-                            },
-                            path: {
-                              type: "array",
-                              items: {
-                                anyOf: [
-                                  {
-                                    type: "string",
-                                  },
-                                  {
-                                    type: "number",
-                                  },
-                                ],
-                              },
-                            },
-                            value: {},
-                          },
-                          required: ["op", "path"],
-                        },
-                        {
-                          type: "object",
-                          properties: {
-                            op: {
-                              type: "string",
-                              const: "replace",
-                            },
-                            path: {
-                              type: "array",
-                              items: {
-                                anyOf: [
-                                  {
-                                    type: "string",
-                                  },
-                                  {
-                                    type: "number",
-                                  },
-                                ],
-                              },
-                            },
-                            value: {},
-                          },
-                          required: ["op", "path"],
-                        },
-                        {
-                          type: "object",
-                          properties: {
-                            op: {
-                              type: "string",
-                              const: "remove",
-                            },
-                            path: {
-                              type: "array",
-                              items: {
-                                anyOf: [
-                                  {
-                                    type: "string",
-                                  },
-                                  {
-                                    type: "number",
-                                  },
-                                ],
-                              },
-                            },
-                          },
-                          required: ["op", "path"],
-                        },
-                      ],
-                    },
-                  },
-                },
-                required: ["namespace", "patches"],
-              },
-            },
             result: {
               type: "object",
               properties: {},
               additionalProperties: {},
               required: [],
             },
-            invalidatesNamespaces: {
-              type: "array",
-              items: {
-                type: "string",
-                enum: [
-                  "pages",
-                  "instances",
-                  "props",
-                  "styles",
-                  "styleSources",
-                  "styleSourceSelections",
-                  "dataSources",
-                  "resources",
-                  "assets",
-                  "assetFolders",
-                  "breakpoints",
-                  "projectSettings",
-                  "marketplaceProduct",
-                ],
-              },
-            },
-            storageChanges: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  root: {
-                    oneOf: [
-                      {
-                        type: "object",
-                        properties: {
-                          type: {
-                            type: "string",
-                            const: "project",
-                          },
-                        },
-                        required: ["type"],
-                      },
-                      {
-                        type: "object",
-                        properties: {
-                          type: {
-                            type: "string",
-                            const: "external",
-                          },
-                          identity: {
-                            type: "object",
-                            properties: {
-                              blockInstanceId: {
-                                type: "string",
-                                minLength: 1,
-                              },
-                              assetId: {
-                                type: "string",
-                                minLength: 1,
-                              },
-                              revision: {
-                                type: "string",
-                                minLength: 1,
-                              },
-                              contentRef: {
-                                type: "string",
-                                minLength: 1,
-                              },
-                              format: {
-                                type: "string",
-                                const: "mdx",
-                              },
-                              renderScope: {
-                                type: "string",
-                                minLength: 1,
-                              },
-                            },
-                            required: [
-                              "blockInstanceId",
-                              "assetId",
-                              "revision",
-                              "contentRef",
-                              "format",
-                              "renderScope",
-                            ],
-                            additionalProperties: false,
-                          },
-                        },
-                        required: ["type", "identity"],
-                      },
-                    ],
-                  },
-                  payload: {
-                    type: "array",
-                    items: {
-                      anyOf: [
-                        {
-                          type: "object",
-                          properties: {
-                            namespace: {
-                              type: "string",
-                              enum: [
-                                "pages",
-                                "instances",
-                                "props",
-                                "styles",
-                                "styleSources",
-                                "styleSourceSelections",
-                                "dataSources",
-                                "resources",
-                                "assets",
-                                "assetFolders",
-                                "breakpoints",
-                                "projectSettings",
-                                "marketplaceProduct",
-                              ],
-                            },
-                            patches: {
-                              type: "array",
-                              items: {
-                                anyOf: [
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      op: {
-                                        type: "string",
-                                        const: "add",
-                                      },
-                                      path: {
-                                        type: "array",
-                                        items: {
-                                          anyOf: [
-                                            {
-                                              type: "string",
-                                            },
-                                            {
-                                              type: "number",
-                                            },
-                                          ],
-                                        },
-                                      },
-                                      value: {},
-                                    },
-                                    required: ["op", "path"],
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      op: {
-                                        type: "string",
-                                        const: "replace",
-                                      },
-                                      path: {
-                                        type: "array",
-                                        items: {
-                                          anyOf: [
-                                            {
-                                              type: "string",
-                                            },
-                                            {
-                                              type: "number",
-                                            },
-                                          ],
-                                        },
-                                      },
-                                      value: {},
-                                    },
-                                    required: ["op", "path"],
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      op: {
-                                        type: "string",
-                                        const: "remove",
-                                      },
-                                      path: {
-                                        type: "array",
-                                        items: {
-                                          anyOf: [
-                                            {
-                                              type: "string",
-                                            },
-                                            {
-                                              type: "number",
-                                            },
-                                          ],
-                                        },
-                                      },
-                                    },
-                                    required: ["op", "path"],
-                                  },
-                                ],
-                              },
-                            },
-                          },
-                          required: ["namespace", "patches"],
-                        },
-                        {
-                          type: "object",
-                          properties: {
-                            namespace: {
-                              type: "string",
-                              const: "fragment",
-                            },
-                            patches: {
-                              type: "array",
-                              items: {
-                                anyOf: [
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      op: {
-                                        type: "string",
-                                        const: "add",
-                                      },
-                                      path: {
-                                        type: "array",
-                                        items: {
-                                          anyOf: [
-                                            {
-                                              type: "string",
-                                            },
-                                            {
-                                              type: "number",
-                                            },
-                                          ],
-                                        },
-                                      },
-                                      value: {},
-                                    },
-                                    required: ["op", "path"],
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      op: {
-                                        type: "string",
-                                        const: "replace",
-                                      },
-                                      path: {
-                                        type: "array",
-                                        items: {
-                                          anyOf: [
-                                            {
-                                              type: "string",
-                                            },
-                                            {
-                                              type: "number",
-                                            },
-                                          ],
-                                        },
-                                      },
-                                      value: {},
-                                    },
-                                    required: ["op", "path"],
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      op: {
-                                        type: "string",
-                                        const: "remove",
-                                      },
-                                      path: {
-                                        type: "array",
-                                        items: {
-                                          anyOf: [
-                                            {
-                                              type: "string",
-                                            },
-                                            {
-                                              type: "number",
-                                            },
-                                          ],
-                                        },
-                                      },
-                                    },
-                                    required: ["op", "path"],
-                                  },
-                                ],
-                              },
-                            },
-                          },
-                          required: ["namespace", "patches"],
-                        },
-                      ],
-                    },
-                  },
-                  copySource: {
-                    type: "object",
-                    properties: {
-                      root: {
-                        oneOf: [
-                          {
-                            type: "object",
-                            properties: {
-                              type: {
-                                type: "string",
-                                const: "project",
-                              },
-                            },
-                            required: ["type"],
-                          },
-                          {
-                            type: "object",
-                            properties: {
-                              type: {
-                                type: "string",
-                                const: "external",
-                              },
-                              identity: {
-                                type: "object",
-                                properties: {
-                                  blockInstanceId: {
-                                    type: "string",
-                                    minLength: 1,
-                                  },
-                                  assetId: {
-                                    type: "string",
-                                    minLength: 1,
-                                  },
-                                  revision: {
-                                    type: "string",
-                                    minLength: 1,
-                                  },
-                                  contentRef: {
-                                    type: "string",
-                                    minLength: 1,
-                                  },
-                                  format: {
-                                    type: "string",
-                                    const: "mdx",
-                                  },
-                                  renderScope: {
-                                    type: "string",
-                                    minLength: 1,
-                                  },
-                                },
-                                required: [
-                                  "blockInstanceId",
-                                  "assetId",
-                                  "revision",
-                                  "contentRef",
-                                  "format",
-                                  "renderScope",
-                                ],
-                                additionalProperties: false,
-                              },
-                            },
-                            required: ["type", "identity"],
-                          },
-                        ],
-                      },
-                      instanceId: {
-                        type: "string",
-                        minLength: 1,
-                      },
-                    },
-                    required: ["root", "instanceId"],
-                  },
-                  mdxInsert: {
-                    type: "object",
-                    properties: {
-                      source: {
-                        type: "string",
-                      },
-                      parentInstanceId: {
-                        type: "string",
-                      },
-                      childIndex: {
-                        type: "integer",
-                        minimum: 0,
-                        maximum: 9007199254740991,
-                      },
-                      position: {
-                        type: "string",
-                        enum: ["append", "prepend", "replace", "index"],
-                      },
-                      instanceIds: {
-                        type: "array",
-                        items: {
-                          type: "string",
-                        },
-                      },
-                      rootInstanceIds: {
-                        type: "array",
-                        items: {
-                          type: "string",
-                        },
-                      },
-                    },
-                    required: [
-                      "source",
-                      "parentInstanceId",
-                      "childIndex",
-                      "position",
-                      "instanceIds",
-                      "rootInstanceIds",
-                    ],
-                  },
-                },
-                required: ["root", "payload"],
-              },
-            },
             noop: {
               type: "boolean",
             },
           },
-          required: [
-            "kind",
-            "payload",
-            "result",
-            "invalidatesNamespaces",
-            "noop",
-          ],
+          required: ["result", "noop"],
         },
         changedAsset: {
           type: "boolean",
+        },
+        persistence: {
+          type: "object",
+          properties: {
+            status: {
+              type: "string",
+              enum: ["complete", "partial", "failed"],
+            },
+            steps: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {},
+                additionalProperties: {},
+                required: [],
+              },
+            },
+            retry: {
+              type: "object",
+              properties: {
+                replan: {
+                  type: "boolean",
+                  const: true,
+                },
+                roots: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      blockInstanceId: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                      assetId: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                      revision: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                      contentRef: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                      format: {
+                        type: "string",
+                        const: "mdx",
+                      },
+                      renderScope: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    required: [
+                      "blockInstanceId",
+                      "assetId",
+                      "revision",
+                      "contentRef",
+                      "format",
+                      "renderScope",
+                    ],
+                    additionalProperties: false,
+                  },
+                },
+                project: {
+                  type: "boolean",
+                },
+              },
+              required: ["replan", "roots", "project"],
+            },
+          },
+          required: ["status", "steps", "retry"],
         },
       },
       required: ["status", "changedAsset"],

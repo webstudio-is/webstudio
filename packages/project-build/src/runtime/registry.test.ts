@@ -444,7 +444,15 @@ describe("builder runtime read families", () => {
           createId: () => "unused",
           contentStorageApplication: {
             getMaterializedContent: () => [],
-            saveStorageChanges: async () => ({ status: "complete" }),
+            preflightStorageChanges: async () => ({ status: "ready" as const }),
+            saveStorageChanges: async () => ({
+              status: "complete" as const,
+              persistence: {
+                status: "complete" as const,
+                steps: [],
+                retry: { replan: true as const, roots: [], project: false },
+              },
+            }),
             inspectSource,
           },
         },
@@ -498,7 +506,15 @@ describe("builder runtime read families", () => {
     }));
     const contentStorageApplication = {
       getMaterializedContent: () => [],
-      saveStorageChanges: async () => ({ status: "complete" as const }),
+      preflightStorageChanges: async () => ({ status: "ready" as const }),
+      saveStorageChanges: async () => ({
+        status: "complete" as const,
+        persistence: {
+          status: "complete" as const,
+          steps: [],
+          retry: { replan: true as const, roots: [], project: false },
+        },
+      }),
       inspectSource: async () => inspection,
       recover,
       semanticEdit,
@@ -525,7 +541,10 @@ describe("builder runtime read families", () => {
       dryRun: true,
     });
 
-    await executeBuilderRuntimeOperation({
+    const edit = await executeBuilderRuntimeOperation<{
+      status: string;
+      result: Record<string, unknown>;
+    }>({
       id: "contentBlocks.semanticEdit",
       state,
       input: {
@@ -536,6 +555,12 @@ describe("builder runtime read families", () => {
       },
       context: { createId: () => "unused", contentStorageApplication },
     });
+    expect(edit).toMatchObject({
+      status: "complete",
+      result: { result: { updated: true }, noop: false },
+    });
+    expect(edit.result).not.toHaveProperty("payload");
+    expect(edit.result).not.toHaveProperty("storageChanges");
     expect(semanticEdit).toHaveBeenCalledWith({
       blockInstanceId: "block",
       renderScope: "page:/",

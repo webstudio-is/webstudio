@@ -168,27 +168,11 @@ const createController = ({
   state,
   fileSource = "# File body",
   authorizeAsset = () => true,
-  recordStorageHistory,
-  beginStorageHistory,
-  dropStorageHistory,
-  disposeStorageHistory,
   updateError,
 }: {
   state: ReturnType<typeof createState>;
   fileSource?: string;
   authorizeAsset?: () => boolean;
-  recordStorageHistory?: Parameters<
-    typeof createContentBlockSourceController
-  >[0]["recordStorageHistory"];
-  beginStorageHistory?: Parameters<
-    typeof createContentBlockSourceController
-  >[0]["beginStorageHistory"];
-  dropStorageHistory?: Parameters<
-    typeof createContentBlockSourceController
-  >[0]["dropStorageHistory"];
-  disposeStorageHistory?: Parameters<
-    typeof createContentBlockSourceController
-  >[0]["disposeStorageHistory"];
   updateError?: Error;
 }) => {
   const storage = createRepository(fileSource, updateError);
@@ -208,10 +192,6 @@ const createController = ({
     commitProjectPayload,
     invalidateAssets,
     publishSessionState,
-    recordStorageHistory,
-    beginStorageHistory,
-    dropStorageHistory,
-    disposeStorageHistory,
   });
   return {
     controller,
@@ -244,7 +224,7 @@ test("connects using file content through one Builder project transaction", asyn
   expect(setup.storage.updateContent).not.toHaveBeenCalled();
 });
 
-test("blocks combined project and Asset replacement without a partial write", async () => {
+test("replaces the Asset before committing the project connection", async () => {
   const setup = createController({ state: createState() });
 
   const result = await setup.controller.requestSource({
@@ -252,21 +232,46 @@ test("blocks combined project and Asset replacement without a partial write", as
     authority: "replace-file-body-with-block-content",
   });
 
-  expect(result).toEqual({
-    status: "blocked",
-    code: "content-source-atomic-persistence-unavailable",
-    message:
-      "Replacing file content while changing the Content Block source requires atomic project and Asset persistence, which is not available yet.",
-  });
-  expect(setup.commitProjectPayload).not.toHaveBeenCalled();
-  expect(setup.storage.updateContent).not.toHaveBeenCalled();
+  expect(result).toMatchObject({ status: "applied" });
+  expect(setup.commitProjectPayload).toHaveBeenCalledOnce();
+  expect(setup.storage.updateContent).toHaveBeenCalledOnce();
+  expect(setup.storage.updateContent.mock.invocationCallOrder[0]).toBeLessThan(
+    setup.commitProjectPayload.mock.invocationCallOrder[0]
+  );
   expect(setup.storage.reads).toBe(1);
   expect(setup.publishSessionState).toHaveBeenLastCalledWith(
-    expect.objectContaining({ status: "saved", source: "# File body" })
+    expect.objectContaining({ status: "saved" })
   );
 });
 
-test("rolls back lifecycle preparation that finishes after disposal", async () => {
+test("keeps the previous view when the Asset saves but project connection fails", async () => {
+  const setup = createController({ state: createState() });
+  setup.commitProjectPayload.mockRejectedValueOnce(
+    new Error("Project connection failed")
+  );
+
+  await expect(
+    setup.controller.requestSource({
+      source: { type: "asset", assetId: "post" },
+      authority: "replace-file-body-with-block-content",
+    })
+  ).resolves.toMatchObject({
+    status: "partial",
+    persistence: {
+      status: "partial",
+      steps: [
+        { type: "asset", status: "saved" },
+        { type: "project", status: "failed" },
+      ],
+      retry: { replan: true, roots: [], project: true },
+    },
+  });
+  expect(setup.storage.updateContent).toHaveBeenCalledOnce();
+  expect(setup.publishSessionState).not.toHaveBeenCalled();
+  expect(setup.invalidateAssets).toHaveBeenCalledOnce();
+});
+
+test("does not start lifecycle persistence after disposal", async () => {
   const setup = createController({ state: createState() });
   const request = setup.controller.requestSource({
     source: { type: "asset", assetId: "post" },
@@ -456,26 +461,9 @@ test("does not publish a retry that finishes after the source changes", async ()
 });
 
 test("persists a single-Asset content edit and invalidates Asset resources", async () => {
-  const recordStorageHistory = vi.fn(
-    (
-      _input: Parameters<
-        NonNullable<
-          Parameters<
-            typeof createContentBlockSourceController
-          >[0]["recordStorageHistory"]
-        >
-      >[0]
-    ) => ({
-      status: "applied" as const,
-      entryId: "history",
-    })
-  );
-  const beginStorageHistory = vi.fn(() => "history");
   const setup = createController({
     state: createState({ body: false }),
     fileSource: "Before",
-    recordStorageHistory,
-    beginStorageHistory,
   });
   const loaded = await setup.controller.open({
     type: "asset",
@@ -518,47 +506,13 @@ test("persists a single-Asset content edit and invalidates Asset resources", asy
   expect(setup.storage.updateContent).toHaveBeenCalledTimes(1);
   expect(setup.invalidateAssets).toHaveBeenCalledTimes(1);
   expect(setup.commitProjectPayload).not.toHaveBeenCalled();
-  expect(recordStorageHistory).toHaveBeenCalledOnce();
-  expect(beginStorageHistory).toHaveBeenCalledOnce();
-  expect(recordStorageHistory).toHaveBeenCalledWith(
-    expect.objectContaining({
-      beforeSource: "Before",
-      afterSource: "After\n",
-      id: "history",
-      mutation: { payload: [] },
-      isCurrent: expect.any(Function),
-    })
-  );
-  const historyInput = recordStorageHistory.mock.calls[0][0];
-  expect(historyInput.isCurrent?.()).toBe(true);
-  await setup.controller.open({ type: "asset", assetId: "other" });
-  expect(historyInput.isCurrent?.()).toBe(false);
 });
 
-test("removes its storage history when disposed", () => {
-  const disposeStorageHistory = vi.fn();
-  const setup = createController({
-    state: createState({ body: false }),
-    disposeStorageHistory,
-  });
-
-  setup.controller.dispose();
-  setup.controller.dispose();
-
-  expect(disposeStorageHistory).toHaveBeenCalledOnce();
-});
-
-test("drops pending history when the Asset save fails", async () => {
-  const recordStorageHistory = vi.fn();
-  const beginStorageHistory = vi.fn(() => "failed-history");
-  const dropStorageHistory = vi.fn();
+test("preserves the failed source for recovery when an Asset save fails", async () => {
   const setup = createController({
     state: createState({ body: false }),
     fileSource: "Before",
     updateError: new Error("write failed"),
-    recordStorageHistory,
-    beginStorageHistory,
-    dropStorageHistory,
   });
   const loaded = await setup.controller.open({
     type: "asset",
@@ -592,8 +546,8 @@ test("drops pending history when the Asset save fails", async () => {
       },
     ])
   ).toMatchObject({ status: "blocked" });
-  expect(recordStorageHistory).not.toHaveBeenCalled();
-  expect(dropStorageHistory).toHaveBeenCalledWith("failed-history");
+  expect(setup.invalidateAssets).not.toHaveBeenCalled();
+  expect(setup.commitProjectPayload).not.toHaveBeenCalled();
 });
 
 test("keeps the newest source when an older load finishes last", async () => {

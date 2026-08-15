@@ -112,9 +112,28 @@ const contentBlockLifecyclePlan = z.object({
   ),
   diagnostics: z.array(contentBlockDiagnostic),
   persistenceOrder: z.enum(["none", "storage-before-project"]),
+  persistence: z
+    .object({
+      status: z.enum(["complete", "partial", "failed"]),
+      steps: z.array(
+        z.object({
+          type: z.enum(["asset", "project"]),
+          status: z.enum(["saved", "failed", "not-attempted"]),
+          root: contentBlockExternalContentIdentity.optional(),
+          code: z.string().optional(),
+          message: z.string().optional(),
+        })
+      ),
+      retry: z.object({
+        replan: z.literal(true),
+        roots: z.array(contentBlockExternalContentIdentity),
+        project: z.boolean(),
+      }),
+    })
+    .optional(),
 });
 const contentBlockApplicationResult = z.object({
-  status: z.enum(["complete", "confirmation-required", "blocked"]),
+  status: z.enum(["complete", "partial", "confirmation-required", "blocked"]),
   code: z.string().optional(),
   message: z.string().optional(),
   source: contentBlockSourceInspection,
@@ -124,7 +143,7 @@ const contentBlockApplicationResult = z.object({
     .optional(),
 });
 const contentBlockRecoveryResult = z.object({
-  status: z.enum(["complete", "blocked"]),
+  status: z.enum(["complete", "partial", "blocked"]),
   code: z.string().optional(),
   message: z.string().optional(),
   source: contentBlockSourceInspection,
@@ -198,15 +217,32 @@ export const createRuntimeMutationExecutionSchema = <
         })
       )
       .optional(),
+    persistenceOrder: z.enum(["storage-first", "project-first"]).optional(),
     noop: z.boolean(),
   });
 
 const contentBlockSemanticEditResult = z.object({
-  status: z.enum(["complete", "blocked"]),
+  status: z.enum(["complete", "partial", "blocked"]),
   code: z.string().optional(),
   message: z.string().optional(),
-  result: createRuntimeMutationExecutionSchema(z.looseObject({})).optional(),
+  result: z
+    .object({
+      result: z.looseObject({}),
+      noop: z.boolean(),
+    })
+    .optional(),
   changedAsset: z.boolean(),
+  persistence: z
+    .object({
+      status: z.enum(["complete", "partial", "failed"]),
+      steps: z.array(z.looseObject({})),
+      retry: z.object({
+        replan: z.literal(true),
+        roots: z.array(contentBlockExternalContentIdentity),
+        project: z.boolean(),
+      }),
+    })
+    .optional(),
 });
 
 const pageSummary = looseObject({

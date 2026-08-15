@@ -15,6 +15,7 @@ import type { BuilderState } from "../state/builder-state";
 import {
   createContentStorageProjection,
   createContentStorageSelectorProjection,
+  getContentStorageRootKey,
   resolveContentStorageRoot,
 } from "./content-storage";
 import { executeBuilderRuntimeOperation } from "./registry";
@@ -2374,7 +2375,7 @@ test("orders independent batched moves by their authored roots", () => {
   });
 });
 
-test("moves authored content into project ownership atomically", () => {
+test("moves authored content into project ownership", () => {
   const state = createStructuralState();
   state.instances?.set("project-parent", {
     type: "instance",
@@ -2465,7 +2466,7 @@ test("moves authored content into project ownership atomically", () => {
   });
 });
 
-test("moves content between authored storage roots atomically", () => {
+test("orders the destination before the source when moving between authored roots", () => {
   const sourceIdentity = identity("page:/post");
   const targetIdentity = identity("page:/second", "second-block", "second");
 
@@ -2500,11 +2501,64 @@ test("moves content between authored storage roots atomically", () => {
   ).toMatchObject({
     payload: [],
     storageChanges: [
-      { root: { type: "external", identity: sourceIdentity } },
       { root: { type: "external", identity: targetIdentity } },
+      { root: { type: "external", identity: sourceIdentity } },
     ],
     result: { instanceIds: ["first"] },
   });
+});
+
+test("keeps repeated render scopes distinct in persistence plans", () => {
+  const sourceIdentity = identity("collection:item-1", "block", "first");
+  const targetIdentity = identity("collection:item-2", "block", "second");
+
+  expect(
+    getContentStorageRootKey({ type: "external", identity: sourceIdentity })
+  ).not.toBe(
+    getContentStorageRootKey({ type: "external", identity: targetIdentity })
+  );
+});
+
+test("rejects cyclic cross-root moves before returning persistence steps", () => {
+  const sourceIdentity = identity("page:/post");
+  const targetIdentity = identity("page:/second", "second-block", "second");
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.move",
+      state: addSecondSourceBlock(createStructuralState()),
+      input: {
+        moves: [
+          {
+            instanceId: "first",
+            parentInstanceId: "second-parent",
+            position: "end",
+          },
+          {
+            instanceId: "second",
+            parentInstanceId: "parent",
+            position: "end",
+          },
+        ],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: sourceIdentity,
+            fragment: siblingFragment("parent", ["first"]),
+          },
+          {
+            identity: targetIdentity,
+            fragment: siblingFragment("second-parent", ["second"]),
+          },
+        ],
+      },
+    })
+  ).toThrow(
+    "Cyclic cross-root ownership transfers are not supported by serial persistence."
+  );
 });
 
 test("rejects overlapping cross-root subtree transfers atomically", () => {
@@ -2604,7 +2658,7 @@ test("keeps a repeated cross-root move as a noop after ownership changes", () =>
   });
 });
 
-test("reparents content between authored storage roots atomically", () => {
+test("orders the destination before the source when reparenting between authored roots", () => {
   const sourceIdentity = identity("page:/post");
   const targetIdentity = identity("page:/second", "second-block", "second");
 
@@ -2637,8 +2691,8 @@ test("reparents content between authored storage roots atomically", () => {
   ).toMatchObject({
     payload: [],
     storageChanges: [
-      { root: { type: "external", identity: sourceIdentity } },
       { root: { type: "external", identity: targetIdentity } },
+      { root: { type: "external", identity: sourceIdentity } },
     ],
     result: {
       instanceSelector: ["first", "second-parent", "second-block"],
@@ -2646,7 +2700,7 @@ test("reparents content between authored storage roots atomically", () => {
   });
 });
 
-test("moves project content into authored storage atomically", () => {
+test("moves project content into authored storage", () => {
   const state = createStructuralState();
   state.instances?.set("project-parent", {
     type: "instance",
@@ -2731,8 +2785,8 @@ test("moves content across nested authored ownership boundaries", () => {
   ).toMatchObject({
     payload: [],
     storageChanges: [
-      { root: { type: "external", identity: nestedIdentity } },
       { root: { type: "external", identity: parentIdentity } },
+      { root: { type: "external", identity: nestedIdentity } },
     ],
     result: { instanceIds: ["nested-content"] },
   });

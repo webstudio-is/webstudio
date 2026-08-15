@@ -154,12 +154,12 @@ Webstudio never merges the two bodies implicitly. The file's frontmatter is
 preserved when its body is replaced. If only one side has body content,
 Webstudio selects that side automatically.
 
-{% hint style="warning" %}
-A lifecycle or semantic edit that must change project data and an Asset in one
-atomic commit, or must coordinate several Asset writes, is currently blocked
-before any change is saved. Keep the content in one file or choose **Use file
-content** until atomic multi-storage commits are available.
-{% endhint %}
+Lifecycle and semantic edits validate every target first, then save each target
+in a deterministic order. For **Replace file body with block content**, Webstudio
+saves the file before connecting the Content Block. If a later step fails, the
+earlier writes remain saved and the result identifies the failed and
+not-attempted steps. Reinspect the current source and retry only those steps;
+Webstudio does not roll back completed file writes.
 
 ### Convert Markdown to MDX
 
@@ -230,6 +230,11 @@ normalize whitespace, quoting, table alignment, and frontmatter key order while
 preserving the document's meaning, frontmatter, comments, unresolved template
 references, and ignored authored props.
 
+Undo inside an active canvas text editor or the Text File Editor uses that
+editor's local history. Webstudio does not add saved MDX file changes to the
+Builder's project-wide **Undo** and **Redo** history. Closing or remounting the
+editor ends that local file history.
+
 ### Insert a template by name
 
 Reference one direct child of the Content Block's flat Templates list with its
@@ -297,10 +302,11 @@ overwriting newer content. Migration reports partial per-file failures without
 silently retrying them.
 
 The operations return stable diagnostic and error codes through MCP, direct CLI
-calls, and the HTTP API. Lifecycle and semantic edits that require atomic
-project-plus-Asset or coordinated multi-Asset writes remain blocked before any
-write. Template migration is different: it applies each explicitly reviewed
-file with its own revision check and can return a partial result. Recovery of
+calls, and the HTTP API. Lifecycle and semantic edits return ordered per-target
+results. They stop after a failed dependent step, leave completed writes in
+place, and identify which steps must be replanned and retried. Template
+migration similarly applies each explicitly reviewed file with its own revision
+check and can return a partial result. Recovery of
 unsaved local MDX requires the same live Builder or MCP session; a fresh
 one-shot CLI process or stateless HTTP request returns a not-loaded result
 instead of guessing which local state to recover. See [Webstudio MCP](../mcp.md)

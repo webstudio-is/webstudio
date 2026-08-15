@@ -34,6 +34,7 @@ import {
 
 export type ContentBlockSourceMutationResult =
   | Readonly<{ status: "applied" }>
+  | Readonly<{ status: "partial"; message: string }>
   | Readonly<{ status: "blocked"; message: string }>;
 
 export type ContentBlockSourceActionResult =
@@ -268,7 +269,7 @@ export const ContentBlockSourceControl = ({
         });
         return;
       }
-      if (result.status === "blocked") {
+      if (result.status === "blocked" || result.status === "partial") {
         setLocalError(result.message);
         return;
       }
@@ -458,7 +459,10 @@ export const ContentBlockSourceControl = ({
               }
               void onDisconnect()
                 .then((result) => {
-                  if (result.status === "blocked") {
+                  if (
+                    result.status === "blocked" ||
+                    result.status === "partial"
+                  ) {
                     setLocalError(result.message);
                     return;
                   }

@@ -18,6 +18,7 @@ import equal from "fast-deep-equal";
 import type { BuilderPatchChange } from "../contracts/patch";
 import {
   hasContentStorageChange,
+  getRuntimeMutationPersistenceOrder,
   type BuilderRuntimeMutation,
   type ContentStorageChange,
   type ContentStoragePatchChange,
@@ -53,6 +54,11 @@ export const getContentStorageIdentityKey = (
     identity.format,
     identity.renderScope,
   ]);
+
+export const getContentStorageRootKey = (root: ContentStorageRoot) =>
+  root.type === "project"
+    ? "project"
+    : `external:${getContentStorageIdentityKey(root.identity)}`;
 
 export type ContentStorageTarget =
   | Readonly<{ type: "instance"; instanceId: Instance["id"] }>
@@ -1569,6 +1575,38 @@ export const executeContentStorageStructuralMutation = <
     }
     return [{ transfer, sourceRoot, targetRoot, instanceIds }];
   });
+  const transferTargets = new Map<string, Set<string>>();
+  for (const { sourceRoot, targetRoot } of ownershipTransferPlans) {
+    const sourceKey = getContentStorageRootKey(sourceRoot);
+    const targets = transferTargets.get(sourceKey) ?? new Set<string>();
+    targets.add(getContentStorageRootKey(targetRoot));
+    transferTargets.set(sourceKey, targets);
+  }
+  const visitedRoots = new Set<string>();
+  const visitingRoots = new Set<string>();
+  const hasTransferCycle = (rootKey: string): boolean => {
+    if (visitingRoots.has(rootKey)) {
+      return true;
+    }
+    if (visitedRoots.has(rootKey)) {
+      return false;
+    }
+    visitingRoots.add(rootKey);
+    for (const targetKey of transferTargets.get(rootKey) ?? []) {
+      if (hasTransferCycle(targetKey)) {
+        return true;
+      }
+    }
+    visitingRoots.delete(rootKey);
+    visitedRoots.add(rootKey);
+    return false;
+  };
+  if (Array.from(transferTargets.keys()).some(hasTransferCycle)) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Cyclic cross-root ownership transfers are not supported by serial persistence."
+    );
+  }
   const transferredInstanceIds = new Set<Instance["id"]>();
   for (const { instanceIds } of ownershipTransferPlans) {
     for (const instanceId of instanceIds) {
@@ -1943,8 +1981,8 @@ export const executeContentStorageStructuralMutation = <
           );
         }
         markTransferred(namespace, id);
-        addPatch(sourceRoot, namespace, { op: "remove", path: [id] });
         addPatch(targetRoot, namespace, { op: "add", path: [id], value });
+        addPatch(sourceRoot, namespace, { op: "remove", path: [id] });
         for (const externalRoot of [sourceRoot, targetRoot]) {
           if (externalRoot.type !== "external") {
             continue;
@@ -2079,11 +2117,15 @@ export const executeContentStorageStructuralMutation = <
     ...(mutation.storageChanges ?? []),
     ...storageChanges,
   ];
-  return {
+  const result = {
     ...mutation,
     payload: Array.from(projectChanges.values()),
     storageChanges:
       combinedStorageChanges.length === 0 ? undefined : combinedStorageChanges,
     noop: projectChanges.size === 0 && combinedStorageChanges.length === 0,
   } as Mutation;
+  return {
+    ...result,
+    persistenceOrder: getRuntimeMutationPersistenceOrder(result),
+  };
 };

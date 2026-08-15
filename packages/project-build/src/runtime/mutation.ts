@@ -41,7 +41,53 @@ export type BuilderRuntimeMutation<
   result: Result;
   invalidatesNamespaces: readonly BuilderNamespace[];
   storageChanges?: ContentStorageChange[];
+  persistenceOrder?: "storage-first" | "project-first";
   noop: boolean;
+};
+
+// Moving authored records into project ownership is the one serial persistence
+// case where saving the project first avoids deleting the only durable copy.
+// The inverse move remains storage-first so the external destination exists
+// before the project source is removed.
+export const getRuntimeMutationPersistenceOrder = (
+  mutation: Pick<
+    BuilderRuntimeMutation,
+    "payload" | "storageChanges" | "persistenceOrder"
+  >
+): "storage-first" | "project-first" => {
+  if (
+    "persistenceOrder" in mutation &&
+    mutation.persistenceOrder !== undefined
+  ) {
+    return mutation.persistenceOrder;
+  }
+  const projectAdds = new Set(
+    mutation.payload.flatMap(({ patches }) =>
+      patches.flatMap((patch) =>
+        patch.op === "add" &&
+        patch.path.length === 1 &&
+        typeof patch.path[0] === "string"
+          ? [patch.path[0]]
+          : []
+      )
+    )
+  );
+  const storageRemovals = new Set(
+    (mutation.storageChanges ?? []).flatMap(({ payload }) =>
+      payload.flatMap(({ patches }) =>
+        patches.flatMap((patch) =>
+          patch.op === "remove" &&
+          patch.path.length === 1 &&
+          typeof patch.path[0] === "string"
+            ? [patch.path[0]]
+            : []
+        )
+      )
+    )
+  );
+  return Array.from(projectAdds).some((id) => storageRemovals.has(id))
+    ? "project-first"
+    : "storage-first";
 };
 
 export const createRuntimeMutation = <
@@ -51,17 +97,20 @@ export const createRuntimeMutation = <
   result,
   invalidatesNamespaces,
   storageChanges,
+  persistenceOrder,
 }: {
   payload: BuilderPatchChange[];
   result: Result;
   invalidatesNamespaces: readonly BuilderNamespace[];
   storageChanges?: ContentStorageChange[];
+  persistenceOrder?: BuilderRuntimeMutation["persistenceOrder"];
 }): BuilderRuntimeMutation<Result> => ({
   kind: "mutation",
   payload,
   result,
   invalidatesNamespaces,
   storageChanges,
+  ...(persistenceOrder === undefined ? {} : { persistenceOrder }),
   noop:
     payload.length === 0 &&
     storageChanges?.some(hasContentStorageChange) !== true,

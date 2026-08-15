@@ -42,13 +42,48 @@ export type ContentBlockSourceInspection = Readonly<{
   )[];
 }>;
 
+export type ContentBlockPersistenceStep = Readonly<{
+  type: "asset" | "project";
+  status: "saved" | "failed" | "not-attempted";
+  root?: ContentBlockExternalContentIdentity;
+  code?: string;
+  message?: string;
+}>;
+
+export type ContentBlockPersistenceResult = Readonly<{
+  status: "complete" | "partial" | "failed";
+  steps: readonly ContentBlockPersistenceStep[];
+  retry: Readonly<{
+    replan: true;
+    roots: readonly ContentBlockExternalContentIdentity[];
+    project: boolean;
+  }>;
+}>;
+
 export type ContentStorageApplication = Readonly<{
   getMaterializedContent: () => readonly MaterializedContentRoot[];
-  saveStorageChanges: (
+  preflightStorageChanges: (
     changes: readonly ContentStorageChange[]
   ) => Promise<
-    | Readonly<{ status: "complete" }>
-    | Readonly<{ status: "blocked"; code: string; message: string }>
+    | Readonly<{ status: "ready" }>
+    | Readonly<{
+        status: "failed";
+        code: string;
+        message: string;
+        persistence: ContentBlockPersistenceResult;
+      }>
+  >;
+  saveStorageChanges: (changes: readonly ContentStorageChange[]) => Promise<
+    | Readonly<{
+        status: "complete";
+        persistence: ContentBlockPersistenceResult;
+      }>
+    | Readonly<{
+        status: "failed" | "partial";
+        code: string;
+        message: string;
+        persistence: ContentBlockPersistenceResult;
+      }>
   >;
   inspectSource?: (input: {
     blockInstanceId: string;
@@ -85,7 +120,7 @@ export type ContentStorageApplication = Readonly<{
         result: ContentBlockLifecyclePlan;
       }>
     | Readonly<{
-        status: "blocked";
+        status: "blocked" | "partial";
         code: string;
         message: string;
         result?: ContentBlockLifecyclePlan;
@@ -125,7 +160,7 @@ export type ContentStorageApplication = Readonly<{
   }) => Promise<
     | Readonly<{ status: "complete"; result: unknown }>
     | Readonly<{
-        status: "blocked";
+        status: "blocked" | "partial";
         code: string;
         message: string;
         result?: unknown;

@@ -36,7 +36,10 @@ import { build } from "./state/fixtures.test-utils";
 import { parseWebstudioJsxFragment } from "./runtime/jsx";
 import { executeBuilderRuntimeOperation } from "./runtime/registry";
 import type { BuilderRuntimeMutation } from "./runtime/mutation";
-import type { BuilderRuntimeContext } from "./runtime/context";
+import type {
+  BuilderRuntimeContext,
+  ContentStorageApplication,
+} from "./runtime/context";
 
 const compatibilityVersion = "test-session";
 const compatibility: ProjectSessionCompatibility = {
@@ -843,6 +846,13 @@ describe("project session", () => {
       component: blockTemplateComponent,
       children: [],
     });
+    state.instances?.set("project-parent", {
+      type: "instance",
+      id: "project-parent",
+      component: elementComponent,
+      tag: "main",
+      children: [],
+    });
     state.props?.set("content-source", {
       id: "content-source",
       instanceId: "instance-root",
@@ -880,7 +890,17 @@ describe("project session", () => {
     };
     const saveStorageChanges = vi.fn(async () => ({
       status: "complete" as const,
+      persistence: {
+        status: "complete" as const,
+        steps: [
+          { type: "asset" as const, status: "saved" as const, root: identity },
+        ],
+        retry: { replan: true as const, roots: [], project: false },
+      },
     }));
+    const preflightStorageChanges = vi.fn<
+      ContentStorageApplication["preflightStorageChanges"]
+    >(async () => ({ status: "ready" }));
     const transport = createTransport(createSnapshot({ state }));
     const session = createSession({
       transport,
@@ -889,6 +909,7 @@ describe("project session", () => {
         createId: () => "unused",
         contentStorageApplication: {
           getMaterializedContent: () => [{ identity, fragment }],
+          preflightStorageChanges,
           saveStorageChanges,
         },
       },
@@ -904,15 +925,11 @@ describe("project session", () => {
       },
       { dryRun: true }
     );
-    expect(planned).toMatchObject({
-      source: "dry-run",
-      result: {
-        storageChanges: [
-          { root: { type: "external", identity }, payload: expect.any(Array) },
-        ],
-      },
-    });
+    expect(planned).toMatchObject({ source: "dry-run" });
+    expect(planned.state.committed).toBe(false);
+    expect(planned.result).not.toHaveProperty("storageChanges");
     expect(saveStorageChanges).not.toHaveBeenCalled();
+    expect(preflightStorageChanges).not.toHaveBeenCalled();
 
     const committed = await session.mutate("instances.updateText", {
       instanceId: "external-heading",
@@ -920,9 +937,48 @@ describe("project session", () => {
       text: "Updated",
     });
     expect(committed.state.committed).toBe(true);
+    expect(committed.result).toMatchObject({
+      persistence: {
+        status: "complete",
+        steps: [{ type: "asset", status: "saved", root: identity }],
+      },
+    });
     expect(saveStorageChanges).toHaveBeenCalledTimes(1);
+    expect(preflightStorageChanges).toHaveBeenCalledTimes(1);
     expect(transport.commits).toEqual([]);
     expect(state.instances?.has("external-heading")).toBe(false);
+
+    preflightStorageChanges.mockResolvedValueOnce({
+      status: "failed",
+      code: "content-source-write-conflict",
+      message: "The exact MDX revision changed",
+      persistence: {
+        status: "failed",
+        steps: [
+          {
+            type: "asset",
+            status: "failed",
+            root: identity,
+            code: "content-source-write-conflict",
+          },
+        ],
+        retry: { replan: true, roots: [identity], project: false },
+      },
+    });
+    const blocked = await session.mutate("instances.updateText", {
+      instanceId: "external-heading",
+      childIndex: 0,
+      text: "Blocked",
+    });
+    expect(blocked.state.committed).toBe(false);
+    expect(blocked.result).toMatchObject({
+      persistence: {
+        status: "failed",
+        steps: [{ type: "asset", status: "failed", root: identity }],
+      },
+    });
+    expect(saveStorageChanges).toHaveBeenCalledTimes(1);
+    expect(preflightStorageChanges).toHaveBeenCalledTimes(2);
 
     const projectCommitted = await session.mutate("instances.setLabel", {
       instanceId: "instance-root",
@@ -930,6 +986,32 @@ describe("project session", () => {
     });
     expect(projectCommitted.state.committed).toBe(true);
     expect(transport.commits).toHaveLength(1);
+    expect(saveStorageChanges).toHaveBeenCalledTimes(1);
+
+    transport.commitPatch = async () => {
+      throw new Error("Project version changed");
+    };
+    const failedMove = await session.mutate("instances.move", {
+      moves: [
+        {
+          instanceId: "external-heading",
+          parentInstanceId: "project-parent",
+          position: "end",
+        },
+      ],
+    });
+    expect(failedMove.state.committed).toBe(false);
+    expect(failedMove.result).toMatchObject({
+      persistence: {
+        status: "failed",
+        steps: [
+          { type: "project", status: "failed" },
+          { type: "asset", status: "not-attempted", root: identity },
+        ],
+        retry: { replan: true, roots: [identity], project: true },
+      },
+    });
+    expect(failedMove.result).not.toHaveProperty("storageChanges");
     expect(saveStorageChanges).toHaveBeenCalledTimes(1);
   });
 
@@ -954,7 +1036,15 @@ describe("project session", () => {
     }));
     const application = {
       getMaterializedContent: () => [],
-      saveStorageChanges: async () => ({ status: "complete" as const }),
+      preflightStorageChanges: async () => ({ status: "ready" as const }),
+      saveStorageChanges: async () => ({
+        status: "complete" as const,
+        persistence: {
+          status: "complete" as const,
+          steps: [],
+          retry: { replan: true as const, roots: [], project: false },
+        },
+      }),
       inspectSource,
       recover: async () => ({
         status: "blocked" as const,
@@ -1028,7 +1118,15 @@ describe("project session", () => {
         createId: () => "application-transaction",
         contentStorageApplication: {
           getMaterializedContent: () => [],
-          saveStorageChanges: async () => ({ status: "complete" }),
+          preflightStorageChanges: async () => ({ status: "ready" as const }),
+          saveStorageChanges: async () => ({
+            status: "complete" as const,
+            persistence: {
+              status: "complete" as const,
+              steps: [],
+              retry: { replan: true as const, roots: [], project: false },
+            },
+          }),
           migrateTemplateReferences: async () => ({
             status: "partial",
             discoveryComplete: true,

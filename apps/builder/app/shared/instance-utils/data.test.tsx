@@ -714,6 +714,7 @@ describe("data store helpers", () => {
     const unregister = registerContentStorageSaver({
       blockInstanceId: "block",
       renderScope: identity.renderScope,
+      preflight: async () => ({ status: "applied" }),
       isCurrent: () => true,
       save,
     });
@@ -728,9 +729,11 @@ describe("data store helpers", () => {
         text: "After",
       },
     });
-    expect($runtimeInstances.get().get("external")?.children).toEqual([
-      { type: "text", value: "After" },
-    ]);
+    await vi.waitFor(() =>
+      expect($runtimeInstances.get().get("external")?.children).toEqual([
+        { type: "text", value: "After" },
+      ])
+    );
     expect(
       getMaterializedContentStatus({
         blockInstanceId: "block",
@@ -746,10 +749,12 @@ describe("data store helpers", () => {
         text: "Again",
       },
     });
-    expect(accumulated?.storageChanges).toHaveLength(1);
-    expect($runtimeInstances.get().get("external")?.children).toEqual([
-      { type: "text", value: "Again" },
-    ]);
+    expect(accumulated).toBeUndefined();
+    await vi.waitFor(() =>
+      expect($runtimeInstances.get().get("external")?.children).toEqual([
+        { type: "text", value: "Again" },
+      ])
+    );
     await Promise.resolve();
     const savedRoot = $materializedContentRoots
       .get()
@@ -759,7 +764,7 @@ describe("data store helpers", () => {
     }
     publishMaterializedContentRoot(savedRoot);
 
-    expect(result?.storageChanges).toHaveLength(1);
+    expect(result).toBeUndefined();
     expect(save).toHaveBeenCalledTimes(2);
     expect($instances.get().has("external")).toBe(false);
     expect($instances.get().get("block")?.children).toEqual([
@@ -769,6 +774,7 @@ describe("data store helpers", () => {
     const unregisterStale = registerContentStorageSaver({
       blockInstanceId: "block",
       renderScope: identity.renderScope,
+      preflight: async () => ({ status: "applied" }),
       isCurrent: () => false,
       save,
     });
@@ -797,6 +803,7 @@ describe("data store helpers", () => {
     const unregisterDeferred = registerContentStorageSaver({
       blockInstanceId: "block",
       renderScope: identity.renderScope,
+      preflight: async () => ({ status: "applied" }),
       isCurrent: () => true,
       save: deferredSave,
     });
@@ -828,6 +835,7 @@ describe("data store helpers", () => {
     const unregisterRejected = registerContentStorageSaver({
       blockInstanceId: "block",
       renderScope: identity.renderScope,
+      preflight: async () => ({ status: "applied" }),
       isCurrent: () => true,
       save: async () => {
         throw new Error("private transport details");
@@ -843,7 +851,7 @@ describe("data store helpers", () => {
           text: "Rejected",
         },
       })
-    ).rejects.toThrow("The MDX file could not be saved.");
+    ).resolves.toBeUndefined();
     expect(
       getMaterializedContentStatus({
         blockInstanceId: "block",

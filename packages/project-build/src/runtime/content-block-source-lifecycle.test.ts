@@ -273,16 +273,6 @@ describe("Content Block source lifecycle", () => {
     expect(prepared.storageWrites[0].source).toContain("title: Existing");
     expect(prepared.storageWrites[0].source).toContain("Block body");
     expect(prepared.storageWrites[0].source).not.toContain("File body");
-    expect(prepared.undoEntry.storage).toMatchObject([
-      {
-        beforeSource: "---\ntitle: Existing\n---\n\nFile body\n",
-        afterSource: prepared.storageWrites[0].source,
-      },
-    ]);
-    const connected = applyPayload(state, prepared.projectPayload);
-    const restored = applyPayload(connected, prepared.undoEntry.project.undo);
-    expect(restored.instances).toEqual(state.instances);
-    expect(restored.props).toEqual(state.props);
   });
 
   test("disconnects by copying resolved content with fresh project ids", async () => {
@@ -322,9 +312,6 @@ describe("Content Block source lifecycle", () => {
       { name: "src" },
     ]);
     expect(sources.get("first")).toBe("# File body");
-    const restored = applyPayload(next, prepared.undoEntry.project.undo);
-    expect(restored.instances).toEqual(state.instances);
-    expect(restored.props).toEqual(state.props);
   });
 
   test("switch validates the new dynamic source before changing the old source prop", async () => {
@@ -345,7 +332,7 @@ describe("Content Block source lifecycle", () => {
     if (loaded.status !== "saved") {
       throw new Error("Expected loaded source");
     }
-    const restore = await session.prepareSourceRestore({
+    const restore = await session.prepareSourceReplacement({
       key: loaded.key,
       expectedSource: loaded.source,
       source: "Unsaved first",
@@ -430,7 +417,7 @@ describe("Content Block source lifecycle", () => {
     expect(prepared.storageWrites[0].source).toContain("Block body");
   });
 
-  test("settles pending writes before switching source", async () => {
+  test("does not persist pending writes while preparing a source switch", async () => {
     const { repository, sources, writes } = createRepository({
       first: "First",
       second: "Second",
@@ -450,7 +437,7 @@ describe("Content Block source lifecycle", () => {
     if (loaded.status !== "saved") {
       throw new Error("Expected loaded source");
     }
-    const restore = await session.prepareSourceRestore({
+    const restore = await session.prepareSourceReplacement({
       key: loaded.key,
       expectedSource: loaded.source,
       source: "Edited first",
@@ -460,28 +447,25 @@ describe("Content Block source lifecycle", () => {
     }
     restore.apply({ schedule: false });
 
-    const prepared = await prepareContentBlockSwitch({
-      state,
-      blockInstanceId: "block",
-      currentSessionKey: loaded.key,
-      source: { type: "asset", assetId: "second" },
-      renderScope: "page:/",
-      projectId: "project",
-      authority: "use-file-content",
-      session,
-      context: createContext(),
-    });
-    const next = applyPayload(state, prepared.projectPayload);
+    await expect(
+      prepareContentBlockSwitch({
+        state,
+        blockInstanceId: "block",
+        currentSessionKey: loaded.key,
+        source: { type: "asset", assetId: "second" },
+        renderScope: "page:/",
+        projectId: "project",
+        authority: "use-file-content",
+        session,
+        context: createContext(),
+      })
+    ).rejects.toThrow("MDX Asset session is pending");
 
-    expect(writes).toEqual(["Edited first"]);
-    expect(sources.get("first")).toBe("Edited first");
-    expect(next.props?.get("src")).toMatchObject({
+    expect(writes).toEqual([]);
+    expect(sources.get("first")).toBe("First");
+    expect(state.props?.get("src")).toMatchObject({
       type: "asset",
-      value: "second",
-    });
-    expect(prepared.sourceState).toMatchObject({
-      status: "saved",
-      source: "Second",
+      value: "first",
     });
   });
 
@@ -503,7 +487,7 @@ describe("Content Block source lifecycle", () => {
     if (loaded.status !== "saved") {
       throw new Error("Expected loaded source");
     }
-    const restore = await session.prepareSourceRestore({
+    const restore = await session.prepareSourceReplacement({
       key: loaded.key,
       expectedSource: loaded.source,
       source: "Unsaved first",
@@ -525,12 +509,16 @@ describe("Content Block source lifecycle", () => {
     });
     const next = applyPayload(state, prepared.projectPayload);
 
-    expect(writes).toEqual(["Unsaved first"]);
+    expect(writes).toEqual([]);
     expect(next.props?.get("src")).toMatchObject({
       type: "expression",
       value: "$ws$dataSource$asset",
     });
     expect(prepared.storageWrites).toEqual([]);
+    expect(prepared.sourceState).toMatchObject({
+      status: "pending",
+      localSource: "Unsaved first",
+    });
   });
 
   test("does not settle the current source when the target has unresolved writes", async () => {
@@ -560,12 +548,12 @@ describe("Content Block source lifecycle", () => {
     if (first.status !== "saved" || second.status !== "saved") {
       throw new Error("Expected loaded sources");
     }
-    const firstRestore = await session.prepareSourceRestore({
+    const firstRestore = await session.prepareSourceReplacement({
       key: first.key,
       expectedSource: first.source,
       source: "Unsaved first",
     });
-    const secondRestore = await session.prepareSourceRestore({
+    const secondRestore = await session.prepareSourceReplacement({
       key: second.key,
       expectedSource: second.source,
       source: "Unsaved second",
@@ -745,7 +733,7 @@ describe("Content Block source lifecycle", () => {
     if (otherSource.status !== "saved" || otherScope.status !== "saved") {
       throw new Error("Expected loaded sources");
     }
-    const restore = await session.prepareSourceRestore({
+    const restore = await session.prepareSourceReplacement({
       key: otherSource.key,
       expectedSource: otherSource.source,
       source: "Unsaved second",
@@ -796,7 +784,7 @@ describe("Content Block source lifecycle", () => {
     if (loaded.status !== "saved") {
       throw new Error("Expected loaded source");
     }
-    const restore = await session.prepareSourceRestore({
+    const restore = await session.prepareSourceReplacement({
       key: loaded.key,
       expectedSource: loaded.source,
       source: "Unsaved first",
@@ -821,7 +809,7 @@ describe("Content Block source lifecycle", () => {
     expect(writes).toEqual([]);
   });
 
-  test("repeated connect is a noop while a prepared replacement remains pending", async () => {
+  test("repeated connect is a noop while a prepared replacement remains saved", async () => {
     const { repository } = createRepository({ first: "" });
     const session = createMdxAssetEditingSession({
       repository,
@@ -850,7 +838,7 @@ describe("Content Block source lifecycle", () => {
 
     expect(repeated.projectPayload).toEqual([]);
     expect(repeated.storageWrites).toEqual([]);
-    expect(repeated.sourceState?.status).toBe("pending");
+    expect(repeated.sourceState?.status).toBe("saved");
   });
 
   test("repeated disconnect is a project-only noop", async () => {

@@ -1,4 +1,4 @@
-import type { Page, Request, Response } from "playwright";
+import type { Page, Response } from "playwright";
 import {
   configureDynamicDetailContentBlock,
   configureRepresentableContentBlockBody,
@@ -39,11 +39,6 @@ const isAssetContentResponse = (response: Response, method = "PUT") =>
   response.request().method() === method &&
   response.url().includes("/rest/assets/") &&
   response.url().includes("/content");
-
-const isAssetContentRequest = (request: Request, method = "PUT") =>
-  request.method() === method &&
-  request.url().includes("/rest/assets/") &&
-  request.url().includes("/content");
 
 const waitForAssetWrite = (page: Page) =>
   page.waitForResponse(
@@ -87,32 +82,8 @@ test("Content Block MDX source lifecycle persists edits and disconnect copy", as
     await uploadAsset({ page, filename: alternateFilename });
 
     await selectContentBlock({ page });
-    let assetWriteCount = 0;
-    const countAssetWrites = (request: Request) => {
-      if (isAssetContentRequest(request)) {
-        assetWriteCount += 1;
-      }
-    };
-    page.on("request", countAssetWrites);
     await chooseContentBlockSource({ page, filename: sourceFilename });
-    const sourceDialog = page.getByRole("dialog", {
-      name: "Connect content source",
-    });
-    await sourceDialog
-      .getByRole("button", { name: "Replace file body with block content" })
-      .click();
-    await sourceDialog
-      .getByRole("alert")
-      .getByText(
-        "Replacing file content while changing the Content Block source requires atomic project and Asset persistence, which is not available yet.",
-        { exact: true }
-      )
-      .waitFor();
-    if (assetWriteCount !== 0) {
-      throw new Error("Blocked source replacement must not write the Asset");
-    }
     await useFileContent({ page });
-    page.off("request", countAssetWrites);
     await waitForCanvasText({ page, text: sourceHeading });
 
     await Promise.all([
@@ -124,16 +95,6 @@ test("Content Block MDX source lifecycle persists edits and disconnect copy", as
         waitForProjectSync: false,
       }),
     ]);
-
-    const undoWrite = waitForAssetWrite(page);
-    await page.keyboard.press("ControlOrMeta+Z");
-    await undoWrite;
-    await waitForCanvasText({ page, text: sourceHeading });
-
-    const redoWrite = waitForAssetWrite(page);
-    await page.keyboard.press("ControlOrMeta+Shift+Z");
-    await redoWrite;
-    await waitForCanvasText({ page, text: editedHeading });
 
     await openFixture({
       page,

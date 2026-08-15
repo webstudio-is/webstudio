@@ -79,7 +79,15 @@ describe("api runtime adapter", () => {
         context: {
           contentStorageApplication: {
             getMaterializedContent: () => [],
-            saveStorageChanges: async () => ({ status: "complete" }),
+            preflightStorageChanges: async () => ({ status: "ready" }),
+            saveStorageChanges: async () => ({
+              status: "complete",
+              persistence: {
+                status: "complete",
+                steps: [],
+                retry: { replan: true, roots: [], project: false },
+              },
+            }),
             inspectSource: async (input) => ({
               ...input,
               sessionStatus: "disconnected",
@@ -144,7 +152,15 @@ describe("api runtime adapter", () => {
           },
           contentStorageApplication: {
             getMaterializedContent: () => [],
-            saveStorageChanges: async () => ({ status: "complete" }),
+            preflightStorageChanges: async () => ({ status: "ready" }),
+            saveStorageChanges: async () => ({
+              status: "complete",
+              persistence: {
+                status: "complete",
+                steps: [],
+                retry: { replan: true, roots: [], project: false },
+              },
+            }),
             inspectSource: async () => inspection,
             applyLifecycle: async (_input, execution) => {
               await execution?.commitProjectPayload?.([]);

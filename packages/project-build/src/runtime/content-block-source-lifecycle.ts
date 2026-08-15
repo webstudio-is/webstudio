@@ -28,10 +28,6 @@ import type {
   MdxAssetEditingSessionState,
   MdxAssetSourceController,
 } from "./mdx-asset-session";
-import {
-  createMdxAssetUndoEntry,
-  type MdxAssetUndoEntry,
-} from "./mdx-asset-undo";
 import type { MdxTemplateMaterialization } from "./mdx-materialization";
 import type { PendingMdxContentStorageWrite } from "./mdx-storage-adapter";
 
@@ -52,7 +48,6 @@ type LifecycleSession = MdxAssetSourceController &
       projectId: string;
       variables?: Readonly<Record<string, unknown>>;
     }) => Promise<MdxAssetEditingSessionState>;
-    flush: (key: string) => Promise<MdxAssetEditingSessionState>;
     get: (key: string) => MdxAssetEditingSessionState | undefined;
   }>;
 
@@ -62,46 +57,9 @@ export type PreparedContentBlockSourceLifecycle = Readonly<{
   projectPayload: readonly BuilderPatchChange[];
   storageWrites: readonly PendingMdxContentStorageWrite[];
   diagnostics: readonly ContentBlockDiagnostic[];
-  undoEntry: MdxAssetUndoEntry;
   sourceState?: MdxAssetEditingSessionState;
   persistenceOrder: "none" | "storage-before-project";
 }>;
-
-export type MdxContentPersistencePlan =
-  | Readonly<{ status: "ready"; mode: "project" | "single-asset" | "noop" }>
-  | Readonly<{
-      status: "blocked";
-      reason:
-        | "atomic-project-and-asset-unavailable"
-        | "atomic-multiple-assets-unavailable";
-    }>;
-
-export const getMdxContentPersistencePlan = (
-  prepared: PreparedContentBlockSourceLifecycle
-): MdxContentPersistencePlan => {
-  if (prepared.storageWrites.length > 1) {
-    return {
-      status: "blocked",
-      reason: "atomic-multiple-assets-unavailable",
-    };
-  }
-  if (
-    prepared.storageWrites.length === 1 &&
-    prepared.projectPayload.length > 0
-  ) {
-    return {
-      status: "blocked",
-      reason: "atomic-project-and-asset-unavailable",
-    };
-  }
-  if (prepared.storageWrites.length === 1) {
-    return { status: "ready", mode: "single-asset" };
-  }
-  if (prepared.projectPayload.length > 0) {
-    return { status: "ready", mode: "project" };
-  }
-  return { status: "ready", mode: "noop" };
-};
 
 const emptyTemplateMaterialization: MdxTemplateMaterialization = {
   templates: [],
@@ -374,14 +332,12 @@ const assertLoadedSource = ({
   }
 };
 
-const settleSession = async (session: LifecycleSession, key: string) => {
+const getSavedSession = (session: LifecycleSession, key: string) => {
   const current = session.get(key);
   if (current === undefined) {
     throw new Error("MDX Asset editing session does not exist");
   }
-  return requireSaved(
-    current.status === "pending" ? await session.flush(key) : current
-  );
+  return requireSaved(current);
 };
 
 const getAuthority = ({
@@ -423,11 +379,10 @@ const prepareReplacement = async ({
   if (source === target.source) {
     return {
       changesSource: false,
-      apply: () => target,
       source,
     };
   }
-  const prepared = await session.prepareSourceRestore({
+  const prepared = await session.prepareSourceReplacement({
     key: target.key,
     expectedSource: target.source,
     source,
@@ -441,20 +396,15 @@ const prepareReplacement = async ({
   }
   return {
     changesSource: true,
-    apply: () => prepared.apply({ schedule: false }).state,
     source,
   };
 };
 
 const createNoopResult = ({
   action,
-  state,
-  context,
   sourceState,
 }: {
   action: PreparedContentBlockSourceLifecycle["action"];
-  state: BuilderState;
-  context: BuilderRuntimeContext;
   sourceState?: MdxAssetEditingSessionState;
 }): PreparedContentBlockSourceLifecycle => ({
   status: "prepared",
@@ -462,12 +412,6 @@ const createNoopResult = ({
   projectPayload: [],
   storageWrites: [],
   diagnostics: sourceState?.diagnostics ?? [],
-  undoEntry: createMdxAssetUndoEntry({
-    id: context.createId(),
-    state,
-    mutation: { payload: [] },
-    storage: [],
-  }),
   sourceState,
   persistenceOrder: "none",
 });
@@ -512,8 +456,6 @@ export const prepareContentBlockConnect = async ({
     );
     return createNoopResult({
       action: "connect",
-      state,
-      context,
       sourceState,
     });
   }
@@ -555,34 +497,23 @@ export const prepareContentBlockConnect = async ({
           source: serializeBlockBody({ state, bodyChildren, target }),
         })
       : undefined;
-  const storage =
+  const storageWrites =
     replacement?.changesSource === true
       ? [
           {
-            session,
-            key: target.key,
-            beforeSource: target.source,
-            afterSource: replacement.source,
+            root: { type: "external" as const, identity: target.identity },
+            expectedRevision: target.identity.revision,
+            source: replacement.source,
           },
         ]
       : [];
-  const undoEntry = createMdxAssetUndoEntry({
-    id: context.createId(),
-    state,
-    mutation: { payload: projectPayload },
-    storage,
-  });
-  const replacementState = replacement?.apply();
-  const storageWrites =
-    replacementState?.status === "pending" ? replacementState.writes : [];
   return {
     status: "prepared",
     action: "connect",
     projectPayload,
     storageWrites,
     diagnostics: target.diagnostics,
-    undoEntry,
-    sourceState: replacementState ?? target,
+    sourceState: target,
     persistenceOrder:
       storageWrites.length === 1 ? "storage-before-project" : "none",
   };
@@ -606,7 +537,7 @@ export const prepareContentBlockDisconnect = async ({
   const block = getBlock(state, blockInstanceId);
   const sourceProp = getSourceProp(state, blockInstanceId);
   if (sourceProp === undefined) {
-    return createNoopResult({ action: "disconnect", state, context });
+    return createNoopResult({ action: "disconnect" });
   }
   if (currentSessionKey === undefined) {
     throw new Error("Disconnect requires the loaded MDX Asset session key");
@@ -629,7 +560,7 @@ export const prepareContentBlockDisconnect = async ({
       "Source-backed Content Block contains persisted body content"
     );
   }
-  const current = await settleSession(session, currentSessionKey);
+  const current = getSavedSession(session, currentSessionKey);
   const insertion = insertFragment(
     state,
     {
@@ -654,12 +585,6 @@ export const prepareContentBlockDisconnect = async ({
     projectPayload,
     storageWrites: [],
     diagnostics: current.diagnostics,
-    undoEntry: createMdxAssetUndoEntry({
-      id: context.createId(),
-      state,
-      mutation: { payload: projectPayload },
-      storage: [],
-    }),
     sourceState: current,
     persistenceOrder: "none",
   };
@@ -708,11 +633,9 @@ export const prepareContentBlockSwitch = async ({
     renderScope,
   });
   if (isSameSource(existingSource, source)) {
-    const previous = await settleSession(session, currentSessionKey);
+    const previous = getSavedSession(session, currentSessionKey);
     return createNoopResult({
       action: "switch",
-      state,
-      context,
       sourceState: previous,
     });
   }
@@ -727,18 +650,30 @@ export const prepareContentBlockSwitch = async ({
     })
   );
   const sharesCurrentStorage = loadedTarget.key === usablePrevious.key;
-  const selectedAuthority = sharesCurrentStorage
-    ? "use-file-content"
-    : getAuthority({
-        blockHasBody: usablePrevious.root.document.children.length > 0,
-        fileHasBody: loadedTarget.root.document.children.length > 0,
-        authority,
-      });
-  const savedTarget = sharesCurrentStorage
-    ? undefined
-    : requireSaved(loadedTarget);
-  const previous = await settleSession(session, currentSessionKey);
-  const target = savedTarget ?? previous;
+  if (sharesCurrentStorage) {
+    return {
+      status: "prepared",
+      action: "switch",
+      projectPayload: createSourcePayload({
+        state,
+        blockInstanceId,
+        source,
+        createId: context.createId,
+      }),
+      storageWrites: [],
+      diagnostics: usablePrevious.diagnostics,
+      sourceState: usablePrevious,
+      persistenceOrder: "none",
+    };
+  }
+  const selectedAuthority = getAuthority({
+    blockHasBody: usablePrevious.root.document.children.length > 0,
+    fileHasBody: loadedTarget.root.document.children.length > 0,
+    authority,
+  });
+  const savedTarget = requireSaved(loadedTarget);
+  const previous = getSavedSession(session, currentSessionKey);
+  const target = savedTarget;
   const replacement =
     selectedAuthority === "replace-file-body-with-block-content"
       ? await prepareReplacement({
@@ -757,34 +692,23 @@ export const prepareContentBlockSwitch = async ({
     source,
     createId: context.createId,
   });
-  const storage =
+  const storageWrites =
     replacement?.changesSource === true
       ? [
           {
-            session,
-            key: target.key,
-            beforeSource: target.source,
-            afterSource: replacement.source,
+            root: { type: "external" as const, identity: target.identity },
+            expectedRevision: target.identity.revision,
+            source: replacement.source,
           },
         ]
       : [];
-  const undoEntry = createMdxAssetUndoEntry({
-    id: context.createId(),
-    state,
-    mutation: { payload: projectPayload },
-    storage,
-  });
-  const replacementState = replacement?.apply();
-  const storageWrites =
-    replacementState?.status === "pending" ? replacementState.writes : [];
   return {
     status: "prepared",
     action: "switch",
     projectPayload,
     storageWrites,
     diagnostics: target.diagnostics,
-    undoEntry,
-    sourceState: replacementState ?? target,
+    sourceState: target,
     persistenceOrder:
       storageWrites.length === 1 ? "storage-before-project" : "none",
   };

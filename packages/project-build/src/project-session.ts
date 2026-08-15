@@ -17,6 +17,8 @@ import { projectOutput } from "./runtime/output";
 import {
   builderRuntimeContext,
   type BuilderRuntimeContext,
+  type ContentBlockPersistenceResult,
+  type ContentBlockPersistenceStep,
 } from "./runtime/context";
 import {
   BuilderRuntimeError,
@@ -24,7 +26,11 @@ import {
   sanitizeValidationDetail,
   type SemanticValidationIssue,
 } from "./runtime/errors";
-import type { BuilderRuntimeMutation } from "./runtime/mutation";
+import {
+  getRuntimeMutationPersistenceOrder,
+  type BuilderRuntimeMutation,
+} from "./runtime/mutation";
+import { getContentStorageIdentityKey } from "./runtime/content-storage";
 import { executeBuilderRuntimeOperation } from "./runtime/registry";
 import type { BuilderState } from "./state/builder-state";
 import { getMissingBuilderStateNamespaces } from "./state/builder-state";
@@ -703,6 +709,31 @@ export const hasProjectSessionPermit = (
     return permissions.canBuild;
   }
   return permissions.canAdmin;
+};
+
+const addProjectPersistenceStep = ({
+  persistence,
+  step,
+  order,
+}: {
+  persistence: ContentBlockPersistenceResult;
+  step: ContentBlockPersistenceStep;
+  order: "before" | "after";
+}): ContentBlockPersistenceResult => {
+  const steps =
+    order === "before"
+      ? [step, ...persistence.steps]
+      : [...persistence.steps, step];
+  const hasFailure = steps.some(({ status }) => status === "failed");
+  const hasSaved = steps.some(({ status }) => status === "saved");
+  return {
+    status: hasFailure ? (hasSaved ? "partial" : "failed") : "complete",
+    steps,
+    retry: {
+      ...persistence.retry,
+      project: step.type === "project" && step.status !== "saved",
+    },
+  };
 };
 
 export class ProjectSession {
@@ -1512,13 +1543,7 @@ export class ProjectSession {
       id: this.#options.runtimeContext.createId(),
       payload: mutation.payload,
     };
-    const result =
-      mutation.storageChanges === undefined
-        ? mutation.result
-        : ({
-            ...mutation.result,
-            storageChanges: mutation.storageChanges,
-          } as Result);
+    let result = mutation.result;
     if (options.dryRun) {
       return this.createEnvelope({
         source: "dry-run",
@@ -1537,67 +1562,84 @@ export class ProjectSession {
         ],
       });
     }
-    if (
-      mutation.storageChanges !== undefined &&
-      mutation.storageChanges.length > 0
-    ) {
-      if (mutation.payload.length > 0) {
-        return this.createEnvelope({
-          source: "local",
-          result,
-          committed: false,
-          contract,
-          snapshot,
-          diagnostics: [
-            ...diagnostics,
-            {
-              level: "error",
-              code: "CONTENT_STORAGE_ATOMIC_PERSISTENCE_UNAVAILABLE",
-              message:
-                "This operation requires project and MDX Asset changes that cannot be persisted atomically.",
-            },
-          ],
-        });
-      }
-      const application =
-        this.#options.runtimeContext.contentStorageApplication;
-      if (application === undefined) {
-        return this.createEnvelope({
-          source: "local",
-          result,
-          committed: false,
-          contract,
-          snapshot,
-          diagnostics: [
-            ...diagnostics,
-            {
-              level: "error",
-              code: "CONTENT_STORAGE_SESSION_UNAVAILABLE",
-              message:
-                "The exact MDX Asset revision and render scope are not loaded.",
-            },
-          ],
-        });
-      }
-      const saved = await application.saveStorageChanges(
-        mutation.storageChanges
-      );
+    const storageChanges = mutation.storageChanges ?? [];
+    const application = this.#options.runtimeContext.contentStorageApplication;
+    if (storageChanges.length > 0 && application === undefined) {
       return this.createEnvelope({
         source: "local",
         result,
-        committed: saved.status === "complete",
+        committed: false,
         contract,
         snapshot,
-        diagnostics:
-          saved.status === "complete"
-            ? diagnostics
-            : [
-                ...diagnostics,
-                { level: "error", code: saved.code, message: saved.message },
-              ],
+        diagnostics: [
+          ...diagnostics,
+          {
+            level: "error",
+            code: "CONTENT_STORAGE_SESSION_UNAVAILABLE",
+            message:
+              "The exact MDX Asset revision and render scope are not loaded.",
+          },
+        ],
       });
     }
-    if (hasGeneratedRecordWritePatch(mutation.payload)) {
+    const projectFirst =
+      storageChanges.length > 0 &&
+      mutation.payload.length > 0 &&
+      getRuntimeMutationPersistenceOrder(mutation) === "project-first";
+    if (storageChanges.length > 0) {
+      const preflight =
+        await application!.preflightStorageChanges(storageChanges);
+      if (preflight.status === "failed") {
+        result = { ...result, persistence: preflight.persistence } as Result;
+        return this.createEnvelope({
+          source: "local",
+          result,
+          committed: false,
+          contract,
+          snapshot,
+          diagnostics: [
+            ...diagnostics,
+            {
+              level: "error",
+              code: preflight.code,
+              message: preflight.message,
+            },
+          ],
+        });
+      }
+    }
+    const saveStorage = () => application!.saveStorageChanges(storageChanges);
+    if (storageChanges.length > 0 && projectFirst === false) {
+      const saved = await saveStorage();
+      result = { ...result, persistence: saved.persistence } as Result;
+      if (saved.status !== "complete") {
+        return this.createEnvelope({
+          source: "local",
+          result,
+          committed: saved.status === "partial",
+          contract,
+          snapshot,
+          diagnostics: [
+            ...diagnostics,
+            { level: "error", code: saved.code, message: saved.message },
+          ],
+        });
+      }
+      if (mutation.payload.length === 0) {
+        return this.createEnvelope({
+          source: "local",
+          result,
+          committed: true,
+          contract,
+          snapshot,
+          diagnostics,
+        });
+      }
+    }
+    if (
+      storageChanges.length === 0 &&
+      hasGeneratedRecordWritePatch(mutation.payload)
+    ) {
       return await this.executeServerOperation<Result>(
         {
           id: operationId,
@@ -1614,14 +1656,143 @@ export class ProjectSession {
       baseVersion: snapshot.version,
       transactions: [transaction],
     };
-    const { result: commit, confirmedAfterRetry } =
-      await commitWithConflictConfirmation({
-        commit: (input) => this.#options.transport.commitPatch(input),
-        input: commitInput,
+    let commit: ProjectSessionCommitResult;
+    let confirmedAfterRetry: boolean;
+    try {
+      ({ result: commit, confirmedAfterRetry } =
+        await commitWithConflictConfirmation({
+          commit: (input) => this.#options.transport.commitPatch(input),
+          input: commitInput,
+        }));
+    } catch (error) {
+      if (storageChanges.length === 0) {
+        throw error;
+      }
+      if (projectFirst) {
+        const roots = [
+          ...new Map(
+            storageChanges.flatMap((change) =>
+              change.root.type === "external"
+                ? [
+                    [
+                      getContentStorageIdentityKey(change.root.identity),
+                      change.root.identity,
+                    ] as const,
+                  ]
+                : []
+            )
+          ).values(),
+        ];
+        const persistence: ContentBlockPersistenceResult = {
+          status: "failed",
+          steps: [
+            {
+              type: "project",
+              status: "failed",
+              code: "CONTENT_STORAGE_PERSISTENCE_FAILED",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Project persistence failed",
+            },
+            ...roots.map((root) => ({
+              type: "asset" as const,
+              status: "not-attempted" as const,
+              root,
+            })),
+          ],
+          retry: { replan: true, roots, project: true },
+        };
+        result = { ...result, persistence } as Result;
+        return this.createEnvelope({
+          source: "local",
+          result,
+          committed: false,
+          contract,
+          snapshot,
+          diagnostics: [
+            ...diagnostics,
+            {
+              level: "error",
+              code: "CONTENT_STORAGE_PERSISTENCE_FAILED",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Project persistence failed",
+            },
+          ],
+        });
+      }
+      const persistence = addProjectPersistenceStep({
+        persistence: (
+          result as Result & {
+            persistence: ContentBlockPersistenceResult;
+          }
+        ).persistence,
+        step: {
+          type: "project",
+          status: "failed",
+          code: "CONTENT_STORAGE_PARTIAL_PERSISTENCE",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Project persistence failed",
+        },
+        order: "after",
       });
-    const commitDiagnostics = confirmedAfterRetry
+      result = { ...result, persistence } as Result;
+      return this.createEnvelope({
+        source: "local",
+        result,
+        committed: true,
+        contract,
+        snapshot,
+        diagnostics: [
+          ...diagnostics,
+          {
+            level: "error",
+            code: "CONTENT_STORAGE_PARTIAL_PERSISTENCE",
+            message:
+              error instanceof Error
+                ? `MDX files were saved, but the project change failed: ${error.message}`
+                : "MDX files were saved, but the project change failed.",
+          },
+        ],
+      });
+    }
+    let commitDiagnostics = confirmedAfterRetry
       ? [...diagnostics, commitRetryConfirmedDiagnostic]
       : diagnostics;
+    if (projectFirst) {
+      const saved = await saveStorage();
+      const persistence = addProjectPersistenceStep({
+        persistence: saved.persistence,
+        step: { type: "project", status: "saved" },
+        order: "before",
+      });
+      result = { ...result, persistence } as Result;
+      if (saved.status !== "complete") {
+        commitDiagnostics = [
+          ...commitDiagnostics,
+          {
+            level: "error",
+            code: saved.code,
+            message: `The project destination was saved, but an MDX source step failed: ${saved.message}`,
+          },
+        ];
+      }
+    } else if (storageChanges.length > 0) {
+      const persistence = addProjectPersistenceStep({
+        persistence: (
+          result as Result & {
+            persistence: ContentBlockPersistenceResult;
+          }
+        ).persistence,
+        step: { type: "project", status: "saved" },
+        order: "after",
+      });
+      result = { ...result, persistence } as Result;
+    }
     const applied = applyBuilderPatchTransactions(snapshot.state, [
       transaction,
     ]);
@@ -1657,7 +1828,7 @@ export class ProjectSession {
     });
     return this.createEnvelope({
       source: "local",
-      result: mutation.result,
+      result,
       committed: true,
       contract: {
         ...contract,

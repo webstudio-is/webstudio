@@ -44,10 +44,7 @@ import {
 } from "~/shared/breakpoints";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime";
-import {
-  redoBuilderHistory,
-  undoBuilderHistory,
-} from "~/shared/content-block-history-bridge";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $publisher } from "~/shared/pubsub";
 import {
   $activeInspectorPanel,
@@ -1131,12 +1128,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+z", "ctrl+z"],
       disableOnInputLikeControls: true,
-      handler: async () => {
-        const result = await undoBuilderHistory();
-        if (result.status === "blocked") {
-          toast.error(result.message);
-        }
-      },
+      handler: () => serverSyncStore.undo(),
     },
     {
       name: "redo",
@@ -1145,12 +1137,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+shift+z", "ctrl+shift+z"],
       disableOnInputLikeControls: true,
-      handler: async () => {
-        const result = await redoBuilderHistory();
-        if (result.status === "blocked") {
-          toast.error(result.message);
-        }
-      },
+      handler: () => serverSyncStore.redo(),
     },
 
     {

@@ -105,7 +105,7 @@ type MdxAssetSessionQueueEntry = {
   remoteStateUnknown: boolean;
 };
 
-export type MdxAssetSourceRestoreResult =
+export type MdxAssetSourceReplacementResult =
   | Readonly<{
       status: "applied";
       state: MdxAssetEditingSessionState;
@@ -122,41 +122,41 @@ export type MdxAssetSourceRestoreResult =
       currentSource?: string;
     }>;
 
-export type MdxAssetSourceRestorePreflight =
+export type MdxAssetSourceReplacementPreflight =
   | Readonly<{ status: "ready"; currentSource: string }>
-  | Extract<MdxAssetSourceRestoreResult, { status: "blocked" }>;
+  | Extract<MdxAssetSourceReplacementResult, { status: "blocked" }>;
 
-export type MdxAssetPreparedSourceRestore =
-  | Extract<MdxAssetSourceRestoreResult, { status: "blocked" }>
+export type MdxAssetPreparedSourceReplacement =
+  | Extract<MdxAssetSourceReplacementResult, { status: "blocked" }>
   | Readonly<{
       status: "ready";
-      canApply: () => MdxAssetSourceRestorePreflight;
+      canApply: () => MdxAssetSourceReplacementPreflight;
       apply: (options?: {
         schedule?: boolean;
-      }) => Extract<MdxAssetSourceRestoreResult, { status: "applied" }>;
+      }) => Extract<MdxAssetSourceReplacementResult, { status: "applied" }>;
     }>;
 
 export type MdxAssetSourceController = Readonly<{
-  canRestoreSource: (input: {
+  canReplaceSource: (input: {
     key: string;
     expectedSource: string;
-  }) => MdxAssetSourceRestorePreflight;
-  restoreSource: (input: {
-    key: string;
-    expectedSource: string;
-    source: string;
-  }) => Promise<MdxAssetSourceRestoreResult>;
-  prepareSourceRestore: (input: {
+  }) => MdxAssetSourceReplacementPreflight;
+  replaceSource: (input: {
     key: string;
     expectedSource: string;
     source: string;
-  }) => Promise<MdxAssetPreparedSourceRestore>;
-  persistSourceRestore: (input: {
+  }) => Promise<MdxAssetSourceReplacementResult>;
+  prepareSourceReplacement: (input: {
+    key: string;
+    expectedSource: string;
+    source: string;
+  }) => Promise<MdxAssetPreparedSourceReplacement>;
+  persistSourceReplacement: (input: {
     key: string;
     expectedSource: string;
     source: string;
     isCurrent?: () => boolean;
-  }) => Promise<MdxAssetSourceRestoreResult>;
+  }) => Promise<MdxAssetSourceReplacementResult>;
 }>;
 
 const toParserDiagnostic = ({
@@ -677,6 +677,53 @@ export const createMdxAssetEditingSession = ({
     }
   };
 
+  const preflightSave = async ({
+    key,
+    changes,
+  }: {
+    key: string;
+    changes: readonly ContentStorageChange[];
+  }): Promise<
+    | Readonly<{ status: "ready" }>
+    | Readonly<{ status: "blocked"; reason: string }>
+  > => {
+    const current = states.get(resolveKey(key));
+    if (
+      current === undefined ||
+      (current.status !== "saved" &&
+        current.status !== "pending" &&
+        !(current.status === "failed" && "root" in current))
+    ) {
+      return {
+        status: "blocked",
+        reason: "MDX Asset editing session is not ready to save",
+      };
+    }
+    try {
+      await prepareMdxContentStorageWrites({
+        loadedRoots: [current.root],
+        changes,
+        authorizeAssetWrite: async (identity) =>
+          identity.assetId === current.identity.assetId &&
+          getContentStorageIdentityKey(identity) === current.key &&
+          (await authorizeAsset({
+            assetId: current.identity.assetId,
+            operation: "write",
+            identity: current.identity,
+          })),
+      });
+      return { status: "ready" };
+    } catch (error) {
+      return {
+        status: "blocked",
+        reason:
+          error instanceof Error
+            ? error.message
+            : "Unable to prepare MDX Asset save",
+      };
+    }
+  };
+
   const flushOne = async (
     key: string
   ): Promise<MdxAssetEditingSessionState> => {
@@ -935,13 +982,13 @@ export const createMdxAssetEditingSession = ({
   const copyUnsavedSource = (key: string) =>
     queueEntries.get(resolveKey(key))?.unsavedSource;
 
-  const canRestoreSource = ({
+  const canReplaceSource = ({
     key,
     expectedSource,
   }: {
     key: string;
     expectedSource: string;
-  }): MdxAssetSourceRestorePreflight => {
+  }): MdxAssetSourceReplacementPreflight => {
     const resolvedKey = resolveKey(key);
     const entry = queueEntries.get(resolvedKey);
     const state = states.get(resolvedKey);
@@ -989,7 +1036,7 @@ export const createMdxAssetEditingSession = ({
     return { status: "ready", currentSource };
   };
 
-  const prepareSourceRestore = async ({
+  const prepareSourceReplacement = async ({
     key,
     expectedSource,
     source,
@@ -997,8 +1044,8 @@ export const createMdxAssetEditingSession = ({
     key: string;
     expectedSource: string;
     source: string;
-  }): Promise<MdxAssetPreparedSourceRestore> => {
-    const preflight = canRestoreSource({ key, expectedSource });
+  }): Promise<MdxAssetPreparedSourceReplacement> => {
+    const preflight = canReplaceSource({ key, expectedSource });
     if (preflight.status === "blocked") {
       return preflight;
     }
@@ -1011,7 +1058,7 @@ export const createMdxAssetEditingSession = ({
         ? getContentStorageIdentityKey(current.identity)
         : undefined;
     const canApply = () => {
-      const latest = canRestoreSource({ key, expectedSource });
+      const latest = canReplaceSource({ key, expectedSource });
       if (latest.status === "blocked") {
         return latest;
       }
@@ -1040,7 +1087,7 @@ export const createMdxAssetEditingSession = ({
     };
     const assertCanApply = () => {
       if (canApply().status === "blocked") {
-        throw new Error("Prepared MDX Asset source restore is stale");
+        throw new Error("Prepared MDX Asset source replacement is stale");
       }
     };
     if (source === preflight.currentSource) {
@@ -1093,7 +1140,7 @@ export const createMdxAssetEditingSession = ({
         })) === true;
     } catch {
       // Authorization failures are stable preflight blockers. They must not
-      // advance the session or expose transport-specific errors to undo/lifecycle callers.
+      // advance the session or expose transport-specific errors to lifecycle callers.
     }
     if (writeAuthorized === false) {
       return {
@@ -1141,12 +1188,12 @@ export const createMdxAssetEditingSession = ({
     };
   };
 
-  const restoreSource = async (input: {
+  const replaceSource = async (input: {
     key: string;
     expectedSource: string;
     source: string;
-  }): Promise<MdxAssetSourceRestoreResult> => {
-    const prepared = await prepareSourceRestore(input);
+  }): Promise<MdxAssetSourceReplacementResult> => {
+    const prepared = await prepareSourceReplacement(input);
     if (prepared.status === "blocked") {
       return prepared;
     }
@@ -1154,12 +1201,12 @@ export const createMdxAssetEditingSession = ({
     return preflight.status === "ready" ? prepared.apply() : preflight;
   };
 
-  const persistSourceRestore = async (input: {
+  const persistSourceReplacement = async (input: {
     key: string;
     expectedSource: string;
     source: string;
     isCurrent?: () => boolean;
-  }): Promise<MdxAssetSourceRestoreResult> => {
+  }): Promise<MdxAssetSourceReplacementResult> => {
     const isPersistedSource = (
       state: MdxAssetEditingSessionState,
       source: string
@@ -1209,7 +1256,7 @@ export const createMdxAssetEditingSession = ({
                   : undefined,
           };
     }
-    const prepared = await prepareSourceRestore(input);
+    const prepared = await prepareSourceReplacement(input);
     if (prepared.status === "blocked") {
       return prepared;
     }
@@ -1225,11 +1272,11 @@ export const createMdxAssetEditingSession = ({
         currentSource: preflight.currentSource,
       };
     }
-    const restored = prepared.apply({ schedule: false });
-    if (restored.state.status !== "pending") {
-      return restored;
+    const applied = prepared.apply({ schedule: false });
+    if (applied.state.status !== "pending") {
+      return applied;
     }
-    const persisted = await flushOne(restored.state.key);
+    const persisted = await flushOne(applied.state.key);
     return isPersistedSource(persisted, input.source)
       ? { status: "applied", state: persisted }
       : {
@@ -1273,15 +1320,16 @@ export const createMdxAssetEditingSession = ({
   return {
     open,
     prepareSave,
+    preflightSave,
     queueSave,
     flush,
     retry,
     reloadRemote,
     copyUnsavedSource,
-    canRestoreSource,
-    prepareSourceRestore,
-    persistSourceRestore,
-    restoreSource,
+    canReplaceSource,
+    prepareSourceReplacement,
+    persistSourceReplacement,
+    replaceSource,
     cancel,
     get: (key: string) => states.get(resolveKey(key)),
     list: () => Array.from(states.values()),

@@ -317,10 +317,11 @@ are supported; an unbounded or truncated candidate graph blocks automatic
 apply until the reviewed set is supplied.
 
 Read the machine-readable `status`, `code`, diagnostics, and source inspection
-after every call. Lifecycle and semantic edits that require one atomic
-project-plus-Asset commit or coordinated writes to several Assets are blocked
-before any write. Template migration intentionally commits reviewed files one
-at a time and reports partial results. See [Content Block](core-components/content-block.md#use-an-mdx-file-as-the-content-source)
+after every call. Lifecycle and semantic edits validate their targets, then
+persist them in a deterministic order. A partial result lists saved, failed,
+and not-attempted steps; completed writes are not rolled back. Reinspect the
+current revisions and retry only unfinished steps. Template migration also
+commits reviewed files one at a time and reports partial results. See [Content Block](core-components/content-block.md#use-an-mdx-file-as-the-content-source)
 for the file grammar and Builder workflow.
 
 ## Consumer Capabilities

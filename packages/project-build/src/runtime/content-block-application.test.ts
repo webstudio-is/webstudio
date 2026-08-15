@@ -13,8 +13,9 @@ import type { BuilderState } from "../state/builder-state";
 import { createDefaultPages } from "../shared/pages-utils";
 import {
   createContentBlockApplicationOperations,
+  executeContentBlockPersistencePlan,
+  persistContentBlockStorageChangesSerially,
   recoverContentBlockSession,
-  rollbackPreparedContentBlockLifecycle,
 } from "./content-block-application";
 import { createMdxAssetEditingSession } from "./mdx-asset-session";
 
@@ -158,37 +159,205 @@ const createRepository = (initialSource = "# Original") => {
 };
 
 describe("Content Block application operations", () => {
-  test("attempts every prepared rollback when one root is already stale", async () => {
-    const staleRestore = vi.fn(async () => ({
-      status: "blocked" as const,
-      reason: "source-mismatch",
-    }));
-    const pendingRestore = vi.fn(async () => ({
-      status: "applied" as const,
-      state: {},
-    }));
+  test("preflights the complete serial plan and stops after the first durable failure", async () => {
+    const events: string[] = [];
+    const createStep = (
+      name: string,
+      status: "saved" | "failed" = "saved"
+    ) => ({
+      type: name === "project" ? ("project" as const) : ("asset" as const),
+      preflight: async () => {
+        events.push(`preflight:${name}`);
+        return { status: "ready" as const };
+      },
+      persist: async () => {
+        events.push(`persist:${name}`);
+        return status === "saved"
+          ? { status }
+          : {
+              status,
+              code: "content-source-write-conflict",
+              message: "Source changed",
+            };
+      },
+    });
 
     await expect(
-      rollbackPreparedContentBlockLifecycle({
-        undoEntry: {
-          storage: [
+      executeContentBlockPersistencePlan([
+        createStep("destination"),
+        createStep("source", "failed"),
+        createStep("project"),
+      ])
+    ).resolves.toMatchObject({
+      status: "partial",
+      steps: [
+        { type: "asset", status: "saved" },
+        { type: "asset", status: "failed" },
+        { type: "project", status: "not-attempted" },
+      ],
+      retry: { replan: true, project: true },
+    });
+    expect(events).toEqual([
+      "preflight:destination",
+      "preflight:source",
+      "preflight:project",
+      "persist:destination",
+      "persist:source",
+    ]);
+  });
+
+  test("preflights every storage root before saving the first one", async () => {
+    const firstIdentity = {
+      blockInstanceId: "first-block",
+      assetId: "first",
+      revision: "sha256:first",
+      contentRef: "first.mdx",
+      format: "mdx" as const,
+      renderScope: "page:/first",
+    };
+    const secondIdentity = {
+      ...firstIdentity,
+      blockInstanceId: "second-block",
+      assetId: "second",
+      revision: "sha256:second",
+      contentRef: "second.mdx",
+      renderScope: "page:/second",
+    };
+    const queueSave = vi.fn();
+    const preflightSave = vi.fn(async ({ key }: { key: string }) =>
+      key.includes("second")
+        ? { status: "blocked" as const, reason: "Second Asset is stale" }
+        : { status: "ready" as const }
+    );
+    const changes = [firstIdentity, secondIdentity].map((identity) => ({
+      root: { type: "external" as const, identity },
+      payload: [
+        {
+          namespace: "instances" as const,
+          patches: [
             {
-              session: { restoreSource: staleRestore },
-              key: "stale",
-              beforeSource: "before-stale",
-              afterSource: "after-stale",
-            },
-            {
-              session: { restoreSource: pendingRestore },
-              key: "pending",
-              beforeSource: "before-pending",
-              afterSource: "after-pending",
+              op: "replace" as const,
+              path: ["content", "children", 0, "value"],
+              value: "Updated",
             },
           ],
         },
-      } as never)
-    ).resolves.toBe("Prepared MDX rollback is blocked: source-mismatch");
-    expect(pendingRestore).toHaveBeenCalledTimes(1);
+      ],
+    }));
+
+    await expect(
+      persistContentBlockStorageChangesSerially({
+        session: {
+          list: () =>
+            [firstIdentity, secondIdentity].map((identity) => ({
+              status: "saved",
+              key: JSON.stringify([
+                identity.blockInstanceId,
+                identity.assetId,
+                identity.revision,
+                identity.contentRef,
+                identity.format,
+                identity.renderScope,
+              ]),
+              identity,
+              source: "# Original",
+              diagnostics: [],
+            })),
+          preflightSave,
+          queueSave,
+        } as never,
+        changes,
+      })
+    ).resolves.toMatchObject({
+      status: "failed",
+      steps: [
+        { status: "not-attempted", root: firstIdentity },
+        { status: "failed", root: secondIdentity },
+      ],
+      retry: {
+        replan: true,
+        roots: [firstIdentity, secondIdentity],
+      },
+    });
+    expect(preflightSave).toHaveBeenCalledTimes(2);
+    expect(queueSave).not.toHaveBeenCalled();
+  });
+
+  test("combines accumulated changes for one root into one revisioned write", async () => {
+    const identity = {
+      blockInstanceId: "block",
+      assetId: "article",
+      revision: "sha256:article",
+      contentRef: "article.mdx",
+      format: "mdx" as const,
+      renderScope: "page:/",
+    };
+    const key = JSON.stringify([
+      identity.blockInstanceId,
+      identity.assetId,
+      identity.revision,
+      identity.contentRef,
+      identity.format,
+      identity.renderScope,
+    ]);
+    const changes = ["First", "Second"].map((value) => ({
+      root: { type: "external" as const, identity },
+      payload: [
+        {
+          namespace: "instances" as const,
+          patches: [
+            {
+              op: "replace" as const,
+              path: ["content", "children", 0, "value"],
+              value,
+            },
+          ],
+        },
+      ],
+    }));
+    const preflightSave = vi.fn(async () => ({ status: "ready" as const }));
+    const queueSave = vi.fn(async () => ({
+      status: "pending" as const,
+      key,
+      identity,
+      localSource: "# Second",
+      diagnostics: [],
+    }));
+    const flush = vi.fn(async () => ({
+      status: "saved" as const,
+      key,
+      identity,
+      source: "# Second",
+      diagnostics: [],
+    }));
+
+    await expect(
+      persistContentBlockStorageChangesSerially({
+        session: {
+          list: () => [
+            {
+              status: "saved",
+              key,
+              identity,
+              source: "# Original",
+              diagnostics: [],
+            },
+          ],
+          preflightSave,
+          queueSave,
+          flush,
+        } as never,
+        changes,
+      })
+    ).resolves.toMatchObject({
+      status: "complete",
+      steps: [{ type: "asset", status: "saved", root: identity }],
+    });
+    expect(preflightSave).toHaveBeenCalledOnce();
+    expect(preflightSave).toHaveBeenCalledWith({ key, changes });
+    expect(queueSave).toHaveBeenCalledOnce();
+    expect(queueSave).toHaveBeenCalledWith({ key, changes });
+    expect(flush).toHaveBeenCalledOnce();
   });
 
   test("marks successful remote recovery as an Asset refresh", async () => {
@@ -515,7 +684,7 @@ describe("Content Block application operations", () => {
     });
   });
 
-  test("rolls back prepared file state when atomic connect persistence is unavailable", async () => {
+  test("persists a replacement before connecting the Content Block", async () => {
     const { repository, updateContent } = createRepository();
     const state = createState("asset", true);
     state.props?.clear();
@@ -523,12 +692,88 @@ describe("Content Block application operations", () => {
       repository,
       authorizeAsset: () => true,
     });
+    const commitProjectPayload = vi.fn(async () => {});
     const operations = createContentBlockApplicationOperations({
       projectId: "project",
       session,
       getState: () => state,
       context: { createId: () => "generated" },
+      commitProjectPayload,
     });
+
+    const confirmation = await operations.applyLifecycle({
+      action: "connect",
+      blockInstanceId: "block",
+      renderScope: "page:/",
+      source: { type: "asset", assetId: "article" },
+      authority: "replace-file-body-with-block-content",
+    });
+    expect(confirmation.status).toBe("confirmation-required");
+    if (confirmation.status !== "confirmation-required") {
+      throw new Error("Expected replacement confirmation");
+    }
+    await expect(
+      operations.applyLifecycle({
+        action: "connect",
+        blockInstanceId: "block",
+        renderScope: "page:/",
+        source: { type: "asset", assetId: "article" },
+        authority: "replace-file-body-with-block-content",
+        confirmationToken: confirmation.confirmationToken,
+      })
+    ).resolves.toMatchObject({
+      status: "complete",
+      result: {
+        persistence: {
+          status: "complete",
+          steps: [
+            { type: "asset", status: "saved" },
+            { type: "project", status: "saved" },
+          ],
+        },
+      },
+    });
+    expect(session.list()).toEqual([
+      expect.objectContaining({
+        status: "saved",
+        source: '<ws.element ws:tag="p">Persisted body</ws.element>\n',
+      }),
+    ]);
+    expect(updateContent).toHaveBeenCalledOnce();
+    expect(commitProjectPayload).toHaveBeenCalledOnce();
+  });
+
+  test("does not attempt the project step when the Asset replacement fails", async () => {
+    const storage = createRepository();
+    const state = createState("asset", true);
+    state.props?.clear();
+    const session = createMdxAssetEditingSession({
+      repository: {
+        ...storage.repository,
+        updateContent: async () => {
+          throw new Error("Asset write failed");
+        },
+      },
+      authorizeAsset: () => true,
+    });
+    const commitProjectPayload = vi.fn();
+    const operations = createContentBlockApplicationOperations({
+      projectId: "project",
+      session,
+      getState: () => state,
+      context: { createId: () => "generated" },
+      commitProjectPayload,
+    });
+    const confirmation = await operations.applyLifecycle({
+      action: "connect",
+      blockInstanceId: "block",
+      renderScope: "page:/",
+      source: { type: "asset", assetId: "article" },
+      authority: "replace-file-body-with-block-content",
+    });
+    if (confirmation.status !== "confirmation-required") {
+      throw new Error("Expected replacement confirmation");
+    }
 
     await expect(
       operations.applyLifecycle({
@@ -537,17 +782,78 @@ describe("Content Block application operations", () => {
         renderScope: "page:/",
         source: { type: "asset", assetId: "article" },
         authority: "replace-file-body-with-block-content",
+        confirmationToken: confirmation.confirmationToken,
       })
     ).resolves.toMatchObject({
       status: "blocked",
-      code: "content-source-atomic-persistence-unavailable",
-      message:
-        "Replacing file content while changing the Content Block source requires atomic project and Asset persistence, which is not available yet.",
+      result: {
+        persistence: {
+          status: "failed",
+          steps: [
+            { type: "asset", status: "failed" },
+            { type: "project", status: "not-attempted" },
+          ],
+          retry: { replan: true, roots: [expect.any(Object)], project: true },
+        },
+      },
     });
-    expect(session.list()).toEqual([
-      expect.objectContaining({ status: "saved", source: "# Original" }),
-    ]);
-    expect(updateContent).not.toHaveBeenCalled();
+    expect(commitProjectPayload).not.toHaveBeenCalled();
+    expect(storage.getSource()).toBe("# Original");
+  });
+
+  test("keeps a saved Asset replacement when the project step fails", async () => {
+    const storage = createRepository();
+    const state = createState("asset", true);
+    state.props?.clear();
+    const session = createMdxAssetEditingSession({
+      repository: storage.repository,
+      authorizeAsset: () => true,
+    });
+    const operations = createContentBlockApplicationOperations({
+      projectId: "project",
+      session,
+      getState: () => state,
+      context: { createId: () => "generated" },
+      commitProjectPayload: async () => {
+        throw new Error("Project write failed");
+      },
+    });
+    const confirmation = await operations.applyLifecycle({
+      action: "connect",
+      blockInstanceId: "block",
+      renderScope: "page:/",
+      source: { type: "asset", assetId: "article" },
+      authority: "replace-file-body-with-block-content",
+    });
+    if (confirmation.status !== "confirmation-required") {
+      throw new Error("Expected replacement confirmation");
+    }
+
+    await expect(
+      operations.applyLifecycle({
+        action: "connect",
+        blockInstanceId: "block",
+        renderScope: "page:/",
+        source: { type: "asset", assetId: "article" },
+        authority: "replace-file-body-with-block-content",
+        confirmationToken: confirmation.confirmationToken,
+      })
+    ).resolves.toMatchObject({
+      status: "partial",
+      result: {
+        persistence: {
+          status: "partial",
+          steps: [
+            { type: "asset", status: "saved" },
+            { type: "project", status: "failed" },
+          ],
+          retry: { replan: true, roots: [], project: true },
+        },
+      },
+    });
+    expect(storage.getSource()).toBe(
+      '<ws.element ws:tag="p">Persisted body</ws.element>\n'
+    );
   });
 
   test("discovers the owning direct source and migrates template references through the pinned session", async () => {

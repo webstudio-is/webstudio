@@ -5,9 +5,11 @@ import type { MdxAuthoredNode } from "@webstudio-is/content-engine/mdx";
 import {
   createContentStorageSelectorProjection,
   applyMdxContentStorageChanges,
+  executeContentBlockPersistencePlan,
   findBlockSelector,
   getContentStorageIdentityKey,
   type ContentStorageChange,
+  type ContentBlockPersistenceResult,
   type MaterializedContentRoot,
   type MaterializedMdxAuthoredContentRoot,
   type MdxAssetEditingSessionState,
@@ -46,14 +48,22 @@ import {
 } from "./sync/data-stores";
 
 type StorageSaveResult =
-  | Readonly<{ status: "applied" }>
-  | Readonly<{ status: "blocked"; message: string }>;
+  | Readonly<{
+      status: "applied";
+      persistence?: ContentBlockPersistenceResult;
+    }>
+  | Readonly<{
+      status: "blocked" | "partial";
+      message: string;
+      persistence?: ContentBlockPersistenceResult;
+    }>;
 
 type StorageSaver = (
   changes: readonly ContentStorageChange[]
 ) => Promise<StorageSaveResult>;
 
 type StorageSaverEntry = {
+  preflight: StorageSaver;
   save: StorageSaver;
   isCurrent: (root: MaterializedContentRoot) => boolean;
 };
@@ -1005,16 +1015,18 @@ export const removeMaterializedContentRoot = ({
 export const registerContentStorageSaver = ({
   blockInstanceId,
   renderScope,
+  preflight,
   save,
   isCurrent,
 }: {
   blockInstanceId: string;
   renderScope: string;
+  preflight: StorageSaver;
   save: StorageSaver;
   isCurrent: StorageSaverEntry["isCurrent"];
 }) => {
   const key = JSON.stringify([blockInstanceId, renderScope]);
-  const entry = { save, isCurrent };
+  const entry = { preflight, save, isCurrent };
   storageSavers.set(key, entry);
   return () => {
     if (storageSavers.get(key) === entry) {
@@ -1024,83 +1036,167 @@ export const registerContentStorageSaver = ({
 };
 
 export const saveMaterializedContentChanges = async (
-  changes: readonly ContentStorageChange[]
+  changes: readonly ContentStorageChange[],
+  {
+    projectStep,
+  }: {
+    projectStep?: Readonly<{
+      order: "before" | "after";
+      preflight: () => Promise<StorageSaveResult> | StorageSaveResult;
+      save: () => Promise<StorageSaveResult> | StorageSaveResult;
+    }>;
+  } = {}
 ): Promise<StorageSaveResult> => {
   const blocker = getMaterializedContentSaveBlocker(changes);
   if (blocker !== undefined) {
     return blocker;
   }
   const externalChanges = getExternalStorageChanges(changes);
-  if (externalChanges.length === 0) {
+  if (externalChanges.length === 0 && projectStep === undefined) {
     return { status: "applied" };
   }
-  const [change] = externalChanges;
-  const scopeKey = JSON.stringify([
-    change.root.identity.blockInstanceId,
-    change.root.identity.renderScope,
-  ]);
-  const saver = storageSavers.get(scopeKey)!;
-  publishPendingMaterializedContentChanges(externalChanges);
-  return saver.save(externalChanges);
+  const groupedChanges = new Map<
+    string,
+    {
+      identity: ContentBlockExternalContentIdentity;
+      changes: ContentStorageChange[];
+    }
+  >();
+  for (const change of externalChanges) {
+    const key = getContentStorageIdentityKey(change.root.identity);
+    const group = groupedChanges.get(key) ?? {
+      identity: change.root.identity,
+      changes: [],
+    };
+    group.changes.push(change);
+    groupedChanges.set(key, group);
+  }
+  const assetSteps = [...groupedChanges.values()].map((group) => {
+    const scopeKey = JSON.stringify([
+      group.identity.blockInstanceId,
+      group.identity.renderScope,
+    ]);
+    const saver = storageSavers.get(scopeKey)!;
+    return {
+      type: "asset" as const,
+      root: group.identity,
+      preflight: async () => {
+        const result = await saver.preflight(group.changes);
+        return result.status === "applied"
+          ? { status: "ready" as const }
+          : {
+              status: "failed" as const,
+              code: "content-source-session-failed",
+              message: result.message,
+            };
+      },
+      persist: async () => {
+        publishPendingMaterializedContentChanges(group.changes);
+        const result = await saver.save(group.changes);
+        return result.status === "applied"
+          ? { status: "saved" as const }
+          : {
+              status: "failed" as const,
+              code: "content-source-session-failed",
+              message: result.message,
+            };
+      },
+    };
+  });
+  const projectPlan =
+    projectStep === undefined
+      ? []
+      : [
+          {
+            type: "project" as const,
+            preflight: async () => {
+              const result = await projectStep.preflight();
+              return result.status === "applied"
+                ? { status: "ready" as const }
+                : {
+                    status: "failed" as const,
+                    code: "content-source-session-failed",
+                    message: result.message,
+                  };
+            },
+            persist: async () => {
+              const result = await projectStep.save();
+              return result.status === "applied"
+                ? { status: "saved" as const }
+                : {
+                    status: "failed" as const,
+                    code: "content-source-session-failed",
+                    message: result.message,
+                  };
+            },
+          },
+        ];
+  const persistence = await executeContentBlockPersistencePlan(
+    projectStep?.order === "before"
+      ? [...projectPlan, ...assetSteps]
+      : [...assetSteps, ...projectPlan]
+  );
+  if (persistence.status === "complete") {
+    return { status: "applied", persistence };
+  }
+  const failure = persistence.steps.find(({ status }) => status === "failed");
+  return {
+    status: persistence.status === "partial" ? "partial" : "blocked",
+    message:
+      failure?.message ??
+      (persistence.status === "partial"
+        ? "Some content changes were saved. Retry the unfinished steps."
+        : "The content changes could not be saved."),
+    persistence,
+  };
 };
 
 export const getMaterializedContentSaveBlocker = (
   changes: readonly ContentStorageChange[]
-): Extract<StorageSaveResult, { status: "blocked" }> | undefined => {
+): Readonly<{ status: "blocked"; message: string }> | undefined => {
   const externalChanges = getExternalStorageChanges(changes);
   if (externalChanges.length === 0) {
     return;
   }
-  if (
-    new Set(
-      externalChanges.map(({ root }) =>
-        getContentStorageIdentityKey(root.identity)
-      )
-    ).size !== 1
-  ) {
-    return {
-      status: "blocked",
-      message: "Editing multiple MDX files atomically is not available yet.",
-    };
-  }
-  const [change] = externalChanges;
-  const scopeKey = JSON.stringify([
-    change.root.identity.blockInstanceId,
-    change.root.identity.renderScope,
-  ]);
-  const status = getMaterializedContentStatus({
-    blockInstanceId: change.root.identity.blockInstanceId,
-    renderScope: change.root.identity.renderScope,
-  });
-  if (status !== "ready" && status !== "empty" && status !== "pending") {
-    return {
-      status: "blocked",
-      message: "The MDX content source is not ready for editing.",
-    };
-  }
-  const currentRoot = $activeMaterializedContentRoots.get().get(scopeKey);
-  if (
-    currentRoot === undefined ||
-    getContentStorageIdentityKey(currentRoot.identity) !==
-      getContentStorageIdentityKey(change.root.identity)
-  ) {
-    return {
-      status: "blocked",
-      message: "The MDX content source changed before the edit was saved.",
-    };
-  }
-  const saver = storageSavers.get(scopeKey);
-  if (saver === undefined) {
-    return {
-      status: "blocked",
-      message: "The MDX content source is not ready for editing.",
-    };
-  }
-  if (saver.isCurrent(currentRoot) === false) {
-    return {
-      status: "blocked",
-      message: "The MDX content source changed before the edit was saved.",
-    };
+  for (const change of externalChanges) {
+    const scopeKey = JSON.stringify([
+      change.root.identity.blockInstanceId,
+      change.root.identity.renderScope,
+    ]);
+    const status = getMaterializedContentStatus({
+      blockInstanceId: change.root.identity.blockInstanceId,
+      renderScope: change.root.identity.renderScope,
+    });
+    if (status !== "ready" && status !== "empty" && status !== "pending") {
+      return {
+        status: "blocked",
+        message: "The MDX content source is not ready for editing.",
+      };
+    }
+    const currentRoot = $activeMaterializedContentRoots.get().get(scopeKey);
+    if (
+      currentRoot === undefined ||
+      getContentStorageIdentityKey(currentRoot.identity) !==
+        getContentStorageIdentityKey(change.root.identity)
+    ) {
+      return {
+        status: "blocked",
+        message: "The MDX content source changed before the edit was saved.",
+      };
+    }
+    const saver = storageSavers.get(scopeKey);
+    if (saver === undefined) {
+      return {
+        status: "blocked",
+        message: "The MDX content source is not ready for editing.",
+      };
+    }
+    if (saver.isCurrent(currentRoot) === false) {
+      return {
+        status: "blocked",
+        message: "The MDX content source changed before the edit was saved.",
+      };
+    }
   }
 };
 

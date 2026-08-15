@@ -499,7 +499,7 @@ describe("MDX Asset editing session", () => {
     expect(writable.updates).toHaveLength(1);
   });
 
-  test("undoes pending source locally and redoes it through the write queue", async () => {
+  test("replaces pending source locally and persists the next replacement", async () => {
     const writable = createWritableRepository(new Map([["post", "Before"]]));
     const tasks = new Set<() => void>();
     const session = createMdxAssetEditingSession({
@@ -529,24 +529,24 @@ describe("MDX Asset editing session", () => {
       "pending"
     );
 
-    const undone = await session.restoreSource({
+    const restored = await session.replaceSource({
       key: loaded.key,
       expectedSource: pending.localSource,
       source: loaded.source,
     });
-    expect(undone).toMatchObject({
+    expect(restored).toMatchObject({
       status: "applied",
       state: { status: "saved" },
     });
     expect(tasks.size).toBe(0);
     expect(writable.updates).toHaveLength(0);
 
-    const redone = await session.restoreSource({
+    const replaced = await session.replaceSource({
       key: loaded.key,
       expectedSource: loaded.source,
       source: pending.localSource,
     });
-    expect(redone).toMatchObject({
+    expect(replaced).toMatchObject({
       status: "applied",
       state: { status: "pending" },
     });
@@ -582,7 +582,7 @@ describe("MDX Asset editing session", () => {
       "saved"
     );
 
-    const restored = await session.persistSourceRestore({
+    const restored = await session.persistSourceReplacement({
       key: loaded.key,
       expectedSource: loaded.source,
       source: "After",
@@ -632,7 +632,7 @@ describe("MDX Asset editing session", () => {
     );
 
     expect(
-      await session.restoreSource({
+      await session.replaceSource({
         key: loaded.key,
         expectedSource: pending.localSource,
         source: pending.localSource,
@@ -666,7 +666,7 @@ describe("MDX Asset editing session", () => {
       }),
       "saved"
     );
-    const prepared = await session.prepareSourceRestore({
+    const prepared = await session.prepareSourceReplacement({
       key: loaded.key,
       expectedSource: loaded.source,
       source: "After",
@@ -711,7 +711,7 @@ describe("MDX Asset editing session", () => {
     );
 
     expect(
-      await session.prepareSourceRestore({
+      await session.prepareSourceReplacement({
         key: loaded.key,
         expectedSource: loaded.source,
         source: "After",
@@ -743,7 +743,7 @@ describe("MDX Asset editing session", () => {
       }),
       "saved"
     );
-    const prepared = await session.prepareSourceRestore({
+    const prepared = await session.prepareSourceReplacement({
       key: loaded.key,
       expectedSource: loaded.source,
       source: "After",
@@ -778,7 +778,7 @@ describe("MDX Asset editing session", () => {
       projectId: "project",
     };
     const loaded = expectStatus(await session.open(input), "saved");
-    const prepared = await session.prepareSourceRestore({
+    const prepared = await session.prepareSourceReplacement({
       key: loaded.key,
       expectedSource: loaded.source,
       source: "After",
@@ -806,7 +806,7 @@ describe("MDX Asset editing session", () => {
     expect(() => prepared.apply()).toThrowError();
   });
 
-  test("undoes and redoes saved content against each latest revision", async () => {
+  test("replaces saved content against each latest revision", async () => {
     const writable = createWritableRepository(new Map([["post", "Before"]]));
     const session = createMdxAssetEditingSession({
       repository: writable.repository,
@@ -831,7 +831,7 @@ describe("MDX Asset editing session", () => {
     const savedAfter = expectStatus(await session.flush(loaded.key), "saved");
 
     expect(
-      await session.restoreSource({
+      await session.replaceSource({
         key: loaded.key,
         expectedSource: savedAfter.source,
         source: loaded.source,
@@ -842,14 +842,14 @@ describe("MDX Asset editing session", () => {
     expect(writable.sources.get("post")).toBe("Before");
 
     expect(
-      await session.restoreSource({
+      await session.replaceSource({
         key: loaded.key,
         expectedSource: savedBefore.source,
         source: savedAfter.source,
       })
     ).toMatchObject({ status: "applied", state: { status: "pending" } });
-    const redone = expectStatus(await session.flush(loaded.key), "saved");
-    expect(redone.identity.contentRef).toBe("post_revision_3.mdx");
+    const replaced = expectStatus(await session.flush(loaded.key), "saved");
+    expect(replaced.identity.contentRef).toBe("post_revision_3.mdx");
     expect(writable.sources.get("post")).toContain("After");
   });
 
@@ -1026,13 +1026,13 @@ describe("MDX Asset editing session", () => {
       throw new Error("Expected failed write state");
     }
     expect(
-      session.canRestoreSource({
+      session.canReplaceSource({
         key: loaded.key,
         expectedSource: failed.localSource,
       })
     ).toMatchObject({ status: "blocked", reason: "unresolved-write" });
     expect(
-      await session.restoreSource({
+      await session.replaceSource({
         key: loaded.key,
         expectedSource: failed.localSource,
         source: loaded.source,
@@ -1186,7 +1186,7 @@ describe("MDX Asset editing session", () => {
     expectStatus(await session.flush(loaded.key), "cancelled");
     expect(writable.updates).toHaveLength(0);
     expect(
-      await session.restoreSource({
+      await session.replaceSource({
         key: loaded.key,
         expectedSource: pending.localSource,
         source: loaded.source,
@@ -1224,7 +1224,7 @@ describe("MDX Asset editing session", () => {
     expect(stale.copyUnsavedSource(staleLoaded.key)).toContain("Stale");
     stale.cancel(staleLoaded.key);
     expect(
-      stale.canRestoreSource({
+      stale.canReplaceSource({
         key: staleLoaded.key,
         expectedSource: stale.copyUnsavedSource(staleLoaded.key)!,
       })
@@ -1318,7 +1318,7 @@ describe("MDX Asset editing session", () => {
 
     expectStatus(await flushing, "cancelled");
     expect(
-      session.canRestoreSource({
+      session.canReplaceSource({
         key: loaded.key,
         expectedSource: loaded.source,
       })

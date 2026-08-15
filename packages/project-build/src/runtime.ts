@@ -31,7 +31,6 @@ export * from "./runtime/lookup";
 export * from "./runtime/matcher";
 export * from "./runtime/mdx-authored-content";
 export * from "./runtime/mdx-asset-session";
-export * from "./runtime/mdx-asset-undo";
 export * from "./runtime/mdx-materialization";
 export * from "./runtime/mdx-paste";
 export * from "./runtime/mdx-storage-adapter";

@@ -8,6 +8,7 @@ import {
   blockTemplateNameConfirmationInput,
   executeBuilderRuntimeOperation,
   createRuntimeMutationAccumulator,
+  getRuntimeMutationPersistenceOrder,
   type BuilderRuntimeOperationInput,
   type BuilderRuntimeMutationOperationId,
   type BuilderRuntimeOperationResult,
@@ -154,16 +155,6 @@ const canEditSelectedMaterializedContent = () => {
     return false;
   }
   const roots = getSelectedMaterializedContent();
-  const blockIds = new Set<string>();
-  for (const { identity } of roots) {
-    if (blockIds.has(identity.blockInstanceId)) {
-      toast.error(
-        "Editing multiple repeated MDX scopes atomically is not available yet."
-      );
-      return false;
-    }
-    blockIds.add(identity.blockInstanceId);
-  }
   for (const { identity } of roots) {
     const status = getMaterializedContentStatus({
       blockInstanceId: identity.blockInstanceId,
@@ -209,48 +200,91 @@ const createRuntimeMutationArgs = <
   context: { ...getRuntimeMutationContext(), ...context },
 });
 
-const commitRuntimeMutation = <Mutation extends BuilderRuntimeMutation>(
-  result: Mutation
-): Mutation | undefined => {
-  if (result.storageChanges?.length) {
-    const blocker =
-      result.payload.length > 0
-        ? {
-            status: "blocked" as const,
-            message:
-              "This change requires atomic project and MDX file persistence, which is not available yet.",
-          }
-        : getMaterializedContentSaveBlocker(result.storageChanges);
-    if (blocker !== undefined) {
-      toast.error(blocker.message);
+const hasSameWebstudioData = (
+  expected: ReturnType<typeof getWebstudioData>
+) => {
+  const current = getWebstudioData();
+  return Object.keys(expected).every(
+    (namespace) =>
+      expected[namespace as keyof typeof expected] ===
+      current[namespace as keyof typeof current]
+  );
+};
+
+const persistRuntimeMutation = async <Mutation extends BuilderRuntimeMutation>(
+  result: Mutation,
+  plannedData: ReturnType<typeof getWebstudioData>
+): Promise<Mutation | undefined> => {
+  const storageChanges = result.storageChanges ?? [];
+  const projectFirst =
+    result.payload.length > 0 &&
+    getRuntimeMutationPersistenceOrder(result) === "project-first";
+  try {
+    const saveResult = await saveMaterializedContentChanges(storageChanges, {
+      projectStep:
+        result.payload.length === 0
+          ? undefined
+          : {
+              order: projectFirst ? ("before" as const) : ("after" as const),
+              preflight: () =>
+                hasSameWebstudioData(plannedData)
+                  ? { status: "applied" as const }
+                  : {
+                      status: "blocked" as const,
+                      message:
+                        "The project changed before the content edit was saved.",
+                    },
+              save: () => {
+                if (hasSameWebstudioData(plannedData) === false) {
+                  return {
+                    status: "blocked" as const,
+                    message:
+                      projectFirst === false
+                        ? "The MDX files were saved, but the project changed before its step."
+                        : "The project changed before the content edit was saved.",
+                  };
+                }
+                createTransactionFromBuilderPatchPayload({
+                  data: plannedData,
+                  payload: result.payload,
+                });
+                return { status: "applied" as const };
+              },
+            },
+    });
+    if (saveResult.status !== "applied") {
+      failPendingMaterializedContentChanges(storageChanges, saveResult.message);
+      toast.error(saveResult.message);
       return;
     }
-    void saveMaterializedContentChanges(result.storageChanges).then(
-      (saveResult) => {
-        if (saveResult.status === "blocked") {
-          failPendingMaterializedContentChanges(
-            result.storageChanges ?? [],
-            saveResult.message
-          );
-          toast.error(saveResult.message);
-        }
-      },
-      () => {
-        const message = "The MDX file could not be saved.";
-        failPendingMaterializedContentChanges(
-          result.storageChanges ?? [],
-          message
-        );
-        toast.error(message);
-      }
-    );
+    return result;
+  } catch (error) {
+    const message = "The MDX file could not be saved.";
+    failPendingMaterializedContentChanges(storageChanges, message);
+    toast.error(message);
+    throw new Error(message, { cause: error });
+  }
+};
+
+const commitRuntimeMutation = <Mutation extends BuilderRuntimeMutation>(
+  result: Mutation,
+  { returnPendingResult = false }: { returnPendingResult?: boolean } = {}
+): Mutation | undefined => {
+  const plannedData = getWebstudioData();
+  if (!result.storageChanges?.length) {
+    createTransactionFromBuilderPatchPayload({
+      data: plannedData,
+      payload: result.payload,
+    });
     return result;
   }
-  createTransactionFromBuilderPatchPayload({
-    data: getWebstudioData(),
-    payload: result.payload,
-  });
-  return result;
+  const blocker = getMaterializedContentSaveBlocker(result.storageChanges);
+  if (blocker !== undefined) {
+    toast.error(blocker.message);
+    return;
+  }
+  void persistRuntimeMutation(result, plannedData).catch(() => undefined);
+  return returnPendingResult ? result : undefined;
 };
 
 const commitRuntimeMutationAsync = async <
@@ -261,30 +295,12 @@ const commitRuntimeMutationAsync = async <
   if (!result.storageChanges?.length) {
     return commitRuntimeMutation(result);
   }
-  if (result.payload.length > 0) {
-    toast.error(
-      "This change requires atomic project and MDX file persistence, which is not available yet."
-    );
+  const blocker = getMaterializedContentSaveBlocker(result.storageChanges);
+  if (blocker !== undefined) {
+    toast.error(blocker.message);
     return;
   }
-  try {
-    const saveResult = await saveMaterializedContentChanges(
-      result.storageChanges ?? []
-    );
-    if (saveResult.status === "blocked") {
-      failPendingMaterializedContentChanges(
-        result.storageChanges ?? [],
-        saveResult.message
-      );
-      toast.error(saveResult.message);
-      return;
-    }
-    return result;
-  } catch (error) {
-    const message = "The MDX file could not be saved.";
-    failPendingMaterializedContentChanges(result.storageChanges ?? [], message);
-    throw new Error(message, { cause: error });
-  }
+  return persistRuntimeMutation(result, getWebstudioData());
 };
 
 export const executeRuntimeMutation = <
@@ -311,7 +327,8 @@ export const executeRuntimeMutation = <
         executeBuilderRuntimeOperation<RuntimeMutationResult<Id>>(
           createRuntimeMutationArgs({ id, input, context })
         )
-      )
+      ),
+      { returnPendingResult: id === "instances.updateTextTree" }
     );
   } catch (error) {
     const confirmation = getTemplateNameConfirmation(error);
@@ -421,13 +438,15 @@ export const executeRuntimeMutationAsync = async <
   return commitRuntimeMutationAsync(result);
 };
 
+const defaultProjectSettings = { meta: {}, compiler: {} };
+
 export const getWebstudioData = () => {
   const data = readBuilderStateStores();
   const { pages } = data;
   if (pages === undefined) {
     throw Error(`Cannot get webstudio data with empty pages`);
   }
-  const projectSettings = data.projectSettings ?? { meta: {}, compiler: {} };
+  const projectSettings = data.projectSettings ?? defaultProjectSettings;
   return {
     ...data,
     pages,

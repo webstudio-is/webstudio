@@ -14,7 +14,6 @@ import { parseJsonExpression } from "@webstudio-is/expression";
 import { resolvePublishedMdxAssetCandidates } from "../content-database";
 import {
   ContentBlockSourceAuthorityRequiredError,
-  getMdxContentPersistencePlan,
   prepareContentBlockConnect,
   prepareContentBlockDisconnect,
   prepareContentBlockSwitch,
@@ -23,11 +22,17 @@ import {
 } from "./content-block-source-lifecycle";
 import type {
   BuilderRuntimeContext,
+  ContentBlockPersistenceResult,
+  ContentBlockPersistenceStep,
   ContentBlockSourceInspection,
 } from "./context";
 import type { MdxAssetEditingSessionState } from "./mdx-asset-session";
 import type { PendingMdxContentStorageWrite } from "./mdx-storage-adapter";
-import type { BuilderRuntimeMutation, ContentStorageChange } from "./mutation";
+import {
+  getRuntimeMutationPersistenceOrder,
+  type BuilderRuntimeMutation,
+  type ContentStorageChange,
+} from "./mutation";
 import { getContentStorageIdentityKey } from "./content-storage";
 import { getSourceBackedBlockTemplateContext } from "./block";
 import {
@@ -50,11 +55,19 @@ export type MdxAssetEditingSession = Parameters<
       key: string;
       changes: readonly ContentStorageChange[];
     }) => Promise<MdxAssetEditingSessionState>;
+    preflightSave: (input: {
+      key: string;
+      changes: readonly ContentStorageChange[];
+    }) => Promise<
+      | Readonly<{ status: "ready" }>
+      | Readonly<{ status: "blocked"; reason: string }>
+    >;
+    flush: (key: string) => Promise<MdxAssetEditingSessionState>;
     retry: (key: string) => Promise<MdxAssetEditingSessionState>;
     reloadRemote: (key: string) => Promise<MdxAssetEditingSessionState>;
     copyUnsavedSource: (key: string) => string | undefined;
     list: () => readonly MdxAssetEditingSessionState[];
-    persistSourceRestore: (input: {
+    persistSourceReplacement: (input: {
       key: string;
       expectedSource: string;
       source: string;
@@ -70,12 +83,10 @@ export type ContentBlockApplicationErrorCode =
   | "content-source-authority-required"
   | "content-source-confirmation-required"
   | "content-source-stale-confirmation"
-  | "content-source-atomic-persistence-unavailable"
   | "content-source-session-failed"
   | "content-source-write-conflict"
   | "content-source-authorization-failed"
-  | "content-source-mixed-mutation-unavailable"
-  | "content-source-multiple-roots-unavailable";
+  | "content-source-partial-persistence";
 
 export type ContentBlockApplicationResult<Result = unknown> =
   | Readonly<{ status: "complete"; result: Result }>
@@ -91,6 +102,12 @@ export type ContentBlockApplicationResult<Result = unknown> =
       code: ContentBlockApplicationErrorCode;
       message: string;
       result?: Result;
+    }>
+  | Readonly<{
+      status: "partial";
+      code: "content-source-partial-persistence";
+      message: string;
+      result: Result;
     }>;
 
 const lifecycleConfirmationTtlMs = 5 * 60_000;
@@ -145,29 +162,111 @@ export const isContentBlockSessionSourceCommitted = ({
   (state.status === "saved" && state.source === source) ||
   (state.status === "recoverable" && state.committedSource === source);
 
-export const rollbackPreparedContentBlockLifecycle = async (
-  prepared: PreparedContentBlockSourceLifecycle
-) => {
-  let rollbackError: string | undefined;
-  for (const storage of prepared.undoEntry.storage) {
-    const restored = await storage.session.restoreSource({
-      key: storage.key,
-      expectedSource: storage.afterSource,
-      source: storage.beforeSource,
-    });
-    if (restored.status === "blocked" && rollbackError === undefined) {
-      rollbackError = `Prepared MDX rollback is blocked: ${restored.reason}`;
+export type { ContentBlockPersistenceResult, ContentBlockPersistenceStep };
+
+export type ContentBlockPersistencePlanStep = Readonly<{
+  type: "asset" | "project";
+  root?: PendingMdxContentStorageWrite["root"]["identity"];
+  preflight: () => Promise<
+    | Readonly<{ status: "ready" }>
+    | Readonly<{ status: "failed"; code: string; message: string }>
+  >;
+  persist: () => Promise<
+    | Readonly<{ status: "saved" }>
+    | Readonly<{ status: "failed"; code: string; message: string }>
+  >;
+}>;
+
+export const executeContentBlockPersistencePlan = async (
+  plan: readonly ContentBlockPersistencePlanStep[]
+): Promise<ContentBlockPersistenceResult> => {
+  for (const [index, planned] of plan.entries()) {
+    let preflight: Awaited<ReturnType<typeof planned.preflight>>;
+    try {
+      preflight = await planned.preflight();
+    } catch {
+      preflight = {
+        status: "failed",
+        code: "content-source-session-failed",
+        message: "Content persistence preflight failed",
+      };
     }
+    if (preflight.status === "ready") {
+      continue;
+    }
+    return {
+      status: "failed",
+      steps: plan.map((step, stepIndex) => ({
+        type: step.type,
+        status: stepIndex === index ? "failed" : "not-attempted",
+        ...(step.root === undefined ? {} : { root: step.root }),
+        ...(stepIndex === index
+          ? { code: preflight.code, message: preflight.message }
+          : {}),
+      })),
+      retry: {
+        replan: true,
+        roots: plan.flatMap(({ type, root }) =>
+          type === "asset" && root !== undefined ? [root] : []
+        ),
+        project: plan.some(({ type }) => type === "project"),
+      },
+    };
   }
-  return rollbackError;
+  const steps: ContentBlockPersistenceStep[] = [];
+  for (const [index, planned] of plan.entries()) {
+    let persisted: Awaited<ReturnType<typeof planned.persist>>;
+    try {
+      persisted = await planned.persist();
+    } catch {
+      persisted = {
+        status: "failed",
+        code: "content-source-session-failed",
+        message: "Content persistence failed",
+      };
+    }
+    steps.push({
+      type: planned.type,
+      status: persisted.status,
+      ...(planned.root === undefined ? {} : { root: planned.root }),
+      ...(persisted.status === "failed"
+        ? { code: persisted.code, message: persisted.message }
+        : {}),
+    });
+    if (persisted.status === "saved") {
+      continue;
+    }
+    for (const remaining of plan.slice(index + 1)) {
+      steps.push({
+        type: remaining.type,
+        status: "not-attempted",
+        ...(remaining.root === undefined ? {} : { root: remaining.root }),
+      });
+    }
+    return {
+      status: index === 0 ? "failed" : "partial",
+      steps,
+      retry: {
+        replan: true,
+        roots: plan
+          .slice(index)
+          .flatMap(({ type, root }) =>
+            type === "asset" && root !== undefined ? [root] : []
+          ),
+        project: plan.slice(index).some(({ type }) => type === "project"),
+      },
+    };
+  }
+  return {
+    status: "complete",
+    steps,
+    retry: { replan: true, roots: [], project: false },
+  };
 };
 
-const contentBlockPersistenceBlockedMessage = {
-  "atomic-project-and-asset-unavailable":
-    "Replacing file content while changing the Content Block source requires atomic project and Asset persistence, which is not available yet.",
-  "atomic-multiple-assets-unavailable":
-    "This change requires atomic updates to multiple Assets, which are not available yet.",
-} as const;
+type ContentBlockSemanticMutation<Result extends Record<string, unknown>> =
+  BuilderRuntimeMutation<Result> &
+    Readonly<{ persistence?: ContentBlockPersistenceResult }>;
 
 export const persistPreparedContentBlockLifecycle = async ({
   prepared,
@@ -182,80 +281,135 @@ export const persistPreparedContentBlockLifecycle = async ({
   ) => void | Promise<void>;
   canCommitProjectPayload?: () => boolean;
 }): Promise<
-  | Readonly<{
-      status: "complete";
-      state?: MdxAssetEditingSessionState;
-    }>
-  | Readonly<{
-      status: "blocked";
-      code: ContentBlockApplicationErrorCode;
-      message: string;
-      state?: MdxAssetEditingSessionState;
-    }>
+  Readonly<{
+    status: "complete" | "partial" | "failed";
+    state?: MdxAssetEditingSessionState;
+    persistence: ContentBlockPersistenceResult;
+  }>
 > => {
-  const persistence = getMdxContentPersistencePlan(prepared);
-  if (persistence.status === "blocked") {
-    const rollbackError = await rollbackPreparedContentBlockLifecycle(prepared);
-    return {
-      status: "blocked",
-      code:
-        rollbackError === undefined
-          ? "content-source-atomic-persistence-unavailable"
-          : "content-source-session-failed",
-      message:
-        rollbackError ??
-        contentBlockPersistenceBlockedMessage[persistence.reason],
-      state:
-        prepared.sourceState !== undefined && "key" in prepared.sourceState
-          ? session.get(prepared.sourceState.key)
-          : undefined,
-    };
-  }
-  if (persistence.mode === "single-asset") {
-    const sourceState = prepared.sourceState;
-    if (sourceState === undefined || !("key" in sourceState)) {
-      return {
-        status: "blocked",
-        code: "content-source-not-loaded",
-        message: "The MDX Asset is not loaded",
-      };
-    }
-    const expectedSource = getContentBlockSessionSource(sourceState);
-    const saved = await session.flush(sourceState.key);
-    if (
-      expectedSource === undefined ||
-      isContentBlockSessionSourceCommitted({
-        state: saved,
-        source: expectedSource,
-      }) === false
-    ) {
-      return {
-        status: "blocked",
-        code: getContentBlockSessionErrorCode(saved),
-        message: getContentBlockSessionMessage(saved),
-        state: saved,
-      };
-    }
-    return { status: "complete", state: saved };
-  }
-  if (persistence.mode === "project") {
-    if (canCommitProjectPayload() === false) {
-      return {
-        status: "blocked",
-        code: "content-source-session-failed",
-        message: "The project changed while preparing this source update.",
-      };
-    }
-    if (commitProjectPayload === undefined) {
-      return {
-        status: "blocked",
-        code: "content-source-session-failed",
-        message: "Project persistence is not available",
-      };
-    }
-    await commitProjectPayload(prepared.projectPayload);
-  }
-  return { status: "complete", state: prepared.sourceState };
+  let state = prepared.sourceState;
+  const owners: Array<{ key: string; expectedSource: string } | undefined> = [];
+  const assetPlan = prepared.storageWrites.map((write, index) => ({
+    type: "asset" as const,
+    root: write.root.identity,
+    preflight: async () => {
+      const identityKey = getContentStorageIdentityKey(write.root.identity);
+      const owner = session
+        .list()
+        .find(
+          (candidate) =>
+            "identity" in candidate &&
+            getContentStorageIdentityKey(candidate.identity) === identityKey
+        );
+      const expectedSource = getContentBlockSessionSource(owner);
+      if (
+        owner === undefined ||
+        !("key" in owner) ||
+        expectedSource === undefined
+      ) {
+        return {
+          status: "failed" as const,
+          code: "content-source-not-loaded",
+          message: "The MDX Asset is not loaded",
+        };
+      }
+      const preflight = await session.prepareSourceReplacement({
+        key: owner.key,
+        expectedSource,
+        source: write.source,
+      });
+      if (preflight.status === "blocked") {
+        state = preflight.state;
+        return {
+          status: "failed" as const,
+          code: getContentBlockSessionErrorCode(preflight.state),
+          message: getContentBlockSessionMessage(preflight.state),
+        };
+      }
+      owners[index] = { key: owner.key, expectedSource };
+      return { status: "ready" as const };
+    },
+    persist: async () => {
+      const owner = owners[index];
+      if (owner === undefined) {
+        return {
+          status: "failed" as const,
+          code: "content-source-session-failed",
+          message: "The MDX Asset persistence plan is stale",
+        };
+      }
+      const persisted = await session.persistSourceReplacement({
+        key: owner.key,
+        expectedSource: owner.expectedSource,
+        source: write.source,
+      });
+      state = persisted.state;
+      return persisted.status === "applied"
+        ? { status: "saved" as const }
+        : {
+            status: "failed" as const,
+            code: getContentBlockSessionErrorCode(persisted.state),
+            message: getContentBlockSessionMessage(persisted.state),
+          };
+    },
+  }));
+  const projectPlan =
+    prepared.projectPayload.length === 0
+      ? []
+      : [
+          {
+            type: "project" as const,
+            preflight: async () =>
+              canCommitProjectPayload() && commitProjectPayload !== undefined
+                ? { status: "ready" as const }
+                : {
+                    status: "failed" as const,
+                    code: "content-source-session-failed",
+                    message:
+                      commitProjectPayload === undefined
+                        ? "Project persistence is not available"
+                        : "The project changed while preparing this source update.",
+                  },
+            persist: async () => {
+              if (canCommitProjectPayload() === false) {
+                return {
+                  status: "failed" as const,
+                  code: "content-source-session-failed",
+                  message: "The project changed before its persistence step.",
+                };
+              }
+              if (commitProjectPayload === undefined) {
+                return {
+                  status: "failed" as const,
+                  code: "content-source-session-failed",
+                  message: "Project persistence is not available",
+                };
+              }
+              try {
+                await commitProjectPayload(prepared.projectPayload);
+                return { status: "saved" as const };
+              } catch (error) {
+                return {
+                  status: "failed" as const,
+                  code: "content-source-partial-persistence",
+                  message:
+                    error instanceof Error
+                      ? error.message
+                      : "Project persistence failed",
+                };
+              }
+            },
+          },
+        ];
+  const persistence = await executeContentBlockPersistencePlan([
+    ...assetPlan,
+    ...projectPlan,
+  ]);
+  return {
+    status: persistence.status,
+    state,
+    persistence,
+  };
 };
 
 export const recoverContentBlockSession = async ({
@@ -397,6 +551,189 @@ export const persistContentBlockStorageChanges = async ({
       };
 };
 
+const groupExternalStorageChanges = (
+  changes: readonly ContentStorageChange[]
+) => {
+  const groups = new Map<
+    string,
+    {
+      identity: Extract<
+        ContentStorageChange["root"],
+        { type: "external" }
+      >["identity"];
+      changes: ContentStorageChange[];
+    }
+  >();
+  for (const change of changes) {
+    if (change.root.type !== "external") {
+      continue;
+    }
+    const key = getContentStorageIdentityKey(change.root.identity);
+    const group = groups.get(key) ?? {
+      identity: change.root.identity,
+      changes: [],
+    };
+    group.changes.push(change);
+    groups.set(key, group);
+  }
+  return [...groups.values()];
+};
+
+export const preflightContentBlockStorageChanges = async ({
+  session,
+  changes,
+}: {
+  session: MdxAssetEditingSession;
+  changes: readonly ContentStorageChange[];
+}): Promise<
+  | Readonly<{ status: "ready" }>
+  | Readonly<{
+      status: "failed";
+      code: ContentBlockApplicationErrorCode;
+      message: string;
+      persistence: ContentBlockPersistenceResult;
+    }>
+> => {
+  const groups = groupExternalStorageChanges(changes);
+  for (const [index, group] of groups.entries()) {
+    const identityKey = getContentStorageIdentityKey(group.identity);
+    const owner = session
+      .list()
+      .find(
+        (state) =>
+          "identity" in state &&
+          getContentStorageIdentityKey(state.identity) === identityKey
+      );
+    const preflight =
+      owner !== undefined && "key" in owner
+        ? await session.preflightSave({
+            key: owner.key,
+            changes: group.changes,
+          })
+        : {
+            status: "blocked" as const,
+            reason: "The exact MDX Asset render scope is not loaded",
+          };
+    if (preflight.status === "ready") {
+      continue;
+    }
+    const persistence: ContentBlockPersistenceResult = {
+      status: "failed",
+      steps: groups.map((candidate, candidateIndex) => ({
+        type: "asset" as const,
+        status:
+          candidateIndex === index
+            ? ("failed" as const)
+            : ("not-attempted" as const),
+        root: candidate.identity,
+        ...(candidateIndex === index
+          ? {
+              code: "content-source-session-failed",
+              message: preflight.reason,
+            }
+          : {}),
+      })),
+      retry: {
+        replan: true,
+        roots: groups.map(({ identity }) => identity),
+        project: false,
+      },
+    };
+    return {
+      status: "failed",
+      code: "content-source-session-failed",
+      message: preflight.reason,
+      persistence,
+    };
+  }
+  return { status: "ready" };
+};
+
+export const persistContentBlockStorageChangesSerially = async ({
+  session,
+  changes,
+  publishState,
+  projectStep,
+  persistenceOrder = "storage-first",
+}: {
+  session: MdxAssetEditingSession;
+  changes: readonly ContentStorageChange[];
+  publishState?: (state: MdxAssetEditingSessionState) => void;
+  projectStep?: ContentBlockPersistencePlanStep;
+  persistenceOrder?: "storage-first" | "project-first";
+}): Promise<ContentBlockPersistenceResult> => {
+  const groups = groupExternalStorageChanges(changes);
+  const assetPlan = groups.map((group) => ({
+    type: "asset" as const,
+    root: group.identity,
+    preflight: async () => {
+      const identityKey = getContentStorageIdentityKey(group.identity);
+      const owner = session
+        .list()
+        .find(
+          (state) =>
+            "identity" in state &&
+            getContentStorageIdentityKey(state.identity) === identityKey
+        );
+      if (owner === undefined || !("key" in owner)) {
+        return {
+          status: "failed" as const,
+          code: "content-source-not-loaded",
+          message: "The exact MDX Asset render scope is not loaded",
+        };
+      }
+      const preflight = await session.preflightSave({
+        key: owner.key,
+        changes: group.changes,
+      });
+      return preflight.status === "ready"
+        ? preflight
+        : {
+            status: "failed" as const,
+            code: "content-source-session-failed",
+            message: preflight.reason,
+          };
+    },
+    persist: async () => {
+      const identityKey = getContentStorageIdentityKey(group.identity);
+      const owner = session
+        .list()
+        .find(
+          (state) =>
+            "identity" in state &&
+            getContentStorageIdentityKey(state.identity) === identityKey
+        );
+      if (owner === undefined || !("key" in owner)) {
+        return {
+          status: "failed" as const,
+          code: "content-source-not-loaded",
+          message: "The exact MDX Asset render scope is not loaded",
+        };
+      }
+      const persisted = await persistContentBlockStorageChanges({
+        session,
+        key: owner.key,
+        changes: group.changes,
+        publishState,
+      });
+      return persisted.status === "complete"
+        ? { status: "saved" as const }
+        : {
+            status: "failed" as const,
+            code: persisted.code,
+            message: persisted.message,
+          };
+    },
+  }));
+  return executeContentBlockPersistencePlan(
+    projectStep === undefined
+      ? assetPlan
+      : persistenceOrder === "project-first"
+        ? [projectStep, ...assetPlan]
+        : [...assetPlan, projectStep]
+  );
+};
+
 const getLifecycleConfirmationPayload = ({
   projectId,
   projectVersion,
@@ -439,6 +776,7 @@ export type ContentBlockLifecyclePlan = Readonly<{
   }>[];
   diagnostics: PreparedContentBlockSourceLifecycle["diagnostics"];
   persistenceOrder: PreparedContentBlockSourceLifecycle["persistenceOrder"];
+  persistence?: ContentBlockPersistenceResult;
 }>;
 
 const serializeLifecyclePlan = (
@@ -658,6 +996,8 @@ export const createContentBlockApplicationOperations = ({
       ) => void | Promise<void>;
     }
   ): Promise<ContentBlockApplicationResult<ContentBlockLifecyclePlan>> => {
+    const projectVersionBeforePreparation =
+      getProjectVersion?.() ?? context.projectVersion;
     const stateBeforePreparation = getState();
     const blockBeforePreparation =
       stateBeforePreparation.instances?.get(blockInstanceId);
@@ -696,28 +1036,9 @@ export const createContentBlockApplicationOperations = ({
           error instanceof Error ? error.message : "Source update failed",
       };
     }
-    const persistence = getMdxContentPersistencePlan(prepared);
-    if (persistence.status === "blocked") {
-      const blocked = await persistPreparedContentBlockLifecycle({
-        prepared,
-        session,
-      });
-      return {
-        status: "blocked",
-        code:
-          blocked.status === "blocked"
-            ? blocked.code
-            : "content-source-session-failed",
-        message:
-          blocked.status === "blocked"
-            ? blocked.message
-            : "Atomic Content Block persistence is not available",
-        result: serializeLifecyclePlan(prepared),
-      };
-    }
     const confirmationPayload = getLifecycleConfirmationPayload({
       projectId,
-      projectVersion: getProjectVersion?.() ?? context.projectVersion,
+      projectVersion: projectVersionBeforePreparation,
       prepared,
       blockInstanceId,
       renderScope,
@@ -741,16 +1062,6 @@ export const createContentBlockApplicationOperations = ({
         confirmationPayload,
         lifecycleConfirmationTtlMs
       );
-      const rollbackError =
-        await rollbackPreparedContentBlockLifecycle(prepared);
-      if (rollbackError !== undefined) {
-        return {
-          status: "blocked",
-          code: "content-source-session-failed",
-          message: rollbackError,
-          result: serializeLifecyclePlan(prepared),
-        };
-      }
       return {
         status: "confirmation-required",
         code: "content-source-confirmation-required",
@@ -762,21 +1073,39 @@ export const createContentBlockApplicationOperations = ({
     if (dryRun) {
       return { status: "complete", result: serializeLifecyclePlan(prepared) };
     }
+    const projectCommit =
+      execution?.commitProjectPayload ?? commitProjectPayload;
     const persisted = await persistPreparedContentBlockLifecycle({
       prepared,
       session,
-      commitProjectPayload:
-        execution?.commitProjectPayload ?? commitProjectPayload,
+      commitProjectPayload: projectCommit,
+      canCommitProjectPayload: () =>
+        prepared.projectPayload.length === 0 ||
+        (projectCommit !== undefined &&
+          (getProjectVersion?.() ?? context.projectVersion) ===
+            projectVersionBeforePreparation),
     });
-    if (persisted.status === "blocked") {
-      return { ...persisted, result: serializeLifecyclePlan(prepared) };
+    const plan = {
+      ...serializeLifecyclePlan(prepared),
+      persistence: persisted.persistence,
+    };
+    if (persisted.status !== "complete") {
+      return {
+        status: persisted.status === "partial" ? "partial" : "blocked",
+        code: "content-source-partial-persistence",
+        message:
+          persisted.status === "partial"
+            ? "Some content changes were saved. Retry the unfinished steps."
+            : "The content changes could not be saved.",
+        result: plan,
+      };
     }
     if (action === "disconnect") {
       activeKeys.delete(scopeKey(blockInstanceId, renderScope));
     } else if (persisted.state !== undefined) {
       publishSession(persisted.state);
     }
-    return { status: "complete", result: serializeLifecyclePlan(prepared) };
+    return { status: "complete", result: plan };
   };
 
   const semanticEdit = async <Result extends Record<string, unknown>>({
@@ -796,15 +1125,17 @@ export const createContentBlockApplicationOperations = ({
   }): Promise<
     | Readonly<{
         status: "complete";
-        result: BuilderRuntimeMutation<Result>;
+        result: ContentBlockSemanticMutation<Result>;
       }>
     | Readonly<{
-        status: "blocked";
+        status: "blocked" | "partial";
         code: string;
         message: string;
-        result?: BuilderRuntimeMutation<Result>;
+        result?: ContentBlockSemanticMutation<Result>;
       }>
   > => {
+    const projectVersionBeforeMutation =
+      getProjectVersion?.() ?? context.projectVersion;
     let active = getActiveState(blockInstanceId, renderScope);
     if (active === undefined) {
       await inspectSource({ blockInstanceId, renderScope, variables });
@@ -869,47 +1200,89 @@ export const createContentBlockApplicationOperations = ({
       }
       return { status: "complete", result: mutation };
     }
-    if (mutation.payload.length > 0) {
-      return {
-        status: "blocked",
-        code: "content-source-mixed-mutation-unavailable",
-        message: "Project and MDX Asset changes cannot be persisted atomically",
-        result: mutation,
-      };
-    }
-    const externalRoots = new Set(
-      storageChanges.flatMap((change) =>
-        change.root.type === "external"
-          ? [getContentStorageIdentityKey(change.root.identity)]
-          : []
-      )
-    );
-    if (externalRoots.size !== 1) {
-      return {
-        status: "blocked",
-        code: "content-source-multiple-roots-unavailable",
-        message: "Multiple MDX Assets cannot be persisted atomically",
-        result: mutation,
-      };
-    }
     if (dryRun) {
       return { status: "complete", result: mutation };
     }
-    const persisted = await persistContentBlockStorageChanges({
+    const projectFirst =
+      mutation.payload.length > 0 &&
+      getRuntimeMutationPersistenceOrder(mutation) === "project-first";
+    const projectStep: ContentBlockPersistencePlanStep | undefined =
+      mutation.payload.length === 0
+        ? undefined
+        : {
+            type: "project",
+            preflight: async () =>
+              commitProjectPayload !== undefined &&
+              (getProjectVersion?.() ?? context.projectVersion) ===
+                projectVersionBeforeMutation
+                ? { status: "ready" }
+                : {
+                    status: "failed",
+                    code: "content-source-session-failed",
+                    message:
+                      commitProjectPayload === undefined
+                        ? "Project persistence is not available for this edit"
+                        : "The project changed before the content edit was saved",
+                  },
+            persist: async () => {
+              if (
+                (getProjectVersion?.() ?? context.projectVersion) !==
+                projectVersionBeforeMutation
+              ) {
+                return {
+                  status: "failed",
+                  code: "content-source-session-failed",
+                  message: projectFirst
+                    ? "The project changed before the content edit was saved"
+                    : "MDX Assets were saved, but the project changed before its step.",
+                };
+              }
+              if (commitProjectPayload === undefined) {
+                return {
+                  status: "failed",
+                  code: "content-source-session-failed",
+                  message: "Project persistence is not available for this edit",
+                };
+              }
+              try {
+                await commitProjectPayload(mutation.payload);
+                return { status: "saved" };
+              } catch (error) {
+                return {
+                  status: "failed",
+                  code: "content-source-session-failed",
+                  message:
+                    error instanceof Error
+                      ? error.message
+                      : "Project persistence failed",
+                };
+              }
+            },
+          };
+    const persistence = await persistContentBlockStorageChangesSerially({
       session,
-      key: active.key,
       changes: storageChanges,
       publishState: publishSession,
+      projectStep,
+      persistenceOrder: projectFirst ? "project-first" : "storage-first",
     });
-    if (persisted.status === "blocked") {
+    if (persistence.status === "complete") {
       return {
-        status: "blocked",
-        code: persisted.code,
-        message: persisted.message,
-        result: mutation,
+        status: "complete",
+        result: { ...mutation, persistence },
       };
     }
-    return { status: "complete", result: mutation };
+    const failure = persistence.steps.find(({ status }) => status === "failed");
+    return {
+      status: persistence.status === "partial" ? "partial" : "blocked",
+      code: "content-source-partial-persistence",
+      message:
+        failure?.message ??
+        (persistence.status === "partial"
+          ? "Some content changes were saved. Retry the unfinished steps."
+          : "The content changes could not be saved."),
+      result: { ...mutation, persistence },
+    };
   };
 
   const recover = async ({
@@ -1232,7 +1605,7 @@ export const createContentBlockApplicationOperations = ({
         });
         continue;
       }
-      const restored = await session.persistSourceRestore({
+      const restored = await session.persistSourceReplacement({
         key: loadedFile.key,
         expectedSource: loadedFile.source,
         source: file.source,
@@ -1288,64 +1661,38 @@ export const createContentBlockApplicationOperations = ({
   const saveStorageChanges = async (
     changes: readonly ContentStorageChange[]
   ): Promise<
-    | Readonly<{ status: "complete" }>
     | Readonly<{
-        status: "blocked";
+        status: "complete";
+        persistence: ContentBlockPersistenceResult;
+      }>
+    | Readonly<{
+        status: "partial" | "failed";
         code: ContentBlockApplicationErrorCode;
         message: string;
+        persistence: ContentBlockPersistenceResult;
       }>
   > => {
-    const externalIdentities = new Map(
-      changes.flatMap((change) =>
-        change.root.type === "external"
-          ? [
-              [
-                getContentStorageIdentityKey(change.root.identity),
-                change.root.identity,
-              ] as const,
-            ]
-          : []
-      )
-    );
-    if (externalIdentities.size !== 1) {
-      return {
-        status: "blocked",
-        code: "content-source-multiple-roots-unavailable",
-        message: "Multiple MDX Assets cannot be persisted atomically",
-      };
-    }
-    const [identity] = externalIdentities.values();
-    const active = getActiveState(
-      identity.blockInstanceId,
-      identity.renderScope
-    );
-    if (
-      active === undefined ||
-      !("key" in active) ||
-      !("identity" in active) ||
-      getContentStorageIdentityKey(active.identity) !==
-        getContentStorageIdentityKey(identity)
-    ) {
-      return {
-        status: "blocked",
-        code: "content-source-not-loaded",
-        message: "The exact revision and render scope are not loaded",
-      };
-    }
-    const persisted = await persistContentBlockStorageChanges({
+    const persisted = await persistContentBlockStorageChangesSerially({
       session,
-      key: active.key,
       changes,
       publishState: publishSession,
     });
     return persisted.status === "complete"
-      ? { status: "complete" }
+      ? { status: "complete", persistence: persisted }
       : {
-          status: "blocked",
-          code: persisted.code,
-          message: persisted.message,
+          status: persisted.status,
+          code: "content-source-partial-persistence",
+          message:
+            persisted.status === "partial"
+              ? "Some MDX Assets were saved. Retry the unfinished roots."
+              : "The MDX Asset changes could not be saved.",
+          persistence: persisted,
         };
   };
+
+  const preflightStorageChanges = async (
+    changes: readonly ContentStorageChange[]
+  ) => preflightContentBlockStorageChanges({ session, changes });
 
   return {
     inspectSource,
@@ -1354,6 +1701,7 @@ export const createContentBlockApplicationOperations = ({
     recover,
     migrateTemplateReferences,
     getMaterializedContent,
+    preflightStorageChanges,
     saveStorageChanges,
   };
 };

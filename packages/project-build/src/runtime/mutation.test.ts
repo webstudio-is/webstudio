@@ -8,7 +8,64 @@ import {
 import {
   createRuntimeMutation,
   createRuntimeMutationAccumulator,
+  getRuntimeMutationPersistenceOrder,
 } from "./mutation";
+
+const externalRoot = {
+  type: "external" as const,
+  identity: {
+    blockInstanceId: "block",
+    assetId: "article",
+    revision: "sha256:article",
+    contentRef: "article.mdx",
+    format: "mdx" as const,
+    renderScope: "page:/",
+  },
+};
+
+test("orders the durable destination before a cross-storage source removal", () => {
+  const storageRemoval = {
+    root: externalRoot,
+    payload: [
+      {
+        namespace: "instances" as const,
+        patches: [{ op: "remove" as const, path: ["moved"] }],
+      },
+    ],
+  };
+  expect(
+    getRuntimeMutationPersistenceOrder({
+      payload: [
+        {
+          namespace: "instances",
+          patches: [{ op: "add", path: ["moved"], value: {} }],
+        },
+      ],
+      storageChanges: [storageRemoval],
+    })
+  ).toBe("project-first");
+  expect(
+    getRuntimeMutationPersistenceOrder({
+      payload: [
+        {
+          namespace: "instances",
+          patches: [{ op: "remove", path: ["moved"] }],
+        },
+      ],
+      storageChanges: [
+        {
+          root: externalRoot,
+          payload: [
+            {
+              namespace: "instances",
+              patches: [{ op: "add", path: ["moved"], value: {} }],
+            },
+          ],
+        },
+      ],
+    })
+  ).toBe("storage-first");
+});
 
 test("creates mutation result and marks noop from payload", () => {
   expect(

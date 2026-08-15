@@ -8,7 +8,6 @@ import {
   serializeAssetContentDescriptor,
 } from "@webstudio-is/protocol/asset-resource-api";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
-import { getMdxContentPersistencePlan } from "@webstudio-is/project-build/runtime";
 import { createHttpAssetContentRepository } from "./mdx-content-repository";
 import { createBuilderHttpAssetContentRepository } from "./builder-mdx-content-repository.client";
 
@@ -257,35 +256,4 @@ describe("HTTP MDX content repository", () => {
       })
     ).rejects.toThrow("requested Asset");
   });
-});
-
-describe("MDX content persistence capability", () => {
-  const prepared = (projectChanges: number, storageWrites: number) =>
-    ({
-      status: "prepared",
-      projectPayload: Array.from({ length: projectChanges }, () => ({})),
-      storageWrites: Array.from({ length: storageWrites }, () => ({})),
-    }) as never;
-
-  test.each([
-    [0, 0, { status: "ready", mode: "noop" }],
-    [1, 0, { status: "ready", mode: "project" }],
-    [0, 1, { status: "ready", mode: "single-asset" }],
-    [
-      1,
-      1,
-      {
-        status: "blocked",
-        reason: "atomic-project-and-asset-unavailable",
-      },
-    ],
-    [0, 2, { status: "blocked", reason: "atomic-multiple-assets-unavailable" }],
-  ] as const)(
-    "plans %s project and %s storage changes without overstating atomicity",
-    (projectChanges, storageWrites, expected) => {
-      expect(
-        getMdxContentPersistencePlan(prepared(projectChanges, storageWrites))
-      ).toEqual(expected);
-    }
-  );
 });
