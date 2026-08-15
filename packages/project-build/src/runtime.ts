@@ -35,6 +35,7 @@ export * from "./runtime/mdx-materialization";
 export * from "./runtime/mdx-paste";
 export * from "./runtime/mdx-storage-adapter";
 export * from "./runtime/mdx-template-resolution";
+export * from "./runtime/published-mdx";
 export * from "./runtime/mutation";
 export * from "./runtime/output";
 export * from "./runtime/page-copy";

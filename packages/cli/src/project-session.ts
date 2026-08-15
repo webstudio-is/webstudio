@@ -21,7 +21,8 @@ import {
 } from "@webstudio-is/protocol";
 import packageJson from "../package.json";
 import {
-  createReachableAssetContentCompilationPlan,
+  blockComponent,
+  getContentBlockSource,
   getHomePage,
 } from "@webstudio-is/sdk";
 import {
@@ -51,7 +52,15 @@ import {
   type BuilderBuildDataSnapshot,
   type SerializedBuilderStateSnapshot,
 } from "@webstudio-is/project-build/state";
-import { removeLegacyProjectSettingsFromPages } from "@webstudio-is/project-build";
+import {
+  createBuildContentCompilationPlan,
+  createPublishedBuildContentCompilationPlan,
+  getDynamicPublishedMdxSourceBlockIds,
+  getPublishedMdxContentDatabaseMaxBytes,
+  removeLegacyProjectSettingsFromPages,
+  resolvePublishedMdxAssetCandidates,
+  resolvePublishedMdxDependencyClosure,
+} from "@webstudio-is/project-build";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
 import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "./config";
 import type { ApiConnection } from "./api-connection";
@@ -565,12 +574,53 @@ export const loadCliProjectSessionAssetIndex = async (
   if (connection.projectId !== snapshot.projectId) {
     throw new Error("CLI connection does not match the project session");
   }
-  const plan = createReachableAssetContentCompilationPlan({
-    props: snapshot.state.props?.values() ?? [],
-    dataSources: snapshot.state.dataSources?.values() ?? [],
-    resources: snapshot.state.resources?.values() ?? [],
-  });
+  const build = {
+    instances: Array.from(snapshot.state.instances?.values() ?? []),
+    props: Array.from(snapshot.state.props?.values() ?? []),
+    dataSources: Array.from(snapshot.state.dataSources?.values() ?? []),
+    resources: Array.from(snapshot.state.resources?.values() ?? []),
+  };
+  const hasMdxSource = build.instances.some(
+    (instance) =>
+      instance.component === blockComponent &&
+      getContentBlockSource({
+        blockInstanceId: instance.id,
+        props: build.props,
+      }) !== undefined
+  );
+  const basePlan = createBuildContentCompilationPlan(build);
+  let publicationBuild:
+    | (typeof build & { pages: NonNullable<typeof snapshot.state.pages> })
+    | undefined;
+  let needsCandidateDiscovery = false;
+  let plan = basePlan;
+  if (hasMdxSource) {
+    if (snapshot.state.pages === undefined) {
+      throw new Error("Project session pages namespace is missing");
+    }
+    publicationBuild = { ...build, pages: snapshot.state.pages };
+    const dynamicBlockIds =
+      getDynamicPublishedMdxSourceBlockIds(publicationBuild);
+    const projectCandidates = resolvePublishedMdxAssetCandidates({
+      build: publicationBuild,
+      allowUnresolved: true,
+    });
+    needsCandidateDiscovery = dynamicBlockIds.some(
+      (blockId) => projectCandidates.has(blockId) === false
+    );
+    plan = needsCandidateDiscovery
+      ? basePlan
+      : createPublishedBuildContentCompilationPlan(
+          publicationBuild,
+          projectCandidates
+        );
+  }
   if (plan === undefined) {
+    if (needsCandidateDiscovery) {
+      throw new Error(
+        "Dynamic MDX preview requires a finite Assets query dependency"
+      );
+    }
     return;
   }
   const assets = Array.from(snapshot.state.assets?.values() ?? []);
@@ -589,19 +639,54 @@ export const loadCliProjectSessionAssetIndex = async (
       { code: "PREVIEW_ASSET_DOWNLOAD_FAILED" }
     );
   }
-  const { artifact } = await compileContentSource({
-    source: createFileSystemContentSource({
-      projectId: snapshot.projectId,
-      assets,
-      folders: snapshot.state.assetFolders ?? new Map(),
-      assetsDirectory,
-    }),
+  const source = createFileSystemContentSource({
     projectId: snapshot.projectId,
-    plan,
-    maxBytes: parseContentDatabaseMaxBytes(
+    assets,
+    folders: snapshot.state.assetFolders ?? new Map(),
+    assetsDirectory,
+  });
+  const maxBytes = getPublishedMdxContentDatabaseMaxBytes({
+    baseBytes: parseContentDatabaseMaxBytes(
       process.env.CONTENT_DATABASE_MAX_BYTES
     ),
+    assets,
   });
+  let { artifact } = await compileContentSource({
+    source,
+    projectId: snapshot.projectId,
+    plan,
+    maxBytes,
+  });
+  if (hasMdxSource) {
+    if (publicationBuild === undefined) {
+      throw new Error("Dynamic MDX preview build is unavailable");
+    }
+    let resolvedPlan = await resolvePublishedMdxDependencyClosure({
+      build: publicationBuild,
+      artifact,
+    });
+    for (let dependencyPass = 0; dependencyPass < 20; dependencyPass += 1) {
+      ({ artifact } = await compileContentSource({
+        source,
+        projectId: snapshot.projectId,
+        plan: resolvedPlan,
+        maxBytes,
+      }));
+      const validatedPlan = await resolvePublishedMdxDependencyClosure({
+        build: publicationBuild,
+        artifact,
+      });
+      if (JSON.stringify(resolvedPlan) === JSON.stringify(validatedPlan)) {
+        break;
+      }
+      if (dependencyPass === 19) {
+        throw new Error(
+          "MDX dependency closure exceeds the safe preview depth"
+        );
+      }
+      resolvedPlan = validatedPlan;
+    }
+  }
   return artifact;
 };
 

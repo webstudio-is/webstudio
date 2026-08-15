@@ -7,7 +7,14 @@ import {
   loadBuildById,
   loadDevBuildByProjectId,
 } from "@webstudio-is/project-build/server";
-import { createBuildContentCompilationPlan } from "@webstudio-is/project-build";
+import {
+  createBuildContentCompilationPlan,
+  createPublishedBuildContentCompilationPlan,
+  getDynamicPublishedMdxSourceBlockIds,
+  getPublishedMdxContentDatabaseMaxBytes,
+  resolvePublishedMdxDependencyClosure,
+  resolvePublishedMdxAssetCandidates,
+} from "@webstudio-is/project-build";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
   loadAssetDataByProject,
@@ -21,7 +28,10 @@ import {
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
-import { serializePages } from "@webstudio-is/project-migrations/pages";
+import {
+  migratePages,
+  serializePages,
+} from "@webstudio-is/project-migrations/pages";
 import { loadById } from "@webstudio-is/project/index.server";
 import { getUserById } from "./user.server";
 import { createAssetClient } from "../asset-client";
@@ -159,7 +169,30 @@ const addProjectMetadata = async (
       ? undefined
       : await getUserById(context, project.userId);
 
-  const assetRequirements = createBuildContentCompilationPlan(data.build);
+  const publicationBuild = {
+    ...data.build,
+    pages: migratePages(data.build.pages),
+  };
+  const dynamicBlockIds =
+    getDynamicPublishedMdxSourceBlockIds(publicationBuild);
+  const projectCandidates = resolvePublishedMdxAssetCandidates({
+    build: publicationBuild,
+    allowUnresolved: true,
+  });
+  const needsCandidateDiscovery = dynamicBlockIds.some(
+    (blockId) => projectCandidates.has(blockId) === false
+  );
+  const assetRequirements = needsCandidateDiscovery
+    ? createBuildContentCompilationPlan(data.build)
+    : createPublishedBuildContentCompilationPlan(
+        publicationBuild,
+        projectCandidates
+      );
+  if (needsCandidateDiscovery && assetRequirements === undefined) {
+    throw new Error(
+      "Dynamic MDX publication requires a finite Assets query dependency"
+    );
+  }
   let assetIndex: PublishedProjectBundle["assetIndex"];
   let publishedAssets = data.assets;
   let publishedAssetFolders = data.assetFolders;
@@ -168,11 +201,27 @@ const addProjectMetadata = async (
       projectId: project.id,
       context,
       assetStore: createAssetClient(),
-      contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
+      contentDatabaseMaxBytes: getPublishedMdxContentDatabaseMaxBytes({
+        baseBytes: getContentDatabaseMaxBytes(),
+        assets: data.assets,
+      }),
       plan: assetRequirements,
       retainedAssetIds: data.assets
         .filter((asset) => asset.type === "font")
         .map((asset) => asset.id),
+      ...(assetRequirements.queries.some(({ id }) =>
+        id.startsWith("__content-block-mdx__:")
+      ) || needsCandidateDiscovery
+        ? {
+            resolvePlan: async (
+              artifact: NonNullable<PublishedProjectBundle["assetIndex"]>
+            ) =>
+              (await resolvePublishedMdxDependencyClosure({
+                build: publicationBuild,
+                artifact,
+              }))!,
+          }
+        : {}),
     });
     assetIndex = publishedAssetData.artifact;
     publishedAssets = publishedAssetData.assets;
