@@ -9,6 +9,7 @@ import {
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
 import * as httpClient from "@webstudio-is/http-client";
+import { assetContentDescriptor } from "@webstudio-is/protocol/asset-resource-api";
 import {
   bundleVersion,
   getPublicBuildIncludes,
@@ -61,6 +62,12 @@ import {
   resolvePublishedMdxAssetCandidates,
   resolvePublishedMdxDependencyClosure,
 } from "@webstudio-is/project-build";
+import {
+  computeExpression,
+  createContentBlockApplicationOperations,
+  createHttpAssetContentRepository,
+  createMdxAssetEditingSession,
+} from "@webstudio-is/project-build/runtime";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
 import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "./config";
 import type { ApiConnection } from "./api-connection";
@@ -527,6 +534,33 @@ export const createCliProjectSessionTransport = ({
       )) as Result),
 });
 
+export const createCliAssetContentRepository = ({
+  connection,
+}: {
+  connection: ApiConnection;
+}) =>
+  createHttpAssetContentRepository({
+    projectId: connection.projectId,
+    read: ({ assetId, range }) =>
+      httpClient.readProjectAssetContent({
+        ...connection,
+        requestOrigin: connection.origin,
+        assetId,
+        range,
+      }),
+    update: async ({ assetId, expectedName, data }) => {
+      const bytes = Uint8Array.from(data);
+      const { asset } = await httpClient.updateProjectAssetContent({
+        ...connection,
+        requestOrigin: connection.origin,
+        assetId,
+        expectedName,
+        readAssetData: async () => bytes,
+      });
+      return assetContentDescriptor.parse(asset);
+    },
+  });
+
 export const createCliProjectSession = ({
   connection,
   storage,
@@ -534,6 +568,9 @@ export const createCliProjectSession = ({
   sessionProjectId,
   executeServerOperation,
   getPermissions,
+  assetContentRepository = createCliAssetContentRepository({ connection }),
+  resolveExpressionAssetId,
+  transport,
 }: {
   connection: ApiConnection;
   storage?: ProjectSessionStorage;
@@ -541,21 +578,105 @@ export const createCliProjectSession = ({
   sessionProjectId?: string;
   executeServerOperation?: ProjectSessionTransport["executeServerOperation"];
   getPermissions?: ProjectSessionTransport["getPermissions"];
-}) =>
-  createProjectSession({
-    projectId: connection.projectId,
-    transport: createCliProjectSessionTransport({
+  assetContentRepository?: ReturnType<typeof createCliAssetContentRepository>;
+  resolveExpressionAssetId?: (input: {
+    expression: string;
+    blockInstanceId: string;
+    renderScope: string;
+    variables?: Readonly<Record<string, unknown>>;
+  }) => string | undefined | Promise<string | undefined>;
+  transport?: ProjectSessionTransport;
+}) => {
+  let projectSession: ReturnType<typeof createProjectSession>;
+  const sessionTransport =
+    transport ??
+    createCliProjectSessionTransport({
       connection,
       executeServerOperation,
       getPermissions,
-    }),
+    });
+  const mdxSession = createMdxAssetEditingSession({
+    repository: assetContentRepository,
+    authorizeAsset: async ({ operation }) => {
+      const permissions = await projectSession.getPermissions();
+      return (
+        permissions.canUseApi &&
+        permissions.canView &&
+        (operation === "read" || permissions.canEdit)
+      );
+    },
+    resolveExpressionAssetId:
+      resolveExpressionAssetId ??
+      (({ expression, variables: scopedVariables }) => {
+        const snapshot = projectSession.snapshot;
+        const variables = new Map<string, unknown>();
+        for (const dataSource of snapshot?.state.dataSources?.values() ?? []) {
+          if (dataSource.type === "variable") {
+            variables.set(dataSource.name, dataSource.value.value);
+          }
+        }
+        for (const [name, value] of Object.entries(scopedVariables ?? {})) {
+          variables.set(name, value);
+        }
+        const value = computeExpression(expression, variables);
+        return typeof value === "string" && value !== "" ? value : undefined;
+      }),
+  });
+  const application = createContentBlockApplicationOperations({
+    projectId: connection.projectId,
+    session: mdxSession,
+    getState: () => {
+      const state = projectSession.snapshot?.state;
+      if (state === undefined) {
+        throw new Error("Project session is not initialized");
+      }
+      return state;
+    },
+    getProjectVersion: () => projectSession.snapshot?.version,
+    context: {
+      projectId: connection.projectId,
+      createId: () => crypto.randomUUID(),
+    },
+  });
+  const contentStorageApplication = {
+    ...application,
+    migrateTemplateReferences: async (
+      input: Parameters<typeof application.migrateTemplateReferences>[0]
+    ) => {
+      if (sessionTransport.executeServerOperation === undefined) {
+        return application.migrateTemplateReferences(input);
+      }
+      const response = await sessionTransport.executeServerOperation<
+        Awaited<ReturnType<typeof application.migrateTemplateReferences>> & {
+          version?: number;
+        }
+      >({
+        operationId: "contentBlocks.migrateTemplateReferences",
+        input,
+      });
+      const { version: _version, ...result } = response;
+      return result as Awaited<
+        ReturnType<typeof application.migrateTemplateReferences>
+      >;
+    },
+  };
+  projectSession = createProjectSession({
+    projectId: connection.projectId,
+    transport: sessionTransport,
     storage:
       storage ??
       createCliProjectSessionStorage(
         getCliProjectSessionFile(projectRoot, sessionProjectId)
       ),
     compatibilityVersion,
+    runtimeContext: {
+      projectId: connection.projectId,
+      createId: () => crypto.randomUUID(),
+      contentStorageApplication,
+    },
   });
+  return projectSession;
+};
 
 export type CliProjectSession = ReturnType<typeof createCliProjectSession>;
 

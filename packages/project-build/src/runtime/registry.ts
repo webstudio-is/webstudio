@@ -11,11 +11,16 @@ import {
 } from "../contracts/input-schema";
 import {
   assetType,
+  contentBlockSource,
   instanceFilterInput,
   type InputJsonSchema,
 } from "@webstudio-is/sdk";
 import { pageCopyNamespaces } from "../contracts/namespaces";
-import { builderRuntimeContext, type BuilderRuntimeContext } from "./context";
+import {
+  builderRuntimeContext,
+  type BuilderRuntimeContext,
+  type ContentBlockSourceInspection,
+} from "./context";
 import { z } from "zod";
 import * as assets from "./assets";
 import * as assetResources from "./asset-resources";
@@ -75,7 +80,7 @@ export type BuilderRuntimeOperation<
   command: string;
   client: string;
   permit?: BuilderApiCapability;
-  kind: "read" | "mutation";
+  kind: "read" | "mutation" | "application";
   inputSchema: z.ZodTypeAny;
   inputJsonSchema: InputJsonSchema;
   outputSchema: z.ZodTypeAny;
@@ -115,12 +120,24 @@ type RuntimeOperationContractInput =
       retryOnConflict?: boolean;
       requiresAssets?: boolean;
       requiresConfirm?: boolean;
+    }
+  | {
+      kind: "application";
+      readNamespaces: readonly BuilderNamespace[];
+      writeNamespaces: readonly BuilderNamespace[];
+      invalidatesNamespaces?: readonly BuilderNamespace[];
+      requiresAssets?: boolean;
+      requiresConfirm?: boolean;
     };
 
 type ReadContract = Extract<RuntimeOperationContractInput, { kind: "read" }>;
 type MutationContract = Extract<
   RuntimeOperationContractInput,
   { kind: "mutation" }
+>;
+type ApplicationContract = Extract<
+  RuntimeOperationContractInput,
+  { kind: "application" }
 >;
 type RuntimeExecutionOutput<
   Id extends RuntimeOutputSchemaId,
@@ -233,7 +250,7 @@ const runtimeOperation = <
   RuntimeExecutionOutput<Id, Contract>
 > => {
   const writeNamespaces =
-    contract.kind === "mutation" ? contract.writeNamespaces : [];
+    contract.kind === "read" ? [] : contract.writeNamespaces;
   const inputJsonSchema = getInputSchemaMetadata(inputSchema, {
     isHiddenField: isHiddenPublicApiInputField,
   }).inputJsonSchema;
@@ -253,9 +270,9 @@ const runtimeOperation = <
     readNamespaces: contract.readNamespaces,
     writeNamespaces,
     invalidatesNamespaces:
-      contract.kind === "mutation"
-        ? (contract.invalidatesNamespaces ?? contract.writeNamespaces)
-        : [],
+      contract.kind === "read"
+        ? []
+        : (contract.invalidatesNamespaces ?? contract.writeNamespaces),
     retryOnConflict:
       contract.kind === "mutation"
         ? (contract.retryOnConflict ?? false)
@@ -265,7 +282,7 @@ const runtimeOperation = <
       (contract.readNamespaces.includes("assets") ||
         writeNamespaces.includes("assets")),
     requiresConfirm:
-      contract.kind === "mutation"
+      contract.kind === "mutation" || contract.kind === "application"
         ? (contract.requiresConfirm ??
           isDestructiveRuntimeCommand(publicApi.command))
         : false,
@@ -329,6 +346,14 @@ const mutationContract = (input: {
   requiresAssets?: boolean;
   requiresConfirm?: boolean;
 }): MutationContract => ({ kind: "mutation", ...input });
+
+const applicationContract = (input: {
+  readNamespaces: readonly BuilderNamespace[];
+  writeNamespaces: readonly BuilderNamespace[];
+  invalidatesNamespaces?: readonly BuilderNamespace[];
+  requiresAssets?: boolean;
+  requiresConfirm?: boolean;
+}): ApplicationContract => ({ kind: "application", ...input });
 
 const pageNamespaces = ["pages", "instances"] as const;
 const pageExpressionNamespaces = ["pages", "instances", "dataSources"] as const;
@@ -442,8 +467,367 @@ const assetUsageInput = z.object({
   assetId: z.string(),
   ...paginatedOutputInputSchema.shape,
 });
+const contentBlockSourceInspectionInput = z.object({
+  blockInstanceId: z.string().min(1),
+  renderScope: z.string().min(1),
+  load: z.boolean().optional(),
+  variables: z
+    .record(z.string().min(1), z.json())
+    .refine(
+      (variables) =>
+        Object.keys(variables).length <= 100 &&
+        new TextEncoder().encode(JSON.stringify(variables)).byteLength <=
+          64 * 1024,
+      "Render-scope variables are limited to 100 entries and 64 KiB"
+    )
+    .optional(),
+});
+const contentBlockLifecycleBaseInput = contentBlockSourceInspectionInput
+  .omit({ load: true })
+  .extend({
+    dryRun: z.boolean().optional(),
+    confirmationToken: z.string().min(1).optional(),
+  });
+const contentBlockSourceChangeInput = contentBlockLifecycleBaseInput.extend({
+  source: contentBlockSource,
+  authority: z
+    .enum(["use-file-content", "replace-file-body-with-block-content"])
+    .optional(),
+});
+const contentBlockRecoveryInput = contentBlockSourceInspectionInput
+  .omit({ load: true, variables: true })
+  .extend({
+    action: z.enum(["retry", "reload-remote", "copy-unsaved-mdx"]),
+  });
+const contentBlockTemplateMigrationInput = z.object({
+  templateInstanceId: z.string().min(1),
+  migration: z.discriminatedUnion("type", [
+    z.object({ type: z.literal("rename"), to: z.string().min(1) }),
+    z.object({ type: z.literal("remove") }),
+  ]),
+  renderScope: z.string().min(1),
+  variables: contentBlockSourceInspectionInput.shape.variables,
+  selectedAssetIds: z.array(z.string().min(1)).max(100).optional(),
+  dryRun: z.boolean().optional(),
+  confirmationToken: z.string().min(1).optional(),
+});
+const contentBlockSemanticEditInput = contentBlockSourceInspectionInput
+  .omit({ load: true })
+  .extend({
+    operationId: z.string().min(1),
+    input: z.json(),
+    dryRun: z.boolean().optional(),
+  });
+const contentBlockApplicationContract = applicationContract({
+  readNamespaces: components.componentInsertReadNamespaces,
+  writeNamespaces: components.componentInsertReadNamespaces,
+  requiresAssets: true,
+  requiresConfirm: false,
+});
+const serializeContentBlockInspection = (
+  result: ContentBlockSourceInspection
+) => ({
+  ...result,
+  diagnostics: [...result.diagnostics],
+  repairRoutes: [...result.repairRoutes],
+});
+
+const executeContentBlockLifecycleApplication = async ({
+  operationId,
+  action,
+  input,
+  context,
+}: {
+  operationId:
+    | "contentBlocks.connectSource"
+    | "contentBlocks.switchSource"
+    | "contentBlocks.disconnectSource";
+  action: "connect" | "switch" | "disconnect";
+  input: z.infer<typeof contentBlockLifecycleBaseInput> & {
+    source?: z.infer<typeof contentBlockSource>;
+    authority?: "use-file-content" | "replace-file-body-with-block-content";
+  };
+  context: BuilderRuntimeContext;
+}) => {
+  const application = context.contentStorageApplication;
+  if (application === undefined) {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      "Content Block source updates require an Asset editing session"
+    );
+  }
+  const applyLifecycle = application.applyLifecycle;
+  const inspectSource = application.inspectSource;
+  if (applyLifecycle === undefined || inspectSource === undefined) {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      "Content Block source updates require lifecycle and inspection capabilities"
+    );
+  }
+  const expectedVersion = context.projectVersion;
+  const result = await applyLifecycle(
+    {
+      ...input,
+      action,
+      dryRun: input.dryRun === true || context.applicationDryRun === true,
+    },
+    {
+      commitProjectPayload:
+        expectedVersion === undefined ||
+        context.commitApplicationProjectPayload === undefined
+          ? undefined
+          : async (payload) => {
+              await context.commitApplicationProjectPayload?.({
+                payload,
+                expectedVersion,
+                operationId,
+                invalidatesNamespaces: components.componentInsertReadNamespaces,
+              });
+            },
+    }
+  );
+  const source = serializeContentBlockInspection(
+    await inspectSource({
+      blockInstanceId: input.blockInstanceId,
+      renderScope: input.renderScope,
+      variables: input.variables,
+      load: false,
+    })
+  );
+  return {
+    status: result.status,
+    code: "code" in result ? result.code : undefined,
+    message: "message" in result ? result.message : undefined,
+    source,
+    plan:
+      result.result === undefined
+        ? undefined
+        : {
+            ...result.result,
+            storageWrites: [...result.result.storageWrites],
+            diagnostics: [...result.result.diagnostics],
+          },
+    confirmation:
+      result.status === "confirmation-required"
+        ? {
+            token: result.confirmationToken,
+            expiresAt: result.confirmationExpiresAt,
+          }
+        : undefined,
+  };
+};
 
 export const builderRuntimeOperations = [
+  runtimeOperation(
+    "contentBlocks.inspectSource",
+    api("inspect-content-block-source", "inspectContentBlockSource", "view"),
+    readContract([...components.componentInsertReadNamespaces], {
+      requiresAssets: true,
+    }),
+    contentBlockSourceInspectionInput,
+    async ({ input, context }) => {
+      const inspect = context.contentStorageApplication?.inspectSource;
+      if (inspect === undefined) {
+        return throwBuilderRuntimeError(
+          "CONFLICT",
+          "Content Block source inspection requires an Asset editing session"
+        );
+      }
+      return serializeContentBlockInspection(await inspect(input));
+    }
+  ),
+  runtimeOperation(
+    "contentBlocks.connectSource",
+    api("connect-content-block-source", "connectContentBlockSource", "edit"),
+    contentBlockApplicationContract,
+    contentBlockSourceChangeInput,
+    ({ input, context }) =>
+      executeContentBlockLifecycleApplication({
+        operationId: "contentBlocks.connectSource",
+        action: "connect",
+        input,
+        context,
+      })
+  ),
+  runtimeOperation(
+    "contentBlocks.switchSource",
+    api("switch-content-block-source", "switchContentBlockSource", "edit"),
+    contentBlockApplicationContract,
+    contentBlockSourceChangeInput,
+    ({ input, context }) =>
+      executeContentBlockLifecycleApplication({
+        operationId: "contentBlocks.switchSource",
+        action: "switch",
+        input,
+        context,
+      })
+  ),
+  runtimeOperation(
+    "contentBlocks.disconnectSource",
+    api(
+      "disconnect-content-block-source",
+      "disconnectContentBlockSource",
+      "edit"
+    ),
+    contentBlockApplicationContract,
+    contentBlockLifecycleBaseInput,
+    ({ input, context }) =>
+      executeContentBlockLifecycleApplication({
+        operationId: "contentBlocks.disconnectSource",
+        action: "disconnect",
+        input,
+        context,
+      })
+  ),
+  runtimeOperation(
+    "contentBlocks.recoverSource",
+    api("recover-content-block-source", "recoverContentBlockSource", "edit"),
+    contentBlockApplicationContract,
+    contentBlockRecoveryInput,
+    async ({ input, context }) => {
+      const application = context.contentStorageApplication;
+      if (application === undefined) {
+        return throwBuilderRuntimeError(
+          "CONFLICT",
+          "Content Block source recovery requires an Asset editing session"
+        );
+      }
+      const recover = application.recover;
+      const inspectSource = application.inspectSource;
+      if (recover === undefined || inspectSource === undefined) {
+        return throwBuilderRuntimeError(
+          "CONFLICT",
+          "Content Block source recovery requires recovery and inspection capabilities"
+        );
+      }
+      const result = await recover({
+        ...input,
+        dryRun: context.applicationDryRun === true,
+      });
+      const inspection =
+        result.result?.inspection ??
+        (await inspectSource({
+          blockInstanceId: input.blockInstanceId,
+          renderScope: input.renderScope,
+          load: false,
+        }));
+      return {
+        status: result.status,
+        code: "code" in result ? result.code : undefined,
+        message: "message" in result ? result.message : undefined,
+        source: serializeContentBlockInspection(inspection),
+        localMdx:
+          result.result !== undefined && "source" in result.result
+            ? result.result.source
+            : undefined,
+        changedAsset: result.result?.changedAsset ?? false,
+      };
+    }
+  ),
+  runtimeOperation(
+    "contentBlocks.migrateTemplateReferences",
+    api(
+      "migrate-content-block-template-references",
+      "migrateContentBlockTemplateReferences",
+      "edit"
+    ),
+    contentBlockApplicationContract,
+    contentBlockTemplateMigrationInput,
+    async ({ input, context }) => {
+      const migrate =
+        context.contentStorageApplication?.migrateTemplateReferences;
+      if (migrate === undefined) {
+        return throwBuilderRuntimeError(
+          "CONFLICT",
+          "Content Block template migration requires an Asset editing session"
+        );
+      }
+      const result = await migrate({
+        ...input,
+        dryRun: input.dryRun === true || context.applicationDryRun === true,
+      });
+      return {
+        ...result,
+        changedAsset: result.changedAsset ?? false,
+        files: result.files.map((file) => ({
+          ...file,
+          diagnostics: [...file.diagnostics],
+        })),
+        diagnostics:
+          result.diagnostics === undefined
+            ? undefined
+            : [...result.diagnostics],
+        confirmation:
+          result.status === "confirmation-required" &&
+          typeof result.confirmationToken === "string" &&
+          typeof result.confirmationExpiresAt === "string"
+            ? {
+                token: result.confirmationToken,
+                expiresAt: result.confirmationExpiresAt,
+              }
+            : undefined,
+      };
+    }
+  ),
+  runtimeOperation(
+    "contentBlocks.semanticEdit",
+    api("edit-content-block-source", "editContentBlockSource", "edit"),
+    contentBlockApplicationContract,
+    contentBlockSemanticEditInput,
+    async ({ input, context }) => {
+      const semanticEdit = context.contentStorageApplication?.semanticEdit;
+      if (semanticEdit === undefined) {
+        return throwBuilderRuntimeError(
+          "CONFLICT",
+          "Content Block semantic editing requires an Asset editing session"
+        );
+      }
+      const dryRun =
+        input.dryRun === true || context.applicationDryRun === true;
+      const result = await semanticEdit({ ...input, dryRun });
+      const mutation = result.result as
+        | BuilderRuntimeMutation<Record<string, unknown>>
+        | undefined;
+      const serializedMutation =
+        mutation === undefined
+          ? undefined
+          : {
+              ...mutation,
+              payload: mutation.payload.map((change) => ({
+                ...change,
+                patches: [...change.patches],
+              })),
+              invalidatesNamespaces: [...mutation.invalidatesNamespaces],
+              storageChanges: mutation.storageChanges?.map((change) => ({
+                ...change,
+                copySource:
+                  change.copySource === undefined
+                    ? undefined
+                    : { ...change.copySource },
+                mdxInsert:
+                  change.mdxInsert === undefined
+                    ? undefined
+                    : {
+                        ...change.mdxInsert,
+                        instanceIds: [...change.mdxInsert.instanceIds],
+                        rootInstanceIds: [...change.mdxInsert.rootInstanceIds],
+                      },
+                payload: change.payload.map((payload) => ({
+                  ...payload,
+                  patches: [...payload.patches],
+                })),
+              })),
+            };
+      return {
+        ...result,
+        result: serializedMutation,
+        changedAsset:
+          dryRun === false &&
+          result.status === "complete" &&
+          (mutation?.storageChanges?.length ?? 0) > 0,
+      };
+    }
+  ),
   runtimeOperation(
     "pages.list",
     api("list-pages", "listPages"),

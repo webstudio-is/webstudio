@@ -12,6 +12,8 @@ import {
   prop,
   instance,
   contentBlockExternalContentIdentity,
+  contentBlockDiagnostic,
+  contentBlockSource,
 } from "@webstudio-is/sdk";
 import {
   assetQueryResultMode,
@@ -64,6 +66,101 @@ const contentStorageRoot = z.discriminatedUnion("type", [
   }),
 ]);
 
+const contentBlockSourceInspection = z.object({
+  blockInstanceId: z.string(),
+  renderScope: z.string(),
+  configuredSource: contentBlockSource.optional(),
+  resolvedIdentity: contentBlockExternalContentIdentity.optional(),
+  sessionStatus: z.enum([
+    "disconnected",
+    "saved",
+    "pending",
+    "conflicting",
+    "cancelled",
+    "recoverable",
+    "failed",
+  ]),
+  pending: z.boolean(),
+  diagnostics: z.array(contentBlockDiagnostic),
+  capabilities: z.object({
+    canConnect: z.boolean(),
+    canSwitch: z.boolean(),
+    canDisconnectWithCopy: z.boolean(),
+    canEdit: z.boolean(),
+    canRetry: z.boolean(),
+    canReloadRemote: z.boolean(),
+    canCopyUnsavedSource: z.boolean(),
+  }),
+  repairRoutes: z.array(
+    z.enum([
+      "open-file",
+      "retry",
+      "reload-remote",
+      "copy-unsaved-mdx",
+      "disconnect-with-copy",
+    ])
+  ),
+});
+const contentBlockLifecyclePlan = z.object({
+  action: z.enum(["connect", "switch", "disconnect"]),
+  changesProject: z.boolean(),
+  storageWrites: z.array(
+    z.object({
+      identity: contentBlockExternalContentIdentity,
+      expectedRevision: z.string(),
+    })
+  ),
+  diagnostics: z.array(contentBlockDiagnostic),
+  persistenceOrder: z.enum(["none", "storage-before-project"]),
+});
+const contentBlockApplicationResult = z.object({
+  status: z.enum(["complete", "confirmation-required", "blocked"]),
+  code: z.string().optional(),
+  message: z.string().optional(),
+  source: contentBlockSourceInspection,
+  plan: contentBlockLifecyclePlan.optional(),
+  confirmation: z
+    .object({ token: z.string(), expiresAt: z.string() })
+    .optional(),
+});
+const contentBlockRecoveryResult = z.object({
+  status: z.enum(["complete", "blocked"]),
+  code: z.string().optional(),
+  message: z.string().optional(),
+  source: contentBlockSourceInspection,
+  localMdx: z.string().optional(),
+  changedAsset: z.boolean(),
+});
+const contentBlockTemplateMigrationResult = z.object({
+  status: z.enum(["complete", "partial", "blocked", "confirmation-required"]),
+  code: z.string().optional(),
+  message: z.string().optional(),
+  discoveryComplete: z.boolean(),
+  updateCount: z.number().int().nonnegative(),
+  omissionCount: z.number().int().nonnegative(),
+  changedAsset: z.boolean(),
+  files: z.array(
+    z.object({
+      assetId: z.string(),
+      revision: z.string().optional(),
+      contentRef: z.string(),
+      changed: z.boolean().optional(),
+      status: z.enum(["updated", "unchanged", "failed"]).optional(),
+      updateCount: z.number().int().nonnegative(),
+      omissionCount: z.number().int().nonnegative(),
+      diagnostics: z.array(
+        z.looseObject({ code: z.string(), message: z.string() })
+      ),
+    })
+  ),
+  diagnostics: z
+    .array(z.looseObject({ code: z.string(), message: z.string() }))
+    .optional(),
+  confirmation: z
+    .object({ token: z.string(), expiresAt: z.string() })
+    .optional(),
+});
+
 export const pageDraftOutputHint =
   "True when the page is a draft. Missing or false means the page is publishable.";
 
@@ -103,6 +200,14 @@ export const createRuntimeMutationExecutionSchema = <
       .optional(),
     noop: z.boolean(),
   });
+
+const contentBlockSemanticEditResult = z.object({
+  status: z.enum(["complete", "blocked"]),
+  code: z.string().optional(),
+  message: z.string().optional(),
+  result: createRuntimeMutationExecutionSchema(z.looseObject({})).optional(),
+  changedAsset: z.boolean(),
+});
 
 const pageSummary = looseObject({
   id,
@@ -452,6 +557,14 @@ export const runtimeOutputSchemas = {
   }),
   "pageTree.move": looseObject({ childId: id }),
   "pageTree.reparentOrphans": looseObject({}),
+  "contentBlocks.inspectSource": contentBlockSourceInspection,
+  "contentBlocks.connectSource": contentBlockApplicationResult,
+  "contentBlocks.switchSource": contentBlockApplicationResult,
+  "contentBlocks.disconnectSource": contentBlockApplicationResult,
+  "contentBlocks.recoverSource": contentBlockRecoveryResult,
+  "contentBlocks.semanticEdit": contentBlockSemanticEditResult,
+  "contentBlocks.migrateTemplateReferences":
+    contentBlockTemplateMigrationResult,
   "instances.list": looseObject({
     instances: z.array(instanceSummary.extend({ record: instance.optional() })),
     ...outputPage,

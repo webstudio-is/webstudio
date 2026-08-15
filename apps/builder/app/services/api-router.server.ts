@@ -40,6 +40,7 @@ import {
   loadBuilderAssetFieldCatalog,
   loadAssetDataByProject,
   loadAssetFoldersByProject,
+  PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
@@ -57,9 +58,16 @@ import { componentMetas } from "~/shared/component-metas.server";
 import { type Asset, type AssetFolder } from "@webstudio-is/sdk";
 import {
   applyContentModeTransaction,
+  computeExpression,
+  createContentBlockApplicationOperations,
+  createMdxAssetEditingSession,
   getContentModeCapabilities,
 } from "@webstudio-is/project-build/runtime";
-import type { CompactBuild } from "@webstudio-is/project-build";
+import {
+  createBuildContentCompilationPlan,
+  type CompactBuild,
+} from "@webstudio-is/project-build";
+import { applyBuilderPatchTransactions } from "@webstudio-is/project-build/state";
 import {
   runtimeOperationContracts,
   type RuntimeOperationId,
@@ -464,18 +472,95 @@ const loadRuntimeAssetData = async (ctx: AppContext, projectId: string) => {
   });
 };
 
+const createServerContentStorageApplication = async ({
+  ctx,
+  projectId,
+  build,
+  assets,
+  assetFolders,
+  includeMigrationCandidates = false,
+}: {
+  ctx: AppContext;
+  projectId: string;
+  build: CompactBuild;
+  assets: Asset[];
+  assetFolders: AssetFolder[];
+  includeMigrationCandidates?: boolean;
+}) => {
+  let state = createBuilderRuntimeState(build, assets, assetFolders);
+  const repository = new PostgresAssetRepository({
+    projectId,
+    context: ctx,
+    assetStore: createAssetClient(),
+  });
+  const migrationContentArtifact = includeMigrationCandidates
+    ? await repository.prepareIndex(createBuildContentCompilationPlan(build))
+    : undefined;
+  const application = createContentBlockApplicationOperations({
+    projectId,
+    session: createMdxAssetEditingSession({
+      repository,
+      authorizeAsset: ({ assetId }) => state.assets?.has(assetId) === true,
+      resolveExpressionAssetId: ({ expression, variables: scoped }) => {
+        const variables = new Map<string, unknown>();
+        for (const dataSource of state.dataSources?.values() ?? []) {
+          if (dataSource.type === "variable") {
+            variables.set(dataSource.name, dataSource.value.value);
+          }
+        }
+        for (const [name, value] of Object.entries(scoped ?? {})) {
+          variables.set(name, value);
+        }
+        const value = computeExpression(expression, variables);
+        return typeof value === "string" && value !== "" ? value : undefined;
+      },
+    }),
+    getState: () => state,
+    getProjectVersion: () => build.version,
+    migrationContentArtifact,
+    context: {
+      createId: () => crypto.randomUUID(),
+      projectId,
+      projectVersion: build.version,
+    },
+  });
+  return {
+    application,
+    applyProjectPayload: (
+      payload: z.infer<typeof buildPatchTransaction>["payload"]
+    ) => {
+      state = applyBuilderPatchTransactions(state, [
+        { id: crypto.randomUUID(), payload },
+      ]).state;
+    },
+  };
+};
+
 const runtimeAssetsQuery = <Result = unknown>(id: RuntimeOperationId) =>
   projectQuery(runtimeProjectInput(id), "view", async ({ ctx, input }) => {
     const [{ assets, assetFolders }, build] = await Promise.all([
       loadRuntimeAssetData(ctx, input.projectId),
       loadDevBuildByProjectId(ctx, input.projectId),
     ]);
+    const contentStorageApplication =
+      id === "contentBlocks.inspectSource"
+        ? (
+            await createServerContentStorageApplication({
+              ctx,
+              projectId: input.projectId,
+              build,
+              assets,
+              assetFolders,
+            })
+          ).application
+        : undefined;
     return executeApiRuntimeOperation<Result>({
       id,
       build,
       assets,
       assetFolders,
       input,
+      context: { contentStorageApplication },
     });
   });
 
@@ -497,6 +582,52 @@ const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
         input,
         commit,
       });
+    }
+  );
+
+const runtimeAssetsApplication = <Result extends Record<string, unknown> = {}>(
+  id: RuntimeOperationId
+) =>
+  contentOrBuildMutation(
+    runtimeMutationInput(id, false),
+    async ({ ctx, input, build, commit }) => {
+      const { assets, assetFolders } = await loadRuntimeAssetData(
+        ctx,
+        input.projectId
+      );
+      const storage = await createServerContentStorageApplication({
+        ctx,
+        projectId: input.projectId,
+        build,
+        assets,
+        assetFolders,
+        includeMigrationCandidates:
+          id === "contentBlocks.migrateTemplateReferences",
+      });
+      let version = build.version;
+      const result = await executeApiRuntimeOperation<Result>({
+        id,
+        build,
+        assets,
+        assetFolders,
+        input,
+        context: {
+          contentStorageApplication: storage.application,
+          commitApplicationProjectPayload: async ({
+            payload,
+            expectedVersion,
+          }) => {
+            if (expectedVersion !== build.version) {
+              throwApiError("CONFLICT", "Project changed after preparation");
+            }
+            const committed = await commit([...payload]);
+            storage.applyProjectPayload([...payload]);
+            version = committed.version;
+            return { version };
+          },
+        },
+      });
+      return { version, ...result };
     }
   );
 
@@ -530,8 +661,11 @@ const addRuntimeOperationRoute = (
 const createRuntimeOperationProcedure = (operation: RuntimeOperation) => {
   const { id } = operation;
   if (operation.requiresAssets) {
-    return operation.kind === "read"
-      ? runtimeAssetsQuery(id)
+    if (operation.kind === "read") {
+      return runtimeAssetsQuery(id);
+    }
+    return operation.kind === "application"
+      ? runtimeAssetsApplication(id)
       : runtimeAssetsMutation(id);
   }
   if (operation.kind === "read") {

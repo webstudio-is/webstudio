@@ -84,6 +84,7 @@ export type MdxAssetSessionOpenInput = Readonly<{
   expectedRevision?: string;
   state: BuilderState;
   projectId: string;
+  variables?: Readonly<Record<string, unknown>>;
 }>;
 
 type MdxAssetSessionSchedule = (
@@ -235,6 +236,7 @@ export const createMdxAssetEditingSession = ({
     expression: string;
     blockInstanceId: string;
     renderScope: string;
+    variables?: Readonly<Record<string, unknown>>;
   }) => string | undefined | Promise<string | undefined>;
   schedule?: MdxAssetSessionSchedule;
   cancelScheduled?: (handle: unknown) => void;
@@ -368,6 +370,7 @@ export const createMdxAssetEditingSession = ({
               expression: input.source.value,
               blockInstanceId: input.blockInstanceId,
               renderScope: input.renderScope,
+              variables: input.variables,
             });
     } catch (error) {
       return {
@@ -950,8 +953,8 @@ export const createMdxAssetEditingSession = ({
       (state.status === "saved"
         ? state.source
         : state.status === "recoverable" && state.committedSource !== undefined
-        ? state.committedSource
-        : entry.unsavedSource ?? entry.persisted?.source);
+          ? state.committedSource
+          : (entry.unsavedSource ?? entry.persisted?.source));
     if (entry.inFlight !== undefined) {
       return { status: "blocked", state, reason: "in-flight", currentSource };
     }
@@ -1202,8 +1205,8 @@ export const createMdxAssetEditingSession = ({
               "localSource" in persisted
                 ? persisted.localSource
                 : "source" in persisted
-                ? persisted.source
-                : undefined,
+                  ? persisted.source
+                  : undefined,
           };
     }
     const prepared = await prepareSourceRestore(input);
@@ -1237,8 +1240,8 @@ export const createMdxAssetEditingSession = ({
             "localSource" in persisted
               ? persisted.localSource
               : "source" in persisted
-              ? persisted.source
-              : undefined,
+                ? persisted.source
+                : undefined,
         };
   };
 

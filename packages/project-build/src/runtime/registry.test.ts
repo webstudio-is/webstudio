@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   getInputJsonSchemaMetadata,
   toInputJsonSchemaObject,
@@ -404,6 +404,147 @@ describe("builder runtime pages", () => {
 });
 
 describe("builder runtime read families", () => {
+  test("exposes exact Content Block source inspection through the shared application", async () => {
+    const inspectSource = vi.fn(async () => ({
+      blockInstanceId: "block",
+      renderScope: "page:/posts:item:one",
+      configuredSource: { type: "asset" as const, assetId: "article" },
+      resolvedIdentity: {
+        blockInstanceId: "block",
+        assetId: "article",
+        revision: "sha256:article",
+        contentRef: "article-revision.mdx",
+        format: "mdx" as const,
+        renderScope: "page:/posts:item:one",
+      },
+      sessionStatus: "saved" as const,
+      pending: false,
+      diagnostics: [],
+      capabilities: {
+        canConnect: false,
+        canSwitch: true,
+        canDisconnectWithCopy: true,
+        canEdit: true,
+        canRetry: false,
+        canReloadRemote: false,
+        canCopyUnsavedSource: false,
+      },
+      repairRoutes: ["open-file", "disconnect-with-copy"] as const,
+    }));
+
+    await expect(
+      executeBuilderRuntimeOperation({
+        id: "contentBlocks.inspectSource",
+        state,
+        input: {
+          blockInstanceId: "block",
+          renderScope: "page:/posts:item:one",
+        },
+        context: {
+          createId: () => "unused",
+          contentStorageApplication: {
+            getMaterializedContent: () => [],
+            saveStorageChanges: async () => ({ status: "complete" }),
+            inspectSource,
+          },
+        },
+      })
+    ).resolves.toMatchObject({
+      resolvedIdentity: {
+        assetId: "article",
+        renderScope: "page:/posts:item:one",
+      },
+      capabilities: { canEdit: true },
+      repairRoutes: ["open-file", "disconnect-with-copy"],
+    });
+    expect(inspectSource).toHaveBeenCalledWith({
+      blockInstanceId: "block",
+      renderScope: "page:/posts:item:one",
+    });
+  });
+
+  test("keeps recovery dry-runs non-mutating and exposes one-shot semantic editing", async () => {
+    const inspection = {
+      blockInstanceId: "block",
+      renderScope: "page:/",
+      sessionStatus: "failed" as const,
+      pending: false,
+      diagnostics: [],
+      capabilities: {
+        canConnect: false,
+        canSwitch: true,
+        canDisconnectWithCopy: false,
+        canEdit: false,
+        canRetry: true,
+        canReloadRemote: false,
+        canCopyUnsavedSource: true,
+      },
+      repairRoutes: ["retry" as const],
+    };
+    const recover = vi.fn(async () => ({
+      status: "complete" as const,
+      result: { inspection, changedAsset: false },
+    }));
+    const semanticEdit = vi.fn(async () => ({
+      status: "complete" as const,
+      result: {
+        kind: "mutation" as const,
+        payload: [],
+        result: { updated: true },
+        invalidatesNamespaces: [],
+        storageChanges: [],
+        noop: false,
+      },
+    }));
+    const contentStorageApplication = {
+      getMaterializedContent: () => [],
+      saveStorageChanges: async () => ({ status: "complete" as const }),
+      inspectSource: async () => inspection,
+      recover,
+      semanticEdit,
+    };
+
+    await executeBuilderRuntimeOperation({
+      id: "contentBlocks.recoverSource",
+      state,
+      input: {
+        blockInstanceId: "block",
+        renderScope: "page:/",
+        action: "retry",
+      },
+      context: {
+        createId: () => "unused",
+        applicationDryRun: true,
+        contentStorageApplication,
+      },
+    });
+    expect(recover).toHaveBeenCalledWith({
+      blockInstanceId: "block",
+      renderScope: "page:/",
+      action: "retry",
+      dryRun: true,
+    });
+
+    await executeBuilderRuntimeOperation({
+      id: "contentBlocks.semanticEdit",
+      state,
+      input: {
+        blockInstanceId: "block",
+        renderScope: "page:/",
+        operationId: "instances.updateText",
+        input: { instanceId: "text", childIndex: 0, text: "Updated" },
+      },
+      context: { createId: () => "unused", contentStorageApplication },
+    });
+    expect(semanticEdit).toHaveBeenCalledWith({
+      blockInstanceId: "block",
+      renderScope: "page:/",
+      operationId: "instances.updateText",
+      input: { instanceId: "text", childIndex: 0, text: "Updated" },
+      dryRun: false,
+    });
+  });
+
   test("keeps representative high-volume compact lists within budget", () => {
     const sourceInstance = state.instances.get("heading")!;
     const sourceAsset = state.assets.get("asset")!;

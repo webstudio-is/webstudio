@@ -121,6 +121,49 @@ const isSourceBackedBlockTemplate = ({
   );
 };
 
+export const getSourceBackedBlockTemplateContext = ({
+  templateInstanceId,
+  instances,
+  props,
+}: {
+  templateInstanceId: Instance["id"];
+  instances: Instances;
+  props: Iterable<Prop>;
+}) => {
+  const template = instances.get(templateInstanceId);
+  const templates = findParentInstanceReference(
+    instances,
+    templateInstanceId
+  )?.instance;
+  if (
+    template === undefined ||
+    templates?.component !== blockTemplateComponent
+  ) {
+    return;
+  }
+  const block = findParentInstanceReference(instances, templates.id)?.instance;
+  if (block?.component !== blockComponent) {
+    return;
+  }
+  const source = getContentBlockSource({
+    blockInstanceId: block.id,
+    props,
+  });
+  if (source === undefined) {
+    return;
+  }
+  return {
+    blockInstanceId: block.id,
+    templatesInstanceId: templates.id,
+    templateInstanceId,
+    templateName: getInstanceName({
+      instance: template,
+      metas: componentMetas,
+    }),
+    source,
+  };
+};
+
 export const getBlockTemplateNameConfirmation = ({
   changes,
   instances,

@@ -1,5 +1,11 @@
-import { describe, expect, test } from "vitest";
-import { encodeDataVariableId } from "@webstudio-is/sdk";
+import { describe, expect, test, vi } from "vitest";
+import {
+  blockComponent,
+  blockTemplateComponent,
+  elementComponent,
+  encodeDataVariableId,
+  type WebstudioFragment,
+} from "@webstudio-is/sdk";
 import type { BuilderNamespace } from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
 import {
@@ -21,12 +27,16 @@ import type {
   ProjectSessionTransport,
 } from "./project-session";
 import { createBuilderStateFromSnapshot } from "./state/adapters";
-import { createBuilderStateFreshness } from "./state/freshness";
+import {
+  createBuilderStateFreshness,
+  getBuilderStateNamespaceFreshness,
+} from "./state/freshness";
 import { applyBuilderPatchTransactions } from "./state/patch";
 import { build } from "./state/fixtures.test-utils";
 import { parseWebstudioJsxFragment } from "./runtime/jsx";
 import { executeBuilderRuntimeOperation } from "./runtime/registry";
 import type { BuilderRuntimeMutation } from "./runtime/mutation";
+import type { BuilderRuntimeContext } from "./runtime/context";
 
 const compatibilityVersion = "test-session";
 const compatibility: ProjectSessionCompatibility = {
@@ -214,9 +224,11 @@ const createMutableTransport = (
 const createSession = ({
   storage = createStorage(),
   transport = createTransport(),
+  runtimeContext,
 }: {
   storage?: ProjectSessionStorage;
   transport?: ProjectSessionTransport;
+  runtimeContext?: BuilderRuntimeContext;
 } = {}) => {
   let generatedId = 0;
   return createProjectSession({
@@ -226,6 +238,7 @@ const createSession = ({
     compatibilityVersion,
     runtimeContext: {
       createId: () => `generated-id-${generatedId++}`,
+      ...runtimeContext,
     },
   });
 };
@@ -814,6 +827,246 @@ describe("project session", () => {
     expect(
       storage.saved.at(-1)?.state.instances?.get(result.collectionInstanceId)
     ).toMatchObject({ component: "ws:collection" });
+  });
+
+  test("routes MCP semantic mutations to exact loaded MDX storage", async () => {
+    const state = createSnapshot().state;
+    state.instances?.set("instance-root", {
+      type: "instance",
+      id: "instance-root",
+      component: blockComponent,
+      children: [{ type: "id", value: "templates" }],
+    });
+    state.instances?.set("templates", {
+      type: "instance",
+      id: "templates",
+      component: blockTemplateComponent,
+      children: [],
+    });
+    state.props?.set("content-source", {
+      id: "content-source",
+      instanceId: "instance-root",
+      name: "src",
+      type: "asset",
+      value: "article",
+    });
+    const identity = {
+      blockInstanceId: "instance-root",
+      assetId: "article",
+      revision: "sha256:article",
+      contentRef: "article-revision.mdx",
+      format: "mdx" as const,
+      renderScope: "page:/",
+    };
+    const fragment: WebstudioFragment = {
+      children: [{ type: "id", value: "external-heading" }],
+      instances: [
+        {
+          type: "instance",
+          id: "external-heading",
+          component: elementComponent,
+          tag: "h1",
+          children: [{ type: "text", value: "Original" }],
+        },
+      ],
+      props: [],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+    };
+    const saveStorageChanges = vi.fn(async () => ({
+      status: "complete" as const,
+    }));
+    const transport = createTransport(createSnapshot({ state }));
+    const session = createSession({
+      transport,
+      storage: createStorage(createPersistedSnapshot({ state })),
+      runtimeContext: {
+        createId: () => "unused",
+        contentStorageApplication: {
+          getMaterializedContent: () => [{ identity, fragment }],
+          saveStorageChanges,
+        },
+      },
+    });
+    await session.initialize();
+
+    const planned = await session.mutate(
+      "instances.updateText",
+      {
+        instanceId: "external-heading",
+        childIndex: 0,
+        text: "Updated",
+      },
+      { dryRun: true }
+    );
+    expect(planned).toMatchObject({
+      source: "dry-run",
+      result: {
+        storageChanges: [
+          { root: { type: "external", identity }, payload: expect.any(Array) },
+        ],
+      },
+    });
+    expect(saveStorageChanges).not.toHaveBeenCalled();
+
+    const committed = await session.mutate("instances.updateText", {
+      instanceId: "external-heading",
+      childIndex: 0,
+      text: "Updated",
+    });
+    expect(committed.state.committed).toBe(true);
+    expect(saveStorageChanges).toHaveBeenCalledTimes(1);
+    expect(transport.commits).toEqual([]);
+    expect(state.instances?.has("external-heading")).toBe(false);
+
+    const projectCommitted = await session.mutate("instances.setLabel", {
+      instanceId: "instance-root",
+      label: "Article body",
+    });
+    expect(projectCommitted.state.committed).toBe(true);
+    expect(transport.commits).toHaveLength(1);
+    expect(saveStorageChanges).toHaveBeenCalledTimes(1);
+  });
+
+  test("commits generated Content Block application operations with the pinned project version", async () => {
+    const snapshot = createSnapshot();
+    const inspectSource = vi.fn(async ({ blockInstanceId, renderScope }) => ({
+      blockInstanceId,
+      renderScope,
+      sessionStatus: "saved" as const,
+      pending: false,
+      diagnostics: [],
+      capabilities: {
+        canConnect: false,
+        canSwitch: true,
+        canDisconnectWithCopy: true,
+        canEdit: true,
+        canRetry: false,
+        canReloadRemote: false,
+        canCopyUnsavedSource: false,
+      },
+      repairRoutes: ["disconnect-with-copy" as const],
+    }));
+    const application = {
+      getMaterializedContent: () => [],
+      saveStorageChanges: async () => ({ status: "complete" as const }),
+      inspectSource,
+      recover: async () => ({
+        status: "blocked" as const,
+        code: "content-source-not-loaded",
+        message: "not loaded",
+      }),
+      applyLifecycle: async (
+        input: { action: "connect" | "switch" | "disconnect" },
+        execution?: {
+          commitProjectPayload?: (
+            payload: BuilderPatchTransaction["payload"]
+          ) => void | Promise<void>;
+        }
+      ) => {
+        await execution?.commitProjectPayload?.([
+          {
+            namespace: "instances",
+            patches: [
+              {
+                op: "add",
+                path: ["instance-root", "label"],
+                value: "Connected content",
+              },
+            ],
+          },
+        ]);
+        return {
+          status: "complete" as const,
+          result: {
+            action: input.action,
+            changesProject: true,
+            storageWrites: [],
+            diagnostics: [],
+            persistenceOrder: "none" as const,
+          },
+        };
+      },
+    };
+    const transport = createTransport(snapshot);
+    const session = createSession({
+      transport,
+      storage: createStorage(createPersistedSnapshot(snapshot)),
+      runtimeContext: {
+        createId: () => "application-transaction",
+        contentStorageApplication: application,
+      },
+    });
+    await session.initialize();
+
+    const result = await session.mutate("contentBlocks.connectSource", {
+      blockInstanceId: "instance-root",
+      renderScope: "page:/",
+      source: { type: "asset", assetId: "article" },
+      authority: "use-file-content",
+    });
+
+    expect(result.state.committed).toBe(true);
+    expect(result.transaction?.id).toBe("application-transaction");
+    expect(session.snapshot?.state.instances?.get("instance-root")?.label).toBe(
+      "Connected content"
+    );
+    expect(transport.commits).toHaveLength(1);
+  });
+
+  test("records partial Asset application writes and marks Asset data stale", async () => {
+    const snapshot = createSnapshot();
+    const session = createSession({
+      transport: createTransport(snapshot),
+      storage: createStorage(createPersistedSnapshot(snapshot)),
+      runtimeContext: {
+        createId: () => "application-transaction",
+        contentStorageApplication: {
+          getMaterializedContent: () => [],
+          saveStorageChanges: async () => ({ status: "complete" }),
+          migrateTemplateReferences: async () => ({
+            status: "partial",
+            discoveryComplete: true,
+            updateCount: 1,
+            omissionCount: 0,
+            changedAsset: true,
+            files: [
+              {
+                assetId: "article",
+                revision: "revision",
+                contentRef: "article.mdx",
+                status: "updated",
+                updateCount: 1,
+                omissionCount: 0,
+                diagnostics: [],
+              },
+            ],
+          }),
+        },
+      },
+    });
+    await session.initialize();
+
+    const result = await session.mutate(
+      "contentBlocks.migrateTemplateReferences",
+      {
+        templateInstanceId: "template",
+        migration: { type: "remove" },
+        renderScope: "page:/",
+        confirmationToken: "confirmed",
+      }
+    );
+
+    expect(result.state.committed).toBe(true);
+    expect(
+      getBuilderStateNamespaceFreshness(session.snapshot!.freshness, "assets")
+        .status
+    ).toBe("stale");
   });
 
   test("plans and commits one runtime UI integration that survives refresh", async () => {

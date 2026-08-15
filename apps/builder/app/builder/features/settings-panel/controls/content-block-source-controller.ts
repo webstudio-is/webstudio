@@ -4,6 +4,7 @@ import {
   computeExpression,
   createMdxAssetEditingSession,
   getContentStorageIdentityKey,
+  getMdxContentPersistencePlan,
   prepareContentBlockConnect,
   prepareContentBlockDisconnect,
   prepareContentBlockSwitch,
@@ -16,10 +17,7 @@ import {
   getContentBlockSource,
   type ContentBlockSource,
 } from "@webstudio-is/sdk";
-import {
-  createBuilderHttpAssetContentRepository,
-  getMdxContentPersistencePlan,
-} from "~/builder/shared/assets/mdx-content-repository";
+import { createBuilderHttpAssetContentRepository } from "~/builder/shared/assets/mdx-content-repository";
 import {
   $authPermit,
   $variableValuesByInstanceSelector,
@@ -78,8 +76,8 @@ const getEditableSource = (state: MdxAssetEditingSessionState | undefined) =>
   state !== undefined && "localSource" in state
     ? state.localSource
     : state !== undefined && "source" in state
-    ? state.source
-    : undefined;
+      ? state.source
+      : undefined;
 
 const getConfiguredSource = ({
   state,
@@ -105,10 +103,10 @@ const getStorageSaveError = (state: MdxAssetEditingSessionState) =>
   state.status === "conflicting"
     ? "The MDX file changed remotely. Reload it before saving."
     : state.status === "recoverable"
-    ? "The MDX file still could not be rendered."
-    : state.status === "failed" && "localSource" in state
-    ? "The MDX file could not be saved."
-    : "The MDX file could not be loaded.";
+      ? "The MDX file still could not be rendered."
+      : state.status === "failed" && "localSource" in state
+        ? "The MDX file could not be saved."
+        : "The MDX file could not be loaded.";
 
 const hasSameBuilderState = (
   left: ReturnType<typeof readBuilderStateStores>,

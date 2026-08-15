@@ -106,6 +106,22 @@ export const builderRuntimeCutoverManifests = [
     callers: ["appRouter.api.instances"] as const,
   },
   {
+    family: "content-block-source-operations",
+    operationIds: [
+      "contentBlocks.inspectSource",
+      "contentBlocks.connectSource",
+      "contentBlocks.switchSource",
+      "contentBlocks.disconnectSource",
+      "contentBlocks.recoverSource",
+      "contentBlocks.migrateTemplateReferences",
+      "contentBlocks.semanticEdit",
+    ] as const,
+    callers: [
+      "Builder Content Block controls",
+      "MCP/CLI content editing",
+    ] as const,
+  },
+  {
     family: "project-inspection-read",
     operationIds: [
       "project.search",

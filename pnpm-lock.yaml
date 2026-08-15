@@ -2264,6 +2264,9 @@ importers:
       '@webstudio-is/project-migrations':
         specifier: workspace:*
         version: link:../project-migrations
+      '@webstudio-is/protocol':
+        specifier: workspace:*
+        version: link:../protocol
       '@webstudio-is/query-builder':
         specifier: workspace:*
         version: link:../query-builder

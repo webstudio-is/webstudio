@@ -8,10 +8,10 @@ import {
   serializeAssetContentDescriptor,
 } from "@webstudio-is/protocol/asset-resource-api";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
+import { getMdxContentPersistencePlan } from "@webstudio-is/project-build/runtime";
 import {
   createBuilderHttpAssetContentRepository,
   createHttpAssetContentRepository,
-  getMdxContentPersistencePlan,
 } from "./mdx-content-repository";
 
 const asset = {

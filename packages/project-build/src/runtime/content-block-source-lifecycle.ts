@@ -50,6 +50,7 @@ type LifecycleSession = MdxAssetSourceController &
       expectedRevision?: string;
       state: BuilderState;
       projectId: string;
+      variables?: Readonly<Record<string, unknown>>;
     }) => Promise<MdxAssetEditingSessionState>;
     flush: (key: string) => Promise<MdxAssetEditingSessionState>;
     get: (key: string) => MdxAssetEditingSessionState | undefined;
@@ -65,6 +66,42 @@ export type PreparedContentBlockSourceLifecycle = Readonly<{
   sourceState?: MdxAssetEditingSessionState;
   persistenceOrder: "none" | "storage-before-project";
 }>;
+
+export type MdxContentPersistencePlan =
+  | Readonly<{ status: "ready"; mode: "project" | "single-asset" | "noop" }>
+  | Readonly<{
+      status: "blocked";
+      reason:
+        | "atomic-project-and-asset-unavailable"
+        | "atomic-multiple-assets-unavailable";
+    }>;
+
+export const getMdxContentPersistencePlan = (
+  prepared: PreparedContentBlockSourceLifecycle
+): MdxContentPersistencePlan => {
+  if (prepared.storageWrites.length > 1) {
+    return {
+      status: "blocked",
+      reason: "atomic-multiple-assets-unavailable",
+    };
+  }
+  if (
+    prepared.storageWrites.length === 1 &&
+    prepared.projectPayload.length > 0
+  ) {
+    return {
+      status: "blocked",
+      reason: "atomic-project-and-asset-unavailable",
+    };
+  }
+  if (prepared.storageWrites.length === 1) {
+    return { status: "ready", mode: "single-asset" };
+  }
+  if (prepared.projectPayload.length > 0) {
+    return { status: "ready", mode: "project" };
+  }
+  return { status: "ready", mode: "noop" };
+};
 
 const emptyTemplateMaterialization: MdxTemplateMaterialization = {
   templates: [],
@@ -442,6 +479,7 @@ export const prepareContentBlockConnect = async ({
   renderScope,
   projectId,
   authority,
+  variables,
   session,
   context,
 }: {
@@ -451,6 +489,7 @@ export const prepareContentBlockConnect = async ({
   renderScope: string;
   projectId: string;
   authority?: ContentBlockSourceAuthority;
+  variables?: Readonly<Record<string, unknown>>;
   session: LifecycleSession;
   context: BuilderRuntimeContext;
 }): Promise<PreparedContentBlockSourceLifecycle> => {
@@ -468,6 +507,7 @@ export const prepareContentBlockConnect = async ({
         renderScope,
         state,
         projectId,
+        variables,
       })
     );
     return createNoopResult({
@@ -484,6 +524,7 @@ export const prepareContentBlockConnect = async ({
       renderScope,
       state,
       projectId,
+      variables,
     })
   );
   const { templateChild, bodyChildren } = getBlockParts(state, block);
@@ -632,6 +673,7 @@ export const prepareContentBlockSwitch = async ({
   renderScope,
   projectId,
   authority,
+  variables,
   session,
   context,
 }: {
@@ -642,6 +684,7 @@ export const prepareContentBlockSwitch = async ({
   renderScope: string;
   projectId: string;
   authority?: ContentBlockSourceAuthority;
+  variables?: Readonly<Record<string, unknown>>;
   session: LifecycleSession;
   context: BuilderRuntimeContext;
 }): Promise<PreparedContentBlockSourceLifecycle> => {
@@ -680,6 +723,7 @@ export const prepareContentBlockSwitch = async ({
       renderScope,
       state,
       projectId,
+      variables,
     })
   );
   const sharesCurrentStorage = loadedTarget.key === usablePrevious.key;
