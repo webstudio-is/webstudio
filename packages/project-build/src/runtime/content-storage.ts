@@ -2,12 +2,16 @@ import {
   blockComponent,
   blockTemplateComponent,
   contentBlockSourceProp,
+  decodeDataVariableId,
   getStyleDeclKey,
   parseContentBlockSourceProp,
+  prop as propSchema,
   type ContentBlockExternalContentIdentity,
   type Instance,
+  type Prop,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
+import { getExpressionIdentifiers } from "@webstudio-is/expression";
 import type { BuilderState } from "../state/builder-state";
 import equal from "fast-deep-equal";
 import type { BuilderRuntimeMutation } from "./mutation";
@@ -22,6 +26,7 @@ import {
 } from "./content-mode-permissions";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { throwBuilderRuntimeError } from "./errors";
+import { listPropExpressions } from "./props";
 
 export type MaterializedContentRoot = Readonly<{
   identity: ContentBlockExternalContentIdentity;
@@ -50,6 +55,14 @@ export type ContentStorageProjection = Readonly<{
   >;
   externalRootByInstanceId: ReadonlyMap<
     Instance["id"],
+    ContentBlockExternalContentIdentity
+  >;
+  externalRootByDataSourceId: ReadonlyMap<
+    string,
+    ContentBlockExternalContentIdentity
+  >;
+  externalRootByResourceId: ReadonlyMap<
+    string,
     ContentBlockExternalContentIdentity
   >;
 }>;
@@ -241,6 +254,8 @@ export const createContentStorageProjection = ({
       state,
       externalRootByBlockId: new Map(),
       externalRootByInstanceId: new Map(),
+      externalRootByDataSourceId: new Map(),
+      externalRootByResourceId: new Map(),
     };
   }
 
@@ -254,6 +269,14 @@ export const createContentStorageProjection = ({
   >();
   const externalRootByInstanceId = new Map<
     Instance["id"],
+    ContentBlockExternalContentIdentity
+  >();
+  const externalRootByDataSourceId = new Map<
+    string,
+    ContentBlockExternalContentIdentity
+  >();
+  const externalRootByResourceId = new Map<
+    string,
     ContentBlockExternalContentIdentity
   >();
 
@@ -361,16 +384,33 @@ export const createContentStorageProjection = ({
     for (const instance of fragment.instances) {
       externalRootByInstanceId.set(instance.id, identity);
     }
+    for (const dataSource of fragment.dataSources) {
+      externalRootByDataSourceId.set(dataSource.id, identity);
+    }
+    for (const resource of fragment.resources) {
+      externalRootByResourceId.set(resource.id, identity);
+    }
   }
 
   return {
     state: projectedState,
     externalRootByBlockId,
     externalRootByInstanceId,
+    externalRootByDataSourceId,
+    externalRootByResourceId,
   };
 };
 
 const projectStorageRoot = { type: "project" } as const;
+
+const isSameContentStorageRoot = (
+  left: ContentStorageRoot,
+  right: ContentStorageRoot
+) =>
+  left.type === right.type &&
+  (left.type === "project" ||
+    (right.type === "external" &&
+      left.identity.blockInstanceId === right.identity.blockInstanceId));
 
 export const resolveContentStorageRoot = (
   projection: ContentStorageProjection,
@@ -680,5 +720,228 @@ export const executeContentStorageTextReplacement = <
     storageChanges:
       combinedStorageChanges.length === 0 ? undefined : combinedStorageChanges,
     noop: projectPatches.length === 0 && combinedStorageChanges.length === 0,
+  } as Mutation;
+};
+
+const getPatchedProp = (
+  projection: ContentStorageProjection,
+  patch: BuilderPatchChange["patches"][number]
+) => {
+  const [propId, field] = patch.path;
+  if (typeof propId !== "string" || patch.op === "remove") {
+    return;
+  }
+  if (patch.path.length === 1) {
+    const parsed = propSchema.safeParse(patch.value);
+    return parsed.success ? parsed.data : undefined;
+  }
+  if (patch.path.length === 2 && field === "value") {
+    const existing = projection.state.props?.get(propId);
+    if (existing !== undefined) {
+      return { ...existing, value: patch.value } as typeof existing;
+    }
+  }
+};
+
+const getPropStorageRoot = (
+  projection: ContentStorageProjection,
+  patch: BuilderPatchChange["patches"][number]
+) => {
+  const [propId] = patch.path;
+  const prop =
+    getPatchedProp(projection, patch) ??
+    (typeof propId === "string"
+      ? projection.state.props?.get(propId)
+      : undefined);
+  if (prop === undefined) {
+    return throwBuilderRuntimeError("BAD_REQUEST", "Prop owner is missing.");
+  }
+  const root = resolveContentStorageRoot(projection, {
+    type: "instance",
+    instanceId: prop.instanceId,
+  });
+  if (typeof propId === "string") {
+    const existing = projection.state.props?.get(propId);
+    if (existing !== undefined) {
+      const existingRoot = resolveContentStorageRoot(projection, {
+        type: "instance",
+        instanceId: existing.instanceId,
+      });
+      if (isSameContentStorageRoot(root, existingRoot) === false) {
+        return throwBuilderRuntimeError(
+          "BAD_REQUEST",
+          "Prop mutation crosses an authored storage boundary."
+        );
+      }
+    }
+  }
+  return root;
+};
+
+const validatePropReferenceOwnership = ({
+  projection,
+  root,
+  prop,
+}: {
+  projection: ContentStorageProjection;
+  root: ContentStorageRoot;
+  prop: Prop;
+}) => {
+  const referenceRoots: ContentStorageRoot[] = [];
+  if (prop.type === "parameter") {
+    const identity = projection.externalRootByDataSourceId.get(prop.value);
+    referenceRoots.push(
+      identity === undefined
+        ? projectStorageRoot
+        : { type: "external", identity }
+    );
+  } else if (prop.type === "resource") {
+    const identity = projection.externalRootByResourceId.get(prop.value);
+    referenceRoots.push(
+      identity === undefined
+        ? projectStorageRoot
+        : { type: "external", identity }
+    );
+  } else if (
+    prop.type === "page" &&
+    typeof prop.value === "object" &&
+    prop.value !== null
+  ) {
+    referenceRoots.push(
+      resolveContentStorageRoot(projection, {
+        type: "instance",
+        instanceId: prop.value.instanceId,
+      })
+    );
+  }
+  for (const { expression } of listPropExpressions(prop)) {
+    for (const identifier of getExpressionIdentifiers(expression)) {
+      const dataSourceId = decodeDataVariableId(identifier);
+      if (dataSourceId === undefined) {
+        continue;
+      }
+      const identity = projection.externalRootByDataSourceId.get(dataSourceId);
+      referenceRoots.push(
+        identity === undefined
+          ? projectStorageRoot
+          : { type: "external", identity }
+      );
+    }
+  }
+  for (const referenceRoot of referenceRoots) {
+    if (
+      referenceRoot.type === "external" &&
+      isSameContentStorageRoot(root, referenceRoot) === false
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Prop reference crosses an authored storage boundary."
+      );
+    }
+  }
+};
+
+export const executeContentStoragePropMutation = <
+  Mutation extends BuilderRuntimeMutation,
+>({
+  state,
+  materializedRoots,
+  returnStorageChanges,
+  execute,
+}: {
+  state: BuilderState;
+  materializedRoots?: readonly MaterializedContentRoot[];
+  returnStorageChanges?: boolean;
+  execute: (state: BuilderState) => Mutation;
+}): Mutation => {
+  if (materializedRoots === undefined || materializedRoots.length === 0) {
+    return execute(state);
+  }
+  const projection = createContentStorageProjection({
+    state,
+    materializedRoots,
+  });
+  const mutation = execute(projection.state);
+  const projectChanges = new Map<
+    BuilderPatchChange["namespace"],
+    BuilderPatchChange
+  >();
+  const externalChanges = new Map<
+    Instance["id"],
+    {
+      root: Extract<ContentStorageRoot, { type: "external" }>;
+      changes: Map<BuilderPatchChange["namespace"], BuilderPatchChange>;
+    }
+  >();
+  for (const change of mutation.payload) {
+    for (const patch of change.patches) {
+      let root: ContentStorageRoot;
+      if (change.namespace === "props") {
+        root = getPropStorageRoot(projection, patch);
+        const prop = getPatchedProp(projection, patch);
+        if (prop !== undefined) {
+          validatePropReferenceOwnership({ projection, root, prop });
+        }
+      } else if (change.namespace === "resources") {
+        const [resourceId] = patch.path;
+        if (typeof resourceId !== "string") {
+          return throwBuilderRuntimeError(
+            "BAD_REQUEST",
+            "Resource owner is missing."
+          );
+        }
+        const identity = projection.externalRootByResourceId.get(resourceId);
+        root =
+          identity === undefined
+            ? projectStorageRoot
+            : { type: "external", identity };
+      } else {
+        return throwBuilderRuntimeError(
+          "BAD_REQUEST",
+          "Prop mutation produced an unsupported patch."
+        );
+      }
+      const changes =
+        root.type === "project"
+          ? projectChanges
+          : (externalChanges.get(root.identity.blockInstanceId)?.changes ??
+            new Map());
+      const accumulated = changes.get(change.namespace) ?? {
+        namespace: change.namespace,
+        patches: [],
+      };
+      accumulated.patches.push(patch);
+      changes.set(change.namespace, accumulated);
+      if (root.type === "external") {
+        externalChanges.set(root.identity.blockInstanceId, { root, changes });
+      }
+    }
+  }
+  if (externalChanges.size > 0 && returnStorageChanges !== true) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "The caller must handle authored storage changes."
+    );
+  }
+  const storageChanges = Array.from(externalChanges.values()).flatMap(
+    ({ root, changes }) => {
+      const storageChange = createExternalStorageChange({
+        projection,
+        root,
+        payload: Array.from(changes.values()),
+      });
+      return storageChange === undefined ? [] : [storageChange];
+    }
+  );
+  const combinedStorageChanges = [
+    ...(mutation.storageChanges ?? []),
+    ...storageChanges,
+  ];
+  return {
+    ...mutation,
+    payload: Array.from(projectChanges.values()),
+    storageChanges:
+      combinedStorageChanges.length === 0 ? undefined : combinedStorageChanges,
+    noop: projectChanges.size === 0 && combinedStorageChanges.length === 0,
   } as Mutation;
 };

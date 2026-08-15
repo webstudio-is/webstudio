@@ -54,6 +54,7 @@ import {
 import {
   createContentStorageProjection,
   executeContentStorageMutation,
+  executeContentStoragePropMutation,
   executeContentStorageTextReplacement,
 } from "./content-storage";
 
@@ -330,6 +331,11 @@ const styleNamespaces = [
   "styleSourceSelections",
 ] as const;
 const dataNamespaces = ["dataSources", "resources"] as const;
+const contentStoragePropReadNamespaces = [
+  "instances",
+  "props",
+  ...dataNamespaces,
+] as const;
 const treeMutationNamespaces = [
   "pages",
   "instances",
@@ -1149,105 +1155,129 @@ export const builderRuntimeOperations = [
     "instances.updateProps",
     api("update-props", "updateProps", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "props", "dataSources"],
+      readNamespaces: contentStoragePropReadNamespaces,
       writeNamespaces: ["props"],
     }),
     props.propUpdatesInput,
-    ({ state, input, context }) => {
-      const warnings = input.updates.flatMap((update, index) =>
-        getScopedPropWarnings({
-          state,
-          instanceId: update.instanceId,
-          path: ["updates", String(index), "value"],
-          prop: update,
-        })
-      );
-      return withExpressionWarnings(
-        props.updateProps(
-          state,
-          {
-            updates: input.updates.map((update) =>
-              update.type === "expression"
-                ? {
-                    ...update,
-                    value: bindExpressionInput(
-                      state,
-                      update.instanceId,
-                      update.value
-                    ),
-                  }
-                : update
+    ({ state, input, context }) =>
+      executeContentStoragePropMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        execute: (mutationState) => {
+          const warnings = input.updates.flatMap((update, index) =>
+            getScopedPropWarnings({
+              state: mutationState,
+              instanceId: update.instanceId,
+              path: ["updates", String(index), "value"],
+              prop: update,
+            })
+          );
+          return withExpressionWarnings(
+            props.updateProps(
+              mutationState,
+              {
+                updates: input.updates.map((update) =>
+                  update.type === "expression"
+                    ? {
+                        ...update,
+                        value: bindExpressionInput(
+                          mutationState,
+                          update.instanceId,
+                          update.value
+                        ),
+                      }
+                    : update
+                ),
+              },
+              context
             ),
-          },
-          context
-        ),
-        warnings
-      );
-    }
+            warnings
+          );
+        },
+      })
   ),
   runtimeOperation(
     "instances.replacePropText",
     api("replace-prop-text", "replacePropText", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "props"],
+      readNamespaces: contentStoragePropReadNamespaces,
       writeNamespaces: ["props"],
       retryOnConflict: true,
     }),
     props.replacePropTextInput,
-    ({ state, input }) => props.replacePropText(state, input)
+    ({ state, input, context }) =>
+      executeContentStoragePropMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        execute: (mutationState) => props.replacePropText(mutationState, input),
+      })
   ),
   runtimeOperation(
     "instances.deleteProps",
     api("delete-props", "deleteProps", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "props"],
+      readNamespaces: contentStoragePropReadNamespaces,
       writeNamespaces: ["props", "resources"],
     }),
     props.propDeletionsInput,
-    ({ state, input }) => props.deleteProps(state, input)
+    ({ state, input, context }) =>
+      executeContentStoragePropMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        execute: (mutationState) => props.deleteProps(mutationState, input),
+      })
   ),
   runtimeOperation(
     "instances.bindProps",
     api("bind-props", "bindProps"),
     mutationContract({
-      readNamespaces: ["instances", "props", ...dataNamespaces],
+      readNamespaces: contentStoragePropReadNamespaces,
       writeNamespaces: ["props"],
     }),
     props.propBindingsInput,
-    ({ state, input, context }) => {
-      const warnings = input.bindings.flatMap((binding, index) =>
-        getScopedPropWarnings({
-          state,
-          instanceId: binding.instanceId,
-          path: ["bindings", String(index), "binding", "value"],
-          prop: binding.binding,
-        })
-      );
-      return withExpressionWarnings(
-        props.bindProps(
-          state,
-          {
-            bindings: input.bindings.map((binding) =>
-              binding.binding.type === "expression"
-                ? {
-                    ...binding,
-                    binding: {
-                      ...binding.binding,
-                      value: bindExpressionInput(
-                        state,
-                        binding.instanceId,
-                        binding.binding.value
-                      ),
-                    },
-                  }
-                : binding
+    ({ state, input, context }) =>
+      executeContentStoragePropMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        execute: (mutationState) => {
+          const warnings = input.bindings.flatMap((binding, index) =>
+            getScopedPropWarnings({
+              state: mutationState,
+              instanceId: binding.instanceId,
+              path: ["bindings", String(index), "binding", "value"],
+              prop: binding.binding,
+            })
+          );
+          return withExpressionWarnings(
+            props.bindProps(
+              mutationState,
+              {
+                bindings: input.bindings.map((binding) =>
+                  binding.binding.type === "expression"
+                    ? {
+                        ...binding,
+                        binding: {
+                          ...binding.binding,
+                          value: bindExpressionInput(
+                            mutationState,
+                            binding.instanceId,
+                            binding.binding.value
+                          ),
+                        },
+                      }
+                    : binding
+                ),
+              },
+              context
             ),
-          },
-          context
-        ),
-        warnings
-      );
-    }
+            warnings
+          );
+        },
+      })
   ),
   runtimeOperation(
     "instances.listTexts",

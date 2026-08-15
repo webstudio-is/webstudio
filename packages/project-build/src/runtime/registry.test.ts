@@ -2220,6 +2220,16 @@ describe("builder runtime registry", () => {
     expect(getBuilderRuntimeOperation("pages.create").requiresConfirm).toBe(
       false
     );
+    for (const operationId of [
+      "instances.updateProps",
+      "instances.replacePropText",
+      "instances.deleteProps",
+      "instances.bindProps",
+    ] as const) {
+      expect(getBuilderRuntimeOperation(operationId).requiresAssets).toBe(
+        false
+      );
+    }
   });
 
   test("rejects client-supplied generated ids and hides generated id fields", () => {

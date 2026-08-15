@@ -976,3 +976,416 @@ test("rejects rich-text updates that cross a nested storage boundary", () => {
     })
   ).toThrow("storage boundary");
 });
+
+const linkFragment = (id: string, href: string): WebstudioFragment => ({
+  ...fragment(id),
+  instances: [
+    {
+      type: "instance",
+      id,
+      component: "Link",
+      children: [{ type: "text", value: id }],
+    },
+  ],
+  props: [
+    {
+      id: `${id}-href`,
+      instanceId: id,
+      name: "href",
+      type: "string",
+      value: href,
+    },
+  ],
+});
+
+test("partitions mixed project and external prop updates", () => {
+  const state = createState();
+  state.instances?.set("ordinary-link", {
+    type: "instance",
+    id: "ordinary-link",
+    component: "Link",
+    children: [],
+  });
+  state.props?.set("ordinary-href", {
+    id: "ordinary-href",
+    instanceId: "ordinary-link",
+    name: "href",
+    type: "string",
+    value: "/before",
+  });
+  const externalIdentity = identity("page:/post");
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.updateProps",
+      state,
+      input: {
+        updates: [
+          {
+            instanceId: "ordinary-link",
+            name: "href",
+            type: "string",
+            value: "/ordinary",
+          },
+          {
+            instanceId: "external-link",
+            name: "href",
+            type: "string",
+            value: "/external",
+          },
+        ],
+      },
+      context: {
+        createId: () => "unused",
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: externalIdentity,
+            fragment: linkFragment("external-link", "/before"),
+          },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [
+      {
+        namespace: "props",
+        patches: [{ path: ["ordinary-href"] }],
+      },
+    ],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: [
+          {
+            namespace: "props",
+            patches: [{ path: ["external-link-href"] }],
+          },
+        ],
+      },
+    ],
+    result: { propIds: ["ordinary-href", "external-link-href"] },
+  });
+});
+
+test("routes bulk prop replacement and deletion to external storage", () => {
+  const state = createState();
+  state.instances?.set("ordinary-link", {
+    type: "instance",
+    id: "ordinary-link",
+    component: "Link",
+    children: [],
+  });
+  state.props?.set("ordinary-href", {
+    id: "ordinary-href",
+    instanceId: "ordinary-link",
+    name: "href",
+    type: "string",
+    value: "/before",
+  });
+  const externalIdentity = identity("page:/post");
+  const externalFragment = linkFragment("external-link", "/before");
+  const context = {
+    createId: () => "unused",
+    returnStorageChanges: true,
+    materializedContent: [
+      { identity: externalIdentity, fragment: externalFragment },
+    ],
+  };
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.replacePropText",
+      state,
+      input: { find: "/before", replace: "/after", match: "exact" },
+      context,
+    })
+  ).toMatchObject({
+    payload: [
+      {
+        namespace: "props",
+        patches: [{ path: ["ordinary-href", "value"], value: "/after" }],
+      },
+    ],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: [
+          {
+            namespace: "props",
+            patches: [
+              { path: ["external-link-href", "value"], value: "/after" },
+            ],
+          },
+        ],
+      },
+    ],
+    result: { changedCount: 2, matchingPropCount: 2 },
+  });
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.deleteProps",
+      state,
+      input: {
+        deletions: [{ instanceId: "external-link", name: "href" }],
+      },
+      context,
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: [
+          {
+            namespace: "props",
+            patches: [{ op: "remove", path: ["external-link-href"] }],
+          },
+        ],
+      },
+    ],
+  });
+});
+
+test("routes asset props while retaining the authored Asset reference", () => {
+  const state = createState();
+  const externalIdentity = identity("page:/post");
+  const externalFragment = fragment("external-image");
+  externalFragment.instances[0].component = "Image";
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.updateProps",
+      state,
+      input: {
+        updates: [
+          {
+            instanceId: "external-image",
+            name: "src",
+            type: "asset",
+            value: "hero-asset",
+          },
+        ],
+      },
+      context: {
+        createId: () => "external-src",
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: [
+          {
+            namespace: "props",
+            patches: [
+              {
+                path: ["external-src"],
+                value: { type: "asset", value: "hero-asset" },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+});
+
+test("rejects design-only props and cross-root prop references", () => {
+  const state = createState();
+  state.instances?.set("ordinary-link", {
+    type: "instance",
+    id: "ordinary-link",
+    component: "Link",
+    children: [],
+  });
+  const firstIdentity = identity("page:/first");
+  const secondIdentity = identity("page:/second", "second-block", "second");
+  state.instances?.set("second-block", {
+    type: "instance",
+    id: "second-block",
+    component: blockComponent,
+    children: [{ type: "id", value: "second-templates" }],
+  });
+  state.instances?.set("second-templates", {
+    type: "instance",
+    id: "second-templates",
+    component: blockTemplateComponent,
+    children: [],
+  });
+  state.props?.set("second-src", {
+    id: "second-src",
+    instanceId: "second-block",
+    name: "src",
+    type: "asset",
+    value: "second",
+  });
+  const secondFragment = linkFragment("second-link", "/second");
+  secondFragment.dataSources.push({
+    id: "second-parameter",
+    scopeInstanceId: "second-link",
+    type: "parameter",
+    name: "secondParameter",
+  });
+  const materializedContent = [
+    {
+      identity: firstIdentity,
+      fragment: linkFragment("first-link", "/first"),
+    },
+    { identity: secondIdentity, fragment: secondFragment },
+  ];
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.updateProps",
+      state,
+      input: {
+        updates: [
+          {
+            instanceId: "first-link",
+            name: "target",
+            type: "string",
+            value: "_blank",
+          },
+        ],
+      },
+      context: {
+        createId: () => "first-target",
+        returnStorageChanges: true,
+        materializedContent,
+      },
+    })
+  ).toThrow("not editable in content mode");
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.bindProps",
+      state,
+      input: {
+        bindings: [
+          {
+            instanceId: "first-link",
+            name: "href",
+            binding: { type: "parameter", value: "second-parameter" },
+          },
+        ],
+      },
+      context: {
+        createId: () => "first-binding",
+        returnStorageChanges: true,
+        materializedContent,
+      },
+    })
+  ).toThrow("crosses an authored storage boundary");
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.bindProps",
+      state,
+      input: {
+        bindings: [
+          {
+            instanceId: "ordinary-link",
+            name: "href",
+            binding: { type: "parameter", value: "second-parameter" },
+          },
+        ],
+      },
+      context: {
+        createId: () => "ordinary-binding",
+        returnStorageChanges: true,
+        materializedContent,
+      },
+    })
+  ).toThrow("crosses an authored storage boundary");
+});
+
+test.each([
+  {
+    label: "incompatible",
+    update: {
+      instanceId: "external-link",
+      name: "href",
+      type: "boolean" as const,
+      value: true,
+    },
+  },
+  {
+    label: "unknown",
+    update: {
+      instanceId: "external-link",
+      name: "unknown",
+      type: "string" as const,
+      value: "value",
+    },
+  },
+])("rejects $label external props", ({ update }) => {
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.updateProps",
+      state: createState(),
+      input: { updates: [update] },
+      context: {
+        createId: () => `${update.name}-prop`,
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: identity("page:/post"),
+            fragment: linkFragment("external-link", "/before"),
+          },
+        ],
+      },
+    })
+  ).toThrow("not editable in content mode");
+});
+
+test("routes prop updates to the innermost nested storage root", () => {
+  const { nestedIdentity, roots } = createNestedMaterializedContent();
+  roots[0].fragment.instances[0].component = "Image";
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.updateProps",
+      state: createState(),
+      input: {
+        updates: [
+          {
+            instanceId: "nested-content",
+            name: "src",
+            type: "asset",
+            value: "nested-image",
+          },
+        ],
+      },
+      context: {
+        createId: () => "nested-content-src",
+        returnStorageChanges: true,
+        materializedContent: roots,
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: nestedIdentity },
+        payload: [
+          {
+            namespace: "props",
+            patches: [
+              {
+                path: ["nested-content-src"],
+                value: { value: "nested-image" },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+});
