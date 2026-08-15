@@ -136,6 +136,61 @@ const paste = async ({
 };
 
 describe("pasted MDX", () => {
+  test("requires confirmation when replacement changes a template name", async () => {
+    const execute = (templateNameConfirmation?: {
+      action: "rename";
+      templates: Array<{
+        instanceId: string;
+        oldName: string;
+        newName: string;
+      }>;
+    }) =>
+      executeBuilderRuntimeOperation({
+        id: "instances.insertMdxText",
+        state: createState(),
+        input: {
+          parentInstanceId: "templates",
+          source: "# Replacement",
+          mode: "replace",
+          templateNameConfirmation,
+        },
+        context: { createId: createId(), projectId: "project" },
+      });
+
+    await expect(execute()).rejects.toMatchObject({
+      code: "INVALID_INPUT",
+      issues: [
+        expect.objectContaining({
+          code: "template_name_change_requires_confirmation",
+          example: {
+            action: "rename",
+            templates: [
+              {
+                instanceId: "hero",
+                oldName: "Hero Card",
+                newName: "<h1>",
+              },
+            ],
+          },
+        }),
+      ],
+    });
+    await expect(
+      execute({
+        action: "rename",
+        templates: [
+          {
+            instanceId: "hero",
+            oldName: "Hero Card",
+            newName: "<h1>",
+          },
+        ],
+      })
+    ).resolves.toMatchObject({
+      result: { removedInstanceIds: ["hero", "hero-heading"] },
+    });
+  });
+
   test("resolves names only from the destination Templates list", async () => {
     const source = `---\ntitle: Pasted\n---\n\n# Intro\n\n<ws.element ws:name="Hero Card" />`;
     const { root, mutation } = await paste({

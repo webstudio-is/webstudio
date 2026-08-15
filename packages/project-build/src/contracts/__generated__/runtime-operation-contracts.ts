@@ -45873,6 +45873,36 @@ export const runtimeOperationContractData = [
           minimum: 0,
           maximum: 9007199254740991,
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["parentInstanceId", "component"],
     },
@@ -49004,6 +49034,36 @@ export const runtimeOperationContractData = [
           minimum: 0,
           maximum: 9007199254740991,
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["parentInstanceId", "data", "itemFragment"],
       $defs: {
@@ -51839,6 +51899,36 @@ export const runtimeOperationContractData = [
           type: "integer",
           minimum: 0,
           maximum: 9007199254740991,
+        },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
         },
       },
       required: ["parentInstanceId", "source"],
@@ -55785,6 +55875,36 @@ export const runtimeOperationContractData = [
           minimum: 0,
           maximum: 9007199254740991,
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["fragment"],
       $defs: {
@@ -58917,6 +59037,36 @@ export const runtimeOperationContractData = [
           type: "string",
           minLength: 1,
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["instanceSelector", "component"],
     },
@@ -59166,6 +59316,36 @@ export const runtimeOperationContractData = [
             type: "string",
           },
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["instanceIds"],
     },
@@ -59229,6 +59409,36 @@ export const runtimeOperationContractData = [
           items: {
             type: "string",
           },
+        },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
         },
       },
       required: ["instanceSelector"],
@@ -62688,6 +62898,36 @@ export const runtimeOperationContractData = [
         legacyPropName: {
           type: "string",
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["instanceId", "tag"],
     },
@@ -62724,6 +62964,36 @@ export const runtimeOperationContractData = [
         label: {
           type: "string",
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["instanceId", "label"],
     },
@@ -62743,7 +63013,7 @@ export const runtimeOperationContractData = [
       required: ["instanceIds", "label"],
       additionalProperties: {},
     },
-    readNamespaces: ["instances"],
+    readNamespaces: ["instances", "props"],
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
     retryOnConflict: true,

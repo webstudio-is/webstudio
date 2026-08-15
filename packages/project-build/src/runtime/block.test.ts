@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   blockComponent,
   blockTemplateComponent,
+  contentBlockSourceProp,
   type Instance,
 } from "@webstudio-is/sdk";
 import {
@@ -12,6 +13,7 @@ import {
   findBlockSelector,
   findBlockTemplates,
   getBlockTemplateInsertionIndex,
+  getBlockTemplateNameConfirmation,
 } from "./block";
 
 const createInstance = (
@@ -212,6 +214,109 @@ describe("block template names", () => {
         instance: instances.get("card")!,
         nextInstance: { ...instances.get("card")!, label: "hero card" },
         instances,
+      })
+    ).toBeUndefined();
+  });
+
+  test.each([
+    {
+      source: {
+        id: "src",
+        instanceId: "block",
+        name: contentBlockSourceProp,
+        type: "asset" as const,
+        value: "article.mdx",
+      },
+      label: "direct",
+    },
+    {
+      source: {
+        id: "src",
+        instanceId: "block",
+        name: contentBlockSourceProp,
+        type: "expression" as const,
+        value: "articleAssetId",
+      },
+      label: "dynamic",
+    },
+  ])("requires confirmation for a $label source", ({ source }) => {
+    const instances = createBlockInstances();
+    const instance = instances.get("card")!;
+    const hero = instances.get("hero")!;
+
+    expect(
+      getBlockTemplateNameConfirmation({
+        changes: [
+          { instance, nextInstance: { ...instance, label: "Article Card" } },
+          { instance: hero, nextInstance: { ...hero, label: "Article Hero" } },
+        ],
+        instances,
+        props: new Map([[source.id, source]]).values(),
+      })
+    ).toEqual({
+      action: "rename",
+      templates: [
+        { instanceId: "card", oldName: "Box", newName: "Article Card" },
+        {
+          instanceId: "hero",
+          oldName: "Hero Card",
+          newName: "Article Hero",
+        },
+      ],
+    });
+    expect(
+      getBlockTemplateNameConfirmation({
+        changes: [{ instance }],
+        instances,
+        props: [source],
+      })
+    ).toEqual({
+      action: "delete",
+      templates: [{ instanceId: "card", oldName: "Box" }],
+    });
+  });
+
+  test("does not warn for nested, unchanged, or non-source templates", () => {
+    const instances = createBlockInstances();
+    const instance = instances.get("card")!;
+    instances.set(
+      "nested",
+      createInstance("nested", "Box", [{ type: "id", value: "card" }])
+    );
+    instances.get("templates")!.children = [
+      { type: "id", value: "hero" },
+      { type: "id", value: "nested" },
+    ];
+    const source = {
+      id: "src",
+      instanceId: "block",
+      name: contentBlockSourceProp,
+      type: "asset" as const,
+      value: "article.mdx",
+    };
+
+    expect(
+      getBlockTemplateNameConfirmation({
+        changes: [{ instance, nextInstance: { ...instance, label: "Card" } }],
+        instances,
+        props: [source],
+      })
+    ).toBeUndefined();
+    instances.get("templates")!.children.push({ type: "id", value: "card" });
+    expect(
+      getBlockTemplateNameConfirmation({
+        changes: [{ instance, nextInstance: { ...instance } }],
+        instances,
+        props: [source],
+      })
+    ).toBeUndefined();
+    expect(
+      getBlockTemplateNameConfirmation({
+        changes: [
+          { instance, nextInstance: { ...instance, label: "Article Card" } },
+        ],
+        instances,
+        props: [],
       })
     ).toBeUndefined();
   });

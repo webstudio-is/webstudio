@@ -2,7 +2,7 @@ import {
   reparentInstance,
   toggleInstanceShow,
 } from "~/shared/instance-utils/mutation";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { atom, computed } from "nanostores";
 import { mergeRefs } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
@@ -79,7 +79,10 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import {
+  executeRuntimeMutation,
+  getDuplicateTemplateNameMessage,
+} from "~/shared/instance-utils/data";
 import { isRichTextContent } from "@webstudio-is/project-build/runtime";
 import {
   getInstanceLabel,
@@ -498,6 +501,11 @@ const ShowToggle = ({
 
 const EditableTreeNodeLabel = styled("div", {
   variants: {
+    hasError: {
+      true: {
+        outline: `1px solid ${theme.colors.borderDestructiveMain}`,
+      },
+    },
     isEditing: {
       true: {
         background: theme.colors.backgroundControls,
@@ -523,6 +531,8 @@ const TreeNodeContent = ({
   onIsEditingChange: (isEditing: boolean) => void;
 }) => {
   const editableRef = useRef<HTMLDivElement | null>(null);
+  const errorId = useId();
+  const [error, setError] = useState<string>();
 
   const label = getInstanceLabel(instance);
   const { ref, handlers } = useContentEditable({
@@ -530,24 +540,48 @@ const TreeNodeContent = ({
     isEditable: instance.component !== contentBlockPresentationComponent,
     isEditing,
     onChangeValue: (value: string) => {
-      executeRuntimeMutation({
-        id: "instances.setLabel",
-        input: { instanceId: instance.id, label: value },
-      });
+      try {
+        executeRuntimeMutation({
+          id: "instances.setLabel",
+          input: { instanceId: instance.id, label: value },
+        });
+      } catch (caught) {
+        const message = getDuplicateTemplateNameMessage(caught);
+        if (message !== undefined) {
+          setError(message);
+          requestAnimationFrame(() => editableRef.current?.focus());
+          return false;
+        }
+        throw caught;
+      }
+      setError(undefined);
       editableRef.current?.closest("button")?.focus();
     },
-    onChangeEditing: onIsEditingChange,
+    onChangeEditing: (editing) => {
+      if (editing) {
+        setError(undefined);
+      }
+      onIsEditingChange(editing);
+    },
   });
 
   return (
     <TreeNodeLabel prefix={<InstanceIcon instance={instance} />}>
-      <EditableTreeNodeLabel
-        ref={mergeRefs(editableRef, ref)}
-        {...handlers}
-        isEditing={isEditing}
+      <Tooltip
+        open={error !== undefined}
+        content={<Text id={errorId}>{error}</Text>}
       >
-        {label}
-      </EditableTreeNodeLabel>
+        <EditableTreeNodeLabel
+          ref={mergeRefs(editableRef, ref)}
+          {...handlers}
+          isEditing={isEditing}
+          hasError={error !== undefined}
+          aria-invalid={error !== undefined}
+          aria-errormessage={error === undefined ? undefined : errorId}
+        >
+          {label}
+        </EditableTreeNodeLabel>
+      </Tooltip>
     </TreeNodeLabel>
   );
 };

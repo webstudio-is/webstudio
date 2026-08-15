@@ -3,9 +3,11 @@ import {
   blockComponent,
   blockTemplateComponent,
   findParentInstanceReference,
+  getContentBlockSource,
   getInstanceName,
   type Instance,
   type Instances,
+  type Prop,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import type { InstanceSelector } from "./tree";
@@ -83,6 +85,89 @@ export const findBlockTemplateNameCollision = ({
       return { instance: sibling, name };
     }
   }
+};
+
+export type BlockTemplateNameConfirmation = {
+  action: "rename" | "delete";
+  templates: Array<{
+    instanceId: Instance["id"];
+    oldName: string;
+    newName?: string;
+  }>;
+};
+
+const isSourceBackedBlockTemplate = ({
+  instanceId,
+  instances,
+  props,
+}: {
+  instanceId: Instance["id"];
+  instances: Instances;
+  props: Iterable<Prop>;
+}) => {
+  const templates = findParentInstanceReference(
+    instances,
+    instanceId
+  )?.instance;
+  if (templates?.component !== blockTemplateComponent) {
+    return false;
+  }
+  const block = findParentInstanceReference(instances, templates.id)?.instance;
+  if (block?.component !== blockComponent) {
+    return false;
+  }
+  return (
+    getContentBlockSource({ blockInstanceId: block.id, props }) !== undefined
+  );
+};
+
+export const getBlockTemplateNameConfirmation = ({
+  changes,
+  instances,
+  props,
+}: {
+  changes: ReadonlyArray<{
+    instance: Instance;
+    nextInstance?: Instance;
+  }>;
+  instances: Instances;
+  props: Iterable<Prop>;
+}): BlockTemplateNameConfirmation | undefined => {
+  const templates: BlockTemplateNameConfirmation["templates"] = [];
+  const sourceProps = Array.from(props);
+  for (const { instance, nextInstance } of changes) {
+    if (
+      isSourceBackedBlockTemplate({
+        instanceId: instance.id,
+        instances,
+        props: sourceProps,
+      }) === false
+    ) {
+      continue;
+    }
+    const oldName = getInstanceName({ instance, metas: componentMetas });
+    const newName =
+      nextInstance === undefined
+        ? undefined
+        : getInstanceName({ instance: nextInstance, metas: componentMetas });
+    if (newName === oldName) {
+      continue;
+    }
+    templates.push({
+      instanceId: instance.id,
+      oldName,
+      ...(newName === undefined ? {} : { newName }),
+    });
+  }
+  if (templates.length === 0) {
+    return;
+  }
+  return {
+    action: changes.some(({ nextInstance }) => nextInstance === undefined)
+      ? "delete"
+      : "rename",
+    templates,
+  };
 };
 
 export const findBlockChildSelector = ({

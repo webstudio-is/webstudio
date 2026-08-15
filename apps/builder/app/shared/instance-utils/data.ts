@@ -4,12 +4,15 @@
 import { toast } from "@webstudio-is/design-system";
 import { type WebstudioData, isPageTemplate } from "@webstudio-is/sdk";
 import {
+  BuilderRuntimeError,
+  blockTemplateNameConfirmationInput,
   executeBuilderRuntimeOperation,
   createRuntimeMutationAccumulator,
   type BuilderRuntimeOperationInput,
   type BuilderRuntimeMutationOperationId,
   type BuilderRuntimeOperationResult,
 } from "@webstudio-is/project-build/runtime";
+import { atom } from "nanostores";
 import {
   builderRuntimeContext,
   type BuilderRuntimeContext,
@@ -18,7 +21,11 @@ import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime
 import { $canOpenPageTemplates, $selectedPage } from "../nano-states";
 import { createTransactionFromBuilderPatchPayload } from "../sync/builder-patch";
 import { $project, readBuilderStateStores } from "../sync/data-stores";
-import { $allSelectedInstanceSelectors } from "../nano-states";
+import {
+  $allSelectedInstanceSelectors,
+  clearInstanceSelection,
+  selectInstance,
+} from "../nano-states";
 import {
   getMaterializedContentStatus,
   getMaterializedContentSaveBlocker,
@@ -37,6 +44,38 @@ export type RuntimeMutationOperation = {
     input: BuilderRuntimeOperationInput<Id>;
   };
 }[BuilderRuntimeMutationOperationId];
+
+type TemplateNameConfirmation = ReturnType<
+  typeof blockTemplateNameConfirmationInput.parse
+>;
+
+type PendingTemplateNameConfirmation = {
+  operation: RuntimeMutationOperation;
+  confirmation: TemplateNameConfirmation;
+};
+
+export const $pendingTemplateNameConfirmation = atom<
+  PendingTemplateNameConfirmation | undefined
+>(undefined);
+
+const getTemplateNameConfirmation = (error: unknown) => {
+  if (error instanceof BuilderRuntimeError === false) {
+    return;
+  }
+  const issue = error.issues?.find(
+    ({ code }) => code === "template_name_change_requires_confirmation"
+  );
+  const result = blockTemplateNameConfirmationInput.safeParse(issue?.example);
+  return result.success ? result.data : undefined;
+};
+
+export const getDuplicateTemplateNameMessage = (error: unknown) => {
+  if (error instanceof BuilderRuntimeError === false) {
+    return;
+  }
+  return error.issues?.find(({ code }) => code === "duplicate_template_name")
+    ?.message;
+};
 
 export type WebstudioInstanceData = Pick<
   WebstudioData,
@@ -154,7 +193,7 @@ const requireSynchronousResult = <Result>(
 };
 
 const createRuntimeMutationArgs = <
-  Id extends BuilderRuntimeMutationOperationId
+  Id extends BuilderRuntimeMutationOperationId,
 >({
   id,
   input,
@@ -215,7 +254,7 @@ const commitRuntimeMutation = <Mutation extends BuilderRuntimeMutation>(
 };
 
 const commitRuntimeMutationAsync = async <
-  Mutation extends BuilderRuntimeMutation
+  Mutation extends BuilderRuntimeMutation,
 >(
   result: Mutation
 ): Promise<Mutation | undefined> => {
@@ -249,7 +288,7 @@ const commitRuntimeMutationAsync = async <
 };
 
 export const executeRuntimeMutation = <
-  Id extends BuilderRuntimeMutationOperationId
+  Id extends BuilderRuntimeMutationOperationId,
 >({
   id,
   input,
@@ -265,14 +304,72 @@ export const executeRuntimeMutation = <
   if (canEditSelectedMaterializedContent() === false) {
     return;
   }
-  return commitRuntimeMutation(
-    requireSynchronousResult(
-      id,
-      executeBuilderRuntimeOperation<RuntimeMutationResult<Id>>(
-        createRuntimeMutationArgs({ id, input, context })
+  try {
+    return commitRuntimeMutation(
+      requireSynchronousResult(
+        id,
+        executeBuilderRuntimeOperation<RuntimeMutationResult<Id>>(
+          createRuntimeMutationArgs({ id, input, context })
+        )
       )
+    );
+  } catch (error) {
+    const confirmation = getTemplateNameConfirmation(error);
+    if (confirmation === undefined) {
+      throw error;
+    }
+    $pendingTemplateNameConfirmation.set({
+      operation: { id, input } as RuntimeMutationOperation,
+      confirmation,
+    });
+    return;
+  }
+};
+
+export const abortPendingTemplateNameConfirmation = () => {
+  $pendingTemplateNameConfirmation.set(undefined);
+};
+
+export const confirmPendingTemplateNameChange = () => {
+  const pending = $pendingTemplateNameConfirmation.get();
+  if (pending === undefined) {
+    return;
+  }
+  $pendingTemplateNameConfirmation.set(undefined);
+  const operation = {
+    ...pending.operation,
+    input: {
+      ...pending.operation.input,
+      templateNameConfirmation: pending.confirmation,
+    },
+  } as RuntimeMutationOperation;
+  let result: BuilderRuntimeMutation | undefined;
+  try {
+    result = executeRuntimeMutation(operation);
+  } catch (error) {
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "The template change could not be applied."
+    );
+    return;
+  }
+  if (result === undefined) {
+    return;
+  }
+  if (operation.id === "instances.delete") {
+    clearInstanceSelection();
+  }
+  if (
+    operation.id === "instances.deleteBySelector" &&
+    "instanceSelector" in result.result &&
+    Array.isArray(result.result.instanceSelector) &&
+    result.result.instanceSelector.every(
+      (instanceId) => typeof instanceId === "string"
     )
-  );
+  ) {
+    selectInstance(result.result.instanceSelector);
+  }
 };
 
 export const executeRuntimeMutationSequence = (
@@ -302,7 +399,7 @@ export const executeRuntimeMutationSequence = (
 };
 
 export const executeRuntimeMutationAsync = async <
-  Id extends BuilderRuntimeMutationOperationId
+  Id extends BuilderRuntimeMutationOperationId,
 >({
   id,
   input,

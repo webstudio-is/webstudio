@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
   blockTemplateComponent,
+  blockComponent,
+  contentBlockSourceProp,
   encodeDataVariableId,
   type DataSource,
   elementComponent,
@@ -61,6 +63,7 @@ import {
 import { applyBuilderPatchPayloadMutable } from "../state/patch";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { BuilderRuntimeError } from "./errors";
 
 const runtimeContext = { createId: () => "generated" };
 
@@ -1326,6 +1329,62 @@ describe("convertInstance", () => {
     ).toThrow("Template name must be unique");
   });
 
+  test("requires confirmation when conversion changes a source-backed template name", () => {
+    const block = createInstance("block", blockComponent, [
+      { type: "id", value: "templates" },
+    ]);
+    const templates = createInstance("templates", blockTemplateComponent, [
+      { type: "id", value: "card" },
+    ]);
+    const card = createInstance("card", "Box");
+    const state = {
+      instances: new Map([
+        [block.id, block],
+        [templates.id, templates],
+        [card.id, card],
+      ]),
+      props: new Map([
+        [
+          "src",
+          {
+            id: "src",
+            instanceId: block.id,
+            name: contentBlockSourceProp,
+            type: "asset" as const,
+            value: "article.mdx",
+          },
+        ],
+      ]),
+    };
+    expect(() =>
+      convertInstance(
+        state,
+        {
+          instanceSelector: [card.id, templates.id, block.id],
+          component: "Section",
+        },
+        runtimeContext
+      )
+    ).toThrow("Template name change requires confirmation");
+
+    expect(
+      convertInstance(
+        state,
+        {
+          instanceSelector: [card.id, templates.id, block.id],
+          component: "Section",
+          templateNameConfirmation: {
+            action: "rename",
+            templates: [
+              { instanceId: "card", oldName: "Box", newName: "Section" },
+            ],
+          },
+        },
+        runtimeContext
+      ).result
+    ).toEqual({ instanceId: "card" });
+  });
+
   test("removes legacy tag prop and renames React props when converting to element", () => {
     const result = convertInstance(
       {
@@ -2034,6 +2093,61 @@ describe("setInstanceTag", () => {
       )
     ).toThrow("Template name must be unique");
   });
+
+  test("requires confirmation when an unlabeled source-backed template tag changes", () => {
+    const block = createInstance("block", blockComponent, [
+      { type: "id", value: "templates" },
+    ]);
+    const templates = createInstance("templates", blockTemplateComponent, [
+      { type: "id", value: "element" },
+    ]);
+    const element = createInstance("element", elementComponent);
+    element.tag = "div";
+    const state = {
+      instances: new Map([
+        [block.id, block],
+        [templates.id, templates],
+        [element.id, element],
+      ]),
+      props: new Map([
+        [
+          "src",
+          {
+            id: "src",
+            instanceId: block.id,
+            name: contentBlockSourceProp,
+            type: "asset" as const,
+            value: "article.mdx",
+          },
+        ],
+      ]),
+    };
+
+    expect(() =>
+      setInstanceTag(state, { instanceId: element.id, tag: "section" })
+    ).toThrow("Template name change requires confirmation");
+    expect(
+      setInstanceTag(state, {
+        instanceId: element.id,
+        tag: "section",
+        templateNameConfirmation: {
+          action: "rename",
+          templates: [
+            {
+              instanceId: "element",
+              oldName: "<div>",
+              newName: "<section>",
+            },
+          ],
+        },
+      }).result
+    ).toEqual({ instanceId: "element", tag: "section" });
+
+    element.label = "Hero element";
+    expect(
+      setInstanceTag(state, { instanceId: element.id, tag: "article" }).result
+    ).toEqual({ instanceId: "element", tag: "article" });
+  });
 });
 
 describe("setInstanceLabel", () => {
@@ -2159,6 +2273,9 @@ describe("setInstanceLabel", () => {
   });
 
   test("rejects a duplicate name in the same Content Block Templates list", () => {
+    const block = createInstance("block", blockComponent, [
+      { type: "id", value: "templates" },
+    ]);
     const templates = createInstance("templates", blockTemplateComponent, [
       { type: "id", value: "hero" },
       { type: "id", value: "card" },
@@ -2170,14 +2287,149 @@ describe("setInstanceLabel", () => {
       setInstanceLabel(
         {
           instances: new Map([
+            ["block", block],
             ["templates", templates],
             ["hero", hero],
             ["card", createInstance("card", "Box")],
+          ]),
+          props: new Map([
+            [
+              "src",
+              {
+                id: "src",
+                instanceId: block.id,
+                name: contentBlockSourceProp,
+                type: "asset" as const,
+                value: "article.mdx",
+              },
+            ],
           ]),
         },
         { instanceId: "card", label: "Hero Card" }
       )
     ).toThrow("Template name must be unique");
+  });
+
+  test("requires a current confirmation before renaming a source-backed template", () => {
+    const block = createInstance("block", blockComponent, [
+      { type: "id", value: "templates" },
+    ]);
+    const templates = createInstance("templates", blockTemplateComponent, [
+      { type: "id", value: "card" },
+    ]);
+    const card = createInstance("card", "Box");
+    const state = {
+      instances: new Map([
+        [block.id, block],
+        [templates.id, templates],
+        [card.id, card],
+      ]),
+      props: new Map([
+        [
+          "src",
+          {
+            id: "src",
+            instanceId: block.id,
+            name: contentBlockSourceProp,
+            type: "expression" as const,
+            value: "articleAssetId",
+          },
+        ],
+      ]),
+    };
+    let confirmation: unknown;
+    try {
+      setInstanceLabel(state, { instanceId: card.id, label: "Hero Card" });
+    } catch (error) {
+      expect(error).toBeInstanceOf(BuilderRuntimeError);
+      const issue = (error as BuilderRuntimeError).issues?.[0];
+      expect(issue).toMatchObject({
+        code: "template_name_change_requires_confirmation",
+        constraint: "requires_confirmation:template_name_references",
+      });
+      confirmation = issue?.example;
+    }
+    expect(confirmation).toEqual({
+      action: "rename",
+      templates: [{ instanceId: "card", oldName: "Box", newName: "Hero Card" }],
+    });
+
+    expect(
+      setInstanceLabel(state, {
+        instanceId: card.id,
+        label: "Hero Card",
+        templateNameConfirmation: confirmation as {
+          action: "rename";
+          templates: Array<{
+            instanceId: string;
+            oldName: string;
+            newName?: string;
+          }>;
+        },
+      }).result
+    ).toEqual({ instanceIds: ["card"], label: "Hero Card" });
+
+    card.label = "Current card";
+    expect(() =>
+      setInstanceLabel(state, {
+        instanceId: card.id,
+        label: "Hero Card",
+        templateNameConfirmation: confirmation as {
+          action: "rename";
+          templates: Array<{
+            instanceId: string;
+            oldName: string;
+            newName?: string;
+          }>;
+        },
+      })
+    ).toThrow("Template name change requires confirmation");
+  });
+
+  test("uses the default effective name when clearing a template label", () => {
+    const block = createInstance("block", blockComponent, [
+      { type: "id", value: "templates" },
+    ]);
+    const templates = createInstance("templates", blockTemplateComponent, [
+      { type: "id", value: "card" },
+    ]);
+    const card = createInstance("card", "Box");
+    card.label = "Hero Card";
+    const state = {
+      instances: new Map([
+        [block.id, block],
+        [templates.id, templates],
+        [card.id, card],
+      ]),
+      props: new Map([
+        [
+          "src",
+          {
+            id: "src",
+            instanceId: block.id,
+            name: contentBlockSourceProp,
+            type: "asset" as const,
+            value: "article.mdx",
+          },
+        ],
+      ]),
+    };
+
+    expect(() =>
+      setInstanceLabel(state, { instanceId: card.id, label: "  " })
+    ).toThrow("Template name change requires confirmation");
+    expect(
+      setInstanceLabel(state, {
+        instanceId: card.id,
+        label: "  ",
+        templateNameConfirmation: {
+          action: "rename",
+          templates: [
+            { instanceId: "card", oldName: "Hero Card", newName: "Box" },
+          ],
+        },
+      }).result.label
+    ).toBe("");
   });
 });
 

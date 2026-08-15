@@ -442,7 +442,7 @@ const deleteSelectedInstances = () => {
     reportSkippedSelectedInstances("deleted");
   }
 
-  executeRuntimeMutation({
+  const result = executeRuntimeMutation({
     id: "instances.delete",
     input: {
       instanceIds: sortInstancePathsForChildMutation(
@@ -450,7 +450,9 @@ const deleteSelectedInstances = () => {
       ).map(({ instancePath }) => instancePath[0].instance.id),
     },
   });
-  clearInstanceSelection();
+  if (result !== undefined) {
+    clearInstanceSelection();
+  }
   return true;
 };
 

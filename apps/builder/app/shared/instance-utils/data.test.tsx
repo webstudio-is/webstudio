@@ -1,5 +1,12 @@
 import { describe, expect, expectTypeOf, test, vi } from "vitest";
-import type { Asset, Instance, PageTemplate } from "@webstudio-is/sdk";
+import {
+  blockComponent,
+  blockTemplateComponent,
+  contentBlockSourceProp,
+  type Asset,
+  type Instance,
+  type PageTemplate,
+} from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   findCycles,
@@ -10,6 +17,9 @@ import {
   executeRuntimeMutation,
   executeRuntimeMutationAsync,
   executeRuntimeMutationSequence,
+  $pendingTemplateNameConfirmation,
+  abortPendingTemplateNameConfirmation,
+  confirmPendingTemplateNameChange,
   getWebstudioData,
   migrateLoadedWebstudioData,
   type RuntimeMutationOperation,
@@ -60,6 +70,7 @@ test("accepts only mutation operation ids in the Builder commit helpers", () => 
 });
 
 const setBaseStores = () => {
+  abortPendingTemplateNameConfirmation();
   serverSyncStore.transactionManager.currentStack = [];
   serverSyncStore.transactionManager.undoneStack = [];
   serverSyncStore.popAll();
@@ -149,6 +160,91 @@ describe("data store helpers", () => {
         value: "main",
       }),
     ]);
+  });
+
+  test("requires and revalidates confirmation for a source-backed template rename", () => {
+    setBaseStores();
+    $instances.set(
+      new Map([
+        [
+          "body",
+          createInstance("body", "Body", [{ type: "id", value: "block" }]),
+        ],
+        [
+          "block",
+          createInstance("block", blockComponent, [
+            { type: "id", value: "templates" },
+          ]),
+        ],
+        [
+          "templates",
+          createInstance("templates", blockTemplateComponent, [
+            { type: "id", value: "card" },
+          ]),
+        ],
+        ["card", createInstance("card", "Box", [])],
+      ])
+    );
+    $props.set(
+      new Map([
+        [
+          "src",
+          {
+            id: "src",
+            instanceId: "block",
+            name: contentBlockSourceProp,
+            type: "asset" as const,
+            value: "article.mdx",
+          },
+        ],
+      ])
+    );
+
+    expect(
+      executeRuntimeMutation({
+        id: "instances.setLabel",
+        input: { instanceId: "card", label: "Hero Card" },
+      })
+    ).toBeUndefined();
+    expect($instances.get().get("card")?.label).toBeUndefined();
+    expect($pendingTemplateNameConfirmation.get()?.confirmation).toEqual({
+      action: "rename",
+      templates: [{ instanceId: "card", oldName: "Box", newName: "Hero Card" }],
+    });
+
+    abortPendingTemplateNameConfirmation();
+    expect($instances.get().get("card")?.label).toBeUndefined();
+
+    executeRuntimeMutation({
+      id: "instances.setLabel",
+      input: { instanceId: "card", label: "Hero Card" },
+    });
+    const current = $instances.get();
+    current.set("card", { ...current.get("card")!, label: "Current Card" });
+    $instances.set(new Map(current));
+    confirmPendingTemplateNameChange();
+    expect($instances.get().get("card")?.label).toBe("Current Card");
+    expect(
+      $pendingTemplateNameConfirmation.get()?.confirmation.templates[0]?.oldName
+    ).toBe("Current Card");
+
+    confirmPendingTemplateNameChange();
+    expect($instances.get().get("card")?.label).toBe("Hero Card");
+    expect($pendingTemplateNameConfirmation.get()).toBeUndefined();
+
+    expect(
+      executeRuntimeMutation({
+        id: "instances.delete",
+        input: { instanceIds: ["card"] },
+      })
+    ).toBeUndefined();
+    expect($pendingTemplateNameConfirmation.get()?.confirmation).toEqual({
+      action: "delete",
+      templates: [{ instanceId: "card", oldName: "Hero Card" }],
+    });
+    expect($instances.get().has("card")).toBe(true);
+    confirmPendingTemplateNameChange();
+    expect($instances.get().has("card")).toBe(false);
   });
 
   test("commits runtime patch payloads with sync undo and redo support", () => {

@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 import {
+  blockComponent,
   blockTemplateComponent,
+  contentBlockSourceProp,
   collectionComponent,
   elementComponent,
   encodeDataVariableId,
@@ -23,6 +25,7 @@ import {
   insertFragmentInput,
 } from "./components";
 import { getZodValidationIssues } from "./errors";
+import { BuilderRuntimeError } from "./errors";
 import { getComponentTemplates } from "./component-templates";
 import { createEmptyWebstudioFragment } from "./component-template";
 import { insertCollectionInput } from "./collection";
@@ -153,6 +156,81 @@ test("validates component ids with canonical instance schema", () => {
       component: "",
     }).success
   ).toBe(false);
+});
+
+test("requires confirmation when replacing source-backed template entries", () => {
+  const body: Instance = {
+    type: "instance",
+    id: "body",
+    component: "Body",
+    children: [{ type: "id", value: "block" }],
+  };
+  const state = createState(body);
+  state.instances.set("block", {
+    type: "instance",
+    id: "block",
+    component: blockComponent,
+    children: [{ type: "id", value: "templates" }],
+  });
+  state.instances.set("templates", {
+    type: "instance",
+    id: "templates",
+    component: blockTemplateComponent,
+    children: [{ type: "id", value: "hero" }],
+  });
+  state.instances.set("hero", {
+    type: "instance",
+    id: "hero",
+    component: "Box",
+    label: "Hero Card",
+    children: [],
+  });
+  state.props.set("src", {
+    id: "src",
+    instanceId: "block",
+    name: contentBlockSourceProp,
+    type: "asset",
+    value: "article.mdx",
+  });
+  let confirmation: unknown;
+  try {
+    insertComponent(
+      state,
+      {
+        parentInstanceId: "templates",
+        component: "Box",
+        mode: "replace",
+      },
+      { createId: createIdFactory() }
+    );
+  } catch (error) {
+    expect(error).toBeInstanceOf(BuilderRuntimeError);
+    confirmation = (error as BuilderRuntimeError).issues?.[0]?.example;
+  }
+  expect(confirmation).toEqual({
+    action: "rename",
+    templates: [{ instanceId: "hero", oldName: "Hero Card", newName: "Box" }],
+  });
+
+  expect(
+    insertComponent(
+      state,
+      {
+        parentInstanceId: "templates",
+        component: "Box",
+        mode: "replace",
+        templateNameConfirmation: confirmation as {
+          action: "rename";
+          templates: Array<{
+            instanceId: string;
+            oldName: string;
+            newName?: string;
+          }>;
+        },
+      },
+      { createId: createIdFactory() }
+    ).result.removedInstanceIds
+  ).toEqual(["hero"]);
 });
 
 test("explains the required parent for fragments with children", () => {

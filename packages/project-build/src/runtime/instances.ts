@@ -79,7 +79,9 @@ import equal from "fast-deep-equal";
 import { z } from "zod";
 import {
   assignUniqueBlockTemplateNamesMutable,
+  type BlockTemplateNameConfirmation,
   findBlockTemplateNameCollision,
+  getBlockTemplateNameConfirmation,
 } from "./block";
 
 const throwDuplicateBlockTemplateName = ({
@@ -98,6 +100,53 @@ const throwDuplicateBlockTemplateName = ({
       example: `${name} 2`,
     },
   ]);
+
+export const blockTemplateNameConfirmationInput = z
+  .object({
+    action: z.enum(["rename", "delete"]),
+    templates: z.array(
+      z.object({
+        instanceId: z.string(),
+        oldName: z.string(),
+        newName: z.string().optional(),
+      })
+    ),
+  })
+  .describe(
+    "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval."
+  );
+
+export const requireBlockTemplateNameConfirmation = ({
+  required,
+  confirm,
+  path,
+}: {
+  required: BlockTemplateNameConfirmation | undefined;
+  confirm: BlockTemplateNameConfirmation | undefined;
+  path:
+    | "component"
+    | "instanceIds"
+    | "instanceSelector"
+    | "label"
+    | "mode"
+    | "tag";
+}) => {
+  if (required === undefined || equal(required, confirm)) {
+    return;
+  }
+  throwBuilderValidationError("Template name change requires confirmation", [
+    {
+      code: "template_name_change_requires_confirmation",
+      path: [path],
+      message:
+        required.action === "delete"
+          ? "Deleting this template may disconnect references in MDX files."
+          : "Renaming this template may disconnect references in MDX files.",
+      constraint: "requires_confirmation:template_name_references",
+      example: required,
+    },
+  ]);
+};
 
 export const insertIndexInput = z.number().int().nonnegative();
 const instanceEndPositionInput = z.literal("end");
@@ -153,10 +202,12 @@ export const cloneInstanceInput = z.object({
 
 export const deleteInstancesInput = z.object({
   instanceIds: z.array(z.string()).min(1),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const deleteInstanceBySelectorInput = z.object({
   instanceSelector: z.array(z.string()).min(2),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const fillGridInput = z.object({
@@ -186,6 +237,7 @@ export const convertInstanceInput = z.object({
   component: instanceInput.shape.component,
   tag: z.string().min(1).optional(),
   currentTag: z.string().min(1).optional(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const unwrapInstanceInput = z.object({
@@ -201,11 +253,13 @@ export const setInstanceTagInput = z.object({
   instanceId: z.string(),
   tag: z.string(),
   legacyPropName: z.string().optional(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const setInstanceLabelInput = z.object({
   instanceId: z.string(),
   label: z.string(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const updateTextInstanceInput = z.object({
@@ -2457,6 +2511,15 @@ export const convertInstance = (
           "Converted tree violates content model"
         );
       }
+      requireBlockTemplateNameConfirmation({
+        required: getBlockTemplateNameConfirmation({
+          changes: [{ instance: previousInstance, nextInstance }],
+          instances: draft.instances,
+          props: draft.props.values(),
+        }),
+        confirm: input.templateNameConfirmation,
+        path: "component",
+      });
     });
     return createRuntimeMutation({
       payload,
@@ -2566,7 +2629,6 @@ export const convertInstance = (
       path: "component",
     });
   }
-
   const isSatisfying = canConvertInstance({
     instanceId,
     instanceSelector: input.instanceSelector,
@@ -2583,6 +2645,15 @@ export const convertInstance = (
       "Converted tree violates content model"
     );
   }
+  requireBlockTemplateNameConfirmation({
+    required: getBlockTemplateNameConfirmation({
+      changes: [{ instance, nextInstance }],
+      instances,
+      props: state.props.values(),
+    }),
+    confirm: input.templateNameConfirmation,
+    path: "component",
+  });
 
   payload.push({ namespace: "instances", patches: instancePatches });
   return createRuntimeMutation({
@@ -2991,6 +3062,15 @@ export const setInstanceTag = (
       path: "tag",
     });
   }
+  requireBlockTemplateNameConfirmation({
+    required: getBlockTemplateNameConfirmation({
+      changes: [{ instance, nextInstance: { ...instance, tag: input.tag } }],
+      instances,
+      props: state.props.values(),
+    }),
+    confirm: input.templateNameConfirmation,
+    path: "tag",
+  });
 
   const payload: BuilderPatchChange[] = [];
   if (input.legacyPropName !== undefined) {
@@ -3028,7 +3108,7 @@ export const setInstanceTag = (
 };
 
 export const setInstanceLabel = (
-  state: Pick<BuilderState, "instances">,
+  state: Pick<BuilderState, "instances"> & Partial<Pick<BuilderState, "props">>,
   input: z.infer<typeof setInstanceLabelInput>
 ) => {
   const instances = getRequiredInstances(state);
@@ -3065,6 +3145,18 @@ export const setInstanceLabel = (
       });
     }
   }
+  requireBlockTemplateNameConfirmation({
+    required: getBlockTemplateNameConfirmation({
+      changes: targetInstances.map((targetInstance) => ({
+        instance: targetInstance,
+        nextInstance: prospectiveInstances.get(targetInstance.id),
+      })),
+      instances,
+      props: state.props?.values() ?? [],
+    }),
+    confirm: input.templateNameConfirmation,
+    path: "label",
+  });
 
   const patches: BuilderPatchChange["patches"] = [];
   for (const targetInstance of targetInstances) {
@@ -3121,6 +3213,18 @@ export const deleteInstances = (
   if (error?.type === "parent-not-found") {
     return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
   }
+  requireBlockTemplateNameConfirmation({
+    required: getBlockTemplateNameConfirmation({
+      changes: input.instanceIds.flatMap((instanceId) => {
+        const instance = mutationState.instances.get(instanceId);
+        return instance === undefined ? [] : [{ instance }];
+      }),
+      instances: mutationState.instances,
+      props: mutationState.props.values(),
+    }),
+    confirm: input.templateNameConfirmation,
+    path: "instanceIds",
+  });
   return createRuntimeMutation({
     payload,
     result: { instanceIds },
@@ -3180,6 +3284,15 @@ export const deleteInstanceBySelector = (
     if (error?.type === "parent-not-found") {
       return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
     }
+    requireBlockTemplateNameConfirmation({
+      required: getBlockTemplateNameConfirmation({
+        changes: [{ instance: targetInstance }],
+        instances: draft.instances,
+        props: draft.props.values(),
+      }),
+      confirm: input.templateNameConfirmation,
+      path: "instanceSelector",
+    });
     instanceIds = deletePayload.instanceIds;
     applyBuilderPatchPayloadMutable(
       (namespace) => getWebstudioDataNamespace(draft, namespace),

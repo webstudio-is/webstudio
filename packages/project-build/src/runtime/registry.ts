@@ -1822,7 +1822,7 @@ export const builderRuntimeOperations = [
     "instances.setLabel",
     api("set-instance-label", "setInstanceLabel", "edit"),
     mutationContract({
-      readNamespaces: ["instances"],
+      readNamespaces: ["instances", "props"],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),

@@ -15,7 +15,11 @@ import { componentInsertResult } from "./component-insert-contract";
 import { getRequiredComponentInsertData, insertFragment } from "./components";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
-import { instanceInsertModeInput, insertIndexInput } from "./instances";
+import {
+  blockTemplateNameConfirmationInput,
+  instanceInsertModeInput,
+  insertIndexInput,
+} from "./instances";
 import { materializeMdxAuthoredContent } from "./mdx-authored-content";
 import { materializeMdxTemplates } from "./mdx-materialization";
 import { resolveMdxTemplates } from "./mdx-template-resolution";
@@ -26,6 +30,7 @@ export const insertMdxTextInput = z.object({
   source: z.string().min(1),
   mode: instanceInsertModeInput.optional(),
   insertIndex: insertIndexInput.optional(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const mdxPasteResult = componentInsertResult.extend({
@@ -137,6 +142,7 @@ export const insertMdxText = async ({
       contentMode: destinationBlock !== undefined,
       mode: input.mode,
       insertIndex: input.insertIndex,
+      templateNameConfirmation: input.templateNameConfirmation,
     },
     context,
     { protectedChildCount }

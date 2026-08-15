@@ -2118,7 +2118,24 @@ test("keeps Content Block and Templates metadata project-owned", () => {
       executeBuilderRuntimeOperation({
         id: "instances.setLabel",
         state,
-        input: { instanceId, label: `Renamed ${instanceId}` },
+        input: {
+          instanceId,
+          label: `Renamed ${instanceId}`,
+          ...(instanceId === "template"
+            ? {
+                templateNameConfirmation: {
+                  action: "rename" as const,
+                  templates: [
+                    {
+                      instanceId: "template",
+                      oldName: "<section>",
+                      newName: "Renamed template",
+                    },
+                  ],
+                },
+              }
+            : {}),
+        },
         context: {
           createId: createIdFactory(),
           returnStorageChanges: true,
@@ -2978,7 +2995,13 @@ test("partitions deletion across project and authored roots", () => {
     executeBuilderRuntimeOperation({
       id: "instances.delete",
       state,
-      input: { instanceIds: ["first", "project-child", "second"] },
+      input: {
+        instanceIds: ["first", "project-child", "second"],
+        templateNameConfirmation: {
+          action: "delete",
+          templates: [{ instanceId: "project-child", oldName: "<p>" }],
+        },
+      },
       context: {
         createId: createIdFactory(),
         returnStorageChanges: true,

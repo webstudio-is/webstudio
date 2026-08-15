@@ -53,10 +53,12 @@ import {
   webstudioFragmentMutationInput,
 } from "./fragment";
 import {
+  blockTemplateNameConfirmationInput,
   createInstanceAppendPayload,
   createInstanceChild,
   insertIndexInput,
   instanceInsertModeInput,
+  requireBlockTemplateNameConfirmation,
 } from "./instances";
 import { createRuntimeMutation, type BuilderRuntimeMutation } from "./mutation";
 import { getSlotFragmentDropTargetMutable } from "./slot";
@@ -68,7 +70,11 @@ import {
   getNewFragmentContentModelWarnings,
 } from "./matcher";
 import { z } from "zod";
-import { assignUniqueBlockTemplateNamesMutable } from "./block";
+import {
+  assignUniqueBlockTemplateNamesMutable,
+  getBlockTemplateNameConfirmation,
+  type BlockTemplateNameConfirmation,
+} from "./block";
 
 const conflictResolutionInput = z.enum(["ours", "theirs", "merge"]);
 
@@ -84,6 +90,7 @@ export const insertComponentInput = z.object({
     .describe('Required when component is "ws:element"; omit otherwise.'),
   mode: instanceInsertModeInput.optional(),
   insertIndex: insertIndexInput.optional(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const insertFragmentInput = z
@@ -96,6 +103,7 @@ export const insertFragmentInput = z
     contentMode: z.boolean().optional(),
     mode: instanceInsertModeInput.optional(),
     insertIndex: insertIndexInput.optional(),
+    templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
   })
   .superRefine((input, context) => {
     if (
@@ -704,6 +712,7 @@ const createInsertFragmentMutation = <
   getResultDetails,
   validateContentModel = true,
   protectedChildCount = 0,
+  confirm,
   context,
 }: {
   state: ComponentInsertState;
@@ -723,6 +732,7 @@ const createInsertFragmentMutation = <
   }) => Details;
   validateContentModel?: boolean;
   protectedChildCount?: number;
+  confirm?: BlockTemplateNameConfirmation;
   context: BuilderRuntimeContext;
 }) => {
   const mutationState = getRequiredComponentInsertState(state);
@@ -824,6 +834,31 @@ const createInsertFragmentMutation = <
         : [],
     instances: nextData.instances,
   });
+  let requiredTemplateNameConfirmation:
+    | BlockTemplateNameConfirmation
+    | undefined;
+  if (mode === "replace" && parent.component === blockTemplateComponent) {
+    const insertedInstanceIds = insertedChildren.flatMap((child) =>
+      child.type === "id" ? [child.value] : []
+    );
+    const replacedInstances = parentChildren
+      .slice(protectedChildCount)
+      .flatMap((child) => {
+        if (child.type !== "id") {
+          return [];
+        }
+        const instance = mutationState.instances.get(child.value);
+        return instance === undefined ? [] : [instance];
+      });
+    requiredTemplateNameConfirmation = getBlockTemplateNameConfirmation({
+      changes: replacedInstances.map((instance, index) => ({
+        instance,
+        nextInstance: nextData.instances.get(insertedInstanceIds[index] ?? ""),
+      })),
+      instances: mutationState.instances,
+      props: mutationState.props.values(),
+    });
+  }
 
   if (validateContentModel) {
     const validationInstances = new Map(nextData.instances);
@@ -868,6 +903,11 @@ const createInsertFragmentMutation = <
       return throwBuilderRuntimeError("BAD_REQUEST", contentModelError.message);
     }
   }
+  requireBlockTemplateNameConfirmation({
+    required: requiredTemplateNameConfirmation,
+    confirm,
+    path: "mode",
+  });
 
   const createResult = (
     parentInstanceId: string,
@@ -1040,6 +1080,7 @@ export const insertComponent = (
     insertIndex: input.insertIndex,
     validateContentModel: false,
     protectedChildCount: options.protectedChildCount,
+    confirm: input.templateNameConfirmation,
     context,
   });
 };
@@ -1099,6 +1140,7 @@ export const insertCollection = (
       ),
     }),
     protectedChildCount: options.protectedChildCount,
+    confirm: input.templateNameConfirmation,
     context,
   });
 };
@@ -1190,6 +1232,7 @@ export const insertFragment = (
     conflictResolution: input.conflictResolution,
     contentMode: input.contentMode,
     protectedChildCount: options.protectedChildCount,
+    confirm: input.templateNameConfirmation,
     context,
   });
 };
