@@ -3344,7 +3344,13 @@ test.each([
   ).toMatchObject({
     payload: [],
     storageChanges: [
-      { root: { type: "external", identity: externalIdentity } },
+      {
+        root: { type: "external", identity: externalIdentity },
+        copySource: {
+          root: { type: "external", identity: externalIdentity },
+          instanceId: "selected",
+        },
+      },
     ],
     result: { instanceId: "generated-0" },
   });
@@ -3489,6 +3495,13 @@ test("copies content between authored storage roots", () => {
     storageChanges: [
       {
         root: { type: "external", identity: targetIdentity },
+        copySource: {
+          root: {
+            type: "external",
+            identity: identity("page:/post"),
+          },
+          instanceId: "selected",
+        },
         payload: expect.arrayContaining([
           expect.objectContaining({ namespace: "instances" }),
           expect.objectContaining({
@@ -3669,6 +3682,10 @@ test("copies project content into authored storage", () => {
     storageChanges: [
       {
         root: { type: "external", identity: identity("page:/post") },
+        copySource: {
+          root: { type: "project" },
+          instanceId: "project-selected",
+        },
         payload: expect.arrayContaining([
           expect.objectContaining({ namespace: "instances" }),
           expect.objectContaining({

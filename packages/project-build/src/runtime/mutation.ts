@@ -1,3 +1,4 @@
+import type { Instance } from "@webstudio-is/sdk";
 import type { BuilderNamespace } from "../contracts/namespaces";
 import type { BuilderPatchChange } from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
@@ -14,6 +15,10 @@ export type ContentStoragePatchChange =
 export type ContentStorageChange = {
   root: ContentStorageRoot;
   payload: ContentStoragePatchChange[];
+  copySource?: Readonly<{
+    root: ContentStorageRoot;
+    instanceId: Instance["id"];
+  }>;
 };
 
 export type BuilderRuntimeMutation<

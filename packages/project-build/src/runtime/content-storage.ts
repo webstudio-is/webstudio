@@ -711,6 +711,7 @@ export const executeContentStorageMutation = <
   protectedInstanceIds = [],
   crossRootError = "Mutation crosses an authored storage boundary.",
   allowCrossRoot = false,
+  copySourceInstanceId,
   validationSkippedNamespaces = [],
   execute,
 }: {
@@ -723,6 +724,7 @@ export const executeContentStorageMutation = <
   protectedInstanceIds?: readonly Instance["id"][];
   crossRootError?: string;
   allowCrossRoot?: boolean;
+  copySourceInstanceId?: Instance["id"];
   validationSkippedNamespaces?: readonly BuilderPatchChange["namespace"][];
   execute: (
     state: BuilderState,
@@ -815,10 +817,22 @@ export const executeContentStorageMutation = <
     payload: mutation.payload,
     validationSkippedRecordIds,
   });
+  const annotatedStorageChange =
+    storageChange !== undefined &&
+    copySourceInstanceId !== undefined &&
+    sourceRoot !== undefined
+      ? {
+          ...storageChange,
+          copySource: {
+            root: sourceRoot,
+            instanceId: copySourceInstanceId,
+          },
+        }
+      : storageChange;
   const storageChanges =
-    storageChange === undefined
+    annotatedStorageChange === undefined
       ? mutation.storageChanges
-      : [...(mutation.storageChanges ?? []), storageChange];
+      : [...(mutation.storageChanges ?? []), annotatedStorageChange];
   return {
     ...mutation,
     payload: [],

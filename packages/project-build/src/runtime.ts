@@ -29,6 +29,7 @@ export * from "./runtime/lookup";
 export * from "./runtime/matcher";
 export * from "./runtime/mdx-authored-content";
 export * from "./runtime/mdx-materialization";
+export * from "./runtime/mdx-storage-adapter";
 export * from "./runtime/mdx-template-resolution";
 export * from "./runtime/mutation";
 export * from "./runtime/output";

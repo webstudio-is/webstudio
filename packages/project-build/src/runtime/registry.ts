@@ -1274,6 +1274,7 @@ export const builderRuntimeOperations = [
         returnStorageChanges: context.returnStorageChanges,
         protectTemplatesList: true,
         allowCrossRoot: true,
+        copySourceInstanceId: input.sourceInstanceId,
         validationSkippedNamespaces: ["dataSources", "resources"],
         crossRootError:
           "Copying content across authored storage roots is not supported.",
@@ -1361,6 +1362,7 @@ export const builderRuntimeOperations = [
         materializedRoots: context.materializedContent,
         returnStorageChanges: context.returnStorageChanges,
         protectTemplatesList: true,
+        copySourceInstanceId: input.sourceInstanceId,
         crossRootError:
           "Copying content across authored storage roots is not supported.",
         source: { type: "instance", instanceId: input.sourceInstanceId },

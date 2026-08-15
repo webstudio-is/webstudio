@@ -81,6 +81,12 @@ export const createRuntimeMutationExecutionSchema = <
         z.object({
           root: contentStorageRoot,
           payload: z.array(contentStoragePatchChange),
+          copySource: z
+            .object({
+              root: contentStorageRoot,
+              instanceId: z.string().min(1),
+            })
+            .optional(),
         })
       )
       .optional(),
