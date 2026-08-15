@@ -1135,6 +1135,7 @@ export const createInstanceAppendPayload = ({
   styleSources,
   styleSourceSelections,
   styles,
+  protectedChildCount = 0,
 }: {
   parent: Instance;
   instances: Instances;
@@ -1146,12 +1147,14 @@ export const createInstanceAppendPayload = ({
   styleSources: Iterable<StyleSource>;
   styleSourceSelections: Iterable<StyleSourceSelection>;
   styles: Iterable<StyleDecl>;
+  protectedChildCount?: number;
 }) => {
   const parentChildren = parent.children ?? [];
+  const replaceableChildren = parentChildren.slice(protectedChildCount);
   const replacedInstanceIds =
     mode === "replace"
       ? new Set(
-          parentChildren.flatMap((child) =>
+          replaceableChildren.flatMap((child) =>
             child.type === "id"
               ? collectInstanceIds(instances, child.value)
               : []
@@ -1182,9 +1185,9 @@ export const createInstanceAppendPayload = ({
       patches: [
         ...(mode === "replace"
           ? sortChildRemovalPatches(
-              parentChildren.map((_child, index) => ({
+              replaceableChildren.map((_child, index) => ({
                 op: "remove" as const,
-                path: [parent.id, "children", index] as [
+                path: [parent.id, "children", protectedChildCount + index] as [
                   string,
                   "children",
                   number,

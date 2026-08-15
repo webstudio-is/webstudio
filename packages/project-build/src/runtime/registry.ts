@@ -56,6 +56,7 @@ import {
   executeContentStorageMutation,
   executeContentStoragePropMutation,
   executeContentStorageTextReplacement,
+  getContentStorageProtectedChildCount,
 } from "./content-storage";
 
 export type BuilderRuntimeOperation<
@@ -919,7 +920,23 @@ export const builderRuntimeOperations = [
     }),
     components.insertComponentInput,
     ({ state, input, context }) =>
-      components.insertComponent(state, input, context)
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target: {
+          type: "children",
+          parentInstanceId: input.parentInstanceId,
+        },
+        execute: (mutationState, root) =>
+          components.insertComponent(mutationState, input, context, {
+            protectedChildCount: getContentStorageProtectedChildCount({
+              state: mutationState,
+              root,
+              parentInstanceId: input.parentInstanceId,
+            }),
+          }),
+      })
   ),
   runtimeOperation(
     "instances.insertCollection",
@@ -929,32 +946,48 @@ export const builderRuntimeOperations = [
       writeNamespaces: components.componentInsertNamespaces,
     }),
     collection.insertCollectionInput,
-    ({ state, input, context }) => {
-      const warnings = [
-        ...(input.data.type === "expression"
-          ? getScopedExpressionWarnings(
-              state,
-              input.parentInstanceId,
-              ["data", "value"],
-              input.data.value
-            )
-          : []),
-        ...listFragmentExpressions(input.itemFragment).flatMap((entry) =>
-          getScopedExpressionWarnings(
-            state,
-            input.parentInstanceId,
-            ["itemFragment", ...entry.path],
-            entry.expression,
-            entry.allowAssignment,
-            ["collectionItem", "collectionItemKey", ...entry.variables]
-          )
-        ),
-      ];
-      return withExpressionWarnings(
-        components.insertCollection(state, input, context),
-        warnings
-      );
-    }
+    ({ state, input, context }) =>
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target: {
+          type: "children",
+          parentInstanceId: input.parentInstanceId,
+        },
+        execute: (mutationState, root) => {
+          const warnings = [
+            ...(input.data.type === "expression"
+              ? getScopedExpressionWarnings(
+                  mutationState,
+                  input.parentInstanceId,
+                  ["data", "value"],
+                  input.data.value
+                )
+              : []),
+            ...listFragmentExpressions(input.itemFragment).flatMap((entry) =>
+              getScopedExpressionWarnings(
+                mutationState,
+                input.parentInstanceId,
+                ["itemFragment", ...entry.path],
+                entry.expression,
+                entry.allowAssignment,
+                ["collectionItem", "collectionItemKey", ...entry.variables]
+              )
+            ),
+          ];
+          return withExpressionWarnings(
+            components.insertCollection(mutationState, input, context, {
+              protectedChildCount: getContentStorageProtectedChildCount({
+                state: mutationState,
+                root,
+                parentInstanceId: input.parentInstanceId,
+              }),
+            }),
+            warnings
+          );
+        },
+      })
   ),
   runtimeOperation(
     "instances.insertFragment",
@@ -964,8 +997,29 @@ export const builderRuntimeOperations = [
       writeNamespaces: components.componentInsertNamespaces,
     }),
     components.insertFragmentInput,
-    ({ state, input, context }) =>
-      components.insertFragment(state, input, context)
+    ({ state, input, context }) => {
+      const parentInstanceId = input.parentInstanceId;
+      if (
+        parentInstanceId === undefined ||
+        input.fragment.children.length === 0
+      ) {
+        return components.insertFragment(state, input, context);
+      }
+      return executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target: { type: "children", parentInstanceId },
+        execute: (mutationState, root) =>
+          components.insertFragment(mutationState, input, context, {
+            protectedChildCount: getContentStorageProtectedChildCount({
+              state: mutationState,
+              root,
+              parentInstanceId,
+            }),
+          }),
+      });
+    }
   ),
   runtimeOperation(
     "slots.attach",

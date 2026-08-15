@@ -67,6 +67,33 @@ export type ContentStorageProjection = Readonly<{
   >;
 }>;
 
+export const getContentStorageProtectedChildCount = ({
+  state,
+  root,
+  parentInstanceId,
+}: {
+  state: BuilderState;
+  root: ContentStorageRoot;
+  parentInstanceId: Instance["id"];
+}) => {
+  if (
+    root.type !== "external" ||
+    root.identity.blockInstanceId !== parentInstanceId
+  ) {
+    return 0;
+  }
+  return (
+    state.instances
+      ?.get(parentInstanceId)
+      ?.children.filter(
+        (child) =>
+          child.type === "id" &&
+          state.instances?.get(child.value)?.component ===
+            blockTemplateComponent
+      ).length ?? 0
+  );
+};
+
 export const projectContentStorageChanges = ({
   state,
   changes,
@@ -593,10 +620,10 @@ export const executeContentStorageMutation = <
   materializedRoots?: readonly MaterializedContentRoot[];
   returnStorageChanges?: boolean;
   target: ContentStorageTarget;
-  execute: (state: BuilderState) => Mutation;
+  execute: (state: BuilderState, root: ContentStorageRoot) => Mutation;
 }): Mutation => {
   if (materializedRoots === undefined || materializedRoots.length === 0) {
-    return execute(state);
+    return execute(state, projectStorageRoot);
   }
   const projection = createContentStorageProjection({
     state,
@@ -604,7 +631,7 @@ export const executeContentStorageMutation = <
   });
   const root = resolveContentStorageRoot(projection, target);
   if (root.type === "project") {
-    return execute(state);
+    return execute(state, root);
   }
   if (returnStorageChanges !== true) {
     return throwBuilderRuntimeError(
@@ -613,7 +640,7 @@ export const executeContentStorageMutation = <
     );
   }
 
-  const mutation = execute(projection.state);
+  const mutation = execute(projection.state, root);
   const storageChange = createExternalStorageChange({
     projection,
     root,

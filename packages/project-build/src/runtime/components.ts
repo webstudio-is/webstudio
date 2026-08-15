@@ -679,6 +679,7 @@ const createInsertFragmentMutation = <
   additionalAvailableVariables = [],
   getResultDetails,
   validateContentModel = true,
+  protectedChildCount = 0,
   context,
 }: {
   state: ComponentInsertState;
@@ -695,6 +696,7 @@ const createInsertFragmentMutation = <
     newDataSourceIds: Map<string, string>;
   }) => Details;
   validateContentModel?: boolean;
+  protectedChildCount?: number;
   context: BuilderRuntimeContext;
 }) => {
   const mutationState = getRequiredComponentInsertState(state);
@@ -728,10 +730,12 @@ const createInsertFragmentMutation = <
   const parentChildren = parent.children ?? [];
   const insertIndex =
     mode === "replace"
-      ? 0
+      ? protectedChildCount
       : mode === "prepend"
-        ? 0
-        : (explicitInsertIndex ?? parentChildren.length);
+        ? protectedChildCount
+        : explicitInsertIndex === undefined
+          ? parentChildren.length
+          : protectedChildCount + explicitInsertIndex;
   if (insertIndex > parentChildren.length) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
@@ -786,9 +790,9 @@ const createInsertFragmentMutation = <
     parent,
     replacedInstanceIds:
       mode === "replace"
-        ? parentChildren.flatMap((child) =>
-            child.type === "id" ? [child.value] : []
-          )
+        ? parentChildren
+            .slice(protectedChildCount)
+            .flatMap((child) => (child.type === "id" ? [child.value] : []))
         : [],
     instances: nextData.instances,
   });
@@ -898,6 +902,7 @@ const createInsertFragmentMutation = <
       styleSources: mutationState.styleSources.values(),
       styleSourceSelections: mutationState.styleSourceSelections.values(),
       styles: mutationState.styles.values(),
+      protectedChildCount,
     });
   const insertPayload = createFragmentInsertPayload({
     before: mutationState,
@@ -919,7 +924,8 @@ const createInsertFragmentMutation = <
 export const insertComponent = (
   state: ComponentInsertState,
   input: z.infer<typeof insertComponentInput>,
-  context: BuilderRuntimeContext
+  context: BuilderRuntimeContext,
+  options: { protectedChildCount?: number } = {}
 ) => {
   const mutationState = getRequiredComponentInsertState(state);
   const parent = mutationState.instances.get(input.parentInstanceId);
@@ -1005,6 +1011,7 @@ export const insertComponent = (
     mode: input.mode,
     insertIndex: input.insertIndex,
     validateContentModel: false,
+    protectedChildCount: options.protectedChildCount,
     context,
   });
 };
@@ -1012,7 +1019,8 @@ export const insertComponent = (
 export const insertCollection = (
   state: ComponentInsertState,
   input: z.infer<typeof insertCollectionInput>,
-  context: BuilderRuntimeContext
+  context: BuilderRuntimeContext,
+  options: { protectedChildCount?: number } = {}
 ) => {
   const mutationState = getRequiredComponentInsertState(state);
   if (mutationState.instances.has(input.parentInstanceId) === false) {
@@ -1062,6 +1070,7 @@ export const insertCollection = (
         collection.itemKeyParameterId
       ),
     }),
+    protectedChildCount: options.protectedChildCount,
     context,
   });
 };
@@ -1107,7 +1116,8 @@ const createInsertTokenFragmentMutation = ({
 export const insertFragment = (
   state: ComponentInsertState,
   input: z.infer<typeof insertFragmentInput>,
-  context: BuilderRuntimeContext
+  context: BuilderRuntimeContext,
+  options: { protectedChildCount?: number } = {}
 ): BuilderRuntimeMutation<FragmentInsertResult> => {
   const htmlEmbedError = validateFragmentHtmlEmbedCode(input.fragment);
   if (htmlEmbedError !== undefined) {
@@ -1151,6 +1161,7 @@ export const insertFragment = (
     insertIndex: input.insertIndex,
     conflictResolution: input.conflictResolution,
     contentMode: input.contentMode,
+    protectedChildCount: options.protectedChildCount,
     context,
   });
 };

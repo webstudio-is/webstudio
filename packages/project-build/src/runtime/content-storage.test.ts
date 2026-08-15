@@ -83,6 +83,23 @@ const createState = (source: Prop = assetSource()): BuilderState => ({
   props: new Map([[source.id, source]]),
 });
 
+const createStructuralState = () => ({
+  ...createState(),
+  pages: createDefaultPages({ rootInstanceId: "block" }),
+  dataSources: new Map(),
+  resources: new Map(),
+  styleSources: new Map(),
+  styleSourceSelections: new Map(),
+  styles: new Map(),
+  breakpoints: new Map(),
+  assets: new Map(),
+});
+
+const createIdFactory = () => {
+  let index = 0;
+  return () => `generated-${index++}`;
+};
+
 const createNestedMaterializedContent = () => {
   const parentIdentity = identity("page:/post");
   const nestedIdentity = identity(
@@ -1388,4 +1405,233 @@ test("routes prop updates to the innermost nested storage root", () => {
       },
     ],
   });
+});
+
+test("inserts a component into direct authored Content Block children", () => {
+  const state = createStructuralState();
+  const externalIdentity = identity("page:/post");
+
+  const mutation = executeBuilderRuntimeOperation({
+    id: "instances.insertComponent",
+    state,
+    input: {
+      parentInstanceId: "block",
+      component: elementComponent,
+      tag: "section",
+    },
+    context: {
+      createId: createIdFactory(),
+      returnStorageChanges: true,
+      materializedContent: [
+        { identity: externalIdentity, fragment: fragment("external") },
+      ],
+    },
+  });
+
+  expect(mutation).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: expect.arrayContaining([
+          {
+            namespace: "fragment",
+            patches: [expect.objectContaining({ path: ["children", 1] })],
+          },
+        ]),
+      },
+    ],
+    result: { parentInstanceId: "block" },
+  });
+  expect(state.instances?.get("block")?.children).toEqual([
+    { type: "id", value: "templates" },
+  ]);
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.insertComponent",
+      state,
+      input: {
+        parentInstanceId: "block",
+        component: elementComponent,
+        tag: "section",
+      },
+      context: {
+        createId: createIdFactory(),
+        materializedContent: [
+          { identity: externalIdentity, fragment: fragment("external") },
+        ],
+      },
+    })
+  ).toThrow("must handle authored storage changes");
+});
+
+test.each([
+  { label: "explicit first index", input: { insertIndex: 0 } },
+  { label: "prepend", input: { mode: "prepend" as const } },
+  { label: "replace", input: { mode: "replace" as const } },
+])("inserts at direct authored coordinates with $label", ({ input }) => {
+  const externalIdentity = identity("page:/post");
+  const mutation = executeBuilderRuntimeOperation({
+    id: "instances.insertComponent",
+    state: createStructuralState(),
+    input: {
+      parentInstanceId: "block",
+      component: elementComponent,
+      tag: "section",
+      ...input,
+    },
+    context: {
+      createId: createIdFactory(),
+      returnStorageChanges: true,
+      materializedContent: [
+        { identity: externalIdentity, fragment: fragment("external") },
+      ],
+    },
+  });
+  expect(mutation).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: expect.arrayContaining([
+          {
+            namespace: "fragment",
+            patches: expect.arrayContaining([
+              expect.objectContaining({ path: ["children", 0] }),
+            ]),
+          },
+        ]),
+      },
+    ],
+    result: {
+      removedInstanceIds: input.mode === "replace" ? ["external"] : [],
+    },
+  });
+});
+
+test("inserts a fragment into an external descendant", () => {
+  const state = createStructuralState();
+  const externalIdentity = identity("page:/post");
+  const externalFragment = fragment("external");
+  externalFragment.instances[0].tag = "div";
+  const insertedFragment = fragment("incoming");
+  insertedFragment.instances[0].tag = "article";
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.insertFragment",
+      state,
+      input: {
+        parentInstanceId: "external",
+        fragment: insertedFragment,
+        contentMode: true,
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: [expect.objectContaining({ namespace: "instances" })],
+      },
+    ],
+    result: { parentInstanceId: "external" },
+  });
+});
+
+test("inserts into the innermost nested storage scope", () => {
+  const { nestedIdentity, roots } = createNestedMaterializedContent();
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.insertComponent",
+      state: createStructuralState(),
+      input: {
+        parentInstanceId: "nested-content",
+        component: elementComponent,
+        tag: "span",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: roots,
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [{ root: { type: "external", identity: nestedIdentity } }],
+  });
+});
+
+test("keeps token-only fragments project-owned when a parent is provided", () => {
+  const tokenFragment = fragment("unused");
+  tokenFragment.children = [];
+  tokenFragment.instances = [];
+  tokenFragment.styleSources = [{ type: "token", id: "brand", name: "Brand" }];
+  tokenFragment.styles = [
+    {
+      styleSourceId: "brand",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+  ];
+  tokenFragment.breakpoints = [{ id: "base", label: "" }];
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.insertFragment",
+      state: createStructuralState(),
+      input: {
+        parentInstanceId: "external",
+        fragment: tokenFragment,
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: fragment("external") },
+        ],
+      },
+    })
+  ).toMatchObject({
+    storageChanges: undefined,
+    payload: expect.arrayContaining([
+      expect.objectContaining({ namespace: "styleSources" }),
+    ]),
+    result: { rootInstanceIds: [] },
+  });
+});
+
+test("routes collection insertion through Content-mode validation", () => {
+  const externalIdentity = identity("page:/post");
+  const externalFragment = fragment("external");
+  externalFragment.instances[0].tag = "div";
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.insertCollection",
+      state: createStructuralState(),
+      input: {
+        parentInstanceId: "external",
+        data: { type: "json", value: [] },
+        itemFragment: fragment("item"),
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toThrow("not editable in content mode");
 });
