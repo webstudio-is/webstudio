@@ -2365,6 +2365,7 @@ describe("builder runtime registry", () => {
       ["runtimeUi.integrate", {}],
       ["instances.insertComponent", { parentInstanceId: "body" }],
       ["instances.insertCollection", { parentInstanceId: "body" }],
+      ["instances.insertMdxText", { parentInstanceId: "body" }],
       ["instances.insertFragment", { parentInstanceId: "body" }],
       ["slots.attach", {}],
       ["slots.extract", {}],

@@ -1,5 +1,10 @@
 import equal from "fast-deep-equal";
-import { serializeMdxDocument } from "@webstudio-is/content-engine/mdx";
+import {
+  parseMdxDocument,
+  serializeMdxDocument,
+  type MdxAuthoredNode,
+  type MdxDocument,
+} from "@webstudio-is/content-engine/mdx";
 import {
   getStyleDeclKey,
   type ContentBlockExternalContentIdentity,
@@ -16,7 +21,7 @@ import {
   reconcileMdxAuthoredContent,
   type MaterializedMdxAuthoredContentRoot,
 } from "./mdx-authored-content";
-import type { ContentStorageChange } from "./mutation";
+import { hasContentStorageChange, type ContentStorageChange } from "./mutation";
 
 export type PendingMdxContentStorageWrite = Readonly<{
   root: Extract<ContentStorageRoot, { type: "external" }>;
@@ -125,6 +130,238 @@ const applyStorageChanges = ({
   return fromFragmentState({ state, children: fragmentRoot.children });
 };
 
+const keepOriginalRecords = <Record>(
+  records: readonly Record[],
+  original: readonly Record[],
+  getKey: (record: Record) => string
+) => {
+  const originalKeys = new Set(original.map(getKey));
+  return records.filter((record) => originalKeys.has(getKey(record)));
+};
+
+const removeInsertedMdxRecords = ({
+  root,
+  fragment,
+  change,
+}: {
+  root: MaterializedMdxAuthoredContentRoot;
+  fragment: WebstudioFragment;
+  change: NonNullable<ContentStorageChange["mdxInsert"]>;
+}): WebstudioFragment => {
+  const insertedIds = new Set(change.instanceIds);
+  const insertedRootIds = new Set(change.rootInstanceIds);
+  const instances = fragment.instances
+    .filter(({ id }) => insertedIds.has(id) === false)
+    .map((instance) =>
+      instance.id === change.parentInstanceId
+        ? {
+            ...instance,
+            children: instance.children.filter(
+              (child) =>
+                child.type !== "id" ||
+                insertedRootIds.has(child.value) === false
+            ),
+          }
+        : instance
+    );
+  return {
+    children:
+      change.parentInstanceId === root.identity.blockInstanceId
+        ? fragment.children.filter(
+            (child) =>
+              child.type !== "id" || insertedRootIds.has(child.value) === false
+          )
+        : fragment.children,
+    instances,
+    props: fragment.props.filter(
+      ({ instanceId }) => insertedIds.has(instanceId) === false
+    ),
+    assets: keepOriginalRecords(
+      fragment.assets,
+      root.fragment.assets,
+      ({ id }) => id
+    ),
+    dataSources: keepOriginalRecords(
+      fragment.dataSources,
+      root.fragment.dataSources,
+      ({ id }) => id
+    ),
+    resources: keepOriginalRecords(
+      fragment.resources,
+      root.fragment.resources,
+      ({ id }) => id
+    ),
+    breakpoints: keepOriginalRecords(
+      fragment.breakpoints,
+      root.fragment.breakpoints,
+      ({ id }) => id
+    ),
+    styleSources: keepOriginalRecords(
+      fragment.styleSources,
+      root.fragment.styleSources,
+      ({ id }) => id
+    ),
+    styleSourceSelections: fragment.styleSourceSelections.filter(
+      ({ instanceId }) => insertedIds.has(instanceId) === false
+    ),
+    styles: keepOriginalRecords(
+      fragment.styles,
+      root.fragment.styles,
+      getStyleDeclKey
+    ),
+  };
+};
+
+const hasSameValues = (left: ReadonlySet<string>, right: ReadonlySet<string>) =>
+  left.size === right.size &&
+  Array.from(left).every((value) => right.has(value));
+
+const assertMdxInsertMatchesFragment = ({
+  root,
+  fragment,
+  change,
+}: {
+  root: MaterializedMdxAuthoredContentRoot;
+  fragment: WebstudioFragment;
+  change: NonNullable<ContentStorageChange["mdxInsert"]>;
+}) => {
+  const originalIds = new Set(root.fragment.instances.map(({ id }) => id));
+  const addedIds = new Set(
+    fragment.instances
+      .filter(({ id }) => originalIds.has(id) === false)
+      .map(({ id }) => id)
+  );
+  const insertedIds = new Set(change.instanceIds);
+  const parentChildren =
+    change.parentInstanceId === root.identity.blockInstanceId
+      ? fragment.children
+      : fragment.instances.find(({ id }) => id === change.parentInstanceId)
+          ?.children;
+  const addedChildIds = new Set(
+    parentChildren?.flatMap((child) =>
+      child.type === "id" && addedIds.has(child.value) ? [child.value] : []
+    ) ?? []
+  );
+  const insertedRootIds = new Set(change.rootInstanceIds);
+  if (
+    insertedIds.size !== change.instanceIds.length ||
+    insertedRootIds.size !== change.rootInstanceIds.length ||
+    hasSameValues(addedIds, insertedIds) === false ||
+    hasSameValues(addedChildIds, insertedRootIds) === false
+  ) {
+    throw new Error(
+      "Pasted MDX metadata does not match its semantic insertion"
+    );
+  }
+};
+
+const getNodeAtPath = (
+  document: MdxDocument,
+  path: readonly number[]
+): Exclude<MdxAuthoredNode, { type: "text" | "comment" }> | undefined => {
+  let nodes = document.children;
+  let node: MdxAuthoredNode | undefined;
+  for (const index of path) {
+    node = nodes[index];
+    if (node === undefined || node.type === "text" || node.type === "comment") {
+      return;
+    }
+    nodes = node.children;
+  }
+  return node?.type === "text" || node?.type === "comment" ? undefined : node;
+};
+
+const insertAuthoredNodes = ({
+  root,
+  document,
+  change,
+  nodes,
+}: {
+  root: MaterializedMdxAuthoredContentRoot;
+  document: MdxDocument;
+  change: NonNullable<ContentStorageChange["mdxInsert"]>;
+  nodes: readonly MdxAuthoredNode[];
+}): MdxDocument => {
+  const next = structuredClone(document);
+  let children = next.children as MdxAuthoredNode[];
+  if (change.parentInstanceId !== root.identity.blockInstanceId) {
+    const provenance = root.provenance.nodes.find(
+      ({ instanceId }) => instanceId === change.parentInstanceId
+    );
+    if (provenance?.type !== "element") {
+      throw new Error(
+        "Pasted MDX can only target an authored element or Content Block root"
+      );
+    }
+    const parent = getNodeAtPath(next, provenance.path);
+    if (parent?.type !== "element") {
+      throw new Error("Pasted MDX parent provenance is stale");
+    }
+    children = parent.children as MdxAuthoredNode[];
+  }
+  if (change.position === "replace") {
+    children.splice(0, children.length, ...structuredClone(nodes));
+    return next;
+  }
+  let authoredIndex = change.position === "append" ? children.length : 0;
+  if (change.position === "index") {
+    let renderedIndex = 0;
+    authoredIndex = children.length;
+    for (const [index, node] of children.entries()) {
+      if (node.type === "comment") {
+        continue;
+      }
+      if (renderedIndex === change.childIndex) {
+        authoredIndex = index;
+        break;
+      }
+      renderedIndex += 1;
+    }
+  }
+  children.splice(authoredIndex, 0, ...structuredClone(nodes));
+  return next;
+};
+
+const reconcileMdxInsert = async ({
+  root,
+  changes,
+}: {
+  root: MaterializedMdxAuthoredContentRoot;
+  changes: readonly ContentStorageChange[];
+}) => {
+  const inserts = changes.flatMap(({ mdxInsert }) =>
+    mdxInsert === undefined ? [] : [mdxInsert]
+  );
+  if (inserts.length !== 1 || changes.length !== 1) {
+    throw new Error(
+      "An MDX paste must be persisted before applying more changes to the same storage root"
+    );
+  }
+  const [insert] = inserts;
+  const finalFragment = applyStorageChanges({ root, changes });
+  assertMdxInsertMatchesFragment({
+    root,
+    fragment: finalFragment,
+    change: insert,
+  });
+  const baseFragment = removeInsertedMdxRecords({
+    root,
+    fragment: finalFragment,
+    change: insert,
+  });
+  const document = reconcileMdxAuthoredContent({
+    root,
+    fragment: baseFragment,
+  });
+  const pasted = await parseMdxDocument({ source: insert.source });
+  return insertAuthoredNodes({
+    root,
+    document,
+    change: insert,
+    nodes: pasted.children,
+  });
+};
+
 const getLoadedRoot = ({
   loadedRoots,
   loadedByIdentity,
@@ -229,7 +466,7 @@ export const prepareMdxContentStorageWrites = async ({
     }
   >();
   for (const change of changes) {
-    if (change.payload.every(({ patches }) => patches.length === 0)) {
+    if (hasContentStorageChange(change) === false) {
       continue;
     }
     if (change.root.type !== "external") {
@@ -273,8 +510,14 @@ export const prepareMdxContentStorageWrites = async ({
         `MDX storage root "${root.identity.blockInstanceId}" authored provenance is stale`
       );
     }
-    const fragment = applyStorageChanges({ root, changes: rootChanges });
-    const document = reconcileMdxAuthoredContent({ root, fragment });
+    const document = rootChanges.some(
+      ({ mdxInsert }) => mdxInsert !== undefined
+    )
+      ? await reconcileMdxInsert({ root, changes: rootChanges })
+      : reconcileMdxAuthoredContent({
+          root,
+          fragment: applyStorageChanges({ root, changes: rootChanges }),
+        });
     writes.push({
       root: { type: "external", identity: root.identity },
       expectedRevision: root.identity.revision,

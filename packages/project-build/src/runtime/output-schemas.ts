@@ -33,6 +33,7 @@ import {
 } from "./component-insert-contract";
 import { expressionWarningSchema } from "./expression-validation";
 import { designTokenImportPlanEntrySchema } from "./design-token-import";
+import { mdxPasteResult } from "./mdx-paste";
 
 const looseObject = <Shape extends z.ZodRawShape>(shape: Shape) =>
   z.looseObject(shape);
@@ -85,6 +86,16 @@ export const createRuntimeMutationExecutionSchema = <
             .object({
               root: contentStorageRoot,
               instanceId: z.string().min(1),
+            })
+            .optional(),
+          mdxInsert: z
+            .object({
+              source: z.string(),
+              parentInstanceId: z.string(),
+              childIndex: z.number().int().nonnegative(),
+              position: z.enum(["append", "prepend", "replace", "index"]),
+              instanceIds: z.array(z.string()),
+              rootInstanceIds: z.array(z.string()),
             })
             .optional(),
         })
@@ -485,6 +496,7 @@ export const runtimeOutputSchemas = {
     warnings: expressionWarnings.optional(),
   }),
   "instances.insertFragment": fragmentInsertResult,
+  "instances.insertMdxText": mdxPasteResult,
   "slots.attach": looseObject({ slotId: id, fragmentId: id }),
   "slots.extract": looseObject({ slotId: id, fragmentId: id, instanceId: id }),
   "instances.move": instanceIdsResult,

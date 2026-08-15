@@ -16,11 +16,12 @@ import { getExpressionIdentifiers } from "@webstudio-is/expression";
 import type { BuilderState } from "../state/builder-state";
 import { applyBuilderPatchTransactions } from "../state/patch";
 import equal from "fast-deep-equal";
-import type { BuilderRuntimeMutation } from "./mutation";
 import type { BuilderPatchChange } from "../contracts/patch";
-import type {
-  ContentStorageChange,
-  ContentStoragePatchChange,
+import {
+  hasContentStorageChange,
+  type BuilderRuntimeMutation,
+  type ContentStorageChange,
+  type ContentStoragePatchChange,
 } from "./mutation";
 import {
   getContentModeCapabilities,
@@ -712,6 +713,7 @@ export const executeContentStorageMutation = <
   crossRootError = "Mutation crosses an authored storage boundary.",
   allowCrossRoot = false,
   copySourceInstanceId,
+  mdxInsert,
   validationSkippedNamespaces = [],
   execute,
 }: {
@@ -725,6 +727,12 @@ export const executeContentStorageMutation = <
   crossRootError?: string;
   allowCrossRoot?: boolean;
   copySourceInstanceId?: Instance["id"];
+  mdxInsert?: Readonly<{
+    source: string;
+    parentInstanceId: Instance["id"];
+    childIndex: number;
+    position: "append" | "prepend" | "replace" | "index";
+  }>;
   validationSkippedNamespaces?: readonly BuilderPatchChange["namespace"][];
   execute: (
     state: BuilderState,
@@ -817,18 +825,34 @@ export const executeContentStorageMutation = <
     payload: mutation.payload,
     validationSkippedRecordIds,
   });
-  const annotatedStorageChange =
-    storageChange !== undefined &&
-    copySourceInstanceId !== undefined &&
-    sourceRoot !== undefined
-      ? {
-          ...storageChange,
-          copySource: {
-            root: sourceRoot,
-            instanceId: copySourceInstanceId,
-          },
-        }
-      : storageChange;
+  let annotatedStorageChange: ContentStorageChange | undefined = storageChange;
+  if (copySourceInstanceId !== undefined && sourceRoot !== undefined) {
+    annotatedStorageChange = {
+      root,
+      payload: storageChange?.payload ?? [],
+      copySource: {
+        root: sourceRoot,
+        instanceId: copySourceInstanceId,
+      },
+    };
+  }
+  if (mdxInsert !== undefined) {
+    const result = mutation.result as Record<string, unknown>;
+    if (
+      Array.isArray(result.instanceIds) === false ||
+      Array.isArray(result.rootInstanceIds) === false
+    ) {
+      throw new Error("MDX insertion result is missing inserted instance ids");
+    }
+    annotatedStorageChange = {
+      ...(annotatedStorageChange ?? { root, payload: [] }),
+      mdxInsert: {
+        ...mdxInsert,
+        instanceIds: result.instanceIds as string[],
+        rootInstanceIds: result.rootInstanceIds as string[],
+      },
+    };
+  }
   const storageChanges =
     annotatedStorageChange === undefined
       ? mutation.storageChanges
@@ -837,7 +861,7 @@ export const executeContentStorageMutation = <
     ...mutation,
     payload: [],
     storageChanges,
-    noop: storageChanges?.some((change) => change.payload.length > 0) !== true,
+    noop: storageChanges?.some(hasContentStorageChange) !== true,
   } as Mutation;
 };
 

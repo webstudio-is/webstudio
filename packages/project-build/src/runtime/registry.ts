@@ -28,6 +28,7 @@ import * as fonts from "./fonts";
 import * as instanceDuplicate from "./instance-duplicate";
 import * as instances from "./instances";
 import * as migrations from "./migrations";
+import * as mdxPaste from "./mdx-paste";
 import * as pageCopy from "./page-copy";
 import * as pages from "./pages";
 import * as projectSettings from "./project-settings";
@@ -62,6 +63,7 @@ import {
   executeContentStorageStructuralMutation,
   executeContentStorageTextReplacement,
   getContentStorageProtectedChildCount,
+  resolveContentStorageRoot,
 } from "./content-storage";
 
 export type BuilderRuntimeOperation<
@@ -993,6 +995,66 @@ export const builderRuntimeOperations = [
           );
         },
       })
+  ),
+  runtimeOperation(
+    "instances.insertMdxText",
+    api("insert-mdx-text", "insertMdxText"),
+    mutationContract({
+      readNamespaces: components.componentInsertReadNamespaces,
+      writeNamespaces: components.componentInsertNamespaces,
+    }),
+    mdxPaste.insertMdxTextInput,
+    async ({ state, input, context }) => {
+      const target = {
+        type: "children" as const,
+        parentInstanceId: input.parentInstanceId,
+      };
+      const projection = createContentStorageProjection({
+        state,
+        materializedRoots: context.materializedContent ?? [],
+      });
+      const root = resolveContentStorageRoot(projection, target);
+      const parent = projection.state.instances?.get(input.parentInstanceId);
+      if (parent === undefined) {
+        return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+      }
+      const protectedChildCount = getContentStorageProtectedChildCount({
+        state: projection.state,
+        root,
+        parentInstanceId: input.parentInstanceId,
+      });
+      const childIndex =
+        input.mode === "replace" || input.mode === "prepend"
+          ? 0
+          : (input.insertIndex ??
+            Math.max(0, parent.children.length - protectedChildCount));
+      const mutation = await mdxPaste.insertMdxText({
+        state: projection.state,
+        input,
+        context,
+        destinationIdentity:
+          root.type === "external" ? root.identity : undefined,
+        protectedChildCount,
+      });
+      return executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target,
+        mdxInsert: {
+          source: input.source,
+          parentInstanceId: input.parentInstanceId,
+          childIndex,
+          position:
+            input.mode === "replace" || input.mode === "prepend"
+              ? input.mode
+              : input.insertIndex === undefined
+                ? "append"
+                : "index",
+        },
+        execute: () => mutation,
+      });
+    }
   ),
   runtimeOperation(
     "instances.insertFragment",

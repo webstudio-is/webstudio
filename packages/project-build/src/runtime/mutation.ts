@@ -19,7 +19,19 @@ export type ContentStorageChange = {
     root: ContentStorageRoot;
     instanceId: Instance["id"];
   }>;
+  mdxInsert?: Readonly<{
+    source: string;
+    parentInstanceId: Instance["id"];
+    childIndex: number;
+    position: "append" | "prepend" | "replace" | "index";
+    instanceIds: readonly Instance["id"][];
+    rootInstanceIds: readonly Instance["id"][];
+  }>;
 };
+
+export const hasContentStorageChange = (change: ContentStorageChange) =>
+  change.mdxInsert !== undefined ||
+  change.payload.some(({ patches }) => patches.length > 0);
 
 export type BuilderRuntimeMutation<
   Result extends Record<string, unknown> = Record<string, unknown>,
@@ -52,7 +64,7 @@ export const createRuntimeMutation = <
   storageChanges,
   noop:
     payload.length === 0 &&
-    storageChanges?.some((change) => change.payload.length > 0) !== true,
+    storageChanges?.some(hasContentStorageChange) !== true,
 });
 
 export const createRuntimeMutationAccumulator = (
