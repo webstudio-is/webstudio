@@ -1,8 +1,8 @@
 import { createAssetContentRevision } from "@webstudio-is/asset-uploader/content-revision";
 import {
   AssetRevisionConflictError,
-  type AssetRepository,
-} from "@webstudio-is/asset-uploader/server";
+  type AssetContentRepository,
+} from "@webstudio-is/asset-uploader/content-repository";
 import {
   decodeUtf8,
   readBoundedBytes,
@@ -217,8 +217,8 @@ export const createMdxAssetEditingSession = ({
     clearTimeout(handle as ReturnType<typeof setTimeout>),
   debounceMilliseconds = 300,
 }: {
-  repository: Pick<AssetRepository, "readContent"> &
-    Partial<Pick<AssetRepository, "updateContent">>;
+  repository: Pick<AssetContentRepository, "readContent"> &
+    Partial<Pick<AssetContentRepository, "updateContent">>;
   authorizeAsset: MdxAssetSessionAuthorization;
   resolveExpressionAssetId?: (input: {
     expression: string;
@@ -434,7 +434,7 @@ export const createMdxAssetEditingSession = ({
       };
     }
 
-    let read: Awaited<ReturnType<AssetRepository["readContent"]>>;
+    let read: Awaited<ReturnType<AssetContentRepository["readContent"]>>;
     let bytes: Uint8Array;
     try {
       read = await repository.readContent({ assetId });
@@ -451,7 +451,18 @@ export const createMdxAssetEditingSession = ({
         error: error instanceof Error ? error : new Error("Asset read failed"),
       };
     }
-
+    if (
+      read.asset.projectId !== input.projectId ||
+      bytes.byteLength !== read.asset.size
+    ) {
+      return {
+        status: "failed",
+        blockInstanceId: input.blockInstanceId,
+        renderScope: input.renderScope,
+        diagnostics: [],
+        error: new Error("Asset content identity does not match its bytes"),
+      };
+    }
     const contentHash = await getAssetContentHash(new Uint8Array(bytes).buffer);
     const revisionInput = {
       storageName: read.asset.name,

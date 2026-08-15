@@ -10,6 +10,7 @@ import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import {
   assetFolderCreateRequest,
   assetFolderUpdateRequest,
+  assetContentDescriptorHeader,
   assetMetadataUpdate,
   assetResourceApiOperations,
   assetUploadReservationRequest,
@@ -343,6 +344,10 @@ describe("Assets OpenAPI description", () => {
       document.paths[assetResourceApiOperations.downloadAssetContent.path].get
         .responses[200].content
     ).toHaveProperty("*/*");
+    expect(
+      document.paths[assetResourceApiOperations.downloadAssetContent.path].get
+        .responses[200].headers
+    ).toHaveProperty(assetContentDescriptorHeader);
     expect(
       document.paths[assetResourceApiOperations.replaceAssetContent.path].put
         .requestBody.content

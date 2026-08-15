@@ -1363,6 +1363,47 @@ describe("MDX Asset editing session", () => {
     );
   });
 
+  test.each([
+    [{ projectId: "other" }, "Body"],
+    [{ size: 3 }, "Body"],
+  ])(
+    "rejects content whose identity does not match its bytes %#",
+    async (assetOverride, source) => {
+      const bytes = encoder.encode(source);
+      const session = createMdxAssetEditingSession({
+        repository: {
+          readContent: async () => ({
+            asset: {
+              ...asset("post"),
+              size: bytes.byteLength,
+              ...assetOverride,
+            },
+            data: {
+              async *[Symbol.asyncIterator]() {
+                yield bytes;
+              },
+            },
+          }),
+        },
+        authorizeAsset: () => true,
+      });
+
+      const failed = expectStatus(
+        await session.open({
+          blockInstanceId: "block",
+          source: { type: "asset", assetId: "post" },
+          renderScope: "page:/one",
+          state: createState(),
+          projectId: "project",
+        }),
+        "failed"
+      );
+      expect(failed.error.message).toBe(
+        "Asset content identity does not match its bytes"
+      );
+    }
+  );
+
   test("keeps invalid and unsafe MDX recoverable and supports reload/cancel", async () => {
     const sources = new Map([["post", `<ws.element ws:tag="p">`]]);
     const session = createMdxAssetEditingSession({
