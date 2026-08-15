@@ -24,6 +24,8 @@ import {
   getMaterializedContentSaveBlocker,
   $activeMaterializedContentRoots,
   saveMaterializedContentChanges,
+  $contentBlockPresentationItems,
+  failPendingMaterializedContentChanges,
 } from "../content-block-content";
 
 type RuntimeMutationResult<Id extends BuilderRuntimeMutationOperationId> =
@@ -102,6 +104,16 @@ const getRuntimeMutationContext = () => ({
 });
 
 const canEditSelectedMaterializedContent = () => {
+  if (
+    $allSelectedInstanceSelectors
+      .get()
+      .some(([instanceId]) =>
+        $contentBlockPresentationItems.get().has(instanceId)
+      )
+  ) {
+    toast.error("MDX diagnostic notices cannot be edited.");
+    return false;
+  }
   const roots = getSelectedMaterializedContent();
   const blockIds = new Set<string>();
   for (const { identity } of roots) {
@@ -114,12 +126,11 @@ const canEditSelectedMaterializedContent = () => {
     blockIds.add(identity.blockInstanceId);
   }
   for (const { identity } of roots) {
-    if (
-      getMaterializedContentStatus({
-        blockInstanceId: identity.blockInstanceId,
-        renderScope: identity.renderScope,
-      }) !== "ready"
-    ) {
+    const status = getMaterializedContentStatus({
+      blockInstanceId: identity.blockInstanceId,
+      renderScope: identity.renderScope,
+    });
+    if (status !== "ready" && status !== "empty" && status !== "pending") {
       toast.error("The MDX content source is not ready for editing.");
       return false;
     }
@@ -143,7 +154,7 @@ const requireSynchronousResult = <Result>(
 };
 
 const createRuntimeMutationArgs = <
-  Id extends BuilderRuntimeMutationOperationId,
+  Id extends BuilderRuntimeMutationOperationId
 >({
   id,
   input,
@@ -178,15 +189,20 @@ const commitRuntimeMutation = <Mutation extends BuilderRuntimeMutation>(
     void saveMaterializedContentChanges(result.storageChanges).then(
       (saveResult) => {
         if (saveResult.status === "blocked") {
+          failPendingMaterializedContentChanges(
+            result.storageChanges ?? [],
+            saveResult.message
+          );
           toast.error(saveResult.message);
         }
       },
-      (error) => {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "The MDX file could not be saved."
+      () => {
+        const message = "The MDX file could not be saved.";
+        failPendingMaterializedContentChanges(
+          result.storageChanges ?? [],
+          message
         );
+        toast.error(message);
       }
     );
     return result;
@@ -199,7 +215,7 @@ const commitRuntimeMutation = <Mutation extends BuilderRuntimeMutation>(
 };
 
 const commitRuntimeMutationAsync = async <
-  Mutation extends BuilderRuntimeMutation,
+  Mutation extends BuilderRuntimeMutation
 >(
   result: Mutation
 ): Promise<Mutation | undefined> => {
@@ -212,18 +228,28 @@ const commitRuntimeMutationAsync = async <
     );
     return;
   }
-  const saveResult = await saveMaterializedContentChanges(
-    result.storageChanges ?? []
-  );
-  if (saveResult.status === "blocked") {
-    toast.error(saveResult.message);
-    return;
+  try {
+    const saveResult = await saveMaterializedContentChanges(
+      result.storageChanges ?? []
+    );
+    if (saveResult.status === "blocked") {
+      failPendingMaterializedContentChanges(
+        result.storageChanges ?? [],
+        saveResult.message
+      );
+      toast.error(saveResult.message);
+      return;
+    }
+    return result;
+  } catch (error) {
+    const message = "The MDX file could not be saved.";
+    failPendingMaterializedContentChanges(result.storageChanges ?? [], message);
+    throw new Error(message, { cause: error });
   }
-  return result;
 };
 
 export const executeRuntimeMutation = <
-  Id extends BuilderRuntimeMutationOperationId,
+  Id extends BuilderRuntimeMutationOperationId
 >({
   id,
   input,
@@ -276,7 +302,7 @@ export const executeRuntimeMutationSequence = (
 };
 
 export const executeRuntimeMutationAsync = async <
-  Id extends BuilderRuntimeMutationOperationId,
+  Id extends BuilderRuntimeMutationOperationId
 >({
   id,
   input,

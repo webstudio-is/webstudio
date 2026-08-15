@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { toast } from "@webstudio-is/design-system";
 import {
   decodeUtf8,
   readBoundedBytes,
@@ -31,6 +30,10 @@ import {
 } from "~/shared/sync/data-stores";
 import { ContentBlockSourceControl } from "./content-block-source";
 import { createBuilderContentBlockSourceController } from "./content-block-source-controller";
+import {
+  $materializedContentViewStates,
+  formatContentBlockDiagnostic,
+} from "~/shared/content-block-content";
 
 const getSource = (
   blockInstanceId: string,
@@ -47,7 +50,9 @@ const getStateError = (
   >
 ) => {
   if (state.status === "failed" || state.status === "recoverable") {
-    return state.error.message;
+    return state.diagnostics[0] === undefined
+      ? "The MDX file could not be loaded."
+      : formatContentBlockDiagnostic(state.diagnostics[0]);
   }
   if (state.status === "conflicting") {
     return "The MDX file changed remotely. Reload it before editing.";
@@ -67,6 +72,10 @@ export const ContentBlockSourceSection = ({
   const instances = useStore($instances);
   const authPermit = useStore($authPermit);
   const variableValues = useStore($variableValuesByInstanceSelector);
+  const materializedViewStates = useStore($materializedContentViewStates);
+  const viewState = materializedViewStates.get(
+    JSON.stringify([blockInstanceId, renderScope])
+  );
   const source = useMemo(
     () => getSource(blockInstanceId, props),
     [blockInstanceId, props]
@@ -137,21 +146,11 @@ export const ContentBlockSourceSection = ({
       .then((state) => {
         if (active) {
           setError(getStateError(state));
-          const warningCount = state.diagnostics.filter(
-            (diagnostic) => diagnostic.severity === "warning"
-          ).length;
-          if (warningCount > 0) {
-            toast.warn(
-              `The MDX file has ${warningCount} content ${warningCount === 1 ? "warning" : "warnings"}.`
-            );
-          }
         }
       })
-      .catch((error) => {
+      .catch(() => {
         if (active) {
-          setError(
-            error instanceof Error ? error.message : "Unable to load MDX"
-          );
+          setError("Unable to load MDX");
         }
       })
       .finally(() => {
@@ -207,6 +206,7 @@ export const ContentBlockSourceSection = ({
         disabled={authPermit === "view"}
         loading={loading}
         error={error ?? sourceIntegrityError}
+        diagnostics={viewState?.diagnostics}
         onRequestSource={requestSource}
         onDisconnect={async () => {
           const result = await controller.disconnect();

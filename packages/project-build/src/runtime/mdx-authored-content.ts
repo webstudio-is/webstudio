@@ -73,6 +73,11 @@ const getNamespaceRecordKey = (
 
 export type MdxAuthoredContentProvenance = Readonly<{
   nodes: readonly (AuthoredElementProvenance | TemplateProvenance)[];
+  unresolvedTemplates: readonly Readonly<{
+    path: readonly number[];
+    markerId: string;
+    templateName: string;
+  }>[];
 }>;
 
 export type MaterializedMdxAuthoredContentRoot = MaterializedContentRoot &
@@ -327,7 +332,24 @@ export const materializeMdxAuthoredContent = ({
   };
 
   fragment.children = visit(document.children, []);
-  return { identity, fragment, document, provenance: { nodes } };
+  const unresolvedTemplates = templateMaterialization.templates.flatMap(
+    (template) =>
+      template.type === "unresolved-template"
+        ? [
+            {
+              path: template.reference.path,
+              markerId: template.markerId,
+              templateName: template.reference.templateName,
+            },
+          ]
+        : []
+  );
+  return {
+    identity,
+    fragment,
+    document,
+    provenance: { nodes, unresolvedTemplates },
+  };
 };
 
 const assertSupportedNamespaces = ({

@@ -9,6 +9,7 @@ import { $instances, $pages, $props } from "../sync/data-stores";
 import {
   publishMaterializedContentRoot,
   resetMaterializedContent,
+  getRuntimeInstanceChildren,
 } from "../content-block-content";
 import {
   $allSelectedInstanceSelectors,
@@ -84,34 +85,48 @@ describe("selectInstance", () => {
         ],
       ])
     );
-    publishMaterializedContentRoot({
-      identity: {
-        blockInstanceId: "block",
-        assetId: "article",
-        revision: "sha256:one",
-        contentRef: "article.mdx",
-        format: "mdx",
-        renderScope,
+    const identity = {
+      blockInstanceId: "block",
+      assetId: "article",
+      revision: "sha256:one",
+      contentRef: "article.mdx",
+      format: "mdx",
+      renderScope,
+    } as const;
+    publishMaterializedContentRoot(
+      {
+        identity,
+        fragment: {
+          children: [{ type: "id", value: "external" }],
+          instances: [
+            {
+              ...createInstance("external"),
+              component: elementComponent,
+              tag: "p",
+            },
+          ],
+          props: [],
+          assets: [],
+          dataSources: [],
+          resources: [],
+          breakpoints: [],
+          styleSourceSelections: [],
+          styleSources: [],
+          styles: [],
+        },
       },
-      fragment: {
-        children: [{ type: "id", value: "external" }],
-        instances: [
-          {
-            ...createInstance("external"),
-            component: elementComponent,
-            tag: "p",
-          },
-        ],
-        props: [],
-        assets: [],
-        dataSources: [],
-        resources: [],
-        breakpoints: [],
-        styleSourceSelections: [],
-        styleSources: [],
-        styles: [],
-      },
-    });
+      [
+        {
+          code: "unresolved-template",
+          severity: "warning",
+          blockInstanceId: "block",
+          assetId: "article",
+          contentRef: "article.mdx",
+          renderScope,
+          templateName: "Missing",
+        },
+      ]
+    );
 
     selectInstance([
       "external",
@@ -129,6 +144,23 @@ describe("selectInstance", () => {
       "collection",
       "body",
     ]);
+
+    const block = $instances.get().get("block");
+    if (block === undefined) {
+      throw new Error("Expected Content Block");
+    }
+    const warningId = getRuntimeInstanceChildren(block, [
+      "block",
+      "collection[1]",
+      "collection",
+      "body",
+    ]).at(-1)?.value;
+    if (warningId === undefined) {
+      throw new Error("Expected unresolved-template notice");
+    }
+    selectInstance([warningId, "block", "collection[1]", "collection", "body"]);
+    $instances.set(new Map($instances.get()));
+    expect($selectedInstanceSelector.get()?.[0]).toBe(warningId);
   });
 
   test("selects and clears the selected instance selector through canonical state", () => {

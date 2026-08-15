@@ -63,6 +63,8 @@ import {
   $materializedContentStatuses,
   getRuntimeInstanceChildren,
   isMaterializedInstanceEditable,
+  $contentBlockPresentationItems,
+  contentBlockPresentationComponent,
 } from "~/shared/content-block-content";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import {
@@ -82,7 +84,7 @@ import {
   createInstanceChildrenElements,
   type WebstudioComponentProps,
 } from "~/canvas/elements";
-import { Block } from "../build-mode/block";
+import { Block, ContentBlockPresentation } from "../build-mode/block";
 import { BlockTemplate } from "../build-mode/block-template";
 import {
   editablePlaceholderAttribute,
@@ -482,6 +484,7 @@ const useContentBlockMaterialization = ({
       blockInstanceId: instance.id,
       renderScope,
       status: "loading",
+      assetId: resolvedAssetId,
     });
     const markFailed = () => {
       if (active && $project.get()?.id === project?.id) {
@@ -489,14 +492,11 @@ const useContentBlockMaterialization = ({
           blockInstanceId: instance.id,
           renderScope,
           status: "failed",
+          assetId: resolvedAssetId,
         });
       }
     };
-    void controller.open(JSON.parse(sourceKey)).then((state) => {
-      if (state.status !== "saved" && state.status !== "pending") {
-        markFailed();
-      }
-    }, markFailed);
+    void controller.open(JSON.parse(sourceKey)).catch(markFailed);
     return () => {
       active = false;
     };
@@ -514,8 +514,11 @@ const useContentBlockMaterialization = ({
 /**
  * We are identifying newly created instances like Tooltips and ensuring the calculation of 'inflated' elements.
  */
-const useInflateOnNewElement = (instanceId: Instance["id"]) => {
+const useInflateOnNewElement = (instanceId: Instance["id"], enabled = true) => {
   useEffect(() => {
+    if (enabled === false) {
+      return;
+    }
     if (existingElements.has(instanceId) === false) {
       inflateInstance(instanceId);
     }
@@ -524,7 +527,7 @@ const useInflateOnNewElement = (instanceId: Instance["id"]) => {
     return () => {
       existingElements.delete(instanceId);
     };
-  }, [instanceId]);
+  }, [enabled, instanceId]);
 };
 
 /**
@@ -607,6 +610,7 @@ export const WebstudioComponentCanvas = forwardRef<
   const instanceId = instance.id;
   const instances = useStore($instances);
   const allProps = useStore($props);
+  const presentationItems = useStore($contentBlockPresentationItems);
   useStore($materializedContentStatuses);
   useContentBlockMaterialization({
     instance,
@@ -636,7 +640,10 @@ export const WebstudioComponentCanvas = forwardRef<
    */
   const initialContentEditableContent = useRef(children);
 
-  useInflateOnNewElement(instanceId);
+  useInflateOnNewElement(
+    instanceId,
+    instance.component !== contentBlockPresentationComponent
+  );
 
   // this assumes presence of `useStore($selectedInstanceSelector)` above
   // we rely on root re-rendering after selected instance changes
@@ -743,6 +750,13 @@ export const WebstudioComponentCanvas = forwardRef<
   // For expressions that resolve to asset URLs (via assets resource), use the src value itself
   const key = computeComponentKey(props);
 
+  if (instance.component === contentBlockPresentationComponent) {
+    const item = presentationItems.get(instance.id);
+    return item === undefined ? null : (
+      <ContentBlockPresentation item={item} {...props} ref={ref} />
+    );
+  }
+
   const instanceElement = (
     <>
       <Component key={key} {...props} ref={ref}>
@@ -813,6 +827,7 @@ export const WebstudioComponentPreview = forwardRef<
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instances = useStore($instances);
   const allProps = useStore($props);
+  useStore($contentBlockPresentationItems);
   useContentBlockMaterialization({
     instance,
     instanceSelector,
@@ -820,6 +835,10 @@ export const WebstudioComponentPreview = forwardRef<
   });
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
+
+  if (instance.component === contentBlockPresentationComponent) {
+    return null;
+  }
   const props: {
     [componentAttribute]: string;
     [idAttribute]: string;

@@ -85,7 +85,7 @@ const fromFragmentState = ({
   styles: Array.from(state.styles?.values() ?? []),
 });
 
-const applyStorageChanges = ({
+export const applyMdxContentStorageChanges = ({
   root,
   changes,
 }: {
@@ -331,7 +331,7 @@ const reconcileMdxInsert = async ({
     );
   }
   const [insert] = inserts;
-  const finalFragment = applyStorageChanges({ root, changes });
+  const finalFragment = applyMdxContentStorageChanges({ root, changes });
   assertMdxInsertMatchesFragment({
     root,
     fragment: finalFragment,
@@ -509,7 +509,10 @@ export const prepareMdxContentStorageWrites = async ({
       ? await reconcileMdxInsert({ root, changes: rootChanges })
       : reconcileMdxAuthoredContent({
           root,
-          fragment: applyStorageChanges({ root, changes: rootChanges }),
+          fragment: applyMdxContentStorageChanges({
+            root,
+            changes: rootChanges,
+          }),
         });
     writes.push({
       root: { type: "external", identity: root.identity },

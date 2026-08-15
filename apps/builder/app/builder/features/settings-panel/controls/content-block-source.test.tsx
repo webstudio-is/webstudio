@@ -3,6 +3,7 @@
  */
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
+import type { ComponentProps } from "react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/sdk";
@@ -90,6 +91,7 @@ const renderControl = ({
   onDisconnect = async () => ({ status: "applied" as const }),
   source = { type: "asset" as const, assetId: asset.id },
   loading = false,
+  diagnostics,
 }: {
   onDisconnect?: () => Promise<
     { status: "applied" } | { status: "blocked"; message: string }
@@ -98,6 +100,7 @@ const renderControl = ({
     | { type: "asset"; assetId: string }
     | { type: "expression"; value: string };
   loading?: boolean;
+  diagnostics?: ComponentProps<typeof ContentBlockSourceControl>["diagnostics"];
 } = {}) => {
   act(() => {
     root.render(
@@ -106,6 +109,7 @@ const renderControl = ({
           source={source}
           resolvedAsset={asset}
           loading={loading}
+          diagnostics={diagnostics}
           onRequestSource={async () => ({ status: "applied" })}
           onDisconnect={onDisconnect}
           onOpen={() => {}}
@@ -118,6 +122,38 @@ const renderControl = ({
     );
   });
 };
+
+test("shows persistent actionable diagnostics with file, location, and render scope", () => {
+  const diagnostic = {
+    code: "ignored-template-prop" as const,
+    severity: "warning" as const,
+    blockInstanceId: "block",
+    assetId: "post",
+    contentRef: "post.mdx",
+    renderScope: "collection:item-2",
+    templateName: "Hero",
+    propName: "tone",
+    reason: "design-only" as const,
+    sourceRange: {
+      start: { line: 7, column: 4 },
+      end: { line: 7, column: 12 },
+    },
+  };
+  renderControl({
+    diagnostics: [diagnostic, diagnostic],
+  });
+
+  expect(
+    container.querySelector('[aria-label="MDX diagnostics"]')?.textContent
+  ).toContain(
+    'post.mdx: Property "tone" on template "Hero" was ignored because it is design only. Line 7, column 4.'
+  );
+  expect(container.textContent).toContain("Render scope: collection:item-2");
+  expect(
+    container.querySelectorAll('[aria-label="MDX diagnostics"] > li')
+  ).toHaveLength(1);
+  expect(findButton("Open file to repair")).not.toBeNull();
+});
 
 test("keeps the resolved filename visible while refreshed content loads", () => {
   renderControl({ loading: true });

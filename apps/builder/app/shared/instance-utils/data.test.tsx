@@ -1,7 +1,10 @@
 import { describe, expect, expectTypeOf, test, vi } from "vitest";
 import type { Asset, Instance, PageTemplate } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { findCycles } from "@webstudio-is/project-build/runtime";
+import {
+  findCycles,
+  type MaterializedMdxAuthoredContentRoot,
+} from "@webstudio-is/project-build/runtime";
 import type { BuilderRuntimeOperationInput } from "@webstudio-is/project-build/runtime";
 import {
   executeRuntimeMutation,
@@ -32,6 +35,9 @@ import {
   publishMaterializedContentRoot,
   registerContentStorageSaver,
   resetMaterializedContent,
+  $runtimeInstances,
+  $materializedContentRoots,
+  getMaterializedContentStatus,
 } from "../content-block-content";
 
 const createInstance = (
@@ -561,7 +567,7 @@ describe("data store helpers", () => {
       format: "mdx" as const,
       renderScope: JSON.stringify(["block", "body"]),
     };
-    publishMaterializedContentRoot({
+    const authoredRoot: MaterializedMdxAuthoredContentRoot = {
       identity,
       fragment: {
         children: [{ type: "id", value: "external" }],
@@ -583,7 +589,31 @@ describe("data store helpers", () => {
         styleSources: [],
         styles: [],
       },
-    });
+      document: {
+        frontmatter: { properties: {} },
+        children: [
+          {
+            type: "element",
+            syntax: "markdown",
+            tag: "p",
+            props: [],
+            children: [{ type: "text", value: "Before" }],
+          },
+        ],
+      },
+      provenance: {
+        nodes: [
+          {
+            type: "element",
+            path: [0],
+            instanceId: "external",
+            assetProps: [],
+          },
+        ],
+        unresolvedTemplates: [],
+      },
+    };
+    publishMaterializedContentRoot(authoredRoot);
     const save = vi.fn(async () => ({ status: "applied" as const }));
     const unregister = registerContentStorageSaver({
       blockInstanceId: "block",
@@ -602,10 +632,39 @@ describe("data store helpers", () => {
         text: "After",
       },
     });
+    expect($runtimeInstances.get().get("external")?.children).toEqual([
+      { type: "text", value: "After" },
+    ]);
+    expect(
+      getMaterializedContentStatus({
+        blockInstanceId: "block",
+        renderScope: identity.renderScope,
+      })
+    ).toBe("pending");
+    const accumulated = executeRuntimeMutation({
+      id: "instances.setTextContent",
+      input: {
+        operation: "set",
+        instanceId: "external",
+        mode: "text",
+        text: "Again",
+      },
+    });
+    expect(accumulated?.storageChanges).toHaveLength(1);
+    expect($runtimeInstances.get().get("external")?.children).toEqual([
+      { type: "text", value: "Again" },
+    ]);
     await Promise.resolve();
+    const savedRoot = $materializedContentRoots
+      .get()
+      .get(JSON.stringify(["block", identity.renderScope]));
+    if (savedRoot === undefined) {
+      throw new Error("Expected pending materialized content");
+    }
+    publishMaterializedContentRoot(savedRoot);
 
     expect(result?.storageChanges).toHaveLength(1);
-    expect(save).toHaveBeenCalledOnce();
+    expect(save).toHaveBeenCalledTimes(2);
     expect($instances.get().has("external")).toBe(false);
     expect($instances.get().get("block")?.children).toEqual([
       { type: "id", value: "templates" },
@@ -629,7 +688,7 @@ describe("data store helpers", () => {
       })
     ).toBeUndefined();
     await Promise.resolve();
-    expect(save).toHaveBeenCalledOnce();
+    expect(save).toHaveBeenCalledTimes(2);
     unregisterStale();
 
     let finishSave: ((result: { status: "applied" }) => void) | undefined;
@@ -663,6 +722,39 @@ describe("data store helpers", () => {
     finishSave?.({ status: "applied" });
     expect((await asyncMutation)?.storageChanges).toHaveLength(1);
     unregisterDeferred();
+    const latestRoot = $materializedContentRoots
+      .get()
+      .get(JSON.stringify(["block", identity.renderScope]));
+    if (latestRoot === undefined) {
+      throw new Error("Expected accumulated materialized content");
+    }
+    publishMaterializedContentRoot(latestRoot);
+    const unregisterRejected = registerContentStorageSaver({
+      blockInstanceId: "block",
+      renderScope: identity.renderScope,
+      isCurrent: () => true,
+      save: async () => {
+        throw new Error("private transport details");
+      },
+    });
+    await expect(
+      executeRuntimeMutationAsync({
+        id: "instances.setTextContent",
+        input: {
+          operation: "set",
+          instanceId: "external",
+          mode: "text",
+          text: "Rejected",
+        },
+      })
+    ).rejects.toThrow("The MDX file could not be saved.");
+    expect(
+      getMaterializedContentStatus({
+        blockInstanceId: "block",
+        renderScope: identity.renderScope,
+      })
+    ).toBe("failed");
+    unregisterRejected();
     resetMaterializedContent();
   });
 

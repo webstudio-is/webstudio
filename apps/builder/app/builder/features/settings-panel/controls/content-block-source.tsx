@@ -20,12 +20,17 @@ import type { ContentBlockSourceAuthority } from "@webstudio-is/project-build/ru
 import {
   formatAssetName,
   type Asset,
+  type ContentBlockDiagnostic,
   type ContentBlockSource,
 } from "@webstudio-is/sdk";
 import { AssetManager } from "~/builder/shared/asset-manager";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { CreateTextFileDialog } from "~/builder/features/text-file-editor/create-text-file-dialog";
 import { useBindableControl } from "./use-bindable-control";
+import {
+  deduplicateContentBlockDiagnostics,
+  formatContentBlockDiagnostic,
+} from "~/shared/content-block-content";
 
 export type ContentBlockSourceMutationResult =
   | Readonly<{ status: "applied" }>
@@ -187,6 +192,7 @@ export const ContentBlockSourceControl = ({
   disabled = false,
   loading = false,
   error,
+  diagnostics = [],
   onRequestSource,
   onDisconnect,
   onOpen,
@@ -198,6 +204,7 @@ export const ContentBlockSourceControl = ({
   disabled?: boolean;
   loading?: boolean;
   error?: string;
+  diagnostics?: readonly ContentBlockDiagnostic[];
   onRequestSource: (input: {
     source: ContentBlockSource;
     authority?: ContentBlockSourceAuthority;
@@ -225,6 +232,7 @@ export const ContentBlockSourceControl = ({
     boundExpression: source?.type === "expression" ? source.value : undefined,
     fallbackExpression: JSON.stringify(resolvedAsset?.id ?? ""),
   });
+  const uniqueDiagnostics = deduplicateContentBlockDiagnostics(diagnostics);
 
   const beginOperation = () => {
     if (disabled || loading || busyRef.current) {
@@ -307,12 +315,12 @@ export const ContentBlockSourceControl = ({
                 {resolvedAsset
                   ? formatAssetName(resolvedAsset)
                   : loading
-                    ? "Loading content source…"
-                    : source?.type === "expression"
-                      ? "Dynamic content source"
-                      : source?.type === "asset"
-                        ? "Missing MDX Asset"
-                        : "No content source"}
+                  ? "Loading content source…"
+                  : source?.type === "expression"
+                  ? "Dynamic content source"
+                  : source?.type === "asset"
+                  ? "Missing MDX Asset"
+                  : "No content source"}
               </Text>
               {resolvedAsset !== undefined && (
                 <Button
@@ -391,6 +399,42 @@ export const ContentBlockSourceControl = ({
           </Text>
         )}
 
+        {uniqueDiagnostics.length > 0 && (
+          <Grid as="ul" gap="2" aria-label="MDX diagnostics">
+            {uniqueDiagnostics.map((diagnostic) => (
+              <Flex
+                as="li"
+                key={JSON.stringify(diagnostic)}
+                direction="column"
+                gap="1"
+              >
+                <Text
+                  color={
+                    diagnostic.severity === "error" ? "destructive" : "subtle"
+                  }
+                  variant="tiny"
+                >
+                  {diagnostic.contentRef ?? resolvedAsset?.name ?? "MDX file"}
+                  {": "}
+                  {formatContentBlockDiagnostic(diagnostic)}
+                </Text>
+                <Text color="subtle" variant="tiny">
+                  Render scope: {diagnostic.renderScope ?? "current block"}
+                </Text>
+                {resolvedAsset !== undefined && (
+                  <Button
+                    color="ghost"
+                    disabled={isDisabled}
+                    onClick={() => onOpen(resolvedAsset.id)}
+                  >
+                    Open file to repair
+                  </Button>
+                )}
+              </Flex>
+            ))}
+          </Grid>
+        )}
+
         {pendingSource !== undefined && (
           <SourceAuthorityDialog
             pending={pendingSource}
@@ -445,7 +489,11 @@ export const ContentBlockSourceControl = ({
                 <DialogDescription>
                   {conversion.preview.omissions.length === 0
                     ? "All content can be converted. The original Markdown file will not be changed."
-                    : `${conversion.preview.omissions.length} unsupported ${conversion.preview.omissions.length === 1 ? "part" : "parts"} will be skipped. The original Markdown file will not be changed.`}
+                    : `${conversion.preview.omissions.length} unsupported ${
+                        conversion.preview.omissions.length === 1
+                          ? "part"
+                          : "parts"
+                      } will be skipped. The original Markdown file will not be changed.`}
                 </DialogDescription>
                 {conversion.preview.omissions.length > 0 && (
                   <ul>

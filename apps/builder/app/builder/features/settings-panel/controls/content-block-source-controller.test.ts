@@ -40,6 +40,9 @@ const createRepository = (source: string) => {
       return reads;
     },
     updateContent,
+    setSource: (source: string) => {
+      currentSource = source;
+    },
     repository: {
       readContent: async ({ assetId }: { assetId: string }) => {
         reads += 1;
@@ -174,16 +177,24 @@ const createController = ({
   });
   const commitProjectPayload = vi.fn();
   const invalidateAssets = vi.fn();
+  const publishSessionState = vi.fn();
   const controller = createContentBlockSourceController({
     blockInstanceId: "block",
     renderScope: "scope",
     projectId: "project",
     session,
-    getState: () => ({ ...state }) as never,
+    getState: () => ({ ...state } as never),
     commitProjectPayload,
     invalidateAssets,
+    publishSessionState,
   });
-  return { controller, commitProjectPayload, invalidateAssets, storage };
+  return {
+    controller,
+    commitProjectPayload,
+    invalidateAssets,
+    publishSessionState,
+    storage,
+  };
 };
 
 test("connects using file content through one Builder project transaction", async () => {
@@ -274,7 +285,123 @@ test("surfaces exact Asset authorization failure without a project mutation", as
   });
 
   expect(state).toMatchObject({ status: "failed" });
+  expect(setup.publishSessionState).toHaveBeenCalledWith(
+    expect.objectContaining({ status: "failed" })
+  );
   expect(setup.commitProjectPayload).not.toHaveBeenCalled();
+});
+
+test("retries a recoverable parse failure by reopening the pinned source", async () => {
+  const source = { type: "asset" as const, assetId: "post" };
+  const setup = createController({
+    state: createState({ body: false, source }),
+    fileSource: '{alert("unsafe")}',
+  });
+  await expect(setup.controller.open(source)).resolves.toMatchObject({
+    status: "recoverable",
+  });
+  setup.storage.setSource("# Repaired");
+
+  await expect(setup.controller.retry()).resolves.toMatchObject({
+    status: "applied",
+    state: { status: "saved" },
+  });
+  expect(setup.publishSessionState).toHaveBeenLastCalledWith(
+    expect.objectContaining({ status: "saved" })
+  );
+});
+
+test("requires explicit remote reload instead of blindly retrying a conflict", async () => {
+  const conflicting = {
+    status: "conflicting" as const,
+    key: "post",
+    identity: { assetId: "post" },
+    diagnostics: [],
+  };
+  const retry = vi.fn();
+  const session = {
+    open: vi.fn(async () => conflicting),
+    get: vi.fn(() => conflicting),
+    retry,
+    list: () => [],
+  };
+  const controller = createContentBlockSourceController({
+    blockInstanceId: "block",
+    renderScope: "scope",
+    projectId: "project",
+    session: session as never,
+    getState: () =>
+      createState({
+        body: false,
+        source: { type: "asset", assetId: "post" },
+      }) as never,
+    commitProjectPayload: vi.fn(),
+    invalidateAssets: vi.fn(),
+  });
+  await controller.open({ type: "asset", assetId: "post" });
+
+  await expect(controller.retry()).resolves.toEqual({
+    status: "blocked",
+    message: "Reload the remote MDX file before retrying this change.",
+  });
+  expect(retry).not.toHaveBeenCalled();
+});
+
+test("does not publish a retry that finishes after the source changes", async () => {
+  const failed = {
+    status: "failed" as const,
+    key: "first",
+    identity: { assetId: "first" },
+    diagnostics: [],
+    localSource: "Unsaved",
+  };
+  const saved = (assetId: string) => ({
+    status: "saved" as const,
+    key: assetId,
+    identity: { assetId },
+    root: {},
+    diagnostics: [],
+  });
+  let finishRetry: ((state: ReturnType<typeof saved>) => void) | undefined;
+  const session = {
+    open: vi.fn(({ source }: { source: ContentBlockSource }) =>
+      Promise.resolve(
+        source.type === "asset" && source.assetId === "first"
+          ? failed
+          : saved("second")
+      )
+    ),
+    get: vi.fn(() => failed),
+    retry: vi.fn(
+      () =>
+        new Promise<ReturnType<typeof saved>>((resolve) => {
+          finishRetry = resolve;
+        })
+    ),
+    list: () => [],
+  };
+  const publishSessionState = vi.fn();
+  const controller = createContentBlockSourceController({
+    blockInstanceId: "block",
+    renderScope: "scope",
+    projectId: "project",
+    session: session as never,
+    getState: () => createState() as never,
+    commitProjectPayload: vi.fn(),
+    invalidateAssets: vi.fn(),
+    publishSessionState,
+  });
+  await controller.open({ type: "asset", assetId: "first" });
+  const retrying = controller.retry();
+  await controller.open({ type: "asset", assetId: "second" });
+  finishRetry?.(saved("first-retried"));
+
+  await expect(retrying).resolves.toEqual({
+    status: "blocked",
+    message: "The MDX Asset session changed.",
+  });
+  expect(publishSessionState).toHaveBeenCalledTimes(2);
+  expect(publishSessionState).toHaveBeenLastCalledWith(saved("second"));
 });
 
 test("persists a single-Asset content edit and invalidates Asset resources", async () => {
@@ -289,31 +416,36 @@ test("persists a single-Asset content edit and invalidates Asset resources", asy
   if (loaded.status !== "saved") {
     throw new Error(`Expected saved state, received ${loaded.status}`);
   }
+  expect(setup.controller.isCurrent(loaded.root)).toBe(true);
 
-  await expect(
-    setup.controller.saveStorageChanges([
-      {
-        root: { type: "external", identity: loaded.identity },
-        payload: [
-          {
-            namespace: "instances",
-            patches: [
-              {
-                op: "replace",
-                path: [
-                  loaded.root.fragment.instances[0].id,
-                  "children",
-                  0,
-                  "value",
-                ],
-                value: "After",
-              },
-            ],
-          },
-        ],
-      },
-    ])
-  ).resolves.toMatchObject({ status: "applied" });
+  const saveResult = await setup.controller.saveStorageChanges([
+    {
+      root: { type: "external", identity: loaded.identity },
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: [
+                loaded.root.fragment.instances[0].id,
+                "children",
+                0,
+                "value",
+              ],
+              value: "After",
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+  expect(saveResult).toMatchObject({ status: "applied" });
+  if (saveResult.status !== "applied" || saveResult.state?.status !== "saved") {
+    throw new Error("Expected the MDX edit to be saved");
+  }
+  expect(setup.controller.isCurrent(loaded.root)).toBe(false);
+  expect(setup.controller.isCurrent(saveResult.state.root)).toBe(true);
 
   expect(setup.storage.updateContent).toHaveBeenCalledTimes(1);
   expect(setup.invalidateAssets).toHaveBeenCalledTimes(1);

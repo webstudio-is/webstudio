@@ -68,6 +68,7 @@ import {
   $runtimeInstances as $instances,
   $runtimeProps as $props,
   getRuntimeInstanceChildren,
+  contentBlockPresentationComponent,
 } from "~/shared/content-block-content";
 import { suppressCommandsForEvent } from "~/shared/commands-emitter";
 import {
@@ -526,7 +527,7 @@ const TreeNodeContent = ({
   const label = getInstanceLabel(instance);
   const { ref, handlers } = useContentEditable({
     value: label,
-    isEditable: true,
+    isEditable: instance.component !== contentBlockPresentationComponent,
     isEditing,
     onChangeValue: (value: string) => {
       executeRuntimeMutation({

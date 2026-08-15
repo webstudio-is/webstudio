@@ -261,6 +261,14 @@ describe("MDX authored content", () => {
     const next = structuredClone(root.fragment);
     next.instances[0].children = [{ type: "text", value: "Changed" }];
 
+    expect(root.provenance.unresolvedTemplates).toEqual([
+      {
+        path: [1],
+        markerId: "missing",
+        templateName: "Missing",
+      },
+    ]);
+
     const reconciled = reconcileMdxAuthoredContent({ root, fragment: next });
 
     expect(reconciled.children).toMatchObject([
