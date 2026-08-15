@@ -89,6 +89,7 @@ const findButton = (label: string) => {
 const renderControl = ({
   onDisconnect = async () => ({ status: "applied" as const }),
   source = { type: "asset" as const, assetId: asset.id },
+  loading = false,
 }: {
   onDisconnect?: () => Promise<
     { status: "applied" } | { status: "blocked"; message: string }
@@ -96,6 +97,7 @@ const renderControl = ({
   source?:
     | { type: "asset"; assetId: string }
     | { type: "expression"; value: string };
+  loading?: boolean;
 } = {}) => {
   act(() => {
     root.render(
@@ -103,6 +105,7 @@ const renderControl = ({
         <ContentBlockSourceControl
           source={source}
           resolvedAsset={asset}
+          loading={loading}
           onRequestSource={async () => ({ status: "applied" })}
           onDisconnect={onDisconnect}
           onOpen={() => {}}
@@ -115,6 +118,13 @@ const renderControl = ({
     );
   });
 };
+
+test("keeps the resolved filename visible while refreshed content loads", () => {
+  renderControl({ loading: true });
+
+  expect(document.body.textContent).toContain("post.mdx");
+  expect(findButton("Open").matches(":disabled")).toBe(true);
+});
 
 test("requires copying loaded file content before disconnecting", async () => {
   const onDisconnect = vi.fn(async () => ({ status: "applied" as const }));
@@ -331,7 +341,10 @@ test("previews converted MDX and explains skipped Markdown before creation", asy
     createConverted.click();
     await Promise.resolve();
   });
-  expect(onCreateConvertedMdx).toHaveBeenCalledWith(preview);
+  expect(onCreateConvertedMdx).toHaveBeenCalledWith({
+    assetId: "legacy",
+    preview,
+  });
   expect(onRequestSource).toHaveBeenCalledWith({
     source: { type: "asset", assetId: "converted" },
     authority: undefined,

@@ -174,19 +174,30 @@ export const createHttpAssetContentRepository = ({
   },
 });
 
-export const createBuilderMdxAssetContentRepository = ({
+export const createBuilderHttpAssetContentRepository = ({
   projectId,
-  origin = window.location.origin,
+  origin,
 }: {
   projectId: string;
   origin?: string;
-}) =>
-  createHttpAssetContentRepository({
-    projectId,
-    origin,
-    authToken: () => $authToken.get(),
-    request: builderFetch,
-  });
+}): AssetContentRepository => {
+  const getRepository = () => {
+    const requestOrigin = origin ?? globalThis.location?.origin;
+    if (requestOrigin === undefined) {
+      throw new Error("Asset content requests require a browser origin");
+    }
+    return createHttpAssetContentRepository({
+      projectId,
+      origin: requestOrigin,
+      authToken: () => $authToken.get(),
+      request: builderFetch,
+    });
+  };
+  return {
+    readContent: (input) => getRepository().readContent(input),
+    updateContent: (input) => getRepository().updateContent(input),
+  };
+};
 
 export type MdxContentPersistencePlan =
   | Readonly<{ status: "ready"; mode: "project" | "single-asset" | "noop" }>

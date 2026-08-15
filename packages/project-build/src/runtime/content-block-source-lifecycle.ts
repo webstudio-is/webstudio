@@ -39,6 +39,8 @@ export type ContentBlockSourceAuthority =
   | "use-file-content"
   | "replace-file-body-with-block-content";
 
+export class ContentBlockSourceAuthorityRequiredError extends Error {}
+
 type LifecycleSession = MdxAssetSourceController &
   Readonly<{
     open: (input: {
@@ -362,7 +364,7 @@ const getAuthority = ({
     throw new Error("Content authority is invalid");
   }
   if (blockHasBody && fileHasBody && authority === undefined) {
-    throw new Error(
+    throw new ContentBlockSourceAuthorityRequiredError(
       "Connecting non-empty content requires an explicit content authority"
     );
   }

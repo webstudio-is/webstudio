@@ -40,6 +40,11 @@ type PendingSource = Readonly<{
   action: "connect" | "switch";
 }>;
 
+type PendingConversion = Readonly<{
+  assetId: string;
+  preview: MarkdownToMdxConversionPreview;
+}>;
+
 const SourceAuthorityDialog = ({
   pending,
   disabled,
@@ -203,7 +208,7 @@ export const ContentBlockSourceControl = ({
     assetId: string
   ) => Promise<MarkdownToMdxConversionPreview>;
   onCreateConvertedMdx: (
-    preview: MarkdownToMdxConversionPreview
+    input: PendingConversion
   ) => Promise<string | undefined>;
 }) => {
   const conversionPreviewId = useId();
@@ -212,8 +217,7 @@ export const ContentBlockSourceControl = ({
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [localError, setLocalError] = useState<string>();
-  const [conversion, setConversion] =
-    useState<MarkdownToMdxConversionPreview>();
+  const [conversion, setConversion] = useState<PendingConversion>();
   const [creatingMdx, setCreatingMdx] = useState(false);
   const isDisabled = disabled || loading || busy;
   const connected = source !== undefined;
@@ -300,10 +304,10 @@ export const ContentBlockSourceControl = ({
           renderControl={() => (
             <Flex gap="2" align="center" wrap="wrap">
               <Text>
-                {loading
-                  ? "Loading content source…"
-                  : resolvedAsset
-                    ? formatAssetName(resolvedAsset)
+                {resolvedAsset
+                  ? formatAssetName(resolvedAsset)
+                  : loading
+                    ? "Loading content source…"
                     : source?.type === "expression"
                       ? "Dynamic content source"
                       : source?.type === "asset"
@@ -350,7 +354,7 @@ export const ContentBlockSourceControl = ({
                 return;
               }
               void onPreviewMarkdown(assetId)
-                .then((preview) => setConversion(preview))
+                .then((preview) => setConversion({ assetId, preview }))
                 .catch((error) =>
                   setLocalError(
                     error instanceof Error
@@ -439,25 +443,28 @@ export const ContentBlockSourceControl = ({
               <DialogTitle>Convert Markdown to MDX</DialogTitle>
               <Grid gap="3" css={{ padding: theme.panel.padding }}>
                 <DialogDescription>
-                  {conversion.omissions.length === 0
+                  {conversion.preview.omissions.length === 0
                     ? "All content can be converted. The original Markdown file will not be changed."
-                    : `${conversion.omissions.length} unsupported ${conversion.omissions.length === 1 ? "part" : "parts"} will be skipped. The original Markdown file will not be changed.`}
+                    : `${conversion.preview.omissions.length} unsupported ${conversion.preview.omissions.length === 1 ? "part" : "parts"} will be skipped. The original Markdown file will not be changed.`}
                 </DialogDescription>
-                {conversion.omissions.length > 0 && (
+                {conversion.preview.omissions.length > 0 && (
                   <ul>
-                    {conversion.omissions.slice(0, 10).map((omission) => (
-                      <li
-                        key={`${omission.nodeType}:${omission.sourceRange.start.line}:${omission.sourceRange.start.column}`}
-                      >
-                        <Text variant="tiny">
-                          {omission.nodeType}: {omission.reason}
-                        </Text>
-                      </li>
-                    ))}
-                    {conversion.omissions.length > 10 && (
+                    {conversion.preview.omissions
+                      .slice(0, 10)
+                      .map((omission) => (
+                        <li
+                          key={`${omission.nodeType}:${omission.sourceRange.start.line}:${omission.sourceRange.start.column}`}
+                        >
+                          <Text variant="tiny">
+                            {omission.nodeType}: {omission.reason}
+                          </Text>
+                        </li>
+                      ))}
+                    {conversion.preview.omissions.length > 10 && (
                       <li>
                         <Text variant="tiny">
-                          {conversion.omissions.length - 10} more skipped parts
+                          {conversion.preview.omissions.length - 10} more
+                          skipped parts
                         </Text>
                       </li>
                     )}
@@ -469,7 +476,7 @@ export const ContentBlockSourceControl = ({
                     id={conversionPreviewId}
                     readOnly
                     rows={10}
-                    value={conversion.source}
+                    value={conversion.preview.source}
                   />
                 </Grid>
                 {(localError ?? error) !== undefined && (

@@ -8,6 +8,7 @@ import {
 import type { BuilderState } from "../state/builder-state";
 import { applyBuilderPatchTransactions } from "../state/patch";
 import {
+  ContentBlockSourceAuthorityRequiredError,
   prepareContentBlockConnect,
   prepareContentBlockDisconnect,
   prepareContentBlockSwitch,
@@ -215,7 +216,7 @@ describe("Content Block source lifecycle", () => {
         session,
         context: createContext(),
       })
-    ).rejects.toThrow();
+    ).rejects.toThrow(ContentBlockSourceAuthorityRequiredError);
   });
 
   test("uses validated file content and removes every persisted body child", async () => {
