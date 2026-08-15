@@ -55,6 +55,7 @@ import {
   createContentStorageProjection,
   executeContentStorageMutation,
   executeContentStoragePropMutation,
+  executeContentStorageStructuralMutation,
   executeContentStorageTextReplacement,
   getContentStorageProtectedChildCount,
 } from "./content-storage";
@@ -1049,7 +1050,19 @@ export const builderRuntimeOperations = [
       writeNamespaces: ["pages", "instances", "props", ...dataNamespaces],
     }),
     instances.moveInstancesInput,
-    ({ state, input }) => instances.moveInstances(state, input)
+    ({ state, input, context }) =>
+      executeContentStorageStructuralMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        protectedInstanceIds: input.moves.map(({ instanceId }) => instanceId),
+        rootPairs: input.moves.map(({ instanceId, parentInstanceId }) => ({
+          source: { type: "instance", instanceId },
+          target: { type: "children", parentInstanceId },
+        })),
+        execute: (mutationState) =>
+          instances.moveInstances(mutationState, input),
+      })
   ),
   runtimeOperation(
     "instances.reparent",
@@ -1076,7 +1089,26 @@ export const builderRuntimeOperations = [
     }),
     instances.reparentInstanceInput,
     ({ state, input, context }) =>
-      instances.reparentInstance(state, input, context)
+      executeContentStorageStructuralMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        protectedInstanceIds: [input.sourceInstanceSelector[0]],
+        rootPairs: [
+          {
+            source: {
+              type: "instance",
+              instanceId: input.sourceInstanceSelector[0],
+            },
+            target: {
+              type: "children",
+              parentInstanceId: input.dropTarget.parentSelector[0],
+            },
+          },
+        ],
+        execute: (mutationState) =>
+          instances.reparentInstance(mutationState, input, context),
+      })
   ),
   runtimeOperation(
     "instances.fillGrid",
@@ -1198,7 +1230,15 @@ export const builderRuntimeOperations = [
       writeNamespaces: treeMutationNamespaces,
     }),
     instances.deleteInstancesInput,
-    ({ state, input }) => instances.deleteInstances(state, input)
+    ({ state, input, context }) =>
+      executeContentStorageStructuralMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        protectedInstanceIds: input.instanceIds,
+        execute: (mutationState) =>
+          instances.deleteInstances(mutationState, input),
+      })
   ),
   runtimeOperation(
     "instances.deleteBySelector",

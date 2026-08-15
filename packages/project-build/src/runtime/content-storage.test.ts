@@ -2116,3 +2116,434 @@ test("keeps Content Block and Templates metadata project-owned", () => {
     });
   }
 });
+
+const siblingFragment = (
+  parentId: string,
+  childIds: readonly string[]
+): WebstudioFragment => ({
+  ...fragment(parentId),
+  instances: [
+    {
+      type: "instance",
+      id: parentId,
+      component: elementComponent,
+      tag: "div",
+      children: childIds.map((value) => ({ type: "id" as const, value })),
+    },
+    ...childIds.map((id) => ({
+      type: "instance" as const,
+      id,
+      component: elementComponent,
+      tag: "p",
+      children: [{ type: "text" as const, value: id }],
+    })),
+  ],
+});
+
+const addSecondSourceBlock = (state: BuilderState) => {
+  state.instances?.set("second-block", {
+    type: "instance",
+    id: "second-block",
+    component: blockComponent,
+    children: [{ type: "id", value: "second-templates" }],
+  });
+  state.instances?.set("second-templates", {
+    type: "instance",
+    id: "second-templates",
+    component: blockTemplateComponent,
+    children: [],
+  });
+  state.props?.set("second-src", {
+    id: "second-src",
+    instanceId: "second-block",
+    name: "src",
+    type: "asset",
+    value: "second",
+  });
+  return state;
+};
+
+test("reorders authored siblings within one storage root", () => {
+  const externalIdentity = identity("page:/post");
+  const externalFragment = siblingFragment("parent", ["first", "second"]);
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.reparent",
+      state: createStructuralState(),
+      input: {
+        sourceInstanceSelector: ["first", "parent", "block"],
+        dropTarget: {
+          parentSelector: ["parent", "block"],
+          position: "end",
+        },
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      { root: { type: "external", identity: externalIdentity } },
+    ],
+    result: { instanceSelector: ["first", "parent", "block"] },
+  });
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.reparent",
+      state: createStructuralState(),
+      input: {
+        sourceInstanceSelector: ["first", "parent", "block"],
+        dropTarget: {
+          parentSelector: ["parent", "block"],
+          position: "end",
+        },
+      },
+      context: {
+        createId: createIdFactory(),
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toThrow("must handle authored storage changes");
+});
+
+test("keeps a repeated authored reorder as a noop", () => {
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.reparent",
+      state: createStructuralState(),
+      input: {
+        sourceInstanceSelector: ["first", "parent", "block"],
+        dropTarget: {
+          parentSelector: ["parent", "block"],
+          position: "end",
+        },
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: identity("page:/post"),
+            fragment: siblingFragment("parent", ["second", "first"]),
+          },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: undefined,
+    noop: true,
+    result: { instanceSelector: ["first", "parent", "block"] },
+  });
+});
+
+test("routes batched moves within their authored roots", () => {
+  const externalIdentity = identity("page:/post");
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.move",
+      state: createStructuralState(),
+      input: {
+        moves: [
+          { instanceId: "first", parentInstanceId: "parent", position: "end" },
+        ],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: externalIdentity,
+            fragment: siblingFragment("parent", ["first", "second"]),
+          },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      { root: { type: "external", identity: externalIdentity } },
+    ],
+    result: { instanceIds: ["first"] },
+  });
+});
+
+test("orders independent batched moves by their authored roots", () => {
+  const firstIdentity = identity("page:/post");
+  const secondIdentity = identity("page:/second", "second-block", "second");
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.move",
+      state: addSecondSourceBlock(createStructuralState()),
+      input: {
+        moves: [
+          {
+            instanceId: "first",
+            parentInstanceId: "first-parent",
+            position: "end",
+          },
+          {
+            instanceId: "second",
+            parentInstanceId: "second-parent",
+            position: "end",
+          },
+        ],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: firstIdentity,
+            fragment: siblingFragment("first-parent", ["first", "first-tail"]),
+          },
+          {
+            identity: secondIdentity,
+            fragment: siblingFragment("second-parent", [
+              "second",
+              "second-tail",
+            ]),
+          },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      { root: { type: "external", identity: firstIdentity } },
+      { root: { type: "external", identity: secondIdentity } },
+    ],
+    result: { instanceIds: ["first", "second"] },
+  });
+});
+
+test.each([
+  {
+    destination: "project",
+    configure: (state: BuilderState) => state,
+    materializedContent: [
+      {
+        identity: identity("page:/post"),
+        fragment: siblingFragment("parent", ["first"]),
+      },
+    ],
+    targetParentId: "templates",
+  },
+  {
+    destination: "another authored root",
+    configure: addSecondSourceBlock,
+    materializedContent: [
+      {
+        identity: identity("page:/post"),
+        fragment: siblingFragment("parent", ["first"]),
+      },
+      {
+        identity: identity("page:/second", "second-block", "second"),
+        fragment: siblingFragment("second-parent", ["second"]),
+      },
+    ],
+    targetParentId: "second-parent",
+  },
+])("rejects moving authored content to $destination", (testCase) => {
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.move",
+      state: testCase.configure(createStructuralState()),
+      input: {
+        moves: [
+          {
+            instanceId: "first",
+            parentInstanceId: testCase.targetParentId,
+            position: "end",
+          },
+        ],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: testCase.materializedContent,
+      },
+    })
+  ).toThrow("Moving content across authored storage roots is not supported");
+});
+
+test("partitions deletion across project and authored roots", () => {
+  const state = addSecondSourceBlock(createStructuralState());
+  state.instances?.get("templates")?.children.push({
+    type: "id",
+    value: "project-child",
+  });
+  state.instances?.set("project-child", {
+    type: "instance",
+    id: "project-child",
+    component: elementComponent,
+    tag: "p",
+    children: [],
+  });
+  const firstIdentity = identity("page:/post");
+  const secondIdentity = identity("page:/second", "second-block", "second");
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.delete",
+      state,
+      input: { instanceIds: ["first", "project-child", "second"] },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          {
+            identity: firstIdentity,
+            fragment: siblingFragment("first-parent", ["first"]),
+          },
+          {
+            identity: secondIdentity,
+            fragment: siblingFragment("second-parent", ["second"]),
+          },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [expect.objectContaining({ namespace: "instances" })],
+    storageChanges: [
+      { root: { type: "external", identity: firstIdentity } },
+      { root: { type: "external", identity: secondIdentity } },
+    ],
+    result: { instanceIds: ["first", "project-child", "second"] },
+  });
+  expect(state.instances?.has("project-child")).toEqual(true);
+});
+
+test("routes deletion to the innermost nested storage root", () => {
+  const { nestedIdentity, roots } = createNestedMaterializedContent();
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.delete",
+      state: createStructuralState(),
+      input: { instanceIds: ["nested-content"] },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: roots,
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [{ root: { type: "external", identity: nestedIdentity } }],
+    result: { instanceIds: ["nested-content"] },
+  });
+});
+
+test("keeps deleted authored local styles in the same storage root", () => {
+  const externalIdentity = identity("page:/post");
+  const externalFragment = fragment("external");
+  externalFragment.styleSources = [{ type: "local", id: "external-style" }];
+  externalFragment.styleSourceSelections = [
+    { instanceId: "external", values: ["external-style"] },
+  ];
+  externalFragment.styles = [
+    {
+      styleSourceId: "external-style",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+  ];
+
+  expect(
+    executeBuilderRuntimeOperation({
+      id: "instances.delete",
+      state: createStructuralState(),
+      input: { instanceIds: ["external"] },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: externalIdentity, fragment: externalFragment },
+        ],
+      },
+    })
+  ).toMatchObject({
+    payload: [],
+    storageChanges: [
+      {
+        root: { type: "external", identity: externalIdentity },
+        payload: expect.arrayContaining([
+          expect.objectContaining({ namespace: "instances" }),
+          expect.objectContaining({ namespace: "styleSourceSelections" }),
+          expect.objectContaining({ namespace: "styleSources" }),
+          expect.objectContaining({ namespace: "styles" }),
+        ]),
+      },
+    ],
+  });
+});
+
+test("rejects a protected Templates deletion before returning other roots", () => {
+  const state = createStructuralState();
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.delete",
+      state,
+      input: { instanceIds: ["external", "templates"] },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: fragment("external") },
+        ],
+      },
+    })
+  ).toThrow("Templates list cannot be changed");
+  expect(state.instances?.has("templates")).toEqual(true);
+});
+
+test("rejects moving the protected Templates list through project storage", () => {
+  const state = createStructuralState();
+  state.instances?.set("project-container", {
+    type: "instance",
+    id: "project-container",
+    component: elementComponent,
+    tag: "div",
+    children: [],
+  });
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.move",
+      state,
+      input: {
+        moves: [
+          {
+            instanceId: "templates",
+            parentInstanceId: "project-container",
+            position: "end",
+          },
+        ],
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [
+          { identity: identity("page:/post"), fragment: fragment("external") },
+        ],
+      },
+    })
+  ).toThrow("Templates list cannot be changed");
+  expect(state.instances?.get("block")?.children).toEqual([
+    { type: "id", value: "templates" },
+  ]);
+});

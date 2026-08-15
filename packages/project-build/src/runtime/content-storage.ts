@@ -65,6 +65,14 @@ export type ContentStorageProjection = Readonly<{
     string,
     ContentBlockExternalContentIdentity
   >;
+  externalRootByStyleSourceId: ReadonlyMap<
+    string,
+    ContentBlockExternalContentIdentity
+  >;
+  externalRootByStyleDeclKey: ReadonlyMap<
+    string,
+    ContentBlockExternalContentIdentity
+  >;
 }>;
 
 export const getContentStorageProtectedChildCount = ({
@@ -283,6 +291,8 @@ export const createContentStorageProjection = ({
       externalRootByInstanceId: new Map(),
       externalRootByDataSourceId: new Map(),
       externalRootByResourceId: new Map(),
+      externalRootByStyleSourceId: new Map(),
+      externalRootByStyleDeclKey: new Map(),
     };
   }
 
@@ -303,6 +313,14 @@ export const createContentStorageProjection = ({
     ContentBlockExternalContentIdentity
   >();
   const externalRootByResourceId = new Map<
+    string,
+    ContentBlockExternalContentIdentity
+  >();
+  const externalRootByStyleSourceId = new Map<
+    string,
+    ContentBlockExternalContentIdentity
+  >();
+  const externalRootByStyleDeclKey = new Map<
     string,
     ContentBlockExternalContentIdentity
   >();
@@ -417,6 +435,14 @@ export const createContentStorageProjection = ({
     for (const resource of fragment.resources) {
       externalRootByResourceId.set(resource.id, identity);
     }
+    for (const styleSource of fragment.styleSources) {
+      if (styleSource.type === "local") {
+        externalRootByStyleSourceId.set(styleSource.id, identity);
+      }
+    }
+    for (const style of fragment.styles) {
+      externalRootByStyleDeclKey.set(getStyleDeclKey(style), identity);
+    }
   }
 
   return {
@@ -425,6 +451,8 @@ export const createContentStorageProjection = ({
     externalRootByInstanceId,
     externalRootByDataSourceId,
     externalRootByResourceId,
+    externalRootByStyleSourceId,
+    externalRootByStyleDeclKey,
   };
 };
 
@@ -607,6 +635,27 @@ const createExternalStorageChange = ({
     : { root, payload: storagePayload };
 };
 
+const isProtectedTemplatesList = ({
+  projection,
+  materializedRoots,
+  instanceId,
+}: {
+  projection: ContentStorageProjection;
+  materializedRoots: readonly MaterializedContentRoot[];
+  instanceId: Instance["id"];
+}) =>
+  materializedRoots.some(({ identity }) =>
+    projection.state.instances
+      ?.get(identity.blockInstanceId)
+      ?.children.some(
+        (child) =>
+          child.type === "id" &&
+          child.value === instanceId &&
+          projection.state.instances?.get(child.value)?.component ===
+            blockTemplateComponent
+      )
+  );
+
 export const executeContentStorageMutation = <
   Mutation extends BuilderRuntimeMutation,
 >({
@@ -634,17 +683,11 @@ export const executeContentStorageMutation = <
   if (
     protectTemplatesList === true &&
     target.type === "instance" &&
-    materializedRoots.some(({ identity }) =>
-      projection.state.instances
-        ?.get(identity.blockInstanceId)
-        ?.children.some(
-          (child) =>
-            child.type === "id" &&
-            child.value === target.instanceId &&
-            projection.state.instances?.get(child.value)?.component ===
-              blockTemplateComponent
-        )
-    )
+    isProtectedTemplatesList({
+      projection,
+      materializedRoots,
+      instanceId: target.instanceId,
+    })
   ) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
@@ -950,6 +993,218 @@ export const executeContentStoragePropMutation = <
           "Prop mutation produced an unsupported patch."
         );
       }
+      const changes =
+        root.type === "project"
+          ? projectChanges
+          : (externalChanges.get(root.identity.blockInstanceId)?.changes ??
+            new Map());
+      const accumulated = changes.get(change.namespace) ?? {
+        namespace: change.namespace,
+        patches: [],
+      };
+      accumulated.patches.push(patch);
+      changes.set(change.namespace, accumulated);
+      if (root.type === "external") {
+        externalChanges.set(root.identity.blockInstanceId, { root, changes });
+      }
+    }
+  }
+  if (externalChanges.size > 0 && returnStorageChanges !== true) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "The caller must handle authored storage changes."
+    );
+  }
+  const storageChanges = Array.from(externalChanges.values()).flatMap(
+    ({ root, changes }) => {
+      const storageChange = createExternalStorageChange({
+        projection,
+        root,
+        payload: Array.from(changes.values()),
+      });
+      return storageChange === undefined ? [] : [storageChange];
+    }
+  );
+  const combinedStorageChanges = [
+    ...(mutation.storageChanges ?? []),
+    ...storageChanges,
+  ];
+  return {
+    ...mutation,
+    payload: Array.from(projectChanges.values()),
+    storageChanges:
+      combinedStorageChanges.length === 0 ? undefined : combinedStorageChanges,
+    noop: projectChanges.size === 0 && combinedStorageChanges.length === 0,
+  } as Mutation;
+};
+
+const getExistingRecordStorageRoot = ({
+  identity,
+  exists,
+}: {
+  identity: ContentBlockExternalContentIdentity | undefined;
+  exists: boolean;
+}): ContentStorageRoot => {
+  if (identity !== undefined) {
+    return { type: "external", identity };
+  }
+  if (exists) {
+    return projectStorageRoot;
+  }
+  return throwBuilderRuntimeError(
+    "BAD_REQUEST",
+    "Structural mutation owner is missing."
+  );
+};
+
+const getStructuralPatchRoot = ({
+  projection,
+  change,
+  patch,
+}: {
+  projection: ContentStorageProjection;
+  change: BuilderPatchChange;
+  patch: BuilderPatchChange["patches"][number];
+}): ContentStorageRoot => {
+  const [id, field] = patch.path;
+  if (typeof id !== "string") {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Structural mutation owner is missing."
+    );
+  }
+  if (change.namespace === "instances") {
+    if (projection.state.instances?.has(id) === false) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Structural mutation cannot create instances while partitioning roots."
+      );
+    }
+    return resolveContentStorageRoot(
+      projection,
+      field === "children"
+        ? { type: "children", parentInstanceId: id }
+        : { type: "instance", instanceId: id }
+    );
+  }
+  if (change.namespace === "props") {
+    const root = getPropStorageRoot(projection, patch);
+    const prop = getPatchedProp(projection, patch);
+    if (prop !== undefined) {
+      validatePropReferenceOwnership({ projection, root, prop });
+    }
+    return root;
+  }
+  if (change.namespace === "styleSourceSelections") {
+    return resolveContentStorageRoot(projection, {
+      type: "instance",
+      instanceId: id,
+    });
+  }
+  if (change.namespace === "dataSources") {
+    return getExistingRecordStorageRoot({
+      identity: projection.externalRootByDataSourceId.get(id),
+      exists: projection.state.dataSources?.has(id) === true,
+    });
+  }
+  if (change.namespace === "resources") {
+    return getExistingRecordStorageRoot({
+      identity: projection.externalRootByResourceId.get(id),
+      exists: projection.state.resources?.has(id) === true,
+    });
+  }
+  if (change.namespace === "styleSources") {
+    return getExistingRecordStorageRoot({
+      identity: projection.externalRootByStyleSourceId.get(id),
+      exists: projection.state.styleSources?.has(id) === true,
+    });
+  }
+  if (change.namespace === "styles") {
+    return getExistingRecordStorageRoot({
+      identity: projection.externalRootByStyleDeclKey.get(id),
+      exists: projection.state.styles?.has(id) === true,
+    });
+  }
+  if (change.namespace === "pages") {
+    return projectStorageRoot;
+  }
+  return throwBuilderRuntimeError(
+    "BAD_REQUEST",
+    `Structural mutation produced unsupported namespace "${change.namespace}".`
+  );
+};
+
+export const executeContentStorageStructuralMutation = <
+  Mutation extends BuilderRuntimeMutation,
+>({
+  state,
+  materializedRoots,
+  returnStorageChanges,
+  protectedInstanceIds = [],
+  rootPairs = [],
+  execute,
+}: {
+  state: BuilderState;
+  materializedRoots?: readonly MaterializedContentRoot[];
+  returnStorageChanges?: boolean;
+  protectedInstanceIds?: readonly Instance["id"][];
+  rootPairs?: readonly Readonly<{
+    source: ContentStorageTarget;
+    target: ContentStorageTarget;
+  }>[];
+  execute: (state: BuilderState) => Mutation;
+}): Mutation => {
+  if (materializedRoots === undefined || materializedRoots.length === 0) {
+    return execute(state);
+  }
+  const projection = createContentStorageProjection({
+    state,
+    materializedRoots,
+  });
+  for (const instanceId of protectedInstanceIds) {
+    if (
+      isProtectedTemplatesList({
+        projection,
+        materializedRoots,
+        instanceId,
+      })
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "The source-backed Content Block Templates list cannot be changed."
+      );
+    }
+  }
+  let hasExternalPair = false;
+  for (const pair of rootPairs) {
+    const sourceRoot = resolveContentStorageRoot(projection, pair.source);
+    const targetRoot = resolveContentStorageRoot(projection, pair.target);
+    if (isSameContentStorageRoot(sourceRoot, targetRoot) === false) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Moving content across authored storage roots is not supported."
+      );
+    }
+    hasExternalPair ||= sourceRoot.type === "external";
+  }
+  if (rootPairs.length > 0 && hasExternalPair === false) {
+    return execute(state);
+  }
+  const mutation = execute(projection.state);
+  const projectChanges = new Map<
+    BuilderPatchChange["namespace"],
+    BuilderPatchChange
+  >();
+  const externalChanges = new Map<
+    Instance["id"],
+    {
+      root: Extract<ContentStorageRoot, { type: "external" }>;
+      changes: Map<BuilderPatchChange["namespace"], BuilderPatchChange>;
+    }
+  >();
+  for (const change of mutation.payload) {
+    for (const patch of change.patches) {
+      const root = getStructuralPatchRoot({ projection, change, patch });
       const changes =
         root.type === "project"
           ? projectChanges
