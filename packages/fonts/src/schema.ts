@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { FONT_STYLES } from "./constants";
 
+const fontStyle = z.enum(FONT_STYLES);
+
 export const fontFormat = z.union([
   z.literal("ttf"),
   z.literal("woff"),
@@ -29,7 +31,7 @@ export type VariationAxes = z.infer<typeof variationAxes>;
 
 export const fontMetaStatic = z.object({
   family: z.string(),
-  style: z.enum(FONT_STYLES),
+  style: fontStyle,
   weight: z.number(),
 });
 
@@ -37,6 +39,7 @@ export type FontMetaStatic = z.infer<typeof fontMetaStatic>;
 
 export const fontMetaVariable = z.object({
   family: z.string(),
+  style: fontStyle.default("normal"),
   variationAxes: variationAxes,
 });
 
@@ -44,7 +47,13 @@ export const fontMeta = z.union([fontMetaStatic, fontMetaVariable]);
 
 export const fontMetaUpdate = z.union([
   fontMetaStatic.partial().strict(),
-  fontMetaVariable.partial().strict(),
+  z
+    .object({
+      family: fontMetaVariable.shape.family.optional(),
+      style: fontStyle.optional(),
+      variationAxes: fontMetaVariable.shape.variationAxes.optional(),
+    })
+    .strict(),
 ]);
 
 export type FontMeta = z.infer<typeof fontMeta>;
@@ -57,17 +66,17 @@ export const mergeFontMeta = (
   if (result.success === false) {
     return;
   }
-  const { family } = result.data;
+  const { family, style } = result.data;
   if ("variationAxes" in current) {
     const variationAxes =
       "variationAxes" in result.data ? result.data.variationAxes : undefined;
     return {
       ...current,
       ...(family === undefined ? {} : { family }),
+      ...(style === undefined ? {} : { style }),
       ...(variationAxes === undefined ? {} : { variationAxes }),
     };
   }
-  const style = "style" in result.data ? result.data.style : undefined;
   const weight = "weight" in result.data ? result.data.weight : undefined;
   return {
     ...current,

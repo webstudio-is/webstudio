@@ -3741,6 +3741,11 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
@@ -6857,6 +6862,11 @@ export const runtimeOperationContractData = [
                                     properties: {
                                       family: {
                                         type: "string",
+                                      },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
                                       },
                                       variationAxes: {
                                         type: "object",
@@ -9986,6 +9996,11 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
@@ -13102,6 +13117,11 @@ export const runtimeOperationContractData = [
                                     properties: {
                                       family: {
                                         type: "string",
+                                      },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
                                       },
                                       variationAxes: {
                                         type: "object",
@@ -18929,6 +18949,15 @@ export const runtimeOperationContractData = [
                                             family: {
                                               type: "string",
                                             },
+                                            style: {
+                                              default: "normal",
+                                              type: "string",
+                                              enum: [
+                                                "normal",
+                                                "italic",
+                                                "oblique",
+                                              ],
+                                            },
                                             variationAxes: {
                                               type: "object",
                                               propertyNames: {
@@ -22249,6 +22278,15 @@ export const runtimeOperationContractData = [
                                           properties: {
                                             family: {
                                               type: "string",
+                                            },
+                                            style: {
+                                              default: "normal",
+                                              type: "string",
+                                              enum: [
+                                                "normal",
+                                                "italic",
+                                                "oblique",
+                                              ],
                                             },
                                             variationAxes: {
                                               type: "object",
@@ -36615,6 +36653,11 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
@@ -39810,6 +39853,11 @@ export const runtimeOperationContractData = [
                                     properties: {
                                       family: {
                                         type: "string",
+                                      },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
                                       },
                                       variationAxes: {
                                         type: "object",
@@ -46119,6 +46167,11 @@ export const runtimeOperationContractData = [
                               family: {
                                 type: "string",
                               },
+                              style: {
+                                default: "normal",
+                                type: "string",
+                                enum: ["normal", "italic", "oblique"],
+                              },
                               variationAxes: {
                                 type: "object",
                                 propertyNames: {
@@ -51924,6 +51977,11 @@ export const runtimeOperationContractData = [
                             properties: {
                               family: {
                                 type: "string",
+                              },
+                              style: {
+                                default: "normal",
+                                type: "string",
+                                enum: ["normal", "italic", "oblique"],
                               },
                               variationAxes: {
                                 type: "object",
@@ -70656,6 +70714,10 @@ export const runtimeOperationContractData = [
                         family: {
                           type: "string",
                         },
+                        style: {
+                          type: "string",
+                          enum: ["normal", "italic", "oblique"],
+                        },
                         variationAxes: {
                           type: "object",
                           propertyNames: {
@@ -70710,7 +70772,7 @@ export const runtimeOperationContractData = [
                 },
               ],
               description:
-                "Type-specific metadata: family/style/weight or variationAxes for fonts, width/height for images, and no fields for generic files.",
+                "Type-specific metadata: family and style plus weight for static fonts or variationAxes for variable fonts, width/height for images, and no fields for generic files.",
             },
           },
           required: [],
@@ -70905,6 +70967,11 @@ export const runtimeOperationContractData = [
                       properties: {
                         family: {
                           type: "string",
+                        },
+                        style: {
+                          default: "normal",
+                          type: "string",
+                          enum: ["normal", "italic", "oblique"],
                         },
                         variationAxes: {
                           type: "object",

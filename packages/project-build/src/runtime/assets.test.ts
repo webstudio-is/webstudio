@@ -1154,6 +1154,23 @@ describe("updateAsset", () => {
       values: { meta: { family: "Rajdhani Display", weight: 600 } },
     });
 
+    const variationAxes = {
+      wght: { name: "Weight", min: 100, default: 400, max: 900 },
+    };
+    expect(
+      assetUpdateInput.parse({
+        assetId: "variable-font-1",
+        values: {
+          meta: { family: "Inter", style: "italic", variationAxes },
+        },
+      })
+    ).toEqual({
+      assetId: "variable-font-1",
+      values: {
+        meta: { family: "Inter", style: "italic", variationAxes },
+      },
+    });
+
     expect(
       assetUpdateInput.parse({
         assetId: "image-1",

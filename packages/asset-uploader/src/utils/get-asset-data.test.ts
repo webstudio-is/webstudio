@@ -58,7 +58,11 @@ describe("asset data overrides", () => {
         {
           size: 100,
           format: "woff2",
-          meta: { family: "Detected Family", variationAxes },
+          meta: {
+            family: "Detected Family",
+            style: "italic",
+            variationAxes,
+          },
         },
         {
           format: "woff2",
@@ -72,7 +76,11 @@ describe("asset data overrides", () => {
     ).toEqual({
       size: 100,
       format: "woff2",
-      meta: { family: "Configured Family", variationAxes },
+      meta: {
+        family: "Configured Family",
+        style: "normal",
+        variationAxes,
+      },
     });
   });
 

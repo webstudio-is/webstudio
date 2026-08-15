@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import { $, ws, css, renderData, createProxy } from "@webstudio-is/template";
 import { generateCss, type CssConfig } from "./css";
 import type { Breakpoint } from "./schema/breakpoints";
+import type { Asset } from "./schema/assets";
 import { rootComponent } from "./core-metas";
 
 const toMap = <T extends { id: string }>(list: T[]) =>
@@ -18,6 +19,45 @@ const generateAllCss = (config: Omit<CssConfig, "atomic">) => {
   });
   return { cssText, atomicCssText, classes, atomicClasses };
 };
+
+test("generates distinct upright and italic variable font faces", () => {
+  const variableFontAsset = (style: "normal" | "italic"): Asset => ({
+    id: style,
+    projectId: "project",
+    name: `family-${style}.woff2`,
+    type: "font",
+    size: 1,
+    format: "woff2",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    description: null,
+    meta: {
+      family: "Family",
+      style,
+      variationAxes: {
+        wght: { name: "Weight", min: 100, default: 400, max: 900 },
+      },
+    },
+  });
+  const assets = toMap([
+    variableFontAsset("normal"),
+    variableFontAsset("italic"),
+  ]);
+  const { cssText } = generateCss({
+    ...renderData(<$.Body />),
+    assets,
+    atomic: false,
+    componentMetas: new Map(),
+    assetBaseUrl: "/assets/",
+  });
+
+  expect(cssText).toBe(`@font-face {
+  font-family: Family; font-style: normal; font-weight: 100 900; font-display: swap; src: url("/assets/family-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: Family; font-style: italic; font-weight: 100 900; font-display: swap; src: url("/assets/family-italic.woff2") format("woff2");
+}
+`);
+});
 
 test("generate css for one instance with two tokens", () => {
   const { cssText, atomicCssText, atomicClasses } = generateAllCss({

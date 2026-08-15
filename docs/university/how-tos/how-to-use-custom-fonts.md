@@ -72,7 +72,8 @@ When uploading custom fonts, these formats are supported:
 
 - **Use WOFF2 format** when possible for smallest file size
 - **Limit font variations** — only upload weights you actually use
-- **Consider variable fonts** — one file contains multiple weights
+- **Upload upright and italic files together** when a family provides separate files. Webstudio reads each file's style metadata so the browser can select the correct face.
+- **Consider variable fonts** — one file can contain multiple weights and may also contain italic or slant variations
 
 ---
 
