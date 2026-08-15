@@ -40,6 +40,11 @@
     "./patch-assets-core.server": {
       "webstudio": "./src/asset-patch-core.ts",
       "import": "./src/asset-patch-core.ts"
+    },
+    "./content-revision": {
+      "webstudio": "./src/content-revision.ts",
+      "import": "./src/content-revision.ts",
+      "default": "./src/content-revision.ts"
     }
   },
   "license": "AGPL-3.0-or-later",

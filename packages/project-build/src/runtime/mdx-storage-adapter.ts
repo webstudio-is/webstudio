@@ -16,7 +16,10 @@ import {
   applyBuilderNamespacePatches,
   applyBuilderPatchTransactions,
 } from "../state/patch";
-import type { ContentStorageRoot } from "./content-storage";
+import {
+  getContentStorageIdentityKey,
+  type ContentStorageRoot,
+} from "./content-storage";
 import {
   reconcileMdxAuthoredContent,
   type MaterializedMdxAuthoredContentRoot,
@@ -42,16 +45,6 @@ const fragmentNamespaces = [
 ] as const satisfies readonly BuilderNamespace[];
 
 type FragmentNamespace = (typeof fragmentNamespaces)[number];
-
-const identityKey = (identity: ContentBlockExternalContentIdentity) =>
-  JSON.stringify([
-    identity.blockInstanceId,
-    identity.assetId,
-    identity.revision,
-    identity.contentRef,
-    identity.format,
-    identity.renderScope,
-  ]);
 
 const toFragmentState = (fragment: WebstudioFragment): BuilderState => ({
   instances: new Map(fragment.instances.map((value) => [value.id, value])),
@@ -371,7 +364,7 @@ const getLoadedRoot = ({
   loadedByIdentity: ReadonlyMap<string, MaterializedMdxAuthoredContentRoot>;
   identity: ContentBlockExternalContentIdentity;
 }) => {
-  const loaded = loadedByIdentity.get(identityKey(identity));
+  const loaded = loadedByIdentity.get(getContentStorageIdentityKey(identity));
   if (loaded !== undefined) {
     return loaded;
   }
@@ -449,7 +442,7 @@ export const prepareMdxContentStorageWrites = async ({
         `Content storage root "${root.identity.contentRef}" is not MDX`
       );
     }
-    const key = identityKey(root.identity);
+    const key = getContentStorageIdentityKey(root.identity);
     if (loadedByIdentity.has(key)) {
       throw new Error(
         `Duplicate loaded MDX storage root "${root.identity.contentRef}"`
@@ -478,7 +471,7 @@ export const prepareMdxContentStorageWrites = async ({
         `Content storage root "${identity.contentRef}" is not MDX`
       );
     }
-    const key = identityKey(identity);
+    const key = getContentStorageIdentityKey(identity);
     const loaded = getLoadedRoot({ loadedRoots, loadedByIdentity, identity });
     assertCopySourceIsSerializable({
       change,

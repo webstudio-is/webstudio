@@ -12,7 +12,7 @@ import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
 import { componentInsertResult } from "./component-insert-contract";
-import { componentInsertNamespaces, insertFragment } from "./components";
+import { getRequiredComponentInsertData, insertFragment } from "./components";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
 import { instanceInsertModeInput, insertIndexInput } from "./instances";
@@ -33,28 +33,6 @@ export const mdxPasteResult = componentInsertResult.extend({
 });
 
 export type MdxPasteResult = z.infer<typeof mdxPasteResult>;
-
-const getRequiredData = (state: BuilderState): Omit<WebstudioData, "pages"> => {
-  for (const namespace of componentInsertNamespaces) {
-    if (state[namespace] === undefined) {
-      return throwBuilderRuntimeError(
-        "BAD_REQUEST",
-        `MDX paste requires the ${namespace} namespace.`
-      );
-    }
-  }
-  return {
-    instances: state.instances!,
-    props: state.props!,
-    dataSources: state.dataSources!,
-    resources: state.resources!,
-    styleSources: state.styleSources!,
-    styleSourceSelections: state.styleSourceSelections!,
-    styles: state.styles!,
-    breakpoints: state.breakpoints!,
-    assets: state.assets!,
-  };
-};
 
 const findDestinationBlock = ({
   parentInstanceId,
@@ -120,7 +98,7 @@ export const insertMdxText = async ({
   destinationIdentity?: ContentBlockExternalContentIdentity;
   protectedChildCount?: number;
 }): Promise<BuilderRuntimeMutation<MdxPasteResult>> => {
-  const data = getRequiredData(state);
+  const data = getRequiredComponentInsertData(state);
   const destinationBlock = findDestinationBlock({
     parentInstanceId: input.parentInstanceId,
     instances: data.instances,

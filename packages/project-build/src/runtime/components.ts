@@ -239,19 +239,39 @@ const getRequiredComponentInsertState = (state: ComponentInsertState) => {
   };
 };
 
+export const getRequiredComponentInsertData = (
+  state: ComponentInsertState
+): Omit<WebstudioData, "pages"> => {
+  const required = getRequiredComponentInsertState(state);
+  return {
+    instances: required.instances,
+    props: required.props,
+    dataSources: required.dataSources,
+    resources: required.resources,
+    styleSources: required.styleSources,
+    styleSourceSelections: required.styleSourceSelections,
+    styles: required.styles,
+    breakpoints: required.breakpoints,
+    assets: required.assets,
+  };
+};
+
 const cloneFragmentData = (
   state: ReturnType<typeof getRequiredComponentInsertState>
-): Omit<WebstudioData, "pages"> => ({
-  instances: cloneMap(state.instances),
-  props: cloneMap(state.props),
-  dataSources: cloneMap(state.dataSources),
-  resources: cloneMap(state.resources),
-  styleSources: cloneMap(state.styleSources),
-  styleSourceSelections: cloneMap(state.styleSourceSelections),
-  styles: cloneMap(state.styles),
-  breakpoints: cloneMap(state.breakpoints),
-  assets: cloneMap(state.assets),
-});
+): Omit<WebstudioData, "pages"> => {
+  const data = getRequiredComponentInsertData(state);
+  return {
+    instances: cloneMap(data.instances),
+    props: cloneMap(data.props),
+    dataSources: cloneMap(data.dataSources),
+    resources: cloneMap(data.resources),
+    styleSources: cloneMap(data.styleSources),
+    styleSourceSelections: cloneMap(data.styleSourceSelections),
+    styles: cloneMap(data.styles),
+    breakpoints: cloneMap(data.breakpoints),
+    assets: cloneMap(data.assets),
+  };
+};
 
 const cloneMap = <Key, Value>(map: Map<Key, Value>) =>
   new Map(

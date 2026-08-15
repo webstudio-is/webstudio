@@ -43,6 +43,18 @@ export type ContentStorageRoot =
       identity: ContentBlockExternalContentIdentity;
     }>;
 
+export const getContentStorageIdentityKey = (
+  identity: ContentBlockExternalContentIdentity
+) =>
+  JSON.stringify([
+    identity.blockInstanceId,
+    identity.assetId,
+    identity.revision,
+    identity.contentRef,
+    identity.format,
+    identity.renderScope,
+  ]);
+
 export type ContentStorageTarget =
   | Readonly<{ type: "instance"; instanceId: Instance["id"] }>
   | Readonly<{
