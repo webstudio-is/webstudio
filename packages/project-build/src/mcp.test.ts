@@ -1004,9 +1004,7 @@ describe("project session mcp adapter", () => {
       ).toMatchObject({
         type: "object",
         required:
-          command === "preview.start"
-            ? ["url", "running", "mode"]
-            : ["running"],
+          command === "preview.start" ? ["running", "mode"] : ["running"],
         properties: {
           url: { type: "string" },
           pid: { type: "integer" },
@@ -2812,7 +2810,9 @@ describe("project session mcp adapter", () => {
       })
     );
     expect(result.structuredContent.meta).toMatchObject({
-      next: [expect.stringContaining("run audit")],
+      next: [
+        expect.stringContaining("Run audit when the change is structural"),
+      ],
     });
   });
 
@@ -2836,7 +2836,7 @@ describe("project session mcp adapter", () => {
 
     expect(result.structuredContent.meta.next).toEqual([
       expect.stringContaining("run verify-bindings"),
-      expect.stringContaining("run audit"),
+      expect.stringContaining("Run audit when the change is structural"),
     ]);
   });
 
@@ -7020,6 +7020,88 @@ describe("project session mcp adapter", () => {
       (guide.structuredContent.data as { workflow: string[] }).workflow
     ).not.toContain(
       testMcpGuidance.getVisionWorkflowSummary({ includeDiff: false })
+    );
+  });
+
+  test("uses proportional verification for small value corrections", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      captureScreenshot: vi.fn(),
+      startPreview: vi.fn(),
+      getPreviewStatus: vi.fn(),
+      guidance: testMcpGuidance,
+    });
+
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "Correct one asset reference on the pricing page" },
+    });
+
+    expect(guide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        taskScope: "small-value-or-reference-correction",
+        workflow: expect.arrayContaining([
+          "Focused search → atomic edit → targeted assertions.",
+        ]),
+        visionLoop: [],
+        slowOperation: expect.objectContaining({
+          confirmationRequired: true,
+          operation: "full production preview",
+        }),
+      })
+    );
+  });
+
+  test("preflights production preview before starting slow work", async () => {
+    const startPreview = vi.fn(async () => ({
+      url: "http://127.0.0.1:5173/",
+      running: true,
+      mode: "production" as const,
+    }));
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      startPreview,
+      getPreviewStatus: vi.fn(),
+    });
+
+    const result = await adapter.callTool({
+      name: "preview.start",
+      input: { mode: "production", maxDurationMs: 10_000 },
+    });
+
+    expect(startPreview).not.toHaveBeenCalled();
+    expect(result.structuredContent.data).toEqual(
+      expect.objectContaining({
+        confirmationRequired: true,
+        operation: "production preview build",
+        estimatedDuration: "30–60 seconds",
+        confirmationToken: expect.any(String),
+        fasterAlternative: expect.objectContaining({
+          operation: "targeted route validation",
+        }),
+      })
+    );
+
+    const confirmationToken = (
+      result.structuredContent.data as { confirmationToken: string }
+    ).confirmationToken;
+    const confirmed = await adapter.callTool({
+      name: "preview.start",
+      input: {
+        mode: "production",
+        maxDurationMs: 10_000,
+        confirmSlow: true,
+        confirmationToken,
+      },
+    });
+
+    expect(startPreview).toHaveBeenCalledOnce();
+    expect(confirmed.structuredContent.data).toEqual(
+      expect.objectContaining({ running: true, mode: "production" })
     );
   });
 
