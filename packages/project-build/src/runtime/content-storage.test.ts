@@ -14,6 +14,7 @@ import type {
 import type { BuilderState } from "../state/builder-state";
 import {
   createContentStorageProjection,
+  createContentStorageSelectorProjection,
   resolveContentStorageRoot,
 } from "./content-storage";
 import { executeBuilderRuntimeOperation } from "./registry";
@@ -289,6 +290,32 @@ test("rejects two render scopes projected onto the same block", () => {
       ],
     })
   ).toThrow("one render scope");
+});
+
+test("resolves repeated Content Block children by exact render scope", () => {
+  const state = createState();
+  const projection = createContentStorageSelectorProjection({
+    state,
+    materializedRoots: [
+      { identity: identity("page:/one"), fragment: fragment("one") },
+      { identity: identity("page:/two"), fragment: fragment("two") },
+    ],
+  });
+  const block = projection.state.instances?.get("block");
+  if (block === undefined) {
+    throw new Error("Expected Content Block");
+  }
+
+  expect(projection.state.instances?.has("one")).toBe(true);
+  expect(projection.state.instances?.has("two")).toBe(true);
+  expect(projection.getInstanceChildren(block, "page:/one")).toEqual([
+    { type: "id", value: "templates" },
+    { type: "id", value: "one" },
+  ]);
+  expect(projection.getInstanceChildren(block, "page:/two")).toEqual([
+    { type: "id", value: "templates" },
+    { type: "id", value: "two" },
+  ]);
 });
 
 test("projects materialized roots into runtime reads", () => {

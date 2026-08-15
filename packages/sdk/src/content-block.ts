@@ -24,6 +24,31 @@ export const parseContentBlockSourceProp = (
   }
 };
 
+export const getContentBlockSource = ({
+  blockInstanceId,
+  props,
+}: {
+  blockInstanceId: Instance["id"];
+  props: Iterable<Prop>;
+}) => {
+  let sourceProp: Prop | undefined;
+  for (const prop of props) {
+    if (
+      prop.instanceId !== blockInstanceId ||
+      prop.name !== contentBlockSourceProp
+    ) {
+      continue;
+    }
+    if (sourceProp !== undefined) {
+      return;
+    }
+    sourceProp = prop;
+  }
+  return sourceProp === undefined
+    ? undefined
+    : parseContentBlockSourceProp(sourceProp);
+};
+
 export type ContentBlockSourceIntegrityIssue =
   | {
       type: "duplicateContentBlockSource";

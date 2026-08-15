@@ -9,12 +9,11 @@ import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { previewMarkdownToMdxConversion } from "@webstudio-is/content-engine/mdx-conversion";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import {
-  contentBlockSourceProp,
   formatAssetName,
   formatContentBlockSourceIntegrityIssue,
   getFileNameParts,
   getContentBlockSourceIntegrityIssues,
-  parseContentBlockSourceProp,
+  getContentBlockSource,
   type ContentBlockSource,
 } from "@webstudio-is/sdk";
 import { TextFileEditor } from "~/builder/features/text-file-editor/text-file-editor";
@@ -37,14 +36,7 @@ const getSource = (
   blockInstanceId: string,
   props: ReturnType<typeof $props.get>
 ) => {
-  const sourceProps = Array.from(props.values()).filter(
-    (prop) =>
-      prop.instanceId === blockInstanceId &&
-      prop.name === contentBlockSourceProp
-  );
-  return sourceProps.length === 1
-    ? parseContentBlockSourceProp(sourceProps[0])
-    : undefined;
+  return getContentBlockSource({ blockInstanceId, props: props.values() });
 };
 
 const getStateError = (

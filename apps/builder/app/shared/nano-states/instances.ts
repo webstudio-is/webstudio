@@ -5,7 +5,7 @@ import {
   ROOT_INSTANCE_ID,
   rootComponent,
 } from "@webstudio-is/sdk";
-import { $instances } from "../sync/data-stores";
+import { $runtimeInstances as $instances } from "../content-block-content";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import { getInstancePath } from "@webstudio-is/project-build/runtime";
 import { $selectedPage } from "./pages";

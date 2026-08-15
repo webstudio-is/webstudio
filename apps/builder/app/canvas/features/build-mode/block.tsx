@@ -10,7 +10,7 @@ import {
 import * as React from "react";
 import { $isDesignMode, $isPreviewMode } from "~/shared/nano-states";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import { $runtimeInstances as $instances } from "~/shared/content-block-content";
 
 export const Block = React.forwardRef<
   HTMLDivElement,

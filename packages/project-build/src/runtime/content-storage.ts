@@ -1,10 +1,9 @@
 import {
   blockComponent,
   blockTemplateComponent,
-  contentBlockSourceProp,
   decodeDataVariableId,
   getStyleDeclKey,
-  parseContentBlockSourceProp,
+  getContentBlockSource,
   prop as propSchema,
   type ContentBlockExternalContentIdentity,
   type Instance,
@@ -98,6 +97,14 @@ export type ContentStorageProjection = Readonly<{
     string,
     ContentBlockExternalContentIdentity
   >;
+}>;
+
+export type ContentStorageSelectorProjection = Readonly<{
+  state: BuilderState;
+  getInstanceChildren: (
+    instance: Instance,
+    renderScope: string
+  ) => Instance["children"];
 }>;
 
 export const getContentStorageProtectedChildCount = ({
@@ -232,9 +239,11 @@ const projectItemsById = <Item extends { id: string }>({
 const assertExternalBlockStorage = ({
   state,
   identity,
+  validateSource,
 }: {
   state: BuilderState;
   identity: ContentBlockExternalContentIdentity;
+  validateSource: boolean;
 }) => {
   const block = state.instances?.get(identity.blockInstanceId);
   if (block?.component !== blockComponent) {
@@ -242,15 +251,11 @@ const assertExternalBlockStorage = ({
       `Materialized content block "${identity.blockInstanceId}" is missing`
     );
   }
-  if (state.props !== undefined) {
-    const sourceProps = Array.from(state.props.values()).filter(
-      (prop) =>
-        prop.instanceId === block.id && prop.name === contentBlockSourceProp
-    );
-    const source =
-      sourceProps.length === 1
-        ? parseContentBlockSourceProp(sourceProps[0])
-        : undefined;
+  if (validateSource && state.props !== undefined) {
+    const source = getContentBlockSource({
+      blockInstanceId: block.id,
+      props: state.props.values(),
+    });
     if (source === undefined) {
       throw new Error(
         `Materialized content block "${block.id}" has no valid source`
@@ -302,12 +307,22 @@ const assertFragmentInstanceReferences = (fragment: WebstudioFragment) => {
   }
 };
 
-export const createContentStorageProjection = ({
+const createContentStorageProjectionInternal = ({
   state,
   materializedRoots,
+  includeRootChildren,
+  validateSource,
 }: {
   state: BuilderState;
   materializedRoots: readonly MaterializedContentRoot[];
+  /**
+   * Scope-aware readers can merge every root namespace while projecting the
+   * children of only the render scope they are currently reading.
+   */
+  includeRootChildren?: (
+    identity: ContentBlockExternalContentIdentity
+  ) => boolean;
+  validateSource: boolean;
 }): ContentStorageProjection => {
   if (materializedRoots.length === 0) {
     return {
@@ -351,6 +366,9 @@ export const createContentStorageProjection = ({
   >();
 
   for (const { identity } of materializedRoots) {
+    if (includeRootChildren?.(identity) === false) {
+      continue;
+    }
     if (externalRootByBlockId.has(identity.blockInstanceId)) {
       throw new Error(
         `Content Block "${identity.blockInstanceId}" can project only one render scope`
@@ -360,6 +378,7 @@ export const createContentStorageProjection = ({
   }
 
   const pendingRoots = [...materializedRoots];
+  const validatedBlockIds = new Set<Instance["id"]>();
   while (pendingRoots.length > 0) {
     const rootIndex = pendingRoots.findIndex(({ identity }) =>
       projectedState.instances?.has(identity.blockInstanceId)
@@ -370,10 +389,19 @@ export const createContentStorageProjection = ({
       );
     }
     const [{ identity, fragment }] = pendingRoots.splice(rootIndex, 1);
-    const block = assertExternalBlockStorage({
-      state: projectedState,
-      identity,
-    });
+    const block = validatedBlockIds.has(identity.blockInstanceId)
+      ? projectedState.instances?.get(identity.blockInstanceId)
+      : assertExternalBlockStorage({
+          state: projectedState,
+          identity,
+          validateSource,
+        });
+    if (block === undefined) {
+      throw new Error(
+        `Materialized content block "${identity.blockInstanceId}" is missing`
+      );
+    }
+    validatedBlockIds.add(identity.blockInstanceId);
     assertFragmentInstanceReferences(fragment);
     const projectedInstances = projectItemsById({
       current: projectedState.instances,
@@ -385,10 +413,12 @@ export const createContentStorageProjection = ({
       throw new Error("Materialized content has no instances");
     }
     projectedState.instances = projectedInstances;
-    projectedState.instances.set(block.id, {
-      ...block,
-      children: [...block.children, ...fragment.children],
-    });
+    if (includeRootChildren?.(identity) !== false) {
+      projectedState.instances.set(block.id, {
+        ...block,
+        children: [...block.children, ...fragment.children],
+      });
+    }
     projectedState.props = projectItemsById({
       current: projectedState.props,
       items: fragment.props,
@@ -478,6 +508,57 @@ export const createContentStorageProjection = ({
     externalRootByResourceId,
     externalRootByStyleSourceId,
     externalRootByStyleDeclKey,
+  };
+};
+
+export const createContentStorageProjection = (args: {
+  state: BuilderState;
+  materializedRoots: readonly MaterializedContentRoot[];
+}): ContentStorageProjection =>
+  createContentStorageProjectionInternal({
+    ...args,
+    validateSource: true,
+  });
+
+export const createContentStorageSelectorProjection = ({
+  state,
+  materializedRoots,
+  allowStaleSource = false,
+}: {
+  state: BuilderState;
+  materializedRoots: readonly MaterializedContentRoot[];
+  allowStaleSource?: boolean;
+}): ContentStorageSelectorProjection => {
+  // Builder reads keep the previous materialization visible while a changed
+  // source is loading. Mutations must continue to use the strict projection
+  // and exact storage identity checks above.
+  const projection = createContentStorageProjectionInternal({
+    state,
+    materializedRoots,
+    includeRootChildren: () => false,
+    validateSource: allowStaleSource === false,
+  });
+  const rootByScope = new Map(
+    materializedRoots.map((root) => [
+      JSON.stringify([
+        root.identity.blockInstanceId,
+        root.identity.renderScope,
+      ]),
+      root,
+    ])
+  );
+  return {
+    state: projection.state,
+    getInstanceChildren: (instance, renderScope) => {
+      if (instance.component !== blockComponent) {
+        return instance.children;
+      }
+      const root = rootByScope.get(JSON.stringify([instance.id, renderScope]));
+      if (root === undefined) {
+        return instance.children;
+      }
+      return [...instance.children, ...root.fragment.children];
+    },
   };
 };
 

@@ -1,4 +1,4 @@
-import { describe, expect, expectTypeOf, test } from "vitest";
+import { describe, expect, expectTypeOf, test, vi } from "vitest";
 import type { Asset, Instance, PageTemplate } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { findCycles } from "@webstudio-is/project-build/runtime";
@@ -27,6 +27,12 @@ import {
 } from "../sync/data-stores";
 import { $selectedPageId } from "../nano-states/pages";
 import { $authPermit, $builderMode } from "../nano-states/misc";
+import { selectInstance } from "../nano-states/instances";
+import {
+  publishMaterializedContentRoot,
+  registerContentStorageSaver,
+  resetMaterializedContent,
+} from "../content-block-content";
 
 const createInstance = (
   id: Instance["id"],
@@ -514,6 +520,150 @@ describe("data store helpers", () => {
     expect($instances.get().get("body")?.children).toEqual([
       { type: "text", value: "Hello" },
     ]);
+  });
+
+  test("routes projected text edits to MDX storage without persisting projected instances", async () => {
+    setBaseStores();
+    $instances.set(
+      new Map([
+        [
+          "body",
+          createInstance("body", "Body", [{ type: "id", value: "block" }]),
+        ],
+        [
+          "block",
+          createInstance("block", "ws:block", [
+            { type: "id", value: "templates" },
+          ]),
+        ],
+        ["templates", createInstance("templates", "ws:block-template", [])],
+      ])
+    );
+    $props.set(
+      new Map([
+        [
+          "source",
+          {
+            id: "source",
+            instanceId: "block",
+            name: "src",
+            type: "asset" as const,
+            value: "article",
+          },
+        ],
+      ])
+    );
+    const identity = {
+      blockInstanceId: "block",
+      assetId: "article",
+      revision: "sha256:one",
+      contentRef: "article.mdx",
+      format: "mdx" as const,
+      renderScope: JSON.stringify(["block", "body"]),
+    };
+    publishMaterializedContentRoot({
+      identity,
+      fragment: {
+        children: [{ type: "id", value: "external" }],
+        instances: [
+          {
+            type: "instance",
+            id: "external",
+            component: "ws:element",
+            tag: "p",
+            children: [{ type: "text", value: "Before" }],
+          },
+        ],
+        props: [],
+        assets: [],
+        dataSources: [],
+        resources: [],
+        breakpoints: [],
+        styleSourceSelections: [],
+        styleSources: [],
+        styles: [],
+      },
+    });
+    const save = vi.fn(async () => ({ status: "applied" as const }));
+    const unregister = registerContentStorageSaver({
+      blockInstanceId: "block",
+      renderScope: identity.renderScope,
+      isCurrent: () => true,
+      save,
+    });
+    selectInstance(["external", "block", "body"]);
+
+    const result = executeRuntimeMutation({
+      id: "instances.setTextContent",
+      input: {
+        operation: "set",
+        instanceId: "external",
+        mode: "text",
+        text: "After",
+      },
+    });
+    await Promise.resolve();
+
+    expect(result?.storageChanges).toHaveLength(1);
+    expect(save).toHaveBeenCalledOnce();
+    expect($instances.get().has("external")).toBe(false);
+    expect($instances.get().get("block")?.children).toEqual([
+      { type: "id", value: "templates" },
+    ]);
+    unregister();
+    const unregisterStale = registerContentStorageSaver({
+      blockInstanceId: "block",
+      renderScope: identity.renderScope,
+      isCurrent: () => false,
+      save,
+    });
+    expect(
+      executeRuntimeMutation({
+        id: "instances.setTextContent",
+        input: {
+          operation: "set",
+          instanceId: "external",
+          mode: "text",
+          text: "Stale",
+        },
+      })
+    ).toBeUndefined();
+    await Promise.resolve();
+    expect(save).toHaveBeenCalledOnce();
+    unregisterStale();
+
+    let finishSave: ((result: { status: "applied" }) => void) | undefined;
+    const deferredSave = vi.fn(
+      () =>
+        new Promise<{ status: "applied" }>((resolve) => {
+          finishSave = resolve;
+        })
+    );
+    const unregisterDeferred = registerContentStorageSaver({
+      blockInstanceId: "block",
+      renderScope: identity.renderScope,
+      isCurrent: () => true,
+      save: deferredSave,
+    });
+    let asyncMutationSettled = false;
+    const asyncMutation = executeRuntimeMutationAsync({
+      id: "instances.setTextContent",
+      input: {
+        operation: "set",
+        instanceId: "external",
+        mode: "text",
+        text: "Async",
+      },
+    }).then((mutation) => {
+      asyncMutationSettled = true;
+      return mutation;
+    });
+    await vi.waitFor(() => expect(deferredSave).toHaveBeenCalledOnce());
+    expect(asyncMutationSettled).toBe(false);
+    finishSave?.({ status: "applied" });
+    expect((await asyncMutation)?.storageChanges).toHaveLength(1);
+    unregisterDeferred();
+    resetMaterializedContent();
   });
 
   test("uses text content runtime validation before updating stores", () => {

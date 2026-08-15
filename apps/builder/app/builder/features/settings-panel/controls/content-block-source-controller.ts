@@ -8,11 +8,11 @@ import {
   prepareContentBlockSwitch,
   type ContentBlockSourceAuthority,
   type ContentStorageChange,
+  type MaterializedContentRoot,
   type MdxAssetEditingSessionState,
 } from "@webstudio-is/project-build/runtime";
 import {
-  contentBlockSourceProp,
-  parseContentBlockSourceProp,
+  getContentBlockSource,
   type ContentBlockSource,
 } from "@webstudio-is/sdk";
 import {
@@ -31,6 +31,13 @@ import {
 import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
 import { getWebstudioData } from "~/shared/instance-utils/data";
 import { invalidateAssets } from "~/shared/resources";
+import {
+  publishMaterializedContentRoot,
+  registerContentStorageSaver,
+  removeMaterializedContentRoot,
+  setMaterializedContentStatus,
+  getMaterializedContentStatus,
+} from "~/shared/content-block-content";
 
 export type ContentBlockSourceControllerResult =
   | Readonly<{
@@ -52,6 +59,8 @@ type ContentBlockSourceControllerDependencies = Readonly<{
     >[0]["payload"]
   ) => void;
   invalidateAssets: () => void;
+  publishMaterializedRoot?: (root: MaterializedContentRoot) => void;
+  removeMaterializedRoot?: () => void;
 }>;
 
 const getConfiguredSource = ({
@@ -61,14 +70,10 @@ const getConfiguredSource = ({
   state: ReturnType<typeof readBuilderStateStores>;
   blockInstanceId: string;
 }) => {
-  const sourceProps = Array.from(state.props.values()).filter(
-    (prop) =>
-      prop.instanceId === blockInstanceId &&
-      prop.name === contentBlockSourceProp
-  );
-  return sourceProps.length === 1
-    ? parseContentBlockSourceProp(sourceProps[0])
-    : undefined;
+  return getContentBlockSource({
+    blockInstanceId,
+    props: state.props.values(),
+  });
 };
 
 const blockedMessage = {
@@ -101,6 +106,8 @@ export const createContentBlockSourceController = ({
   getState,
   commitProjectPayload,
   invalidateAssets: invalidate,
+  publishMaterializedRoot,
+  removeMaterializedRoot,
 }: ContentBlockSourceControllerDependencies) => {
   let currentSessionKey: string | undefined;
   let openVersion = 0;
@@ -122,6 +129,7 @@ export const createContentBlockSourceController = ({
       "root" in state
     ) {
       currentSessionKey = state.key;
+      publishMaterializedRoot?.(state.root);
     }
     return state;
   };
@@ -166,6 +174,7 @@ export const createContentBlockSourceController = ({
         };
       }
       currentSessionKey = saved.key;
+      publishMaterializedRoot?.(saved.root);
       invalidate();
       return { status: "applied", state: saved };
     }
@@ -180,6 +189,7 @@ export const createContentBlockSourceController = ({
     }
     if (prepared.action === "disconnect") {
       currentSessionKey = undefined;
+      removeMaterializedRoot?.();
     } else if (
       prepared.sourceState !== undefined &&
       "key" in prepared.sourceState
@@ -307,6 +317,7 @@ export const createContentBlockSourceController = ({
     }
     if (disposed === false && currentSessionKey === key) {
       currentSessionKey = saved.key;
+      publishMaterializedRoot?.(saved.root);
     }
     invalidate();
     return { status: "applied", state: saved };
@@ -329,6 +340,49 @@ export const createContentBlockSourceController = ({
   return { open, requestSource, disconnect, saveStorageChanges, dispose };
 };
 
+type BuilderContentBlockSourceController = ReturnType<
+  typeof createContentBlockSourceController
+>;
+
+type BuilderControllerEntry = {
+  controller: BuilderContentBlockSourceController;
+  unregisterSaver: () => void;
+  references: number;
+};
+
+const builderControllers = new Map<string, BuilderControllerEntry>();
+
+const acquireBuilderController = ({
+  controllerKey,
+  entry,
+  blockInstanceId,
+  renderScope,
+}: {
+  controllerKey: string;
+  entry: BuilderControllerEntry;
+  blockInstanceId: string;
+  renderScope: string;
+}) => {
+  let released = false;
+  return {
+    ...entry.controller,
+    dispose: () => {
+      if (released) {
+        return;
+      }
+      released = true;
+      entry.references -= 1;
+      if (entry.references !== 0) {
+        return;
+      }
+      builderControllers.delete(controllerKey);
+      entry.unregisterSaver();
+      entry.controller.dispose();
+      removeMaterializedContentRoot({ blockInstanceId, renderScope });
+    },
+  };
+};
+
 export const createBuilderContentBlockSourceController = ({
   blockInstanceId,
   renderScope,
@@ -338,6 +392,21 @@ export const createBuilderContentBlockSourceController = ({
   renderScope: string;
   projectId: string;
 }) => {
+  const controllerKey = JSON.stringify([
+    projectId,
+    blockInstanceId,
+    renderScope,
+  ]);
+  const existing = builderControllers.get(controllerKey);
+  if (existing !== undefined) {
+    existing.references += 1;
+    return acquireBuilderController({
+      controllerKey,
+      entry: existing,
+      blockInstanceId,
+      renderScope,
+    });
+  }
   const repository = createBuilderHttpAssetContentRepository({ projectId });
   const session = createMdxAssetEditingSession({
     repository,
@@ -357,7 +426,7 @@ export const createBuilderContentBlockSourceController = ({
       return typeof value === "string" && value !== "" ? value : undefined;
     },
   });
-  return createContentBlockSourceController({
+  const controller = createContentBlockSourceController({
     blockInstanceId,
     renderScope,
     projectId,
@@ -369,5 +438,69 @@ export const createBuilderContentBlockSourceController = ({
         payload,
       }),
     invalidateAssets,
+    publishMaterializedRoot: (root) => {
+      if ($project.get()?.id === projectId) {
+        publishMaterializedContentRoot(root);
+      }
+    },
+    removeMaterializedRoot: () =>
+      removeMaterializedContentRoot({ blockInstanceId, renderScope }),
+  });
+  const unregisterSaver = registerContentStorageSaver({
+    blockInstanceId,
+    renderScope,
+    isCurrent: ({ identity }) => {
+      const source = getConfiguredSource({
+        state: readBuilderStateStores(),
+        blockInstanceId,
+      });
+      if (source?.type === "asset") {
+        return source.assetId === identity.assetId;
+      }
+      if (source?.type !== "expression") {
+        return false;
+      }
+      try {
+        const variables = $variableValuesByInstanceSelector
+          .get()
+          .get(renderScope);
+        return (
+          computeExpression(source.value, variables ?? new Map()) ===
+          identity.assetId
+        );
+      } catch {
+        return false;
+      }
+    },
+    save: async (changes) => {
+      const result = await controller.saveStorageChanges(changes);
+      const saveResult =
+        result.status === "requires-authority"
+          ? {
+              status: "blocked" as const,
+              message: "Saving MDX content cannot require content authority.",
+            }
+          : result;
+      if (
+        saveResult.status === "blocked" &&
+        getMaterializedContentStatus({ blockInstanceId, renderScope }) !==
+          undefined
+      ) {
+        setMaterializedContentStatus({
+          blockInstanceId,
+          renderScope,
+          status: "failed",
+        });
+      }
+      return saveResult;
+    },
+  });
+  const entry = { controller, unregisterSaver, references: 1 };
+  builderControllers.set(controllerKey, entry);
+  return acquireBuilderController({
+    controllerKey,
+    entry,
+    blockInstanceId,
+    renderScope,
   });
 };

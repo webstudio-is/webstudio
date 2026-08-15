@@ -4,8 +4,10 @@ import { compareMedia, type StyleValue } from "@webstudio-is/css-engine";
 import { parseGridTemplateTrackList } from "@webstudio-is/css-data";
 import type { Breakpoint, StyleDecl, WsComponentMeta } from "@webstudio-is/sdk";
 import { $registeredComponentMetas, $stylesIndex } from "~/shared/nano-states";
-import { $breakpoints } from "~/shared/sync/data-stores";
-import { $instances } from "~/shared/sync/data-stores";
+import {
+  $runtimeBreakpoints as $breakpoints,
+  $runtimeInstances as $instances,
+} from "~/shared/content-block-content";
 import { $selectedBreakpoint } from "~/shared/nano-states";
 import { $selectedPage } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
