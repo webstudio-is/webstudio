@@ -267,6 +267,62 @@ Component and template registry items use a shadcn-compatible top-level shape pl
 Prefer the focused `components.*` tools over dumping `webstudio://project/components`. Do not write local scripts to parse full MCP discovery JSON for common component lookup.
 For “use every component” or design-system pages, start with compact `components.coverage-plan`, checkpoint, then page through roots/parts instead of dumping the full catalog.
 
+## MDX Content Block workflow
+
+Content Blocks can store their editable body in an `.mdx` Asset. The Builder,
+direct CLI, HTTP API, and MCP use the same source resolver, safe MDX parser,
+Content mode permissions, serializer, diagnostics, Asset authorization, and
+revision checks.
+
+Use the focused tools instead of downloading and rewriting the file as text:
+
+1. Call `inspect-content-block-source` with the Content Block ID and exact
+   render scope. For a dynamic source, also pass the bounded route, detail, or
+   Collection variables required to resolve it. Inspect the configured source,
+   resolved Asset/revision/scope, capabilities, pending session state,
+   diagnostics, and repair routes.
+2. Use `connect-content-block-source` or `switch-content-block-source`. When
+   both sides contain body content, choose exactly `use-file-content` or
+   `replace-file-body-with-block-content`; content is never merged implicitly.
+3. Use `edit-content-block-source` for semantic text, prop, insert, move,
+   reorder, or delete operations against the materialized MDX instances. Do not
+   edit generated instance IDs in the file.
+4. Use `disconnect-content-block-source` to copy the resolved file content into
+   ordinary project instances and remove the source. The file remains
+   unchanged; disconnect never discards the visible body.
+5. If inspection reports a recoverable state, use
+   `recover-content-block-source` only for an advertised action: retry, reload
+   the remote revision, or copy unsaved local MDX. Recovery must run in the same
+   live MCP or `mcp run` session that owns that state. A fresh one-shot CLI
+   process or stateless HTTP request returns `content-source-not-loaded` rather
+   than reconstructing unsaved in-memory content.
+
+Run replacement and migration operations with `--dry-run` first. A required
+approval returns a short-lived confirmation token bound to the inspected
+project, Content Block, files, and revisions. Review the plan, then repeat the
+operation with that token. Stale or replayed tokens and changed Asset revisions
+are rejected. Disconnect also requires confirmation because it copies the file
+body into project storage and removes the source, although it leaves the file
+itself unchanged.
+
+Use `migrate-content-block-template-references` to preview a `ws:name` rename
+or removal across the bounded `.mdx` files discovered from one Content Block
+and template. When automatic discovery cannot prove the complete candidate set,
+pass no more than 100 explicitly reviewed Asset IDs. The tool parses the MDX
+AST; it does not use search-and-replace. Review the selected files, update and
+omission counts, and per-file diagnostics before confirmation. Each file uses
+an exact revision check, and partial failures are returned explicitly without
+overwriting newer content. Finite direct, detail, and repeated candidate sets
+are supported; an unbounded or truncated candidate graph blocks automatic
+apply until the reviewed set is supplied.
+
+Read the machine-readable `status`, `code`, diagnostics, and source inspection
+after every call. Lifecycle and semantic edits that require one atomic
+project-plus-Asset commit or coordinated writes to several Assets are blocked
+before any write. Template migration intentionally commits reviewed files one
+at a time and reports partial results. See [Content Block](core-components/content-block.md#use-an-mdx-file-as-the-content-source)
+for the file grammar and Builder workflow.
+
 ## Consumer Capabilities
 
 MCP lets agents work on one configured Webstudio project at a time. In consumer
@@ -297,6 +353,10 @@ terms, agents can:
 - Update plain text and expression text.
 - Update structured rich text.
 - Add, update, delete, and bind element props.
+- Inspect, connect, switch, disconnect, recover, and semantically edit
+  MDX-backed Content Blocks.
+- Preview and apply bounded template-name migrations across reachable MDX
+  Assets.
 - Bind props to expressions, resources, actions, and runtime system values.
 - Read, add, update, delete, and replace local styles.
 - Update selected style-source styles.
