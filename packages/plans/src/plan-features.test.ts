@@ -173,4 +173,42 @@ describe("parsePlansEnv", () => {
       (result.get("Pro")!.features as Record<string, unknown>)["admin"]
     ).toBeUndefined();
   });
+
+  test("rejects unsupported publish report retention values", () => {
+    const result = parsePlansEnv(
+      JSON.stringify([
+        { name: "Invalid", features: { publishLogRetentionDays: 7 } },
+        { name: "Pro", features: { publishLogRetentionDays: 1 } },
+        { name: "Team", features: { publishLogRetentionDays: 30 } },
+      ])
+    );
+
+    expect(result.has("Invalid")).toBe(false);
+    expect(result.get("Pro")?.features.publishLogRetentionDays).toBe(1);
+    expect(result.get("Team")?.features.publishLogRetentionDays).toBe(30);
+  });
+
+  test("keeps compact activity for 30 days independently of detailed logs", () => {
+    const result = parsePlansEnv(
+      JSON.stringify([
+        {
+          name: "Invalid",
+          features: { publishActivityRetentionDays: 1 },
+        },
+        {
+          name: "Pro",
+          features: {
+            publishLogRetentionDays: 1,
+            publishActivityRetentionDays: 30,
+          },
+        },
+      ])
+    );
+
+    expect(result.has("Invalid")).toBe(false);
+    expect(result.get("Pro")?.features).toMatchObject({
+      publishLogRetentionDays: 1,
+      publishActivityRetentionDays: 30,
+    });
+  });
 });

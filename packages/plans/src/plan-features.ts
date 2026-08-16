@@ -13,6 +13,13 @@ export const planFeatures = z.object({
   allowAuth: z.boolean(),
   allowContentMode: z.boolean(),
   allowStagingPublish: z.boolean(),
+  allowAdvancedPublishDiagnostics: z.boolean().optional(),
+  publishLogRetentionDays: z
+    .union([z.literal(0), z.literal(1), z.literal(30)])
+    .optional(),
+  publishActivityRetentionDays: z
+    .union([z.literal(0), z.literal(30)])
+    .optional(),
   maxContactEmailsPerProject: z.number().nonnegative(),
   maxDomainsAllowedPerUser: z.number().nonnegative(),
   maxDailyPublishesPerUser: z.number().nonnegative(),
@@ -28,7 +35,9 @@ export type PlanFeatures = z.infer<typeof planFeatures>;
 // Compile-time guard: all PlanFeatures values must be boolean or number.
 // If a new field with a different type is added to planFeatures, this line will error.
 type _AssertBooleanOrNumber =
-  PlanFeatures extends Record<string, boolean | number> ? true : never;
+  PlanFeatures extends Record<string, boolean | number | undefined>
+    ? true
+    : never;
 const _checkPlanFeaturesValueTypes: _AssertBooleanOrNumber = true;
 void _checkPlanFeaturesValueTypes;
 
@@ -41,6 +50,9 @@ export const defaultPlanFeatures: PlanFeatures = {
   allowAuth: false,
   allowContentMode: false,
   allowStagingPublish: false,
+  allowAdvancedPublishDiagnostics: false,
+  publishLogRetentionDays: 0,
+  publishActivityRetentionDays: 0,
   maxContactEmailsPerProject: 0,
   maxDomainsAllowedPerUser: 0,
   maxDailyPublishesPerUser: 10,

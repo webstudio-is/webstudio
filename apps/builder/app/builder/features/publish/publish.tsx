@@ -64,8 +64,6 @@ import { $project } from "~/shared/sync/data-stores";
 import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
-  CheckCircleIcon,
-  AlertIcon,
   CopyIcon,
   GearIcon,
   UpgradeIcon,
@@ -97,6 +95,10 @@ import {
   type RestrictedFeature,
 } from "./restricted-features";
 import {
+  invalidatePublishActivity,
+  PublishStatusButton,
+} from "./publish-details-dialog";
+import {
   findPageAndSelectorByInstanceId,
   formatPrePublishAuditFinding,
   runPrePublishAudit,
@@ -104,6 +106,9 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { showContentDatabasePublishWarning } from "./content-database-publish-warning";
 import { showPublishWarning } from "./publish-warning";
+
+const getShortPublishError = (message: string) =>
+  message.length <= 200 ? message : `${message.slice(0, 197)}…`;
 
 const PrePublishAuditMessage = ({
   finding,
@@ -278,29 +283,18 @@ const ChangeProjectDomain = ({
       }
       suffix={
         <Grid flow="column" align="center">
-          <Tooltip
-            content={error !== undefined ? error : <Text>{statusText}</Text>}
-          >
-            <Flex
-              align="center"
-              justify="center"
-              css={{
-                cursor: "pointer",
-                width: theme.sizes.controlHeight,
-                height: theme.sizes.controlHeight,
-                color:
-                  error !== undefined || status === "FAILED"
-                    ? theme.colors.foregroundDestructive
-                    : theme.colors.foregroundSuccessText,
-              }}
-            >
-              {error !== undefined || status === "FAILED" ? (
-                <AlertIcon />
-              ) : (
-                <CheckCircleIcon />
-              )}
-            </Flex>
-          </Tooltip>
+          <PublishStatusButton
+            label={pageUrl.host}
+            activity={error ?? statusText}
+            latestBuildId={project.latestBuildVirtual?.buildId}
+            status={
+              error !== undefined || status === "FAILED"
+                ? "error"
+                : status === "PENDING"
+                  ? "pending"
+                  : "success"
+            }
+          />
 
           <CopyToClipboard
             text={pageUrl.toString()}
@@ -536,6 +530,7 @@ const Publish = ({
       domains,
       destination: "saas",
     });
+    invalidatePublishActivity(project.id);
 
     if (publishResult.success === false) {
       console.error(publishResult.error);
@@ -565,7 +560,9 @@ const Publish = ({
       if (publishResult.error === "NOT_IMPLEMENTED") {
         toast.info(error);
       } else {
-        toast.error(error);
+        toast.error(
+          typeof error === "string" ? getShortPublishError(error) : error
+        );
       }
 
       if (process.env.NODE_ENV === "development") {
@@ -793,111 +790,130 @@ const PublishStatic = ({
           <Text>{publishWarning}</Text>
         </PanelBanner>
       )}
-      {status === "FAILED" && <Text color="destructive">{statusText}</Text>}
-
-      <Tooltip
-        content={isPublishInProgress ? "Preparing static site" : undefined}
-      >
-        <Button
-          type="button"
-          color="positive"
-          state={isPublishInProgress ? "pending" : undefined}
-          onClick={() => {
-            setPublishError(undefined);
-            setPublishWarning(undefined);
-            const { error: auditError, warning: auditWarning } =
-              getPrePublishAuditMessages();
-            if (auditError !== undefined) {
-              toast.error(auditError);
-              setPublishError(auditError);
-              return;
-            }
-            if (auditWarning !== undefined) {
-              showPublishWarning({
-                message: auditWarning,
-                setWarning: setPublishWarning,
-              });
-            }
-
-            startTransition(async () => {
-              try {
-                setIsPendingOptimistic(true);
-
-                await showContentDatabasePublishWarning({
-                  projectId,
+      <Flex gap="2" align="center">
+        <PublishStatusButton
+          label="Static export"
+          activity={statusText}
+          latestBuildId={project.latestStaticBuild?.buildId}
+          status={
+            isPublishInProgress
+              ? "pending"
+              : status === "FAILED"
+                ? "error"
+                : status === "PUBLISHED"
+                  ? "success"
+                  : "warning"
+          }
+        />
+        <Tooltip
+          content={isPublishInProgress ? "Preparing static site" : undefined}
+        >
+          <Button
+            type="button"
+            color="positive"
+            state={isPublishInProgress ? "pending" : undefined}
+            onClick={() => {
+              setPublishError(undefined);
+              setPublishWarning(undefined);
+              const { error: auditError, warning: auditWarning } =
+                getPrePublishAuditMessages();
+              if (auditError !== undefined) {
+                toast.error(auditError);
+                setPublishError(auditError);
+                return;
+              }
+              if (auditWarning !== undefined) {
+                showPublishWarning({
+                  message: auditWarning,
                   setWarning: setPublishWarning,
                 });
+              }
 
-                const result = await nativeClient.domain.publish.mutate({
-                  projectId,
-                  destination: "static",
-                  templates: [...templates],
-                });
+              startTransition(async () => {
+                try {
+                  setIsPendingOptimistic(true);
 
-                if (result.success === false) {
-                  toast.error(result.error);
-                  return;
-                }
+                  await showContentDatabasePublishWarning({
+                    projectId,
+                    setWarning: setPublishWarning,
+                  });
 
-                const name = "name" in result ? result.name : undefined;
+                  const result = await nativeClient.domain.publish.mutate({
+                    projectId,
+                    destination: "static",
+                    templates: [...templates],
+                  });
+                  invalidatePublishActivity(projectId);
 
-                if (name == null) {
-                  toast.error('File name must be defined in "result"');
-                  return;
-                }
+                  if (result.success === false) {
+                    const message = getShortPublishError(result.error);
+                    toast.error(message);
+                    setPublishError(message);
+                    return;
+                  }
 
-                const timeout = 10000;
+                  const name = "name" in result ? result.name : undefined;
 
-                // Repeat few more times than timeout
-                const repeat = PENDING_TIMEOUT / timeout + 5;
+                  if (name == null) {
+                    toast.error('File name must be defined in "result"');
+                    return;
+                  }
 
-                for (let i = 0; i !== repeat; i++) {
-                  await new Promise((resolve) => setTimeout(resolve, timeout));
+                  const timeout = 10000;
 
-                  await refreshProject();
+                  // Repeat few more times than timeout
+                  const repeat = PENDING_TIMEOUT / timeout + 5;
+
+                  for (let i = 0; i !== repeat; i++) {
+                    await new Promise((resolve) =>
+                      setTimeout(resolve, timeout)
+                    );
+
+                    await refreshProject();
+
+                    const latestStaticBuild = $project.get()?.latestStaticBuild;
+
+                    if (latestStaticBuild == null) {
+                      continue;
+                    }
+
+                    const { status } =
+                      getStaticPublishStatusAndText(latestStaticBuild);
+
+                    if (status !== "PENDING") {
+                      break;
+                    }
+                  }
 
                   const latestStaticBuild = $project.get()?.latestStaticBuild;
 
                   if (latestStaticBuild == null) {
-                    continue;
+                    throw new Error("Static build not found");
                   }
 
-                  const { status } =
+                  const { status, statusText } =
                     getStaticPublishStatusAndText(latestStaticBuild);
 
-                  if (status !== "PENDING") {
-                    break;
+                  if (status === "FAILED") {
+                    // Report if Export failed
+                    toast.error(statusText);
                   }
+
+                  if (status === "PUBLISHED") {
+                    window.location.href = `/cgi/static/ssg/${name}`;
+                  }
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error ? error.message : "Unknown error"
+                  );
                 }
-
-                const latestStaticBuild = $project.get()?.latestStaticBuild;
-
-                if (latestStaticBuild == null) {
-                  throw new Error("Static build not found");
-                }
-
-                const { status, statusText } =
-                  getStaticPublishStatusAndText(latestStaticBuild);
-
-                if (status === "FAILED") {
-                  // Report if Export failed
-                  toast.error(statusText);
-                }
-
-                if (status === "PUBLISHED") {
-                  window.location.href = `/cgi/static/ssg/${name}`;
-                }
-              } catch (error) {
-                toast.error(
-                  error instanceof Error ? error.message : "Unknown error"
-                );
-              }
-            });
-          }}
-        >
-          Build and download static site
-        </Button>
-      </Tooltip>
+              });
+            }}
+          >
+            Build and download static site
+          </Button>
+        </Tooltip>
+      </Flex>
     </Flex>
   );
 };
