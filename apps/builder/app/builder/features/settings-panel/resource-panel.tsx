@@ -14,6 +14,7 @@ import {
 import { useStore } from "@nanostores/react";
 import {
   encodeDataVariableId,
+  getResourceCycleDataSourceIds,
   isAssetsResource as isAssetsResourceRecord,
   SYSTEM_VARIABLE_ID,
   systemParameter,
@@ -391,11 +392,13 @@ export const getResourceScopeForInstance = ({
   instanceKey,
   dataSources,
   variableValuesByInstanceSelector,
+  includeResourceDataSources = false,
 }: {
   page: undefined | Page | PageTemplate;
   instanceKey: undefined | string;
   dataSources: DataSources;
   variableValuesByInstanceSelector: Map<string, Map<string, unknown>>;
+  includeResourceDataSources?: boolean;
 }) => {
   const scope: Record<string, unknown> = {};
   const aliases = new Map<string, string>();
@@ -408,8 +411,10 @@ export const getResourceScopeForInstance = ({
     if (dataSource.type === "parameter") {
       hiddenDataSourceIds.add(dataSource.id);
     }
-    // prevent resources using data of other resources
-    if (dataSource.type === "resource") {
+    if (
+      dataSource.type === "resource" &&
+      includeResourceDataSources === false
+    ) {
       hiddenDataSourceIds.add(dataSource.id);
     }
   }
@@ -467,12 +472,14 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
             $selectedInstancePathWithRoot,
             $variableValuesByInstanceSelector,
             $dataSources,
+            $resources,
           ],
           (
             page,
             instancePath,
             variableValuesByInstanceSelector,
-            dataSources
+            dataSources,
+            resources
           ) => {
             const { scope, aliases, variableValues } =
               getResourceScopeForInstance({
@@ -483,17 +490,27 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
                 }),
                 dataSources,
                 variableValuesByInstanceSelector,
+                includeResourceDataSources: true,
               });
-            // prevent showing currently edited variable in suggestions
-            // to avoid cirular dependeny
+            // Prevent showing dependencies that would create a cycle.
             const newScope = { ...scope };
             const newAliases = new Map(aliases);
             const newVariableValues = new Map(variableValues);
             if (variable) {
-              const key = encodeDataVariableId(variable.id);
-              delete newScope[key];
-              newAliases.delete(key);
-              newVariableValues.delete(variable.id);
+              const hiddenDataSourceIds =
+                variable.type === "resource"
+                  ? getResourceCycleDataSourceIds({
+                      resourceDataSource: variable,
+                      resources,
+                      dataSources,
+                    })
+                  : [variable.id];
+              for (const dataSourceId of hiddenDataSourceIds) {
+                const key = encodeDataVariableId(dataSourceId);
+                delete newScope[key];
+                newAliases.delete(key);
+                newVariableValues.delete(dataSourceId);
+              }
             }
             return {
               scope: newScope,

@@ -37,6 +37,7 @@ import { createPublishedAssetResourceFetch } from "@webstudio-is/content-engine/
 import {
   createStructuredAssetQueryResourceBody,
   encodeDataSourceVariable,
+  encodeDataVariableId,
   SYSTEM_VARIABLE_ID,
   type Resource,
 } from "@webstudio-is/sdk";
@@ -2593,6 +2594,18 @@ sitemap.map((page) => page.path);`
     const siteData = {
       ...createSiteData({
         assets: [createAssetForIndexedDocument(document)],
+        props: [
+          [
+            "root-title",
+            {
+              id: "root-title",
+              instanceId: "root",
+              name: "title",
+              type: "expression",
+              value: `${encodeDataVariableId("posts-data")}.data["post-1"].properties.title`,
+            },
+          ],
+        ],
       }),
       assetIndex: index,
     };
@@ -2652,8 +2665,8 @@ sitemap.map((page) => page.path);`
       routeParams: {},
     });
 
-    expect(pageData.resources).toMatchObject({
-      Posts: {
+    expect(Object.values(pageData.resources)).toMatchObject([
+      {
         ok: true,
         status: 200,
         data: {
@@ -2664,7 +2677,7 @@ sitemap.map((page) => page.path);`
         },
         meta: { totalCount: 1, hasMore: false },
       },
-    });
+    ]);
     await runGeneratedCommand("vite", ["build"]);
     await runGeneratedCommand("vike", ["prerender"]);
     await expect(readFile("dist/client/index.html", "utf8")).resolves.toContain(

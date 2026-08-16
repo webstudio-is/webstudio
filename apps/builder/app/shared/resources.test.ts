@@ -1,11 +1,17 @@
 import { afterEach, expect, test, vi } from "vitest";
-import type { ResourceRequest } from "@webstudio-is/sdk";
+import {
+  encodeDataSourceVariable,
+  type DataSources,
+  type ResourceRequest,
+  type Resources,
+} from "@webstudio-is/sdk";
 import {
   __testing__,
   $hasPendingResources,
   $resourceDiagnosticsCache,
   $resourcePerformanceCache,
   $resourcesCache,
+  computeResourceRequestPlan,
   getResourceKey,
   loadResourceDiagnostics,
   preloadResources,
@@ -48,6 +54,96 @@ test("removes obsolete queued requests but keeps cached results", () => {
   expect($hasPendingResources.get()).toBe(false);
   expect(resourceCacheListener).not.toHaveBeenCalled();
   unlisten();
+});
+
+test("unlocks reachable resource requests as dependency documents are cached", () => {
+  const authorVariable = encodeDataSourceVariable("authorDataSource");
+  const resources: Resources = new Map([
+    [
+      "authorResource",
+      {
+        id: "authorResource",
+        name: "Author",
+        method: "get",
+        url: '"https://example.com/authors/1"',
+        headers: [],
+      },
+    ],
+    [
+      "postsResource",
+      {
+        id: "postsResource",
+        name: "Posts",
+        method: "get",
+        url: `"https://example.com/authors/" + ${authorVariable}.data.id + "/posts"`,
+        headers: [],
+      },
+    ],
+    [
+      "unusedResource",
+      {
+        id: "unusedResource",
+        name: "Unused",
+        method: "get",
+        url: '"https://example.com/unused"',
+        headers: [],
+      },
+    ],
+  ]);
+  const dataSources: DataSources = new Map([
+    [
+      "authorDataSource",
+      {
+        type: "resource",
+        id: "authorDataSource",
+        name: "Author",
+        resourceId: "authorResource",
+      },
+    ],
+    [
+      "postsDataSource",
+      {
+        type: "resource",
+        id: "postsDataSource",
+        name: "Posts",
+        resourceId: "postsResource",
+      },
+    ],
+    [
+      "unusedDataSource",
+      {
+        type: "resource",
+        id: "unusedDataSource",
+        name: "Unused",
+        resourceId: "unusedResource",
+      },
+    ],
+  ]);
+  const resourceCache = new Map<string, unknown>();
+
+  const waiting = computeResourceRequestPlan({
+    rootResourceIds: ["postsResource"],
+    resources,
+    dataSources,
+    values: new Map(),
+    resourceCache,
+  });
+  expect(waiting.requests.map(({ name }) => name)).toEqual(["Author"]);
+  expect(waiting.documents.has("postsResource")).toBe(false);
+
+  const authorRequest = waiting.requests[0];
+  resourceCache.set(getResourceKey(authorRequest), { data: { id: 1 } });
+  const ready = computeResourceRequestPlan({
+    rootResourceIds: ["postsResource"],
+    resources,
+    dataSources,
+    values: new Map(),
+    resourceCache,
+  });
+
+  expect(ready.requests.map(({ name }) => name)).toEqual(["Author", "Posts"]);
+  expect(ready.requests[1].url).toBe("https://example.com/authors/1/posts");
+  expect(ready.requests.some(({ name }) => name === "Unused")).toBe(false);
 });
 
 test("dispatches resources synchronously", async () => {
@@ -390,13 +486,16 @@ test("fills capacity freed by obsolete resources in a mixed batch", async () => 
 
 test("drains bounded batches without an additional delay", async () => {
   vi.useFakeTimers();
-  const requests: ResourceRequest[] = Array.from({ length: 6 }, (_, index) => ({
-    name: `Resource ${index}`,
-    method: "get",
-    url: `https://example.com/resource-${index}`,
-    searchParams: [],
-    headers: [],
-  }));
+  const requests: ResourceRequest[] = Array.from(
+    { length: 21 },
+    (_, index) => ({
+      name: `Resource ${index}`,
+      method: "get",
+      url: `https://example.com/resource-${index}`,
+      searchParams: [],
+      headers: [],
+    })
+  );
   const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json([]));
 
   queueResources(requests);
@@ -406,7 +505,7 @@ test("drains bounded batches without an additional delay", async () => {
   });
 
   expect(fetch).toHaveBeenCalledTimes(2);
-  expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toHaveLength(5);
+  expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toHaveLength(20);
   expect(JSON.parse(String(fetch.mock.calls[1][1]?.body))).toHaveLength(1);
 });
 
