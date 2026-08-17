@@ -2285,6 +2285,9 @@ importers:
       papaparse:
         specifier: ^5.5.3
         version: 5.5.3
+      parse5:
+        specifier: ^7.3.0
+        version: 7.3.0
       slugify:
         specifier: ^1.6.6
         version: 1.6.6

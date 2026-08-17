@@ -37,6 +37,7 @@ import {
   augmentAuditWithRenderedChecks,
   type RenderedAuditArtifactManifest,
 } from "./mcp-rendered-audit";
+import { renderAndVerifyRoute, type RouteAssertions } from "./mcp-route";
 import {
   defaultScreenshotTimeout,
   defaultScreenshotWaitForTimeout,
@@ -303,6 +304,16 @@ export type ProjectSessionDownloadAssetResult = {
 type DownloadAsset = (
   input: ProjectSessionDownloadAssetInput
 ) => Promise<ProjectSessionDownloadAssetResult>;
+
+export type ProjectSessionDocumentSearchInput = {
+  query: string;
+  limit?: number;
+  maxDurationMs?: number;
+};
+
+type SearchAssetContents = (
+  input: ProjectSessionDocumentSearchInput
+) => Promise<{ matches: unknown[]; total: number; elapsedMs: number }>;
 
 export type ProjectSessionMcpGuidance = {
   visualVerificationRule: string;
@@ -1317,6 +1328,22 @@ const responsiveScreenshotInputSchema = {
     waitForSelector: screenshotInputSchema.properties.waitForSelector,
     waitForTimeout: screenshotInputSchema.properties.waitForTimeout,
     timeout: screenshotInputSchema.properties.timeout,
+    maxDurationMs: {
+      type: "integer",
+      minimum: 1,
+      description:
+        "Maximum acceptable duration. Returns a preflight when the captures cannot reasonably fit this budget.",
+    },
+    confirmSlow: {
+      type: "boolean",
+      description:
+        "Must be true after explicit user consent for the unchanged slow-operation preflight.",
+    },
+    confirmationToken: {
+      type: "string",
+      description:
+        "Short-lived token returned by the unchanged slow-operation preflight.",
+    },
   },
   required: ["path", "viewports"],
 } as const satisfies ProjectSessionMcpInputSchema;
@@ -1581,6 +1608,77 @@ const previewInputSchema = {
   },
 } as const satisfies ProjectSessionMcpInputSchema;
 
+const routeAssertionInputSchema = {
+  ...emptyInputSchema,
+  description:
+    "Render one generated route through the iterative preview and return HTML, resolved metadata, resource URLs, and focused assertion results without a production build or screenshot.",
+  properties: {
+    baseUrl: {
+      type: "string",
+      description:
+        "Existing generated-site base URL. When omitted, use or start this MCP session's iterative preview.",
+    },
+    path: {
+      type: "string",
+      description: "Generated route path, for example /pricing.",
+    },
+    assertions: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        status: { type: "integer", minimum: 100, maximum: 599 },
+        text: { type: "array", items: { type: "string" } },
+        elements: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              tag: { type: "string" },
+              id: { type: "string" },
+              attributes: {
+                type: "object",
+                additionalProperties: { type: "string" },
+              },
+            },
+          },
+        },
+        metadata: {
+          type: "array",
+          items: { type: "string", enum: ["title", "description"] },
+        },
+        linksResolve: { type: "boolean" },
+        resourcesResolve: { type: "boolean" },
+        imageContentTypes: { type: "boolean" },
+        structuredDataParses: { type: "boolean" },
+        structuredDataTypes: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Required schema.org @type values in parsed JSON-LD, including values inside @graph.",
+        },
+        noUnresolvedBindings: { type: "boolean" },
+      },
+    },
+    maxDurationMs: {
+      type: "integer",
+      minimum: 1,
+      description:
+        "Hard time budget for rendering and optional resource checks. Returns a preflight when starting preview or crawling resources cannot reasonably fit.",
+    },
+    confirmSlow: {
+      type: "boolean",
+      description:
+        "Confirm the unchanged slow operation after explicit user consent.",
+    },
+    confirmationToken: {
+      type: "string",
+      description: "Short-lived token from the unchanged preflight.",
+    },
+  },
+  required: ["path"],
+} as const satisfies ProjectSessionMcpInputSchema;
+
 const importInputSchema = {
   ...emptyInputSchema,
   description:
@@ -1791,6 +1889,18 @@ export const mcpArgumentExamples: Record<
   "preview.start": [{ source: "session" }],
   "preview.status": [{}],
   "preview.stop": [{}],
+  "route.render": [{ path: "/pricing" }],
+  "route.verify": [
+    {
+      path: "/pricing",
+      assertions: {
+        status: 200,
+        text: ["Pricing"],
+        metadata: ["title", "description"],
+        noUnresolvedBindings: true,
+      },
+    },
+  ],
   status: [{}, { verbose: true }],
   "list-pages": [{ limit: 20 }],
   "get-page-by-path": [{ path: "/pricing" }],
@@ -1804,6 +1914,17 @@ export const mcpArgumentExamples: Record<
   "search-project": [
     { query: "pricing" },
     { query: "api.example.com", scopes: ["resources"] },
+  ],
+  "update-project-matches": [
+    {
+      updates: [
+        {
+          matchId: "<match-id-from-search-project>",
+          expectedValue: "Old value",
+          value: "New value",
+        },
+      ],
+    },
   ],
   audit: [
     {},
@@ -3300,6 +3421,54 @@ const downloadAssetTool = createProjectSessionMcpTool({
   },
 });
 
+const createRouteTools = (
+  operations: readonly PublicMcpOperation[]
+): readonly ProjectSessionMcpTool[] => {
+  const verifyBindings = operations.find(
+    (operation) => operation.command === "verify-bindings"
+  );
+  return [
+    createProjectSessionMcpTool({
+      name: "route.render",
+      description:
+        "Render one route through the iterative session preview and return its HTML, evaluated metadata, and discovered resource URLs without a full production build.",
+      inputSchema: routeAssertionInputSchema,
+      mcpExamples: getMcpExamples("route.render"),
+      annotations: {
+        command: "route.render",
+        operationId: "route.render",
+        method: "session",
+        permit: "api",
+        localCapable: false,
+        serverOnly: true,
+        readNamespaces: [],
+        writeNamespaces: [],
+        invalidatesNamespaces: [],
+        retryOnConflict: false,
+      },
+    }),
+    createProjectSessionMcpTool({
+      name: "route.verify",
+      description:
+        "Render one route and run explicit status, text, element, metadata, link, resource, image content-type, structured-data, and binding assertions without screenshots.",
+      inputSchema: routeAssertionInputSchema,
+      mcpExamples: getMcpExamples("route.verify"),
+      annotations: {
+        command: "route.verify",
+        operationId: "route.verify",
+        method: "session",
+        permit: verifyBindings?.permit ?? "api",
+        localCapable: false,
+        serverOnly: true,
+        readNamespaces: verifyBindings?.readNamespaces ?? [],
+        writeNamespaces: [],
+        invalidatesNamespaces: [],
+        retryOnConflict: false,
+      },
+    }),
+  ];
+};
+
 const previewTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "preview.start",
@@ -3386,6 +3555,18 @@ type ProjectSessionMcpMeta = {
   session?: ReturnType<typeof serializeProjectSessionMeta>;
   next?: string[];
   confirmation?: DestructiveConfirmation;
+  changeSummary?: {
+    committed: boolean;
+    affectedNamespaces: string[];
+    patchCount: number;
+    affectedEntities?: unknown;
+    affectedRoutes?: unknown;
+    generatedValues?: unknown;
+    validation?: unknown;
+    uncertainty?: unknown;
+    smallestNextStep?: string;
+    slowOperationConsentRequired: boolean;
+  };
 };
 
 type ProjectSessionMcpStructuredContent = {
@@ -3538,7 +3719,9 @@ export const listProjectSessionMcpTools = (
     : []),
   ...(options.includeScreenshotDiff ? [screenshotDiffTool] : []),
   ...(options.includeInstallOcr ? [installOcrTool] : []),
-  ...(options.includePreview ? previewTools : []),
+  ...(options.includePreview
+    ? [...createRouteTools(operations), ...previewTools]
+    : []),
 ];
 
 const toMetaResult = (data: unknown): ProjectSessionMcpToolResult => {
@@ -3591,6 +3774,8 @@ const capabilityAreas = [
       "preview.start",
       "preview.status",
       "preview.stop",
+      "route.render",
+      "route.verify",
       "screenshot",
       "verify-page-responsive",
       "screenshot.diff",
@@ -6715,6 +6900,42 @@ const toCallResult = (
     confirmation?: DestructiveConfirmation;
   } = {}
 ): ProjectSessionMcpToolResult => {
+  const result = isRecord(envelope.result) ? envelope.result : undefined;
+  const changeSummary =
+    envelope.transaction === undefined
+      ? undefined
+      : {
+          committed: envelope.state.committed,
+          affectedNamespaces: envelope.transaction.payload.map(
+            ({ namespace }) => namespace
+          ),
+          patchCount: envelope.transaction.payload.reduce(
+            (total, { patches }) => total + patches.length,
+            0
+          ),
+          ...(result?.affectedEntities === undefined
+            ? {}
+            : { affectedEntities: result.affectedEntities }),
+          ...(result?.affectedRoutes === undefined
+            ? {}
+            : { affectedRoutes: result.affectedRoutes }),
+          ...(result?.generatedValues === undefined
+            ? {}
+            : { generatedValues: result.generatedValues }),
+          ...(result?.validation === undefined
+            ? {}
+            : { validation: result.validation }),
+          ...(result?.uncertainty === undefined
+            ? {}
+            : { uncertainty: result.uncertainty }),
+          ...(typeof result?.next === "string"
+            ? { smallestNextStep: result.next }
+            : options.next?.[0] === undefined
+              ? {}
+              : { smallestNextStep: options.next[0] }),
+          slowOperationConsentRequired:
+            result?.slowOperationConsentRequired === true,
+        };
   const meta = {
     session: serializeProjectSessionMeta(envelope, {
       verbose: options.verboseSession,
@@ -6723,6 +6944,7 @@ const toCallResult = (
     ...(options.confirmation === undefined
       ? {}
       : { confirmation: options.confirmation }),
+    ...(changeSummary === undefined ? {} : { changeSummary }),
   };
   const structuredContent: ProjectSessionMcpStructuredContent =
     options.error === undefined
@@ -7073,6 +7295,66 @@ const getResponsiveScreenshotInputs = (
   });
 };
 
+const getResponsiveScreenshotPreflight = async (
+  input: unknown,
+  historicalDurationMs?: number
+) => {
+  const screenshotInputs = getResponsiveScreenshotInputs(input);
+  const estimatedDurationMs =
+    historicalDurationMs ?? screenshotInputs.length * 4_000;
+  const maxDurationMs =
+    isRecord(input) && typeof input.maxDurationMs === "number"
+      ? input.maxDurationMs
+      : undefined;
+  if (
+    estimatedDurationMs <= 10_000 &&
+    (maxDurationMs === undefined || maxDurationMs >= estimatedDurationMs)
+  ) {
+    return;
+  }
+  const confirmationPayload = {
+    operation: "responsive multi-capture",
+    path: screenshotInputs[0]?.path,
+    viewports: screenshotInputs.map(({ viewport }) => viewport),
+    maxDurationMs,
+  };
+  if (
+    isRecord(input) &&
+    input.confirmSlow === true &&
+    (await validateConfirmationToken(
+      typeof input.confirmationToken === "string"
+        ? input.confirmationToken
+        : undefined,
+      confirmationPayload
+    ))
+  ) {
+    return;
+  }
+  const { token } = await createConfirmationToken(
+    confirmationPayload,
+    slowOperationConfirmationTtlMs
+  );
+  return {
+    confirmationRequired: true,
+    operation: "responsive multi-capture",
+    estimatedDuration: `${Math.ceil(estimatedDurationMs / 1_000)}–${Math.ceil(estimatedDurationMs / 500)} seconds`,
+    estimateSource:
+      historicalDurationMs === undefined
+        ? "operation baseline"
+        : "session history",
+    reason:
+      maxDurationMs !== undefined && maxDurationMs < estimatedDurationMs
+        ? `The requested captures cannot reasonably finish within the ${maxDurationMs}ms budget.`
+        : `${screenshotInputs.length} browser captures are expected to exceed 10 seconds.`,
+    confirmationToken: token,
+    fasterAlternative: {
+      operation: "targeted route assertions",
+      estimatedDuration: "1–5 seconds with an active preview",
+      limitations: "Does not visually inspect layout at every viewport.",
+    },
+  };
+};
+
 const getScreenshotDiffInput = (
   input: unknown
 ): ProjectSessionScreenshotDiffInput => {
@@ -7254,6 +7536,203 @@ const getProductionPreviewPreflight = async (input: unknown) => {
   };
 };
 
+const getIterativePreviewPreflight = async ({
+  input,
+  previewRunning,
+}: {
+  input: unknown;
+  previewRunning: boolean;
+}) => {
+  if (previewRunning || (isRecord(input) && input.mode === "production")) {
+    return;
+  }
+  const previewInput = getPreviewInput(input);
+  const confirmationPayload = {
+    operation: "start iterative preview",
+    input: previewInput,
+    maxDurationMs:
+      isRecord(input) && typeof input.maxDurationMs === "number"
+        ? input.maxDurationMs
+        : undefined,
+  };
+  if (
+    isRecord(input) &&
+    input.confirmSlow === true &&
+    (await validateConfirmationToken(
+      typeof input.confirmationToken === "string"
+        ? input.confirmationToken
+        : undefined,
+      confirmationPayload
+    ))
+  ) {
+    return;
+  }
+  const { token } = await createConfirmationToken(
+    confirmationPayload,
+    slowOperationConfirmationTtlMs
+  );
+  return {
+    running: false,
+    mode: "iterative" as const,
+    confirmationRequired: true,
+    operation: "start iterative preview",
+    estimatedDuration: "5–20 seconds",
+    estimateSource: "operation baseline",
+    reason:
+      "The first preview can install generated dependencies, so its duration is unknown and may exceed 10 seconds.",
+    confirmationToken: token,
+    fasterAlternative: {
+      operation: "use route.render with an existing baseUrl",
+      estimatedDuration: "1–5 seconds",
+      limitations: "Requires an already running generated-site server.",
+    },
+  };
+};
+
+const getRouteAssertionInput = (input: unknown) => {
+  if (
+    isRecord(input) === false ||
+    typeof input.path !== "string" ||
+    input.path.startsWith("/") === false
+  ) {
+    throw new Error("route rendering requires a path starting with /.");
+  }
+  const baseUrl = typeof input.baseUrl === "string" ? input.baseUrl : undefined;
+  if (baseUrl !== undefined) {
+    try {
+      new URL(baseUrl);
+    } catch {
+      throw new Error("route rendering baseUrl must be an absolute URL.");
+    }
+  }
+  return {
+    path: input.path,
+    baseUrl,
+    assertions: isRecord(input.assertions)
+      ? (input.assertions as RouteAssertions & {
+          noUnresolvedBindings?: boolean;
+        })
+      : {},
+    maxDurationMs:
+      typeof input.maxDurationMs === "number" ? input.maxDurationMs : undefined,
+  };
+};
+
+const getRouteRenderingPreflight = async ({
+  input,
+  previewRunning,
+  historicalDurationMs,
+}: {
+  input: unknown;
+  previewRunning: boolean;
+  historicalDurationMs?: number;
+}) => {
+  const routeInput = getRouteAssertionInput(input);
+  const crawlsResources =
+    routeInput.assertions.linksResolve === true ||
+    routeInput.assertions.resourcesResolve === true ||
+    routeInput.assertions.imageContentTypes === true;
+  const startsPreview = routeInput.baseUrl === undefined && !previewRunning;
+  if (startsPreview === false && crawlsResources === false) {
+    return;
+  }
+  const confirmationPayload = {
+    operation: startsPreview
+      ? "start iterative preview and render route"
+      : "render route and crawl its resources",
+    path: routeInput.path,
+    assertions: routeInput.assertions,
+    maxDurationMs: routeInput.maxDurationMs,
+  };
+  if (
+    isRecord(input) &&
+    input.confirmSlow === true &&
+    (await validateConfirmationToken(
+      typeof input.confirmationToken === "string"
+        ? input.confirmationToken
+        : undefined,
+      confirmationPayload
+    ))
+  ) {
+    return;
+  }
+  const { token } = await createConfirmationToken(
+    confirmationPayload,
+    slowOperationConfirmationTtlMs
+  );
+  return {
+    running: false,
+    confirmationRequired: true,
+    operation: confirmationPayload.operation,
+    estimatedDuration: startsPreview ? "5–20 seconds" : "5–30 seconds",
+    estimateSource:
+      historicalDurationMs === undefined
+        ? "operation baseline"
+        : "session history",
+    ...(historicalDurationMs === undefined
+      ? {}
+      : { historicalDurationMs: Math.round(historicalDurationMs) }),
+    reason: startsPreview
+      ? "The first iterative preview may install generated dependencies, so its duration is unknown."
+      : "The route can contain an unknown number of links and resources to request.",
+    confirmationToken: token,
+    fasterAlternative: {
+      operation: "render the route without resource assertions",
+      estimatedDuration: "1–5 seconds with an active preview",
+      limitations:
+        "Returns discovered URLs but does not verify their status or content type.",
+    },
+  };
+};
+
+const getDocumentSearchPreflight = async (input: unknown) => {
+  if (
+    isRecord(input) === false ||
+    Array.isArray(input.scopes) === false ||
+    input.scopes.some((scope) => scope === "documents" || scope === "all") ===
+      false
+  ) {
+    return;
+  }
+  const confirmationPayload = {
+    operation: "search editable document contents",
+    query: input.query,
+    scopes: input.scopes,
+    limit: input.limit,
+    maxDurationMs: input.maxDurationMs,
+  };
+  if (
+    input.confirmSlow === true &&
+    (await validateConfirmationToken(
+      typeof input.confirmationToken === "string"
+        ? input.confirmationToken
+        : undefined,
+      confirmationPayload
+    ))
+  ) {
+    return;
+  }
+  const { token } = await createConfirmationToken(
+    confirmationPayload,
+    slowOperationConfirmationTtlMs
+  );
+  return {
+    confirmationRequired: true,
+    operation: "search editable document contents",
+    estimatedDuration: "5–30 seconds",
+    estimateSource: "operation baseline",
+    reason:
+      "Markdown, JSON, and text assets may need to be downloaded, so a project-wide content scan has unknown duration.",
+    confirmationToken: token,
+    fasterAlternative: {
+      operation: "search structured project values",
+      estimatedDuration: "under 5 seconds",
+      limitations:
+        "Omit the documents scope; asset metadata remains searchable through the assets scope.",
+    },
+  };
+};
+
 const getImportInput = (input: unknown): ProjectSessionImportInput => {
   if (isRecord(input) === false) {
     throw new Error("import input must be an object.");
@@ -7297,6 +7776,7 @@ type ProjectSessionMcpCoreOptions<Command extends string> = {
   executeOperation: ExecuteMcpOperation<Command>;
   importProject?: ImportProject;
   downloadAsset?: DownloadAsset;
+  searchAssetContents?: SearchAssetContents;
   captureScreenshot?: CaptureScreenshot;
   capturePageScreenshots?: CapturePageScreenshots;
   diffScreenshots?: DiffScreenshots;
@@ -7331,6 +7811,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   executeOperation,
   importProject,
   downloadAsset,
+  searchAssetContents,
   captureScreenshot,
   capturePageScreenshots,
   diffScreenshots,
@@ -7346,6 +7827,22 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
 }: ProjectSessionMcpCoreOptions<Command>) => {
   let session: ReturnType<CreateProjectSession> | undefined;
   let pendingCheckpoint: ProjectSessionMcpCheckpoint | undefined;
+  const durationHistory = new Map<string, number[]>();
+  const recordDuration = (operation: string, durationMs: number) => {
+    const durations = durationHistory.get(operation) ?? [];
+    durations.push(durationMs);
+    durationHistory.set(operation, durations.slice(-10));
+  };
+  const getHistoricalDuration = (operation: string) => {
+    const durations = durationHistory.get(operation);
+    if (durations === undefined || durations.length === 0) {
+      return;
+    }
+    return (
+      durations.reduce((total, duration) => total + duration, 0) /
+      durations.length
+    );
+  };
   const toCheckpointedMetaResult = (
     tool: string,
     data: unknown
@@ -7835,6 +8332,89 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (name === "download-asset" && downloadAsset !== undefined) {
         return toMetaResult(await downloadAsset(getDownloadAssetInput(input)));
       }
+      if (
+        (name === "route.render" || name === "route.verify") &&
+        startPreview !== undefined &&
+        getPreviewStatus !== undefined
+      ) {
+        const routeInput = getRouteAssertionInput(input);
+        let previewStatus = await getPreviewStatus();
+        const preflight = await getRouteRenderingPreflight({
+          input,
+          previewRunning:
+            routeInput.baseUrl !== undefined || previewStatus.running,
+          historicalDurationMs: getHistoricalDuration("route.render"),
+        });
+        if (preflight !== undefined) {
+          return toMetaResult(preflight);
+        }
+        if (
+          routeInput.baseUrl === undefined &&
+          (previewStatus.running === false ||
+            (previewStatus as unknown as Record<string, unknown>).stale ===
+              true)
+        ) {
+          previewStatus = await startPreview(
+            { port: 0, source: "session", mode: "iterative" },
+            {
+              report: (message) => {
+                reportToolProgress?.(message);
+              },
+            }
+          );
+        }
+        const baseUrl = routeInput.baseUrl ?? previewStatus.url;
+        if (baseUrl === undefined) {
+          throw new Error("route rendering could not resolve a preview URL.");
+        }
+        const rendered = await renderAndVerifyRoute({
+          baseUrl,
+          path: routeInput.path,
+          assertions:
+            name === "route.verify" ? routeInput.assertions : undefined,
+          maxDurationMs: routeInput.maxDurationMs,
+        });
+        recordDuration("route.render", rendered.elapsedMs);
+        if (
+          name !== "route.verify" ||
+          routeInput.assertions.noUnresolvedBindings !== true
+        ) {
+          return toMetaResult(rendered);
+        }
+        const verifyBindings = operationByCommand.get(
+          "verify-bindings" as Command
+        );
+        if (verifyBindings === undefined) {
+          throw new Error(
+            "route.verify noUnresolvedBindings requires verify-bindings."
+          );
+        }
+        const bindingEnvelope = await executeOperation({
+          command: "verify-bindings" as Command,
+          input: getNormalizedOperationInput(verifyBindings, {
+            pagePath: routeInput.path,
+            limit: 200,
+          }),
+          dryRun: false,
+        });
+        const findingCount =
+          isRecord(bindingEnvelope.result) &&
+          isRecord(bindingEnvelope.result.summary) &&
+          typeof bindingEnvelope.result.summary.findings === "number"
+            ? bindingEnvelope.result.summary.findings
+            : undefined;
+        const bindingAssertion = {
+          assertion: "no-unresolved-bindings",
+          passed: findingCount === 0,
+          actual: findingCount,
+        };
+        return toMetaResult({
+          ...rendered,
+          assertions: [...rendered.assertions, bindingAssertion],
+          passed: rendered.passed && bindingAssertion.passed,
+          bindingVerification: bindingEnvelope.result,
+        });
+      }
       if (name === "screenshot" && captureScreenshot !== undefined) {
         const screenshotInput = getScreenshotInput(input);
         try {
@@ -7860,6 +8440,13 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         name === "verify-page-responsive" &&
         capturePageScreenshots !== undefined
       ) {
+        const preflight = await getResponsiveScreenshotPreflight(
+          input,
+          getHistoricalDuration("screenshot.responsive")
+        );
+        if (preflight !== undefined) {
+          return toMetaResult(preflight);
+        }
         const auditOperation = operationByCommand.get("audit" as Command);
         if (auditOperation === undefined) {
           throw new Error(
@@ -7878,6 +8465,13 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
             reportToolProgress?.(message);
           },
         });
+        recordDuration(
+          "screenshot.responsive",
+          screenshots.reduce(
+            (total, screenshot) => total + screenshot.elapsedMs,
+            0
+          )
+        );
         const auditEnvelope = await executeOperation({
           command: "audit" as Command,
           input: getNormalizedOperationInput(auditOperation, { pagePath }),
@@ -7893,16 +8487,29 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         name === "screenshot.responsive" &&
         capturePageScreenshots !== undefined
       ) {
-        return toMetaResult({
-          screenshots: await capturePageScreenshots(
-            getResponsiveScreenshotInputs(input),
-            {
-              report: (message) => {
-                reportToolProgress?.(message);
-              },
-            }
-          ),
-        });
+        const preflight = await getResponsiveScreenshotPreflight(
+          input,
+          getHistoricalDuration("screenshot.responsive")
+        );
+        if (preflight !== undefined) {
+          return toMetaResult(preflight);
+        }
+        const screenshots = await capturePageScreenshots(
+          getResponsiveScreenshotInputs(input),
+          {
+            report: (message) => {
+              reportToolProgress?.(message);
+            },
+          }
+        );
+        recordDuration(
+          "screenshot.responsive",
+          screenshots.reduce(
+            (total, screenshot) => total + screenshot.elapsedMs,
+            0
+          )
+        );
+        return toMetaResult({ screenshots });
       }
       if (name === "screenshot.diff" && diffScreenshots !== undefined) {
         return toMetaResult(
@@ -7917,6 +8524,14 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         const preflight = await getProductionPreviewPreflight(input);
         if (preflight !== undefined) {
           return toMetaResult(preflight);
+        }
+        const previewStatus = await getPreviewStatus?.();
+        const iterativePreflight = await getIterativePreviewPreflight({
+          input,
+          previewRunning: previewStatus?.running === true,
+        });
+        if (iterativePreflight !== undefined) {
+          return toMetaResult(iterativePreflight);
         }
         return toMetaResult(
           await startPreview(getPreviewInput(input), {
@@ -8173,6 +8788,20 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
             )
           : normalizedInput
       );
+      const includesDocumentSearch =
+        name === "search-project" &&
+        searchAssetContents !== undefined &&
+        isRecord(operationInput) &&
+        Array.isArray(operationInput.scopes) &&
+        operationInput.scopes.some(
+          (scope) => scope === "documents" || scope === "all"
+        );
+      if (includesDocumentSearch) {
+        const preflight = await getDocumentSearchPreflight(operationInput);
+        if (preflight !== undefined) {
+          return toMetaResult(preflight);
+        }
+      }
       const [envelope, response] = operation.requiresConfirm
         ? await executeDestructiveMcpOperation({
             command: name as Command,
@@ -8191,6 +8820,50 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           ];
       if (response !== undefined) {
         return response;
+      }
+      if (
+        includesDocumentSearch &&
+        searchAssetContents !== undefined &&
+        isRecord(operationInput)
+      ) {
+        const existingResult = isRecord(envelope.result) ? envelope.result : {};
+        const existingMatches = Array.isArray(existingResult.matches)
+          ? existingResult.matches
+          : [];
+        const limit =
+          typeof operationInput.limit === "number"
+            ? Math.max(0, operationInput.limit - existingMatches.length)
+            : Math.max(0, 20 - existingMatches.length);
+        const documents = await searchAssetContents({
+          query: String(operationInput.query),
+          limit,
+          maxDurationMs:
+            typeof operationInput.maxDurationMs === "number"
+              ? operationInput.maxDurationMs
+              : undefined,
+        });
+        recordDuration("search.documents", documents.elapsedMs);
+        const matches = [...existingMatches, ...documents.matches];
+        return toCallResult({
+          ...envelope,
+          result: {
+            ...existingResult,
+            matches,
+            total:
+              (typeof existingResult.total === "number"
+                ? existingResult.total
+                : existingMatches.length) + documents.total,
+            returnedCount: matches.length,
+            truncated:
+              existingResult.truncated === true ||
+              documents.total > documents.matches.length,
+            documentSearch: {
+              total: documents.total,
+              elapsedMs: documents.elapsedMs,
+              estimateSource: "measured",
+            },
+          },
+        });
       }
       if (name === "audit") {
         const auditedEnvelope = await augmentAuditWithRenderedChecks({

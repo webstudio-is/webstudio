@@ -1101,6 +1101,87 @@ const createCliMcpHost = async ({
         path: getLocalAssetPath(asset.name, input.assetsDir),
       };
     },
+    async searchAssetContents(input) {
+      const startedAt = Date.now();
+      const snapshot = getLoadedProjectSessionSnapshot(session);
+      const searchableFormats = new Set([
+        "md",
+        "mdx",
+        "markdown",
+        "json",
+        "txt",
+        "csv",
+        "yaml",
+        "yml",
+      ]);
+      const query = input.query.toLocaleLowerCase();
+      const matches: Array<Record<string, unknown>> = [];
+      let total = 0;
+      for (const asset of snapshot.state.assets?.values() ?? []) {
+        if (
+          asset.type !== "file" ||
+          searchableFormats.has(asset.format.toLocaleLowerCase()) === false
+        ) {
+          continue;
+        }
+        if (
+          input.maxDurationMs !== undefined &&
+          Date.now() - startedAt >= input.maxDurationMs
+        ) {
+          throw Object.assign(
+            new Error(
+              `Document search exceeded the ${input.maxDurationMs}ms time budget.`
+            ),
+            { code: "TIME_BUDGET_EXCEEDED" }
+          );
+        }
+        await downloadAssetFile({ asset, origin: connection.origin });
+        const content = await readFile(getLocalAssetPath(asset.name), "utf8");
+        for (const [lineIndex, line] of content.split(/\r?\n/).entries()) {
+          let from = 0;
+          const normalizedLine = line.toLocaleLowerCase();
+          while (from <= normalizedLine.length) {
+            const column = normalizedLine.indexOf(query, from);
+            if (column === -1) {
+              break;
+            }
+            total += 1;
+            if (matches.length < (input.limit ?? 20)) {
+              const location = {
+                namespace: "assets",
+                path: [asset.id, "content", lineIndex, column],
+                source: asset.name,
+                line: lineIndex + 1,
+                column: column + 1,
+              };
+              matches.push({
+                matchId: `document-match:${encodeURIComponent(
+                  JSON.stringify([asset.id, lineIndex, column, input.query])
+                )}`,
+                kind: "document",
+                entityType: "document",
+                entityId: asset.id,
+                assetId: asset.id,
+                format: asset.format,
+                currentValue: line.slice(column, column + input.query.length),
+                editable: true,
+                editCommand: "update-asset-content",
+                location,
+                affectedRoutes: [],
+                reference: {
+                  targetType: "asset",
+                  targetId: asset.id,
+                  resolved: true,
+                  valid: true,
+                },
+              });
+            }
+            from = column + Math.max(1, input.query.length);
+          }
+        }
+      }
+      return { matches, total, elapsedMs: Date.now() - startedAt };
+    },
     async startPreview(input, progress) {
       const result = await startMcpPreview({
         input,

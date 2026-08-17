@@ -427,8 +427,30 @@ export const runtimeOutputSchemas = {
     query: z.string(),
     scopes: stringArray,
     truncated: z.boolean(),
-    matches: z.array(looseObject({ kind: z.string() })),
+    matches: z.array(
+      looseObject({
+        matchId: id,
+        kind: z.string(),
+        entityType: z.string(),
+        entityId: id,
+        currentValue: z.union([z.string(), z.number(), z.boolean(), z.null()]),
+        editable: z.boolean(),
+        affectedRoutes: stringArray,
+      })
+    ),
     ...outputPage,
+  }),
+  "project.updateMatches": looseObject({
+    changedCount: z.number(),
+    affectedEntities: z.array(
+      looseObject({ entityType: z.string(), entityId: id })
+    ),
+    affectedRoutes: stringArray,
+    generatedValues: z.array(z.unknown()),
+    validation: looseObject({ status: z.literal("passed") }),
+    uncertainty: stringArray,
+    next: z.string(),
+    slowOperationConsentRequired: z.boolean(),
   }),
   "project.audit": auditResult,
   "project.verifyBindings": bindingVerificationResult,

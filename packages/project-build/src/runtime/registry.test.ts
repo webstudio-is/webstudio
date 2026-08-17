@@ -2352,6 +2352,7 @@ describe("builder runtime registry", () => {
       ["pageTransfer.insert", {}],
       ["pageTree.move", {}],
       ["pageTree.reparentOrphans", "invalid"],
+      ["project.updateMatches", {}],
       ["runtimeUi.integrate", {}],
       ["instances.insertComponent", { parentInstanceId: "body" }],
       ["instances.insertCollection", { parentInstanceId: "body" }],
@@ -2545,6 +2546,20 @@ describe("builder runtime registry", () => {
         },
       ],
       ["projectSettings.update", { meta: { siteName: "Updated project" } }],
+      [
+        "project.updateMatches",
+        {
+          updates: [
+            {
+              matchId: `project-match:${encodeURIComponent(
+                JSON.stringify(["pages", "pages", "home", "title"])
+              )}`,
+              expectedValue: "Home",
+              value: "Updated home title",
+            },
+          ],
+        },
+      ],
       ["redirects.create", { old: "/legacy", new: "/new" }],
       ["breakpoints.create", { label: "Tablet", maxWidth: 768 }],
       [

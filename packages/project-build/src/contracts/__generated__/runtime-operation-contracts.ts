@@ -33113,12 +33113,20 @@ export const runtimeOperationContractData = [
           items: {
             type: "string",
             enum: [
+              "all",
+              "pages",
               "instances",
               "text",
               "props",
+              "bindings",
+              "variables",
               "resources",
               "assets",
+              "documents",
               "styles",
+              "tokens",
+              "redirects",
+              "settings",
             ],
           },
         },
@@ -33126,6 +33134,17 @@ export const runtimeOperationContractData = [
           type: "string",
         },
         pagePath: {
+          type: "string",
+        },
+        maxDurationMs: {
+          type: "integer",
+          exclusiveMinimum: 0,
+          maximum: 9007199254740991,
+        },
+        confirmSlow: {
+          type: "boolean",
+        },
+        confirmationToken: {
           type: "string",
         },
         cursor: {
@@ -33165,11 +33184,53 @@ export const runtimeOperationContractData = [
           items: {
             type: "object",
             properties: {
+              matchId: {
+                type: "string",
+              },
               kind: {
                 type: "string",
               },
+              entityType: {
+                type: "string",
+              },
+              entityId: {
+                type: "string",
+              },
+              currentValue: {
+                anyOf: [
+                  {
+                    type: "string",
+                  },
+                  {
+                    type: "number",
+                  },
+                  {
+                    type: "boolean",
+                  },
+                  {
+                    type: "null",
+                  },
+                ],
+              },
+              editable: {
+                type: "boolean",
+              },
+              affectedRoutes: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
             },
-            required: ["kind"],
+            required: [
+              "matchId",
+              "kind",
+              "entityType",
+              "entityId",
+              "currentValue",
+              "editable",
+              "affectedRoutes",
+            ],
             additionalProperties: {},
           },
         },
@@ -33232,6 +33293,181 @@ export const runtimeOperationContractData = [
     ],
     writeNamespaces: [],
     invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "project.updateMatches",
+    command: "update-project-matches",
+    client: "updateProjectMatches",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        updates: {
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              matchId: {
+                type: "string",
+              },
+              expectedValue: {
+                anyOf: [
+                  {
+                    type: "string",
+                  },
+                  {
+                    type: "number",
+                  },
+                  {
+                    type: "boolean",
+                  },
+                  {
+                    type: "null",
+                  },
+                ],
+              },
+              value: {
+                anyOf: [
+                  {
+                    type: "string",
+                  },
+                  {
+                    type: "number",
+                  },
+                  {
+                    type: "boolean",
+                  },
+                  {
+                    type: "null",
+                  },
+                ],
+              },
+            },
+            required: ["matchId", "expectedValue", "value"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["updates"],
+      additionalProperties: false,
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        changedCount: {
+          type: "number",
+        },
+        affectedEntities: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              entityType: {
+                type: "string",
+              },
+              entityId: {
+                type: "string",
+              },
+            },
+            required: ["entityType", "entityId"],
+            additionalProperties: {},
+          },
+        },
+        affectedRoutes: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        generatedValues: {
+          type: "array",
+          items: {},
+        },
+        validation: {
+          type: "object",
+          properties: {
+            status: {
+              type: "string",
+              const: "passed",
+            },
+          },
+          required: ["status"],
+          additionalProperties: {},
+        },
+        uncertainty: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        next: {
+          type: "string",
+        },
+        slowOperationConsentRequired: {
+          type: "boolean",
+        },
+      },
+      required: [
+        "changedCount",
+        "affectedEntities",
+        "affectedRoutes",
+        "generatedValues",
+        "validation",
+        "uncertainty",
+        "next",
+        "slowOperationConsentRequired",
+      ],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "projectSettings",
+      "marketplaceProduct",
+      "instances",
+      "props",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "resources",
+      "dataSources",
+      "assets",
+      "assetFolders",
+      "breakpoints",
+    ],
+    writeNamespaces: [
+      "pages",
+      "projectSettings",
+      "marketplaceProduct",
+      "instances",
+      "props",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "resources",
+      "dataSources",
+      "assets",
+      "assetFolders",
+      "breakpoints",
+    ],
+    invalidatesNamespaces: [
+      "pages",
+      "projectSettings",
+      "marketplaceProduct",
+      "instances",
+      "props",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "resources",
+      "dataSources",
+      "assets",
+      "assetFolders",
+      "breakpoints",
+    ],
     retryOnConflict: false,
     requiresAssets: true,
   },

@@ -1,6 +1,20 @@
 import { z } from "zod";
 import { isLiteralExpression } from "@webstudio-is/expression";
-import { isAssetsResource, type StyleDecl } from "@webstudio-is/sdk";
+import {
+  assets as assetsSchema,
+  assetFolders as assetFoldersSchema,
+  breakpoints as breakpointsSchema,
+  dataSources as dataSourcesSchema,
+  instances as instancesSchema,
+  isAssetsResource,
+  pages as pagesSchema,
+  props as propsSchema,
+  resources as resourcesSchema,
+  styles as stylesSchema,
+  styleSources as styleSourcesSchema,
+  styleSourceSelections as styleSourceSelectionsSchema,
+  type StyleDecl,
+} from "@webstudio-is/sdk";
 import { hasTopLevelJsonLdContext } from "@webstudio-is/sdk/runtime";
 import { validateJsonLdWithSchemaOrg } from "@webstudio-is/sdk/schema-org";
 import { ariaAttributes, ariaRoles } from "@webstudio-is/html-data";
@@ -17,14 +31,28 @@ import { findSerializedPageByInput, getSerializedPages } from "./pages";
 import { validatePageSelector } from "./page-selector";
 import { hasAccessibleName, isDynamicPropType } from "./accessibility-analysis";
 import { paginateOutput, paginatedOutputInputSchema } from "./output";
+import { applyBuilderPatchTransactions } from "../state/patch";
+import type { BuilderNamespace } from "../contracts/namespaces";
+import { createRuntimeMutation } from "./mutation";
+import { projectSettings as projectSettingsSchema } from "../shared/project-settings";
+import { marketplaceProduct as marketplaceProductSchema } from "../shared/marketplace";
+import { verifyBindings } from "./binding-verification";
 
 const projectLookupScope = z.enum([
+  "all",
+  "pages",
   "instances",
   "text",
   "props",
+  "bindings",
+  "variables",
   "resources",
   "assets",
+  "documents",
   "styles",
+  "tokens",
+  "redirects",
+  "settings",
 ]);
 
 const projectAnalysisScope = z.enum([
@@ -41,6 +69,9 @@ export const projectSearchInput = z
     scopes: z.array(projectLookupScope).min(1).optional(),
     pageId: z.string().optional(),
     pagePath: z.string().optional(),
+    maxDurationMs: z.number().int().positive().optional(),
+    confirmSlow: z.boolean().optional(),
+    confirmationToken: z.string().optional(),
     ...paginatedOutputInputSchema.shape,
   })
   .strict()
@@ -54,7 +85,787 @@ type ProjectAnalysisInput = {
   limit?: number;
 };
 
-const defaultScopes = projectLookupScope.options;
+const defaultScopes = [
+  "instances",
+  "text",
+  "props",
+  "resources",
+  "assets",
+  "styles",
+] as const;
+const defaultProjectSearchScopes = ["all"] as const;
+
+type SearchPath = Array<string | number>;
+
+export type ProjectSearchMatch = {
+  matchId: string;
+  kind: string;
+  entityType: string;
+  entityId: string;
+  currentValue: string | number | boolean | null;
+  editable: boolean;
+  location: {
+    namespace: BuilderNamespace;
+    path: SearchPath;
+    field?: string;
+  };
+  affectedRoutes: string[];
+  reference?: {
+    targetType: string;
+    targetId: string;
+    resolved: boolean;
+    valid: boolean;
+  };
+};
+
+const namespaceSchemas = {
+  pages: pagesSchema,
+  instances: instancesSchema,
+  props: propsSchema,
+  styles: stylesSchema,
+  styleSources: styleSourcesSchema,
+  styleSourceSelections: styleSourceSelectionsSchema,
+  dataSources: dataSourcesSchema,
+  resources: resourcesSchema,
+  assets: assetsSchema,
+  assetFolders: assetFoldersSchema,
+  breakpoints: breakpointsSchema,
+  projectSettings: projectSettingsSchema,
+  marketplaceProduct: marketplaceProductSchema,
+} satisfies Record<BuilderNamespace, z.ZodType>;
+
+const encodeMatchId = (namespace: BuilderNamespace, path: SearchPath) =>
+  `project-match:${encodeURIComponent(JSON.stringify([namespace, ...path]))}`;
+
+const decodeMatchId = (matchId: string) => {
+  const prefix = "project-match:";
+  if (matchId.startsWith(prefix) === false) {
+    return throwBuilderRuntimeError("BAD_REQUEST", "Invalid project match id");
+  }
+  try {
+    const decoded: unknown = JSON.parse(
+      decodeURIComponent(matchId.slice(prefix.length))
+    );
+    if (
+      Array.isArray(decoded) === false ||
+      decoded.length < 2 ||
+      typeof decoded[0] !== "string"
+    ) {
+      throw new Error("invalid match path");
+    }
+    const [namespace, ...path] = decoded;
+    if (Object.hasOwn(namespaceSchemas, namespace) === false) {
+      throw new Error("invalid namespace");
+    }
+    if (
+      path.some(
+        (segment) => typeof segment !== "string" && typeof segment !== "number"
+      )
+    ) {
+      throw new Error("invalid path");
+    }
+    return {
+      namespace: namespace as BuilderNamespace,
+      path: path as SearchPath,
+    };
+  } catch {
+    return throwBuilderRuntimeError("BAD_REQUEST", "Invalid project match id");
+  }
+};
+
+const visitPrimitiveValues = (
+  value: unknown,
+  visit: (value: string | number | boolean | null, path: SearchPath) => void,
+  path: SearchPath = []
+) => {
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    value === null
+  ) {
+    visit(value, path);
+    return;
+  }
+  if (value instanceof Map) {
+    for (const [key, item] of value) {
+      visitPrimitiveValues(item, visit, [...path, key]);
+    }
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const [index, item] of value.entries()) {
+      visitPrimitiveValues(item, visit, [...path, index]);
+    }
+    return;
+  }
+  if (typeof value === "object" && value !== null) {
+    for (const [key, item] of Object.entries(value)) {
+      visitPrimitiveValues(item, visit, [...path, key]);
+    }
+  }
+};
+
+const getPathValue = (value: unknown, path: SearchPath): unknown => {
+  let current = value;
+  for (const segment of path) {
+    if (current instanceof Map) {
+      current = current.get(segment);
+    } else if (Array.isArray(current)) {
+      current = current[Number(segment)];
+    } else if (typeof current === "object" && current !== null) {
+      current = (current as Record<string, unknown>)[String(segment)];
+    } else {
+      return;
+    }
+  }
+  return current;
+};
+
+const normalizePagePath = (path: string) => (path === "" ? "/" : path);
+
+const getSearchContext = (state: BuilderState) => {
+  const routesByInstanceId = new Map<string, Set<string>>();
+  const pagesById = new Map<string, string>();
+  if (state.pages !== undefined && state.instances !== undefined) {
+    for (const page of getSerializedPages(state).pages) {
+      const route = normalizePagePath(page.path);
+      pagesById.set(page.id, route);
+      for (const instanceId of getInstanceDepths(state.instances, [
+        page.rootInstanceId,
+      ]).keys()) {
+        const routes = routesByInstanceId.get(instanceId) ?? new Set<string>();
+        routes.add(route);
+        routesByInstanceId.set(instanceId, routes);
+      }
+    }
+  }
+  return { pagesById, routesByInstanceId };
+};
+
+const getEntity = ({
+  state,
+  namespace,
+  path,
+}: {
+  state: BuilderState;
+  namespace: BuilderNamespace;
+  path: SearchPath;
+}) => {
+  const recordId = String(path[0] ?? namespace);
+  if (namespace === "pages") {
+    if (path[0] === "pages") {
+      return { entityType: "page", entityId: String(path[1]), kind: "page" };
+    }
+    if (path[0] === "redirects") {
+      return {
+        entityType: "redirect",
+        entityId: String(path[1]),
+        kind: "redirect",
+      };
+    }
+    if (path[0] === "folders") {
+      return {
+        entityType: "page-folder",
+        entityId: String(path[1]),
+        kind: "page-folder",
+      };
+    }
+  }
+  if (namespace === "instances") {
+    const instance = state.instances?.get(recordId);
+    const childIndex = path[1] === "children" ? Number(path[2]) : undefined;
+    const child =
+      childIndex === undefined ? undefined : instance?.children[childIndex];
+    if (child?.type === "text" || child?.type === "expression") {
+      return { entityType: "text", entityId: recordId, kind: "text" };
+    }
+    return { entityType: "instance", entityId: recordId, kind: "instance" };
+  }
+  if (namespace === "props") {
+    const type = state.props?.get(recordId)?.type;
+    return {
+      entityType:
+        type === "expression" ||
+        type === "resource" ||
+        type === "parameter" ||
+        type === "page"
+          ? "binding"
+          : "prop",
+      entityId: recordId,
+      kind: "prop",
+    };
+  }
+  const types: Partial<Record<BuilderNamespace, string>> = {
+    resources: "resource",
+    dataSources: "variable",
+    assets: "asset",
+    assetFolders: "asset-folder",
+    styles: "style",
+    styleSources:
+      state.styleSources?.get(recordId)?.type === "token"
+        ? "design-token"
+        : "style-source",
+    styleSourceSelections: "style-source-selection",
+    breakpoints: "breakpoint",
+    projectSettings: "project-setting",
+    marketplaceProduct: "marketplace-setting",
+  };
+  const entityType = types[namespace] ?? namespace;
+  return { entityType, entityId: recordId, kind: entityType };
+};
+
+const getScope = (match: Pick<ProjectSearchMatch, "entityType">) => {
+  const scopes: Record<string, z.infer<typeof projectLookupScope>> = {
+    page: "pages",
+    "page-folder": "pages",
+    redirect: "redirects",
+    instance: "instances",
+    text: "text",
+    prop: "props",
+    binding: "bindings",
+    variable: "variables",
+    resource: "resources",
+    asset: "assets",
+    "asset-folder": "assets",
+    style: "styles",
+    "style-source": "styles",
+    "style-source-selection": "styles",
+    "design-token": "tokens",
+    breakpoint: "styles",
+    "project-setting": "settings",
+    "marketplace-setting": "settings",
+  };
+  return scopes[match.entityType];
+};
+
+const getLegacySearchIdentity = ({
+  state,
+  namespace,
+  path,
+}: {
+  state: BuilderState;
+  namespace: BuilderNamespace;
+  path: SearchPath;
+}) => {
+  const recordId = String(path[0]);
+  if (namespace === "instances") {
+    return {
+      instanceId: recordId,
+      ...(path[1] === "children" ? { childIndex: Number(path[2]) } : {}),
+    };
+  }
+  if (namespace === "props") {
+    const prop = state.props?.get(recordId);
+    return {
+      propId: recordId,
+      instanceId: prop?.instanceId,
+      name: prop?.name,
+      type: prop?.type,
+    };
+  }
+  if (namespace === "resources") {
+    return { resourceId: recordId };
+  }
+  if (namespace === "assets") {
+    return { assetId: recordId };
+  }
+  if (namespace === "styles") {
+    const style = state.styles?.get(recordId);
+    return {
+      styleSourceId: style?.styleSourceId,
+      breakpointId: style?.breakpointId,
+      styleProperty: style?.property,
+    };
+  }
+  if (namespace === "styleSources") {
+    const token = listDesignTokens(state, { withUsage: true }).tokens.find(
+      ({ id }) => id === recordId
+    );
+    if (token !== undefined) {
+      return {
+        designTokenId: recordId,
+        name: token.name,
+        declarationCount: token.declarationCount,
+        usageCount: token.usageCount,
+      };
+    }
+    return { styleSourceId: recordId };
+  }
+  return {};
+};
+
+const getAffectedRoutes = ({
+  state,
+  namespace,
+  path,
+  pagesById,
+  routesByInstanceId,
+}: {
+  state: BuilderState;
+  namespace: BuilderNamespace;
+  path: SearchPath;
+  pagesById: ReadonlyMap<string, string>;
+  routesByInstanceId: ReadonlyMap<string, ReadonlySet<string>>;
+}) => {
+  const routes = new Set<string>();
+  const addInstanceRoutes = (instanceId: string | undefined) => {
+    if (instanceId === undefined) {
+      return;
+    }
+    for (const route of routesByInstanceId.get(instanceId) ?? []) {
+      routes.add(route);
+    }
+  };
+  if (namespace === "pages" && path[0] === "pages") {
+    const route = pagesById.get(String(path[1]));
+    if (route !== undefined) {
+      routes.add(route);
+    }
+  }
+  if (namespace === "instances") {
+    addInstanceRoutes(String(path[0]));
+  } else if (namespace === "props") {
+    addInstanceRoutes(state.props?.get(String(path[0]))?.instanceId);
+  } else if (namespace === "dataSources") {
+    addInstanceRoutes(state.dataSources?.get(String(path[0]))?.scopeInstanceId);
+  } else if (namespace === "resources") {
+    for (const dataSource of state.dataSources?.values() ?? []) {
+      if (
+        dataSource.type === "resource" &&
+        dataSource.resourceId === String(path[0])
+      ) {
+        addInstanceRoutes(dataSource.scopeInstanceId);
+      }
+    }
+  } else if (namespace === "styleSourceSelections") {
+    addInstanceRoutes(String(path[0]));
+  } else if (namespace === "styles" || namespace === "styleSources") {
+    const styleSourceId =
+      namespace === "styles"
+        ? state.styles?.get(String(path[0]))?.styleSourceId
+        : String(path[0]);
+    for (const selection of state.styleSourceSelections?.values() ?? []) {
+      if (
+        styleSourceId !== undefined &&
+        selection.values.includes(styleSourceId)
+      ) {
+        addInstanceRoutes(selection.instanceId);
+      }
+    }
+  } else if (namespace === "breakpoints") {
+    for (const style of state.styles?.values() ?? []) {
+      if (style.breakpointId !== String(path[0])) {
+        continue;
+      }
+      for (const selection of state.styleSourceSelections?.values() ?? []) {
+        if (selection.values.includes(style.styleSourceId)) {
+          addInstanceRoutes(selection.instanceId);
+        }
+      }
+    }
+  } else if (namespace === "assets") {
+    const assetId = String(path[0]);
+    for (const prop of state.props?.values() ?? []) {
+      if (prop.type === "asset" && prop.value === assetId) {
+        addInstanceRoutes(prop.instanceId);
+      }
+    }
+    for (const [pageId, route] of pagesById) {
+      if (state.pages?.pages.get(pageId)?.meta.socialImageAssetId === assetId) {
+        routes.add(route);
+      }
+    }
+  }
+  if (namespace === "pages" && path[0] === "redirects") {
+    routes.add("*");
+  }
+  if (namespace === "projectSettings" || namespace === "marketplaceProduct") {
+    routes.add("*");
+  }
+  return [...routes].sort();
+};
+
+const getReference = ({
+  state,
+  namespace,
+  path,
+  value,
+}: {
+  state: BuilderState;
+  namespace: BuilderNamespace;
+  path: SearchPath;
+  value: string | number | boolean | null;
+}): ProjectSearchMatch["reference"] => {
+  if (typeof value !== "string") {
+    return;
+  }
+  let targetType: string | undefined;
+  let resolved = false;
+  if (namespace === "props" && path.at(-1) === "value") {
+    const type = state.props?.get(String(path[0]))?.type;
+    if (type === "asset") {
+      targetType = "asset";
+      resolved = state.assets?.has(value) === true;
+    } else if (type === "resource") {
+      targetType = "resource";
+      resolved = state.resources?.has(value) === true;
+    } else if (type === "parameter") {
+      targetType = "variable";
+      resolved = state.dataSources?.has(value) === true;
+    } else if (type === "page") {
+      targetType = "page";
+      resolved = state.pages?.pages.has(value) === true;
+    }
+  }
+  if (namespace === "styles" && path.at(-1) === "styleSourceId") {
+    targetType = "style-source";
+    resolved = state.styleSources?.has(value) === true;
+  }
+  if (namespace === "styles" && path.at(-1) === "breakpointId") {
+    targetType = "breakpoint";
+    resolved = state.breakpoints?.has(value) === true;
+  }
+  if (
+    namespace === "instances" &&
+    path[1] === "children" &&
+    path.at(-1) === "value" &&
+    state.instances?.get(String(path[0]))?.children[Number(path[2])]?.type ===
+      "id"
+  ) {
+    targetType = "instance";
+    resolved = state.instances?.has(value) === true;
+  }
+  if (namespace === "dataSources" && path.at(-1) === "resourceId") {
+    targetType = "resource";
+    resolved = state.resources?.has(value) === true;
+  }
+  if (namespace === "pages" && path.at(-1) === "socialImageAssetId") {
+    targetType = "asset";
+    resolved = state.assets?.has(value) === true;
+  }
+  if (namespace === "styleSourceSelections" && path[1] === "values") {
+    targetType = "style-source";
+    resolved = state.styleSources?.has(value) === true;
+  }
+  if (targetType === undefined) {
+    return;
+  }
+  return { targetType, targetId: value, resolved, valid: resolved };
+};
+
+const getBrokenReferenceIds = (state: BuilderState) => {
+  const brokenReferences = new Set<string>();
+  for (const namespace of Object.keys(namespaceSchemas) as BuilderNamespace[]) {
+    const namespaceValue = state[namespace];
+    if (namespaceValue === undefined) {
+      continue;
+    }
+    visitPrimitiveValues(namespaceValue, (value, path) => {
+      const reference = getReference({ state, namespace, path, value });
+      if (reference?.valid === false) {
+        brokenReferences.add(
+          `${encodeMatchId(namespace, path)}:${reference.targetType}:${reference.targetId}`
+        );
+      }
+    });
+  }
+  return brokenReferences;
+};
+
+const collectProjectSearchMatches = (
+  state: BuilderState,
+  input: z.infer<typeof projectSearchInput>
+) => {
+  const query = input.query.toLocaleLowerCase();
+  const selectedScopes = new Set(input.scopes ?? defaultProjectSearchScopes);
+  const allScopes = selectedScopes.has("all");
+  const { pagesById, routesByInstanceId } = getSearchContext(state);
+  const selectedPage =
+    input.pageId === undefined && input.pagePath === undefined
+      ? undefined
+      : findSerializedPageByInput(getSerializedPages(state), input);
+  if (
+    (input.pageId !== undefined || input.pagePath !== undefined) &&
+    selectedPage === undefined
+  ) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Page not found");
+  }
+  const selectedRoute =
+    selectedPage === undefined
+      ? undefined
+      : normalizePagePath(selectedPage.path);
+  const matches: ProjectSearchMatch[] = [];
+  for (const namespace of Object.keys(namespaceSchemas) as BuilderNamespace[]) {
+    const namespaceValue = state[namespace];
+    if (namespaceValue === undefined) {
+      continue;
+    }
+    visitPrimitiveValues(namespaceValue, (value, path) => {
+      if (serializeValue(value).toLocaleLowerCase().includes(query) === false) {
+        return;
+      }
+      if (path.at(-1) === "id" && namespace !== "styleSources") {
+        return;
+      }
+      const entity = getEntity({ state, namespace, path });
+      const scope = getScope(entity);
+      if (
+        allScopes === false &&
+        (scope === undefined || selectedScopes.has(scope) === false)
+      ) {
+        return;
+      }
+      const field =
+        typeof path.at(-1) === "string" ? String(path.at(-1)) : undefined;
+      const editable =
+        field !== "id" &&
+        !(namespace === "pages" && path.length === 1) &&
+        field !== "homePageId" &&
+        field !== "rootFolderId";
+      matches.push({
+        ...entity,
+        ...getLegacySearchIdentity({ state, namespace, path }),
+        matchId: encodeMatchId(namespace, path),
+        currentValue: value,
+        editable,
+        location: { namespace, path, field },
+        affectedRoutes: getAffectedRoutes({
+          state,
+          namespace,
+          path,
+          pagesById,
+          routesByInstanceId,
+        }),
+        reference: getReference({ state, namespace, path, value }),
+      });
+    });
+    if (namespace === "styleSources") {
+      for (const [styleSourceId, styleSource] of state.styleSources ?? []) {
+        if (
+          styleSource.type !== "token" ||
+          styleSourceId.toLocaleLowerCase().includes(query) === false ||
+          matches.some(
+            (match) =>
+              match.entityType === "design-token" &&
+              match.entityId === styleSourceId
+          )
+        ) {
+          continue;
+        }
+        const path = [styleSourceId, "name"];
+        const entity = getEntity({ state, namespace, path });
+        matches.push({
+          ...entity,
+          ...getLegacySearchIdentity({ state, namespace, path }),
+          matchId: encodeMatchId(namespace, path),
+          currentValue: styleSource.name,
+          editable: true,
+          location: { namespace, path, field: "name" },
+          affectedRoutes: [],
+        });
+      }
+    }
+  }
+  if (selectedRoute === undefined) {
+    return matches;
+  }
+  const projectWideNamespaces = new Set<BuilderNamespace>([
+    "assets",
+    "assetFolders",
+    "styles",
+    "styleSources",
+    "styleSourceSelections",
+    "breakpoints",
+    "projectSettings",
+    "marketplaceProduct",
+  ]);
+  return matches.filter(
+    (match) =>
+      match.affectedRoutes.includes(selectedRoute) ||
+      projectWideNamespaces.has(match.location.namespace)
+  );
+};
+
+export const projectMatchUpdatesInput = z
+  .object({
+    updates: z
+      .array(
+        z
+          .object({
+            matchId: z.string(),
+            expectedValue: z.union([
+              z.string(),
+              z.number(),
+              z.boolean(),
+              z.null(),
+            ]),
+            value: z.union([z.string(), z.number(), z.boolean(), z.null()]),
+          })
+          .strict()
+      )
+      .min(1),
+  })
+  .strict();
+
+const getAllBindingFindings = (state: BuilderState) => {
+  const findings: ReturnType<typeof verifyBindings>["findings"] = [];
+  let cursor: string | undefined;
+  do {
+    const result = verifyBindings(state, { cursor, limit: 200 });
+    findings.push(...result.findings);
+    cursor = result.nextCursor ?? undefined;
+  } while (cursor !== undefined);
+  return findings;
+};
+
+export const updateProjectMatches = (
+  state: BuilderState,
+  input: z.infer<typeof projectMatchUpdatesInput>
+) => {
+  const changes = new Map<
+    BuilderNamespace,
+    Array<{ op: "replace"; path: SearchPath; value: unknown }>
+  >();
+  const affectedEntities: Array<{ entityType: string; entityId: string }> = [];
+  const affectedRoutes = new Set<string>();
+  const { pagesById, routesByInstanceId } = getSearchContext(state);
+  const matchIds = new Set<string>();
+  for (const update of input.updates) {
+    if (matchIds.has(update.matchId)) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        `Project match ${update.matchId} is updated more than once`
+      );
+    }
+    matchIds.add(update.matchId);
+    const { namespace, path } = decodeMatchId(update.matchId);
+    const namespaceValue = state[namespace];
+    const currentValue = getPathValue(namespaceValue, path);
+    if (Object.is(currentValue, update.expectedValue) === false) {
+      return throwBuilderRuntimeError(
+        "CONFLICT",
+        `Project value for ${update.matchId} changed since search`
+      );
+    }
+    const field = path.at(-1);
+    if (
+      field === "id" ||
+      field === "homePageId" ||
+      field === "rootFolderId" ||
+      (namespace === "pages" && path.length === 1)
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        `Project match ${update.matchId} is not editable`
+      );
+    }
+    const entity = getEntity({ state, namespace, path });
+    affectedEntities.push({
+      entityType: entity.entityType,
+      entityId: entity.entityId,
+    });
+    for (const route of getAffectedRoutes({
+      state,
+      namespace,
+      path,
+      pagesById,
+      routesByInstanceId,
+    })) {
+      affectedRoutes.add(route);
+    }
+    const patches = changes.get(namespace) ?? [];
+    patches.push({ op: "replace", path, value: update.value });
+    changes.set(namespace, patches);
+  }
+  const payload = [...changes].map(([namespace, patches]) => ({
+    namespace,
+    patches,
+  }));
+  const nextState = applyBuilderPatchTransactions(state, [
+    { id: "project-update-matches-validation", payload },
+  ]).state;
+  for (const namespace of changes.keys()) {
+    const result = namespaceSchemas[namespace].safeParse(nextState[namespace]);
+    if (result.success === false) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        `Updated ${namespace} values are invalid: ${z.prettifyError(result.error)}`
+      );
+    }
+  }
+  const brokenReferences = getBrokenReferenceIds(state);
+  const newBrokenReferences = [...getBrokenReferenceIds(nextState)].filter(
+    (reference) => brokenReferences.has(reference) === false
+  );
+  if (newBrokenReferences.length > 0) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      `Updated values introduce unresolved references: ${newBrokenReferences.join(
+        ", "
+      )}`
+    );
+  }
+  if (nextState.pages !== undefined) {
+    const routes = getSerializedPages(nextState).pages.map(({ path }) => path);
+    if (new Set(routes).size !== routes.length) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Updated page paths must remain unique"
+      );
+    }
+  }
+  const bindingNamespaces = [
+    state.pages,
+    state.instances,
+    state.props,
+    state.dataSources,
+    state.resources,
+    nextState.pages,
+    nextState.instances,
+    nextState.props,
+    nextState.dataSources,
+    nextState.resources,
+  ];
+  if (bindingNamespaces.every((namespace) => namespace !== undefined)) {
+    const beforeFindingIds = new Set(
+      getAllBindingFindings(state).map(({ id }) => id)
+    );
+    const newFindings = getAllBindingFindings(nextState).filter(
+      ({ id }) => beforeFindingIds.has(id) === false
+    );
+    if (newFindings.length > 0) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        `Updated values introduce invalid bindings or references: ${newFindings
+          .map(({ message }) => message)
+          .join("; ")}`
+      );
+    }
+  }
+  const uniqueAffectedEntities = [
+    ...new Map(
+      affectedEntities.map((entity) => [
+        `${entity.entityType}:${entity.entityId}`,
+        entity,
+      ])
+    ).values(),
+  ];
+  return createRuntimeMutation({
+    payload,
+    invalidatesNamespaces: [...changes.keys()],
+    result: {
+      changedCount: input.updates.length,
+      affectedEntities: uniqueAffectedEntities,
+      affectedRoutes: [...affectedRoutes].sort(),
+      generatedValues: [],
+      validation: { status: "passed" as const },
+      uncertainty: [],
+      next: "Run focused assertions for the affected routes.",
+      slowOperationConsentRequired: false,
+    },
+  });
+};
 
 const serializeValue = (value: unknown) => {
   if (typeof value === "string") {
@@ -1510,15 +2321,12 @@ export const analyzeProject = (
 };
 
 export const searchProject = (
-  state: Parameters<typeof analyzeProject>[0],
+  state: BuilderState,
   input: z.infer<typeof projectSearchInput>
 ) => {
-  const result = analyzeProject(state, {
-    ...input,
-    limit: Number.MAX_SAFE_INTEGER,
-  });
+  const matches = collectProjectSearchMatches(state, input);
   const { items, ...pagination } = paginateOutput({
-    items: result.matches,
+    items: matches,
     cursor: input.cursor,
     limit: input.limit,
     filters: {
@@ -1531,7 +2339,7 @@ export const searchProject = (
   });
   return {
     query: input.query,
-    scopes: result.scopes,
+    scopes: [...(input.scopes ?? defaultProjectSearchScopes)],
     matches: items,
     truncated: pagination.nextCursor !== null,
     ...pagination,

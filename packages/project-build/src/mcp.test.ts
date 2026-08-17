@@ -2284,6 +2284,12 @@ describe("project session mcp adapter", () => {
           committed: false,
           transaction,
         },
+        changeSummary: {
+          committed: false,
+          affectedNamespaces: ["pages"],
+          patchCount: 1,
+          slowOperationConsentRequired: false,
+        },
       },
     });
   });
@@ -6913,6 +6919,8 @@ describe("project session mcp adapter", () => {
         "preview.start",
         "preview.status",
         "preview.stop",
+        "route.render",
+        "route.verify",
       ])
     );
     expect(
@@ -6940,7 +6948,7 @@ describe("project session mcp adapter", () => {
       },
       expect.objectContaining({ report: expect.any(Function) })
     );
-    expect(getPreviewStatus).toHaveBeenCalledOnce();
+    expect(getPreviewStatus).toHaveBeenCalledTimes(2);
     expect(stopPreview).toHaveBeenCalledOnce();
     expect(progressMessages).toEqual([
       "tool preview.start preparing generated preview project",
@@ -6977,6 +6985,8 @@ describe("project session mcp adapter", () => {
               "preview.start",
               "preview.status",
               "preview.stop",
+              "route.render",
+              "route.verify",
               "screenshot",
               "screenshot.diff",
             ],
@@ -6993,6 +7003,196 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({ name: "preview.start" }),
           expect.objectContaining({ name: "screenshot" }),
         ]),
+      })
+    );
+  });
+
+  test("renders one route and evaluates focused assertions", async () => {
+    const fetchMock = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          "<!doctype html><html><head><title>Pricing</title></head><body><h1>Pricing</h1></body></html>",
+          { status: 200 }
+        )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      startPreview: vi.fn(),
+      getPreviewStatus: vi.fn(async () => ({
+        url: "http://127.0.0.1:5173/",
+        running: true,
+        mode: "iterative" as const,
+      })),
+    });
+
+    try {
+      const result = await adapter.callTool({
+        name: "route.verify",
+        input: {
+          path: "/pricing",
+          assertions: { status: 200, text: ["Pricing"] },
+          maxDurationMs: 5_000,
+        },
+      });
+
+      expect(result.structuredContent.data).toEqual(
+        expect.objectContaining({
+          passed: true,
+          route: expect.objectContaining({
+            url: "http://127.0.0.1:5173/pricing",
+            status: 200,
+          }),
+          html: expect.stringContaining("<h1>Pricing</h1>"),
+        })
+      );
+      expect(fetchMock).toHaveBeenCalledOnce();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  test("preflights route rendering when it must start an unknown preview", async () => {
+    const startPreview = vi.fn();
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      startPreview,
+      getPreviewStatus: vi.fn(async () => ({ running: false })),
+    });
+
+    const result = await adapter.callTool({
+      name: "route.render",
+      input: { path: "/pricing", maxDurationMs: 5_000 },
+    });
+
+    expect(startPreview).not.toHaveBeenCalled();
+    expect(result.structuredContent.data).toEqual(
+      expect.objectContaining({
+        confirmationRequired: true,
+        operation: "start iterative preview and render route",
+        confirmationToken: expect.any(String),
+        fasterAlternative: expect.any(Object),
+      })
+    );
+  });
+
+  test("preflights responsive captures that are expected to exceed ten seconds", async () => {
+    const capturePageScreenshots = vi.fn();
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      capturePageScreenshots,
+    });
+
+    const result = await adapter.callTool({
+      name: "screenshot.responsive",
+      input: {
+        path: "/pricing",
+        viewports: [
+          { width: 1440, height: 900 },
+          { width: 768, height: 1024 },
+          { width: 390, height: 844 },
+        ],
+      },
+    });
+
+    expect(capturePageScreenshots).not.toHaveBeenCalled();
+    expect(result.structuredContent.data).toEqual(
+      expect.objectContaining({
+        confirmationRequired: true,
+        operation: "responsive multi-capture",
+        estimatedDuration: expect.any(String),
+        estimateSource: "operation baseline",
+        confirmationToken: expect.any(String),
+        fasterAlternative: expect.any(Object),
+      })
+    );
+  });
+
+  test("preflights and searches editable document contents through the host", async () => {
+    const searchAssetContents = vi.fn(async () => ({
+      matches: [
+        {
+          matchId: "document-match:one",
+          kind: "document",
+          entityType: "document",
+          entityId: "asset-one",
+          currentValue: "pricing",
+          editable: true,
+          location: {
+            namespace: "assets",
+            path: ["asset-one", "content", 0, 0],
+            source: "content.md",
+            line: 1,
+            column: 1,
+          },
+          affectedRoutes: [],
+        },
+      ],
+      total: 1,
+      elapsedMs: 12,
+    }));
+    const adapter = createProjectSessionMcpCore({
+      operations: [
+        ...publicMcpOperations,
+        publicOperation({
+          command: "search-project",
+          id: "project.search",
+          description: "Search project",
+          inputSchema: getTestInputSchema(
+            z.object({
+              query: z.string(),
+              scopes: z.array(z.string()).optional(),
+              limit: z.number().optional(),
+              maxDurationMs: z.number().optional(),
+              confirmSlow: z.boolean().optional(),
+              confirmationToken: z.string().optional(),
+            })
+          ),
+        }),
+      ],
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      searchAssetContents,
+    });
+
+    const preflight = await adapter.callTool({
+      name: "search-project",
+      input: { query: "pricing", scopes: ["documents"] },
+    });
+    expect(searchAssetContents).not.toHaveBeenCalled();
+    const confirmationToken = (
+      preflight.structuredContent.data as { confirmationToken: string }
+    ).confirmationToken;
+
+    const result = await adapter.callTool({
+      name: "search-project",
+      input: {
+        query: "pricing",
+        scopes: ["documents"],
+        confirmSlow: true,
+        confirmationToken,
+      },
+    });
+
+    expect(searchAssetContents).toHaveBeenCalledWith({
+      query: "pricing",
+      limit: 20,
+      maxDurationMs: undefined,
+    });
+    expect(result.structuredContent.data).toEqual(
+      expect.objectContaining({
+        matches: [expect.objectContaining({ kind: "document" })],
+        documentSearch: {
+          total: 1,
+          elapsedMs: 12,
+          estimateSource: "measured",
+        },
       })
     );
   });
@@ -7065,7 +7265,7 @@ describe("project session mcp adapter", () => {
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
       startPreview,
-      getPreviewStatus: vi.fn(),
+      getPreviewStatus: vi.fn(async () => ({ running: true })),
     });
 
     const result = await adapter.callTool({
@@ -7133,7 +7333,7 @@ describe("project session mcp adapter", () => {
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
       startPreview,
-      getPreviewStatus: vi.fn(),
+      getPreviewStatus: vi.fn(async () => ({ running: true })),
     });
 
     await adapter.callTool({ name: "preview.start", input: { port: 0 } });

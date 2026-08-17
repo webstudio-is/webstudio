@@ -115,6 +115,11 @@ export const builderRuntimeCutoverManifests = [
     callers: ["MCP/CLI project search and audit"] as const,
   },
   {
+    family: "project-semantic-mutations",
+    operationIds: ["project.updateMatches"] as const,
+    callers: ["MCP/CLI stable search-match updates"] as const,
+  },
+  {
     family: "instance-structural-api-mutations",
     operationIds: [
       "instances.move",

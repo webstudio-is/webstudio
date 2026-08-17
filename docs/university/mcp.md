@@ -790,6 +790,33 @@ source of truth. For tools with no required arguments, pass `{}`.
 }
 ```
 
+### route.render
+
+```json
+{
+  "path": "/pricing"
+}
+```
+
+### route.verify
+
+```json
+{
+  "path": "/pricing",
+  "assertions": {
+    "status": 200,
+    "text": [
+      "Pricing"
+    ],
+    "metadata": [
+      "title",
+      "description"
+    ],
+    "noUnresolvedBindings": true
+  }
+}
+```
+
 ### status
 
 ```json
@@ -849,6 +876,20 @@ source of truth. For tools with no required arguments, pass `{}`.
   "query": "api.example.com",
   "scopes": [
     "resources"
+  ]
+}
+```
+
+### update-project-matches
+
+```json
+{
+  "updates": [
+    {
+      "matchId": "<match-id-from-search-project>",
+      "expectedValue": "Old value",
+      "value": "New value"
+    }
   ]
 }
 ```

@@ -93,7 +93,7 @@ MCP lets agents work on one configured Webstudio project. Agents can:
 
 - Inspect the linked project, token permissions, and latest editable build.
 - Read selected project data for audits, migrations, and repair.
-- Search labels, text, props, resource URLs, asset metadata, and styles.
+- Search editable project values with stable match ids and route context, then update matches across entity kinds in one transaction.
 - Audit accessibility, security, SEO, performance settings, unused assets, ineffective Collection styles, and unused or duplicate style data.
 - Create and edit pages, folders, redirects, breakpoints, and page templates.
 - Create pages from reusable templates.
@@ -109,7 +109,7 @@ MCP lets agents work on one configured Webstudio project. Agents can:
 - Bind resources to rendered data or form/action props.
 - Manage nested asset folders and upload, inspect, move, duplicate, download, replace, delete, and inspect usage for assets.
 - Publish, unpublish, inspect publish jobs, and manage custom domains.
-- Start preview, capture screenshots, compare screenshot diffs, and use OCR when installed.
+- Render and assert one route without a full build, or start preview, capture screenshots, compare screenshot diffs, and use OCR when installed.
 
 ## Inspect and refresh MCP session cache
 
@@ -134,6 +134,8 @@ Commands:
 - MCP tool: preview.start {"host":"127.0.0.1","port":5173}
 - MCP tool: preview.status {}
 - MCP tool: preview.stop {}
+- MCP tool: route.render {"path":"/pricing"}
+- MCP tool: route.verify {"path":"/pricing","assertions":{"status":200,"text":["Pricing"],"metadata":["title","description"],"noUnresolvedBindings":true}}
 - MCP tool: screenshot {"path":"/","output":".webstudio/screenshots/home-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 - MCP tool: screenshot {"path":"/pricing","output":".webstudio/screenshots/pricing-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 - MCP tool: screenshot {"baseUrl":"http://127.0.0.1:5177","path":"/pricing","output":".webstudio/screenshots/pricing-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
@@ -147,6 +149,8 @@ Notes:
 
 - `preview.status` reports whether generated output is `stale`. When no preview is running, `url`, `pid`, and `mode` are omitted. When present, `renderedProjectVersion` is the last project version materialized into the preview.
 - A managed `screenshot` or another `preview.start` refreshes stale generated output before capture.
+- Use `route.render` to inspect one route's HTML, evaluated metadata, and discovered resource URLs without a production build or screenshot. Use `route.verify` for focused status, text, element, metadata, link, resource, image content-type, structured-data, and binding assertions.
+- Starting a new preview, crawling an unknown resource set, a production build, and three or more responsive captures return a duration estimate, reason, faster alternative, and confirmation token before slow work. Repeat the unchanged call with `confirmSlow:true` and the token only after user consent. Set `maxDurationMs` to enforce a time budget.
 
 - Use this after page/content/style mutations so a vision-capable AI can see the generated site from the current MCP session. Use `path`; never pass a Webstudio Builder/share URL or capture Builder chrome.
 - For multi-page work, capture every changed page by `path` through the same preview server; no click navigation is required.
@@ -1020,7 +1024,10 @@ Patch namespaces:
 Commands:
 
 - MCP tool: search-project {"query":"pricing"}
+- MCP tool: search-project {"query":"pricing","scopes":["all"]}
+- MCP tool: search-project {"query":"headline","scopes":["documents"]}
 - MCP tool: search-project {"query":"api.example.com","scopes":["resources"]}
+- MCP tool: update-project-matches {"updates":[{"matchId":"<match-id>","expectedValue":"Old value","value":"New value"}]}
 - MCP tool: list-instances {"pagePath":"/","maxDepth":5}
 - MCP tool: inspect-instance {"instanceId":"<instanceId>","include":["props","styles","children"]}
 - MCP tool: list-texts {"pagePath":"/"}
@@ -1030,7 +1037,10 @@ Commands:
 
 Notes:
 
-- Use `search-project` for query-driven lookup across labels, text, prop values, resource URLs, asset metadata, and styles. Use `audit` for project health findings.
+- `search-project` searches pages and settings, instances and text, props and bindings, variables and resources, assets, styles and tokens, redirects, and project settings. Every result includes a stable match id, entity identity, current value, structured location, affected routes, editability, and reference resolution when applicable.
+- The `documents` scope searches Markdown, MDX, JSON, text, CSV, and YAML asset contents with source line and column locations. Because files may need downloading, it uses the slow-operation preflight; edit returned document assets with `update-asset-content`.
+- Use `update-project-matches` to change results from different entity kinds in one optimistic transaction. Every expected value must still match; validation failure or one stale value rejects the complete update.
+- Use `audit` for project health findings rather than treating search as a broad audit.
 
 ## Audit project quality
 

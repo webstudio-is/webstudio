@@ -854,6 +854,45 @@ export const builderRuntimeOperations = [
     ({ state, input }) => search.searchProject(state, input)
   ),
   runtimeOperation(
+    "project.updateMatches",
+    api("update-project-matches", "updateProjectMatches", "edit"),
+    mutationContract({
+      readNamespaces: [
+        "pages",
+        "projectSettings",
+        "marketplaceProduct",
+        "instances",
+        "props",
+        "styles",
+        "styleSources",
+        "styleSourceSelections",
+        "resources",
+        "dataSources",
+        "assets",
+        "assetFolders",
+        "breakpoints",
+      ],
+      writeNamespaces: [
+        "pages",
+        "projectSettings",
+        "marketplaceProduct",
+        "instances",
+        "props",
+        "styles",
+        "styleSources",
+        "styleSourceSelections",
+        "resources",
+        "dataSources",
+        "assets",
+        "assetFolders",
+        "breakpoints",
+      ],
+      retryOnConflict: false,
+    }),
+    search.projectMatchUpdatesInput,
+    ({ state, input }) => search.updateProjectMatches(state, input)
+  ),
+  runtimeOperation(
     "project.audit",
     api("audit", "audit"),
     readContract([
