@@ -58,8 +58,6 @@ const normalizedValues = {
   },
   "background-size": autoValue,
   "text-size-adjust": autoValue,
-  // mdn-data 2.28 predates the current CSS Anchor Positioning Level 1 value.
-  "position-anchor": { type: "keyword", value: "normal" },
 } as const;
 
 const beautifyKeyword = (_property: string, keyword: string) => {

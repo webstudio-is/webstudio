@@ -92,17 +92,6 @@ keywordValues["grid-auto-flow"] = [
   "unset",
 ];
 
-// mdn-data 2.28 predates the current CSS Anchor Positioning Level 1 grammar.
-keywordValues["position-anchor"] = [
-  "normal",
-  "auto",
-  "none",
-  "match-parent",
-  "initial",
-  "inherit",
-  "unset",
-];
-
 keywordValues["list-style-type"] = [
   "disc",
   "circle",

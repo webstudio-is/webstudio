@@ -710,6 +710,15 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-right-width",
   },
+  "border-shape": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-shape",
+  },
   "border-spacing": {
     unitGroups: ["length"],
     inherited: true,
@@ -1370,6 +1379,16 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/flex-grow",
   },
+  "flex-line-count": {
+    unitGroups: ["number"],
+    inherited: false,
+    initial: {
+      type: "unit",
+      unit: "number",
+      value: 1,
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/flex-line-count",
+  },
   "flex-shrink": {
     unitGroups: ["number"],
     inherited: false,
@@ -1617,6 +1636,16 @@ export const properties: Properties = {
       value: "auto",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/forced-color-adjust",
+  },
+  "frame-sizing": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/Reference/Properties/frame-sizing",
   },
   "grid-auto-columns": {
     unitGroups: ["length", "percentage", "flex"],
@@ -2337,7 +2366,7 @@ export const properties: Properties = {
   },
   "object-position": {
     unitGroups: ["length", "percentage"],
-    inherited: true,
+    inherited: false,
     initial: {
       type: "tuple",
       value: [
@@ -2676,6 +2705,15 @@ export const properties: Properties = {
       value: "normal",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/paint-order",
+  },
+  "path-length": {
+    unitGroups: ["length"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/path-length",
   },
   perspective: {
     unitGroups: ["length"],
@@ -3336,7 +3374,7 @@ export const properties: Properties = {
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-color",
   },
   "text-decoration-inset": {
-    unitGroups: ["length"],
+    unitGroups: ["length", "percentage"],
     inherited: false,
     initial: {
       type: "unit",
@@ -3409,6 +3447,15 @@ export const properties: Properties = {
       value: "none",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-emphasis-style",
+  },
+  "text-fit": {
+    unitGroups: ["percentage"],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-fit",
   },
   "text-indent": {
     unitGroups: ["length", "percentage"],
@@ -3761,6 +3808,15 @@ export const properties: Properties = {
       value: "none",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/view-transition-name",
+  },
+  "view-transition-scope": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/view-transition-scope",
   },
   visibility: {
     unitGroups: [],

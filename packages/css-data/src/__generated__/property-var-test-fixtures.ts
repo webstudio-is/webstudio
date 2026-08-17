@@ -357,6 +357,92 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["anchor-name:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "anchor-name:branch:1:repeat:type:dashed-ident",
+          "anchor-name:branch:1:repeat:type:dashed-ident",
+        ],
+        value: "var(--slot-dashed-ident),var(--slot-dashed-ident-2)",
+        variables: {
+          "--slot-dashed-ident": "--custom-ident",
+          "--slot-dashed-ident-2": "--custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["anchor-name:branch:1:repeat:type:dashed-ident"],
+        value: "var(--slot-dashed-ident),--custom-ident",
+        variables: {
+          "--slot-dashed-ident": "--custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: ["anchor-name:branch:1:repeat:type:dashed-ident"],
+        value: "--custom-ident,var(--slot-dashed-ident-2)",
+        variables: {
+          "--slot-dashed-ident-2": "--custom-ident",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "anchor-name",
+    syntax: "none | <dashed-ident>#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["anchor-scope:branch:1:keyword:all"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "all",
+        },
+      },
+      {
+        id: "pattern-3-all-slots",
+        positions: [
+          "anchor-scope:branch:2:repeat:type:dashed-ident",
+          "anchor-scope:branch:2:repeat:type:dashed-ident",
+        ],
+        value: "var(--slot-dashed-ident),var(--slot-dashed-ident-2)",
+        variables: {
+          "--slot-dashed-ident": "--custom-ident",
+          "--slot-dashed-ident-2": "--custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-1",
+        positions: ["anchor-scope:branch:2:repeat:type:dashed-ident"],
+        value: "var(--slot-dashed-ident),--custom-ident",
+        variables: {
+          "--slot-dashed-ident": "--custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-2",
+        positions: ["anchor-scope:branch:2:repeat:type:dashed-ident"],
+        value: "--custom-ident,var(--slot-dashed-ident-2)",
+        variables: {
+          "--slot-dashed-ident-2": "--custom-ident",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "anchor-scope",
+    syntax: "none | all | <dashed-ident>#",
+  },
+  {
+    cases: [
+      {
         id: "pattern-1-all-slots",
         positions: [
           "animation:term:0:repeat:type:single-animation:term:0:property:animation-duration:term:0:repeat:branch:0:keyword:auto",
@@ -1973,9 +2059,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-all-slots",
         positions: [
-          "border-block:term:0:property:border-block-start:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
-          "border-block:term:0:property:border-block-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
-          "border-block:term:0:property:border-block-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "border-block:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+          "border-block:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+          "border-block:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value:
           "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
@@ -1988,7 +2074,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: [
-          "border-block:term:0:property:border-block-start:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
+          "border-block:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
         ],
         value: "var(--slot-line-width) none red",
         variables: {
@@ -1998,7 +2084,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-2",
         positions: [
-          "border-block:term:0:property:border-block-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
+          "border-block:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
         ],
         value: "1px var(--slot-line-style) red",
         variables: {
@@ -2008,7 +2094,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-3",
         positions: [
-          "border-block:term:0:property:border-block-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "border-block:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value: "1px none var(--slot-color)",
         variables: {
@@ -2018,7 +2104,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     ],
     kind: "shorthand",
     property: "border-block",
-    syntax: "<'border-block-start'>",
+    syntax: "<'border-top'>",
   },
   {
     cases: [
@@ -2055,7 +2141,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         },
       },
     ],
-    kind: "longhand",
+    kind: "shorthand",
     property: "border-block-color",
     syntax: "<'border-top-color'>{1,2}",
   },
@@ -2064,9 +2150,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-all-slots",
         positions: [
-          "border-block-end:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
-          "border-block-end:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
-          "border-block-end:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "border-block-end:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+          "border-block-end:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+          "border-block-end:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value:
           "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
@@ -2079,7 +2165,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: [
-          "border-block-end:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
+          "border-block-end:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
         ],
         value: "var(--slot-line-width) none red",
         variables: {
@@ -2089,7 +2175,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-2",
         positions: [
-          "border-block-end:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
+          "border-block-end:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
         ],
         value: "1px var(--slot-line-style) red",
         variables: {
@@ -2099,7 +2185,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-3",
         positions: [
-          "border-block-end:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "border-block-end:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value: "1px none var(--slot-color)",
         variables: {
@@ -2109,7 +2195,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     ],
     kind: "shorthand",
     property: "border-block-end",
-    syntax: "<'border-top-width'> || <'border-top-style'> || <color>",
+    syntax: "<'border-top'>",
   },
   {
     cases: [
@@ -2167,9 +2253,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-all-slots",
         positions: [
-          "border-block-start:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
-          "border-block-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
-          "border-block-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "border-block-start:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+          "border-block-start:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+          "border-block-start:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value:
           "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
@@ -2182,7 +2268,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: [
-          "border-block-start:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
+          "border-block-start:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
         ],
         value: "var(--slot-line-width) none red",
         variables: {
@@ -2192,7 +2278,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-2",
         positions: [
-          "border-block-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
+          "border-block-start:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
         ],
         value: "1px var(--slot-line-style) red",
         variables: {
@@ -2202,7 +2288,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-3",
         positions: [
-          "border-block-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "border-block-start:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value: "1px none var(--slot-color)",
         variables: {
@@ -2212,7 +2298,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     ],
     kind: "shorthand",
     property: "border-block-start",
-    syntax: "<'border-top-width'> || <'border-top-style'> || <color>",
+    syntax: "<'border-top'>",
   },
   {
     cases: [
@@ -2300,7 +2386,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         },
       },
     ],
-    kind: "longhand",
+    kind: "shorthand",
     property: "border-block-style",
     syntax: "<'border-top-style'>{1,2}",
   },
@@ -2339,7 +2425,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         },
       },
     ],
-    kind: "longhand",
+    kind: "shorthand",
     property: "border-block-width",
     syntax: "<'border-top-width'>{1,2}",
   },
@@ -3105,9 +3191,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-all-slots",
         positions: [
-          "border-inline:term:0:property:border-block-start:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
-          "border-inline:term:0:property:border-block-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
-          "border-inline:term:0:property:border-block-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "border-inline:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+          "border-inline:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+          "border-inline:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value:
           "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
@@ -3120,7 +3206,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: [
-          "border-inline:term:0:property:border-block-start:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
+          "border-inline:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
         ],
         value: "var(--slot-line-width) none red",
         variables: {
@@ -3130,7 +3216,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-2",
         positions: [
-          "border-inline:term:0:property:border-block-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
+          "border-inline:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
         ],
         value: "1px var(--slot-line-style) red",
         variables: {
@@ -3140,7 +3226,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-3",
         positions: [
-          "border-inline:term:0:property:border-block-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "border-inline:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value: "1px none var(--slot-color)",
         variables: {
@@ -3150,7 +3236,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     ],
     kind: "shorthand",
     property: "border-inline",
-    syntax: "<'border-block-start'>",
+    syntax: "<'border-top'>",
   },
   {
     cases: [
@@ -3187,7 +3273,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         },
       },
     ],
-    kind: "longhand",
+    kind: "shorthand",
     property: "border-inline-color",
     syntax: "<'border-top-color'>{1,2}",
   },
@@ -3196,9 +3282,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-all-slots",
         positions: [
-          "border-inline-end:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
-          "border-inline-end:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
-          "border-inline-end:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "border-inline-end:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+          "border-inline-end:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+          "border-inline-end:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value:
           "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
@@ -3211,7 +3297,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: [
-          "border-inline-end:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
+          "border-inline-end:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
         ],
         value: "var(--slot-line-width) none red",
         variables: {
@@ -3221,7 +3307,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-2",
         positions: [
-          "border-inline-end:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
+          "border-inline-end:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
         ],
         value: "1px var(--slot-line-style) red",
         variables: {
@@ -3231,7 +3317,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-3",
         positions: [
-          "border-inline-end:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "border-inline-end:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value: "1px none var(--slot-color)",
         variables: {
@@ -3241,7 +3327,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     ],
     kind: "shorthand",
     property: "border-inline-end",
-    syntax: "<'border-top-width'> || <'border-top-style'> || <color>",
+    syntax: "<'border-top'>",
   },
   {
     cases: [
@@ -3299,9 +3385,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-all-slots",
         positions: [
-          "border-inline-start:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
-          "border-inline-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
-          "border-inline-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "border-inline-start:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+          "border-inline-start:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+          "border-inline-start:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value:
           "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
@@ -3314,7 +3400,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: [
-          "border-inline-start:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
+          "border-inline-start:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
         ],
         value: "var(--slot-line-width) none red",
         variables: {
@@ -3324,7 +3410,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-2",
         positions: [
-          "border-inline-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
+          "border-inline-start:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
         ],
         value: "1px var(--slot-line-style) red",
         variables: {
@@ -3334,7 +3420,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-3",
         positions: [
-          "border-inline-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "border-inline-start:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value: "1px none var(--slot-color)",
         variables: {
@@ -3344,7 +3430,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     ],
     kind: "shorthand",
     property: "border-inline-start",
-    syntax: "<'border-top-width'> || <'border-top-style'> || <color>",
+    syntax: "<'border-top'>",
   },
   {
     cases: [
@@ -3432,7 +3518,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         },
       },
     ],
-    kind: "longhand",
+    kind: "shorthand",
     property: "border-inline-style",
     syntax: "<'border-top-style'>{1,2}",
   },
@@ -3471,7 +3557,7 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         },
       },
     ],
-    kind: "longhand",
+    kind: "shorthand",
     property: "border-inline-width",
     syntax: "<'border-top-width'>{1,2}",
   },
@@ -3787,6 +3873,54 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "border-right-width",
     syntax: "<line-width>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["border-shape:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "border-shape:branch:1:repeat:term:1:repeat:type:geometry-box:branch:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
+          "border-shape:branch:1:repeat:term:1:repeat:type:geometry-box:branch:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value:
+          "shape() var(--slot-geometry-box) shape() var(--slot-geometry-box-2)",
+        variables: {
+          "--slot-geometry-box": "content-box",
+          "--slot-geometry-box-2": "content-box",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "border-shape:branch:1:repeat:term:1:repeat:type:geometry-box:branch:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value: "shape() var(--slot-geometry-box) shape() content-box",
+        variables: {
+          "--slot-geometry-box": "content-box",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "border-shape:branch:1:repeat:term:1:repeat:type:geometry-box:branch:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value: "shape() content-box shape() var(--slot-geometry-box-2)",
+        variables: {
+          "--slot-geometry-box-2": "content-box",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "border-shape",
+    syntax: "none | [ <basic-shape> <geometry-box>?]{1,2}",
   },
   {
     cases: [
@@ -4577,46 +4711,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         },
       },
       {
-        id: "pattern-3-all-slots",
-        positions: [
-          "clip-path:branch:1:term:0:type:basic-shape:branch:6:type:path():term:1:repeat:property:fill-rule:branch:0:keyword:nonzero",
-          "clip-path:branch:1:term:0:type:basic-shape:branch:6:type:path():term:3:type:string",
-          "clip-path:branch:1:term:1:type:geometry-box:branch:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
-        ],
-        value:
-          "path(var(--slot-basic-shape),var(--slot-basic-shape-2)) var(--slot-geometry-box)",
-        variables: {
-          "--slot-basic-shape": "nonzero",
-          "--slot-basic-shape-2": '"x"',
-          "--slot-geometry-box": "content-box",
-        },
-      },
-      {
         id: "pattern-3-slot-1",
         positions: [
-          "clip-path:branch:1:term:0:type:basic-shape:branch:6:type:path():term:1:repeat:property:fill-rule:branch:0:keyword:nonzero",
-        ],
-        value: 'path(var(--slot-basic-shape),"x") content-box',
-        variables: {
-          "--slot-basic-shape": "nonzero",
-        },
-      },
-      {
-        id: "pattern-3-slot-2",
-        positions: [
-          "clip-path:branch:1:term:0:type:basic-shape:branch:6:type:path():term:3:type:string",
-        ],
-        value: "path(nonzero,var(--slot-basic-shape-2)) content-box",
-        variables: {
-          "--slot-basic-shape-2": '"x"',
-        },
-      },
-      {
-        id: "pattern-3-slot-3",
-        positions: [
           "clip-path:branch:1:term:1:type:geometry-box:branch:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: 'path(nonzero,"x") var(--slot-geometry-box)',
+        value: "shape() var(--slot-geometry-box)",
         variables: {
           "--slot-geometry-box": "content-box",
         },
@@ -4823,36 +4922,24 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-all-slots",
         positions: [
-          "column-rule:term:0:property:column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
-          "column-rule:term:0:property:column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
-          "column-rule:term:0:property:column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
-          "column-rule:term:0:property:column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
-          "column-rule:term:1:property:column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-          "column-rule:term:1:property:column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-          "column-rule:term:1:property:column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-          "column-rule:term:1:property:column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
+          "column-rule:term:0:property:column-rule-width:term:0:type:line-width:branch:0:type:length",
+          "column-rule:term:1:property:column-rule-style:term:0:type:line-style:branch:0:keyword:none",
           "column-rule:term:2:property:column-rule-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value:
-          "var(--slot-line-width) var(--slot-line-width-2) var(--slot-line-width-3) var(--slot-line-width-4) var(--slot-line-style) var(--slot-line-style-2) var(--slot-line-style-3) var(--slot-line-style-4) var(--slot-color)",
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
         variables: {
           "--slot-line-width": "1px",
-          "--slot-line-width-2": "1px",
-          "--slot-line-width-3": "1px",
-          "--slot-line-width-4": "1px",
           "--slot-line-style": "none",
-          "--slot-line-style-2": "none",
-          "--slot-line-style-3": "none",
-          "--slot-line-style-4": "none",
           "--slot-color": "red",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: [
-          "column-rule:term:0:property:column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
+          "column-rule:term:0:property:column-rule-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-line-width) 1px 1px 1px none none none none red",
+        value: "var(--slot-line-width) none red",
         variables: {
           "--slot-line-width": "1px",
         },
@@ -4860,79 +4947,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-2",
         positions: [
-          "column-rule:term:0:property:column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
+          "column-rule:term:1:property:column-rule-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "1px var(--slot-line-width-2) 1px 1px none none none none red",
-        variables: {
-          "--slot-line-width-2": "1px",
-        },
-      },
-      {
-        id: "pattern-1-slot-3",
-        positions: [
-          "column-rule:term:0:property:column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
-        ],
-        value: "1px 1px var(--slot-line-width-3) 1px none none none none red",
-        variables: {
-          "--slot-line-width-3": "1px",
-        },
-      },
-      {
-        id: "pattern-1-slot-4",
-        positions: [
-          "column-rule:term:0:property:column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
-        ],
-        value: "1px 1px 1px var(--slot-line-width-4) none none none none red",
-        variables: {
-          "--slot-line-width-4": "1px",
-        },
-      },
-      {
-        id: "pattern-1-slot-5",
-        positions: [
-          "column-rule:term:1:property:column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-        ],
-        value: "1px 1px 1px 1px var(--slot-line-style) none none none red",
+        value: "1px var(--slot-line-style) red",
         variables: {
           "--slot-line-style": "none",
         },
       },
       {
-        id: "pattern-1-slot-6",
-        positions: [
-          "column-rule:term:1:property:column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-        ],
-        value: "1px 1px 1px 1px none var(--slot-line-style-2) none none red",
-        variables: {
-          "--slot-line-style-2": "none",
-        },
-      },
-      {
-        id: "pattern-1-slot-7",
-        positions: [
-          "column-rule:term:1:property:column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-        ],
-        value: "1px 1px 1px 1px none none var(--slot-line-style-3) none red",
-        variables: {
-          "--slot-line-style-3": "none",
-        },
-      },
-      {
-        id: "pattern-1-slot-8",
-        positions: [
-          "column-rule:term:1:property:column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-        ],
-        value: "1px 1px 1px 1px none none none var(--slot-line-style-4) red",
-        variables: {
-          "--slot-line-style-4": "none",
-        },
-      },
-      {
-        id: "pattern-1-slot-9",
+        id: "pattern-1-slot-3",
         positions: [
           "column-rule:term:2:property:column-rule-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px 1px 1px 1px none none none none var(--slot-color)",
+        value: "1px none var(--slot-color)",
         variables: {
           "--slot-color": "red",
         },
@@ -4963,130 +4990,36 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-1-all-slots",
-        positions: [
-          "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-          "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-          "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-          "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-        ],
-        value:
-          "var(--slot-line-style) var(--slot-line-style-2) var(--slot-line-style-3) var(--slot-line-style-4)",
-        variables: {
-          "--slot-line-style": "none",
-          "--slot-line-style-2": "none",
-          "--slot-line-style-3": "none",
-          "--slot-line-style-4": "none",
-        },
-      },
-      {
         id: "pattern-1-slot-1",
         positions: [
-          "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
+          "column-rule-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-line-style) none none none",
+        value: "var(--slot-line-style)",
         variables: {
           "--slot-line-style": "none",
-        },
-      },
-      {
-        id: "pattern-1-slot-2",
-        positions: [
-          "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-        ],
-        value: "none var(--slot-line-style-2) none none",
-        variables: {
-          "--slot-line-style-2": "none",
-        },
-      },
-      {
-        id: "pattern-1-slot-3",
-        positions: [
-          "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-        ],
-        value: "none none var(--slot-line-style-3) none",
-        variables: {
-          "--slot-line-style-3": "none",
-        },
-      },
-      {
-        id: "pattern-1-slot-4",
-        positions: [
-          "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
-        ],
-        value: "none none none var(--slot-line-style-4)",
-        variables: {
-          "--slot-line-style-4": "none",
         },
       },
     ],
     kind: "longhand",
     property: "column-rule-style",
-    syntax: "<'border-style'>",
+    syntax: "<line-style>",
   },
   {
     cases: [
       {
-        id: "pattern-1-all-slots",
-        positions: [
-          "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
-          "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
-          "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
-          "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
-        ],
-        value:
-          "var(--slot-line-width) var(--slot-line-width-2) var(--slot-line-width-3) var(--slot-line-width-4)",
-        variables: {
-          "--slot-line-width": "1px",
-          "--slot-line-width-2": "1px",
-          "--slot-line-width-3": "1px",
-          "--slot-line-width-4": "1px",
-        },
-      },
-      {
         id: "pattern-1-slot-1",
         positions: [
-          "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
+          "column-rule-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-line-width) 1px 1px 1px",
+        value: "var(--slot-line-width)",
         variables: {
           "--slot-line-width": "1px",
-        },
-      },
-      {
-        id: "pattern-1-slot-2",
-        positions: [
-          "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
-        ],
-        value: "1px var(--slot-line-width-2) 1px 1px",
-        variables: {
-          "--slot-line-width-2": "1px",
-        },
-      },
-      {
-        id: "pattern-1-slot-3",
-        positions: [
-          "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
-        ],
-        value: "1px 1px var(--slot-line-width-3) 1px",
-        variables: {
-          "--slot-line-width-3": "1px",
-        },
-      },
-      {
-        id: "pattern-1-slot-4",
-        positions: [
-          "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
-        ],
-        value: "1px 1px 1px var(--slot-line-width-4)",
-        variables: {
-          "--slot-line-width-4": "1px",
         },
       },
     ],
     kind: "longhand",
     property: "column-rule-width",
-    syntax: "<'border-width'>",
+    syntax: "<line-width>",
   },
   {
     cases: [
@@ -7071,6 +7004,23 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     cases: [
       {
         id: "pattern-1-slot-1",
+        positions: [
+          "flex-line-count:term:0:type:integer:term:0:type:number-token",
+        ],
+        value: "var(--slot-integer)",
+        variables: {
+          "--slot-integer": "1",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "flex-line-count",
+    syntax: "<integer [1,∞]>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
         positions: ["flex-shrink:term:0:type:number"],
         value: "var(--slot-number)",
         variables: {
@@ -7085,17 +7035,45 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-3-slot-1",
-        positions: ["flex-wrap:branch:2:keyword:wrap-reverse"],
+        id: "pattern-1-slot-1",
+        positions: ["flex-wrap:branch:0:keyword:nowrap"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "wrap-reverse",
+          "--slot-1": "nowrap",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "flex-wrap:branch:1:term:0:branch:0:keyword:wrap",
+          "flex-wrap:branch:1:term:1:keyword:balance",
+        ],
+        value: "var(--slot-1) var(--slot-2)",
+        variables: {
+          "--slot-1": "wrap",
+          "--slot-2": "balance",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["flex-wrap:branch:1:term:0:branch:0:keyword:wrap"],
+        value: "var(--slot-1) balance",
+        variables: {
+          "--slot-1": "wrap",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: ["flex-wrap:branch:1:term:1:keyword:balance"],
+        value: "wrap var(--slot-2)",
+        variables: {
+          "--slot-2": "balance",
         },
       },
     ],
     kind: "longhand",
     property: "flex-wrap",
-    syntax: "nowrap | wrap | wrap-reverse",
+    syntax: "nowrap | [ wrap | wrap-reverse ] || balance",
   },
   {
     cases: [
@@ -8475,6 +8453,22 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "forced-color-adjust",
     syntax: "auto | none | preserve-parent-color",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["frame-sizing:branch:3:keyword:content-block-size"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "content-block-size",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "frame-sizing",
+    syntax:
+      "auto | content-width | content-height | content-block-size | content-inline-size",
   },
   {
     cases: [
@@ -14761,6 +14755,49 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     cases: [
       {
         id: "pattern-1-slot-1",
+        positions: ["path-length:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "path-length:branch:1:term:0:type:length",
+          "path-length:branch:1:term:1:term:0:keyword:0",
+        ],
+        value: "var(--slot-length) var(--slot-2),∞",
+        variables: {
+          "--slot-length": "1px",
+          "--slot-2": "0",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["path-length:branch:1:term:0:type:length"],
+        value: "var(--slot-length)0,∞",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: ["path-length:branch:1:term:1:term:0:keyword:0"],
+        value: "1px var(--slot-2),∞",
+        variables: {
+          "--slot-2": "0",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "path-length",
+    syntax: "none | <length> [0,∞]",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
         positions: ["perspective:branch:0:keyword:none"],
         value: "var(--slot-1)",
         variables: {
@@ -14966,6 +15003,246 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "position",
     syntax: "static | relative | absolute | sticky | fixed",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-3-slot-1",
+        positions: ["position-anchor:branch:2:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-4-slot-1",
+        positions: [
+          "position-anchor:branch:3:type:anchor-name:term:0:type:dashed-ident",
+        ],
+        value: "var(--slot-anchor-name)",
+        variables: {
+          "--slot-anchor-name": "--custom-ident",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "position-anchor",
+    syntax: "normal | auto | none | <anchor-name> | match-parent",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["position-area:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "position-area:branch:1:type:position-area:branch:0:term:0:branch:0:keyword:left",
+          "position-area:branch:1:type:position-area:branch:0:term:1:branch:0:keyword:top",
+        ],
+        value: "var(--slot-position-area) var(--slot-position-area-2)",
+        variables: {
+          "--slot-position-area": "left",
+          "--slot-position-area-2": "top",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "position-area:branch:1:type:position-area:branch:0:term:0:branch:0:keyword:left",
+        ],
+        value: "var(--slot-position-area) top",
+        variables: {
+          "--slot-position-area": "left",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "position-area:branch:1:type:position-area:branch:0:term:1:branch:0:keyword:top",
+        ],
+        value: "left var(--slot-position-area-2)",
+        variables: {
+          "--slot-position-area-2": "top",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "position-area",
+    syntax: "none | <position-area>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "position-try:term:0:repeat:property:position-try-order:branch:0:keyword:normal",
+          "position-try:term:1:property:position-try-fallbacks:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1) var(--slot-2)",
+        variables: {
+          "--slot-1": "normal",
+          "--slot-2": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "position-try:term:0:repeat:property:position-try-order:branch:0:keyword:normal",
+        ],
+        value: "var(--slot-1) none",
+        variables: {
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "position-try:term:1:property:position-try-fallbacks:branch:0:keyword:none",
+        ],
+        value: "normal var(--slot-2)",
+        variables: {
+          "--slot-2": "none",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "position-try",
+    syntax: "<'position-try-order'>? <'position-try-fallbacks'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["position-try-fallbacks:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "position-try-fallbacks:branch:1:repeat:branch:1:property:position-area:branch:0:keyword:none",
+          "position-try-fallbacks:branch:1:repeat:branch:1:property:position-area:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1),var(--slot-2)",
+        variables: {
+          "--slot-1": "none",
+          "--slot-2": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "position-try-fallbacks:branch:1:repeat:branch:1:property:position-area:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1),none",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "position-try-fallbacks:branch:1:repeat:branch:1:property:position-area:branch:0:keyword:none",
+        ],
+        value: "none,var(--slot-2)",
+        variables: {
+          "--slot-2": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "position-try-fallbacks",
+    syntax: "none | [ [<dashed-ident> || <try-tactic>] | <'position-area'> ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["position-try-order:branch:0:keyword:normal"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "position-try-order:branch:1:type:try-size:branch:0:keyword:most-width",
+        ],
+        value: "var(--slot-try-size)",
+        variables: {
+          "--slot-try-size": "most-width",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "position-try-order",
+    syntax: "normal | <try-size>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["position-visibility:branch:0:keyword:always"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "always",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "position-visibility:branch:1:term:0:keyword:anchors-valid",
+          "position-visibility:branch:1:term:1:keyword:anchors-visible",
+          "position-visibility:branch:1:term:2:keyword:no-overflow",
+        ],
+        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        variables: {
+          "--slot-1": "anchors-valid",
+          "--slot-2": "anchors-visible",
+          "--slot-3": "no-overflow",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "position-visibility:branch:1:term:0:keyword:anchors-valid",
+        ],
+        value: "var(--slot-1) anchors-visible no-overflow",
+        variables: {
+          "--slot-1": "anchors-valid",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "position-visibility:branch:1:term:1:keyword:anchors-visible",
+        ],
+        value: "anchors-valid var(--slot-2) no-overflow",
+        variables: {
+          "--slot-2": "anchors-visible",
+        },
+      },
+      {
+        id: "pattern-2-slot-3",
+        positions: ["position-visibility:branch:1:term:2:keyword:no-overflow"],
+        value: "anchors-valid anchors-visible var(--slot-3)",
+        variables: {
+          "--slot-3": "no-overflow",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "position-visibility",
+    syntax: "always | [ anchors-valid || anchors-visible || no-overflow ]",
   },
   {
     cases: [
@@ -16251,48 +16528,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         },
       },
       {
-        id: "pattern-3-all-slots",
-        positions: [
-          "shape-outside:branch:1:term:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
-          "shape-outside:branch:1:term:1:type:basic-shape:branch:6:type:path():term:1:repeat:property:fill-rule:branch:0:keyword:nonzero",
-          "shape-outside:branch:1:term:1:type:basic-shape:branch:6:type:path():term:3:type:string",
-        ],
-        value:
-          "var(--slot-shape-box) path(var(--slot-basic-shape),var(--slot-basic-shape-2))",
-        variables: {
-          "--slot-shape-box": "content-box",
-          "--slot-basic-shape": "nonzero",
-          "--slot-basic-shape-2": '"x"',
-        },
-      },
-      {
         id: "pattern-3-slot-1",
         positions: [
           "shape-outside:branch:1:term:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: 'var(--slot-shape-box) path(nonzero,"x")',
+        value: "var(--slot-shape-box) shape()",
         variables: {
           "--slot-shape-box": "content-box",
-        },
-      },
-      {
-        id: "pattern-3-slot-2",
-        positions: [
-          "shape-outside:branch:1:term:1:type:basic-shape:branch:6:type:path():term:1:repeat:property:fill-rule:branch:0:keyword:nonzero",
-        ],
-        value: 'content-box path(var(--slot-basic-shape),"x")',
-        variables: {
-          "--slot-basic-shape": "nonzero",
-        },
-      },
-      {
-        id: "pattern-3-slot-3",
-        positions: [
-          "shape-outside:branch:1:term:1:type:basic-shape:branch:6:type:path():term:3:type:string",
-        ],
-        value: "content-box path(nonzero,var(--slot-basic-shape-2))",
-        variables: {
-          "--slot-basic-shape-2": '"x"',
         },
       },
     ],
@@ -16785,35 +17027,39 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-2-all-slots",
         positions: [
-          "text-decoration-inset:branch:0:repeat:type:length",
-          "text-decoration-inset:branch:0:repeat:type:length",
+          "text-decoration-inset:branch:0:repeat:type:length-percentage:branch:0:type:length",
+          "text-decoration-inset:branch:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-length) var(--slot-length-2)",
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
         variables: {
-          "--slot-length": "1px",
-          "--slot-length-2": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
         id: "pattern-2-slot-1",
-        positions: ["text-decoration-inset:branch:0:repeat:type:length"],
-        value: "var(--slot-length) 1px",
+        positions: [
+          "text-decoration-inset:branch:0:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage) 1px",
         variables: {
-          "--slot-length": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
         id: "pattern-2-slot-2",
-        positions: ["text-decoration-inset:branch:0:repeat:type:length"],
-        value: "1px var(--slot-length-2)",
+        positions: [
+          "text-decoration-inset:branch:0:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value: "1px var(--slot-length-percentage-2)",
         variables: {
-          "--slot-length-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
     ],
     kind: "longhand",
     property: "text-decoration-inset",
-    syntax: "<length>{1,2} | auto",
+    syntax: "<length-percentage>{1,2} | auto",
   },
   {
     cases: [
@@ -17098,6 +17344,84 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     property: "text-emphasis-style",
     syntax:
       "none | [ [ filled | open ] || [ dot | circle | double-circle | triangle | sesame ] ] | <string>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-2",
+        positions: ["text-fit:term:1:repeat:branch:0:keyword:consistent"],
+        value: "none var(--slot-2) 10%",
+        variables: {
+          "--slot-2": "consistent",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: ["text-fit:term:2:repeat:type:percentage"],
+        value: "none consistent var(--slot-percentage)",
+        variables: {
+          "--slot-percentage": "10%",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: ["text-fit:term:1:repeat:branch:0:keyword:consistent"],
+        value: "grow var(--slot-2) 10%",
+        variables: {
+          "--slot-2": "consistent",
+        },
+      },
+      {
+        id: "pattern-2-slot-3",
+        positions: ["text-fit:term:2:repeat:type:percentage"],
+        value: "grow consistent var(--slot-percentage)",
+        variables: {
+          "--slot-percentage": "10%",
+        },
+      },
+      {
+        id: "pattern-3-all-slots",
+        positions: [
+          "text-fit:term:0:branch:2:keyword:shrink",
+          "text-fit:term:1:repeat:branch:0:keyword:consistent",
+          "text-fit:term:2:repeat:type:percentage",
+        ],
+        value: "var(--slot-1) var(--slot-2) var(--slot-percentage)",
+        variables: {
+          "--slot-1": "shrink",
+          "--slot-2": "consistent",
+          "--slot-percentage": "10%",
+        },
+      },
+      {
+        id: "pattern-3-slot-1",
+        positions: ["text-fit:term:0:branch:2:keyword:shrink"],
+        value: "var(--slot-1) consistent 10%",
+        variables: {
+          "--slot-1": "shrink",
+        },
+      },
+      {
+        id: "pattern-3-slot-2",
+        positions: ["text-fit:term:1:repeat:branch:0:keyword:consistent"],
+        value: "shrink var(--slot-2) 10%",
+        variables: {
+          "--slot-2": "consistent",
+        },
+      },
+      {
+        id: "pattern-3-slot-3",
+        positions: ["text-fit:term:2:repeat:type:percentage"],
+        value: "shrink consistent var(--slot-percentage)",
+        variables: {
+          "--slot-percentage": "10%",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "text-fit",
+    syntax:
+      "[ none | grow | shrink ] [consistent | per-line | per-line-all]? <percentage>?",
   },
   {
     cases: [
@@ -19296,6 +19620,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "view-transition-name",
     syntax: "none | <custom-ident> | match-element",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["view-transition-scope:branch:1:keyword:all"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "all",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "view-transition-scope",
+    syntax: "none | all",
   },
   {
     cases: [
