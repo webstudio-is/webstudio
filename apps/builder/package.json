@@ -106,7 +106,7 @@
     "change-case": "^5.4.4",
     "colorjs.io": "^0.6.1",
     "cookie": "^1.0.1",
-    "css-tree": "^3.1.0",
+    "css-tree": "^3.2.1",
     "debug": "^4.3.7",
     "downshift": "^6.1.7",
     "entrijs": "^0.0.11",

@@ -1,9 +1,10 @@
 import {
   type CssNode,
   definitionSyntax,
+  fork,
   type FunctionNode,
   generate,
-  lexer,
+  lexer as baseLexer,
   List,
   parse,
   tokenize,
@@ -35,6 +36,19 @@ import {
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
+
+const positionAnchor = baseLexer.getProperty("position-anchor");
+if (positionAnchor === null) {
+  throw new Error("Missing css-tree syntax for position-anchor");
+}
+
+// @todo Remove this extension when upgrading CSS-tree once its bundled MDN data
+// includes the current `position-anchor: normal | match-parent` grammar.
+const lexer = fork({
+  properties: {
+    "position-anchor": `${definitionSyntax.generate(positionAnchor.syntax)} | normal | match-parent`,
+  },
+}).lexer;
 
 export const cssTryParseValue = (input: string): undefined | CssNode => {
   try {
@@ -81,7 +95,17 @@ const cssNumericFunctionNames = new Set([
   "sign",
 ]);
 
-const cssMathConstants = new Set(["e", "pi", "infinity", "-infinity", "nan"]);
+const cssMathKeywords = new Set([
+  "e",
+  "pi",
+  "infinity",
+  "-infinity",
+  "nan",
+  "nearest",
+  "up",
+  "down",
+  "to-zero",
+]);
 
 const cssNumericTypeNames = new Set([
   "length",
@@ -97,7 +121,49 @@ const cssNumericTypeNames = new Set([
   "alpha-value",
 ]);
 
-const canFallbackToCssMath = (ast: CssNode, syntax: string | undefined) => {
+const analyzeCssNumericFunctions = (ast: CssNode) => {
+  let hasCssNumericFunction = false;
+  let hasInvalidCssNumericFunction = false;
+
+  const hasUnknownIdentifier = (node: CssNode): boolean => {
+    if (node.type === "Identifier") {
+      return cssMathKeywords.has(node.name.toLowerCase()) === false;
+    }
+    if (node.type === "Function") {
+      return false;
+    }
+    if ("children" in node && node.children) {
+      for (const child of node.children) {
+        if (hasUnknownIdentifier(child)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  walk(ast, (node) => {
+    if (
+      node.type !== "Function" ||
+      cssNumericFunctionNames.has(node.name) === false
+    ) {
+      return;
+    }
+    hasCssNumericFunction = true;
+    for (const child of node.children) {
+      if (hasUnknownIdentifier(child)) {
+        hasInvalidCssNumericFunction = true;
+        break;
+      }
+    }
+  });
+  return { hasCssNumericFunction, hasInvalidCssNumericFunction };
+};
+
+const canFallbackToCssMath = (
+  syntax: string | undefined,
+  hasCssNumericFunction: boolean
+) => {
   if (syntax === undefined) {
     return false;
   }
@@ -120,20 +186,7 @@ const canFallbackToCssMath = (ast: CssNode, syntax: string | undefined) => {
     return false;
   }
 
-  let hasCssNumericFunction = false;
-  let hasUnknownIdentifier = false;
-  walk(ast, (node) => {
-    if (node.type === "Function" && cssNumericFunctionNames.has(node.name)) {
-      hasCssNumericFunction = true;
-    }
-    if (
-      node.type === "Identifier" &&
-      cssMathConstants.has(node.name.toLowerCase()) === false
-    ) {
-      hasUnknownIdentifier = true;
-    }
-  });
-  return hasCssNumericFunction && hasUnknownIdentifier === false;
+  return hasCssNumericFunction;
 };
 
 const getSyntaxMatchErrorSyntax = (error: Error | null | undefined) => {
@@ -320,6 +373,12 @@ export const isValidDeclaration = (
     return false;
   }
 
+  const { hasCssNumericFunction, hasInvalidCssNumericFunction } =
+    analyzeCssNumericFunctions(ast);
+  if (hasInvalidCssNumericFunction) {
+    return false;
+  }
+
   if (
     property === "transition-timing-function" ||
     property === "animation-timing-function"
@@ -345,7 +404,10 @@ export const isValidDeclaration = (
   // invalid values, which are intended for transient editor state.
   if (
     matchResult.matched == null &&
-    canFallbackToCssMath(ast, getSyntaxMatchErrorSyntax(matchResult.error))
+    canFallbackToCssMath(
+      getSyntaxMatchErrorSyntax(matchResult.error),
+      hasCssNumericFunction
+    )
   ) {
     return true;
   }

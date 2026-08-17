@@ -9,6 +9,7 @@ import {
   ComboboxListboxItem,
   ComboboxRoot,
   ComboboxScrollArea,
+  Flex,
   InputField,
   NestedInputButton,
   Text,
@@ -41,6 +42,10 @@ import {
 import { parseStyleInput } from "./parse-style-input";
 import { validateCssVariableName } from "~/builder/shared/css-variable-utils";
 import { toast } from "@webstudio-is/design-system";
+import {
+  PropertyStatusDescription,
+  PropertyStatusIcon,
+} from "~/builder/features/style-panel/property-status";
 
 type SearchItem = {
   property: string;
@@ -57,7 +62,14 @@ const getNewPropertyDescription = (item: null | SearchItem) => {
   if (item && propertyDescriptions[item.property]) {
     description = propertyDescriptions[item.property];
   }
-  return <Box css={{ width: theme.spacing[28] }}>{description}</Box>;
+  return (
+    <Box css={{ width: theme.spacing[28] }}>
+      <Flex direction="column" gap="2">
+        {description}
+        {item && <PropertyStatusDescription property={item.property} />}
+      </Flex>
+    </Box>
+  );
 };
 
 const getAutocompleteItems = () => {
@@ -314,9 +326,12 @@ export const AddStyleInput = forwardRef<
                   {...combobox.getItemProps({ item, index })}
                   key={index}
                 >
-                  <Text variant="labels" truncate css={{ maxWidth: "25ch" }}>
-                    {item.label}
-                  </Text>
+                  <Flex align="center" gap="1">
+                    <Text variant="labels" truncate css={{ maxWidth: "25ch" }}>
+                      {item.label}
+                    </Text>
+                    <PropertyStatusIcon property={item.property} />
+                  </Flex>
                 </ComboboxListboxItem>
               ))}
             </ComboboxScrollArea>
