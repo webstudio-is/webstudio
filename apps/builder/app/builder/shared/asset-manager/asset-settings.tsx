@@ -64,7 +64,7 @@ import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/run
 import { $selectedPageId } from "~/shared/nano-states";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { deleteAssets, updateAssetContent } from "~/builder/shared/assets";
-import { normalizeTextFileContent } from "~/builder/features/text-file-editor/text-file-utils";
+import { normalizeTextFileConversion } from "~/builder/features/text-file-editor/text-file-utils";
 import {
   $activeInspectorPanel,
   setActiveSidebarPanel,
@@ -363,7 +363,7 @@ const AssetSettingsContent = ({
         if (response.ok === false) {
           throw new Error(`Unable to load asset: ${response.status}`);
         }
-        const normalized = normalizeTextFileContent(
+        const normalized = normalizeTextFileConversion(
           { format: extension },
           await response.text()
         );

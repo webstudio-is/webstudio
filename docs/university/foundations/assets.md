@@ -60,6 +60,7 @@ converts JSON-compatible syntax to strict JSON before saving the new
 file revision. JSON files can contain any JSON value, including arrays and
 scalars. The editor accepts unquoted object keys, single-quoted strings, and
 trailing commas. It reports unsupported syntax instead of saving the file.
+Converting an empty text file to `.json` initializes it with an empty object.
 
 ### Use assets as content
 

@@ -9,6 +9,7 @@ import {
   isMarkdownPreviewAsset,
   isMarkdownSyntaxAsset,
   normalizeTextFileContent,
+  normalizeTextFileConversion,
 } from "./text-file-utils";
 
 describe("text file assets", () => {
@@ -88,5 +89,14 @@ describe("text file assets", () => {
     expect(normalizeTextFileContent({ format: "json" }, "{ title:")).toEqual({
       error: "Enter a JSON-compatible value.",
     });
+  });
+
+  test("initializes empty content when converting a text file to JSON", () => {
+    expect(normalizeTextFileConversion({ format: "json" }, " \n")).toEqual({
+      content: "{}\n",
+    });
+    expect(
+      normalizeTextFileConversion({ format: "json" }, "not json")
+    ).toEqual({ error: "Enter a JSON-compatible value." });
   });
 });

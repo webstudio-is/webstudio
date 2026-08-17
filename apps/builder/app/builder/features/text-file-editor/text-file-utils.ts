@@ -51,3 +51,16 @@ export const normalizeTextFileContent = (
 
   return { content: `${JSON.stringify(value, undefined, 2)}\n` };
 };
+
+export const normalizeTextFileConversion = (
+  asset: Pick<Asset, "format">,
+  content: string
+) => {
+  if (
+    getAssetTextEditorLanguage(asset) === "json" &&
+    content.trim() === ""
+  ) {
+    return { content: "{}\n" };
+  }
+  return normalizeTextFileContent(asset, content);
+};
