@@ -75,7 +75,9 @@ export const ExperimentalPropertyIndicator = ({
       variant="wrapped"
       content={<ExperimentalPropertyDescription property={property} />}
     >
-      <ExperimentalPropertyIcon property={property} />
+      <Flex as="span" css={{ marginLeft: "3px" }}>
+        <ExperimentalPropertyIcon property={property} />
+      </Flex>
     </Tooltip>
   );
 };
