@@ -250,9 +250,6 @@ const additionalShorthandProperties = [
 // Properties we don't support in this form.
 const unsupportedProperties = [
   "--*",
-  "-webkit-text-fill-color",
-  "-webkit-text-stroke-color",
-  "-webkit-text-stroke-width",
   // shorthand properties
   "all",
   "overflow",

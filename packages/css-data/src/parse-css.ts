@@ -18,11 +18,6 @@ const shorthandSet = new Set<string>(shorthandProperties);
 const supportedPrefixedPropertySet = new Set([
   ...Object.keys(properties).filter((property) => property.startsWith("-")),
   ...shorthandProperties.filter((property) => property.startsWith("-")),
-  // These properties are handled outside generated longhand metadata.
-  "-webkit-font-smoothing",
-  "-moz-osx-font-smoothing",
-  "-webkit-text-stroke-color",
-  "-webkit-text-stroke-width",
 ]);
 
 // css-tree exposes `skip` as a Symbol on the walk function itself.

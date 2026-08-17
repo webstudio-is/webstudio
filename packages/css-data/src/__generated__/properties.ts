@@ -999,6 +999,37 @@ export const properties: Properties = {
     mdnUrl:
       "https://developer.mozilla.org/docs/Web/CSS/-webkit-tap-highlight-color",
   },
+  "-webkit-text-fill-color": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "currentColor",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/-webkit-text-fill-color",
+  },
+  "-webkit-text-stroke-color": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "currentColor",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/-webkit-text-stroke-color",
+  },
+  "-webkit-text-stroke-width": {
+    unitGroups: ["length"],
+    inherited: true,
+    initial: {
+      type: "unit",
+      unit: "px",
+      value: 0,
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/-webkit-text-stroke-width",
+  },
   "-webkit-touch-callout": {
     unitGroups: [],
     inherited: true,

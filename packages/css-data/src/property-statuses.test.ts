@@ -6,9 +6,6 @@ import { shorthandProperties } from "./__generated__/shorthand-properties";
 
 const propertiesHandledInAnotherForm = new Set([
   "--*",
-  "-webkit-text-fill-color",
-  "-webkit-text-stroke-color",
-  "-webkit-text-stroke-width",
   "all",
   "overflow",
   "background-position",

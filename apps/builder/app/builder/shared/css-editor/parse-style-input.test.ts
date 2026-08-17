@@ -256,4 +256,14 @@ describe("parseStyleInput", () => {
       ])
     );
   });
+
+  test.each([
+    ["-webkit-text-fill-color", "red"],
+    ["-webkit-text-stroke-color", "blue"],
+    ["-webkit-text-stroke-width", "2px"],
+  ] as const)("recognizes generated WebKit longhand %s", (property, value) => {
+    const { styleMap } = parseStyleInput(`${property}: ${value}`, new Map());
+    expect(styleMap.has(property), property).toBe(true);
+    expect(styleMap.has(`--${property}`), property).toBe(false);
+  });
 });
