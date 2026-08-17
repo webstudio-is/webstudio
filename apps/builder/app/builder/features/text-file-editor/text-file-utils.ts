@@ -3,6 +3,7 @@ import { css } from "@codemirror/lang-css";
 import { html } from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
+import { parseJsonExpression } from "@webstudio-is/expression";
 import {
   getAssetTextEditorLanguage,
   type Asset,
@@ -35,22 +36,22 @@ export const isMarkdownSyntaxAsset = (asset: Pick<Asset, "format">) =>
 export const isMarkdownPreviewAsset = (asset: Pick<Asset, "format">) =>
   asset.format.toLowerCase() === "md";
 
-export const getTextFileContentError = (
+export const normalizeTextFileContent = (
   asset: Pick<Asset, "format">,
   content: string
-): string | undefined => {
+): { content: string } | { error: string } => {
   if (getAssetTextEditorLanguage(asset) !== "json") {
-    return;
+    return { content };
   }
 
-  let value: unknown;
-  try {
-    value = JSON.parse(content);
-  } catch {
-    return "Enter valid JSON.";
+  const value = parseJsonExpression(content);
+  if (value === undefined) {
+    return { error: "Enter a JSON-compatible object." };
   }
 
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return "JSON content must have an object at its root.";
+    return { error: "JSON content must have an object at its root." };
   }
+
+  return { content: `${JSON.stringify(value, undefined, 2)}\n` };
 };

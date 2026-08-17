@@ -60,10 +60,10 @@ import {
   type UrlInputValue,
 } from "~/builder/features/settings-panel/controls/url";
 import {
-  getTextFileContentError,
   getTextFileEditorExtensions,
   isMarkdownPreviewAsset,
   isMarkdownSyntaxAsset,
+  normalizeTextFileContent,
 } from "./text-file-utils";
 import { MarkdownSplitView } from "./markdown-preview";
 
@@ -492,12 +492,16 @@ export const TextFileEditor = ({
       toast.error("Unable to save: asset not found");
       return;
     }
-    const contentError = getTextFileContentError(currentAsset, content);
-    if (contentError !== undefined) {
-      toast.error(contentError);
+    const normalized = normalizeTextFileContent(currentAsset, content);
+    if ("error" in normalized) {
+      toast.error(normalized.error);
       return;
     }
-    requestedContentRef.current = content;
+    const normalizedContent = normalized.content;
+    if (normalizedContent !== content) {
+      setState({ status: "loaded", content: normalizedContent });
+    }
+    requestedContentRef.current = normalizedContent;
     saveQueueRef.current = saveQueueRef.current.then(async () => {
       const requestedContent = requestedContentRef.current;
       if (

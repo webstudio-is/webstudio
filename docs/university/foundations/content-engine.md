@@ -97,7 +97,7 @@ in this guide use that ID to query only files in this folder.
 
 1. Open `blog/posts` in the Assets panel.
 2. Open the add menu and choose **Create text file**.
-3. Choose **Markdown** and name the file `hello-world.md`.
+3. Name the file `hello-world.md`.
 4. Add the article metadata between the two `---` lines, followed by the
    article body:
 
@@ -178,9 +178,11 @@ contain an object at its root:
 
 Its fields are also exposed under `properties`, such as `properties.name` and
 `properties.avatar`. Use JSON when the file contains structured data without a
-Markdown body. Choose **JSON** in the **Create text file** dialog to create a
-valid empty object, then add its fields in the editor. Invalid JSON is reported
-without saving the file.
+Markdown body. Name the file with a `.json` extension in the **Create text
+file** dialog to create a valid empty object, then add its fields in the editor.
+The editor accepts JSON-compatible object syntax and formats it as strict JSON
+when saving. Unsupported or incomplete syntax is reported without saving the
+file.
 
 ## 3. Query the articles for the overview
 

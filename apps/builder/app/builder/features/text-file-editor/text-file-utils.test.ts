@@ -5,10 +5,10 @@ import {
   isTextFileAsset,
 } from "@webstudio-is/sdk";
 import {
-  getTextFileContentError,
   getTextFileEditorExtensions,
   isMarkdownPreviewAsset,
   isMarkdownSyntaxAsset,
+  normalizeTextFileContent,
 } from "./text-file-utils";
 
 describe("text file assets", () => {
@@ -54,18 +54,36 @@ describe("text file assets", () => {
     expect(isMarkdownPreviewAsset({ format: "mdx" })).toBe(false);
   });
 
-  test("validates that JSON content has an object root", () => {
+  test("normalizes JSON-compatible object expressions to strict JSON", () => {
     expect(
-      getTextFileContentError({ format: "json" }, '{"title":"Post"}')
-    ).toBeUndefined();
-    expect(getTextFileContentError({ format: "json" }, "not json")).toBe(
-      "Enter valid JSON."
-    );
-    expect(getTextFileContentError({ format: "json" }, "[]")).toBe(
-      "JSON content must have an object at its root."
-    );
+      normalizeTextFileContent(
+        { format: "json" },
+        "{ title: 'Post', tags: ['one', 'two'], }"
+      )
+    ).toEqual({
+      content:
+        '{\n  "title": "Post",\n  "tags": [\n    "one",\n    "two"\n  ]\n}\n',
+    });
+  });
+
+  test("rejects executable or non-object JSON content", () => {
     expect(
-      getTextFileContentError({ format: "md" }, "anything")
-    ).toBeUndefined();
+      normalizeTextFileContent({ format: "json" }, "{ value: fetch('/') }")
+    ).toEqual({ error: "Enter a JSON-compatible object." });
+    expect(normalizeTextFileContent({ format: "json" }, "[]")).toEqual({
+      error: "JSON content must have an object at its root.",
+    });
+  });
+
+  test("preserves non-JSON text content", () => {
+    expect(normalizeTextFileContent({ format: "md" }, "anything")).toEqual({
+      content: "anything",
+    });
+  });
+
+  test("rejects incomplete object syntax", () => {
+    expect(normalizeTextFileContent({ format: "json" }, "{ title:")).toEqual({
+      error: "Enter a JSON-compatible object.",
+    });
   });
 });
