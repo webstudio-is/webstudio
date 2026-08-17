@@ -4,7 +4,12 @@ import { useDebouncedCallback } from "use-debounce";
 import prettyBytes from "pretty-bytes";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { getAssetUrl, getMimeTypeByExtension } from "@webstudio-is/sdk";
+import {
+  getAssetUrl,
+  getFileNameParts,
+  getMimeTypeByExtension,
+  isTextFileAsset,
+} from "@webstudio-is/sdk";
 import type { Asset, Instance } from "@webstudio-is/sdk";
 import {
   Box,
@@ -29,6 +34,7 @@ import {
   TextArea,
   textVariants,
   theme,
+  toast,
   Tooltip,
 } from "@webstudio-is/design-system";
 import {
@@ -57,7 +63,8 @@ import { selectPage } from "~/shared/nano-states";
 import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/runtime";
 import { $selectedPageId } from "~/shared/nano-states";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { deleteAssets } from "~/builder/shared/assets";
+import { deleteAssets, updateAssetContent } from "~/builder/shared/assets";
+import { normalizeTextFileContent } from "~/builder/features/text-file-editor/text-file-utils";
 import {
   $activeInspectorPanel,
   setActiveSidebarPanel,
@@ -313,33 +320,83 @@ const AssetSettingsContent = ({
 }) => {
   const { canDownloadAssets } = useStore($permissions);
   const { size, meta, id } = asset;
-  const { basename, ext } = getAssetDisplayNameParts(asset);
+  const { ext } = getAssetDisplayNameParts(asset);
   const [filenameError, setFilenameError] = useState<string>();
-  const [filename, setFilename] = useLocalValue(basename, (newFilename) => {
+  const saveFilename = async (newFilename: string) => {
     const assetId = asset.id;
-    // validate filename
     if (!isValidFilename(newFilename)) {
       setFilenameError("Invalid filename");
       return;
     }
-    // validate duplicates
-    for (const asset of $assets.get().values()) {
-      if (asset.id !== assetId) {
-        const { basename: filename } = getAssetDisplayNameParts(asset);
-        if (newFilename === filename) {
-          setFilenameError("Filename already used");
-          return;
-        }
+
+    const currentAsset = $assets.get().get(assetId) ?? asset;
+    const currentExtension = getAssetDisplayNameParts(currentAsset).ext;
+    const { basename, extension } = getFileNameParts(newFilename);
+    if (extension === "" && currentExtension !== "") {
+      setFilenameError("File extension is required");
+      return;
+    }
+
+    for (const candidate of $assets.get().values()) {
+      if (
+        candidate.id !== assetId &&
+        formatAssetName(candidate) === newFilename
+      ) {
+        setFilenameError("Filename already used");
+        return;
       }
     }
+
+    if (extension.toLowerCase() !== currentExtension.toLowerCase()) {
+      if (
+        !isTextFileAsset(currentAsset) ||
+        !isTextFileAsset({ format: extension })
+      ) {
+        setFilenameError("Only text file extensions can be changed");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          getAssetUrl(currentAsset, window.location.origin)
+        );
+        if (response.ok === false) {
+          throw new Error(`Unable to load asset: ${response.status}`);
+        }
+        const normalized = normalizeTextFileContent(
+          { format: extension },
+          await response.text()
+        );
+        if ("error" in normalized) {
+          setFilenameError(normalized.error);
+          return;
+        }
+        await updateAssetContent({
+          asset: currentAsset,
+          content: normalized.content,
+          extension,
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unable to rename file";
+        setFilenameError(message);
+        toast.error(message);
+        return;
+      }
+    }
+
     executeRuntimeMutation({
       id: "assets.update",
       input: {
         assetId,
-        values: { filename: newFilename },
+        values: { filename: basename },
       },
     });
-  });
+  };
+  const [filename, setFilename] = useLocalValue(
+    formatAssetName(asset),
+    (newFilename) => void saveFilename(newFilename)
+  );
   const [description, setDescription] = useLocalValue(
     asset.description ?? "",
     (newDescription) => {
@@ -451,24 +508,10 @@ const AssetSettingsContent = ({
         >
           <InputField
             id="asset-manager-filename"
-            aria-describedby={
-              ext === "" ? undefined : "asset-manager-filename-extension"
-            }
             autoFocus={focusName}
             readOnly={authPermit === "view"}
             color={filenameError ? "error" : undefined}
             value={filename}
-            suffix={
-              ext === "" ? undefined : (
-                <Text
-                  id="asset-manager-filename-extension"
-                  color="subtle"
-                  variant="labels"
-                >
-                  .{ext}
-                </Text>
-              )
-            }
             onChange={(event) => {
               setFilename(event.target.value);
               setFilenameError(undefined);

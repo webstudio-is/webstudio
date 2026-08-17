@@ -18,9 +18,11 @@ export const createUpdateAssetContent =
   async ({
     asset,
     content,
+    extension,
   }: {
     asset: Asset;
     content: string;
+    extension?: string;
   }): Promise<Asset> => {
     const projectId = $project.get()?.id;
     if (projectId === undefined) {
@@ -32,6 +34,7 @@ export const createUpdateAssetContent =
       assetId: asset.id,
       projectId,
       expectedName: asset.name,
+      extension,
       origin,
       authToken: $authToken.get(),
       readAssetData: async () => content,

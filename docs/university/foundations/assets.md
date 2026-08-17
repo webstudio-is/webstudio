@@ -53,12 +53,13 @@ formatting controls. The file editor previews `.md`; connect `.mdx` to a Content
 Block to see its materialized result on the canvas.
 
 Edits save when the editor loses focus or when you press `Command + S` on
-macOS, `Ctrl + S` on Windows, or `Command/Ctrl + Enter`. The file extension is
-fixed, but you can rename its basename in Asset settings. JSON files must
-contain an object at the root. The editor accepts JSON-compatible object syntax
-such as unquoted keys, single-quoted strings, and trailing commas, then formats
-and saves it as strict JSON. It reports unsupported syntax instead of saving
-the file.
+macOS, `Ctrl + S` on Windows, or `Command/Ctrl + Enter`. Edit the complete
+filename in Asset settings to rename a text file or change its format. When you
+change the extension to `.json`, Webstudio validates the existing content and
+converts JSON-compatible object syntax to strict JSON before saving the new
+file revision. JSON files must contain an object at the root. The editor accepts
+unquoted keys, single-quoted strings, and trailing commas. It reports
+unsupported syntax instead of saving the file.
 
 ### Use assets as content
 

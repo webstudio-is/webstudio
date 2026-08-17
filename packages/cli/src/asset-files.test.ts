@@ -68,6 +68,7 @@ test("creates asset content readers from inline content or a file", async () => 
   const fromContent = createLocalUpdateAssetContentInput({
     assetId: "asset",
     expectedName: "content_old.json",
+    extension: "json",
     content: '{"source":"inline"}',
     readFile,
   });
@@ -81,6 +82,7 @@ test("creates asset content readers from inline content or a file", async () => 
   await expect(fromContent.readAssetData()).resolves.toBe(
     '{"source":"inline"}'
   );
+  expect(fromContent.extension).toBe("json");
   await expect(fromPath.readAssetData()).resolves.toEqual(
     Buffer.from('{"source":"file"}')
   );

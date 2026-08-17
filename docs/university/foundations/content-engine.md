@@ -182,7 +182,9 @@ Markdown body. Name the file with a `.json` extension in the **Create text
 file** dialog to create a valid empty object, then add its fields in the editor.
 The editor accepts JSON-compatible object syntax and formats it as strict JSON
 when saving. Unsupported or incomplete syntax is reported without saving the
-file.
+file. You can also change an existing text file's extension to `.json` by
+editing its complete filename in Asset settings; Webstudio validates and
+formats the current content before converting it.
 
 ## 3. Query the articles for the overview
 

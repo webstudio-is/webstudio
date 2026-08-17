@@ -1158,6 +1158,12 @@ export const createAssetResourceOpenApi = ({
               true,
               assetResourceLimits.assetFilenameCharacters
             ),
+            queryParameter(
+              "extension",
+              "Optional editable text format for the replacement revision",
+              false,
+              assetResourceLimits.assetFilenameCharacters
+            ),
           ],
           requestBody: {
             required: true,
