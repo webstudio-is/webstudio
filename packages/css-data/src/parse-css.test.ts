@@ -615,6 +615,16 @@ describe("Parse CSS", () => {
     ]);
   });
 
+  test.each([
+    ["-ms-grid-columns", "1fr"],
+    ["-moz-orient", "vertical"],
+    ["-webkit-mask-attachment", "fixed"],
+  ])("keep prefix for known MDN property %s", (property, value) => {
+    expect(parseCss(`a { ${property}: ${value}; }`, new Map()).styles).toEqual([
+      expect.objectContaining({ property }),
+    ]);
+  });
+
   test("keep prefix for -webkit-text-stroke", () => {
     // shorthand expands to prefixed longhands while preserving the prefix
     expect(

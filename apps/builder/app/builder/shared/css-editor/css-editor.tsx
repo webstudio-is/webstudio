@@ -49,7 +49,7 @@ import type {
   SetProperty,
 } from "../../features/style-panel/shared/use-style-data";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { ExperimentalPropertyIndicator } from "../../features/style-panel/experimental-property";
+import { PropertyStatusIndicator } from "../../features/style-panel/property-status";
 
 // Used to indent the values when they are on the next line. This way its easier to see
 // where the property ends and value begins, especially in case of presets.
@@ -318,7 +318,7 @@ const AdvancedDeclarationLonghand = memo(
           onSetProperty={onSetProperty}
           inputRef={valueInputRef}
         />
-        <ExperimentalPropertyIndicator property={styleDecl.property} />
+        <PropertyStatusIndicator property={styleDecl.property} />
       </Flex>
     );
   }

@@ -43,9 +43,9 @@ import { parseStyleInput } from "./parse-style-input";
 import { validateCssVariableName } from "~/builder/shared/css-variable-utils";
 import { toast } from "@webstudio-is/design-system";
 import {
-  ExperimentalPropertyDescription,
-  ExperimentalPropertyIcon,
-} from "~/builder/features/style-panel/experimental-property";
+  PropertyStatusDescription,
+  PropertyStatusIcon,
+} from "~/builder/features/style-panel/property-status";
 
 type SearchItem = {
   property: string;
@@ -66,7 +66,7 @@ const getNewPropertyDescription = (item: null | SearchItem) => {
     <Box css={{ width: theme.spacing[28] }}>
       <Flex direction="column" gap="2">
         {description}
-        {item && <ExperimentalPropertyDescription property={item.property} />}
+        {item && <PropertyStatusDescription property={item.property} />}
       </Flex>
     </Box>
   );
@@ -330,7 +330,7 @@ export const AddStyleInput = forwardRef<
                     <Text variant="labels" truncate css={{ maxWidth: "25ch" }}>
                       {item.label}
                     </Text>
-                    <ExperimentalPropertyIcon property={item.property} />
+                    <PropertyStatusIcon property={item.property} />
                   </Flex>
                 </ComboboxListboxItem>
               ))}

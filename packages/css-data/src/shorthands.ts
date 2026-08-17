@@ -1094,14 +1094,25 @@ type SyntaxMatch = {
   node?: CssNode;
 };
 
+const markNodeTree = (node: CssNode, seen: Set<CssNode>) => {
+  seen.add(node);
+  const children = "children" in node ? node.children : undefined;
+  if (children != null) {
+    for (const child of children) {
+      markNodeTree(child, seen);
+    }
+  }
+};
+
 const getMatchedNodes = (
   match: SyntaxMatch,
   nodes: CssNode[] = [],
   seen = new Set<CssNode>()
 ) => {
   if (match.node !== undefined && seen.has(match.node) === false) {
-    seen.add(match.node);
+    markNodeTree(match.node, seen);
     nodes.push(match.node);
+    return nodes;
   }
   for (const child of match.match ?? []) {
     getMatchedNodes(child, nodes, seen);

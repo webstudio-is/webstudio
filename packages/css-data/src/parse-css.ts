@@ -11,9 +11,19 @@ import {
   isValidCustomPropertyValue,
 } from "./parse-css-value";
 import { expandShorthands } from "./shorthands";
+import { properties } from "./__generated__/properties";
 import { shorthandProperties } from "./__generated__/shorthand-properties";
 
 const shorthandSet = new Set<string>(shorthandProperties);
+const supportedPrefixedPropertySet = new Set([
+  ...Object.keys(properties).filter((property) => property.startsWith("-")),
+  ...shorthandProperties.filter((property) => property.startsWith("-")),
+  // These properties are handled outside generated longhand metadata.
+  "-webkit-font-smoothing",
+  "-moz-osx-font-smoothing",
+  "-webkit-text-stroke-color",
+  "-webkit-text-stroke-width",
+]);
 
 // css-tree exposes `skip` as a Symbol on the walk function itself.
 // Returning it from an enter() callback prevents descent into child nodes.
@@ -58,18 +68,6 @@ export const hasUnsupportedCssTemplateRules = (source: string): boolean => {
   }
 };
 
-// @todo we don't parse correctly most of them if not all
-const prefixedProperties = [
-  "-webkit-box-orient",
-  "-webkit-line-clamp",
-  "-webkit-font-smoothing",
-  "-moz-osx-font-smoothing",
-  "-webkit-tap-highlight-color",
-  "-webkit-overflow-scrolling",
-  "-webkit-text-stroke",
-  "-webkit-text-stroke-color",
-  "-webkit-text-stroke-width",
-];
 const prefixes = ["webkit", "moz", "ms", "o"];
 const prefixRegex = new RegExp(`^-(${prefixes.join("|")})-`);
 
@@ -81,7 +79,7 @@ const normalizeProperty = (property: string): CssProperty => {
   if (property === "font-smoothing") {
     return "-webkit-font-smoothing";
   }
-  if (prefixedProperties.includes(property)) {
+  if (supportedPrefixedPropertySet.has(property)) {
     return property as CssProperty;
   }
   // remove old or unexpected prefixes

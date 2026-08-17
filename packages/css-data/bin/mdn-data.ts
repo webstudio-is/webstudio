@@ -19,7 +19,6 @@ import type {
 } from "@webstudio-is/css-engine";
 import * as customData from "../src/custom-data";
 import { camelCaseProperty } from "../src/parse-css";
-import { isSupportedProperty } from "./property-filter";
 
 const units: Record<string, Array<string>> = {
   number: [],
@@ -82,7 +81,6 @@ const beautifyKeyword = (_property: string, keyword: string) => {
 const convertToStyleValue = (
   node: CssNode,
   property: string,
-  value: string,
   unitGroups: Set<string>
 ): undefined | UnitValue | KeywordValue | UnparsedValue => {
   if (node?.type === "Identifier") {
@@ -98,9 +96,7 @@ const convertToStyleValue = (
       if (unitGroups.has("length")) {
         unit = "px";
       } else {
-        throw Error(
-          `Cannot infer unit for "${value}" initial value of ${property} property`
-        );
+        return;
       }
     }
     return {
@@ -141,33 +137,32 @@ const parseInitialValue = (
 
   // more than 2 values consider as keyword
   if (ast.children.first !== ast.children.last) {
+    const values: Array<
+      Exclude<ReturnType<typeof convertToStyleValue>, undefined>
+    > = [];
+    for (const node of ast.children) {
+      const styleValue = convertToStyleValue(node, property, unitGroups);
+      if (styleValue === undefined) {
+        return { type: "unparsed", value };
+      }
+      values.push(styleValue);
+    }
     return {
       type: "tuple",
-      value: ast.children.toArray().map((node) => {
-        const styleValue = convertToStyleValue(
-          node,
-          property,
-          value,
-          unitGroups
-        );
-        if (styleValue !== undefined) {
-          return styleValue;
-        }
-        throw Error(`Cannot find initial for ${property}`);
-      }),
+      value: values,
     };
   }
 
   const node = ast.children.first;
   let styleValue: undefined | StyleValue;
   if (node) {
-    styleValue = convertToStyleValue(node, property, value, unitGroups);
+    styleValue = convertToStyleValue(node, property, unitGroups);
   }
   if (styleValue !== undefined) {
     return styleValue;
   }
 
-  throw Error(`Cannot find initial for ${property}`);
+  return { type: "unparsed", value };
 };
 
 const walkSyntax = (
@@ -285,13 +280,6 @@ const filterData = () => {
     }
 
     const config = properties[property];
-
-    if (
-      isSupportedProperty(property, config.status, "mdn_url" in config) ===
-      false
-    ) {
-      continue;
-    }
 
     const isAnimatableProperty =
       property.startsWith("-") === false &&
@@ -544,14 +532,14 @@ writeToFile(
   Object.keys(filteredData.animatableLonghands)
 );
 writeToFile(
-  "experimental-properties.ts",
-  "experimentalProperties",
-  Object.entries({
-    ...filteredData.allLonghands,
-    ...filteredData.allShorthands,
-  })
-    .filter(([, config]) => config.status === "experimental")
-    .map(([property]) => property)
+  "property-statuses.ts",
+  "propertyStatuses",
+  Object.fromEntries(
+    Object.entries({
+      ...filteredData.allLonghands,
+      ...filteredData.allShorthands,
+    }).map(([property, config]) => [property, config.status])
+  )
 );
 writeToFile("pseudo-elements.ts", "pseudoElements", pseudoElements);
 writeToFile("pseudo-classes.ts", "pseudoClasses", pseudoClasses);

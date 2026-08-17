@@ -15,7 +15,6 @@ import { fileURLToPath } from "node:url";
 import properties from "mdn-data/css/properties.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
 import { definitionSyntax, generate, parse } from "css-tree";
-import { isSupportedProperty } from "./property-filter";
 
 type DSNode =
   | { type: "Keyword"; name: string }
@@ -230,13 +229,6 @@ const getFilteredProperties = () => {
 
   for (const [property, config] of Object.entries(propertyData)) {
     if (unsupportedProperties.includes(property)) {
-      continue;
-    }
-
-    if (
-      isSupportedProperty(property, config.status, "mdn_url" in config) ===
-      false
-    ) {
       continue;
     }
 

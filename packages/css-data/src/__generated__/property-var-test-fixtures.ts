@@ -19,6 +19,3827 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-4-slot-1",
+        positions: ["-moz-appearance:branch:3:keyword:button-arrow-next"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "button-arrow-next",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-appearance",
+    syntax:
+      "none | button | button-arrow-down | button-arrow-next | button-arrow-previous | button-arrow-up | button-bevel | button-focus | caret | checkbox | checkbox-container | checkbox-label | checkmenuitem | dualbutton | groupbox | listbox | listitem | menuarrow | menubar | menucheckbox | menuimage | menuitem | menuitemtext | menulist | menulist-button | menulist-text | menulist-textfield | menupopup | menuradio | menuseparator | meterbar | meterchunk | progressbar | progressbar-vertical | progresschunk | progresschunk-vertical | radio | radio-container | radio-label | radiomenuitem | range | range-thumb | resizer | resizerpanel | scale-horizontal | scalethumbend | scalethumb-horizontal | scalethumbstart | scalethumbtick | scalethumb-vertical | scale-vertical | scrollbarbutton-down | scrollbarbutton-left | scrollbarbutton-right | scrollbarbutton-up | scrollbarthumb-horizontal | scrollbarthumb-vertical | scrollbartrack-horizontal | scrollbartrack-vertical | searchfield | separator | sheet | spinner | spinner-downbutton | spinner-textfield | spinner-upbutton | splitter | statusbar | statusbarpanel | tab | tabpanel | tabpanels | tab-scroll-arrow-back | tab-scroll-arrow-forward | textfield | textfield-multiline | toolbar | toolbarbutton | toolbarbutton-dropdown | toolbargripper | toolbox | tooltip | treeheader | treeheadercell | treeheadersortarrow | treeitem | treeline | treetwisty | treetwistyopen | treeview | -moz-mac-unified-toolbar | -moz-win-borderless-glass | -moz-win-browsertabbar-toolbox | -moz-win-communicationstext | -moz-win-communications-toolbox | -moz-win-exclude-glass | -moz-win-glass | -moz-win-mediatext | -moz-win-media-toolbox | -moz-window-button-box | -moz-window-button-box-maximized | -moz-window-button-close | -moz-window-button-maximize | -moz-window-button-minimize | -moz-window-button-restore | -moz-window-frame-bottom | -moz-window-frame-left | -moz-window-frame-right | -moz-window-titlebar | -moz-window-titlebar-maximized",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-moz-binding:branch:0:type:url"],
+        value: "var(--slot-url)",
+        variables: {
+          "--slot-url": "url(hero.png)",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-moz-binding:branch:1:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-binding",
+    syntax: "<url> | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-moz-border-bottom-colors:branch:1:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "-moz-border-bottom-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "-moz-border-bottom-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color) var(--slot-color-2)",
+        variables: {
+          "--slot-color": "red",
+          "--slot-color-2": "red",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "-moz-border-bottom-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color) red",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "-moz-border-bottom-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "red var(--slot-color-2)",
+        variables: {
+          "--slot-color-2": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-border-bottom-colors",
+    syntax: "<color>+ | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-moz-border-left-colors:branch:1:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "-moz-border-left-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "-moz-border-left-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color) var(--slot-color-2)",
+        variables: {
+          "--slot-color": "red",
+          "--slot-color-2": "red",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "-moz-border-left-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color) red",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "-moz-border-left-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "red var(--slot-color-2)",
+        variables: {
+          "--slot-color-2": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-border-left-colors",
+    syntax: "<color>+ | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-moz-border-right-colors:branch:1:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "-moz-border-right-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "-moz-border-right-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color) var(--slot-color-2)",
+        variables: {
+          "--slot-color": "red",
+          "--slot-color-2": "red",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "-moz-border-right-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color) red",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "-moz-border-right-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "red var(--slot-color-2)",
+        variables: {
+          "--slot-color-2": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-border-right-colors",
+    syntax: "<color>+ | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-moz-border-top-colors:branch:1:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "-moz-border-top-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+          "-moz-border-top-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color) var(--slot-color-2)",
+        variables: {
+          "--slot-color": "red",
+          "--slot-color-2": "red",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "-moz-border-top-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color) red",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "-moz-border-top-colors:branch:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "red var(--slot-color-2)",
+        variables: {
+          "--slot-color-2": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-border-top-colors",
+    syntax: "<color>+ | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-moz-context-properties:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "-moz-context-properties:branch:1:repeat:branch:0:keyword:fill",
+          "-moz-context-properties:branch:1:repeat:branch:0:keyword:fill",
+        ],
+        value: "var(--slot-1),var(--slot-2)",
+        variables: {
+          "--slot-1": "fill",
+          "--slot-2": "fill",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "-moz-context-properties:branch:1:repeat:branch:0:keyword:fill",
+        ],
+        value: "var(--slot-1),fill",
+        variables: {
+          "--slot-1": "fill",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "-moz-context-properties:branch:1:repeat:branch:0:keyword:fill",
+        ],
+        value: "fill,var(--slot-2)",
+        variables: {
+          "--slot-2": "fill",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-context-properties",
+    syntax: "none | [ fill | fill-opacity | stroke | stroke-opacity ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["-moz-float-edge:branch:3:keyword:padding-box"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "padding-box",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-float-edge",
+    syntax: "border-box | content-box | margin-box | padding-box",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-moz-force-broken-image-icon:branch:1:keyword:1"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "1",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-force-broken-image-icon",
+    syntax: "0 | 1",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["-moz-orient:branch:3:keyword:vertical"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "vertical",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-orient",
+    syntax: "inline | block | horizontal | vertical",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-moz-outline-radius:term:0:repeat:type:outline-radius:branch:0:type:length",
+          "-moz-outline-radius:term:0:repeat:type:outline-radius:branch:0:type:length",
+          "-moz-outline-radius:term:0:repeat:type:outline-radius:branch:0:type:length",
+          "-moz-outline-radius:term:0:repeat:type:outline-radius:branch:0:type:length",
+          "-moz-outline-radius:term:1:repeat:term:1:repeat:type:outline-radius:branch:0:type:length",
+          "-moz-outline-radius:term:1:repeat:term:1:repeat:type:outline-radius:branch:0:type:length",
+          "-moz-outline-radius:term:1:repeat:term:1:repeat:type:outline-radius:branch:0:type:length",
+          "-moz-outline-radius:term:1:repeat:term:1:repeat:type:outline-radius:branch:0:type:length",
+        ],
+        value:
+          "var(--slot-outline-radius) var(--slot-outline-radius-2) var(--slot-outline-radius-3) var(--slot-outline-radius-4)/var(--slot-outline-radius-5) var(--slot-outline-radius-6) var(--slot-outline-radius-7) var(--slot-outline-radius-8)",
+        variables: {
+          "--slot-outline-radius": "1px",
+          "--slot-outline-radius-2": "1px",
+          "--slot-outline-radius-3": "1px",
+          "--slot-outline-radius-4": "1px",
+          "--slot-outline-radius-5": "1px",
+          "--slot-outline-radius-6": "1px",
+          "--slot-outline-radius-7": "1px",
+          "--slot-outline-radius-8": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-moz-outline-radius:term:0:repeat:type:outline-radius:branch:0:type:length",
+        ],
+        value: "var(--slot-outline-radius) 1px 1px 1px/1px 1px 1px 1px",
+        variables: {
+          "--slot-outline-radius": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-moz-outline-radius:term:0:repeat:type:outline-radius:branch:0:type:length",
+        ],
+        value: "1px var(--slot-outline-radius-2) 1px 1px/1px 1px 1px 1px",
+        variables: {
+          "--slot-outline-radius-2": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "-moz-outline-radius:term:0:repeat:type:outline-radius:branch:0:type:length",
+        ],
+        value: "1px 1px var(--slot-outline-radius-3) 1px/1px 1px 1px 1px",
+        variables: {
+          "--slot-outline-radius-3": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-4",
+        positions: [
+          "-moz-outline-radius:term:0:repeat:type:outline-radius:branch:0:type:length",
+        ],
+        value: "1px 1px 1px var(--slot-outline-radius-4)/1px 1px 1px 1px",
+        variables: {
+          "--slot-outline-radius-4": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-5",
+        positions: [
+          "-moz-outline-radius:term:1:repeat:term:1:repeat:type:outline-radius:branch:0:type:length",
+        ],
+        value: "1px 1px 1px 1px/var(--slot-outline-radius-5) 1px 1px 1px",
+        variables: {
+          "--slot-outline-radius-5": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-6",
+        positions: [
+          "-moz-outline-radius:term:1:repeat:term:1:repeat:type:outline-radius:branch:0:type:length",
+        ],
+        value: "1px 1px 1px 1px/1px var(--slot-outline-radius-6) 1px 1px",
+        variables: {
+          "--slot-outline-radius-6": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-7",
+        positions: [
+          "-moz-outline-radius:term:1:repeat:term:1:repeat:type:outline-radius:branch:0:type:length",
+        ],
+        value: "1px 1px 1px 1px/1px 1px var(--slot-outline-radius-7) 1px",
+        variables: {
+          "--slot-outline-radius-7": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-8",
+        positions: [
+          "-moz-outline-radius:term:1:repeat:term:1:repeat:type:outline-radius:branch:0:type:length",
+        ],
+        value: "1px 1px 1px 1px/1px 1px 1px var(--slot-outline-radius-8)",
+        variables: {
+          "--slot-outline-radius-8": "1px",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "-moz-outline-radius",
+    syntax: "<outline-radius>{1,4} [ / <outline-radius>{1,4} ]?",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-moz-outline-radius-bottomleft:term:0:type:outline-radius:branch:0:type:length",
+        ],
+        value: "var(--slot-outline-radius)",
+        variables: {
+          "--slot-outline-radius": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-outline-radius-bottomleft",
+    syntax: "<outline-radius>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-moz-outline-radius-bottomright:term:0:type:outline-radius:branch:0:type:length",
+        ],
+        value: "var(--slot-outline-radius)",
+        variables: {
+          "--slot-outline-radius": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-outline-radius-bottomright",
+    syntax: "<outline-radius>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-moz-outline-radius-topleft:term:0:type:outline-radius:branch:0:type:length",
+        ],
+        value: "var(--slot-outline-radius)",
+        variables: {
+          "--slot-outline-radius": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-outline-radius-topleft",
+    syntax: "<outline-radius>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-moz-outline-radius-topright:term:0:type:outline-radius:branch:0:type:length",
+        ],
+        value: "var(--slot-outline-radius)",
+        variables: {
+          "--slot-outline-radius": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-outline-radius-topright",
+    syntax: "<outline-radius>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-moz-stack-sizing:branch:1:keyword:stretch-to-fit"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "stretch-to-fit",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-stack-sizing",
+    syntax: "ignore | stretch-to-fit",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-moz-text-blink:branch:1:keyword:blink"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "blink",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-text-blink",
+    syntax: "none | blink",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["-moz-user-focus:branch:3:keyword:select-before"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "select-before",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-user-focus",
+    syntax:
+      "ignore | normal | select-after | select-before | select-menu | select-same | select-all | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["-moz-user-input:branch:3:keyword:disabled"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "disabled",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-user-input",
+    syntax: "auto | none | enabled | disabled",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-3-slot-1",
+        positions: ["-moz-user-modify:branch:2:keyword:write-only"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "write-only",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-user-modify",
+    syntax: "read-only | read-write | write-only",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-moz-window-dragging:branch:1:keyword:no-drag"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "no-drag",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-window-dragging",
+    syntax: "drag | no-drag",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["-moz-window-shadow:branch:3:keyword:sheet"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "sheet",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-moz-window-shadow",
+    syntax: "default | menu | tooltip | sheet | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-ms-accelerator:branch:1:keyword:true"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "true",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-accelerator",
+    syntax: "false | true",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["-ms-block-progression:branch:3:keyword:lr"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "lr",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-block-progression",
+    syntax: "tb | rl | bt | lr",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-ms-content-zoom-chaining:branch:1:keyword:chained"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "chained",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-content-zoom-chaining",
+    syntax: "none | chained",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-ms-content-zoom-limit:term:0:property:-ms-content-zoom-limit-min:term:0:type:percentage",
+          "-ms-content-zoom-limit:term:1:property:-ms-content-zoom-limit-max:term:0:type:percentage",
+        ],
+        value: "var(--slot-percentage) var(--slot-percentage-2)",
+        variables: {
+          "--slot-percentage": "10%",
+          "--slot-percentage-2": "10%",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-content-zoom-limit:term:0:property:-ms-content-zoom-limit-min:term:0:type:percentage",
+        ],
+        value: "var(--slot-percentage) 10%",
+        variables: {
+          "--slot-percentage": "10%",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-ms-content-zoom-limit:term:1:property:-ms-content-zoom-limit-max:term:0:type:percentage",
+        ],
+        value: "10% var(--slot-percentage-2)",
+        variables: {
+          "--slot-percentage-2": "10%",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "-ms-content-zoom-limit",
+    syntax: "<'-ms-content-zoom-limit-min'> <'-ms-content-zoom-limit-max'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-content-zoom-limit-max:term:0:type:percentage"],
+        value: "var(--slot-percentage)",
+        variables: {
+          "--slot-percentage": "10%",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-content-zoom-limit-max",
+    syntax: "<percentage>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-content-zoom-limit-min:term:0:type:percentage"],
+        value: "var(--slot-percentage)",
+        variables: {
+          "--slot-percentage": "10%",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-content-zoom-limit-min",
+    syntax: "<percentage>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-ms-content-zoom-snap:term:0:property:-ms-content-zoom-snap-type:branch:0:keyword:none",
+          "-ms-content-zoom-snap:term:1:property:-ms-content-zoom-snap-points:branch:0:term:1:type:percentage",
+          "-ms-content-zoom-snap:term:1:property:-ms-content-zoom-snap-points:branch:0:term:3:type:percentage",
+        ],
+        value:
+          "var(--slot-1) snapInterval(var(--slot-percentage),var(--slot-percentage-2))",
+        variables: {
+          "--slot-1": "none",
+          "--slot-percentage": "10%",
+          "--slot-percentage-2": "10%",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-content-zoom-snap:term:0:property:-ms-content-zoom-snap-type:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1) snapInterval(10%,10%)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-ms-content-zoom-snap:term:1:property:-ms-content-zoom-snap-points:branch:0:term:1:type:percentage",
+        ],
+        value: "none snapInterval(var(--slot-percentage),10%)",
+        variables: {
+          "--slot-percentage": "10%",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "-ms-content-zoom-snap:term:1:property:-ms-content-zoom-snap-points:branch:0:term:3:type:percentage",
+        ],
+        value: "none snapInterval(10%,var(--slot-percentage-2))",
+        variables: {
+          "--slot-percentage-2": "10%",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "-ms-content-zoom-snap",
+    syntax:
+      "<'-ms-content-zoom-snap-type'> || <'-ms-content-zoom-snap-points'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-ms-content-zoom-snap-points:branch:0:term:1:type:percentage",
+          "-ms-content-zoom-snap-points:branch:0:term:3:type:percentage",
+        ],
+        value: "snapInterval(var(--slot-percentage),var(--slot-percentage-2))",
+        variables: {
+          "--slot-percentage": "10%",
+          "--slot-percentage-2": "10%",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-content-zoom-snap-points:branch:0:term:1:type:percentage",
+        ],
+        value: "snapInterval(var(--slot-percentage),10%)",
+        variables: {
+          "--slot-percentage": "10%",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-ms-content-zoom-snap-points:branch:0:term:3:type:percentage",
+        ],
+        value: "snapInterval(10%,var(--slot-percentage-2))",
+        variables: {
+          "--slot-percentage-2": "10%",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "-ms-content-zoom-snap-points:branch:1:term:1:repeat:type:percentage",
+          "-ms-content-zoom-snap-points:branch:1:term:1:repeat:type:percentage",
+        ],
+        value: "snapList(var(--slot-percentage),var(--slot-percentage-2))",
+        variables: {
+          "--slot-percentage": "10%",
+          "--slot-percentage-2": "10%",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "-ms-content-zoom-snap-points:branch:1:term:1:repeat:type:percentage",
+        ],
+        value: "snapList(var(--slot-percentage),10%)",
+        variables: {
+          "--slot-percentage": "10%",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "-ms-content-zoom-snap-points:branch:1:term:1:repeat:type:percentage",
+        ],
+        value: "snapList(10%,var(--slot-percentage-2))",
+        variables: {
+          "--slot-percentage-2": "10%",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-content-zoom-snap-points",
+    syntax:
+      "snapInterval( <percentage>, <percentage> ) | snapList( <percentage># )",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-3-slot-1",
+        positions: ["-ms-content-zoom-snap-type:branch:2:keyword:mandatory"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "mandatory",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-content-zoom-snap-type",
+    syntax: "none | proximity | mandatory",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-ms-content-zooming:branch:1:keyword:zoom"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "zoom",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-content-zooming",
+    syntax: "none | zoom",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-filter:term:0:type:string"],
+        value: "var(--slot-string)",
+        variables: {
+          "--slot-string": '"x"',
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-filter",
+    syntax: "<string>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-ms-flow-from:term:0:repeat:branch:0:keyword:none",
+          "-ms-flow-from:term:0:repeat:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1),var(--slot-2)",
+        variables: {
+          "--slot-1": "none",
+          "--slot-2": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-flow-from:term:0:repeat:branch:0:keyword:none"],
+        value: "var(--slot-1),none",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: ["-ms-flow-from:term:0:repeat:branch:0:keyword:none"],
+        value: "none,var(--slot-2)",
+        variables: {
+          "--slot-2": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-flow-from",
+    syntax: "[ none | <custom-ident> ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-ms-flow-into:term:0:repeat:branch:0:keyword:none",
+          "-ms-flow-into:term:0:repeat:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1),var(--slot-2)",
+        variables: {
+          "--slot-1": "none",
+          "--slot-2": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-flow-into:term:0:repeat:branch:0:keyword:none"],
+        value: "var(--slot-1),none",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: ["-ms-flow-into:term:0:repeat:branch:0:keyword:none"],
+        value: "none,var(--slot-2)",
+        variables: {
+          "--slot-2": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-flow-into",
+    syntax: "[ none | <custom-ident> ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-grid-columns:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:1:branch:0:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:1:branch:0:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-columns:branch:1:type:track-list:term:1:repeat:type:line-names:term:0:string",
+          "-ms-grid-columns:branch:1:type:track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:1:type:track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:1:type:track-list:term:1:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          "var(--slot-track-list) var(--slot-track-list-2) var(--slot-track-list-3) var(--slot-track-list-4) var(--slot-track-list-5) var(--slot-track-list-6) var(--slot-track-list-7) var(--slot-track-list-8) var(--slot-track-list-9) var(--slot-track-list-10) var(--slot-track-list-11) var(--slot-track-list-12) var(--slot-track-list-13) var(--slot-track-list-14)",
+        variables: {
+          "--slot-track-list": '"x"',
+          "--slot-track-list-2": "custom-ident",
+          "--slot-track-list-3": "custom-ident",
+          "--slot-track-list-4": '"x"',
+          "--slot-track-list-5": "1px",
+          "--slot-track-list-6": '"x"',
+          "--slot-track-list-7": "custom-ident",
+          "--slot-track-list-8": "custom-ident",
+          "--slot-track-list-9": '"x"',
+          "--slot-track-list-10": "1px",
+          "--slot-track-list-11": '"x"',
+          "--slot-track-list-12": "custom-ident",
+          "--slot-track-list-13": "custom-ident",
+          "--slot-track-list-14": '"x"',
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          'var(--slot-track-list) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list": '"x"',
+        },
+      },
+      {
+        id: "pattern-2-slot-10",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:1:branch:0:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-track-list-10)"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-10": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-11",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:1:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-track-list-11) custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-11": '"x"',
+        },
+      },
+      {
+        id: "pattern-2-slot-12",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-track-list-12) custom-ident"x"',
+        variables: {
+          "--slot-track-list-12": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-13",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-track-list-13)"x"',
+        variables: {
+          "--slot-track-list-13": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-14",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:1:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-track-list-14)',
+        variables: {
+          "--slot-track-list-14": '"x"',
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"var(--slot-track-list-2) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-2": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-3",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident var(--slot-track-list-3)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-3": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-4",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident var(--slot-track-list-4) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-4": '"x"',
+        },
+      },
+      {
+        id: "pattern-2-slot-5",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:1:branch:0:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"var(--slot-track-list-5)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-5": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-6",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px var(--slot-track-list-6) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-6": '"x"',
+        },
+      },
+      {
+        id: "pattern-2-slot-7",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"var(--slot-track-list-7) custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-7": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-8",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-track-list-8)"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-8": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-9",
+        positions: [
+          "-ms-grid-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-track-list-9) 1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-9": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-all-slots",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:0:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:2:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:1:branch:0:keyword:auto-fill",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:1:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:1:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:0:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:2:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:0:string",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          "var(--slot-auto-track-list) var(--slot-auto-track-list-2) var(--slot-auto-track-list-3) var(--slot-auto-track-list-4) var(--slot-auto-track-list-5) var(--slot-auto-track-list-6) var(--slot-auto-track-list-7) var(--slot-auto-track-list-8) var(--slot-auto-track-list-9) var(--slot-auto-track-list-10) var(--slot-auto-track-list-11) var(--slot-auto-track-list-12) var(--slot-auto-track-list-13) var(--slot-auto-track-list-14) repeat(var(--slot-auto-track-list-15),var(--slot-auto-track-list-16) var(--slot-auto-track-list-17) var(--slot-auto-track-list-18) var(--slot-auto-track-list-19) var(--slot-auto-track-list-20) var(--slot-auto-track-list-21) var(--slot-auto-track-list-22) var(--slot-auto-track-list-23) var(--slot-auto-track-list-24) var(--slot-auto-track-list-25) var(--slot-auto-track-list-26) var(--slot-auto-track-list-27) var(--slot-auto-track-list-28) var(--slot-auto-track-list-29)) var(--slot-auto-track-list-30) var(--slot-auto-track-list-31) var(--slot-auto-track-list-32) var(--slot-auto-track-list-33) var(--slot-auto-track-list-34) var(--slot-auto-track-list-35) var(--slot-auto-track-list-36) var(--slot-auto-track-list-37) var(--slot-auto-track-list-38) var(--slot-auto-track-list-39) var(--slot-auto-track-list-40) var(--slot-auto-track-list-41) var(--slot-auto-track-list-42) var(--slot-auto-track-list-43)",
+        variables: {
+          "--slot-auto-track-list": '"x"',
+          "--slot-auto-track-list-2": "custom-ident",
+          "--slot-auto-track-list-3": "custom-ident",
+          "--slot-auto-track-list-4": '"x"',
+          "--slot-auto-track-list-5": "1px",
+          "--slot-auto-track-list-6": '"x"',
+          "--slot-auto-track-list-7": "custom-ident",
+          "--slot-auto-track-list-8": "custom-ident",
+          "--slot-auto-track-list-9": '"x"',
+          "--slot-auto-track-list-10": "1px",
+          "--slot-auto-track-list-11": '"x"',
+          "--slot-auto-track-list-12": "custom-ident",
+          "--slot-auto-track-list-13": "custom-ident",
+          "--slot-auto-track-list-14": '"x"',
+          "--slot-auto-track-list-15": "auto-fill",
+          "--slot-auto-track-list-16": '"x"',
+          "--slot-auto-track-list-17": "custom-ident",
+          "--slot-auto-track-list-18": "custom-ident",
+          "--slot-auto-track-list-19": '"x"',
+          "--slot-auto-track-list-20": "1px",
+          "--slot-auto-track-list-21": '"x"',
+          "--slot-auto-track-list-22": "custom-ident",
+          "--slot-auto-track-list-23": "custom-ident",
+          "--slot-auto-track-list-24": '"x"',
+          "--slot-auto-track-list-25": "1px",
+          "--slot-auto-track-list-26": '"x"',
+          "--slot-auto-track-list-27": "custom-ident",
+          "--slot-auto-track-list-28": "custom-ident",
+          "--slot-auto-track-list-29": '"x"',
+          "--slot-auto-track-list-30": '"x"',
+          "--slot-auto-track-list-31": "custom-ident",
+          "--slot-auto-track-list-32": "custom-ident",
+          "--slot-auto-track-list-33": '"x"',
+          "--slot-auto-track-list-34": "1px",
+          "--slot-auto-track-list-35": '"x"',
+          "--slot-auto-track-list-36": "custom-ident",
+          "--slot-auto-track-list-37": "custom-ident",
+          "--slot-auto-track-list-38": '"x"',
+          "--slot-auto-track-list-39": "1px",
+          "--slot-auto-track-list-40": '"x"',
+          "--slot-auto-track-list-41": "custom-ident",
+          "--slot-auto-track-list-42": "custom-ident",
+          "--slot-auto-track-list-43": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-1",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          'var(--slot-auto-track-list) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-10",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-auto-track-list-10)"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-10": "1px",
+        },
+      },
+      {
+        id: "pattern-3-slot-11",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-11) custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-11": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-12",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-12) custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-12": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-13",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-13)"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-13": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-14",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-14) repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-14": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-15",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:1:branch:0:keyword:auto-fill",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(var(--slot-auto-track-list-15),"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-15": "auto-fill",
+        },
+      },
+      {
+        id: "pattern-3-slot-16",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,var(--slot-auto-track-list-16) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-16": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-17",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"var(--slot-auto-track-list-17) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-17": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-18",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident var(--slot-auto-track-list-18)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-18": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-19",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident var(--slot-auto-track-list-19) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-19": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-2",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"var(--slot-auto-track-list-2) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-2": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-20",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:1:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"var(--slot-auto-track-list-20)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-20": "1px",
+        },
+      },
+      {
+        id: "pattern-3-slot-21",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-21) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-21": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-22",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-22) custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-22": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-23",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-23)"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-23": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-24",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-24) 1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-24": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-25",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:1:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-auto-track-list-25)"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-25": "1px",
+        },
+      },
+      {
+        id: "pattern-3-slot-26",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-26) custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-26": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-27",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-27) custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-27": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-28",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-28)"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-28": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-29",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-29))"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-29": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-3",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident var(--slot-auto-track-list-3)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-3": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-30",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x") var(--slot-auto-track-list-30) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-30": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-31",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"var(--slot-auto-track-list-31) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-31": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-32",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident var(--slot-auto-track-list-32)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-32": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-33",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident var(--slot-auto-track-list-33) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-33": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-34",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"var(--slot-auto-track-list-34)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-34": "1px",
+        },
+      },
+      {
+        id: "pattern-3-slot-35",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-35) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-35": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-36",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-36) custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-36": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-37",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-37)"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-37": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-38",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-38) 1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-38": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-39",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:3:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-auto-track-list-39)"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-39": "1px",
+        },
+      },
+      {
+        id: "pattern-3-slot-4",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident var(--slot-auto-track-list-4) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-4": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-40",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-40) custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-40": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-41",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-41) custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-41": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-42",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-42)"x"',
+        variables: {
+          "--slot-auto-track-list-42": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-43",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-43)',
+        variables: {
+          "--slot-auto-track-list-43": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-5",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"var(--slot-auto-track-list-5)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-5": "1px",
+        },
+      },
+      {
+        id: "pattern-3-slot-6",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-6) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-6": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-7",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-7) custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-7": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-8",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-8)"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-8": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-9",
+        positions: [
+          "-ms-grid-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-9) 1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-9": '"x"',
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-grid-columns",
+    syntax: "none | <track-list> | <auto-track-list>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-grid-rows:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:1:branch:0:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:1:branch:0:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-rows:branch:1:type:track-list:term:1:repeat:type:line-names:term:0:string",
+          "-ms-grid-rows:branch:1:type:track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:1:type:track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:1:type:track-list:term:1:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          "var(--slot-track-list) var(--slot-track-list-2) var(--slot-track-list-3) var(--slot-track-list-4) var(--slot-track-list-5) var(--slot-track-list-6) var(--slot-track-list-7) var(--slot-track-list-8) var(--slot-track-list-9) var(--slot-track-list-10) var(--slot-track-list-11) var(--slot-track-list-12) var(--slot-track-list-13) var(--slot-track-list-14)",
+        variables: {
+          "--slot-track-list": '"x"',
+          "--slot-track-list-2": "custom-ident",
+          "--slot-track-list-3": "custom-ident",
+          "--slot-track-list-4": '"x"',
+          "--slot-track-list-5": "1px",
+          "--slot-track-list-6": '"x"',
+          "--slot-track-list-7": "custom-ident",
+          "--slot-track-list-8": "custom-ident",
+          "--slot-track-list-9": '"x"',
+          "--slot-track-list-10": "1px",
+          "--slot-track-list-11": '"x"',
+          "--slot-track-list-12": "custom-ident",
+          "--slot-track-list-13": "custom-ident",
+          "--slot-track-list-14": '"x"',
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          'var(--slot-track-list) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list": '"x"',
+        },
+      },
+      {
+        id: "pattern-2-slot-10",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:1:branch:0:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-track-list-10)"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-10": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-11",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:1:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-track-list-11) custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-11": '"x"',
+        },
+      },
+      {
+        id: "pattern-2-slot-12",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-track-list-12) custom-ident"x"',
+        variables: {
+          "--slot-track-list-12": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-13",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-track-list-13)"x"',
+        variables: {
+          "--slot-track-list-13": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-14",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:1:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-track-list-14)',
+        variables: {
+          "--slot-track-list-14": '"x"',
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"var(--slot-track-list-2) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-2": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-3",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident var(--slot-track-list-3)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-3": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-4",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident var(--slot-track-list-4) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-4": '"x"',
+        },
+      },
+      {
+        id: "pattern-2-slot-5",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:1:branch:0:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"var(--slot-track-list-5)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-5": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-6",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px var(--slot-track-list-6) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-6": '"x"',
+        },
+      },
+      {
+        id: "pattern-2-slot-7",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"var(--slot-track-list-7) custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-7": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-8",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-track-list-8)"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-8": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-9",
+        positions: [
+          "-ms-grid-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-track-list-9) 1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-track-list-9": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-all-slots",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:0:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:2:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:1:branch:0:keyword:auto-fill",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:1:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:1:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:0:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:2:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:0:string",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          "var(--slot-auto-track-list) var(--slot-auto-track-list-2) var(--slot-auto-track-list-3) var(--slot-auto-track-list-4) var(--slot-auto-track-list-5) var(--slot-auto-track-list-6) var(--slot-auto-track-list-7) var(--slot-auto-track-list-8) var(--slot-auto-track-list-9) var(--slot-auto-track-list-10) var(--slot-auto-track-list-11) var(--slot-auto-track-list-12) var(--slot-auto-track-list-13) var(--slot-auto-track-list-14) repeat(var(--slot-auto-track-list-15),var(--slot-auto-track-list-16) var(--slot-auto-track-list-17) var(--slot-auto-track-list-18) var(--slot-auto-track-list-19) var(--slot-auto-track-list-20) var(--slot-auto-track-list-21) var(--slot-auto-track-list-22) var(--slot-auto-track-list-23) var(--slot-auto-track-list-24) var(--slot-auto-track-list-25) var(--slot-auto-track-list-26) var(--slot-auto-track-list-27) var(--slot-auto-track-list-28) var(--slot-auto-track-list-29)) var(--slot-auto-track-list-30) var(--slot-auto-track-list-31) var(--slot-auto-track-list-32) var(--slot-auto-track-list-33) var(--slot-auto-track-list-34) var(--slot-auto-track-list-35) var(--slot-auto-track-list-36) var(--slot-auto-track-list-37) var(--slot-auto-track-list-38) var(--slot-auto-track-list-39) var(--slot-auto-track-list-40) var(--slot-auto-track-list-41) var(--slot-auto-track-list-42) var(--slot-auto-track-list-43)",
+        variables: {
+          "--slot-auto-track-list": '"x"',
+          "--slot-auto-track-list-2": "custom-ident",
+          "--slot-auto-track-list-3": "custom-ident",
+          "--slot-auto-track-list-4": '"x"',
+          "--slot-auto-track-list-5": "1px",
+          "--slot-auto-track-list-6": '"x"',
+          "--slot-auto-track-list-7": "custom-ident",
+          "--slot-auto-track-list-8": "custom-ident",
+          "--slot-auto-track-list-9": '"x"',
+          "--slot-auto-track-list-10": "1px",
+          "--slot-auto-track-list-11": '"x"',
+          "--slot-auto-track-list-12": "custom-ident",
+          "--slot-auto-track-list-13": "custom-ident",
+          "--slot-auto-track-list-14": '"x"',
+          "--slot-auto-track-list-15": "auto-fill",
+          "--slot-auto-track-list-16": '"x"',
+          "--slot-auto-track-list-17": "custom-ident",
+          "--slot-auto-track-list-18": "custom-ident",
+          "--slot-auto-track-list-19": '"x"',
+          "--slot-auto-track-list-20": "1px",
+          "--slot-auto-track-list-21": '"x"',
+          "--slot-auto-track-list-22": "custom-ident",
+          "--slot-auto-track-list-23": "custom-ident",
+          "--slot-auto-track-list-24": '"x"',
+          "--slot-auto-track-list-25": "1px",
+          "--slot-auto-track-list-26": '"x"',
+          "--slot-auto-track-list-27": "custom-ident",
+          "--slot-auto-track-list-28": "custom-ident",
+          "--slot-auto-track-list-29": '"x"',
+          "--slot-auto-track-list-30": '"x"',
+          "--slot-auto-track-list-31": "custom-ident",
+          "--slot-auto-track-list-32": "custom-ident",
+          "--slot-auto-track-list-33": '"x"',
+          "--slot-auto-track-list-34": "1px",
+          "--slot-auto-track-list-35": '"x"',
+          "--slot-auto-track-list-36": "custom-ident",
+          "--slot-auto-track-list-37": "custom-ident",
+          "--slot-auto-track-list-38": '"x"',
+          "--slot-auto-track-list-39": "1px",
+          "--slot-auto-track-list-40": '"x"',
+          "--slot-auto-track-list-41": "custom-ident",
+          "--slot-auto-track-list-42": "custom-ident",
+          "--slot-auto-track-list-43": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-1",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          'var(--slot-auto-track-list) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-10",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-auto-track-list-10)"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-10": "1px",
+        },
+      },
+      {
+        id: "pattern-3-slot-11",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-11) custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-11": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-12",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-12) custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-12": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-13",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-13)"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-13": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-14",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-14) repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-14": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-15",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:1:branch:0:keyword:auto-fill",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(var(--slot-auto-track-list-15),"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-15": "auto-fill",
+        },
+      },
+      {
+        id: "pattern-3-slot-16",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,var(--slot-auto-track-list-16) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-16": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-17",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"var(--slot-auto-track-list-17) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-17": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-18",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident var(--slot-auto-track-list-18)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-18": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-19",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident var(--slot-auto-track-list-19) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-19": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-2",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"var(--slot-auto-track-list-2) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-2": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-20",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:1:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"var(--slot-auto-track-list-20)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-20": "1px",
+        },
+      },
+      {
+        id: "pattern-3-slot-21",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-21) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-21": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-22",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-22) custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-22": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-23",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-23)"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-23": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-24",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-24) 1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-24": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-25",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:1:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-auto-track-list-25)"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-25": "1px",
+        },
+      },
+      {
+        id: "pattern-3-slot-26",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-26) custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-26": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-27",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-27) custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-27": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-28",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-28)"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-28": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-29",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-29))"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-29": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-3",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident var(--slot-auto-track-list-3)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-3": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-30",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x") var(--slot-auto-track-list-30) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-30": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-31",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"var(--slot-auto-track-list-31) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-31": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-32",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident var(--slot-auto-track-list-32)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-32": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-33",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident var(--slot-auto-track-list-33) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-33": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-34",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"var(--slot-auto-track-list-34)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-34": "1px",
+        },
+      },
+      {
+        id: "pattern-3-slot-35",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-35) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-35": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-36",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-36) custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-36": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-37",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-37)"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-37": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-38",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-38) 1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-38": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-39",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:3:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-auto-track-list-39)"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-39": "1px",
+        },
+      },
+      {
+        id: "pattern-3-slot-4",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident var(--slot-auto-track-list-4) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-4": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-40",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-40) custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-40": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-41",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-41) custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-41": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-42",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-42)"x"',
+        variables: {
+          "--slot-auto-track-list-42": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-43",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-43)',
+        variables: {
+          "--slot-auto-track-list-43": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-5",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"var(--slot-auto-track-list-5)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-5": "1px",
+        },
+      },
+      {
+        id: "pattern-3-slot-6",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-6) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-6": '"x"',
+        },
+      },
+      {
+        id: "pattern-3-slot-7",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-7) custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-7": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-8",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-8)"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-8": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-3-slot-9",
+        positions: [
+          "-ms-grid-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
+        ],
+        value:
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-9) 1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+        variables: {
+          "--slot-auto-track-list-9": '"x"',
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-grid-rows",
+    syntax: "none | <track-list> | <auto-track-list>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-ms-high-contrast-adjust:branch:1:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-high-contrast-adjust",
+    syntax: "auto | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-hyphenate-limit-chars:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "-ms-hyphenate-limit-chars:branch:1:repeat:type:integer:term:0:type:number-token",
+          "-ms-hyphenate-limit-chars:branch:1:repeat:type:integer:term:0:type:number-token",
+          "-ms-hyphenate-limit-chars:branch:1:repeat:type:integer:term:0:type:number-token",
+        ],
+        value:
+          "var(--slot-integer) var(--slot-integer-2) var(--slot-integer-3)",
+        variables: {
+          "--slot-integer": "1",
+          "--slot-integer-2": "1",
+          "--slot-integer-3": "1",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "-ms-hyphenate-limit-chars:branch:1:repeat:type:integer:term:0:type:number-token",
+        ],
+        value: "var(--slot-integer)1 1",
+        variables: {
+          "--slot-integer": "1",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "-ms-hyphenate-limit-chars:branch:1:repeat:type:integer:term:0:type:number-token",
+        ],
+        value: "1 var(--slot-integer-2)1",
+        variables: {
+          "--slot-integer-2": "1",
+        },
+      },
+      {
+        id: "pattern-2-slot-3",
+        positions: [
+          "-ms-hyphenate-limit-chars:branch:1:repeat:type:integer:term:0:type:number-token",
+        ],
+        value: "1 1 var(--slot-integer-3)",
+        variables: {
+          "--slot-integer-3": "1",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-hyphenate-limit-chars",
+    syntax: "auto | <integer>{1,3}",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-hyphenate-limit-lines:branch:0:keyword:no-limit"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "no-limit",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "-ms-hyphenate-limit-lines:branch:1:type:integer:term:0:type:number-token",
+        ],
+        value: "var(--slot-integer)",
+        variables: {
+          "--slot-integer": "1",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-hyphenate-limit-lines",
+    syntax: "no-limit | <integer>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-hyphenate-limit-zone:branch:0:type:percentage"],
+        value: "var(--slot-percentage)",
+        variables: {
+          "--slot-percentage": "10%",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-ms-hyphenate-limit-zone:branch:1:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-hyphenate-limit-zone",
+    syntax: "<percentage> | <length>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-ms-ime-align:branch:1:keyword:after"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "after",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-ime-align",
+    syntax: "auto | after",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: [
+          "-ms-overflow-style:branch:3:keyword:-ms-autohiding-scrollbar",
+        ],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "-ms-autohiding-scrollbar",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-overflow-style",
+    syntax: "auto | none | scrollbar | -ms-autohiding-scrollbar",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-ms-scroll-chaining:branch:1:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scroll-chaining",
+    syntax: "chained | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-ms-scroll-limit:term:0:property:-ms-scroll-limit-x-min:term:0:type:length",
+          "-ms-scroll-limit:term:1:property:-ms-scroll-limit-y-min:term:0:type:length",
+          "-ms-scroll-limit:term:2:property:-ms-scroll-limit-x-max:branch:0:keyword:auto",
+          "-ms-scroll-limit:term:3:property:-ms-scroll-limit-y-max:branch:0:keyword:auto",
+        ],
+        value:
+          "var(--slot-length) var(--slot-length-2) var(--slot-3) var(--slot-4)",
+        variables: {
+          "--slot-length": "1px",
+          "--slot-length-2": "1px",
+          "--slot-3": "auto",
+          "--slot-4": "auto",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-scroll-limit:term:0:property:-ms-scroll-limit-x-min:term:0:type:length",
+        ],
+        value: "var(--slot-length) 1px auto auto",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-ms-scroll-limit:term:1:property:-ms-scroll-limit-y-min:term:0:type:length",
+        ],
+        value: "1px var(--slot-length-2) auto auto",
+        variables: {
+          "--slot-length-2": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "-ms-scroll-limit:term:2:property:-ms-scroll-limit-x-max:branch:0:keyword:auto",
+        ],
+        value: "1px 1px var(--slot-3) auto",
+        variables: {
+          "--slot-3": "auto",
+        },
+      },
+      {
+        id: "pattern-1-slot-4",
+        positions: [
+          "-ms-scroll-limit:term:3:property:-ms-scroll-limit-y-max:branch:0:keyword:auto",
+        ],
+        value: "1px 1px auto var(--slot-4)",
+        variables: {
+          "--slot-4": "auto",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "-ms-scroll-limit",
+    syntax:
+      "<'-ms-scroll-limit-x-min'> <'-ms-scroll-limit-y-min'> <'-ms-scroll-limit-x-max'> <'-ms-scroll-limit-y-max'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-scroll-limit-x-max:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-ms-scroll-limit-x-max:branch:1:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scroll-limit-x-max",
+    syntax: "auto | <length>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-scroll-limit-x-min:term:0:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scroll-limit-x-min",
+    syntax: "<length>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-scroll-limit-y-max:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-ms-scroll-limit-y-max:branch:1:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scroll-limit-y-max",
+    syntax: "auto | <length>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-scroll-limit-y-min:term:0:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scroll-limit-y-min",
+    syntax: "<length>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-ms-scroll-rails:branch:1:keyword:railed"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "railed",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scroll-rails",
+    syntax: "none | railed",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-ms-scroll-snap-points-x:branch:0:term:1:type:length-percentage:branch:0:type:length",
+          "-ms-scroll-snap-points-x:branch:0:term:3:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "snapInterval(var(--slot-length-percentage),var(--slot-length-percentage-2))",
+        variables: {
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-scroll-snap-points-x:branch:0:term:1:type:length-percentage:branch:0:type:length",
+        ],
+        value: "snapInterval(var(--slot-length-percentage),1px)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-ms-scroll-snap-points-x:branch:0:term:3:type:length-percentage:branch:0:type:length",
+        ],
+        value: "snapInterval(1px,var(--slot-length-percentage-2))",
+        variables: {
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "-ms-scroll-snap-points-x:branch:1:term:1:repeat:type:length-percentage:branch:0:type:length",
+          "-ms-scroll-snap-points-x:branch:1:term:1:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "snapList(var(--slot-length-percentage),var(--slot-length-percentage-2))",
+        variables: {
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "-ms-scroll-snap-points-x:branch:1:term:1:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value: "snapList(var(--slot-length-percentage),1px)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "-ms-scroll-snap-points-x:branch:1:term:1:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value: "snapList(1px,var(--slot-length-percentage-2))",
+        variables: {
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scroll-snap-points-x",
+    syntax:
+      "snapInterval( <length-percentage>, <length-percentage> ) | snapList( <length-percentage># )",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-ms-scroll-snap-points-y:branch:0:term:1:type:length-percentage:branch:0:type:length",
+          "-ms-scroll-snap-points-y:branch:0:term:3:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "snapInterval(var(--slot-length-percentage),var(--slot-length-percentage-2))",
+        variables: {
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-scroll-snap-points-y:branch:0:term:1:type:length-percentage:branch:0:type:length",
+        ],
+        value: "snapInterval(var(--slot-length-percentage),1px)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-ms-scroll-snap-points-y:branch:0:term:3:type:length-percentage:branch:0:type:length",
+        ],
+        value: "snapInterval(1px,var(--slot-length-percentage-2))",
+        variables: {
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "-ms-scroll-snap-points-y:branch:1:term:1:repeat:type:length-percentage:branch:0:type:length",
+          "-ms-scroll-snap-points-y:branch:1:term:1:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "snapList(var(--slot-length-percentage),var(--slot-length-percentage-2))",
+        variables: {
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "-ms-scroll-snap-points-y:branch:1:term:1:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value: "snapList(var(--slot-length-percentage),1px)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "-ms-scroll-snap-points-y:branch:1:term:1:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value: "snapList(1px,var(--slot-length-percentage-2))",
+        variables: {
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scroll-snap-points-y",
+    syntax:
+      "snapInterval( <length-percentage>, <length-percentage> ) | snapList( <length-percentage># )",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-3-slot-1",
+        positions: ["-ms-scroll-snap-type:branch:2:keyword:mandatory"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "mandatory",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scroll-snap-type",
+    syntax: "none | proximity | mandatory",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-ms-scroll-snap-x:term:0:property:-ms-scroll-snap-type:branch:0:keyword:none",
+          "-ms-scroll-snap-x:term:1:property:-ms-scroll-snap-points-x:branch:0:term:1:type:length-percentage:branch:0:type:length",
+          "-ms-scroll-snap-x:term:1:property:-ms-scroll-snap-points-x:branch:0:term:3:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "var(--slot-1) snapInterval(var(--slot-length-percentage),var(--slot-length-percentage-2))",
+        variables: {
+          "--slot-1": "none",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-scroll-snap-x:term:0:property:-ms-scroll-snap-type:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1) snapInterval(1px,1px)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-ms-scroll-snap-x:term:1:property:-ms-scroll-snap-points-x:branch:0:term:1:type:length-percentage:branch:0:type:length",
+        ],
+        value: "none snapInterval(var(--slot-length-percentage),1px)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "-ms-scroll-snap-x:term:1:property:-ms-scroll-snap-points-x:branch:0:term:3:type:length-percentage:branch:0:type:length",
+        ],
+        value: "none snapInterval(1px,var(--slot-length-percentage-2))",
+        variables: {
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "-ms-scroll-snap-x",
+    syntax: "<'-ms-scroll-snap-type'> <'-ms-scroll-snap-points-x'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-ms-scroll-snap-y:term:0:property:-ms-scroll-snap-type:branch:0:keyword:none",
+          "-ms-scroll-snap-y:term:1:property:-ms-scroll-snap-points-y:branch:0:term:1:type:length-percentage:branch:0:type:length",
+          "-ms-scroll-snap-y:term:1:property:-ms-scroll-snap-points-y:branch:0:term:3:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "var(--slot-1) snapInterval(var(--slot-length-percentage),var(--slot-length-percentage-2))",
+        variables: {
+          "--slot-1": "none",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-scroll-snap-y:term:0:property:-ms-scroll-snap-type:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1) snapInterval(1px,1px)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-ms-scroll-snap-y:term:1:property:-ms-scroll-snap-points-y:branch:0:term:1:type:length-percentage:branch:0:type:length",
+        ],
+        value: "none snapInterval(var(--slot-length-percentage),1px)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "-ms-scroll-snap-y:term:1:property:-ms-scroll-snap-points-y:branch:0:term:3:type:length-percentage:branch:0:type:length",
+        ],
+        value: "none snapInterval(1px,var(--slot-length-percentage-2))",
+        variables: {
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "-ms-scroll-snap-y",
+    syntax: "<'-ms-scroll-snap-type'> <'-ms-scroll-snap-points-y'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "-ms-scroll-translation:branch:1:keyword:vertical-to-horizontal",
+        ],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "vertical-to-horizontal",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scroll-translation",
+    syntax: "none | vertical-to-horizontal",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-scrollbar-3dlight-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scrollbar-3dlight-color",
+    syntax: "<color>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-scrollbar-arrow-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scrollbar-arrow-color",
+    syntax: "<color>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-scrollbar-base-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scrollbar-base-color",
+    syntax: "<color>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-scrollbar-darkshadow-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scrollbar-darkshadow-color",
+    syntax: "<color>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-scrollbar-face-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scrollbar-face-color",
+    syntax: "<color>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-scrollbar-highlight-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scrollbar-highlight-color",
+    syntax: "<color>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-scrollbar-shadow-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scrollbar-shadow-color",
+    syntax: "<color>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-ms-scrollbar-track-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-scrollbar-track-color",
+    syntax: "<color>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: [
+          "-ms-text-autospace:branch:3:keyword:ideograph-parenthesis",
+        ],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "ideograph-parenthesis",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-text-autospace",
+    syntax:
+      "none | ideograph-alpha | ideograph-numeric | ideograph-parenthesis | ideograph-space",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-ms-touch-select:branch:1:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-touch-select",
+    syntax: "grippers | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-3-slot-1",
+        positions: ["-ms-user-select:branch:2:keyword:text"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "text",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-user-select",
+    syntax: "none | element | text",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["-ms-wrap-flow:branch:3:keyword:end"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "end",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-wrap-flow",
+    syntax: "auto | both | start | end | maximum | clear",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-ms-wrap-margin:term:0:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-wrap-margin",
+    syntax: "<length>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-ms-wrap-through:branch:1:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-ms-wrap-through",
+    syntax: "wrap | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["-webkit-appearance:branch:3:keyword:caret"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "caret",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-appearance",
+    syntax:
+      "none | button | button-bevel | caret | checkbox | default-button | inner-spin-button | listbox | listitem | media-controls-background | media-controls-fullscreen-background | media-current-time-display | media-enter-fullscreen-button | media-exit-fullscreen-button | media-fullscreen-button | media-mute-button | media-overlay-play-button | media-play-button | media-seek-back-button | media-seek-forward-button | media-slider | media-sliderthumb | media-time-remaining-display | media-toggle-closed-captions-button | media-volume-slider | media-volume-slider-container | media-volume-sliderthumb | menulist | menulist-button | menulist-text | menulist-textfield | meter | progress-bar | progress-bar-value | push-button | radio | searchfield | searchfield-cancel-button | searchfield-decoration | searchfield-results-button | searchfield-results-decoration | slider-horizontal | slider-vertical | sliderthumb-horizontal | sliderthumb-vertical | square-button | textarea | textfield | -apple-pay-button",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-border-after:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+          "-webkit-border-after:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+          "-webkit-border-after:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
+        variables: {
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-after:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+        ],
+        value: "var(--slot-line-width) none red",
+        variables: {
+          "--slot-line-width": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-border-after:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+        ],
+        value: "1px var(--slot-line-style) red",
+        variables: {
+          "--slot-line-style": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "-webkit-border-after:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "1px none var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "-webkit-border-after",
+    syntax: "<'border-top'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-after-color:term:0:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-border-after-color",
+    syntax: "<'border-top-color'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-after-style:term:0:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
+        ],
+        value: "var(--slot-line-style)",
+        variables: {
+          "--slot-line-style": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-border-after-style",
+    syntax: "<'border-top-style'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-after-width:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
+        ],
+        value: "var(--slot-line-width)",
+        variables: {
+          "--slot-line-width": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-border-after-width",
+    syntax: "<'border-top-width'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-border-before:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+          "-webkit-border-before:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+          "-webkit-border-before:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
+        variables: {
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-before:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+        ],
+        value: "var(--slot-line-width) none red",
+        variables: {
+          "--slot-line-width": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-border-before:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+        ],
+        value: "1px var(--slot-line-style) red",
+        variables: {
+          "--slot-line-style": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "-webkit-border-before:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "1px none var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "-webkit-border-before",
+    syntax: "<'border-top'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-before-color:term:0:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-border-before-color",
+    syntax: "<'border-top-color'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-before-style:term:0:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
+        ],
+        value: "var(--slot-line-style)",
+        variables: {
+          "--slot-line-style": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-border-before-style",
+    syntax: "<'border-top-style'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-before-width:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
+        ],
+        value: "var(--slot-line-width)",
+        variables: {
+          "--slot-line-width": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-border-before-width",
+    syntax: "<'border-top-width'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-border-end:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+          "-webkit-border-end:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+          "-webkit-border-end:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
+        variables: {
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-end:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+        ],
+        value: "var(--slot-line-width) none red",
+        variables: {
+          "--slot-line-width": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-border-end:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+        ],
+        value: "1px var(--slot-line-style) red",
+        variables: {
+          "--slot-line-style": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "-webkit-border-end:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "1px none var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "-webkit-border-end",
+    syntax: "<'border-top'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-end-color:term:0:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-border-end-color",
+    syntax: "<'border-top-color'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-end-style:term:0:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
+        ],
+        value: "var(--slot-line-style)",
+        variables: {
+          "--slot-line-style": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-border-end-style",
+    syntax: "<'border-top-style'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-end-width:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
+        ],
+        value: "var(--slot-line-width)",
+        variables: {
+          "--slot-line-width": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-border-end-width",
+    syntax: "<'border-top-width'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-border-start:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+          "-webkit-border-start:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+          "-webkit-border-start:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
+        variables: {
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-start:term:0:property:border-top:term:0:type:line-width:branch:0:type:length",
+        ],
+        value: "var(--slot-line-width) none red",
+        variables: {
+          "--slot-line-width": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-border-start:term:0:property:border-top:term:1:type:line-style:branch:0:keyword:none",
+        ],
+        value: "1px var(--slot-line-style) red",
+        variables: {
+          "--slot-line-style": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "-webkit-border-start:term:0:property:border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "1px none var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "-webkit-border-start",
+    syntax: "<'border-top'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-start-color:term:0:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-border-start-color",
+    syntax: "<'border-top-color'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-start-style:term:0:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
+        ],
+        value: "var(--slot-line-style)",
+        variables: {
+          "--slot-line-style": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-border-start-style",
+    syntax: "<'border-top-style'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-border-start-width:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
+        ],
+        value: "var(--slot-line-width)",
+        variables: {
+          "--slot-line-width": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-border-start-width",
+    syntax: "<'border-top-width'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-box-reflect:term:0:repeat:branch:0:keyword:above",
+          "-webkit-box-reflect:term:1:repeat:type:length",
+          "-webkit-box-reflect:term:2:repeat:type:image:branch:0:type:url",
+        ],
+        value: "var(--slot-1) var(--slot-length) var(--slot-image)",
+        variables: {
+          "--slot-1": "above",
+          "--slot-length": "1px",
+          "--slot-image": "url(hero.png)",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: ["-webkit-box-reflect:term:0:repeat:branch:0:keyword:above"],
+        value: "var(--slot-1) 1px url(hero.png)",
+        variables: {
+          "--slot-1": "above",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: ["-webkit-box-reflect:term:1:repeat:type:length"],
+        value: "above var(--slot-length)url(hero.png)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "-webkit-box-reflect:term:2:repeat:type:image:branch:0:type:url",
+        ],
+        value: "above 1px var(--slot-image)",
+        variables: {
+          "--slot-image": "url(hero.png)",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-box-reflect",
+    syntax: "[ above | below | right | left ]? <length>? <image>?",
+  },
+  {
+    cases: [
+      {
         id: "pattern-1-slot-1",
         positions: ["-webkit-line-clamp:branch:0:keyword:none"],
         value: "var(--slot-1)",
@@ -40,6 +3861,650 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "-webkit-line-clamp",
     syntax: "none | <integer>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:0:type:mask-reference:branch:0:keyword:none",
+          "-webkit-mask:term:0:repeat:term:1:term:0:type:position:branch:0:term:0:branch:0:keyword:left",
+          "-webkit-mask:term:0:repeat:term:1:term:0:type:position:branch:0:term:1:branch:0:keyword:top",
+          "-webkit-mask:term:0:repeat:term:1:term:1:repeat:term:1:type:bg-size:branch:1:keyword:cover",
+          "-webkit-mask:term:0:repeat:term:2:type:repeat-style:branch:0:keyword:repeat-x",
+          "-webkit-mask:term:0:repeat:term:3:branch:0:type:visual-box:branch:0:keyword:content-box",
+          "-webkit-mask:term:0:repeat:term:4:branch:0:type:visual-box:branch:0:keyword:content-box",
+          "-webkit-mask:term:0:repeat:term:0:type:mask-reference:branch:0:keyword:none",
+          "-webkit-mask:term:0:repeat:term:1:term:0:type:position:branch:0:term:0:branch:0:keyword:left",
+          "-webkit-mask:term:0:repeat:term:1:term:0:type:position:branch:0:term:1:branch:0:keyword:top",
+          "-webkit-mask:term:0:repeat:term:1:term:1:repeat:term:1:type:bg-size:branch:1:keyword:cover",
+          "-webkit-mask:term:0:repeat:term:2:type:repeat-style:branch:0:keyword:repeat-x",
+          "-webkit-mask:term:0:repeat:term:3:branch:0:type:visual-box:branch:0:keyword:content-box",
+          "-webkit-mask:term:0:repeat:term:4:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value:
+          "var(--slot-mask-reference) var(--slot-position) var(--slot-position-2)/var(--slot-bg-size) var(--slot-repeat-style) var(--slot-visual-box) var(--slot-visual-box-2),var(--slot-mask-reference-2) var(--slot-position-3) var(--slot-position-4)/var(--slot-bg-size-2) var(--slot-repeat-style-2) var(--slot-visual-box-3) var(--slot-visual-box-4)",
+        variables: {
+          "--slot-mask-reference": "none",
+          "--slot-position": "left",
+          "--slot-position-2": "top",
+          "--slot-bg-size": "cover",
+          "--slot-repeat-style": "repeat-x",
+          "--slot-visual-box": "content-box",
+          "--slot-visual-box-2": "content-box",
+          "--slot-mask-reference-2": "none",
+          "--slot-position-3": "left",
+          "--slot-position-4": "top",
+          "--slot-bg-size-2": "cover",
+          "--slot-repeat-style-2": "repeat-x",
+          "--slot-visual-box-3": "content-box",
+          "--slot-visual-box-4": "content-box",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:0:type:mask-reference:branch:0:keyword:none",
+        ],
+        value:
+          "var(--slot-mask-reference) left top/cover repeat-x content-box content-box,none left top/cover repeat-x content-box content-box",
+        variables: {
+          "--slot-mask-reference": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-10",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:1:term:0:type:position:branch:0:term:1:branch:0:keyword:top",
+        ],
+        value:
+          "none left top/cover repeat-x content-box content-box,none left var(--slot-position-4)/cover repeat-x content-box content-box",
+        variables: {
+          "--slot-position-4": "top",
+        },
+      },
+      {
+        id: "pattern-1-slot-11",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:1:term:1:repeat:term:1:type:bg-size:branch:1:keyword:cover",
+        ],
+        value:
+          "none left top/cover repeat-x content-box content-box,none left top/var(--slot-bg-size-2) repeat-x content-box content-box",
+        variables: {
+          "--slot-bg-size-2": "cover",
+        },
+      },
+      {
+        id: "pattern-1-slot-12",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:2:type:repeat-style:branch:0:keyword:repeat-x",
+        ],
+        value:
+          "none left top/cover repeat-x content-box content-box,none left top/cover var(--slot-repeat-style-2) content-box content-box",
+        variables: {
+          "--slot-repeat-style-2": "repeat-x",
+        },
+      },
+      {
+        id: "pattern-1-slot-13",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:3:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value:
+          "none left top/cover repeat-x content-box content-box,none left top/cover repeat-x var(--slot-visual-box-3) content-box",
+        variables: {
+          "--slot-visual-box-3": "content-box",
+        },
+      },
+      {
+        id: "pattern-1-slot-14",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:4:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value:
+          "none left top/cover repeat-x content-box content-box,none left top/cover repeat-x content-box var(--slot-visual-box-4)",
+        variables: {
+          "--slot-visual-box-4": "content-box",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:1:term:0:type:position:branch:0:term:0:branch:0:keyword:left",
+        ],
+        value:
+          "none var(--slot-position) top/cover repeat-x content-box content-box,none left top/cover repeat-x content-box content-box",
+        variables: {
+          "--slot-position": "left",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:1:term:0:type:position:branch:0:term:1:branch:0:keyword:top",
+        ],
+        value:
+          "none left var(--slot-position-2)/cover repeat-x content-box content-box,none left top/cover repeat-x content-box content-box",
+        variables: {
+          "--slot-position-2": "top",
+        },
+      },
+      {
+        id: "pattern-1-slot-4",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:1:term:1:repeat:term:1:type:bg-size:branch:1:keyword:cover",
+        ],
+        value:
+          "none left top/var(--slot-bg-size) repeat-x content-box content-box,none left top/cover repeat-x content-box content-box",
+        variables: {
+          "--slot-bg-size": "cover",
+        },
+      },
+      {
+        id: "pattern-1-slot-5",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:2:type:repeat-style:branch:0:keyword:repeat-x",
+        ],
+        value:
+          "none left top/cover var(--slot-repeat-style) content-box content-box,none left top/cover repeat-x content-box content-box",
+        variables: {
+          "--slot-repeat-style": "repeat-x",
+        },
+      },
+      {
+        id: "pattern-1-slot-6",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:3:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value:
+          "none left top/cover repeat-x var(--slot-visual-box) content-box,none left top/cover repeat-x content-box content-box",
+        variables: {
+          "--slot-visual-box": "content-box",
+        },
+      },
+      {
+        id: "pattern-1-slot-7",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:4:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value:
+          "none left top/cover repeat-x content-box var(--slot-visual-box-2),none left top/cover repeat-x content-box content-box",
+        variables: {
+          "--slot-visual-box-2": "content-box",
+        },
+      },
+      {
+        id: "pattern-1-slot-8",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:0:type:mask-reference:branch:0:keyword:none",
+        ],
+        value:
+          "none left top/cover repeat-x content-box content-box,var(--slot-mask-reference-2) left top/cover repeat-x content-box content-box",
+        variables: {
+          "--slot-mask-reference-2": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-9",
+        positions: [
+          "-webkit-mask:term:0:repeat:term:1:term:0:type:position:branch:0:term:0:branch:0:keyword:left",
+        ],
+        value:
+          "none left top/cover repeat-x content-box content-box,none var(--slot-position-3) top/cover repeat-x content-box content-box",
+        variables: {
+          "--slot-position-3": "left",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "-webkit-mask",
+    syntax:
+      "[ <mask-reference> || <position> [ / <bg-size> ]? || <repeat-style> || [ <visual-box> | border | padding | content | text ] || [ <visual-box> | border | padding | content ] ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-mask-attachment:term:0:repeat:type:attachment:branch:0:keyword:scroll",
+          "-webkit-mask-attachment:term:0:repeat:type:attachment:branch:0:keyword:scroll",
+        ],
+        value: "var(--slot-attachment),var(--slot-attachment-2)",
+        variables: {
+          "--slot-attachment": "scroll",
+          "--slot-attachment-2": "scroll",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-mask-attachment:term:0:repeat:type:attachment:branch:0:keyword:scroll",
+        ],
+        value: "var(--slot-attachment),scroll",
+        variables: {
+          "--slot-attachment": "scroll",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-mask-attachment:term:0:repeat:type:attachment:branch:0:keyword:scroll",
+        ],
+        value: "scroll,var(--slot-attachment-2)",
+        variables: {
+          "--slot-attachment-2": "scroll",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-mask-attachment",
+    syntax: "<attachment>#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-mask-clip:term:0:repeat:branch:0:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
+          "-webkit-mask-clip:term:0:repeat:branch:0:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value: "var(--slot-coord-box),var(--slot-coord-box-2)",
+        variables: {
+          "--slot-coord-box": "content-box",
+          "--slot-coord-box-2": "content-box",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-mask-clip:term:0:repeat:branch:0:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value: "var(--slot-coord-box),content-box",
+        variables: {
+          "--slot-coord-box": "content-box",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-mask-clip:term:0:repeat:branch:0:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value: "content-box,var(--slot-coord-box-2)",
+        variables: {
+          "--slot-coord-box-2": "content-box",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-mask-clip",
+    syntax: "[ <coord-box> | no-clip | border | padding | content | text ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-mask-composite:term:0:repeat:type:composite-style:branch:0:keyword:clear",
+          "-webkit-mask-composite:term:0:repeat:type:composite-style:branch:0:keyword:clear",
+        ],
+        value: "var(--slot-composite-style),var(--slot-composite-style-2)",
+        variables: {
+          "--slot-composite-style": "clear",
+          "--slot-composite-style-2": "clear",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-mask-composite:term:0:repeat:type:composite-style:branch:0:keyword:clear",
+        ],
+        value: "var(--slot-composite-style),clear",
+        variables: {
+          "--slot-composite-style": "clear",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-mask-composite:term:0:repeat:type:composite-style:branch:0:keyword:clear",
+        ],
+        value: "clear,var(--slot-composite-style-2)",
+        variables: {
+          "--slot-composite-style-2": "clear",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-mask-composite",
+    syntax: "<composite-style>#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-mask-image:term:0:repeat:type:mask-reference:branch:0:keyword:none",
+          "-webkit-mask-image:term:0:repeat:type:mask-reference:branch:0:keyword:none",
+        ],
+        value: "var(--slot-mask-reference),var(--slot-mask-reference-2)",
+        variables: {
+          "--slot-mask-reference": "none",
+          "--slot-mask-reference-2": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-mask-image:term:0:repeat:type:mask-reference:branch:0:keyword:none",
+        ],
+        value: "var(--slot-mask-reference),none",
+        variables: {
+          "--slot-mask-reference": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-mask-image:term:0:repeat:type:mask-reference:branch:0:keyword:none",
+        ],
+        value: "none,var(--slot-mask-reference-2)",
+        variables: {
+          "--slot-mask-reference-2": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-mask-image",
+    syntax: "<mask-reference>#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-mask-origin:term:0:repeat:branch:0:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
+          "-webkit-mask-origin:term:0:repeat:branch:0:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value: "var(--slot-coord-box),var(--slot-coord-box-2)",
+        variables: {
+          "--slot-coord-box": "content-box",
+          "--slot-coord-box-2": "content-box",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-mask-origin:term:0:repeat:branch:0:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value: "var(--slot-coord-box),content-box",
+        variables: {
+          "--slot-coord-box": "content-box",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-mask-origin:term:0:repeat:branch:0:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
+        ],
+        value: "content-box,var(--slot-coord-box-2)",
+        variables: {
+          "--slot-coord-box-2": "content-box",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-mask-origin",
+    syntax: "[ <coord-box> | border | padding | content ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-mask-position:term:0:repeat:type:position:branch:0:term:0:branch:0:keyword:left",
+          "-webkit-mask-position:term:0:repeat:type:position:branch:0:term:1:branch:0:keyword:top",
+          "-webkit-mask-position:term:0:repeat:type:position:branch:0:term:0:branch:0:keyword:left",
+          "-webkit-mask-position:term:0:repeat:type:position:branch:0:term:1:branch:0:keyword:top",
+        ],
+        value:
+          "var(--slot-position) var(--slot-position-2),var(--slot-position-3) var(--slot-position-4)",
+        variables: {
+          "--slot-position": "left",
+          "--slot-position-2": "top",
+          "--slot-position-3": "left",
+          "--slot-position-4": "top",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-mask-position:term:0:repeat:type:position:branch:0:term:0:branch:0:keyword:left",
+        ],
+        value: "var(--slot-position) top,left top",
+        variables: {
+          "--slot-position": "left",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-mask-position:term:0:repeat:type:position:branch:0:term:1:branch:0:keyword:top",
+        ],
+        value: "left var(--slot-position-2),left top",
+        variables: {
+          "--slot-position-2": "top",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "-webkit-mask-position:term:0:repeat:type:position:branch:0:term:0:branch:0:keyword:left",
+        ],
+        value: "left top,var(--slot-position-3) top",
+        variables: {
+          "--slot-position-3": "left",
+        },
+      },
+      {
+        id: "pattern-1-slot-4",
+        positions: [
+          "-webkit-mask-position:term:0:repeat:type:position:branch:0:term:1:branch:0:keyword:top",
+        ],
+        value: "left top,left var(--slot-position-4)",
+        variables: {
+          "--slot-position-4": "top",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-mask-position",
+    syntax: "<position>#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-mask-position-x:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
+          "-webkit-mask-position-x:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage),var(--slot-length-percentage-2)",
+        variables: {
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-mask-position-x:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage),1px",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-mask-position-x:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "1px,var(--slot-length-percentage-2)",
+        variables: {
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-mask-position-x",
+    syntax: "[ <length-percentage> | left | center | right ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-mask-position-y:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
+          "-webkit-mask-position-y:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage),var(--slot-length-percentage-2)",
+        variables: {
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-mask-position-y:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage),1px",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-mask-position-y:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "1px,var(--slot-length-percentage-2)",
+        variables: {
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-mask-position-y",
+    syntax: "[ <length-percentage> | top | center | bottom ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-mask-repeat:term:0:repeat:type:repeat-style:branch:0:keyword:repeat-x",
+          "-webkit-mask-repeat:term:0:repeat:type:repeat-style:branch:0:keyword:repeat-x",
+        ],
+        value: "var(--slot-repeat-style),var(--slot-repeat-style-2)",
+        variables: {
+          "--slot-repeat-style": "repeat-x",
+          "--slot-repeat-style-2": "repeat-x",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-mask-repeat:term:0:repeat:type:repeat-style:branch:0:keyword:repeat-x",
+        ],
+        value: "var(--slot-repeat-style),repeat-x",
+        variables: {
+          "--slot-repeat-style": "repeat-x",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-mask-repeat:term:0:repeat:type:repeat-style:branch:0:keyword:repeat-x",
+        ],
+        value: "repeat-x,var(--slot-repeat-style-2)",
+        variables: {
+          "--slot-repeat-style-2": "repeat-x",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-mask-repeat",
+    syntax: "<repeat-style>#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["-webkit-mask-repeat-x:branch:3:keyword:round"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "round",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-mask-repeat-x",
+    syntax: "repeat | no-repeat | space | round",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["-webkit-mask-repeat-y:branch:3:keyword:round"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "round",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-mask-repeat-y",
+    syntax: "repeat | no-repeat | space | round",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "-webkit-mask-size:term:0:repeat:type:bg-size:branch:1:keyword:cover",
+          "-webkit-mask-size:term:0:repeat:type:bg-size:branch:1:keyword:cover",
+        ],
+        value: "var(--slot-bg-size),var(--slot-bg-size-2)",
+        variables: {
+          "--slot-bg-size": "cover",
+          "--slot-bg-size-2": "cover",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "-webkit-mask-size:term:0:repeat:type:bg-size:branch:1:keyword:cover",
+        ],
+        value: "var(--slot-bg-size),cover",
+        variables: {
+          "--slot-bg-size": "cover",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "-webkit-mask-size:term:0:repeat:type:bg-size:branch:1:keyword:cover",
+        ],
+        value: "cover,var(--slot-bg-size-2)",
+        variables: {
+          "--slot-bg-size-2": "cover",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-mask-size",
+    syntax: "<bg-size>#",
   },
   {
     cases: [
@@ -158,6 +4623,53 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "-webkit-text-stroke-width",
     syntax: "<length>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["-webkit-touch-callout:branch:1:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-touch-callout",
+    syntax: "default | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-3-slot-1",
+        positions: [
+          "-webkit-user-modify:branch:2:keyword:read-write-plaintext-only",
+        ],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "read-write-plaintext-only",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-user-modify",
+    syntax: "read-only | read-write | read-write-plaintext-only",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["-webkit-user-select:branch:3:keyword:all"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "all",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "-webkit-user-select",
+    syntax: "auto | text | none | all",
   },
   {
     cases: [
@@ -337,6 +4849,42 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     property: "align-self",
     syntax:
       "auto | normal | stretch | <baseline-position> | <overflow-position>? <self-position> | anchor-center",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "align-tracks:term:0:repeat:branch:0:keyword:normal",
+          "align-tracks:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "var(--slot-1),var(--slot-2)",
+        variables: {
+          "--slot-1": "normal",
+          "--slot-2": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: ["align-tracks:term:0:repeat:branch:0:keyword:normal"],
+        value: "var(--slot-1),normal",
+        variables: {
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: ["align-tracks:term:0:repeat:branch:0:keyword:normal"],
+        value: "normal,var(--slot-2)",
+        variables: {
+          "--slot-2": "normal",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "align-tracks",
+    syntax:
+      "[ normal | <baseline-position> | <content-distribution> | <overflow-position>? <content-position> ]#",
   },
   {
     cases: [
@@ -2207,6 +6755,31 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "background-size",
     syntax: "<bg-size>#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "baseline-shift:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
+        id: "pattern-4-slot-1",
+        positions: ["baseline-shift:branch:3:keyword:baseline"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "baseline",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "baseline-shift",
+    syntax: "<length-percentage> | sub | super | baseline",
   },
   {
     cases: [
@@ -4600,6 +9173,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-4-slot-1",
+        positions: ["box-align:branch:3:keyword:baseline"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "baseline",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "box-align",
+    syntax: "start | center | end | baseline | stretch",
+  },
+  {
+    cases: [
+      {
         id: "pattern-2-slot-1",
         positions: ["box-decoration-break:branch:1:keyword:clone"],
         value: "var(--slot-1)",
@@ -4611,6 +9199,115 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "box-decoration-break",
     syntax: "slice | clone",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-3-slot-1",
+        positions: ["box-direction:branch:2:keyword:inherit"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "inherit",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "box-direction",
+    syntax: "normal | reverse | inherit",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["box-flex:term:0:type:number"],
+        value: "var(--slot-number)",
+        variables: {
+          "--slot-number": "1",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "box-flex",
+    syntax: "<number>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "box-flex-group:term:0:type:integer:term:0:type:number-token",
+        ],
+        value: "var(--slot-integer)",
+        variables: {
+          "--slot-integer": "1",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "box-flex-group",
+    syntax: "<integer>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["box-lines:branch:1:keyword:multiple"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "multiple",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "box-lines",
+    syntax: "single | multiple",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "box-ordinal-group:term:0:type:integer:term:0:type:number-token",
+        ],
+        value: "var(--slot-integer)",
+        variables: {
+          "--slot-integer": "1",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "box-ordinal-group",
+    syntax: "<integer>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["box-orient:branch:3:keyword:block-axis"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "block-axis",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "box-orient",
+    syntax: "horizontal | vertical | inline-axis | block-axis | inherit",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["box-pack:branch:3:keyword:justify"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "justify",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "box-pack",
+    syntax: "start | center | end | justify",
   },
   {
     cases: [
@@ -4872,6 +9569,53 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-all-slots",
+        positions: [
+          "caret:term:0:property:caret-color:branch:0:keyword:auto",
+          "caret:term:1:property:caret-animation:branch:0:keyword:auto",
+          "caret:term:2:property:caret-shape:branch:0:keyword:auto",
+        ],
+        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        variables: {
+          "--slot-1": "auto",
+          "--slot-2": "auto",
+          "--slot-3": "auto",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: ["caret:term:0:property:caret-color:branch:0:keyword:auto"],
+        value: "var(--slot-1) auto auto",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "caret:term:1:property:caret-animation:branch:0:keyword:auto",
+        ],
+        value: "auto var(--slot-2) auto",
+        variables: {
+          "--slot-2": "auto",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: ["caret:term:2:property:caret-shape:branch:0:keyword:auto"],
+        value: "auto auto var(--slot-3)",
+        variables: {
+          "--slot-3": "auto",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "caret",
+    syntax: "<'caret-color'> || <'caret-animation'> || <'caret-shape'>",
+  },
+  {
+    cases: [
+      {
         id: "pattern-2-slot-1",
         positions: ["caret-animation:branch:1:keyword:manual"],
         value: "var(--slot-1)",
@@ -4913,6 +9657,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     cases: [
       {
         id: "pattern-4-slot-1",
+        positions: ["caret-shape:branch:3:keyword:underscore"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "underscore",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "caret-shape",
+    syntax: "auto | bar | block | underscore",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
         positions: ["clear:branch:3:keyword:both"],
         value: "var(--slot-1)",
         variables: {
@@ -4923,6 +9682,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "clear",
     syntax: "none | left | right | both | inline-start | inline-end",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["clip:branch:1:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "clip",
+    syntax: "<shape> | auto",
   },
   {
     cases: [
@@ -7709,6 +12483,48 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-3-slot-1",
+        positions: ["font-smooth:branch:2:keyword:always"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "always",
+        },
+      },
+      {
+        id: "pattern-4-slot-1",
+        positions: [
+          "font-smooth:branch:3:type:absolute-size:branch:0:keyword:xx-small",
+        ],
+        value: "var(--slot-absolute-size)",
+        variables: {
+          "--slot-absolute-size": "xx-small",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "font-smooth",
+    syntax: "auto | never | always | <absolute-size> | <length>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "font-stretch:term:0:type:font-stretch-absolute:branch:0:keyword:normal",
+        ],
+        value: "var(--slot-font-stretch-absolute)",
+        variables: {
+          "--slot-font-stretch-absolute": "normal",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "font-stretch",
+    syntax: "<font-stretch-absolute>",
+  },
+  {
+    cases: [
+      {
         id: "pattern-2-slot-1",
         positions: ["font-style:branch:1:keyword:italic"],
         value: "var(--slot-1)",
@@ -9168,6 +13984,23 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: [
+          "grid-column-gap:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "grid-column-gap",
+    syntax: "<length-percentage>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
           "grid-column-start:term:0:type:grid-line:branch:0:keyword:auto",
         ],
         value: "var(--slot-grid-line)",
@@ -9179,6 +14012,45 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "grid-column-start",
     syntax: "<grid-line>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "grid-gap:term:0:property:grid-row-gap:term:0:type:length-percentage:branch:0:type:length",
+          "grid-gap:term:1:repeat:property:grid-column-gap:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
+        variables: {
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "grid-gap:term:0:property:grid-row-gap:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage) 1px",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "grid-gap:term:1:repeat:property:grid-column-gap:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "1px var(--slot-length-percentage-2)",
+        variables: {
+          "--slot-length-percentage-2": "1px",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "grid-gap",
+    syntax: "<'grid-row-gap'> <'grid-column-gap'>?",
   },
   {
     cases: [
@@ -9231,6 +14103,23 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "grid-row-end",
     syntax: "<grid-line>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "grid-row-gap:term:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "grid-row-gap",
+    syntax: "<length-percentage>",
   },
   {
     cases: [
@@ -11445,6 +16334,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-4-slot-1",
+        positions: ["ime-mode:branch:3:keyword:inactive"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "inactive",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "ime-mode",
+    syntax: "auto | normal | active | inactive | disabled",
+  },
+  {
+    cases: [
+      {
         id: "pattern-1-slot-1",
         positions: ["initial-letter:branch:0:keyword:normal"],
         value: "var(--slot-1)",
@@ -11937,6 +16841,42 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     property: "justify-self",
     syntax:
       "auto | normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ] | anchor-center",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "justify-tracks:term:0:repeat:branch:0:keyword:normal",
+          "justify-tracks:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "var(--slot-1),var(--slot-2)",
+        variables: {
+          "--slot-1": "normal",
+          "--slot-2": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: ["justify-tracks:term:0:repeat:branch:0:keyword:normal"],
+        value: "var(--slot-1),normal",
+        variables: {
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: ["justify-tracks:term:0:repeat:branch:0:keyword:normal"],
+        value: "normal,var(--slot-2)",
+        variables: {
+          "--slot-2": "normal",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "justify-tracks",
+    syntax:
+      "[ normal | <content-distribution> | <overflow-position>? [ <content-position> | left | right ] ]#",
   },
   {
     cases: [
@@ -13761,6 +18701,57 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-2-slot-2",
+        positions: ["masonry-auto-flow:term:1:branch:1:keyword:ordered"],
+        value: "pack var(--slot-2)",
+        variables: {
+          "--slot-2": "ordered",
+        },
+      },
+      {
+        id: "pattern-3-slot-1",
+        positions: ["masonry-auto-flow:term:0:branch:1:keyword:next"],
+        value: "var(--slot-1) definite-first",
+        variables: {
+          "--slot-1": "next",
+        },
+      },
+      {
+        id: "pattern-4-all-slots",
+        positions: [
+          "masonry-auto-flow:term:0:branch:1:keyword:next",
+          "masonry-auto-flow:term:1:branch:1:keyword:ordered",
+        ],
+        value: "var(--slot-1) var(--slot-2)",
+        variables: {
+          "--slot-1": "next",
+          "--slot-2": "ordered",
+        },
+      },
+      {
+        id: "pattern-4-slot-1",
+        positions: ["masonry-auto-flow:term:0:branch:1:keyword:next"],
+        value: "var(--slot-1) ordered",
+        variables: {
+          "--slot-1": "next",
+        },
+      },
+      {
+        id: "pattern-4-slot-2",
+        positions: ["masonry-auto-flow:term:1:branch:1:keyword:ordered"],
+        value: "next var(--slot-2)",
+        variables: {
+          "--slot-2": "ordered",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "masonry-auto-flow",
+    syntax: "[ pack | next ] || [ definite-first | ordered ]",
+  },
+  {
+    cases: [
+      {
         id: "pattern-1-slot-1",
         positions: ["math-depth:branch:0:keyword:auto-add"],
         value: "var(--slot-1)",
@@ -14826,6 +19817,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-2-slot-1",
+        positions: ["overflow-clip-box:branch:1:keyword:content-box"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "content-box",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "overflow-clip-box",
+    syntax: "padding-box | content-box",
+  },
+  {
+    cases: [
+      {
         id: "pattern-1-all-slots",
         positions: [
           "overflow-clip-margin:term:0:type:visual-box:branch:0:keyword:content-box",
@@ -15334,6 +20340,51 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "page",
     syntax: "auto | <custom-ident>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["page-break-after:branch:3:keyword:left"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "left",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "page-break-after",
+    syntax: "auto | always | avoid | left | right | recto | verso",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["page-break-before:branch:3:keyword:left"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "left",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "page-break-before",
+    syntax: "auto | always | avoid | left | right | recto | verso",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["page-break-inside:branch:1:keyword:avoid"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "avoid",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "page-break-inside",
+    syntax: "auto | avoid",
   },
   {
     cases: [
@@ -16165,6 +21216,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-2-slot-1",
+        positions: ["ruby-overhang:branch:1:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "ruby-overhang",
+    syntax: "auto | none",
+  },
+  {
+    cases: [
+      {
         id: "pattern-1-slot-1",
         positions: ["ruby-position:branch:1:keyword:inter-character"],
         value: "var(--slot-1)",
@@ -16962,6 +22028,167 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["scroll-snap-coordinate:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "scroll-snap-coordinate:branch:1:repeat:type:position:branch:0:term:0:branch:0:keyword:left",
+          "scroll-snap-coordinate:branch:1:repeat:type:position:branch:0:term:1:branch:0:keyword:top",
+          "scroll-snap-coordinate:branch:1:repeat:type:position:branch:0:term:0:branch:0:keyword:left",
+          "scroll-snap-coordinate:branch:1:repeat:type:position:branch:0:term:1:branch:0:keyword:top",
+        ],
+        value:
+          "var(--slot-position) var(--slot-position-2),var(--slot-position-3) var(--slot-position-4)",
+        variables: {
+          "--slot-position": "left",
+          "--slot-position-2": "top",
+          "--slot-position-3": "left",
+          "--slot-position-4": "top",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "scroll-snap-coordinate:branch:1:repeat:type:position:branch:0:term:0:branch:0:keyword:left",
+        ],
+        value: "var(--slot-position) top,left top",
+        variables: {
+          "--slot-position": "left",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "scroll-snap-coordinate:branch:1:repeat:type:position:branch:0:term:1:branch:0:keyword:top",
+        ],
+        value: "left var(--slot-position-2),left top",
+        variables: {
+          "--slot-position-2": "top",
+        },
+      },
+      {
+        id: "pattern-2-slot-3",
+        positions: [
+          "scroll-snap-coordinate:branch:1:repeat:type:position:branch:0:term:0:branch:0:keyword:left",
+        ],
+        value: "left top,var(--slot-position-3) top",
+        variables: {
+          "--slot-position-3": "left",
+        },
+      },
+      {
+        id: "pattern-2-slot-4",
+        positions: [
+          "scroll-snap-coordinate:branch:1:repeat:type:position:branch:0:term:1:branch:0:keyword:top",
+        ],
+        value: "left top,left var(--slot-position-4)",
+        variables: {
+          "--slot-position-4": "top",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "scroll-snap-coordinate",
+    syntax: "none | <position>#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "scroll-snap-destination:term:0:type:position:branch:0:term:0:branch:0:keyword:left",
+          "scroll-snap-destination:term:0:type:position:branch:0:term:1:branch:0:keyword:top",
+        ],
+        value: "var(--slot-position) var(--slot-position-2)",
+        variables: {
+          "--slot-position": "left",
+          "--slot-position-2": "top",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "scroll-snap-destination:term:0:type:position:branch:0:term:0:branch:0:keyword:left",
+        ],
+        value: "var(--slot-position) top",
+        variables: {
+          "--slot-position": "left",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "scroll-snap-destination:term:0:type:position:branch:0:term:1:branch:0:keyword:top",
+        ],
+        value: "left var(--slot-position-2)",
+        variables: {
+          "--slot-position-2": "top",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "scroll-snap-destination",
+    syntax: "<position>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["scroll-snap-points-x:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "scroll-snap-points-x:branch:1:term:1:type:length-percentage:branch:0:type:length",
+        ],
+        value: "repeat(var(--slot-length-percentage))",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "scroll-snap-points-x",
+    syntax: "none | repeat( <length-percentage> )",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["scroll-snap-points-y:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "scroll-snap-points-y:branch:1:term:1:type:length-percentage:branch:0:type:length",
+        ],
+        value: "repeat(var(--slot-length-percentage))",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "scroll-snap-points-y",
+    syntax: "none | repeat( <length-percentage> )",
+  },
+  {
+    cases: [
+      {
         id: "pattern-2-slot-1",
         positions: ["scroll-snap-stop:branch:1:keyword:always"],
         value: "var(--slot-1)",
@@ -17019,6 +22246,36 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     property: "scroll-snap-type",
     syntax:
       "none | [ x | y | block | inline | both ] [ mandatory | proximity ]?",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-3-slot-1",
+        positions: ["scroll-snap-type-x:branch:2:keyword:proximity"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "proximity",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "scroll-snap-type-x",
+    syntax: "none | mandatory | proximity",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-3-slot-1",
+        positions: ["scroll-snap-type-y:branch:2:keyword:proximity"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "proximity",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "scroll-snap-type-y",
+    syntax: "none | mandatory | proximity",
   },
   {
     cases: [
@@ -17733,6 +22990,115 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "text-autospace",
     syntax: "normal | <autospace> | auto",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["text-box:branch:0:keyword:normal"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "text-box:branch:1:term:0:property:text-box-trim:branch:0:keyword:none",
+          "text-box:branch:1:term:1:property:text-box-edge:branch:0:keyword:auto",
+        ],
+        value: "var(--slot-1) var(--slot-2)",
+        variables: {
+          "--slot-1": "none",
+          "--slot-2": "auto",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "text-box:branch:1:term:0:property:text-box-trim:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1) auto",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "text-box:branch:1:term:1:property:text-box-edge:branch:0:keyword:auto",
+        ],
+        value: "none var(--slot-2)",
+        variables: {
+          "--slot-2": "auto",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "text-box",
+    syntax: "normal | <'text-box-trim'> || <'text-box-edge'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["text-box-edge:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "text-box-edge:branch:1:type:text-edge:term:0:branch:0:keyword:text",
+          "text-box-edge:branch:1:type:text-edge:term:1:repeat:branch:0:keyword:text",
+        ],
+        value: "var(--slot-text-edge) var(--slot-text-edge-2)",
+        variables: {
+          "--slot-text-edge": "text",
+          "--slot-text-edge-2": "text",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "text-box-edge:branch:1:type:text-edge:term:0:branch:0:keyword:text",
+        ],
+        value: "var(--slot-text-edge) text",
+        variables: {
+          "--slot-text-edge": "text",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "text-box-edge:branch:1:type:text-edge:term:1:repeat:branch:0:keyword:text",
+        ],
+        value: "text var(--slot-text-edge-2)",
+        variables: {
+          "--slot-text-edge-2": "text",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "text-box-edge",
+    syntax: "auto | <text-edge>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["text-box-trim:branch:3:keyword:trim-both"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "trim-both",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "text-box-trim",
+    syntax: "none | trim-start | trim-end | trim-both",
   },
   {
     cases: [
@@ -20259,6 +25625,49 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "view-timeline-name",
     syntax: "[ none | <dashed-ident> ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["view-transition-class:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "view-transition-class:branch:1:repeat:type:custom-ident",
+          "view-transition-class:branch:1:repeat:type:custom-ident",
+        ],
+        value: "var(--slot-custom-ident) var(--slot-custom-ident-2)",
+        variables: {
+          "--slot-custom-ident": "custom-ident",
+          "--slot-custom-ident-2": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["view-transition-class:branch:1:repeat:type:custom-ident"],
+        value: "var(--slot-custom-ident) custom-ident",
+        variables: {
+          "--slot-custom-ident": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: ["view-transition-class:branch:1:repeat:type:custom-ident"],
+        value: "custom-ident var(--slot-custom-ident-2)",
+        variables: {
+          "--slot-custom-ident-2": "custom-ident",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "view-transition-class",
+    syntax: "none | <custom-ident>+",
   },
   {
     cases: [

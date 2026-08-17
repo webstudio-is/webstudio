@@ -1512,6 +1512,23 @@ test("preserve shorthands with incompatible MDN and CSS-tree data", () => {
   ]);
 });
 
+test.each([
+  [
+    "-ms-content-zoom-snap",
+    "-ms-content-zoom-snap-type",
+    "-ms-content-zoom-snap-points",
+  ],
+  ["-ms-scroll-snap-x", "-ms-scroll-snap-type", "-ms-scroll-snap-points-x"],
+  ["-ms-scroll-snap-y", "-ms-scroll-snap-type", "-ms-scroll-snap-points-y"],
+])("expand syntax-defined function shorthand %s", (shorthand, type, points) => {
+  expect(
+    expandShorthands([[shorthand, "mandatory snapInterval(10%, 20%)"]])
+  ).toEqual([
+    [type, "mandatory"],
+    [points, "snapInterval(10%,20%)"],
+  ]);
+});
+
 test("replace empty value with unset", () => {
   expect(expandShorthands([["color", ""]])).toEqual([["color", "unset"]]);
   expect(expandShorthands([["transition", ""]])).toEqual([
