@@ -95,8 +95,8 @@ describe("text file assets", () => {
     expect(normalizeTextFileConversion({ format: "json" }, " \n")).toEqual({
       content: "{}\n",
     });
-    expect(
-      normalizeTextFileConversion({ format: "json" }, "not json")
-    ).toEqual({ error: "Enter a JSON-compatible value." });
+    expect(normalizeTextFileConversion({ format: "json" }, "not json")).toEqual(
+      { error: "Enter a JSON-compatible value." }
+    );
   });
 });

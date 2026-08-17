@@ -56,10 +56,7 @@ export const normalizeTextFileConversion = (
   asset: Pick<Asset, "format">,
   content: string
 ) => {
-  if (
-    getAssetTextEditorLanguage(asset) === "json" &&
-    content.trim() === ""
-  ) {
+  if (getAssetTextEditorLanguage(asset) === "json" && content.trim() === "") {
     return { content: "{}\n" };
   }
   return normalizeTextFileContent(asset, content);
