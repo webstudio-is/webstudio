@@ -838,6 +838,22 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "search-asset-contents",
+    description:
+      "Search text document assets on the server and return stable source matches without downloading complete documents to the client",
+    examples: [
+      'MCP/API: search-asset-contents {"query":"Old headline","limit":20}',
+    ],
+  },
+  {
+    command: "update-document-matches",
+    description:
+      "Atomically update one or more stable matches in one text document without uploading its complete content",
+    examples: [
+      'MCP/API: update-document-matches {"updates":[{"matchId":"document-match-id","expectedValue":"Old headline","value":"New headline"}]}',
+    ],
+  },
+  {
     command: "find-asset-usage",
     description: "Find where an asset is referenced in the project",
     requiredOptions: ["asset", "json"],

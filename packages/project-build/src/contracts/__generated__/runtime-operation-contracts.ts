@@ -33300,7 +33300,6 @@ export const runtimeOperationContractData = [
     id: "project.updateMatches",
     command: "update-project-matches",
     client: "updateProjectMatches",
-    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",

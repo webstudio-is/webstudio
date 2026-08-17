@@ -1028,6 +1028,7 @@ Commands:
 - MCP tool: search-project {"query":"headline","scopes":["documents"]}
 - MCP tool: search-project {"query":"api.example.com","scopes":["resources"]}
 - MCP tool: update-project-matches {"updates":[{"matchId":"<match-id>","expectedValue":"Old value","value":"New value"}]}
+- MCP tool: update-document-matches {"updates":[{"matchId":"<document-match-id>","expectedValue":"Old headline","value":"New headline"}]}
 - MCP tool: list-instances {"pagePath":"/","maxDepth":5}
 - MCP tool: inspect-instance {"instanceId":"<instanceId>","include":["props","styles","children"]}
 - MCP tool: list-texts {"pagePath":"/"}
@@ -1038,8 +1039,9 @@ Commands:
 Notes:
 
 - `search-project` searches pages and settings, instances and text, props and bindings, variables and resources, assets, styles and tokens, redirects, and project settings. Every result includes a stable match id, entity identity, current value, structured location, affected routes, editability, and reference resolution when applicable.
-- The `documents` scope searches Markdown, MDX, JSON, text, CSV, and YAML asset contents with source line and column locations. Because files may need downloading, it uses the slow-operation preflight; edit returned document assets with `update-asset-content`.
+- The `documents` scope searches Markdown, MDX, JSON, text, CSV, and YAML asset contents on the server and returns source line and column locations without sending complete documents to the client. It uses the slow-operation preflight when indexing or scanning may exceed the time budget.
 - Use `update-project-matches` to change results from different entity kinds in one optimistic transaction. Every expected value must still match; validation failure or one stale value rejects the complete update.
+- Use `update-document-matches` to change several returned matches in one document revision without downloading or uploading the complete file. Document matches from different assets must be updated separately so each file remains atomic.
 - Use `audit` for project health findings rather than treating search as a broad audit.
 
 ## Audit project quality

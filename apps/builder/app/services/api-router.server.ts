@@ -40,6 +40,9 @@ import {
   loadBuilderAssetFieldCatalog,
   loadAssetDataByProject,
   loadAssetFoldersByProject,
+  PostgresAssetRepository,
+  searchAssetContentMatches,
+  updateAssetContentMatches,
 } from "@webstudio-is/asset-uploader/server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
@@ -120,6 +123,24 @@ const projectIdInput = z.object({ projectId: z.string() });
 const assetQueryInput = projectIdInput.extend(assetQueryRequest.shape);
 const assetQueryValidationInput = projectIdInput.extend({
   query: assetQueryRequest.shape.query,
+});
+const assetContentSearchInput = projectIdInput.extend({
+  query: z.string().min(1),
+  limit: z.number().int().min(0).max(100).optional(),
+  maxDurationMs: z.number().int().positive().optional(),
+});
+const assetContentMatchUpdatesInput = projectIdInput.extend({
+  updates: z
+    .array(
+      z
+        .object({
+          matchId: z.string().min(1),
+          expectedValue: z.string(),
+          value: z.string(),
+        })
+        .strict()
+    )
+    .min(1),
 });
 const throwAssetQueryApiError = (error: unknown): never => {
   const queryError = getAssetResourceQueryError(error);
@@ -786,6 +807,47 @@ export const apiRouter = router({
   ...runtimeOperationRouters,
 
   assetQueries: router({
+    searchContent: projectQuery(
+      assetContentSearchInput,
+      "view",
+      async ({ ctx, input }) => {
+        const repository = new PostgresAssetRepository({
+          projectId: input.projectId,
+          context: ctx,
+          assetStore: createAssetClient(),
+        });
+        return await searchAssetContentMatches({
+          repository,
+          query: input.query,
+          limit: input.limit,
+          maxDurationMs: input.maxDurationMs,
+        });
+      },
+      {
+        command: "search-asset-contents",
+        client: "searchAssetContents",
+      }
+    ),
+    updateContentMatches: projectMutation(
+      assetContentMatchUpdatesInput,
+      "edit",
+      async ({ ctx, input }) => {
+        const repository = new PostgresAssetRepository({
+          projectId: input.projectId,
+          context: ctx,
+          assetStore: createAssetClient(),
+        });
+        return await updateAssetContentMatches({
+          repository,
+          updates: input.updates,
+        });
+      },
+      {
+        command: "update-document-matches",
+        client: "updateDocumentMatches",
+        invalidatesNamespaces: ["assets"],
+      }
+    ),
     validate: projectQuery(
       assetQueryValidationInput,
       "view",

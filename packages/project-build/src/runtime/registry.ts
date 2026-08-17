@@ -855,7 +855,7 @@ export const builderRuntimeOperations = [
   ),
   runtimeOperation(
     "project.updateMatches",
-    api("update-project-matches", "updateProjectMatches", "edit"),
+    api("update-project-matches", "updateProjectMatches"),
     mutationContract({
       readNamespaces: [
         "pages",

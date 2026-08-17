@@ -488,6 +488,70 @@ export const serverOnlyRouterOperationMetadata = {
       required: ["baseVersion", "transactions"],
     },
   },
+  "assetQueries.searchContent": {
+    id: "assetQueries.searchContent",
+    command: "search-asset-contents",
+    method: "query",
+    path: "api.assetQueries.searchContent",
+    client: "searchAssetContents",
+    permit: "view",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          minLength: 1,
+        },
+        limit: {
+          type: "integer",
+          minimum: 0,
+          maximum: 100,
+        },
+        maxDurationMs: {
+          type: "integer",
+          exclusiveMinimum: 0,
+          maximum: 9007199254740991,
+        },
+      },
+      required: ["query"],
+    },
+  },
+  "assetQueries.updateContentMatches": {
+    id: "assetQueries.updateContentMatches",
+    command: "update-document-matches",
+    method: "mutation",
+    path: "api.assetQueries.updateContentMatches",
+    client: "updateDocumentMatches",
+    permit: "edit",
+    invalidatesNamespaces: ["assets"],
+    inputSchema: {
+      type: "object",
+      properties: {
+        updates: {
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              matchId: {
+                type: "string",
+                minLength: 1,
+              },
+              expectedValue: {
+                type: "string",
+              },
+              value: {
+                type: "string",
+              },
+            },
+            required: ["matchId", "expectedValue", "value"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["updates"],
+    },
+  },
   "assetQueries.validate": {
     id: "assetQueries.validate",
     command: "validate-asset-query",
