@@ -5,6 +5,7 @@ import {
   parsePath,
 } from "@remix-run/react";
 import { redirect } from "@remix-run/server-runtime";
+import { removeTrailingSlash } from "@webstudio-is/sdk";
 
 type RedirectItem = {
   old: string;
@@ -160,8 +161,15 @@ export const redirectRequest = (
   redirects: RedirectItem[]
 ): Response | undefined => {
   const matchedRedirect = matchRedirect(request.url, redirects);
-  if (matchedRedirect === undefined) {
+  if (matchedRedirect !== undefined) {
+    return redirect(matchedRedirect.url, matchedRedirect.status);
+  }
+
+  const url = new URL(request.url);
+  const pathname = removeTrailingSlash(url.pathname);
+  if (pathname === url.pathname) {
     return;
   }
-  return redirect(matchedRedirect.url, matchedRedirect.status);
+
+  return redirect(`${pathname}${url.search}`, 301);
 };
