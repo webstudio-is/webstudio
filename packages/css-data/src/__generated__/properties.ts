@@ -153,6 +153,23 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/alignment-baseline",
   },
+  "anchor-name": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/anchor-name",
+  },
+  "anchor-scope": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+  },
   "animation-composition": {
     unitGroups: [],
     inherited: false,
@@ -2706,6 +2723,51 @@ export const properties: Properties = {
       value: "static",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/position",
+  },
+  "position-anchor": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/position-anchor",
+  },
+  "position-area": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/position-area",
+  },
+  "position-try-fallbacks": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/position-try-fallbacks",
+  },
+  "position-try-order": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/position-try-order",
+  },
+  "position-visibility": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "anchors-visible",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/position-visibility",
   },
   "print-color-adjust": {
     unitGroups: [],

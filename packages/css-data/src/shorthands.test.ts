@@ -1447,15 +1447,21 @@ test("expand overscroll-behavior", () => {
 test("expand position-try", () => {
   expect(expandShorthands([["position-try", "none"]])).toEqual([
     ["position-try-order", "normal"],
-    ["position-try-options", "none"],
+    ["position-try-fallbacks", "none"],
   ]);
   expect(expandShorthands([["position-try", "most-width none"]])).toEqual([
     ["position-try-order", "most-width"],
-    ["position-try-options", "none"],
+    ["position-try-fallbacks", "none"],
   ]);
-  expect(expandShorthands([["position-try", "--dashed-ident"]])).toEqual([
+  expect(expandShorthands([["position-try", "--fallback flip-block"]])).toEqual(
+    [
+      ["position-try-order", "normal"],
+      ["position-try-fallbacks", "--fallback flip-block"],
+    ]
+  );
+  expect(expandShorthands([["position-try", "top span-right"]])).toEqual([
     ["position-try-order", "normal"],
-    ["position-try-options", "--dashed-ident"],
+    ["position-try-fallbacks", "top span-right"],
   ]);
 });
 

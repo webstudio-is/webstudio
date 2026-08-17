@@ -62,6 +62,7 @@ export const shorthandProperties = [
   "place-content",
   "place-items",
   "place-self",
+  "position-try",
   "scroll-margin",
   "scroll-margin-block",
   "scroll-margin-inline",

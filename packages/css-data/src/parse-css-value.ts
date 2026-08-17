@@ -1,9 +1,9 @@
 import {
   type CssNode,
   definitionSyntax,
+  fork,
   type FunctionNode,
   generate,
-  lexer,
   List,
   parse,
   tokenize,
@@ -35,6 +35,48 @@ import {
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
+
+// css-tree 3.1 predates the current anchor positioning grammar. Extend its
+// existing property data while keeping all other validation unchanged.
+const anchorInsetSyntax =
+  "<length> | <percentage> | auto | <anchor()> | <anchor-size()>";
+const anchorMarginSyntax = "<length> | <percentage> | auto | <anchor-size()>";
+const anchorSizeSyntax =
+  "auto | <length> | <percentage> | min-content | max-content | fit-content | fit-content(<length-percentage>) | stretch | <-non-standard-size> | <anchor-size()>";
+const anchorMaxSizeSyntax =
+  "none | <length-percentage> | min-content | max-content | fit-content | fit-content(<length-percentage>) | stretch | <-non-standard-size> | <anchor-size()>";
+const anchorAlignItemsSyntax =
+  "normal | stretch | <baseline-position> | [ <overflow-position>? <self-position> ] | anchor-center";
+const anchorAlignSelfSyntax =
+  "auto | normal | stretch | <baseline-position> | <overflow-position>? <self-position> | anchor-center";
+const anchorJustifyItemsSyntax =
+  "normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ] | legacy | legacy && [ left | right | center ] | anchor-center";
+const anchorJustifySelfSyntax =
+  "auto | normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ] | anchor-center";
+
+const lexer = fork({
+  properties: {
+    top: anchorInsetSyntax,
+    right: anchorInsetSyntax,
+    bottom: anchorInsetSyntax,
+    left: anchorInsetSyntax,
+    "margin-top": anchorMarginSyntax,
+    "margin-right": anchorMarginSyntax,
+    "margin-bottom": anchorMarginSyntax,
+    "margin-left": anchorMarginSyntax,
+    width: anchorSizeSyntax,
+    height: anchorSizeSyntax,
+    "min-width": anchorSizeSyntax,
+    "min-height": anchorSizeSyntax,
+    "max-width": anchorMaxSizeSyntax,
+    "max-height": anchorMaxSizeSyntax,
+    "position-anchor": "normal | none | auto | <anchor-name> | match-parent",
+    "align-items": anchorAlignItemsSyntax,
+    "align-self": anchorAlignSelfSyntax,
+    "justify-items": anchorJustifyItemsSyntax,
+    "justify-self": anchorJustifySelfSyntax,
+  },
+}).lexer;
 
 export const cssTryParseValue = (input: string): undefined | CssNode => {
   try {

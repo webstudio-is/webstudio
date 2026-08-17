@@ -1477,11 +1477,8 @@ const expandShorthand = function* (property: string, value: CssNode) {
     }
 
     case "position-try": {
-      const [order, options] = parseUnordered(
-        [
-          `normal | most-width | most-height | most-block-size | most-inline-size`,
-          `none | [ [<custom-ident> || flip-block || flip-inline || flip-start] | inset-area( <'inset-area'> ) ]#`,
-        ],
+      const [order, fallbacks] = parseUnordered(
+        [`<'position-try-order'>`, `<'position-try-fallbacks'>`],
         value
       );
       yield [
@@ -1489,8 +1486,8 @@ const expandShorthand = function* (property: string, value: CssNode) {
         order ?? createIdentifier("normal"),
       ] as const;
       yield [
-        "position-try-options",
-        options ?? createIdentifier("none"),
+        "position-try-fallbacks",
+        fallbacks ?? createIdentifier("none"),
       ] as const;
       break;
     }
