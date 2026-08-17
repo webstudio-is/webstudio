@@ -2533,7 +2533,7 @@ export const properties: Properties = {
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/offset-distance",
   },
   "offset-path": {
-    unitGroups: ["length", "percentage"],
+    unitGroups: [],
     inherited: false,
     initial: {
       type: "keyword",

@@ -132,6 +132,28 @@ const propertyPatternOverrides: Record<string, GrammarPattern[]> = {
       ],
     },
   ],
+  "timeline-trigger": [
+    {
+      complexity: 1,
+      parts: [
+        { kind: "slot", label: "timeline-trigger-name", text: "--trigger" },
+        { kind: "text", text: " " },
+        { kind: "slot", label: "timeline-trigger-source", text: "auto" },
+        { kind: "text", text: " " },
+        {
+          kind: "slot",
+          label: "timeline-trigger-activation-range",
+          text: "normal",
+        },
+        { kind: "text", text: " / " },
+        {
+          kind: "slot",
+          label: "timeline-trigger-active-range",
+          text: "auto",
+        },
+      ],
+    },
+  ],
   "view-timeline": [
     {
       complexity: 1,

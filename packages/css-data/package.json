@@ -45,7 +45,7 @@
   "dependencies": {
     "@webstudio-is/css-engine": "workspace:*",
     "change-case": "^5.4.4",
-    "css-tree": "^3.1.0",
+    "css-tree": "^3.2.1",
     "warn-once": "^0.1.1"
   }
 }

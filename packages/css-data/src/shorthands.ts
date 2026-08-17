@@ -330,7 +330,7 @@ const expandBorderImage = function* (value: CssNode) {
 /**
  *
  * font =
- *   [ <'font-style'> || <font-variant-css21> || <'font-weight'> || <'font-stretch'> ]?
+ *   [ <'font-style'> || <font-variant-css2> || <'font-weight'> || <'font-stretch'> ]?
  *   <'font-size'> [ / <'line-height'> ]? <'font-family'>
  *
  */
@@ -339,7 +339,7 @@ const expandFont = function* (value: CssNode) {
     parseUnordered(
       [
         "<'font-style'>",
-        "<font-variant-css21>",
+        "<font-variant-css2>",
         "<'font-weight'>",
         "<'font-stretch'>",
       ],
