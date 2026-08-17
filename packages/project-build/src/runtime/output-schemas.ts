@@ -58,12 +58,13 @@ const contentStoragePatchChange = z.union([
   }),
 ]);
 
+const externalContentStorageRoot = z.object({
+  type: z.literal("external"),
+  identity: contentBlockExternalContentIdentity,
+});
 const contentStorageRoot = z.discriminatedUnion("type", [
   z.object({ type: z.literal("project") }),
-  z.object({
-    type: z.literal("external"),
-    identity: contentBlockExternalContentIdentity,
-  }),
+  externalContentStorageRoot,
 ]);
 
 const contentBlockSourceInspection = z.object({
@@ -196,7 +197,7 @@ export const createRuntimeMutationExecutionSchema = <
     storageChanges: z
       .array(
         z.object({
-          root: contentStorageRoot,
+          root: externalContentStorageRoot,
           payload: z.array(contentStoragePatchChange),
           copySource: z
             .object({

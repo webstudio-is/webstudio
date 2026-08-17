@@ -1,4 +1,5 @@
 import hash from "@emotion/hash";
+import { serializeJsonDeterministically } from "@webstudio-is/content-engine/compiler";
 import {
   getAssetContentHash,
   type ContentBlockDiagnostic,
@@ -135,7 +136,7 @@ export const materializeMdxTemplates = async ({
           templateInstanceId: reference.templateInstanceId,
           templateName: reference.templateName,
           revision: `sha256:${await getAssetContentHash(
-            new TextEncoder().encode(JSON.stringify(fragment))
+            new TextEncoder().encode(serializeJsonDeterministically(fragment))
           )}`,
         },
       };

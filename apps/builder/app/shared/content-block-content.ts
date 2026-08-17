@@ -7,14 +7,15 @@ import {
   applyMdxContentStorageChanges,
   executeContentBlockPersistencePlan,
   findBlockSelector,
+  getContentBlockRenderScopeKey,
   getContentStorageIdentityKey,
   type ContentStorageChange,
   type ContentBlockPersistenceResult,
+  type InstanceSelector,
   type MaterializedContentRoot,
   type MaterializedMdxAuthoredContentRoot,
   type MdxAssetEditingSessionState,
 } from "@webstudio-is/project-build/runtime";
-import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import type {
   Asset,
   Breakpoint,
@@ -104,9 +105,6 @@ export type ContentBlockPresentationItem = Readonly<{
   diagnostic?: ContentBlockDiagnostic;
   assetId?: Asset["id"];
 }>;
-
-const getRenderScopeKey = ({ identity }: MaterializedContentRoot): string =>
-  JSON.stringify([identity.blockInstanceId, identity.renderScope]);
 
 export const $materializedContentRoots = atom<
   ReadonlyMap<string, MaterializedContentRoot>
@@ -607,13 +605,16 @@ const $contentStorageProjection = computed(
           authoredProjectedChildren.push(
             ...materializedChildren.slice(materializedIndex)
           );
-          childrenByScope.set(JSON.stringify([parentId, renderScope]), [
-            ...projectOwnedChildren,
-            ...authoredProjectedChildren,
-          ]);
+          childrenByScope.set(
+            getContentBlockRenderScopeKey(parentId, renderScope),
+            [...projectOwnedChildren, ...authoredProjectedChildren]
+          );
         }
       }
-      const blockChildrenKey = JSON.stringify([blockInstanceId, renderScope]);
+      const blockChildrenKey = getContentBlockRenderScopeKey(
+        blockInstanceId,
+        renderScope
+      );
       const blockChildren =
         childrenByScope.get(blockChildrenKey) ??
         projection.getInstanceChildren(
@@ -632,8 +633,9 @@ const $contentStorageProjection = computed(
       state: { ...projection.state, instances },
       items,
       getInstanceChildren: (instance: Instance, renderScope: string) =>
-        childrenByScope.get(JSON.stringify([instance.id, renderScope])) ??
-        projection.getInstanceChildren(instance, renderScope),
+        childrenByScope.get(
+          getContentBlockRenderScopeKey(instance.id, renderScope)
+        ) ?? projection.getInstanceChildren(instance, renderScope),
     };
   }
 );
@@ -699,7 +701,7 @@ export const getMaterializedContentStatus = ({
 }) =>
   $materializedContentViewStates
     .get()
-    .get(JSON.stringify([blockInstanceId, renderScope]))?.status;
+    .get(getContentBlockRenderScopeKey(blockInstanceId, renderScope))?.status;
 
 export const getMaterializedContentViewState = ({
   blockInstanceId,
@@ -710,7 +712,7 @@ export const getMaterializedContentViewState = ({
 }) =>
   $materializedContentViewStates
     .get()
-    .get(JSON.stringify([blockInstanceId, renderScope]));
+    .get(getContentBlockRenderScopeKey(blockInstanceId, renderScope));
 
 export const getMaterializedInstanceEditability = ({
   instanceSelector,
@@ -731,7 +733,12 @@ export const getMaterializedInstanceEditability = ({
   }
   const root = $activeMaterializedContentRoots
     .get()
-    .get(JSON.stringify([blockSelector[0], JSON.stringify(blockSelector)]));
+    .get(
+      getContentBlockRenderScopeKey(
+        blockSelector[0],
+        JSON.stringify(blockSelector)
+      )
+    );
   if (
     root === undefined ||
     root.fragment.instances.some(({ id }) => id === instanceSelector[0]) ===
@@ -739,10 +746,10 @@ export const getMaterializedInstanceEditability = ({
   ) {
     return;
   }
-  const scopeKey = JSON.stringify([
+  const scopeKey = getContentBlockRenderScopeKey(
     root.identity.blockInstanceId,
-    root.identity.renderScope,
-  ]);
+    root.identity.renderScope
+  );
   if ($switchingContentScopes.get().has(scopeKey)) {
     return false;
   }
@@ -762,7 +769,7 @@ export const setContentBlockSourceSwitching = ({
   renderScope: string;
   switching: boolean;
 }) => {
-  const key = JSON.stringify([blockInstanceId, renderScope]);
+  const key = getContentBlockRenderScopeKey(blockInstanceId, renderScope);
   const scopes = new Set($switchingContentScopes.get());
   if (switching) {
     scopes.add(key);
@@ -789,7 +796,7 @@ export const registerContentBlockPresentationActions = ({
   renderScope: string;
   actions: ContentBlockPresentationActions;
 }) => {
-  const key = JSON.stringify([blockInstanceId, renderScope]);
+  const key = getContentBlockRenderScopeKey(blockInstanceId, renderScope);
   presentationActions.set(key, actions);
   return () => {
     if (presentationActions.get(key) === actions) {
@@ -804,15 +811,9 @@ export const getContentBlockPresentationActions = ({
 }: {
   blockInstanceId: string;
   renderScope: string;
-}) => presentationActions.get(JSON.stringify([blockInstanceId, renderScope]));
-
-const getExternalStorageChanges = (changes: readonly ContentStorageChange[]) =>
-  changes.filter(
-    (
-      change
-    ): change is ContentStorageChange & {
-      root: Extract<ContentStorageChange["root"], { type: "external" }>;
-    } => change.root.type === "external"
+}) =>
+  presentationActions.get(
+    getContentBlockRenderScopeKey(blockInstanceId, renderScope)
   );
 
 export const publishMaterializedContentRoot = (
@@ -820,10 +821,14 @@ export const publishMaterializedContentRoot = (
   diagnostics: readonly ContentBlockDiagnostic[] = []
 ) => {
   const roots = new Map($materializedContentRoots.get());
-  roots.set(getRenderScopeKey(root), root);
+  const scopeKey = getContentBlockRenderScopeKey(
+    root.identity.blockInstanceId,
+    root.identity.renderScope
+  );
+  roots.set(scopeKey, root);
   $materializedContentRoots.set(roots);
   const states = new Map($materializedContentViewStates.get());
-  states.set(getRenderScopeKey(root), {
+  states.set(scopeKey, {
     status: root.fragment.children.length === 0 ? "empty" : "ready",
     identity: root.identity,
     diagnostics,
@@ -843,7 +848,7 @@ export const setMaterializedContentStatus = ({
   assetId?: Asset["id"];
 }) => {
   const states = new Map($materializedContentViewStates.get());
-  const key = JSON.stringify([blockInstanceId, renderScope]);
+  const key = getContentBlockRenderScopeKey(blockInstanceId, renderScope);
   const current = states.get(key);
   const sourceChanged =
     assetId !== undefined &&
@@ -920,12 +925,15 @@ export const publishMaterializedContentSessionState = ({
   }
   if ("root" in state) {
     const roots = new Map($materializedContentRoots.get());
-    roots.set(JSON.stringify([blockInstanceId, renderScope]), state.root);
+    roots.set(
+      getContentBlockRenderScopeKey(blockInstanceId, renderScope),
+      state.root
+    );
     $materializedContentRoots.set(roots);
   }
   const states = new Map($materializedContentViewStates.get());
   states.set(
-    JSON.stringify([blockInstanceId, renderScope]),
+    getContentBlockRenderScopeKey(blockInstanceId, renderScope),
     getMaterializedContentViewStateFromSession(state)
   );
   $materializedContentViewStates.set(states);
@@ -935,11 +943,11 @@ export const publishPendingMaterializedContentChanges = (
   changes: readonly ContentStorageChange[]
 ) => {
   const changesByScope = new Map<string, ContentStorageChange[]>();
-  for (const change of getExternalStorageChanges(changes)) {
-    const scopeKey = JSON.stringify([
+  for (const change of changes) {
+    const scopeKey = getContentBlockRenderScopeKey(
       change.root.identity.blockInstanceId,
-      change.root.identity.renderScope,
-    ]);
+      change.root.identity.renderScope
+    );
     const scopeChanges = changesByScope.get(scopeKey) ?? [];
     scopeChanges.push(change);
     changesByScope.set(scopeKey, scopeChanges);
@@ -975,11 +983,11 @@ export const failPendingMaterializedContentChanges = (
 ) => {
   const states = new Map($materializedContentViewStates.get());
   let changed = false;
-  for (const change of getExternalStorageChanges(changes)) {
-    const scopeKey = JSON.stringify([
+  for (const change of changes) {
+    const scopeKey = getContentBlockRenderScopeKey(
       change.root.identity.blockInstanceId,
-      change.root.identity.renderScope,
-    ]);
+      change.root.identity.renderScope
+    );
     const current = states.get(scopeKey);
     if (current?.status !== "pending") {
       continue;
@@ -1000,10 +1008,11 @@ export const removeMaterializedContentRoot = ({
   renderScope: string;
 }) => {
   const roots = new Map($materializedContentRoots.get());
-  roots.delete(JSON.stringify([blockInstanceId, renderScope]));
+  const scopeKey = getContentBlockRenderScopeKey(blockInstanceId, renderScope);
+  roots.delete(scopeKey);
   $materializedContentRoots.set(roots);
   const states = new Map($materializedContentViewStates.get());
-  states.delete(JSON.stringify([blockInstanceId, renderScope]));
+  states.delete(scopeKey);
   $materializedContentViewStates.set(states);
   setContentBlockSourceSwitching({
     blockInstanceId,
@@ -1025,7 +1034,7 @@ export const registerContentStorageSaver = ({
   save: StorageSaver;
   isCurrent: StorageSaverEntry["isCurrent"];
 }) => {
-  const key = JSON.stringify([blockInstanceId, renderScope]);
+  const key = getContentBlockRenderScopeKey(blockInstanceId, renderScope);
   const entry = { preflight, save, isCurrent };
   storageSavers.set(key, entry);
   return () => {
@@ -1051,8 +1060,7 @@ export const saveMaterializedContentChanges = async (
   if (blocker !== undefined) {
     return blocker;
   }
-  const externalChanges = getExternalStorageChanges(changes);
-  if (externalChanges.length === 0 && projectStep === undefined) {
+  if (changes.length === 0 && projectStep === undefined) {
     return { status: "applied" };
   }
   const groupedChanges = new Map<
@@ -1062,7 +1070,7 @@ export const saveMaterializedContentChanges = async (
       changes: ContentStorageChange[];
     }
   >();
-  for (const change of externalChanges) {
+  for (const change of changes) {
     const key = getContentStorageIdentityKey(change.root.identity);
     const group = groupedChanges.get(key) ?? {
       identity: change.root.identity,
@@ -1072,10 +1080,10 @@ export const saveMaterializedContentChanges = async (
     groupedChanges.set(key, group);
   }
   const assetSteps = [...groupedChanges.values()].map((group) => {
-    const scopeKey = JSON.stringify([
+    const scopeKey = getContentBlockRenderScopeKey(
       group.identity.blockInstanceId,
-      group.identity.renderScope,
-    ]);
+      group.identity.renderScope
+    );
     const saver = storageSavers.get(scopeKey)!;
     return {
       type: "asset" as const,
@@ -1154,15 +1162,14 @@ export const saveMaterializedContentChanges = async (
 export const getMaterializedContentSaveBlocker = (
   changes: readonly ContentStorageChange[]
 ): Readonly<{ status: "blocked"; message: string }> | undefined => {
-  const externalChanges = getExternalStorageChanges(changes);
-  if (externalChanges.length === 0) {
+  if (changes.length === 0) {
     return;
   }
-  for (const change of externalChanges) {
-    const scopeKey = JSON.stringify([
+  for (const change of changes) {
+    const scopeKey = getContentBlockRenderScopeKey(
       change.root.identity.blockInstanceId,
-      change.root.identity.renderScope,
-    ]);
+      change.root.identity.renderScope
+    );
     const status = getMaterializedContentStatus({
       blockInstanceId: change.root.identity.blockInstanceId,
       renderScope: change.root.identity.renderScope,

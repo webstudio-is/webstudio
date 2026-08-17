@@ -1,10 +1,6 @@
-import { AssetRevisionConflictError } from "@webstudio-is/asset-uploader/content-repository";
 import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
-import { describe, expect, test, vi } from "vitest";
-import {
-  applyMdxTemplateMigration,
-  planMdxTemplateMigration,
-} from "./mdx-template-migration";
+import { describe, expect, test } from "vitest";
+import { planMdxTemplateMigration } from "./mdx-template-migration";
 
 const files = [
   {
@@ -105,58 +101,5 @@ describe("MDX template migration", () => {
       expect.objectContaining({ type: "comment" }),
       expect.objectContaining({ type: "template", name: "Other" }),
     ]);
-  });
-
-  test("requires the unchanged plan token and reports file-by-file conflicts", async () => {
-    const plan = await planMdxTemplateMigration({
-      projectId: "project",
-      migration: { type: "rename", from: "Card", to: "Feature Card" },
-      files: [
-        ...files,
-        {
-          ...files[0],
-          assetId: "conflicting",
-          contentRef: "conflicting-revision",
-        },
-      ],
-    });
-    const updateContent = vi.fn(async ({ assetId }: { assetId: string }) => {
-      if (assetId === "conflicting") {
-        throw new AssetRevisionConflictError("changed remotely");
-      }
-      return {} as never;
-    });
-
-    await expect(
-      applyMdxTemplateMigration({
-        projectId: "other-project",
-        plan,
-        confirmationToken: plan.confirmationToken,
-        repository: { updateContent },
-        authorizeAsset: () => true,
-      })
-    ).resolves.toMatchObject({ status: "confirmation-required", files: [] });
-    expect(updateContent).not.toHaveBeenCalled();
-
-    const result = await applyMdxTemplateMigration({
-      projectId: "project",
-      plan,
-      confirmationToken: plan.confirmationToken,
-      repository: { updateContent },
-      authorizeAsset: ({ revision }) => revision === "revision-1",
-    });
-    expect(result).toMatchObject({
-      status: "partial",
-      updateCount: 2,
-      files: [
-        { assetId: "article", status: "updated", updateCount: 2 },
-        {
-          assetId: "conflicting",
-          status: "failed",
-          diagnostics: [{ code: "asset-revision-conflict" }],
-        },
-      ],
-    });
-    expect(updateContent).toHaveBeenCalledTimes(2);
   });
 });

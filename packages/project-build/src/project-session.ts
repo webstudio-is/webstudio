@@ -736,6 +736,21 @@ const addProjectPersistenceStep = ({
   };
 };
 
+const markPersistedAssetChangesStale = (
+  snapshot: ProjectSessionSnapshot,
+  persistence: ContentBlockPersistenceResult
+) =>
+  persistence.steps.some(
+    ({ type, status }) => type === "asset" && status === "saved"
+  )
+    ? {
+        ...snapshot,
+        freshness: markBuilderStateNamespacesStale(snapshot.freshness, [
+          "assets",
+        ]),
+      }
+    : snapshot;
+
 export class ProjectSession {
   #snapshot: ProjectSessionSnapshot | undefined;
   #revision: string | undefined;
@@ -1609,16 +1624,25 @@ export class ProjectSession {
       }
     }
     const saveStorage = () => application!.saveStorageChanges(storageChanges);
+    let persistedStorage: ContentBlockPersistenceResult | undefined;
     if (storageChanges.length > 0 && projectFirst === false) {
       const saved = await saveStorage();
+      persistedStorage = saved.persistence;
       result = { ...result, persistence: saved.persistence } as Result;
       if (saved.status !== "complete") {
+        const resultSnapshot = markPersistedAssetChangesStale(
+          snapshot,
+          saved.persistence
+        );
+        if (resultSnapshot !== snapshot) {
+          await this.saveSnapshot(resultSnapshot);
+        }
         return this.createEnvelope({
           source: "local",
           result,
           committed: saved.status === "partial",
           contract,
-          snapshot,
+          snapshot: resultSnapshot,
           diagnostics: [
             ...diagnostics,
             { level: "error", code: saved.code, message: saved.message },
@@ -1626,12 +1650,19 @@ export class ProjectSession {
         });
       }
       if (mutation.payload.length === 0) {
+        const resultSnapshot = markPersistedAssetChangesStale(
+          snapshot,
+          saved.persistence
+        );
+        if (resultSnapshot !== snapshot) {
+          await this.saveSnapshot(resultSnapshot);
+        }
         return this.createEnvelope({
           source: "local",
           result,
           committed: true,
           contract,
-          snapshot,
+          snapshot: resultSnapshot,
           diagnostics,
         });
       }
@@ -1671,15 +1702,12 @@ export class ProjectSession {
       if (projectFirst) {
         const roots = [
           ...new Map(
-            storageChanges.flatMap((change) =>
-              change.root.type === "external"
-                ? [
-                    [
-                      getContentStorageIdentityKey(change.root.identity),
-                      change.root.identity,
-                    ] as const,
-                  ]
-                : []
+            storageChanges.map(
+              (change) =>
+                [
+                  getContentStorageIdentityKey(change.root.identity),
+                  change.root.identity,
+                ] as const
             )
           ).values(),
         ];
@@ -1741,12 +1769,19 @@ export class ProjectSession {
         order: "after",
       });
       result = { ...result, persistence } as Result;
+      const resultSnapshot = markPersistedAssetChangesStale(
+        snapshot,
+        persistence
+      );
+      if (resultSnapshot !== snapshot) {
+        await this.saveSnapshot(resultSnapshot);
+      }
       return this.createEnvelope({
         source: "local",
         result,
         committed: true,
         contract,
-        snapshot,
+        snapshot: resultSnapshot,
         diagnostics: [
           ...diagnostics,
           {
@@ -1765,6 +1800,7 @@ export class ProjectSession {
       : diagnostics;
     if (projectFirst) {
       const saved = await saveStorage();
+      persistedStorage = saved.persistence;
       const persistence = addProjectPersistenceStep({
         persistence: saved.persistence,
         step: { type: "project", status: "saved" },
@@ -1800,7 +1836,7 @@ export class ProjectSession {
     const updatedNamespaces = [
       ...new Set(mutation.payload.map((change) => change.namespace)),
     ];
-    const committedSnapshot: ProjectSessionSnapshot = {
+    const committedSnapshotBase: ProjectSessionSnapshot = {
       ...snapshot,
       version: commit.version,
       state: applied.state,
@@ -1817,6 +1853,13 @@ export class ProjectSession {
         operationId
       ),
     };
+    const committedSnapshot =
+      persistedStorage === undefined
+        ? committedSnapshotBase
+        : markPersistedAssetChangesStale(
+            committedSnapshotBase,
+            persistedStorage
+          );
     const persisted = await this.#synchronizeAfterCommit({
       snapshot: committedSnapshot,
       namespaces: mergeNamespaces(

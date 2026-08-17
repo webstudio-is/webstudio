@@ -12,6 +12,7 @@ import {
 import {
   createBuildContentCompilationPlan,
   createPublishedBuildContentCompilationPlan,
+  getDynamicPublishedMdxSourceBlockIds,
   getPublishedMdxContentDatabaseMaxBytes,
   resolvePublishedMdxAssetCandidates,
   resolvePublishedMdxDependencyClosure,
@@ -134,6 +135,21 @@ describe("Content Block MDX compilation", () => {
         createBuild({ sourceType: "string" })
       )
     ).toBeUndefined();
+  });
+
+  test("does not retain conflicting duplicate Content Block sources", () => {
+    const build = createBuild({});
+    build.props.push({
+      id: "duplicate-source",
+      instanceId: "block",
+      name: "src",
+      type: "asset",
+      value: "private.mdx",
+    });
+
+    expect(createPublishedBuildContentCompilationPlan(build)).toBeUndefined();
+    expect(getDynamicPublishedMdxSourceBlockIds(build)).toEqual([]);
+    expect(resolvePublishedMdxAssetCandidates({ build })).toEqual(new Map());
   });
 
   test("does not retain MDX used only by a draft page", () => {

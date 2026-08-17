@@ -371,6 +371,58 @@ describe("MDX Asset editing session", () => {
     expect(session.get(loaded.key)).toBe(pending);
   });
 
+  test("keeps the latest result when the same scope is opened out of order", async () => {
+    let releaseFirstRead: (() => void) | undefined;
+    const firstRead = new Promise<void>((resolve) => {
+      releaseFirstRead = resolve;
+    });
+    let readCount = 0;
+    const session = createMdxAssetEditingSession({
+      repository: {
+        readContent: async ({ assetId }) => {
+          readCount += 1;
+          const currentRead = readCount;
+          if (currentRead === 1) {
+            await firstRead;
+          }
+          const source = currentRead === 1 ? "Old" : "New";
+          const bytes = encoder.encode(source);
+          return {
+            asset: {
+              ...asset(assetId, `${assetId}_${source.toLowerCase()}.mdx`),
+              size: bytes.byteLength,
+            },
+            data: {
+              async *[Symbol.asyncIterator]() {
+                yield bytes;
+              },
+            },
+          };
+        },
+      },
+      authorizeAsset: () => true,
+    });
+    const input = {
+      blockInstanceId: "block",
+      source: { type: "asset" as const, assetId: "post" },
+      renderScope: "page:/one",
+      state: createState(),
+      projectId: "project",
+    };
+
+    const olderOpen = session.open(input);
+    while (readCount === 0) {
+      await Promise.resolve();
+    }
+    const latest = expectStatus(await session.open(input), "saved");
+    releaseFirstRead?.();
+    await olderOpen;
+
+    expect(latest.source).toBe("New");
+    expect(session.get(latest.key)).toBe(latest);
+    expect(session.list()).toEqual([latest]);
+  });
+
   test("keeps a session saved when there are no writes to prepare", async () => {
     let scheduled = false;
     const session = createMdxAssetEditingSession({

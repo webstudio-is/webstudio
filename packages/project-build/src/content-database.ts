@@ -17,7 +17,6 @@ import {
 import {
   blockComponent,
   collectionComponent,
-  contentBlockSourceProp,
   createReachableAssetContentCompilationPlan,
   decodeDataSourceVariable,
   getContentBlockSource,
@@ -123,10 +122,11 @@ export const createBuildContentCompilationPlan = (
     resources: getBuildValues<Resource>(build.resources),
   });
 
-export const getDynamicPublishedMdxSourceBlockIds = (
+const getPublishedContentBlockSources = (
   build: PublishedContentDatabaseBuild,
   publishedInstanceIds: ReadonlySet<string> = getPublishedInstanceIds(build)
 ) => {
+  const props = getBuildValues<Prop>(build.props);
   const blockIds = new Set(
     getBuildValues<Instance>(build.instances).flatMap((instance) =>
       instance.component === blockComponent &&
@@ -135,16 +135,35 @@ export const getDynamicPublishedMdxSourceBlockIds = (
         : []
     )
   );
-  return getBuildValues<Prop>(build.props).flatMap((prop) =>
-    blockIds.has(prop.instanceId) &&
-    prop.name === contentBlockSourceProp &&
-    prop.type === "expression" &&
-    prop.value.length > 0 &&
-    typeof parseJsonExpression(prop.value) !== "string"
-      ? [prop.instanceId]
-      : []
-  );
+  const propsByBlock = new Map<string, Prop[]>();
+  for (const prop of props) {
+    if (blockIds.has(prop.instanceId)) {
+      const blockProps = propsByBlock.get(prop.instanceId) ?? [];
+      blockProps.push(prop);
+      propsByBlock.set(prop.instanceId, blockProps);
+    }
+  }
+  return Array.from(blockIds).flatMap((blockInstanceId) => {
+    const source = getContentBlockSource({
+      blockInstanceId,
+      props: propsByBlock.get(blockInstanceId) ?? [],
+    });
+    return source === undefined ? [] : [{ blockInstanceId, source }];
+  });
 };
+
+export const getDynamicPublishedMdxSourceBlockIds = (
+  build: PublishedContentDatabaseBuild,
+  publishedInstanceIds: ReadonlySet<string> = getPublishedInstanceIds(build)
+) =>
+  getPublishedContentBlockSources(build, publishedInstanceIds).flatMap(
+    ({ blockInstanceId, source }) =>
+      source.type === "expression" &&
+      source.value.length > 0 &&
+      typeof parseJsonExpression(source.value) !== "string"
+        ? [blockInstanceId]
+        : []
+  );
 
 export const hasDynamicPublishedMdxSources = (
   build: PublishedContentDatabaseBuild,
@@ -157,44 +176,29 @@ export const createPublishedBuildContentCompilationPlan = (
   dynamicAssetIdsByBlock: ReadonlyMap<string, readonly string[]> = new Map(),
   publishedInstanceIds: ReadonlySet<string> = getPublishedInstanceIds(build)
 ) => {
-  const props = getBuildValues<Prop>(build.props);
-  const blockIds = new Set(
-    getBuildValues<Instance>(build.instances).flatMap((instance) =>
-      instance.component === blockComponent &&
-      publishedInstanceIds.has(instance.id)
-        ? [instance.id]
-        : []
-    )
-  );
-  const sourceProps = props.filter(
-    (prop) =>
-      blockIds.has(prop.instanceId) && prop.name === contentBlockSourceProp
-  );
+  const sources = getPublishedContentBlockSources(build, publishedInstanceIds);
   const directAssetIds = new Set(
-    sourceProps.flatMap((prop) => {
-      if (prop.type === "asset" && prop.value.length > 0) {
-        return [prop.value];
+    sources.flatMap(({ blockInstanceId, source }) => {
+      if (source.type === "asset") {
+        return source.assetId.length > 0 ? [source.assetId] : [];
       }
-      if (prop.type === "expression") {
-        const value = parseJsonExpression(prop.value);
-        if (typeof value === "string" && value.length > 0) {
-          return [value];
-        }
-        return dynamicAssetIdsByBlock.get(prop.instanceId) ?? [];
+      const value = parseJsonExpression(source.value);
+      if (typeof value === "string" && value.length > 0) {
+        return [value];
       }
-      return [];
+      return dynamicAssetIdsByBlock.get(blockInstanceId) ?? [];
     })
   );
-  const dynamicSource = sourceProps.find(
-    (prop) =>
-      prop.type === "expression" &&
-      prop.value.length > 0 &&
-      typeof parseJsonExpression(prop.value) !== "string" &&
-      dynamicAssetIdsByBlock.has(prop.instanceId) === false
+  const dynamicSource = sources.find(
+    ({ blockInstanceId, source }) =>
+      source.type === "expression" &&
+      source.value.length > 0 &&
+      typeof parseJsonExpression(source.value) !== "string" &&
+      dynamicAssetIdsByBlock.has(blockInstanceId) === false
   );
   if (dynamicSource !== undefined) {
     throw new Error(
-      `Content Block "${dynamicSource.instanceId}" uses a dynamic MDX source whose exact Asset dependencies cannot be determined safely for publication`
+      `Content Block "${dynamicSource.blockInstanceId}" uses a dynamic MDX source whose exact Asset dependencies cannot be determined safely for publication`
     );
   }
   const createMdxQuery = ({
@@ -538,17 +542,21 @@ export const resolvePublishedMdxAssetCandidates = ({
   };
 
   const candidatesByBlock = new Map<string, readonly string[]>();
-  for (const prop of props) {
+  for (const blockInstanceId of blockInstanceIds) {
+    if (instances.get(blockInstanceId)?.component !== blockComponent) {
+      continue;
+    }
+    const source = getContentBlockSource({
+      blockInstanceId,
+      props: propsByInstance.get(blockInstanceId) ?? [],
+    });
     if (
-      prop.name !== contentBlockSourceProp ||
-      blockInstanceIds.has(prop.instanceId) === false ||
-      prop.type !== "expression" ||
-      typeof parseJsonExpression(prop.value) === "string" ||
-      instances.get(prop.instanceId)?.component !== blockComponent
+      source?.type !== "expression" ||
+      typeof parseJsonExpression(source.value) === "string"
     ) {
       continue;
     }
-    const path = parseStaticMemberPath(prop.value);
+    const path = parseStaticMemberPath(source.value);
     const dataSourceId =
       path === undefined ? undefined : decodeDataSourceVariable(path[0]);
     const assetIds =
@@ -563,11 +571,11 @@ export const resolvePublishedMdxAssetCandidates = ({
         continue;
       }
       throw new Error(
-        `Content Block "${prop.instanceId}" has no finite dynamic MDX Asset candidates`
+        `Content Block "${blockInstanceId}" has no finite dynamic MDX Asset candidates`
       );
     }
     candidatesByBlock.set(
-      prop.instanceId,
+      blockInstanceId,
       Array.from(new Set(assetIds)).sort()
     );
   }

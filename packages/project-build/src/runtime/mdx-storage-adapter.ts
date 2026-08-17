@@ -13,6 +13,10 @@ import {
 import type { BuilderNamespace } from "../contracts/namespaces";
 import type { BuilderState } from "../state/builder-state";
 import {
+  createBuilderBuildDataSnapshotFromState,
+  createBuilderStateFromBuildData,
+} from "../state/adapters";
+import {
   applyBuilderNamespacePatches,
   applyBuilderPatchTransactions,
 } from "../state/patch";
@@ -46,44 +50,27 @@ const fragmentNamespaces = [
 
 type FragmentNamespace = (typeof fragmentNamespaces)[number];
 
-const toFragmentState = (fragment: WebstudioFragment): BuilderState => ({
-  instances: new Map(fragment.instances.map((value) => [value.id, value])),
-  props: new Map(fragment.props.map((value) => [value.id, value])),
-  assets: new Map(fragment.assets.map((value) => [value.id, value])),
-  dataSources: new Map(fragment.dataSources.map((value) => [value.id, value])),
-  resources: new Map(fragment.resources.map((value) => [value.id, value])),
-  breakpoints: new Map(fragment.breakpoints.map((value) => [value.id, value])),
-  styleSources: new Map(
-    fragment.styleSources.map((value) => [value.id, value])
-  ),
-  styleSourceSelections: new Map(
-    fragment.styleSourceSelections.map((value) => [value.instanceId, value])
-  ),
-  styles: new Map(
-    fragment.styles.map((value) => [getStyleDeclKey(value), value])
-  ),
-});
-
 const fromFragmentState = ({
   state,
   children,
 }: {
   state: BuilderState;
   children: WebstudioFragment["children"];
-}): WebstudioFragment => ({
-  children,
-  instances: Array.from(state.instances?.values() ?? []),
-  props: Array.from(state.props?.values() ?? []),
-  assets: Array.from(state.assets?.values() ?? []),
-  dataSources: Array.from(state.dataSources?.values() ?? []),
-  resources: Array.from(state.resources?.values() ?? []),
-  breakpoints: Array.from(state.breakpoints?.values() ?? []),
-  styleSources: Array.from(state.styleSources?.values() ?? []),
-  styleSourceSelections: Array.from(
-    state.styleSourceSelections?.values() ?? []
-  ),
-  styles: Array.from(state.styles?.values() ?? []),
-});
+}): WebstudioFragment => {
+  const snapshot = createBuilderBuildDataSnapshotFromState(state);
+  return {
+    children,
+    instances: snapshot.instances ?? [],
+    props: snapshot.props ?? [],
+    assets: snapshot.assets ?? [],
+    dataSources: snapshot.dataSources ?? [],
+    resources: snapshot.resources ?? [],
+    breakpoints: snapshot.breakpoints ?? [],
+    styleSources: snapshot.styleSources ?? [],
+    styleSourceSelections: snapshot.styleSourceSelections ?? [],
+    styles: snapshot.styles ?? [],
+  };
+};
 
 export const applyMdxContentStorageChanges = ({
   root,
@@ -92,7 +79,7 @@ export const applyMdxContentStorageChanges = ({
   root: MaterializedMdxAuthoredContentRoot;
   changes: readonly ContentStorageChange[];
 }) => {
-  let state = toFragmentState(root.fragment);
+  let state = createBuilderStateFromBuildData(root.fragment);
   let fragmentRoot = { children: root.fragment.children };
   for (const change of changes) {
     for (const storageChange of change.payload) {
@@ -277,6 +264,7 @@ const insertAuthoredNodes = ({
 }): MdxDocument => {
   const next = structuredClone(document);
   let children = next.children as MdxAuthoredNode[];
+  let parentPath: readonly number[] = [];
   if (change.parentInstanceId !== root.identity.blockInstanceId) {
     const provenance = root.provenance.nodes.find(
       ({ instanceId }) => instanceId === change.parentInstanceId
@@ -290,6 +278,7 @@ const insertAuthoredNodes = ({
     if (parent?.type !== "element") {
       throw new Error("Pasted MDX parent provenance is stale");
     }
+    parentPath = provenance.path;
     children = parent.children as MdxAuthoredNode[];
   }
   if (change.position === "replace") {
@@ -298,10 +287,16 @@ const insertAuthoredNodes = ({
   }
   let authoredIndex = change.position === "append" ? children.length : 0;
   if (change.position === "index") {
+    const unresolvedPaths = new Set(
+      root.provenance.unresolvedTemplates.map(({ path }) => path.join("."))
+    );
     let renderedIndex = 0;
     authoredIndex = children.length;
     for (const [index, node] of children.entries()) {
-      if (node.type === "comment") {
+      if (
+        node.type === "comment" ||
+        unresolvedPaths.has([...parentPath, index].join("."))
+      ) {
         continue;
       }
       if (renderedIndex === change.childIndex) {
@@ -461,9 +456,6 @@ export const prepareMdxContentStorageWrites = async ({
   for (const change of changes) {
     if (hasContentStorageChange(change) === false) {
       continue;
-    }
-    if (change.root.type !== "external") {
-      throw new Error("Project storage changes cannot be written as MDX");
     }
     const identity = change.root.identity;
     if (identity.format !== "mdx") {

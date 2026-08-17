@@ -67,6 +67,30 @@ test("orders the durable destination before a cross-storage source removal", () 
   ).toBe("storage-first");
 });
 
+test("does not correlate unrelated records that only share an id", () => {
+  expect(
+    getRuntimeMutationPersistenceOrder({
+      payload: [
+        {
+          namespace: "props",
+          patches: [{ op: "add", path: ["shared"], value: {} }],
+        },
+      ],
+      storageChanges: [
+        {
+          root: externalRoot,
+          payload: [
+            {
+              namespace: "instances",
+              patches: [{ op: "remove", path: ["shared"] }],
+            },
+          ],
+        },
+      ],
+    })
+  ).toBe("storage-first");
+});
+
 test("creates mutation result and marks noop from payload", () => {
   expect(
     createRuntimeMutation({

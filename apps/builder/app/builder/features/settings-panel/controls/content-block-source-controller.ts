@@ -28,7 +28,11 @@ import {
   $variableValuesByInstanceSelector,
   getInstanceKeyWithRoot,
 } from "~/shared/nano-states";
-import { $project, readBuilderStateStores } from "~/shared/sync/data-stores";
+import {
+  $project,
+  hasSameBuilderStateStoreReferences,
+  readBuilderStateStores,
+} from "~/shared/sync/data-stores";
 import { getAssetContentBridge } from "~/shared/asset-content-bridge.client";
 import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
 import { getWebstudioData } from "~/shared/instance-utils/data";
@@ -83,16 +87,6 @@ const getConfiguredSource = ({
     props: state.props.values(),
   });
 };
-
-const hasSameBuilderState = (
-  left: ReturnType<typeof readBuilderStateStores>,
-  right: ReturnType<typeof readBuilderStateStores>
-) =>
-  Object.keys(left).every(
-    (namespace) =>
-      left[namespace as keyof typeof left] ===
-      right[namespace as keyof typeof right]
-  );
 
 // Builder retains a long-lived session for canvas projection.
 // Lifecycle persistence and recovery policy stay in project-build so the
@@ -155,7 +149,7 @@ export const createContentBlockSourceController = ({
       session,
       commitProjectPayload: (payload) => commitProjectPayload([...payload]),
       canCommitProjectPayload: () =>
-        hasSameBuilderState(expectedState, getState()),
+        hasSameBuilderStateStoreReferences(expectedState, getState()),
     });
     if (persisted.status !== "complete") {
       const failedStep = persisted.persistence.steps.find(
@@ -307,15 +301,7 @@ export const createContentBlockSourceController = ({
       return { status: "blocked", message: "The MDX Asset is not loaded." };
     }
     const key = currentSessionKey;
-    let pending: Awaited<ReturnType<typeof session.queueSave>>;
-    try {
-      pending = await session.queueSave({
-        key,
-        changes,
-      });
-    } catch (error) {
-      throw error;
-    }
+    const pending = await session.queueSave({ key, changes });
     if (disposed === false && currentSessionKey === key) {
       publishSessionState?.(pending);
     }
@@ -342,12 +328,8 @@ export const createContentBlockSourceController = ({
         message: "The updated MDX source is unavailable.",
       };
     }
-    let saved: Awaited<ReturnType<typeof session.flush>>;
-    try {
-      saved = pending.status === "pending" ? await session.flush(key) : pending;
-    } catch (error) {
-      throw error;
-    }
+    const saved =
+      pending.status === "pending" ? await session.flush(key) : pending;
     if (disposed === false && currentSessionKey === key) {
       publishSessionState?.(saved);
     }

@@ -947,6 +947,10 @@ describe("project session", () => {
     expect(preflightStorageChanges).toHaveBeenCalledTimes(1);
     expect(transport.commits).toEqual([]);
     expect(state.instances?.has("external-heading")).toBe(false);
+    expect(
+      getBuilderStateNamespaceFreshness(session.snapshot!.freshness, "assets")
+        .status
+    ).toBe("stale");
 
     preflightStorageChanges.mockResolvedValueOnce({
       status: "failed",

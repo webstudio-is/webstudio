@@ -8,7 +8,6 @@ import {
   type ContentBlockExternalContentIdentity,
   type Instance,
   type Prop,
-  type Resource,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import { getExpressionIdentifiers } from "@webstudio-is/expression";
@@ -28,6 +27,7 @@ import {
   validateContentModeTransaction,
 } from "./content-mode-permissions";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { listResourceExpressions } from "./data";
 import { throwBuilderRuntimeError } from "./errors";
 import { listPropExpressions } from "./props";
 
@@ -42,6 +42,11 @@ export type ContentStorageRoot =
       type: "external";
       identity: ContentBlockExternalContentIdentity;
     }>;
+
+export const getContentBlockRenderScopeKey = (
+  blockInstanceId: Instance["id"],
+  renderScope: string
+) => JSON.stringify([blockInstanceId, renderScope]);
 
 export const getContentStorageIdentityKey = (
   identity: ContentBlockExternalContentIdentity
@@ -151,9 +156,6 @@ export const projectContentStorageChanges = ({
     payload.map((change) => {
       if (change.namespace !== "fragment") {
         return change;
-      }
-      if (root.type !== "external") {
-        throw new Error("Fragment changes require external storage");
       }
       const block = state.instances?.get(root.identity.blockInstanceId);
       if (block === undefined) {
@@ -546,10 +548,10 @@ export const createContentStorageSelectorProjection = ({
   });
   const rootByScope = new Map(
     materializedRoots.map((root) => [
-      JSON.stringify([
+      getContentBlockRenderScopeKey(
         root.identity.blockInstanceId,
-        root.identity.renderScope,
-      ]),
+        root.identity.renderScope
+      ),
       root,
     ])
   );
@@ -559,7 +561,9 @@ export const createContentStorageSelectorProjection = ({
       if (instance.component !== blockComponent) {
         return instance.children;
       }
-      const root = rootByScope.get(JSON.stringify([instance.id, renderScope]));
+      const root = rootByScope.get(
+        getContentBlockRenderScopeKey(instance.id, renderScope)
+      );
       if (root === undefined) {
         return instance.children;
       }
@@ -577,7 +581,8 @@ const isSameContentStorageRoot = (
   left.type === right.type &&
   (left.type === "project" ||
     (right.type === "external" &&
-      left.identity.blockInstanceId === right.identity.blockInstanceId));
+      getContentStorageIdentityKey(left.identity) ===
+        getContentStorageIdentityKey(right.identity)));
 
 export const resolveContentStorageRoot = (
   projection: ContentStorageProjection,
@@ -1178,13 +1183,6 @@ const validateExpressionReferenceOwnership = ({
     });
   }
 };
-
-const listResourceExpressions = (resource: Resource) => [
-  resource.url,
-  ...resource.headers.map(({ value }) => value),
-  ...(resource.searchParams?.map(({ value }) => value) ?? []),
-  ...(resource.body === undefined ? [] : [resource.body]),
-];
 
 const validatePropReferenceOwnership = ({
   projection,
@@ -1844,8 +1842,8 @@ export const executeContentStorageStructuralMutation = <
           continue;
         }
         if (
-          listResourceExpressions(resource).some(
-            referencesTransferredDataSource
+          listResourceExpressions(resource).some(({ expression }) =>
+            referencesTransferredDataSource(expression)
           )
         ) {
           return throwBuilderRuntimeError(
@@ -1954,7 +1952,7 @@ export const executeContentStorageStructuralMutation = <
       if (resource === undefined) {
         continue;
       }
-      for (const expression of listResourceExpressions(resource)) {
+      for (const { expression } of listResourceExpressions(resource)) {
         validateExpressionReferenceOwnership({
           projection,
           root: targetRoot,

@@ -26,14 +26,22 @@ import type {
   ContentBlockPersistenceStep,
   ContentBlockSourceInspection,
 } from "./context";
-import type { MdxAssetEditingSessionState } from "./mdx-asset-session";
+import {
+  getContentBlockSessionSource,
+  isContentBlockSessionSourceCommitted,
+  type createMdxAssetEditingSession,
+  type MdxAssetEditingSessionState,
+} from "./mdx-asset-session";
 import type { PendingMdxContentStorageWrite } from "./mdx-storage-adapter";
 import {
   getRuntimeMutationPersistenceOrder,
   type BuilderRuntimeMutation,
   type ContentStorageChange,
 } from "./mutation";
-import { getContentStorageIdentityKey } from "./content-storage";
+import {
+  getContentBlockRenderScopeKey,
+  getContentStorageIdentityKey,
+} from "./content-storage";
 import { getSourceBackedBlockTemplateContext } from "./block";
 import {
   planMdxTemplateMigration,
@@ -47,35 +55,9 @@ import {
   type BuilderRuntimeOperationId,
 } from "./registry";
 
-export type MdxAssetEditingSession = Parameters<
-  typeof prepareContentBlockConnect
->[0]["session"] &
-  Readonly<{
-    queueSave: (input: {
-      key: string;
-      changes: readonly ContentStorageChange[];
-    }) => Promise<MdxAssetEditingSessionState>;
-    preflightSave: (input: {
-      key: string;
-      changes: readonly ContentStorageChange[];
-    }) => Promise<
-      | Readonly<{ status: "ready" }>
-      | Readonly<{ status: "blocked"; reason: string }>
-    >;
-    flush: (key: string) => Promise<MdxAssetEditingSessionState>;
-    retry: (key: string) => Promise<MdxAssetEditingSessionState>;
-    reloadRemote: (key: string) => Promise<MdxAssetEditingSessionState>;
-    copyUnsavedSource: (key: string) => string | undefined;
-    list: () => readonly MdxAssetEditingSessionState[];
-    persistSourceReplacement: (input: {
-      key: string;
-      expectedSource: string;
-      source: string;
-    }) => Promise<
-      | Readonly<{ status: "applied"; state: MdxAssetEditingSessionState }>
-      | Readonly<{ status: "blocked"; reason: string }>
-    >;
-  }>;
+export type MdxAssetEditingSession = ReturnType<
+  typeof createMdxAssetEditingSession
+>;
 
 export type ContentBlockApplicationErrorCode =
   | "content-source-not-configured"
@@ -142,25 +124,6 @@ export const getContentBlockSessionMessage = (
     : state.status === "conflicting"
       ? "The MDX Asset changed remotely"
       : `The MDX Asset session is ${state.status}`;
-
-export const getContentBlockSessionSource = (
-  state: MdxAssetEditingSessionState | undefined
-) =>
-  state !== undefined && "localSource" in state
-    ? state.localSource
-    : state !== undefined && "source" in state
-      ? state.source
-      : undefined;
-
-export const isContentBlockSessionSourceCommitted = ({
-  state,
-  source,
-}: {
-  state: MdxAssetEditingSessionState;
-  source: string;
-}) =>
-  (state.status === "saved" && state.source === source) ||
-  (state.status === "recoverable" && state.committedSource === source);
 
 export type { ContentBlockPersistenceResult, ContentBlockPersistenceStep };
 
@@ -268,6 +231,20 @@ type ContentBlockSemanticMutation<Result extends Record<string, unknown>> =
   BuilderRuntimeMutation<Result> &
     Readonly<{ persistence?: ContentBlockPersistenceResult }>;
 
+const getContentStorageSessionState = (
+  session: MdxAssetEditingSession,
+  identity: ContentStorageChange["root"]["identity"]
+) => {
+  const identityKey = getContentStorageIdentityKey(identity);
+  return session
+    .list()
+    .find(
+      (state) =>
+        "identity" in state &&
+        getContentStorageIdentityKey(state.identity) === identityKey
+    );
+};
+
 export const persistPreparedContentBlockLifecycle = async ({
   prepared,
   session,
@@ -293,14 +270,7 @@ export const persistPreparedContentBlockLifecycle = async ({
     type: "asset" as const,
     root: write.root.identity,
     preflight: async () => {
-      const identityKey = getContentStorageIdentityKey(write.root.identity);
-      const owner = session
-        .list()
-        .find(
-          (candidate) =>
-            "identity" in candidate &&
-            getContentStorageIdentityKey(candidate.identity) === identityKey
-        );
+      const owner = getContentStorageSessionState(session, write.root.identity);
       const expectedSource = getContentBlockSessionSource(owner);
       if (
         owner === undefined ||
@@ -450,9 +420,6 @@ export const recoverContentBlockSession = async ({
         }
       : { status: "complete", state, source, changedAsset: false };
   }
-  if (dryRun) {
-    return { status: "complete", state, changedAsset: false };
-  }
   if (!("key" in state)) {
     return {
       status: "blocked",
@@ -461,13 +428,11 @@ export const recoverContentBlockSession = async ({
       state,
     };
   }
-  let next: MdxAssetEditingSessionState;
   if (action === "retry") {
-    if (state.status === "failed" && "localSource" in state) {
-      next = await session.retry(state.key);
-    } else if (state.status === "recoverable" && reopen !== undefined) {
-      next = await reopen();
-    } else {
+    if (
+      (state.status !== "failed" || !("localSource" in state)) &&
+      (state.status !== "recoverable" || reopen === undefined)
+    ) {
       return {
         status: "blocked",
         code: "content-source-session-failed",
@@ -475,17 +440,23 @@ export const recoverContentBlockSession = async ({
         state,
       };
     }
-  } else {
-    if (state.status !== "conflicting") {
-      return {
-        status: "blocked",
-        code: "content-source-session-failed",
-        message: `Remote reload is not available while the MDX Asset session is ${state.status}`,
-        state,
-      };
-    }
-    next = await session.reloadRemote(state.key);
+  } else if (state.status !== "conflicting") {
+    return {
+      status: "blocked",
+      code: "content-source-session-failed",
+      message: `Remote reload is not available while the MDX Asset session is ${state.status}`,
+      state,
+    };
   }
+  if (dryRun) {
+    return { status: "complete", state, changedAsset: false };
+  }
+  const next =
+    action === "reload-remote"
+      ? await session.reloadRemote(state.key)
+      : state.status === "recoverable" && reopen !== undefined
+        ? await reopen()
+        : await session.retry(state.key);
   const committedRetry =
     action === "retry" &&
     "localSource" in state &&
@@ -557,17 +528,11 @@ const groupExternalStorageChanges = (
   const groups = new Map<
     string,
     {
-      identity: Extract<
-        ContentStorageChange["root"],
-        { type: "external" }
-      >["identity"];
+      identity: ContentStorageChange["root"]["identity"];
       changes: ContentStorageChange[];
     }
   >();
   for (const change of changes) {
-    if (change.root.type !== "external") {
-      continue;
-    }
     const key = getContentStorageIdentityKey(change.root.identity);
     const group = groups.get(key) ?? {
       identity: change.root.identity,
@@ -596,14 +561,7 @@ export const preflightContentBlockStorageChanges = async ({
 > => {
   const groups = groupExternalStorageChanges(changes);
   for (const [index, group] of groups.entries()) {
-    const identityKey = getContentStorageIdentityKey(group.identity);
-    const owner = session
-      .list()
-      .find(
-        (state) =>
-          "identity" in state &&
-          getContentStorageIdentityKey(state.identity) === identityKey
-      );
+    const owner = getContentStorageSessionState(session, group.identity);
     const preflight =
       owner !== undefined && "key" in owner
         ? await session.preflightSave({
@@ -667,14 +625,7 @@ export const persistContentBlockStorageChangesSerially = async ({
     type: "asset" as const,
     root: group.identity,
     preflight: async () => {
-      const identityKey = getContentStorageIdentityKey(group.identity);
-      const owner = session
-        .list()
-        .find(
-          (state) =>
-            "identity" in state &&
-            getContentStorageIdentityKey(state.identity) === identityKey
-        );
+      const owner = getContentStorageSessionState(session, group.identity);
       if (owner === undefined || !("key" in owner)) {
         return {
           status: "failed" as const,
@@ -695,14 +646,7 @@ export const persistContentBlockStorageChangesSerially = async ({
           };
     },
     persist: async () => {
-      const identityKey = getContentStorageIdentityKey(group.identity);
-      const owner = session
-        .list()
-        .find(
-          (state) =>
-            "identity" in state &&
-            getContentStorageIdentityKey(state.identity) === identityKey
-        );
+      const owner = getContentStorageSessionState(session, group.identity);
       if (owner === undefined || !("key" in owner)) {
         return {
           status: "failed" as const,
@@ -812,19 +756,22 @@ export const createContentBlockApplicationOperations = ({
   context: BuilderRuntimeContext;
 }) => {
   const activeKeys = new Map<string, string>();
-  const scopeKey = (blockInstanceId: string, renderScope: string) =>
-    JSON.stringify([blockInstanceId, renderScope]);
   const publishSession = (state: MdxAssetEditingSessionState) => {
     if ("identity" in state && "key" in state) {
       activeKeys.set(
-        scopeKey(state.identity.blockInstanceId, state.identity.renderScope),
+        getContentBlockRenderScopeKey(
+          state.identity.blockInstanceId,
+          state.identity.renderScope
+        ),
         state.key
       );
     }
     return state;
   };
   const getActiveState = (blockInstanceId: string, renderScope: string) => {
-    const key = activeKeys.get(scopeKey(blockInstanceId, renderScope));
+    const key = activeKeys.get(
+      getContentBlockRenderScopeKey(blockInstanceId, renderScope)
+    );
     return key === undefined ? undefined : session.get(key);
   };
 
@@ -1101,7 +1048,9 @@ export const createContentBlockApplicationOperations = ({
       };
     }
     if (action === "disconnect") {
-      activeKeys.delete(scopeKey(blockInstanceId, renderScope));
+      activeKeys.delete(
+        getContentBlockRenderScopeKey(blockInstanceId, renderScope)
+      );
     } else if (persisted.state !== undefined) {
       publishSession(persisted.state);
     }

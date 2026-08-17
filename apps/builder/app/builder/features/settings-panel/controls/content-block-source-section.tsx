@@ -6,6 +6,7 @@ import {
 } from "@webstudio-is/content-engine/compiler";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { previewMarkdownToMdxConversion } from "@webstudio-is/content-engine/mdx-conversion";
+import { getContentBlockRenderScopeKey } from "@webstudio-is/project-build/runtime";
 import {
   formatAssetName,
   formatContentBlockSourceIntegrityIssue,
@@ -70,7 +71,7 @@ export const ContentBlockSourceSection = ({
   const authPermit = useStore($authPermit);
   const materializedViewStates = useStore($materializedContentViewStates);
   const viewState = materializedViewStates.get(
-    JSON.stringify([blockInstanceId, renderScope])
+    getContentBlockRenderScopeKey(blockInstanceId, renderScope)
   );
   const source = useMemo(
     () => getSource(blockInstanceId, props),

@@ -13,7 +13,7 @@ export type ContentStoragePatchChange =
   | { namespace: "fragment"; patches: BuilderPatchChange["patches"] };
 
 export type ContentStorageChange = {
-  root: ContentStorageRoot;
+  root: Extract<ContentStorageRoot, { type: "external" }>;
   payload: ContentStoragePatchChange[];
   copySource?: Readonly<{
     root: ContentStorageRoot;
@@ -62,24 +62,24 @@ export const getRuntimeMutationPersistenceOrder = (
     return mutation.persistenceOrder;
   }
   const projectAdds = new Set(
-    mutation.payload.flatMap(({ patches }) =>
+    mutation.payload.flatMap(({ namespace, patches }) =>
       patches.flatMap((patch) =>
         patch.op === "add" &&
         patch.path.length === 1 &&
         typeof patch.path[0] === "string"
-          ? [patch.path[0]]
+          ? [JSON.stringify([namespace, patch.path[0]])]
           : []
       )
     )
   );
   const storageRemovals = new Set(
     (mutation.storageChanges ?? []).flatMap(({ payload }) =>
-      payload.flatMap(({ patches }) =>
+      payload.flatMap(({ namespace, patches }) =>
         patches.flatMap((patch) =>
           patch.op === "remove" &&
           patch.path.length === 1 &&
           typeof patch.path[0] === "string"
-            ? [patch.path[0]]
+            ? [JSON.stringify([namespace, patch.path[0]])]
             : []
         )
       )

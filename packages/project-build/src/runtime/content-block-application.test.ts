@@ -388,6 +388,25 @@ describe("Content Block application operations", () => {
     });
   });
 
+  test("dry-run rejects recovery actions that the live session cannot run", async () => {
+    await expect(
+      recoverContentBlockSession({
+        session: {} as never,
+        state: {
+          status: "saved",
+          key: "article",
+          source: "# Saved",
+          diagnostics: [],
+        } as never,
+        action: "reload-remote",
+        dryRun: true,
+      })
+    ).resolves.toMatchObject({
+      status: "blocked",
+      code: "content-source-session-failed",
+    });
+  });
+
   test("discovers exact dynamic render scopes and their repair capabilities", async () => {
     const { repository } = createRepository();
     const resolveExpressionAssetId = vi.fn(() => "article");

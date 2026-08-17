@@ -96,31 +96,6 @@ export type BlockTemplateNameConfirmation = {
   }>;
 };
 
-const isSourceBackedBlockTemplate = ({
-  instanceId,
-  instances,
-  props,
-}: {
-  instanceId: Instance["id"];
-  instances: Instances;
-  props: Iterable<Prop>;
-}) => {
-  const templates = findParentInstanceReference(
-    instances,
-    instanceId
-  )?.instance;
-  if (templates?.component !== blockTemplateComponent) {
-    return false;
-  }
-  const block = findParentInstanceReference(instances, templates.id)?.instance;
-  if (block?.component !== blockComponent) {
-    return false;
-  }
-  return (
-    getContentBlockSource({ blockInstanceId: block.id, props }) !== undefined
-  );
-};
-
 export const getSourceBackedBlockTemplateContext = ({
   templateInstanceId,
   instances,
@@ -179,16 +154,15 @@ export const getBlockTemplateNameConfirmation = ({
   const templates: BlockTemplateNameConfirmation["templates"] = [];
   const sourceProps = Array.from(props);
   for (const { instance, nextInstance } of changes) {
-    if (
-      isSourceBackedBlockTemplate({
-        instanceId: instance.id,
-        instances,
-        props: sourceProps,
-      }) === false
-    ) {
+    const context = getSourceBackedBlockTemplateContext({
+      templateInstanceId: instance.id,
+      instances,
+      props: sourceProps,
+    });
+    if (context === undefined) {
       continue;
     }
-    const oldName = getInstanceName({ instance, metas: componentMetas });
+    const oldName = context.templateName;
     const newName =
       nextInstance === undefined
         ? undefined

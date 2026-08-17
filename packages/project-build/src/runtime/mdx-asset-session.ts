@@ -22,7 +22,10 @@ import {
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import type { BuilderState } from "../state/builder-state";
 import { getRequiredComponentInsertData } from "./components";
-import { getContentStorageIdentityKey } from "./content-storage";
+import {
+  getContentBlockRenderScopeKey,
+  getContentStorageIdentityKey,
+} from "./content-storage";
 import { materializeMdxAuthoredContent } from "./mdx-authored-content";
 import { materializeMdxTemplates } from "./mdx-materialization";
 import {
@@ -70,6 +73,25 @@ export type MdxAssetEditingSessionState =
       error: Error;
     }>
   | (UnsavedSessionBase & Readonly<{ status: "failed"; error: Error }>);
+
+export const getContentBlockSessionSource = (
+  state: MdxAssetEditingSessionState | undefined
+) =>
+  state !== undefined && "localSource" in state
+    ? state.localSource
+    : state !== undefined && "source" in state
+      ? state.source
+      : undefined;
+
+export const isContentBlockSessionSourceCommitted = ({
+  state,
+  source,
+}: {
+  state: MdxAssetEditingSessionState;
+  source: string;
+}) =>
+  (state.status === "saved" && state.source === source) ||
+  (state.status === "recoverable" && state.committedSource === source);
 
 export type MdxAssetSessionAuthorization = (input: {
   assetId: string;
@@ -245,6 +267,7 @@ export const createMdxAssetEditingSession = ({
   const states = new Map<string, MdxAssetEditingSessionState>();
   const queueEntries = new Map<string, MdxAssetSessionQueueEntry>();
   const keyAliases = new Map<string, string>();
+  const openVersions = new Map<string, number>();
 
   const resolveKey = (key: string) => {
     let resolved = key;
@@ -361,6 +384,13 @@ export const createMdxAssetEditingSession = ({
   const open = async (
     input: MdxAssetSessionOpenInput
   ): Promise<MdxAssetEditingSessionState> => {
+    const openScopeKey = getContentBlockRenderScopeKey(
+      input.blockInstanceId,
+      input.renderScope
+    );
+    const openVersion = (openVersions.get(openScopeKey) ?? 0) + 1;
+    openVersions.set(openScopeKey, openVersion);
+    const isCurrentOpen = () => openVersions.get(openScopeKey) === openVersion;
     let assetId: string | undefined;
     try {
       assetId =
@@ -519,7 +549,9 @@ export const createMdxAssetEditingSession = ({
           },
         ],
       };
-      states.set(key, conflicting);
+      if (isCurrentOpen()) {
+        states.set(key, conflicting);
+      }
       return conflicting;
     }
     if (
@@ -556,7 +588,9 @@ export const createMdxAssetEditingSession = ({
           },
         ],
       };
-      states.set(key, conflicting);
+      if (isCurrentOpen()) {
+        states.set(key, conflicting);
+      }
       return conflicting;
     }
     const existing = states.get(key);
@@ -569,8 +603,10 @@ export const createMdxAssetEditingSession = ({
       source = decodeUtf8(bytes);
     } catch (error) {
       const recoverable = createRecoverableState({ error, identity });
-      states.set(key, recoverable);
-      getOrCreateQueueEntry({ key, input, assetId });
+      if (isCurrentOpen()) {
+        states.set(key, recoverable);
+        getOrCreateQueueEntry({ key, input, assetId });
+      }
       return recoverable;
     }
     try {
@@ -579,6 +615,9 @@ export const createMdxAssetEditingSession = ({
         ...loaded,
         status: "saved" as const,
       };
+      if (isCurrentOpen() === false) {
+        return saved;
+      }
       states.set(key, saved);
       const entry = getOrCreateQueueEntry({ key, input, assetId });
       entry.persisted = loaded;
@@ -589,8 +628,10 @@ export const createMdxAssetEditingSession = ({
     } catch (error) {
       if (error instanceof MdxDocumentError) {
         const recoverable = createRecoverableState({ error, identity });
-        states.set(key, recoverable);
-        getOrCreateQueueEntry({ key, input, assetId });
+        if (isCurrentOpen()) {
+          states.set(key, recoverable);
+          getOrCreateQueueEntry({ key, input, assetId });
+        }
         return recoverable;
       }
       const failed = {
@@ -1207,12 +1248,6 @@ export const createMdxAssetEditingSession = ({
     source: string;
     isCurrent?: () => boolean;
   }): Promise<MdxAssetSourceReplacementResult> => {
-    const isPersistedSource = (
-      state: MdxAssetEditingSessionState,
-      source: string
-    ) =>
-      (state.status === "saved" && state.source === source) ||
-      (state.status === "recoverable" && state.committedSource === source);
     const current = states.get(resolveKey(input.key));
     if (
       current?.status === "recoverable" &&
@@ -1242,18 +1277,16 @@ export const createMdxAssetEditingSession = ({
         };
       }
       const persisted = await flushOne(input.key);
-      return isPersistedSource(persisted, input.source)
+      return isContentBlockSessionSourceCommitted({
+        state: persisted,
+        source: input.source,
+      })
         ? { status: "applied", state: persisted }
         : {
             status: "blocked",
             state: persisted,
             reason: "unresolved-write",
-            currentSource:
-              "localSource" in persisted
-                ? persisted.localSource
-                : "source" in persisted
-                  ? persisted.source
-                  : undefined,
+            currentSource: getContentBlockSessionSource(persisted),
           };
     }
     const prepared = await prepareSourceReplacement(input);
@@ -1277,18 +1310,16 @@ export const createMdxAssetEditingSession = ({
       return applied;
     }
     const persisted = await flushOne(applied.state.key);
-    return isPersistedSource(persisted, input.source)
+    return isContentBlockSessionSourceCommitted({
+      state: persisted,
+      source: input.source,
+    })
       ? { status: "applied", state: persisted }
       : {
           status: "blocked",
           state: persisted,
           reason: "unresolved-write",
-          currentSource:
-            "localSource" in persisted
-              ? persisted.localSource
-              : "source" in persisted
-                ? persisted.source
-                : undefined,
+          currentSource: getContentBlockSessionSource(persisted),
         };
   };
 

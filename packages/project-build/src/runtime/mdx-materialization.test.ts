@@ -501,7 +501,7 @@ describe("materializeMdxTemplates", () => {
   test("tracks effective names and deduplicated template revisions", async () => {
     const data = createData();
     const originalData = structuredClone(data);
-    const materialize = () =>
+    const materialize = (sourceData = data) =>
       materializeMdxTemplates({
         identity,
         resolution: {
@@ -518,7 +518,7 @@ describe("materializeMdxTemplates", () => {
           ],
           diagnostics: [],
         },
-        data,
+        data: sourceData,
         metas,
         projectId: "target-project",
       });
@@ -540,6 +540,19 @@ describe("materializeMdxTemplates", () => {
         : []
     );
     expect(new Set(rootIds).size).toBe(2);
+
+    const reorderedData = createData();
+    const reorderedAsset = reorderedData.assets.get("image");
+    if (reorderedAsset?.type !== "image") {
+      throw new Error("Expected image Asset");
+    }
+    reorderedData.assets.set("image", {
+      ...reorderedAsset,
+      meta: { height: 10, width: 10 },
+    });
+    expect(
+      (await materialize(reorderedData)).dependencies.templates[0].revision
+    ).toBe(first.templates[0].revision);
 
     data.instances.get("heading")?.children.push({
       type: "text",

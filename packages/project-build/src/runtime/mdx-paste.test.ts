@@ -289,6 +289,61 @@ describe("pasted MDX", () => {
     ]);
   });
 
+  test("positions pasted MDX by rendered children around unresolved names", async () => {
+    const destinationSource = `<ws.element ws:name="Missing" />\n\nExisting`;
+    const document = await parseMdxDocument({ source: destinationSource });
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization: {
+        templates: [
+          {
+            type: "unresolved-template",
+            reference: {
+              type: "unresolved-template",
+              path: [0],
+              templateName: "Missing",
+            },
+            markerId: "missing",
+          },
+        ],
+        diagnostics: [],
+        dependencies: { templateNames: ["Missing"], templates: [] },
+      },
+    });
+    const state = createState();
+    const mutation = await executeBuilderRuntimeOperation<
+      BuilderRuntimeMutation<MdxPasteResult>
+    >({
+      id: "instances.insertMdxText",
+      state,
+      input: {
+        parentInstanceId: "block",
+        source: "# Inserted",
+        insertIndex: 1,
+      },
+      context: {
+        createId: createId(),
+        projectId: "project",
+        returnStorageChanges: true,
+        materializedContent: [root],
+      },
+    });
+
+    const [write] = await prepareMdxContentStorageWrites({
+      loadedRoots: [root],
+      changes: mutation.storageChanges ?? [],
+      authorizeAssetWrite: () => true,
+    });
+    const persisted = await parseMdxDocument({ source: write.source });
+
+    expect(persisted.children).toMatchObject([
+      { type: "template", name: "Missing" },
+      { type: "element", tag: "p" },
+      { type: "element", tag: "h1" },
+    ]);
+  });
+
   test("rejects raw MDX metadata that does not match the semantic insertion", async () => {
     const { root, mutation } = await paste({ source: "# Inserted" });
     const change = mutation.storageChanges?.[0];

@@ -153,11 +153,17 @@ const toSourceProp = ({
 const isSameSource = (
   left: ContentBlockSource | undefined,
   right: ContentBlockSource
-) =>
-  left?.type === right.type &&
-  (left.type === "asset"
-    ? left.assetId === (right.type === "asset" ? right.assetId : undefined)
-    : left?.value === (right.type === "expression" ? right.value : undefined));
+) => {
+  if (left?.type !== right.type) {
+    return false;
+  }
+  if (left.type === "asset" && right.type === "asset") {
+    return left.assetId === right.assetId;
+  }
+  return left.type === "expression" && right.type === "expression"
+    ? left.value === right.value
+    : false;
+};
 
 const createSourcePayload = ({
   state,

@@ -6,8 +6,13 @@ import type {
   AssetValueReference,
   ContentArtifactV1,
 } from "@webstudio-is/content-engine";
-import { contentEngineLimits } from "@webstudio-is/content-engine";
 import {
+  contentEngineLimits,
+  createDocumentGraph,
+  getDocumentGraphClosure,
+} from "@webstudio-is/content-engine";
+import {
+  blockComponent,
   getAssetContentHash,
   getContentBlockSource,
   type ContentBlockDiagnostic,
@@ -66,38 +71,16 @@ const getNestedDocumentDependencies = ({
   artifact: ContentArtifactV1;
   assetId: string;
 }) => {
-  const nodes = new Map(
-    artifact.documentGraph?.nodes.map((node) => [node.id, node]) ?? []
-  );
-  const edgesBySource = new Map<string, string[]>();
-  for (const edge of artifact.documentGraph?.edges ?? []) {
-    const targets = edgesBySource.get(edge.sourceId) ?? [];
-    targets.push(edge.reference.documentId);
-    edgesBySource.set(edge.sourceId, targets);
+  if (artifact.documentGraph === undefined) {
+    return [];
   }
-  const dependencies = new Map<
-    string,
-    { revision: string; contentRef: string }
-  >();
-  const pending = [assetId];
-  while (pending.length > 0) {
-    const current = pending.pop()!;
-    if (dependencies.has(current)) {
-      continue;
-    }
-    const node = nodes.get(current);
-    if (node !== undefined) {
-      dependencies.set(current, {
-        revision: node.revision,
-        contentRef: node.contentRef,
-      });
-    }
-    pending.push(...(edgesBySource.get(current) ?? []));
+  const graph = createDocumentGraph(artifact.documentGraph);
+  if (graph.nodes.some(({ id }) => id === assetId) === false) {
+    return [];
   }
-  return Array.from(dependencies, ([id, dependency]) => ({
-    id,
-    ...dependency,
-  })).sort((left, right) => left.id.localeCompare(right.id));
+  return getDocumentGraphClosure({ graph, rootIds: [assetId] })
+    .map(({ id, revision, contentRef }) => ({ id, revision, contentRef }))
+    .sort((left, right) => left.id.localeCompare(right.id));
 };
 
 const createDependencyRevision = async ({
@@ -170,8 +153,9 @@ export const materializePublishedMdx = async ({
   const warnings: PublishedMdxWarning[] = [];
   for (const block of data.instances.values()) {
     if (
-      blockInstanceIds !== undefined &&
-      blockInstanceIds.has(block.id) === false
+      block.component !== blockComponent ||
+      (blockInstanceIds !== undefined &&
+        blockInstanceIds.has(block.id) === false)
     ) {
       continue;
     }

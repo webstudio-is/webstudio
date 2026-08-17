@@ -155,6 +155,25 @@ describe("published MDX materialization", () => {
     ).toEqual(["block"]);
   });
 
+  test("ignores src props on instances that are not Content Blocks", async () => {
+    const data = createData({});
+    const block = data.instances.get("block");
+    if (block === undefined) {
+      throw new Error("Expected Content Block");
+    }
+    data.instances.set("block", { ...block, component: "ws:element" });
+
+    const result = await materializePublishedMdx({
+      route: "/",
+      data,
+      artifact: createArtifact([{ id: "article", source: "# Private" }]),
+      metas: new Map(),
+      projectId: "project",
+    });
+
+    expect(result.roots).toEqual([]);
+  });
+
   test("materializes the exact candidate for a static expression source", async () => {
     const result = await materializePublishedMdx({
       route: "/blog/:slug",
@@ -406,5 +425,43 @@ describe("published MDX materialization", () => {
         projectId: "project",
       })
     ).rejects.toThrow();
+  });
+
+  test("rejects an invalid document dependency graph", async () => {
+    const artifact = createArtifact([{ id: "article", source: "# Article" }]);
+    artifact.documentGraph = {
+      format: "webstudio-document-graph",
+      version: 1,
+      nodes: [
+        {
+          id: "article",
+          revision: revision("b"),
+          contentRef: "article.mdx",
+          format: "mdx",
+        },
+      ],
+      edges: [
+        {
+          sourceId: "missing",
+          referenceId: "#frontmatter/author",
+          reference: {
+            documentId: "article",
+            revision: revision("b"),
+            representation: { type: "markdown-frontmatter" },
+          },
+        },
+      ],
+      integrity: { algorithm: "sha256", checksum: revision("d") },
+    };
+
+    await expect(
+      materializePublishedMdx({
+        route: "/",
+        data: createData({}),
+        artifact,
+        metas: new Map(),
+        projectId: "project",
+      })
+    ).rejects.toThrow("Document graph source missing does not exist");
   });
 });

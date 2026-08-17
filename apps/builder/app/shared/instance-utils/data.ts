@@ -21,7 +21,11 @@ import {
 import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime";
 import { $canOpenPageTemplates, $selectedPage } from "../nano-states";
 import { createTransactionFromBuilderPatchPayload } from "../sync/builder-patch";
-import { $project, readBuilderStateStores } from "../sync/data-stores";
+import {
+  $project,
+  hasSameBuilderStateStoreReferences,
+  readBuilderStateStores,
+} from "../sync/data-stores";
 import {
   $allSelectedInstanceSelectors,
   clearInstanceSelection,
@@ -200,17 +204,6 @@ const createRuntimeMutationArgs = <
   context: { ...getRuntimeMutationContext(), ...context },
 });
 
-const hasSameWebstudioData = (
-  expected: ReturnType<typeof getWebstudioData>
-) => {
-  const current = getWebstudioData();
-  return Object.keys(expected).every(
-    (namespace) =>
-      expected[namespace as keyof typeof expected] ===
-      current[namespace as keyof typeof current]
-  );
-};
-
 const persistRuntimeMutation = async <Mutation extends BuilderRuntimeMutation>(
   result: Mutation,
   plannedData: ReturnType<typeof getWebstudioData>
@@ -227,7 +220,10 @@ const persistRuntimeMutation = async <Mutation extends BuilderRuntimeMutation>(
           : {
               order: projectFirst ? ("before" as const) : ("after" as const),
               preflight: () =>
-                hasSameWebstudioData(plannedData)
+                hasSameBuilderStateStoreReferences(
+                  plannedData,
+                  getWebstudioData()
+                )
                   ? { status: "applied" as const }
                   : {
                       status: "blocked" as const,
@@ -235,7 +231,12 @@ const persistRuntimeMutation = async <Mutation extends BuilderRuntimeMutation>(
                         "The project changed before the content edit was saved.",
                     },
               save: () => {
-                if (hasSameWebstudioData(plannedData) === false) {
+                if (
+                  hasSameBuilderStateStoreReferences(
+                    plannedData,
+                    getWebstudioData()
+                  ) === false
+                ) {
                   return {
                     status: "blocked" as const,
                     message:

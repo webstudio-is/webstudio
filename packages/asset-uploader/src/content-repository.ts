@@ -1,6 +1,9 @@
 import type { Asset } from "@webstudio-is/sdk";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
-import { readBoundedBytes } from "@webstudio-is/content-engine/compiler";
+import {
+  readableStreamToAsyncIterable,
+  readBoundedBytes,
+} from "@webstudio-is/content-engine/compiler";
 
 export type AssetContentDescriptor = Pick<
   Asset,
@@ -35,28 +38,6 @@ export interface AssetContentRepository {
 export class AssetRevisionConflictError extends Error {}
 
 export class AssetContentAuthorizationError extends Error {}
-
-const toAsyncIterable = (stream: ReadableStream<Uint8Array>) => ({
-  async *[Symbol.asyncIterator]() {
-    const reader = stream.getReader();
-    let completed = false;
-    try {
-      for (;;) {
-        const result = await reader.read();
-        if (result.done) {
-          completed = true;
-          return;
-        }
-        yield result.value;
-      }
-    } finally {
-      if (completed === false) {
-        await reader.cancel();
-      }
-      reader.releaseLock();
-    }
-  },
-});
 
 const cancelBody = async (response: Response) => {
   try {
@@ -152,7 +133,7 @@ export const createHttpAssetContentRepository = ({
       }
       return {
         asset,
-        data: toAsyncIterable(response.body),
+        data: readableStreamToAsyncIterable(response.body),
         contentLength,
       };
     } catch (error) {
@@ -162,7 +143,7 @@ export const createHttpAssetContentRepository = ({
   updateContent: async ({ assetId, expectedName, data }) => {
     try {
       const bytes = await readBoundedBytes(
-        toAsyncIterable(data),
+        readableStreamToAsyncIterable(data),
         contentEngineLimits.hydratedFileBytes
       );
       const descriptor = await update({ assetId, expectedName, data: bytes });

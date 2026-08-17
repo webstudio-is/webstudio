@@ -21,6 +21,7 @@ import {
   type MdxTemplateMaterialization,
 } from "./mdx-materialization";
 import type { MaterializedContentRoot } from "./content-storage";
+import { createEmptyWebstudioFragment } from "./component-template";
 
 type AuthoredElementProvenance = Readonly<{
   type: "element";
@@ -85,19 +86,6 @@ export type MaterializedMdxAuthoredContentRoot = MaterializedContentRoot &
     document: MdxDocument;
     provenance: MdxAuthoredContentProvenance;
   }>;
-
-const emptyFragment = (): WebstudioFragment => ({
-  children: [],
-  instances: [],
-  props: [],
-  assets: [],
-  dataSources: [],
-  resources: [],
-  breakpoints: [],
-  styleSourceSelections: [],
-  styleSources: [],
-  styles: [],
-});
 
 const pathKey = (path: readonly number[]) => path.join(".");
 
@@ -218,7 +206,7 @@ export const materializeMdxAuthoredContent = ({
   templateMaterialization: MdxTemplateMaterialization;
   assetReferences?: readonly AssetValueReference[];
 }): MaterializedMdxAuthoredContentRoot => {
-  const fragment = emptyFragment();
+  const fragment = createEmptyWebstudioFragment();
   const nodes: (AuthoredElementProvenance | TemplateProvenance)[] = [];
   const templatesByPath = new Map(
     templateMaterialization.templates.map((template) => [
