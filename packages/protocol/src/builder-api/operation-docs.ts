@@ -293,10 +293,10 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "search-project",
     description:
-      "Search instance labels, text, props including href and embeds, resource URLs, assets, and styles",
+      "After normal ProjectSession synchronization, search ids and values in the CLI process and return paged matches to the model. Namespace filters limit values matched, but related namespaces may still supply route/reference context and synchronization is unchanged. Recognized credential fields and asset binary or document bodies are excluded.",
     examples: [
       'MCP tool: search-project {"query":"pricing"}',
-      'MCP tool: search-project {"query":"api.example.com","scopes":["resources"]}',
+      'MCP tool: search-project {"query":"api.example.com","namespaces":["resources"]}',
     ],
   },
   {

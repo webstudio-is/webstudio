@@ -427,8 +427,52 @@ export const runtimeOutputSchemas = {
     query: z.string(),
     namespaces: stringArray,
     scopes: stringArray,
+    excludedSensitiveValueCount: z.number().int().nonnegative(),
     truncated: z.boolean(),
-    matches: z.array(looseObject({ kind: z.string() })),
+    matches: z.array(
+      z.union([
+        looseObject({
+          kind: z.literal("value"),
+          matchType: z.enum(["value", "key"]),
+          matchId: z.string(),
+          currentValue: z.union([
+            z.string(),
+            z.number(),
+            z.boolean(),
+            z.null(),
+          ]),
+          entity: z.object({ type: z.string(), id: z.string() }),
+          location: z.object({
+            namespace: z.enum(builderNamespaces),
+            path: z.array(z.union([z.string(), z.number()])),
+          }),
+          pageIds: stringArray,
+          pagePaths: stringArray,
+          reference: z
+            .object({
+              namespace: z.enum(builderNamespaces),
+              entityType: z.string(),
+              id: z.string(),
+              resolved: z.boolean(),
+            })
+            .optional(),
+        }),
+        looseObject({
+          kind: z.enum([
+            "instance",
+            "text",
+            "prop",
+            "resource",
+            "asset",
+            "design-token",
+            "style-source",
+            "css-variable",
+            "style",
+            "breakpoint",
+          ]),
+        }),
+      ])
+    ),
     ...outputPage,
   }),
   "project.audit": auditResult,

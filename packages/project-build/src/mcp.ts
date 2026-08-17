@@ -6033,6 +6033,19 @@ const getMetaGuide = (
   ].filter(Boolean);
   return {
     taskScope,
+    ...(isSmallCorrection && goalGuide === undefined
+      ? {
+          focusedCorrection: {
+            search: {
+              tool: "search-project",
+              requiredInput: ["query"],
+              calls: 1,
+            },
+            edit: { strategy: "smallest-semantic-mutation" },
+            verify: { strategy: "targeted-assertions" },
+          },
+        }
+      : {}),
     delegatedAgentRule:
       "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
     workflow: goalGuide?.workflow ?? generalWorkflow,

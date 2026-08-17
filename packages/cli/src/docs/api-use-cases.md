@@ -1034,8 +1034,9 @@ Notes:
 
 - `search-project` is a standalone local-session command over every Builder namespace. It returns matching values with stable match ids, namespace paths, owning entities, references, and affected pages.
 - Use it when a value or id is known. Use list/get tools when the project structure or target is not known.
-- The command synchronizes its required Builder namespaces, then searches locally and returns only matches. Namespace filters narrow the local search, not synchronization. This reduces data passed to the model; it does not remove the initial project-data synchronization.
+- The command synchronizes its required Builder namespaces, then searches locally and returns only matches. Namespace filters limit values matched; related namespaces may still supply route and reference context, and synchronization is unchanged. This reduces data passed to the model, not the initial project-data synchronization.
 - Asset records and file metadata are searchable. Asset binary or document contents are not Builder namespace data and are not searched.
+- Values in recognized credential fields are excluded and counted in `excludedSensitiveValueCount`.
 - Use `audit` for project health findings.
 
 ## Audit project quality

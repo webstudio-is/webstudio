@@ -5023,6 +5023,14 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+
+    const specializedGuide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "Update one font asset reference" },
+    });
+    expect(specializedGuide.structuredContent.data).not.toHaveProperty(
+      "focusedCorrection"
+    );
   });
 
   test("rejects invalid focused discovery input with path-specific messages", async () => {
@@ -7054,6 +7062,15 @@ describe("project session mcp adapter", () => {
     expect(guide.structuredContent.data).toEqual(
       expect.objectContaining({
         taskScope: "small-value-or-reference-correction",
+        focusedCorrection: {
+          search: {
+            tool: "search-project",
+            requiredInput: ["query"],
+            calls: 1,
+          },
+          edit: { strategy: "smallest-semantic-mutation" },
+          verify: { strategy: "targeted-assertions" },
+        },
         tools: expect.arrayContaining([
           expect.objectContaining({
             name: "search-project",
