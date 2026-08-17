@@ -33109,7 +33109,7 @@ export const runtimeOperationContractData = [
         },
         namespaces: {
           description:
-            "Builder namespaces to search. Omit to search every namespace in the local project session.",
+            "Namespaces to match. Omit for all; synchronization is unchanged.",
           minItems: 1,
           type: "array",
           items: {
@@ -33132,8 +33132,7 @@ export const runtimeOperationContractData = [
           },
         },
         scopes: {
-          description:
-            "Deprecated semantic namespace groups. Use namespaces for new workflows.",
+          description: "Deprecated; use namespaces.",
           minItems: 1,
           type: "array",
           items: {

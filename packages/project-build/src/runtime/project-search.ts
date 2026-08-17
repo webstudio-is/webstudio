@@ -36,15 +36,13 @@ export const projectSearchInput = z
       .min(1)
       .optional()
       .describe(
-        "Builder namespaces to search. Omit to search every namespace in the local project session."
+        "Namespaces to match. Omit for all; synchronization is unchanged."
       ),
     scopes: z
       .array(projectLookupScope)
       .min(1)
       .optional()
-      .describe(
-        "Deprecated semantic namespace groups. Use namespaces for new workflows."
-      ),
+      .describe("Deprecated; use namespaces."),
     pageId: z.string().optional(),
     pagePath: z.string().optional(),
     ...paginatedOutputInputSchema.shape,
