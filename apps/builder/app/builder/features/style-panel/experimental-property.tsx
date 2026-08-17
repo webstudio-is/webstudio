@@ -1,14 +1,17 @@
 import { AlertIcon } from "@webstudio-is/icons";
-import { experimentalProperties } from "@webstudio-is/css-data";
+import { experimentalProperties, propertiesData } from "@webstudio-is/css-data";
 import { Flex, Link, rawTheme, Text } from "@webstudio-is/design-system";
 
+const experimentalPropertySet = new Set<string>(experimentalProperties);
+
 const getExperimentalPropertyMdnUrl = (property: string) => {
-  if (Object.hasOwn(experimentalProperties, property) === false) {
+  if (experimentalPropertySet.has(property) === false) {
     return;
   }
-  return experimentalProperties[
-    property as keyof typeof experimentalProperties
-  ];
+  return (
+    propertiesData[property as keyof typeof propertiesData]?.mdnUrl ??
+    `https://developer.mozilla.org/docs/Web/CSS/${encodeURIComponent(property)}`
+  );
 };
 
 export const ExperimentalPropertyDescription = ({

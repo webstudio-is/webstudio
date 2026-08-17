@@ -490,14 +490,12 @@ writeToFile(
 writeToFile(
   "experimental-properties.ts",
   "experimentalProperties",
-  Object.fromEntries(
-    Object.entries({
-      ...filteredData.allLonghands,
-      ...filteredData.allShorthands,
-    })
-      .filter(([, config]) => config.status === "experimental")
-      .map(([property, config]) => [property, getMdnUrl(property, config)])
-  )
+  Object.entries({
+    ...filteredData.allLonghands,
+    ...filteredData.allShorthands,
+  })
+    .filter(([, config]) => config.status === "experimental")
+    .map(([property]) => property)
 );
 writeToFile("pseudo-elements.ts", "pseudoElements", pseudoElements);
 writeToFile("pseudo-classes.ts", "pseudoClasses", pseudoClasses);
