@@ -70,6 +70,23 @@ test("allocates and reuses a collision-free port for automatic screenshots", asy
   expect(getAvailablePort).toHaveBeenCalledOnce();
 });
 
+test("allocates an available port for a local-source screenshot", async () => {
+  const getAvailablePort = vi.fn(async () => 53124);
+
+  await expect(
+    resolveMcpScreenshotInput(
+      {
+        path: "/account",
+        source: "local",
+        viewport: { width: 1440, height: 900 },
+      },
+      { running: false },
+      { getAvailablePort }
+    )
+  ).resolves.toMatchObject({ source: "local", port: 53124 });
+  expect(getAvailablePort).toHaveBeenCalledWith("127.0.0.1");
+});
+
 test("rejects an occupied explicit screenshot port before preview preparation", async () => {
   const isPortAvailable = vi.fn(async () => false);
 
@@ -1009,6 +1026,64 @@ test("captures one session page across multiple viewports through resize", async
   expect(preview.startAndWait).not.toHaveBeenCalled();
 });
 
+test("prepares one local page for multiple viewport captures", async () => {
+  let running = false;
+  const preview = {
+    status: vi.fn(() => ({
+      url: "http://127.0.0.1:5173/",
+      running,
+      mode: "production" as const,
+    })),
+    startAndWait: vi.fn(async () => {
+      running = true;
+      return {
+        url: "http://127.0.0.1:5173/",
+        running: true,
+        mode: "production" as const,
+      };
+    }),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:5173${path}`),
+  };
+  const capture = createCaptureScreenshotMock([]);
+  const capturePage = vi.fn(
+    async (optionsList) => await Promise.all(optionsList.map(capture))
+  );
+  const createCaptureSession = vi.fn(() => ({
+    capture,
+    capturePage,
+    close: vi.fn(async () => undefined),
+  }));
+  const preparePreview = vi.fn(async () => ({ cwd: "/tmp/local-preview" }));
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    preparePreview,
+    createCaptureSession,
+    isStale: () => false,
+  });
+
+  const results = await handlers.capturePageScreenshots(
+    [1440, 768, 390].map((width) => ({
+      path: "/responsive",
+      source: "local" as const,
+      mode: "production" as const,
+      browserPath: "/browser",
+      viewport: { width, height: 900 },
+    }))
+  );
+
+  expect(results.map((result) => result.viewport.width)).toEqual([
+    1440, 768, 390,
+  ]);
+  expect(preparePreview).toHaveBeenCalledOnce();
+  expect(preview.startAndWait).toHaveBeenCalledOnce();
+  expect(createCaptureSession).toHaveBeenCalledOnce();
+  expect(capturePage).toHaveBeenCalledWith([
+    expect.objectContaining({ width: 1440, browserPath: "/browser" }),
+    expect.objectContaining({ width: 768, browserPath: "/browser" }),
+    expect.objectContaining({ width: 390, browserPath: "/browser" }),
+  ]);
+});
+
 test("times out a stalled responsive capture and releases its session", async () => {
   const close = vi.fn(async () => undefined);
   const preview = {
@@ -1086,7 +1161,7 @@ test.each([
           viewport: { width: 1440, height: 900 },
         },
       ])
-    ).rejects.toThrow("one session preview target and browser configuration");
+    ).rejects.toThrow("one generated preview target and browser configuration");
     expect(createCaptureSession).not.toHaveBeenCalled();
   }
 );
