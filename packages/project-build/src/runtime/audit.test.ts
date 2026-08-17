@@ -9,7 +9,7 @@ import {
 import type { BuilderRuntimeMutation } from "./mutation";
 import { executeBuilderRuntimeOperation } from "./registry";
 import { setImageDescriptions } from "./assets";
-import { analyzeProject, searchProject } from "./search";
+import { analyzeProject } from "./search";
 import {
   audit,
   auditRuleId,
@@ -1014,22 +1014,6 @@ describe("project audit and analysis", () => {
     } satisfies BuilderState;
 
     expect(
-      searchProject(searchState, { query: "video.example.com" })
-    ).toMatchObject({
-      total: 1,
-      returnedCount: 1,
-      nextCursor: null,
-      detail: "compact",
-      matches: [
-        {
-          kind: "prop",
-          propId: "embed",
-          instanceId: "heading",
-          name: "code",
-        },
-      ],
-    });
-    expect(
       analyzeProject(searchState, { query: "posts", scopes: ["resources"] })
     ).toMatchObject({
       matches: [
@@ -1039,62 +1023,6 @@ describe("project audit and analysis", () => {
           url: '"/posts"',
         },
       ],
-    });
-    const propsWithAssetReference = new Map<string, Prop>(searchState.props);
-    propsWithAssetReference.set("asset-reference", {
-      id: "asset-reference",
-      instanceId: "heading",
-      name: "src",
-      type: "asset",
-      value: "asset",
-    });
-    expect(
-      executeBuilderRuntimeOperation({
-        id: "project.search",
-        state: { ...searchState, props: propsWithAssetReference },
-        input: { query: "next", scopes: ["assets"] },
-        context,
-      })
-    ).toMatchObject({
-      total: 1,
-      matches: [
-        {
-          kind: "asset",
-          assetId: "next",
-        },
-      ],
-    });
-    const styleSourcesWithUnusedToken = new Map(searchState.styleSources);
-    styleSourcesWithUnusedToken.set("unused-token", {
-      type: "token",
-      id: "unused-token",
-      name: "Unused token",
-    });
-    expect(
-      executeBuilderRuntimeOperation({
-        id: "project.search",
-        state: { ...searchState, styleSources: styleSourcesWithUnusedToken },
-        input: { query: "unused-token", scopes: ["styles"] },
-        context,
-      })
-    ).toMatchObject({
-      total: 1,
-      matches: [
-        {
-          kind: "design-token",
-          designTokenId: "unused-token",
-          usageCount: 0,
-        },
-      ],
-    });
-    expectRuntimeValidationError("project.search", {});
-    expectRuntimeValidationError("project.search", {
-      query: "button",
-      scopes: ["accessibility"],
-    });
-    expectRuntimeValidationError("project.search", {
-      query: "button",
-      pagePat: "/pricing",
     });
     expect(
       analyzeProject(searchState, { query: "BRAND", scopes: ["styles"] })

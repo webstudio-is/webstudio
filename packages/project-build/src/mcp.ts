@@ -1803,7 +1803,7 @@ export const mcpArgumentExamples: Record<
   ],
   "search-project": [
     { query: "pricing" },
-    { query: "api.example.com", scopes: ["resources"] },
+    { query: "api.example.com", namespaces: ["resources"] },
   ],
   audit: [
     {},
@@ -3434,6 +3434,7 @@ export const hiddenMcpOperationCommands = new Set<string>([
 ]);
 
 const mcpOperationSchemaInlineSizes = new Map<string, number>([
+  ["search-project", 0],
   ["insert-fragment", 1_000],
   ["create-assets-resource", 2_500],
   ["update-assets-resource", 2_500],
@@ -5544,6 +5545,8 @@ const getMetaIndex = (
       insertFragment: `Primary authored/styled insertion command shape: save ${JSON.stringify(insertFragmentInputFileExample)} as ${insertFragmentInputFilePath}, then run node packages/cli/local.js insert-fragment --input-file ${insertFragmentInputFilePath} --dry-run. Use parentInstanceId, not parentId. Use Webstudio components/helpers such as ws.element, radix.*, css, token, expression, and ActionValue. Use ws:style={css\`...\`} for Webstudio-native CSS, or style={{ padding: 24 }} for React-style object syntax converted into editable Webstudio styles. Use node packages/cli/local.js mcp single-op-call insert-fragment only when you need the explicit MCP form.`,
       resources:
         "Use MCP resources/list to discover overview and full resources.",
+      projectSearch:
+        'Use search-project({"query":"known value"}) to find a value or id across local Builder data without passing full namespaces to the model. Add namespaces only to narrow the search.',
       components:
         'Use components.list({"source":"all"}) for shadcn-compatible registry items, templates.list({}) for templates, components.summary for a compact catalog, components.coverage-plan for design-system/all-component tasks, components.coverage-insert-next({"pagePath":"/design-system","parentInstanceId":"root-id"}) for one checkpoint-safe coverage insertion, components.coverage-status({"pagePath":"/design-system"}) to verify progress, components.search({"brief":"radix select"}) to search, and components.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) or templates.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) for one item. Do not dump or parse webstudio://project/components unless those focused tools are insufficient.',
       guide:
@@ -5985,22 +5988,34 @@ const getMetaGuide = (
   guidance: ProjectSessionMcpGuidance | undefined
 ) => {
   const taskScope = classifyTaskScope(brief);
+  const isSmallCorrection = taskScope === "small-value-or-reference-correction";
   const goalGuide = metaGoalGuides.find(({ pattern }) => pattern.test(brief));
-  const matches =
+  const matchedTools =
     goalGuide === undefined
       ? getMatchingTools(brief, tools).slice(0, 12)
       : getExactToolSelection(goalGuide.tools, tools).tools;
+  const searchProjectTool = tools.find(
+    (tool) => tool.name === "search-project"
+  );
+  const matches =
+    goalGuide === undefined &&
+    isSmallCorrection &&
+    searchProjectTool !== undefined
+      ? [
+          searchProjectTool,
+          ...matchedTools.filter((tool) => tool !== searchProjectTool),
+        ].slice(0, 12)
+      : matchedTools;
   const canVerifyVisually =
     tools.some((tool) => tool.name === "preview.start") &&
     tools.some((tool) => tool.name === "screenshot");
   const canDiffScreenshots = tools.some(
     (tool) => tool.name === "screenshot.diff"
   );
-  const isSmallCorrection = taskScope === "small-value-or-reference-correction";
   const needsVisualVerification = taskScope === "visual-change";
   const generalWorkflow = [
     isSmallCorrection
-      ? "Focused search → atomic edit → targeted assertions."
+      ? "Call search-project once with the known value or id, then make the smallest semantic edit and run targeted assertions."
       : undefined,
     "Use the fewest discovery calls needed for the immediate action.",
     "Call permissions or status only when the task depends on capabilities or local session freshness.",
@@ -6008,7 +6023,7 @@ const getMetaGuide = (
     matches.some((tool) => tool.name === "verify-font-assets") === false
       ? "Call refresh if cached namespaces may be stale."
       : undefined,
-    "Use focused read tools to collect ids and current values.",
+    "Use search-project for a known value or id across project data. Use focused list/get tools when the structure or target is not yet known.",
     "Use the smallest semantic mutation tool that matches the requested change.",
     valuesVsBindingsRule,
     "Use apply-patch only when no semantic mutation tool fits.",
@@ -6018,6 +6033,19 @@ const getMetaGuide = (
   ].filter(Boolean);
   return {
     taskScope,
+    ...(isSmallCorrection && goalGuide === undefined
+      ? {
+          focusedCorrection: {
+            search: {
+              tool: "search-project",
+              requiredInput: ["query"],
+              calls: 1,
+            },
+            edit: { strategy: "smallest-semantic-mutation" },
+            verify: { strategy: "targeted-assertions" },
+          },
+        }
+      : {}),
     delegatedAgentRule:
       "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
     workflow: goalGuide?.workflow ?? generalWorkflow,
