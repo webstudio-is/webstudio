@@ -1,8 +1,9 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
+import { parse, definitionSyntax, lexer, type CssNode } from "css-tree";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore @todo add missing type defitions for definitionSyntax, type DSNode, type CssNode
-import { parse, definitionSyntax, type DSNode, type CssNode } from "css-tree";
+// @ts-ignore @todo add the missing DSNode type definition
+import type { DSNode } from "css-tree";
 import properties from "mdn-data/css/properties.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
 import selectors from "mdn-data/css/selectors.json";
@@ -430,6 +431,45 @@ const getTypes = (propertiesData: typeof customData.propertiesData) => {
 
 const filteredData = filterData();
 
+const getLonghandInitials = (
+  property: Property,
+  seen = new Set<Property>()
+): Array<[property: string, initial: string]> => {
+  if (seen.has(property)) {
+    return [];
+  }
+  const config = properties[property];
+  if (Array.isArray(config.initial) === false) {
+    return [[property, config.initial]];
+  }
+  const nextSeen = new Set(seen).add(property);
+  return config.initial.flatMap((longhand) =>
+    getLonghandInitials(longhand as Property, nextSeen)
+  );
+};
+
+const getSyntaxShorthandInitials = (property: Property) => {
+  const initials = getLonghandInitials(property);
+  const propertySyntax = lexer.getProperty(property);
+  if (propertySyntax === null) {
+    return [];
+  }
+
+  const references = new Set<string>();
+  definitionSyntax.walk(propertySyntax.syntax, (node) => {
+    if (node.type === "Property" && "name" in node) {
+      references.add(node.name);
+    }
+  });
+  if (
+    references.size !== initials.length ||
+    initials.some(([longhand]) => references.has(longhand) === false)
+  ) {
+    return [];
+  }
+  return initials;
+};
+
 const longhandPropertiesData = getPropertiesData(
   customData.propertiesData,
   filteredData.allLonghands
@@ -481,6 +521,22 @@ writeToFile(
   "shorthand-properties.ts",
   "shorthandProperties",
   Object.keys(filteredData.allShorthands)
+);
+writeToFile(
+  "shorthand-expansions.ts",
+  "shorthandExpansions",
+  Object.fromEntries(
+    Object.entries(filteredData.allShorthands).flatMap(([property, config]) => {
+      if (Array.isArray(config.initial) === false) {
+        return [];
+      }
+      const initials = getSyntaxShorthandInitials(property as Property);
+      if (initials.length === 0) {
+        return [];
+      }
+      return [[property, Object.fromEntries(initials)]];
+    })
+  )
 );
 writeToFile(
   "animatable-properties.ts",

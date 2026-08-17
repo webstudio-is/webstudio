@@ -8,6 +8,7 @@ import {
   type Value,
 } from "css-tree";
 import warnOnce from "warn-once";
+import { shorthandExpansions } from "./__generated__/shorthand-expansions";
 
 const cssWideKeywordsSyntax = Array.from(cssWideKeywords).join(" | ");
 
@@ -1087,6 +1088,74 @@ const expandBackground = function* (value: CssNode) {
   yield ["background-color", backgroundColor] as const;
 };
 
+type SyntaxMatch = {
+  syntax?: { type: string; name?: string } | null;
+  match?: SyntaxMatch[];
+  node?: CssNode;
+};
+
+const getMatchedNodes = (
+  match: SyntaxMatch,
+  nodes: CssNode[] = [],
+  seen = new Set<CssNode>()
+) => {
+  if (match.node !== undefined && seen.has(match.node) === false) {
+    seen.add(match.node);
+    nodes.push(match.node);
+  }
+  for (const child of match.match ?? []) {
+    getMatchedNodes(child, nodes, seen);
+  }
+  return nodes;
+};
+
+const expandSyntaxShorthand = (property: string, value: CssNode) => {
+  if (Object.hasOwn(shorthandExpansions, property) === false) {
+    return;
+  }
+
+  const expansion = shorthandExpansions[
+    property as keyof typeof shorthandExpansions
+  ] as Record<string, string>;
+  const longhands = new Set(Object.keys(expansion));
+
+  const result = lexer.matchProperty(property, value);
+  if (result.matched === null) {
+    return Object.keys(expansion).map((longhand) => [longhand, value] as const);
+  }
+
+  const matches = new Map<string, Value>();
+  let hasRepeatedMatch = false;
+  const visit = (match: SyntaxMatch) => {
+    const matchedProperty = match.syntax?.name;
+    if (
+      match.syntax?.type === "Property" &&
+      matchedProperty !== undefined &&
+      longhands.has(matchedProperty)
+    ) {
+      if (matches.has(matchedProperty)) {
+        hasRepeatedMatch = true;
+        return;
+      }
+      matches.set(matchedProperty, createValueNode(getMatchedNodes(match)));
+      return;
+    }
+    for (const child of match.match ?? []) {
+      visit(child);
+    }
+  };
+  visit(result.matched as SyntaxMatch);
+
+  if (hasRepeatedMatch) {
+    return;
+  }
+
+  return Object.entries(expansion).map(([longhand, initial]) => {
+    const matched = matches.get(longhand);
+    return [longhand, matched ?? parse(initial, { context: "value" })] as const;
+  });
+};
+
 const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
     // ignore "all" to avoid bloating styles with huge amount of longhand properties
@@ -1476,17 +1545,6 @@ const expandShorthand = function* (property: string, value: CssNode) {
       break;
     }
 
-    case "position-try": {
-      const nodes = getValueList(value);
-      const first = createValueNode(nodes.slice(0, 1));
-      const hasOrder = lexer.match("<'position-try-order'>", first).matched;
-      const order = hasOrder ? first : createIdentifier("normal");
-      const fallbacks = createValueNode(nodes.slice(hasOrder ? 1 : 0));
-      yield ["position-try-order", order] as const;
-      yield ["position-try-fallbacks", fallbacks] as const;
-      break;
-    }
-
     // -webkit-text-stroke = <line-width> || <color>
     // Sets width/color together with standard shorthand reset semantics.
     case "-webkit-text-stroke": {
@@ -1513,7 +1571,9 @@ const expandShorthand = function* (property: string, value: CssNode) {
     }
 
     default:
-      yield [property, value] as const;
+      yield* (
+        expandSyntaxShorthand(property, value) ?? [[property, value] as const]
+      );
   }
 };
 

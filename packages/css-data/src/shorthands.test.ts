@@ -1446,31 +1446,35 @@ test("expand overscroll-behavior", () => {
 
 test("expand position-try", () => {
   expect(expandShorthands([["position-try", "none"]])).toEqual([
-    ["position-try-order", "normal"],
     ["position-try-fallbacks", "none"],
+    ["position-try-order", "normal"],
   ]);
   expect(expandShorthands([["position-try", "most-width none"]])).toEqual([
-    ["position-try-order", "most-width"],
     ["position-try-fallbacks", "none"],
+    ["position-try-order", "most-width"],
   ]);
   expect(expandShorthands([["position-try", "--fallback flip-block"]])).toEqual(
     [
-      ["position-try-order", "normal"],
       ["position-try-fallbacks", "--fallback flip-block"],
+      ["position-try-order", "normal"],
     ]
   );
   expect(expandShorthands([["position-try", "top span-right"]])).toEqual([
-    ["position-try-order", "normal"],
     ["position-try-fallbacks", "top span-right"],
+    ["position-try-order", "normal"],
+  ]);
+  expect(expandShorthands([["position-try", "var(--try)"]])).toEqual([
+    ["position-try-fallbacks", "var(--try)"],
+    ["position-try-order", "var(--try)"],
   ]);
   expect(expandShorthands([["position-try", "most-width"]])).toEqual([
+    ["position-try-fallbacks", "most-width"],
     ["position-try-order", "most-width"],
-    ["position-try-fallbacks", ""],
   ]);
   expect(expandShorthands([["position-try", "--fallback most-width"]])).toEqual(
     [
-      ["position-try-order", "normal"],
       ["position-try-fallbacks", "--fallback most-width"],
+      ["position-try-order", "--fallback most-width"],
     ]
   );
 });
