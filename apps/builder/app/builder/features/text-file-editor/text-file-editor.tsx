@@ -60,6 +60,7 @@ import {
   type UrlInputValue,
 } from "~/builder/features/settings-panel/controls/url";
 import {
+  getTextFileContentError,
   getTextFileEditorExtensions,
   isMarkdownPreviewAsset,
   isMarkdownSyntaxAsset,
@@ -486,6 +487,16 @@ export const TextFileEditor = ({
     if (canEdit === false) {
       return;
     }
+    const currentAsset = currentAssetRef.current;
+    if (currentAsset === undefined) {
+      toast.error("Unable to save: asset not found");
+      return;
+    }
+    const contentError = getTextFileContentError(currentAsset, content);
+    if (contentError !== undefined) {
+      toast.error(contentError);
+      return;
+    }
     requestedContentRef.current = content;
     saveQueueRef.current = saveQueueRef.current.then(async () => {
       const requestedContent = requestedContentRef.current;
@@ -496,15 +507,15 @@ export const TextFileEditor = ({
         return;
       }
 
-      const currentAsset = currentAssetRef.current;
-      if (currentAsset === undefined) {
+      const assetToUpdate = currentAssetRef.current;
+      if (assetToUpdate === undefined) {
         toast.error("Unable to save: asset not found");
         return;
       }
 
       try {
         const updatedAsset = await updateAssetContent({
-          asset: currentAsset,
+          asset: assetToUpdate,
           content: requestedContent,
         });
         currentAssetRef.current = updatedAsset;

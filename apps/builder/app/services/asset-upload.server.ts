@@ -14,7 +14,10 @@ export const getBrowserUploadBody = async (
     throw new Error("Asset body is empty");
   }
 
-  if (contentType?.includes("application/json")) {
+  if (
+    contentType?.includes("application/json") &&
+    request.headers.get("x-webstudio-asset-source") === "url"
+  ) {
     const jsonBody = await request.json();
     const urlParse = urlBody.safeParse(jsonBody);
 
@@ -39,12 +42,9 @@ export const getBrowserUploadBody = async (
           `An error occurred while fetching the image at ${url}: Image body is null`
         );
       }
-
       body = imageRequest.body;
     } else {
-      body = new Blob([JSON.stringify(jsonBody)], {
-        type: "application/json",
-      }).stream();
+      throw new Error("Invalid URL asset upload body");
     }
   }
 

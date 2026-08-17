@@ -5,6 +5,7 @@ import {
   isTextFileAsset,
 } from "@webstudio-is/sdk";
 import {
+  getTextFileContentError,
   getTextFileEditorExtensions,
   isMarkdownPreviewAsset,
   isMarkdownSyntaxAsset,
@@ -51,5 +52,20 @@ describe("text file assets", () => {
   test("limits the Markdown preview to .md files", () => {
     expect(isMarkdownPreviewAsset({ format: "MD" })).toBe(true);
     expect(isMarkdownPreviewAsset({ format: "mdx" })).toBe(false);
+  });
+
+  test("validates that JSON content has an object root", () => {
+    expect(
+      getTextFileContentError({ format: "json" }, '{"title":"Post"}')
+    ).toBeUndefined();
+    expect(getTextFileContentError({ format: "json" }, "not json")).toBe(
+      "Enter valid JSON."
+    );
+    expect(getTextFileContentError({ format: "json" }, "[]")).toBe(
+      "JSON content must have an object at its root."
+    );
+    expect(
+      getTextFileContentError({ format: "md" }, "anything")
+    ).toBeUndefined();
   });
 });

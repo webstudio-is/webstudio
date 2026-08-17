@@ -255,6 +255,7 @@ const submitAssetUpload = async ({
 
     if (fileOrUrl instanceof URL) {
       headers.set("Content-Type", "application/json");
+      headers.set("x-webstudio-asset-source", "url");
     }
 
     let width = undefined;
