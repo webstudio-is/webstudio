@@ -1379,21 +1379,6 @@ const expandShorthand = function* (property: string, value: CssNode) {
       break;
     }
 
-    case "column-rule": {
-      const [width, style, color] = parseUnordered(
-        [
-          "<'column-rule-width'>",
-          "<'column-rule-style'>",
-          "<'column-rule-color'>",
-        ],
-        value
-      );
-      yield ["column-rule-width", width ?? createInitialNode()] as const;
-      yield ["column-rule-style", style ?? createInitialNode()] as const;
-      yield ["column-rule-color", color ?? createInitialNode()] as const;
-      break;
-    }
-
     case "list-style": {
       const [position, image, type] = parseUnordered(
         [
@@ -1471,13 +1456,6 @@ const expandShorthand = function* (property: string, value: CssNode) {
       const [x, y] = getValueList(value);
       yield ["overflow-x", x] as const;
       yield ["overflow-y", y ?? x] as const;
-      break;
-    }
-
-    case "container": {
-      const [name, type] = splitByOperator(value, "/");
-      yield ["container-name", name ?? createIdentifier("none")] as const;
-      yield ["container-type", type ?? createIdentifier("normal")] as const;
       break;
     }
 

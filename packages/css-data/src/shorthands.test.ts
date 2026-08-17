@@ -705,6 +705,21 @@ test("expand column-rule", () => {
     ["column-rule-style", "inset"],
     ["column-rule-color", "blue"],
   ]);
+  expect(expandShorthands([["column-rule", "blue dashed"]])).toEqual([
+    ["column-rule-width", "medium"],
+    ["column-rule-style", "dashed"],
+    ["column-rule-color", "blue"],
+  ]);
+  expect(expandShorthands([["column-rule", "inherit"]])).toEqual([
+    ["column-rule-width", "inherit"],
+    ["column-rule-style", "inherit"],
+    ["column-rule-color", "inherit"],
+  ]);
+  expect(expandShorthands([["column-rule", "var(--rule)"]])).toEqual([
+    ["column-rule-width", "var(--rule)"],
+    ["column-rule-style", "var(--rule)"],
+    ["column-rule-color", "var(--rule)"],
+  ]);
 });
 
 test("expand list-style", () => {
@@ -1163,6 +1178,14 @@ test("expand container", () => {
     ["container-name", "my-layout"],
     ["container-type", "size"],
   ]);
+  expect(expandShorthands([["container", "unset"]])).toEqual([
+    ["container-name", "unset"],
+    ["container-type", "unset"],
+  ]);
+  expect(expandShorthands([["container", "var(--container)"]])).toEqual([
+    ["container-name", "var(--container)"],
+    ["container-type", "var(--container)"],
+  ]);
 });
 
 test("expand contain-intrinsic-size", () => {
@@ -1477,6 +1500,16 @@ test("expand position-try", () => {
       ["position-try-order", "--fallback most-width"],
     ]
   );
+  expect(expandShorthands([["position-try", "revert-layer"]])).toEqual([
+    ["position-try-fallbacks", "revert-layer"],
+    ["position-try-order", "revert-layer"],
+  ]);
+});
+
+test("preserve shorthands with incompatible MDN and CSS-tree data", () => {
+  expect(expandShorthands([["interest-delay", "1s 2s"]])).toEqual([
+    ["interest-delay", "1s 2s"],
+  ]);
 });
 
 test("replace empty value with unset", () => {
