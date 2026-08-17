@@ -42,6 +42,8 @@ if (positionAnchor === null) {
   throw new Error("Missing css-tree syntax for position-anchor");
 }
 
+// @todo Remove this extension when upgrading CSS-tree once its bundled MDN data
+// includes the current `position-anchor: normal | match-parent` grammar.
 const lexer = fork({
   properties: {
     "position-anchor": `${definitionSyntax.generate(positionAnchor.syntax)} | normal | match-parent`,
