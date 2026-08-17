@@ -46,11 +46,7 @@ export const normalizeTextFileContent = (
 
   const value = parseJsonExpression(content);
   if (value === undefined) {
-    return { error: "Enter a JSON-compatible object." };
-  }
-
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return { error: "JSON content must have an object at its root." };
+    return { error: "Enter a JSON-compatible value." };
   }
 
   return { content: `${JSON.stringify(value, undefined, 2)}\n` };

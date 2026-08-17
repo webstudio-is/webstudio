@@ -66,12 +66,15 @@ describe("text file assets", () => {
     });
   });
 
-  test("rejects executable or non-object JSON content", () => {
+  test("rejects executable content and accepts every JSON root type", () => {
     expect(
       normalizeTextFileContent({ format: "json" }, "{ value: fetch('/') }")
-    ).toEqual({ error: "Enter a JSON-compatible object." });
-    expect(normalizeTextFileContent({ format: "json" }, "[]")).toEqual({
-      error: "JSON content must have an object at its root.",
+    ).toEqual({ error: "Enter a JSON-compatible value." });
+    expect(normalizeTextFileContent({ format: "json" }, "[1, 'two']")).toEqual({
+      content: '[\n  1,\n  "two"\n]\n',
+    });
+    expect(normalizeTextFileContent({ format: "json" }, "null")).toEqual({
+      content: "null\n",
     });
   });
 
@@ -83,7 +86,7 @@ describe("text file assets", () => {
 
   test("rejects incomplete object syntax", () => {
     expect(normalizeTextFileContent({ format: "json" }, "{ title:")).toEqual({
-      error: "Enter a JSON-compatible object.",
+      error: "Enter a JSON-compatible value.",
     });
   });
 });

@@ -56,10 +56,10 @@ Edits save when the editor loses focus or when you press `Command + S` on
 macOS, `Ctrl + S` on Windows, or `Command/Ctrl + Enter`. Edit the complete
 filename in Asset settings to rename a text file or change its format. When you
 change the extension to `.json`, Webstudio validates the existing content and
-converts JSON-compatible object syntax to strict JSON before saving the new
-file revision. JSON files must contain an object at the root. The editor accepts
-unquoted keys, single-quoted strings, and trailing commas. It reports
-unsupported syntax instead of saving the file.
+converts JSON-compatible syntax to strict JSON before saving the new
+file revision. JSON files can contain any JSON value, including arrays and
+scalars. The editor accepts unquoted object keys, single-quoted strings, and
+trailing commas. It reports unsupported syntax instead of saving the file.
 
 ### Use assets as content
 
