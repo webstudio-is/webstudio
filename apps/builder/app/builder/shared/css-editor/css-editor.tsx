@@ -49,10 +49,7 @@ import type {
   SetProperty,
 } from "../../features/style-panel/shared/use-style-data";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import {
-  ExperimentalPropertyDescription,
-  ExperimentalPropertyIcon,
-} from "../../features/style-panel/experimental-property";
+import { ExperimentalPropertyIndicator } from "../../features/style-panel/experimental-property";
 
 // Used to indent the values when they are on the next line. This way its easier to see
 // where the property ends and value begins, especially in case of presets.
@@ -96,12 +93,7 @@ const AdvancedPropertyLabel = ({
               ? "CSS Variable"
               : styleDecl.property
           }
-          description={
-            <Flex direction="column" gap="2">
-              {description}
-              <ExperimentalPropertyDescription property={styleDecl.property} />
-            </Flex>
-          }
+          description={description}
           styles={[styleDecl]}
           onReset={() => {
             onDeleteProperty(styleDecl.property);
@@ -113,20 +105,16 @@ const AdvancedPropertyLabel = ({
         />
       }
     >
-      <Flex
-        align="center"
-        gap="1"
-        css={{ marginLeft: `-${initialIndentation}` }}
+      <Label
+        color={styleDecl.source.name}
+        text="mono"
+        css={{
+          backgroundColor: "transparent",
+          marginLeft: `-${initialIndentation}`,
+        }}
       >
-        <Label
-          color={styleDecl.source.name}
-          text="mono"
-          css={{ backgroundColor: "transparent" }}
-        >
-          {styleDecl.property}
-        </Label>
-        <ExperimentalPropertyIcon property={styleDecl.property} />
-      </Flex>
+        {styleDecl.property}
+      </Label>
     </Tooltip>
   );
 };
@@ -330,6 +318,7 @@ const AdvancedDeclarationLonghand = memo(
           onSetProperty={onSetProperty}
           inputRef={valueInputRef}
         />
+        <ExperimentalPropertyIndicator property={styleDecl.property} />
       </Flex>
     );
   }

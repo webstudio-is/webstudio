@@ -1,6 +1,12 @@
 import { AlertIcon } from "@webstudio-is/icons";
 import { experimentalProperties, propertiesData } from "@webstudio-is/css-data";
-import { Flex, Link, rawTheme, Text } from "@webstudio-is/design-system";
+import {
+  Flex,
+  Link,
+  rawTheme,
+  Text,
+  Tooltip,
+} from "@webstudio-is/design-system";
 
 const experimentalPropertySet = new Set<string>(experimentalProperties);
 
@@ -52,5 +58,24 @@ export const ExperimentalPropertyIcon = ({
     >
       <AlertIcon size={12} />
     </Flex>
+  );
+};
+
+export const ExperimentalPropertyIndicator = ({
+  property,
+}: {
+  property: string;
+}) => {
+  if (experimentalPropertySet.has(property) === false) {
+    return;
+  }
+
+  return (
+    <Tooltip
+      variant="wrapped"
+      content={<ExperimentalPropertyDescription property={property} />}
+    >
+      <ExperimentalPropertyIcon property={property} />
+    </Tooltip>
   );
 };
