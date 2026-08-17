@@ -2,6 +2,7 @@
 export const shorthandProperties = [
   "-webkit-text-stroke",
   "animation",
+  "animation-range",
   "background",
   "border",
   "border-block",
@@ -69,6 +70,7 @@ export const shorthandProperties = [
   "scroll-padding",
   "scroll-padding-block",
   "scroll-padding-inline",
+  "scroll-timeline",
   "stroke",
   "text-decoration",
   "text-emphasis",
@@ -77,5 +79,6 @@ export const shorthandProperties = [
   "timeline-trigger-activation-range",
   "timeline-trigger-active-range",
   "transition",
+  "view-timeline",
   "white-space",
 ] as const;

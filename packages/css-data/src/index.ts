@@ -8,6 +8,7 @@ export {
   propertySyntaxesGenerated as propertySyntaxes,
 } from "./__generated__/property-value-descriptions";
 export * from "./__generated__/animatable-properties";
+export * from "./__generated__/experimental-properties";
 export * from "./__generated__/pseudo-elements";
 export * from "./__generated__/pseudo-classes";
 export {

@@ -58,8 +58,7 @@ export const properties: Properties = {
       type: "keyword",
       value: "none",
     },
-    mdnUrl:
-      "https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-name",
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/view-timeline-name",
   },
   "scroll-timeline-name": {
     unitGroups: [],
@@ -68,8 +67,7 @@ export const properties: Properties = {
       type: "keyword",
       value: "none",
     },
-    mdnUrl:
-      "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-timeline-name",
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-timeline-name",
   },
   "view-timeline-inset": {
     unitGroups: ["length", "percentage"],
@@ -78,8 +76,7 @@ export const properties: Properties = {
       type: "keyword",
       value: "auto",
     },
-    mdnUrl:
-      "https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-inset",
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/view-timeline-inset",
   },
   "-webkit-line-clamp": {
     unitGroups: ["number"],
@@ -97,6 +94,8 @@ export const properties: Properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/en-US/search?q=-webkit-overflow-scrolling",
   },
   "-webkit-tap-highlight-color": {
     unitGroups: [],
@@ -169,6 +168,7 @@ export const properties: Properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/en-US/search?q=anchor-scope",
   },
   "animation-composition": {
     unitGroups: [],
@@ -245,6 +245,33 @@ export const properties: Properties = {
       value: "running",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/animation-play-state",
+  },
+  "animation-range-end": {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/animation-range-end",
+  },
+  "animation-range-start": {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/animation-range-start",
+  },
+  "animation-timeline": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/animation-timeline",
   },
   "animation-timing-function": {
     unitGroups: [],
@@ -1516,6 +1543,16 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-style",
   },
+  "font-synthesis-position": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/font-synthesis-position",
+  },
   "font-synthesis-small-caps": {
     unitGroups: [],
     inherited: true,
@@ -1627,6 +1664,15 @@ export const properties: Properties = {
       value: "normal",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-weight",
+  },
+  "font-width": {
+    unitGroups: ["percentage"],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    mdnUrl: "https://developer.mozilla.org/en-US/search?q=font-width",
   },
   "forced-color-adjust": {
     unitGroups: [],
@@ -1800,6 +1846,16 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/image-rendering",
   },
+  "image-resolution": {
+    unitGroups: ["resolution"],
+    inherited: true,
+    initial: {
+      type: "unit",
+      unit: "dppx",
+      value: 1,
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/image-resolution",
+  },
   "initial-letter": {
     unitGroups: ["number"],
     inherited: false,
@@ -1808,6 +1864,15 @@ export const properties: Properties = {
       value: "normal",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/initial-letter",
+  },
+  "initial-letter-align": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl: "https://developer.mozilla.org/en-US/search?q=initial-letter-align",
   },
   "inline-size": {
     unitGroups: ["length", "percentage"],
@@ -1853,6 +1918,15 @@ export const properties: Properties = {
       value: "auto",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/inset-inline-start",
+  },
+  "interpolate-size": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "numeric-only",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/interpolate-size",
   },
   isolation: {
     unitGroups: [],
@@ -1971,6 +2045,25 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/line-height",
   },
+  "line-height-step": {
+    unitGroups: ["length"],
+    inherited: true,
+    initial: {
+      type: "unit",
+      unit: "px",
+      value: 0,
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/line-height-step",
+  },
+  "link-parameters": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/link-parameters",
+  },
   "list-style-image": {
     unitGroups: [],
     inherited: true,
@@ -2077,6 +2170,15 @@ export const properties: Properties = {
       value: 0,
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/margin-top",
+  },
+  "margin-trim": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/margin-trim",
   },
   "marker-end": {
     unitGroups: [],
@@ -2263,6 +2365,15 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/math-depth",
   },
+  "math-shift": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/math-shift",
+  },
   "math-style": {
     unitGroups: [],
     inherited: true,
@@ -2298,6 +2409,15 @@ export const properties: Properties = {
       value: "none",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/max-inline-size",
+  },
+  "max-lines": {
+    unitGroups: ["number"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/en-US/search?q=max-lines",
   },
   "max-width": {
     unitGroups: ["length", "percentage"],
@@ -2383,6 +2503,15 @@ export const properties: Properties = {
       ],
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/object-position",
+  },
+  "object-view-box": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/en-US/search?q=object-view-box",
   },
   "offset-anchor": {
     unitGroups: ["length", "percentage"],
@@ -2560,6 +2689,15 @@ export const properties: Properties = {
       value: "visible",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/overflow-y",
+  },
+  overlay: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/overlay",
   },
   "overscroll-behavior": {
     unitGroups: [],
@@ -2900,6 +3038,15 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/ruby-align",
   },
+  "ruby-merge": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "separate",
+    },
+    mdnUrl: "https://developer.mozilla.org/en-US/search?q=ruby-merge",
+  },
   "ruby-position": {
     unitGroups: [],
     inherited: true,
@@ -2944,6 +3091,16 @@ export const properties: Properties = {
       value: "auto",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-behavior",
+  },
+  "scroll-initial-target": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/en-US/search?q=scroll-initial-target",
   },
   "scroll-margin-block-end": {
     unitGroups: ["length"],
@@ -3150,6 +3307,15 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-target-group",
   },
+  "scroll-timeline-axis": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "block",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-timeline-axis",
+  },
   "scrollbar-color": {
     unitGroups: [],
     inherited: true,
@@ -3215,6 +3381,15 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/shape-rendering",
   },
+  "speak-as": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl: "https://developer.mozilla.org/en-US/search?q=speak-as",
+  },
   "stop-color": {
     unitGroups: [],
     inherited: false,
@@ -3232,6 +3407,15 @@ export const properties: Properties = {
       value: "black",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/stop-opacity",
+  },
+  "stroke-color": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "transparent",
+    },
+    mdnUrl: "https://developer.mozilla.org/en-US/search?q=stroke-color",
   },
   "stroke-dasharray": {
     unitGroups: ["length", "percentage", "number"],
@@ -3392,6 +3576,15 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-line",
   },
+  "text-decoration-skip": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "objects",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-skip",
+  },
   "text-decoration-skip-ink": {
     unitGroups: [],
     inherited: true,
@@ -3521,6 +3714,15 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-size-adjust",
   },
+  "text-spacing-trim": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-spacing-trim",
+  },
   "text-transform": {
     unitGroups: [],
     inherited: true,
@@ -3566,6 +3768,15 @@ export const properties: Properties = {
       value: "auto",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-wrap-style",
+  },
+  "timeline-scope": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/timeline-scope",
   },
   "timeline-trigger-activation-range-end": {
     unitGroups: ["length", "percentage"],
@@ -3799,6 +4010,15 @@ export const properties: Properties = {
       value: "baseline",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/vertical-align",
+  },
+  "view-timeline-axis": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "block",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/view-timeline-axis",
   },
   "view-transition-name": {
     unitGroups: [],

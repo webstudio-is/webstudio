@@ -18,7 +18,7 @@ import type {
 } from "@webstudio-is/css-engine";
 import * as customData from "../src/custom-data";
 import { camelCaseProperty } from "../src/parse-css";
-import { supportedExperimentalPropertySet } from "./property-filter";
+import { isSupportedProperty } from "./property-filter";
 
 const units: Record<string, Array<string>> = {
   number: [],
@@ -280,15 +280,9 @@ const filterData = () => {
 
     const config = properties[property];
 
-    const isStandardProperty =
-      config.status === "standard" && "mdn_url" in config;
-
-    const isSupportedExperimentalProperty =
-      supportedExperimentalPropertySet.has(property);
-
     if (
-      isStandardProperty === false &&
-      isSupportedExperimentalProperty === false
+      isSupportedProperty(property, config.status, "mdn_url" in config) ===
+      false
     ) {
       continue;
     }
@@ -361,7 +355,10 @@ const getPropertiesData = (
       unitGroups: Array.from(unitGroups),
       inherited: config.inherited,
       initial: parseInitialValue(property, config.initial, unitGroups),
-      ...("mdn_url" in config && { mdnUrl: config.mdn_url }),
+      mdnUrl:
+        "mdn_url" in config
+          ? config.mdn_url
+          : `https://developer.mozilla.org/en-US/search?q=${encodeURIComponent(property)}`,
     };
   }
 
@@ -487,6 +484,16 @@ writeToFile(
   "animatable-properties.ts",
   "animatableProperties",
   Object.keys(filteredData.animatableLonghands)
+);
+writeToFile(
+  "experimental-properties.ts",
+  "experimentalProperties",
+  Object.entries({
+    ...filteredData.allLonghands,
+    ...filteredData.allShorthands,
+  })
+    .filter(([, config]) => config.status === "experimental")
+    .map(([property]) => property)
 );
 writeToFile("pseudo-elements.ts", "pseudoElements", pseudoElements);
 writeToFile("pseudo-classes.ts", "pseudoClasses", pseudoClasses);

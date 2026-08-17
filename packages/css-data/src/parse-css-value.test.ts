@@ -735,23 +735,11 @@ test("parse transition-behavior property as layers", () => {
   });
 });
 
-test("parse unknown properties as unparsed", () => {
-  expect(parseCssValue("animation-timeline" as CssProperty, "auto")).toEqual({
+test("parse properties unknown to css-tree", () => {
+  expect(parseCssValue("future-property" as CssProperty, "auto")).toEqual({
     type: "unparsed",
     value: "auto",
   });
-  expect(
-    parseCssValue("animation-range-start" as CssProperty, "normal")
-  ).toEqual({
-    type: "unparsed",
-    value: "normal",
-  });
-  expect(parseCssValue("animation-range-end" as CssProperty, "normal")).toEqual(
-    {
-      type: "unparsed",
-      value: "normal",
-    }
-  );
   expect(
     parseCssValue("animation-timing-function", "linear(0 0%, 1 100%)")
   ).toEqual({ type: "unparsed", value: "linear(0 0%, 1 100%)" });

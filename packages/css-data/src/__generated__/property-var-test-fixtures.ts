@@ -1052,6 +1052,238 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-all-slots",
         positions: [
+          "animation-range:term:0:repeat:term:0:property:animation-range-start:term:0:repeat:branch:0:keyword:normal",
+          "animation-range:term:0:repeat:term:0:property:animation-range-start:term:0:repeat:branch:0:keyword:normal",
+          "animation-range:term:0:repeat:term:1:repeat:property:animation-range-end:term:0:repeat:branch:0:keyword:normal",
+          "animation-range:term:0:repeat:term:1:repeat:property:animation-range-end:term:0:repeat:branch:0:keyword:normal",
+          "animation-range:term:0:repeat:term:0:property:animation-range-start:term:0:repeat:branch:0:keyword:normal",
+          "animation-range:term:0:repeat:term:0:property:animation-range-start:term:0:repeat:branch:0:keyword:normal",
+          "animation-range:term:0:repeat:term:1:repeat:property:animation-range-end:term:0:repeat:branch:0:keyword:normal",
+          "animation-range:term:0:repeat:term:1:repeat:property:animation-range-end:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value:
+          "var(--slot-1),var(--slot-2) var(--slot-3),var(--slot-4),var(--slot-5),var(--slot-6) var(--slot-7),var(--slot-8)",
+        variables: {
+          "--slot-1": "normal",
+          "--slot-2": "normal",
+          "--slot-3": "normal",
+          "--slot-4": "normal",
+          "--slot-5": "normal",
+          "--slot-6": "normal",
+          "--slot-7": "normal",
+          "--slot-8": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "animation-range:term:0:repeat:term:0:property:animation-range-start:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "var(--slot-1),normal normal,normal,normal,normal normal,normal",
+        variables: {
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "animation-range:term:0:repeat:term:0:property:animation-range-start:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "normal,var(--slot-2) normal,normal,normal,normal normal,normal",
+        variables: {
+          "--slot-2": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "animation-range:term:0:repeat:term:1:repeat:property:animation-range-end:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "normal,normal var(--slot-3),normal,normal,normal normal,normal",
+        variables: {
+          "--slot-3": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-4",
+        positions: [
+          "animation-range:term:0:repeat:term:1:repeat:property:animation-range-end:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "normal,normal normal,var(--slot-4),normal,normal normal,normal",
+        variables: {
+          "--slot-4": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-5",
+        positions: [
+          "animation-range:term:0:repeat:term:0:property:animation-range-start:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "normal,normal normal,normal,var(--slot-5),normal normal,normal",
+        variables: {
+          "--slot-5": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-6",
+        positions: [
+          "animation-range:term:0:repeat:term:0:property:animation-range-start:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "normal,normal normal,normal,normal,var(--slot-6) normal,normal",
+        variables: {
+          "--slot-6": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-7",
+        positions: [
+          "animation-range:term:0:repeat:term:1:repeat:property:animation-range-end:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "normal,normal normal,normal,normal,normal var(--slot-7),normal",
+        variables: {
+          "--slot-7": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-8",
+        positions: [
+          "animation-range:term:0:repeat:term:1:repeat:property:animation-range-end:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "normal,normal normal,normal,normal,normal normal,var(--slot-8)",
+        variables: {
+          "--slot-8": "normal",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "animation-range",
+    syntax: "[ <'animation-range-start'> <'animation-range-end'>? ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "animation-range-end:term:0:repeat:branch:0:keyword:normal",
+          "animation-range-end:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "var(--slot-1),var(--slot-2)",
+        variables: {
+          "--slot-1": "normal",
+          "--slot-2": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "animation-range-end:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "var(--slot-1),normal",
+        variables: {
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "animation-range-end:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "normal,var(--slot-2)",
+        variables: {
+          "--slot-2": "normal",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "animation-range-end",
+    syntax:
+      "[ normal | <length-percentage> | <timeline-range-name> <length-percentage>? ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "animation-range-start:term:0:repeat:branch:0:keyword:normal",
+          "animation-range-start:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "var(--slot-1),var(--slot-2)",
+        variables: {
+          "--slot-1": "normal",
+          "--slot-2": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "animation-range-start:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "var(--slot-1),normal",
+        variables: {
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "animation-range-start:term:0:repeat:branch:0:keyword:normal",
+        ],
+        value: "normal,var(--slot-2)",
+        variables: {
+          "--slot-2": "normal",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "animation-range-start",
+    syntax:
+      "[ normal | <length-percentage> | <timeline-range-name> <length-percentage>? ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "animation-timeline:term:0:repeat:type:single-animation-timeline:branch:0:keyword:auto",
+          "animation-timeline:term:0:repeat:type:single-animation-timeline:branch:0:keyword:auto",
+        ],
+        value:
+          "var(--slot-single-animation-timeline),var(--slot-single-animation-timeline-2)",
+        variables: {
+          "--slot-single-animation-timeline": "auto",
+          "--slot-single-animation-timeline-2": "auto",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "animation-timeline:term:0:repeat:type:single-animation-timeline:branch:0:keyword:auto",
+        ],
+        value: "var(--slot-single-animation-timeline),auto",
+        variables: {
+          "--slot-single-animation-timeline": "auto",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "animation-timeline:term:0:repeat:type:single-animation-timeline:branch:0:keyword:auto",
+        ],
+        value: "auto,var(--slot-single-animation-timeline-2)",
+        variables: {
+          "--slot-single-animation-timeline-2": "auto",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "animation-timeline",
+    syntax: "<single-animation-timeline>#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
           "animation-timing-function:term:0:repeat:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
           "animation-timing-function:term:0:repeat:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
         ],
@@ -7584,6 +7816,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     cases: [
       {
         id: "pattern-2-slot-1",
+        positions: ["font-synthesis-position:branch:1:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "font-synthesis-position",
+    syntax: "auto | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
         positions: ["font-synthesis-small-caps:branch:1:keyword:none"],
         value: "var(--slot-1)",
         variables: {
@@ -8436,6 +8683,30 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "font-weight",
     syntax: "<font-weight-absolute> | bolder | lighter",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["font-width:branch:1:type:percentage"],
+        value: "var(--slot-percentage)",
+        variables: {
+          "--slot-percentage": "10%",
+        },
+      },
+      {
+        id: "pattern-4-slot-1",
+        positions: ["font-width:branch:3:keyword:extra-condensed"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "extra-condensed",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "font-width",
+    syntax:
+      "normal | <percentage [0,∞]> | ultra-condensed | extra-condensed | condensed | semi-condensed | semi-expanded | expanded | extra-expanded | ultra-expanded",
   },
   {
     cases: [
@@ -11129,6 +11400,51 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-all-slots",
+        positions: [
+          "image-resolution:term:0:term:0:keyword:from-image",
+          "image-resolution:term:0:term:1:type:resolution",
+          "image-resolution:term:1:repeat:keyword:snap",
+        ],
+        value: "var(--slot-1) var(--slot-resolution) var(--slot-3)",
+        variables: {
+          "--slot-1": "from-image",
+          "--slot-resolution": "1dpi",
+          "--slot-3": "snap",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: ["image-resolution:term:0:term:0:keyword:from-image"],
+        value: "var(--slot-1) 1dpi snap",
+        variables: {
+          "--slot-1": "from-image",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: ["image-resolution:term:0:term:1:type:resolution"],
+        value: "from-image var(--slot-resolution) snap",
+        variables: {
+          "--slot-resolution": "1dpi",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: ["image-resolution:term:1:repeat:keyword:snap"],
+        value: "from-image 1dpi var(--slot-3)",
+        variables: {
+          "--slot-3": "snap",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "image-resolution",
+    syntax: "[ from-image || <resolution> ] && snap?",
+  },
+  {
+    cases: [
+      {
         id: "pattern-1-slot-1",
         positions: ["initial-letter:branch:0:keyword:normal"],
         value: "var(--slot-1)",
@@ -11170,6 +11486,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "initial-letter",
     syntax: "normal | [ <number> <integer>? ]",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-4-slot-1",
+        positions: ["initial-letter-align:branch:3:keyword:ideographic"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "ideographic",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "initial-letter-align",
+    syntax: "[ auto | alphabetic | hanging | ideographic ]",
   },
   {
     cases: [
@@ -11491,6 +11822,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     cases: [
       {
         id: "pattern-2-slot-1",
+        positions: ["interpolate-size:branch:1:keyword:allow-keywords"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "allow-keywords",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "interpolate-size",
+    syntax: "numeric-only | allow-keywords",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
         positions: ["isolation:branch:1:keyword:isolate"],
         value: "var(--slot-1)",
         variables: {
@@ -11735,6 +12081,36 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "line-height",
     syntax: "normal | <number> | <length> | <percentage>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["line-height-step:term:0:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "line-height-step",
+    syntax: "<length>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["link-parameters:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "link-parameters",
+    syntax: "none | <param()>#",
   },
   {
     cases: [
@@ -12162,6 +12538,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "margin-top",
     syntax: "<length-percentage> | auto | <anchor-size()>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-3-slot-1",
+        positions: ["margin-trim:branch:2:keyword:all"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "all",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "margin-trim",
+    syntax: "none | in-flow | all",
   },
   {
     cases: [
@@ -13406,6 +13797,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     cases: [
       {
         id: "pattern-2-slot-1",
+        positions: ["math-shift:branch:1:keyword:compact"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "compact",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "math-shift",
+    syntax: "normal | compact",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
         positions: ["math-style:branch:1:keyword:compact"],
         value: "var(--slot-1)",
         variables: {
@@ -13476,6 +13882,29 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "max-inline-size",
     syntax: "<'max-width'>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["max-lines:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["max-lines:branch:1:type:integer:term:0:type:number-token"],
+        value: "var(--slot-integer)",
+        variables: {
+          "--slot-integer": "1",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "max-lines",
+    syntax: "none | <integer>",
   },
   {
     cases: [
@@ -13667,6 +14096,199 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "object-position",
     syntax: "<position>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["object-view-box:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:1:repeat:type:length-percentage:branch:0:type:length",
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:1:repeat:type:length-percentage:branch:0:type:length",
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:2:repeat:type:length-percentage:branch:0:type:length",
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:2:repeat:type:length-percentage:branch:0:type:length",
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:0:keyword:round",
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:1:repeat:term:1:repeat:type:length-percentage:branch:0:type:length",
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:1:repeat:term:1:repeat:type:length-percentage:branch:0:type:length",
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:1:repeat:term:1:repeat:type:length-percentage:branch:0:type:length",
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:1:repeat:term:1:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "xywh(var(--slot-basic-shape-rect) var(--slot-basic-shape-rect-2) var(--slot-basic-shape-rect-3) var(--slot-basic-shape-rect-4) var(--slot-basic-shape-rect-5) var(--slot-basic-shape-rect-6) var(--slot-basic-shape-rect-7) var(--slot-basic-shape-rect-8) var(--slot-basic-shape-rect-9)/var(--slot-basic-shape-rect-10) var(--slot-basic-shape-rect-11) var(--slot-basic-shape-rect-12) var(--slot-basic-shape-rect-13))",
+        variables: {
+          "--slot-basic-shape-rect": "1px",
+          "--slot-basic-shape-rect-2": "1px",
+          "--slot-basic-shape-rect-3": "1px",
+          "--slot-basic-shape-rect-4": "1px",
+          "--slot-basic-shape-rect-5": "round",
+          "--slot-basic-shape-rect-6": "1px",
+          "--slot-basic-shape-rect-7": "1px",
+          "--slot-basic-shape-rect-8": "1px",
+          "--slot-basic-shape-rect-9": "1px",
+          "--slot-basic-shape-rect-10": "1px",
+          "--slot-basic-shape-rect-11": "1px",
+          "--slot-basic-shape-rect-12": "1px",
+          "--slot-basic-shape-rect-13": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:1:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "xywh(var(--slot-basic-shape-rect) 1px 1px 1px round 1px 1px 1px 1px/1px 1px 1px 1px)",
+        variables: {
+          "--slot-basic-shape-rect": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-10",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:1:repeat:term:1:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "xywh(1px 1px 1px 1px round 1px 1px 1px 1px/var(--slot-basic-shape-rect-10) 1px 1px 1px)",
+        variables: {
+          "--slot-basic-shape-rect-10": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-11",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:1:repeat:term:1:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "xywh(1px 1px 1px 1px round 1px 1px 1px 1px/1px var(--slot-basic-shape-rect-11) 1px 1px)",
+        variables: {
+          "--slot-basic-shape-rect-11": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-12",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:1:repeat:term:1:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "xywh(1px 1px 1px 1px round 1px 1px 1px 1px/1px 1px var(--slot-basic-shape-rect-12) 1px)",
+        variables: {
+          "--slot-basic-shape-rect-12": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-13",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:1:repeat:term:1:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "xywh(1px 1px 1px 1px round 1px 1px 1px 1px/1px 1px 1px var(--slot-basic-shape-rect-13))",
+        variables: {
+          "--slot-basic-shape-rect-13": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:1:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "xywh(1px var(--slot-basic-shape-rect-2) 1px 1px round 1px 1px 1px 1px/1px 1px 1px 1px)",
+        variables: {
+          "--slot-basic-shape-rect-2": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-3",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:2:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "xywh(1px 1px var(--slot-basic-shape-rect-3) 1px round 1px 1px 1px 1px/1px 1px 1px 1px)",
+        variables: {
+          "--slot-basic-shape-rect-3": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-4",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:2:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "xywh(1px 1px 1px var(--slot-basic-shape-rect-4) round 1px 1px 1px 1px/1px 1px 1px 1px)",
+        variables: {
+          "--slot-basic-shape-rect-4": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-5",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:0:keyword:round",
+        ],
+        value:
+          "xywh(1px 1px 1px 1px var(--slot-basic-shape-rect-5) 1px 1px 1px 1px/1px 1px 1px 1px)",
+        variables: {
+          "--slot-basic-shape-rect-5": "round",
+        },
+      },
+      {
+        id: "pattern-2-slot-6",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "xywh(1px 1px 1px 1px round var(--slot-basic-shape-rect-6) 1px 1px 1px/1px 1px 1px 1px)",
+        variables: {
+          "--slot-basic-shape-rect-6": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-7",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "xywh(1px 1px 1px 1px round 1px var(--slot-basic-shape-rect-7) 1px 1px/1px 1px 1px 1px)",
+        variables: {
+          "--slot-basic-shape-rect-7": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-8",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "xywh(1px 1px 1px 1px round 1px 1px var(--slot-basic-shape-rect-8) 1px/1px 1px 1px 1px)",
+        variables: {
+          "--slot-basic-shape-rect-8": "1px",
+        },
+      },
+      {
+        id: "pattern-2-slot-9",
+        positions: [
+          "object-view-box:branch:1:type:basic-shape-rect:branch:2:type:xywh():term:3:repeat:term:1:property:border-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
+        ],
+        value:
+          "xywh(1px 1px 1px 1px round 1px 1px 1px var(--slot-basic-shape-rect-9)/1px 1px 1px 1px)",
+        variables: {
+          "--slot-basic-shape-rect-9": "1px",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "object-view-box",
+    syntax: "none | <basic-shape-rect>",
   },
   {
     cases: [
@@ -14297,6 +14919,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "overflow-y",
     syntax: "visible | hidden | clip | scroll | auto",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["overlay:branch:1:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "overlay",
+    syntax: "none | auto",
   },
   {
     cases: [
@@ -15513,6 +16150,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-3-slot-1",
+        positions: ["ruby-merge:branch:2:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "ruby-merge",
+    syntax: "separate | collapse | auto",
+  },
+  {
+    cases: [
+      {
         id: "pattern-1-slot-1",
         positions: ["ruby-position:branch:1:keyword:inter-character"],
         value: "var(--slot-1)",
@@ -15666,6 +16318,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "scroll-behavior",
     syntax: "auto | smooth",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["scroll-initial-target:branch:1:keyword:nearest"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "nearest",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "scroll-initial-target",
+    syntax: "none | nearest",
   },
   {
     cases: [
@@ -16371,6 +17038,112 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-all-slots",
+        positions: ["scroll-timeline-name", "scroll-timeline-axis"],
+        value: "var(--slot-1) var(--slot-2)",
+        variables: {
+          "--slot-1": "--timeline",
+          "--slot-2": "block",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: ["scroll-timeline-name"],
+        value: "var(--slot-1) block",
+        variables: {
+          "--slot-1": "--timeline",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: ["scroll-timeline-axis"],
+        value: "--timeline var(--slot-2)",
+        variables: {
+          "--slot-2": "block",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "scroll-timeline",
+    syntax: "[ <'scroll-timeline-name'> <'scroll-timeline-axis'>? ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "scroll-timeline-axis:term:0:repeat:branch:0:keyword:block",
+          "scroll-timeline-axis:term:0:repeat:branch:0:keyword:block",
+        ],
+        value: "var(--slot-1),var(--slot-2)",
+        variables: {
+          "--slot-1": "block",
+          "--slot-2": "block",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "scroll-timeline-axis:term:0:repeat:branch:0:keyword:block",
+        ],
+        value: "var(--slot-1),block",
+        variables: {
+          "--slot-1": "block",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "scroll-timeline-axis:term:0:repeat:branch:0:keyword:block",
+        ],
+        value: "block,var(--slot-2)",
+        variables: {
+          "--slot-2": "block",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "scroll-timeline-axis",
+    syntax: "[ block | inline | x | y ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "scroll-timeline-name:term:0:repeat:branch:0:keyword:none",
+          "scroll-timeline-name:term:0:repeat:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1),var(--slot-2)",
+        variables: {
+          "--slot-1": "none",
+          "--slot-2": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: ["scroll-timeline-name:term:0:repeat:branch:0:keyword:none"],
+        value: "var(--slot-1),none",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: ["scroll-timeline-name:term:0:repeat:branch:0:keyword:none"],
+        value: "none,var(--slot-2)",
+        variables: {
+          "--slot-2": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "scroll-timeline-name",
+    syntax: "[ none | <dashed-ident> ]#",
+  },
+  {
+    cases: [
+      {
         id: "pattern-1-slot-1",
         positions: ["scrollbar-color:branch:0:keyword:auto"],
         value: "var(--slot-1)",
@@ -16561,6 +17334,62 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     cases: [
       {
         id: "pattern-1-slot-1",
+        positions: ["speak-as:branch:0:keyword:normal"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "speak-as:branch:1:term:0:keyword:spell-out",
+          "speak-as:branch:1:term:1:keyword:digits",
+          "speak-as:branch:1:term:2:branch:0:keyword:literal-punctuation",
+        ],
+        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        variables: {
+          "--slot-1": "spell-out",
+          "--slot-2": "digits",
+          "--slot-3": "literal-punctuation",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["speak-as:branch:1:term:0:keyword:spell-out"],
+        value: "var(--slot-1) digits literal-punctuation",
+        variables: {
+          "--slot-1": "spell-out",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: ["speak-as:branch:1:term:1:keyword:digits"],
+        value: "spell-out var(--slot-2) literal-punctuation",
+        variables: {
+          "--slot-2": "digits",
+        },
+      },
+      {
+        id: "pattern-2-slot-3",
+        positions: [
+          "speak-as:branch:1:term:2:branch:0:keyword:literal-punctuation",
+        ],
+        value: "spell-out digits var(--slot-3)",
+        variables: {
+          "--slot-3": "literal-punctuation",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "speak-as",
+    syntax:
+      "normal | spell-out || digits || [ literal-punctuation | no-punctuation ]",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
         positions: [
           "stop-color:term:0:property:color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
@@ -16605,6 +17434,23 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "shorthand",
     property: "stroke",
     syntax: "<paint>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "stroke-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
+        ],
+        value: "var(--slot-color)",
+        variables: {
+          "--slot-color": "red",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "stroke-color",
+    syntax: "<color>",
   },
   {
     cases: [
@@ -17126,6 +17972,74 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     property: "text-decoration-line",
     syntax:
       "none | [ underline || overline || line-through || blink ] | spelling-error | grammar-error",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["text-decoration-skip:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "text-decoration-skip:branch:1:term:0:keyword:objects",
+          "text-decoration-skip:branch:1:term:1:branch:0:keyword:spaces",
+          "text-decoration-skip:branch:1:term:2:keyword:edges",
+          "text-decoration-skip:branch:1:term:3:keyword:box-decoration",
+        ],
+        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        variables: {
+          "--slot-1": "objects",
+          "--slot-2": "spaces",
+          "--slot-3": "edges",
+          "--slot-4": "box-decoration",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["text-decoration-skip:branch:1:term:0:keyword:objects"],
+        value: "var(--slot-1) spaces edges box-decoration",
+        variables: {
+          "--slot-1": "objects",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: [
+          "text-decoration-skip:branch:1:term:1:branch:0:keyword:spaces",
+        ],
+        value: "objects var(--slot-2) edges box-decoration",
+        variables: {
+          "--slot-2": "spaces",
+        },
+      },
+      {
+        id: "pattern-2-slot-3",
+        positions: ["text-decoration-skip:branch:1:term:2:keyword:edges"],
+        value: "objects spaces var(--slot-3) box-decoration",
+        variables: {
+          "--slot-3": "edges",
+        },
+      },
+      {
+        id: "pattern-2-slot-4",
+        positions: [
+          "text-decoration-skip:branch:1:term:3:keyword:box-decoration",
+        ],
+        value: "objects spaces edges var(--slot-4)",
+        variables: {
+          "--slot-4": "box-decoration",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "text-decoration-skip",
+    syntax:
+      "none | [ objects || [ spaces | [ leading-spaces || trailing-spaces ] ] || edges || box-decoration ]",
   },
   {
     cases: [
@@ -17696,6 +18610,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-4-slot-1",
+        positions: ["text-spacing-trim:branch:3:keyword:trim-start"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "trim-start",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "text-spacing-trim",
+    syntax: "space-all | normal | space-first | trim-start",
+  },
+  {
+    cases: [
+      {
         id: "pattern-2-slot-1",
         positions: ["text-transform:branch:2:keyword:math-auto"],
         value: "var(--slot-1)",
@@ -17893,6 +18822,49 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "text-wrap-style",
     syntax: "auto | balance | stable | pretty",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["timeline-scope:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-all-slots",
+        positions: [
+          "timeline-scope:branch:1:repeat:type:dashed-ident",
+          "timeline-scope:branch:1:repeat:type:dashed-ident",
+        ],
+        value: "var(--slot-dashed-ident),var(--slot-dashed-ident-2)",
+        variables: {
+          "--slot-dashed-ident": "--custom-ident",
+          "--slot-dashed-ident-2": "--custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["timeline-scope:branch:1:repeat:type:dashed-ident"],
+        value: "var(--slot-dashed-ident),--custom-ident",
+        variables: {
+          "--slot-dashed-ident": "--custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-2",
+        positions: ["timeline-scope:branch:1:repeat:type:dashed-ident"],
+        value: "--custom-ident,var(--slot-dashed-ident-2)",
+        variables: {
+          "--slot-dashed-ident-2": "--custom-ident",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "timeline-scope",
+    syntax: "none | <dashed-ident>#",
   },
   {
     cases: [
@@ -19597,6 +20569,185 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     property: "vertical-align",
     syntax:
       "baseline | sub | super | text-top | text-bottom | middle | top | bottom | <percentage> | <length>",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "view-timeline-name",
+          "view-timeline-axis",
+          "view-timeline-inset",
+        ],
+        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        variables: {
+          "--slot-1": "--timeline",
+          "--slot-2": "block",
+          "--slot-3": "auto",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: ["view-timeline-name"],
+        value: "var(--slot-1) block auto",
+        variables: {
+          "--slot-1": "--timeline",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: ["view-timeline-axis"],
+        value: "--timeline var(--slot-2) auto",
+        variables: {
+          "--slot-2": "block",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: ["view-timeline-inset"],
+        value: "--timeline block var(--slot-3)",
+        variables: {
+          "--slot-3": "auto",
+        },
+      },
+    ],
+    kind: "shorthand",
+    property: "view-timeline",
+    syntax:
+      "[ <'view-timeline-name'> [ <'view-timeline-axis'> || <'view-timeline-inset'> ]? ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "view-timeline-axis:term:0:repeat:branch:0:keyword:block",
+          "view-timeline-axis:term:0:repeat:branch:0:keyword:block",
+        ],
+        value: "var(--slot-1),var(--slot-2)",
+        variables: {
+          "--slot-1": "block",
+          "--slot-2": "block",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: ["view-timeline-axis:term:0:repeat:branch:0:keyword:block"],
+        value: "var(--slot-1),block",
+        variables: {
+          "--slot-1": "block",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: ["view-timeline-axis:term:0:repeat:branch:0:keyword:block"],
+        value: "block,var(--slot-2)",
+        variables: {
+          "--slot-2": "block",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "view-timeline-axis",
+    syntax: "[ block | inline | x | y ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "view-timeline-inset:term:0:repeat:term:0:repeat:branch:0:keyword:auto",
+          "view-timeline-inset:term:0:repeat:term:0:repeat:branch:0:keyword:auto",
+          "view-timeline-inset:term:0:repeat:term:0:repeat:branch:0:keyword:auto",
+          "view-timeline-inset:term:0:repeat:term:0:repeat:branch:0:keyword:auto",
+        ],
+        value: "var(--slot-1) var(--slot-2),var(--slot-3) var(--slot-4)",
+        variables: {
+          "--slot-1": "auto",
+          "--slot-2": "auto",
+          "--slot-3": "auto",
+          "--slot-4": "auto",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "view-timeline-inset:term:0:repeat:term:0:repeat:branch:0:keyword:auto",
+        ],
+        value: "var(--slot-1) auto,auto auto",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: [
+          "view-timeline-inset:term:0:repeat:term:0:repeat:branch:0:keyword:auto",
+        ],
+        value: "auto var(--slot-2),auto auto",
+        variables: {
+          "--slot-2": "auto",
+        },
+      },
+      {
+        id: "pattern-1-slot-3",
+        positions: [
+          "view-timeline-inset:term:0:repeat:term:0:repeat:branch:0:keyword:auto",
+        ],
+        value: "auto auto,var(--slot-3) auto",
+        variables: {
+          "--slot-3": "auto",
+        },
+      },
+      {
+        id: "pattern-1-slot-4",
+        positions: [
+          "view-timeline-inset:term:0:repeat:term:0:repeat:branch:0:keyword:auto",
+        ],
+        value: "auto auto,auto var(--slot-4)",
+        variables: {
+          "--slot-4": "auto",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "view-timeline-inset",
+    syntax: "[ [ auto | <length-percentage> ]{1,2} ]#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-1-all-slots",
+        positions: [
+          "view-timeline-name:term:0:repeat:branch:0:keyword:none",
+          "view-timeline-name:term:0:repeat:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1),var(--slot-2)",
+        variables: {
+          "--slot-1": "none",
+          "--slot-2": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-1",
+        positions: ["view-timeline-name:term:0:repeat:branch:0:keyword:none"],
+        value: "var(--slot-1),none",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-1-slot-2",
+        positions: ["view-timeline-name:term:0:repeat:branch:0:keyword:none"],
+        value: "none,var(--slot-2)",
+        variables: {
+          "--slot-2": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "view-timeline-name",
+    syntax: "[ none | <dashed-ident> ]#",
   },
   {
     cases: [
