@@ -833,8 +833,8 @@ const curatedPublicApiOperationDocumentation = [
     description:
       "Replace a text asset's content or extension while preserving its stable asset id; provide exactly one of path or content and use the current asset name as expectedName",
     examples: [
-      'MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.json","content":"{\\"theme\\":\\"dark\\"}"}',
-      'MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.md","extension":"json","content":"{\\"theme\\":\\"dark\\"}"}',
+      `MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.json","content":"{theme:'dark'}"}`,
+      `MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.md","extension":"json","content":"{theme:'dark'}"}`,
       'MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"styles_hash.css","path":"./styles.css"}',
     ],
   },
