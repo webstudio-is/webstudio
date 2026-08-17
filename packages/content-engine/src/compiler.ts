@@ -8,5 +8,10 @@ export * from "./content-source";
 export * from "./document-metadata";
 export * from "./asset-value-references";
 export { serializeJsonDeterministically } from "./canonical-json";
-export { decodeUtf8, readBoundedBytes, readBytePrefix } from "./byte-stream";
+export {
+  decodeUtf8,
+  readableStreamToAsyncIterable,
+  readBoundedBytes,
+  readBytePrefix,
+} from "./byte-stream";
 export { mapBounded } from "./async-utils";

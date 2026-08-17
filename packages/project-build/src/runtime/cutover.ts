@@ -106,6 +106,22 @@ export const builderRuntimeCutoverManifests = [
     callers: ["appRouter.api.instances"] as const,
   },
   {
+    family: "content-block-source-operations",
+    operationIds: [
+      "contentBlocks.inspectSource",
+      "contentBlocks.connectSource",
+      "contentBlocks.switchSource",
+      "contentBlocks.disconnectSource",
+      "contentBlocks.recoverSource",
+      "contentBlocks.migrateTemplateReferences",
+      "contentBlocks.semanticEdit",
+    ] as const,
+    callers: [
+      "Builder stateful Content Block adapter using shared application policy",
+      "MCP/CLI content editing",
+    ] as const,
+  },
+  {
     family: "project-inspection-read",
     operationIds: [
       "project.search",
@@ -135,6 +151,7 @@ export const builderRuntimeCutoverManifests = [
       "instances.insertComponent",
       "instances.insertCollection",
       "instances.insertFragment",
+      "instances.insertMdxText",
       "slots.attach",
       "slots.extract",
     ] as const,
@@ -142,6 +159,7 @@ export const builderRuntimeCutoverManifests = [
       "appRouter.api.instances",
       "MCP insert-collection",
       "MCP insert-fragment",
+      "MCP/CLI MDX text insertion",
       "MCP shared Slot authoring",
       "Builder components panel",
     ] as const,

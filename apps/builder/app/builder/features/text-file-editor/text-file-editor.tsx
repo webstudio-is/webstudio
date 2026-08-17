@@ -61,7 +61,8 @@ import {
 } from "~/builder/features/settings-panel/controls/url";
 import {
   getTextFileEditorExtensions,
-  isMarkdownAsset,
+  isMarkdownPreviewAsset,
+  isMarkdownSyntaxAsset,
 } from "./text-file-utils";
 import { MarkdownSplitView } from "./markdown-preview";
 
@@ -355,11 +356,13 @@ const MarkdownLinkPicker = ({
 const MarkdownToolbar = ({
   editorApiRef,
   disabled,
+  showPreview,
   previewOpen,
   onPreviewOpenChange,
 }: {
   editorApiRef: RefObject<EditorApi | undefined>;
   disabled: boolean;
+  showPreview: boolean;
   previewOpen: boolean;
   onPreviewOpenChange: (open: boolean) => void;
 }) => (
@@ -404,18 +407,20 @@ const MarkdownToolbar = ({
       <MarkdownLinkPicker editorApiRef={editorApiRef} disabled={disabled} />
       <MarkdownImagePicker editorApiRef={editorApiRef} disabled={disabled} />
     </Flex>
-    <Tooltip content={previewOpen ? "Hide preview" : "Show preview"}>
-      <IconButton
-        type="button"
-        aria-label={previewOpen ? "Hide preview" : "Show preview"}
-        aria-pressed={previewOpen}
-        variant={previewOpen ? "local" : "default"}
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={() => onPreviewOpenChange(previewOpen === false)}
-      >
-        <MarkdownEmbedIcon />
-      </IconButton>
-    </Tooltip>
+    {showPreview && (
+      <Tooltip content={previewOpen ? "Hide preview" : "Show preview"}>
+        <IconButton
+          type="button"
+          aria-label={previewOpen ? "Hide preview" : "Show preview"}
+          aria-pressed={previewOpen}
+          variant={previewOpen ? "local" : "default"}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => onPreviewOpenChange(previewOpen === false)}
+        >
+          <MarkdownEmbedIcon />
+        </IconButton>
+      </Tooltip>
+    )}
   </Flex>
 );
 
@@ -512,7 +517,9 @@ export const TextFileEditor = ({
   };
 
   const title = asset === undefined ? "Text file" : formatAssetName(asset);
-  const isMarkdown = asset !== undefined && isMarkdownAsset(asset);
+  const isMarkdown = asset !== undefined && isMarkdownSyntaxAsset(asset);
+  const hasMarkdownPreview =
+    asset !== undefined && isMarkdownPreviewAsset(asset);
   let editor: ReactNode;
   if (state.status === "loaded" && asset !== undefined) {
     editor = (
@@ -572,11 +579,12 @@ export const TextFileEditor = ({
                 <MarkdownToolbar
                   editorApiRef={editorApiRef}
                   disabled={canEdit === false}
+                  showPreview={hasMarkdownPreview}
                   previewOpen={previewOpen}
                   onPreviewOpenChange={setPreviewOpen}
                 />
               )}
-              {isMarkdown ? (
+              {hasMarkdownPreview ? (
                 <MarkdownSplitView
                   open={previewOpen}
                   source={state.content}

@@ -2,7 +2,7 @@ import { atom, computed } from "nanostores";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { FontWeight } from "@webstudio-is/fonts";
 import type { Rect } from "@webstudio-is/design-system";
-import { $instances } from "../sync/data-stores";
+import { $runtimeInstances as $instances } from "../content-block-content";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 
 export type TextToolbarState = {

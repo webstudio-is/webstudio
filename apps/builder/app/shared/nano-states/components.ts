@@ -14,7 +14,10 @@ import {
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
-import { $props, $instances } from "../sync/data-stores";
+import {
+  $runtimeInstances as $instances,
+  $runtimeProps as $props,
+} from "../content-block-content";
 import { $memoryProps } from "./misc";
 import { $selectedPage } from "./pages";
 import { $selectedInstanceSelector, getInstanceKey } from "./instances";

@@ -1,5 +1,6 @@
 import equal from "fast-deep-equal";
 import {
+  blockTemplateComponent,
   elementComponent,
   instanceComponent,
   ROOT_INSTANCE_ID,
@@ -47,14 +48,17 @@ import { findAvailableVariables } from "./data";
 import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
 import {
   detectFragmentTokenConflicts,
+  extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   webstudioFragmentMutationInput,
 } from "./fragment";
 import {
+  blockTemplateNameConfirmationInput,
   createInstanceAppendPayload,
   createInstanceChild,
   insertIndexInput,
   instanceInsertModeInput,
+  requireBlockTemplateNameConfirmation,
 } from "./instances";
 import { createRuntimeMutation, type BuilderRuntimeMutation } from "./mutation";
 import { getSlotFragmentDropTargetMutable } from "./slot";
@@ -66,6 +70,11 @@ import {
   getNewFragmentContentModelWarnings,
 } from "./matcher";
 import { z } from "zod";
+import {
+  assignUniqueBlockTemplateNamesMutable,
+  getBlockTemplateNameConfirmation,
+  type BlockTemplateNameConfirmation,
+} from "./block";
 
 const conflictResolutionInput = z
   .enum(["ours", "theirs", "merge"])
@@ -85,6 +94,7 @@ export const insertComponentInput = z.object({
     .describe('Required when component is "ws:element"; omit otherwise.'),
   mode: instanceInsertModeInput.optional(),
   insertIndex: insertIndexInput.optional(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const insertFragmentInput = z
@@ -102,6 +112,7 @@ export const insertFragmentInput = z
       ),
     mode: instanceInsertModeInput.optional(),
     insertIndex: insertIndexInput.optional(),
+    templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
   })
   .superRefine((input, context) => {
     if (
@@ -245,19 +256,39 @@ const getRequiredComponentInsertState = (state: ComponentInsertState) => {
   };
 };
 
+export const getRequiredComponentInsertData = (
+  state: ComponentInsertState
+): Omit<WebstudioData, "pages"> => {
+  const required = getRequiredComponentInsertState(state);
+  return {
+    instances: required.instances,
+    props: required.props,
+    dataSources: required.dataSources,
+    resources: required.resources,
+    styleSources: required.styleSources,
+    styleSourceSelections: required.styleSourceSelections,
+    styles: required.styles,
+    breakpoints: required.breakpoints,
+    assets: required.assets,
+  };
+};
+
 const cloneFragmentData = (
   state: ReturnType<typeof getRequiredComponentInsertState>
-): Omit<WebstudioData, "pages"> => ({
-  instances: cloneMap(state.instances),
-  props: cloneMap(state.props),
-  dataSources: cloneMap(state.dataSources),
-  resources: cloneMap(state.resources),
-  styleSources: cloneMap(state.styleSources),
-  styleSourceSelections: cloneMap(state.styleSourceSelections),
-  styles: cloneMap(state.styles),
-  breakpoints: cloneMap(state.breakpoints),
-  assets: cloneMap(state.assets),
-});
+): Omit<WebstudioData, "pages"> => {
+  const data = getRequiredComponentInsertData(state);
+  return {
+    instances: cloneMap(data.instances),
+    props: cloneMap(data.props),
+    dataSources: cloneMap(data.dataSources),
+    resources: cloneMap(data.resources),
+    styleSources: cloneMap(data.styleSources),
+    styleSourceSelections: cloneMap(data.styleSourceSelections),
+    styles: cloneMap(data.styles),
+    breakpoints: cloneMap(data.breakpoints),
+    assets: cloneMap(data.assets),
+  };
+};
 
 const cloneMap = <Key, Value>(map: Map<Key, Value>) =>
   new Map(
@@ -684,9 +715,13 @@ const createInsertFragmentMutation = <
   insertIndex: explicitInsertIndex,
   conflictResolution,
   contentMode = false,
+  includeDataResources,
+  reusePortalContent,
   additionalAvailableVariables = [],
   getResultDetails,
   validateContentModel = true,
+  protectedChildCount = 0,
+  confirm,
   context,
 }: {
   state: ComponentInsertState;
@@ -697,12 +732,16 @@ const createInsertFragmentMutation = <
   insertIndex?: z.infer<typeof insertIndexInput>;
   conflictResolution?: ConflictResolution;
   contentMode?: boolean;
+  includeDataResources?: boolean;
+  reusePortalContent?: boolean;
   additionalAvailableVariables?: DataSource[];
   getResultDetails?: (ids: {
     newInstanceIds: Map<string, string>;
     newDataSourceIds: Map<string, string>;
   }) => Details;
   validateContentModel?: boolean;
+  protectedChildCount?: number;
+  confirm?: BlockTemplateNameConfirmation;
   context: BuilderRuntimeContext;
 }) => {
   const mutationState = getRequiredComponentInsertState(state);
@@ -736,10 +775,12 @@ const createInsertFragmentMutation = <
   const parentChildren = parent.children ?? [];
   const insertIndex =
     mode === "replace"
-      ? 0
+      ? protectedChildCount
       : mode === "prepend"
-        ? 0
-        : (explicitInsertIndex ?? parentChildren.length);
+        ? protectedChildCount
+        : explicitInsertIndex === undefined
+          ? parentChildren.length
+          : protectedChildCount + explicitInsertIndex;
   if (insertIndex > parentChildren.length) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
@@ -765,6 +806,8 @@ const createInsertFragmentMutation = <
       metas: componentMetas,
       contentModeCopyableProp: isFragmentContentModeCopyableProp,
       contentMode,
+      includeDataResources,
+      reusePortalContent,
     });
   for (const instanceId of newInstanceIds.values()) {
     if (
@@ -787,6 +830,44 @@ const createInsertFragmentMutation = <
       return child;
     }
   );
+  assignUniqueBlockTemplateNamesMutable({
+    instanceIds: insertedChildren.flatMap((child) =>
+      child.type === "id" ? [child.value] : []
+    ),
+    parent,
+    replacedInstanceIds:
+      mode === "replace"
+        ? parentChildren
+            .slice(protectedChildCount)
+            .flatMap((child) => (child.type === "id" ? [child.value] : []))
+        : [],
+    instances: nextData.instances,
+  });
+  let requiredTemplateNameConfirmation:
+    | BlockTemplateNameConfirmation
+    | undefined;
+  if (mode === "replace" && parent.component === blockTemplateComponent) {
+    const insertedInstanceIds = insertedChildren.flatMap((child) =>
+      child.type === "id" ? [child.value] : []
+    );
+    const replacedInstances = parentChildren
+      .slice(protectedChildCount)
+      .flatMap((child) => {
+        if (child.type !== "id") {
+          return [];
+        }
+        const instance = mutationState.instances.get(child.value);
+        return instance === undefined ? [] : [instance];
+      });
+    requiredTemplateNameConfirmation = getBlockTemplateNameConfirmation({
+      changes: replacedInstances.map((instance, index) => ({
+        instance,
+        nextInstance: nextData.instances.get(insertedInstanceIds[index] ?? ""),
+      })),
+      instances: mutationState.instances,
+      props: mutationState.props.values(),
+    });
+  }
 
   if (validateContentModel) {
     const validationInstances = new Map(nextData.instances);
@@ -831,6 +912,11 @@ const createInsertFragmentMutation = <
       return throwBuilderRuntimeError("BAD_REQUEST", contentModelError.message);
     }
   }
+  requireBlockTemplateNameConfirmation({
+    required: requiredTemplateNameConfirmation,
+    confirm,
+    path: "mode",
+  });
 
   const createResult = (
     parentInstanceId: string,
@@ -893,6 +979,7 @@ const createInsertFragmentMutation = <
       styleSources: mutationState.styleSources.values(),
       styleSourceSelections: mutationState.styleSourceSelections.values(),
       styles: mutationState.styles.values(),
+      protectedChildCount,
     });
   const insertPayload = createFragmentInsertPayload({
     before: mutationState,
@@ -914,7 +1001,8 @@ const createInsertFragmentMutation = <
 export const insertComponent = (
   state: ComponentInsertState,
   input: z.infer<typeof insertComponentInput>,
-  context: BuilderRuntimeContext
+  context: BuilderRuntimeContext,
+  options: { protectedChildCount?: number } = {}
 ) => {
   const mutationState = getRequiredComponentInsertState(state);
   const parent = mutationState.instances.get(input.parentInstanceId);
@@ -1000,6 +1088,8 @@ export const insertComponent = (
     mode: input.mode,
     insertIndex: input.insertIndex,
     validateContentModel: false,
+    protectedChildCount: options.protectedChildCount,
+    confirm: input.templateNameConfirmation,
     context,
   });
 };
@@ -1007,7 +1097,8 @@ export const insertComponent = (
 export const insertCollection = (
   state: ComponentInsertState,
   input: z.infer<typeof insertCollectionInput>,
-  context: BuilderRuntimeContext
+  context: BuilderRuntimeContext,
+  options: { protectedChildCount?: number } = {}
 ) => {
   const mutationState = getRequiredComponentInsertState(state);
   if (mutationState.instances.has(input.parentInstanceId) === false) {
@@ -1057,6 +1148,8 @@ export const insertCollection = (
         collection.itemKeyParameterId
       ),
     }),
+    protectedChildCount: options.protectedChildCount,
+    confirm: input.templateNameConfirmation,
     context,
   });
 };
@@ -1102,7 +1195,8 @@ const createInsertTokenFragmentMutation = ({
 export const insertFragment = (
   state: ComponentInsertState,
   input: z.infer<typeof insertFragmentInput>,
-  context: BuilderRuntimeContext
+  context: BuilderRuntimeContext,
+  options: { protectedChildCount?: number } = {}
 ): BuilderRuntimeMutation<FragmentInsertResult> => {
   const htmlEmbedError = validateFragmentHtmlEmbedCode(input.fragment);
   if (htmlEmbedError !== undefined) {
@@ -1146,6 +1240,52 @@ export const insertFragment = (
     insertIndex: input.insertIndex,
     conflictResolution: input.conflictResolution,
     contentMode: input.contentMode,
+    protectedChildCount: options.protectedChildCount,
+    confirm: input.templateNameConfirmation,
+    context,
+  });
+};
+
+export const insertInstanceCopy = (
+  state: ComponentInsertState,
+  input: {
+    sourceInstanceId: Instance["id"];
+    parentInstanceId: Instance["id"];
+    insertIndex?: number;
+    contentMode?: boolean;
+  },
+  context: BuilderRuntimeContext,
+  options: { protectedChildCount?: number } = {}
+) => {
+  const mutationState = getRequiredComponentInsertState(state);
+  if (mutationState.instances.has(input.sourceInstanceId) === false) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  const fragment = extractWebstudioFragment(
+    mutationState,
+    input.sourceInstanceId
+  );
+  if (
+    fragment.instances.some(
+      (instance) => instance.component === blockTemplateComponent
+    )
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "A subtree containing Content Block Templates cannot be copied across storage roots."
+    );
+  }
+  return createInsertFragmentMutation({
+    state: mutationState,
+    parentInstanceId: input.parentInstanceId,
+    fragment,
+    templates: getComponentTemplates(),
+    insertIndex: input.insertIndex,
+    conflictResolution: "ours",
+    contentMode: input.contentMode,
+    includeDataResources: true,
+    reusePortalContent: false,
+    protectedChildCount: options.protectedChildCount,
     context,
   });
 };

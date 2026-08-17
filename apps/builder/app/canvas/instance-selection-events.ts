@@ -13,8 +13,10 @@ import {
   selectInstances,
 } from "~/shared/nano-states";
 import { getInstanceSelectionUpdate } from "~/shared/instance-utils/selection";
-import { $props } from "~/shared/sync/data-stores";
-import { $instances } from "~/shared/sync/data-stores";
+import {
+  $runtimeInstances as $instances,
+  $runtimeProps as $props,
+} from "~/shared/content-block-content";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { emitCommand } from "./shared/commands";
 import { shallowEqual } from "shallow-equal";

@@ -17,6 +17,8 @@ import { projectOutput } from "./runtime/output";
 import {
   builderRuntimeContext,
   type BuilderRuntimeContext,
+  type ContentBlockPersistenceResult,
+  type ContentBlockPersistenceStep,
 } from "./runtime/context";
 import {
   BuilderRuntimeError,
@@ -24,7 +26,11 @@ import {
   sanitizeValidationDetail,
   type SemanticValidationIssue,
 } from "./runtime/errors";
-import type { BuilderRuntimeMutation } from "./runtime/mutation";
+import {
+  getRuntimeMutationPersistenceOrder,
+  type BuilderRuntimeMutation,
+} from "./runtime/mutation";
+import { getContentStorageIdentityKey } from "./runtime/content-storage";
 import { executeBuilderRuntimeOperation } from "./runtime/registry";
 import type { BuilderState } from "./state/builder-state";
 import { getMissingBuilderStateNamespaces } from "./state/builder-state";
@@ -705,6 +711,46 @@ export const hasProjectSessionPermit = (
   return permissions.canAdmin;
 };
 
+const addProjectPersistenceStep = ({
+  persistence,
+  step,
+  order,
+}: {
+  persistence: ContentBlockPersistenceResult;
+  step: ContentBlockPersistenceStep;
+  order: "before" | "after";
+}): ContentBlockPersistenceResult => {
+  const steps =
+    order === "before"
+      ? [step, ...persistence.steps]
+      : [...persistence.steps, step];
+  const hasFailure = steps.some(({ status }) => status === "failed");
+  const hasSaved = steps.some(({ status }) => status === "saved");
+  return {
+    status: hasFailure ? (hasSaved ? "partial" : "failed") : "complete",
+    steps,
+    retry: {
+      ...persistence.retry,
+      project: step.type === "project" && step.status !== "saved",
+    },
+  };
+};
+
+const markPersistedAssetChangesStale = (
+  snapshot: ProjectSessionSnapshot,
+  persistence: ContentBlockPersistenceResult
+) =>
+  persistence.steps.some(
+    ({ type, status }) => type === "asset" && status === "saved"
+  )
+    ? {
+        ...snapshot,
+        freshness: markBuilderStateNamespacesStale(snapshot.freshness, [
+          "assets",
+        ]),
+      }
+    : snapshot;
+
 export class ProjectSession {
   #snapshot: ProjectSessionSnapshot | undefined;
   #revision: string | undefined;
@@ -979,6 +1025,9 @@ export class ProjectSession {
         context: {
           ...this.#options.runtimeContext,
           projectVersion: snapshot.version,
+          materializedContent:
+            this.#options.runtimeContext.contentStorageApplication?.getMaterializedContent() ??
+            this.#options.runtimeContext.materializedContent,
         },
       });
       return this.createEnvelope({
@@ -1256,7 +1305,7 @@ export class ProjectSession {
     options: ProjectSessionMutationOptions
   ) {
     const contract = getRuntimeOperationContract(operationId);
-    if (contract.kind !== "mutation") {
+    if (contract.kind === "read") {
       throw new Error(`Runtime operation "${operationId}" is not a mutation.`);
     }
     const requiredNamespaces = mergeNamespaces(
@@ -1266,13 +1315,21 @@ export class ProjectSession {
     const snapshot = await this.ensureNamespaces(requiredNamespaces);
     try {
       await this.assertPermit(options.permit);
-      return await this.commitMutation({
-        operationId,
-        input,
-        options,
-        contract,
-        snapshot,
-      });
+      return contract.kind === "application"
+        ? await this.commitApplicationOperation({
+            operationId,
+            input,
+            options,
+            contract,
+            snapshot,
+          })
+        : await this.commitMutation({
+            operationId,
+            input,
+            options,
+            contract,
+            snapshot,
+          });
     } catch (error) {
       this.clearPermissionsAfterAuthorizationError(error);
       let latestSnapshot = snapshot;
@@ -1287,6 +1344,7 @@ export class ProjectSession {
               "Remote build changed. Required namespaces were refreshed; rerun the operation against the latest snapshot.",
           });
           if (
+            contract.kind === "mutation" &&
             contract.retryOnConflict &&
             options.dryRun !== true &&
             getCommitConfirmationFailureCode(error) === undefined
@@ -1323,6 +1381,135 @@ export class ProjectSession {
     }
   }
 
+  async #commitApplicationProjectPayload({
+    payload,
+    expectedVersion,
+    operationId,
+    invalidatesNamespaces,
+  }: {
+    payload: readonly BuilderPatchTransaction["payload"][number][];
+    expectedVersion: number;
+    operationId: string;
+    invalidatesNamespaces: readonly BuilderNamespace[];
+  }) {
+    const snapshot = this.#snapshot;
+    if (snapshot === undefined || snapshot.version !== expectedVersion) {
+      throw new BuilderRuntimeError(
+        "CONFLICT",
+        "Project changed after the Content Block operation was prepared"
+      );
+    }
+    const transaction: BuilderPatchTransaction = {
+      id: this.#options.runtimeContext.createId(),
+      payload: [...payload],
+    };
+    const commit = await this.#options.transport.commitPatch({
+      projectId: snapshot.projectId,
+      buildId: snapshot.buildId,
+      baseVersion: expectedVersion,
+      transactions: [transaction],
+    });
+    const applied = applyBuilderPatchTransactions(snapshot.state, [
+      transaction,
+    ]);
+    const updatedNamespaces = [
+      ...new Set(payload.map(({ namespace }) => namespace)),
+    ];
+    const committedSnapshot: ProjectSessionSnapshot = {
+      ...snapshot,
+      version: commit.version,
+      state: applied.state,
+      freshness: markBuilderStateNamespacesInvalidated(
+        mergeFreshness({
+          current: snapshot.freshness,
+          state: applied.state,
+          namespaces: updatedNamespaces,
+          version: commit.version,
+          loadedAt: new Date().toISOString(),
+          source: "local",
+        }),
+        invalidatesNamespaces,
+        operationId
+      ),
+    };
+    await this.saveSnapshot(committedSnapshot);
+    return { version: commit.version, transaction };
+  }
+
+  async commitApplicationOperation<
+    Result extends Record<string, unknown> = Record<string, unknown>,
+  >({
+    operationId,
+    input,
+    options,
+    contract,
+    snapshot,
+  }: {
+    operationId: RuntimeOperationId;
+    input: unknown;
+    options: ProjectSessionMutationOptions;
+    contract: RuntimeOperationContract;
+    snapshot: ProjectSessionSnapshot;
+  }) {
+    let transaction: BuilderPatchTransaction | undefined;
+    const result = await executeBuilderRuntimeOperation<Result>({
+      id: operationId,
+      state: snapshot.state,
+      input,
+      context: {
+        ...this.#options.runtimeContext,
+        projectVersion: snapshot.version,
+        applicationDryRun: options.dryRun,
+        commitApplicationProjectPayload: async (commitInput) => {
+          const committed =
+            await this.#commitApplicationProjectPayload(commitInput);
+          transaction = committed.transaction;
+          return { version: committed.version };
+        },
+      },
+    });
+    const status = result.status;
+    const plan = result.plan;
+    const changedAsset = result.changedAsset === true;
+    const committed =
+      options.dryRun !== true &&
+      (transaction !== undefined ||
+        changedAsset ||
+        (status === "complete" &&
+          typeof plan === "object" &&
+          plan !== null &&
+          "storageWrites" in plan &&
+          Array.isArray(plan.storageWrites) &&
+          plan.storageWrites.length > 0));
+    let resultSnapshot = this.#snapshot ?? snapshot;
+    if (options.dryRun !== true && changedAsset) {
+      resultSnapshot = {
+        ...resultSnapshot,
+        freshness: markBuilderStateNamespacesStale(resultSnapshot.freshness, [
+          "assets",
+        ]),
+      };
+      await this.saveSnapshot(resultSnapshot);
+    }
+    return this.createEnvelope({
+      source: options.dryRun ? "dry-run" : "local",
+      result,
+      committed,
+      contract,
+      snapshot: resultSnapshot,
+      transaction,
+      diagnostics: options.dryRun
+        ? [
+            {
+              level: "info",
+              code: "DRY_RUN",
+              message: "Application operation was planned and not committed.",
+            },
+          ]
+        : [],
+    });
+  }
+
   async commitMutation<
     Result extends Record<string, unknown> = Record<string, unknown>,
   >({
@@ -1349,6 +1536,12 @@ export class ProjectSession {
       context: {
         ...this.#options.runtimeContext,
         projectVersion: snapshot.version,
+        materializedContent:
+          this.#options.runtimeContext.contentStorageApplication?.getMaterializedContent() ??
+          this.#options.runtimeContext.materializedContent,
+        returnStorageChanges:
+          this.#options.runtimeContext.contentStorageApplication !==
+            undefined || this.#options.runtimeContext.returnStorageChanges,
       },
     });
     if (mutation.noop) {
@@ -1365,10 +1558,11 @@ export class ProjectSession {
       id: this.#options.runtimeContext.createId(),
       payload: mutation.payload,
     };
+    let result = mutation.result;
     if (options.dryRun) {
       return this.createEnvelope({
         source: "dry-run",
-        result: mutation.result,
+        result,
         committed: false,
         contract,
         snapshot,
@@ -1383,7 +1577,100 @@ export class ProjectSession {
         ],
       });
     }
-    if (hasGeneratedRecordWritePatch(mutation.payload)) {
+    const storageChanges = mutation.storageChanges ?? [];
+    const application = this.#options.runtimeContext.contentStorageApplication;
+    if (storageChanges.length > 0 && application === undefined) {
+      return this.createEnvelope({
+        source: "local",
+        result,
+        committed: false,
+        contract,
+        snapshot,
+        diagnostics: [
+          ...diagnostics,
+          {
+            level: "error",
+            code: "CONTENT_STORAGE_SESSION_UNAVAILABLE",
+            message:
+              "The exact MDX Asset revision and render scope are not loaded.",
+          },
+        ],
+      });
+    }
+    const projectFirst =
+      storageChanges.length > 0 &&
+      mutation.payload.length > 0 &&
+      getRuntimeMutationPersistenceOrder(mutation) === "project-first";
+    if (storageChanges.length > 0) {
+      const preflight =
+        await application!.preflightStorageChanges(storageChanges);
+      if (preflight.status === "failed") {
+        result = { ...result, persistence: preflight.persistence } as Result;
+        return this.createEnvelope({
+          source: "local",
+          result,
+          committed: false,
+          contract,
+          snapshot,
+          diagnostics: [
+            ...diagnostics,
+            {
+              level: "error",
+              code: preflight.code,
+              message: preflight.message,
+            },
+          ],
+        });
+      }
+    }
+    const saveStorage = () => application!.saveStorageChanges(storageChanges);
+    let persistedStorage: ContentBlockPersistenceResult | undefined;
+    if (storageChanges.length > 0 && projectFirst === false) {
+      const saved = await saveStorage();
+      persistedStorage = saved.persistence;
+      result = { ...result, persistence: saved.persistence } as Result;
+      if (saved.status !== "complete") {
+        const resultSnapshot = markPersistedAssetChangesStale(
+          snapshot,
+          saved.persistence
+        );
+        if (resultSnapshot !== snapshot) {
+          await this.saveSnapshot(resultSnapshot);
+        }
+        return this.createEnvelope({
+          source: "local",
+          result,
+          committed: saved.status === "partial",
+          contract,
+          snapshot: resultSnapshot,
+          diagnostics: [
+            ...diagnostics,
+            { level: "error", code: saved.code, message: saved.message },
+          ],
+        });
+      }
+      if (mutation.payload.length === 0) {
+        const resultSnapshot = markPersistedAssetChangesStale(
+          snapshot,
+          saved.persistence
+        );
+        if (resultSnapshot !== snapshot) {
+          await this.saveSnapshot(resultSnapshot);
+        }
+        return this.createEnvelope({
+          source: "local",
+          result,
+          committed: true,
+          contract,
+          snapshot: resultSnapshot,
+          diagnostics,
+        });
+      }
+    }
+    if (
+      storageChanges.length === 0 &&
+      hasGeneratedRecordWritePatch(mutation.payload)
+    ) {
       return await this.executeServerOperation<Result>(
         {
           id: operationId,
@@ -1400,14 +1687,148 @@ export class ProjectSession {
       baseVersion: snapshot.version,
       transactions: [transaction],
     };
-    const { result: commit, confirmedAfterRetry } =
-      await commitWithConflictConfirmation({
-        commit: (input) => this.#options.transport.commitPatch(input),
-        input: commitInput,
+    let commit: ProjectSessionCommitResult;
+    let confirmedAfterRetry: boolean;
+    try {
+      ({ result: commit, confirmedAfterRetry } =
+        await commitWithConflictConfirmation({
+          commit: (input) => this.#options.transport.commitPatch(input),
+          input: commitInput,
+        }));
+    } catch (error) {
+      if (storageChanges.length === 0) {
+        throw error;
+      }
+      if (projectFirst) {
+        const roots = [
+          ...new Map(
+            storageChanges.map(
+              (change) =>
+                [
+                  getContentStorageIdentityKey(change.root.identity),
+                  change.root.identity,
+                ] as const
+            )
+          ).values(),
+        ];
+        const persistence: ContentBlockPersistenceResult = {
+          status: "failed",
+          steps: [
+            {
+              type: "project",
+              status: "failed",
+              code: "CONTENT_STORAGE_PERSISTENCE_FAILED",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Project persistence failed",
+            },
+            ...roots.map((root) => ({
+              type: "asset" as const,
+              status: "not-attempted" as const,
+              root,
+            })),
+          ],
+          retry: { replan: true, roots, project: true },
+        };
+        result = { ...result, persistence } as Result;
+        return this.createEnvelope({
+          source: "local",
+          result,
+          committed: false,
+          contract,
+          snapshot,
+          diagnostics: [
+            ...diagnostics,
+            {
+              level: "error",
+              code: "CONTENT_STORAGE_PERSISTENCE_FAILED",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Project persistence failed",
+            },
+          ],
+        });
+      }
+      const persistence = addProjectPersistenceStep({
+        persistence: (
+          result as Result & {
+            persistence: ContentBlockPersistenceResult;
+          }
+        ).persistence,
+        step: {
+          type: "project",
+          status: "failed",
+          code: "CONTENT_STORAGE_PARTIAL_PERSISTENCE",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Project persistence failed",
+        },
+        order: "after",
       });
-    const commitDiagnostics = confirmedAfterRetry
+      result = { ...result, persistence } as Result;
+      const resultSnapshot = markPersistedAssetChangesStale(
+        snapshot,
+        persistence
+      );
+      if (resultSnapshot !== snapshot) {
+        await this.saveSnapshot(resultSnapshot);
+      }
+      return this.createEnvelope({
+        source: "local",
+        result,
+        committed: true,
+        contract,
+        snapshot: resultSnapshot,
+        diagnostics: [
+          ...diagnostics,
+          {
+            level: "error",
+            code: "CONTENT_STORAGE_PARTIAL_PERSISTENCE",
+            message:
+              error instanceof Error
+                ? `MDX files were saved, but the project change failed: ${error.message}`
+                : "MDX files were saved, but the project change failed.",
+          },
+        ],
+      });
+    }
+    let commitDiagnostics = confirmedAfterRetry
       ? [...diagnostics, commitRetryConfirmedDiagnostic]
       : diagnostics;
+    if (projectFirst) {
+      const saved = await saveStorage();
+      persistedStorage = saved.persistence;
+      const persistence = addProjectPersistenceStep({
+        persistence: saved.persistence,
+        step: { type: "project", status: "saved" },
+        order: "before",
+      });
+      result = { ...result, persistence } as Result;
+      if (saved.status !== "complete") {
+        commitDiagnostics = [
+          ...commitDiagnostics,
+          {
+            level: "error",
+            code: saved.code,
+            message: `The project destination was saved, but an MDX source step failed: ${saved.message}`,
+          },
+        ];
+      }
+    } else if (storageChanges.length > 0) {
+      const persistence = addProjectPersistenceStep({
+        persistence: (
+          result as Result & {
+            persistence: ContentBlockPersistenceResult;
+          }
+        ).persistence,
+        step: { type: "project", status: "saved" },
+        order: "after",
+      });
+      result = { ...result, persistence } as Result;
+    }
     const applied = applyBuilderPatchTransactions(snapshot.state, [
       transaction,
     ]);
@@ -1415,7 +1836,7 @@ export class ProjectSession {
     const updatedNamespaces = [
       ...new Set(mutation.payload.map((change) => change.namespace)),
     ];
-    const committedSnapshot: ProjectSessionSnapshot = {
+    const committedSnapshotBase: ProjectSessionSnapshot = {
       ...snapshot,
       version: commit.version,
       state: applied.state,
@@ -1432,6 +1853,13 @@ export class ProjectSession {
         operationId
       ),
     };
+    const committedSnapshot =
+      persistedStorage === undefined
+        ? committedSnapshotBase
+        : markPersistedAssetChangesStale(
+            committedSnapshotBase,
+            persistedStorage
+          );
     const persisted = await this.#synchronizeAfterCommit({
       snapshot: committedSnapshot,
       namespaces: mergeNamespaces(
@@ -1443,7 +1871,7 @@ export class ProjectSession {
     });
     return this.createEnvelope({
       source: "local",
-      result: mutation.result,
+      result,
       committed: true,
       contract: {
         ...contract,

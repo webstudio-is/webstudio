@@ -23,7 +23,14 @@ import {
 import { build } from "esbuild";
 import { loadConfigFromFile } from "vite";
 import { bundleVersion } from "@webstudio-is/protocol";
-import type { Asset, Instance, Prop } from "@webstudio-is/sdk";
+import type {
+  Asset,
+  Instance,
+  Prop,
+  StyleDecl,
+  StyleSource,
+  StyleSourceSelection,
+} from "@webstudio-is/sdk";
 import {
   createDocumentGraph,
   type AssetFileDocument,
@@ -237,6 +244,9 @@ const createSiteData = (
     }>;
     instances?: Array<[string, Omit<Instance, "type">]>;
     props?: Array<[string, Prop]>;
+    styleSources?: Array<[string, StyleSource]>;
+    styleSourceSelections?: Array<[string, StyleSourceSelection]>;
+    styles?: Array<[string, StyleDecl]>;
     pageMeta?: Record<string, unknown>;
     redirects?: Redirects;
   } = {}
@@ -331,9 +341,9 @@ const createSiteData = (
       ).map(([id, instance]) => [id, { type: "instance", ...instance }]),
       dataSources: [],
       resources: [],
-      styleSources: [],
-      styleSourceSelections: [],
-      styles: [],
+      styleSources: overrides.styleSources ?? [],
+      styleSourceSelections: overrides.styleSourceSelections ?? [],
+      styles: overrides.styles ?? [],
       breakpoints: [],
     },
   };
@@ -781,6 +791,337 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test("materializes direct MDX Content Blocks into generated page code", async () => {
+    const source = "# Published from MDX";
+    const article: AssetFileDocument = {
+      ...indexedDocument,
+      _id: "article",
+      name: "article.mdx",
+      path: "article.mdx",
+      key: "article",
+      extension: "mdx",
+      mimeType: "text/mdx",
+      size: new TextEncoder().encode(source).byteLength,
+      revision: "article-revision",
+      contentRef: "article.mdx",
+      properties: {},
+    };
+    const siteData = createSiteData({
+      assets: [createAssetForIndexedDocument(article)],
+      instances: [
+        [
+          "root",
+          {
+            id: "root",
+            component: "Box",
+            children: [{ type: "id", value: "content" }],
+          },
+        ],
+        [
+          "content",
+          {
+            id: "content",
+            component: "ws:block",
+            children: [],
+          },
+        ],
+      ],
+      props: [
+        [
+          "content-src",
+          {
+            id: "content-src",
+            instanceId: "content",
+            name: "src",
+            type: "asset",
+            value: "article",
+          },
+        ],
+      ],
+    });
+    const siteDataWithIndex = {
+      ...siteData,
+      assetIndex: await createTestAssetIndex(article, {
+        "article.mdx": source,
+      }),
+    };
+    await writeSiteData(siteDataWithIndex);
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    const generatedPage = await readFile(
+      "app/__generated__/_index.tsx",
+      "utf8"
+    );
+    expect(generatedPage).toContain("Published from MDX");
+    expect(generatedPage).not.toContain("fetch(");
+    expect(generatedPage).not.toContain("unresolved-template");
+  });
+
+  test("includes font preloads from an MDX-selected template", async () => {
+    const source = '<ws.element ws:name="Hero" />';
+    const article: AssetFileDocument = {
+      ...indexedDocument,
+      _id: "article",
+      name: "article.mdx",
+      path: "article.mdx",
+      key: "article",
+      extension: "mdx",
+      mimeType: "text/mdx",
+      size: source.length,
+      revision: "article-revision",
+      contentRef: "article.mdx",
+      properties: {},
+    };
+    const font: Asset = {
+      id: "hero-font",
+      projectId: "project-id",
+      name: "hero.woff2",
+      type: "font",
+      format: "woff2",
+      size: 1,
+      meta: { family: "Hero Font", style: "normal", weight: 400 },
+      description: "",
+      createdAt: "2024-01-01T00:00:00.000Z",
+    };
+    const unusedFont: Asset = {
+      ...font,
+      id: "unused-font",
+      name: "unused.woff2",
+      meta: { ...font.meta, family: "Unused Font" },
+    };
+    const siteData = createSiteData({
+      assets: [createAssetForIndexedDocument(article), font, unusedFont],
+      instances: [
+        [
+          "root",
+          {
+            id: "root",
+            component: "Box",
+            children: [{ type: "id", value: "content" }],
+          },
+        ],
+        [
+          "content",
+          {
+            id: "content",
+            component: "ws:block",
+            children: [{ type: "id", value: "templates" }],
+          },
+        ],
+        [
+          "templates",
+          {
+            id: "templates",
+            component: "ws:block-template",
+            children: [
+              { type: "id", value: "hero" },
+              { type: "id", value: "unused" },
+            ],
+          },
+        ],
+        [
+          "unused",
+          {
+            id: "unused",
+            component: "ws:element",
+            tag: "section",
+            label: "Unused",
+            children: [],
+          },
+        ],
+        [
+          "hero",
+          {
+            id: "hero",
+            component: "ws:element",
+            tag: "section",
+            label: "Hero",
+            children: [],
+          },
+        ],
+      ],
+      props: [
+        [
+          "content-src",
+          {
+            id: "content-src",
+            instanceId: "content",
+            name: "src",
+            type: "asset",
+            value: "article",
+          },
+        ],
+      ],
+      styleSources: [
+        ["hero-style", { type: "local", id: "hero-style" }],
+        ["unused-style", { type: "local", id: "unused-style" }],
+      ],
+      styleSourceSelections: [
+        ["hero", { instanceId: "hero", values: ["hero-style"] }],
+        ["unused", { instanceId: "unused", values: ["unused-style"] }],
+      ],
+      styles: [
+        [
+          "hero-style:base:fontFamily:",
+          {
+            styleSourceId: "hero-style",
+            breakpointId: "base",
+            property: "fontFamily",
+            value: { type: "fontFamily", value: ["Hero Font"] },
+          },
+        ],
+        [
+          "unused-style:base:fontFamily:",
+          {
+            styleSourceId: "unused-style",
+            breakpointId: "base",
+            property: "fontFamily",
+            value: { type: "fontFamily", value: ["Unused Font"] },
+          },
+        ],
+      ],
+    });
+    const siteDataWithIndex = {
+      ...siteData,
+      assetIndex: await createTestAssetIndex(article, {
+        "article.mdx": source,
+      }),
+    };
+    await writeSiteData(siteDataWithIndex);
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    const generatedPage = await readFile(
+      "app/__generated__/_index.tsx",
+      "utf8"
+    );
+    expect(generatedPage).toContain(
+      'export const pageFontAssets: string[] =\n        ["hero.woff2"]'
+    );
+    expect(generatedPage).not.toContain("unused.woff2");
+  });
+
+  test("materializes finite dynamic MDX candidates without publishing unrelated files", async () => {
+    const createDocument = (
+      id: string,
+      extension: "json" | "mdx",
+      properties?: Record<string, string>
+    ): AssetFileDocument => ({
+      ...indexedDocument,
+      _id: id,
+      name: `${id}.${extension}`,
+      path: `${id}.${extension}`,
+      key: id,
+      extension,
+      mimeType: extension === "mdx" ? "text/mdx" : "application/json",
+      revision: `${id}-revision`,
+      contentRef: `${id}.${extension}`,
+      properties: properties ?? {},
+    });
+    const post = createDocument("post", "json", {
+      category: "published",
+      mdx: "article",
+    });
+    const privatePost = createDocument("private-post", "json", {
+      category: "private",
+      mdx: "private",
+    });
+    const article = createDocument("article", "mdx");
+    const privateArticle = createDocument("private", "mdx");
+    const documents = [post, privatePost, article, privateArticle];
+    const sourceExpression = `${encodeDataSourceVariable(
+      "posts-data"
+    )}.data.properties.mdx`;
+    const siteData = createSiteData({
+      assets: documents.map(createAssetForIndexedDocument),
+      instances: [
+        [
+          "root",
+          {
+            id: "root",
+            component: "Box",
+            children: [{ type: "id", value: "content" }],
+          },
+        ],
+        [
+          "content",
+          {
+            id: "content",
+            component: "ws:block",
+            children: [],
+          },
+        ],
+      ],
+      props: [
+        [
+          "content-src",
+          {
+            id: "content-src",
+            instanceId: "content",
+            name: "src",
+            type: "expression",
+            value: sourceExpression,
+          },
+        ],
+      ],
+    });
+    siteData.build.dataSources = [
+      [
+        "posts-data",
+        {
+          type: "resource",
+          id: "posts-data",
+          scopeInstanceId: "root",
+          name: "posts",
+          resourceId: "posts",
+        },
+      ],
+    ] as never;
+    siteData.build.resources = [
+      [
+        "posts",
+        {
+          ...createQueryResource(),
+          body: createStructuredAssetQueryResourceBody({
+            where: {
+              all: [
+                {
+                  field: ["properties", "category"],
+                  operator: "eq",
+                  value: '"published"',
+                },
+              ],
+            },
+            sort: [],
+            limit: "100",
+            offset: "0",
+            output: { mode: "all", includeMetadata: true },
+            content: { mode: "none" },
+          }),
+        },
+      ],
+    ] as never;
+    const siteDataWithIndex = {
+      ...siteData,
+      assetIndex: await createTestAssetIndex(documents, {
+        "article.mdx": "# Public article",
+        "private.mdx": "# Private article",
+      }),
+    };
+    await writeSiteData(siteDataWithIndex);
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    const generatedPage = await readFile(
+      "app/__generated__/_index.tsx",
+      "utf8"
+    );
+    expect(generatedPage).toContain("Public article");
+    expect(generatedPage).not.toContain("Private article");
+    expect(generatedPage).toContain('=== "article"');
+  });
+
   test("imports only configured Code Text language and theme assets", async () => {
     await writeSiteData(
       createCodeTextSiteData([
@@ -2454,7 +2795,9 @@ sitemap.map((page) => page.path);`
           {
             field: ["properties", "slug"],
             operator: "eq",
-            value: `${encodeDataSourceVariable(SYSTEM_VARIABLE_ID)}.params.slug`,
+            value: `${encodeDataSourceVariable(
+              SYSTEM_VARIABLE_ID
+            )}.params.slug`,
           },
         ],
       },

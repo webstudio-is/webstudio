@@ -652,7 +652,7 @@ const constrainUnconstrainedInputSchemas = <Schema extends InputJsonSchema>(
   return result as Schema;
 };
 
-const maxInlineMcpInputSchemaSize = 20_000;
+const maxInlineMcpInputSchemaSize = 1_000;
 
 const getCompactSchemaProperty = (schema: InputJsonSchema): InputJsonSchema => {
   const description =
@@ -3440,6 +3440,7 @@ const mcpOperationSchemaInlineSizes = new Map<string, number>([
   ["update-assets-resource", 2_500],
   ["validate-asset-query", 2_500],
   ["preview-asset-query", 2_500],
+  ["create-page", 15_000],
 ]);
 
 const detailedMcpInputSchemas = new WeakMap<
@@ -5910,7 +5911,6 @@ const metaGoalGuides = [
   },
 ] as const;
 
-const metaGuideDetailedInputSchemaTools = new Set(["update-styles"]);
 const metaGuideExampleTools = new Set(["upload-assets"]);
 
 const taskScopes = [
@@ -5968,17 +5968,11 @@ const serializeMetaGuideTool = (
         inputFields: tool.annotations.inputFields,
         requiredInputFields: tool.annotations.requiredInputFields,
         mcpExamples: tool.mcpExamples ?? [],
-        ...(metaGuideDetailedInputSchemaTools.has(tool.name)
-          ? { inputSchema: getDetailedProjectSessionMcpInputSchema(tool) }
-          : {}),
       }
     : {
         name: tool.name,
         ...(metaGuideExampleTools.has(tool.name)
           ? { mcpExamples: tool.mcpExamples ?? [] }
-          : {}),
-        ...(metaGuideDetailedInputSchemaTools.has(tool.name)
-          ? { inputSchema: getDetailedProjectSessionMcpInputSchema(tool) }
           : {}),
       };
 
@@ -6055,18 +6049,22 @@ const getMetaGuide = (
             includeDiff: canDiffScreenshots,
           })
         : [],
-    slowOperation: {
-      confirmationRequired: true,
-      operation: "full production preview",
-      estimatedDuration: "30–60 seconds",
-      reason:
-        "Builds complete rendered output and is unnecessary for a focused value correction unless the requested outcome depends on layout or runtime behavior.",
-      fasterAlternative: {
-        operation: "targeted route validation",
-        estimatedDuration: "2–5 seconds",
-        limitations: "Does not visually inspect layout.",
-      },
-    },
+    ...(goalGuide === undefined
+      ? {
+          slowOperation: {
+            confirmationRequired: true,
+            operation: "full production preview",
+            estimatedDuration: "30–60 seconds",
+            reason:
+              "Builds complete rendered output and is unnecessary for a focused value correction unless the requested outcome depends on layout or runtime behavior.",
+            fasterAlternative: {
+              operation: "targeted route validation",
+              estimatedDuration: "2–5 seconds",
+              limitations: "Does not visually inspect layout.",
+            },
+          },
+        }
+      : {}),
     tools: matches.map((tool) =>
       serializeMetaGuideTool(tool, goalGuide === undefined)
     ),

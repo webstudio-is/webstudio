@@ -41,8 +41,12 @@ import {
   subscribeModifierKeys,
   assetBaseUrl,
 } from "~/shared/nano-states";
-import { $assets } from "~/shared/sync/data-stores";
-import { $pages, $instances, $breakpoints } from "~/shared/sync/data-stores";
+import { $pages } from "~/shared/sync/data-stores";
+import {
+  $runtimeAssets as $assets,
+  $runtimeBreakpoints as $breakpoints,
+  $runtimeInstances as $instances,
+} from "~/shared/content-block-content";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import {
   initCopyPaste,

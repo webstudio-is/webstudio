@@ -17,6 +17,7 @@ import {
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   encodeDataVariableId,
+  blockComponent,
   getStyleDeclKey,
   portalComponent,
   ROOT_INSTANCE_ID,
@@ -129,6 +130,72 @@ test("copies a fragment for a target instance and maps root children", () => {
       children: [{ type: "text", value: "Hello" }],
     })
   );
+});
+
+test("copies a Content Block with its direct MDX source Asset", () => {
+  const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+  const fragment = {
+    children: [{ type: "id" as const, value: "block" }],
+    instances: [
+      {
+        type: "instance" as const,
+        id: "block",
+        component: blockComponent,
+        children: [],
+      },
+    ],
+    props: [
+      {
+        id: "source",
+        instanceId: "block",
+        name: "src",
+        type: "asset" as const,
+        value: "post",
+      },
+    ],
+    assets: [
+      {
+        id: "post",
+        projectId: "source-project",
+        type: "file" as const,
+        name: "post_hash.mdx",
+        filename: "post",
+        format: "mdx",
+        size: 1,
+        meta: {},
+        description: null,
+        createdAt: "2026-08-14T00:00:00.000Z",
+      },
+    ],
+    dataSources: [],
+    resources: [],
+    breakpoints: [],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+  };
+  const ids = ["block-copy", "source-copy"];
+
+  copyWebstudioFragmentMutable({
+    data,
+    fragment,
+    targetInstanceId: "bodyId",
+    projectId: "target-project",
+    createId: () => ids.shift() ?? "missing",
+  });
+
+  expect(data.assets.get("post")).toMatchObject({
+    id: "post",
+    projectId: "target-project",
+    name: "post_hash.mdx",
+  });
+  expect(data.props.get("source-copy")).toEqual({
+    id: "source-copy",
+    instanceId: "block-copy",
+    name: "src",
+    type: "asset",
+    value: "post",
+  });
 });
 
 test("merges multiple copied fragments and preserves requested roots", () => {

@@ -87,6 +87,15 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     url,
     { signal: arg.request.signal }
   );
+  Object.assign(
+    resources,
+    await loadResources(
+      generatedFetch,
+      getResources({ system, resources }).contentData,
+      url,
+      { signal: arg.request.signal }
+    )
+  );
   const pageMeta = getPageMeta({ system, resources });
 
   if (pageMeta.redirect) {

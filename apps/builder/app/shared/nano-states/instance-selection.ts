@@ -8,7 +8,10 @@ import {
   canResolveInstanceSelector,
   normalizeInstanceSelectors,
 } from "../instance-utils/selection";
-import { $instances } from "../sync/data-stores";
+import {
+  $runtimeInstances as $instances,
+  getRuntimeInstanceChildren,
+} from "../content-block-content";
 
 export const $allSelectedInstanceSelectors = atom<InstanceSelector[]>([]);
 // Instance pruning is derived from tree updates and must not be synchronized
@@ -82,7 +85,11 @@ $instances.listen((instances) => {
   }
   setSelectedInstances(
     selectedSelectors.filter((instanceSelector) =>
-      canResolveInstanceSelector(instanceSelector, instances)
+      canResolveInstanceSelector(
+        instanceSelector,
+        instances,
+        getRuntimeInstanceChildren
+      )
     ),
     "instance-pruning"
   );

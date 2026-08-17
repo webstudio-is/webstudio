@@ -70,6 +70,122 @@ describe("api runtime adapter", () => {
     ).rejects.toThrow("Page not found");
   });
 
+  test("uses the shared Content Block source application for API inspection", async () => {
+    await expect(
+      executeApiRuntimeOperation({
+        id: "contentBlocks.inspectSource",
+        build: createBuild(),
+        input: { blockInstanceId: "root-1", renderScope: "page:/" },
+        context: {
+          contentStorageApplication: {
+            getMaterializedContent: () => [],
+            preflightStorageChanges: async () => ({ status: "ready" }),
+            saveStorageChanges: async () => ({
+              status: "complete",
+              persistence: {
+                status: "complete",
+                steps: [],
+                retry: { replan: true, roots: [], project: false },
+              },
+            }),
+            inspectSource: async (input) => ({
+              ...input,
+              sessionStatus: "disconnected",
+              pending: false,
+              diagnostics: [],
+              capabilities: {
+                canConnect: true,
+                canSwitch: false,
+                canDisconnectWithCopy: false,
+                canEdit: false,
+                canRetry: false,
+                canReloadRemote: false,
+                canCopyUnsavedSource: false,
+              },
+              repairRoutes: [],
+            }),
+          },
+        },
+      })
+    ).resolves.toMatchObject({
+      blockInstanceId: "root-1",
+      renderScope: "page:/",
+      sessionStatus: "disconnected",
+      capabilities: { canConnect: true },
+    });
+  });
+
+  test("uses the per-request API project commit capability for Content Block lifecycle", async () => {
+    let committed = false;
+    const inspection = {
+      blockInstanceId: "root-1",
+      renderScope: "page:/",
+      sessionStatus: "saved" as const,
+      pending: false,
+      diagnostics: [],
+      capabilities: {
+        canConnect: false,
+        canSwitch: true,
+        canDisconnectWithCopy: true,
+        canEdit: true,
+        canRetry: false,
+        canReloadRemote: false,
+        canCopyUnsavedSource: false,
+      },
+      repairRoutes: ["disconnect-with-copy" as const],
+    };
+    await expect(
+      executeApiRuntimeOperation({
+        id: "contentBlocks.connectSource",
+        build: createBuild(),
+        input: {
+          blockInstanceId: "root-1",
+          renderScope: "page:/",
+          source: { type: "asset", assetId: "article" },
+          authority: "use-file-content",
+        },
+        context: {
+          commitApplicationProjectPayload: async ({ expectedVersion }) => {
+            expect(expectedVersion).toBe(1);
+            committed = true;
+            return { version: 2 };
+          },
+          contentStorageApplication: {
+            getMaterializedContent: () => [],
+            preflightStorageChanges: async () => ({ status: "ready" }),
+            saveStorageChanges: async () => ({
+              status: "complete",
+              persistence: {
+                status: "complete",
+                steps: [],
+                retry: { replan: true, roots: [], project: false },
+              },
+            }),
+            inspectSource: async () => inspection,
+            applyLifecycle: async (_input, execution) => {
+              await execution?.commitProjectPayload?.([]);
+              return {
+                status: "complete",
+                result: {
+                  action: "connect",
+                  changesProject: true,
+                  storageWrites: [],
+                  diagnostics: [],
+                  persistenceOrder: "none",
+                },
+              };
+            },
+          },
+        },
+      })
+    ).resolves.toMatchObject({
+      status: "complete",
+      source: { renderScope: "page:/" },
+      plan: { action: "connect", changesProject: true },
+    });
+    expect(committed).toBe(true);
+  });
+
   test("preserves canonical mutation payloads across the API adapter", async () => {
     const build = createBuild();
     const pageId = build.pages.homePageId;

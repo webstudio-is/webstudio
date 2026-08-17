@@ -4,11 +4,18 @@ description: Create a file-based blog with Markdown, Assets queries, and dynamic
 
 # 📚 Content Engine
 
-Webstudio's Content Engine turns Markdown and JSON files in Assets into content
-you can query and bind in the visual editor. The files remain the source of
-truth, including their filenames, folders, metadata, and relative links. You
-can move the same files between projects or use them outside Webstudio without
-exporting them from a database first.
+Webstudio's Content Engine turns Markdown, MDX, and JSON files in Assets into
+content you can query and bind in the visual editor. The files remain the
+source of truth, including their filenames, folders, metadata, and relative
+links. You can move the same files between projects or use them outside
+Webstudio without exporting them from a database first.
+
+This tutorial uses `.md` files and a Markdown Embed. Use `.mdx` when the file
+must also be the editable body of a [Content
+Block](../core-components/content-block.md#use-an-mdx-file-as-the-content-source).
+Content Engine indexes the frontmatter and can return the body in either format,
+but `.md` keeps standard embedded HTML behavior while `.mdx` uses Webstudio's
+safe MDX grammar.
 
 This guide creates a blog overview at `/blog` and one dynamic article page at
 `/blog/:slug`.
@@ -291,21 +298,23 @@ will render it without another page design.
 
 ## Connect content with document references
 
-The Content Engine calls links between Markdown and JSON files **document
+The Content Engine calls links between Markdown, MDX, and JSON files **document
 references**. A document reference replaces an exact `$ref` object with data
 from another content file. This is Webstudio's syntax. It uses URI references
 for file paths and [JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901)
 for values inside JSON files, but it does not implement JSON Schema resolution.
 
-Both supported source formats can reference either target format:
+All supported source formats can reference the other content formats:
 
-| Source | Where references can appear | JSON target | Markdown target |
+| Source | Where references can appear | JSON target | Markdown or MDX target |
 | --- | --- | --- | --- |
 | Markdown | YAML frontmatter | Yes | Yes |
+| MDX | YAML frontmatter | Yes | Yes |
 | JSON | Anywhere in the document | Yes | Yes |
 
-References do not work inside a Markdown body. A `$ref` object can be nested in
-an object or array, including inside a file reached through another reference.
+References do not work inside a Markdown or MDX body. A `$ref` object can be
+nested in an object or array, including inside a file reached through another
+reference.
 
 ### Reference syntax
 
@@ -380,14 +389,14 @@ the resolved `properties.author` value is:
 }
 ```
 
-The same rules cover JSON to Markdown and Markdown frontmatter to JSON. A
-referenced file can contain its own references, so shared records can be
-composed across several files.
+The same rules cover JSON to Markdown or MDX and Markdown or MDX frontmatter to
+JSON. A referenced file can contain its own references, so shared records can
+be composed across several files.
 
 The Content Engine loads referenced data when a query filters, sorts, or
-returns a field that depends on it. The target must be another Markdown or JSON
-file in the project's compiled Assets. Missing files, invalid fragments, and
-reference cycles fail instead of returning partial data.
+returns a field that depends on it. The target must be another Markdown, MDX,
+or JSON file in the project's compiled Assets. Missing files, invalid
+fragments, and reference cycles fail instead of returning partial data.
 
 ## Related
 

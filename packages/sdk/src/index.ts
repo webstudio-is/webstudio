@@ -14,12 +14,14 @@ export * from "./schema/deployment";
 export * from "./schema/webstudio";
 export * from "./schema/prop-meta";
 export * from "./schema/component-meta";
+export * from "./schema/content-block";
 
 export * from "./assets";
 export * from "./asset-folder-hierarchy";
 export * from "./asset-folder-normalization";
 export * from "./asset-resource-config";
 export * from "./core-metas";
+export * from "./content-block";
 export * from "./instances-utils";
 export * from "./page-utils";
 export * from "./scope";

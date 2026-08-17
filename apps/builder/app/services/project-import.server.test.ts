@@ -4,6 +4,7 @@ import {
   createPageFixture,
   createPublishedProjectBundleFixture,
 } from "@webstudio-is/protocol/fixtures";
+import { blockComponent } from "@webstudio-is/sdk";
 import { type PublishedProjectBundle } from "@webstudio-is/protocol";
 import { createAssetRows } from "@webstudio-is/asset-uploader/server";
 import {
@@ -216,6 +217,50 @@ describe("build import helpers", () => {
       { projectId: "target-project", permit: "build" },
       {}
     );
+  });
+
+  test("rejects imported Content Blocks with missing source Assets", async () => {
+    const data = createData({ assets: [] });
+    data.build.instances = [
+      [
+        "block",
+        {
+          type: "instance",
+          id: "block",
+          component: blockComponent,
+          children: [],
+        },
+      ],
+    ];
+    data.build.props = [
+      [
+        "source",
+        {
+          id: "source",
+          instanceId: "block",
+          name: "src",
+          type: "asset",
+          value: "missing-post",
+        },
+      ],
+    ];
+    const calls: string[] = [];
+
+    await expect(
+      importPublishedProjectBundle(
+        {
+          ctx: {
+            postgrest: { client: createPostgrestClient(calls) },
+          } as never,
+          data,
+          projectId: "target-project",
+        },
+        { hasProjectPermit, loadDevBuildByProjectId }
+      )
+    ).rejects.toThrow(
+      'Cannot import: Content Block source prop "source" references missing Asset "missing-post".'
+    );
+    expect(calls).toEqual([]);
   });
 
   test("serializes imported build data into compact build columns", () => {

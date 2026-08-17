@@ -1388,6 +1388,88 @@ test("ignore ws:block-template when generate index attribute", () => {
   );
 });
 
+test("renders pre-materialized dynamic Content Block candidates without loading", () => {
+  const instances = new Map([
+    [
+      "body",
+      {
+        type: "instance" as const,
+        id: "body",
+        component: elementComponent,
+        tag: "main",
+        children: [{ type: "id" as const, value: "block" }],
+      },
+    ],
+    [
+      "block",
+      {
+        type: "instance" as const,
+        id: "block",
+        component: "ws:block",
+        children: [],
+      },
+    ],
+    [
+      "article-heading",
+      {
+        type: "instance" as const,
+        id: "article-heading",
+        component: elementComponent,
+        tag: "h1",
+        children: [{ type: "text" as const, value: "Article" }],
+      },
+    ],
+    [
+      "other-heading",
+      {
+        type: "instance" as const,
+        id: "other-heading",
+        component: elementComponent,
+        tag: "h1",
+        children: [{ type: "text" as const, value: "Other" }],
+      },
+    ],
+  ]);
+  const generated = generateWebstudioComponent({
+    classesMap: new Map(),
+    scope: createScope(),
+    name: "Page",
+    rootInstanceId: "body",
+    parameters: [],
+    metas: new Map(),
+    instances,
+    props: new Map(),
+    dataSources: new Map(),
+    publishedContentBlocks: new Map([
+      [
+        "block",
+        {
+          sourceExpression: '"article"',
+          candidates: [
+            {
+              assetId: "article",
+              dependencyRevision: "article-revision",
+              children: [{ type: "id", value: "article-heading" }],
+            },
+            {
+              assetId: "other",
+              dependencyRevision: "other-revision",
+              children: [{ type: "id", value: "other-heading" }],
+            },
+          ],
+        },
+      ],
+    ]),
+  });
+
+  expect(generated).toContain('contentSource === "article"');
+  expect(generated).toContain('contentSource === "other"');
+  expect(generated.split('("article")')).toHaveLength(2);
+  expect(generated).toContain("<h1>");
+  expect(generated).not.toContain("fetch(");
+  expect(isValidJSX(generated)).toBe(true);
+});
+
 test("render empty component when no instances found", () => {
   expect(
     generateWebstudioComponent({

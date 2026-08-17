@@ -7,11 +7,15 @@ const createEntry = ({
   properties = {},
   excerpt,
   prepared = false,
+  format = "markdown",
+  size = 44,
 }: {
   revision?: string;
   properties?: Record<string, string>;
   excerpt?: string;
   prepared?: boolean;
+  format?: "markdown" | "mdx";
+  size?: number;
 } = {}) =>
   createCanonicalAssetFileEntry({
     projectId: "project",
@@ -22,20 +26,37 @@ const createEntry = ({
     document: {
       _id: "post",
       _type: "asset.file",
-      name: "post.md",
-      path: "blog/post.md",
+      name: `post.${format === "markdown" ? "md" : "mdx"}`,
+      path: `blog/post.${format === "markdown" ? "md" : "mdx"}`,
       key: "post",
-      extension: "md",
-      mimeType: "text/markdown",
-      size: 44,
+      extension: format === "markdown" ? "md" : "mdx",
+      mimeType: format === "markdown" ? "text/markdown" : "text/mdx",
+      size,
       revision,
-      contentRef: "post.md",
+      contentRef: `post.${format === "markdown" ? "md" : "mdx"}`,
       properties,
       ...(excerpt === undefined ? {} : { excerpt }),
     },
   });
 
 describe("content metadata cache", () => {
+  test("indexes MDX frontmatter without generating a Markdown excerpt", async () => {
+    const bytes = new TextEncoder().encode(
+      "---\ntitle: MDX post\n---\n<ws.element>Body</ws.element>"
+    );
+    const readBytes = vi.fn(async () => bytes);
+
+    const prepared = await prepareCanonicalContentMetadata({
+      base: createEntry({ format: "mdx", size: bytes.byteLength }),
+      requirements: { structuredProperties: true, excerpt: true },
+      readBytes,
+    });
+
+    expect(prepared.document.properties).toEqual({ title: "MDX post" });
+    expect(prepared.document).not.toHaveProperty("excerpt");
+    expect(readBytes).toHaveBeenCalledWith(bytes.byteLength);
+  });
+
   test("reuses a matching prepared entry without reading source bytes", async () => {
     const cached = createEntry({
       properties: { title: "Cached" },

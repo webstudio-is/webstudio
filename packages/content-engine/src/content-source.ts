@@ -21,6 +21,7 @@ import { compareStrings } from "./canonical-json";
 import { encodeUtf8, type ByteSource } from "./byte-stream";
 import { extractMarkdownBody } from "./markdown-body";
 import { contentEngineLimits } from "./limits";
+import { discoverMdxBodyAssetReferences, parseMdxDocument } from "./mdx";
 import {
   compileDocumentSourceGraph,
   getDocumentFormatByContentType,
@@ -215,13 +216,13 @@ const discoverSnapshotAssetReferences = async ({
   return references;
 };
 
-const discoverSnapshotAssetValueReferences = ({
+const discoverSnapshotAssetValueReferences = async ({
   snapshot,
   entries,
 }: {
   snapshot: ContentSourceSnapshot;
   entries: readonly ContentCompilerInput[];
-}): AssetValueReferences => {
+}): Promise<AssetValueReferences> => {
   const assetIdsByPath = createUniqueAssetIdsByPath(snapshot.files);
   const references: AssetValueReferences = {};
   for (const entry of [...entries].sort((left, right) =>
@@ -232,6 +233,19 @@ const discoverSnapshotAssetValueReferences = ({
       sourcePath: entry.document.path,
       assetIdsByPath,
     });
+    if (
+      entry.content !== undefined &&
+      getDocumentFormatByContentType(entry.document.mimeType) === "mdx"
+    ) {
+      const document = await parseMdxDocument({ source: entry.content });
+      discovered.push(
+        ...discoverMdxBodyAssetReferences({
+          document,
+          sourcePath: entry.document.path,
+          assetIdsByPath,
+        })
+      );
+    }
     if (discovered.length > 0) {
       references[entry.assetId] = discovered;
     }
@@ -359,7 +373,7 @@ export const materializeContentSnapshot = async ({
       operation: () =>
         discoverSnapshotAssetReferences({ snapshot, entries, plan }),
     });
-    const assetValueReferences = discoverSnapshotAssetValueReferences({
+    const assetValueReferences = await discoverSnapshotAssetValueReferences({
       snapshot,
       entries,
     });

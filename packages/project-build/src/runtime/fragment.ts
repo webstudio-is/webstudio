@@ -19,6 +19,8 @@ import {
   findPageByIdOrPath,
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
+  formatContentBlockSourceIntegrityIssue,
+  getContentBlockSourceIntegrityIssues,
   getHomePage,
   portalComponent,
   webstudioFragment,
@@ -51,6 +53,7 @@ import {
   collectFontFamiliesFromStyleValue,
   traverseStyleValue,
 } from "./style-utils";
+import { addZodValidationIssue } from "./errors";
 
 export type ContentModeCopyableProp = (input: {
   prop: Prop;
@@ -103,6 +106,28 @@ export const webstudioFragmentMutationInput = webstudioFragment.superRefine(
         availableVariables: new Set(entry.variables),
       });
       addExpressionValidationIssues(context, errors, entry.path);
+    }
+    const propIndexById = new Map(
+      fragment.props.map((prop, index) => [prop.id, index])
+    );
+    for (const issue of getContentBlockSourceIntegrityIssues({
+      instances: fragment.instances,
+      props: fragment.props,
+      assets: fragment.assets,
+    })) {
+      const propId =
+        issue.type === "duplicateContentBlockSource"
+          ? issue.propIds[0]
+          : issue.propId;
+      addZodValidationIssue(context, {
+        code: issue.type,
+        path:
+          propId === undefined
+            ? []
+            : ["props", String(propIndexById.get(propId) ?? 0)],
+        message: formatContentBlockSourceIntegrityIssue(issue),
+        constraint: "valid_content_block_source",
+      });
     }
   }
 );
@@ -586,9 +611,11 @@ export const insertWebstudioFragmentCopy = ({
   metas,
   contentModeCopyableProp,
   createId = nanoid,
-  // In content mode, insertion keeps content-editable instance data, creates
-  // local styles for inserted instances, and avoids data/resource records.
+  // Content mode keeps content-editable instance data and creates local styles.
+  // Callers may opt into copying owned data/resources or remapping portal content.
   contentMode = false,
+  includeDataResources = contentMode === false,
+  reusePortalContent = true,
 }: {
   data: Omit<WebstudioData, "pages">;
   fragment: WebstudioFragment;
@@ -600,6 +627,8 @@ export const insertWebstudioFragmentCopy = ({
   contentModeCopyableProp?: ContentModeCopyableProp;
   createId?: () => string;
   contentMode?: boolean;
+  includeDataResources?: boolean;
+  reusePortalContent?: boolean;
 }) => {
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
@@ -680,7 +709,7 @@ export const insertWebstudioFragmentCopy = ({
   // - data sources
   // - props
   // - local styles
-  for (const rootInstanceId of portalContentRootIds) {
+  for (const rootInstanceId of reusePortalContent ? portalContentRootIds : []) {
     const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
       fragmentInstances,
       rootInstanceId
@@ -692,7 +721,7 @@ export const insertWebstudioFragmentCopy = ({
       continue;
     }
 
-    if (contentMode === false) {
+    if (includeDataResources) {
       const usedResourceIds = new Set<Resource["id"]>();
       for (const dataSource of fragment.dataSources) {
         // insert only data sources within portal content
@@ -768,7 +797,7 @@ export const insertWebstudioFragmentCopy = ({
     maskedIdByName.set(dataSource.name, dataSource.id);
   }
   const newResourceIds = new Map<Resource["id"], Resource["id"]>();
-  if (contentMode === false) {
+  if (includeDataResources) {
     for (let dataSource of fragment.dataSources) {
       const scopeInstanceId = dataSource.scopeInstanceId ?? "";
       if (scopeInstanceId === ROOT_INSTANCE_ID) {
@@ -851,7 +880,7 @@ export const insertWebstudioFragmentCopy = ({
     props.set(prop.id, prop);
   }
 
-  if (contentMode === false) {
+  if (includeDataResources) {
     for (let resource of fragment.resources) {
       if (newResourceIds.has(resource.id) === false) {
         continue;
