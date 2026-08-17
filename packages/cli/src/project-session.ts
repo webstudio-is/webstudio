@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { release } from "node:os";
 import { join } from "node:path";
@@ -351,7 +352,7 @@ export const createCliProjectSessionStorage = (
     ) {
       throw new Error("Project session snapshot changed on disk.");
     }
-    const revision = crypto.randomUUID();
+    const revision = randomUUID();
     await writeFileAtomic(
       path,
       `${JSON.stringify(
@@ -417,7 +418,7 @@ export const createCliProjectRestorePointStorage = (
       return await withFileLock(path, async () => {
         const persisted = await load();
         const point: PersistedCliProjectRestorePoint = {
-          id: crypto.randomUUID(),
+          id: randomUUID(),
           name,
           createdAt: new Date().toISOString(),
           snapshot: serializePersistedSnapshot(snapshot),

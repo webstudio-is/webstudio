@@ -105,7 +105,7 @@ export const assetUpdateInput = z.object({
       folderId: z.union([z.string().min(1), z.null()]).optional(),
       meta: assetMetaUpdate
         .describe(
-          "Type-specific metadata: family/style/weight or variationAxes for fonts, width/height for images, and no fields for generic files."
+          "Type-specific metadata: family and style plus weight for static fonts or variationAxes for variable fonts, width/height for images, and no fields for generic files."
         )
         .optional(),
     })

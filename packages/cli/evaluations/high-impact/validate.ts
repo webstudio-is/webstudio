@@ -522,8 +522,8 @@ const validateFontAssets = (
       fontAssets.every(
         (asset) =>
           asset.meta.family === fontAssetFixtureMeta.family &&
-          "style" in asset.meta &&
           asset.meta.style === fontAssetFixtureMeta.style &&
+          "weight" in asset.meta &&
           asset.meta.weight === fontAssetFixtureMeta.weight
       ),
     "Uploaded font metadata did not persist as Rajdhani normal 600."

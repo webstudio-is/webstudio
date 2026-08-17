@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+import { fontMeta } from "@webstudio-is/fonts";
 import {
   ALLOWED_FILE_TYPES,
   getMimeTypeByExtension,
@@ -1030,10 +1031,10 @@ describe("allowed-file-types", () => {
       format: "woff2" as const,
       description: null,
       createdAt: "2024-01-01",
-      meta: {
+      meta: fontMeta.parse({
         family: "Inter",
         variationAxes: {},
-      },
+      }),
     };
 
     const mockGenericAsset = {
@@ -1067,7 +1068,7 @@ describe("allowed-file-types", () => {
       });
     });
 
-    test("converts variable font asset without style/weight", () => {
+    test("defaults variable font style and omits weight", () => {
       const result = toRuntimeAsset(
         mockVariableFontAsset,
         "https://example.com"
@@ -1075,6 +1076,7 @@ describe("allowed-file-types", () => {
       expect(result).toEqual({
         url: "/cgi/asset/variable-font.woff2?format=raw",
         family: "Inter",
+        style: "normal",
       });
     });
 

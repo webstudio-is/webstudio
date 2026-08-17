@@ -39,7 +39,7 @@ import * as pages from "./pages";
 import * as projectSettings from "./project-settings";
 import * as props from "./props";
 import * as runtimeUi from "./runtime-ui";
-import * as search from "./search";
+import * as projectSearch from "./project-search";
 import * as slot from "./slot";
 import * as designTokenImport from "./design-token-import";
 import * as audit from "./audit";
@@ -1259,10 +1259,12 @@ export const builderRuntimeOperations = [
       "resources",
       "dataSources",
       "assets",
+      "assetFolders",
       "breakpoints",
+      "marketplaceProduct",
     ]),
-    search.projectSearchInput,
-    ({ state, input }) => search.searchProject(state, input)
+    projectSearch.projectSearchInput,
+    ({ state, input }) => projectSearch.searchProject(state, input)
   ),
   runtimeOperation(
     "project.audit",

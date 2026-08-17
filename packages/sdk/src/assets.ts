@@ -587,10 +587,10 @@ const extractFontMetadata = (asset: Asset): RuntimeMetadata => {
   }
   const metadata: Omit<RuntimeAsset, "url"> = {
     family: asset.meta.family,
+    style: asset.meta.style,
   };
-  // Static fonts have style and weight, variable fonts have variationAxes
-  if ("style" in asset.meta) {
-    metadata.style = asset.meta.style;
+  // Static fonts have weight, variable fonts have variationAxes
+  if ("weight" in asset.meta) {
     metadata.weight = asset.meta.weight;
   }
   return metadata;

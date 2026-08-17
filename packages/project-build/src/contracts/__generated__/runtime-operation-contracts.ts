@@ -13213,6 +13213,11 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
@@ -16329,6 +16334,11 @@ export const runtimeOperationContractData = [
                                     properties: {
                                       family: {
                                         type: "string",
+                                      },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
                                       },
                                       variationAxes: {
                                         type: "object",
@@ -19458,6 +19468,11 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
@@ -22574,6 +22589,11 @@ export const runtimeOperationContractData = [
                                     properties: {
                                       family: {
                                         type: "string",
+                                      },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
                                       },
                                       variationAxes: {
                                         type: "object",
@@ -28401,6 +28421,15 @@ export const runtimeOperationContractData = [
                                             family: {
                                               type: "string",
                                             },
+                                            style: {
+                                              default: "normal",
+                                              type: "string",
+                                              enum: [
+                                                "normal",
+                                                "italic",
+                                                "oblique",
+                                              ],
+                                            },
                                             variationAxes: {
                                               type: "object",
                                               propertyNames: {
@@ -31721,6 +31750,15 @@ export const runtimeOperationContractData = [
                                           properties: {
                                             family: {
                                               type: "string",
+                                            },
+                                            style: {
+                                              default: "normal",
+                                              type: "string",
+                                              enum: [
+                                                "normal",
+                                                "italic",
+                                                "oblique",
+                                              ],
                                             },
                                             variationAxes: {
                                               type: "object",
@@ -42541,7 +42579,32 @@ export const runtimeOperationContractData = [
           type: "string",
           minLength: 1,
         },
+        namespaces: {
+          description:
+            "Namespaces to match. Omit for all; synchronization is unchanged.",
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "string",
+            enum: [
+              "pages",
+              "instances",
+              "props",
+              "styles",
+              "styleSources",
+              "styleSourceSelections",
+              "dataSources",
+              "resources",
+              "assets",
+              "assetFolders",
+              "breakpoints",
+              "projectSettings",
+              "marketplaceProduct",
+            ],
+          },
+        },
         scopes: {
+          description: "Deprecated; use namespaces.",
           minItems: 1,
           type: "array",
           items: {
@@ -42585,11 +42648,22 @@ export const runtimeOperationContractData = [
         query: {
           type: "string",
         },
+        namespaces: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
         scopes: {
           type: "array",
           items: {
             type: "string",
           },
+        },
+        excludedSensitiveValueCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
         },
         truncated: {
           type: "boolean",
@@ -42597,14 +42671,167 @@ export const runtimeOperationContractData = [
         matches: {
           type: "array",
           items: {
-            type: "object",
-            properties: {
-              kind: {
-                type: "string",
+            anyOf: [
+              {
+                type: "object",
+                properties: {
+                  kind: {
+                    type: "string",
+                    const: "value",
+                  },
+                  matchType: {
+                    type: "string",
+                    enum: ["value", "key"],
+                  },
+                  matchId: {
+                    type: "string",
+                  },
+                  currentValue: {
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "number",
+                      },
+                      {
+                        type: "boolean",
+                      },
+                      {
+                        type: "null",
+                      },
+                    ],
+                  },
+                  entity: {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                      },
+                      id: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "id"],
+                  },
+                  location: {
+                    type: "object",
+                    properties: {
+                      namespace: {
+                        type: "string",
+                        enum: [
+                          "pages",
+                          "instances",
+                          "props",
+                          "styles",
+                          "styleSources",
+                          "styleSourceSelections",
+                          "dataSources",
+                          "resources",
+                          "assets",
+                          "assetFolders",
+                          "breakpoints",
+                          "projectSettings",
+                          "marketplaceProduct",
+                        ],
+                      },
+                      path: {
+                        type: "array",
+                        items: {
+                          anyOf: [
+                            {
+                              type: "string",
+                            },
+                            {
+                              type: "number",
+                            },
+                          ],
+                        },
+                      },
+                    },
+                    required: ["namespace", "path"],
+                  },
+                  pageIds: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                  },
+                  pagePaths: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                  },
+                  reference: {
+                    type: "object",
+                    properties: {
+                      namespace: {
+                        type: "string",
+                        enum: [
+                          "pages",
+                          "instances",
+                          "props",
+                          "styles",
+                          "styleSources",
+                          "styleSourceSelections",
+                          "dataSources",
+                          "resources",
+                          "assets",
+                          "assetFolders",
+                          "breakpoints",
+                          "projectSettings",
+                          "marketplaceProduct",
+                        ],
+                      },
+                      entityType: {
+                        type: "string",
+                      },
+                      id: {
+                        type: "string",
+                      },
+                      resolved: {
+                        type: "boolean",
+                      },
+                    },
+                    required: ["namespace", "entityType", "id", "resolved"],
+                  },
+                },
+                required: [
+                  "kind",
+                  "matchType",
+                  "matchId",
+                  "currentValue",
+                  "entity",
+                  "location",
+                  "pageIds",
+                  "pagePaths",
+                ],
+                additionalProperties: {},
               },
-            },
-            required: ["kind"],
-            additionalProperties: {},
+              {
+                type: "object",
+                properties: {
+                  kind: {
+                    type: "string",
+                    enum: [
+                      "instance",
+                      "text",
+                      "prop",
+                      "resource",
+                      "asset",
+                      "design-token",
+                      "style-source",
+                      "css-variable",
+                      "style",
+                      "breakpoint",
+                    ],
+                  },
+                },
+                required: ["kind"],
+                additionalProperties: {},
+              },
+            ],
           },
         },
         detail: {
@@ -42640,7 +42867,9 @@ export const runtimeOperationContractData = [
       },
       required: [
         "query",
+        "namespaces",
         "scopes",
+        "excludedSensitiveValueCount",
         "truncated",
         "matches",
         "detail",
@@ -42662,7 +42891,9 @@ export const runtimeOperationContractData = [
       "resources",
       "dataSources",
       "assets",
+      "assetFolders",
       "breakpoints",
+      "marketplaceProduct",
     ],
     writeNamespaces: [],
     invalidatesNamespaces: [],
@@ -46087,6 +46318,11 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
@@ -49282,6 +49518,11 @@ export const runtimeOperationContractData = [
                                     properties: {
                                       family: {
                                         type: "string",
+                                      },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
                                       },
                                       variationAxes: {
                                         type: "object",
@@ -55620,6 +55861,11 @@ export const runtimeOperationContractData = [
                             properties: {
                               family: {
                                 type: "string",
+                              },
+                              style: {
+                                default: "normal",
+                                type: "string",
+                                enum: ["normal", "italic", "oblique"],
                               },
                               variationAxes: {
                                 type: "object",
@@ -62441,6 +62687,11 @@ export const runtimeOperationContractData = [
                             properties: {
                               family: {
                                 type: "string",
+                              },
+                              style: {
+                                default: "normal",
+                                type: "string",
+                                enum: ["normal", "italic", "oblique"],
                               },
                               variationAxes: {
                                 type: "object",
@@ -81386,6 +81637,10 @@ export const runtimeOperationContractData = [
                         family: {
                           type: "string",
                         },
+                        style: {
+                          type: "string",
+                          enum: ["normal", "italic", "oblique"],
+                        },
                         variationAxes: {
                           type: "object",
                           propertyNames: {
@@ -81440,7 +81695,7 @@ export const runtimeOperationContractData = [
                 },
               ],
               description:
-                "Type-specific metadata: family/style/weight or variationAxes for fonts, width/height for images, and no fields for generic files.",
+                "Type-specific metadata: family and style plus weight for static fonts or variationAxes for variable fonts, width/height for images, and no fields for generic files.",
             },
           },
           required: [],
@@ -81635,6 +81890,11 @@ export const runtimeOperationContractData = [
                       properties: {
                         family: {
                           type: "string",
+                        },
+                        style: {
+                          default: "normal",
+                          type: "string",
+                          enum: ["normal", "italic", "oblique"],
                         },
                         variationAxes: {
                           type: "object",

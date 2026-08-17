@@ -28,6 +28,46 @@ describe("parseStyleInput", () => {
     );
   });
 
+  test("recognizes anchor positioning properties", () => {
+    const declarations = [
+      ["anchor-name", "--trigger"],
+      ["anchor-scope", "--trigger"],
+      ["position-anchor", "--trigger"],
+      ["position-area", "top span-right"],
+      ["position-try-fallbacks", "flip-block"],
+      ["position-try-order", "most-width"],
+      ["position-visibility", "anchors-visible"],
+    ] as const;
+
+    for (const [property, value] of declarations) {
+      const { styleMap } = parseStyleInput(`${property}: ${value}`, new Map());
+      expect(styleMap.has(property), property).toBe(true);
+      expect(styleMap.has(`--${property}`), property).toBe(false);
+    }
+  });
+
+  test("expands the position-try shorthand", () => {
+    const { styleMap } = parseStyleInput(
+      "position-try: most-width --fallback flip-block",
+      new Map()
+    );
+    expect(styleMap).toEqual(
+      new Map([
+        ["position-try-order", { type: "keyword", value: "most-width" }],
+        [
+          "position-try-fallbacks",
+          {
+            type: "tuple",
+            value: [
+              { type: "unparsed", value: "--fallback" },
+              { type: "keyword", value: "flip-block" },
+            ],
+          },
+        ],
+      ])
+    );
+  });
+
   test("trims whitespace", () => {
     const { styleMap: result } = parseStyleInput("  color  ", new Map());
     expect(result).toEqual(
@@ -215,5 +255,15 @@ describe("parseStyleInput", () => {
         ],
       ])
     );
+  });
+
+  test.each([
+    ["-webkit-text-fill-color", "red"],
+    ["-webkit-text-stroke-color", "blue"],
+    ["-webkit-text-stroke-width", "2px"],
+  ] as const)("recognizes generated WebKit longhand %s", (property, value) => {
+    const { styleMap } = parseStyleInput(`${property}: ${value}`, new Map());
+    expect(styleMap.has(property), property).toBe(true);
+    expect(styleMap.has(`--${property}`), property).toBe(false);
   });
 });

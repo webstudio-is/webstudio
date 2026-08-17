@@ -293,10 +293,10 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "search-project",
     description:
-      "Search instance labels, text, props including href and embeds, resource URLs, assets, and styles",
+      "Search synchronized Builder values in the CLI and return paged matches. Filters do not reduce synchronization; recognized credential fields are omitted.",
     examples: [
       'MCP tool: search-project {"query":"pricing"}',
-      'MCP tool: search-project {"query":"api.example.com","scopes":["resources"]}',
+      'MCP tool: search-project {"query":"api.example.com","namespaces":["resources"]}',
     ],
   },
   {

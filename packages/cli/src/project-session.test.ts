@@ -243,6 +243,36 @@ describe("cli project session storage", () => {
     expect(await storage.list()).toHaveLength(19);
   });
 
+  test("persists session state without the Web Crypto global", async () => {
+    vi.stubGlobal("crypto", undefined);
+    const directory = await createTemporaryDirectory();
+    const state = createBuilderStateFromSnapshot({});
+    const snapshot = {
+      projectId: "project-1",
+      buildId: "build-1",
+      version: 1,
+      state,
+      freshness: createBuilderStateFreshness({ state, version: 1 }),
+      compatibilityVersion: "test",
+      compatibility: {
+        sessionVersion: "test",
+        runtimeContractVersion: "test-runtime",
+        projectSchemaVersion: "test-schema",
+      },
+    };
+
+    await expect(
+      createCliProjectSessionStorage(
+        join(directory, ".webstudio", "project-session.json")
+      ).save(snapshot, {})
+    ).resolves.toEqual({ revision: expect.any(String) });
+    await expect(
+      createCliProjectRestorePointStorage(
+        join(directory, ".webstudio", "restore-points.json")
+      ).create("Before mutation", snapshot)
+    ).resolves.toEqual(expect.objectContaining({ id: expect.any(String) }));
+  });
+
   test("persists builder state snapshots as JSON and checks revisions", async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, ".webstudio", "project-session.json");

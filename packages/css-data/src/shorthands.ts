@@ -8,6 +8,7 @@ import {
   type Value,
 } from "css-tree";
 import warnOnce from "warn-once";
+import { shorthandExpansions } from "./__generated__/shorthand-expansions";
 
 const cssWideKeywordsSyntax = Array.from(cssWideKeywords).join(" | ");
 
@@ -330,7 +331,7 @@ const expandBorderImage = function* (value: CssNode) {
 /**
  *
  * font =
- *   [ <'font-style'> || <font-variant-css21> || <'font-weight'> || <'font-stretch'> ]?
+ *   [ <'font-style'> || <font-variant-css2> || <'font-weight'> || <'font-stretch'> ]?
  *   <'font-size'> [ / <'line-height'> ]? <'font-family'>
  *
  */
@@ -339,7 +340,7 @@ const expandFont = function* (value: CssNode) {
     parseUnordered(
       [
         "<'font-style'>",
-        "<font-variant-css21>",
+        "<font-variant-css2>",
         "<'font-weight'>",
         "<'font-stretch'>",
       ],
@@ -1087,6 +1088,85 @@ const expandBackground = function* (value: CssNode) {
   yield ["background-color", backgroundColor] as const;
 };
 
+type SyntaxMatch = {
+  syntax?: { type: string; name?: string } | null;
+  match?: SyntaxMatch[];
+  node?: CssNode;
+};
+
+const markNodeTree = (node: CssNode, seen: Set<CssNode>) => {
+  seen.add(node);
+  const children = "children" in node ? node.children : undefined;
+  if (children != null) {
+    for (const child of children) {
+      markNodeTree(child, seen);
+    }
+  }
+};
+
+const getMatchedNodes = (
+  match: SyntaxMatch,
+  nodes: CssNode[] = [],
+  seen = new Set<CssNode>()
+) => {
+  if (match.node !== undefined && seen.has(match.node) === false) {
+    markNodeTree(match.node, seen);
+    nodes.push(match.node);
+    return nodes;
+  }
+  for (const child of match.match ?? []) {
+    getMatchedNodes(child, nodes, seen);
+  }
+  return nodes;
+};
+
+const expandSyntaxShorthand = (property: string, value: CssNode) => {
+  if (Object.hasOwn(shorthandExpansions, property) === false) {
+    return;
+  }
+
+  const expansion = shorthandExpansions[
+    property as keyof typeof shorthandExpansions
+  ] as Record<string, string>;
+  const longhands = new Set(Object.keys(expansion));
+
+  const result = lexer.matchProperty(property, value);
+  if (result.matched === null) {
+    return Object.keys(expansion).map((longhand) => [longhand, value] as const);
+  }
+
+  const matches = new Map<string, Value>();
+  let hasRepeatedMatch = false;
+  const visit = (match: SyntaxMatch) => {
+    const matchedProperty = match.syntax?.name;
+    if (
+      match.syntax?.type === "Property" &&
+      matchedProperty !== undefined &&
+      longhands.has(matchedProperty)
+    ) {
+      if (matches.has(matchedProperty)) {
+        hasRepeatedMatch = true;
+        return;
+      }
+      matches.set(matchedProperty, createValueNode(getMatchedNodes(match)));
+      return;
+    }
+    for (const child of match.match ?? []) {
+      visit(child);
+    }
+  };
+  visit(result.matched as SyntaxMatch);
+
+  if (hasRepeatedMatch) {
+    return;
+  }
+
+  return Object.entries(expansion).map(([longhand, initial]) => {
+    const matched = matches.get(longhand);
+    return [longhand, matched ?? parse(initial, { context: "value" })] as const;
+  });
+};
+
 const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
     // ignore "all" to avoid bloating styles with huge amount of longhand properties
@@ -1310,21 +1390,6 @@ const expandShorthand = function* (property: string, value: CssNode) {
       break;
     }
 
-    case "column-rule": {
-      const [width, style, color] = parseUnordered(
-        [
-          "<'column-rule-width'>",
-          "<'column-rule-style'>",
-          "<'column-rule-color'>",
-        ],
-        value
-      );
-      yield ["column-rule-width", width ?? createInitialNode()] as const;
-      yield ["column-rule-style", style ?? createInitialNode()] as const;
-      yield ["column-rule-color", color ?? createInitialNode()] as const;
-      break;
-    }
-
     case "list-style": {
       const [position, image, type] = parseUnordered(
         [
@@ -1405,13 +1470,6 @@ const expandShorthand = function* (property: string, value: CssNode) {
       break;
     }
 
-    case "container": {
-      const [name, type] = splitByOperator(value, "/");
-      yield ["container-name", name ?? createIdentifier("none")] as const;
-      yield ["container-type", type ?? createIdentifier("normal")] as const;
-      break;
-    }
-
     case "contain-intrinsic-size": {
       const [width, height] = parseUnordered(
         [`<'contain-intrinsic-width'>`, `<'contain-intrinsic-height'>`],
@@ -1476,25 +1534,6 @@ const expandShorthand = function* (property: string, value: CssNode) {
       break;
     }
 
-    case "position-try": {
-      const [order, options] = parseUnordered(
-        [
-          `normal | most-width | most-height | most-block-size | most-inline-size`,
-          `none | [ [<custom-ident> || flip-block || flip-inline || flip-start] | inset-area( <'inset-area'> ) ]#`,
-        ],
-        value
-      );
-      yield [
-        "position-try-order",
-        order ?? createIdentifier("normal"),
-      ] as const;
-      yield [
-        "position-try-options",
-        options ?? createIdentifier("none"),
-      ] as const;
-      break;
-    }
-
     // -webkit-text-stroke = <line-width> || <color>
     // Sets width/color together with standard shorthand reset semantics.
     case "-webkit-text-stroke": {
@@ -1521,7 +1560,9 @@ const expandShorthand = function* (property: string, value: CssNode) {
     }
 
     default:
-      yield [property, value] as const;
+      yield* (
+        expandSyntaxShorthand(property, value) ?? [[property, value] as const]
+      );
   }
 };
 

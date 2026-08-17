@@ -279,6 +279,9 @@ Use MCP itself after startup, or call the same tools with `webstudio mcp single-
 - `components.get`: full metadata for one component id
 - `templates.list`: compact metadata for template-backed insertions only
 - `templates.get`: full registry item and payload metadata for one template
+- `search-project`: find a known value or id with `webstudio search-project '{"query":"pricing"}'` or MCP `search-project {"query":"pricing"}`; use focused list/get tools when the target structure is unknown
+
+`search-project` follows normal ProjectSession synchronization, then searches in the CLI process. Namespace filters limit values matched; related namespaces may still supply route and reference context, and synchronization is unchanged. Only paged matches enter model context. Recognized credential fields and asset binary or document bodies are excluded.
 
 Component and template registry items use a shadcn-compatible top-level shape plus Webstudio-specific superset metadata in `meta`. Use `meta.runtime` for component ids, props, states, content model, and source identity; `meta.authoring` for composition and accessibility guidance; and `meta.builder` for template insertion details and expected project-data namespaces. These items are for Builder/MCP discovery and are not a published shadcn install registry yet.
 
@@ -351,6 +354,7 @@ terms, agents can:
 - Check what the share link is allowed to do.
 - Inspect project metadata and the latest editable build.
 - Read selected project data for audits and repair.
+- Search all Builder namespaces for a known value or id without putting complete namespace data in model context.
 - Apply precise project changes against a known version.
 - List, inspect, create, update, delete, duplicate, copy, and reorder pages.
 - Set the home page.
@@ -908,7 +912,7 @@ source of truth. For tools with no required arguments, pass `{}`.
 ```json
 {
   "query": "api.example.com",
-  "scopes": [
+  "namespaces": [
     "resources"
   ]
 }
