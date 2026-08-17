@@ -93,7 +93,7 @@ MCP lets agents work on one configured Webstudio project. Agents can:
 
 - Inspect the linked project, token permissions, and latest editable build.
 - Read selected project data for audits, migrations, and repair.
-- Search labels, text, props, resource URLs, asset metadata, and styles.
+- Search values and ids across every Builder namespace without sending full project data to the model.
 - Audit accessibility, security, SEO, performance settings, unused assets, ineffective Collection styles, and unused or duplicate style data.
 - Create and edit pages, folders, redirects, breakpoints, and page templates.
 - Create pages from reusable templates.
@@ -1019,8 +1019,10 @@ Patch namespaces:
 
 Commands:
 
+- webstudio search-project '{"query":"pricing"}'
 - MCP tool: search-project {"query":"pricing"}
-- MCP tool: search-project {"query":"api.example.com","scopes":["resources"]}
+- MCP tool: search-project {"query":"api.example.com","namespaces":["resources"]}
+- MCP tool: search-project {"query":"Brand","namespaces":["styles","styleSources","styleSourceSelections"]}
 - MCP tool: list-instances {"pagePath":"/","maxDepth":5}
 - MCP tool: inspect-instance {"instanceId":"<instanceId>","include":["props","styles","children"]}
 - MCP tool: list-texts {"pagePath":"/"}
@@ -1030,7 +1032,11 @@ Commands:
 
 Notes:
 
-- Use `search-project` for query-driven lookup across labels, text, prop values, resource URLs, asset metadata, and styles. Use `audit` for project health findings.
+- `search-project` is a standalone local-session command over every Builder namespace. It returns matching values with stable match ids, namespace paths, owning entities, references, and affected pages.
+- Use it when a value or id is known. Use list/get tools when the project structure or target is not known.
+- The command synchronizes its required Builder namespaces, then searches locally and returns only matches. Namespace filters narrow the local search, not synchronization. This reduces data passed to the model; it does not remove the initial project-data synchronization.
+- Asset records and file metadata are searchable. Asset binary or document contents are not Builder namespace data and are not searched.
+- Use `audit` for project health findings.
 
 ## Audit project quality
 

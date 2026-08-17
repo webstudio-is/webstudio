@@ -33107,7 +33107,33 @@ export const runtimeOperationContractData = [
           type: "string",
           minLength: 1,
         },
+        namespaces: {
+          description:
+            "Builder namespaces to search. Omit to search every namespace in the local project session.",
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "string",
+            enum: [
+              "pages",
+              "instances",
+              "props",
+              "styles",
+              "styleSources",
+              "styleSourceSelections",
+              "dataSources",
+              "resources",
+              "assets",
+              "assetFolders",
+              "breakpoints",
+              "projectSettings",
+              "marketplaceProduct",
+            ],
+          },
+        },
         scopes: {
+          description:
+            "Deprecated semantic namespace groups. Use namespaces for new workflows.",
           minItems: 1,
           type: "array",
           items: {
@@ -33150,6 +33176,12 @@ export const runtimeOperationContractData = [
       properties: {
         query: {
           type: "string",
+        },
+        namespaces: {
+          type: "array",
+          items: {
+            type: "string",
+          },
         },
         scopes: {
           type: "array",
@@ -33206,6 +33238,7 @@ export const runtimeOperationContractData = [
       },
       required: [
         "query",
+        "namespaces",
         "scopes",
         "truncated",
         "matches",
@@ -33228,7 +33261,9 @@ export const runtimeOperationContractData = [
       "resources",
       "dataSources",
       "assets",
+      "assetFolders",
       "breakpoints",
+      "marketplaceProduct",
     ],
     writeNamespaces: [],
     invalidatesNamespaces: [],

@@ -7024,8 +7024,20 @@ describe("project session mcp adapter", () => {
   });
 
   test("uses proportional verification for small value corrections", async () => {
+    const searchOperation = publicOperation({
+      command: "search-project",
+      id: "project.search",
+      description: "Search project data",
+      inputSchema: getTestInputSchema(
+        z.object({
+          query: z.string(),
+          namespaces: z.array(z.string()).optional(),
+        })
+      ),
+      readNamespaces: ["pages", "instances", "props"],
+    });
     const adapter = createProjectSessionMcpCore({
-      operations: publicMcpOperations,
+      operations: [...publicMcpOperations, searchOperation],
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
       captureScreenshot: vi.fn(),
@@ -7042,8 +7054,12 @@ describe("project session mcp adapter", () => {
     expect(guide.structuredContent.data).toEqual(
       expect.objectContaining({
         taskScope: "small-value-or-reference-correction",
-        workflow: expect.arrayContaining([
-          "Focused search → atomic edit → targeted assertions.",
+        tools: expect.arrayContaining([
+          expect.objectContaining({
+            name: "search-project",
+            requiredInputFields: ["query"],
+            inputFields: expect.arrayContaining(["query", "namespaces"]),
+          }),
         ]),
         visionLoop: [],
         slowOperation: expect.objectContaining({

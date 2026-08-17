@@ -14,10 +14,7 @@ import { listCssVariables, listDesignTokens } from "./styles";
 import { getInstanceDepths } from "./instances";
 import { isBaseWidthBreakpoint } from "./breakpoints";
 import { findSerializedPageByInput, getSerializedPages } from "./pages";
-import { validatePageSelector } from "./page-selector";
 import { hasAccessibleName, isDynamicPropType } from "./accessibility-analysis";
-import { paginateOutput, paginatedOutputInputSchema } from "./output";
-
 const projectLookupScope = z.enum([
   "instances",
   "text",
@@ -34,17 +31,6 @@ const projectAnalysisScope = z.enum([
   "seo",
   "performance",
 ]);
-
-export const projectSearchInput = z
-  .object({
-    query: z.string().min(1),
-    scopes: z.array(projectLookupScope).min(1).optional(),
-    pageId: z.string().optional(),
-    pagePath: z.string().optional(),
-    ...paginatedOutputInputSchema.shape,
-  })
-  .strict()
-  .superRefine(validatePageSelector);
 
 type ProjectAnalysisInput = {
   query?: string;
@@ -1506,34 +1492,5 @@ export const analyzeProject = (
     total: matches.length,
     truncated: matches.length > limit,
     matches: matches.slice(0, limit),
-  };
-};
-
-export const searchProject = (
-  state: Parameters<typeof analyzeProject>[0],
-  input: z.infer<typeof projectSearchInput>
-) => {
-  const result = analyzeProject(state, {
-    ...input,
-    limit: Number.MAX_SAFE_INTEGER,
-  });
-  const { items, ...pagination } = paginateOutput({
-    items: result.matches,
-    cursor: input.cursor,
-    limit: input.limit,
-    filters: {
-      query: input.query,
-      scopes: input.scopes,
-      pageId: input.pageId,
-      pagePath: input.pagePath,
-    },
-    verbose: input.verbose,
-  });
-  return {
-    query: input.query,
-    scopes: result.scopes,
-    matches: items,
-    truncated: pagination.nextCursor !== null,
-    ...pagination,
   };
 };

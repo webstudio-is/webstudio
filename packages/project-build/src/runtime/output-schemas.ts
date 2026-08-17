@@ -425,6 +425,7 @@ export const runtimeOutputSchemas = {
   }),
   "project.search": looseObject({
     query: z.string(),
+    namespaces: stringArray,
     scopes: stringArray,
     truncated: z.boolean(),
     matches: z.array(looseObject({ kind: z.string() })),

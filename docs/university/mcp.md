@@ -847,7 +847,7 @@ source of truth. For tools with no required arguments, pass `{}`.
 ```json
 {
   "query": "api.example.com",
-  "scopes": [
+  "namespaces": [
     "resources"
   ]
 }
