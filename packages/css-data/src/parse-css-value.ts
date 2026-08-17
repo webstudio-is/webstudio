@@ -4,6 +4,7 @@ import {
   fork,
   type FunctionNode,
   generate,
+  lexer as baseLexer,
   List,
   parse,
   tokenize,
@@ -36,45 +37,45 @@ import {
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
 
-// css-tree 3.1 predates the current anchor positioning grammar. Extend its
-// existing property data while keeping all other validation unchanged.
-const anchorInsetSyntax =
-  "<length> | <percentage> | auto | <anchor()> | <anchor-size()>";
-const anchorMarginSyntax = "<length> | <percentage> | auto | <anchor-size()>";
-const anchorSizeSyntax =
-  "auto | <length> | <percentage> | min-content | max-content | fit-content | fit-content(<length-percentage>) | stretch | <-non-standard-size> | <anchor-size()>";
-const anchorMaxSizeSyntax =
-  "none | <length-percentage> | min-content | max-content | fit-content | fit-content(<length-percentage>) | stretch | <-non-standard-size> | <anchor-size()>";
-const anchorAlignItemsSyntax =
-  "normal | stretch | <baseline-position> | [ <overflow-position>? <self-position> ] | anchor-center";
-const anchorAlignSelfSyntax =
-  "auto | normal | stretch | <baseline-position> | <overflow-position>? <self-position> | anchor-center";
-const anchorJustifyItemsSyntax =
-  "normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ] | legacy | legacy && [ left | right | center ] | anchor-center";
-const anchorJustifySelfSyntax =
-  "auto | normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ] | anchor-center";
+const extendPropertySyntax = (
+  properties: string[],
+  syntax: string
+): Record<string, string> =>
+  Object.fromEntries(
+    properties.map((property) => {
+      const propertyData = baseLexer.getProperty(property);
+      if (propertyData === null) {
+        throw new Error(`Missing css-tree syntax for ${property}`);
+      }
+      return [
+        property,
+        `${definitionSyntax.generate(propertyData.syntax)} | ${syntax}`,
+      ];
+    })
+  );
 
 const lexer = fork({
   properties: {
-    top: anchorInsetSyntax,
-    right: anchorInsetSyntax,
-    bottom: anchorInsetSyntax,
-    left: anchorInsetSyntax,
-    "margin-top": anchorMarginSyntax,
-    "margin-right": anchorMarginSyntax,
-    "margin-bottom": anchorMarginSyntax,
-    "margin-left": anchorMarginSyntax,
-    width: anchorSizeSyntax,
-    height: anchorSizeSyntax,
-    "min-width": anchorSizeSyntax,
-    "min-height": anchorSizeSyntax,
-    "max-width": anchorMaxSizeSyntax,
-    "max-height": anchorMaxSizeSyntax,
-    "position-anchor": "normal | none | auto | <anchor-name> | match-parent",
-    "align-items": anchorAlignItemsSyntax,
-    "align-self": anchorAlignSelfSyntax,
-    "justify-items": anchorJustifyItemsSyntax,
-    "justify-self": anchorJustifySelfSyntax,
+    ...extendPropertySyntax(
+      ["top", "right", "bottom", "left"],
+      "<anchor()> | <anchor-size()>"
+    ),
+    ...extendPropertySyntax(
+      ["margin-top", "margin-right", "margin-bottom", "margin-left"],
+      "<anchor-size()>"
+    ),
+    ...extendPropertySyntax(
+      ["width", "height", "min-width", "min-height", "max-width", "max-height"],
+      "<anchor-size()>"
+    ),
+    ...extendPropertySyntax(
+      ["align-items", "align-self", "justify-items", "justify-self"],
+      "anchor-center"
+    ),
+    ...extendPropertySyntax(
+      ["position-anchor"],
+      "normal | none | match-parent"
+    ),
   },
 }).lexer;
 

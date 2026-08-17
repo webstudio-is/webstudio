@@ -1,54 +1,46 @@
 import { AlertIcon } from "@webstudio-is/icons";
-import { experimentalProperties, propertiesData } from "@webstudio-is/css-data";
-import {
-  Flex,
-  Link,
-  rawTheme,
-  Text,
-  Tooltip,
-} from "@webstudio-is/design-system";
+import { experimentalProperties } from "@webstudio-is/css-data";
+import { Flex, Link, rawTheme, Text } from "@webstudio-is/design-system";
 
-const experimentalPropertySet = new Set<string>(experimentalProperties);
-
-export const isExperimentalProperty = (property: string) =>
-  experimentalPropertySet.has(property);
+const getExperimentalPropertyMdnUrl = (property: string) => {
+  if (Object.hasOwn(experimentalProperties, property) === false) {
+    return;
+  }
+  return experimentalProperties[
+    property as keyof typeof experimentalProperties
+  ];
+};
 
 export const ExperimentalPropertyDescription = ({
   property,
 }: {
   property: string;
 }) => {
-  if (isExperimentalProperty(property) === false) {
+  const mdnUrl = getExperimentalPropertyMdnUrl(property);
+  if (mdnUrl === undefined) {
     return;
   }
-
-  const mdnUrl =
-    propertiesData[property as keyof typeof propertiesData]?.mdnUrl;
 
   return (
     <Flex direction="column" gap="1">
       <Text>This CSS property is experimental and may change.</Text>
-      {mdnUrl && (
-        <Link href={mdnUrl} target="_blank" rel="noreferrer" color="inherit">
-          Learn more on MDN
-        </Link>
-      )}
+      <Link href={mdnUrl} target="_blank" rel="noreferrer" color="inherit">
+        Learn more on MDN
+      </Link>
     </Flex>
   );
 };
 
 export const ExperimentalPropertyIcon = ({
   property,
-  withTooltip = false,
 }: {
   property: string;
-  withTooltip?: boolean;
 }) => {
-  if (isExperimentalProperty(property) === false) {
+  if (getExperimentalPropertyMdnUrl(property) === undefined) {
     return;
   }
 
-  const icon = (
+  return (
     <Flex
       as="span"
       align="center"
@@ -57,18 +49,5 @@ export const ExperimentalPropertyIcon = ({
     >
       <AlertIcon size={12} />
     </Flex>
-  );
-
-  if (withTooltip === false) {
-    return icon;
-  }
-
-  return (
-    <Tooltip
-      variant="wrapped"
-      content={<ExperimentalPropertyDescription property={property} />}
-    >
-      {icon}
-    </Tooltip>
   );
 };

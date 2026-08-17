@@ -1477,18 +1477,13 @@ const expandShorthand = function* (property: string, value: CssNode) {
     }
 
     case "position-try": {
-      const [order, fallbacks] = parseUnordered(
-        [`<'position-try-order'>`, `<'position-try-fallbacks'>`],
-        value
-      );
-      yield [
-        "position-try-order",
-        order ?? createIdentifier("normal"),
-      ] as const;
-      yield [
-        "position-try-fallbacks",
-        fallbacks ?? createIdentifier("none"),
-      ] as const;
+      const nodes = getValueList(value);
+      const first = createValueNode(nodes.slice(0, 1));
+      const hasOrder = lexer.match("<'position-try-order'>", first).matched;
+      const order = hasOrder ? first : createIdentifier("normal");
+      const fallbacks = createValueNode(nodes.slice(hasOrder ? 1 : 0));
+      yield ["position-try-order", order] as const;
+      yield ["position-try-fallbacks", fallbacks] as const;
       break;
     }
 

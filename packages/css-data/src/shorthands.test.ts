@@ -1463,6 +1463,16 @@ test("expand position-try", () => {
     ["position-try-order", "normal"],
     ["position-try-fallbacks", "top span-right"],
   ]);
+  expect(expandShorthands([["position-try", "most-width"]])).toEqual([
+    ["position-try-order", "most-width"],
+    ["position-try-fallbacks", ""],
+  ]);
+  expect(expandShorthands([["position-try", "--fallback most-width"]])).toEqual(
+    [
+      ["position-try-order", "normal"],
+      ["position-try-fallbacks", "--fallback most-width"],
+    ]
+  );
 });
 
 test("replace empty value with unset", () => {

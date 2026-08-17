@@ -330,10 +330,7 @@ export const AddStyleInput = forwardRef<
                     <Text variant="labels" truncate css={{ maxWidth: "25ch" }}>
                       {item.label}
                     </Text>
-                    <ExperimentalPropertyIcon
-                      property={item.property}
-                      withTooltip
-                    />
+                    <ExperimentalPropertyIcon property={item.property} />
                   </Flex>
                 </ComboboxListboxItem>
               ))}

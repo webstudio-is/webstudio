@@ -35,6 +35,11 @@ const autoValue = {
   value: "auto",
 } as const;
 
+const getMdnUrl = (property: string, config: Value): string =>
+  "mdn_url" in config
+    ? config.mdn_url
+    : `https://developer.mozilla.org/en-US/search?q=${encodeURIComponent(property)}`;
+
 // Normalize browser dependant properties.
 const normalizedValues = {
   // dependsOnUserAgent
@@ -355,10 +360,7 @@ const getPropertiesData = (
       unitGroups: Array.from(unitGroups),
       inherited: config.inherited,
       initial: parseInitialValue(property, config.initial, unitGroups),
-      mdnUrl:
-        "mdn_url" in config
-          ? config.mdn_url
-          : `https://developer.mozilla.org/en-US/search?q=${encodeURIComponent(property)}`,
+      mdnUrl: getMdnUrl(property, config),
     };
   }
 
@@ -488,12 +490,14 @@ writeToFile(
 writeToFile(
   "experimental-properties.ts",
   "experimentalProperties",
-  Object.entries({
-    ...filteredData.allLonghands,
-    ...filteredData.allShorthands,
-  })
-    .filter(([, config]) => config.status === "experimental")
-    .map(([property]) => property)
+  Object.fromEntries(
+    Object.entries({
+      ...filteredData.allLonghands,
+      ...filteredData.allShorthands,
+    })
+      .filter(([, config]) => config.status === "experimental")
+      .map(([property, config]) => [property, getMdnUrl(property, config)])
+  )
 );
 writeToFile("pseudo-elements.ts", "pseudoElements", pseudoElements);
 writeToFile("pseudo-classes.ts", "pseudoClasses", pseudoClasses);

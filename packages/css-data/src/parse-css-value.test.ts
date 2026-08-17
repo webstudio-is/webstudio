@@ -746,6 +746,18 @@ test("parse properties unknown to css-tree", () => {
 });
 
 test("parse anchor positioning functions as unparsed values", () => {
+  for (const [property, value] of [
+    ["width", "fit-content(10px)"],
+    ["top", "calc(10px + 5%)"],
+    ["align-items", "safe center"],
+    ["justify-items", "legacy right"],
+    ["position-anchor", "auto"],
+  ] as const) {
+    expect(isValidDeclaration(property, value), `${property}: ${value}`).toBe(
+      true
+    );
+  }
+
   expect(parseCssValue("top", "anchor(--trigger bottom, 1rem)")).toEqual({
     type: "unparsed",
     value: "anchor(--trigger bottom, 1rem)",
