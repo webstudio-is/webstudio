@@ -10,6 +10,7 @@ import {
   getAssetQueryFieldValue,
   validateAssetQueryAgainstCatalog,
 } from "./structured-query";
+import { contentEngineLimits } from "./limits";
 
 const document = ({
   id,
@@ -457,6 +458,203 @@ describe("structured asset query", () => {
         },
       },
     ]);
+  });
+
+  test("expands selected asset reference metadata without changing legacy queries", async () => {
+    const legacyPost = document({
+      id: "post",
+      properties: { title: "Post", featureImage: "./hero.png" },
+    });
+    const runtimeAssets = {
+      hero: {
+        url: "/cgi/image/hero.png?format=raw",
+        name: "hero.png",
+        description: "A person presenting Webstudio",
+        mimeType: "image/png",
+        size: 1024,
+        meta: { width: 1600, height: 900 },
+        width: 1600,
+        height: 900,
+      },
+    };
+
+    await expect(
+      executeAssetQuery({
+        documents: [legacyPost],
+        assetValueReferences: {
+          post: [
+            {
+              path: ["properties", "featureImage"],
+              assetId: "hero",
+            },
+          ],
+        },
+        runtimeAssets,
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["properties", "featureImage"]],
+          },
+        },
+      })
+    ).resolves.toMatchObject({
+      items: [
+        {
+          properties: {
+            featureImage: "/cgi/image/hero.png?format=raw",
+          },
+        },
+      ],
+    });
+
+    const structuredPost = document({
+      id: "post",
+      properties: {
+        title: "Post",
+        featureImage: { $ref: "./hero.png" },
+      },
+    });
+    await expect(
+      executeAssetQuery({
+        documents: [structuredPost],
+        assetValueReferences: {
+          post: [
+            {
+              path: ["properties", "featureImage"],
+              assetId: "hero",
+              structured: true,
+            },
+          ],
+        },
+        runtimeAssets,
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [
+              ["properties", "featureImage", "src"],
+              ["properties", "featureImage", "description"],
+              ["properties", "featureImage", "size"],
+            ],
+          },
+        },
+      })
+    ).resolves.toEqual({
+      items: [
+        {
+          id: "post",
+          properties: {
+            featureImage: {
+              src: "/cgi/image/hero.png?format=raw",
+              description: "A person presenting Webstudio",
+              size: 1024,
+            },
+          },
+        },
+      ],
+      totalCount: 1,
+      hasMore: false,
+    });
+  });
+
+  test("counts expanded metadata toward the result byte limit", async () => {
+    await expect(
+      executeAssetQuery({
+        documents: [
+          document({
+            id: "post",
+            properties: { featureImage: { $ref: "./hero.png" } },
+          }),
+        ],
+        assetValueReferences: {
+          post: [
+            {
+              path: ["properties", "featureImage"],
+              assetId: "hero",
+              structured: true,
+            },
+          ],
+        },
+        runtimeAssets: {
+          hero: {
+            url: "/hero.png",
+            description: "x".repeat(contentEngineLimits.resultBytes),
+          },
+        },
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [
+              ["properties", "featureImage", "src"],
+              ["properties", "featureImage", "description"],
+            ],
+          },
+        },
+      })
+    ).rejects.toThrow("Asset query result exceeds the byte limit");
+  });
+
+  test("projects selected metadata from asset references nested in arrays", async () => {
+    await expect(
+      executeAssetQuery({
+        documents: [
+          document({
+            id: "post",
+            properties: {
+              showcase: {
+                images: [
+                  { src: { $ref: "./one.png" } },
+                  { src: { $ref: "./two.png" } },
+                ],
+              },
+            },
+          }),
+        ],
+        assetValueReferences: {
+          post: [
+            {
+              path: ["properties", "showcase", "images", 0, "src"],
+              assetId: "one",
+              structured: true,
+            },
+            {
+              path: ["properties", "showcase", "images", 1, "src"],
+              assetId: "two",
+              structured: true,
+            },
+          ],
+        },
+        runtimeAssets: {
+          one: { url: "/one.png", description: "First image" },
+          two: { url: "/two.png", description: "Second image" },
+        },
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [
+              ["properties", "showcase", "images", "*", "src", "src"],
+              ["properties", "showcase", "images", "*", "src", "description"],
+            ],
+          },
+        },
+      })
+    ).resolves.toMatchObject({
+      items: [
+        {
+          properties: {
+            showcase: {
+              images: [
+                { src: { src: "/one.png", description: "First image" } },
+                { src: { src: "/two.png", description: "Second image" } },
+              ],
+            },
+          },
+        },
+      ],
+    });
   });
 
   test("accepts only referenced Markdown body queries", () => {

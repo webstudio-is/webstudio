@@ -56,12 +56,14 @@ export const compileDocumentSourceGraph = async ({
   rootIds,
   concurrency = contentEngineLimits.concurrentContentReads,
   maximumBytes = contentEngineLimits.hydratedFileBytes,
+  ignoredReferenceUrls,
   signal,
 }: {
   documents: readonly DocumentSourceDescriptor[];
   rootIds?: readonly string[];
   concurrency?: number;
   maximumBytes?: number;
+  ignoredReferenceUrls?: ReadonlySet<string>;
   signal?: AbortSignal;
 }): Promise<DocumentGraph> => {
   assertActive(signal);
@@ -117,8 +119,11 @@ export const compileDocumentSourceGraph = async ({
       analyzedIds.add(document.id);
     }
     for (const result of analyzed) {
-      references.push(...result.references);
       for (const occurrence of result.references) {
+        if (ignoredReferenceUrls?.has(occurrence.reference.documentUrl)) {
+          continue;
+        }
+        references.push(occurrence);
         const target = documentsByUrl.get(occurrence.reference.documentUrl);
         if (target !== undefined && analyzedIds.has(target.id) === false) {
           pendingIds.add(target.id);

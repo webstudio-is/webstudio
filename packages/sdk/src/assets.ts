@@ -1,4 +1,5 @@
 import warnOnce from "warn-once";
+import type { AssetRuntimeData } from "@webstudio-is/content-engine";
 import type { Asset, AssetType } from "./schema/assets";
 
 export const MIME_CATEGORIES = [
@@ -643,4 +644,15 @@ export const toRuntimeAsset = (asset: Asset, origin: string): RuntimeAsset => {
     url: relativeUrl,
     ...metadata,
   };
+};
+
+/** Runtime data used only when an Assets query expands a local asset reference. */
+export const toAssetReferenceRuntimeData = (asset: Asset, origin: string) => {
+  const name = formatAssetName(asset);
+  return {
+    ...asset,
+    ...toRuntimeAsset(asset, origin),
+    name,
+    mimeType: getAssetMime(asset) ?? getMimeTypeByFilename(name),
+  } satisfies AssetRuntimeData;
 };

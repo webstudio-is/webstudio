@@ -39,7 +39,7 @@ import {
   generateCss,
   ROOT_INSTANCE_ID,
   elementComponent,
-  toRuntimeAsset,
+  toAssetReferenceRuntimeData,
   matchPathnameParams,
   createReachableAssetContentCompilationPlan,
   parseStructuredAssetQueryResourceBody,
@@ -60,6 +60,7 @@ import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
   assetQueryFilter,
+  type AssetRuntimeData,
   type AssetQueryFilter,
   type ContentRuntimeArtifact,
   type ContentDatabaseDocument,
@@ -519,7 +520,7 @@ const generateAssetQueryRuntimeModule = ({
 }: {
   deploymentId: string;
   index: ContentRuntimeArtifact | undefined;
-  runtimeAssets: Readonly<Record<string, ContentRuntimeAsset>>;
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
 }) => {
   const inputType = `{
     request: Request;
@@ -545,10 +546,6 @@ export const createGeneratedAssetResourceFetch = ({ request, fallback }: ${input
 `;
 };
 
-type ContentRuntimeAsset = ReturnType<typeof toRuntimeAsset> & {
-  contentRef?: string;
-};
-
 export const materializeAssetIndex = async ({
   index,
   runtimeAssets,
@@ -557,7 +554,7 @@ export const materializeAssetIndex = async ({
   deploymentId,
 }: {
   index: PublishedProjectBundle["assetIndex"];
-  runtimeAssets: Readonly<Record<string, ContentRuntimeAsset>>;
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   includeDocumentRuntimeAssets: boolean;
   generatedDirectory: string;
   deploymentId: string;
@@ -1434,7 +1431,10 @@ export const prebuild = async (options: {
   // builder-only URL with the generated project's local asset URL.
   const assetsById = Object.fromEntries(
     siteData.assets.map((asset) => {
-      const runtimeAsset = toRuntimeAsset(asset, "https://placeholder.local");
+      const runtimeAsset = toAssetReferenceRuntimeData(
+        asset,
+        "https://placeholder.local"
+      );
       return [
         asset.id,
         {

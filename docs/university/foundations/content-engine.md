@@ -101,7 +101,8 @@ slug: hello-world
 publishedAt: 2026-08-10
 excerpt: A short introduction to the article.
 draft: false
-featureImage: ./assets/hello-world.png
+featureImage:
+  $ref: ./assets/hello-world.png
 author: Ada Lovelace
 ---
 
@@ -135,15 +136,29 @@ at `content.text` when the Assets resource uses **Markdown body reference**.
 
 ### Relative asset paths
 
-Upload `hello-world.png` to `blog/posts/assets`. The article refers to it with
-`./assets/hello-world.png`, relative to the Markdown file. When an Assets
-resource returns `properties.featureImage`, Webstudio turns that path into the
-published image URL. Bind the returned value directly to an image, background
-image, social image, download link, or another URL property.
+Upload `hello-world.png` to `blog/posts/assets`. The article's `$ref` resolves
+relative to the Markdown file. It declares that `featureImage` is structured
+asset data without deciding which metadata a query must return.
 
 Relative paths also work in nested objects, arrays, and JSON files. Query
 strings and fragments are preserved, so a value such as
 `./assets/hello-world.png?width=1200#cover` remains usable.
+
+Select only the referenced fields the page uses, such as
+`properties.featureImage.src` and `properties.featureImage.description`. The
+value becomes structured data:
+
+```js
+post.properties.featureImage.src
+post.properties.featureImage.description
+```
+
+Bind the Image source to `post.properties.featureImage.src`. Bind its
+alternative text to
+`post.properties.featureImage.description ?? post.properties.title`. This
+uses the Asset Manager description when present and falls back to the article
+title. Existing content that stores the asset path as a plain string continues
+returning a URL string.
 
 Imported content can also use published asset paths such as
 `./assets/hero.png` or `/assets/hero.png`. Webstudio matches the final filename
@@ -191,7 +206,8 @@ page-level **Dynamic data**:
 3. Under **Output**, choose **Selected fields**, turn off **File metadata**, and
    include only the fields the overview renders, such as `properties.title`,
    `properties.slug`, `properties.publishedAt`, `properties.excerpt`, and
-   `properties.featureImage`.
+   `properties.featureImage.src` and
+   `properties.featureImage.description`.
 4. Under **Result**, choose **Many**.
 5. Under **Content**, choose **Metadata only**. The overview does not render
    complete article bodies.
@@ -217,8 +233,10 @@ article just to display a list.
 4. Design one article card inside the Collection.
 5. Bind the card's text and image to fields on `Post.value`, such as
    `Post.value.properties.title` and
-   `Post.value.properties.featureImage`.
-6. Bind the card link to `"/blog/" + Post.value.properties.slug`.
+   `Post.value.properties.featureImage.src`.
+6. Bind the image alternative text to
+   `Post.value.properties.featureImage.description ?? Post.value.properties.title`.
+7. Bind the card link to `"/blog/" + Post.value.properties.slug`.
 
 The Assets resource returns many results as an object keyed by asset ID. The
 current article inside the Collection is available through the Collection
@@ -236,8 +254,9 @@ Add another Assets resource to the page-level **Dynamic data**:
 2. Name it `post`.
 3. Under **Output**, choose **Selected fields**, turn off **File metadata**, and
    include the fields this page renders, such as `properties.title`,
-   `properties.publishedAt`, `properties.excerpt`, `properties.featureImage`,
-   and `properties.author`.
+   `properties.publishedAt`, `properties.excerpt`,
+   `properties.featureImage.src`, `properties.featureImage.description`, and
+   `properties.author`.
 4. Under **Result**, choose **Exactly one**.
 5. Under **Content**, choose **Markdown body reference**.
 6. Add these filters:
@@ -262,7 +281,9 @@ Bind the article components directly to `post.data`:
 
 - Heading: `post.data.properties.title`
 - Author: `post.data.properties.author`
-- Image source: `post.data.properties.featureImage`
+- Image source: `post.data.properties.featureImage.src`
+- Image alternative text:
+  `post.data.properties.featureImage.description ?? post.data.properties.title`
 - Markdown Embed code: `post.data.content.text`
 
 Add a [Markdown Embed](../core-components/markdown-embed.md) for the body. Style
@@ -273,7 +294,7 @@ In Page Settings, bind the fields needed for search and sharing:
 
 - **Title**: `post.data.properties.title`
 - **Description**: `post.data.properties.excerpt`
-- **Social image**: `post.data.properties.featureImage`
+- **Social image**: `post.data.properties.featureImage.src`
 - **Status code**: `post.data ? 200 : 404`
 
 The status expression returns a real 404 when no article matches the URL.
