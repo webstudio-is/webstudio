@@ -11,8 +11,8 @@ type Props = ComponentProps<"form"> & {
 };
 
 export const WebhookForm = forwardRef<ElementRef<"form">, Props>(
-  ({ children, method = "post", state = "initial", ...props }, ref) => (
-    <form {...props} method={method} ref={ref}>
+  ({ children, state = "initial", ...props }, ref) => (
+    <form {...props} ref={ref}>
       {children}
     </form>
   )

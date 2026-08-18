@@ -1005,10 +1005,10 @@ return (condition) &&
 `);
 });
 
-test("generate resource prop", () => {
+test("generate resource prop with configured form method", () => {
   const myResource = new ResourceValue("myResource", {
     url: expression`"https://my-url.com?with-secret"`,
-    method: "get",
+    method: "post",
     searchParams: [],
     headers: [],
   });
@@ -1037,9 +1037,11 @@ test("generate resource prop", () => {
     "const Page = () => {
     return <Body>
     <Form
-    action={"action"} />
+    action={"action"}
+    method={"post"} />
     <Form
-    action={"action_1"} />
+    action={"action_1"}
+    method={"get"} />
     </Body>
     }
     "

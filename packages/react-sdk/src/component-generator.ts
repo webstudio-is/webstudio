@@ -8,6 +8,7 @@ import type {
   DataSource,
   WsComponentMeta,
   IndexesWithinAncestors,
+  Resources,
 } from "@webstudio-is/sdk";
 import {
   parseComponentName,
@@ -149,6 +150,7 @@ export const generateJsxElement = ({
   tagsOverrides,
   instance,
   props,
+  resources,
   dataSources,
   usedDataSources,
   indexesWithinAncestors,
@@ -164,6 +166,7 @@ export const generateJsxElement = ({
   tagsOverrides?: Record<string, string>;
   instance: Instance;
   props: Props;
+  resources?: Resources;
   dataSources: DataSources;
   usedDataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
@@ -194,10 +197,23 @@ export const generateJsxElement = ({
   let collectionItemValue: undefined | string;
   let collectionItemKeyValue: undefined | string;
   let classNameValue: undefined | string;
+  let hasMethodProp = false;
+  let actionResourceMethod: undefined | string;
 
   for (const prop of props.values()) {
     if (prop.instanceId !== instance.id) {
       continue;
+    }
+
+    if (prop.name === "method") {
+      hasMethodProp = true;
+    }
+    if (
+      instance.component === "Form" &&
+      prop.name === "action" &&
+      prop.type === "resource"
+    ) {
+      actionResourceMethod = resources?.get(prop.value)?.method;
     }
 
     const propValue = generatePropValue({
@@ -256,6 +272,10 @@ export const generateJsxElement = ({
     if (propValue !== undefined) {
       generatedProps += `\n${name}={${propValue}}`;
     }
+  }
+
+  if (hasMethodProp === false && actionResourceMethod !== undefined) {
+    generatedProps += `\nmethod={${JSON.stringify(actionResourceMethod)}}`;
   }
 
   const classMapArray = classesMap?.get(instance.id);
@@ -365,6 +385,7 @@ export const generateJsxChildren = ({
   children,
   instances,
   props,
+  resources,
   dataSources,
   usedDataSources,
   indexesWithinAncestors,
@@ -378,6 +399,7 @@ export const generateJsxChildren = ({
   children: Instance["children"];
   instances: Instances;
   props: Props;
+  resources?: Resources;
   dataSources: DataSources;
   usedDataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
@@ -421,6 +443,7 @@ export const generateJsxChildren = ({
         tagsOverrides,
         instance,
         props,
+        resources,
         dataSources,
         usedDataSources,
         indexesWithinAncestors,
@@ -433,6 +456,7 @@ export const generateJsxChildren = ({
           children: instance.children,
           instances,
           props,
+          resources,
           dataSources,
           usedDataSources,
           indexesWithinAncestors,
@@ -453,6 +477,7 @@ export const generateWebstudioComponent = ({
   parameters,
   instances,
   props,
+  resources,
   dataSources,
   metas,
   tagsOverrides,
@@ -464,6 +489,7 @@ export const generateWebstudioComponent = ({
   parameters: Extract<Prop, { type: "parameter" }>[];
   instances: Instances;
   props: Props;
+  resources?: Resources;
   dataSources: DataSources;
   classesMap: Map<string, Array<string>>;
   metas: Map<Instance["component"], WsComponentMeta>;
@@ -488,6 +514,7 @@ export const generateWebstudioComponent = ({
       tagsOverrides,
       instance,
       props,
+      resources,
       dataSources,
       usedDataSources,
       indexesWithinAncestors,
@@ -499,6 +526,7 @@ export const generateWebstudioComponent = ({
         children: instance.children,
         instances,
         props,
+        resources,
         dataSources,
         usedDataSources,
         indexesWithinAncestors,
