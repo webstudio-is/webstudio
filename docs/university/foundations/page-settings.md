@@ -61,6 +61,11 @@ Path rules:
 - Wildcards such as `*` and `:path*` must be the final segment
 - Parameter names can contain letters, numbers, and underscores
 
+Webstudio Cloud sites and exported JavaScript applications permanently redirect
+a trailing-slash URL such as `/about/` to the page path `/about` and preserve
+its query string. For static exports, the hosting platform controls
+[trailing-slash behavior](../self-hosting/#static-site-url-behavior).
+
 ## Status code
 
 The HTTP status code returned when this page is requested. Defaults to `200`.
