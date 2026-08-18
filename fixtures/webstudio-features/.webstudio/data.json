@@ -7261,8 +7261,11 @@
       "createdAt": "2026-01-14T02:59:19.806+00:00",
       "updatedAt": "2026-01-14T02:59:19.806+00:00",
       "format": "webm",
-      "meta": {},
-      "type": "file"
+      "meta": {
+        "width": 480,
+        "height": 270
+      },
+      "type": "video"
     },
     {
       "id": "7cf5892080fa66b5e6175ffd2d27c304ee6b09ce1f21847a95000225ad1afa59",
@@ -7300,8 +7303,11 @@
       "createdAt": "2026-01-14T02:59:28.168+00:00",
       "updatedAt": "2026-01-14T02:59:28.168+00:00",
       "format": "mp4",
-      "meta": {},
-      "type": "file"
+      "meta": {
+        "width": 202,
+        "height": 360
+      },
+      "type": "video"
     },
     {
       "id": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
