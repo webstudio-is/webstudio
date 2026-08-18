@@ -6,7 +6,6 @@ import {
   type JSX,
   type PointerEvent,
 } from "react";
-import type { AssetType } from "@webstudio-is/asset-uploader";
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -35,7 +34,10 @@ import {
   readDroppedAssetItems,
 } from "./directory-drop";
 import { $assetFolders } from "~/shared/sync/data-stores";
-import { createAssetFolderHierarchy } from "@webstudio-is/sdk";
+import {
+  createAssetFolderHierarchy,
+  type UploadAssetType,
+} from "@webstudio-is/sdk";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import {
@@ -52,7 +54,7 @@ type AssetsShellProps = {
   children: JSX.Element;
   interactionOverlay?: JSX.Element;
   footer?: JSX.Element;
-  type: AssetType;
+  type: UploadAssetType;
   accept?: string;
   isEmpty: boolean;
   emptyMessage?: string;
@@ -86,7 +88,7 @@ const uploadDroppedFiles = ({
   folderId,
 }: {
   files: File[];
-  type: AssetType;
+  type: UploadAssetType;
   accept?: string;
   folderId?: string;
 }) => {

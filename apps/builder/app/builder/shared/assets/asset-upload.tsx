@@ -7,9 +7,12 @@ import {
 import { useStore } from "@nanostores/react";
 import { Button, Flex, Tooltip, toast } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
-import { IMAGE_MIME_TYPES, detectAssetType } from "@webstudio-is/sdk";
+import {
+  IMAGE_MIME_TYPES,
+  detectAssetType,
+  type UploadAssetType,
+} from "@webstudio-is/sdk";
 import { MAX_UPLOAD_SIZE, toBytes } from "@webstudio-is/asset-uploader";
-import type { AssetType } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { uploadAssets } from "./upload-assets";
 import { $authPermit } from "~/shared/nano-states";
@@ -27,7 +30,7 @@ export const validateFiles = (files: File[]) => {
 };
 
 export const groupFilesByAssetType = (files: readonly File[]) => {
-  const filesByType = new Map<AssetType, File[]>();
+  const filesByType = new Map<UploadAssetType, File[]>();
   for (const file of files) {
     const type = detectAssetType(file.name);
     const groupedFiles = filesByType.get(type) ?? [];
@@ -91,7 +94,7 @@ export const acceptFileTypeSpecifier = (specifiers: string, file: File) => {
 };
 
 export const acceptUploadType = (
-  assetType: AssetType,
+  assetType: UploadAssetType,
   accept: string | undefined,
   file: File
 ) => {
@@ -108,7 +111,7 @@ export const acceptUploadType = (
 };
 
 type AssetUploadProps = {
-  type: AssetType;
+  type: UploadAssetType;
   accept?: string;
   folderId?: string;
   showTrigger?: boolean;

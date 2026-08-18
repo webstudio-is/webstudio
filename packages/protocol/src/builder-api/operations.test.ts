@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { getInputJsonSchemaMetadata } from "@webstudio-is/sdk";
+import {
+  getInputJsonSchemaMetadata,
+  UPLOAD_ASSET_TYPES,
+} from "@webstudio-is/sdk";
 import * as protocol from "../index";
 import {
   getPublicApiOperation,
@@ -308,7 +311,7 @@ describe("public api operation catalog", () => {
     expect(JSON.stringify(uploadMany.inputSchema)).toContain('"force"');
   });
 
-  test("accepts video as an MCP upload descriptor type", () => {
+  test("exposes every supported upload type to MCP", () => {
     const uploadAssetSchema =
       getPublicApiOperation("upload-asset").inputSchema?.properties?.asset;
     const assetTypeSchema =
@@ -318,7 +321,7 @@ describe("public api operation catalog", () => {
 
     expect(assetTypeSchema).toMatchObject({
       type: "string",
-      enum: ["image", "font", "video", "file"],
+      enum: UPLOAD_ASSET_TYPES,
     });
   });
 

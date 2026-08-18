@@ -1,9 +1,14 @@
 import warnOnce from "warn-once";
 import invariant from "tiny-invariant";
-import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
+import {
+  getFileNameParts,
+  toStoredAssetType,
+  type Asset,
+  type UploadAssetType,
+} from "@webstudio-is/sdk";
 import { assetsUploadsApiUrl } from "@webstudio-is/sdk/runtime";
 import type { AssetUploadResult } from "@webstudio-is/protocol/asset-resource-api";
-import type { AssetType, UploadTicket } from "@webstudio-is/asset-uploader";
+import type { UploadTicket } from "@webstudio-is/asset-uploader";
 import { Box, toast, css, theme } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
@@ -69,7 +74,7 @@ const safeSetAsset = (asset: Asset, projectId: string) => {
 };
 
 const getFilesData = async <T extends File | URL>(
-  type: AssetType,
+  type: UploadAssetType,
   filesOrUrls: T[],
   folderId?: string,
   createObjectURL = URL.createObjectURL
@@ -300,13 +305,13 @@ const createUploadTicket = async ({
   projectId: string;
   fileOrUrl: File | URL;
   contentHash?: string;
-  assetType: AssetType;
+  assetType: UploadAssetType;
   request?: typeof fetch;
 }): Promise<UploadTicket> => {
   const fileName = getFileName(fileOrUrl);
   const metaFormData = new FormData();
   metaFormData.append("projectId", projectId);
-  metaFormData.append("type", assetType === "video" ? "file" : assetType);
+  metaFormData.append("type", toStoredAssetType(assetType));
   if (contentHash !== undefined) {
     metaFormData.append("contentHash", contentHash);
   }
@@ -456,7 +461,7 @@ const processUpload = async (
 };
 
 export const uploadAssets = async <T extends File | URL>(
-  type: AssetType,
+  type: UploadAssetType,
   filesOrUrls: T[],
   options: { folderId?: string } = {}
 ): Promise<Map<T, string>> => {
@@ -570,7 +575,7 @@ export const uploadAssets = async <T extends File | URL>(
 };
 
 export const uploadSingleAsset = async (
-  type: AssetType,
+  type: UploadAssetType,
   file: File,
   options: { folderId?: string } = {}
 ): Promise<Asset | undefined> => {

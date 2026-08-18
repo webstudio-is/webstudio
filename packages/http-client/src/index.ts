@@ -2,8 +2,10 @@ import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 import { Upload } from "tus-js-client";
 import {
   getAssetContentHash,
+  toStoredAssetType,
   type AssetQueryResourceConfigurationInput,
   type AssetFolder,
+  type UploadAssetType,
 } from "@webstudio-is/sdk";
 import {
   type AssetFolderUpdateRequest,
@@ -353,7 +355,7 @@ type AssetUpload = {
 
 type AssetUploadDescriptor = {
   name: string;
-  type: Asset["type"] | "video";
+  type: UploadAssetType;
   format?: string;
   meta?: Record<string, unknown>;
   description?: string | null;
@@ -540,6 +542,7 @@ const toUploadAsset = ({
   descriptor: AssetUploadDescriptor;
   projectId: string;
 }): Asset => {
+  const storedType = toStoredAssetType(descriptor.type);
   const base = {
     id: "",
     projectId,
@@ -550,7 +553,7 @@ const toUploadAsset = ({
     size: 0,
     createdAt: new Date().toISOString(),
   };
-  if (descriptor.type === "image") {
+  if (storedType === "image") {
     const width = descriptor.meta?.width;
     const height = descriptor.meta?.height;
     if (
@@ -569,7 +572,7 @@ const toUploadAsset = ({
       meta: { width, height },
     };
   }
-  if (descriptor.type === "font") {
+  if (storedType === "font") {
     return {
       ...base,
       type: "font",

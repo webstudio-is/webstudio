@@ -1,5 +1,19 @@
 import warnOnce from "warn-once";
-import type { Asset } from "./schema/assets";
+import type { Asset, AssetType as StoredAssetType } from "./schema/assets";
+
+export const UPLOAD_ASSET_TYPES = ["image", "font", "video", "file"] as const;
+export type UploadAssetType = (typeof UPLOAD_ASSET_TYPES)[number];
+
+const storedAssetTypeByUploadType = {
+  image: "image",
+  font: "font",
+  video: "file",
+  file: "file",
+} as const satisfies Record<UploadAssetType, StoredAssetType>;
+
+export const toStoredAssetType = (
+  uploadType: UploadAssetType
+): StoredAssetType => storedAssetTypeByUploadType[uploadType];
 
 export const MIME_CATEGORIES = [
   "image",
@@ -493,9 +507,7 @@ export const validateFileName = (
 /**
  * Detect the asset type from a file based on its extension
  */
-export const detectAssetType = (
-  fileName: string
-): "image" | "font" | "video" | "file" => {
+export const detectAssetType = (fileName: string): UploadAssetType => {
   const ext = getFileExtension(fileName)?.toLowerCase();
   if (!ext) {
     return "file";

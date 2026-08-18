@@ -1,5 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { fontMeta } from "@webstudio-is/fonts";
+import { assetType } from "./schema/assets";
 import {
   ALLOWED_FILE_TYPES,
   getMimeTypeByExtension,
@@ -14,6 +15,8 @@ import {
   FONT_EXTENSIONS,
   FILE_EXTENSIONS_BY_CATEGORY,
   detectAssetType,
+  toStoredAssetType,
+  UPLOAD_ASSET_TYPES,
   decodePathFragment,
   getAssetUrl,
   toRuntimeAsset,
@@ -460,6 +463,25 @@ describe("allowed-file-types", () => {
   });
 
   describe("detectAssetType", () => {
+    test("maps every supported upload type to a valid stored asset type", () => {
+      const storedTypes = Object.fromEntries(
+        UPLOAD_ASSET_TYPES.map((uploadType) => [
+          uploadType,
+          toStoredAssetType(uploadType),
+        ])
+      );
+
+      expect(storedTypes).toEqual({
+        image: "image",
+        font: "font",
+        video: "file",
+        file: "file",
+      });
+      for (const storedType of Object.values(storedTypes)) {
+        expect(assetType.safeParse(storedType).success).toBe(true);
+      }
+    });
+
     test("detects image files", () => {
       expect(detectAssetType("photo.jpg")).toBe("image");
       expect(detectAssetType("image.png")).toBe("image");
