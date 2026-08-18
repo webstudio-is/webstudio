@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { createCanonicalAssetFileEntry } from "./canonical";
+import { getContentArtifactReferencedAssetIds } from "./content-artifact";
 import {
   compileContentSource,
   ContentSourceChangedError,
@@ -119,6 +120,69 @@ const createDocumentSource = ({
 });
 
 describe("content source snapshots", () => {
+  test("compiles MDX sources into the document graph", async () => {
+    const mdx =
+      '---\nauthor:\n  $ref: ./author.json#/profile\n---\n<ws.element ws:name="Hero">Hello</ws.element>\n';
+    const post = createFile({
+      id: "post",
+      path: "blog/post.mdx",
+      contentType: "text/mdx",
+      contentRef: "revisions/post.mdx",
+      size: new TextEncoder().encode(mdx).byteLength,
+    });
+    const author = createFile({
+      id: "author",
+      path: "blog/author.json",
+      contentType: "application/json",
+    });
+    const source = createDocumentSource({
+      files: [post, author],
+      sources: {
+        post: mdx,
+        author: '{"profile":{"name":"Ada"}}',
+      },
+    });
+
+    const result = await compileContentSource({
+      source,
+      projectId,
+      plan: {
+        standardFields: [],
+        structuredPropertyPaths: [["properties", "author"]],
+        excerpt: false,
+        metadataError: false,
+        queries: [
+          {
+            id: "posts",
+            where: { all: [] },
+            sort: [],
+            limit: { type: "literal", value: 1 },
+            offset: { type: "literal", value: 0 },
+            output: {
+              mode: "fields",
+              includeMetadata: false,
+              fields: [["properties", "author"]],
+            },
+            content: { mode: "none" },
+          },
+        ],
+      },
+    });
+
+    expect(
+      result.documentGraph?.nodes.map(({ id, format }) => [id, format])
+    ).toEqual([
+      ["author", "json"],
+      ["post", "mdx"],
+    ]);
+    expect(result.documentGraph?.edges).toEqual([
+      expect.objectContaining({
+        sourceId: "post",
+        referenceId: "#frontmatter/author",
+      }),
+    ]);
+  });
+
   test("analyzes only query roots and their reachable document targets", async () => {
     const post = createFile({ id: "post", path: "blog/post.md" });
     const author = createFile({
@@ -585,6 +649,89 @@ describe("content source snapshots", () => {
     });
   });
 
+  test("exposes MDX frontmatter and authored Asset references", async () => {
+    const mdx = createFile({
+      id: "post",
+      path: "blog/post.mdx",
+      contentType: "text/mdx",
+      contentRef: "revisions/post.mdx",
+    });
+    const cover = createFile({
+      id: "cover",
+      path: "blog/cover.png",
+      contentType: "image/png",
+    });
+    const hero = createFile({
+      id: "hero",
+      path: "blog/hero.png",
+      contentType: "image/png",
+    });
+    const video = createFile({
+      id: "video",
+      path: "blog/video.jpg",
+      contentType: "image/jpeg",
+    });
+    const content = `---
+cover: ./cover.png
+---
+![Hero](./hero.png#crop)
+
+<ws.element ws:name="Card" poster="./video.jpg" />
+`;
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [mdx, cover, hero, video],
+          async loadEntries() {
+            const entry = createEntry(mdx);
+            return [
+              {
+                ...entry,
+                document: {
+                  ...entry.document,
+                  properties: { cover: "./cover.png" },
+                },
+                content,
+              } as typeof entry & { content: string },
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+
+    expect(result.artifact.documents[0]?.properties).toEqual({
+      cover: "./cover.png",
+    });
+    expect(result.artifact.assetValueReferences).toEqual({
+      post: [
+        {
+          path: ["properties", "cover"],
+          assetId: "cover",
+        },
+        {
+          path: ["children", 0, "children", 0, "props", 0, "value"],
+          assetId: "hero",
+          suffix: "#crop",
+        },
+        {
+          path: ["children", 1, "props", 0, "value"],
+          assetId: "video",
+        },
+      ],
+    });
+    expect(getContentArtifactReferencedAssetIds(result.artifact)).toEqual([
+      "cover",
+      "hero",
+      "video",
+    ]);
+  });
+
   test("resolves the same relative URL independently for each Markdown folder", async () => {
     const firstPost = createFile({
       id: "first-post",
@@ -717,77 +864,95 @@ describe("content source snapshots", () => {
     ).toEqual({ "revisions/post.md": ["hero"] });
   });
 
-  test("keeps Markdown body content in storage for graph-backed queries", async () => {
-    const markdown = "---\ntitle: Post\nslug: post\n---\nStored body\n";
-    const post = createFile({
-      id: "post",
-      path: "blog/post.md",
-      size: new TextEncoder().encode(markdown).byteLength,
-    });
-    const source: ContentSource = {
-      async openSnapshot() {
-        return {
-          revision: "snapshot",
-          files: [post],
-          async loadEntries() {
-            return [{ ...createEntry(post), content: markdown }];
-          },
-          async loadDocumentSources() {
-            return [{ id: post.id, source: markdown }];
-          },
-          async isCurrent() {
-            return true;
-          },
-        };
-      },
-    };
+  test.each([
+    {
+      label: "Markdown",
+      extension: "md",
+      contentType: "text/markdown",
+      format: "markdown",
+    },
+    {
+      label: "MDX",
+      extension: "mdx",
+      contentType: "text/mdx",
+      format: "mdx",
+    },
+  ] as const)(
+    "keeps $label body content in storage for graph-backed queries",
+    async ({ extension, contentType, format }) => {
+      const markdown = "---\ntitle: Post\nslug: post\n---\nStored body\n";
+      const post = createFile({
+        id: "post",
+        path: `blog/post.${extension}`,
+        contentType,
+        contentRef: `revisions/post.${extension}`,
+        size: new TextEncoder().encode(markdown).byteLength,
+      });
+      const source: ContentSource = {
+        async openSnapshot() {
+          return {
+            revision: "snapshot",
+            files: [post],
+            async loadEntries() {
+              return [{ ...createEntry(post), content: markdown }];
+            },
+            async loadDocumentSources() {
+              return [{ id: post.id, source: markdown }];
+            },
+            async isCurrent() {
+              return true;
+            },
+          };
+        },
+      };
 
-    const result = await compileContentSource({
-      source,
-      projectId,
-      plan: {
-        standardFields: [["extension"], ["mimeType"], ["revision"], ["size"]],
-        structuredPropertyPaths: [["properties", "slug"]],
-        excerpt: false,
-        metadataError: false,
-        queries: [
+      const result = await compileContentSource({
+        source,
+        projectId,
+        plan: {
+          standardFields: [["extension"], ["mimeType"], ["revision"], ["size"]],
+          structuredPropertyPaths: [["properties", "slug"]],
+          excerpt: false,
+          metadataError: false,
+          queries: [
+            {
+              id: "post",
+              where: {
+                all: [
+                  {
+                    field: ["properties", "slug"],
+                    operator: "eq",
+                    value: { type: "dynamic" },
+                  },
+                ],
+              },
+              sort: [],
+              limit: { type: "literal", value: 1 },
+              offset: { type: "literal", value: 0 },
+              output: {
+                mode: "fields",
+                includeMetadata: false,
+                fields: [["properties", "slug"]],
+              },
+              content: { mode: "markdown-body-ref" },
+            },
+          ],
+        },
+      });
+
+      expect(result.artifact.contents).toBeUndefined();
+      expect(result.artifact.documentGraph).toMatchObject({
+        nodes: [
           {
             id: "post",
-            where: {
-              all: [
-                {
-                  field: ["properties", "slug"],
-                  operator: "eq",
-                  value: { type: "dynamic" },
-                },
-              ],
-            },
-            sort: [],
-            limit: { type: "literal", value: 1 },
-            offset: { type: "literal", value: 0 },
-            output: {
-              mode: "fields",
-              includeMetadata: false,
-              fields: [["properties", "slug"]],
-            },
-            content: { mode: "markdown-body-ref" },
+            contentRef: `revisions/post.${extension}`,
+            format,
           },
         ],
-      },
-    });
-
-    expect(result.artifact.contents).toBeUndefined();
-    expect(result.artifact.documentGraph).toMatchObject({
-      nodes: [
-        {
-          id: "post",
-          contentRef: "revisions/post.md",
-          format: "markdown",
-        },
-      ],
-      edges: [],
-    });
-  });
+        edges: [],
+      });
+    }
+  );
 
   test("does not resolve an ambiguous Asset path", async () => {
     const post = createFile({ id: "post", path: "blog/post.md" });

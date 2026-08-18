@@ -17,7 +17,7 @@ The Assets panel is located on the left side of the builder. It stores all stati
 | **Video** | MP4, MOV, AVI, WebM |
 | **Audio** | MP3, WAV, OGG, M4A |
 | **Documents** | PDF, DOC, DOCX, XLS, XLSX, CSV, PPT, PPTX |
-| **Code & text** | TXT, MD, JS, CSS, JSON, HTML, XML |
+| **Code & text** | TXT, MD, MDX, JS, CSS, JSON, HTML, XML |
 | **Archives** | ZIP, RAR |
 
 {% hint style="info" %}
@@ -40,15 +40,17 @@ multiple selected assets does not insert multiple Image components.
 ### Create and edit text files
 
 Open the add menu in the Assets panel and choose **Create text file**. Enter a
-supported filename, such as `notes.md` or `data.json`.
+supported filename, such as `notes.md`, `article.mdx`, or `data.json`.
 Webstudio creates the file in the current folder and opens it in the code
 editor. New JSON files start with an empty object so the Content Engine can
-index them immediately.
+index them immediately. You can also choose **Create MDX file** from a Content
+Block's **Content source** control.
 
-You can open uploaded `txt`, `csv`, `md`, `js`, `css`, `json`, `html`, `xml`,
-and `svg` assets in the same editor. Syntax highlighting follows the file type;
-unsupported text types use plain text. Markdown files also provide formatting
-controls and a preview.
+You can open uploaded `txt`, `csv`, `md`, `mdx`, `js`, `css`, `json`, `html`,
+`xml`, and `svg` assets in the same editor. Syntax highlighting follows the
+file type; unsupported text types use plain text. Markdown and MDX files provide
+formatting controls. The file editor previews `.md`; connect `.mdx` to a Content
+Block to see its materialized result on the canvas.
 
 Edits save when the editor loses focus or when you press `Command + S` on
 macOS, `Ctrl + S` on Windows, or `Command/Ctrl + Enter`. Edit the complete
@@ -62,10 +64,28 @@ Converting an empty text file to `.json` initializes it with an empty object.
 
 ### Use assets as content
 
-Markdown and JSON files in Assets can be the source of truth for a site. The
-Content Engine reads their structured fields, queries the files, and resolves
-links between them. See [Content Engine](content-engine.md) for the supported
-file structure and a complete article workflow.
+Markdown, MDX, and JSON files in Assets can be the source of truth for a site.
+The Content Engine reads their structured fields, queries the files, and
+resolves links between them. See [Content Engine](content-engine.md) for the
+supported file structure and a complete article workflow.
+
+Markdown and MDX have different rendering and editing behavior:
+
+| Extension | Use |
+| --- | --- |
+| `.md` | Standard Markdown with its normal embedded HTML behavior. Use it with Content Engine queries or Markdown rendering. |
+| `.mdx` | Safe MDX with frontmatter, Markdown, and restricted `<ws.element>` JSX. It can be the editable body of a Content Block. |
+
+The extensions are not interchangeable. A `.md` file may contain HTML that is
+not valid safe MDX. From a Content Block, choose **Convert Markdown** to preview
+a best-effort conversion. Webstudio lists and skips unsupported parts, creates
+a new `.mdx` Asset, and leaves the original `.md` file unchanged.
+
+When a Content Block is connected to an `.mdx` Asset, canvas edits save to that
+file. The file is loaded and materialized before the published component tree
+renders; the published page does not fetch it from the browser. See [Content
+Block](../core-components/content-block.md#use-an-mdx-file-as-the-content-source)
+for source binding, switching, recovery, and safe MDX syntax.
 
 ## Organizing assets with folders
 

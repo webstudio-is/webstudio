@@ -76,7 +76,7 @@ import {
   $textEditorContextMenu,
   execTextEditorContextMenuCommand,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import { $runtimeInstances as $instances } from "~/shared/content-block-content";
 import {
   findBlockChildSelector,
   findBlockTemplates,

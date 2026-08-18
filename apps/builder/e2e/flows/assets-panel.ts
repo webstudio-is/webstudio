@@ -174,6 +174,24 @@ export const chooseAssetByFilename = async ({
   filename: string;
 }) => {
   const title = await waitForAsset({ page, filename });
-  await page.getByAltText(title, { exact: true }).last().click();
+  await page.getByTitle(title, { exact: true }).last().click();
   return title;
+};
+
+export const getAssetIdByFilename = async ({
+  page,
+  filename,
+}: {
+  page: Page;
+  filename: string;
+}) => {
+  const title = await waitForAsset({ page, filename });
+  const dragKey = await page
+    .getByTitle(title)
+    .locator("xpath=ancestor-or-self::*[@data-asset-manager-drag-key][1]")
+    .getAttribute("data-asset-manager-drag-key");
+  if (dragKey?.startsWith("asset:") !== true) {
+    throw new Error(`Expected uploaded asset ${filename} to expose its id`);
+  }
+  return dragKey.slice("asset:".length);
 };

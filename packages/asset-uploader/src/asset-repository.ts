@@ -105,9 +105,14 @@ import {
   type AssetQueryPerformanceObserver,
   type AssetQueryPerformancePhase,
 } from "./query-performance";
+import type { AssetContentRead as SharedAssetContentRead } from "./content-repository";
 
 type CreateId = () => Asset["id"];
 type RepositoryObjectStore = AssetObjectReader & Partial<AssetObjectWriter>;
+
+export type AssetContentRead = Omit<SharedAssetContentRead, "asset"> & {
+  asset: Asset;
+};
 
 type ContentBytesReference = {
   contentRef: string;
@@ -188,12 +193,6 @@ export class AssetIndexPreparationError extends Error {
     this.issues = issues;
   }
 }
-
-export type AssetContentRead = {
-  asset: Asset;
-  data: AsyncIterable<Uint8Array>;
-  contentLength?: number;
-};
 
 type AssetQueryPreviewOptions = {
   databasePlan?: ContentCompilationPlan;

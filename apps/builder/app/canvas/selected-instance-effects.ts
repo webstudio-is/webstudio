@@ -16,7 +16,11 @@ import {
   type UnitSizes,
   type PropertySizes,
 } from "~/shared/nano-states";
-import { $styleSourceSelections } from "~/shared/sync/data-stores";
+import {
+  $runtimeInstances as $instances,
+  $runtimeStyleSourceSelections as $styleSourceSelections,
+  $runtimeStyles as $styles,
+} from "~/shared/content-block-content";
 import {
   getAllElementsBoundingBox,
   getVisibleElementsByInstanceSelector,
@@ -29,7 +33,6 @@ import {
   $selectedInstanceOutline,
   $selectedInstanceOutlines,
 } from "~/shared/nano-states";
-import { $instances, $styles } from "~/shared/sync/data-stores";
 import { inflateInstance } from "~/canvas/inflator";
 import {
   areInstanceSelectorsEqual,

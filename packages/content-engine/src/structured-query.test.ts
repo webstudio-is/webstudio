@@ -8,6 +8,7 @@ import {
   executeAssetQuery,
   executeAssetQueries,
   getAssetQueryFieldValue,
+  supportsAssetQueryContent,
   validateAssetQueryAgainstCatalog,
 } from "./structured-query";
 
@@ -71,6 +72,25 @@ const documents = [
     },
   }),
 ];
+
+test("supports referenced bodies for Markdown and MDX documents", () => {
+  const content = { mode: "markdown-body-ref" } as const;
+  expect(supportsAssetQueryContent({ document: documents[0], content })).toBe(
+    true
+  );
+  expect(
+    supportsAssetQueryContent({
+      document: {
+        ...documents[0],
+        name: "alpha.mdx",
+        path: "blog/alpha.mdx",
+        extension: "mdx",
+        mimeType: "text/mdx",
+      },
+      content,
+    })
+  ).toBe(true);
+});
 
 const catalog: BuilderAssetFieldCatalog = {
   format: "webstudio-builder-asset-field-catalog",

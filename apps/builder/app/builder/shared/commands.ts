@@ -96,7 +96,7 @@ import {
 import { getDirectSharedSlotChildBoundary } from "~/shared/instance-utils/slot";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import { areInstanceSelectorsEqual } from "@webstudio-is/project-build/runtime";
-import { findChildReferenceIndex } from "@webstudio-is/project-build/runtime";
+import { findChildReferenceIndex } from "@webstudio-is/sdk";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -442,7 +442,7 @@ const deleteSelectedInstances = () => {
     reportSkippedSelectedInstances("deleted");
   }
 
-  executeRuntimeMutation({
+  const result = executeRuntimeMutation({
     id: "instances.delete",
     input: {
       instanceIds: sortInstancePathsForChildMutation(
@@ -450,7 +450,9 @@ const deleteSelectedInstances = () => {
       ).map(({ instancePath }) => instancePath[0].instance.id),
     },
   });
-  clearInstanceSelection();
+  if (result !== undefined) {
+    clearInstanceSelection();
+  }
   return true;
 };
 
@@ -1126,9 +1128,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+z", "ctrl+z"],
       disableOnInputLikeControls: true,
-      handler: () => {
-        serverSyncStore.undo();
-      },
+      handler: () => serverSyncStore.undo(),
     },
     {
       name: "redo",
@@ -1137,9 +1137,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+shift+z", "ctrl+shift+z"],
       disableOnInputLikeControls: true,
-      handler: () => {
-        serverSyncStore.redo();
-      },
+      handler: () => serverSyncStore.redo(),
     },
 
     {

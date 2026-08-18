@@ -6,7 +6,8 @@ import {
 } from "@webstudio-is/sdk";
 import {
   getTextFileEditorExtensions,
-  isMarkdownAsset,
+  isMarkdownPreviewAsset,
+  isMarkdownSyntaxAsset,
   normalizeTextFileContent,
   normalizeTextFileConversion,
 } from "./text-file-utils";
@@ -21,7 +22,7 @@ describe("text file assets", () => {
     expect(isTextFileAsset({ format: "pdf" })).toBe(false);
   });
 
-  test.each(["md", "js", "css", "json", "html", "xml", "svg"])(
+  test.each(["md", "mdx", "js", "css", "json", "html", "xml", "svg"])(
     "uses the available CodeMirror language for %s",
     (format) => {
       expect(getTextFileEditorExtensions({ format })).toHaveLength(1);
@@ -43,9 +44,15 @@ describe("text file assets", () => {
     }
   );
 
-  test("identifies Markdown files case-insensitively", () => {
-    expect(isMarkdownAsset({ format: "MD" })).toBe(true);
-    expect(isMarkdownAsset({ format: "txt" })).toBe(false);
+  test("identifies files that use Markdown syntax", () => {
+    expect(isMarkdownSyntaxAsset({ format: "MD" })).toBe(true);
+    expect(isMarkdownSyntaxAsset({ format: "mdx" })).toBe(true);
+    expect(isMarkdownSyntaxAsset({ format: "txt" })).toBe(false);
+  });
+
+  test("limits the Markdown preview to .md files", () => {
+    expect(isMarkdownPreviewAsset({ format: "MD" })).toBe(true);
+    expect(isMarkdownPreviewAsset({ format: "mdx" })).toBe(false);
   });
 
   test("normalizes JSON-compatible object expressions to strict JSON", () => {

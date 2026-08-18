@@ -5,12 +5,17 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { createBuilderStateFromSnapshot } from "@webstudio-is/project-build/state";
 import { createBuilderStateFreshness } from "@webstudio-is/project-build/state";
 import { builderNamespaces } from "@webstudio-is/project-build/contracts";
-import { createStructuredAssetQueryResourceBody } from "@webstudio-is/sdk";
+import {
+  blockComponent,
+  blockTemplateComponent,
+  createStructuredAssetQueryResourceBody,
+} from "@webstudio-is/sdk";
 import {
   createLocalProjectBundleFromSessionSnapshot,
   createCliProjectRestorePointStorage,
   createCliProjectSessionStorage,
   createCliProjectSessionTransport,
+  createCliProjectSession,
   addIssueReportRuntime,
   getCliServerApiContract,
   getCliProjectSessionFile,
@@ -615,6 +620,239 @@ test("rejects incomplete project session snapshots before preview generation", (
 });
 
 describe("cli project session transport", () => {
+  test("loads exact MDX source identity for MCP inspection", async () => {
+    const source = "# CLI content";
+    const bytes = new TextEncoder().encode(source);
+    const state = createBuilderStateFromSnapshot({
+      pages: {
+        homePageId: "home",
+        rootFolderId: "root-folder",
+        pages: new Map([
+          [
+            "home",
+            {
+              id: "home",
+              name: "Home",
+              title: "Home",
+              path: "",
+              rootInstanceId: "block",
+              meta: {},
+            },
+          ],
+        ]),
+        folders: new Map([
+          [
+            "root-folder",
+            {
+              id: "root-folder",
+              name: "Root",
+              slug: "",
+              children: ["home"],
+            },
+          ],
+        ]),
+      },
+      instances: [
+        [
+          "block",
+          {
+            type: "instance",
+            id: "block",
+            component: blockComponent,
+            children: [{ type: "id", value: "templates" }],
+          },
+        ],
+        [
+          "templates",
+          {
+            type: "instance",
+            id: "templates",
+            component: blockTemplateComponent,
+            children: [],
+          },
+        ],
+      ],
+      props: [
+        [
+          "src",
+          {
+            id: "src",
+            instanceId: "block",
+            name: "src",
+            type: "asset",
+            value: "article",
+          },
+        ],
+      ],
+      assets: [
+        [
+          "article",
+          {
+            id: "article",
+            type: "file",
+            format: "mdx",
+            name: "article.mdx",
+            description: "",
+            projectId: "project",
+            size: bytes.byteLength,
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+      ],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSources: [],
+      styleSourceSelections: [],
+      styles: [],
+    } as never);
+    const executeServerOperation = vi.fn(async (_request: unknown) => ({
+      version: 1,
+      status: "confirmation-required",
+      discoveryComplete: true,
+      updateCount: 1,
+      omissionCount: 0,
+      changedAsset: false,
+      files: [],
+      confirmationToken: "migration-token",
+      confirmationExpiresAt: "2026-01-01T00:05:00.000Z",
+    }));
+    const transport = {
+      getCompatibility: async () => ({
+        sessionVersion: "test-session",
+        runtimeContractVersion: "test-runtime",
+        projectSchemaVersion: "test-project",
+        apiCompatibilityVersion: "test-api",
+      }),
+      fetchNamespaces: async () => ({
+        projectId: "project",
+        buildId: "build",
+        version: 1,
+        state,
+      }),
+      commitPatch: async () => ({ version: 2 }),
+      commitRestorePoint: async () => ({ version: 2 }),
+      executeServerOperation: async <Result>(request: {
+        operationId: string;
+        input: unknown;
+      }) => (await executeServerOperation(request)) as Result,
+      getPermissions: async () => ({
+        canView: true,
+        canEdit: true,
+        canBuild: true,
+        canAdmin: true,
+        canUseApi: true,
+      }),
+    };
+    const session = createCliProjectSession({
+      connection: previewConnection,
+      transport,
+      storage: {
+        load: async () => undefined,
+        save: async () => undefined,
+        clear: async () => undefined,
+      },
+      assetContentRepository: {
+        readContent: async () => ({
+          asset: {
+            id: "article",
+            projectId: "project",
+            type: "file",
+            format: "mdx",
+            name: "article-revision.mdx",
+            size: bytes.byteLength,
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+          data: {
+            async *[Symbol.asyncIterator]() {
+              yield bytes;
+            },
+          },
+        }),
+        updateContent: async () => {
+          throw new Error("Unexpected write");
+        },
+      },
+    });
+    await session.initialize();
+
+    const result = await session.read("contentBlocks.inspectSource", {
+      blockInstanceId: "block",
+      renderScope: "page:/",
+    });
+    expect(result).toMatchObject({
+      source: "local",
+      result: {
+        configuredSource: { type: "asset", assetId: "article" },
+        resolvedIdentity: {
+          assetId: "article",
+          contentRef: "article-revision.mdx",
+          renderScope: "page:/",
+        },
+        sessionStatus: "saved",
+        capabilities: { canEdit: true },
+      },
+    });
+
+    await expect(
+      session.mutate("contentBlocks.migrateTemplateReferences", {
+        templateInstanceId: "template",
+        migration: { type: "remove" },
+        renderScope: "page:/",
+        dryRun: true,
+      })
+    ).resolves.toMatchObject({
+      result: {
+        status: "confirmation-required",
+        confirmation: { token: "migration-token" },
+      },
+    });
+    expect(executeServerOperation).toHaveBeenCalledWith({
+      operationId: "contentBlocks.migrateTemplateReferences",
+      input: expect.objectContaining({ templateInstanceId: "template" }),
+    });
+
+    const disconnectPreview = await session.mutate(
+      "contentBlocks.disconnectSource",
+      {
+        blockInstanceId: "block",
+        renderScope: "page:/",
+      },
+      { dryRun: true }
+    );
+    expect(disconnectPreview.result).toMatchObject({
+      status: "confirmation-required",
+      confirmation: { token: expect.any(String) },
+    });
+    const disconnected = await session.mutate(
+      "contentBlocks.disconnectSource",
+      {
+        blockInstanceId: "block",
+        renderScope: "page:/",
+        confirmationToken: (
+          disconnectPreview.result as {
+            confirmation: { token: string };
+          }
+        ).confirmation.token,
+      }
+    );
+    expect(disconnected).toMatchObject({
+      source: "local",
+      state: { committed: true },
+      result: {
+        status: "complete",
+        source: { sessionStatus: "disconnected" },
+        plan: { action: "disconnect", changesProject: true },
+      },
+    });
+    expect(
+      Array.from(session.snapshot?.state.props?.values() ?? []).some(
+        (prop) => prop.instanceId === "block" && prop.name === "src"
+      )
+    ).toBe(false);
+    expect(session.snapshot?.state.instances?.size).toBeGreaterThan(2);
+  });
+
   test("adapts public API build snapshots into project-session state", async () => {
     const transport = createCliProjectSessionTransport({
       connection: {

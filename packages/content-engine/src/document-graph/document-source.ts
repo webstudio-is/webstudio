@@ -1,5 +1,5 @@
 import type { ByteSource } from "../byte-stream";
-import type { DocumentFormat } from "./document-adapter";
+import type { DocumentFormat } from "./document-format";
 import type { DocumentGraphNode } from "./graph";
 
 export type DocumentSource = Readonly<{
