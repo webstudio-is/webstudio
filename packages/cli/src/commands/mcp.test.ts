@@ -924,18 +924,20 @@ test("installs termination reporting for an active MCP single-op call", async ()
     const results = consoleInfo.mock.calls.map(([output]) =>
       JSON.parse(String(output))
     );
-    expect(results).toContainEqual({
-      ok: false,
-      error: {
-        code: "MCP_CALL_TERMINATED",
-        message:
-          "MCP single-op-call insert-fragment terminated before returning a result.",
+    expect(results).toEqual([
+      {
+        ok: false,
+        error: {
+          code: "MCP_CALL_TERMINATED",
+          message:
+            "MCP single-op-call insert-fragment terminated before returning a result.",
+        },
+        meta: {
+          elapsedMs: expect.any(Number),
+          termination: { type: "beforeExit", exitCode: 0 },
+        },
       },
-      meta: {
-        elapsedMs: expect.any(Number),
-        termination: { type: "beforeExit", exitCode: 0 },
-      },
-    });
+    ]);
     expect(stderrWrite).toHaveBeenCalledWith(
       "[webstudio mcp] single-op-call insert-fragment terminated: MCP single-op-call insert-fragment terminated before returning a result.\n"
     );

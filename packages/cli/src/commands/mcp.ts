@@ -1325,6 +1325,7 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
     )}\n`
   );
   let activeCall: ActiveMcpRunCall | undefined = { number: 1, tool };
+  let didTerminate = false;
   let disposeHost: () => Promise<void> = async () => undefined;
   const disposeTerminationHandlers = installMcpRunTerminationHandlers({
     getActiveCall: () => activeCall,
@@ -1333,6 +1334,7 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
     startedAt,
     disposeHost: () => disposeHost(),
     reportTermination: ({ termination, activeCall, elapsedMs }) => {
+      didTerminate = true;
       reportMcpSingleOpCallTermination({
         termination,
         tool: activeCall.tool,
@@ -1344,10 +1346,16 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
     assertSingleOpCallToolSupported(tool);
     const input = await parseMcpSingleOpCallInput(options);
     validateSingleOpCallInput(tool, input);
+    if (didTerminate) {
+      throw new HandledCliError();
+    }
     await withMcpHost(
       async () => {
         const mcpHost = await createCliMcpHost({ projectId: options.project });
         disposeHost = mcpHost.dispose;
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
         return mcpHost;
       },
       async ({ host, apiContract, scope }) => {
@@ -1364,12 +1372,18 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
         );
         if (options.refresh === true && tool !== "refresh") {
           await core.callTool({ name: "refresh" });
+          if (didTerminate) {
+            throw new HandledCliError();
+          }
         }
         const result = await core.callTool({
           name: tool,
           input,
           dryRun: options.dryRun,
         });
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
         if (isMcpToolCallFailure(result)) {
           activeCall = undefined;
           stderr.write(
@@ -1393,6 +1407,9 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
           structuredContent: result.structuredContent,
           scope,
         });
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
         const session = result.structuredContent.meta.session;
         const committed =
           session === undefined ? "" : `; committed=${session.committed}`;
@@ -1411,6 +1428,9 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
     );
   } catch (error) {
     activeCall = undefined;
+    if (didTerminate) {
+      throw new HandledCliError();
+    }
     if (isHandledCliError(error)) {
       throw error;
     }
