@@ -82,6 +82,13 @@ describe("asset content revisions", () => {
         filename: null,
       })
     ).toBe("test.md");
+    expect(
+      getRevisionFilename({
+        name: "settings_old-revision.md",
+        filename: "configuration",
+        extension: "json",
+      })
+    ).toBe("configuration.json");
   });
 
   test("uploads an immutable revision and keeps the asset id", async () => {

@@ -39,6 +39,22 @@ test("keeps browser JSON file uploads as JSON file content", async () => {
   ).resolves.toBe(JSON.stringify({ value: 1 }));
 });
 
+test("keeps JSON files with a root URL field as file content", async () => {
+  const content = JSON.stringify({ url: "https://example.com/page" });
+  const request = new Request(
+    "https://webstudio.is/rest/assets/uploads/data.json",
+    {
+      method: "POST",
+      body: content,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+
+  await expect(
+    new Response(await getBrowserUploadBody(request, "application/json")).text()
+  ).resolves.toBe(content);
+});
+
 test("keeps browser URL image uploads by fetching the remote image body", async () => {
   const fetch = vi.fn(async () => new Response("remote image"));
   vi.stubGlobal("fetch", fetch);
@@ -47,7 +63,10 @@ test("keeps browser URL image uploads by fetching the remote image body", async 
     {
       method: "POST",
       body: JSON.stringify({ url: "https://example.com/image.png" }),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-webstudio-asset-source": "url",
+      },
     }
   );
 
@@ -70,7 +89,10 @@ test("reports browser URL image fetch failures", async () => {
     {
       method: "POST",
       body: JSON.stringify({ url: "https://example.com/image.png" }),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-webstudio-asset-source": "url",
+      },
     }
   );
 

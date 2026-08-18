@@ -130,6 +130,24 @@ describe("upload-assets", () => {
     expect(onError).toHaveBeenCalledWith("network down");
   });
 
+  test("marks URL uploads separately from JSON file uploads", async () => {
+    request.mockResolvedValue(
+      Response.json({ uploadedAssets: [{ id: "asset" }] })
+    );
+
+    await submitAssetUpload({
+      authToken: undefined,
+      uploadName: "upload-name",
+      fileOrUrl: new URL("https://example.com/image.png"),
+      onCompleted: vi.fn(),
+      onError: vi.fn(),
+      request,
+    });
+
+    const [, init] = request.mock.calls[0] as [string, { headers: Headers }];
+    expect(init.headers.get("x-webstudio-asset-source")).toBe("url");
+  });
+
   test("keeps the selected folder throughout upload preparation", async () => {
     const [fileData] = await getFilesData(
       "image",

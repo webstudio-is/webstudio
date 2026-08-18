@@ -41,9 +41,10 @@ multiple selected assets does not insert multiple Image components.
 
 Open the add menu in the Assets panel and choose **Create text file**. Enter a
 supported filename, such as `notes.md`, `article.mdx`, or `data.json`.
-Webstudio creates the blank file in the current folder and opens it in the code
-editor. You can also choose **Create MDX file** from a Content Block's
-**Content source** control.
+Webstudio creates the file in the current folder and opens it in the code
+editor. New JSON files start with an empty object so the Content Engine can
+index them immediately. You can also choose **Create MDX file** from a Content
+Block's **Content source** control.
 
 You can open uploaded `txt`, `csv`, `md`, `mdx`, `js`, `css`, `json`, `html`,
 `xml`, and `svg` assets in the same editor. Syntax highlighting follows the
@@ -52,8 +53,14 @@ formatting controls. The file editor previews `.md`; connect `.mdx` to a Content
 Block to see its materialized result on the canvas.
 
 Edits save when the editor loses focus or when you press `Command + S` on
-macOS, `Ctrl + S` on Windows, or `Command/Ctrl + Enter`. The file extension is
-fixed, but you can rename its basename in Asset settings.
+macOS, `Ctrl + S` on Windows, or `Command/Ctrl + Enter`. Edit the complete
+filename in Asset settings to rename a text file or change its format. When you
+change the extension to `.json`, Webstudio validates the existing content and
+converts JSON-compatible syntax to strict JSON before saving the new
+file revision. JSON files can contain any JSON value, including arrays and
+scalars. The editor accepts unquoted object keys, single-quoted strings, and
+trailing commas. It reports unsupported syntax instead of saving the file.
+Converting an empty text file to `.json` initializes it with an empty object.
 
 ### Use assets as content
 

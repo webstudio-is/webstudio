@@ -1538,6 +1538,7 @@ test("updates asset content through the stable asset revision endpoint", async (
       ...apiParams,
       assetId: "asset/id",
       expectedName: "old_hash.json",
+      extension: "json",
       readAssetData: async () => '{"theme":"dark"}',
       request,
     })
@@ -1547,6 +1548,7 @@ test("updates asset content through the stable asset revision endpoint", async (
   expect(url.pathname).toBe("/rest/assets/asset%2Fid/content");
   expect(url.searchParams.get("projectId")).toBe(apiParams.projectId);
   expect(url.searchParams.get("expectedName")).toBe("old_hash.json");
+  expect(url.searchParams.get("extension")).toBe("json");
   expect(init).toMatchObject({ method: "PUT", body: '{"theme":"dark"}' });
   expect(new Headers(init.headers).get("x-auth-token")).toBe(
     apiParams.authToken

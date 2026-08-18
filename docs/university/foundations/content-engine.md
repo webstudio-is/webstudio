@@ -165,8 +165,9 @@ asset ID or generated filename. This is what makes the content portable.
 
 ### JSON files
 
-The Content Engine can query JSON files as well as Markdown. A JSON file must
-contain an object at its root:
+The Content Engine can query JSON files as well as Markdown. JSON files can
+contain objects, arrays, or scalar values. A root object exposes its fields for
+structured queries:
 
 ```json
 {
@@ -176,9 +177,16 @@ contain an object at its root:
 }
 ```
 
-Its fields are also exposed under `properties`, such as `properties.name` and
-`properties.avatar`. Use JSON when the file contains structured data without a
-Markdown body.
+The object's fields are exposed under `properties`, such as `properties.name`
+and `properties.avatar`. Root arrays and scalars remain valid JSON content but
+do not expose top-level `properties` fields. Use JSON when the file contains
+structured data without a Markdown body. Name the file with a `.json` extension
+in the **Create text file** dialog. A new file starts with an empty object, which
+you can replace with any JSON value. The editor accepts JSON-compatible syntax
+and formats it as strict JSON when saving. Unsupported or incomplete syntax is
+reported without saving the file. You can also change an existing text file's
+extension to `.json` by editing its complete filename in Asset settings;
+Webstudio validates and formats the current content before converting it.
 
 ## 3. Query the articles for the overview
 

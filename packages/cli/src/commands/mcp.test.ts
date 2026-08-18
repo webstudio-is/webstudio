@@ -1126,16 +1126,19 @@ test("adapts MCP asset content input to the shared revision client", async () =>
   const input = getMcpOperationInput("update-asset-content", {
     assetId: "asset-id",
     expectedName: "settings_hash.json",
+    extension: "json",
     content: '{"theme":"dark"}',
   }) as {
     assetId: string;
     expectedName: string;
+    extension?: string;
     readAssetData: () => Promise<unknown>;
   };
 
   expect(input).toMatchObject({
     assetId: "asset-id",
     expectedName: "settings_hash.json",
+    extension: "json",
   });
   await expect(input.readAssetData()).resolves.toBe('{"theme":"dark"}');
 });
@@ -1152,6 +1155,7 @@ test("exposes asset content editing through MCP discovery", () => {
       properties: {
         assetId: expect.any(Object),
         expectedName: expect.any(Object),
+        extension: expect.any(Object),
         path: expect.any(Object),
         content: expect.any(Object),
       },
