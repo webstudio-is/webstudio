@@ -6,6 +6,8 @@ import { getErrorMessage, throwWebstudioJsxValidationError } from "./errors";
 type EvaluateJsxOptions = {
   source: string;
   createModule: (source: string) => string;
+  transformJsx?: typeof transform;
+  transformTimeoutMs?: number;
   globals?: Record<string, unknown>;
   parseErrorMessage?: (error: unknown) => string;
   evaluationErrorMessage?: (error: unknown) => string;
@@ -15,6 +17,8 @@ type EvaluateJsxOptions = {
 export const evaluateJsx = async <Result>({
   source,
   createModule,
+  transformJsx = transform,
+  transformTimeoutMs = 5_000,
   globals,
   parseErrorMessage = (error) =>
     `Could not parse JSX. ${getErrorMessage(error)}`,
@@ -23,15 +27,27 @@ export const evaluateJsx = async <Result>({
   missingResultMessage = "JSX did not produce a value.",
 }: EvaluateJsxOptions): Promise<Result> => {
   let code: string;
+  let transformTimeout: ReturnType<typeof setTimeout> | undefined;
   try {
-    const result = await transform(createModule(source), {
-      loader: "tsx",
-      format: "cjs",
-      platform: "node",
-      jsx: "transform",
-      jsxFactory: "createElement",
-      jsxFragment: "Fragment",
-    });
+    const result = await Promise.race([
+      transformJsx(createModule(source), {
+        loader: "tsx",
+        format: "cjs",
+        platform: "node",
+        jsx: "transform",
+        jsxFactory: "createElement",
+        jsxFragment: "Fragment",
+      }),
+      new Promise<never>((_resolve, reject) => {
+        transformTimeout = setTimeout(
+          () =>
+            reject(
+              new Error(`JSX transformation exceeded ${transformTimeoutMs}ms.`)
+            ),
+          transformTimeoutMs
+        );
+      }),
+    ]);
     code = result.code;
   } catch (error) {
     return throwWebstudioJsxValidationError(
@@ -39,6 +55,8 @@ export const evaluateJsx = async <Result>({
       "valid_webstudio_jsx_syntax",
       getErrorMessage(error)
     );
+  } finally {
+    clearTimeout(transformTimeout);
   }
 
   const exports: { default?: Result } = {};

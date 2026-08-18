@@ -2465,6 +2465,55 @@ describe("project session mcp adapter", () => {
     expect(call?.input).not.toHaveProperty("source");
   });
 
+  test("converts a styled nested svg before executing insert-fragment", async () => {
+    const executeOperation = createExecuteOperation(async () =>
+      createEnvelope({
+        operationId: "instances.insertFragment",
+        result: {
+          rootInstanceIds: ["anchor"],
+          instanceIds: ["anchor", "svg", "path"],
+        },
+      })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await adapter.callTool({
+      name: "insert-fragment",
+      input: {
+        parentInstanceId: "body",
+        fragment:
+          '<ws.element ws:tag="a"><ws.element ws:tag="svg" ws:style={css`pointer-events: none;`}><ws.element ws:tag="path" /></ws.element></ws.element>',
+      },
+      dryRun: true,
+    });
+
+    const call = vi.mocked(executeOperation).mock.calls[0]?.[0];
+    expect(call).toMatchObject({
+      command: "insert-fragment",
+      dryRun: true,
+      input: {
+        parentInstanceId: "body",
+        fragment: {
+          instances: [
+            expect.objectContaining({ tag: "a" }),
+            expect.objectContaining({ tag: "svg" }),
+            expect.objectContaining({ tag: "path" }),
+          ],
+          styles: [
+            expect.objectContaining({
+              property: "pointerEvents",
+              value: { type: "keyword", value: "none" },
+            }),
+          ],
+        },
+      },
+    });
+  });
+
   test("inserts a fragment and verifies persisted bindings in one call", async () => {
     const executeOperation = createExecuteOperation(async ({ command }) =>
       command === "insert-fragment"
