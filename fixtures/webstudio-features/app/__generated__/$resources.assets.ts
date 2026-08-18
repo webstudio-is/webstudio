@@ -13,6 +13,8 @@
   },
   "4afe692f78ec0530e355a551a3860302c4478037db7b25a3bdae82c32c78634d": {
     "url": "/assets/webm-example_2r_6VmRBjhAy3ldaqz0gk.webm",
+    "width": 480,
+    "height": 270,
     "contentRef": "webm-example_2r_6VmRBjhAy3ldaqz0gk.webm"
   },
   "7cf5892080fa66b5e6175ffd2d27c304ee6b09ce1f21847a95000225ad1afa59": {
@@ -29,6 +31,8 @@
   },
   "cbf6b1b052e52b256cef54a032a546bf43bf3f5441be4d1c5eeaabce26903d78": {
     "url": "/assets/video_QamtUWsD-ShifhzZLoNIv_ald_1xtyEb3uHhFb7nCQa.mp4",
+    "width": 202,
+    "height": 360,
     "contentRef": "video_QamtUWsD-ShifhzZLoNIv_ald_1xtyEb3uHhFb7nCQa.mp4"
   },
   "cd939c56-bcdd-4e64-bd9c-567a9bccd3da": {

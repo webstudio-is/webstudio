@@ -1,4 +1,5 @@
 import { beforeEach, describe, test, expect, vi } from "vitest";
+import { assetType } from "@webstudio-is/sdk";
 import { __testing__ } from "./upload-assets";
 
 const {
@@ -53,6 +54,30 @@ describe("upload-assets", () => {
     expect(init.body.get("contentHash")).toBeNull();
     expect(init.headers.get("x-auth-token")).toBe("token");
   });
+
+  test.each(assetType.options)(
+    "reserves %s assets without changing their type",
+    async (type) => {
+      request.mockResolvedValue(
+        Response.json({
+          assetId: "server-asset-id",
+          name: "upload-name",
+          deduplicated: false,
+        })
+      );
+
+      await createUploadTicket({
+        authToken: "token",
+        projectId: "project-id",
+        fileOrUrl: new File(["content"], `asset.${type}`),
+        assetType: type,
+        request,
+      });
+
+      const [, init] = request.mock.calls[0] as [string, { body: FormData }];
+      expect(init.body.get("type")).toBe(type);
+    }
+  );
 
   test("keeps the display name separate from the sanitized storage name", async () => {
     request.mockResolvedValue(

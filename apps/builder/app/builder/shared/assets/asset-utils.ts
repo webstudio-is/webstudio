@@ -2,6 +2,7 @@ import type {
   Asset,
   FontAsset,
   ImageAsset,
+  VideoAsset,
   AllowedFileExtension,
 } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
@@ -147,7 +148,20 @@ export const uploadingFileDataToAsset = (
     return asset;
   }
 
-  // Videos and other non-image/font uploads use the generic file type.
+  if (assetType === "video") {
+    const asset: VideoAsset = {
+      ...base,
+      format,
+      type: "video",
+      meta: {
+        width: Number.NaN,
+        height: Number.NaN,
+      },
+    };
+
+    return asset;
+  }
+
   const asset: Asset = {
     ...base,
     format,

@@ -1,9 +1,13 @@
 import warnOnce from "warn-once";
 import invariant from "tiny-invariant";
-import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
+import {
+  getFileNameParts,
+  type Asset,
+  type AssetType,
+} from "@webstudio-is/sdk";
 import { assetsUploadsApiUrl } from "@webstudio-is/sdk/runtime";
 import type { AssetUploadResult } from "@webstudio-is/protocol/asset-resource-api";
-import type { AssetType, UploadTicket } from "@webstudio-is/asset-uploader";
+import type { UploadTicket } from "@webstudio-is/asset-uploader";
 import { Box, toast, css, theme } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";

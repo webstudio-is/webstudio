@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import * as httpClient from "@webstudio-is/http-client";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
-import type { PageRedirect } from "@webstudio-is/sdk";
+import type { AssetType, PageRedirect } from "@webstudio-is/sdk";
 import { isFileExists } from "../fs-utils";
 import { HandledCliError } from "../errors";
 import {
@@ -1408,7 +1408,7 @@ export type ApiCommandOptions = {
   withUsage?: boolean;
   includeSystem?: boolean;
   scopeInstance?: string;
-  type?: "image" | "font" | "file";
+  type?: AssetType;
   sort?: "name" | "usage" | "size" | "createdAt";
   cursor?: string;
   limit?: number;

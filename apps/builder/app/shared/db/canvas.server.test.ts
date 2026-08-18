@@ -44,17 +44,24 @@ const createBundleBuild = (
 
 test("serializes dev builds into project bundles without requiring deployment", () => {
   const build = createBundleBuild();
-  const asset = createImageAssetFixture({ projectId: build.projectId });
+  const imageAsset = createImageAssetFixture({ projectId: build.projectId });
+  const videoAsset: Asset = {
+    ...imageAsset,
+    id: "video-asset",
+    name: "video.mp4",
+    type: "video",
+    format: "mp4",
+  };
 
   const bundle = serializeProjectBundle({
     build,
-    assets: [asset],
+    assets: [imageAsset, videoAsset],
   });
 
   expect(bundle.build.id).toBe(build.id);
   expect(bundle.build.deployment).toBeUndefined();
   expect(bundle.page.path).toBe("");
-  expect(bundle.assets).toEqual([asset]);
+  expect(bundle.assets).toEqual([imageAsset, videoAsset]);
 });
 
 test("keeps font assets referenced from nested style values", () => {

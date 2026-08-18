@@ -1,5 +1,5 @@
 import warnOnce from "warn-once";
-import type { Asset } from "./schema/assets";
+import type { Asset, AssetType } from "./schema/assets";
 
 export const MIME_CATEGORIES = [
   "image",
@@ -402,7 +402,7 @@ export const getAssetMime = ({
   type,
   format,
 }: {
-  type: "image" | "font" | "file";
+  type: AssetType;
   format: string;
 }): string | undefined => {
   const lowerFormat = format.toLowerCase();
@@ -493,9 +493,7 @@ export const validateFileName = (
 /**
  * Detect the asset type from a file based on its extension
  */
-export const detectAssetType = (
-  fileName: string
-): "image" | "font" | "video" | "file" => {
+export const detectAssetType = (fileName: string): AssetType => {
   const ext = getFileExtension(fileName)?.toLowerCase();
   if (!ext) {
     return "file";
@@ -595,6 +593,18 @@ const extractFontMetadata = (asset: Asset): RuntimeMetadata => {
   return metadata;
 };
 
+const extractVideoMetadata = (asset: Asset): RuntimeMetadata => {
+  if (asset.type !== "video") {
+    return;
+  }
+  if (asset.meta.width && asset.meta.height) {
+    return {
+      width: asset.meta.width,
+      height: asset.meta.height,
+    };
+  }
+};
+
 const extractFileMetadata = (_asset: Asset): RuntimeMetadata => {
   // Generic files don't need additional metadata at runtime
   return;
@@ -606,6 +616,7 @@ const metadataExtractors: Record<
 > = {
   image: extractImageMetadata,
   font: extractFontMetadata,
+  video: extractVideoMetadata,
   file: extractFileMetadata,
 };
 

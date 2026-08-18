@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getInputJsonSchemaMetadata } from "@webstudio-is/sdk";
+import { assetType, getInputJsonSchemaMetadata } from "@webstudio-is/sdk";
 import * as protocol from "../index";
 import {
   getPublicApiOperation,
@@ -306,6 +306,20 @@ describe("public api operation catalog", () => {
     expect(JSON.stringify(uploadMany.inputSchema)).toContain('"folderId"');
     expect(JSON.stringify(upload.inputSchema)).toContain('"force"');
     expect(JSON.stringify(uploadMany.inputSchema)).toContain('"force"');
+  });
+
+  test("exposes every supported upload type to MCP", () => {
+    const uploadAssetSchema =
+      getPublicApiOperation("upload-asset").inputSchema?.properties?.asset;
+    const assetTypeSchema =
+      uploadAssetSchema !== undefined &&
+      typeof uploadAssetSchema === "object" &&
+      uploadAssetSchema.properties?.type;
+
+    expect(assetTypeSchema).toMatchObject({
+      type: "string",
+      enum: assetType.options,
+    });
   });
 
   test("keeps operation lookup and tRPC path lookup strict", () => {

@@ -1,5 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { fontMeta } from "@webstudio-is/fonts";
+import { assetType } from "./schema/assets";
 import {
   ALLOWED_FILE_TYPES,
   getMimeTypeByExtension,
@@ -460,6 +461,20 @@ describe("allowed-file-types", () => {
   });
 
   describe("detectAssetType", () => {
+    test("detects only canonical asset types", () => {
+      expect(assetType.options).toEqual(["font", "image", "video", "file"]);
+      for (const filename of [
+        "image.png",
+        "font.woff2",
+        "video.mp4",
+        "document.pdf",
+      ]) {
+        expect(assetType.safeParse(detectAssetType(filename)).success).toBe(
+          true
+        );
+      }
+    });
+
     test("detects image files", () => {
       expect(detectAssetType("photo.jpg")).toBe("image");
       expect(detectAssetType("image.png")).toBe("image");

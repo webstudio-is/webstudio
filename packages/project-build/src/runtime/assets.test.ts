@@ -146,11 +146,11 @@ describe("asset upload helpers", () => {
     ).toThrow('MIME type "script/*" is not allowed');
   });
 
-  test("accepts only stored asset types for API uploads", () => {
+  test("accepts every asset type for API uploads", () => {
     expect(parseAssetType("image")).toBe("image");
     expect(parseAssetType("font")).toBe("font");
     expect(parseAssetType("file")).toBe("file");
-    expect(parseAssetType("video")).toBeUndefined();
+    expect(parseAssetType("video")).toBe("video");
     expect(parseAssetType(null)).toBeUndefined();
   });
 

@@ -3905,6 +3905,72 @@ export const runtimeOperationContractData = [
                               },
                               meta: {
                                 type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "video",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 256,
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
                                 properties: {},
                                 required: [],
                                 additionalProperties: true,
@@ -6974,6 +7040,72 @@ export const runtimeOperationContractData = [
                               type: {
                                 type: "string",
                                 const: "image",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 256,
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "video",
                               },
                             },
                             required: [
@@ -10160,6 +10292,72 @@ export const runtimeOperationContractData = [
                               },
                               meta: {
                                 type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "video",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 256,
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
                                 properties: {},
                                 required: [],
                                 additionalProperties: true,
@@ -13229,6 +13427,72 @@ export const runtimeOperationContractData = [
                               type: {
                                 type: "string",
                                 const: "image",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 256,
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "video",
                               },
                             },
                             required: [
@@ -19118,6 +19382,72 @@ export const runtimeOperationContractData = [
                                     },
                                     meta: {
                                       type: "object",
+                                      properties: {
+                                        width: {
+                                          type: "number",
+                                        },
+                                        height: {
+                                          type: "number",
+                                        },
+                                      },
+                                      required: ["width", "height"],
+                                    },
+                                    type: {
+                                      type: "string",
+                                      const: "video",
+                                    },
+                                  },
+                                  required: [
+                                    "id",
+                                    "size",
+                                    "name",
+                                    "createdAt",
+                                    "format",
+                                    "meta",
+                                    "type",
+                                  ],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    id: {
+                                      type: "string",
+                                    },
+                                    size: {
+                                      type: "number",
+                                    },
+                                    name: {
+                                      type: "string",
+                                    },
+                                    filename: {
+                                      type: "string",
+                                    },
+                                    description: {
+                                      anyOf: [
+                                        {
+                                          type: "string",
+                                        },
+                                        {
+                                          type: "null",
+                                        },
+                                      ],
+                                    },
+                                    folderId: {
+                                      type: "string",
+                                      minLength: 1,
+                                      maxLength: 256,
+                                    },
+                                    createdAt: {
+                                      type: "string",
+                                    },
+                                    updatedAt: {
+                                      type: "string",
+                                    },
+                                    format: {
+                                      type: "string",
+                                    },
+                                    meta: {
+                                      type: "object",
                                       properties: {},
                                       required: [],
                                     },
@@ -22395,6 +22725,72 @@ export const runtimeOperationContractData = [
                                     type: {
                                       type: "string",
                                       const: "image",
+                                    },
+                                  },
+                                  required: [
+                                    "id",
+                                    "size",
+                                    "name",
+                                    "createdAt",
+                                    "format",
+                                    "meta",
+                                    "type",
+                                  ],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    id: {
+                                      type: "string",
+                                    },
+                                    size: {
+                                      type: "number",
+                                    },
+                                    name: {
+                                      type: "string",
+                                    },
+                                    filename: {
+                                      type: "string",
+                                    },
+                                    description: {
+                                      anyOf: [
+                                        {
+                                          type: "string",
+                                        },
+                                        {
+                                          type: "null",
+                                        },
+                                      ],
+                                    },
+                                    folderId: {
+                                      type: "string",
+                                      minLength: 1,
+                                      maxLength: 256,
+                                    },
+                                    createdAt: {
+                                      type: "string",
+                                    },
+                                    updatedAt: {
+                                      type: "string",
+                                    },
+                                    format: {
+                                      type: "string",
+                                    },
+                                    meta: {
+                                      type: "object",
+                                      properties: {
+                                        width: {
+                                          type: "number",
+                                        },
+                                        height: {
+                                          type: "number",
+                                        },
+                                      },
+                                      required: ["width", "height"],
+                                    },
+                                    type: {
+                                      type: "string",
+                                      const: "video",
                                     },
                                   },
                                   required: [
@@ -37010,6 +37406,72 @@ export const runtimeOperationContractData = [
                               },
                               meta: {
                                 type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "video",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 256,
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
                                 properties: {},
                                 required: [],
                                 additionalProperties: true,
@@ -40158,6 +40620,72 @@ export const runtimeOperationContractData = [
                               type: {
                                 type: "string",
                                 const: "image",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 256,
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "video",
                               },
                             },
                             required: [
@@ -46519,6 +47047,72 @@ export const runtimeOperationContractData = [
                       },
                       meta: {
                         type: "object",
+                        properties: {
+                          width: {
+                            type: "number",
+                          },
+                          height: {
+                            type: "number",
+                          },
+                        },
+                        required: ["width", "height"],
+                      },
+                      type: {
+                        type: "string",
+                        const: "video",
+                      },
+                    },
+                    required: [
+                      "id",
+                      "size",
+                      "name",
+                      "createdAt",
+                      "format",
+                      "meta",
+                      "type",
+                    ],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      id: {
+                        type: "string",
+                      },
+                      size: {
+                        type: "number",
+                      },
+                      name: {
+                        type: "string",
+                      },
+                      filename: {
+                        type: "string",
+                      },
+                      description: {
+                        anyOf: [
+                          {
+                            type: "string",
+                          },
+                          {
+                            type: "null",
+                          },
+                        ],
+                      },
+                      folderId: {
+                        type: "string",
+                        minLength: 1,
+                        maxLength: 256,
+                      },
+                      createdAt: {
+                        type: "string",
+                      },
+                      updatedAt: {
+                        type: "string",
+                      },
+                      format: {
+                        type: "string",
+                      },
+                      meta: {
+                        type: "object",
                         properties: {},
                         required: [],
                         additionalProperties: true,
@@ -52277,6 +52871,72 @@ export const runtimeOperationContractData = [
                       type: {
                         type: "string",
                         const: "image",
+                      },
+                    },
+                    required: [
+                      "id",
+                      "size",
+                      "name",
+                      "createdAt",
+                      "format",
+                      "meta",
+                      "type",
+                    ],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      id: {
+                        type: "string",
+                      },
+                      size: {
+                        type: "number",
+                      },
+                      name: {
+                        type: "string",
+                      },
+                      filename: {
+                        type: "string",
+                      },
+                      description: {
+                        anyOf: [
+                          {
+                            type: "string",
+                          },
+                          {
+                            type: "null",
+                          },
+                        ],
+                      },
+                      folderId: {
+                        type: "string",
+                        minLength: 1,
+                        maxLength: 256,
+                      },
+                      createdAt: {
+                        type: "string",
+                      },
+                      updatedAt: {
+                        type: "string",
+                      },
+                      format: {
+                        type: "string",
+                      },
+                      meta: {
+                        type: "object",
+                        properties: {
+                          width: {
+                            type: "number",
+                          },
+                          height: {
+                            type: "number",
+                          },
+                        },
+                        required: ["width", "height"],
+                      },
+                      type: {
+                        type: "string",
+                        const: "video",
                       },
                     },
                     required: [
@@ -70287,7 +70947,7 @@ export const runtimeOperationContractData = [
       properties: {
         type: {
           type: "string",
-          enum: ["font", "image", "file"],
+          enum: ["font", "image", "video", "file"],
         },
         sort: {
           type: "string",
@@ -70334,7 +70994,7 @@ export const runtimeOperationContractData = [
               },
               type: {
                 type: "string",
-                enum: ["font", "image", "file"],
+                enum: ["font", "image", "video", "file"],
               },
               size: {
                 type: "number",
@@ -70377,7 +71037,7 @@ export const runtimeOperationContractData = [
                   },
                   type: {
                     type: "string",
-                    enum: ["font", "image", "file"],
+                    enum: ["font", "image", "video", "file"],
                   },
                   size: {
                     type: "number",
@@ -70515,7 +71175,7 @@ export const runtimeOperationContractData = [
             },
             type: {
               type: "string",
-              enum: ["font", "image", "file"],
+              enum: ["font", "image", "video", "file"],
             },
             size: {
               type: "number",
@@ -70965,7 +71625,7 @@ export const runtimeOperationContractData = [
                 },
               ],
               description:
-                "Type-specific metadata: family and style plus weight for static fonts or variationAxes for variable fonts, width/height for images, and no fields for generic files.",
+                "Type-specific metadata: family and style plus weight for static fonts or variationAxes for variable fonts, width/height for images and videos, and no fields for generic files.",
             },
           },
           required: [],
@@ -71267,6 +71927,72 @@ export const runtimeOperationContractData = [
                 type: {
                   type: "string",
                   const: "image",
+                },
+              },
+              required: [
+                "id",
+                "size",
+                "name",
+                "createdAt",
+                "format",
+                "meta",
+                "type",
+              ],
+            },
+            {
+              type: "object",
+              properties: {
+                id: {
+                  type: "string",
+                },
+                size: {
+                  type: "number",
+                },
+                name: {
+                  type: "string",
+                },
+                filename: {
+                  type: "string",
+                },
+                description: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "null",
+                    },
+                  ],
+                },
+                folderId: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 256,
+                },
+                createdAt: {
+                  type: "string",
+                },
+                updatedAt: {
+                  type: "string",
+                },
+                format: {
+                  type: "string",
+                },
+                meta: {
+                  type: "object",
+                  properties: {
+                    width: {
+                      type: "number",
+                    },
+                    height: {
+                      type: "number",
+                    },
+                  },
+                  required: ["width", "height"],
+                },
+                type: {
+                  type: "string",
+                  const: "video",
                 },
               },
               required: [

@@ -6,7 +6,6 @@ import {
   type JSX,
   type PointerEvent,
 } from "react";
-import type { AssetType } from "@webstudio-is/asset-uploader";
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -35,7 +34,7 @@ import {
   readDroppedAssetItems,
 } from "./directory-drop";
 import { $assetFolders } from "~/shared/sync/data-stores";
-import { createAssetFolderHierarchy } from "@webstudio-is/sdk";
+import { createAssetFolderHierarchy, type AssetType } from "@webstudio-is/sdk";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import {
