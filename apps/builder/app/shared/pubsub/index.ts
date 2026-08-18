@@ -16,12 +16,6 @@ export interface PubsubMap extends NamespacedCommands {
     name: string;
     [key: string]: unknown;
   };
-  contentBlockSourceStatus: {
-    projectId: string;
-    blockInstanceId: string;
-    renderScope: string;
-    status: "loading" | "ready";
-  };
 }
 
 export const { publish, usePublish, useSubscribe, subscribe } =

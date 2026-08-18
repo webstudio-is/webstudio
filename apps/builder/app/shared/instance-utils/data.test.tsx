@@ -1,25 +1,12 @@
-import { describe, expect, expectTypeOf, test, vi } from "vitest";
-import {
-  blockComponent,
-  blockTemplateComponent,
-  contentBlockSourceProp,
-  type Asset,
-  type Instance,
-  type PageTemplate,
-} from "@webstudio-is/sdk";
+import { describe, expect, expectTypeOf, test } from "vitest";
+import type { Asset, Instance, PageTemplate } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import {
-  findCycles,
-  type MaterializedMdxAuthoredContentRoot,
-} from "@webstudio-is/project-build/runtime";
+import { findCycles } from "@webstudio-is/project-build/runtime";
 import type { BuilderRuntimeOperationInput } from "@webstudio-is/project-build/runtime";
 import {
   executeRuntimeMutation,
   executeRuntimeMutationAsync,
   executeRuntimeMutationSequence,
-  $pendingTemplateNameConfirmation,
-  abortPendingTemplateNameConfirmation,
-  confirmPendingTemplateNameChange,
   getWebstudioData,
   migrateLoadedWebstudioData,
   type RuntimeMutationOperation,
@@ -40,15 +27,6 @@ import {
 } from "../sync/data-stores";
 import { $selectedPageId } from "../nano-states/pages";
 import { $authPermit, $builderMode } from "../nano-states/misc";
-import { selectInstance } from "../nano-states/instances";
-import {
-  publishMaterializedContentRoot,
-  registerContentStorageSaver,
-  resetMaterializedContent,
-  $runtimeInstances,
-  $materializedContentRoots,
-  getMaterializedContentStatus,
-} from "../content-block-content";
 
 const createInstance = (
   id: Instance["id"],
@@ -70,7 +48,6 @@ test("accepts only mutation operation ids in the Builder commit helpers", () => 
 });
 
 const setBaseStores = () => {
-  abortPendingTemplateNameConfirmation();
   serverSyncStore.transactionManager.currentStack = [];
   serverSyncStore.transactionManager.undoneStack = [];
   serverSyncStore.popAll();
@@ -160,91 +137,6 @@ describe("data store helpers", () => {
         value: "main",
       }),
     ]);
-  });
-
-  test("requires and revalidates confirmation for a source-backed template rename", () => {
-    setBaseStores();
-    $instances.set(
-      new Map([
-        [
-          "body",
-          createInstance("body", "Body", [{ type: "id", value: "block" }]),
-        ],
-        [
-          "block",
-          createInstance("block", blockComponent, [
-            { type: "id", value: "templates" },
-          ]),
-        ],
-        [
-          "templates",
-          createInstance("templates", blockTemplateComponent, [
-            { type: "id", value: "card" },
-          ]),
-        ],
-        ["card", createInstance("card", "Box", [])],
-      ])
-    );
-    $props.set(
-      new Map([
-        [
-          "src",
-          {
-            id: "src",
-            instanceId: "block",
-            name: contentBlockSourceProp,
-            type: "asset" as const,
-            value: "article.mdx",
-          },
-        ],
-      ])
-    );
-
-    expect(
-      executeRuntimeMutation({
-        id: "instances.setLabel",
-        input: { instanceId: "card", label: "Hero Card" },
-      })
-    ).toBeUndefined();
-    expect($instances.get().get("card")?.label).toBeUndefined();
-    expect($pendingTemplateNameConfirmation.get()?.confirmation).toEqual({
-      action: "rename",
-      templates: [{ instanceId: "card", oldName: "Box", newName: "Hero Card" }],
-    });
-
-    abortPendingTemplateNameConfirmation();
-    expect($instances.get().get("card")?.label).toBeUndefined();
-
-    executeRuntimeMutation({
-      id: "instances.setLabel",
-      input: { instanceId: "card", label: "Hero Card" },
-    });
-    const current = $instances.get();
-    current.set("card", { ...current.get("card")!, label: "Current Card" });
-    $instances.set(new Map(current));
-    confirmPendingTemplateNameChange();
-    expect($instances.get().get("card")?.label).toBe("Current Card");
-    expect(
-      $pendingTemplateNameConfirmation.get()?.confirmation.templates[0]?.oldName
-    ).toBe("Current Card");
-
-    confirmPendingTemplateNameChange();
-    expect($instances.get().get("card")?.label).toBe("Hero Card");
-    expect($pendingTemplateNameConfirmation.get()).toBeUndefined();
-
-    expect(
-      executeRuntimeMutation({
-        id: "instances.delete",
-        input: { instanceIds: ["card"] },
-      })
-    ).toBeUndefined();
-    expect($pendingTemplateNameConfirmation.get()?.confirmation).toEqual({
-      action: "delete",
-      templates: [{ instanceId: "card", oldName: "Hero Card" }],
-    });
-    expect($instances.get().has("card")).toBe(true);
-    confirmPendingTemplateNameChange();
-    expect($instances.get().has("card")).toBe(false);
   });
 
   test("commits runtime patch payloads with sync undo and redo support", () => {
@@ -622,244 +514,6 @@ describe("data store helpers", () => {
     expect($instances.get().get("body")?.children).toEqual([
       { type: "text", value: "Hello" },
     ]);
-  });
-
-  test("routes projected text edits to MDX storage without persisting projected instances", async () => {
-    setBaseStores();
-    $instances.set(
-      new Map([
-        [
-          "body",
-          createInstance("body", "Body", [{ type: "id", value: "block" }]),
-        ],
-        [
-          "block",
-          createInstance("block", "ws:block", [
-            { type: "id", value: "templates" },
-          ]),
-        ],
-        ["templates", createInstance("templates", "ws:block-template", [])],
-      ])
-    );
-    $props.set(
-      new Map([
-        [
-          "source",
-          {
-            id: "source",
-            instanceId: "block",
-            name: "src",
-            type: "asset" as const,
-            value: "article",
-          },
-        ],
-      ])
-    );
-    const identity = {
-      blockInstanceId: "block",
-      assetId: "article",
-      revision: "sha256:one",
-      contentRef: "article.mdx",
-      format: "mdx" as const,
-      renderScope: JSON.stringify(["block", "body"]),
-    };
-    const authoredRoot: MaterializedMdxAuthoredContentRoot = {
-      identity,
-      fragment: {
-        children: [{ type: "id", value: "external" }],
-        instances: [
-          {
-            type: "instance",
-            id: "external",
-            component: "ws:element",
-            tag: "p",
-            children: [{ type: "text", value: "Before" }],
-          },
-        ],
-        props: [],
-        assets: [],
-        dataSources: [],
-        resources: [],
-        breakpoints: [],
-        styleSourceSelections: [],
-        styleSources: [],
-        styles: [],
-      },
-      document: {
-        frontmatter: { properties: {} },
-        children: [
-          {
-            type: "element",
-            syntax: "markdown",
-            tag: "p",
-            props: [],
-            children: [{ type: "text", value: "Before" }],
-          },
-        ],
-      },
-      provenance: {
-        nodes: [
-          {
-            type: "element",
-            path: [0],
-            instanceId: "external",
-            assetProps: [],
-          },
-        ],
-        unresolvedTemplates: [],
-      },
-    };
-    publishMaterializedContentRoot(authoredRoot);
-    const save = vi.fn(async () => ({ status: "applied" as const }));
-    const unregister = registerContentStorageSaver({
-      blockInstanceId: "block",
-      renderScope: identity.renderScope,
-      preflight: async () => ({ status: "applied" }),
-      isCurrent: () => true,
-      save,
-    });
-    selectInstance(["external", "block", "body"]);
-
-    const result = executeRuntimeMutation({
-      id: "instances.setTextContent",
-      input: {
-        operation: "set",
-        instanceId: "external",
-        mode: "text",
-        text: "After",
-      },
-    });
-    await vi.waitFor(() =>
-      expect($runtimeInstances.get().get("external")?.children).toEqual([
-        { type: "text", value: "After" },
-      ])
-    );
-    expect(
-      getMaterializedContentStatus({
-        blockInstanceId: "block",
-        renderScope: identity.renderScope,
-      })
-    ).toBe("pending");
-    const accumulated = executeRuntimeMutation({
-      id: "instances.setTextContent",
-      input: {
-        operation: "set",
-        instanceId: "external",
-        mode: "text",
-        text: "Again",
-      },
-    });
-    expect(accumulated).toBeUndefined();
-    await vi.waitFor(() =>
-      expect($runtimeInstances.get().get("external")?.children).toEqual([
-        { type: "text", value: "Again" },
-      ])
-    );
-    await Promise.resolve();
-    const savedRoot = $materializedContentRoots
-      .get()
-      .get(JSON.stringify(["block", identity.renderScope]));
-    if (savedRoot === undefined) {
-      throw new Error("Expected pending materialized content");
-    }
-    publishMaterializedContentRoot(savedRoot);
-
-    expect(result).toBeUndefined();
-    expect(save).toHaveBeenCalledTimes(2);
-    expect($instances.get().has("external")).toBe(false);
-    expect($instances.get().get("block")?.children).toEqual([
-      { type: "id", value: "templates" },
-    ]);
-    unregister();
-    const unregisterStale = registerContentStorageSaver({
-      blockInstanceId: "block",
-      renderScope: identity.renderScope,
-      preflight: async () => ({ status: "applied" }),
-      isCurrent: () => false,
-      save,
-    });
-    expect(
-      executeRuntimeMutation({
-        id: "instances.setTextContent",
-        input: {
-          operation: "set",
-          instanceId: "external",
-          mode: "text",
-          text: "Stale",
-        },
-      })
-    ).toBeUndefined();
-    await Promise.resolve();
-    expect(save).toHaveBeenCalledTimes(2);
-    unregisterStale();
-
-    let finishSave: ((result: { status: "applied" }) => void) | undefined;
-    const deferredSave = vi.fn(
-      () =>
-        new Promise<{ status: "applied" }>((resolve) => {
-          finishSave = resolve;
-        })
-    );
-    const unregisterDeferred = registerContentStorageSaver({
-      blockInstanceId: "block",
-      renderScope: identity.renderScope,
-      preflight: async () => ({ status: "applied" }),
-      isCurrent: () => true,
-      save: deferredSave,
-    });
-    let asyncMutationSettled = false;
-    const asyncMutation = executeRuntimeMutationAsync({
-      id: "instances.setTextContent",
-      input: {
-        operation: "set",
-        instanceId: "external",
-        mode: "text",
-        text: "Async",
-      },
-    }).then((mutation) => {
-      asyncMutationSettled = true;
-      return mutation;
-    });
-    await vi.waitFor(() => expect(deferredSave).toHaveBeenCalledOnce());
-    expect(asyncMutationSettled).toBe(false);
-    finishSave?.({ status: "applied" });
-    expect((await asyncMutation)?.storageChanges).toHaveLength(1);
-    unregisterDeferred();
-    const latestRoot = $materializedContentRoots
-      .get()
-      .get(JSON.stringify(["block", identity.renderScope]));
-    if (latestRoot === undefined) {
-      throw new Error("Expected accumulated materialized content");
-    }
-    publishMaterializedContentRoot(latestRoot);
-    const unregisterRejected = registerContentStorageSaver({
-      blockInstanceId: "block",
-      renderScope: identity.renderScope,
-      preflight: async () => ({ status: "applied" }),
-      isCurrent: () => true,
-      save: async () => {
-        throw new Error("private transport details");
-      },
-    });
-    await expect(
-      executeRuntimeMutationAsync({
-        id: "instances.setTextContent",
-        input: {
-          operation: "set",
-          instanceId: "external",
-          mode: "text",
-          text: "Rejected",
-        },
-      })
-    ).resolves.toBeUndefined();
-    expect(
-      getMaterializedContentStatus({
-        blockInstanceId: "block",
-        renderScope: identity.renderScope,
-      })
-    ).toBe("failed");
-    unregisterRejected();
-    resetMaterializedContent();
   });
 
   test("uses text content runtime validation before updating stores", () => {

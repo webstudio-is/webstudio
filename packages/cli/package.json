@@ -23,7 +23,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "generate-docs": "tsx scripts/generate-docs.ts && oxfmt src/docs.generated.ts",
-    "build:content-runtime": "esbuild @webstudio-is/content-engine/runtime --bundle --format=esm --platform=browser --target=es2022 --conditions=webstudio,worker --minify --outfile=lib/content-runtime.js",
+    "build:content-runtime": "esbuild @webstudio-is/content-engine/runtime --bundle --format=esm --platform=browser --target=es2022 --conditions=webstudio --minify --outfile=lib/content-runtime.js",
     "fixtures:build": "pnpm build:content-runtime",
     "build": "pnpm generate-docs && rm -rf lib && vite build && pnpm build:content-runtime",
     "pretest": "mkdir -p lib && pnpm build:content-runtime",
@@ -95,7 +95,6 @@
     "@types/yargs": "^17.0.33",
     "@vercel/react-router": "^1.1.0",
     "@vitejs/plugin-react": "^4.4.1",
-    "@webstudio-is/asset-uploader": "workspace:*",
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/content-engine": "workspace:*",
     "@webstudio-is/expression": "workspace:*",

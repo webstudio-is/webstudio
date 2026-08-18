@@ -91,38 +91,6 @@ const resetDataStores = () => {
   $builderMode.set("design");
 };
 
-test("keeps ordinary project undo and redo commands working", async () => {
-  resetDataStores();
-  const unsubscribe = subscribeCommands();
-  $instances.set(
-    new Map([
-      [
-        "box",
-        {
-          type: "instance" as const,
-          id: "box",
-          component: "Box",
-          children: [],
-        },
-      ],
-    ])
-  );
-  serverSyncStore.createTransaction([$instances], (instances) => {
-    instances.get("box")!.label = "Changed";
-  });
-
-  emitCommand("undo");
-  await vi.waitFor(() =>
-    expect($instances.get().get("box")?.label).toBeUndefined()
-  );
-  emitCommand("redo");
-  await vi.waitFor(() =>
-    expect($instances.get().get("box")?.label).toBe("Changed")
-  );
-
-  unsubscribe();
-});
-
 const setupMoveInstanceProject = () => {
   resetDataStores();
   const instances = new Map<Instance["id"], Instance>([

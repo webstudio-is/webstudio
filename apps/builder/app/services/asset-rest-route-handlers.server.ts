@@ -7,10 +7,8 @@ import { Readable } from "node:stream";
 import parseRange from "range-parser";
 import { getAssetMime } from "@webstudio-is/sdk";
 import {
-  assetContentDescriptorHeader,
   assetMetadataUpdate,
   assetResourceApiOperations,
-  serializeAssetContentDescriptor,
 } from "@webstudio-is/protocol/asset-resource-api";
 import { privateNoStoreResponseHeaders } from "./cache-control.server";
 import { ensureApiCsrf } from "./api-auth.server";
@@ -72,12 +70,8 @@ export const createAssetContentLoader =
       const content = await repository.readContent({ assetId, range, asset });
       const headers = new Headers(privateNoStoreResponseHeaders);
       headers.set(
-        assetContentDescriptorHeader,
-        serializeAssetContentDescriptor(content.asset)
-      );
-      headers.set(
         "content-type",
-        getAssetMime(content.asset) ?? "application/octet-stream"
+        getAssetMime(asset) ?? "application/octet-stream"
       );
       headers.set("accept-ranges", "bytes");
       headers.set(

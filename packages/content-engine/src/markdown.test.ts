@@ -215,12 +215,6 @@ describe("Markdown body and excerpt extraction", () => {
     ).toBe("Hello world Use code and links.");
   });
 
-  test("uses GFM semantics in plain-text excerpts", () => {
-    expect(extractMarkdownExcerpt("- [x] Ready\n\n~~obsolete~~")).toBe(
-      "Ready obsolete"
-    );
-  });
-
   test("truncates excerpts at a valid UTF-8 character boundary", () => {
     expect(extractMarkdownExcerpt("Hello 🌍 world", 10)).toBe("Hello 🌍");
     expect(

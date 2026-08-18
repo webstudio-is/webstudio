@@ -20,10 +20,7 @@ import {
   $registeredComponentMetas,
   type ItemDropTarget,
 } from "~/shared/nano-states";
-import {
-  $runtimeInstances as $instances,
-  $runtimeProps as $props,
-} from "~/shared/content-block-content";
+import { $instances, $props } from "~/shared/sync/data-stores";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
   getElementByInstanceSelector,

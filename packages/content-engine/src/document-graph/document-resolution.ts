@@ -6,8 +6,8 @@ import {
   parseDocumentSource,
   selectDocumentRepresentation,
   type AdaptedDocument,
+  type DocumentFormat,
 } from "./document-adapter";
-import type { DocumentFormat } from "./document-format";
 import {
   getDocumentGraphClosure,
   type DocumentGraph,

@@ -10,20 +10,3 @@ export const openNavigatorPanel = async ({ page }: { page: Page }) => {
     timeout: 10_000,
   });
 };
-
-export const selectNavigatorItem = async ({
-  page,
-  name,
-}: {
-  page: Page;
-  name: string;
-}) => {
-  await openNavigatorPanel({ page });
-  const item = page
-    .locator("[data-navigator-tree] [data-tree-button]")
-    .filter({ hasText: name })
-    .last();
-  await item.waitFor({ state: "visible" });
-  await item.click();
-  await item.click();
-};

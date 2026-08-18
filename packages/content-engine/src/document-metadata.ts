@@ -16,9 +16,6 @@ import { markdownFrontmatterEnvelopeBytes } from "./markdown-scanner";
 const isMarkdown = (entry: CanonicalAssetFileEntry) =>
   entry.document.extension.toLowerCase() === "md";
 
-const hasMarkdownFrontmatter = (entry: CanonicalAssetFileEntry) =>
-  isMarkdown(entry) || entry.document.extension.toLowerCase() === "mdx";
-
 const isJson = (entry: CanonicalAssetFileEntry) =>
   entry.document.extension.toLowerCase() === "json";
 
@@ -111,23 +108,14 @@ export const prepareCanonicalContentMetadata = async ({
   const needsExcerpt =
     requirements.excerpt && cachedRequirements.excerpt === false;
 
-  if (
-    (hasMarkdownFrontmatter(base) && needsProperties) ||
-    (isMarkdown(base) && needsExcerpt)
-  ) {
-    // Frontmatter discovery needs only the bounded opening block. Markdown
-    // excerpt generation still receives the larger body budget.
-    const maximumBytes =
-      isMarkdown(base) && needsExcerpt
-        ? contentEngineLimits.hydratedFileBytes
-        : contentEngineLimits.frontmatterBytes +
-          markdownFrontmatterEnvelopeBytes;
+  if (isMarkdown(base) && (needsProperties || needsExcerpt)) {
+    // Frontmatter discovery needs only the bounded opening block. Excerpt
+    // generation still receives the larger Markdown body budget.
+    const maximumBytes = needsExcerpt
+      ? contentEngineLimits.hydratedFileBytes
+      : contentEngineLimits.frontmatterBytes + markdownFrontmatterEnvelopeBytes;
     let bytes = await readBytes(Math.min(base.document.size, maximumBytes));
-    if (
-      isMarkdown(base) &&
-      needsExcerpt &&
-      base.document.size > bytes.byteLength
-    ) {
+    if (needsExcerpt && base.document.size > bytes.byteLength) {
       bytes = trimIncompleteUtf8Suffix(bytes);
     }
     if (needsProperties) {
@@ -140,7 +128,7 @@ export const prepareCanonicalContentMetadata = async ({
         metadataError = { code: error.code, message: error.message };
       }
     }
-    if (isMarkdown(base) && needsExcerpt) {
+    if (needsExcerpt) {
       try {
         excerpt = (await extractMarkdownBodyAndExcerpt(bytes)).excerpt;
       } catch (error) {

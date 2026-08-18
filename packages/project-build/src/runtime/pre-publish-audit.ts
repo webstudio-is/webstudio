@@ -1,7 +1,6 @@
 import {
   getPagePath,
   getPublishablePages,
-  type Assets,
   type DataSources,
   type Instances,
   type Pages,
@@ -27,7 +26,6 @@ export type PrePublishAuditFinding = {
     dataSourceId?: string;
     propId?: string;
     resourceId?: string;
-    assetId?: string;
   };
 };
 
@@ -37,7 +35,6 @@ type PrePublishAuditContext = {
   props: Props;
   dataSources: DataSources;
   resources: Resources;
-  assets: Assets;
   metas: Map<string, WsComponentMeta>;
 };
 
@@ -85,50 +82,30 @@ const checkHtmlContentModel: PrePublishAuditCheck = ({
   return findings;
 };
 
-const checkBuildIntegrity: PrePublishAuditCheck = ({
+const checkResourceIntegrity: PrePublishAuditCheck = ({
   dataSources,
   props,
   resources,
-  instances,
-  assets,
 }) =>
   getBuildIntegrityIssues({
     dataSources: dataSources.values(),
     props: props.values(),
     resources: resources.values(),
-    instances: instances.values(),
-    assets: assets.values(),
   }).map((issue) => ({
-    ruleId:
-      issue.type === "missingResource"
-        ? "resource-integrity"
-        : "content-block-source-integrity",
+    ruleId: "resource-integrity",
     severity: "error",
     message: formatBuildIntegrityIssue(issue),
     location: {
-      ...(issue.type === "missingResource"
-        ? {
-            ...(issue.source === "dataSource"
-              ? { dataSourceId: issue.dataSourceId }
-              : { propId: issue.propId }),
-            resourceId: issue.resourceId,
-          }
-        : {
-            instanceId: issue.blockInstanceId,
-            ...(issue.type === "duplicateContentBlockSource"
-              ? { propId: issue.propIds[0] }
-              : { propId: issue.propId }),
-            ...(issue.type === "missingContentBlockSourceAsset" ||
-            issue.type === "incompatibleContentBlockSourceAsset"
-              ? { assetId: issue.assetId }
-              : {}),
-          }),
+      ...(issue.source === "dataSource"
+        ? { dataSourceId: issue.dataSourceId }
+        : { propId: issue.propId }),
+      resourceId: issue.resourceId,
     },
   }));
 
 const prePublishAuditChecks: PrePublishAuditCheck[] = [
   checkHtmlContentModel,
-  checkBuildIntegrity,
+  checkResourceIntegrity,
 ];
 
 export const runPrePublishAudit = ({

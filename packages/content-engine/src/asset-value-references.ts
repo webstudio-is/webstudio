@@ -1,10 +1,9 @@
-import {
-  createAssetReferenceResolver,
-  type ResolvedAssetReference,
-} from "./asset-reference-utils";
+import { createAssetIdResolver } from "./asset-path-resolution";
 
-export type AssetValueReference = ResolvedAssetReference & {
+export type AssetValueReference = {
   path: Array<string | number>;
+  assetId: string;
+  suffix?: string;
 };
 
 export type AssetValueReferences = Record<string, AssetValueReference[]>;
@@ -16,27 +15,38 @@ export const getRuntimeAssetUrls = (
     Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [id, asset.url])
   );
 
+const getUrlSuffix = (value: string) => {
+  let parsed: URL;
+  try {
+    parsed = new URL(value, "https://content.webstudio.invalid/");
+  } catch {
+    return;
+  }
+  const suffix = `${parsed.search}${parsed.hash}`;
+  return suffix === "" ? undefined : suffix;
+};
+
 export const discoverAssetValueReferences = ({
   properties,
   sourcePath,
   assetIdsByPath,
-  rootPath = ["properties"],
 }: {
   properties: Readonly<Record<string, unknown>>;
   sourcePath: string;
   assetIdsByPath: ReadonlyMap<string, string>;
-  rootPath?: Array<string | number>;
 }): AssetValueReference[] => {
-  const resolveAssetReference = createAssetReferenceResolver({
-    sourcePath,
-    assetIdsByPath,
-  });
+  const resolveAssetId = createAssetIdResolver(assetIdsByPath, sourcePath);
   const references: AssetValueReference[] = [];
   const visit = (value: unknown, path: Array<string | number>) => {
     if (typeof value === "string") {
-      const reference = resolveAssetReference(value);
-      if (reference !== undefined) {
-        references.push({ path, ...reference });
+      const assetId = resolveAssetId(value);
+      if (assetId !== undefined) {
+        const suffix = getUrlSuffix(value);
+        references.push({
+          path,
+          assetId,
+          ...(suffix === undefined ? {} : { suffix }),
+        });
       }
       return;
     }
@@ -53,17 +63,17 @@ export const discoverAssetValueReferences = ({
       visit(item, [...path, key]);
     }
   };
-  visit(properties, rootPath);
+  visit(properties, ["properties"]);
   return references;
 };
 
 export const mergeAssetUrlSuffix = (url: string, suffix?: string) => {
-  if (suffix === undefined || suffix.length === 0) {
+  if (suffix === undefined) {
     return url;
   }
-  const base = new URL("https://content.webstudio.invalid/__assets__/");
-  const canonical = new URL(url, base);
-  const authored = new URL(suffix, base);
+  const base = "https://content.webstudio.invalid";
+  const canonical = new URL(url, `${base}/`);
+  const authored = new URL(suffix, `${base}/`);
   for (const [key, value] of authored.searchParams) {
     canonical.searchParams.append(key, value);
   }
@@ -76,13 +86,7 @@ export const mergeAssetUrlSuffix = (url: string, suffix?: string) => {
   if (url.startsWith("/")) {
     return `${canonical.pathname}${canonical.search}${canonical.hash}`;
   }
-  if (URL.canParse(url)) {
-    return canonical.href;
-  }
-  const pathname = canonical.pathname.startsWith(base.pathname)
-    ? canonical.pathname.slice(base.pathname.length)
-    : canonical.pathname;
-  return `${pathname}${canonical.search}${canonical.hash}`;
+  return canonical.href;
 };
 
 const replaceValueAtPath = ({

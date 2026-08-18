@@ -1,13 +1,4 @@
-import {
-  formatContentBlockSourceIntegrityIssue,
-  getContentBlockSourceIntegrityIssues,
-  type Asset,
-  type ContentBlockSourceIntegrityIssue,
-  type DataSource,
-  type Instance,
-  type Prop,
-  type Resource,
-} from "@webstudio-is/sdk";
+import type { DataSource, Prop, Resource } from "@webstudio-is/sdk";
 
 export type BuildIntegrityIssue =
   | {
@@ -23,30 +14,18 @@ export type BuildIntegrityIssue =
       propId: string;
       propName: string;
       resourceId: string;
-    }
-  | ContentBlockSourceIntegrityIssue;
+    };
 
 export const getBuildIntegrityIssues = ({
   dataSources,
   props,
   resources,
-  instances = [],
-  assets,
 }: {
   dataSources: Iterable<DataSource>;
   props: Iterable<Prop>;
   resources: Iterable<Resource>;
-  instances?: Iterable<Instance>;
-  assets?: Iterable<Asset>;
 }): BuildIntegrityIssue[] => {
-  const propsList = Array.from(props);
-  const issues: BuildIntegrityIssue[] = [
-    ...getContentBlockSourceIntegrityIssues({
-      instances,
-      props: propsList,
-      assets,
-    }),
-  ];
+  const issues: BuildIntegrityIssue[] = [];
   const resourceIds = new Set<string>();
 
   for (const resource of resources) {
@@ -68,7 +47,7 @@ export const getBuildIntegrityIssues = ({
     }
   }
 
-  for (const prop of propsList) {
+  for (const prop of props) {
     if (prop.type === "resource" && resourceIds.has(prop.value) === false) {
       issues.push({
         type: "missingResource",
@@ -86,9 +65,6 @@ export const getBuildIntegrityIssues = ({
 export const formatBuildIntegrityIssue = (
   issue: BuildIntegrityIssue
 ): string => {
-  if (issue.type !== "missingResource") {
-    return formatContentBlockSourceIntegrityIssue(issue);
-  }
   if (issue.source === "dataSource") {
     return `resource variable "${issue.dataSourceName}" (${issue.dataSourceId}) references missing resource "${issue.resourceId}".`;
   }
@@ -107,29 +83,11 @@ export const assertBuildIntegrity = (
     dataSources: Iterable<DataSource>;
     props: Iterable<Prop>;
     resources: Iterable<Resource>;
-    instances?: Iterable<Instance>;
-    assets?: Iterable<Asset>;
   },
   options: { messagePrefix?: string } = {}
 ) => {
   const issues = getBuildIntegrityIssues(data);
   const firstIssue = issues[0];
-  if (firstIssue !== undefined) {
-    throw new Error(
-      formatBuildIntegrityError(firstIssue, options.messagePrefix)
-    );
-  }
-};
-
-export const assertContentBlockSourceIntegrity = (
-  data: {
-    instances: Iterable<Instance>;
-    props: Iterable<Prop>;
-    assets?: Iterable<Asset>;
-  },
-  options: { messagePrefix?: string } = {}
-) => {
-  const firstIssue = getContentBlockSourceIntegrityIssues(data)[0];
   if (firstIssue !== undefined) {
     throw new Error(
       formatBuildIntegrityError(firstIssue, options.messagePrefix)

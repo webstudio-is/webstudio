@@ -3,7 +3,7 @@ import type { InputJsonSchema } from "@webstudio-is/sdk";
 import type { BuilderNamespace } from "./namespaces";
 import type { BuilderApiCapability } from "./permissions";
 
-export type RuntimeOperationKind = "read" | "mutation" | "application";
+export type RuntimeOperationKind = "read" | "mutation";
 
 export type RuntimeOperationPublicApiPermit = BuilderApiCapability;
 

@@ -29,9 +29,6 @@ test("accepts supported text names and rejects invalid or duplicate names", () =
   expect(
     getTextFileNameError({ name: "data.json", assets: [existing] })
   ).toBeUndefined();
-  expect(
-    getTextFileNameError({ name: "component.mdx", assets: [] })
-  ).toBeUndefined();
   expect(getTextFileNameError({ name: "image.png", assets: [] })).toBe(
     "Use a supported editable text extension."
   );
@@ -57,38 +54,6 @@ test("compares global complete display names after an asset is renamed", () => {
     })
   ).toBe("A file with this name already exists.");
 });
-
-test("can restrict creation to the requested text format", () => {
-  expect(
-    getTextFileNameError({
-      name: "post.mdx",
-      assets: [],
-      allowedExtensions: ["mdx"],
-    })
-  ).toBeUndefined();
-  expect(
-    getTextFileNameError({
-      name: "post.md",
-      assets: [],
-      allowedExtensions: ["mdx"],
-    })
-  ).toBe("Use a supported editable text extension.");
-  expect(
-    getTextFileNameError({
-      name: "post.MDX",
-      assets: [],
-      allowedExtensions: ["MDX"],
-    })
-  ).toBeUndefined();
-  expect(
-    getTextFileNameError({
-      name: "post.mdx.txt",
-      assets: [],
-      allowedExtensions: ["mdx"],
-    })
-  ).toBe("Use a supported editable text extension.");
-});
-
 test("creates valid initial content for editable file types", async () => {
   const jsonFile = createTextFileData("data.json");
   if (jsonFile === undefined) {

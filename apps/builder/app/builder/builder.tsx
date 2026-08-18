@@ -58,10 +58,7 @@ import { CloneProjectDialog } from "~/shared/clone-project";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";
 import { initBuilderApi } from "~/shared/builder-api";
-import {
-  abortPendingTemplateNameConfirmation,
-  migrateLoadedWebstudioData,
-} from "~/shared/instance-utils/data";
+import { migrateLoadedWebstudioData } from "~/shared/instance-utils/data";
 import { Loading, LoadingBackground } from "./shared/loading";
 import { mergeRefs } from "@react-aria/utils";
 import { CommandPanel } from "./features/command-panel";
@@ -74,7 +71,6 @@ import { TokenConflictDialog } from "~/shared/token-conflict-dialog";
 import { RootStyleConflictDialog } from "~/shared/root-style-conflict-dialog";
 import { DesignTokenImportDialog } from "~/shared/design-token-import-dialog";
 import type { User } from "~/shared/db/user.server";
-import { TemplateNameConfirmationDialog } from "./features/template-name-confirmation-dialog";
 
 import {
   initCopyPaste,
@@ -328,7 +324,6 @@ export const Builder = (props: BuilderProps) => {
 
   useUnmount(() => {
     $pages.set(undefined);
-    abortPendingTemplateNameConfirmation();
   });
 
   const dataLoadingState = useStore($dataLoadingState);
@@ -534,7 +529,6 @@ export const Builder = (props: BuilderProps) => {
         <DesignTokenImportDialog />
         <TokenConflictDialog />
         <RootStyleConflictDialog />
-        <TemplateNameConfirmationDialog />
         <RemoteDialog />
         <Toaster />
       </div>

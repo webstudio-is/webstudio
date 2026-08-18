@@ -9,7 +9,6 @@ export * from "./patch";
 export * from "./asset-patch-core";
 export * from "./folder-persistence";
 export * from "./revision";
-export * from "./markdown-to-mdx";
 export * from "./field-catalog";
 export * from "./query-preview";
 export * from "./query-performance";

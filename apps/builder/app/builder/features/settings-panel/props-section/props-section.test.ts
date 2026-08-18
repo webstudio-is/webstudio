@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { blockComponent, rootComponent } from "@webstudio-is/sdk";
+import { rootComponent } from "@webstudio-is/sdk";
 import { __testing__ } from "./props-section";
 
 const {
@@ -66,17 +66,6 @@ describe("shouldRenderPropsSectionContainer", () => {
         propsMetasSize: 0,
         hasVisibleProps: true,
         isContentMode: true,
-      })
-    ).toBe(true);
-  });
-
-  test("renders Content Block source controls without component prop metadata", () => {
-    expect(
-      shouldRenderPropsSectionContainer({
-        component: blockComponent,
-        propsMetasSize: 0,
-        hasVisibleProps: false,
-        isContentMode: false,
       })
     ).toBe(true);
   });

@@ -1,21 +1,19 @@
 import { expect, test } from "vitest";
-import { blockComponent, type WebstudioFragment } from "@webstudio-is/sdk";
 import { parsePageTransferData } from "./page-transfer";
 
-const emptyFragment: WebstudioFragment = {
-  children: [],
-  instances: [],
-  assets: [],
-  dataSources: [],
-  resources: [],
-  props: [],
-  breakpoints: [],
-  styleSourceSelections: [],
-  styleSources: [],
-  styles: [],
-};
-
 test("validates page transfer data", () => {
+  const fragment = {
+    children: [],
+    instances: [],
+    assets: [],
+    dataSources: [],
+    resources: [],
+    props: [],
+    breakpoints: [],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+  };
   const valid = parsePageTransferData(
     JSON.stringify({
       "@webstudio/page/v0.1": {
@@ -28,8 +26,8 @@ test("validates page transfer data", () => {
           meta: {},
           rootInstanceId: "body",
         },
-        rootFragment: emptyFragment,
-        bodyFragment: emptyFragment,
+        rootFragment: fragment,
+        bodyFragment: fragment,
       },
     })
   );
@@ -48,41 +46,4 @@ test("validates page transfer data", () => {
     owned: false,
     valid: false,
   });
-});
-
-test("validates Content Block sources in copied page data", () => {
-  const bodyFragment: WebstudioFragment = {
-    ...emptyFragment,
-    children: [{ type: "id", value: "block" }],
-    instances: [
-      {
-        type: "instance",
-        id: "block",
-        component: blockComponent,
-        children: [],
-      },
-    ],
-    props: [
-      {
-        id: "source",
-        instanceId: "block",
-        name: "src",
-        type: "asset",
-        value: "missing-post",
-      },
-    ],
-  };
-
-  expect(
-    parsePageTransferData(
-      JSON.stringify({
-        "@webstudio/page/v0.1": {
-          type: "page",
-          page: {},
-          rootFragment: emptyFragment,
-          bodyFragment,
-        },
-      })
-    )
-  ).toEqual({ owned: true, valid: false });
 });

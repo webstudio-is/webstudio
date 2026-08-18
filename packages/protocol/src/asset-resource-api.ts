@@ -35,38 +35,6 @@ const assetItemApiPath = `${assetsApiUrl}/{assetId}`;
 const assetContentApiPath = `${assetItemApiPath}/content`;
 const assetFolderItemApiPath = `${assetsFoldersApiUrl}/{folderId}`;
 
-export const assetContentDescriptorHeader =
-  "x-webstudio-asset-content-descriptor";
-
-export const assetContentDescriptor = z.object({
-  id: z.string(),
-  projectId: z.string(),
-  name: z.string(),
-  type: assetType,
-  format: z.string(),
-  size: z.number().nonnegative(),
-  createdAt: z.string(),
-  updatedAt: z.string().optional(),
-});
-export type AssetContentDescriptor = z.infer<typeof assetContentDescriptor>;
-
-export const serializeAssetContentDescriptor = (
-  value: AssetContentDescriptor
-) => encodeURIComponent(JSON.stringify(assetContentDescriptor.parse(value)));
-
-export const parseAssetContentDescriptor = (value: string | null) => {
-  if (value === null) {
-    throw new Error("Asset content response is missing its revision identity");
-  }
-  try {
-    return assetContentDescriptor.parse(JSON.parse(decodeURIComponent(value)));
-  } catch (cause) {
-    throw new Error("Asset content response has an invalid revision identity", {
-      cause,
-    });
-  }
-};
-
 const operation = <
   OperationId extends string,
   Method extends string,
@@ -894,13 +862,6 @@ const assetFolderParameters = [
   projectIdParameter,
 ];
 const binarySchema = { type: "string", format: "binary" } as const;
-const assetContentResponseHeaders = {
-  [assetContentDescriptorHeader]: {
-    description:
-      "URI-encoded JSON identity of the exact Asset revision in this response",
-    schema: { type: "string" },
-  },
-};
 
 /**
  * OpenAPI is both the transport description and the sole query-authoring
@@ -1121,7 +1082,6 @@ export const createAssetResourceOpenApi = ({
           responses: {
             200: {
               description: "Complete asset content",
-              headers: assetContentResponseHeaders,
               content: {
                 "*/*": {
                   schema: binarySchema,
@@ -1131,7 +1091,6 @@ export const createAssetResourceOpenApi = ({
             206: {
               description: "Partial asset content",
               headers: {
-                ...assetContentResponseHeaders,
                 "Content-Range": { schema: { type: "string" } },
               },
               content: {
@@ -1172,7 +1131,6 @@ export const createAssetResourceOpenApi = ({
                 schema: binarySchema,
               },
               "text/markdown": { schema: { type: "string" } },
-              "text/mdx": { schema: { type: "string" } },
               "application/json": { schema: {} },
             },
           },

@@ -11,9 +11,6 @@ import {
   projectMeta,
   prop,
   instance,
-  contentBlockExternalContentIdentity,
-  contentBlockDiagnostic,
-  contentBlockSource,
 } from "@webstudio-is/sdk";
 import {
   assetQueryResultMode,
@@ -35,7 +32,6 @@ import {
 } from "./component-insert-contract";
 import { expressionWarningSchema } from "./expression-validation";
 import { designTokenImportPlanEntrySchema } from "./design-token-import";
-import { mdxPasteResult } from "./mdx-paste";
 
 const looseObject = <Shape extends z.ZodRawShape>(shape: Shape) =>
   z.looseObject(shape);
@@ -49,136 +45,6 @@ const styleValue = looseObject({
 const patchChange = z.object({
   namespace: z.enum(builderNamespaces),
   patches: z.array(builderPatchSchema),
-});
-const contentStoragePatchChange = z.union([
-  patchChange,
-  z.object({
-    namespace: z.literal("fragment"),
-    patches: z.array(builderPatchSchema),
-  }),
-]);
-
-const externalContentStorageRoot = z.object({
-  type: z.literal("external"),
-  identity: contentBlockExternalContentIdentity,
-});
-const contentStorageRoot = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("project") }),
-  externalContentStorageRoot,
-]);
-
-const contentBlockSourceInspection = z.object({
-  blockInstanceId: z.string(),
-  renderScope: z.string(),
-  configuredSource: contentBlockSource.optional(),
-  resolvedIdentity: contentBlockExternalContentIdentity.optional(),
-  sessionStatus: z.enum([
-    "disconnected",
-    "saved",
-    "pending",
-    "conflicting",
-    "cancelled",
-    "recoverable",
-    "failed",
-  ]),
-  pending: z.boolean(),
-  diagnostics: z.array(contentBlockDiagnostic),
-  capabilities: z.object({
-    canConnect: z.boolean(),
-    canSwitch: z.boolean(),
-    canDisconnectWithCopy: z.boolean(),
-    canEdit: z.boolean(),
-    canRetry: z.boolean(),
-    canReloadRemote: z.boolean(),
-    canCopyUnsavedSource: z.boolean(),
-  }),
-  repairRoutes: z.array(
-    z.enum([
-      "open-file",
-      "retry",
-      "reload-remote",
-      "copy-unsaved-mdx",
-      "disconnect-with-copy",
-    ])
-  ),
-});
-const contentBlockLifecyclePlan = z.object({
-  action: z.enum(["connect", "switch", "disconnect"]),
-  changesProject: z.boolean(),
-  storageWrites: z.array(
-    z.object({
-      identity: contentBlockExternalContentIdentity,
-      expectedRevision: z.string(),
-    })
-  ),
-  diagnostics: z.array(contentBlockDiagnostic),
-  persistenceOrder: z.enum(["none", "storage-before-project"]),
-  persistence: z
-    .object({
-      status: z.enum(["complete", "partial", "failed"]),
-      steps: z.array(
-        z.object({
-          type: z.enum(["asset", "project"]),
-          status: z.enum(["saved", "failed", "not-attempted"]),
-          root: contentBlockExternalContentIdentity.optional(),
-          code: z.string().optional(),
-          message: z.string().optional(),
-        })
-      ),
-      retry: z.object({
-        replan: z.literal(true),
-        roots: z.array(contentBlockExternalContentIdentity),
-        project: z.boolean(),
-      }),
-    })
-    .optional(),
-});
-const contentBlockApplicationResult = z.object({
-  status: z.enum(["complete", "partial", "confirmation-required", "blocked"]),
-  code: z.string().optional(),
-  message: z.string().optional(),
-  source: contentBlockSourceInspection,
-  plan: contentBlockLifecyclePlan.optional(),
-  confirmation: z
-    .object({ token: z.string(), expiresAt: z.string() })
-    .optional(),
-});
-const contentBlockRecoveryResult = z.object({
-  status: z.enum(["complete", "partial", "blocked"]),
-  code: z.string().optional(),
-  message: z.string().optional(),
-  source: contentBlockSourceInspection,
-  localMdx: z.string().optional(),
-  changedAsset: z.boolean(),
-});
-const contentBlockTemplateMigrationResult = z.object({
-  status: z.enum(["complete", "partial", "blocked", "confirmation-required"]),
-  code: z.string().optional(),
-  message: z.string().optional(),
-  discoveryComplete: z.boolean(),
-  updateCount: z.number().int().nonnegative(),
-  omissionCount: z.number().int().nonnegative(),
-  changedAsset: z.boolean(),
-  files: z.array(
-    z.object({
-      assetId: z.string(),
-      revision: z.string().optional(),
-      contentRef: z.string(),
-      changed: z.boolean().optional(),
-      status: z.enum(["updated", "unchanged", "failed"]).optional(),
-      updateCount: z.number().int().nonnegative(),
-      omissionCount: z.number().int().nonnegative(),
-      diagnostics: z.array(
-        z.looseObject({ code: z.string(), message: z.string() })
-      ),
-    })
-  ),
-  diagnostics: z
-    .array(z.looseObject({ code: z.string(), message: z.string() }))
-    .optional(),
-  confirmation: z
-    .object({ token: z.string(), expiresAt: z.string() })
-    .optional(),
 });
 
 export const pageDraftOutputHint =
@@ -194,57 +60,8 @@ export const createRuntimeMutationExecutionSchema = <
     payload: z.array(patchChange),
     result,
     invalidatesNamespaces: z.array(z.enum(builderNamespaces)),
-    storageChanges: z
-      .array(
-        z.object({
-          root: externalContentStorageRoot,
-          payload: z.array(contentStoragePatchChange),
-          copySource: z
-            .object({
-              root: contentStorageRoot,
-              instanceId: z.string().min(1),
-            })
-            .optional(),
-          mdxInsert: z
-            .object({
-              source: z.string(),
-              parentInstanceId: z.string(),
-              childIndex: z.number().int().nonnegative(),
-              position: z.enum(["append", "prepend", "replace", "index"]),
-              instanceIds: z.array(z.string()),
-              rootInstanceIds: z.array(z.string()),
-            })
-            .optional(),
-        })
-      )
-      .optional(),
-    persistenceOrder: z.enum(["storage-first", "project-first"]).optional(),
     noop: z.boolean(),
   });
-
-const contentBlockSemanticEditResult = z.object({
-  status: z.enum(["complete", "partial", "blocked"]),
-  code: z.string().optional(),
-  message: z.string().optional(),
-  result: z
-    .object({
-      result: z.looseObject({}),
-      noop: z.boolean(),
-    })
-    .optional(),
-  changedAsset: z.boolean(),
-  persistence: z
-    .object({
-      status: z.enum(["complete", "partial", "failed"]),
-      steps: z.array(z.looseObject({})),
-      retry: z.object({
-        replan: z.literal(true),
-        roots: z.array(contentBlockExternalContentIdentity),
-        project: z.boolean(),
-      }),
-    })
-    .optional(),
-});
 
 const pageSummary = looseObject({
   id,
@@ -594,14 +411,6 @@ export const runtimeOutputSchemas = {
   }),
   "pageTree.move": looseObject({ childId: id }),
   "pageTree.reparentOrphans": looseObject({}),
-  "contentBlocks.inspectSource": contentBlockSourceInspection,
-  "contentBlocks.connectSource": contentBlockApplicationResult,
-  "contentBlocks.switchSource": contentBlockApplicationResult,
-  "contentBlocks.disconnectSource": contentBlockApplicationResult,
-  "contentBlocks.recoverSource": contentBlockRecoveryResult,
-  "contentBlocks.semanticEdit": contentBlockSemanticEditResult,
-  "contentBlocks.migrateTemplateReferences":
-    contentBlockTemplateMigrationResult,
   "instances.list": looseObject({
     instances: z.array(instanceSummary.extend({ record: instance.optional() })),
     ...outputPage,
@@ -691,7 +500,6 @@ export const runtimeOutputSchemas = {
     warnings: expressionWarnings.optional(),
   }),
   "instances.insertFragment": fragmentInsertResult,
-  "instances.insertMdxText": mdxPasteResult,
   "slots.attach": looseObject({ slotId: id, fragmentId: id }),
   "slots.extract": looseObject({ slotId: id, fragmentId: id, instanceId: id }),
   "instances.move": instanceIdsResult,

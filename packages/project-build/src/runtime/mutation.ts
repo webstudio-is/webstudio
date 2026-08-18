@@ -1,37 +1,7 @@
-import type { Instance } from "@webstudio-is/sdk";
 import type { BuilderNamespace } from "../contracts/namespaces";
 import type { BuilderPatchChange } from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
 import { applyBuilderPatchTransactions } from "../state/patch";
-import {
-  projectContentStorageChanges,
-  type ContentStorageRoot,
-} from "./content-storage";
-
-export type ContentStoragePatchChange =
-  | BuilderPatchChange
-  | { namespace: "fragment"; patches: BuilderPatchChange["patches"] };
-
-export type ContentStorageChange = {
-  root: Extract<ContentStorageRoot, { type: "external" }>;
-  payload: ContentStoragePatchChange[];
-  copySource?: Readonly<{
-    root: ContentStorageRoot;
-    instanceId: Instance["id"];
-  }>;
-  mdxInsert?: Readonly<{
-    source: string;
-    parentInstanceId: Instance["id"];
-    childIndex: number;
-    position: "append" | "prepend" | "replace" | "index";
-    instanceIds: readonly Instance["id"][];
-    rootInstanceIds: readonly Instance["id"][];
-  }>;
-};
-
-export const hasContentStorageChange = (change: ContentStorageChange) =>
-  change.mdxInsert !== undefined ||
-  change.payload.some(({ patches }) => patches.length > 0);
 
 export type BuilderRuntimeMutation<
   Result extends Record<string, unknown> = Record<string, unknown>,
@@ -40,54 +10,7 @@ export type BuilderRuntimeMutation<
   payload: BuilderPatchChange[];
   result: Result;
   invalidatesNamespaces: readonly BuilderNamespace[];
-  storageChanges?: ContentStorageChange[];
-  persistenceOrder?: "storage-first" | "project-first";
   noop: boolean;
-};
-
-// Moving authored records into project ownership is the one serial persistence
-// case where saving the project first avoids deleting the only durable copy.
-// The inverse move remains storage-first so the external destination exists
-// before the project source is removed.
-export const getRuntimeMutationPersistenceOrder = (
-  mutation: Pick<
-    BuilderRuntimeMutation,
-    "payload" | "storageChanges" | "persistenceOrder"
-  >
-): "storage-first" | "project-first" => {
-  if (
-    "persistenceOrder" in mutation &&
-    mutation.persistenceOrder !== undefined
-  ) {
-    return mutation.persistenceOrder;
-  }
-  const projectAdds = new Set(
-    mutation.payload.flatMap(({ namespace, patches }) =>
-      patches.flatMap((patch) =>
-        patch.op === "add" &&
-        patch.path.length === 1 &&
-        typeof patch.path[0] === "string"
-          ? [JSON.stringify([namespace, patch.path[0]])]
-          : []
-      )
-    )
-  );
-  const storageRemovals = new Set(
-    (mutation.storageChanges ?? []).flatMap(({ payload }) =>
-      payload.flatMap(({ namespace, patches }) =>
-        patches.flatMap((patch) =>
-          patch.op === "remove" &&
-          patch.path.length === 1 &&
-          typeof patch.path[0] === "string"
-            ? [JSON.stringify([namespace, patch.path[0]])]
-            : []
-        )
-      )
-    )
-  );
-  return Array.from(projectAdds).some((id) => storageRemovals.has(id))
-    ? "project-first"
-    : "storage-first";
 };
 
 export const createRuntimeMutation = <
@@ -96,24 +19,16 @@ export const createRuntimeMutation = <
   payload,
   result,
   invalidatesNamespaces,
-  storageChanges,
-  persistenceOrder,
 }: {
   payload: BuilderPatchChange[];
   result: Result;
   invalidatesNamespaces: readonly BuilderNamespace[];
-  storageChanges?: ContentStorageChange[];
-  persistenceOrder?: BuilderRuntimeMutation["persistenceOrder"];
 }): BuilderRuntimeMutation<Result> => ({
   kind: "mutation",
   payload,
   result,
   invalidatesNamespaces,
-  storageChanges,
-  ...(persistenceOrder === undefined ? {} : { persistenceOrder }),
-  noop:
-    payload.length === 0 &&
-    storageChanges?.some(hasContentStorageChange) !== true,
+  noop: payload.length === 0,
 });
 
 export const createRuntimeMutationAccumulator = (
@@ -122,7 +37,6 @@ export const createRuntimeMutationAccumulator = (
   let state = initialState;
   const changes = new Map<BuilderNamespace, BuilderPatchChange>();
   const invalidatesNamespaces = new Set<BuilderNamespace>();
-  const storageChanges: ContentStorageChange[] = [];
 
   const stage = <Result extends Record<string, unknown>>(
     mutation: BuilderRuntimeMutation<Result>
@@ -141,17 +55,9 @@ export const createRuntimeMutationAccumulator = (
     for (const namespace of mutation.invalidatesNamespaces) {
       invalidatesNamespaces.add(namespace);
     }
-    storageChanges.push(...(mutation.storageChanges ?? []));
-    const stagedPayload = [
-      ...mutation.payload,
-      ...projectContentStorageChanges({
-        state,
-        changes: mutation.storageChanges ?? [],
-      }),
-    ];
-    if (stagedPayload.length > 0) {
+    if (mutation.payload.length > 0) {
       state = applyBuilderPatchTransactions(state, [
-        { id: "runtime-mutation-stage", payload: stagedPayload },
+        { id: "runtime-mutation-stage", payload: mutation.payload },
       ]).state;
     }
     return mutation.result;
@@ -162,7 +68,6 @@ export const createRuntimeMutationAccumulator = (
       payload: Array.from(changes.values()),
       result,
       invalidatesNamespaces: Array.from(invalidatesNamespaces),
-      storageChanges: storageChanges.length === 0 ? undefined : storageChanges,
     });
 
   return {

@@ -144,9 +144,7 @@ test("keeps every MCP API tool aligned with its public API contract", () => {
 
     const schema = getDetailedProjectSessionMcpInputSchema(tool);
     const transportFields = [
-      ...(operation.method === "mutation" &&
-      operation.localCapable &&
-      operation.inputFields.includes("dryRun") === false
+      ...(operation.method === "mutation" && operation.localCapable
         ? ["dryRun"]
         : []),
       ...(operation.requiresConfirm && operation.localCapable
@@ -167,11 +165,7 @@ test("keeps every MCP API tool aligned with its public API contract", () => {
       const isRepresentationOverride =
         (operation.command === "insert-fragment" &&
           ["parentInstanceId", "fragment"].includes(field)) ||
-        (operation.command === "insert-collection" &&
-          field === "itemFragment") ||
-        (field === "dryRun" &&
-          operation.method === "mutation" &&
-          operation.localCapable);
+        (operation.command === "insert-collection" && field === "itemFragment");
       if (isRepresentationOverride) {
         continue;
       }

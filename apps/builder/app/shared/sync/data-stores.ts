@@ -83,16 +83,6 @@ export const readBuilderStateStores = () => ({
   projectSettings: $projectSettings.get(),
 });
 
-export const hasSameBuilderStateStoreReferences = (
-  left: ReturnType<typeof readBuilderStateStores>,
-  right: ReturnType<typeof readBuilderStateStores>
-) =>
-  Object.keys(left).every(
-    (namespace) =>
-      left[namespace as keyof typeof left] ===
-      right[namespace as keyof typeof right]
-  );
-
 /**
  * Get initial values for all data stores.
  * Used for resetting stores when switching between projects.

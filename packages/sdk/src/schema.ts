@@ -5,7 +5,6 @@ export * from "./schema/assets";
 export * from "./schema/asset-resource";
 export * from "./schema/asset-folders";
 export * from "./schema/breakpoints";
-export * from "./schema/content-block";
 export * from "./schema/data-sources";
 export * from "./schema/deployment";
 export * from "./schema/instances";

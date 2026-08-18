@@ -37,13 +37,9 @@ declare module "__CLIENT__" {
 declare module "__SERVER__" {
   import type { PageMeta, System, ResourceRequest } from "@webstudio-is/sdk";
 
-  export const getResources: (props: {
-    system: System;
-    resources?: Record<string, any>;
-  }) => {
+  export const getResources: (props: { system: System }) => {
     data: Map<string, ResourceRequest>;
     action: Map<string, ResourceRequest>;
-    contentData: Map<string, ResourceRequest>;
   };
 
   export const getPageMeta: (props: {

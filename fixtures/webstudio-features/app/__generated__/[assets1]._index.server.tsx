@@ -4,7 +4,7 @@
 
       import type { PageMeta } from "@webstudio-is/sdk";
       import type { System, ResourceRequest } from "@webstudio-is/sdk";
-export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
+export const getResources = (_props: { system: System }) => {
   const assets_1: ResourceRequest = {
     name: "assets",
     control: "system",
@@ -38,10 +38,9 @@ export const getResources = (_props: { system: System; resources?: Record<string
   const _data = new Map<string, ResourceRequest>([
     ["assets_1", assets_1],
   ])
-  const _contentData = new Map<string, ResourceRequest>()
   const _action = new Map<string, ResourceRequest>([
   ])
-  return { data: _data, action: _action, contentData: _contentData }
+  return { data: _data, action: _action }
 }
 
 

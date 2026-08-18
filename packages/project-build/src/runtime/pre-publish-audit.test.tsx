@@ -1,7 +1,6 @@
 import { expect, test } from "vitest";
 import {
   ROOT_FOLDER_ID,
-  blockComponent,
   type Folder,
   type Page,
   type Pages,
@@ -50,7 +49,6 @@ const runAudit = ({
     ...data,
     dataSources: new Map(),
     resources: new Map(),
-    assets: new Map(),
     metas: componentMetas,
   });
 
@@ -220,7 +218,6 @@ test("blocks publishing when required audit input is unavailable", () => {
     props,
     dataSources: new Map(),
     resources: new Map(),
-    assets: new Map(),
     metas: componentMetas,
   });
 
@@ -253,7 +250,6 @@ test("includes existing resource integrity checks in the audit pipeline", () => 
       ],
     ]),
     resources: new Map(),
-    assets: new Map(),
     metas: componentMetas,
   });
 
@@ -269,33 +265,4 @@ test("includes existing resource integrity checks in the audit pipeline", () => 
       },
     },
   ]);
-});
-
-test("includes Content Block source integrity checks in the audit pipeline", () => {
-  const { instances, props } = renderData(<$.Body ws:id="body"></$.Body>);
-  instances.set("block", {
-    type: "instance",
-    id: "block",
-    component: blockComponent,
-    children: [],
-  });
-  props.set("source", {
-    id: "source",
-    instanceId: "block",
-    name: "src",
-    type: "asset",
-    value: "missing-post",
-  });
-
-  expect(runAudit({ instances, props })).toContainEqual({
-    ruleId: "content-block-source-integrity",
-    severity: "error",
-    message:
-      'Content Block source prop "source" references missing Asset "missing-post".',
-    location: {
-      instanceId: "block",
-      propId: "source",
-      assetId: "missing-post",
-    },
-  });
 });
