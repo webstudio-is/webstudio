@@ -919,6 +919,57 @@ test("restarts the shared browser once after an unexpected exit", async () => {
   expect(dependencies.rm).toHaveBeenCalledTimes(2);
 });
 
+test("restarts a responsive capture when the DevTools connection closes", async () => {
+  const firstProcess = new FakeBrowserProcess();
+  const secondProcess = new FakeBrowserProcess();
+  let recoveredSocket: FakeWebSocket | undefined;
+  const dependencies = createDependencies();
+  vi.mocked(dependencies.spawnBrowser)
+    .mockReturnValueOnce(firstProcess as never)
+    .mockReturnValueOnce(secondProcess as never);
+  vi.mocked(dependencies.createWebSocket)
+    .mockImplementationOnce(
+      () => new ClosingWebSocket() as unknown as WebSocket
+    )
+    .mockImplementationOnce(() => {
+      recoveredSocket = new FakeWebSocket();
+      return recoveredSocket as unknown as WebSocket;
+    });
+  const options = {
+    url: "https://example.com/responsive",
+    output: "/tmp/mobile.png",
+    width: 375,
+    height: 812,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(options, dependencies);
+
+  await expect(
+    session.capturePage([
+      options,
+      { ...options, output: "/tmp/desktop.png", width: 1440, height: 900 },
+    ])
+  ).resolves.toHaveLength(2);
+
+  expect(dependencies.spawnBrowser).toHaveBeenCalledTimes(2);
+  expect(firstProcess.kill).toHaveBeenCalledOnce();
+  expect(dependencies.writeFile).toHaveBeenCalledTimes(2);
+  expect(
+    recoveredSocket?.sentMessages
+      .filter(
+        (message) => message.method === "Emulation.setDeviceMetricsOverride"
+      )
+      .map((message) => message.params?.width)
+  ).toEqual([375, 1440]);
+
+  await session.close();
+
+  expect(secondProcess.kill).toHaveBeenCalledOnce();
+});
+
 test("retries a browser restart after a transient startup failure", async () => {
   const firstProcess = new FakeBrowserProcess();
   const secondProcess = new FakeBrowserProcess();
@@ -1438,12 +1489,20 @@ test("times out when browser DevTools commands stop responding", async () => {
   });
 });
 
-test("rejects pending commands when the DevTools socket closes", async () => {
-  const browserProcess = new FakeBrowserProcess();
-  const dependencies = createDependencies({
-    browserProcess,
-    socket: new ClosingWebSocket(),
-  });
+test("rejects after the DevTools socket closes twice", async () => {
+  const firstProcess = new FakeBrowserProcess();
+  const secondProcess = new FakeBrowserProcess();
+  const dependencies = createDependencies();
+  vi.mocked(dependencies.spawnBrowser)
+    .mockReturnValueOnce(firstProcess as never)
+    .mockReturnValueOnce(secondProcess as never);
+  vi.mocked(dependencies.createWebSocket)
+    .mockImplementationOnce(
+      () => new ClosingWebSocket() as unknown as WebSocket
+    )
+    .mockImplementationOnce(
+      () => new ClosingWebSocket() as unknown as WebSocket
+    );
 
   await expect(
     captureBrowserScreenshot(
@@ -1461,7 +1520,9 @@ test("rejects pending commands when the DevTools socket closes", async () => {
     )
   ).rejects.toThrow("Browser DevTools connection closed.");
 
-  expect(browserProcess.kill).toHaveBeenCalled();
+  expect(dependencies.spawnBrowser).toHaveBeenCalledTimes(2);
+  expect(firstProcess.kill).toHaveBeenCalledOnce();
+  expect(secondProcess.kill).toHaveBeenCalledOnce();
 });
 
 test("times out when browser page target creation does not respond", async () => {
