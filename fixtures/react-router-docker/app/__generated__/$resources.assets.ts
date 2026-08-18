@@ -4,12 +4,16 @@
     "url": "/assets/iconly_svg_converted-converted_zMaMiAAutUl8XrITgz7d1.svg",
     "width": 14,
     "height": 16,
+    "name": "iconly_svg_converted-converted.svg",
+    "mimeType": "image/svg+xml",
     "contentRef": "iconly_svg_converted-converted_zMaMiAAutUl8XrITgz7d1.svg"
   },
   "d0974db9300c1a3b0fb8b291dd9fabd45ad136478908394280af2f7087e3aecd": {
     "url": "/assets/147-1478573_cat-icon-png-black-cat-png-icon.png_ZJ6-qJjk1RlFzuYwyCXdp.jpeg",
     "width": 820,
     "height": 985,
+    "name": "147-1478573_cat-icon-png-black-cat-png-icon.png.jpeg",
+    "mimeType": "image/jpeg",
     "contentRef": "147-1478573_cat-icon-png-black-cat-png-icon.png_ZJ6-qJjk1RlFzuYwyCXdp.jpeg"
   }
 };
