@@ -194,18 +194,12 @@ export const resolveAssetValueReferences = <Value>({
   /** @deprecated Pass runtimeAssets so structured references can include metadata. */
   assetUrls?: Readonly<Record<string, string>>;
 }): Value => {
-  const assets =
-    assetUrls === undefined
-      ? runtimeAssets
-      : {
-          ...Object.fromEntries(
-            Object.entries(assetUrls).map(([id, url]) => [id, { url }])
-          ),
-          ...runtimeAssets,
-        };
   let resolved: unknown = value;
   for (const reference of references ?? []) {
-    const runtimeAsset = assets[reference.assetId];
+    const assetUrl = assetUrls?.[reference.assetId];
+    const runtimeAsset =
+      runtimeAssets[reference.assetId] ??
+      (assetUrl === undefined ? undefined : { url: assetUrl });
     if (runtimeAsset === undefined) {
       continue;
     }

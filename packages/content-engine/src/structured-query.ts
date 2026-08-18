@@ -588,17 +588,17 @@ const scanAndSortAssetQueryDocuments = ({
         ) {
           continue;
         }
-        const item = toQueryItem(document, query.output, runtimeAsset);
+        const projected = toQueryItem(document, query.output, runtimeAsset);
         if (
           query.content.mode === "none" &&
-          Object.keys(item).length === 0 &&
+          Object.keys(projected).length === 0 &&
           includesOutputField(query.output, "id") === false
         ) {
           continue;
         }
         const match = {
           document,
-          item: { id: document._id, ...item },
+          item: { id: document._id, ...projected },
         } satisfies AssetQueryMatch;
         state.matches.set(document, match);
         state.sortGroup.documents.add(document);

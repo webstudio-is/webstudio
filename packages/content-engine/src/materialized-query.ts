@@ -271,8 +271,7 @@ export const getMaterializedAssetQueryResult = async ({
   if (queries === undefined) {
     return;
   }
-  const parsedQuery = assetQuery.parse(query);
-  const value = queries[await getAssetQueryHash(parsedQuery)];
+  const value = queries[await getAssetQueryHash(assetQuery.parse(query))];
   if (value === undefined) {
     return;
   }

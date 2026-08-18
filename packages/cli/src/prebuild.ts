@@ -520,7 +520,7 @@ const generateAssetQueryRuntimeModule = ({
 }: {
   deploymentId: string;
   index: ContentRuntimeArtifact | undefined;
-  runtimeAssets: Readonly<Record<string, ContentRuntimeAsset>>;
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
 }) => {
   const inputType = `{
     request: Request;
@@ -546,10 +546,6 @@ export const createGeneratedAssetResourceFetch = ({ request, fallback }: ${input
 `;
 };
 
-type ContentRuntimeAsset = AssetRuntimeData & {
-  contentRef?: string;
-};
-
 export const materializeAssetIndex = async ({
   index,
   runtimeAssets,
@@ -558,7 +554,7 @@ export const materializeAssetIndex = async ({
   deploymentId,
 }: {
   index: PublishedProjectBundle["assetIndex"];
-  runtimeAssets: Readonly<Record<string, ContentRuntimeAsset>>;
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   includeDocumentRuntimeAssets: boolean;
   generatedDirectory: string;
   deploymentId: string;
