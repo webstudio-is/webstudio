@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { getInputSchemaMetadata } from "@webstudio-is/project-build/contracts";
-import { UPLOAD_ASSET_TYPES, type InputJsonSchema } from "@webstudio-is/sdk";
+import { assetType, type InputJsonSchema } from "@webstudio-is/sdk";
 import type { PublicApiOperationNamespace } from "./runtime-contracts";
 
 const assetUploadDescriptor = z.object({
   name: z.string(),
-  type: z.enum(UPLOAD_ASSET_TYPES),
+  type: assetType,
   format: z.string().optional(),
   description: z.string().optional(),
   folderId: z.string().min(1).optional(),

@@ -15,8 +15,6 @@ import {
   FONT_EXTENSIONS,
   FILE_EXTENSIONS_BY_CATEGORY,
   detectAssetType,
-  toStoredAssetType,
-  UPLOAD_ASSET_TYPES,
   decodePathFragment,
   getAssetUrl,
   toRuntimeAsset,
@@ -463,22 +461,17 @@ describe("allowed-file-types", () => {
   });
 
   describe("detectAssetType", () => {
-    test("maps every supported upload type to a valid stored asset type", () => {
-      const storedTypes = Object.fromEntries(
-        UPLOAD_ASSET_TYPES.map((uploadType) => [
-          uploadType,
-          toStoredAssetType(uploadType),
-        ])
-      );
-
-      expect(storedTypes).toEqual({
-        image: "image",
-        font: "font",
-        video: "file",
-        file: "file",
-      });
-      for (const storedType of Object.values(storedTypes)) {
-        expect(assetType.safeParse(storedType).success).toBe(true);
+    test("detects only canonical asset types", () => {
+      expect(assetType.options).toEqual(["font", "image", "video", "file"]);
+      for (const filename of [
+        "image.png",
+        "font.woff2",
+        "video.mp4",
+        "document.pdf",
+      ]) {
+        expect(assetType.safeParse(detectAssetType(filename)).success).toBe(
+          true
+        );
       }
     });
 

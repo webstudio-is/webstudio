@@ -2,8 +2,8 @@ import { type FontFormat, fontMeta, FONT_FORMATS } from "@webstudio-is/fonts";
 import {
   type Asset,
   imageMeta,
+  videoMeta,
   detectAssetType,
-  toStoredAssetType,
 } from "@webstudio-is/sdk";
 
 export const formatAsset = ({
@@ -53,12 +53,17 @@ export const formatAsset = ({
   }
 
   // Detect actual asset type based on file extension
-  const storedType = toStoredAssetType(detectAssetType(file.name));
+  const detectedType = detectAssetType(file.name);
 
   // Check if it's an image by verifying both metadata AND file extension
   // Videos also have width/height but should not be treated as images
   const isImage =
-    storedType === "image" &&
+    detectedType === "image" &&
+    parsedMeta &&
+    typeof parsedMeta.width === "number" &&
+    typeof parsedMeta.height === "number";
+  const isVideo =
+    detectedType === "video" &&
     parsedMeta &&
     typeof parsedMeta.width === "number" &&
     typeof parsedMeta.height === "number";
@@ -72,7 +77,16 @@ export const formatAsset = ({
     };
   }
 
-  // Default to file type for everything else (including videos)
+  if (isVideo) {
+    return {
+      ...base,
+      type: "video",
+      format: file.format,
+      meta: videoMeta.parse(parsedMeta),
+    };
+  }
+
+  // Default to file type for everything else
   return {
     ...base,
     type: "file",

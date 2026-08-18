@@ -60,6 +60,7 @@ const serializeProjectBundle = ({
   const usedAssets = assets.filter(
     (asset) =>
       asset.type === "image" ||
+      asset.type === "video" ||
       asset.type === "file" ||
       (asset.type === "font" && fontFamilies.has(asset.meta.family))
   );

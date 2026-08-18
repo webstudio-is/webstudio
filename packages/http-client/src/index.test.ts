@@ -1491,6 +1491,19 @@ test("uploads project asset descriptors with local data readers", async () => {
   ).resolves.toEqual({ uploaded: [uploadedAsset] });
 
   await expect(
+    uploadProjectAsset({
+      ...apiParams,
+      asset: {
+        name: "video.mp4",
+        type: "video",
+        format: "mp4",
+        meta: { width: 1920, height: 1080 },
+      },
+      readAssetData: async () => new Uint8Array([1, 2, 3]),
+    })
+  ).resolves.toEqual({ uploaded: [uploadedAsset] });
+
+  await expect(
     uploadProjectAssets({
       ...apiParams,
       assets: [
@@ -1516,6 +1529,10 @@ test("uploads project asset descriptors with local data readers", async () => {
   expect(new Headers(calls[0][1].headers).get("x-webstudio-asset-meta")).toBe(
     JSON.stringify({ width: 10, height: 20 })
   );
+  const videoUrl = new URL(calls[1][0].toString());
+  expect(videoUrl.searchParams.get("type")).toBe("video");
+  expect(videoUrl.searchParams.get("width")).toBe("1920");
+  expect(videoUrl.searchParams.get("height")).toBe("1080");
 });
 
 test("updates asset content through the stable asset revision endpoint", async () => {

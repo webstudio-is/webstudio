@@ -2,9 +2,8 @@ import warnOnce from "warn-once";
 import invariant from "tiny-invariant";
 import {
   getFileNameParts,
-  toStoredAssetType,
   type Asset,
-  type UploadAssetType,
+  type AssetType,
 } from "@webstudio-is/sdk";
 import { assetsUploadsApiUrl } from "@webstudio-is/sdk/runtime";
 import type { AssetUploadResult } from "@webstudio-is/protocol/asset-resource-api";
@@ -74,7 +73,7 @@ const safeSetAsset = (asset: Asset, projectId: string) => {
 };
 
 const getFilesData = async <T extends File | URL>(
-  type: UploadAssetType,
+  type: AssetType,
   filesOrUrls: T[],
   folderId?: string,
   createObjectURL = URL.createObjectURL
@@ -305,13 +304,13 @@ const createUploadTicket = async ({
   projectId: string;
   fileOrUrl: File | URL;
   contentHash?: string;
-  assetType: UploadAssetType;
+  assetType: AssetType;
   request?: typeof fetch;
 }): Promise<UploadTicket> => {
   const fileName = getFileName(fileOrUrl);
   const metaFormData = new FormData();
   metaFormData.append("projectId", projectId);
-  metaFormData.append("type", toStoredAssetType(assetType));
+  metaFormData.append("type", assetType);
   if (contentHash !== undefined) {
     metaFormData.append("contentHash", contentHash);
   }
@@ -461,7 +460,7 @@ const processUpload = async (
 };
 
 export const uploadAssets = async <T extends File | URL>(
-  type: UploadAssetType,
+  type: AssetType,
   filesOrUrls: T[],
   options: { folderId?: string } = {}
 ): Promise<Map<T, string>> => {
@@ -575,7 +574,7 @@ export const uploadAssets = async <T extends File | URL>(
 };
 
 export const uploadSingleAsset = async (
-  type: UploadAssetType,
+  type: AssetType,
   file: File,
   options: { folderId?: string } = {}
 ): Promise<Asset | undefined> => {

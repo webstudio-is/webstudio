@@ -1,8 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {
-  getInputJsonSchemaMetadata,
-  UPLOAD_ASSET_TYPES,
-} from "@webstudio-is/sdk";
+import { assetType, getInputJsonSchemaMetadata } from "@webstudio-is/sdk";
 import * as protocol from "../index";
 import {
   getPublicApiOperation,
@@ -321,7 +318,7 @@ describe("public api operation catalog", () => {
 
     expect(assetTypeSchema).toMatchObject({
       type: "string",
-      enum: UPLOAD_ASSET_TYPES,
+      enum: assetType.options,
     });
   });
 

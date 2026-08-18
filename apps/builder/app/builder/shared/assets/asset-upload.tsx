@@ -10,7 +10,7 @@ import { UploadIcon } from "@webstudio-is/icons";
 import {
   IMAGE_MIME_TYPES,
   detectAssetType,
-  type UploadAssetType,
+  type AssetType,
 } from "@webstudio-is/sdk";
 import { MAX_UPLOAD_SIZE, toBytes } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
@@ -30,7 +30,7 @@ export const validateFiles = (files: File[]) => {
 };
 
 export const groupFilesByAssetType = (files: readonly File[]) => {
-  const filesByType = new Map<UploadAssetType, File[]>();
+  const filesByType = new Map<AssetType, File[]>();
   for (const file of files) {
     const type = detectAssetType(file.name);
     const groupedFiles = filesByType.get(type) ?? [];
@@ -94,7 +94,7 @@ export const acceptFileTypeSpecifier = (specifiers: string, file: File) => {
 };
 
 export const acceptUploadType = (
-  assetType: UploadAssetType,
+  assetType: AssetType,
   accept: string | undefined,
   file: File
 ) => {
@@ -111,7 +111,7 @@ export const acceptUploadType = (
 };
 
 type AssetUploadProps = {
-  type: UploadAssetType;
+  type: AssetType;
   accept?: string;
   folderId?: string;
   showTrigger?: boolean;

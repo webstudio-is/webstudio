@@ -20,7 +20,7 @@ import type {
   Props,
   StyleDecl,
   StyleSource,
-  UploadAssetType,
+  AssetType,
 } from "@webstudio-is/sdk";
 import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
@@ -128,7 +128,7 @@ export type UploadingFileData = Simplify<
     assetId: string;
     fingerprintId: string;
     uploadName: string;
-    type: UploadAssetType;
+    type: AssetType;
     objectURL: string;
     folderId?: string;
   } & (

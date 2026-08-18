@@ -34,10 +34,7 @@ import {
   readDroppedAssetItems,
 } from "./directory-drop";
 import { $assetFolders } from "~/shared/sync/data-stores";
-import {
-  createAssetFolderHierarchy,
-  type UploadAssetType,
-} from "@webstudio-is/sdk";
+import { createAssetFolderHierarchy, type AssetType } from "@webstudio-is/sdk";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import {
@@ -54,7 +51,7 @@ type AssetsShellProps = {
   children: JSX.Element;
   interactionOverlay?: JSX.Element;
   footer?: JSX.Element;
-  type: UploadAssetType;
+  type: AssetType;
   accept?: string;
   isEmpty: boolean;
   emptyMessage?: string;
@@ -88,7 +85,7 @@ const uploadDroppedFiles = ({
   folderId,
 }: {
   files: File[];
-  type: UploadAssetType;
+  type: AssetType;
   accept?: string;
   folderId?: string;
 }) => {

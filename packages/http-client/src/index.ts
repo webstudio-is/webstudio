@@ -2,10 +2,8 @@ import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 import { Upload } from "tus-js-client";
 import {
   getAssetContentHash,
-  toStoredAssetType,
   type AssetQueryResourceConfigurationInput,
   type AssetFolder,
-  type UploadAssetType,
 } from "@webstudio-is/sdk";
 import {
   type AssetFolderUpdateRequest,
@@ -355,7 +353,7 @@ type AssetUpload = {
 
 type AssetUploadDescriptor = {
   name: string;
-  type: UploadAssetType;
+  type: Asset["type"];
   format?: string;
   meta?: Record<string, unknown>;
   description?: string | null;
@@ -403,7 +401,7 @@ const getAssetUploadUrl = ({
   if (asset.folderId !== undefined) {
     url.searchParams.set("folderId", asset.folderId);
   }
-  if (asset.type === "image") {
+  if (asset.type === "image" || asset.type === "video") {
     url.searchParams.set("width", String(asset.meta.width));
     url.searchParams.set("height", String(asset.meta.height));
   }
@@ -542,7 +540,6 @@ const toUploadAsset = ({
   descriptor: AssetUploadDescriptor;
   projectId: string;
 }): Asset => {
-  const storedType = toStoredAssetType(descriptor.type);
   const base = {
     id: "",
     projectId,
@@ -553,7 +550,7 @@ const toUploadAsset = ({
     size: 0,
     createdAt: new Date().toISOString(),
   };
-  if (storedType === "image") {
+  if (descriptor.type === "image" || descriptor.type === "video") {
     const width = descriptor.meta?.width;
     const height = descriptor.meta?.height;
     if (
@@ -562,17 +559,17 @@ const toUploadAsset = ({
       descriptor.format === undefined
     ) {
       throw new Error(
-        `Image asset "${descriptor.name}" requires format, meta.width, and meta.height.`
+        `${descriptor.type === "image" ? "Image" : "Video"} asset "${descriptor.name}" requires format, meta.width, and meta.height.`
       );
     }
     return {
       ...base,
-      type: "image",
+      type: descriptor.type,
       format: descriptor.format,
       meta: { width, height },
     };
   }
-  if (storedType === "font") {
+  if (descriptor.type === "font") {
     return {
       ...base,
       type: "font",

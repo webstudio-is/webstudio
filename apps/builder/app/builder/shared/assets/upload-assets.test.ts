@@ -1,5 +1,5 @@
 import { beforeEach, describe, test, expect, vi } from "vitest";
-import { toStoredAssetType, UPLOAD_ASSET_TYPES } from "@webstudio-is/sdk";
+import { assetType } from "@webstudio-is/sdk";
 import { __testing__ } from "./upload-assets";
 
 const {
@@ -55,9 +55,9 @@ describe("upload-assets", () => {
     expect(init.headers.get("x-auth-token")).toBe("token");
   });
 
-  test.each(UPLOAD_ASSET_TYPES)(
-    "reserves %s uploads with a valid stored asset type",
-    async (uploadType) => {
+  test.each(assetType.options)(
+    "reserves %s assets without changing their type",
+    async (type) => {
       request.mockResolvedValue(
         Response.json({
           assetId: "server-asset-id",
@@ -69,13 +69,13 @@ describe("upload-assets", () => {
       await createUploadTicket({
         authToken: "token",
         projectId: "project-id",
-        fileOrUrl: new File(["content"], `asset.${uploadType}`),
-        assetType: uploadType,
+        fileOrUrl: new File(["content"], `asset.${type}`),
+        assetType: type,
         request,
       });
 
       const [, init] = request.mock.calls[0] as [string, { body: FormData }];
-      expect(init.body.get("type")).toBe(toStoredAssetType(uploadType));
+      expect(init.body.get("type")).toBe(type);
     }
   );
 
