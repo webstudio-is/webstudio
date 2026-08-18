@@ -96,12 +96,14 @@ export const createLocalUploadAssetsInput = <Asset extends { name: string }>({
 export const createLocalUpdateAssetContentInput = ({
   assetId,
   expectedName,
+  extension,
   path,
   content,
   readFile,
 }: {
   assetId: string;
   expectedName: string;
+  extension?: string;
   path?: string;
   content?: string;
   readFile: (path: string) => Promise<unknown>;
@@ -114,6 +116,7 @@ export const createLocalUpdateAssetContentInput = ({
   return {
     assetId,
     expectedName,
+    extension,
     readAssetData: async () =>
       path === undefined ? content : await readFile(resolve(path)),
   };

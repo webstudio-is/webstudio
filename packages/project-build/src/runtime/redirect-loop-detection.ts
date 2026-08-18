@@ -1,6 +1,7 @@
-import type { PageRedirect } from "@webstudio-is/sdk";
+import { removeTrailingSlash, type PageRedirect } from "@webstudio-is/sdk";
 import {
   doesRedirectSourceMatchLocalUrl,
+  getRedirectSourceSearchIndex,
   getRedirectSourcePathname,
   normalizeRedirectSource,
 } from "./redirect-source";
@@ -29,6 +30,13 @@ const resolveLocalTarget = (source: string, target: string) => {
   } catch {
     return;
   }
+};
+
+const normalizeTrailingSlash = (url: string) => {
+  const searchIndex = getRedirectSourceSearchIndex(url);
+  const pathname = searchIndex === -1 ? url : url.slice(0, searchIndex);
+  const search = searchIndex === -1 ? "" : url.slice(searchIndex);
+  return `${removeTrailingSlash(pathname)}${search}`;
 };
 
 export const wouldCreateLoop = (
@@ -77,7 +85,10 @@ export const wouldCreateLoop = (
       }
     }
     if (next === undefined) {
-      return false;
+      next = normalizeTrailingSlash(current);
+      if (next === current) {
+        return false;
+      }
     }
 
     current = next;

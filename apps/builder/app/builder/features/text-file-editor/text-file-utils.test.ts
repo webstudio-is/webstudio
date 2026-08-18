@@ -8,6 +8,8 @@ import {
   getTextFileEditorExtensions,
   isMarkdownPreviewAsset,
   isMarkdownSyntaxAsset,
+  normalizeTextFileContent,
+  normalizeTextFileConversion,
 } from "./text-file-utils";
 
 describe("text file assets", () => {
@@ -51,5 +53,50 @@ describe("text file assets", () => {
   test("limits the Markdown preview to .md files", () => {
     expect(isMarkdownPreviewAsset({ format: "MD" })).toBe(true);
     expect(isMarkdownPreviewAsset({ format: "mdx" })).toBe(false);
+  });
+
+  test("normalizes JSON-compatible object expressions to strict JSON", () => {
+    expect(
+      normalizeTextFileContent(
+        { format: "json" },
+        "{ title: 'Post', tags: ['one', 'two'], }"
+      )
+    ).toEqual({
+      content:
+        '{\n  "title": "Post",\n  "tags": [\n    "one",\n    "two"\n  ]\n}\n',
+    });
+  });
+
+  test("rejects executable content and accepts every JSON root type", () => {
+    expect(
+      normalizeTextFileContent({ format: "json" }, "{ value: fetch('/') }")
+    ).toEqual({ error: "Enter a JSON-compatible value." });
+    expect(normalizeTextFileContent({ format: "json" }, "[1, 'two']")).toEqual({
+      content: '[\n  1,\n  "two"\n]\n',
+    });
+    expect(normalizeTextFileContent({ format: "json" }, "null")).toEqual({
+      content: "null\n",
+    });
+  });
+
+  test("preserves non-JSON text content", () => {
+    expect(normalizeTextFileContent({ format: "md" }, "anything")).toEqual({
+      content: "anything",
+    });
+  });
+
+  test("rejects incomplete object syntax", () => {
+    expect(normalizeTextFileContent({ format: "json" }, "{ title:")).toEqual({
+      error: "Enter a JSON-compatible value.",
+    });
+  });
+
+  test("initializes empty content when converting a text file to JSON", () => {
+    expect(normalizeTextFileConversion({ format: "json" }, " \n")).toEqual({
+      content: "{}\n",
+    });
+    expect(normalizeTextFileConversion({ format: "json" }, "not json")).toEqual(
+      { error: "Enter a JSON-compatible value." }
+    );
   });
 });

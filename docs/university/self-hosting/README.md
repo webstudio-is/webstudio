@@ -111,6 +111,24 @@ While static site exporting and hosting are less technical, this comes at the co
 * No robots.txt
 * No sitemap.xml
 
+#### Static site URL behavior
+
+Webstudio static exports cannot redirect requests by themselves. The hosting
+platform decides whether `/about`, `/about/`, or both URLs serve a generated
+page such as `about/index.html`.
+
+| Platform | Default behavior for a Webstudio static export |
+| --- | --- |
+| Cloudflare Pages | Redirects `/about` to `/about/` for a generated `about/index.html` file. See [Cloudflare Pages serving behavior](https://developers.cloudflare.com/pages/configuration/serving-pages/). |
+| Netlify | Pretty URLs are enabled by default and normalize the generated page to `/about/`. Netlify applies this normalization before redirect rules, so a static redirect rule cannot change it to `/about`. See [Netlify redirect options](https://docs.netlify.com/manage/routing/redirects/redirect-options/). |
+| Vercel | Serves both `/about` and `/about/` unless the project sets `trailingSlash`. Set `"trailingSlash": false` in `vercel.json` to redirect `/about/` to `/about`. See [Vercel project configuration](https://vercel.com/docs/project-configuration/vercel-json#trailingslash). |
+| Other static hosts | Behavior depends on how the host resolves directory index files and normalizes URLs. Configure redirects or canonical URLs with the host. |
+
+If every URL must redirect to the slashless Webstudio page path, use an
+exported JavaScript application. On static hosting, enforcing that convention
+on Netlify or Cloudflare Pages requires request-handling code at the edge rather
+than static redirect files.
+
 #### Local
 
 To run a project locally, you must run a simple local server. Use the command `npx serve .` to spin one up. This is required because the static files use absolute URLs.

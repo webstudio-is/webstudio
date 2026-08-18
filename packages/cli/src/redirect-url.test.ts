@@ -530,11 +530,6 @@ for (const {
         redirects: [{ old: "/old", new: "/new" }],
       },
       {
-        name: "does not normalize trailing slash",
-        requestPath: "/old/",
-        redirects: [{ old: "/old", new: "/new" }],
-      },
-      {
         name: "matches paths case-sensitively",
         requestPath: "/path",
         redirects: [{ old: "/Path", new: "/target" }],
@@ -613,6 +608,68 @@ for (const {
 
     test.each(nonMatchingCases)("$name", ({ requestPath, redirects }) => {
       expect(matchRedirect(url(requestPath), redirects)).toBeUndefined();
+    });
+
+    test("does not use a project redirect for its trailing-slash variant", () => {
+      expect(
+        matchRedirect(url("/old/"), [{ old: "/old", new: "/new" }])
+      ).toBeUndefined();
+    });
+
+    test.each([
+      {
+        name: "normalizes a static path",
+        requestPath: "/about/",
+        location: "/about",
+      },
+      {
+        name: "normalizes a concrete dynamic path",
+        requestPath: "/blog/post/",
+        location: "/blog/post",
+      },
+      {
+        name: "preserves the query string",
+        requestPath: "/about/?campaign=launch",
+        location: "/about?campaign=launch",
+      },
+      {
+        name: "removes repeated trailing slashes",
+        requestPath: "/about///",
+        location: "/about",
+      },
+      {
+        name: "preserves encoded path segments",
+        requestPath: "/file%2Fname/",
+        location: "/file%2Fname",
+      },
+    ])(
+      "returns canonical redirect response: $name",
+      ({ requestPath, location }) => {
+        const response = redirectRequest(new Request(url(requestPath)), []);
+        expect(response?.status).toBe(301);
+        expect(response?.headers.get("Location")).toBe(location);
+      }
+    );
+
+    test("does not redirect the root path", () => {
+      expect(redirectRequest(new Request(url("/")), [])).toBeUndefined();
+    });
+
+    test.each(["//other.example/", "///other.example/"])(
+      "does not create an external redirect from %s",
+      (requestPath) => {
+        expect(
+          redirectRequest(new Request(url(requestPath)), [])
+        ).toBeUndefined();
+      }
+    );
+
+    test("gives an exact project redirect precedence", () => {
+      const response = redirectRequest(new Request(url("/old/")), [
+        { old: "/old/", new: "/new" },
+      ]);
+      expect(response?.status).toBe(301);
+      expect(response?.headers.get("Location")).toBe("/new");
     });
 
     test.each(nonMatchingCases)(

@@ -44,7 +44,7 @@ test("commits a content revision without changing the asset id", async () => {
   requestContentUpdate.mockResolvedValue({ asset: revision });
 
   await expect(
-    updateAssetContent({ asset, content: '{"a":1}' })
+    updateAssetContent({ asset, content: '{"a":1}', extension: "json" })
   ).resolves.toEqual(revision);
 
   expect(requestContentUpdate).toHaveBeenCalledWith(
@@ -52,6 +52,7 @@ test("commits a content revision without changing the asset id", async () => {
       assetId: "asset",
       projectId: "project",
       expectedName: "settings_old.json",
+      extension: "json",
       authToken: "token",
       requestOrigin: window.location.origin,
     })

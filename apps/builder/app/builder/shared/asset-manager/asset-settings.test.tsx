@@ -97,6 +97,23 @@ test("uses an auto-growing textarea for the asset description", () => {
   ).toEqual(["Name", "Folder", "Description", "ID"]);
 });
 
+test("lets users edit the complete asset filename", () => {
+  renderer.render(
+    <TooltipProvider>
+      <AssetSettings open onOpenChange={vi.fn()} asset={createImageAsset()}>
+        <button>Anchor</button>
+      </AssetSettings>
+    </TooltipProvider>
+  );
+
+  expect(
+    document.querySelector<HTMLInputElement>("#asset-manager-filename")?.value
+  ).toBe("image.png");
+  expect(
+    document.querySelector("#asset-manager-filename-extension")
+  ).toBeNull();
+});
+
 test("closes asset settings before replacing an asset", () => {
   const onOpenChange = vi.fn();
   const onReplace = vi.fn();

@@ -163,6 +163,8 @@ type CdpMessage = {
   error?: { message?: string };
 };
 
+class BrowserSessionClosedError extends Error {}
+
 class CdpSession {
   #nextId = 1;
   #callbacks = new Map<
@@ -180,7 +182,9 @@ class CdpSession {
   constructor(socket: WebSocket) {
     this.#socket = socket;
     this.#socket.addEventListener("close", () => {
-      this.#rejectPending(new Error("Browser DevTools connection closed."));
+      this.#rejectPending(
+        new BrowserSessionClosedError("Browser DevTools connection closed.")
+      );
     });
     this.#socket.addEventListener("message", (event) => {
       const message = JSON.parse(String(event.data)) as CdpMessage;
@@ -1248,8 +1252,6 @@ export class BrowserStartupError extends Error {
     this.name = "BrowserStartupError";
   }
 }
-
-class BrowserSessionClosedError extends Error {}
 
 const getBrowserExitMessage = (message: string, reason?: string) =>
   `${message}${reason === undefined ? "" : ` (${reason})`}. Check the browser installation or provide a supported Chromium executable.`;

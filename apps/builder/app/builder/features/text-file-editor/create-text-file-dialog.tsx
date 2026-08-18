@@ -51,6 +51,16 @@ export const getTextFileNameError = ({
   }
 };
 
+export const createTextFileData = (name: string): File | undefined => {
+  const format = getFileExtension(name)?.toLowerCase() ?? "";
+  if (isTextFileAsset({ format }) === false) {
+    return;
+  }
+  return new File([format === "json" ? "{}\n" : ""], name, {
+    type: getMimeTypeByExtension(format),
+  });
+};
+
 const createTextFile = async ({
   name,
   folderId,
@@ -58,13 +68,10 @@ const createTextFile = async ({
   name: string;
   folderId?: string;
 }): Promise<Asset | undefined> => {
-  const format = getFileExtension(name)?.toLowerCase() ?? "";
-  if (isTextFileAsset({ format }) === false) {
+  const file = createTextFileData(name);
+  if (file === undefined) {
     return;
   }
-  const file = new File([""], name, {
-    type: getMimeTypeByExtension(format),
-  });
   return uploadSingleAsset("file", file, { folderId });
 };
 

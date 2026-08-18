@@ -211,6 +211,8 @@ const getMcpUpdateAssetContentInput = (input: unknown) => {
   return createLocalUpdateAssetContentInput({
     assetId: input.assetId,
     expectedName: input.expectedName,
+    extension:
+      typeof input.extension === "string" ? input.extension : undefined,
     path: typeof input.path === "string" ? input.path : undefined,
     content: typeof input.content === "string" ? input.content : undefined,
     readFile,

@@ -254,6 +254,7 @@ export interface AssetRepository {
   updateContent(input: {
     assetId: Asset["id"];
     expectedName: string;
+    extension?: string;
     data: ReadableStream<Uint8Array>;
   }): Promise<Asset>;
   updateMetadata(
@@ -518,6 +519,7 @@ export class PostgresAssetRepository implements AssetRepository {
   async updateContent({
     assetId,
     expectedName,
+    extension,
     data,
   }: Parameters<AssetRepository["updateContent"]>[0]) {
     await this.assertCanEdit();
@@ -526,6 +528,7 @@ export class PostgresAssetRepository implements AssetRepository {
         assetId,
         projectId: this.projectId,
         expectedName,
+        extension,
         data,
       },
       this.getWritableStore(),

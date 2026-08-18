@@ -26,6 +26,7 @@ const localUploadAssetsInput = z.object({
 const localUpdateAssetContentInput = z.object({
   assetId: z.string().min(1),
   expectedName: z.string().min(1),
+  extension: z.string().min(1).optional(),
   path: z.string().min(1).optional(),
   content: z.string().optional(),
 });
