@@ -84,6 +84,9 @@ When you make changes in Webstudio:
 
 Learn how to upload your static site to Netlify.
 
+Netlify uses a trailing slash for generated directory index pages. Review the
+[static site URL behavior](./#static-site-url-behavior) before deployment.
+
 <figure><img src="../../.gitbook/assets/netlify-new-project.png" alt="netlify new site dashboard"><figcaption></figcaption></figure>
 
 ### Prerequisites

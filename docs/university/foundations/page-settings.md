@@ -61,8 +61,10 @@ Path rules:
 - Wildcards such as `*` and `:path*` must be the final segment
 - Parameter names can contain letters, numbers, and underscores
 
-Published sites permanently redirect a trailing-slash URL such as `/about/` to
-the page path `/about` and preserve its query string.
+Webstudio Cloud sites and exported JavaScript applications permanently redirect
+a trailing-slash URL such as `/about/` to the page path `/about` and preserve
+its query string. For static exports, the hosting platform controls
+[trailing-slash behavior](../self-hosting/#static-site-url-behavior).
 
 ## Status code
 
