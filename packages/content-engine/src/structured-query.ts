@@ -40,16 +40,11 @@ import type { MarkdownAssetReferences } from "./markdown-references";
 import {
   getRuntimeAssetUrls,
   resolveAssetValueReferences,
+  type AssetRuntimeData,
   type AssetValueReferences,
 } from "./asset-value-references";
 
-export type AssetRuntimeData = {
-  url: string;
-  /** Immutable storage identity for graph-backed document URLs. */
-  contentRef?: string;
-  width?: number;
-  height?: number;
-};
+export type { AssetRuntimeData } from "./asset-value-references";
 
 export class AssetQueryExecutionError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -746,14 +741,13 @@ export const executeAssetQueries = async ({
     return requireSettledAssetQueryResults(results);
   }
 
-  const assetUrls = getRuntimeAssetUrls(runtimeAssets);
   let resolvedDocuments: readonly ContentDatabaseDocument[];
   try {
     resolvedDocuments = documents.map((document) =>
       resolveAssetValueReferences({
         value: document,
         references: assetValueReferences?.[document._id],
-        assetUrls,
+        runtimeAssets: runtimeAssets ?? {},
       })
     );
   } catch (error) {
@@ -773,6 +767,7 @@ export const executeAssetQueries = async ({
     results,
     runtimeAssets,
   });
+  const assetUrls = getRuntimeAssetUrls(runtimeAssets);
   await finalizeAssetQueries({
     preparedQueries,
     results,

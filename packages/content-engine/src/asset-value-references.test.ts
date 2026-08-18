@@ -128,9 +128,9 @@ describe("structured asset value references", () => {
           assetId: "first",
         },
       ],
-      assetUrls: {
-        hero: "/cgi/image/hero.png?format=raw",
-        first: "/cgi/image/first.png?format=raw",
+      runtimeAssets: {
+        hero: { url: "/cgi/image/hero.png?format=raw" },
+        first: { url: "/cgi/image/first.png?format=raw" },
       },
     });
 
@@ -147,5 +147,60 @@ describe("structured asset value references", () => {
         "?download=1#section"
       )
     ).toBe("https://cdn.example.com/guide.pdf?format=raw&download=1#section");
+  });
+
+  test("resolves an explicit asset marker to structured metadata", () => {
+    const properties = {
+      featureImage: { $ref: "./assets/hero.png?width=1200#cover" },
+      external: "https://example.com/image.png",
+    };
+    const references = discoverAssetValueReferences({
+      properties,
+      sourcePath: "blog/post.md",
+      assetIdsByPath: new Map([["blog/assets/hero.png", "hero"]]),
+      structuredAssetIds: new Set(["hero"]),
+    });
+
+    expect(references).toEqual([
+      {
+        path: ["properties", "featureImage"],
+        assetId: "hero",
+        suffix: "?width=1200#cover",
+        structured: true,
+      },
+    ]);
+    expect(
+      resolveAssetValueReferences({
+        value: { properties },
+        references,
+        runtimeAssets: {
+          hero: {
+            url: "/cgi/image/hero.png?format=raw",
+            name: "hero.png",
+            description: "A mountain at sunrise",
+            mimeType: "image/png",
+            size: 1024,
+            meta: { width: 1600, height: 900 },
+            width: 1600,
+            height: 900,
+          },
+        },
+      })
+    ).toEqual({
+      properties: {
+        featureImage: {
+          id: "hero",
+          src: "/cgi/image/hero.png?format=raw&width=1200#cover",
+          name: "hero.png",
+          description: "A mountain at sunrise",
+          mimeType: "image/png",
+          size: 1024,
+          meta: { width: 1600, height: 900 },
+          width: 1600,
+          height: 900,
+        },
+        external: "https://example.com/image.png",
+      },
+    });
   });
 });

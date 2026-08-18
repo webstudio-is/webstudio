@@ -53,6 +53,9 @@ export type ContentSourceDocument = Readonly<{
   source: ByteSource;
 }>;
 
+const isDocumentFile = ({ contentType }: ContentSourceFile) =>
+  getDocumentFormatByContentType(contentType) !== undefined;
+
 export interface ContentSource {
   openSnapshot(): Promise<ContentSourceSnapshot>;
 }
@@ -223,6 +226,11 @@ const discoverSnapshotAssetValueReferences = ({
   entries: readonly ContentCompilerInput[];
 }): AssetValueReferences => {
   const assetIdsByPath = createUniqueAssetIdsByPath(snapshot.files);
+  const structuredAssetIds = new Set(
+    snapshot.files
+      .filter((file) => isDocumentFile(file) === false)
+      .map(({ id }) => id)
+  );
   const references: AssetValueReferences = {};
   for (const entry of [...entries].sort((left, right) =>
     compareStrings(left.assetId, right.assetId)
@@ -231,6 +239,7 @@ const discoverSnapshotAssetValueReferences = ({
       properties: entry.document.properties ?? {},
       sourcePath: entry.document.path,
       assetIdsByPath,
+      structuredAssetIds,
     });
     if (discovered.length > 0) {
       references[entry.assetId] = discovered;
@@ -293,8 +302,11 @@ const discoverSnapshotDocumentGraph = async (
     }
     sourcesById.set(document.id, document.source);
   }
-  const supportedFiles = snapshot.files.filter(
-    (file) => getDocumentFormatByContentType(file.contentType) !== undefined
+  const supportedFiles = snapshot.files.filter(isDocumentFile);
+  const ignoredReferenceUrls = new Set(
+    snapshot.files
+      .filter((file) => isDocumentFile(file) === false)
+      .map((file) => getDocumentUrl(file.path))
   );
   if (supportedFiles.some((file) => sourcesById.has(file.id) === false)) {
     throw new Error("Content source omitted a supported document source");
@@ -315,6 +327,7 @@ const discoverSnapshotDocumentGraph = async (
         source,
       };
     }),
+    ignoredReferenceUrls,
     ...(plan === undefined
       ? {}
       : {

@@ -41,7 +41,7 @@ import {
   type ContentSource,
 } from "@webstudio-is/content-engine/compiler";
 import {
-  toRuntimeAsset,
+  toAssetReferenceRuntimeData,
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
@@ -1039,7 +1039,7 @@ export class PostgresAssetRepository implements AssetRepository {
         )
       ).map((asset) => [
         asset.id,
-        toRuntimeAsset(asset, "https://webstudio.local"),
+        toAssetReferenceRuntimeData(asset, "https://webstudio.local"),
       ])
     );
   }
