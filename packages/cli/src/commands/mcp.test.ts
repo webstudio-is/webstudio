@@ -14,7 +14,12 @@ import {
 } from "@webstudio-is/project-build/mcp";
 import { publicApiOperations } from "@webstudio-is/protocol";
 import { updatePersistedMcpCheckpoint } from "./mcp-checkpoint";
-import { __testing__, mcpOptions, prepareMcpProjectSession } from "./mcp";
+import {
+  __testing__,
+  mcpOptions,
+  mcpSingleOpCall,
+  prepareMcpProjectSession,
+} from "./mcp";
 
 const {
   assertSingleOpCallToolSupported,
@@ -898,6 +903,46 @@ test("reports termination while inserting a styled nested SVG", async () => {
     },
   });
   expect(setExitCode).not.toHaveBeenCalled();
+});
+
+test("installs termination reporting for an active MCP single-op call", async () => {
+  const previousExitCode = process.exitCode;
+  const consoleInfo = vi.spyOn(console, "info").mockImplementation(() => {});
+  const stderrWrite = vi
+    .spyOn(process.stderr, "write")
+    .mockImplementation(() => true);
+
+  try {
+    const call = mcpSingleOpCall({
+      tool: "insert-fragment",
+      input: "{invalid-json",
+      dryRun: true,
+    });
+    process.emit("beforeExit", 0);
+    await expect(call).rejects.toBeDefined();
+
+    const results = consoleInfo.mock.calls.map(([output]) =>
+      JSON.parse(String(output))
+    );
+    expect(results).toContainEqual({
+      ok: false,
+      error: {
+        code: "MCP_CALL_TERMINATED",
+        message:
+          "MCP single-op-call insert-fragment terminated before returning a result.",
+      },
+      meta: {
+        elapsedMs: expect.any(Number),
+        termination: { type: "beforeExit", exitCode: 0 },
+      },
+    });
+    expect(stderrWrite).toHaveBeenCalledWith(
+      "[webstudio mcp] single-op-call insert-fragment terminated: MCP single-op-call insert-fragment terminated before returning a result.\n"
+    );
+    expect(process.exitCode).toBe(1);
+  } finally {
+    process.exitCode = previousExitCode;
+  }
 });
 
 test("preserves completed calls when a run terminates during an asset query preview", () => {
