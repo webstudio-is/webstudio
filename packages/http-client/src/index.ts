@@ -1316,6 +1316,35 @@ export const setTextContent = runtimeProjectMutation("set-text-content");
 
 export const updateTextTree = runtimeProjectMutation("update-text-tree");
 
+export const inspectContentBlockSource =
+  projectQueryInput<RuntimeOperationParams>("inspect-content-block-source");
+
+export const connectContentBlockSource = runtimeProjectMutation(
+  "connect-content-block-source"
+);
+
+export const switchContentBlockSource = runtimeProjectMutation(
+  "switch-content-block-source"
+);
+
+export const disconnectContentBlockSource = runtimeProjectMutation(
+  "disconnect-content-block-source"
+);
+
+export const recoverContentBlockSource = runtimeProjectMutation(
+  "recover-content-block-source"
+);
+
+export const migrateContentBlockTemplateReferences = runtimeProjectMutation(
+  "migrate-content-block-template-references"
+);
+
+export const editContentBlockSource = runtimeProjectMutation(
+  "edit-content-block-source"
+);
+
+export const insertMdxText = runtimeProjectMutation("insert-mdx-text");
+
 export const setInstanceTag = runtimeProjectMutation("set-instance-tag");
 
 export const setInstanceLabel = runtimeProjectMutation("set-instance-label");

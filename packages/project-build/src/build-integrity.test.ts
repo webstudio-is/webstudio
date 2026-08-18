@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import type { DataSource, Prop, Resource } from "@webstudio-is/sdk";
+import {
+  blockComponent,
+  type DataSource,
+  type FileAsset,
+  type Instance,
+  type Prop,
+  type Resource,
+} from "@webstudio-is/sdk";
 import {
   assertBuildIntegrity,
   formatBuildIntegrityError,
@@ -16,6 +23,55 @@ const resource: Resource = {
 };
 
 describe("getBuildIntegrityIssues", () => {
+  test("reports invalid Content Block source references", () => {
+    const block: Instance = {
+      type: "instance",
+      id: "block",
+      component: blockComponent,
+      children: [],
+    };
+    const source: Prop = {
+      id: "source",
+      instanceId: block.id,
+      name: "src",
+      type: "asset",
+      value: "post",
+    };
+    const markdownAsset: FileAsset = {
+      id: "post",
+      projectId: "project",
+      type: "file",
+      name: "post_hash.md",
+      filename: "post",
+      format: "md",
+      size: 1,
+      meta: {},
+      description: null,
+      createdAt: "2026-08-14T00:00:00.000Z",
+    };
+
+    const issues = getBuildIntegrityIssues({
+      dataSources: [],
+      props: [source],
+      resources: [],
+      instances: [block],
+      assets: [markdownAsset],
+    });
+
+    expect(issues).toEqual([
+      {
+        type: "incompatibleContentBlockSourceAsset",
+        blockInstanceId: "block",
+        propId: "source",
+        assetId: "post",
+        assetName: "post_hash.md",
+      },
+    ]);
+    expect(formatBuildIntegrityIssue(issues[0])).toBe(
+      'Content Block source prop "source" references Asset "post" (post_hash.md), which is not an MDX file.'
+    );
+  });
+
   test("reports resource variables referencing missing resources", () => {
     const dataSource: DataSource = {
       type: "resource",
@@ -28,6 +84,7 @@ describe("getBuildIntegrityIssues", () => {
       dataSources: [dataSource],
       props: [],
       resources: [],
+      instances: [],
     });
 
     expect(issues).toEqual([
@@ -51,6 +108,7 @@ describe("getBuildIntegrityIssues", () => {
           dataSources: [dataSource],
           props: [],
           resources: [],
+          instances: [],
         },
         { messagePrefix: "Cannot publish" }
       )
@@ -72,6 +130,7 @@ describe("getBuildIntegrityIssues", () => {
       dataSources: [],
       props: [prop],
       resources: [],
+      instances: [],
     });
 
     expect(issues).toEqual([
@@ -108,6 +167,7 @@ describe("getBuildIntegrityIssues", () => {
         dataSources: [dataSource],
         props: [prop],
         resources: [resource],
+        instances: [],
       })
     ).toEqual([]);
   });

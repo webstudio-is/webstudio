@@ -139,6 +139,7 @@ const assetFileTypes = {
   // Code
   txt: textFile("text/plain", "plain"),
   md: textFile("text/markdown", "markdown"),
+  mdx: textFile("text/mdx", "markdown"),
   js: textFile("text/javascript", "javascript"),
   css: textFile("text/css", "css"),
   json: textFile("application/json", "json"),

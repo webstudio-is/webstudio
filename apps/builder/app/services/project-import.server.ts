@@ -22,6 +22,7 @@ import {
   createProjectSettingsFromPages,
   removeLegacyProjectSettingsFromPages,
 } from "@webstudio-is/project-build";
+import { assertContentBlockSourceIntegrity } from "@webstudio-is/project-build/runtime";
 import {
   isAssetFileName,
   getMissingImportedAssetFilesMessage,
@@ -331,6 +332,15 @@ export const importPublishedProjectBundle = async (
   assertImportedAssets(data.assets);
   const { assets: importedAssets, folders: importedAssetFolders } =
     normalizeImportedAssetFolderData(data.assetFolders ?? [], data.assets);
+
+  assertContentBlockSourceIntegrity(
+    {
+      props: data.build.props.map(([, value]) => value),
+      instances: data.build.instances.map(([, value]) => value),
+      assets: importedAssets,
+    },
+    { messagePrefix: "Cannot import" }
+  );
 
   await assertImportedAssetFilesUploaded({
     assets: importedAssets,

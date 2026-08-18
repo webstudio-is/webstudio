@@ -15,6 +15,7 @@ import {
   applyContentModeTransaction,
   getContentModeCapabilities,
   getContentModeEditableInstanceIds,
+  getContentModePropEligibility,
   getContentModePropNamesByTag,
   isContentModeCopyableProp,
   isContentModePagePath,
@@ -1072,6 +1073,44 @@ describe("content mode permissions", () => {
         prop: contentProps.get("expression-prop")!,
       })
     ).toBe(false);
+  });
+
+  test("explains why a prop is not editable in content mode", () => {
+    const capabilities = getContentModeCapabilities({
+      instances,
+      metas,
+      props,
+      styleSources,
+    });
+    const instance = instances.get("link")!;
+    const getEligibility = (prop: Prop) =>
+      getContentModePropEligibility({ capabilities, instance, prop });
+
+    expect(getEligibility(props.get("href-prop")!)).toEqual({
+      editable: true,
+    });
+    expect(
+      getEligibility({
+        id: "boolean-href",
+        instanceId: "link",
+        name: "href",
+        type: "boolean",
+        value: true,
+      })
+    ).toEqual({ editable: false, reason: "incompatible" });
+    expect(getEligibility(props.get("target-prop")!)).toEqual({
+      editable: false,
+      reason: "design-only",
+    });
+    expect(
+      getEligibility({
+        id: "unknown-prop",
+        instanceId: "link",
+        name: "unknown",
+        type: "string",
+        value: "value",
+      })
+    ).toEqual({ editable: false, reason: "unknown" });
   });
 
   test("supports content mode props derived from ws:element tag", () => {

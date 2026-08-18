@@ -30,8 +30,11 @@ export const getTextFileEditorExtensions = (
   return languageExtensions[language];
 };
 
-export const isMarkdownAsset = (asset: Pick<Asset, "format">) =>
+export const isMarkdownSyntaxAsset = (asset: Pick<Asset, "format">) =>
   getAssetTextEditorLanguage(asset) === "markdown";
+
+export const isMarkdownPreviewAsset = (asset: Pick<Asset, "format">) =>
+  asset.format.toLowerCase() === "md";
 
 export const normalizeTextFileContent = (
   asset: Pick<Asset, "format">,

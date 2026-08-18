@@ -147,6 +147,9 @@ describe("structured asset value references", () => {
         "?download=1#section"
       )
     ).toBe("https://cdn.example.com/guide.pdf?format=raw&download=1#section");
+    expect(mergeAssetUrlSuffix("assets/hero.png", "?width=1200#cover")).toBe(
+      "assets/hero.png?width=1200#cover"
+    );
   });
 
   test("resolves an explicit asset marker to structured metadata", () => {

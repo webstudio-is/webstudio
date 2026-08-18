@@ -1,17 +1,17 @@
-import { webstudioFragment } from "@webstudio-is/sdk";
 import { z } from "zod";
+import { webstudioFragmentMutationInput } from "../fragment";
 import { parseDataEnvelope } from "./data-envelope";
 
 export const instanceTransferDataVersion = "@webstudio/instance/v0.1";
 export const instancesTransferDataVersion = "@webstudio/instances/v0.1";
 
-export const instanceTransferData = webstudioFragment.extend({
-  instanceSelector: z.array(z.string()),
-});
+export const instanceTransferData = webstudioFragmentMutationInput.and(
+  z.object({ instanceSelector: z.array(z.string()) })
+);
 
 export const instancesTransferData = z.object({
   rootInstanceIds: z.array(z.string()),
-  fragment: webstudioFragment,
+  fragment: webstudioFragmentMutationInput,
 });
 
 export type InstanceTransferData = z.infer<typeof instanceTransferData>;

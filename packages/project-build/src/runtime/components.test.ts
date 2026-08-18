@@ -1,5 +1,8 @@
 import { expect, test } from "vitest";
 import {
+  blockComponent,
+  blockTemplateComponent,
+  contentBlockSourceProp,
   collectionComponent,
   elementComponent,
   encodeDataVariableId,
@@ -22,6 +25,7 @@ import {
   insertFragmentInput,
 } from "./components";
 import { getZodValidationIssues } from "./errors";
+import { BuilderRuntimeError } from "./errors";
 import { getComponentTemplates } from "./component-templates";
 import { createEmptyWebstudioFragment } from "./component-template";
 import { insertCollectionInput } from "./collection";
@@ -152,6 +156,81 @@ test("validates component ids with canonical instance schema", () => {
       component: "",
     }).success
   ).toBe(false);
+});
+
+test("requires confirmation when replacing source-backed template entries", () => {
+  const body: Instance = {
+    type: "instance",
+    id: "body",
+    component: "Body",
+    children: [{ type: "id", value: "block" }],
+  };
+  const state = createState(body);
+  state.instances.set("block", {
+    type: "instance",
+    id: "block",
+    component: blockComponent,
+    children: [{ type: "id", value: "templates" }],
+  });
+  state.instances.set("templates", {
+    type: "instance",
+    id: "templates",
+    component: blockTemplateComponent,
+    children: [{ type: "id", value: "hero" }],
+  });
+  state.instances.set("hero", {
+    type: "instance",
+    id: "hero",
+    component: "Box",
+    label: "Hero Card",
+    children: [],
+  });
+  state.props.set("src", {
+    id: "src",
+    instanceId: "block",
+    name: contentBlockSourceProp,
+    type: "asset",
+    value: "article.mdx",
+  });
+  let confirmation: unknown;
+  try {
+    insertComponent(
+      state,
+      {
+        parentInstanceId: "templates",
+        component: "Box",
+        mode: "replace",
+      },
+      { createId: createIdFactory() }
+    );
+  } catch (error) {
+    expect(error).toBeInstanceOf(BuilderRuntimeError);
+    confirmation = (error as BuilderRuntimeError).issues?.[0]?.example;
+  }
+  expect(confirmation).toEqual({
+    action: "rename",
+    templates: [{ instanceId: "hero", oldName: "Hero Card", newName: "Box" }],
+  });
+
+  expect(
+    insertComponent(
+      state,
+      {
+        parentInstanceId: "templates",
+        component: "Box",
+        mode: "replace",
+        templateNameConfirmation: confirmation as {
+          action: "rename";
+          templates: Array<{
+            instanceId: string;
+            oldName: string;
+            newName?: string;
+          }>;
+        },
+      },
+      { createId: createIdFactory() }
+    ).result.removedInstanceIds
+  ).toEqual(["hero"]);
 });
 
 test("explains the required parent for fragments with children", () => {
@@ -573,6 +652,37 @@ test("inserts fragment into page template", async () => {
     expect.objectContaining({
       id: "generated-0",
       component: "Box",
+    })
+  );
+});
+
+test("assigns a unique name when inserting into a Content Block Templates list", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "templates",
+    component: blockTemplateComponent,
+    children: [{ type: "id", value: "existing" }],
+  };
+  const state = createState(parent);
+  state.instances.set("existing", {
+    type: "instance",
+    id: "existing",
+    component: "Box",
+    children: [],
+  });
+  const fragment = await parseWebstudioJsxFragment("<$.Box />");
+
+  const mutation = insertFragment(
+    state,
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory() }
+  );
+
+  expect(getAddedValues<Instance>(mutation, "instances")).toContainEqual(
+    expect.objectContaining({
+      id: "generated-0",
+      component: "Box",
+      label: "Box 2",
     })
   );
 });
@@ -1320,6 +1430,21 @@ test("inspects webstudio jsx fragment syntax without evaluation", () => {
   expect(() =>
     inspectWebstudioJsxFragmentSyntax(`<div>Hello</div>`)
   ).not.toThrow();
+});
+
+test("preserves standalone JSX grammar and security inspection", async () => {
+  await expect(parseWebstudioJsxFragment("< $ . Box />")).resolves.toEqual(
+    expect.objectContaining({ children: expect.any(Array) })
+  );
+  await expect(
+    parseWebstudioJsxFragment("<$.Box data-count={1_000} />")
+  ).resolves.toEqual(expect.objectContaining({ children: expect.any(Array) }));
+  await expect(
+    parseWebstudioJsxFragment("< $ . Box data-secret={process.env} />")
+  ).rejects.toThrow('Do not access "process" in JSX fragments');
+  await expect(
+    parseWebstudioJsxFragment("`{process.env}`<$.Box />")
+  ).rejects.toThrow('Do not access "process" in JSX fragments');
 });
 
 test("rejects unsupported css rules after interpolation", async () => {

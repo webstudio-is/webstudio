@@ -1,12 +1,24 @@
 ---
-description: Query Markdown and JSON Assets with the Content Engine.
+description: Query Markdown, MDX, and JSON Assets with the Content Engine.
 ---
 
 <!-- Generated from the Content Engine schemas and shared CLI documentation. Do not edit directly. -->
 
 # Content Engine reference
 
-Assets resources query Markdown and JSON files stored in the Assets panel. The Builder and Webstudio MCP use the same structured query contract.
+Assets resources query Markdown, MDX, and JSON files stored in the Assets panel. The Builder and Webstudio MCP use the same structured query contract.
+
+## Document formats
+
+Content Engine indexes frontmatter from both `.md` and `.mdx` files and can return either body with `markdown-body-ref`. Their body grammars remain different:
+
+| Extension | Body behavior |
+| --- | --- |
+| `.md` | Standard Markdown, including its normal embedded HTML behavior. It is not an editable Content Block source. |
+| `.mdx` | Safe MDX: Markdown plus restricted `<ws.element>` JSX. It can be an editable Content Block source. |
+| `.json` | A JSON object whose root fields are indexed under `properties`. |
+
+Do not treat `.md` and `.mdx` as equivalent extensions. Use the Content Block conversion preview to create a new `.mdx` file from Markdown; unsupported or unsafe HTML is skipped and reported, and the original file remains unchanged.
 
 ## MCP workflow
 
@@ -22,7 +34,7 @@ Omit `query` when creating a resource to use the default many-result query for a
 
 ## Fields
 
-Every asset has the standard fields below. Markdown frontmatter and JSON root fields appear under `properties`, for example `properties.slug` or `properties.author.name`. The field catalog reports their observed types, occurrence counts, optionality, and mixed-type state. A JSON content file must contain an object at its root.
+Every asset has the standard fields below. Markdown and MDX frontmatter and JSON root fields appear under `properties`, for example `properties.slug` or `properties.author.name`. The field catalog reports their observed types, occurrence counts, optionality, and mixed-type state. A JSON content file must contain an object at its root.
 
 | Field | Observed type |
 | --- | --- |
@@ -143,9 +155,9 @@ External URLs remain ordinary strings. Existing local path strings also keep the
 | `none` | Returns no file content. Use this for listings and any query that only needs fields or metadata. |
 | `full` | Embeds the complete UTF-8 file content in the content database. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected file is larger. |
 | `range` | Embeds a byte range selected by `offset` and `length` in the content database. `length` cannot exceed 256 KiB. |
-| `markdown-body-ref` | Stores a reference to a Markdown body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected source file is larger. |
+| `markdown-body-ref` | Stores a reference to a Markdown or MDX body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected source file is larger. |
 
-Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for article pages. It keeps article bodies out of the published content database and resolves relative Markdown links when the selected body is loaded.
+Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for article pages. It keeps Markdown and MDX bodies out of the published content database and resolves their relative links when the selected body is loaded.
 
 ## Preview diagnostics
 
@@ -178,7 +190,7 @@ A document reference is an exact object with one string field:
 { "$ref": "<relative-path>[#<fragment>]" }
 ```
 
-Markdown references can appear in YAML frontmatter. JSON references can appear anywhere in the document. Either format can reference Markdown or JSON. References do not run inside a Markdown body.
+Markdown and MDX references can appear in YAML frontmatter. JSON references can appear anywhere in the document. Any format can reference Markdown, MDX, or JSON. References do not run inside a Markdown or MDX body.
 
 | Reference | Inserted value |
 | --- | --- |
@@ -220,6 +232,9 @@ Resolve paths relative to the file containing the reference. JSON Pointer uses `
 | JSON string | 16 KiB |
 | Indexed properties per document | 64 KiB |
 | Generated excerpt | 2 KiB |
+| MDX nesting depth | 100 |
+| MDX nodes | 20000 |
+| MDX JSX props | 4000 |
 | Loaded file | 1 MiB |
 | Loaded content per query | 2 MiB |
 | Loaded files per query | 20 |

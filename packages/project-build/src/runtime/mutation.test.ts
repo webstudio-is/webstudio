@@ -1,9 +1,95 @@
 import { expect, test } from "vitest";
 import { createDefaultPages } from "../shared/pages-utils";
 import {
+  blockComponent,
+  blockTemplateComponent,
+  type Instance,
+} from "@webstudio-is/sdk";
+import {
   createRuntimeMutation,
   createRuntimeMutationAccumulator,
+  getRuntimeMutationPersistenceOrder,
 } from "./mutation";
+
+const externalRoot = {
+  type: "external" as const,
+  identity: {
+    blockInstanceId: "block",
+    assetId: "article",
+    revision: "sha256:article",
+    contentRef: "article.mdx",
+    format: "mdx" as const,
+    renderScope: "page:/",
+  },
+};
+
+test("orders the durable destination before a cross-storage source removal", () => {
+  const storageRemoval = {
+    root: externalRoot,
+    payload: [
+      {
+        namespace: "instances" as const,
+        patches: [{ op: "remove" as const, path: ["moved"] }],
+      },
+    ],
+  };
+  expect(
+    getRuntimeMutationPersistenceOrder({
+      payload: [
+        {
+          namespace: "instances",
+          patches: [{ op: "add", path: ["moved"], value: {} }],
+        },
+      ],
+      storageChanges: [storageRemoval],
+    })
+  ).toBe("project-first");
+  expect(
+    getRuntimeMutationPersistenceOrder({
+      payload: [
+        {
+          namespace: "instances",
+          patches: [{ op: "remove", path: ["moved"] }],
+        },
+      ],
+      storageChanges: [
+        {
+          root: externalRoot,
+          payload: [
+            {
+              namespace: "instances",
+              patches: [{ op: "add", path: ["moved"], value: {} }],
+            },
+          ],
+        },
+      ],
+    })
+  ).toBe("storage-first");
+});
+
+test("does not correlate unrelated records that only share an id", () => {
+  expect(
+    getRuntimeMutationPersistenceOrder({
+      payload: [
+        {
+          namespace: "props",
+          patches: [{ op: "add", path: ["shared"], value: {} }],
+        },
+      ],
+      storageChanges: [
+        {
+          root: externalRoot,
+          payload: [
+            {
+              namespace: "instances",
+              patches: [{ op: "remove", path: ["shared"] }],
+            },
+          ],
+        },
+      ],
+    })
+  ).toBe("storage-first");
+});
 
 test("creates mutation result and marks noop from payload", () => {
   expect(
@@ -75,5 +161,88 @@ test("stages mutations against the latest state and combines their contract", ()
         ],
       },
     ],
+  });
+});
+
+test("preserves multiple authored storage changes and their noop semantics", () => {
+  const instances = new Map<Instance["id"], Instance>();
+  for (const id of ["first", "second"]) {
+    instances.set(id, {
+      type: "instance",
+      id,
+      component: blockComponent,
+      children: [
+        { type: "id", value: `${id}-templates` },
+        { type: "text", value: "Before" },
+      ],
+    });
+    instances.set(`${id}-templates`, {
+      type: "instance",
+      id: `${id}-templates`,
+      component: blockTemplateComponent,
+      children: [],
+    });
+  }
+  const accumulator = createRuntimeMutationAccumulator({ instances });
+  const firstRoot = {
+    type: "external" as const,
+    identity: {
+      blockInstanceId: "first",
+      assetId: "first-asset",
+      revision: "first-revision",
+      contentRef: "first.mdx",
+      format: "mdx" as const,
+      renderScope: "page:/first",
+    },
+  };
+  const secondRoot = {
+    type: "external" as const,
+    identity: {
+      ...firstRoot.identity,
+      blockInstanceId: "second",
+      assetId: "second-asset",
+      contentRef: "second.mdx",
+      renderScope: "page:/second",
+    },
+  };
+  for (const root of [firstRoot, secondRoot]) {
+    accumulator.stage(
+      createRuntimeMutation({
+        payload: [],
+        storageChanges: [
+          {
+            root,
+            payload: [
+              {
+                namespace: "fragment",
+                patches: [
+                  {
+                    op: "replace",
+                    path: ["children", 0],
+                    value: { type: "text", value: root.identity.assetId },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        result: {},
+        invalidatesNamespaces: ["instances"],
+      })
+    );
+  }
+
+  expect(accumulator.state.instances?.get("first")?.children[1]).toEqual({
+    type: "text",
+    value: "first-asset",
+  });
+  expect(accumulator.state.instances?.get("second")?.children[1]).toEqual({
+    type: "text",
+    value: "second-asset",
+  });
+
+  expect(accumulator.complete({})).toMatchObject({
+    noop: false,
+    storageChanges: [{ root: firstRoot }, { root: secondRoot }],
   });
 });
