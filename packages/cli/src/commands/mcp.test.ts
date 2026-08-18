@@ -26,6 +26,7 @@ const {
   createMcpStatusReporter,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
+  reportMcpSingleOpCallTermination,
   reportMcpRunTermination,
   createMcpRunTerminationController,
   parseMcpRunCalls,
@@ -839,6 +840,64 @@ test("formats MCP run failures as structured JSON payloads", () => {
       elapsedMs: 12,
     },
   });
+});
+
+test("reports termination while inserting a styled nested SVG", async () => {
+  const operation = publicApiOperations.find(
+    ({ command }) => command === "insert-fragment"
+  );
+  if (operation === undefined) {
+    throw new Error("Expected insert-fragment operation");
+  }
+  const executeOperation = vi.fn(async () => {
+    throw new Error("Simulated interrupted operation");
+  });
+  const core = createProjectSessionMcpCore({
+    operations: [operation],
+    createProjectSession: () => {
+      throw new Error("insert-fragment must use executeOperation");
+    },
+    executeOperation,
+  });
+  const fragment = `<ws.element ws:tag="a">
+    <ws.element ws:tag="svg" ws:style={css\`pointer-events: none;\`}>
+      <ws.element ws:tag="path" />
+    </ws.element>
+  </ws.element>`;
+
+  await expect(
+    core.callTool({
+      name: "insert-fragment",
+      input: { parentInstanceId: "body", fragment },
+      dryRun: true,
+    })
+  ).rejects.toThrow("Simulated interrupted operation");
+  expect(executeOperation).toHaveBeenCalledOnce();
+
+  const writeResult = vi.fn();
+  const setExitCode = vi.fn();
+  reportMcpSingleOpCallTermination({
+    termination: { type: "signal", signal: "SIGTERM" },
+    tool: "insert-fragment",
+    elapsedMs: 123,
+    writeStatus: vi.fn(),
+    writeResult,
+    setExitCode,
+  });
+
+  expect(writeResult).toHaveBeenCalledWith({
+    ok: false,
+    error: {
+      code: "MCP_CALL_TERMINATED",
+      message:
+        "MCP single-op-call insert-fragment terminated before returning a result.",
+    },
+    meta: {
+      elapsedMs: 123,
+      termination: { type: "signal", signal: "SIGTERM" },
+    },
+  });
+  expect(setExitCode).not.toHaveBeenCalled();
 });
 
 test("preserves completed calls when a run terminates during an asset query preview", () => {
