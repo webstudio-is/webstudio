@@ -1,8 +1,5 @@
 import { describe, expect, test } from "vitest";
 import {
-  blockTemplateComponent,
-  blockComponent,
-  contentBlockSourceProp,
   encodeDataVariableId,
   type DataSource,
   elementComponent,
@@ -33,7 +30,9 @@ import {
   createTextContentResetPayload,
   createTextContentSetPayload,
   createTextContentUpdatePayload,
+  findChildReferenceIndex,
   findLocalStyleSourcesWithinInstances,
+  findParentInstanceReference,
   fillGrid,
   findTextContentChild,
   getInstanceDepths,
@@ -48,7 +47,6 @@ import {
   deleteInstances,
   moveInstancesInput,
   moveInstances,
-  reparentInstanceMutable,
   replaceTextInput,
   serializeTextNodes,
   setInstanceLabel,
@@ -63,7 +61,6 @@ import {
 import { applyBuilderPatchPayloadMutable } from "../state/patch";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
-import { BuilderRuntimeError } from "./errors";
 
 const runtimeContext = { createId: () => "generated" };
 
@@ -1096,41 +1093,6 @@ describe("wrapInstance", () => {
     ]);
   });
 
-  test("assigns a unique name to a wrapper in Templates", () => {
-    const result = wrapInstance(
-      {
-        instances: new Map([
-          [
-            "templates",
-            createInstance("templates", blockTemplateComponent, [
-              { type: "id", value: "existing" },
-              { type: "id", value: "selected" },
-            ]),
-          ],
-          ["existing", createInstance("existing", "Box")],
-          ["selected", createInstance("selected", "Section")],
-        ]),
-        props: new Map(),
-      },
-      {
-        instanceSelector: ["selected", "templates"],
-        component: "Box",
-      },
-      { createId: () => "wrapper" }
-    );
-
-    expect(result.payload[0]?.patches).toContainEqual({
-      op: "add",
-      path: ["wrapper"],
-      value: {
-        ...createInstance("wrapper", "Box", [
-          { type: "id", value: "selected" },
-        ]),
-        label: "Box 2",
-      },
-    });
-  });
-
   test("wraps selected instance inside shared Slot content", () => {
     const result = wrapInstance(
       {
@@ -1301,90 +1263,6 @@ describe("convertInstance", () => {
     ]);
   });
 
-  test("rejects conversion that duplicates a template name", () => {
-    const card = createInstance("card", "Box");
-
-    expect(() =>
-      convertInstance(
-        {
-          instances: new Map([
-            [
-              "templates",
-              createInstance("templates", blockTemplateComponent, [
-                { type: "id", value: "card" },
-                { type: "id", value: "section" },
-              ]),
-            ],
-            [card.id, card],
-            ["section", createInstance("section", "Section")],
-          ]),
-          props: new Map(),
-        },
-        {
-          instanceSelector: ["section", "templates"],
-          component: "Box",
-        },
-        runtimeContext
-      )
-    ).toThrow("Template name must be unique");
-  });
-
-  test("requires confirmation when conversion changes a source-backed template name", () => {
-    const block = createInstance("block", blockComponent, [
-      { type: "id", value: "templates" },
-    ]);
-    const templates = createInstance("templates", blockTemplateComponent, [
-      { type: "id", value: "card" },
-    ]);
-    const card = createInstance("card", "Box");
-    const state = {
-      instances: new Map([
-        [block.id, block],
-        [templates.id, templates],
-        [card.id, card],
-      ]),
-      props: new Map([
-        [
-          "src",
-          {
-            id: "src",
-            instanceId: block.id,
-            name: contentBlockSourceProp,
-            type: "asset" as const,
-            value: "article.mdx",
-          },
-        ],
-      ]),
-    };
-    expect(() =>
-      convertInstance(
-        state,
-        {
-          instanceSelector: [card.id, templates.id, block.id],
-          component: "Section",
-        },
-        runtimeContext
-      )
-    ).toThrow("Template name change requires confirmation");
-
-    expect(
-      convertInstance(
-        state,
-        {
-          instanceSelector: [card.id, templates.id, block.id],
-          component: "Section",
-          templateNameConfirmation: {
-            action: "rename",
-            templates: [
-              { instanceId: "card", oldName: "Box", newName: "Section" },
-            ],
-          },
-        },
-        runtimeContext
-      ).result
-    ).toEqual({ instanceId: "card" });
-  });
-
   test("removes legacy tag prop and renames React props when converting to element", () => {
     const result = convertInstance(
       {
@@ -1524,40 +1402,6 @@ describe("convertInstance", () => {
     ]);
   });
 
-  test("rejects converting a direct Slot template to a duplicate name", () => {
-    expect(() =>
-      convertInstance(
-        {
-          pages: createDefaultPages({ rootInstanceId: "templates" }),
-          instances: new Map([
-            [
-              "templates",
-              createInstance("templates", blockTemplateComponent, [
-                { type: "id", value: "box" },
-                { type: "id", value: "slot" },
-              ]),
-            ],
-            ["box", createInstance("box", "Box")],
-            ["slot", createInstance("slot", "Slot")],
-          ]),
-          props: new Map(),
-          dataSources: new Map(),
-          resources: new Map(),
-          styleSources: new Map(),
-          styleSourceSelections: new Map(),
-          styles: new Map(),
-          breakpoints: new Map(),
-          assets: new Map(),
-        },
-        {
-          instanceSelector: ["slot", "templates"],
-          component: "Box",
-        },
-        runtimeContext
-      )
-    ).toThrow("Template name must be unique");
-  });
-
   test("rejects conversion that violates content model", () => {
     expect(() =>
       convertInstance(
@@ -1636,72 +1480,6 @@ describe("unwrapInstance", () => {
         ],
       },
     ]);
-  });
-
-  test("assigns a unique name when unwrapping into Templates", () => {
-    const result = unwrapInstance(
-      {
-        instances: new Map([
-          [
-            "templates",
-            createInstance("templates", blockTemplateComponent, [
-              { type: "id", value: "existing" },
-              { type: "id", value: "parent" },
-            ]),
-          ],
-          ["existing", createInstance("existing", "Box")],
-          [
-            "parent",
-            createInstance("parent", "Section", [
-              { type: "id", value: "selected" },
-            ]),
-          ],
-          ["selected", createInstance("selected", "Box")],
-        ]),
-        props: new Map(),
-      },
-      { instanceSelector: ["selected", "parent", "templates"] },
-      runtimeContext
-    );
-
-    expect(result.payload[0]?.patches).toContainEqual({
-      op: "add",
-      path: ["selected", "label"],
-      value: "Box 2",
-    });
-  });
-
-  test("includes a retained wrapper when naming an unwrapped template", () => {
-    const result = unwrapInstance(
-      {
-        instances: new Map([
-          [
-            "templates",
-            createInstance("templates", blockTemplateComponent, [
-              { type: "id", value: "parent" },
-            ]),
-          ],
-          [
-            "parent",
-            createInstance("parent", "Box", [
-              { type: "id", value: "selected" },
-              { type: "id", value: "sibling" },
-            ]),
-          ],
-          ["selected", createInstance("selected", "Box")],
-          ["sibling", createInstance("sibling", "Image")],
-        ]),
-        props: new Map(),
-      },
-      { instanceSelector: ["selected", "parent", "templates"] },
-      runtimeContext
-    );
-
-    expect(result.payload[0]?.patches).toContainEqual({
-      op: "add",
-      path: ["selected", "label"],
-      value: "Box 2",
-    });
   });
 
   test("moves selected instance after parent when parent keeps siblings", () => {
@@ -2068,86 +1846,6 @@ describe("setInstanceTag", () => {
     expect(result.noop).toEqual(true);
     expect(result.payload).toEqual([]);
   });
-
-  test("rejects a tag that duplicates a template name", () => {
-    const templates = createInstance("templates", blockTemplateComponent, [
-      { type: "id", value: "heading" },
-      { type: "id", value: "paragraph" },
-    ]);
-    const heading = createInstance("heading", elementComponent);
-    heading.tag = "h2";
-    const paragraph = createInstance("paragraph", elementComponent);
-    paragraph.tag = "p";
-
-    expect(() =>
-      setInstanceTag(
-        {
-          instances: new Map([
-            ["templates", templates],
-            ["heading", heading],
-            ["paragraph", paragraph],
-          ]),
-          props: new Map(),
-        },
-        { instanceId: "paragraph", tag: "h2" }
-      )
-    ).toThrow("Template name must be unique");
-  });
-
-  test("requires confirmation when an unlabeled source-backed template tag changes", () => {
-    const block = createInstance("block", blockComponent, [
-      { type: "id", value: "templates" },
-    ]);
-    const templates = createInstance("templates", blockTemplateComponent, [
-      { type: "id", value: "element" },
-    ]);
-    const element = createInstance("element", elementComponent);
-    element.tag = "div";
-    const state = {
-      instances: new Map([
-        [block.id, block],
-        [templates.id, templates],
-        [element.id, element],
-      ]),
-      props: new Map([
-        [
-          "src",
-          {
-            id: "src",
-            instanceId: block.id,
-            name: contentBlockSourceProp,
-            type: "asset" as const,
-            value: "article.mdx",
-          },
-        ],
-      ]),
-    };
-
-    expect(() =>
-      setInstanceTag(state, { instanceId: element.id, tag: "section" })
-    ).toThrow("Template name change requires confirmation");
-    expect(
-      setInstanceTag(state, {
-        instanceId: element.id,
-        tag: "section",
-        templateNameConfirmation: {
-          action: "rename",
-          templates: [
-            {
-              instanceId: "element",
-              oldName: "<div>",
-              newName: "<section>",
-            },
-          ],
-        },
-      }).result
-    ).toEqual({ instanceId: "element", tag: "section" });
-
-    element.label = "Hero element";
-    expect(
-      setInstanceTag(state, { instanceId: element.id, tag: "article" }).result
-    ).toEqual({ instanceId: "element", tag: "article" });
-  });
 });
 
 describe("setInstanceLabel", () => {
@@ -2229,32 +1927,6 @@ describe("setInstanceLabel", () => {
     ]);
   });
 
-  test("rejects mirrored Slot labels that collide in one Templates list", () => {
-    const templates = createInstance("templates", blockTemplateComponent, [
-      { type: "id", value: "slot" },
-      { type: "id", value: "matching-slot" },
-    ]);
-    const slot = createInstance("slot", "Slot", [
-      { type: "id", value: "child" },
-    ]);
-    const matchingSlot = createInstance("matching-slot", "Slot", [
-      { type: "id", value: "child" },
-    ]);
-
-    expect(() =>
-      setInstanceLabel(
-        {
-          instances: new Map([
-            ["templates", templates],
-            ["slot", slot],
-            ["matching-slot", matchingSlot],
-          ]),
-        },
-        { instanceId: "slot", label: "Shared slot" }
-      )
-    ).toThrow("Template name must be unique");
-  });
-
   test("does not mutate unchanged label", () => {
     const instance = createInstance("box", "Box");
     instance.label = "Hero card";
@@ -2270,166 +1942,6 @@ describe("setInstanceLabel", () => {
 
     expect(result.noop).toEqual(true);
     expect(result.payload).toEqual([]);
-  });
-
-  test("rejects a duplicate name in the same Content Block Templates list", () => {
-    const block = createInstance("block", blockComponent, [
-      { type: "id", value: "templates" },
-    ]);
-    const templates = createInstance("templates", blockTemplateComponent, [
-      { type: "id", value: "hero" },
-      { type: "id", value: "card" },
-    ]);
-    const hero = createInstance("hero", "Box");
-    hero.label = "Hero Card";
-
-    expect(() =>
-      setInstanceLabel(
-        {
-          instances: new Map([
-            ["block", block],
-            ["templates", templates],
-            ["hero", hero],
-            ["card", createInstance("card", "Box")],
-          ]),
-          props: new Map([
-            [
-              "src",
-              {
-                id: "src",
-                instanceId: block.id,
-                name: contentBlockSourceProp,
-                type: "asset" as const,
-                value: "article.mdx",
-              },
-            ],
-          ]),
-        },
-        { instanceId: "card", label: "Hero Card" }
-      )
-    ).toThrow("Template name must be unique");
-  });
-
-  test("requires a current confirmation before renaming a source-backed template", () => {
-    const block = createInstance("block", blockComponent, [
-      { type: "id", value: "templates" },
-    ]);
-    const templates = createInstance("templates", blockTemplateComponent, [
-      { type: "id", value: "card" },
-    ]);
-    const card = createInstance("card", "Box");
-    const state = {
-      instances: new Map([
-        [block.id, block],
-        [templates.id, templates],
-        [card.id, card],
-      ]),
-      props: new Map([
-        [
-          "src",
-          {
-            id: "src",
-            instanceId: block.id,
-            name: contentBlockSourceProp,
-            type: "expression" as const,
-            value: "articleAssetId",
-          },
-        ],
-      ]),
-    };
-    let confirmation: unknown;
-    try {
-      setInstanceLabel(state, { instanceId: card.id, label: "Hero Card" });
-    } catch (error) {
-      expect(error).toBeInstanceOf(BuilderRuntimeError);
-      const issue = (error as BuilderRuntimeError).issues?.[0];
-      expect(issue).toMatchObject({
-        code: "template_name_change_requires_confirmation",
-        constraint: "requires_confirmation:template_name_references",
-      });
-      confirmation = issue?.example;
-    }
-    expect(confirmation).toEqual({
-      action: "rename",
-      templates: [{ instanceId: "card", oldName: "Box", newName: "Hero Card" }],
-    });
-
-    expect(
-      setInstanceLabel(state, {
-        instanceId: card.id,
-        label: "Hero Card",
-        templateNameConfirmation: confirmation as {
-          action: "rename";
-          templates: Array<{
-            instanceId: string;
-            oldName: string;
-            newName?: string;
-          }>;
-        },
-      }).result
-    ).toEqual({ instanceIds: ["card"], label: "Hero Card" });
-
-    card.label = "Current card";
-    expect(() =>
-      setInstanceLabel(state, {
-        instanceId: card.id,
-        label: "Hero Card",
-        templateNameConfirmation: confirmation as {
-          action: "rename";
-          templates: Array<{
-            instanceId: string;
-            oldName: string;
-            newName?: string;
-          }>;
-        },
-      })
-    ).toThrow("Template name change requires confirmation");
-  });
-
-  test("uses the default effective name when clearing a template label", () => {
-    const block = createInstance("block", blockComponent, [
-      { type: "id", value: "templates" },
-    ]);
-    const templates = createInstance("templates", blockTemplateComponent, [
-      { type: "id", value: "card" },
-    ]);
-    const card = createInstance("card", "Box");
-    card.label = "Hero Card";
-    const state = {
-      instances: new Map([
-        [block.id, block],
-        [templates.id, templates],
-        [card.id, card],
-      ]),
-      props: new Map([
-        [
-          "src",
-          {
-            id: "src",
-            instanceId: block.id,
-            name: contentBlockSourceProp,
-            type: "asset" as const,
-            value: "article.mdx",
-          },
-        ],
-      ]),
-    };
-
-    expect(() =>
-      setInstanceLabel(state, { instanceId: card.id, label: "  " })
-    ).toThrow("Template name change requires confirmation");
-    expect(
-      setInstanceLabel(state, {
-        instanceId: card.id,
-        label: "  ",
-        templateNameConfirmation: {
-          action: "rename",
-          templates: [
-            { instanceId: "card", oldName: "Hero Card", newName: "Box" },
-          ],
-        },
-      }).result.label
-    ).toBe("");
   });
 });
 
@@ -2546,6 +2058,22 @@ test("gets instance depths from root ids", () => {
   );
 });
 
+test("finds child reference index", () => {
+  expect(
+    findChildReferenceIndex(
+      [
+        { type: "text", value: "before" },
+        { type: "id", value: "child" },
+        { type: "text", value: "after" },
+      ],
+      "child"
+    )
+  ).toBe(1);
+  expect(
+    findChildReferenceIndex([{ type: "text", value: "only" }], "child")
+  ).toBe(-1);
+});
+
 test("creates instance child references", () => {
   expect(createInstanceChild("child")).toEqual({ type: "id", value: "child" });
 });
@@ -2563,6 +2091,25 @@ test("adjusts same-parent insert index after removal", () => {
       requestedIndex: 1,
     })
   ).toBe(1);
+});
+
+test("finds parent instance reference", () => {
+  const instances = new Map([
+    [
+      "parent",
+      createInstance("parent", elementComponent, [
+        { type: "text", value: "before" },
+        { type: "id", value: "child" },
+      ]),
+    ],
+    ["child", createInstance("child", elementComponent)],
+  ]);
+
+  expect(findParentInstanceReference(instances, "child")).toEqual({
+    instance: instances.get("parent"),
+    childIndex: 1,
+  });
+  expect(findParentInstanceReference(instances, "missing")).toBeUndefined();
 });
 
 test("creates instance move patches", () => {
@@ -2595,71 +2142,6 @@ test("creates instance move patches", () => {
       },
     ],
   });
-});
-
-const createTemplateMoveInstances = () => {
-  const moving = createInstance("moving", "Box");
-  moving.label = "Hero Card";
-  const existing = createInstance("existing", "Box");
-  existing.label = "Hero Card";
-  return {
-    moving,
-    instances: new Map([
-      [
-        "source",
-        createInstance("source", elementComponent, [
-          { type: "id", value: moving.id },
-        ]),
-      ],
-      [
-        "templates",
-        createInstance("templates", blockTemplateComponent, [
-          { type: "id", value: existing.id },
-        ]),
-      ],
-      [moving.id, moving],
-      [existing.id, existing],
-    ]),
-  };
-};
-
-test("assigns a unique template name when moving between parents", () => {
-  const { instances, moving } = createTemplateMoveInstances();
-
-  expect(
-    createInstanceMovePatches({
-      instances,
-      moves: [{ instanceId: moving.id, parentInstanceId: "templates" }],
-    }).patches
-  ).toContainEqual({
-    op: "replace",
-    path: [moving.id, "label"],
-    value: "Hero Card 2",
-  });
-});
-
-test("assigns a unique template name when reparenting in the Builder", () => {
-  const { instances, moving } = createTemplateMoveInstances();
-  const data = {
-    instances,
-    props: new Map(),
-    dataSources: new Map(),
-    resources: new Map(),
-    styleSources: new Map(),
-    styleSourceSelections: new Map(),
-    styles: new Map(),
-    breakpoints: new Map(),
-    assets: new Map(),
-  };
-
-  reparentInstanceMutable({
-    data,
-    sourceInstanceSelector: [moving.id, "source"],
-    dropTarget: { parentSelector: ["templates"], position: "end" },
-    createId: () => "generated",
-  });
-
-  expect(data.instances.get(moving.id)?.label).toBe("Hero Card 2");
 });
 
 test("creates instance move payload", () => {

@@ -27,7 +27,6 @@ import {
 } from "@webstudio-is/icons/svg";
 import {
   elementComponent,
-  getInstanceName,
   parseComponentName,
   ROOT_INSTANCE_ID,
   type Instance,
@@ -121,9 +120,19 @@ export const getInstanceLabel = (
     return "Unknown";
   }
 
-  return getInstanceName({
-    instance: instanceOrInstanceId,
-    metas: $registeredComponentMetas.get(),
-    fallbackName: getLabelFromComponentName(instanceOrInstanceId.component),
-  });
+  if (instanceOrInstanceId.label) {
+    return instanceOrInstanceId.label;
+  }
+  if (
+    instanceOrInstanceId.component === elementComponent &&
+    instanceOrInstanceId.tag
+  ) {
+    return `<${instanceOrInstanceId.tag}>`;
+  }
+  const meta = $registeredComponentMetas
+    .get()
+    .get(instanceOrInstanceId.component);
+  return (
+    meta?.label || getLabelFromComponentName(instanceOrInstanceId.component)
+  );
 };

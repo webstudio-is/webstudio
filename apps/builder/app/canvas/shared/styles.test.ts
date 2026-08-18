@@ -330,51 +330,6 @@ describe("computeDescendantSelectors", () => {
     expect(result.get("descendant")).toBe('[data-ws-id="parent"] > div');
   });
 
-  test("computes a selector for a descendant at an MDX storage root", () => {
-    const instances = new Map([
-      ["block", createInstance("block", "ws:block")],
-      ["descendant", createInstance("descendant", descendantComponent)],
-    ]);
-    const props = new Map([
-      ["prop-1", createProp("prop-1", "descendant", "selector", " > div")],
-    ]);
-    const materializedRoots = new Map([
-      [
-        "root",
-        {
-          identity: {
-            blockInstanceId: "block",
-            assetId: "article",
-            revision: "sha256:one",
-            contentRef: "article.mdx",
-            format: "mdx" as const,
-            renderScope: "page:/",
-          },
-          fragment: {
-            children: [{ type: "id" as const, value: "descendant" }],
-            instances: [],
-            props: [],
-            assets: [],
-            dataSources: [],
-            resources: [],
-            breakpoints: [],
-            styleSourceSelections: [],
-            styleSources: [],
-            styles: [],
-          },
-        },
-      ],
-    ]);
-
-    const result = computeDescendantSelectors(
-      instances,
-      props,
-      materializedRoots
-    );
-
-    expect(result.get("descendant")).toBe('[data-ws-id="block"] > div');
-  });
-
   test("ignores descendant without selector prop", () => {
     const instances = new Map([
       [

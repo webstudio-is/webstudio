@@ -1,6 +1,5 @@
 import { expect, test } from "vitest";
 import {
-  blockTemplateComponent,
   getStyleDeclKey,
   type Instance,
   type StyleDecl,
@@ -103,31 +102,6 @@ test("duplicates an instance after itself", () => {
     { type: "id", value: "source-copy" },
     { type: "id", value: "sibling" },
   ]);
-});
-
-test("assigns a unique name when duplicating a block template", () => {
-  const data = createData();
-  const parent = data.instances.get("parent");
-  if (parent === undefined) {
-    throw new Error("Expected parent");
-  }
-  parent.component = blockTemplateComponent;
-  const source = data.instances.get("source");
-  if (source === undefined) {
-    throw new Error("Expected source");
-  }
-  source.label = "Hero Card";
-  const ids = ["source-copy", "child-copy"];
-
-  duplicateInstanceAfterItselfMutable({
-    data,
-    sourceInstanceId: "source",
-    parentInstanceId: "parent",
-    projectId: "project-id",
-    createId: () => ids.shift() ?? "missing",
-  });
-
-  expect(data.instances.get("source-copy")?.label).toBe("Hero Card 2");
 });
 
 test("preserves legacy HtmlEmbed code when duplicating an instance", () => {

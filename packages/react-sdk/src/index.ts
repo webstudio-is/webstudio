@@ -8,6 +8,5 @@ export {
   generateWebstudioComponent,
   generateJsxElement,
   generateJsxChildren,
-  type PublishedContentBlock,
 } from "./component-generator";
 export * from "./__generated__/standard-attributes";

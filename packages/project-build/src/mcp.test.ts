@@ -1043,7 +1043,6 @@ describe("project session mcp adapter", () => {
       "contentMode",
       "mode",
       "insertIndex",
-      "templateNameConfirmation",
       "dryRun",
     ]);
     const fragmentSchema = insertFragmentTool?.inputSchema.properties?.fragment;
@@ -4709,9 +4708,12 @@ describe("project session mcp adapter", () => {
       }
     ).tools;
     expect(
-      designInputGuideTools.every(
-        (tool) => Object.keys(tool).join(",") === "name"
-      )
+      designInputGuideTools.every((tool) => {
+        const keys = Object.keys(tool).join(",");
+        return tool.name === "update-styles"
+          ? keys === "name,inputSchema"
+          : keys === "name";
+      })
     ).toBe(true);
     const getComponentToolNames = (
       getComponentDetails.structuredContent.data as {
@@ -4997,19 +4999,16 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({ name: "insert-fragment-verified" }),
           expect.objectContaining({ name: "attach-design-token" }),
           expect.objectContaining({ name: "verify-page-responsive" }),
-          expect.objectContaining({ name: "update-styles" }),
+          expect.objectContaining({
+            name: "update-styles",
+            inputSchema: expect.objectContaining({
+              properties: expect.objectContaining({
+                updates: expect.objectContaining({ type: "array" }),
+              }),
+            }),
+          }),
         ]),
       })
-    );
-    expect(
-      (
-        designInputGuide.structuredContent.data as {
-          tools: Array<{ name: string; inputSchema?: unknown }>;
-        }
-      ).tools.find(({ name }) => name === "update-styles")
-    ).not.toHaveProperty("inputSchema");
-    expect(designInputGuide.structuredContent.data).not.toHaveProperty(
-      "slowOperation"
     );
     expect(craftGuide.structuredContent.data).toEqual(
       expect.objectContaining({

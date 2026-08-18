@@ -5,7 +5,7 @@ import {
   ROOT_INSTANCE_ID,
   rootComponent,
 } from "@webstudio-is/sdk";
-import { $runtimeInstances as $instances } from "../content-block-content";
+import { $instances } from "../sync/data-stores";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import { getInstancePath } from "@webstudio-is/project-build/runtime";
 import { $selectedPage } from "./pages";
@@ -119,18 +119,14 @@ export const getInstanceKey = <
 ): (InstanceSelector extends undefined ? undefined : never) | string =>
   JSON.stringify(instanceSelector);
 
-export const getInstanceKeyWithRoot = (instanceSelector: InstanceSelector) =>
-  getInstanceKey(
-    instanceSelector[0] === ROOT_INSTANCE_ID
-      ? instanceSelector
-      : [...instanceSelector, ROOT_INSTANCE_ID]
-  );
-
 export const $selectedInstanceKeyWithRoot = computed(
   $selectedInstanceSelector,
   (instanceSelector) => {
     if (instanceSelector) {
-      return getInstanceKeyWithRoot(instanceSelector);
+      if (instanceSelector[0] === ROOT_INSTANCE_ID) {
+        return getInstanceKey(instanceSelector);
+      }
+      return getInstanceKey([...instanceSelector, ROOT_INSTANCE_ID]);
     }
   }
 );

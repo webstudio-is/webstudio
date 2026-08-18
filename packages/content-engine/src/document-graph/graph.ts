@@ -1,5 +1,4 @@
 import { compareStrings } from "../canonical-json";
-import type { DocumentFormat } from "./document-format";
 import { createDocumentReference, type DocumentReference } from "./reference";
 import {
   documentGraphEdgeSchema,
@@ -11,7 +10,7 @@ export type DocumentGraphNode = Readonly<{
   id: string;
   revision: string;
   contentRef: string;
-  format?: DocumentFormat;
+  format?: "json" | "markdown";
 }>;
 
 export type DocumentGraphEdge = Readonly<{

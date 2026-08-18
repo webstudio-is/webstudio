@@ -5,13 +5,6 @@ import { uploadAssets } from "~/builder/shared/assets/upload-assets";
 import { showTokenConflictDialog } from "./token-conflict-dialog";
 import { showRootStyleConflictDialog } from "./root-style-conflict-dialog";
 import { showDesignTokenImportDialog } from "./design-token-import-dialog";
-import { fetch as builderFetch } from "./fetch.client";
-import { $assets, $project } from "./sync/data-stores";
-import { $authPermit } from "./nano-states";
-import {
-  createAssetContentBridge,
-  initAssetContentBridge,
-} from "./asset-content-bridge.client";
 
 const apiWindowNamespace = "__webstudio__$__builderApi";
 
@@ -23,27 +16,6 @@ const isSafeMode = (() => {
   }
   return new URLSearchParams(window.location.search).get("safemode") === "true";
 })();
-
-const authorizeAssetContent = ({
-  projectId,
-  assetId,
-  identityAssetId,
-  operation,
-}: {
-  projectId: string;
-  assetId: string;
-  identityAssetId?: string;
-  operation: "read" | "write";
-}) => {
-  const asset = $assets.get().get(assetId);
-  return (
-    $project.get()?.id === projectId &&
-    asset?.projectId === projectId &&
-    asset.format === "mdx" &&
-    (identityAssetId === undefined || identityAssetId === assetId) &&
-    (operation === "read" || $authPermit.get() !== "view")
-  );
-};
 
 const _builderApi = {
   isInitialized: () => true,
@@ -145,13 +117,6 @@ export const builderApi = createRecursiveProxy((options) => {
 export const initBuilderApi = () => {
   if (isInTop()) {
     window[apiWindowNamespace] = _builderApi;
-    initAssetContentBridge(
-      createAssetContentBridge({
-        origin: window.location.origin,
-        request: (input, init) => builderFetch(input, init),
-        authorize: authorizeAssetContent,
-      })
-    );
   }
   return () => {};
 };

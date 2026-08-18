@@ -1,6 +1,4 @@
 import { enum as zEnum, strictObject, string } from "zod";
-import { readableStreamToAsyncIterable } from "../byte-stream";
-import { documentFormats } from "./document-format";
 import type { DocumentGraphNode } from "./graph";
 import type { DocumentSourceLoader } from "./document-source";
 import {
@@ -9,7 +7,7 @@ import {
 } from "./observability";
 
 const documentSourceMetadata = strictObject({
-  format: zEnum(documentFormats),
+  format: zEnum(["json", "markdown"]),
   revision: string().min(1),
 });
 
@@ -44,6 +42,34 @@ export class HttpDocumentLoaderError extends Error {
     this.status = status;
   }
 }
+
+const streamResponseBody = (
+  body: ReadableStream<Uint8Array>
+): AsyncIterable<Uint8Array> => ({
+  async *[Symbol.asyncIterator]() {
+    const reader = body.getReader();
+    let completed = false;
+    try {
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) {
+          completed = true;
+          return;
+        }
+        yield chunk.value;
+      }
+    } finally {
+      if (completed === false) {
+        try {
+          await reader.cancel();
+        } catch {
+          // Preserve the consumer error that stopped the stream.
+        }
+      }
+      reader.releaseLock();
+    }
+  },
+});
 
 /** Adapts an injected HTTP/CDN transport to the revisioned source contract. */
 export const createHttpDocumentSourceLoader = ({
@@ -101,7 +127,7 @@ export const createHttpDocumentSourceLoader = ({
     }
     return Object.freeze({
       ...metadata,
-      source: readableStreamToAsyncIterable(body),
+      source: streamResponseBody(body),
     });
   };
   return observeDocumentSourceLoader({ load, onEvent });

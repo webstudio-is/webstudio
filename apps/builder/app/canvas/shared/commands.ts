@@ -14,10 +14,7 @@ import {
   clearInstanceSelection,
   selectInstance,
 } from "~/shared/nano-states";
-import {
-  $runtimeInstances as $instances,
-  $runtimeProps as $props,
-} from "~/shared/content-block-content";
+import { $instances, $props } from "~/shared/sync/data-stores";
 import {
   CLEAR_FORMAT_COMMAND,
   TOGGLE_SPAN_COMMAND,

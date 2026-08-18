@@ -16,10 +16,7 @@ import {
   selectInstance,
 } from "../nano-states";
 import type { InstancePath } from "@webstudio-is/project-build/runtime";
-import {
-  $runtimeInstances as $instances,
-  $runtimeProps as $props,
-} from "../content-block-content";
+import { $instances, $props } from "../sync/data-stores";
 import { $instanceTags } from "~/builder/features/style-panel/shared/model";
 import {
   type DroppableTarget,

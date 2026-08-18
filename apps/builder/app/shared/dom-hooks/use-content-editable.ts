@@ -16,7 +16,7 @@ export const useContentEditable = ({
   isEditable: boolean;
   isEditing: boolean;
   onChangeEditing: (isEditing: boolean) => void;
-  onChangeValue: (value: string) => void | boolean;
+  onChangeValue: (value: string) => void;
   value: string;
 }) => {
   const elementRef = useRef<HTMLDivElement | null>(null);
@@ -62,9 +62,8 @@ export const useContentEditable = ({
       return;
     }
     const nextValue = getValue();
-    if (onChangeValue(nextValue) !== false) {
-      handleEnd(event);
-    }
+    handleEnd(event);
+    onChangeValue(nextValue);
   };
 
   const handleKeyDown: KeyboardEventHandler = (event) => {

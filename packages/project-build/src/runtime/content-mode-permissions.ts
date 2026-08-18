@@ -17,7 +17,6 @@ import {
   type Breakpoints,
   type Instance,
   type Prop,
-  type PropMeta,
   type Props,
   type StyleDecl,
   type StyleSource,
@@ -255,7 +254,7 @@ const getBlockTemplateChildIdsByInstanceId = (
   return childIdsByInstanceId;
 };
 
-const getInstancePropMetas = ({
+const getContentModePropMeta = ({
   capabilities,
   instance,
   propName,
@@ -264,12 +263,10 @@ const getInstancePropMetas = ({
   instance: Instance;
   propName: Prop["name"];
 }) => {
-  const propMetas: PropMeta[] = [];
-  const propMeta = capabilities.metas.get(instance.component)?.props?.[
-    propName
-  ];
-  if (propMeta !== undefined) {
-    propMetas.push(propMeta);
+  const meta = capabilities.metas.get(instance.component);
+  const propMeta = meta?.props?.[propName];
+  if (propMeta?.contentMode === true) {
+    return propMeta;
   }
 
   const tag = getHtmlTagFromInstance({
@@ -279,57 +276,17 @@ const getInstancePropMetas = ({
     htmlTagsByInstanceId: capabilities.htmlTagsByInstanceId,
   });
   if (tag === undefined) {
-    return propMetas;
+    return;
   }
   for (const componentMeta of capabilities.metas.values()) {
     if (Object.keys(componentMeta.presetStyle ?? {}).includes(tag) === false) {
       continue;
     }
     const propMeta = componentMeta.props?.[propName];
-    if (propMeta !== undefined) {
-      propMetas.push(propMeta);
+    if (propMeta?.contentMode === true) {
+      return propMeta;
     }
   }
-  return propMetas;
-};
-
-export type ContentModePropEligibility =
-  | { editable: true }
-  | {
-      editable: false;
-      reason: "unknown" | "incompatible" | "design-only";
-    };
-
-export const getContentModePropEligibility = ({
-  capabilities,
-  instance,
-  prop,
-}: {
-  capabilities: ContentModeCapabilities;
-  instance: Instance;
-  prop: Pick<Prop, "name" | "type">;
-}): ContentModePropEligibility => {
-  if (prop.type === "asset") {
-    return { editable: true };
-  }
-  const propMetas = getInstancePropMetas({
-    capabilities,
-    instance,
-    propName: prop.name,
-  });
-  const contentModePropMeta = propMetas.find(
-    (propMeta) => propMeta.contentMode === true
-  );
-  if (contentModePropMeta === undefined) {
-    return {
-      editable: false,
-      reason: propMetas.length === 0 ? "unknown" : "design-only",
-    };
-  }
-  if (contentModePropMeta.type !== prop.type) {
-    return { editable: false, reason: "incompatible" };
-  }
-  return { editable: true };
 };
 
 const isContentModePropForInstance = ({
@@ -340,7 +297,13 @@ const isContentModePropForInstance = ({
   capabilities: ContentModeCapabilities;
   instance: Instance;
   prop: Prop;
-}) => getContentModePropEligibility({ capabilities, instance, prop }).editable;
+}) =>
+  prop.type === "asset" ||
+  getContentModePropMeta({
+    capabilities,
+    instance,
+    propName: prop.name,
+  })?.type === prop.type;
 
 const contentModeNonCopyablePropTypes = new Set<Prop["type"]>([
   "resource",

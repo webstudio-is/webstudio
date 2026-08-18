@@ -96,21 +96,17 @@ export const replaceCanvasText = async ({
   page,
   currentText,
   text,
-  waitForProjectSync = true,
 }: {
   page: Page;
   currentText: string;
   text: string;
-  waitForProjectSync?: boolean;
 }) => {
   const { canvas, editable } = await startCanvasTextEditingByText({
     page,
     currentText,
   });
   await page.keyboard.press("ControlOrMeta+A");
-  const save = waitForProjectSync
-    ? waitForChangeToBeSaved({ page })
-    : Promise.resolve();
+  const save = waitForChangeToBeSaved({ page });
   try {
     await page.keyboard.type(text);
     await canvas.locator("body").click({ position: { x: 1, y: 1 } });

@@ -24,7 +24,6 @@ import { toast } from "@webstudio-is/design-system";
 import {
   type Instance,
   type WebstudioFragment,
-  findChildReferenceIndex,
   isComponentDetachable,
 } from "@webstudio-is/sdk";
 import { $instances } from "~/shared/sync/data-stores";
@@ -32,6 +31,7 @@ import {
   type InstanceSelector,
   sortInstancePathsForChildMutation,
 } from "@webstudio-is/project-build/runtime";
+import { findChildReferenceIndex } from "@webstudio-is/project-build/runtime";
 import { deleteInstanceBySelector } from "../instance-utils/mutation";
 import {
   $allSelectedInstanceSelectors,

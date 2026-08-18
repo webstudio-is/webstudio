@@ -1,4 +1,4 @@
-import { applyPatches, produceWithPatches, type Patch } from "immer";
+import { applyPatches, type Patch } from "immer";
 import { enableImmerPatchPlugins } from "./immer";
 import type {
   BuilderPatch,
@@ -213,25 +213,6 @@ export const applyBuilderPatchPayloadMutable = (
       setPathValue(parent, key, patch.value, patch.op);
     }
   }
-};
-
-export const createBuilderPatchInversePayload = ({
-  state,
-  payload,
-}: {
-  state: BuilderState;
-  payload: readonly BuilderPatchChange[];
-}) => {
-  const [, , inversePatches] = produceWithPatches(state, (draft) => {
-    applyBuilderPatchPayloadMutable((namespace) => {
-      const namespaceData = draft[namespace];
-      if (namespaceData === undefined) {
-        throw new MissingBuilderStateNamespaceError(namespace);
-      }
-      return namespaceData;
-    }, payload);
-  });
-  return createBuilderPatchPayloadFromImmerPatches(inversePatches);
 };
 
 export const applyBuilderPatchTransactions = (

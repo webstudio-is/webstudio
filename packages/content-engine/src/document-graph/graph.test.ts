@@ -34,22 +34,6 @@ const edges = [
 ];
 
 describe("document graph", () => {
-  test("accepts MDX document identities", () => {
-    expect(
-      createDocumentGraph({
-        nodes: [
-          {
-            id: "post",
-            revision: "post-r1",
-            contentRef: "content:post",
-            format: "mdx",
-          },
-        ],
-        edges: [],
-      }).nodes[0]?.format
-    ).toBe("mdx");
-  });
-
   test("rejects conflicting revisions for one content reference", () => {
     expect(() =>
       createDocumentGraph({

@@ -26,16 +26,6 @@ import { isAttributeNameSafe, showAttribute } from "./props";
 import { standardAttributesToReactProps } from "./__generated__/standard-attributes";
 import { generateCollectionIterationCode } from "./collection-utils";
 
-export type PublishedContentBlock = Readonly<{
-  sourceExpression?: string;
-  candidates: readonly Readonly<{
-    assetId: string;
-    dependencyRevision: string;
-    children: Instance["children"];
-    resourceIds?: readonly string[];
-  }>[];
-}>;
-
 /**
  * (arg1) => {
  * myVar = myVar + arg1
@@ -380,7 +370,6 @@ export const generateJsxChildren = ({
   indexesWithinAncestors,
   classesMap,
   excludePlaceholders,
-  publishedContentBlocks,
 }: {
   scope: Scope;
   metas: Map<Instance["component"], WsComponentMeta>;
@@ -394,7 +383,6 @@ export const generateJsxChildren = ({
   indexesWithinAncestors: IndexesWithinAncestors;
   classesMap?: Map<string, Array<string>>;
   excludePlaceholders?: boolean;
-  publishedContentBlocks?: ReadonlyMap<Instance["id"], PublishedContentBlock>;
 }) => {
   let generatedChildren = "";
   for (const child of children) {
@@ -426,75 +414,6 @@ export const generateJsxChildren = ({
       if (instance === undefined) {
         continue;
       }
-      const publishedContent = publishedContentBlocks?.get(instance.id);
-      let generatedInstanceChildren: string;
-      if (publishedContent === undefined) {
-        generatedInstanceChildren = generateJsxChildren({
-          classesMap,
-          scope,
-          metas,
-          tagsOverrides,
-          children: instance.children,
-          instances,
-          props,
-          dataSources,
-          usedDataSources,
-          indexesWithinAncestors,
-          excludePlaceholders,
-          publishedContentBlocks,
-        });
-      } else {
-        const sourceExpression =
-          publishedContent.sourceExpression === undefined
-            ? undefined
-            : generateExpression({
-                expression: publishedContent.sourceExpression,
-                dataSources,
-                usedDataSources,
-                scope,
-              });
-        const generatedCandidates = publishedContent.candidates.map(
-          ({ assetId, dependencyRevision, children: candidateChildren }) => {
-            const generated = generateJsxChildren({
-              classesMap,
-              scope,
-              metas,
-              tagsOverrides,
-              children: candidateChildren,
-              instances,
-              props,
-              dataSources,
-              usedDataSources,
-              indexesWithinAncestors,
-              excludePlaceholders,
-              publishedContentBlocks,
-            });
-            return { assetId, dependencyRevision, generated };
-          }
-        );
-        if (sourceExpression === undefined) {
-          generatedInstanceChildren = generatedCandidates
-            .map(
-              ({ dependencyRevision, generated }) =>
-                `<Fragment key=${JSON.stringify(dependencyRevision)}>\n${generated}</Fragment>\n`
-            )
-            .join("");
-        } else {
-          const sourceName = scope.getName(
-            `${instance.id}-published-source`,
-            "contentSource"
-          );
-          const branches = generatedCandidates
-            .map(
-              ({ assetId, dependencyRevision, generated }) =>
-                `${sourceName} === ${JSON.stringify(assetId)} ? <Fragment key=${JSON.stringify(dependencyRevision)}>\n${generated}</Fragment>`
-            )
-            .join(" : ");
-          generatedInstanceChildren = `{((${sourceName}) => ${
-            branches.length === 0 ? "null" : `${branches} : null`
-          })(${sourceExpression})}\n`;
-        }
-      }
       generatedChildren += generateJsxElement({
         context: "jsx",
         scope,
@@ -506,7 +425,19 @@ export const generateJsxChildren = ({
         usedDataSources,
         indexesWithinAncestors,
         classesMap,
-        children: generatedInstanceChildren,
+        children: generateJsxChildren({
+          classesMap,
+          scope,
+          metas,
+          tagsOverrides,
+          children: instance.children,
+          instances,
+          props,
+          dataSources,
+          usedDataSources,
+          indexesWithinAncestors,
+          excludePlaceholders,
+        }),
       });
       continue;
     }
@@ -526,7 +457,6 @@ export const generateWebstudioComponent = ({
   metas,
   tagsOverrides,
   classesMap,
-  publishedContentBlocks,
 }: {
   scope: Scope;
   name: string;
@@ -536,7 +466,6 @@ export const generateWebstudioComponent = ({
   props: Props;
   dataSources: DataSources;
   classesMap: Map<string, Array<string>>;
-  publishedContentBlocks?: ReadonlyMap<Instance["id"], PublishedContentBlock>;
   metas: Map<Instance["component"], WsComponentMeta>;
   /**
    * Record<tag, componentDescriptor>
@@ -574,7 +503,6 @@ export const generateWebstudioComponent = ({
         usedDataSources,
         indexesWithinAncestors,
         classesMap,
-        publishedContentBlocks,
       }),
     });
   }

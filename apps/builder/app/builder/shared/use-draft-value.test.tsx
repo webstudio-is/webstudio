@@ -28,7 +28,7 @@ const renderDraftValue = <Type,>({
   onRender,
 }: {
   savedValue: Type;
-  onSave: (value: Type) => void | boolean;
+  onSave: (value: Type) => void;
   options?: Parameters<typeof useDraftValue<Type>>[2];
   onRender?: (draftValue: DraftValueApi<Type>) => void;
 }) => {
@@ -155,31 +155,5 @@ describe("useDraftValue", () => {
 
     draftValue.rerender({ count: 2 });
     expect(draftValue.current.value).toEqual({ count: 2 });
-  });
-
-  test("keeps a rejected draft open across rerenders", () => {
-    const draftValue = renderDraftValue({
-      savedValue: "saved",
-      onSave: () => false,
-    });
-    act(() => {
-      draftValue.current.set("duplicate");
-      draftValue.current.save();
-    });
-    draftValue.rerender("remote");
-
-    expect(draftValue.current.value).toBe("duplicate");
-  });
-
-  test("resets a draft to the latest saved value", () => {
-    const draftValue = renderDraftValue({
-      savedValue: "saved",
-      onSave: vi.fn(),
-    });
-    act(() => draftValue.current.set("draft"));
-    draftValue.rerender("remote");
-    act(() => draftValue.current.reset());
-
-    expect(draftValue.current.value).toBe("remote");
   });
 });

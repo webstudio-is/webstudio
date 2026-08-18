@@ -42,34 +42,6 @@ export const toByteChunks = (source: ByteSource): AsyncIterable<Uint8Array> => {
   return source;
 };
 
-export const readableStreamToAsyncIterable = (
-  stream: ReadableStream<Uint8Array>
-): AsyncIterable<Uint8Array> => ({
-  async *[Symbol.asyncIterator]() {
-    const reader = stream.getReader();
-    let completed = false;
-    try {
-      for (;;) {
-        const result = await reader.read();
-        if (result.done) {
-          completed = true;
-          return;
-        }
-        yield result.value;
-      }
-    } finally {
-      if (completed === false) {
-        try {
-          await reader.cancel();
-        } catch {
-          // Preserve the consumer error that stopped the stream.
-        }
-      }
-      reader.releaseLock();
-    }
-  },
-});
-
 export const readBytePrefix = async (
   source: ByteSource,
   maximumBytes: number

@@ -1,5 +1,4 @@
 import { compareStrings } from "../canonical-json";
-import type { DocumentFormat } from "./document-format";
 import {
   createDocumentGraph,
   DocumentGraphError,
@@ -13,7 +12,7 @@ export type DocumentDescriptor = Readonly<{
   documentUrl: string;
   revision: string;
   contentRef: string;
-  format?: DocumentFormat;
+  format?: "json" | "markdown";
 }>;
 
 export type DocumentGraphCompilationErrorCode =

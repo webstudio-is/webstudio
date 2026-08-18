@@ -49,7 +49,6 @@ const EXTENSION_TO_DISPLAY_CATEGORY: Record<
   // Code
   txt: "Code",
   md: "Code",
-  mdx: "Code",
   js: "Code",
   css: "Code",
   json: "Code",

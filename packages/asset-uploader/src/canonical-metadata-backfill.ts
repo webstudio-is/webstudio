@@ -23,7 +23,7 @@ import type { Client } from "@webstudio-is/postgrest/index.server";
 import type { AssetObjectStore } from "./client";
 import { loadAssetFoldersByProjectWithClient } from "./folder-persistence";
 import { assertPostgrestSuccess } from "./patch-utils";
-import { createAssetContentRevision } from "./content-revision";
+import { isContentHash } from "./content-hash";
 import {
   deleteCanonicalAssetFileEntryIfMatches,
   deleteInvalidCanonicalAssetFileEntryIfMatches,
@@ -45,6 +45,21 @@ export type CanonicalAssetSynchronizationIssue = {
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Unknown asset indexing failure";
+
+const createAssetContentRevision = ({
+  storageName,
+  updatedAt,
+  size,
+  contentHash,
+}: {
+  storageName: string;
+  updatedAt: string;
+  size: number;
+  contentHash?: string | null;
+}) =>
+  isContentHash(contentHash)
+    ? `sha256:${contentHash}`
+    : `file:${encodeURIComponent(storageName)}:${updatedAt}:${size}`;
 
 type UploadedAssetRow = {
   id: string;

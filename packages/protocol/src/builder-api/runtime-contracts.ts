@@ -12,7 +12,7 @@ export type PublicApiOperationNamespace =
 export const publicApiOperationPermits = builderApiCapabilities;
 export type PublicApiOperationPermit =
   (typeof publicApiOperationPermits)[number];
-export type PublicApiOperationKind = "read" | "mutation" | "application";
+export type PublicApiOperationKind = "read" | "mutation";
 export type PublicRuntimeOperationId =
   (typeof runtimeOperationContracts)[number]["id"];
 

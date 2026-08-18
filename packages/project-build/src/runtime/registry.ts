@@ -11,16 +11,11 @@ import {
 } from "../contracts/input-schema";
 import {
   assetType,
-  contentBlockSource,
   instanceFilterInput,
   type InputJsonSchema,
 } from "@webstudio-is/sdk";
 import { pageCopyNamespaces } from "../contracts/namespaces";
-import {
-  builderRuntimeContext,
-  type BuilderRuntimeContext,
-  type ContentBlockSourceInspection,
-} from "./context";
+import { builderRuntimeContext, type BuilderRuntimeContext } from "./context";
 import { z } from "zod";
 import * as assets from "./assets";
 import * as assetResources from "./asset-resources";
@@ -33,7 +28,6 @@ import * as fonts from "./fonts";
 import * as instanceDuplicate from "./instance-duplicate";
 import * as instances from "./instances";
 import * as migrations from "./migrations";
-import * as mdxPaste from "./mdx-paste";
 import * as pageCopy from "./page-copy";
 import * as pages from "./pages";
 import * as projectSettings from "./project-settings";
@@ -43,13 +37,8 @@ import * as projectSearch from "./project-search";
 import * as slot from "./slot";
 import * as designTokenImport from "./design-token-import";
 import * as audit from "./audit";
-import type { ContentBlockPersistenceResult } from "./content-block-application";
 import * as styles from "./styles";
-import {
-  getZodValidationIssues,
-  throwBuilderRuntimeError,
-  throwBuilderValidationError,
-} from "./errors";
+import { getZodValidationIssues, throwBuilderValidationError } from "./errors";
 import {
   createRuntimeMutationExecutionSchema,
   getRuntimeOutputSchema,
@@ -62,15 +51,6 @@ import {
   bindExpressionInput,
   getScopedExpressionWarnings,
 } from "./expression-scope";
-import {
-  createContentStorageProjection,
-  executeContentStorageMutation,
-  executeContentStoragePropMutation,
-  executeContentStorageStructuralMutation,
-  executeContentStorageTextReplacement,
-  getContentStorageProtectedChildCount,
-  resolveContentStorageRoot,
-} from "./content-storage";
 
 export type BuilderRuntimeOperation<
   Id extends string = string,
@@ -81,7 +61,7 @@ export type BuilderRuntimeOperation<
   command: string;
   client: string;
   permit?: BuilderApiCapability;
-  kind: "read" | "mutation" | "application";
+  kind: "read" | "mutation";
   inputSchema: z.ZodTypeAny;
   inputJsonSchema: InputJsonSchema;
   outputSchema: z.ZodTypeAny;
@@ -121,24 +101,12 @@ type RuntimeOperationContractInput =
       retryOnConflict?: boolean;
       requiresAssets?: boolean;
       requiresConfirm?: boolean;
-    }
-  | {
-      kind: "application";
-      readNamespaces: readonly BuilderNamespace[];
-      writeNamespaces: readonly BuilderNamespace[];
-      invalidatesNamespaces?: readonly BuilderNamespace[];
-      requiresAssets?: boolean;
-      requiresConfirm?: boolean;
     };
 
 type ReadContract = Extract<RuntimeOperationContractInput, { kind: "read" }>;
 type MutationContract = Extract<
   RuntimeOperationContractInput,
   { kind: "mutation" }
->;
-type ApplicationContract = Extract<
-  RuntimeOperationContractInput,
-  { kind: "application" }
 >;
 type RuntimeExecutionOutput<
   Id extends RuntimeOutputSchemaId,
@@ -251,7 +219,7 @@ const runtimeOperation = <
   RuntimeExecutionOutput<Id, Contract>
 > => {
   const writeNamespaces =
-    contract.kind === "read" ? [] : contract.writeNamespaces;
+    contract.kind === "mutation" ? contract.writeNamespaces : [];
   const inputJsonSchema = getInputSchemaMetadata(inputSchema, {
     isHiddenField: isHiddenPublicApiInputField,
   }).inputJsonSchema;
@@ -271,9 +239,9 @@ const runtimeOperation = <
     readNamespaces: contract.readNamespaces,
     writeNamespaces,
     invalidatesNamespaces:
-      contract.kind === "read"
-        ? []
-        : (contract.invalidatesNamespaces ?? contract.writeNamespaces),
+      contract.kind === "mutation"
+        ? (contract.invalidatesNamespaces ?? contract.writeNamespaces)
+        : [],
     retryOnConflict:
       contract.kind === "mutation"
         ? (contract.retryOnConflict ?? false)
@@ -283,22 +251,13 @@ const runtimeOperation = <
       (contract.readNamespaces.includes("assets") ||
         writeNamespaces.includes("assets")),
     requiresConfirm:
-      contract.kind === "mutation" || contract.kind === "application"
+      contract.kind === "mutation"
         ? (contract.requiresConfirm ??
           isDestructiveRuntimeCommand(publicApi.command))
         : false,
     execute: ({ state, input, context }) => {
-      const executionState =
-        contract.kind === "read" &&
-        state.instances !== undefined &&
-        context.materializedContent !== undefined
-          ? createContentStorageProjection({
-              state,
-              materializedRoots: context.materializedContent,
-            }).state
-          : state;
       const result = execute({
-        state: executionState,
+        state,
         input: parseOperationInput(inputSchema, input, inputJsonSchema),
         context,
       });
@@ -348,14 +307,6 @@ const mutationContract = (input: {
   requiresConfirm?: boolean;
 }): MutationContract => ({ kind: "mutation", ...input });
 
-const applicationContract = (input: {
-  readNamespaces: readonly BuilderNamespace[];
-  writeNamespaces: readonly BuilderNamespace[];
-  invalidatesNamespaces?: readonly BuilderNamespace[];
-  requiresAssets?: boolean;
-  requiresConfirm?: boolean;
-}): ApplicationContract => ({ kind: "application", ...input });
-
 const pageNamespaces = ["pages", "instances"] as const;
 const pageExpressionNamespaces = ["pages", "instances", "dataSources"] as const;
 const instanceReadNamespaces = ["pages", "instances", "props"] as const;
@@ -365,11 +316,6 @@ const styleNamespaces = [
   "styleSourceSelections",
 ] as const;
 const dataNamespaces = ["dataSources", "resources"] as const;
-const contentStoragePropReadNamespaces = [
-  "instances",
-  "props",
-  ...dataNamespaces,
-] as const;
 const treeMutationNamespaces = [
   "pages",
   "instances",
@@ -468,365 +414,8 @@ const assetUsageInput = z.object({
   assetId: z.string(),
   ...paginatedOutputInputSchema.shape,
 });
-const contentBlockSourceInspectionInput = z.object({
-  blockInstanceId: z.string().min(1),
-  renderScope: z.string().min(1),
-  load: z.boolean().optional(),
-  variables: z
-    .record(z.string().min(1), z.json())
-    .refine(
-      (variables) =>
-        Object.keys(variables).length <= 100 &&
-        new TextEncoder().encode(JSON.stringify(variables)).byteLength <=
-          64 * 1024,
-      "Render-scope variables are limited to 100 entries and 64 KiB"
-    )
-    .optional(),
-});
-const contentBlockLifecycleBaseInput = contentBlockSourceInspectionInput
-  .omit({ load: true })
-  .extend({
-    dryRun: z.boolean().optional(),
-    confirmationToken: z.string().min(1).optional(),
-  });
-const contentBlockSourceChangeInput = contentBlockLifecycleBaseInput.extend({
-  source: contentBlockSource,
-  authority: z
-    .enum(["use-file-content", "replace-file-body-with-block-content"])
-    .optional(),
-});
-const contentBlockRecoveryInput = contentBlockSourceInspectionInput
-  .omit({ load: true, variables: true })
-  .extend({
-    action: z.enum(["retry", "reload-remote", "copy-unsaved-mdx"]),
-  });
-const contentBlockTemplateMigrationInput = z.object({
-  templateInstanceId: z.string().min(1),
-  migration: z.discriminatedUnion("type", [
-    z.object({ type: z.literal("rename"), to: z.string().min(1) }),
-    z.object({ type: z.literal("remove") }),
-  ]),
-  renderScope: z.string().min(1),
-  variables: contentBlockSourceInspectionInput.shape.variables,
-  selectedAssetIds: z.array(z.string().min(1)).max(100).optional(),
-  dryRun: z.boolean().optional(),
-  confirmationToken: z.string().min(1).optional(),
-});
-const contentBlockSemanticEditInput = contentBlockSourceInspectionInput
-  .omit({ load: true })
-  .extend({
-    operationId: z.string().min(1),
-    input: z.json(),
-    dryRun: z.boolean().optional(),
-  });
-const contentBlockApplicationContract = applicationContract({
-  readNamespaces: components.componentInsertReadNamespaces,
-  writeNamespaces: components.componentInsertReadNamespaces,
-  requiresAssets: true,
-  requiresConfirm: false,
-});
-const serializeContentBlockInspection = (
-  result: ContentBlockSourceInspection
-) => ({
-  ...result,
-  diagnostics: [...result.diagnostics],
-  repairRoutes: [...result.repairRoutes],
-});
-
-const executeContentBlockLifecycleApplication = async ({
-  operationId,
-  action,
-  input,
-  context,
-}: {
-  operationId:
-    | "contentBlocks.connectSource"
-    | "contentBlocks.switchSource"
-    | "contentBlocks.disconnectSource";
-  action: "connect" | "switch" | "disconnect";
-  input: z.infer<typeof contentBlockLifecycleBaseInput> & {
-    source?: z.infer<typeof contentBlockSource>;
-    authority?: "use-file-content" | "replace-file-body-with-block-content";
-  };
-  context: BuilderRuntimeContext;
-}) => {
-  const application = context.contentStorageApplication;
-  if (application === undefined) {
-    return throwBuilderRuntimeError(
-      "CONFLICT",
-      "Content Block source updates require an Asset editing session"
-    );
-  }
-  const applyLifecycle = application.applyLifecycle;
-  const inspectSource = application.inspectSource;
-  if (applyLifecycle === undefined || inspectSource === undefined) {
-    return throwBuilderRuntimeError(
-      "CONFLICT",
-      "Content Block source updates require lifecycle and inspection capabilities"
-    );
-  }
-  const expectedVersion = context.projectVersion;
-  const result = await applyLifecycle(
-    {
-      ...input,
-      action,
-      dryRun: input.dryRun === true || context.applicationDryRun === true,
-    },
-    {
-      commitProjectPayload:
-        expectedVersion === undefined ||
-        context.commitApplicationProjectPayload === undefined
-          ? undefined
-          : async (payload) => {
-              await context.commitApplicationProjectPayload?.({
-                payload,
-                expectedVersion,
-                operationId,
-                invalidatesNamespaces: components.componentInsertReadNamespaces,
-              });
-            },
-    }
-  );
-  const source = serializeContentBlockInspection(
-    await inspectSource({
-      blockInstanceId: input.blockInstanceId,
-      renderScope: input.renderScope,
-      variables: input.variables,
-      load: false,
-    })
-  );
-  return {
-    status: result.status,
-    code: "code" in result ? result.code : undefined,
-    message: "message" in result ? result.message : undefined,
-    source,
-    plan:
-      result.result === undefined
-        ? undefined
-        : {
-            ...result.result,
-            storageWrites: [...result.result.storageWrites],
-            diagnostics: [...result.result.diagnostics],
-          },
-    confirmation:
-      result.status === "confirmation-required"
-        ? {
-            token: result.confirmationToken,
-            expiresAt: result.confirmationExpiresAt,
-          }
-        : undefined,
-  };
-};
 
 export const builderRuntimeOperations = [
-  runtimeOperation(
-    "contentBlocks.inspectSource",
-    api("inspect-content-block-source", "inspectContentBlockSource", "view"),
-    readContract([...components.componentInsertReadNamespaces], {
-      requiresAssets: true,
-    }),
-    contentBlockSourceInspectionInput,
-    async ({ input, context }) => {
-      const inspect = context.contentStorageApplication?.inspectSource;
-      if (inspect === undefined) {
-        return throwBuilderRuntimeError(
-          "CONFLICT",
-          "Content Block source inspection requires an Asset editing session"
-        );
-      }
-      return serializeContentBlockInspection(await inspect(input));
-    }
-  ),
-  runtimeOperation(
-    "contentBlocks.connectSource",
-    api("connect-content-block-source", "connectContentBlockSource", "edit"),
-    contentBlockApplicationContract,
-    contentBlockSourceChangeInput,
-    ({ input, context }) =>
-      executeContentBlockLifecycleApplication({
-        operationId: "contentBlocks.connectSource",
-        action: "connect",
-        input,
-        context,
-      })
-  ),
-  runtimeOperation(
-    "contentBlocks.switchSource",
-    api("switch-content-block-source", "switchContentBlockSource", "edit"),
-    contentBlockApplicationContract,
-    contentBlockSourceChangeInput,
-    ({ input, context }) =>
-      executeContentBlockLifecycleApplication({
-        operationId: "contentBlocks.switchSource",
-        action: "switch",
-        input,
-        context,
-      })
-  ),
-  runtimeOperation(
-    "contentBlocks.disconnectSource",
-    api(
-      "disconnect-content-block-source",
-      "disconnectContentBlockSource",
-      "edit"
-    ),
-    contentBlockApplicationContract,
-    contentBlockLifecycleBaseInput,
-    ({ input, context }) =>
-      executeContentBlockLifecycleApplication({
-        operationId: "contentBlocks.disconnectSource",
-        action: "disconnect",
-        input,
-        context,
-      })
-  ),
-  runtimeOperation(
-    "contentBlocks.recoverSource",
-    api("recover-content-block-source", "recoverContentBlockSource", "edit"),
-    contentBlockApplicationContract,
-    contentBlockRecoveryInput,
-    async ({ input, context }) => {
-      const application = context.contentStorageApplication;
-      if (application === undefined) {
-        return throwBuilderRuntimeError(
-          "CONFLICT",
-          "Content Block source recovery requires an Asset editing session"
-        );
-      }
-      const recover = application.recover;
-      const inspectSource = application.inspectSource;
-      if (recover === undefined || inspectSource === undefined) {
-        return throwBuilderRuntimeError(
-          "CONFLICT",
-          "Content Block source recovery requires recovery and inspection capabilities"
-        );
-      }
-      const result = await recover({
-        ...input,
-        dryRun: context.applicationDryRun === true,
-      });
-      const inspection =
-        result.result?.inspection ??
-        (await inspectSource({
-          blockInstanceId: input.blockInstanceId,
-          renderScope: input.renderScope,
-          load: false,
-        }));
-      return {
-        status: result.status,
-        code: "code" in result ? result.code : undefined,
-        message: "message" in result ? result.message : undefined,
-        source: serializeContentBlockInspection(inspection),
-        localMdx:
-          result.result !== undefined && "source" in result.result
-            ? result.result.source
-            : undefined,
-        changedAsset: result.result?.changedAsset ?? false,
-      };
-    }
-  ),
-  runtimeOperation(
-    "contentBlocks.migrateTemplateReferences",
-    api(
-      "migrate-content-block-template-references",
-      "migrateContentBlockTemplateReferences",
-      "edit"
-    ),
-    contentBlockApplicationContract,
-    contentBlockTemplateMigrationInput,
-    async ({ input, context }) => {
-      const migrate =
-        context.contentStorageApplication?.migrateTemplateReferences;
-      if (migrate === undefined) {
-        return throwBuilderRuntimeError(
-          "CONFLICT",
-          "Content Block template migration requires an Asset editing session"
-        );
-      }
-      const result = await migrate({
-        ...input,
-        dryRun: input.dryRun === true || context.applicationDryRun === true,
-      });
-      return {
-        ...result,
-        changedAsset: result.changedAsset ?? false,
-        files: result.files.map((file) => ({
-          ...file,
-          diagnostics: [...file.diagnostics],
-        })),
-        diagnostics:
-          result.diagnostics === undefined
-            ? undefined
-            : [...result.diagnostics],
-        confirmation:
-          result.status === "confirmation-required" &&
-          typeof result.confirmationToken === "string" &&
-          typeof result.confirmationExpiresAt === "string"
-            ? {
-                token: result.confirmationToken,
-                expiresAt: result.confirmationExpiresAt,
-              }
-            : undefined,
-      };
-    }
-  ),
-  runtimeOperation(
-    "contentBlocks.semanticEdit",
-    api("edit-content-block-source", "editContentBlockSource", "edit"),
-    contentBlockApplicationContract,
-    contentBlockSemanticEditInput,
-    async ({ input, context }) => {
-      const semanticEdit = context.contentStorageApplication?.semanticEdit;
-      if (semanticEdit === undefined) {
-        return throwBuilderRuntimeError(
-          "CONFLICT",
-          "Content Block semantic editing requires an Asset editing session"
-        );
-      }
-      const dryRun =
-        input.dryRun === true || context.applicationDryRun === true;
-      const result = await semanticEdit({ ...input, dryRun });
-      const mutation = result.result as
-        | BuilderRuntimeMutation<Record<string, unknown>>
-        | undefined;
-      const serializedMutation =
-        mutation === undefined
-          ? undefined
-          : {
-              result: { ...mutation.result },
-              noop: mutation.noop,
-            };
-      return {
-        ...result,
-        result: serializedMutation,
-        persistence:
-          mutation === undefined || !("persistence" in mutation)
-            ? undefined
-            : (() => {
-                const persistence =
-                  mutation.persistence as ContentBlockPersistenceResult;
-                return {
-                  ...persistence,
-                  steps: persistence.steps.map((step) => ({ ...step })),
-                  retry: {
-                    ...persistence.retry,
-                    roots: persistence.retry.roots.map((root) => ({ ...root })),
-                  },
-                };
-              })(),
-        changedAsset:
-          dryRun === false &&
-          (result.status === "complete" || result.status === "partial") &&
-          (mutation !== undefined && "persistence" in mutation
-            ? (
-                mutation.persistence as ContentBlockPersistenceResult
-              ).steps.some(
-                (step) => step.type === "asset" && step.status === "saved"
-              )
-            : (mutation?.storageChanges?.length ?? 0) > 0),
-      };
-    }
-  ),
   runtimeOperation(
     "pages.list",
     api("list-pages", "listPages"),
@@ -1312,23 +901,7 @@ export const builderRuntimeOperations = [
     }),
     components.insertComponentInput,
     ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        target: {
-          type: "children",
-          parentInstanceId: input.parentInstanceId,
-        },
-        execute: (mutationState, root) =>
-          components.insertComponent(mutationState, input, context, {
-            protectedChildCount: getContentStorageProtectedChildCount({
-              state: mutationState,
-              root,
-              parentInstanceId: input.parentInstanceId,
-            }),
-          }),
-      })
+      components.insertComponent(state, input, context)
   ),
   runtimeOperation(
     "instances.insertCollection",
@@ -1338,107 +911,31 @@ export const builderRuntimeOperations = [
       writeNamespaces: components.componentInsertNamespaces,
     }),
     collection.insertCollectionInput,
-    ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        target: {
-          type: "children",
-          parentInstanceId: input.parentInstanceId,
-        },
-        execute: (mutationState, root) => {
-          const warnings = [
-            ...(input.data.type === "expression"
-              ? getScopedExpressionWarnings(
-                  mutationState,
-                  input.parentInstanceId,
-                  ["data", "value"],
-                  input.data.value
-                )
-              : []),
-            ...listFragmentExpressions(input.itemFragment).flatMap((entry) =>
-              getScopedExpressionWarnings(
-                mutationState,
-                input.parentInstanceId,
-                ["itemFragment", ...entry.path],
-                entry.expression,
-                entry.allowAssignment,
-                ["collectionItem", "collectionItemKey", ...entry.variables]
-              )
-            ),
-          ];
-          return withExpressionWarnings(
-            components.insertCollection(mutationState, input, context, {
-              protectedChildCount: getContentStorageProtectedChildCount({
-                state: mutationState,
-                root,
-                parentInstanceId: input.parentInstanceId,
-              }),
-            }),
-            warnings
-          );
-        },
-      })
-  ),
-  runtimeOperation(
-    "instances.insertMdxText",
-    api("insert-mdx-text", "insertMdxText"),
-    mutationContract({
-      readNamespaces: components.componentInsertReadNamespaces,
-      writeNamespaces: components.componentInsertNamespaces,
-    }),
-    mdxPaste.insertMdxTextInput,
-    async ({ state, input, context }) => {
-      const target = {
-        type: "children" as const,
-        parentInstanceId: input.parentInstanceId,
-      };
-      const projection = createContentStorageProjection({
-        state,
-        materializedRoots: context.materializedContent ?? [],
-      });
-      const root = resolveContentStorageRoot(projection, target);
-      const parent = projection.state.instances?.get(input.parentInstanceId);
-      if (parent === undefined) {
-        return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
-      }
-      const protectedChildCount = getContentStorageProtectedChildCount({
-        state: projection.state,
-        root,
-        parentInstanceId: input.parentInstanceId,
-      });
-      const childIndex =
-        input.mode === "replace" || input.mode === "prepend"
-          ? 0
-          : (input.insertIndex ??
-            Math.max(0, parent.children.length - protectedChildCount));
-      const mutation = await mdxPaste.insertMdxText({
-        state: projection.state,
-        input,
-        context,
-        destinationIdentity:
-          root.type === "external" ? root.identity : undefined,
-        protectedChildCount,
-      });
-      return executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        target,
-        mdxInsert: {
-          source: input.source,
-          parentInstanceId: input.parentInstanceId,
-          childIndex,
-          position:
-            input.mode === "replace" || input.mode === "prepend"
-              ? input.mode
-              : input.insertIndex === undefined
-                ? "append"
-                : "index",
-        },
-        execute: () => mutation,
-      });
+    ({ state, input, context }) => {
+      const warnings = [
+        ...(input.data.type === "expression"
+          ? getScopedExpressionWarnings(
+              state,
+              input.parentInstanceId,
+              ["data", "value"],
+              input.data.value
+            )
+          : []),
+        ...listFragmentExpressions(input.itemFragment).flatMap((entry) =>
+          getScopedExpressionWarnings(
+            state,
+            input.parentInstanceId,
+            ["itemFragment", ...entry.path],
+            entry.expression,
+            entry.allowAssignment,
+            ["collectionItem", "collectionItemKey", ...entry.variables]
+          )
+        ),
+      ];
+      return withExpressionWarnings(
+        components.insertCollection(state, input, context),
+        warnings
+      );
     }
   ),
   runtimeOperation(
@@ -1449,29 +946,8 @@ export const builderRuntimeOperations = [
       writeNamespaces: components.componentInsertNamespaces,
     }),
     components.insertFragmentInput,
-    ({ state, input, context }) => {
-      const parentInstanceId = input.parentInstanceId;
-      if (
-        parentInstanceId === undefined ||
-        input.fragment.children.length === 0
-      ) {
-        return components.insertFragment(state, input, context);
-      }
-      return executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        target: { type: "children", parentInstanceId },
-        execute: (mutationState, root) =>
-          components.insertFragment(mutationState, input, context, {
-            protectedChildCount: getContentStorageProtectedChildCount({
-              state: mutationState,
-              root,
-              parentInstanceId,
-            }),
-          }),
-      });
-    }
+    ({ state, input, context }) =>
+      components.insertFragment(state, input, context)
   ),
   runtimeOperation(
     "slots.attach",
@@ -1501,28 +977,7 @@ export const builderRuntimeOperations = [
       writeNamespaces: ["pages", "instances", "props", ...dataNamespaces],
     }),
     instances.moveInstancesInput,
-    ({ state, input, context }) =>
-      executeContentStorageStructuralMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        protectedInstanceIds: input.moves.flatMap(
-          ({ instanceId, parentInstanceId }) => [instanceId, parentInstanceId]
-        ),
-        rootPairs: input.moves.map(({ instanceId, parentInstanceId }) => ({
-          source: { type: "instance", instanceId },
-          target: { type: "children", parentInstanceId },
-        })),
-        ownershipTransfers: input.moves.map(
-          ({ instanceId, parentInstanceId }) => ({
-            rootInstanceId: instanceId,
-            source: { type: "instance", instanceId },
-            target: { type: "children", parentInstanceId },
-          })
-        ),
-        execute: (mutationState) =>
-          instances.moveInstances(mutationState, input),
-      })
+    ({ state, input }) => instances.moveInstances(state, input)
   ),
   runtimeOperation(
     "instances.reparent",
@@ -1549,42 +1004,7 @@ export const builderRuntimeOperations = [
     }),
     instances.reparentInstanceInput,
     ({ state, input, context }) =>
-      executeContentStorageStructuralMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        protectedInstanceIds: [
-          input.sourceInstanceSelector[0],
-          input.dropTarget.parentSelector[0],
-        ],
-        rootPairs: [
-          {
-            source: {
-              type: "instance",
-              instanceId: input.sourceInstanceSelector[0],
-            },
-            target: {
-              type: "children",
-              parentInstanceId: input.dropTarget.parentSelector[0],
-            },
-          },
-        ],
-        ownershipTransfers: [
-          {
-            rootInstanceId: input.sourceInstanceSelector[0],
-            source: {
-              type: "instance",
-              instanceId: input.sourceInstanceSelector[0],
-            },
-            target: {
-              type: "children",
-              parentInstanceId: input.dropTarget.parentSelector[0],
-            },
-          },
-        ],
-        execute: (mutationState) =>
-          instances.reparentInstance(mutationState, input, context),
-      })
+      instances.reparentInstance(state, input, context)
   ),
   runtimeOperation(
     "instances.fillGrid",
@@ -1599,18 +1019,7 @@ export const builderRuntimeOperations = [
       ],
     }),
     instances.fillGridInput,
-    ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        target: {
-          type: "children",
-          parentInstanceId: input.parentInstanceId,
-        },
-        execute: (mutationState) =>
-          instances.fillGrid(mutationState, input, context),
-      })
+    ({ state, input, context }) => instances.fillGrid(state, input, context)
   ),
   runtimeOperation(
     "instances.wrap",
@@ -1620,19 +1029,7 @@ export const builderRuntimeOperations = [
       writeNamespaces: ["instances"],
     }),
     instances.wrapInstanceInput,
-    ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        protectTemplatesList: true,
-        target: {
-          type: "instance",
-          instanceId: input.instanceSelector[0],
-        },
-        execute: (mutationState) =>
-          instances.wrapInstance(mutationState, input, context),
-      })
+    ({ state, input, context }) => instances.wrapInstance(state, input, context)
   ),
   runtimeOperation(
     "instances.convert",
@@ -1664,18 +1061,7 @@ export const builderRuntimeOperations = [
     }),
     instances.convertInstanceInput,
     ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        protectTemplatesList: true,
-        target: {
-          type: "instance",
-          instanceId: input.instanceSelector[0],
-        },
-        execute: (mutationState) =>
-          instances.convertInstance(mutationState, input, context),
-      })
+      instances.convertInstance(state, input, context)
   ),
   runtimeOperation(
     "instances.unwrap",
@@ -1686,114 +1072,18 @@ export const builderRuntimeOperations = [
     }),
     instances.unwrapInstanceInput,
     ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        protectedInstanceIds: [input.instanceSelector[1]],
-        protectTemplatesList: true,
-        source: {
-          type: "children",
-          parentInstanceId: input.instanceSelector[2],
-        },
-        target: {
-          type: "instance",
-          instanceId: input.instanceSelector[0],
-        },
-        crossRootError:
-          "Moving content across authored storage roots is not supported.",
-        execute: (mutationState) =>
-          instances.unwrapInstance(mutationState, input, context),
-      })
+      instances.unwrapInstance(state, input, context)
   ),
   runtimeOperation(
     "instances.clone",
     api("clone-instance", "cloneInstance"),
     mutationContract({
-      readNamespaces: components.componentInsertReadNamespaces,
-      writeNamespaces: components.componentInsertReadNamespaces,
+      readNamespaces: treeMutationNamespaces,
+      writeNamespaces: treeMutationNamespaces,
     }),
     instances.cloneInstanceInput,
     ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        protectTemplatesList: true,
-        allowCrossRoot: true,
-        copySourceInstanceId: input.sourceInstanceId,
-        validationSkippedNamespaces: ["dataSources", "resources"],
-        crossRootError:
-          "Copying content across authored storage roots is not supported.",
-        source: { type: "instance", instanceId: input.sourceInstanceId },
-        target:
-          input.targetParentInstanceId === undefined
-            ? (mutationState) => {
-                const parent = instances.findInstanceCloneTargetParent({
-                  instances: mutationState.instances ?? new Map(),
-                  sourceInstanceId: input.sourceInstanceId,
-                });
-                return parent === undefined
-                  ? { type: "instance", instanceId: input.sourceInstanceId }
-                  : { type: "children", parentInstanceId: parent.id };
-              }
-            : {
-                type: "children",
-                parentInstanceId: input.targetParentInstanceId,
-              },
-        execute: (mutationState, targetRoot, sourceRoot) => {
-          const isSameRoot =
-            sourceRoot === undefined ||
-            (sourceRoot.type === targetRoot.type &&
-              (sourceRoot.type === "project" ||
-                (targetRoot.type === "external" &&
-                  sourceRoot.identity.blockInstanceId ===
-                    targetRoot.identity.blockInstanceId)));
-          if (isSameRoot) {
-            return instances.cloneInstance(mutationState, input, context);
-          }
-          const targetParentInstanceId =
-            input.targetParentInstanceId ??
-            instances.findInstanceCloneTargetParent({
-              instances: mutationState.instances ?? new Map(),
-              sourceInstanceId: input.sourceInstanceId,
-            })?.id;
-          if (targetParentInstanceId === undefined) {
-            return throwBuilderRuntimeError(
-              "BAD_REQUEST",
-              "Clone target parent is missing."
-            );
-          }
-          const mutation = components.insertInstanceCopy(
-            mutationState,
-            {
-              sourceInstanceId: input.sourceInstanceId,
-              parentInstanceId: targetParentInstanceId,
-              insertIndex: input.insertIndex,
-              contentMode: targetRoot.type === "external",
-            },
-            context,
-            {
-              protectedChildCount: getContentStorageProtectedChildCount({
-                state: mutationState,
-                root: targetRoot,
-                parentInstanceId: targetParentInstanceId,
-              }),
-            }
-          );
-          const instanceId = mutation.result.rootInstanceIds[0];
-          if (instanceId === undefined) {
-            return throwBuilderRuntimeError(
-              "BAD_REQUEST",
-              "Cloned fragment has no root instance."
-            );
-          }
-          return {
-            ...mutation,
-            result: { instanceId, instanceIds: mutation.result.instanceIds },
-          };
-        },
-      })
+      instances.cloneInstance(state, input, context)
   ),
   runtimeOperation(
     "instances.duplicateAfterItself",
@@ -1804,26 +1094,7 @@ export const builderRuntimeOperations = [
     }),
     instanceDuplicate.duplicateInstanceAfterItselfInput,
     ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        protectTemplatesList: true,
-        copySourceInstanceId: input.sourceInstanceId,
-        crossRootError:
-          "Copying content across authored storage roots is not supported.",
-        source: { type: "instance", instanceId: input.sourceInstanceId },
-        target: {
-          type: "children",
-          parentInstanceId: input.parentInstanceId,
-        },
-        execute: (mutationState) =>
-          instanceDuplicate.duplicateInstanceAfterItself(
-            mutationState,
-            input,
-            context
-          ),
-      })
+      instanceDuplicate.duplicateInstanceAfterItself(state, input, context)
   ),
   runtimeOperation(
     "instances.delete",
@@ -1833,15 +1104,7 @@ export const builderRuntimeOperations = [
       writeNamespaces: treeMutationNamespaces,
     }),
     instances.deleteInstancesInput,
-    ({ state, input, context }) =>
-      executeContentStorageStructuralMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        protectedInstanceIds: input.instanceIds,
-        execute: (mutationState) =>
-          instances.deleteInstances(mutationState, input),
-      })
+    ({ state, input }) => instances.deleteInstances(state, input)
   ),
   runtimeOperation(
     "instances.deleteBySelector",
@@ -1868,146 +1131,111 @@ export const builderRuntimeOperations = [
     }),
     instances.deleteInstanceBySelectorInput,
     ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        protectTemplatesList: true,
-        target: {
-          type: "instance",
-          instanceId: input.instanceSelector[0],
-        },
-        execute: (mutationState) =>
-          instances.deleteInstanceBySelector(mutationState, input, context),
-      })
+      instances.deleteInstanceBySelector(state, input, context)
   ),
   runtimeOperation(
     "instances.updateProps",
     api("update-props", "updateProps", "edit"),
     mutationContract({
-      readNamespaces: contentStoragePropReadNamespaces,
+      readNamespaces: ["instances", "props", "dataSources"],
       writeNamespaces: ["props"],
     }),
     props.propUpdatesInput,
-    ({ state, input, context }) =>
-      executeContentStoragePropMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        execute: (mutationState) => {
-          const warnings = input.updates.flatMap((update, index) =>
-            getScopedPropWarnings({
-              state: mutationState,
-              instanceId: update.instanceId,
-              path: ["updates", String(index), "value"],
-              prop: update,
-            })
-          );
-          return withExpressionWarnings(
-            props.updateProps(
-              mutationState,
-              {
-                updates: input.updates.map((update) =>
-                  update.type === "expression"
-                    ? {
-                        ...update,
-                        value: bindExpressionInput(
-                          mutationState,
-                          update.instanceId,
-                          update.value
-                        ),
-                      }
-                    : update
-                ),
-              },
-              context
+    ({ state, input, context }) => {
+      const warnings = input.updates.flatMap((update, index) =>
+        getScopedPropWarnings({
+          state,
+          instanceId: update.instanceId,
+          path: ["updates", String(index), "value"],
+          prop: update,
+        })
+      );
+      return withExpressionWarnings(
+        props.updateProps(
+          state,
+          {
+            updates: input.updates.map((update) =>
+              update.type === "expression"
+                ? {
+                    ...update,
+                    value: bindExpressionInput(
+                      state,
+                      update.instanceId,
+                      update.value
+                    ),
+                  }
+                : update
             ),
-            warnings
-          );
-        },
-      })
+          },
+          context
+        ),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.replacePropText",
     api("replace-prop-text", "replacePropText", "edit"),
     mutationContract({
-      readNamespaces: contentStoragePropReadNamespaces,
+      readNamespaces: ["instances", "props"],
       writeNamespaces: ["props"],
       retryOnConflict: true,
     }),
     props.replacePropTextInput,
-    ({ state, input, context }) =>
-      executeContentStoragePropMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        execute: (mutationState) => props.replacePropText(mutationState, input),
-      })
+    ({ state, input }) => props.replacePropText(state, input)
   ),
   runtimeOperation(
     "instances.deleteProps",
     api("delete-props", "deleteProps", "edit"),
     mutationContract({
-      readNamespaces: contentStoragePropReadNamespaces,
+      readNamespaces: ["instances", "props"],
       writeNamespaces: ["props", "resources"],
     }),
     props.propDeletionsInput,
-    ({ state, input, context }) =>
-      executeContentStoragePropMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        execute: (mutationState) => props.deleteProps(mutationState, input),
-      })
+    ({ state, input }) => props.deleteProps(state, input)
   ),
   runtimeOperation(
     "instances.bindProps",
     api("bind-props", "bindProps"),
     mutationContract({
-      readNamespaces: contentStoragePropReadNamespaces,
+      readNamespaces: ["instances", "props", ...dataNamespaces],
       writeNamespaces: ["props"],
     }),
     props.propBindingsInput,
-    ({ state, input, context }) =>
-      executeContentStoragePropMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        execute: (mutationState) => {
-          const warnings = input.bindings.flatMap((binding, index) =>
-            getScopedPropWarnings({
-              state: mutationState,
-              instanceId: binding.instanceId,
-              path: ["bindings", String(index), "binding", "value"],
-              prop: binding.binding,
-            })
-          );
-          return withExpressionWarnings(
-            props.bindProps(
-              mutationState,
-              {
-                bindings: input.bindings.map((binding) =>
-                  binding.binding.type === "expression"
-                    ? {
-                        ...binding,
-                        binding: {
-                          ...binding.binding,
-                          value: bindExpressionInput(
-                            mutationState,
-                            binding.instanceId,
-                            binding.binding.value
-                          ),
-                        },
-                      }
-                    : binding
-                ),
-              },
-              context
+    ({ state, input, context }) => {
+      const warnings = input.bindings.flatMap((binding, index) =>
+        getScopedPropWarnings({
+          state,
+          instanceId: binding.instanceId,
+          path: ["bindings", String(index), "binding", "value"],
+          prop: binding.binding,
+        })
+      );
+      return withExpressionWarnings(
+        props.bindProps(
+          state,
+          {
+            bindings: input.bindings.map((binding) =>
+              binding.binding.type === "expression"
+                ? {
+                    ...binding,
+                    binding: {
+                      ...binding.binding,
+                      value: bindExpressionInput(
+                        state,
+                        binding.instanceId,
+                        binding.binding.value
+                      ),
+                    },
+                  }
+                : binding
             ),
-            warnings
-          );
-        },
-      })
+          },
+          context
+        ),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.listTexts",
@@ -2020,131 +1248,78 @@ export const builderRuntimeOperations = [
     "instances.updateText",
     api("update-text", "updateText", "edit"),
     mutationContract({
-      readNamespaces: [
-        "instances",
-        "props",
-        "dataSources",
-        ...styleNamespaces,
-        "breakpoints",
-      ],
+      readNamespaces: ["instances", "dataSources"],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),
     instances.updateTextInstanceInput,
-    ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        target: {
-          type: "children",
-          parentInstanceId: input.instanceId,
-        },
-        execute: (mutationState) => {
-          const warnings =
-            input.mode === "expression"
-              ? getScopedExpressionWarnings(
-                  mutationState,
-                  input.instanceId,
-                  ["text"],
-                  input.text
-                )
-              : [];
-          return withExpressionWarnings(
-            instances.updateTextInstance(
-              mutationState,
-              input.mode === "expression"
-                ? {
-                    ...input,
-                    text: bindExpressionInput(
-                      mutationState,
-                      input.instanceId,
-                      input.text
-                    ),
-                  }
-                : input
-            ),
-            warnings
-          );
-        },
-      })
+    ({ state, input }) => {
+      const warnings =
+        input.mode === "expression"
+          ? getScopedExpressionWarnings(
+              state,
+              input.instanceId,
+              ["text"],
+              input.text
+            )
+          : [];
+      return withExpressionWarnings(
+        instances.updateTextInstance(
+          state,
+          input.mode === "expression"
+            ? {
+                ...input,
+                text: bindExpressionInput(state, input.instanceId, input.text),
+              }
+            : input
+        ),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.replaceText",
     api("replace-text", "replaceText", "edit"),
     mutationContract({
-      readNamespaces: [
-        "pages",
-        "instances",
-        "props",
-        "dataSources",
-        ...styleNamespaces,
-        "breakpoints",
-      ],
+      readNamespaces: ["pages", "instances"],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),
     instances.replaceTextInput,
-    ({ state, input, context }) =>
-      executeContentStorageTextReplacement({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        execute: (mutationState) => instances.replaceText(mutationState, input),
-      })
+    ({ state, input }) => instances.replaceText(state, input)
   ),
   runtimeOperation(
     "instances.setTextContent",
     api("set-text-content", "setTextContent", "edit"),
     mutationContract({
-      readNamespaces: [
-        "instances",
-        "props",
-        "dataSources",
-        ...styleNamespaces,
-        "breakpoints",
-      ],
+      readNamespaces: ["instances", "dataSources"],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),
     instances.setTextContentInput,
-    ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        target: {
-          type: "children",
-          parentInstanceId: input.instanceId,
-        },
-        execute: (mutationState) => {
-          const warnings =
-            input.operation === "set" && input.mode === "expression"
-              ? getScopedExpressionWarnings(
-                  mutationState,
-                  input.instanceId,
-                  ["text"],
-                  input.text
-                )
-              : [];
-          return withExpressionWarnings(
-            instances.setTextContent(
-              mutationState,
-              input.operation === "set" && input.mode === "expression"
-                ? {
-                    ...input,
-                    text: bindExpressionInput(
-                      mutationState,
-                      input.instanceId,
-                      input.text
-                    ),
-                  }
-                : input
-            ),
-            warnings
-          );
-        },
-      })
+    ({ state, input }) => {
+      const warnings =
+        input.operation === "set" && input.mode === "expression"
+          ? getScopedExpressionWarnings(
+              state,
+              input.instanceId,
+              ["text"],
+              input.text
+            )
+          : [];
+      return withExpressionWarnings(
+        instances.setTextContent(
+          state,
+          input.operation === "set" && input.mode === "expression"
+            ? {
+                ...input,
+                text: bindExpressionInput(state, input.instanceId, input.text),
+              }
+            : input
+        ),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.updateTextTree",
@@ -2157,7 +1332,6 @@ export const builderRuntimeOperations = [
         "styleSources",
         "styleSourceSelections",
         "styles",
-        "breakpoints",
       ],
       writeNamespaces: [
         "instances",
@@ -2172,17 +1346,7 @@ export const builderRuntimeOperations = [
     }),
     instances.updateTextTreeInput,
     ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        target: {
-          type: "children",
-          parentInstanceId: input.rootInstanceId,
-        },
-        execute: (mutationState) =>
-          instances.updateTextTree(mutationState, input, context),
-      })
+      instances.updateTextTree(state, input, context)
   ),
   runtimeOperation(
     "instances.setTag",
@@ -2193,34 +1357,18 @@ export const builderRuntimeOperations = [
       retryOnConflict: true,
     }),
     instances.setInstanceTagInput,
-    ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        target: { type: "instance", instanceId: input.instanceId },
-        execute: (mutationState) =>
-          instances.setInstanceTag(mutationState, input),
-      })
+    ({ state, input }) => instances.setInstanceTag(state, input)
   ),
   runtimeOperation(
     "instances.setLabel",
     api("set-instance-label", "setInstanceLabel", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "props"],
+      readNamespaces: ["instances"],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),
     instances.setInstanceLabelInput,
-    ({ state, input, context }) =>
-      executeContentStorageMutation({
-        state,
-        materializedRoots: context.materializedContent,
-        returnStorageChanges: context.returnStorageChanges,
-        target: { type: "instance", instanceId: input.instanceId },
-        execute: (mutationState) =>
-          instances.setInstanceLabel(mutationState, input),
-      })
+    ({ state, input }) => instances.setInstanceLabel(state, input)
   ),
   runtimeOperation(
     "styles.getDeclarations",

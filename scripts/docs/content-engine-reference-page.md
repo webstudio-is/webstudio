@@ -1,5 +1,5 @@
 ---
-description: Query Markdown, MDX, and JSON Assets with the Content Engine.
+description: Query Markdown and JSON Assets with the Content Engine.
 ---
 
 <!-- Generated from the Content Engine schemas and shared CLI documentation. Do not edit directly. -->

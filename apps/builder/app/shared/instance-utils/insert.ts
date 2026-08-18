@@ -26,11 +26,7 @@ import {
   $selectedPage,
   selectInstance,
 } from "../nano-states";
-import { $project } from "../sync/data-stores";
-import {
-  $runtimeInstances as $instances,
-  $runtimeProps as $props,
-} from "../content-block-content";
+import { $instances, $project, $props } from "../sync/data-stores";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { executeRuntimeMutation } from "./data";
 

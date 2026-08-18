@@ -36,20 +36,6 @@ describe("HTTP document loader", () => {
     });
   });
 
-  test("accepts MDX response metadata", async () => {
-    const load = createHttpDocumentSourceLoader({
-      fetch: async () => new Response("# Hello"),
-      getRequest: () => "https://cdn.webstudio.test/post.mdx",
-      getMetadata: () => ({ format: "mdx", revision: "post-r1" }),
-    });
-
-    const loaded = await load(node, {});
-    expect(loaded.format).toBe("mdx");
-    await expect(parseDocumentSource(loaded)).resolves.toMatchObject({
-      format: "mdx",
-    });
-  });
-
   test("reports non-success responses without consuming their body", async () => {
     let bodyRead = false;
     const response = {

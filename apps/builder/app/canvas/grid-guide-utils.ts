@@ -3,7 +3,7 @@ import {
   $stylesIndex,
   $propValuesByInstanceSelectorWithMemoryProps,
 } from "~/shared/nano-states";
-import { $runtimeInstances as $instances } from "~/shared/content-block-content";
+import { $instances } from "~/shared/sync/data-stores";
 import { $gridCellData, type GridCellData } from "~/shared/nano-states";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { subscribeWindowResize } from "~/shared/dom-hooks";

@@ -80,7 +80,6 @@ import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import {
-  $assets,
   $dataSources,
   $instances,
   $pages,
@@ -174,7 +173,6 @@ const getPrePublishAuditMessages = () => {
     props: $props.get(),
     dataSources: $dataSources.get(),
     resources: $resources.get(),
-    assets: $assets.get(),
     metas: $registeredComponentMetas.get(),
   });
   const getMessage = (severity: PrePublishAuditFinding["severity"]) => {

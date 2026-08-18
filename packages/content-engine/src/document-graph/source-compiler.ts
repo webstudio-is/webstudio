@@ -3,8 +3,7 @@ import type { ByteSource } from "../byte-stream";
 import { contentEngineLimits } from "../limits";
 import { compareStrings } from "../canonical-json";
 import { compileDocumentGraph, type DocumentDescriptor } from "./compiler";
-import { analyzeDocumentSource } from "./document-adapter";
-import type { DocumentFormat } from "./document-format";
+import { analyzeDocumentSource, type DocumentFormat } from "./document-adapter";
 import type { DocumentGraph } from "./graph";
 import type { SourceReferenceOccurrence } from "./reference-codec";
 

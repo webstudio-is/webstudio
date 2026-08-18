@@ -2,7 +2,7 @@ import { LRUCache } from "lru-cache";
 import { ByteLimitExceededError, readBoundedBytes } from "../byte-stream";
 import { serializeJsonDeterministically } from "../canonical-json";
 import { contentEngineLimits } from "../limits";
-import { isDocumentFormat, type DocumentFormat } from "./document-format";
+import type { DocumentFormat } from "./document-adapter";
 import type { DocumentGraphNode } from "./graph";
 import {
   assertDocumentSourceIdentity,
@@ -83,7 +83,7 @@ const isCachedDocumentSource = (
   }
   const value = input as Partial<CachedDocumentSource>;
   return (
-    isDocumentFormat(value.format) &&
+    (value.format === "json" || value.format === "markdown") &&
     typeof value.revision === "string" &&
     value.revision.length > 0 &&
     value.bytes instanceof Uint8Array
