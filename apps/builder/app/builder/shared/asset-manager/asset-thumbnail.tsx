@@ -115,6 +115,31 @@ const GenericFilePreview = ({
   );
 };
 
+const VideoPreview = ({
+  src,
+  ext,
+  format,
+}: {
+  src: string;
+  ext: string;
+  format: string;
+}) => {
+  const [failedSrc, setFailedSrc] = useState<string>();
+
+  if (failedSrc === src) {
+    return <GenericFilePreview ext={ext} format={format} />;
+  }
+
+  return (
+    <StyledWebstudioVideo
+      src={src}
+      preload="metadata"
+      muted
+      onError={() => setFailedSrc(src)}
+    />
+  );
+};
+
 type AssetThumbnailProps = {
   assetContainer: AssetContainer;
   interactions: AssetManagerThumbnailInteractions;
@@ -258,12 +283,14 @@ export const AssetThumbnail = ({
               width={64}
             />
           ) : assetType === "video" ? (
-            <StyledWebstudioVideo
+            <VideoPreview
               src={
                 assetContainer.status === "uploading"
                   ? assetContainer.objectURL
                   : wsVideoLoader({ src: asset.name })
               }
+              ext={ext}
+              format={asset.format}
             />
           ) : (
             <GenericFilePreview ext={ext} format={asset.format} />
