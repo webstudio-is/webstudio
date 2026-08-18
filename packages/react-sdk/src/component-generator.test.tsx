@@ -1025,11 +1025,26 @@ test("generate resource prop with configured form method", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      metas: new Map(),
+      metas: new Map([
+        [
+          "Form",
+          {
+            props: {
+              action: {
+                control: "resource",
+                type: "resource",
+                required: false,
+                resourceFieldProps: { method: "method" },
+              },
+            },
+          },
+        ],
+      ]),
       ...renderData(
         <$.Body ws:id="body">
           <$.Form ws:id="form1" action={myResource}></$.Form>
           <$.Form ws:id="form2" action={anotherResource}></$.Form>
+          <$.Form ws:id="form3" action={myResource} method="get"></$.Form>
         </$.Body>
       ),
     })
@@ -1041,6 +1056,9 @@ test("generate resource prop with configured form method", () => {
     method={"post"} />
     <Form
     action={"action_1"}
+    method={"get"} />
+    <Form
+    action={"action"}
     method={"get"} />
     </Body>
     }

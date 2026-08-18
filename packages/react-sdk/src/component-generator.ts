@@ -197,25 +197,20 @@ export const generateJsxElement = ({
   let collectionItemValue: undefined | string;
   let collectionItemKeyValue: undefined | string;
   let classNameValue: undefined | string;
-  let hasMethodProp = false;
-  let actionResourceMethod: undefined | string;
+  const instanceProps = Array.from(props.values()).filter(
+    (prop) => prop.instanceId === instance.id
+  );
+  const instancePropNames = new Set(instanceProps.map((prop) => prop.name));
+  const projectedResourceProps = new Map<string, unknown>();
 
-  for (const prop of props.values()) {
-    if (prop.instanceId !== instance.id) {
-      continue;
+  const getGeneratedPropName = (name: string) => {
+    if (hasTags && !meta?.props?.[name]) {
+      return standardAttributesToReactProps[name] ?? name;
     }
+    return name;
+  };
 
-    if (prop.name === "method") {
-      hasMethodProp = true;
-    }
-    if (
-      instance.component === "Form" &&
-      prop.name === "action" &&
-      prop.type === "resource"
-    ) {
-      actionResourceMethod = resources?.get(prop.value)?.method;
-    }
-
+  for (const prop of instanceProps) {
     const propValue = generatePropValue({
       scope,
       prop,
@@ -226,12 +221,25 @@ export const generateJsxElement = ({
     if (isAttributeNameSafe(prop.name) === false) {
       continue;
     }
-    let name = prop.name;
-    // convert html attribute only when component has tags
-    // and does not specify own property with this name
-    if (hasTags && !meta?.props?.[prop.name]) {
-      name = standardAttributesToReactProps[prop.name] ?? prop.name;
+
+    if (prop.type === "resource") {
+      const propMeta = meta?.props?.[prop.name];
+      const resource = resources?.get(prop.value);
+      if (propMeta?.type === "resource" && resource !== undefined) {
+        for (const [name, field] of Object.entries(
+          propMeta.resourceFieldProps ?? {}
+        )) {
+          if (
+            instancePropNames.has(name) === false &&
+            isAttributeNameSafe(name)
+          ) {
+            projectedResourceProps.set(name, resource[field]);
+          }
+        }
+      }
     }
+
+    const name = getGeneratedPropName(prop.name);
 
     // show prop controls conditional rendering and need to be handled separately
     if (prop.name === showAttribute) {
@@ -274,8 +282,9 @@ export const generateJsxElement = ({
     }
   }
 
-  if (hasMethodProp === false && actionResourceMethod !== undefined) {
-    generatedProps += `\nmethod={${JSON.stringify(actionResourceMethod)}}`;
+  for (const [propName, value] of projectedResourceProps) {
+    const name = getGeneratedPropName(propName);
+    generatedProps += `\n${name}={${JSON.stringify(value)}}`;
   }
 
   const classMapArray = classesMap?.get(instance.id);
