@@ -655,6 +655,15 @@ for (const {
       expect(redirectRequest(new Request(url("/")), [])).toBeUndefined();
     });
 
+    test.each(["//other.example/", "///other.example/"])(
+      "does not create an external redirect from %s",
+      (requestPath) => {
+        expect(
+          redirectRequest(new Request(url(requestPath)), [])
+        ).toBeUndefined();
+      }
+    );
+
     test("gives an exact project redirect precedence", () => {
       const response = redirectRequest(new Request(url("/old/")), [
         { old: "/old/", new: "/new" },

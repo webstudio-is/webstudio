@@ -166,6 +166,10 @@ export const redirectRequest = (
   }
 
   const url = new URL(request.url);
+  if (url.pathname.startsWith("//")) {
+    return;
+  }
+
   const pathname = removeTrailingSlash(url.pathname);
   if (pathname === url.pathname) {
     return;
