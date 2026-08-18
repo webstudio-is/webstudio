@@ -116,7 +116,7 @@ featureImage:
   $ref: ./assets/hero.png
 ```
 
-The reference declares only the relationship. The query decides which metadata enters its result and published database. Select the complete `properties.featureImage` object for `id`, `src`, `name`, `description`, `mimeType`, `width`, and `height`, or select only nested fields:
+The reference declares only the relationship. The query decides which metadata enters its result and published database. A complete `properties.featureImage` selection returns the Asset Manager asset metadata together with its resolved `src`. This includes fields such as `id`, `name`, `description`, `mimeType`, `width`, and `height`; new asset metadata becomes available to references without changing the document. Select only the nested fields the page uses:
 
 ```json
 {

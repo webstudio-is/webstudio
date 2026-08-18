@@ -11,11 +11,10 @@ export type AssetValueReference = {
 
 export type AssetValueReferences = Record<string, AssetValueReference[]>;
 
-export type AssetReferenceRuntimeData = {
+export type AssetRuntimeData = Readonly<Record<string, unknown>> & {
   url: string;
-  name?: string;
-  description?: string;
-  mimeType?: string;
+  /** Immutable storage identity for graph-backed document URLs. */
+  contentRef?: string;
   width?: number;
   height?: number;
 };
@@ -167,20 +166,15 @@ const toStructuredAssetValue = ({
   runtimeAsset,
 }: {
   reference: AssetValueReference;
-  runtimeAsset: AssetReferenceRuntimeData;
-}) => ({
-  id: reference.assetId,
-  src: mergeAssetUrlSuffix(runtimeAsset.url, reference.suffix),
-  ...(runtimeAsset.name === undefined ? {} : { name: runtimeAsset.name }),
-  ...(runtimeAsset.description === undefined
-    ? {}
-    : { description: runtimeAsset.description }),
-  ...(runtimeAsset.mimeType === undefined
-    ? {}
-    : { mimeType: runtimeAsset.mimeType }),
-  ...(runtimeAsset.width === undefined ? {} : { width: runtimeAsset.width }),
-  ...(runtimeAsset.height === undefined ? {} : { height: runtimeAsset.height }),
-});
+  runtimeAsset: AssetRuntimeData;
+}) => {
+  const { url, contentRef: _contentRef, ...asset } = runtimeAsset;
+  return {
+    ...asset,
+    id: reference.assetId,
+    src: mergeAssetUrlSuffix(url, reference.suffix),
+  };
+};
 
 export const resolveAssetValueReferences = <Value>({
   value,
@@ -190,7 +184,7 @@ export const resolveAssetValueReferences = <Value>({
 }: {
   value: Value;
   references: readonly AssetValueReference[] | undefined;
-  runtimeAssets?: Readonly<Record<string, AssetReferenceRuntimeData>>;
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   /** @deprecated Pass runtimeAssets so structured references can include metadata. */
   assetUrls?: Readonly<Record<string, string>>;
 }): Value => {

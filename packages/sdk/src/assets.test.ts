@@ -1075,10 +1075,20 @@ describe("allowed-file-types", () => {
       expect(
         toAssetReferenceRuntimeData(mockImageAsset, "https://example.com")
       ).toEqual({
+        id: "image-1",
         url: "/cgi/image/photo.jpg?format=raw",
         name: "photo.jpg",
         description: "A photo",
         mimeType: "image/jpeg",
+        projectId: "project-1",
+        size: 1024,
+        type: "image",
+        format: "jpg",
+        createdAt: "2024-01-01",
+        meta: {
+          width: 1920,
+          height: 1080,
+        },
         width: 1920,
         height: 1080,
       });

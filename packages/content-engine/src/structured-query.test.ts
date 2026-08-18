@@ -471,6 +471,8 @@ describe("structured asset query", () => {
         name: "hero.png",
         description: "A person presenting Webstudio",
         mimeType: "image/png",
+        size: 1024,
+        meta: { width: 1600, height: 900 },
         width: 1600,
         height: 900,
       },
@@ -533,21 +535,26 @@ describe("structured asset query", () => {
             fields: [
               ["properties", "featureImage", "src"],
               ["properties", "featureImage", "description"],
+              ["properties", "featureImage", "size"],
             ],
           },
         },
       })
-    ).resolves.toMatchObject({
+    ).resolves.toEqual({
       items: [
         {
+          id: "post",
           properties: {
             featureImage: {
               src: "/cgi/image/hero.png?format=raw",
               description: "A person presenting Webstudio",
+              size: 1024,
             },
           },
         },
       ],
+      totalCount: 1,
+      hasMore: false,
     });
   });
 

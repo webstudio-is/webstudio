@@ -40,14 +40,11 @@ import type { MarkdownAssetReferences } from "./markdown-references";
 import {
   getRuntimeAssetUrls,
   resolveAssetValueReferences,
-  type AssetReferenceRuntimeData,
+  type AssetRuntimeData,
   type AssetValueReferences,
 } from "./asset-value-references";
 
-export type AssetRuntimeData = AssetReferenceRuntimeData & {
-  /** Immutable storage identity for graph-backed document URLs. */
-  contentRef?: string;
-};
+export type { AssetRuntimeData } from "./asset-value-references";
 
 export class AssetQueryExecutionError extends Error {
   constructor(message: string, options?: ErrorOptions) {
