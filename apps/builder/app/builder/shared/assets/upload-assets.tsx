@@ -306,7 +306,7 @@ const createUploadTicket = async ({
   const fileName = getFileName(fileOrUrl);
   const metaFormData = new FormData();
   metaFormData.append("projectId", projectId);
-  metaFormData.append("type", assetType);
+  metaFormData.append("type", assetType === "video" ? "file" : assetType);
   if (contentHash !== undefined) {
     metaFormData.append("contentHash", contentHash);
   }

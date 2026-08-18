@@ -54,6 +54,27 @@ describe("upload-assets", () => {
     expect(init.headers.get("x-auth-token")).toBe("token");
   });
 
+  test("stores video uploads as generic file assets", async () => {
+    request.mockResolvedValue(
+      Response.json({
+        assetId: "server-asset-id",
+        name: "upload-name",
+        deduplicated: false,
+      })
+    );
+
+    await createUploadTicket({
+      authToken: "token",
+      projectId: "project-id",
+      fileOrUrl: new File(["content"], "video.mp4", { type: "video/mp4" }),
+      assetType: "video",
+      request,
+    });
+
+    const [, init] = request.mock.calls[0] as [string, { body: FormData }];
+    expect(init.body.get("type")).toBe("file");
+  });
+
   test("keeps the display name separate from the sanitized storage name", async () => {
     request.mockResolvedValue(
       new Response(

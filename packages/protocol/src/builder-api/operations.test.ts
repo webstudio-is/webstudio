@@ -308,6 +308,20 @@ describe("public api operation catalog", () => {
     expect(JSON.stringify(uploadMany.inputSchema)).toContain('"force"');
   });
 
+  test("accepts video as an MCP upload descriptor type", () => {
+    const uploadAssetSchema =
+      getPublicApiOperation("upload-asset").inputSchema?.properties?.asset;
+    const assetTypeSchema =
+      uploadAssetSchema !== undefined &&
+      typeof uploadAssetSchema === "object" &&
+      uploadAssetSchema.properties?.type;
+
+    expect(assetTypeSchema).toMatchObject({
+      type: "string",
+      enum: ["image", "font", "video", "file"],
+    });
+  });
+
   test("keeps operation lookup and tRPC path lookup strict", () => {
     expect(getPublicApiOperation("list-pages").id).toBe("pages.list");
     expect(getPublicApiOperationPath("list-pages")).toBe("api.pages.list");

@@ -5,7 +5,7 @@ import type { PublicApiOperationNamespace } from "./runtime-contracts";
 
 const assetUploadDescriptor = z.object({
   name: z.string(),
-  type: z.enum(["image", "font", "file"]),
+  type: z.enum(["image", "font", "video", "file"]),
   format: z.string().optional(),
   description: z.string().optional(),
   folderId: z.string().min(1).optional(),

@@ -353,7 +353,7 @@ type AssetUpload = {
 
 type AssetUploadDescriptor = {
   name: string;
-  type: Asset["type"];
+  type: Asset["type"] | "video";
   format?: string;
   meta?: Record<string, unknown>;
   description?: string | null;
