@@ -1365,11 +1365,17 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
           tool === "checkpoint.ack"
             ? await readPersistedMcpCheckpoint(scope)
             : undefined;
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
         await assertPersistedMcpCheckpointAcknowledged(
           tool,
           core.listTools(),
           scope
         );
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
         if (options.refresh === true && tool !== "refresh") {
           await core.callTool({ name: "refresh" });
           if (didTerminate) {
