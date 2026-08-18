@@ -40,15 +40,13 @@ import type { MarkdownAssetReferences } from "./markdown-references";
 import {
   getRuntimeAssetUrls,
   resolveAssetValueReferences,
+  type AssetReferenceRuntimeData,
   type AssetValueReferences,
 } from "./asset-value-references";
 
-export type AssetRuntimeData = {
-  url: string;
+export type AssetRuntimeData = AssetReferenceRuntimeData & {
   /** Immutable storage identity for graph-backed document URLs. */
   contentRef?: string;
-  width?: number;
-  height?: number;
 };
 
 export class AssetQueryExecutionError extends Error {
@@ -590,17 +588,17 @@ const scanAndSortAssetQueryDocuments = ({
         ) {
           continue;
         }
-        const projected = toQueryItem(document, query.output, runtimeAsset);
+        const item = toQueryItem(document, query.output, runtimeAsset);
         if (
           query.content.mode === "none" &&
-          Object.keys(projected).length === 0 &&
+          Object.keys(item).length === 0 &&
           includesOutputField(query.output, "id") === false
         ) {
           continue;
         }
         const match = {
           document,
-          item: { id: document._id, ...projected },
+          item: { id: document._id, ...item },
         } satisfies AssetQueryMatch;
         state.matches.set(document, match);
         state.sortGroup.documents.add(document);
@@ -746,14 +744,13 @@ export const executeAssetQueries = async ({
     return requireSettledAssetQueryResults(results);
   }
 
-  const assetUrls = getRuntimeAssetUrls(runtimeAssets);
   let resolvedDocuments: readonly ContentDatabaseDocument[];
   try {
     resolvedDocuments = documents.map((document) =>
       resolveAssetValueReferences({
         value: document,
         references: assetValueReferences?.[document._id],
-        assetUrls,
+        runtimeAssets: runtimeAssets ?? {},
       })
     );
   } catch (error) {
@@ -773,6 +770,7 @@ export const executeAssetQueries = async ({
     results,
     runtimeAssets,
   });
+  const assetUrls = getRuntimeAssetUrls(runtimeAssets);
   await finalizeAssetQueries({
     preparedQueries,
     results,

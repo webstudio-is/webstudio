@@ -200,6 +200,7 @@ export const contentArtifactV1 = strictObject({
         path: array(string().min(1).or(number().int().nonnegative())).min(1),
         assetId: string().min(1),
         suffix: string().min(1).optional(),
+        structured: literal(true).optional(),
       })
     )
   ).optional(),

@@ -4,6 +4,8 @@ import {
   type AssetQueryFieldPath,
   type ContentDatabaseDocument,
 } from "./schema";
+import { getJsonReferenceMarkerValue } from "./document-graph/document-utils";
+import type { JsonValue } from "./canonical-json";
 
 export const selectAssetDocumentFields = ({
   document,
@@ -22,55 +24,79 @@ export const selectAssetDocumentFields = ({
   return selected;
 };
 
-const selectPropertyPath = ({
-  source,
-  target,
-  path,
-}: {
-  source: Readonly<AssetFileDocument["properties"]>;
-  target: AssetFileDocument["properties"];
-  path: readonly string[];
-}) => {
-  const [key, ...rest] = path;
-  if (key === undefined || Object.hasOwn(source, key) === false) {
-    return;
+const missing = Symbol("missing property selection");
+
+const selectValuePath = (
+  value: JsonValue,
+  path: readonly string[]
+): JsonValue | typeof missing => {
+  if (
+    path.length === 0 ||
+    typeof getJsonReferenceMarkerValue(value) === "string"
+  ) {
+    return value;
   }
-  const value = source[key];
-  if (rest.length === 0) {
-    Object.defineProperty(target, key, {
-      value,
-      enumerable: true,
-      configurable: true,
-      writable: true,
-    });
-    return;
+  const [segment, ...rest] = path;
+  if (Array.isArray(value)) {
+    if (segment !== "*") {
+      return missing;
+    }
+    const selected = value.map((item) => selectValuePath(item, rest));
+    return selected.some((item) => item !== missing)
+      ? selected.map((item) => (item === missing ? null : item))
+      : missing;
   }
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return;
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    Object.hasOwn(value, segment) === false
+  ) {
+    return missing;
   }
-  const selected: AssetFileDocument["properties"] = {};
-  selectPropertyPath({
-    source: value as Readonly<AssetFileDocument["properties"]>,
-    target: selected,
-    path: rest,
-  });
-  if (Object.keys(selected).length === 0) {
-    return;
+  const selected = selectValuePath(
+    (value as Readonly<Record<string, JsonValue>>)[segment],
+    rest
+  );
+  return selected === missing ? missing : { [segment]: selected };
+};
+
+const mergeSelectedValues = (left: JsonValue, right: JsonValue): JsonValue => {
+  if (Array.isArray(left) && Array.isArray(right)) {
+    return Array.from(
+      { length: Math.max(left.length, right.length) },
+      (_, index) => {
+        const leftItem = left[index];
+        const rightItem = right[index];
+        if (leftItem === undefined) {
+          return rightItem ?? null;
+        }
+        if (rightItem === undefined) {
+          return leftItem;
+        }
+        return mergeSelectedValues(leftItem, rightItem);
+      }
+    );
   }
-  const existing = target[key];
-  Object.defineProperty(target, key, {
-    value: {
-      ...(typeof existing === "object" &&
-      existing !== null &&
-      Array.isArray(existing) === false
-        ? existing
-        : {}),
-      ...selected,
-    },
-    enumerable: true,
-    configurable: true,
-    writable: true,
-  });
+  if (
+    typeof left === "object" &&
+    left !== null &&
+    Array.isArray(left) === false &&
+    typeof right === "object" &&
+    right !== null &&
+    Array.isArray(right) === false
+  ) {
+    const leftObject = left as Readonly<Record<string, JsonValue>>;
+    const rightObject = right as Readonly<Record<string, JsonValue>>;
+    const merged: Record<string, JsonValue> = { ...leftObject };
+    for (const [key, value] of Object.entries(rightObject)) {
+      merged[key] =
+        Object.hasOwn(merged, key) && merged[key] !== undefined
+          ? mergeSelectedValues(merged[key], value)
+          : value;
+    }
+    return merged;
+  }
+  return right;
 };
 
 export const selectAssetProperties = ({
@@ -80,16 +106,15 @@ export const selectAssetProperties = ({
   properties: AssetFileDocument["properties"];
   fields: readonly AssetQueryFieldPath[];
 }) => {
-  const selected: AssetFileDocument["properties"] = {};
+  let selected: JsonValue = {};
   for (const field of fields) {
     if (field[0] !== "properties") {
       continue;
     }
-    selectPropertyPath({
-      source: properties,
-      target: selected,
-      path: field.slice(1),
-    });
+    const value = selectValuePath(properties, field.slice(1));
+    if (value !== missing) {
+      selected = mergeSelectedValues(selected, value);
+    }
   }
-  return selected;
+  return selected as AssetFileDocument["properties"];
 };

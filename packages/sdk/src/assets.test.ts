@@ -18,6 +18,7 @@ import {
   decodePathFragment,
   getAssetUrl,
   toRuntimeAsset,
+  toAssetReferenceRuntimeData,
   acceptToMimePatterns,
   acceptToMimeCategories,
   getAssetMime,
@@ -1065,6 +1066,19 @@ describe("allowed-file-types", () => {
       const result = toRuntimeAsset(mockImageAsset, "https://example.com");
       expect(result).toEqual({
         url: "/cgi/image/photo.jpg?format=raw",
+        width: 1920,
+        height: 1080,
+      });
+    });
+
+    test("converts image asset metadata for structured references", () => {
+      expect(
+        toAssetReferenceRuntimeData(mockImageAsset, "https://example.com")
+      ).toEqual({
+        url: "/cgi/image/photo.jpg?format=raw",
+        name: "photo.jpg",
+        description: "A photo",
+        mimeType: "image/jpeg",
         width: 1920,
         height: 1080,
       });

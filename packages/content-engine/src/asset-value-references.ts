@@ -1,12 +1,24 @@
+import { getJsonReferenceMarkerValue } from "./document-graph/document-utils";
+import type { JsonValue } from "./canonical-json";
 import { createAssetIdResolver } from "./asset-path-resolution";
 
 export type AssetValueReference = {
   path: Array<string | number>;
   assetId: string;
   suffix?: string;
+  structured?: true;
 };
 
 export type AssetValueReferences = Record<string, AssetValueReference[]>;
+
+export type AssetReferenceRuntimeData = {
+  url: string;
+  name?: string;
+  description?: string;
+  mimeType?: string;
+  width?: number;
+  height?: number;
+};
 
 export const getRuntimeAssetUrls = (
   runtimeAssets?: Readonly<Record<string, { url: string }>>
@@ -30,10 +42,12 @@ export const discoverAssetValueReferences = ({
   properties,
   sourcePath,
   assetIdsByPath,
+  structuredAssetIds,
 }: {
   properties: Readonly<Record<string, unknown>>;
   sourcePath: string;
   assetIdsByPath: ReadonlyMap<string, string>;
+  structuredAssetIds?: ReadonlySet<string>;
 }): AssetValueReference[] => {
   const resolveAssetId = createAssetIdResolver(assetIdsByPath, sourcePath);
   const references: AssetValueReference[] = [];
@@ -46,6 +60,20 @@ export const discoverAssetValueReferences = ({
           path,
           assetId,
           ...(suffix === undefined ? {} : { suffix }),
+        });
+      }
+      return;
+    }
+    const marker = getJsonReferenceMarkerValue(value as JsonValue);
+    if (typeof marker === "string") {
+      const assetId = resolveAssetId(marker);
+      if (assetId !== undefined && structuredAssetIds?.has(assetId)) {
+        const suffix = getUrlSuffix(marker);
+        references.push({
+          path,
+          assetId,
+          ...(suffix === undefined ? {} : { suffix }),
+          structured: true,
         });
       }
       return;
@@ -96,7 +124,7 @@ const replaceValueAtPath = ({
 }: {
   value: unknown;
   path: readonly (string | number)[];
-  replacement: string;
+  replacement: unknown;
 }): unknown => {
   const [segment, ...rest] = path;
   if (segment === undefined) {
@@ -134,25 +162,60 @@ const replaceValueAtPath = ({
   };
 };
 
+const toStructuredAssetValue = ({
+  reference,
+  runtimeAsset,
+}: {
+  reference: AssetValueReference;
+  runtimeAsset: AssetReferenceRuntimeData;
+}) => ({
+  id: reference.assetId,
+  src: mergeAssetUrlSuffix(runtimeAsset.url, reference.suffix),
+  ...(runtimeAsset.name === undefined ? {} : { name: runtimeAsset.name }),
+  ...(runtimeAsset.description === undefined
+    ? {}
+    : { description: runtimeAsset.description }),
+  ...(runtimeAsset.mimeType === undefined
+    ? {}
+    : { mimeType: runtimeAsset.mimeType }),
+  ...(runtimeAsset.width === undefined ? {} : { width: runtimeAsset.width }),
+  ...(runtimeAsset.height === undefined ? {} : { height: runtimeAsset.height }),
+});
+
 export const resolveAssetValueReferences = <Value>({
   value,
   references,
+  runtimeAssets = {},
   assetUrls,
 }: {
   value: Value;
   references: readonly AssetValueReference[] | undefined;
-  assetUrls: Readonly<Record<string, string>>;
+  runtimeAssets?: Readonly<Record<string, AssetReferenceRuntimeData>>;
+  /** @deprecated Pass runtimeAssets so structured references can include metadata. */
+  assetUrls?: Readonly<Record<string, string>>;
 }): Value => {
+  const assets =
+    assetUrls === undefined
+      ? runtimeAssets
+      : {
+          ...Object.fromEntries(
+            Object.entries(assetUrls).map(([id, url]) => [id, { url }])
+          ),
+          ...runtimeAssets,
+        };
   let resolved: unknown = value;
   for (const reference of references ?? []) {
-    const assetUrl = assetUrls[reference.assetId];
-    if (assetUrl === undefined) {
+    const runtimeAsset = assets[reference.assetId];
+    if (runtimeAsset === undefined) {
       continue;
     }
     resolved = replaceValueAtPath({
       value: resolved,
       path: reference.path,
-      replacement: mergeAssetUrlSuffix(assetUrl, reference.suffix),
+      replacement:
+        reference.structured === true
+          ? toStructuredAssetValue({ reference, runtimeAsset })
+          : mergeAssetUrlSuffix(runtimeAsset.url, reference.suffix),
     });
   }
   return resolved as Value;

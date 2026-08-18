@@ -223,6 +223,14 @@ const discoverSnapshotAssetValueReferences = ({
   entries: readonly ContentCompilerInput[];
 }): AssetValueReferences => {
   const assetIdsByPath = createUniqueAssetIdsByPath(snapshot.files);
+  const structuredAssetIds = new Set(
+    snapshot.files
+      .filter(
+        ({ contentType }) =>
+          getDocumentFormatByContentType(contentType) === undefined
+      )
+      .map(({ id }) => id)
+  );
   const references: AssetValueReferences = {};
   for (const entry of [...entries].sort((left, right) =>
     compareStrings(left.assetId, right.assetId)
@@ -231,6 +239,7 @@ const discoverSnapshotAssetValueReferences = ({
       properties: entry.document.properties ?? {},
       sourcePath: entry.document.path,
       assetIdsByPath,
+      structuredAssetIds,
     });
     if (discovered.length > 0) {
       references[entry.assetId] = discovered;
@@ -296,6 +305,13 @@ const discoverSnapshotDocumentGraph = async (
   const supportedFiles = snapshot.files.filter(
     (file) => getDocumentFormatByContentType(file.contentType) !== undefined
   );
+  const ignoredReferenceUrls = new Set(
+    snapshot.files
+      .filter(
+        (file) => getDocumentFormatByContentType(file.contentType) === undefined
+      )
+      .map((file) => getDocumentUrl(file.path))
+  );
   if (supportedFiles.some((file) => sourcesById.has(file.id) === false)) {
     throw new Error("Content source omitted a supported document source");
   }
@@ -315,6 +331,7 @@ const discoverSnapshotDocumentGraph = async (
         source,
       };
     }),
+    ignoredReferenceUrls,
     ...(plan === undefined
       ? {}
       : {

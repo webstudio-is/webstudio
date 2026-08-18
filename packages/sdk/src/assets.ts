@@ -644,3 +644,14 @@ export const toRuntimeAsset = (asset: Asset, origin: string): RuntimeAsset => {
     ...metadata,
   };
 };
+
+/** Runtime data used only when an Assets query expands a local asset reference. */
+export const toAssetReferenceRuntimeData = (asset: Asset, origin: string) => ({
+  ...toRuntimeAsset(asset, origin),
+  name: formatAssetName(asset),
+  ...(asset.description === null || asset.description === undefined
+    ? {}
+    : { description: asset.description }),
+  mimeType:
+    getAssetMime(asset) ?? getMimeTypeByFilename(formatAssetName(asset)),
+});
