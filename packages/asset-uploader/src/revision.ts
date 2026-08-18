@@ -1,5 +1,6 @@
 import {
   formatAssetName,
+  getFileNameParts,
   isTextFileAsset,
   type Asset,
 } from "@webstudio-is/sdk";
@@ -21,11 +22,18 @@ export class AssetRevisionConflictError extends Error {}
 const getRevisionFilename = ({
   name,
   filename,
+  extension,
 }: {
   name: string;
   filename: string | null;
+  extension?: string;
 }) => {
-  return sanitizeS3Key(formatAssetName({ name, filename }));
+  const displayName = formatAssetName({ name, filename });
+  if (extension === undefined) {
+    return sanitizeS3Key(displayName);
+  }
+  const { basename } = getFileNameParts(displayName);
+  return sanitizeS3Key(`${basename}.${extension}`);
 };
 
 export const swapAssetFileWithClient = async (
@@ -96,11 +104,13 @@ export const updateAssetContent = async (
     assetId,
     projectId,
     expectedName,
+    extension,
     data,
   }: {
     assetId: Asset["id"];
     projectId: string;
     expectedName: string;
+    extension?: string;
     data: ReadableStream<Uint8Array>;
   },
   assetClient: AssetObjectStore,
@@ -129,11 +139,18 @@ export const updateAssetContent = async (
   if (isTextFileAsset({ format: currentAsset.file.format }) === false) {
     throw new Error("This asset is not an editable text file");
   }
+  if (
+    extension !== undefined &&
+    isTextFileAsset({ format: extension }) === false
+  ) {
+    throw new Error("The new extension must be an editable text file format");
+  }
 
   const revisionName = createUniqueAssetFilename(
     getRevisionFilename({
       name: currentAsset.name,
       filename: currentAsset.filename,
+      extension: extension?.toLowerCase(),
     })
   );
   const insertedFile = await context.postgrest.client.from("File").insert({

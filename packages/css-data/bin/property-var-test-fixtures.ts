@@ -15,7 +15,6 @@ import { fileURLToPath } from "node:url";
 import properties from "mdn-data/css/properties.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
 import { definitionSyntax, generate, parse } from "css-tree";
-import { supportedExperimentalPropertySet } from "./property-filter";
 
 type DSNode =
   | { type: "Keyword"; name: string }
@@ -122,6 +121,50 @@ const propertyPatternOverrides: Record<string, GrammarPattern[]> = {
       ],
     },
   ],
+  "scroll-timeline": [
+    {
+      complexity: 1,
+      parts: [
+        { kind: "slot", label: "scroll-timeline-name", text: "--timeline" },
+        { kind: "text", text: " " },
+        { kind: "slot", label: "scroll-timeline-axis", text: "block" },
+      ],
+    },
+  ],
+  "timeline-trigger": [
+    {
+      complexity: 1,
+      parts: [
+        { kind: "slot", label: "timeline-trigger-name", text: "--trigger" },
+        { kind: "text", text: " " },
+        { kind: "slot", label: "timeline-trigger-source", text: "auto" },
+        { kind: "text", text: " " },
+        {
+          kind: "slot",
+          label: "timeline-trigger-activation-range",
+          text: "normal",
+        },
+        { kind: "text", text: " / " },
+        {
+          kind: "slot",
+          label: "timeline-trigger-active-range",
+          text: "auto",
+        },
+      ],
+    },
+  ],
+  "view-timeline": [
+    {
+      complexity: 1,
+      parts: [
+        { kind: "slot", label: "view-timeline-name", text: "--timeline" },
+        { kind: "text", text: " " },
+        { kind: "slot", label: "view-timeline-axis", text: "block" },
+        { kind: "text", text: " " },
+        { kind: "slot", label: "view-timeline-inset", text: "auto" },
+      ],
+    },
+  ],
   "list-style": [
     {
       complexity: 1,
@@ -186,18 +229,6 @@ const getFilteredProperties = () => {
 
   for (const [property, config] of Object.entries(propertyData)) {
     if (unsupportedProperties.includes(property)) {
-      continue;
-    }
-
-    const isStandardProperty =
-      config.status === "standard" && "mdn_url" in config;
-    const isSupportedExperimentalProperty =
-      supportedExperimentalPropertySet.has(property);
-
-    if (
-      isStandardProperty === false &&
-      isSupportedExperimentalProperty === false
-    ) {
       continue;
     }
 

@@ -62,6 +62,7 @@ import {
 import {
   getTextFileEditorExtensions,
   isMarkdownAsset,
+  normalizeTextFileContent,
 } from "./text-file-utils";
 import { MarkdownSplitView } from "./markdown-preview";
 
@@ -481,7 +482,21 @@ export const TextFileEditor = ({
     if (canEdit === false) {
       return;
     }
-    requestedContentRef.current = content;
+    const currentAsset = currentAssetRef.current;
+    if (currentAsset === undefined) {
+      toast.error("Unable to save: asset not found");
+      return;
+    }
+    const normalized = normalizeTextFileContent(currentAsset, content);
+    if ("error" in normalized) {
+      toast.error(normalized.error);
+      return;
+    }
+    const normalizedContent = normalized.content;
+    if (normalizedContent !== content) {
+      setState({ status: "loaded", content: normalizedContent });
+    }
+    requestedContentRef.current = normalizedContent;
     saveQueueRef.current = saveQueueRef.current.then(async () => {
       const requestedContent = requestedContentRef.current;
       if (
@@ -491,15 +506,15 @@ export const TextFileEditor = ({
         return;
       }
 
-      const currentAsset = currentAssetRef.current;
-      if (currentAsset === undefined) {
+      const assetToUpdate = currentAssetRef.current;
+      if (assetToUpdate === undefined) {
         toast.error("Unable to save: asset not found");
         return;
       }
 
       try {
         const updatedAsset = await updateAssetContent({
-          asset: currentAsset,
+          asset: assetToUpdate,
           content: requestedContent,
         });
         currentAssetRef.current = updatedAsset;

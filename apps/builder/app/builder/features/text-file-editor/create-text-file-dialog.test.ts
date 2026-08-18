@@ -1,6 +1,17 @@
 import { expect, test } from "vitest";
 import type { Asset } from "@webstudio-is/sdk";
-import { getTextFileNameError } from "./create-text-file-dialog";
+import {
+  createTextFileData,
+  getTextFileNameError,
+} from "./create-text-file-dialog";
+
+const readFile = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result)));
+    reader.addEventListener("error", reject);
+    reader.readAsText(file);
+  });
 
 const existing: Asset = {
   id: "existing",
@@ -42,4 +53,22 @@ test("compares global complete display names after an asset is renamed", () => {
       assets: [{ ...existing, filename: "guide", folderId: "other" }],
     })
   ).toBe("A file with this name already exists.");
+});
+test("creates valid initial content for editable file types", async () => {
+  const jsonFile = createTextFileData("data.json");
+  if (jsonFile === undefined) {
+    throw new Error("Expected JSON file data");
+  }
+  expect(jsonFile.name).toBe("data.json");
+  expect(jsonFile.type).toBe("application/json");
+  await expect(readFile(jsonFile)).resolves.toBe("{}\n");
+
+  const markdownFile = createTextFileData("post.md");
+  if (markdownFile === undefined) {
+    throw new Error("Expected Markdown file data");
+  }
+  expect(markdownFile.type).toBe("text/markdown");
+  await expect(readFile(markdownFile)).resolves.toBe("");
+
+  expect(createTextFileData("image.png")).toBeUndefined();
 });

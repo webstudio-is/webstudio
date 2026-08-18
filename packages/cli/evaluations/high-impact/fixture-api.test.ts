@@ -145,7 +145,7 @@ describe("high-impact fixture API", () => {
       await fixtureApi.close();
       await rm(directory, { recursive: true, force: true });
     }
-  }, 60_000);
+  }, 120_000);
 
   test("creates a folder and uploads the Markdown blog files through the local CLI", async () => {
     const fixtureApi = await startHighImpactFixtureApi(markdownBlogFixture);

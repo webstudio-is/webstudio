@@ -41,6 +41,10 @@ Vercel injects a few [files](https://github.com/vercel/vercel/blob/a8ad176262ef8
 
 Learn how to upload your static site to Vercel.
 
+Vercel serves both forms of a path by default, but can redirect to slashless
+paths with project configuration. Review the
+[static site URL behavior](./#static-site-url-behavior) before deployment.
+
 <figure><img src="../../.gitbook/assets/vercel-new-project.png" alt="Vercel add new project dashboard"><figcaption></figcaption></figure>
 
 ### Prerequisites

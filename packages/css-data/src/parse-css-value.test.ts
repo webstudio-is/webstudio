@@ -735,26 +735,84 @@ test("parse transition-behavior property as layers", () => {
   });
 });
 
-test("parse unknown properties as unparsed", () => {
-  expect(parseCssValue("animation-timeline" as CssProperty, "auto")).toEqual({
+test("parse properties unknown to css-tree", () => {
+  expect(parseCssValue("future-property" as CssProperty, "auto")).toEqual({
     type: "unparsed",
     value: "auto",
   });
   expect(
-    parseCssValue("animation-range-start" as CssProperty, "normal")
-  ).toEqual({
-    type: "unparsed",
-    value: "normal",
-  });
-  expect(parseCssValue("animation-range-end" as CssProperty, "normal")).toEqual(
-    {
-      type: "unparsed",
-      value: "normal",
-    }
-  );
-  expect(
     parseCssValue("animation-timing-function", "linear(0 0%, 1 100%)")
   ).toEqual({ type: "unparsed", value: "linear(0 0%, 1 100%)" });
+});
+
+test("parse anchor positioning functions as unparsed values", () => {
+  for (const [property, value] of [
+    ["width", "fit-content(10px)"],
+    ["top", "calc(10px + 5%)"],
+    ["align-items", "safe center"],
+    ["justify-items", "legacy right"],
+    ["position-anchor", "auto"],
+  ] as const) {
+    expect(isValidDeclaration(property, value), `${property}: ${value}`).toBe(
+      true
+    );
+  }
+
+  expect(parseCssValue("top", "anchor(--trigger bottom, 1rem)")).toEqual({
+    type: "unparsed",
+    value: "anchor(--trigger bottom, 1rem)",
+  });
+  expect(parseCssValue("width", "anchor-size(--trigger inline, 50%)")).toEqual({
+    type: "unparsed",
+    value: "anchor-size(--trigger inline, 50%)",
+  });
+  expect(
+    parseCssValue("inset-block-start", "calc(anchor(--trigger top) + 1rem)")
+  ).toEqual({
+    type: "unparsed",
+    value: "calc(anchor(--trigger top) + 1rem)",
+  });
+  expect(
+    parseCssValue("margin-inline-start", "anchor-size(--trigger width)")
+  ).toEqual({
+    type: "unparsed",
+    value: "anchor-size(--trigger width)",
+  });
+  expect(
+    parseCssValue("inline-size", "anchor-size(--trigger self-inline)")
+  ).toEqual({
+    type: "unparsed",
+    value: "anchor-size(--trigger self-inline)",
+  });
+  expect(parseCssValue("top", "anchor(trigger bottom)")).toEqual({
+    type: "invalid",
+    value: "anchor(trigger bottom)",
+  });
+});
+
+test("parse current position-anchor keywords", () => {
+  expect(parseCssValue("position-anchor", "normal")).toEqual({
+    type: "keyword",
+    value: "normal",
+  });
+  expect(parseCssValue("position-anchor", "match-parent")).toEqual({
+    type: "keyword",
+    value: "match-parent",
+  });
+});
+
+test("parse anchor-center alignment", () => {
+  for (const property of [
+    "align-items",
+    "align-self",
+    "justify-items",
+    "justify-self",
+  ] as const) {
+    expect(parseCssValue(property, "anchor-center"), property).toEqual({
+      type: "keyword",
+      value: "anchor-center",
+    });
+  }
 });
 
 test("parse transform property as tuple", () => {

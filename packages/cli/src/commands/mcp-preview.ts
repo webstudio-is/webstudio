@@ -173,11 +173,7 @@ export const resolveMcpScreenshotInput = async (
     isPortAvailable?: (host: string, port: number) => Promise<boolean>;
   } = {}
 ) => {
-  if (
-    input.url !== undefined ||
-    input.baseUrl !== undefined ||
-    input.source === "local"
-  ) {
+  if (input.url !== undefined || input.baseUrl !== undefined) {
     return input;
   }
   const runningPreviewPort = getRunningPreviewPort(previewStatus, input.host);
@@ -634,7 +630,6 @@ export const createMcpPreviewHandlers = ({
         const previewTarget = getPreviewTarget(firstInput);
         if (
           createCaptureSession === undefined ||
-          previewTarget.source === "local" ||
           inputs.some(
             (input) =>
               isSamePreviewTarget(getPreviewTarget(input), previewTarget) ===
@@ -646,7 +641,7 @@ export const createMcpPreviewHandlers = ({
           )
         ) {
           throw new Error(
-            "Resized screenshot capture requires one session preview target and browser configuration."
+            "Resized screenshot capture requires one generated preview target and browser configuration."
           );
         }
         const urls: string[] = [];

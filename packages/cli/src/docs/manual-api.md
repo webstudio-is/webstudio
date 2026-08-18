@@ -31,6 +31,23 @@ The API commands operate on the single project configured by:
 - Use --refresh on local-capable commands to refresh required namespaces before running.
 - Successful JSON responses include compact meta.session with operationId, buildId, version, source, committed, namespaceCounts, diagnosticCount, non-empty diagnostic summaries, and optional compatibilityVersion.
 
+## Search project data
+
+Run `webstudio search-project '{"query":"known value"}'` to search all Builder
+namespaces in the local project session. Narrow it with
+`{"query":"Brand","namespaces":["styleSources","styles"]}` when only specific
+namespaces are relevant. Results contain the current value, stable match id,
+namespace path, owning entity, resolved references, and affected pages.
+
+Values in recognized credential fields are excluded and reported in
+`excludedSensitiveValueCount`.
+
+The command synchronizes its required Builder namespaces, then searches locally
+and returns only matches. Namespace filters limit values matched; related
+namespaces may still supply route and reference context, and synchronization is
+unchanged. This reduces data sent to the model, not project synchronization. It
+searches asset metadata, not asset binaries or document contents.
+
 ## CLI Capability Inventory
 
 For a short end-consumer summary of what MCP can do, see

@@ -752,6 +752,7 @@ export const updateProjectAssetContent = async (
     authToken?: string;
     assetId: string;
     expectedName: string;
+    extension?: string;
     readAssetData: () => Promise<AssetContentData>;
     request?: typeof fetch;
     requestOrigin?: string;
@@ -764,6 +765,9 @@ export const updateProjectAssetContent = async (
     path: getAssetContentApiUrl(params.assetId),
   });
   url.searchParams.set("expectedName", params.expectedName);
+  if (params.extension !== undefined) {
+    url.searchParams.set("extension", params.extension);
+  }
   try {
     return await requestAssetRestJson(request, url, {
       method: "PUT",

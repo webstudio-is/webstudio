@@ -293,10 +293,10 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "search-project",
     description:
-      "Search instance labels, text, props including href and embeds, resource URLs, assets, and styles",
+      "Search synchronized Builder values in the CLI and return paged matches. Filters do not reduce synchronization; recognized credential fields are omitted.",
     examples: [
       'MCP tool: search-project {"query":"pricing"}',
-      'MCP tool: search-project {"query":"api.example.com","scopes":["resources"]}',
+      'MCP tool: search-project {"query":"api.example.com","namespaces":["resources"]}',
     ],
   },
   {
@@ -831,9 +831,10 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-asset-content",
     description:
-      "Replace a text asset's content while preserving its stable asset id; provide exactly one of path or content and use the current asset name as expectedName",
+      "Replace a text asset's content or extension while preserving its stable asset id; provide exactly one of path or content and use the current asset name as expectedName",
     examples: [
-      'MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.json","content":"{\\"theme\\":\\"dark\\"}"}',
+      `MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.json","content":"{theme:'dark'}"}`,
+      `MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.md","extension":"json","content":"{theme:'dark'}"}`,
       'MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"styles_hash.css","path":"./styles.css"}',
     ],
   },
