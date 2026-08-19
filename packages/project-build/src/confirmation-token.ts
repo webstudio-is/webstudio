@@ -1,5 +1,7 @@
-const encodeDigest = (digest: ArrayBuffer) =>
-  btoa(String.fromCharCode(...new Uint8Array(digest)))
+import { Sha256 } from "@aws-crypto/sha256-js";
+
+const encodeDigest = (digest: Uint8Array) =>
+  btoa(String.fromCharCode(...digest))
     .replaceAll("+", "-")
     .replaceAll("/", "_")
     .replaceAll("=", "");
@@ -14,15 +16,11 @@ const stringifyCanonicalJson = (value: unknown) =>
     );
   });
 
-const getConfirmationDigest = async (payload: unknown, expiresAt: number) =>
-  encodeDigest(
-    await globalThis.crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(
-        `${expiresAt}:${stringifyCanonicalJson(payload)}`
-      )
-    )
-  );
+const getConfirmationDigest = async (payload: unknown, expiresAt: number) => {
+  const hash = new Sha256();
+  hash.update(`${expiresAt}:${stringifyCanonicalJson(payload)}`);
+  return encodeDigest(await hash.digest());
+};
 
 export const createConfirmationToken = async (
   payload: unknown,

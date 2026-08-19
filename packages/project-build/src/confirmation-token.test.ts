@@ -1,8 +1,12 @@
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   createConfirmationToken,
   validateConfirmationToken,
 } from "./confirmation-token";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("confirmation tokens", () => {
   test("bind a token to its signature and expiry", async () => {
@@ -29,5 +33,13 @@ describe("confirmation tokens", () => {
         b: 2,
       })
     ).toBe(true);
+  });
+
+  test("works without the Web Crypto API", async () => {
+    vi.stubGlobal("crypto", undefined);
+
+    const { token } = await createConfirmationToken("original", 1_000);
+
+    expect(await validateConfirmationToken(token, "original")).toBe(true);
   });
 });

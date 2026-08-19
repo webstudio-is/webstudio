@@ -2195,6 +2195,9 @@ importers:
 
   packages/project-build:
     dependencies:
+      '@aws-crypto/sha256-js':
+        specifier: ^5.2.0
+        version: 5.2.0
       '@emotion/hash':
         specifier: ^0.9.2
         version: 0.9.2
