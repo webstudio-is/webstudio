@@ -915,7 +915,7 @@ export const auditRules = {
     "styles",
     "warning",
     "The style state selector is not a valid element-scoped suffix and may escape its component or generate invalid CSS.",
-    "Replace it with one pseudo-class, pseudo-element, attribute selector, or a compound suffix that remains scoped to the styled element."
+    "Start with a pseudo-class, pseudo-element, or attribute selector. Descendant and child selectors may follow, but selector lists and sibling combinators are not supported."
   ),
   "orphan-style-breakpoint": rule(
     "styles",

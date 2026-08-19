@@ -10,9 +10,10 @@ export type SelectorValidationResult =
  * Validates an open CSS state suffix scoped to the current element.
  *
  * Builder states are not a closed component-state enum. Valid pseudo-classes,
- * pseudo-elements, and attribute selectors may be compounded, but selector
- * lists, type/class/id selectors, and combinators are rejected because the CSS
- * engine appends this value directly to the generated instance selector.
+ * pseudo-elements, and attribute selectors may be compounded. Descendant and
+ * child selectors may follow that state because the CSS engine anchors the
+ * complete suffix to the generated instance selector. Selector lists,
+ * unanchored selectors, and sibling combinators are rejected.
  * @param selector - The selector to validate (e.g., ":hover", "::before", "[data-state=open]")
  * @returns SelectorValidationResult with success status and type or error message
  */
@@ -41,21 +42,37 @@ export const validateSelector = (
       };
     }
     const parsedSelector = ast.children.first;
+    const selectorNodes =
+      parsedSelector?.type === "Selector"
+        ? parsedSelector.children.toArray()
+        : [];
+    const firstCombinatorIndex = selectorNodes.findIndex(
+      (node) => node.type === "Combinator"
+    );
+    const stateNodes = selectorNodes.slice(
+      0,
+      firstCombinatorIndex === -1 ? undefined : firstCombinatorIndex
+    );
     if (
       parsedSelector?.type !== "Selector" ||
-      parsedSelector.children
-        .toArray()
-        .some(
-          (node) =>
-            node.type !== "PseudoClassSelector" &&
-            node.type !== "PseudoElementSelector" &&
-            node.type !== "AttributeSelector"
-        )
+      stateNodes.length === 0 ||
+      stateNodes.some(
+        (node) =>
+          node.type !== "PseudoClassSelector" &&
+          node.type !== "PseudoElementSelector" &&
+          node.type !== "AttributeSelector"
+      ) ||
+      selectorNodes.some(
+        (node) =>
+          node.type === "Combinator" && node.name !== " " && node.name !== ">"
+      ) ||
+      (firstCombinatorIndex !== -1 &&
+        stateNodes.some((node) => node.type === "PseudoElementSelector"))
     ) {
       return {
         success: false,
         error:
-          "Selector must be a pseudo-class, pseudo-element, or attribute suffix scoped to the current element",
+          "Selector must be an element-scoped state, optionally followed by a descendant or child selector",
       };
     }
 
