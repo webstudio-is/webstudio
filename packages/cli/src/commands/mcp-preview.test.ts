@@ -1,5 +1,8 @@
 import { expect, test, vi } from "vitest";
-import { BrowserStartupError } from "@webstudio-is/vision/browser";
+import {
+  BrowserSessionClosedError,
+  BrowserStartupError,
+} from "@webstudio-is/vision/browser";
 import {
   createScreenshotCaptureSession,
   defaultScreenshotDependencies,
@@ -651,6 +654,93 @@ test("reuses and closes one browser capture session for session screenshots", as
 
   expect(close).toHaveBeenCalledOnce();
   expect(preview.stop).toHaveBeenCalledOnce();
+});
+
+test("reconnects a screenshot session after preview restart", async () => {
+  let running = false;
+  const preview = {
+    status: vi.fn(() =>
+      running
+        ? {
+            url: "http://127.0.0.1:3000/",
+            running: true as const,
+            mode: "iterative" as const,
+          }
+        : { running: false as const }
+    ),
+    startAndWait: vi.fn(async () => {
+      running = true;
+      return {
+        url: "http://127.0.0.1:3000/",
+        running: true as const,
+        mode: "iterative" as const,
+      };
+    }),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+  };
+  const connectionClosed = new BrowserSessionClosedError(
+    "Browser DevTools connection closed."
+  );
+  const firstClose = vi.fn(async () => undefined);
+  const firstCapturePage = vi.fn(async () => {
+    throw connectionClosed;
+  });
+  const captureScreenshot = createCaptureScreenshotMock([]);
+  const secondCapturePage = vi.fn(
+    async (optionsList) => await Promise.all(optionsList.map(captureScreenshot))
+  );
+  const createCaptureSession = vi
+    .fn()
+    .mockReturnValueOnce({
+      capture: vi.fn(),
+      capturePage: firstCapturePage,
+      close: firstClose,
+    })
+    .mockReturnValueOnce({
+      capture: vi.fn(),
+      capturePage: secondCapturePage,
+      close: vi.fn(async () => undefined),
+    });
+  const progress: string[] = [];
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => false,
+    preparePreview: vi.fn(async () => ({ cwd: "/tmp/preview" })),
+    createCaptureSession,
+  });
+
+  await handlers.startPreview({ source: "session", mode: "iterative" });
+  await expect(
+    handlers.capturePageScreenshots(
+      [
+        {
+          path: "/",
+          source: "session",
+          viewport: { width: 1440, height: 900 },
+          fullPage: true,
+        },
+      ],
+      { report: (message) => progress.push(message) }
+    )
+  ).resolves.toEqual([
+    expect.objectContaining({
+      viewport: { width: 1440, height: 900 },
+    }),
+  ]);
+
+  expect(preview.startAndWait).toHaveBeenCalledOnce();
+  expect(createCaptureSession).toHaveBeenCalledTimes(2);
+  expect(firstCapturePage).toHaveBeenCalledOnce();
+  expect(firstClose).toHaveBeenCalledOnce();
+  expect(secondCapturePage).toHaveBeenCalledWith([
+    expect.objectContaining({
+      url: "http://127.0.0.1:3000/",
+      width: 1440,
+      height: 900,
+      fullPage: true,
+    }),
+  ]);
+  expect(progress).toContain("tool screenshot reconnecting browser session");
 });
 
 test("times out a stalled screenshot after preview start and releases its session", async () => {

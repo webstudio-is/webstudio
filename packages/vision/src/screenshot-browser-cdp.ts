@@ -163,7 +163,16 @@ type CdpMessage = {
   error?: { message?: string };
 };
 
-class BrowserSessionClosedError extends Error {}
+export class BrowserSessionClosedError extends Error {
+  readonly code = "BROWSER_SESSION_CLOSED";
+}
+
+export const isBrowserSessionClosedError = (
+  error: unknown
+): error is BrowserSessionClosedError =>
+  error instanceof Error &&
+  "code" in error &&
+  error.code === "BROWSER_SESSION_CLOSED";
 
 class CdpSession {
   #nextId = 1;
