@@ -4,11 +4,11 @@ import { validateSelector } from "./selector-validation";
 describe("validateSelector", () => {
   test.each([
     ":hover, body",
-    ":hover > div",
-    ":hover .child",
     "body:hover",
     ".class",
     "#identifier",
+    ":hover + .tooltip",
+    ":hover ~ .tooltip",
   ])(
     "rejects selector syntax that can escape element scope: %s",
     (selector) => {
@@ -21,6 +21,16 @@ describe("validateSelector", () => {
     "[data-state=open]:hover",
     ":not(.disabled, [aria-disabled=true])",
   ])("accepts compound state suffixes: %s", (selector) => {
+    expect(validateSelector(selector).success).toBe(true);
+  });
+
+  test.each([
+    ":hover .button",
+    ":focus-within input",
+    "[data-state=open] [data-part=content]",
+    ":hover > .icon",
+    ":not(.disabled) > [aria-hidden=true]",
+  ])("accepts states targeting descendants: %s", (selector) => {
     expect(validateSelector(selector).success).toBe(true);
   });
 

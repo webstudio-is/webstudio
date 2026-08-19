@@ -36,7 +36,11 @@ States are CSS pseudo-classes that apply styles when a condition is true, such a
 You can type any valid CSS pseudo-class into the Style Sources dropdown. If it's not in the predefined list, Webstudio will accept it as a custom selector.
 
 {% hint style="info" %}
-Custom selectors are useful for advanced cases, but stick to the predefined states when possible — they are validated and shown in autocomplete.
+Custom states can target descendants while staying scoped to the selected instance. For example, `:hover .button` targets descendants with the [custom class](custom-classes-and-attributes.md) `button` while the selected instance is hovered, and `:hover > .icon` targets only direct children with the custom class `icon`.
+
+Prefer [CSS variables for parent-child interactions](css-variables.md#parent-child-interactions). They keep each property on the child that uses it, can coordinate several children from one parent state, and do not couple the interaction to descendant classes or structure. Use a descendant custom state when the interaction specifically requires selector-based targeting.
+
+Start the selector with a pseudo-class, pseudo-element, or attribute selector for the selected instance. You can then use a descendant (` `) or child (`>`) combinator. Selector lists, selectors that start with a type, class, or ID, and sibling combinators (`+` and `~`) are rejected because they can target elements outside the selected instance.
 {% endhint %}
 
 ## Pseudo-elements
@@ -87,7 +91,7 @@ Pseudo-elements target virtual parts of an element, such as inserting content be
 
 States work together with [Tokens](design-tokens.md). When you have a Token selected, adding a state applies styles for that state _within that Token_. This keeps hover styles, focus styles, and base styles neatly organized.
 
-You can also use [CSS variables](css-variables.md) to create parent-child interactions — define variables on the parent, then change their values on the `:hover` state so all children update at once. See [Parent-child interactions](css-variables.md#parent-child-interactions) for details.
+You can also use [CSS variables](css-variables.md) to coordinate several parent-child style changes — define variables on the parent, then change their values on the `:hover` state so all children update at once. See [Parent-child interactions](css-variables.md#parent-child-interactions) for details.
 
 ## Related
 
