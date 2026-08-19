@@ -7087,6 +7087,59 @@ describe("project session mcp adapter", () => {
     );
   });
 
+  test("routes an authored component insertion without broad discovery", async () => {
+    const operations = [
+      ...publicMcpOperations,
+      publicOperation({
+        command: "create-variable",
+        id: "variables.create",
+        description: "Create a variable in a known container",
+      }),
+      publicOperation({
+        command: "bind-props",
+        id: "props.bind",
+        description: "Bind component interactions to variables",
+      }),
+    ];
+    const adapter = createProjectSessionMcpCore({
+      operations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      guidance: testMcpGuidance,
+    });
+
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: {
+        brief:
+          "Insert an authored timer component with insert-fragment into the known container. Create variables and bind its interactions while keeping the existing design.",
+      },
+    });
+    const data = guide.structuredContent.data as {
+      taskScope: string;
+      routing?: Record<string, unknown>;
+      tools: Array<{ name: string }>;
+    };
+    const toolNames = data.tools.map(({ name }) => name);
+
+    expect(data.taskScope).toBe("structural-project-change");
+    expect(data.routing).toEqual({
+      matchedBy: "general-tool-ranking",
+      workflow: "general",
+      broadContextTools: [],
+      authoredFragment: true,
+    });
+    expect(toolNames).toEqual(
+      expect.arrayContaining([
+        "insert-fragment",
+        "create-variable",
+        "bind-props",
+      ])
+    );
+    expect(toolNames).not.toContain("inspect-design-context");
+    expect(toolNames).not.toContain("components.search");
+  });
+
   test("preflights production preview before starting slow work", async () => {
     const startPreview = vi.fn(async () => ({
       url: "http://127.0.0.1:5173/",

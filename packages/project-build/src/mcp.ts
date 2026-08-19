@@ -5582,6 +5582,7 @@ const getMetaIndex = (
 
 const metaGoalGuides = [
   {
+    id: "markdown-blog",
     pattern:
       /markdown(?:-|\s)*(?:based|backed)?\s*blog|blog.*markdown|assets?(?:-|\s)*backed\s*blog/i,
     tools: [
@@ -5723,6 +5724,7 @@ const metaGoalGuides = [
     },
   },
   {
+    id: "json-ld",
     pattern: /json\s*-?\s*ld|structured\s+data/i,
     tools: [
       "components.get",
@@ -5767,6 +5769,7 @@ const metaGoalGuides = [
     },
   },
   {
+    id: "collection",
     pattern:
       /collection|repeat(?:ed|ing)?\s+(?:list|item|card|row|content)|render\s+(?:an?\s+)?array|array\s+(?:as|into)\s+(?:a\s+)?(?:list|grid|table|cards?)/i,
     tools: [
@@ -5785,6 +5788,7 @@ const metaGoalGuides = [
     ],
   },
   {
+    id: "expression",
     pattern:
       /\bexpressions?\b|computed\s+(?:text|value|prop|metadata|url)|dynamic\s+(?:text|prop|binding)/i,
     tools: [
@@ -5804,6 +5808,7 @@ const metaGoalGuides = [
     ],
   },
   {
+    id: "authenticated-page",
     pattern:
       /authenticated?\s+(?:page|route|screen)|(?:supabase|firebase)\s+auth|sign(?:ed)?[- ]?(?:in|out)|login\s+(?:page|flow)|user\s+session/i,
     tools: [
@@ -5845,6 +5850,7 @@ const metaGoalGuides = [
     },
   },
   {
+    id: "font-assets",
     pattern:
       /(?:upload|import|add|update|manage).*\bfonts?\b|\bfonts?\b.*(?:upload|import|add|update|manage)|font\s+assets?/i,
     tools: [
@@ -5864,8 +5870,9 @@ const metaGoalGuides = [
     ],
   },
   {
+    id: "design-input",
     pattern:
-      /(?:figma|wireframe|screenshot|design\s*(?:guide|input|file)|design\.md|inception).*(?:page|site|build|implement|recreate)|(?:build|implement|recreate).*(?:figma|wireframe|screenshot|design\s*(?:guide|input|file)|design\.md|inception)/i,
+      /(?:figma|wireframe|screenshot|(?:this|supplied|provided)\s+design|design\s*(?:guide|input|file)|design\.md|inception).*(?:page|site|build|implement|recreate)|(?:build|implement|recreate).*(?:figma|wireframe|screenshot|(?:this|supplied|provided)\s+design|design\s*(?:guide|input|file)|design\.md|inception)/i,
     tools: [
       "inspect-design-context",
       "list-style-sources",
@@ -5892,6 +5899,7 @@ const metaGoalGuides = [
     ],
   },
   {
+    id: "craft",
     pattern: /\bcraft\b/i,
     tools: [
       "audit",
@@ -5912,6 +5920,15 @@ const metaGoalGuides = [
 
 const metaGuideDetailedInputSchemaTools = new Set(["update-styles"]);
 const metaGuideExampleTools = new Set(["upload-assets"]);
+const workflowOnlyGuideToolNames = new Set([
+  "inspect-auth-context",
+  "inspect-design-context",
+]);
+const designSystemGuideToolNames = new Set([
+  "list-design-tokens",
+  "attach-design-token",
+  "update-design-token-styles",
+]);
 
 const taskScopes = [
   "small-value-or-reference-correction",
@@ -5932,7 +5949,7 @@ const classifyTaskScope = (brief: string): TaskScope => {
     return "project-wide-migration";
   }
   if (
-    /\b(visual|layout|responsive|screenshot|typography|spacing|color|design)\b/i.test(
+    /\b(visual|layout|responsive|screenshot|typography|spacing|color|design\s+(?:file|guide|input|reference|system))\b|\b(?:this|supplied|provided)\s+design\b/i.test(
       brief
     )
   ) {
@@ -5990,9 +6007,25 @@ const getMetaGuide = (
   const taskScope = classifyTaskScope(brief);
   const isSmallCorrection = taskScope === "small-value-or-reference-correction";
   const goalGuide = metaGoalGuides.find(({ pattern }) => pattern.test(brief));
+  const isAuthoredFragment =
+    /\binsert-fragment\b|\bauthored\s+(?:component|element|fragment|section)\b/i.test(
+      brief
+    );
+  const requestsDesignSystem = /\bdesign\s+(?:system|tokens?)\b/i.test(brief);
   const matchedTools =
     goalGuide === undefined
-      ? getMatchingTools(brief, tools).slice(0, 12)
+      ? getMatchingTools(brief, tools)
+          .filter(
+            (tool) =>
+              workflowOnlyGuideToolNames.has(tool.name) === false &&
+              (isAuthoredFragment === false ||
+                (tool.name.startsWith("components.") === false &&
+                  tool.name.startsWith("templates.") === false)) &&
+              (isAuthoredFragment === false ||
+                requestsDesignSystem ||
+                designSystemGuideToolNames.has(tool.name) === false)
+          )
+          .slice(0, 12)
       : getExactToolSelection(goalGuide.tools, tools).tools;
   const searchProjectTool = tools.find(
     (tool) => tool.name === "search-project"
@@ -6033,6 +6066,16 @@ const getMetaGuide = (
   ].filter(Boolean);
   return {
     taskScope,
+    routing: {
+      matchedBy:
+        goalGuide === undefined ? "general-tool-ranking" : "goal-pattern",
+      workflow: goalGuide?.id ?? "general",
+      broadContextTools:
+        goalGuide?.tools.filter((tool) =>
+          workflowOnlyGuideToolNames.has(tool)
+        ) ?? [],
+      authoredFragment: isAuthoredFragment,
+    },
     ...(isSmallCorrection && goalGuide === undefined
       ? {
           focusedCorrection: {
