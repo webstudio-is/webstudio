@@ -38,6 +38,8 @@ You can type any valid CSS pseudo-class into the Style Sources dropdown. If it's
 {% hint style="info" %}
 Custom states can target descendants while staying scoped to the selected instance. For example, `:hover .button` targets descendants with the [custom class](custom-classes-and-attributes.md) `button` while the selected instance is hovered, and `:hover > .icon` targets only direct children with the custom class `icon`.
 
+Prefer [CSS variables for parent-child interactions](css-variables.md#parent-child-interactions). They keep each property on the child that uses it, can coordinate several children from one parent state, and do not couple the interaction to descendant classes or structure. Use a descendant custom state when the interaction specifically requires selector-based targeting.
+
 Start the selector with a pseudo-class, pseudo-element, or attribute selector for the selected instance. You can then use a descendant (` `) or child (`>`) combinator. Selector lists, selectors that start with a type, class, or ID, and sibling combinators (`+` and `~`) are rejected because they can target elements outside the selected instance.
 {% endhint %}
 
