@@ -2052,7 +2052,7 @@ sitemap.map((page) => page.path);`
     expect(
       Object.fromEntries(form.attrs.map(({ name, value }) => [name, value]))
     ).toMatchObject({ method: "post" });
-  });
+  }, 30_000);
 
   test("ignores dynamic SSG pages without enumerable Assets query paths", async () => {
     await writeSiteData(

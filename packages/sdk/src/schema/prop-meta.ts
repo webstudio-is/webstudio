@@ -56,8 +56,8 @@ const resource = z.object({
   control: z.literal("resource"),
   type: z.literal("resource"),
   defaultValue: z.string().optional(),
-  // Generated component prop name to safe resource field.
-  resourceFieldProps: z.record(z.string(), z.enum(["method"])).optional(),
+  // Safe resource fields copied to same-named props in generated components.
+  generatedProps: z.array(z.enum(["method"])).optional(),
 });
 
 const code = z.object({

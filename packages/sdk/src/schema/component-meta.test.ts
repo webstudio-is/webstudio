@@ -23,7 +23,7 @@ test("allows only safe resource fields in generated component props", () => {
         control: "resource",
         type: "resource",
         required: false,
-        resourceFieldProps: { method: field },
+        generatedProps: [field],
       },
     },
   });

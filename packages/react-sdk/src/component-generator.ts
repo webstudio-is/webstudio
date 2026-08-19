@@ -226,14 +226,12 @@ export const generateJsxElement = ({
       const propMeta = meta?.props?.[prop.name];
       const resource = resources?.get(prop.value);
       if (propMeta?.type === "resource" && resource !== undefined) {
-        for (const [name, field] of Object.entries(
-          propMeta.resourceFieldProps ?? {}
-        )) {
+        for (const name of propMeta.generatedProps ?? []) {
           if (
             instancePropNames.has(name) === false &&
             isAttributeNameSafe(name)
           ) {
-            projectedResourceProps.set(name, resource[field]);
+            projectedResourceProps.set(name, resource[name]);
           }
         }
       }

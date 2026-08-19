@@ -1034,7 +1034,7 @@ test("generate resource prop with configured form method", () => {
                 control: "resource",
                 type: "resource",
                 required: false,
-                resourceFieldProps: { method: "method" },
+                generatedProps: ["method"],
               },
             },
           },

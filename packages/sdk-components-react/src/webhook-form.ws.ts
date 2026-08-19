@@ -22,9 +22,7 @@ export const meta: WsComponentMeta = {
       description:
         "The URI of a program that processes the information submitted via the form.",
       required: false,
-      resourceFieldProps: {
-        method: "method",
-      },
+      generatedProps: ["method"],
     },
   },
 };
