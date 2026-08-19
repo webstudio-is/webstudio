@@ -1,21 +1,24 @@
 #!/usr/bin/env node
 
 import { createRequire } from "node:module";
-import { runWithSupportedNode } from "./node-version.js";
+import semver from "semver";
 
 const require = createRequire(import.meta.url);
 const packageJson = require("./package.json");
 
-const started = await runWithSupportedNode({
-  currentVersion: process.versions.node,
-  supportedVersionRange: packageJson.engines.node,
-  reportError: console.error,
-  run: async () => {
-    const { main } = await import("./lib/cli.js");
-    await main();
-  },
-});
+const start = async () => {
+  const currentVersion = process.versions.node;
+  const supportedVersionRange = packageJson.engines.node;
+  if (semver.satisfies(currentVersion, supportedVersionRange) === false) {
+    console.error(
+      `Webstudio CLI requires Node.js ${supportedVersionRange}. Detected Node.js ${currentVersion}. Install a supported Node.js version and try again.`
+    );
+    process.exitCode = 1;
+    return;
+  }
 
-if (started === false) {
-  process.exitCode = 1;
-}
+  const { main } = await import("./lib/cli.js");
+  await main();
+};
+
+await start();

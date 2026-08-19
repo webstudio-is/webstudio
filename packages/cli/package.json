@@ -18,7 +18,6 @@
     "lib/*",
     "templates/*",
     "bin.js",
-    "node-version.js",
     "!*.{test,stories}.*"
   ],
   "scripts": {
