@@ -15,6 +15,7 @@ import { diffPngFiles } from "@webstudio-is/vision/diff";
 import {
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
+  type IssueReportRecentFailure,
 } from "@webstudio-is/protocol";
 import * as httpClient from "@webstudio-is/http-client";
 import packageJson from "../../package.json" with { type: "json" };
@@ -33,6 +34,8 @@ import {
   assertCliServerOperationSupported,
   createCliProjectRestorePointStorage,
   createCliProjectSession,
+  createIssueReportFailure,
+  createIssueReportRuntime,
   getCliProjectRestorePointsFile,
   getCliServerApiContract,
   getSupportedPublicApiOperations,
@@ -985,10 +988,12 @@ const createCliMcpHost = async ({
   };
   const apiContract = await getCliServerApiContract(apiConnection);
   const operations = getSupportedPublicApiOperations(apiContract);
+  let recentFailure: IssueReportRecentFailure | undefined;
   const session = createCliProjectSession({
     connection: apiConnection,
     projectRoot,
     sessionProjectId: projectId,
+    issueReportRuntime: () => createIssueReportRuntime(recentFailure),
   });
   const restorePointStorage = createCliProjectRestorePointStorage(
     getCliProjectRestorePointsFile(projectRoot, projectId)
@@ -1229,6 +1234,9 @@ const createCliMcpHost = async ({
     host,
     apiContract,
     toolCount: operations.length,
+    recordToolFailure(tool: string, error: unknown) {
+      recentFailure = createIssueReportFailure(tool, error);
+    },
     reportLog(message: string) {
       if (message.startsWith("ready with ")) {
         return;
@@ -1806,10 +1814,16 @@ export const mcp = async (
   stdin.once("end", reportClose);
   stdin.once("close", reportClose);
   status.starting();
-  const { host, toolCount, reportLog, apiContract, dispose } =
-    await createCliMcpHost({
-      projectId: options.project,
-    });
+  const {
+    host,
+    toolCount,
+    reportLog,
+    recordToolFailure,
+    apiContract,
+    dispose,
+  } = await createCliMcpHost({
+    projectId: options.project,
+  });
   disposeHost = dispose;
   if (didReportClose) {
     await disposeHost().catch(() => undefined);
@@ -1822,6 +1836,7 @@ export const mcp = async (
     ...host,
     toolNameFormat: options.toolNameFormat,
     getErrorCode: getStableErrorCode,
+    onToolFailure: recordToolFailure,
     reportLog: (_level, message) => {
       reportLog(message);
     },

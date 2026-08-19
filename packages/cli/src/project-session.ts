@@ -17,6 +17,7 @@ import {
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
   type IssueReportRuntime,
+  type IssueReportRecentFailure,
   type PublicApiCommand,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
@@ -53,6 +54,7 @@ import {
   type SerializedBuilderStateSnapshot,
 } from "@webstudio-is/project-build/state";
 import { removeLegacyProjectSettingsFromPages } from "@webstudio-is/project-build";
+import { getValidationIssues } from "@webstudio-is/project-build/runtime";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
 import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "./config";
 import type { ApiConnection } from "./api-connection";
@@ -234,7 +236,9 @@ const publicOperationById = new Map(
   publicApiOperations.map((operation) => [operation.id, operation])
 );
 
-const getIssueReportRuntime = (): IssueReportRuntime => ({
+export const createIssueReportRuntime = (
+  recentFailure?: IssueReportRecentFailure
+): IssueReportRuntime => ({
   cliVersion: packageJson.version,
   nodeVersion: process.versions.node,
   os: process.platform,
@@ -242,12 +246,39 @@ const getIssueReportRuntime = (): IssueReportRuntime => ({
   architecture: process.arch,
   executionMode: "mcp",
   apiContractVersion: publicApiContractVersion,
+  bundleVersion,
+  recentFailure,
 });
+
+export const createIssueReportFailure = (
+  tool: string,
+  error: unknown
+): IssueReportRecentFailure => {
+  const errorCode = getStableErrorCode(error);
+  const issues =
+    errorCode === "PROJECT_BUNDLE_INVALID"
+      ? getValidationIssues(error)
+          ?.slice(0, 30)
+          .map((issue) => ({
+            path: issue.path,
+            code: issue.code,
+            constraint: issue.constraint,
+          }))
+      : undefined;
+  return {
+    tool: /^[a-z][a-z0-9.-]{0,159}$/.test(tool) ? tool : "unknown",
+    code:
+      errorCode !== undefined && /^[A-Z][A-Z0-9_]{0,159}$/.test(errorCode)
+        ? errorCode
+        : "MCP_TOOL_FAILED",
+    ...(issues === undefined || issues.length === 0 ? {} : { issues }),
+  };
+};
 
 export const addIssueReportRuntime = (
   command: PublicApiCommand,
   input: unknown,
-  runtime: IssueReportRuntime = getIssueReportRuntime()
+  runtime: IssueReportRuntime = createIssueReportRuntime()
 ) => {
   if (command !== "report-issue" || isPlainRecord(input) === false) {
     return input;
@@ -259,10 +290,12 @@ const executePublicServerOperation = async ({
   connection,
   operationId,
   input,
+  issueReportRuntime,
 }: {
   connection: ApiConnection;
   operationId: string;
   input: unknown;
+  issueReportRuntime?: () => IssueReportRuntime;
 }) => {
   const operation = publicOperationById.get(operationId);
   if (operation === undefined) {
@@ -278,10 +311,11 @@ const executePublicServerOperation = async ({
   }
   return await client({
     ...connection,
-    ...(addIssueReportRuntime(operation.command, input) as Record<
-      string,
-      unknown
-    >),
+    ...(addIssueReportRuntime(
+      operation.command,
+      input,
+      issueReportRuntime?.() ?? createIssueReportRuntime()
+    ) as Record<string, unknown>),
     projectId: connection.projectId,
   });
 };
@@ -438,11 +472,13 @@ export const createCliProjectSessionTransport = ({
   executeServerOperation,
   getBuildSnapshot = httpClient.getBuildSnapshot,
   getPermissions,
+  issueReportRuntime,
 }: {
   connection: ApiConnection;
   executeServerOperation?: ProjectSessionTransport["executeServerOperation"];
   getBuildSnapshot?: typeof httpClient.getBuildSnapshot;
   getPermissions?: ProjectSessionTransport["getPermissions"];
+  issueReportRuntime?: () => IssueReportRuntime;
 }): ProjectSessionTransport => ({
   async getCompatibility() {
     return createCliProjectSessionCompatibility(connection);
@@ -515,7 +551,12 @@ export const createCliProjectSessionTransport = ({
       input: unknown;
     }) =>
       (await withMappedRemoteError(() =>
-        executePublicServerOperation({ connection, operationId, input })
+        executePublicServerOperation({
+          connection,
+          operationId,
+          input,
+          issueReportRuntime,
+        })
       )) as Result),
 });
 
@@ -526,6 +567,7 @@ export const createCliProjectSession = ({
   sessionProjectId,
   executeServerOperation,
   getPermissions,
+  issueReportRuntime,
 }: {
   connection: ApiConnection;
   storage?: ProjectSessionStorage;
@@ -533,6 +575,7 @@ export const createCliProjectSession = ({
   sessionProjectId?: string;
   executeServerOperation?: ProjectSessionTransport["executeServerOperation"];
   getPermissions?: ProjectSessionTransport["getPermissions"];
+  issueReportRuntime?: () => IssueReportRuntime;
 }) =>
   createProjectSession({
     projectId: connection.projectId,
@@ -540,6 +583,7 @@ export const createCliProjectSession = ({
       connection,
       executeServerOperation,
       getPermissions,
+      issueReportRuntime,
     }),
     storage:
       storage ??

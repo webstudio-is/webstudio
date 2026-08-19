@@ -11,6 +11,7 @@ import {
   createCliProjectRestorePointStorage,
   createCliProjectSessionStorage,
   createCliProjectSessionTransport,
+  createIssueReportFailure,
   addIssueReportRuntime,
   getCliServerApiContract,
   getCliProjectSessionFile,
@@ -30,6 +31,18 @@ test("adds anonymous local runtime metadata only to issue reports", () => {
     architecture: "arm64",
     executionMode: "mcp" as const,
     apiContractVersion: "public-api:client",
+    bundleVersion: "bundle:client",
+    recentFailure: {
+      tool: "preview.start",
+      code: "PROJECT_BUNDLE_INVALID",
+      issues: [
+        {
+          path: ["assets", "0", "type"],
+          code: "invalid_value",
+          constraint: "one of supported asset types",
+        },
+      ],
+    },
   };
 
   expect(addIssueReportRuntime("report-issue", report, runtime)).toEqual({
@@ -37,6 +50,43 @@ test("adds anonymous local runtime metadata only to issue reports", () => {
     runtime,
   });
   expect(addIssueReportRuntime("audit", report, runtime)).toBe(report);
+});
+
+test("keeps only anonymous structured fields from the latest tool failure", () => {
+  const error = Object.assign(new Error("Asset customer-logo.png is invalid"), {
+    code: "PROJECT_BUNDLE_INVALID",
+    issues: [
+      {
+        path: ["assets", "0", "type"],
+        code: "invalid_value",
+        message: "Customer-specific value is unsupported",
+        constraint: "one of supported asset types",
+        detail: "Asset customer-logo.png belongs to project-123",
+      },
+    ],
+  });
+
+  expect(createIssueReportFailure("preview.start", error)).toEqual({
+    tool: "preview.start",
+    code: "PROJECT_BUNDLE_INVALID",
+    issues: [
+      {
+        path: ["assets", "0", "type"],
+        code: "invalid_value",
+        constraint: "one of supported asset types",
+      },
+    ],
+  });
+
+  expect(
+    createIssueReportFailure("customer/project", {
+      code: "dynamic-code",
+      issues: error.issues,
+    })
+  ).toEqual({
+    tool: "unknown",
+    code: "MCP_TOOL_FAILED",
+  });
 });
 
 test("scopes project session files for explicitly selected projects", () => {
@@ -949,6 +999,7 @@ describe("cli project session transport", () => {
       architecture: process.arch,
       executionMode: "mcp",
       apiContractVersion: expect.any(String),
+      bundleVersion: expect.any(String),
     });
   });
 });

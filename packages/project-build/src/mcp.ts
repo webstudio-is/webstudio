@@ -8405,12 +8405,14 @@ export const createProjectSessionMcpServer = async <
   onInitialized,
   toolNameFormat = "canonical",
   toolHeartbeatIntervalMs = 10_000,
+  onToolFailure,
 }: Omit<ProjectSessionMcpCoreOptions<Command>, "reportToolProgress"> & {
   getErrorCode?: McpErrorCodeResolver;
   reportLog?: (level: McpLogLevel, message: string) => void;
   onInitialized?: (clientName: string | undefined) => void;
   toolNameFormat?: "canonical" | "underscores";
   toolHeartbeatIntervalMs?: number;
+  onToolFailure?: (tool: string, error: unknown) => void;
 }) => {
   const server = new Server(
     { name: "webstudio", version: "0.0.0" },
@@ -8549,6 +8551,7 @@ export const createProjectSessionMcpServer = async <
       sendLog("info", `tool ${name} succeeded in ${Date.now() - startedAt}ms`);
       return result;
     } catch (error) {
+      onToolFailure?.(name, error);
       sendLog(
         "error",
         `tool ${name} failed in ${Date.now() - startedAt}ms: ${

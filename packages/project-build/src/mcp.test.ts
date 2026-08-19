@@ -8622,6 +8622,7 @@ describe("project session mcp adapter", () => {
       "Project session snapshot changed on disk."
     ) as Error & { code: string };
     error.code = "PROJECT_SESSION_BUSY";
+    const onToolFailure = vi.fn();
     const server = await createProjectSessionMcpServer({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
@@ -8632,6 +8633,7 @@ describe("project session mcp adapter", () => {
         typeof error === "object" && error !== null && "code" in error
           ? (error as { code?: string }).code
           : undefined,
+      onToolFailure,
     });
     const { client, close } = await createConnectedClient(server);
 
@@ -8654,6 +8656,7 @@ describe("project session mcp adapter", () => {
           },
         })
       );
+      expect(onToolFailure).toHaveBeenCalledWith("list-pages", error);
     } finally {
       await close();
     }
