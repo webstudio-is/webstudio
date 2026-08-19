@@ -2020,6 +2020,35 @@ Every returned item includes `id`. In `preview-asset-query`, a many result has `
 
 Choose `fields` and disable `includeMetadata` when the page needs only selected values. Fields used only for static filtering or sorting do not need to be returned. When enabled, `includeMetadata` adds `name`, `description`, `path`, `key`, `folderId`, `extension`, `mimeType`, `size`, `createdAt`, `revision`. Every result includes `id`.
 
+### Asset reference metadata
+
+A plain local asset path in Markdown frontmatter or JSON properties keeps the backward-compatible URL string result. Wrap the path in an exact `$ref` object only when consumers need structured Asset Manager metadata:
+
+```yaml
+featureImage:
+  $ref: ./assets/hero.png
+```
+
+The reference declares only the relationship. The query decides which metadata enters its result and published database. A complete `properties.featureImage` selection returns the Asset Manager asset metadata together with its resolved `src`. This includes fields such as `id`, `name`, `description`, `mimeType`, `width`, and `height`; new asset metadata becomes available to references without changing the document. Select only the nested fields the page uses:
+
+```json
+{
+  "output": {
+    "mode": "fields",
+    "includeMetadata": false,
+    "fields": [
+      ["properties", "title"],
+      ["properties", "featureImage", "src"],
+      ["properties", "featureImage", "description"]
+    ]
+  }
+}
+```
+
+The selected value becomes an object. Bind an Image source to `post.properties.featureImage.src` and its alternative text to `post.properties.featureImage.description ?? post.properties.title`. A missing description therefore falls back to the article title without duplicating text in frontmatter.
+
+External URLs remain ordinary strings. Existing local path strings also keep their URL string shape, so adopting structured references does not change existing queries or bindings.
+
 ### Content modes
 
 | Value | Behavior |

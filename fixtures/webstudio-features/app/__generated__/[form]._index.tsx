@@ -92,6 +92,7 @@ formState_1 = state
 set$formState_1(formState_1)
 }}
 action={"action"}
+method={"get"}
 className={`w-webhook-form`}>
 {(formState_1 === 'initial' || formState_1 === 'error') &&
 <Box

@@ -820,7 +820,7 @@ describe("published asset resource runtime", () => {
     });
   });
 
-  test("resolves structured Asset values from materialized query rows", async () => {
+  test("resolves structured Asset metadata in the published runtime", async () => {
     const query = assetQuery.parse({
       where: {
         all: [
@@ -837,7 +837,12 @@ describe("published asset resource runtime", () => {
       output: {
         mode: "fields",
         includeMetadata: false,
-        fields: [["properties", "featureImage"]],
+        fields: [
+          ["properties", "featureImage", "src"],
+          ["properties", "featureImage", "description"],
+          ["properties", "featureImage", "width"],
+          ["properties", "featureImage", "height"],
+        ],
       },
       content: { mode: "none" },
     });
@@ -850,7 +855,9 @@ describe("published asset resource runtime", () => {
             ...document,
             properties: {
               ...document.properties,
-              featureImage: "./assets/hero.png?width=1200#cover",
+              featureImage: {
+                $ref: "./assets/hero.png?width=1200#cover",
+              },
             },
           },
         }),
@@ -861,6 +868,7 @@ describe("published asset resource runtime", () => {
             path: ["properties", "featureImage"],
             assetId: "hero",
             suffix: "?width=1200#cover",
+            structured: true,
           },
         ],
       },
@@ -869,7 +877,7 @@ describe("published asset resource runtime", () => {
       ]),
     });
 
-    expect(index.documents).toEqual([]);
+    expect(index.documents).toHaveLength(1);
     expect(() =>
       createPublishedAssetResourceFetch({
         baseUrl: "https://site.example",
@@ -883,7 +891,12 @@ describe("published asset resource runtime", () => {
       deploymentId: "materialized-structured-asset",
       artifact: index,
       runtimeAssets: {
-        hero: { url: "/cgi/image/hero.png?format=raw" },
+        hero: {
+          url: "/cgi/image/hero.png?format=raw",
+          description: "Published hero",
+          width: 1200,
+          height: 800,
+        },
       },
     });
     const response = await runtimeFetch("/$resources/assets", {
@@ -896,7 +909,12 @@ describe("published asset resource runtime", () => {
         {
           id: "post-1",
           properties: {
-            featureImage: "/cgi/image/hero.png?format=raw&width=1200#cover",
+            featureImage: {
+              src: "/cgi/image/hero.png?format=raw&width=1200#cover",
+              description: "Published hero",
+              width: 1200,
+              height: 800,
+            },
           },
         },
       ],

@@ -122,7 +122,7 @@ export const action = async (props: ActionFunctionArgs) => {
       }
       const assetInfoFallback = getAssetInfoFallback({
         format:
-          assetType === "image"
+          assetType === "image" || assetType === "video"
             ? (url.searchParams.get("format") ?? undefined)
             : undefined,
         searchParams: url.searchParams,

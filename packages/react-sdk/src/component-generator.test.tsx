@@ -1005,10 +1005,10 @@ return (condition) &&
 `);
 });
 
-test("generate resource prop", () => {
+test("generate resource prop with configured form method", () => {
   const myResource = new ResourceValue("myResource", {
     url: expression`"https://my-url.com?with-secret"`,
-    method: "get",
+    method: "post",
     searchParams: [],
     headers: [],
   });
@@ -1025,11 +1025,26 @@ test("generate resource prop", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      metas: new Map(),
+      metas: new Map([
+        [
+          "Form",
+          {
+            props: {
+              action: {
+                control: "resource",
+                type: "resource",
+                required: false,
+                generatedProps: ["method"],
+              },
+            },
+          },
+        ],
+      ]),
       ...renderData(
         <$.Body ws:id="body">
           <$.Form ws:id="form1" action={myResource}></$.Form>
           <$.Form ws:id="form2" action={anotherResource}></$.Form>
+          <$.Form ws:id="form3" action={myResource} method="get"></$.Form>
         </$.Body>
       ),
     })
@@ -1037,9 +1052,14 @@ test("generate resource prop", () => {
     "const Page = () => {
     return <Body>
     <Form
-    action={"action"} />
+    action={"action"}
+    method={"post"} />
     <Form
-    action={"action_1"} />
+    action={"action_1"}
+    method={"get"} />
+    <Form
+    action={"action"}
+    method={"get"} />
     </Body>
     }
     "

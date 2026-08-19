@@ -198,6 +198,34 @@ describe("AssetThumbnail", () => {
     );
   });
 
+  test("falls back to a file preview when the browser cannot decode a video", () => {
+    const container = renderer.render(
+      <AssetThumbnail
+        assetContainer={{
+          status: "uploaded",
+          asset: {
+            id: "video-asset",
+            projectId: "project",
+            name: "sample.avi",
+            format: "avi",
+            size: 100,
+            type: "video",
+            meta: { width: 640, height: 360 },
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        }}
+        interactions={createInteractions()}
+      />
+    );
+    const video = container.querySelector("video");
+    expect(video).toBeInstanceOf(HTMLVideoElement);
+
+    act(() => video?.dispatchEvent(new Event("error", { bubbles: true })));
+
+    expect(container.querySelector("video")).toBeNull();
+    expect(container.textContent).toContain("AVI");
+  });
+
   test("uses focus for folder selection and opens only on activation", () => {
     const onOpen = vi.fn();
     const onSelectionChange = vi.fn();

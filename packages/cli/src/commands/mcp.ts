@@ -701,6 +701,43 @@ type McpRunTermination =
   | { type: "beforeExit"; exitCode: number }
   | { type: "signal"; signal: NodeJS.Signals };
 
+const reportMcpSingleOpCallTermination = ({
+  termination,
+  tool,
+  elapsedMs,
+  writeStatus = (message) => stderr.write(`${message}\n`),
+  writeResult = printJson,
+  setExitCode = (code) => {
+    process.exitCode = code;
+  },
+}: {
+  termination: McpRunTermination;
+  tool: string;
+  elapsedMs: number;
+  writeStatus?: (message: string) => void;
+  writeResult?: (result: unknown) => void;
+  setExitCode?: (code: number) => void;
+}) => {
+  const error = {
+    code: "MCP_CALL_TERMINATED",
+    message: `MCP single-op-call ${tool} terminated before returning a result.`,
+  };
+  const payload = createMcpSingleOpCallErrorPayload({ error, elapsedMs });
+  writeStatus(
+    formatMcpStatusLine(`single-op-call ${tool} terminated: ${error.message}`)
+  );
+  writeResult({
+    ...payload,
+    meta: {
+      ...payload.meta,
+      termination,
+    },
+  });
+  if (termination.type === "beforeExit") {
+    setExitCode(1);
+  }
+};
+
 const mcpRunTerminationCleanupTimeout = 5000;
 
 const reportMcpRunTermination = ({
@@ -816,12 +853,14 @@ const installMcpRunTerminationHandlers = ({
   results,
   startedAt,
   disposeHost,
+  reportTermination = reportMcpRunTermination,
 }: {
   getActiveCall: () => ActiveMcpRunCall | undefined;
   totalCalls: number;
   results: unknown[];
   startedAt: number;
   disposeHost: () => Promise<void>;
+  reportTermination?: typeof reportMcpRunTermination;
 }) => {
   const controller = createMcpRunTerminationController({
     getActiveCall,
@@ -829,6 +868,7 @@ const installMcpRunTerminationHandlers = ({
     results,
     startedAt,
     disposeHost,
+    reportTermination,
   });
   const terminationSignals = ["SIGHUP", "SIGINT", "SIGTERM"] as const;
   const signalHandlers = new Map<NodeJS.Signals, () => void>();
@@ -1284,12 +1324,40 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
       `single-op-call ${tool} started${options.dryRun === true ? " (dry run)" : ""}`
     )}\n`
   );
+  let activeCall: ActiveMcpRunCall | undefined = { number: 1, tool };
+  let didTerminate = false;
+  let disposeHost: () => Promise<void> = async () => undefined;
+  const disposeTerminationHandlers = installMcpRunTerminationHandlers({
+    getActiveCall: () => activeCall,
+    totalCalls: 1,
+    results: [],
+    startedAt,
+    disposeHost: () => disposeHost(),
+    reportTermination: ({ termination, activeCall, elapsedMs }) => {
+      didTerminate = true;
+      reportMcpSingleOpCallTermination({
+        termination,
+        tool: activeCall.tool,
+        elapsedMs,
+      });
+    },
+  });
   try {
     assertSingleOpCallToolSupported(tool);
     const input = await parseMcpSingleOpCallInput(options);
     validateSingleOpCallInput(tool, input);
+    if (didTerminate) {
+      throw new HandledCliError();
+    }
     await withMcpHost(
-      () => createCliMcpHost({ projectId: options.project }),
+      async () => {
+        const mcpHost = await createCliMcpHost({ projectId: options.project });
+        disposeHost = mcpHost.dispose;
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
+        return mcpHost;
+      },
       async ({ host, apiContract, scope }) => {
         assertMcpToolServerSupport(tool, apiContract);
         const core = createCliMcpCore(host);
@@ -1297,20 +1365,33 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
           tool === "checkpoint.ack"
             ? await readPersistedMcpCheckpoint(scope)
             : undefined;
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
         await assertPersistedMcpCheckpointAcknowledged(
           tool,
           core.listTools(),
           scope
         );
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
         if (options.refresh === true && tool !== "refresh") {
           await core.callTool({ name: "refresh" });
+          if (didTerminate) {
+            throw new HandledCliError();
+          }
         }
         const result = await core.callTool({
           name: tool,
           input,
           dryRun: options.dryRun,
         });
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
         if (isMcpToolCallFailure(result)) {
+          activeCall = undefined;
           stderr.write(
             `${formatMcpStatusLine(
               `single-op-call ${tool} failed in ${Date.now() - startedAt}ms`
@@ -1332,9 +1413,13 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
           structuredContent: result.structuredContent,
           scope,
         });
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
         const session = result.structuredContent.meta.session;
         const committed =
           session === undefined ? "" : `; committed=${session.committed}`;
+        activeCall = undefined;
         stderr.write(
           `${formatMcpStatusLine(
             `single-op-call ${tool} succeeded in ${Date.now() - startedAt}ms${committed}`
@@ -1348,6 +1433,10 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
       }
     );
   } catch (error) {
+    activeCall = undefined;
+    if (didTerminate) {
+      throw new HandledCliError();
+    }
     if (isHandledCliError(error)) {
       throw error;
     }
@@ -1362,6 +1451,9 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
     );
     printJson(payload);
     throw new HandledCliError();
+  } finally {
+    activeCall = undefined;
+    disposeTerminationHandlers();
   }
 };
 
@@ -1755,6 +1847,7 @@ export const __testing__ = {
     meta: { elapsedMs },
   }),
   createMcpRunErrorPayload,
+  reportMcpSingleOpCallTermination,
   reportMcpRunTermination,
   createMcpRunTerminationController,
   createMcpRunCheckpointStopPayload,

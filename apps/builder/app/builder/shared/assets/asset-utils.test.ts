@@ -195,7 +195,11 @@ describe("uploadingFileDataToAsset", () => {
       id: "test-id",
       name: "video.mp4",
       format: "mp4",
-      type: "file",
+      type: "video",
+      meta: {
+        width: Number.NaN,
+        height: Number.NaN,
+      },
     });
   });
 

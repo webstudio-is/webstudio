@@ -39,10 +39,7 @@ import {
   assertDocumentSourceIdentity,
 } from "./document-graph";
 import { contentEngineLimits } from "./limits";
-import {
-  getRuntimeAssetUrls,
-  resolveAssetValueReferences,
-} from "./asset-value-references";
+import { resolveAssetValueReferences } from "./asset-value-references";
 
 type ContentDatabaseQueryArguments = [
   request: AssetQueryRequestInput,
@@ -271,7 +268,6 @@ const createQueryableContentDatabase = ({
     const results: Array<
       PromiseSettledResult<AssetQueryExecutionResult> | undefined
     > = Array.from({ length: requests.length });
-    const assetUrls = getRuntimeAssetUrls(runtimeAssets);
     const pendingIndexes: number[] = [];
     for (const [index, request] of requests.entries()) {
       try {
@@ -280,7 +276,7 @@ const createQueryableContentDatabase = ({
           queries: artifact.queries,
           query: request.query,
           assetValueReferences: artifact.assetValueReferences,
-          assetUrls,
+          runtimeAssets,
         });
         if (materialized !== undefined) {
           results[index] = { status: "fulfilled", value: materialized };
@@ -350,7 +346,6 @@ const createQueryableContentDatabase = ({
     query: ReturnType<typeof assetQuery.parse>;
     runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   }) => {
-    const assetUrls = getRuntimeAssetUrls(runtimeAssets);
     return getDocumentGraphQueryRootIds({ graph, query }).filter((rootId) => {
       const storedDocument = documentsById.get(rootId);
       const document =
@@ -359,7 +354,7 @@ const createQueryableContentDatabase = ({
           : resolveAssetValueReferences({
               value: storedDocument,
               references: artifact.assetValueReferences?.[rootId],
-              assetUrls,
+              runtimeAssets: runtimeAssets ?? {},
             });
       if (document === undefined) {
         return false;

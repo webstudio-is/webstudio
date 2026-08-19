@@ -1992,6 +1992,68 @@ sitemap.map((page) => page.path);`
     );
   });
 
+  test("prerenders the configured Webhook Form method", async () => {
+    const siteData = createSiteData({
+      instances: [
+        [
+          "root",
+          {
+            id: "root",
+            component: "Box",
+            children: [{ type: "id", value: "form" }],
+          },
+        ],
+        [
+          "form",
+          {
+            id: "form",
+            component: "Form",
+            children: [],
+          },
+        ],
+      ],
+      props: [
+        [
+          "form-action",
+          {
+            id: "form-action",
+            instanceId: "form",
+            name: "action",
+            type: "resource",
+            value: "webhook",
+          },
+        ],
+      ],
+    });
+    siteData.build.resources = [
+      [
+        "webhook",
+        {
+          id: "webhook",
+          name: "action",
+          method: "post",
+          url: '"https://example.com/webhook"',
+          headers: [],
+        },
+      ],
+    ] as never;
+    await writeSiteData(siteData);
+
+    await prebuild({ assets: false, template: ["ssg"] });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["prerender"]);
+
+    const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
+    const [form] = findElementsByTagName(html, "form");
+    if (form === undefined) {
+      throw new Error("Expected a prerendered Webhook Form");
+    }
+    expect(
+      Object.fromEntries(form.attrs.map(({ name, value }) => [name, value]))
+    ).toMatchObject({ method: "post" });
+  }, 30_000);
+
   test("ignores dynamic SSG pages without enumerable Assets query paths", async () => {
     await writeSiteData(
       createSiteData({

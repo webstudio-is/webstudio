@@ -1,5 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { fontMeta } from "@webstudio-is/fonts";
+import { assetType } from "./schema/assets";
 import {
   ALLOWED_FILE_TYPES,
   getMimeTypeByExtension,
@@ -17,6 +18,7 @@ import {
   decodePathFragment,
   getAssetUrl,
   toRuntimeAsset,
+  toAssetReferenceRuntimeData,
   acceptToMimePatterns,
   acceptToMimeCategories,
   getAssetMime,
@@ -460,6 +462,20 @@ describe("allowed-file-types", () => {
   });
 
   describe("detectAssetType", () => {
+    test("detects only canonical asset types", () => {
+      expect(assetType.options).toEqual(["font", "image", "video", "file"]);
+      for (const filename of [
+        "image.png",
+        "font.woff2",
+        "video.mp4",
+        "document.pdf",
+      ]) {
+        expect(assetType.safeParse(detectAssetType(filename)).success).toBe(
+          true
+        );
+      }
+    });
+
     test("detects image files", () => {
       expect(detectAssetType("photo.jpg")).toBe("image");
       expect(detectAssetType("image.png")).toBe("image");
@@ -1050,6 +1066,29 @@ describe("allowed-file-types", () => {
       const result = toRuntimeAsset(mockImageAsset, "https://example.com");
       expect(result).toEqual({
         url: "/cgi/image/photo.jpg?format=raw",
+        width: 1920,
+        height: 1080,
+      });
+    });
+
+    test("converts image asset metadata for structured references", () => {
+      expect(
+        toAssetReferenceRuntimeData(mockImageAsset, "https://example.com")
+      ).toEqual({
+        id: "image-1",
+        url: "/cgi/image/photo.jpg?format=raw",
+        name: "photo.jpg",
+        description: "A photo",
+        mimeType: "image/jpeg",
+        projectId: "project-1",
+        size: 1024,
+        type: "image",
+        format: "jpg",
+        createdAt: "2024-01-01",
+        meta: {
+          width: 1920,
+          height: 1080,
+        },
         width: 1920,
         height: 1080,
       });

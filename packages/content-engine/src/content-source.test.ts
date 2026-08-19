@@ -539,7 +539,7 @@ describe("content source snapshots", () => {
                 document: {
                   ...markdownEntry.document,
                   properties: {
-                    featureImage: "./assets/content-mode.png",
+                    featureImage: { $ref: "./assets/content-mode.png" },
                     openGraph: {
                       images: ["./assets/content-mode.png#social"],
                     },
@@ -575,6 +575,7 @@ describe("content source snapshots", () => {
         {
           path: ["properties", "featureImage"],
           assetId: "hero",
+          structured: true,
         },
         {
           path: ["properties", "openGraph", "images", 0],

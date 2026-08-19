@@ -7,9 +7,12 @@ import {
 import { useStore } from "@nanostores/react";
 import { Button, Flex, Tooltip, toast } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
-import { IMAGE_MIME_TYPES, detectAssetType } from "@webstudio-is/sdk";
+import {
+  IMAGE_MIME_TYPES,
+  detectAssetType,
+  type AssetType,
+} from "@webstudio-is/sdk";
 import { MAX_UPLOAD_SIZE, toBytes } from "@webstudio-is/asset-uploader";
-import type { AssetType } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { uploadAssets } from "./upload-assets";
 import { $authPermit } from "~/shared/nano-states";

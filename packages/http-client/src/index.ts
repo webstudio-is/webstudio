@@ -401,7 +401,7 @@ const getAssetUploadUrl = ({
   if (asset.folderId !== undefined) {
     url.searchParams.set("folderId", asset.folderId);
   }
-  if (asset.type === "image") {
+  if (asset.type === "image" || asset.type === "video") {
     url.searchParams.set("width", String(asset.meta.width));
     url.searchParams.set("height", String(asset.meta.height));
   }
@@ -550,7 +550,7 @@ const toUploadAsset = ({
     size: 0,
     createdAt: new Date().toISOString(),
   };
-  if (descriptor.type === "image") {
+  if (descriptor.type === "image" || descriptor.type === "video") {
     const width = descriptor.meta?.width;
     const height = descriptor.meta?.height;
     if (
@@ -559,12 +559,12 @@ const toUploadAsset = ({
       descriptor.format === undefined
     ) {
       throw new Error(
-        `Image asset "${descriptor.name}" requires format, meta.width, and meta.height.`
+        `${descriptor.type === "image" ? "Image" : "Video"} asset "${descriptor.name}" requires format, meta.width, and meta.height.`
       );
     }
     return {
       ...base,
-      type: "image",
+      type: descriptor.type,
       format: descriptor.format,
       meta: { width, height },
     };

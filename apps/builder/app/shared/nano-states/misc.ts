@@ -20,10 +20,10 @@ import type {
   Props,
   StyleDecl,
   StyleSource,
+  AssetType,
 } from "@webstudio-is/sdk";
 import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
-import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "@webstudio-is/project-build/runtime";
 import type { ChildrenOrientation } from "@webstudio-is/design-system";

@@ -1,5 +1,10 @@
 import { type FontFormat, fontMeta, FONT_FORMATS } from "@webstudio-is/fonts";
-import { type Asset, imageMeta, detectAssetType } from "@webstudio-is/sdk";
+import {
+  type Asset,
+  imageMeta,
+  videoMeta,
+  detectAssetType,
+} from "@webstudio-is/sdk";
 
 export const formatAsset = ({
   assetId,
@@ -57,6 +62,11 @@ export const formatAsset = ({
     parsedMeta &&
     typeof parsedMeta.width === "number" &&
     typeof parsedMeta.height === "number";
+  const isVideo =
+    detectedType === "video" &&
+    parsedMeta &&
+    typeof parsedMeta.width === "number" &&
+    typeof parsedMeta.height === "number";
 
   if (isImage) {
     return {
@@ -67,7 +77,16 @@ export const formatAsset = ({
     };
   }
 
-  // Default to file type for everything else (including videos)
+  if (isVideo) {
+    return {
+      ...base,
+      type: "video",
+      format: file.format,
+      meta: videoMeta.parse(parsedMeta),
+    };
+  }
+
+  // Default to file type for everything else
   return {
     ...base,
     type: "file",

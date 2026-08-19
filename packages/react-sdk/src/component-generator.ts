@@ -8,6 +8,7 @@ import type {
   DataSource,
   WsComponentMeta,
   IndexesWithinAncestors,
+  Resources,
 } from "@webstudio-is/sdk";
 import {
   parseComponentName,
@@ -149,6 +150,7 @@ export const generateJsxElement = ({
   tagsOverrides,
   instance,
   props,
+  resources,
   dataSources,
   usedDataSources,
   indexesWithinAncestors,
@@ -164,6 +166,7 @@ export const generateJsxElement = ({
   tagsOverrides?: Record<string, string>;
   instance: Instance;
   props: Props;
+  resources?: Resources;
   dataSources: DataSources;
   usedDataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
@@ -194,12 +197,20 @@ export const generateJsxElement = ({
   let collectionItemValue: undefined | string;
   let collectionItemKeyValue: undefined | string;
   let classNameValue: undefined | string;
+  const instanceProps = Array.from(props.values()).filter(
+    (prop) => prop.instanceId === instance.id
+  );
+  const instancePropNames = new Set(instanceProps.map((prop) => prop.name));
+  const projectedResourceProps = new Map<string, unknown>();
 
-  for (const prop of props.values()) {
-    if (prop.instanceId !== instance.id) {
-      continue;
+  const getGeneratedPropName = (name: string) => {
+    if (hasTags && !meta?.props?.[name]) {
+      return standardAttributesToReactProps[name] ?? name;
     }
+    return name;
+  };
 
+  for (const prop of instanceProps) {
     const propValue = generatePropValue({
       scope,
       prop,
@@ -210,12 +221,23 @@ export const generateJsxElement = ({
     if (isAttributeNameSafe(prop.name) === false) {
       continue;
     }
-    let name = prop.name;
-    // convert html attribute only when component has tags
-    // and does not specify own property with this name
-    if (hasTags && !meta?.props?.[prop.name]) {
-      name = standardAttributesToReactProps[prop.name] ?? prop.name;
+
+    if (prop.type === "resource") {
+      const propMeta = meta?.props?.[prop.name];
+      const resource = resources?.get(prop.value);
+      if (propMeta?.type === "resource" && resource !== undefined) {
+        for (const name of propMeta.generatedProps ?? []) {
+          if (
+            instancePropNames.has(name) === false &&
+            isAttributeNameSafe(name)
+          ) {
+            projectedResourceProps.set(name, resource[name]);
+          }
+        }
+      }
     }
+
+    const name = getGeneratedPropName(prop.name);
 
     // show prop controls conditional rendering and need to be handled separately
     if (prop.name === showAttribute) {
@@ -256,6 +278,11 @@ export const generateJsxElement = ({
     if (propValue !== undefined) {
       generatedProps += `\n${name}={${propValue}}`;
     }
+  }
+
+  for (const [propName, value] of projectedResourceProps) {
+    const name = getGeneratedPropName(propName);
+    generatedProps += `\n${name}={${JSON.stringify(value)}}`;
   }
 
   const classMapArray = classesMap?.get(instance.id);
@@ -365,6 +392,7 @@ export const generateJsxChildren = ({
   children,
   instances,
   props,
+  resources,
   dataSources,
   usedDataSources,
   indexesWithinAncestors,
@@ -378,6 +406,7 @@ export const generateJsxChildren = ({
   children: Instance["children"];
   instances: Instances;
   props: Props;
+  resources?: Resources;
   dataSources: DataSources;
   usedDataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
@@ -421,6 +450,7 @@ export const generateJsxChildren = ({
         tagsOverrides,
         instance,
         props,
+        resources,
         dataSources,
         usedDataSources,
         indexesWithinAncestors,
@@ -433,6 +463,7 @@ export const generateJsxChildren = ({
           children: instance.children,
           instances,
           props,
+          resources,
           dataSources,
           usedDataSources,
           indexesWithinAncestors,
@@ -453,6 +484,7 @@ export const generateWebstudioComponent = ({
   parameters,
   instances,
   props,
+  resources,
   dataSources,
   metas,
   tagsOverrides,
@@ -464,6 +496,7 @@ export const generateWebstudioComponent = ({
   parameters: Extract<Prop, { type: "parameter" }>[];
   instances: Instances;
   props: Props;
+  resources?: Resources;
   dataSources: DataSources;
   classesMap: Map<string, Array<string>>;
   metas: Map<Instance["component"], WsComponentMeta>;
@@ -488,6 +521,7 @@ export const generateWebstudioComponent = ({
       tagsOverrides,
       instance,
       props,
+      resources,
       dataSources,
       usedDataSources,
       indexesWithinAncestors,
@@ -499,6 +533,7 @@ export const generateWebstudioComponent = ({
         children: instance.children,
         instances,
         props,
+        resources,
         dataSources,
         usedDataSources,
         indexesWithinAncestors,
