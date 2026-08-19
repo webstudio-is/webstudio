@@ -36,7 +36,7 @@ States are CSS pseudo-classes that apply styles when a condition is true, such a
 You can type any valid CSS pseudo-class into the Style Sources dropdown. If it's not in the predefined list, Webstudio will accept it as a custom selector.
 
 {% hint style="info" %}
-Custom selectors are useful for advanced cases, but stick to the predefined states when possible — they are validated and shown in autocomplete.
+Custom states must stay scoped to the selected instance. Descendant and child combinators such as `:hover .child` and `:hover > .child` are not accepted in this field. To change child styles when a parent is hovered, use [CSS variables for parent-child interactions](css-variables.md#parent-child-interactions).
 {% endhint %}
 
 ## Pseudo-elements

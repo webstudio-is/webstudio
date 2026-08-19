@@ -156,6 +156,8 @@ Here are some use cases for local variables:
 
 With CSS variables, you can interact with the parent and modify the styles of any of the children.
 
+This creates the same visual result as a descendant selector such as `.card:hover .button` without authoring that selector. Define a variable on the parent, use it for the relevant property on the child, and change the variable's value in the parent's `:hover` state.
+
 <figure><img src="../../.gitbook/assets/parent-child-demo.gif" alt=""><figcaption><p>Hovering the link and the children change (icon color, icon bg, and arrow appears)</p></figcaption></figure>
 
 {% embed url="https://youtu.be/rg49mmDvdlE" %}
