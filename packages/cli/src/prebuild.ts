@@ -1228,6 +1228,7 @@ export const prebuild = async (options: {
       ],
       instances,
       props,
+      resources,
       dataSources,
       classesMap: classes,
       metas: usedMetas,
