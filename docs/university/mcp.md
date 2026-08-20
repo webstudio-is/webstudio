@@ -281,6 +281,8 @@ Use MCP itself after startup, or call the same tools with `webstudio mcp single-
 - `templates.get`: full registry item and payload metadata for one template
 - `search-project`: find a known value or id with `webstudio search-project '{"query":"pricing"}'` or MCP `search-project {"query":"pricing"}`; use focused list/get tools when the target structure is unknown
 
+`meta.guide` returns structured `routing` with the matched workflow and any broad context bundle it recommends. Authentication and design context bundles appear only when their specialized workflow matches. A brief that explicitly requests `insert-fragment` or an authored fragment suppresses registry component and template discovery; mention design-system or token reuse explicitly when the fragment depends on it.
+
 `search-project` follows normal ProjectSession synchronization, then searches in the CLI process. Namespace filters limit values matched; related namespaces may still supply route and reference context, and synchronization is unchanged. Only paged matches enter model context. Recognized credential fields and asset binary or document bodies are excluded.
 
 Component and template registry items use a shadcn-compatible top-level shape plus Webstudio-specific superset metadata in `meta`. Use `meta.runtime` for component ids, props, states, content model, and source identity; `meta.authoring` for composition and accessibility guidance; and `meta.builder` for template insertion details and expected project-data namespaces. These items are for Builder/MCP discovery and are not a published shadcn install registry yet.
