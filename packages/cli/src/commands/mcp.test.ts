@@ -157,17 +157,26 @@ test("keeps every MCP API tool aligned with its public API contract", () => {
         ? ["confirmDestructive", "confirmationToken"]
         : []),
     ];
+    const cliOwnedFields =
+      operation.command === "report-issue" ? ["runtime"] : [];
     const schemaMetadata = getInputJsonSchemaMetadata(schema);
     const semanticFields = schemaMetadata.inputFields.filter(
       (field) => transportFields.includes(field) === false
     );
     expect(new Set(semanticFields), operation.command).toEqual(
-      new Set(operation.inputFields)
+      new Set(
+        operation.inputFields.filter(
+          (field) => cliOwnedFields.includes(field) === false
+        )
+      )
     );
 
     const apiProperties = getInputJsonSchemaProperties(operation.inputSchema);
     const mcpProperties = getInputJsonSchemaProperties(schema);
     for (const field of operation.inputFields) {
+      if (cliOwnedFields.includes(field)) {
+        continue;
+      }
       const isRepresentationOverride =
         (operation.command === "insert-fragment" &&
           ["parentInstanceId", "fragment"].includes(field)) ||
@@ -181,7 +190,9 @@ test("keeps every MCP API tool aligned with its public API contract", () => {
       ).toEqual(apiProperties?.[field]);
     }
 
-    const requiredFields = [...operation.requiredInputFields];
+    const requiredFields = operation.requiredInputFields.filter(
+      (field) => cliOwnedFields.includes(field) === false
+    );
     if (
       operation.command === "insert-fragment" &&
       requiredFields.includes("parentInstanceId") === false
