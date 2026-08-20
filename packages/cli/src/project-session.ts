@@ -251,7 +251,7 @@ export const createIssueReportRuntime = (
 });
 
 export const createIssueReportFailure = (
-  tool: string,
+  canonicalTool: string,
   error: unknown
 ): IssueReportRecentFailure => {
   const errorCode = getStableErrorCode(error);
@@ -266,11 +266,8 @@ export const createIssueReportFailure = (
           }))
       : undefined;
   return {
-    tool: /^[a-z][a-z0-9.-]{0,159}$/.test(tool) ? tool : "unknown",
-    code:
-      errorCode !== undefined && /^[A-Z][A-Z0-9_]{0,159}$/.test(errorCode)
-        ? errorCode
-        : "MCP_TOOL_FAILED",
+    tool: canonicalTool,
+    code: errorCode ?? "MCP_TOOL_FAILED",
     ...(issues === undefined || issues.length === 0 ? {} : { issues }),
   };
 };

@@ -79,7 +79,7 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
   });
 
   expect(
-    createIssueReportFailure("customer/project", {
+    createIssueReportFailure("unknown", {
       code: "dynamic-code",
       issues: error.issues,
     })

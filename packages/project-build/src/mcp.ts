@@ -8420,7 +8420,7 @@ export const createProjectSessionMcpServer = async <
   onInitialized?: (clientName: string | undefined) => void;
   toolNameFormat?: "canonical" | "underscores";
   toolHeartbeatIntervalMs?: number;
-  onToolFailure?: (tool: string, error: unknown) => void;
+  onToolFailure?: (canonicalTool: string, error: unknown) => void;
 }) => {
   const server = new Server(
     { name: "webstudio", version: "0.0.0" },
@@ -8536,6 +8536,7 @@ export const createProjectSessionMcpServer = async <
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const params = getRequestParams(request);
     const exposedName = typeof params.name === "string" ? params.name : "";
+    const canonicalName = toolNameIndex.get(exposedName)?.name;
     const name = toolNameIndex.resolve(exposedName);
     const { input, dryRun } = getToolCallInput(params.arguments ?? {});
     const startedAt = Date.now();
@@ -8559,7 +8560,7 @@ export const createProjectSessionMcpServer = async <
       sendLog("info", `tool ${name} succeeded in ${Date.now() - startedAt}ms`);
       return result;
     } catch (error) {
-      onToolFailure?.(name, error);
+      onToolFailure?.(canonicalName ?? "unknown", error);
       sendLog(
         "error",
         `tool ${name} failed in ${Date.now() - startedAt}ms: ${

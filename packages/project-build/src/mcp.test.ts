@@ -8680,6 +8680,12 @@ describe("project session mcp adapter", () => {
         })
       );
       expect(onToolFailure).toHaveBeenCalledWith("list-pages", error);
+
+      await client.callTool({
+        name: "customer/project",
+        arguments: {},
+      });
+      expect(onToolFailure.mock.calls.at(-1)?.[0]).toBe("unknown");
     } finally {
       await close();
     }

@@ -1234,8 +1234,8 @@ const createCliMcpHost = async ({
     host,
     apiContract,
     toolCount: operations.length,
-    recordToolFailure(tool: string, error: unknown) {
-      recentFailure = createIssueReportFailure(tool, error);
+    recordToolFailure(canonicalTool: string, error: unknown) {
+      recentFailure = createIssueReportFailure(canonicalTool, error);
     },
     reportLog(message: string) {
       if (message.startsWith("ready with ")) {
