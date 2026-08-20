@@ -1197,6 +1197,29 @@ describe("project session mcp adapter", () => {
     );
   });
 
+  test("omits CLI-owned issue runtime from the MCP input schema", () => {
+    const [tool] = listProjectSessionMcpTools([
+      publicOperation({
+        command: "report-issue",
+        id: "reports.issue",
+        description: "Report an issue",
+        localCapable: false,
+        serverOnly: true,
+        inputSchema: getTestInputSchema(
+          z.object({
+            title: z.string(),
+            runtime: z
+              .object({ recentFailure: z.unknown().optional() })
+              .optional(),
+          })
+        ),
+      }),
+    ]);
+
+    expect(tool?.inputSchema.properties).toHaveProperty("title");
+    expect(tool?.inputSchema.properties).not.toHaveProperty("runtime");
+  });
+
   test("documents the queried Assets result shape in focused tools", () => {
     const contracts = runtimeOperationContracts.filter(({ id }) =>
       ["assetsResources.create", "assetsResources.update"].includes(id)

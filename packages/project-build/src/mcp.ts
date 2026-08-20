@@ -1400,6 +1400,14 @@ const getMcpOperationInputSchema = (
   let schema = constrainUnconstrainedInputSchemas(
     options.schema ?? getOperationInputSchema(operation)
   );
+  if (operation.command === "report-issue") {
+    const { runtime: _runtime, ...properties } = schema.properties ?? {};
+    schema = {
+      ...schema,
+      properties,
+      required: schema.required?.filter((field) => field !== "runtime"),
+    };
+  }
   const properties = getInputJsonSchemaProperties(schema);
   if (
     schema.additionalProperties === true &&
