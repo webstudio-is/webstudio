@@ -3000,4 +3000,28 @@ sitemap.map((page) => page.path);`
       "Project bundle is invalid, please make sure the project is synced. Invalid fields: page: Required"
     );
   });
+
+  test("exposes anonymous structured diagnostics for invalid asset fields", async () => {
+    const data = structuredClone(createSiteData()) as unknown as {
+      assets: Array<Record<string, unknown>>;
+    };
+    data.assets[0] = { ...data.assets[0], type: "future-video" };
+    await writeFile(".webstudio/data.json", JSON.stringify(data));
+
+    try {
+      await prebuild({ assets: false, template: ["defaults"] });
+      throw new Error("Expected invalid bundle to fail.");
+    } catch (error) {
+      expect(error).toMatchObject({
+        code: "PROJECT_BUNDLE_INVALID",
+        bundleVersion,
+        issues: expect.arrayContaining([
+          expect.objectContaining({
+            path: ["assets", "0", "type"],
+            code: "invalid_value",
+          }),
+        ]),
+      });
+    }
+  });
 });

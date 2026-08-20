@@ -57,7 +57,10 @@ import {
   type ComponentBuildContribution,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
-import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
+import {
+  collectFontFamiliesFromStyleDecls,
+  getZodValidationIssues,
+} from "@webstudio-is/project-build/runtime";
 import {
   assetQueryFilter,
   type AssetRuntimeData,
@@ -83,6 +86,7 @@ import {
   getQueryConditions,
 } from "@webstudio-is/query-builder/runtime";
 import {
+  bundleVersion,
   publishedProjectBundle,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
@@ -911,11 +915,18 @@ export const prebuild = async (options: {
   }
   const parsedSiteData = publishedProjectBundle.safeParse(loadedSiteData);
   if (parsedSiteData.success === false) {
-    throw new Error(
-      `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${formatZodIssues(
-        parsedSiteData.error.issues,
-        loadedSiteData
-      )}`
+    throw Object.assign(
+      new Error(
+        `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${formatZodIssues(
+          parsedSiteData.error.issues,
+          loadedSiteData
+        )}`
+      ),
+      {
+        code: "PROJECT_BUNDLE_INVALID",
+        bundleVersion,
+        issues: getZodValidationIssues(parsedSiteData.error),
+      }
     );
   }
   const siteData = parsedSiteData.data;

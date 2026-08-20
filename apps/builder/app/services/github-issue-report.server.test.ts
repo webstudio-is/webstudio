@@ -26,6 +26,18 @@ const report: IssueReportInput = {
     architecture: "arm64",
     executionMode: "mcp",
     apiContractVersion: "public-api:client",
+    bundleVersion: "bundle:client",
+    recentFailure: {
+      tool: "preview.start",
+      code: "PROJECT_BUNDLE_INVALID",
+      issues: [
+        {
+          path: ["assets", "0", "type"],
+          code: "invalid_value",
+          constraint: 'one of "font"|"image"|"video"|"file"',
+        },
+      ],
+    },
   },
   report: {
     userStory:
@@ -55,6 +67,13 @@ describe("GitHub issue reports", () => {
     expect(body).toContain("- Operating system: linux 6 (arm64)");
     expect(body).toContain("- Execution mode: mcp");
     expect(body).toContain("- API contract: public-api:client");
+    expect(body).toContain("- Bundle contract: bundle:client");
+    expect(body).toContain("## Captured failure diagnostics");
+    expect(body).toContain("- Tool: `preview.start`");
+    expect(body).toContain("- Error code: `PROJECT_BUNDLE_INVALID`");
+    expect(body).toContain(
+      '- `assets.0.type`: `invalid_value` (one of "font"|"image"|"video"|"file")'
+    );
     expect(body).toContain("- Model: gpt-5.6-sol");
     expect(body).toContain("- Reasoning effort: medium");
     expect(body).toContain(

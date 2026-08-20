@@ -188,6 +188,57 @@ export const serverOnlyRouterOperationMetadata = {
               minLength: 1,
               maxLength: 100,
             },
+            bundleVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            recentFailure: {
+              type: "object",
+              properties: {
+                tool: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 160,
+                },
+                code: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 160,
+                },
+                issues: {
+                  maxItems: 30,
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      path: {
+                        maxItems: 30,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          maxLength: 200,
+                        },
+                      },
+                      code: {
+                        type: "string",
+                        minLength: 1,
+                        maxLength: 100,
+                      },
+                      constraint: {
+                        type: "string",
+                        minLength: 1,
+                        maxLength: 500,
+                      },
+                    },
+                    required: ["path", "code", "constraint"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["tool", "code"],
+              additionalProperties: false,
+            },
           },
           required: [
             "cliVersion",

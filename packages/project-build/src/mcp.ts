@@ -1400,6 +1400,14 @@ const getMcpOperationInputSchema = (
   let schema = constrainUnconstrainedInputSchemas(
     options.schema ?? getOperationInputSchema(operation)
   );
+  if (operation.command === "report-issue") {
+    const { runtime: _runtime, ...properties } = schema.properties ?? {};
+    schema = {
+      ...schema,
+      properties,
+      required: schema.required?.filter((field) => field !== "runtime"),
+    };
+  }
   const properties = getInputJsonSchemaProperties(schema);
   if (
     schema.additionalProperties === true &&
@@ -8405,12 +8413,14 @@ export const createProjectSessionMcpServer = async <
   onInitialized,
   toolNameFormat = "canonical",
   toolHeartbeatIntervalMs = 10_000,
+  onToolFailure,
 }: Omit<ProjectSessionMcpCoreOptions<Command>, "reportToolProgress"> & {
   getErrorCode?: McpErrorCodeResolver;
   reportLog?: (level: McpLogLevel, message: string) => void;
   onInitialized?: (clientName: string | undefined) => void;
   toolNameFormat?: "canonical" | "underscores";
   toolHeartbeatIntervalMs?: number;
+  onToolFailure?: (canonicalTool: string, error: unknown) => void;
 }) => {
   const server = new Server(
     { name: "webstudio", version: "0.0.0" },
@@ -8526,6 +8536,7 @@ export const createProjectSessionMcpServer = async <
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const params = getRequestParams(request);
     const exposedName = typeof params.name === "string" ? params.name : "";
+    const canonicalName = toolNameIndex.get(exposedName)?.name;
     const name = toolNameIndex.resolve(exposedName);
     const { input, dryRun } = getToolCallInput(params.arguments ?? {});
     const startedAt = Date.now();
@@ -8549,6 +8560,7 @@ export const createProjectSessionMcpServer = async <
       sendLog("info", `tool ${name} succeeded in ${Date.now() - startedAt}ms`);
       return result;
     } catch (error) {
+      onToolFailure?.(canonicalName ?? "unknown", error);
       sendLog(
         "error",
         `tool ${name} failed in ${Date.now() - startedAt}ms: ${
