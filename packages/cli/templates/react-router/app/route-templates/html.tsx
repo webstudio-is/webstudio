@@ -246,6 +246,7 @@ const getRequestHost = (request: Request): string =>
 export const action = async ({
   request,
   context,
+  params,
 }: ActionFunctionArgs): Promise<
   { success: true } | { success: false; errors: string[] }
 > => {
@@ -258,7 +259,7 @@ export const action = async ({
     const formData = await request.formData();
 
     const system = {
-      params: {},
+      params,
       search: {},
       origin: url.origin,
       pathname: url.pathname,
