@@ -3,6 +3,7 @@ import {
   elementComponent,
   ROOT_INSTANCE_ID,
   tags,
+  type GetInstanceChildren,
   type Instance,
   type Instances,
   type Props,
@@ -45,9 +46,11 @@ type InsertTargetPathItem = {
 export const resolveInsertTargetPosition = ({
   insertTarget,
   instancePath,
+  getInstanceChildren,
 }: {
   insertTarget: InsertTarget;
   instancePath: InsertTargetPathItem[];
+  getInstanceChildren?: GetInstanceChildren;
 }): InsertTarget => {
   if (insertTarget.position !== "after") {
     return insertTarget;
@@ -65,9 +68,10 @@ export const resolveInsertTargetPosition = ({
       position: "end",
     };
   }
-  const index = parentItem.instance.children.findIndex(
-    (child) => child.type === "id" && child.value === instance.id
-  );
+  const index = (
+    getInstanceChildren?.(parentItem.instance, parentItem.instanceSelector) ??
+    parentItem.instance.children
+  ).findIndex((child) => child.type === "id" && child.value === instance.id);
   return {
     parentSelector: parentItem.instanceSelector,
     position: 1 + index,
@@ -79,11 +83,13 @@ export const getDefaultElementInsertTarget = ({
   props,
   metas,
   instanceSelector,
+  getInstanceChildren,
 }: {
   instances: Instances;
   props: Props;
   metas: Map<string, WsComponentMeta>;
   instanceSelector: InstanceSelector;
+  getInstanceChildren?: GetInstanceChildren;
 }): undefined | InsertTarget => {
   const containerSelector = findClosestNonTextualContainer({
     instances,
@@ -103,7 +109,10 @@ export const getDefaultElementInsertTarget = ({
     return;
   }
   const lastChildInstanceId = instanceSelector[insertableIndex - 1];
-  const lastChildPosition = containerInstance.children.findIndex(
+  const lastChildPosition = (
+    getInstanceChildren?.(containerInstance, containerSelector) ??
+    containerInstance.children
+  ).findIndex(
     (child) => child.type === "id" && child.value === lastChildInstanceId
   );
   return {
@@ -157,6 +166,7 @@ export const findClosestInsertTarget = ({
   onRootTarget,
   onNoMatch,
   allowFragmentContentModelWarnings,
+  getInstanceChildren,
 }: {
   fragment: Pick<WebstudioFragment, "children" | "instances" | "props">;
   instances: Instances;
@@ -168,6 +178,7 @@ export const findClosestInsertTarget = ({
   onRootTarget?: () => void;
   onNoMatch?: (message: string) => void;
   allowFragmentContentModelWarnings?: boolean;
+  getInstanceChildren?: GetInstanceChildren;
 }): undefined | InsertTarget => {
   const instanceSelector = from?.parentSelector ??
     selectedInstanceSelector ?? [rootInstanceId];
@@ -215,7 +226,9 @@ export const findClosestInsertTarget = ({
     };
   }
   const lastChildInstanceId = instanceSelector[insertableIndex - 1];
-  const lastChildPosition = instance.children.findIndex(
+  const lastChildPosition = (
+    getInstanceChildren?.(instance, parentSelector) ?? instance.children
+  ).findIndex(
     (child) => child.type === "id" && child.value === lastChildInstanceId
   );
   return {
@@ -236,6 +249,7 @@ export const resolveFragmentInsertTarget = ({
   onNoMatch,
   onMissingTarget,
   allowFragmentContentModelWarnings,
+  getInstanceChildren,
 }: {
   fragment: Pick<WebstudioFragment, "children" | "instances" | "props">;
   instances: Instances;
@@ -248,6 +262,7 @@ export const resolveFragmentInsertTarget = ({
   onNoMatch?: (message: string) => void;
   onMissingTarget?: () => void;
   allowFragmentContentModelWarnings?: boolean;
+  getInstanceChildren?: GetInstanceChildren;
 }): undefined | ResolvedInsertTarget => {
   const matchedTarget = findClosestInsertTarget({
     fragment,
@@ -260,6 +275,7 @@ export const resolveFragmentInsertTarget = ({
     onRootTarget,
     onNoMatch,
     allowFragmentContentModelWarnings,
+    getInstanceChildren,
   });
   const closestTarget =
     matchedTarget ??
@@ -275,6 +291,7 @@ export const resolveFragmentInsertTarget = ({
   const { parentSelector, position } = resolveInsertTargetPosition({
     insertTarget: closestTarget,
     instancePath,
+    getInstanceChildren,
   });
   const [parentInstanceId] = parentSelector;
   if (
@@ -304,6 +321,7 @@ export const resolveComponentInsertTarget = ({
   onRootTarget,
   onNoMatch,
   onMissingTarget,
+  getInstanceChildren,
 }: {
   component: Instance["component"];
   templates: ComponentTemplateRegistry;
@@ -317,6 +335,7 @@ export const resolveComponentInsertTarget = ({
   onRootTarget?: () => void;
   onNoMatch?: (message: string) => void;
   onMissingTarget?: () => void;
+  getInstanceChildren?: GetInstanceChildren;
 }): undefined | ResolvedComponentInsertTarget => {
   if (component === elementComponent) {
     const target =
@@ -328,6 +347,7 @@ export const resolveComponentInsertTarget = ({
             props,
             metas,
             instanceSelector: selectedInstanceSelector,
+            getInstanceChildren,
           }));
     if (target === undefined) {
       return;
@@ -349,6 +369,7 @@ export const resolveComponentInsertTarget = ({
     const { parentSelector, position } = resolveInsertTargetPosition({
       insertTarget: target,
       instancePath,
+      getInstanceChildren,
     });
     const [parentInstanceId] = parentSelector;
     if (
@@ -381,5 +402,6 @@ export const resolveComponentInsertTarget = ({
     onRootTarget,
     onNoMatch,
     onMissingTarget,
+    getInstanceChildren,
   });
 };

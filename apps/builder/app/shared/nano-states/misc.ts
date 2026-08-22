@@ -29,14 +29,13 @@ import { type InstanceSelector } from "@webstudio-is/project-build/runtime";
 import type { ChildrenOrientation } from "@webstudio-is/design-system";
 import { $selectedInstance, $selectedInstanceSelector } from "./instances";
 import { getPermissions } from "../permissions";
+import { $project, $publisherHost } from "../sync/data-stores";
 import {
-  $project,
-  $publisherHost,
-  $props,
-  $styles,
-  $styleSources,
-  $styleSourceSelections,
-} from "../sync/data-stores";
+  $runtimeProps as $props,
+  $runtimeStyles as $styles,
+  $runtimeStyleSources as $styleSources,
+  $runtimeStyleSourceSelections as $styleSourceSelections,
+} from "../content-block-content";
 
 export const $publishedOrigin = computed(
   [$project, $publisherHost],

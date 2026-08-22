@@ -31,7 +31,7 @@ import {
   type InstancePath,
 } from "@webstudio-is/project-build/runtime";
 import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime";
-import { $instances } from "~/shared/sync/data-stores";
+import { $runtimeInstances } from "~/shared/content-block-content";
 import {
   isComponentDetachable,
   ROOT_INSTANCE_ID,
@@ -131,7 +131,7 @@ const getMenuPermissions = ({
 export const MenuItems = () => {
   const instancePath = useStore($selectedInstancePath);
   const selectedInstanceSelectors = useStore($allSelectedInstanceSelectors);
-  const instances = useStore($instances);
+  const instances = useStore($runtimeInstances);
   const propValues = useStore($propValuesByInstanceSelector);
   const isContentMode = useStore($isContentMode);
   const isDesignMode = useStore($isDesignMode);

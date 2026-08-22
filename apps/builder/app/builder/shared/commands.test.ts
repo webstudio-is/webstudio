@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import type { MaterializedMdxAuthoredContentRoot } from "@webstudio-is/project-build/runtime";
 import {
+  blockComponent,
   blockTemplateComponent,
+  elementComponent,
   type DataSource,
   type Instance,
   type PageTemplate,
@@ -48,6 +51,13 @@ import {
 import { expectSlotsShareFragment } from "~/shared/slot-test-utils";
 import { __testing__, emitCommand, subscribeCommands } from "./commands";
 import { $activeInspectorPanel } from "./nano-states";
+import { canReparentInstance } from "~/shared/instance-utils/mutation";
+import {
+  $materializedContentRoots,
+  publishMaterializedContentRoot,
+  registerContentStorageSaver,
+  resetMaterializedContent,
+} from "~/shared/content-block-content";
 
 const {
   canRunDesignModeCommand,
@@ -60,6 +70,7 @@ registerContainers();
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  resetMaterializedContent();
 });
 
 const resetPageActionStores = () => {
@@ -90,6 +101,38 @@ const resetDataStores = () => {
   $styleSourceSelections.set(new Map());
   $builderMode.set("design");
 };
+
+test("keeps ordinary project undo and redo commands working", async () => {
+  resetDataStores();
+  const unsubscribe = subscribeCommands();
+  $instances.set(
+    new Map([
+      [
+        "box",
+        {
+          type: "instance" as const,
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ])
+  );
+  serverSyncStore.createTransaction([$instances], (instances) => {
+    instances.get("box")!.label = "Changed";
+  });
+
+  emitCommand("undo");
+  await vi.waitFor(() =>
+    expect($instances.get().get("box")?.label).toBeUndefined()
+  );
+  emitCommand("redo");
+  await vi.waitFor(() =>
+    expect($instances.get().get("box")?.label).toBe("Changed")
+  );
+
+  unsubscribe();
+});
 
 const setupMoveInstanceProject = () => {
   resetDataStores();
@@ -1611,6 +1654,255 @@ describe("move instance commands", () => {
     expect($instances.get().get("body")?.children).toEqual([
       { type: "id", value: "heading" },
       { type: "id", value: "box" },
+      { type: "id", value: "paragraph" },
+    ]);
+  });
+
+  test("moves editable Content Block children with keyboard commands", () => {
+    resetDataStores();
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(
+      new Map([
+        [
+          "body",
+          {
+            type: "instance",
+            id: "body",
+            component: "Body",
+            children: [{ type: "id", value: "block" }],
+          },
+        ],
+        [
+          "block",
+          {
+            type: "instance",
+            id: "block",
+            component: blockComponent,
+            children: [
+              { type: "id", value: "heading" },
+              { type: "id", value: "paragraph" },
+            ],
+          },
+        ],
+        [
+          "heading",
+          {
+            type: "instance",
+            id: "heading",
+            component: "Heading",
+            children: [],
+          },
+        ],
+        [
+          "paragraph",
+          {
+            type: "instance",
+            id: "paragraph",
+            component: "Paragraph",
+            children: [],
+          },
+        ],
+      ])
+    );
+    $builderMode.set("content");
+    selectInstance(["paragraph", "block", "body"]);
+
+    emitCommand("moveInstanceUp");
+
+    expect($instances.get().get("block")?.children).toEqual([
+      { type: "id", value: "paragraph" },
+      { type: "id", value: "heading" },
+    ]);
+  });
+
+  test("moves projected MDX children with keyboard commands", async () => {
+    resetDataStores();
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(
+      new Map([
+        [
+          "body",
+          {
+            type: "instance" as const,
+            id: "body",
+            component: "Body",
+            children: [{ type: "id" as const, value: "block" }],
+          },
+        ],
+        [
+          "block",
+          {
+            type: "instance" as const,
+            id: "block",
+            component: blockComponent,
+            children: [{ type: "id" as const, value: "templates" }],
+          },
+        ],
+        [
+          "templates",
+          {
+            type: "instance" as const,
+            id: "templates",
+            component: blockTemplateComponent,
+            children: [],
+          },
+        ],
+      ])
+    );
+    $props.set(
+      new Map([
+        [
+          "source",
+          {
+            id: "source",
+            instanceId: "block",
+            name: "src",
+            type: "asset" as const,
+            value: "article",
+          },
+        ],
+      ])
+    );
+    const renderScope = JSON.stringify(["block", "body"]);
+    const root: MaterializedMdxAuthoredContentRoot = {
+      identity: {
+        blockInstanceId: "block",
+        assetId: "article",
+        revision: "sha256:one",
+        contentRef: "article.mdx",
+        format: "mdx",
+        renderScope,
+      },
+      fragment: {
+        children: [
+          { type: "id", value: "first" },
+          { type: "id", value: "second" },
+        ],
+        instances: [
+          {
+            type: "instance",
+            id: "first",
+            component: elementComponent,
+            tag: "p",
+            children: [],
+          },
+          {
+            type: "instance",
+            id: "second",
+            component: elementComponent,
+            tag: "p",
+            children: [],
+          },
+        ],
+        props: [],
+        assets: [],
+        dataSources: [],
+        resources: [],
+        breakpoints: [],
+        styleSourceSelections: [],
+        styleSources: [],
+        styles: [],
+      },
+      document: {
+        frontmatter: { properties: {} },
+        children: [
+          {
+            type: "element",
+            syntax: "markdown",
+            tag: "p",
+            props: [],
+            children: [],
+          },
+          {
+            type: "element",
+            syntax: "markdown",
+            tag: "p",
+            props: [],
+            children: [],
+          },
+        ],
+      },
+      provenance: {
+        nodes: [
+          { type: "element", path: [0], instanceId: "first", assetProps: [] },
+          {
+            type: "element",
+            path: [1],
+            instanceId: "second",
+            assetProps: [],
+          },
+        ],
+        unresolvedTemplates: [],
+      },
+    };
+    publishMaterializedContentRoot(root);
+    const save = vi.fn(async () => ({ status: "applied" as const }));
+    const unregister = registerContentStorageSaver({
+      blockInstanceId: "block",
+      renderScope,
+      preflight: async () => ({ status: "applied" }),
+      isCurrent: () => true,
+      save,
+    });
+    $builderMode.set("content");
+    selectInstance(["second", "block", "body"]);
+
+    expect(
+      canReparentInstance(["second", "block", "body"], {
+        parentSelector: ["block", "body"],
+        position: 1,
+      })
+    ).toBe(true);
+
+    emitCommand("moveInstanceUp");
+
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    expect(
+      $materializedContentRoots
+        .get()
+        .get(JSON.stringify(["block", renderScope]))?.fragment.children
+    ).toEqual([
+      { type: "id", value: "second" },
+      { type: "id", value: "first" },
+    ]);
+
+    emitCommand("selectNextSibling");
+
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      ["second", "block", "body"],
+      ["first", "block", "body"],
+    ]);
+
+    selectInstance(["second", "block", "body"]);
+    emitCommand("selectPreviousSibling");
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      ["second", "block", "body"],
+    ]);
+    unregister();
+  });
+
+  test("does not move instances in preview mode", () => {
+    setupMoveInstanceProject();
+    $builderMode.set("preview");
+    selectInstance(["heading", "body"]);
+
+    emitCommand("moveInstanceUp");
+
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: "heading" },
       { type: "id", value: "paragraph" },
     ]);
   });

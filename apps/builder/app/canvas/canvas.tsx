@@ -14,7 +14,7 @@ import { wsImageLoader, wsVideoLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { canvasComponentLibraries } from "@webstudio-is/sdk-components-registry/canvas";
 import { ErrorMessage } from "~/shared/error";
-import { $publisher, publish } from "~/shared/pubsub";
+import { $publisher, publish, subscribe } from "~/shared/pubsub";
 import {
   registerContainers,
   serverSyncStore,
@@ -41,8 +41,12 @@ import {
   subscribeModifierKeys,
   assetBaseUrl,
 } from "~/shared/nano-states";
-import { $assets } from "~/shared/sync/data-stores";
-import { $pages, $instances, $breakpoints } from "~/shared/sync/data-stores";
+import { $pages } from "~/shared/sync/data-stores";
+import {
+  $runtimeAssets as $assets,
+  $runtimeBreakpoints as $breakpoints,
+  $runtimeInstances as $instances,
+} from "~/shared/content-block-content";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import {
   initCopyPaste,
@@ -56,6 +60,7 @@ import { useHashLinkSync } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { subscribeInterceptedEvents } from "./interceptor";
 import { subscribeCommands } from "~/canvas/shared/commands";
+import { reparentInstance } from "~/shared/instance-utils/mutation";
 import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { initCanvasApi } from "~/shared/canvas-api";
 import { subscribeFontLoadingDone } from "./shared/font-weight-support";
@@ -265,6 +270,23 @@ export const Canvas = () => {
   useEffect(subscribeComponentHooks, []);
 
   useEffect(subscribeCommands, []);
+  useEffect(
+    () =>
+      subscribe(
+        "contentBlockReparentRequest",
+        ({ requestId, sourceInstanceSelector, dropTarget }) => {
+          void reparentInstance(sourceInstanceSelector, dropTarget).then(
+            (success) => {
+              publish({
+                type: "contentBlockReparentResult",
+                payload: { requestId, success },
+              });
+            }
+          );
+        }
+      ),
+    []
+  );
 
   useEffect(() => {
     $publisher.set({ publish });

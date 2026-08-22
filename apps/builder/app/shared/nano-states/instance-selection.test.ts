@@ -1,6 +1,16 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import type { Instance } from "@webstudio-is/sdk";
-import { $instances, $pages } from "../sync/data-stores";
+import {
+  blockComponent,
+  blockTemplateComponent,
+  elementComponent,
+  type Instance,
+} from "@webstudio-is/sdk";
+import { $instances, $pages, $props } from "../sync/data-stores";
+import {
+  publishMaterializedContentRoot,
+  resetMaterializedContent,
+  getRuntimeInstanceChildren,
+} from "../content-block-content";
 import {
   $allSelectedInstanceSelectors,
   $selectedInstance,
@@ -25,13 +35,134 @@ const createInstance = (
 });
 
 beforeEach(() => {
+  resetMaterializedContent();
   $instances.set(new Map());
+  $props.set(new Map());
   $pages.set(undefined);
   $selectedPageId.set(undefined);
   selectInstance(undefined);
 });
 
 describe("selectInstance", () => {
+  test("keeps a repeated MDX child selected through projected store updates", () => {
+    const renderScope = JSON.stringify([
+      "block",
+      "collection[1]",
+      "collection",
+      "body",
+    ]);
+    $instances.set(
+      new Map([
+        ["body", createInstance("body", [{ type: "id", value: "collection" }])],
+        [
+          "collection",
+          createInstance("collection", [{ type: "id", value: "block" }]),
+        ],
+        [
+          "block",
+          {
+            ...createInstance("block", [{ type: "id", value: "templates" }]),
+            component: blockComponent,
+          },
+        ],
+        [
+          "templates",
+          { ...createInstance("templates"), component: blockTemplateComponent },
+        ],
+      ])
+    );
+    $props.set(
+      new Map([
+        [
+          "src",
+          {
+            id: "src",
+            instanceId: "block",
+            name: "src",
+            type: "expression",
+            value: "article",
+          },
+        ],
+      ])
+    );
+    const identity = {
+      blockInstanceId: "block",
+      assetId: "article",
+      revision: "sha256:one",
+      contentRef: "article.mdx",
+      format: "mdx",
+      renderScope,
+    } as const;
+    publishMaterializedContentRoot(
+      {
+        identity,
+        fragment: {
+          children: [{ type: "id", value: "external" }],
+          instances: [
+            {
+              ...createInstance("external"),
+              component: elementComponent,
+              tag: "p",
+            },
+          ],
+          props: [],
+          assets: [],
+          dataSources: [],
+          resources: [],
+          breakpoints: [],
+          styleSourceSelections: [],
+          styleSources: [],
+          styles: [],
+        },
+      },
+      [
+        {
+          code: "unresolved-template",
+          severity: "warning",
+          blockInstanceId: "block",
+          assetId: "article",
+          contentRef: "article.mdx",
+          renderScope,
+          templateName: "Missing",
+        },
+      ]
+    );
+
+    selectInstance([
+      "external",
+      "block",
+      "collection[1]",
+      "collection",
+      "body",
+    ]);
+    $instances.set(new Map($instances.get()));
+
+    expect($selectedInstanceSelector.get()).toEqual([
+      "external",
+      "block",
+      "collection[1]",
+      "collection",
+      "body",
+    ]);
+
+    const block = $instances.get().get("block");
+    if (block === undefined) {
+      throw new Error("Expected Content Block");
+    }
+    const warningId = getRuntimeInstanceChildren(block, [
+      "block",
+      "collection[1]",
+      "collection",
+      "body",
+    ]).at(-1)?.value;
+    if (warningId === undefined) {
+      throw new Error("Expected unresolved-template notice");
+    }
+    selectInstance([warningId, "block", "collection[1]", "collection", "body"]);
+    $instances.set(new Map($instances.get()));
+    expect($selectedInstanceSelector.get()?.[0]).toBe(warningId);
+  });
+
   test("selects and clears the selected instance selector through canonical state", () => {
     selectInstance(["box", "body"]);
     expect($allSelectedInstanceSelectors.get()).toEqual([["box", "body"]]);

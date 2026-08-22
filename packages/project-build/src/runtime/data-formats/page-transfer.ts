@@ -3,9 +3,9 @@ import {
   type Page,
   type PageTemplate,
   type WebstudioFragment,
-  webstudioFragment,
 } from "@webstudio-is/sdk";
 import { z } from "zod";
+import { webstudioFragmentMutationInput } from "../fragment";
 import { parseDataEnvelope } from "./data-envelope";
 
 export type PageCopyData = {
@@ -51,16 +51,16 @@ export const collectPageTransferItems = (
 export const pageTransferPageInput: z.ZodType<PageTransferData> = z.object({
   type: z.literal("page"),
   page: z.custom<Page>(),
-  rootFragment: webstudioFragment,
-  bodyFragment: webstudioFragment,
+  rootFragment: webstudioFragmentMutationInput,
+  bodyFragment: webstudioFragmentMutationInput,
 });
 
 export const pageTransferTemplateInput: z.ZodType<TemplateTransferData> =
   z.object({
     type: z.literal("template"),
     template: z.custom<PageTemplate>(),
-    rootFragment: webstudioFragment,
-    bodyFragment: webstudioFragment,
+    rootFragment: webstudioFragmentMutationInput,
+    bodyFragment: webstudioFragmentMutationInput,
   });
 
 export const pageTransferFolderInput: z.ZodType<FolderTransferData> = z.lazy(

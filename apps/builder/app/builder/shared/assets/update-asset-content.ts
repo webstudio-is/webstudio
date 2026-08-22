@@ -1,4 +1,5 @@
 import type { Asset } from "@webstudio-is/sdk";
+import { AssetRevisionConflictError } from "@webstudio-is/asset-uploader/content-repository";
 import { updateProjectAssetContent } from "@webstudio-is/http-client";
 import { fetch } from "~/shared/fetch.client";
 import { $authToken } from "~/shared/nano-states";
@@ -7,10 +8,12 @@ import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-
 import { getWebstudioData } from "~/shared/instance-utils/data";
 import { invalidateAssets } from "~/shared/resources";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
+import { requireBuilderReload } from "~/shared/sync/reload-required";
 
 type UpdateAssetContentDependencies = {
   requestContentUpdate: typeof updateProjectAssetContent;
   commitUpdatedAsset: (asset: Asset) => void;
+  requireReload: (error: string) => void;
 };
 
 export const createUpdateAssetContent =
@@ -30,17 +33,25 @@ export const createUpdateAssetContent =
     }
 
     const origin = window.location.origin;
-    const { asset: updatedAsset } = await dependencies.requestContentUpdate({
-      assetId: asset.id,
-      projectId,
-      expectedName: asset.name,
-      extension,
-      origin,
-      authToken: $authToken.get(),
-      readAssetData: async () => content,
-      request: fetch,
-      requestOrigin: origin,
-    });
+    let updatedAsset: Asset;
+    try {
+      ({ asset: updatedAsset } = await dependencies.requestContentUpdate({
+        assetId: asset.id,
+        projectId,
+        expectedName: asset.name,
+        extension,
+        origin,
+        authToken: $authToken.get(),
+        readAssetData: async () => content,
+        request: fetch,
+        requestOrigin: origin,
+      }));
+    } catch (error) {
+      if (error instanceof AssetRevisionConflictError) {
+        dependencies.requireReload(error.message);
+      }
+      throw error;
+    }
 
     dependencies.commitUpdatedAsset(updatedAsset);
     return updatedAsset;
@@ -48,6 +59,7 @@ export const createUpdateAssetContent =
 
 export const updateAssetContent = createUpdateAssetContent({
   requestContentUpdate: updateProjectAssetContent,
+  requireReload: (error) => requireBuilderReload({ error }),
   commitUpdatedAsset: (updatedAsset) => {
     createTransactionFromBuilderPatchPayload({
       data: getWebstudioData(),

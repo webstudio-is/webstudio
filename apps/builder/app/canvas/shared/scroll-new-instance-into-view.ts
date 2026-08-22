@@ -1,6 +1,6 @@
 import { idAttribute } from "@webstudio-is/react-sdk";
 import type { Instances } from "@webstudio-is/sdk";
-import { $instances } from "~/shared/sync/data-stores";
+import { $runtimeInstances as $instances } from "~/shared/content-block-content";
 
 /**
  * When a new instance is added to the canvas, scroll it into view.

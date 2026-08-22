@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { blockComponent, blockTemplateComponent } from "@webstudio-is/sdk";
 import { applyBuilderPatchTransactions } from "../state/patch";
 import type { BuilderRuntimeMutation } from "./mutation";
 import { executeBuilderRuntimeOperation } from "./registry";
@@ -10,6 +11,45 @@ const createContext = () => {
 };
 
 describe("runtimeUi.integrate", () => {
+  test("does not insert project content while a connected source is unavailable", () => {
+    const fixture = createResourceCollectionIntegrationFixture();
+    fixture.state.instances?.set("block", {
+      type: "instance",
+      id: "block",
+      component: blockComponent,
+      children: [{ type: "id", value: "templates" }],
+    });
+    fixture.state.instances?.set("templates", {
+      type: "instance",
+      id: "templates",
+      component: blockTemplateComponent,
+      children: [],
+    });
+    fixture.state.props?.set("block-src", {
+      id: "block-src",
+      instanceId: "block",
+      name: "src",
+      type: "asset",
+      value: "article",
+    });
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "runtimeUi.integrate",
+        state: fixture.state,
+        input: { ...fixture.input, parentInstanceId: "block" },
+        context: {
+          ...createContext(),
+          returnStorageChanges: true,
+          materializedContent: [],
+        },
+      })
+    ).toThrow("source is not ready for editing");
+    expect(fixture.state.instances?.get("block")?.children).toEqual([
+      { type: "id", value: "templates" },
+    ]);
+  });
+
   test("plans one editable resource-backed Collection transaction", () => {
     const fixture = createResourceCollectionIntegrationFixture();
     const originalController = structuredClone(

@@ -39,6 +39,9 @@ import {
   TextStrikethroughIcon,
 } from "@webstudio-is/icons";
 import { formatAssetName } from "@webstudio-is/project-build/runtime";
+import { readAssetContentBytes } from "@webstudio-is/asset-uploader/content-repository";
+import { decodeUtf8 } from "@webstudio-is/content-engine/compiler";
+import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { getAssetUrl, getPagePath, type Asset } from "@webstudio-is/sdk";
 import { CodeEditor } from "~/shared/code-editor";
 import { EditorDialog, type EditorApi } from "~/shared/code-editor-base";
@@ -46,6 +49,7 @@ import {
   $assetFolders,
   $assets,
   $pages,
+  $project,
   $props,
 } from "~/shared/sync/data-stores";
 import { $authPermit } from "~/shared/nano-states";
@@ -61,10 +65,12 @@ import {
 } from "~/builder/features/settings-panel/controls/url";
 import {
   getTextFileEditorExtensions,
-  isMarkdownAsset,
+  isMarkdownPreviewAsset,
+  isMarkdownSyntaxAsset,
   normalizeTextFileContent,
 } from "./text-file-utils";
 import { MarkdownSplitView } from "./markdown-preview";
+import { createBuilderHttpAssetContentRepository } from "~/builder/shared/assets/builder-mdx-content-repository.client";
 
 type TextFileState =
   | { status: "loading" }
@@ -356,11 +362,13 @@ const MarkdownLinkPicker = ({
 const MarkdownToolbar = ({
   editorApiRef,
   disabled,
+  showPreview,
   previewOpen,
   onPreviewOpenChange,
 }: {
   editorApiRef: RefObject<EditorApi | undefined>;
   disabled: boolean;
+  showPreview: boolean;
   previewOpen: boolean;
   onPreviewOpenChange: (open: boolean) => void;
 }) => (
@@ -405,18 +413,20 @@ const MarkdownToolbar = ({
       <MarkdownLinkPicker editorApiRef={editorApiRef} disabled={disabled} />
       <MarkdownImagePicker editorApiRef={editorApiRef} disabled={disabled} />
     </Flex>
-    <Tooltip content={previewOpen ? "Hide preview" : "Show preview"}>
-      <IconButton
-        type="button"
-        aria-label={previewOpen ? "Hide preview" : "Show preview"}
-        aria-pressed={previewOpen}
-        variant={previewOpen ? "local" : "default"}
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={() => onPreviewOpenChange(previewOpen === false)}
-      >
-        <MarkdownEmbedIcon />
-      </IconButton>
-    </Tooltip>
+    {showPreview && (
+      <Tooltip content={previewOpen ? "Hide preview" : "Show preview"}>
+        <IconButton
+          type="button"
+          aria-label={previewOpen ? "Hide preview" : "Show preview"}
+          aria-pressed={previewOpen}
+          variant={previewOpen ? "local" : "default"}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => onPreviewOpenChange(previewOpen === false)}
+        >
+          <MarkdownEmbedIcon />
+        </IconButton>
+      </Tooltip>
+    )}
   </Flex>
 );
 
@@ -453,14 +463,31 @@ export const TextFileEditor = ({
 
     const load = async () => {
       try {
-        const response = await fetch(
-          getAssetUrl(assetToLoad, window.location.origin),
-          { signal: controller.signal }
-        );
-        if (response.ok === false) {
-          throw new Error(`Unable to load asset: ${response.status}`);
+        let content: string;
+        if (assetToLoad.format.toLowerCase() === "mdx") {
+          const projectId = $project.get()?.id;
+          if (projectId === undefined) {
+            throw new Error("Project not found");
+          }
+          const result = await readAssetContentBytes({
+            repository: createBuilderHttpAssetContentRepository({ projectId }),
+            assetId,
+            maxSize: contentEngineLimits.hydratedFileBytes,
+          });
+          content = decodeUtf8(result.bytes);
+        } else {
+          const response = await fetch(
+            getAssetUrl(assetToLoad, window.location.origin),
+            { signal: controller.signal }
+          );
+          if (response.ok === false) {
+            throw new Error(`Unable to load asset: ${response.status}`);
+          }
+          content = await response.text();
         }
-        const content = await response.text();
+        if (controller.signal.aborted) {
+          return;
+        }
         persistedContentRef.current = content;
         setState({ status: "loaded", content });
       } catch (error) {
@@ -527,7 +554,9 @@ export const TextFileEditor = ({
   };
 
   const title = asset === undefined ? "Text file" : formatAssetName(asset);
-  const isMarkdown = asset !== undefined && isMarkdownAsset(asset);
+  const isMarkdown = asset !== undefined && isMarkdownSyntaxAsset(asset);
+  const hasMarkdownPreview =
+    asset !== undefined && isMarkdownPreviewAsset(asset);
   let editor: ReactNode;
   if (state.status === "loaded" && asset !== undefined) {
     editor = (
@@ -587,11 +616,12 @@ export const TextFileEditor = ({
                 <MarkdownToolbar
                   editorApiRef={editorApiRef}
                   disabled={canEdit === false}
+                  showPreview={hasMarkdownPreview}
                   previewOpen={previewOpen}
                   onPreviewOpenChange={setPreviewOpen}
                 />
               )}
-              {isMarkdown ? (
+              {hasMarkdownPreview ? (
                 <MarkdownSplitView
                   open={previewOpen}
                   source={state.content}

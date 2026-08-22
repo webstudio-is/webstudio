@@ -1,7 +1,7 @@
 import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance, Instances } from "./schema/instances";
 import type { Props } from "./schema/props";
-import { blockTemplateComponent } from "./core-metas";
+import { blockTemplateComponent, elementComponent } from "./core-metas";
 
 export const ROOT_INSTANCE_ID = ":root";
 
@@ -50,6 +50,26 @@ export const findTreeInstanceIdsExcludingSlotDescendants = (
   return ids;
 };
 
+export const findChildReferenceIndex = (
+  children: Instance["children"],
+  instanceId: Instance["id"]
+) =>
+  children.findIndex(
+    (child) => child.type === "id" && child.value === instanceId
+  );
+
+export const findParentInstanceReference = (
+  instances: Instances,
+  instanceId: Instance["id"]
+) => {
+  for (const instance of instances.values()) {
+    const childIndex = findChildReferenceIndex(instance.children, instanceId);
+    if (childIndex !== -1) {
+      return { instance, childIndex };
+    }
+  }
+};
+
 export const parseComponentName = (componentName: string) => {
   const parts = componentName.split(":");
   let namespace: undefined | string;
@@ -60,6 +80,33 @@ export const parseComponentName = (componentName: string) => {
     [namespace, name] = parts;
   }
   return [namespace, name] as const;
+};
+
+/**
+ * Returns the instance name shown to users. The component or tag supplies the
+ * default name; `instance.label` is the user-defined override created by
+ * renaming the instance.
+ */
+export const getInstanceName = ({
+  instance,
+  metas,
+  fallbackName,
+}: {
+  instance: Pick<Instance, "component" | "label" | "tag">;
+  metas?: ReadonlyMap<Instance["component"], Pick<WsComponentMeta, "label">>;
+  fallbackName?: string;
+}) => {
+  if (instance.label) {
+    return instance.label;
+  }
+  if (instance.component === elementComponent && instance.tag) {
+    return `<${instance.tag}>`;
+  }
+  return (
+    metas?.get(instance.component)?.label ||
+    fallbackName ||
+    parseComponentName(instance.component)[1]
+  );
 };
 
 export const getHtmlTagsFromProps = (props: Props) => {
@@ -106,10 +153,16 @@ export const getHtmlTagFromInstance = ({
 
 export type IndexesWithinAncestors = Map<Instance["id"], number>;
 
+export type GetInstanceChildren = (
+  instance: Instance,
+  instanceSelector: Instance["id"][]
+) => Instance["children"];
+
 export const getIndexesWithinAncestors = (
   metas: Map<Instance["component"], WsComponentMeta>,
   instances: Instances,
-  rootIds: Instance["id"][]
+  rootIds: Instance["id"][],
+  getInstanceChildren: GetInstanceChildren = (instance) => instance.children
 ) => {
   const ancestors = new Set<Instance["component"]>();
   for (const meta of metas.values()) {
@@ -123,6 +176,7 @@ export const getIndexesWithinAncestors = (
   const traverseInstances = (
     instances: Instances,
     instanceId: Instance["id"],
+    instanceSelector: Instance["id"][],
     latestIndexes = new Map<
       Instance["component"],
       Map<Instance["component"], number>
@@ -156,16 +210,21 @@ export const getIndexesWithinAncestors = (
       }
     }
 
-    for (const child of instance.children) {
+    for (const child of getInstanceChildren(instance, instanceSelector)) {
       if (child.type === "id") {
-        traverseInstances(instances, child.value, latestIndexes);
+        traverseInstances(
+          instances,
+          child.value,
+          [child.value, ...instanceSelector],
+          latestIndexes
+        );
       }
     }
   };
 
   const latestIndexes = new Map();
   for (const instanceId of rootIds) {
-    traverseInstances(instances, instanceId, latestIndexes);
+    traverseInstances(instances, instanceId, [instanceId], latestIndexes);
   }
 
   return indexes;

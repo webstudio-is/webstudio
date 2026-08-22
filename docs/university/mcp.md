@@ -290,6 +290,61 @@ Component and template registry items use a shadcn-compatible top-level shape pl
 Prefer the focused `components.*` tools over dumping `webstudio://project/components`. Do not write local scripts to parse full MCP discovery JSON for common component lookup.
 For “use every component” or design-system pages, start with compact `components.coverage-plan`, checkpoint, then page through roots/parts instead of dumping the full catalog.
 
+## MDX Content Block workflow
+
+Content Blocks can store their editable body in an `.mdx` Asset. The Builder,
+direct CLI, HTTP API, and MCP use the same source resolver, safe MDX parser,
+Content mode permissions, serializer, diagnostics, Asset authorization, and
+revision checks.
+
+Use the focused tools instead of downloading and rewriting the file as text:
+
+1. Call `inspect-content-block-source` with the Content Block ID and exact
+   render scope. For a dynamic source, also pass the bounded route, detail, or
+   Collection variables required to resolve it. Inspect the configured source,
+   resolved Asset/revision/scope, capabilities, pending session state,
+   diagnostics, and repair routes.
+2. Use `connect-content-block-source` or `switch-content-block-source`.
+   Connecting a non-empty block requires confirmation, removes its persisted
+   body, and leaves the selected file unchanged. Switching changes only the
+   source binding.
+3. Use `edit-content-block-source` for semantic text, prop, insert, move,
+   reorder, or delete operations against the materialized MDX instances. Do not
+   edit generated instance IDs in the file.
+4. Use `disconnect-content-block-source` to copy the resolved file content into
+   ordinary project instances and remove the source. The file remains
+   unchanged; disconnect never discards the visible body.
+5. If an operation fails, inspect the source again to reload current project
+   and Asset state before replanning. Never overwrite or merge from the stale
+   session.
+
+Run destructive lifecycle and migration operations with `--dry-run` first. A
+required approval returns a short-lived confirmation token bound to the
+inspected project, Content Block, files, and revisions. Review the plan, then
+repeat the operation with that token. Stale or replayed tokens and changed Asset
+revisions are rejected. Disconnect also requires confirmation because it copies the file
+body into project storage and removes the source, although it leaves the file
+itself unchanged.
+
+Use `migrate-content-block-template-references` to preview a `ws:name` rename
+or removal across the bounded `.mdx` files discovered from one Content Block
+and template. When automatic discovery cannot prove the complete candidate set,
+pass no more than 100 explicitly reviewed Asset IDs. The tool parses the MDX
+AST; it does not use search-and-replace. Review the selected files, update and
+omission counts, and per-file diagnostics before confirmation. Each file uses
+an exact revision check, and partial failures are returned explicitly without
+overwriting newer content. Finite direct, detail, and repeated candidate sets
+are supported; an unbounded or truncated candidate graph blocks automatic
+apply until the reviewed set is supplied.
+
+Read the machine-readable `status`, `code`, diagnostics, and source inspection
+after every call. Lifecycle and semantic edits validate their targets, then
+persist them in a deterministic order. A partial result lists saved, failed,
+and not-attempted steps; completed writes are not rolled back. Reinspect the
+current revisions and retry only unfinished steps. Template migration also
+commits reviewed files one at a time and reports partial results. See [Content Block](core-components/content-block.md#use-an-mdx-file-as-the-content-source)
+for the file grammar and Builder workflow.
+
 ## Consumer Capabilities
 
 MCP lets agents work on one configured Webstudio project at a time. In consumer
@@ -321,6 +376,10 @@ terms, agents can:
 - Update plain text and expression text.
 - Update structured rich text.
 - Add, update, delete, and bind element props.
+- Inspect, connect, switch, disconnect, recover, and semantically edit
+  MDX-backed Content Blocks.
+- Preview and apply bounded template-name migrations across reachable MDX
+  Assets.
 - Bind props to expressions, resources, actions, and runtime system values.
 - Read, add, update, delete, and replace local styles.
 - Update selected style-source styles.
@@ -1921,7 +1980,19 @@ source of truth. For tools with no required arguments, pass `{}`.
 
 ## Content Engine reference
 
-Assets resources query Markdown and JSON files stored in the Assets panel. The Builder and Webstudio MCP use the same structured query contract.
+Assets resources query Markdown, MDX, and JSON files stored in the Assets panel. The Builder and Webstudio MCP use the same structured query contract.
+
+### Document formats
+
+Content Engine indexes frontmatter from both `.md` and `.mdx` files and can return either body with `markdown-body-ref`. Their body grammars remain different:
+
+| Extension | Body behavior |
+| --- | --- |
+| `.md` | Standard Markdown, including its normal embedded HTML behavior. It is not an editable Content Block source. |
+| `.mdx` | Safe MDX: Markdown plus restricted `<ws.element>` JSX. It can be an editable Content Block source. |
+| `.json` | A JSON object whose root fields are indexed under `properties`. |
+
+Do not treat `.md` and `.mdx` as equivalent extensions. Use the Content Block conversion preview to create a new `.mdx` file from Markdown; unsupported or unsafe HTML is skipped and reported, and the original file remains unchanged.
 
 ### MCP workflow
 
@@ -1937,7 +2008,7 @@ Omit `query` when creating a resource to use the default many-result query for a
 
 ### Fields
 
-Every asset has the standard fields below. Markdown frontmatter and JSON root fields appear under `properties`, for example `properties.slug` or `properties.author.name`. The field catalog reports their observed types, occurrence counts, optionality, and mixed-type state. A JSON content file must contain an object at its root.
+Every asset has the standard fields below. Markdown and MDX frontmatter and JSON root fields appear under `properties`, for example `properties.slug` or `properties.author.name`. The field catalog reports their observed types, occurrence counts, optionality, and mixed-type state. A JSON content file must contain an object at its root.
 
 | Field | Observed type |
 | --- | --- |
@@ -2058,9 +2129,9 @@ External URLs remain ordinary strings. Existing local path strings also keep the
 | `none` | Returns no file content. Use this for listings and any query that only needs fields or metadata. |
 | `full` | Embeds the complete UTF-8 file content in the content database. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected file is larger. |
 | `range` | Embeds a byte range selected by `offset` and `length` in the content database. `length` cannot exceed 256 KiB. |
-| `markdown-body-ref` | Stores a reference to a Markdown body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected source file is larger. |
+| `markdown-body-ref` | Stores a reference to a Markdown or MDX body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected source file is larger. |
 
-Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for article pages. It keeps article bodies out of the published content database and resolves relative Markdown links when the selected body is loaded.
+Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for article pages. It keeps Markdown and MDX bodies out of the published content database and resolves their relative links when the selected body is loaded.
 
 ### Preview diagnostics
 
@@ -2093,7 +2164,7 @@ A document reference is an exact object with one string field:
 { "$ref": "<relative-path>[#<fragment>]" }
 ```
 
-Markdown references can appear in YAML frontmatter. JSON references can appear anywhere in the document. Either format can reference Markdown or JSON. References do not run inside a Markdown body.
+Markdown and MDX references can appear in YAML frontmatter. JSON references can appear anywhere in the document. Any format can reference Markdown, MDX, or JSON. References do not run inside a Markdown or MDX body.
 
 | Reference | Inserted value |
 | --- | --- |
@@ -2135,6 +2206,9 @@ Resolve paths relative to the file containing the reference. JSON Pointer uses `
 | JSON string | 16 KiB |
 | Indexed properties per document | 64 KiB |
 | Generated excerpt | 2 KiB |
+| MDX nesting depth | 100 |
+| MDX nodes | 20000 |
+| MDX JSX props | 4000 |
 | Loaded file | 1 MiB |
 | Loaded content per query | 2 MiB |
 | Loaded files per query | 20 |

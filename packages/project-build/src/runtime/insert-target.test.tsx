@@ -75,6 +75,33 @@ describe("insert target", () => {
     ).toEqual({ parentSelector: ["body"], position: 1 });
   });
 
+  test("uses projected children to position after the selected instance", () => {
+    const data = renderData(<$.Body ws:id="body" />);
+    const selected = renderData(<$.Paragraph ws:id="external" />).instances.get(
+      "external"
+    );
+    if (selected === undefined) {
+      throw new Error("Expected selected instance");
+    }
+    data.instances.set(selected.id, selected);
+    const fragment = renderTemplate(<$.Paragraph ws:id="paragraph" />);
+
+    expect(
+      findClosestInsertTarget({
+        fragment,
+        instances: data.instances,
+        props: emptyProps,
+        metas: componentMetas,
+        rootInstanceId: "body",
+        selectedInstanceSelector: ["external", "body"],
+        getInstanceChildren: (instance) =>
+          instance.id === "body"
+            ? [{ type: "id", value: "external" }]
+            : instance.children,
+      })
+    ).toEqual({ parentSelector: ["body"], position: 1 });
+  });
+
   test("keeps explicit matching target", () => {
     const data = renderData(<$.Body ws:id="body"></$.Body>);
     const fragment = renderTemplate(

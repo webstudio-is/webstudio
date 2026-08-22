@@ -7,7 +7,7 @@ import {
   $textEditorContextMenu,
   $textEditorContextMenuCommand,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import { $runtimeInstances } from "~/shared/content-block-content";
 import { applyScale } from "./outline";
 import { $scale } from "~/builder/shared/nano-states";
 import { TemplatesMenu } from "./outline/block-instance-outline";
@@ -187,7 +187,7 @@ const Menu = ({
 export const TextEditorContextMenu = () => {
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
   const textEditorContextMenu = useStore($textEditorContextMenu);
-  const instances = useStore($instances);
+  const instances = useStore($runtimeInstances);
 
   if (textEditorContextMenu === undefined) {
     return;

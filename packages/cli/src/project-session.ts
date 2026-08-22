@@ -11,6 +11,11 @@ import {
 } from "@webstudio-is/project-migrations/pages";
 import * as httpClient from "@webstudio-is/http-client";
 import {
+  assetContentDescriptor,
+  assetContentDescriptorHeader,
+  parseAssetContentDescriptor,
+} from "@webstudio-is/protocol/asset-resource-api";
+import {
   bundleVersion,
   getPublicBuildIncludes,
   publicApiContractVersion,
@@ -23,7 +28,8 @@ import {
 } from "@webstudio-is/protocol";
 import packageJson from "../package.json";
 import {
-  createReachableAssetContentCompilationPlan,
+  blockComponent,
+  getContentBlockSource,
   getHomePage,
 } from "@webstudio-is/sdk";
 import {
@@ -53,8 +59,22 @@ import {
   type BuilderBuildDataSnapshot,
   type SerializedBuilderStateSnapshot,
 } from "@webstudio-is/project-build/state";
-import { removeLegacyProjectSettingsFromPages } from "@webstudio-is/project-build";
-import { getValidationIssues } from "@webstudio-is/project-build/runtime";
+import {
+  createBuildContentCompilationPlan,
+  createPublishedBuildContentCompilationPlan,
+  getDynamicPublishedMdxSourceBlockIds,
+  getPublishedMdxContentDatabaseMaxBytes,
+  removeLegacyProjectSettingsFromPages,
+  resolvePublishedMdxAssetCandidates,
+  resolvePublishedMdxDependencyClosure,
+} from "@webstudio-is/project-build";
+import {
+  computeExpression,
+  createContentBlockApplicationOperations,
+  createMdxAssetEditingSession,
+  getValidationIssues,
+} from "@webstudio-is/project-build/runtime";
+import { createHttpAssetContentRepository } from "@webstudio-is/asset-uploader/content-repository";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
 import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "./config";
 import type { ApiConnection } from "./api-connection";
@@ -557,6 +577,37 @@ export const createCliProjectSessionTransport = ({
       )) as Result),
 });
 
+export const createCliAssetContentRepository = ({
+  connection,
+}: {
+  connection: ApiConnection;
+}) =>
+  createHttpAssetContentRepository({
+    projectId: connection.projectId,
+    read: ({ assetId, range }) =>
+      httpClient.readProjectAssetContent({
+        ...connection,
+        requestOrigin: connection.origin,
+        assetId,
+        range,
+      }),
+    update: async ({ assetId, expectedName, data }) => {
+      const bytes = Uint8Array.from(data);
+      const { asset } = await httpClient.updateProjectAssetContent({
+        ...connection,
+        requestOrigin: connection.origin,
+        assetId,
+        expectedName,
+        readAssetData: async () => bytes,
+      });
+      return assetContentDescriptor.parse(asset);
+    },
+    parseAsset: (response) =>
+      parseAssetContentDescriptor(
+        response.headers.get(assetContentDescriptorHeader)
+      ),
+  });
+
 export const createCliProjectSession = ({
   connection,
   storage,
@@ -565,6 +616,9 @@ export const createCliProjectSession = ({
   executeServerOperation,
   getPermissions,
   issueReportRuntime,
+  assetContentRepository = createCliAssetContentRepository({ connection }),
+  resolveExpressionAssetId,
+  transport,
 }: {
   connection: ApiConnection;
   storage?: ProjectSessionStorage;
@@ -573,22 +627,106 @@ export const createCliProjectSession = ({
   executeServerOperation?: ProjectSessionTransport["executeServerOperation"];
   getPermissions?: ProjectSessionTransport["getPermissions"];
   issueReportRuntime?: () => IssueReportRuntime;
-}) =>
-  createProjectSession({
-    projectId: connection.projectId,
-    transport: createCliProjectSessionTransport({
+  assetContentRepository?: ReturnType<typeof createCliAssetContentRepository>;
+  resolveExpressionAssetId?: (input: {
+    expression: string;
+    blockInstanceId: string;
+    renderScope: string;
+    variables?: Readonly<Record<string, unknown>>;
+  }) => string | undefined | Promise<string | undefined>;
+  transport?: ProjectSessionTransport;
+}) => {
+  let projectSession: ReturnType<typeof createProjectSession>;
+  const sessionTransport =
+    transport ??
+    createCliProjectSessionTransport({
       connection,
       executeServerOperation,
       getPermissions,
       issueReportRuntime,
-    }),
+    });
+  const mdxSession = createMdxAssetEditingSession({
+    repository: assetContentRepository,
+    authorizeAsset: async ({ operation }) => {
+      const permissions = await projectSession.getPermissions();
+      return (
+        permissions.canUseApi &&
+        permissions.canView &&
+        (operation === "read" || permissions.canEdit)
+      );
+    },
+    resolveExpressionAssetId:
+      resolveExpressionAssetId ??
+      (({ expression, variables: scopedVariables }) => {
+        const snapshot = projectSession.snapshot;
+        const variables = new Map<string, unknown>();
+        for (const dataSource of snapshot?.state.dataSources?.values() ?? []) {
+          if (dataSource.type === "variable") {
+            variables.set(dataSource.name, dataSource.value.value);
+          }
+        }
+        for (const [name, value] of Object.entries(scopedVariables ?? {})) {
+          variables.set(name, value);
+        }
+        const value = computeExpression(expression, variables);
+        return typeof value === "string" && value !== "" ? value : undefined;
+      }),
+  });
+  const application = createContentBlockApplicationOperations({
+    projectId: connection.projectId,
+    session: mdxSession,
+    getState: () => {
+      const state = projectSession.snapshot?.state;
+      if (state === undefined) {
+        throw new Error("Project session is not initialized");
+      }
+      return state;
+    },
+    getProjectVersion: () => projectSession.snapshot?.version,
+    context: {
+      projectId: connection.projectId,
+      createId: () => crypto.randomUUID(),
+    },
+  });
+  const contentStorageApplication = {
+    ...application,
+    migrateTemplateReferences: async (
+      input: Parameters<typeof application.migrateTemplateReferences>[0]
+    ) => {
+      if (sessionTransport.executeServerOperation === undefined) {
+        return application.migrateTemplateReferences(input);
+      }
+      const response = await sessionTransport.executeServerOperation<
+        Awaited<ReturnType<typeof application.migrateTemplateReferences>> & {
+          version?: number;
+        }
+      >({
+        operationId: "contentBlocks.migrateTemplateReferences",
+        input,
+      });
+      const { version: _version, ...result } = response;
+      return result as Awaited<
+        ReturnType<typeof application.migrateTemplateReferences>
+      >;
+    },
+  };
+  projectSession = createProjectSession({
+    projectId: connection.projectId,
+    transport: sessionTransport,
     storage:
       storage ??
       createCliProjectSessionStorage(
         getCliProjectSessionFile(projectRoot, sessionProjectId)
       ),
     compatibilityVersion,
+    runtimeContext: {
+      projectId: connection.projectId,
+      createId: () => crypto.randomUUID(),
+      contentStorageApplication,
+    },
   });
+  return projectSession;
+};
 
 export type CliProjectSession = ReturnType<typeof createCliProjectSession>;
 
@@ -607,12 +745,53 @@ export const loadCliProjectSessionAssetIndex = async (
   if (connection.projectId !== snapshot.projectId) {
     throw new Error("CLI connection does not match the project session");
   }
-  const plan = createReachableAssetContentCompilationPlan({
-    props: snapshot.state.props?.values() ?? [],
-    dataSources: snapshot.state.dataSources?.values() ?? [],
-    resources: snapshot.state.resources?.values() ?? [],
-  });
+  const build = {
+    instances: Array.from(snapshot.state.instances?.values() ?? []),
+    props: Array.from(snapshot.state.props?.values() ?? []),
+    dataSources: Array.from(snapshot.state.dataSources?.values() ?? []),
+    resources: Array.from(snapshot.state.resources?.values() ?? []),
+  };
+  const hasMdxSource = build.instances.some(
+    (instance) =>
+      instance.component === blockComponent &&
+      getContentBlockSource({
+        blockInstanceId: instance.id,
+        props: build.props,
+      }) !== undefined
+  );
+  const basePlan = createBuildContentCompilationPlan(build);
+  let publicationBuild:
+    | (typeof build & { pages: NonNullable<typeof snapshot.state.pages> })
+    | undefined;
+  let needsCandidateDiscovery = false;
+  let plan = basePlan;
+  if (hasMdxSource) {
+    if (snapshot.state.pages === undefined) {
+      throw new Error("Project session pages namespace is missing");
+    }
+    publicationBuild = { ...build, pages: snapshot.state.pages };
+    const dynamicBlockIds =
+      getDynamicPublishedMdxSourceBlockIds(publicationBuild);
+    const projectCandidates = resolvePublishedMdxAssetCandidates({
+      build: publicationBuild,
+      allowUnresolved: true,
+    });
+    needsCandidateDiscovery = dynamicBlockIds.some(
+      (blockId) => projectCandidates.has(blockId) === false
+    );
+    plan = needsCandidateDiscovery
+      ? basePlan
+      : createPublishedBuildContentCompilationPlan(
+          publicationBuild,
+          projectCandidates
+        );
+  }
   if (plan === undefined) {
+    if (needsCandidateDiscovery) {
+      throw new Error(
+        "Dynamic MDX preview requires a finite Assets query dependency"
+      );
+    }
     return;
   }
   const assets = Array.from(snapshot.state.assets?.values() ?? []);
@@ -631,19 +810,54 @@ export const loadCliProjectSessionAssetIndex = async (
       { code: "PREVIEW_ASSET_DOWNLOAD_FAILED" }
     );
   }
-  const { artifact } = await compileContentSource({
-    source: createFileSystemContentSource({
-      projectId: snapshot.projectId,
-      assets,
-      folders: snapshot.state.assetFolders ?? new Map(),
-      assetsDirectory,
-    }),
+  const source = createFileSystemContentSource({
     projectId: snapshot.projectId,
-    plan,
-    maxBytes: parseContentDatabaseMaxBytes(
+    assets,
+    folders: snapshot.state.assetFolders ?? new Map(),
+    assetsDirectory,
+  });
+  const maxBytes = getPublishedMdxContentDatabaseMaxBytes({
+    baseBytes: parseContentDatabaseMaxBytes(
       process.env.CONTENT_DATABASE_MAX_BYTES
     ),
+    assets,
   });
+  let { artifact } = await compileContentSource({
+    source,
+    projectId: snapshot.projectId,
+    plan,
+    maxBytes,
+  });
+  if (hasMdxSource) {
+    if (publicationBuild === undefined) {
+      throw new Error("Dynamic MDX preview build is unavailable");
+    }
+    let resolvedPlan = await resolvePublishedMdxDependencyClosure({
+      build: publicationBuild,
+      artifact,
+    });
+    for (let dependencyPass = 0; dependencyPass < 20; dependencyPass += 1) {
+      ({ artifact } = await compileContentSource({
+        source,
+        projectId: snapshot.projectId,
+        plan: resolvedPlan,
+        maxBytes,
+      }));
+      const validatedPlan = await resolvePublishedMdxDependencyClosure({
+        build: publicationBuild,
+        artifact,
+      });
+      if (JSON.stringify(resolvedPlan) === JSON.stringify(validatedPlan)) {
+        break;
+      }
+      if (dependencyPass === 19) {
+        throw new Error(
+          "MDX dependency closure exceeds the safe preview depth"
+        );
+      }
+      resolvedPlan = validatedPlan;
+    }
+  }
   return artifact;
 };
 

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   getInputJsonSchemaMetadata,
   toInputJsonSchemaObject,
@@ -404,6 +404,140 @@ describe("builder runtime pages", () => {
 });
 
 describe("builder runtime read families", () => {
+  test("exposes exact Content Block source inspection through the shared application", async () => {
+    const inspectSource = vi.fn(async () => ({
+      blockInstanceId: "block",
+      renderScope: "page:/posts:item:one",
+      configuredSource: { type: "asset" as const, assetId: "article" },
+      resolvedIdentity: {
+        blockInstanceId: "block",
+        assetId: "article",
+        revision: "sha256:article",
+        contentRef: "article-revision.mdx",
+        format: "mdx" as const,
+        renderScope: "page:/posts:item:one",
+      },
+      sessionStatus: "saved" as const,
+      pending: false,
+      diagnostics: [],
+      capabilities: {
+        canConnect: false,
+        canSwitch: true,
+        canDisconnectWithCopy: true,
+        canEdit: true,
+      },
+      repairRoutes: ["open-file", "disconnect-with-copy"] as const,
+    }));
+
+    await expect(
+      executeBuilderRuntimeOperation({
+        id: "contentBlocks.inspectSource",
+        state,
+        input: {
+          blockInstanceId: "block",
+          renderScope: "page:/posts:item:one",
+        },
+        context: {
+          createId: () => "unused",
+          contentStorageApplication: {
+            getMaterializedContent: () => [],
+            preflightStorageChanges: async () => ({ status: "ready" as const }),
+            saveStorageChanges: async () => ({
+              status: "complete" as const,
+              persistence: {
+                status: "complete" as const,
+                steps: [],
+                retry: { replan: true as const, roots: [], project: false },
+              },
+            }),
+            inspectSource,
+          },
+        },
+      })
+    ).resolves.toMatchObject({
+      resolvedIdentity: {
+        assetId: "article",
+        renderScope: "page:/posts:item:one",
+      },
+      capabilities: { canEdit: true },
+      repairRoutes: ["open-file", "disconnect-with-copy"],
+    });
+    expect(inspectSource).toHaveBeenCalledWith({
+      blockInstanceId: "block",
+      renderScope: "page:/posts:item:one",
+    });
+  });
+
+  test("exposes one-shot semantic editing", async () => {
+    const inspection = {
+      blockInstanceId: "block",
+      renderScope: "page:/",
+      sessionStatus: "failed" as const,
+      pending: false,
+      diagnostics: [],
+      capabilities: {
+        canConnect: false,
+        canSwitch: true,
+        canDisconnectWithCopy: false,
+        canEdit: false,
+      },
+      repairRoutes: [],
+    };
+    const semanticEdit = vi.fn(async () => ({
+      status: "complete" as const,
+      result: {
+        kind: "mutation" as const,
+        payload: [],
+        result: { updated: true },
+        invalidatesNamespaces: [],
+        storageChanges: [],
+        noop: false,
+      },
+    }));
+    const contentStorageApplication = {
+      getMaterializedContent: () => [],
+      preflightStorageChanges: async () => ({ status: "ready" as const }),
+      saveStorageChanges: async () => ({
+        status: "complete" as const,
+        persistence: {
+          status: "complete" as const,
+          steps: [],
+          retry: { replan: true as const, roots: [], project: false },
+        },
+      }),
+      inspectSource: async () => inspection,
+      semanticEdit,
+    };
+
+    const edit = await executeBuilderRuntimeOperation<{
+      status: string;
+      result: Record<string, unknown>;
+    }>({
+      id: "contentBlocks.semanticEdit",
+      state,
+      input: {
+        blockInstanceId: "block",
+        renderScope: "page:/",
+        operationId: "instances.updateText",
+        input: { instanceId: "text", childIndex: 0, text: "Updated" },
+      },
+      context: { createId: () => "unused", contentStorageApplication },
+    });
+    expect(edit).toMatchObject({
+      status: "complete",
+      result: { result: { updated: true }, noop: false },
+    });
+    expect(edit.result).not.toHaveProperty("payload");
+    expect(edit.result).not.toHaveProperty("storageChanges");
+    expect(semanticEdit).toHaveBeenCalledWith({
+      blockInstanceId: "block",
+      renderScope: "page:/",
+      operationId: "instances.updateText",
+      input: { instanceId: "text", childIndex: 0, text: "Updated" },
+      dryRun: false,
+    });
+  });
+
   test("keeps representative high-volume compact lists within budget", () => {
     const sourceInstance = state.instances.get("heading")!;
     const sourceAsset = state.assets.get("asset")!;
@@ -2220,6 +2354,16 @@ describe("builder runtime registry", () => {
     expect(getBuilderRuntimeOperation("pages.create").requiresConfirm).toBe(
       false
     );
+    for (const operationId of [
+      "instances.updateProps",
+      "instances.replacePropText",
+      "instances.deleteProps",
+      "instances.bindProps",
+    ] as const) {
+      expect(getBuilderRuntimeOperation(operationId).requiresAssets).toBe(
+        false
+      );
+    }
   });
 
   test("rejects client-supplied generated ids and hides generated id fields", () => {
@@ -2355,6 +2499,7 @@ describe("builder runtime registry", () => {
       ["runtimeUi.integrate", {}],
       ["instances.insertComponent", { parentInstanceId: "body" }],
       ["instances.insertCollection", { parentInstanceId: "body" }],
+      ["instances.insertMdxText", { parentInstanceId: "body" }],
       ["instances.insertFragment", { parentInstanceId: "body" }],
       ["slots.attach", {}],
       ["slots.extract", {}],

@@ -1,5 +1,6 @@
 import {
   reparentInstance,
+  canReparentInstance,
   wrapInstance,
   toggleInstanceShow,
   unwrapInstance,
@@ -8,7 +9,7 @@ import {
 } from "./mutation";
 import { deleteSelectedInstance } from "./mutation";
 import { enableMapSet } from "immer";
-import { describe, test, expect, beforeEach } from "vitest";
+import { describe, test, expect, beforeEach, vi } from "vitest";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
@@ -55,7 +56,15 @@ import {
 import type {
   DroppableTarget,
   InstanceSelector,
+  MaterializedMdxAuthoredContentRoot,
 } from "@webstudio-is/project-build/runtime";
+import { $builderMode } from "../nano-states";
+import {
+  $materializedContentRoots,
+  publishMaterializedContentRoot,
+  registerContentStorageSaver,
+  resetMaterializedContent,
+} from "../content-block-content";
 
 enableMapSet();
 registerContainers();
@@ -122,6 +131,8 @@ const createStyleDecl = (
 
 describe("reparent instance", () => {
   beforeEach(() => {
+    resetMaterializedContent();
+    $builderMode.set("design");
     $project.set({ id: "projectId" } as Project);
   });
 
@@ -175,7 +186,7 @@ describe("reparent instance", () => {
     );
   });
 
-  test("reparentInstance wrapper updates stores and selection", () => {
+  test("reparentInstance wrapper updates stores and selection", async () => {
     const data = renderData(
       <$.Body ws:id="body">
         <$.Box ws:id="source"></$.Box>
@@ -187,7 +198,7 @@ describe("reparent instance", () => {
     $instances.set(data.instances);
     $props.set(data.props);
 
-    reparentInstance(["source", "body"], {
+    await reparentInstance(["source", "body"], {
       parentSelector: ["target", "body"],
       position: "end",
     });
@@ -203,6 +214,160 @@ describe("reparent instance", () => {
       "target",
       "body",
     ]);
+  });
+
+  test("serializes repeated MDX moves against the latest pending root", async () => {
+    $registeredComponentMetas.set(defaultMetasMap);
+    $builderMode.set("content");
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+    $instances.set(
+      new Map([
+        [
+          "body",
+          createInstance("body", "Body", [{ type: "id", value: "block" }]),
+        ],
+        [
+          "block",
+          createInstance("block", "ws:block", [
+            { type: "id", value: "templates" },
+          ]),
+        ],
+        ["templates", createInstance("templates", "ws:block-template", [])],
+      ])
+    );
+    $props.set(
+      new Map([
+        [
+          "source",
+          {
+            id: "source",
+            instanceId: "block",
+            name: "src",
+            type: "asset" as const,
+            value: "article",
+          },
+        ],
+      ])
+    );
+    const renderScope = JSON.stringify(["block", "body"]);
+    const root: MaterializedMdxAuthoredContentRoot = {
+      identity: {
+        blockInstanceId: "block",
+        assetId: "article",
+        revision: "sha256:one",
+        contentRef: "article.mdx",
+        format: "mdx",
+        renderScope,
+      },
+      fragment: {
+        children: [
+          { type: "id", value: "first" },
+          { type: "id", value: "second" },
+        ],
+        instances: [
+          {
+            ...createInstance("first", elementComponent, [
+              { type: "text", value: "First" },
+            ]),
+            tag: "p",
+          },
+          {
+            ...createInstance("second", elementComponent, [
+              { type: "text", value: "Second" },
+            ]),
+            tag: "p",
+          },
+        ],
+        props: [],
+        assets: [],
+        dataSources: [],
+        resources: [],
+        breakpoints: [],
+        styleSourceSelections: [],
+        styleSources: [],
+        styles: [],
+      },
+      document: {
+        frontmatter: { properties: {} },
+        children: [
+          {
+            type: "element",
+            syntax: "markdown",
+            tag: "p",
+            props: [],
+            children: [{ type: "text", value: "First" }],
+          },
+          {
+            type: "element",
+            syntax: "markdown",
+            tag: "p",
+            props: [],
+            children: [{ type: "text", value: "Second" }],
+          },
+        ],
+      },
+      provenance: {
+        nodes: [
+          { type: "element", path: [0], instanceId: "first", assetProps: [] },
+          { type: "element", path: [1], instanceId: "second", assetProps: [] },
+        ],
+        unresolvedTemplates: [],
+      },
+    };
+    publishMaterializedContentRoot(root);
+    let finishFirstSave: (() => void) | undefined;
+    let saveCount = 0;
+    const save = vi.fn(() => {
+      saveCount += 1;
+      return saveCount === 1
+        ? new Promise<{ status: "applied" }>((resolve) => {
+            finishFirstSave = () => resolve({ status: "applied" });
+          })
+        : Promise.resolve({ status: "applied" as const });
+    });
+    const unregister = registerContentStorageSaver({
+      blockInstanceId: "block",
+      renderScope,
+      preflight: async () => ({ status: "applied" }),
+      isCurrent: () => true,
+      save,
+    });
+
+    const firstTarget: DroppableTarget = {
+      parentSelector: ["block", "body"],
+      position: 3,
+    };
+    expect(canReparentInstance(["first", "block", "body"], firstTarget)).toBe(
+      true
+    );
+    expect(
+      canReparentInstance(["templates", "block", "body"], firstTarget)
+    ).toBe(false);
+    const firstMove = reparentInstance(["first", "block", "body"], firstTarget);
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    const secondMove = reparentInstance(["first", "block", "body"], {
+      parentSelector: ["block", "body"],
+      position: 1,
+    });
+    await Promise.resolve();
+    expect(save).toHaveBeenCalledTimes(1);
+    finishFirstSave?.();
+    await expect(Promise.all([firstMove, secondMove])).resolves.toEqual([
+      true,
+      true,
+    ]);
+    expect(save).toHaveBeenCalledTimes(2);
+    const pendingRoot = $materializedContentRoots
+      .get()
+      .get(JSON.stringify(["block", renderScope]));
+    expect(pendingRoot?.fragment.children).toEqual([
+      { type: "id", value: "first" },
+      { type: "id", value: "second" },
+    ]);
+
+    unregister();
+    resetMaterializedContent();
+    $builderMode.set("design");
   });
 
   test("before itself", () => {

@@ -7,7 +7,7 @@ import {
   $isContentMode,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import { $runtimeInstances } from "~/shared/content-block-content";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils/slot";
 import { isDescendantOrSelf } from "@webstudio-is/project-build/runtime";
@@ -16,7 +16,7 @@ import { Label } from "./label";
 import { applyScale } from "../apply-scale";
 
 export const HoveredInstanceOutline = () => {
-  const instances = useStore($instances);
+  const instances = useStore($runtimeInstances);
   const hoveredInstanceSelector = useStore($hoveredInstanceSelector);
   const blockChildOutline = useStore($blockChildOutline);
   const outline = useStore($hoveredInstanceOutlineAndInstance);

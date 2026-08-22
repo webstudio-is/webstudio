@@ -249,6 +249,7 @@ test("prints full mcp tool input schemas when requested", () => {
     "contentMode",
     "mode",
     "insertIndex",
+    "templateNameConfirmation",
     "dryRun",
   ]);
   const fragmentSchema = insertFragmentTool.inputSchema.properties.fragment;

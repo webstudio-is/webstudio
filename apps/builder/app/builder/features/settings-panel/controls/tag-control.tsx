@@ -7,13 +7,20 @@ import { $selectedInstance, $selectedInstancePath } from "~/shared/nano-states";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { getValidTagsForInstance } from "@webstudio-is/project-build/runtime";
 import { $registeredComponentMetas } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
-import { $props } from "~/shared/sync/data-stores";
+import {
+  $runtimeInstances,
+  $runtimeProps,
+} from "~/shared/content-block-content";
 import { type ControlProps, VerticalLayout } from "../shared";
 import { FieldLabel } from "../property-label";
 
 const $satisfyingTags = computed(
-  [$selectedInstancePath, $instances, $props, $registeredComponentMetas],
+  [
+    $selectedInstancePath,
+    $runtimeInstances,
+    $runtimeProps,
+    $registeredComponentMetas,
+  ],
   (instancePath, instances, props, metas) => {
     const satisfyingTags: string[] = [];
     if (instancePath === undefined) {

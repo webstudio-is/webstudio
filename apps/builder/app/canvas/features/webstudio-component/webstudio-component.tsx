@@ -8,6 +8,7 @@ import {
   Fragment,
   type ReactNode,
   type JSX,
+  useState,
 } from "react";
 import { $getSelection, $isRangeSelection } from "lexical";
 import { computed } from "nanostores";
@@ -25,6 +26,7 @@ import {
   descendantComponent,
   blockComponent,
   blockTemplateComponent,
+  getContentBlockSource,
   getIndexesWithinAncestors,
   elementComponent,
 } from "@webstudio-is/sdk";
@@ -53,33 +55,57 @@ import {
   $registeredComponentMetas,
   $selectedInstanceRenderState,
   $selectedPageHash,
+  $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
-import { $props } from "~/shared/sync/data-stores";
+import {
+  $runtimeInstances as $instances,
+  $runtimeProps as $props,
+  $runtimeAssets as $assets,
+  $materializedContentStatuses,
+  getMaterializedContentForSelectors,
+  getMaterializedInstanceEditability,
+  getRuntimeInstanceChildren,
+  isMaterializedInstanceEditable,
+  publishMaterializedContentRoot,
+  $contentBlockPresentationItems,
+  contentBlockPresentationComponent,
+} from "~/shared/content-block-content";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
 import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
+  computeExpression,
 } from "@webstudio-is/project-build/runtime";
 import { findBlockSelector } from "@webstudio-is/project-build/runtime";
 import { inflateInstance } from "~/canvas/inflator";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { TextEditor } from "../text-editor";
-import { $selectedPage, getInstanceKey } from "~/shared/nano-states";
+import {
+  $selectedPage,
+  getInstanceKey,
+  getInstanceKeyWithRoot,
+} from "~/shared/nano-states";
 import { selectInstance } from "~/shared/nano-states";
 import { $currentSystem } from "~/shared/system";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { executeRuntimeMutationAsync } from "~/shared/instance-utils/data";
 import {
   createInstanceChildrenElements,
   type WebstudioComponentProps,
 } from "~/canvas/elements";
-import { Block } from "../build-mode/block";
+import { Block, ContentBlockPresentation } from "../build-mode/block";
 import { BlockTemplate } from "../build-mode/block-template";
 import {
   editablePlaceholderAttribute,
   editingPlaceholderVariable,
 } from "~/canvas/shared/styles";
 import { richTextPlaceholders } from "@webstudio-is/project-build/runtime";
+import { $project } from "~/shared/sync/data-stores";
+import { createBuilderContentBlockSourceController } from "~/builder/features/settings-panel/controls/content-block-source-controller";
+import {
+  setContentBlockSourceSwitching,
+  setMaterializedContentStatus,
+} from "~/shared/content-block-content";
+import { publish, subscribe } from "~/shared/pubsub";
 
 const computeComponentKey = (props: Record<string, unknown>) => {
   const assetId = props.$webstudio$canvasOnly$assetId;
@@ -114,7 +140,51 @@ const getPreviewCurrentUrl = (
   return currentUrl;
 };
 
-export const __testing__ = { computeComponentKey, getPreviewCurrentUrl };
+const shouldDiscardNewEmptyMaterializedTextInstance = ({
+  rootInstanceId,
+  instances,
+  isNew,
+  isMaterialized,
+}: {
+  rootInstanceId: Instance["id"];
+  instances: readonly Instance[];
+  isNew: boolean;
+  isMaterialized: boolean;
+}) => {
+  if (isNew === false || isMaterialized === false) {
+    return false;
+  }
+  const instancesById = new Map(
+    instances.map((instance) => [instance.id, instance])
+  );
+  const visited = new Set<Instance["id"]>();
+  const hasContent = (instanceId: Instance["id"]): boolean => {
+    if (visited.has(instanceId)) {
+      return true;
+    }
+    visited.add(instanceId);
+    const instance = instancesById.get(instanceId);
+    if (instance === undefined) {
+      return true;
+    }
+    return instance.children.some((child) => {
+      if (child.type === "id") {
+        return hasContent(child.value);
+      }
+      if (child.type === "text") {
+        return child.value.trim().length > 0;
+      }
+      return true;
+    });
+  };
+  return hasContent(rootInstanceId) === false;
+};
+
+export const __testing__ = {
+  computeComponentKey,
+  getPreviewCurrentUrl,
+  shouldDiscardNewEmptyMaterializedTextInstance,
+};
 
 const PreviewLinkCurrentUrlProvider = ({
   children,
@@ -331,7 +401,8 @@ const $indexesWithinAncestors = computed(
     return getIndexesWithinAncestors(
       metas,
       instances,
-      page ? [page.rootInstanceId] : []
+      page ? [page.rootInstanceId] : [],
+      getRuntimeInstanceChildren
     );
   }
 );
@@ -387,11 +458,204 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
 
 const existingElements = new Set<string>();
 
+const useContentBlockMaterialization = ({
+  instance,
+  instanceSelector,
+  props,
+}: {
+  instance: Instance;
+  instanceSelector: InstanceSelector;
+  props: ReadonlyMap<string, Prop>;
+}) => {
+  const project = useStore($project);
+  const assets = useStore($assets);
+  const variableValues = useStore($variableValuesByInstanceSelector);
+  const renderScope = getInstanceKey(instanceSelector);
+  const rootedRenderScope = getInstanceKeyWithRoot(instanceSelector);
+  const [sourceReloadVersion, setSourceReloadVersion] = useState(0);
+  useEffect(() => {
+    if (instance.component !== blockComponent || project === undefined) {
+      return;
+    }
+    const unsubscribe = subscribe("contentBlockSourceStatus", (message) => {
+      if (
+        message.projectId === project.id &&
+        message.blockInstanceId === instance.id &&
+        message.renderScope === renderScope
+      ) {
+        setContentBlockSourceSwitching({
+          blockInstanceId: instance.id,
+          renderScope,
+          switching: message.status === "loading",
+        });
+      }
+    });
+    return () => {
+      unsubscribe();
+      setContentBlockSourceSwitching({
+        blockInstanceId: instance.id,
+        renderScope,
+        switching: false,
+      });
+    };
+  }, [instance.component, instance.id, project, renderScope]);
+  useEffect(() => {
+    if (instance.component !== blockComponent || project === undefined) {
+      return;
+    }
+    let editingFrame: number | undefined;
+    const unsubscribe = subscribe("contentBlockSourceReload", (message) => {
+      if (
+        message.projectId === project.id &&
+        message.blockInstanceId === instance.id &&
+        message.renderScope === renderScope
+      ) {
+        if (message.root !== undefined) {
+          publishMaterializedContentRoot(message.root, message.diagnostics);
+        }
+        setSourceReloadVersion((version) => version + 1);
+        const editingInstanceSelector = message.editingInstanceSelector;
+        if (editingInstanceSelector !== undefined) {
+          cancelAnimationFrame(editingFrame ?? 0);
+          editingFrame = requestAnimationFrame(() => {
+            $textEditingInstanceSelector.set({
+              selector: editingInstanceSelector,
+              reason: "new",
+            });
+          });
+        }
+      }
+    });
+    return () => {
+      unsubscribe();
+      cancelAnimationFrame(editingFrame ?? 0);
+    };
+  }, [instance.component, instance.id, project, renderScope]);
+  const source = useMemo(() => {
+    if (instance.component !== blockComponent) {
+      return;
+    }
+    return getContentBlockSource({
+      blockInstanceId: instance.id,
+      props: props.values(),
+    });
+  }, [instance.component, instance.id, props]);
+  const sourceKey = source === undefined ? undefined : JSON.stringify(source);
+  const resolvedAssetId = useMemo(() => {
+    if (source?.type === "asset") {
+      return source.assetId;
+    }
+    if (source?.type !== "expression") {
+      return;
+    }
+    try {
+      const value = computeExpression(
+        source.value,
+        variableValues.get(rootedRenderScope) ?? new Map()
+      );
+      return typeof value === "string" ? value : undefined;
+    } catch {
+      return;
+    }
+  }, [rootedRenderScope, source, variableValues]);
+  const resolvedAsset =
+    resolvedAssetId === undefined ? undefined : assets.get(resolvedAssetId);
+  const resolvedAssetVersion =
+    resolvedAsset === undefined
+      ? undefined
+      : JSON.stringify([
+          resolvedAsset.id,
+          resolvedAsset.name,
+          resolvedAsset.size,
+          resolvedAsset.updatedAt,
+        ]);
+  const controller = useMemo(
+    () =>
+      project === undefined || sourceKey === undefined
+        ? undefined
+        : createBuilderContentBlockSourceController({
+            blockInstanceId: instance.id,
+            renderScope,
+            projectId: project.id,
+            onMaterializedRoot: (root, diagnostics) =>
+              publish({
+                type: "contentBlockMaterialized",
+                payload: { projectId: project.id, root, diagnostics },
+              }),
+            onMaterializedRootRemoved: () =>
+              publish({
+                type: "contentBlockMaterializedRemoved",
+                payload: {
+                  projectId: project.id,
+                  blockInstanceId: instance.id,
+                  renderScope,
+                },
+              }),
+          }),
+    [instance.id, project, renderScope, sourceKey]
+  );
+
+  useEffect(
+    () => () => {
+      controller?.dispose();
+    },
+    [controller]
+  );
+
+  useLayoutEffect(() => {
+    if (
+      controller === undefined ||
+      sourceKey === undefined ||
+      $project.get()?.id !== project?.id
+    ) {
+      return;
+    }
+    let active = true;
+    setContentBlockSourceSwitching({
+      blockInstanceId: instance.id,
+      renderScope,
+      switching: false,
+    });
+    setMaterializedContentStatus({
+      blockInstanceId: instance.id,
+      renderScope,
+      status: "loading",
+      assetId: resolvedAssetId,
+    });
+    const markFailed = () => {
+      if (active && $project.get()?.id === project?.id) {
+        setMaterializedContentStatus({
+          blockInstanceId: instance.id,
+          renderScope,
+          status: "failed",
+          assetId: resolvedAssetId,
+        });
+      }
+    };
+    void controller.open(JSON.parse(sourceKey)).catch(markFailed);
+    return () => {
+      active = false;
+    };
+  }, [
+    controller,
+    instance.id,
+    project,
+    renderScope,
+    resolvedAssetId,
+    resolvedAssetVersion,
+    sourceKey,
+    sourceReloadVersion,
+  ]);
+};
+
 /**
  * We are identifying newly created instances like Tooltips and ensuring the calculation of 'inflated' elements.
  */
-const useInflateOnNewElement = (instanceId: Instance["id"]) => {
+const useInflateOnNewElement = (instanceId: Instance["id"], enabled = true) => {
   useEffect(() => {
+    if (enabled === false) {
+      return;
+    }
     if (existingElements.has(instanceId) === false) {
       inflateInstance(instanceId);
     }
@@ -400,7 +664,7 @@ const useInflateOnNewElement = (instanceId: Instance["id"]) => {
     return () => {
       existingElements.delete(instanceId);
     };
-  }, [instanceId]);
+  }, [enabled, instanceId]);
 };
 
 /**
@@ -483,6 +747,13 @@ export const WebstudioComponentCanvas = forwardRef<
   const instanceId = instance.id;
   const instances = useStore($instances);
   const allProps = useStore($props);
+  const presentationItems = useStore($contentBlockPresentationItems);
+  useStore($materializedContentStatuses);
+  useContentBlockMaterialization({
+    instance,
+    instanceSelector,
+    props: allProps,
+  });
   const metas = useStore($registeredComponentMetas);
 
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
@@ -495,7 +766,7 @@ export const WebstudioComponentCanvas = forwardRef<
     createInstanceChildrenElements({
       instances,
       instanceSelector,
-      children: instance.children,
+      children: getRuntimeInstanceChildren(instance, instanceSelector),
       Component: WebstudioComponentCanvas,
       components,
     });
@@ -506,7 +777,10 @@ export const WebstudioComponentCanvas = forwardRef<
    */
   const initialContentEditableContent = useRef(children);
 
-  useInflateOnNewElement(instanceId);
+  useInflateOnNewElement(
+    instanceId,
+    instance.component !== contentBlockPresentationComponent
+  );
 
   // this assumes presence of `useStore($selectedInstanceSelector)` above
   // we rely on root re-rendering after selected instance changes
@@ -546,7 +820,11 @@ export const WebstudioComponentCanvas = forwardRef<
 
   if (instance.component === collectionComponent) {
     const originalData = instanceProps.data;
-    if (originalData && instance.children.length > 0) {
+    const collectionChildren = getRuntimeInstanceChildren(
+      instance,
+      instanceSelector
+    );
+    if (originalData && collectionChildren.length > 0) {
       const entries = getCollectionEntries(originalData);
       if (entries.length > 0) {
         return entries.map(([key]) => (
@@ -557,7 +835,7 @@ export const WebstudioComponentCanvas = forwardRef<
                 getIndexedInstanceId(instance.id, key),
                 ...instanceSelector,
               ],
-              children: instance.children,
+              children: collectionChildren,
               Component: WebstudioComponentCanvas,
               components,
             })}
@@ -609,6 +887,13 @@ export const WebstudioComponentCanvas = forwardRef<
   // For expressions that resolve to asset URLs (via assets resource), use the src value itself
   const key = computeComponentKey(props);
 
+  if (instance.component === contentBlockPresentationComponent) {
+    const item = presentationItems.get(instance.id);
+    return item === undefined ? null : (
+      <ContentBlockPresentation item={item} {...props} ref={ref} />
+    );
+  }
+
   const instanceElement = (
     <>
       <Component key={key} {...props} ref={ref}>
@@ -618,6 +903,7 @@ export const WebstudioComponentCanvas = forwardRef<
   );
 
   if (
+    isMaterializedInstanceEditable({ instanceSelector, instances }) === false ||
     areInstanceSelectorsEqual(
       textEditingInstanceSelector?.selector,
       instanceSelector
@@ -648,13 +934,40 @@ export const WebstudioComponentCanvas = forwardRef<
           )}
         />
       }
-      onChange={(instancesList) => {
-        const result = executeRuntimeMutation({
+      onChange={async (instancesList) => {
+        const editing = $textEditingInstanceSelector.get();
+        const materializedContent = getMaterializedContentForSelectors(
+          [instanceSelector],
+          instances
+        );
+        if (
+          shouldDiscardNewEmptyMaterializedTextInstance({
+            rootInstanceId: instance.id,
+            instances: instancesList,
+            isNew:
+              editing?.reason === "new" &&
+              areInstanceSelectorsEqual(editing.selector, instanceSelector),
+            isMaterialized:
+              getMaterializedInstanceEditability({
+                instanceSelector,
+                instances,
+              }) !== undefined,
+          })
+        ) {
+          await executeRuntimeMutationAsync({
+            id: "instances.deleteBySelector",
+            input: { instanceSelector },
+            context: { materializedContent },
+          });
+          return;
+        }
+        const result = await executeRuntimeMutationAsync({
           id: "instances.updateTextTree",
           input: {
             rootInstanceId: instance.id,
             instances: instancesList,
           },
+          context: { materializedContent },
         });
         return result?.result.idMap;
       }}
@@ -677,8 +990,19 @@ export const WebstudioComponentPreview = forwardRef<
   WebstudioComponentProps
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instances = useStore($instances);
+  const allProps = useStore($props);
+  useStore($contentBlockPresentationItems);
+  useContentBlockMaterialization({
+    instance,
+    instanceSelector,
+    props: allProps,
+  });
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
+
+  if (instance.component === contentBlockPresentationComponent) {
+    return null;
+  }
   const props: {
     [componentAttribute]: string;
     [idAttribute]: string;
@@ -695,7 +1019,11 @@ export const WebstudioComponentPreview = forwardRef<
 
   if (instance.component === collectionComponent) {
     const originalData = instanceProps.data;
-    if (originalData && instance.children.length > 0) {
+    const collectionChildren = getRuntimeInstanceChildren(
+      instance,
+      instanceSelector
+    );
+    if (originalData && collectionChildren.length > 0) {
       const entries = getCollectionEntries(originalData);
       if (entries.length > 0) {
         return entries.map(([key]) => (
@@ -706,7 +1034,7 @@ export const WebstudioComponentPreview = forwardRef<
                 getIndexedInstanceId(instance.id, key),
                 ...instanceSelector,
               ],
-              children: instance.children,
+              children: collectionChildren,
               Component: WebstudioComponentPreview,
               components,
             })}
@@ -759,7 +1087,7 @@ export const WebstudioComponentPreview = forwardRef<
         createInstanceChildrenElements({
           instances,
           instanceSelector,
-          children: instance.children,
+          children: getRuntimeInstanceChildren(instance, instanceSelector),
           Component: WebstudioComponentPreview,
           components,
         })}

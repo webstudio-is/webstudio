@@ -6,6 +6,8 @@ import { matchSorter } from "match-sorter";
 import {
   type Instance,
   type Props,
+  blockComponent,
+  contentBlockSourceProp,
   descendantComponent,
   rootComponent,
 } from "@webstudio-is/sdk";
@@ -31,7 +33,7 @@ import {
   $memoryProps,
   $selectedBreakpoint,
 } from "~/shared/nano-states";
-import { $props } from "~/shared/sync/data-stores";
+import { $runtimeProps } from "~/shared/content-block-content";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
   $selectedInstance,
@@ -48,6 +50,7 @@ import {
   $selectedInstancePropsMetas,
 } from "../shared";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { ContentBlockSourceSection } from "../controls/content-block-source-section";
 
 type Item = {
   name: string;
@@ -97,14 +100,19 @@ const shouldRenderPropsSectionContainer = ({
   propsMetasSize,
   hasVisibleProps,
   isContentMode,
+  isDesignMode,
 }: {
   component: Instance["component"];
   propsMetasSize: number;
   hasVisibleProps: boolean;
   isContentMode: boolean;
+  isDesignMode: boolean;
 }) => {
   if (component === rootComponent) {
     return false;
+  }
+  if (component === blockComponent) {
+    return isDesignMode || (isContentMode && hasVisibleProps);
   }
   return propsMetasSize > 0 || (isContentMode && hasVisibleProps);
 };
@@ -176,7 +184,7 @@ const forbiddenProperties = new Set(["style"]);
 const $availableProps = computed(
   [
     $selectedInstance,
-    $props,
+    $runtimeProps,
     $selectedInstancePropsMetas,
     $selectedInstanceInitialPropNames,
   ],
@@ -274,8 +282,17 @@ export const PropsSection = (props: PropsSectionProps) => {
 
   const matchMediaValue = matchMediaBreakpoints(matchingBreakpoints);
 
-  const hasProperties =
-    logic.addedProps.length > 0 || logic.initialProps.length > 0;
+  const addedProps = logic.addedProps.filter(
+    (item) =>
+      props.component !== blockComponent ||
+      item.propName !== contentBlockSourceProp
+  );
+  const initialProps = logic.initialProps.filter(
+    (item) =>
+      props.component !== blockComponent ||
+      item.propName !== contentBlockSourceProp
+  );
+  const hasProperties = addedProps.length > 0 || initialProps.length > 0;
   const hasItems = hasProperties || (isDesignMode && addingProp);
 
   const animationAction = logic.initialProps.find(
@@ -368,8 +385,8 @@ export const PropsSection = (props: PropsSectionProps) => {
                 }}
               />
             )}
-            {logic.addedProps.map((item) => renderProperty(props, item))}
-            {logic.initialProps.map((item) => renderProperty(props, item))}
+            {addedProps.map((item) => renderProperty(props, item))}
+            {initialProps.map((item) => renderProperty(props, item))}
           </Flex>
         </CollapsibleSectionWithAddButton>
       )}
@@ -415,6 +432,7 @@ export const PropsSectionContainer = ({
   });
 
   const propsMetas = useStore($selectedInstancePropsMetas);
+  const isDesignMode = useStore($isDesignMode);
   const isContentMode = useStore($isContentMode);
   const hasVisibleProps =
     logic.systemProps.length > 0 ||
@@ -426,6 +444,7 @@ export const PropsSectionContainer = ({
       propsMetasSize: propsMetas.size,
       hasVisibleProps,
       isContentMode,
+      isDesignMode,
     }) === false
   ) {
     return;
@@ -436,6 +455,17 @@ export const PropsSectionContainer = ({
       style={{ display: "contents" }}
       disabled={instance.component === descendantComponent}
     >
+      {isDesignMode && instance.component === blockComponent && (
+        <>
+          <Box css={{ padding: theme.panel.padding }}>
+            <ContentBlockSourceSection
+              blockInstanceId={instance.id}
+              renderScope={selectedInstanceKey}
+            />
+          </Box>
+          <Separator />
+        </>
+      )}
       <PropsSection
         propsLogic={logic}
         propValues={propValues ?? new Map()}

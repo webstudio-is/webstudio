@@ -12,7 +12,11 @@ import type { ComponentTemplateRegistry } from "./component-template";
 import { bindExpressionToInstanceScope } from "./data";
 import { throwBuilderRuntimeError } from "./errors";
 import { webstudioFragmentMutationInput } from "./fragment";
-import { insertIndexInput, instanceInsertModeInput } from "./instances";
+import {
+  blockTemplateNameConfirmationInput,
+  insertIndexInput,
+  instanceInsertModeInput,
+} from "./instances";
 
 const collectionDataInput = z.discriminatedUnion("type", [
   z.object({
@@ -40,6 +44,7 @@ export const insertCollectionInput = z.object({
   ),
   mode: instanceInsertModeInput.optional(),
   insertIndex: insertIndexInput.optional(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const insertCollectionResult = componentInsertResult.extend({

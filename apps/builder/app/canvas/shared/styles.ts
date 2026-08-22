@@ -33,14 +33,16 @@ import {
   $selectedStyleState,
   assetBaseUrl,
 } from "~/shared/nano-states";
-import { $assets } from "~/shared/sync/data-stores";
 import {
-  $breakpoints,
-  $instances,
-  $props,
-  $styleSourceSelections,
-  $styles,
-} from "~/shared/sync/data-stores";
+  $runtimeAssets as $assets,
+  $runtimeBreakpoints as $breakpoints,
+  $runtimeInstances as $instances,
+  $runtimeProps as $props,
+  $runtimeStyleSourceSelections as $styleSourceSelections,
+  $runtimeStyles as $styles,
+  $activeMaterializedContentRoots,
+  findRuntimeNavigableTextInstanceSelectors,
+} from "~/shared/content-block-content";
 import { setDifference } from "~/shared/shim";
 import { $ephemeralStyles } from "../stores";
 import { canvasApi } from "~/shared/canvas-api";
@@ -49,10 +51,8 @@ import {
   $selectedInstanceSelector,
   $selectedPage,
 } from "~/shared/nano-states";
-import {
-  findAllNavigableTextInstanceSelectors,
-  type InstanceSelector,
-} from "@webstudio-is/project-build/runtime";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
+import type { MaterializedContentRoot } from "@webstudio-is/project-build/runtime";
 import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
 import { createComputedStyleDeclStore } from "~/builder/features/style-panel/shared/model";
 
@@ -235,12 +235,13 @@ const subscribeContentEditModeHelperStyles = () => {
     if (rootInstanceId !== undefined) {
       const instances = $instances.get();
 
-      const editableInstanceSelectors = findAllNavigableTextInstanceSelectors({
-        instanceSelector: [rootInstanceId],
-        instances,
-        props: $props.get(),
-        metas: $registeredComponentMetas.get(),
-      });
+      const editableInstanceSelectors =
+        findRuntimeNavigableTextInstanceSelectors({
+          rootInstanceId,
+          instances,
+          props: $props.get(),
+          metas: $registeredComponentMetas.get(),
+        });
 
       for (const rule of computeEditableCursorRules(
         editableInstanceSelectors
@@ -314,7 +315,8 @@ const computeDescendantSelectors = <
   P extends { instanceId: string; name: string; type: string; value?: unknown },
 >(
   instances: Map<Instance["id"], Instance>,
-  props: Map<string, P>
+  props: Map<string, P>,
+  materializedRoots: ReadonlyMap<string, MaterializedContentRoot> = new Map()
 ) => {
   const parentIdByInstanceId = new Map<Instance["id"], Instance["id"]>();
   const descendantInstanceIds: Instance["id"][] = [];
@@ -325,6 +327,13 @@ const computeDescendantSelectors = <
     for (const child of instance.children) {
       if (child.type === "id") {
         parentIdByInstanceId.set(child.value, instance.id);
+      }
+    }
+  }
+  for (const { identity, fragment } of materializedRoots.values()) {
+    for (const child of fragment.children) {
+      if (child.type === "id") {
+        parentIdByInstanceId.set(child.value, identity.blockInstanceId);
       }
     }
   }
@@ -402,7 +411,7 @@ const getPresetStyleSelector = (component: string, tag: string) =>
     : `${tag}:where([data-ws-component="${component}"])`;
 
 const $descendantSelectors = computed(
-  [$instances, $props],
+  [$instances, $props, $activeMaterializedContentRoots],
   computeDescendantSelectors
 );
 

@@ -1,4 +1,8 @@
-import { ROOT_INSTANCE_ID, type Instances } from "@webstudio-is/sdk";
+import {
+  ROOT_INSTANCE_ID,
+  type Instance,
+  type Instances,
+} from "@webstudio-is/sdk";
 import {
   areInstanceSelectorsEqual,
   isDescendantOrSelf,
@@ -170,7 +174,11 @@ const isKnownSelectorSegment = (
 
 export const canResolveInstanceSelector = (
   instanceSelector: InstanceSelector,
-  instances: Instances
+  instances: Instances,
+  getChildren: (
+    instance: Instance,
+    selector: InstanceSelector
+  ) => Instance["children"] = (instance) => instance.children
 ) => {
   for (let index = 0; index < instanceSelector.length; index += 1) {
     if (isKnownSelectorSegment(instanceSelector, index, instances) === false) {
@@ -188,9 +196,12 @@ export const canResolveInstanceSelector = (
       continue;
     }
 
-    const parentInstance = instances.get(parentId);
+    const parentInstance =
+      instances.get(parentId) ??
+      instances.get(getIndexedBaseInstanceId(parentId) ?? "");
     if (
-      parentInstance?.children.some(
+      parentInstance === undefined ||
+      getChildren(parentInstance, instanceSelector.slice(index + 1)).some(
         (child) => child.type === "id" && child.value === instanceId
       ) !== true
     ) {

@@ -1,6 +1,7 @@
 import type {
   Instance,
   Instances,
+  GetInstanceChildren,
   Pages,
   Props,
   WsComponentMeta,
@@ -86,6 +87,7 @@ type TextEditorLookupInput = {
   props: Props;
   metas: Map<string, WsComponentMeta>;
   htmlTagsByInstanceId?: Map<Instance["id"], string>;
+  getInstanceChildren?: GetInstanceChildren;
 };
 
 const hasExpressionInTree = (
@@ -152,7 +154,10 @@ export const findAllNavigableTextInstanceSelectors = (
     if (instance === undefined) {
       return;
     }
-    for (const child of instance.children) {
+    const children =
+      args.getInstanceChildren?.(instance, instanceSelector) ??
+      instance.children;
+    for (const child of children) {
       if (child.type === "id") {
         visit([child.value, ...instanceSelector]);
       }

@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from "vitest";
+import { afterEach, describe, test, expect, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { toast } from "@webstudio-is/design-system";
 import type {
@@ -13,6 +13,7 @@ import type {
 } from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
+  blockComponent,
   collectionComponent,
   coreMetas,
   elementComponent,
@@ -23,7 +24,7 @@ import type { Project } from "@webstudio-is/project";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { registerContainers } from "../sync/sync-stores";
-import { $registeredComponentMetas } from "../nano-states";
+import { $builderMode, $registeredComponentMetas } from "../nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import {
   $dataSources,
@@ -34,6 +35,7 @@ import {
 } from "~/shared/sync/data-stores";
 import { instanceText } from "./plugin-instance";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import type { MaterializedMdxAuthoredContentRoot } from "@webstudio-is/project-build/runtime";
 import { selectInstance, selectInstances } from "~/shared/nano-states";
 import { $allSelectedInstanceSelectors } from "~/shared/nano-states";
 import { $selectedPageId } from "../nano-states/pages";
@@ -44,11 +46,22 @@ import {
 } from "../slot-test-utils";
 import { pasteHandled } from "./copy-paste";
 import { initBuilderApi } from "../builder-api";
+import {
+  $materializedContentRoots,
+  publishMaterializedContentRoot,
+  registerContentStorageSaver,
+  resetMaterializedContent,
+} from "../content-block-content";
 
 const expectString = expect.any(String) as unknown as string;
 
 enableMapSet();
 registerContainers();
+
+afterEach(() => {
+  resetMaterializedContent();
+  $builderMode.set("design");
+});
 
 $registeredComponentMetas.set(
   new Map(Object.entries({ ...baseComponentMetas, ...coreMetas }))
@@ -130,6 +143,141 @@ describe("copy and cut guards", () => {
     expect(instanceText.onCopy?.()).toBeUndefined();
     expect(instanceText.onCut?.()).toBeUndefined();
     expect($instances.get()).toEqual(instances);
+  });
+
+  test("copies and pastes an instance after its materialized MDX sibling", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [{ type: "id", value: "block" }]),
+        createInstance("block", blockComponent, [
+          { type: "id", value: "templates" },
+        ]),
+        createInstance("templates", blockTemplateComponent, []),
+      ] satisfies Instance[])
+    );
+    $props.set(
+      toMap([
+        {
+          id: "source",
+          instanceId: "block",
+          name: "src",
+          type: "asset",
+          value: "article",
+        },
+      ] satisfies Prop[])
+    );
+    const renderScope = JSON.stringify(["block", "body0"]);
+    const root: MaterializedMdxAuthoredContentRoot = {
+      identity: {
+        blockInstanceId: "block",
+        assetId: "article",
+        contentRef: "article.mdx",
+        revision: "sha256:one",
+        renderScope,
+        format: "mdx",
+      },
+      fragment: {
+        children: [
+          { type: "id", value: "mdx-paragraph" },
+          { type: "id", value: "mdx-second" },
+        ],
+        instances: [
+          {
+            ...createInstance("mdx-paragraph", elementComponent, [
+              { type: "text", value: "Copied from MDX" },
+            ]),
+            tag: "p",
+          },
+          {
+            ...createInstance("mdx-second", elementComponent, [
+              { type: "text", value: "Second" },
+            ]),
+            tag: "p",
+          },
+        ],
+        props: [],
+        assets: [],
+        dataSources: [],
+        resources: [],
+        breakpoints: [],
+        styleSourceSelections: [],
+        styleSources: [],
+        styles: [],
+      },
+      document: {
+        frontmatter: { properties: {} },
+        children: [
+          {
+            type: "element",
+            syntax: "markdown",
+            tag: "p",
+            props: [],
+            children: [{ type: "text", value: "Copied from MDX" }],
+          },
+          {
+            type: "element",
+            syntax: "markdown",
+            tag: "p",
+            props: [],
+            children: [{ type: "text", value: "Second" }],
+          },
+        ],
+      },
+      provenance: {
+        nodes: [
+          {
+            type: "element",
+            path: [0],
+            instanceId: "mdx-paragraph",
+            assetProps: [],
+          },
+          {
+            type: "element",
+            path: [1],
+            instanceId: "mdx-second",
+            assetProps: [],
+          },
+        ],
+        unresolvedTemplates: [],
+      },
+    };
+    publishMaterializedContentRoot(root);
+    $builderMode.set("content");
+    selectInstance(["mdx-paragraph", "block", "body0"]);
+
+    const clipboardData = instanceText.onCopy?.() ?? "";
+    expect(JSON.parse(clipboardData)).toMatchObject({
+      "@webstudio/instance/v0.1": {
+        instanceSelector: ["mdx-paragraph", "block", "body0"],
+        instances: [
+          {
+            id: "mdx-paragraph",
+            children: [{ type: "text", value: "Copied from MDX" }],
+          },
+        ],
+      },
+    });
+
+    const save = vi.fn(async () => ({ status: "applied" as const }));
+    const unregister = registerContentStorageSaver({
+      blockInstanceId: "block",
+      renderScope,
+      preflight: async () => ({ status: "applied" }),
+      isCurrent: () => true,
+      save,
+    });
+    initBuilderApi();
+    expect(await instanceText.onPaste?.(clipboardData)).toEqual(pasteHandled);
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    const children = $materializedContentRoots
+      .get()
+      .get(JSON.stringify(["block", renderScope]))?.fragment.children;
+    expect(children).toHaveLength(3);
+    expect(children?.[0]).toEqual({ type: "id", value: "mdx-paragraph" });
+    expect(children?.[1]).toEqual({ type: "id", value: expect.any(String) });
+    expect(children?.[1]).not.toEqual({ type: "id", value: "mdx-second" });
+    expect(children?.[2]).toEqual({ type: "id", value: "mdx-second" });
+    unregister();
   });
 
   test("copies multiple selected roots into one combined fragment", () => {

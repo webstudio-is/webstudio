@@ -4,7 +4,7 @@ import {
   $hoveredInstanceSelector,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import { $runtimeInstances as $instances } from "~/shared/content-block-content";
 import { $hoveredInstanceOutline } from "~/shared/nano-states";
 import {
   getAllElementsBoundingBox,

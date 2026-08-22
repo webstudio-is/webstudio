@@ -7,11 +7,20 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { EditorView } from "@codemirror/view";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
-import type { Instance } from "@webstudio-is/sdk";
+import {
+  blockComponent,
+  blockTemplateComponent,
+  elementComponent,
+  type Instance,
+} from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $builderMode } from "~/shared/nano-states";
-import { $instances, $pages } from "~/shared/sync/data-stores";
+import { $instances, $pages, $props } from "~/shared/sync/data-stores";
 import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
+import {
+  publishMaterializedContentRoot,
+  resetMaterializedContent,
+} from "~/shared/content-block-content";
 import { TextContent } from "./text-content";
 
 (
@@ -74,7 +83,9 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount());
   container.remove();
+  resetMaterializedContent();
   $instances.set(new Map());
+  $props.set(new Map());
   vi.unstubAllGlobals();
   if (rangeGetClientRects === undefined) {
     delete (Range.prototype as { getClientRects?: unknown }).getClientRects;
@@ -87,12 +98,15 @@ afterEach(() => {
   }
 });
 
-const renderTextContent = (computedValue = " · 2") => {
+const renderTextContent = (
+  computedValue = " · 2",
+  instanceId = "reading-time"
+) => {
   act(() => {
     root.render(
       <TooltipProvider>
         <TextContent
-          instanceId="reading-time"
+          instanceId={instanceId}
           meta={{ control: "textContent", type: "string", required: false }}
           prop={undefined}
           propName={textContentAttribute}
@@ -134,6 +148,89 @@ test("renders the existing bound Text content control for the expression child",
 
   expect(container.textContent).toContain("Text Content");
   expect(container.querySelector('[role="textbox"]')?.textContent).toBe("2");
+  expect(container.querySelector('[data-variant="bound"]')).not.toBeNull();
+});
+
+test("renders an expression child from materialized MDX content", () => {
+  $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+  $instances.set(
+    new Map([
+      [
+        "body",
+        {
+          type: "instance" as const,
+          id: "body",
+          component: "Body",
+          children: [{ type: "id" as const, value: "block" }],
+        },
+      ],
+      [
+        "block",
+        {
+          type: "instance" as const,
+          id: "block",
+          component: blockComponent,
+          children: [{ type: "id" as const, value: "templates" }],
+        },
+      ],
+      [
+        "templates",
+        {
+          type: "instance" as const,
+          id: "templates",
+          component: blockTemplateComponent,
+          children: [],
+        },
+      ],
+    ])
+  );
+  $props.set(
+    new Map([
+      [
+        "source",
+        {
+          id: "source",
+          instanceId: "block",
+          name: "src",
+          type: "asset" as const,
+          value: "article",
+        },
+      ],
+    ])
+  );
+  publishMaterializedContentRoot({
+    identity: {
+      blockInstanceId: "block",
+      assetId: "article",
+      contentRef: "article.mdx",
+      revision: "sha256:one",
+      renderScope: JSON.stringify(["block", "body"]),
+      format: "mdx",
+    },
+    fragment: {
+      children: [{ type: "id", value: "mdx-text" }],
+      instances: [
+        {
+          type: "instance",
+          id: "mdx-text",
+          component: elementComponent,
+          tag: "span",
+          children: [{ type: "expression", value: "1 + 1" }],
+        },
+      ],
+      props: [],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+    },
+  });
+
+  renderTextContent("2", "mdx-text");
+
   expect(container.querySelector('[data-variant="bound"]')).not.toBeNull();
 });
 

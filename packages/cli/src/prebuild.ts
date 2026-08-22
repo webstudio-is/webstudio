@@ -14,8 +14,10 @@ import { fileURLToPath } from "node:url";
 import { parse } from "acorn";
 import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
+import deepEqual from "fast-deep-equal";
 import {
   generateWebstudioComponent,
+  type PublishedContentBlock,
   type Params,
   normalizeProps,
   generateRemixRoute,
@@ -37,11 +39,13 @@ import {
   decodeDataSourceVariable,
   SYSTEM_VARIABLE_ID,
   generateCss,
+  getStyleDeclKey,
   ROOT_INSTANCE_ID,
   elementComponent,
   toAssetReferenceRuntimeData,
   matchPathnameParams,
-  createReachableAssetContentCompilationPlan,
+  blockComponent,
+  blockTemplateComponent,
   parseStructuredAssetQueryResourceBody,
   type StructuredAssetQueryFilterBinding,
   type StructuredAssetQueryWhereBinding,
@@ -59,8 +63,15 @@ import {
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
   collectFontFamiliesFromStyleDecls,
+  createPublishedMdxMaterializationCache,
+  materializePublishedMdx,
   getZodValidationIssues,
 } from "@webstudio-is/project-build/runtime";
+import {
+  createPublishedBuildContentCompilationPlan,
+  hasDynamicPublishedMdxSources,
+  resolvePublishedMdxAssetCandidates,
+} from "@webstudio-is/project-build";
 import {
   assetQueryFilter,
   type AssetRuntimeData,
@@ -135,6 +146,7 @@ type SiteDataByPage = {
     assets: Array<Asset>;
     params?: Params;
     pages: Array<Page>;
+    publishedContentBlocks?: ReadonlyMap<string, PublishedContentBlock>;
   };
 };
 
@@ -930,6 +942,32 @@ export const prebuild = async (options: {
     );
   }
   const siteData = parsedSiteData.data;
+  const pages = migratePages(siteData.build.pages);
+  const publicationBuild = { ...siteData.build, pages };
+  const verifiedAssetIndex =
+    siteData.assetIndex === undefined
+      ? undefined
+      : await verifyContentArtifact(siteData.assetIndex);
+  let dynamicMdxCandidates: ReadonlyMap<string, readonly string[]> | undefined;
+  if (hasDynamicPublishedMdxSources(publicationBuild)) {
+    if (verifiedAssetIndex === undefined) {
+      throw new Error(
+        "Dynamic MDX dependencies are unavailable in the Asset artifact"
+      );
+    }
+    dynamicMdxCandidates = resolvePublishedMdxAssetCandidates({
+      build: publicationBuild,
+      artifact: verifiedAssetIndex,
+    });
+  }
+  const assetCompilationPlan = createPublishedBuildContentCompilationPlan(
+    publicationBuild,
+    dynamicMdxCandidates
+  );
+  const hasPublishedMdxSources =
+    assetCompilationPlan?.queries.some(({ id }) =>
+      id.startsWith("__content-block-mdx__:")
+    ) ?? false;
   await configureSsgAssetResourceFetch({
     enabled: siteData.assetIndex !== undefined,
   });
@@ -937,7 +975,6 @@ export const prebuild = async (options: {
   const usedMetas = new Map<Instance["component"], WsComponentMeta>(
     Object.entries(coreMetas)
   );
-  const pages = migratePages(siteData.build.pages);
   const publishablePages = getPublishablePages(pages);
   const generatedPages = options.includeDraftPages
     ? getAllPages(pages)
@@ -1022,59 +1059,6 @@ export const prebuild = async (options: {
       page,
       assets: siteData.assets,
     };
-
-    // Extract background SVGs and Font assets
-    const styleSourceSelections = siteData.build?.styleSourceSelections ?? [];
-    const pageStyleSourceIds = new Set(
-      styleSourceSelections
-        .filter(([, { instanceId }]) => pageInstanceSet.has(instanceId))
-        .map(([, { values }]) => values)
-        .flat()
-    );
-
-    const pageStyles =
-      siteData.build?.styles
-        ?.filter(([, { styleSourceId }]) =>
-          pageStyleSourceIds.has(styleSourceId)
-        )
-        .map(([, style]) => style) ?? [];
-
-    // Extract fonts
-    const pageFontFamilies = collectFontFamiliesFromStyleDecls(pageStyles);
-
-    const pageFontAssets = siteData.assets
-      .filter((asset) => asset.type === "font")
-      .filter((fontAsset) => pageFontFamilies.has(fontAsset.meta.family))
-      .map((asset) => asset.name);
-
-    fontAssetsByPage[page.id] = pageFontAssets;
-
-    // Extract background images
-    // backgroundImage => "value.type=="layers" => value.type == "image" => .value (assetId)
-    const backgroundImageAssetIdSet = new Set(
-      pageStyles
-        .filter(({ property }) => property === "backgroundImage")
-        .map(({ value }) =>
-          value.type === "layers"
-            ? value.value.map((layer) =>
-                layer.type === "image"
-                  ? layer.value.type === "asset"
-                    ? layer.value.value
-                    : undefined
-                  : undefined
-              )
-            : undefined
-        )
-        .flat()
-        .filter(<T>(value: T): value is NonNullable<T> => value !== undefined)
-    );
-
-    const backgroundImageAssets = siteData.assets
-      .filter((asset) => asset.type === "image")
-      .filter((imageAsset) => backgroundImageAssetIdSet.has(imageAsset.id))
-      .map((asset) => asset.name);
-
-    backgroundImageAssetsByPage[page.id] = backgroundImageAssets;
   }
 
   if (options.assets === true) {
@@ -1087,13 +1071,332 @@ export const prebuild = async (options: {
 
   const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
 
+  const publishedInstances = new Map(siteData.build.instances);
+  const publishedProps = new Map(siteData.build.props);
+  const publishedStyleSources = new Map(siteData.build.styleSources);
+  const publishedStyleSourceSelections = new Map(
+    siteData.build.styleSourceSelections
+  );
+  const publishedStyles = new Map(siteData.build.styles);
+  const publishedBreakpoints = new Map(siteData.build.breakpoints);
+  if (hasPublishedMdxSources && siteData.assetIndex === undefined) {
+    throw new Error(
+      "Published Content Block MDX dependencies are unavailable in the Asset artifact"
+    );
+  }
+  if (verifiedAssetIndex !== undefined) {
+    const publishedMdxCache = createPublishedMdxMaterializationCache();
+    const mergeRecord = <Value>(
+      target: Map<string, Value>,
+      key: string,
+      value: Value,
+      namespace: string
+    ) => {
+      const existing = target.get(key);
+      if (existing !== undefined && deepEqual(existing, value)) {
+        return;
+      }
+      if (existing !== undefined) {
+        throw new Error(
+          `Published MDX ${namespace} collision for ${JSON.stringify(key)}`
+        );
+      }
+      target.set(key, value);
+    };
+    for (const page of generatedPages) {
+      const pageData = siteDataByPage[page.id];
+      const pageInstances = new Map(pageData.build.instances);
+      const pageProps = new Map(pageData.build.props);
+      const materializationProps = new Map(
+        siteData.build.props.filter(([, prop]) =>
+          pageInstances.has(prop.instanceId)
+        )
+      );
+      const pageDataSources = new Map(pageData.build.dataSources);
+      const pageResources = new Map(pageData.build.resources);
+      const candidatesByBlock = new Map<string, PublishedContentBlock>();
+      const processedBlockIds = new Set<string>();
+      const getRenderedBlockIds = () => {
+        const blockIds = new Set<string>();
+        const visited = new Set<string>();
+        const visit = (instanceId: string) => {
+          if (visited.has(instanceId)) {
+            return;
+          }
+          visited.add(instanceId);
+          const instance = pageInstances.get(instanceId);
+          if (
+            instance === undefined ||
+            instance.component === blockTemplateComponent
+          ) {
+            return;
+          }
+          if (instance.component === blockComponent) {
+            blockIds.add(instance.id);
+          }
+          for (const child of instance.children) {
+            if (child.type === "id") {
+              visit(child.value);
+            }
+          }
+        };
+        visit(page.rootInstanceId);
+        return blockIds;
+      };
+      for (;;) {
+        const pendingBlockIds = new Set(
+          Array.from(getRenderedBlockIds()).filter(
+            (blockId) => processedBlockIds.has(blockId) === false
+          )
+        );
+        if (pendingBlockIds.size === 0) {
+          break;
+        }
+        for (const blockId of pendingBlockIds) {
+          processedBlockIds.add(blockId);
+        }
+        const pageBuild = {
+          instances: Array.from(pageInstances.values()),
+          props: Array.from(materializationProps.values()),
+          dataSources: Array.from(pageDataSources.values()),
+          resources: Array.from(pageResources.values()),
+        };
+        const pageDynamicCandidates = hasDynamicPublishedMdxSources(
+          pageBuild,
+          pendingBlockIds
+        )
+          ? resolvePublishedMdxAssetCandidates({
+              build: pageBuild,
+              artifact: verifiedAssetIndex,
+              blockInstanceIds: pendingBlockIds,
+            })
+          : undefined;
+        const materialized = await materializePublishedMdx({
+          route: getPagePath(page.id, pages),
+          data: {
+            instances: pageInstances,
+            props: materializationProps,
+            dataSources: pageDataSources,
+            resources: pageResources,
+            styleSources: publishedStyleSources,
+            styleSourceSelections: publishedStyleSourceSelections,
+            styles: publishedStyles,
+            breakpoints: publishedBreakpoints,
+            assets,
+          },
+          artifact: verifiedAssetIndex,
+          metas: usedMetas,
+          projectId: siteData.build.projectId,
+          cache: publishedMdxCache,
+          dynamicAssetIdsByBlock: pageDynamicCandidates,
+          blockInstanceIds: pendingBlockIds,
+        });
+        for (const root of materialized.roots) {
+          if (root.dynamic && root.fragment.resources.length > 0) {
+            const sourcePath =
+              root.source.type === "expression"
+                ? parseStaticMemberPath(root.source.value)
+                : undefined;
+            const sourceDataSourceId =
+              sourcePath === undefined
+                ? undefined
+                : decodeDataSourceVariable(sourcePath[0]);
+            if (
+              sourceDataSourceId !== undefined &&
+              pageDataSources.get(sourceDataSourceId)?.type === "parameter"
+            ) {
+              throw new Error(
+                `Dynamic published MDX Asset "${root.identity.assetId}" uses a Collection-scoped Resource that cannot be selected once per route`
+              );
+            }
+          }
+          const actionResourceIds = new Set(
+            [...materializationProps.values(), ...root.fragment.props].flatMap(
+              (prop) => (prop.type === "resource" ? [prop.value] : [])
+            )
+          );
+          if (
+            root.dynamic &&
+            root.fragment.resources.some(({ id }) => actionResourceIds.has(id))
+          ) {
+            throw new Error(
+              `Dynamic published MDX Asset "${root.identity.assetId}" contains an action Resource that cannot be selected safely at submission time`
+            );
+          }
+          for (const instance of root.fragment.instances) {
+            mergeRecord(pageInstances, instance.id, instance, "instance");
+            mergeRecord(publishedInstances, instance.id, instance, "instance");
+          }
+          for (const prop of root.fragment.props) {
+            mergeRecord(materializationProps, prop.id, prop, "authored prop");
+          }
+          const normalizedFragmentProps = normalizeProps({
+            props: root.fragment.props,
+            assetBaseUrl,
+            assets,
+            uploadingImageAssets: [],
+            pages,
+            source: "prebuild",
+          });
+          for (const prop of normalizedFragmentProps) {
+            mergeRecord(pageProps, prop.id, prop, "prop");
+            mergeRecord(publishedProps, prop.id, prop, "prop");
+          }
+          for (const dataSource of root.fragment.dataSources) {
+            mergeRecord(
+              pageDataSources,
+              dataSource.id,
+              dataSource,
+              "data source"
+            );
+          }
+          for (const resource of root.fragment.resources) {
+            mergeRecord(pageResources, resource.id, resource, "resource");
+          }
+          for (const styleSource of root.fragment.styleSources) {
+            mergeRecord(
+              publishedStyleSources,
+              styleSource.id,
+              styleSource,
+              "style source"
+            );
+          }
+          for (const selection of root.fragment.styleSourceSelections) {
+            mergeRecord(
+              publishedStyleSourceSelections,
+              selection.instanceId,
+              selection,
+              "style source selection"
+            );
+          }
+          for (const style of root.fragment.styles) {
+            mergeRecord(
+              publishedStyles,
+              getStyleDeclKey(style),
+              style,
+              "style declaration"
+            );
+          }
+          for (const breakpoint of root.fragment.breakpoints) {
+            mergeRecord(
+              publishedBreakpoints,
+              breakpoint.id,
+              breakpoint,
+              "breakpoint"
+            );
+          }
+          const previous = candidatesByBlock.get(root.identity.blockInstanceId);
+          candidatesByBlock.set(root.identity.blockInstanceId, {
+            ...(root.source.type === "expression"
+              ? { sourceExpression: root.source.value }
+              : {}),
+            candidates: [
+              ...(previous?.candidates ?? []),
+              {
+                assetId: root.identity.assetId,
+                dependencyRevision: root.dependencyRevision,
+                children: root.fragment.children,
+                resourceIds: root.fragment.resources.map(({ id }) => id),
+              },
+            ],
+          });
+        }
+        for (const warning of materialized.warnings) {
+          console.warn(
+            JSON.stringify({
+              type: "webstudio-build-warning",
+              feature: "content-block-mdx",
+              route: warning.route,
+              ...warning.diagnostic,
+            })
+          );
+        }
+      }
+      pageData.build.instances = Array.from(pageInstances);
+      pageData.build.props = Array.from(pageProps);
+      pageData.build.dataSources = Array.from(pageDataSources);
+      pageData.build.resources = Array.from(pageResources);
+      pageData.publishedContentBlocks = candidatesByBlock;
+    }
+  }
+
+  // Collect preload dependencies after MDX projection. Filtering selections by
+  // each page's projected instances prevents unused candidates from leaking
+  // font or background preloads onto other routes.
+  for (const page of generatedPages) {
+    const pageInstances = new Map(siteDataByPage[page.id].build.instances);
+    const pageInstanceIds = new Set<string>();
+    const visitRenderedInstance = (instanceId: string) => {
+      if (pageInstanceIds.has(instanceId)) {
+        return;
+      }
+      pageInstanceIds.add(instanceId);
+      const instance = pageInstances.get(instanceId);
+      if (
+        instance === undefined ||
+        instance.component === blockTemplateComponent
+      ) {
+        return;
+      }
+      for (const child of instance.children) {
+        if (child.type === "id") {
+          visitRenderedInstance(child.value);
+        }
+      }
+    };
+    visitRenderedInstance(page.rootInstanceId);
+    for (const block of siteDataByPage[
+      page.id
+    ].publishedContentBlocks?.values() ?? []) {
+      if (block.sourceExpression !== undefined) {
+        continue;
+      }
+      for (const candidate of block.candidates) {
+        for (const child of candidate.children) {
+          if (child.type === "id") {
+            visitRenderedInstance(child.value);
+          }
+        }
+      }
+    }
+    const pageStyleSourceIds = new Set(
+      Array.from(publishedStyleSourceSelections.values())
+        .filter(({ instanceId }) => pageInstanceIds.has(instanceId))
+        .flatMap(({ values }) => values)
+    );
+    const pageStyles = Array.from(publishedStyles.values()).filter(
+      ({ styleSourceId }) => pageStyleSourceIds.has(styleSourceId)
+    );
+    const pageFontFamilies = collectFontFamiliesFromStyleDecls(pageStyles);
+    fontAssetsByPage[page.id] = siteData.assets
+      .filter((asset) => asset.type === "font")
+      .filter((asset) => pageFontFamilies.has(asset.meta.family))
+      .map((asset) => asset.name);
+
+    const backgroundImageAssetIds = new Set(
+      pageStyles.flatMap(({ property, value }) =>
+        property === "backgroundImage" && value.type === "layers"
+          ? value.value.flatMap((layer) =>
+              layer.type === "image" && layer.value.type === "asset"
+                ? [layer.value.value]
+                : []
+            )
+          : []
+      )
+    );
+    backgroundImageAssetsByPage[page.id] = siteData.assets
+      .filter((asset) => asset.type === "image")
+      .filter((asset) => backgroundImageAssetIds.has(asset.id))
+      .map((asset) => asset.name);
+  }
+
   const { cssText, classes } = generateCss({
-    instances: new Map(siteData.build.instances),
-    props: new Map(siteData.build.props),
+    instances: publishedInstances,
+    props: publishedProps,
     assets,
-    breakpoints: new Map(siteData.build?.breakpoints),
-    styles: new Map(siteData.build?.styles),
-    styleSourceSelections: new Map(siteData.build?.styleSourceSelections),
+    breakpoints: publishedBreakpoints,
+    styles: publishedStyles,
+    styleSourceSelections: publishedStyleSourceSelections,
     // pass only used metas to not generate unused preset styles
     componentMetas: usedMetas,
     assetBaseUrl,
@@ -1244,6 +1547,7 @@ export const prebuild = async (options: {
       classesMap: classes,
       metas: usedMetas,
       tagsOverrides: framework.tags,
+      publishedContentBlocks: pageData.publishedContentBlocks,
     });
 
     const projectMeta = siteData.build.projectSettings?.meta ?? pages.meta;
@@ -1342,6 +1646,23 @@ export const prebuild = async (options: {
         dataSources,
         props,
         resources,
+        contentBlockResourceSelections: Array.from(
+          pageData.publishedContentBlocks?.values() ?? []
+        ).flatMap((block) =>
+          block.sourceExpression === undefined
+            ? []
+            : [
+                {
+                  sourceExpression: block.sourceExpression,
+                  candidates: block.candidates.map(
+                    ({ assetId, resourceIds = [] }) => ({
+                      assetId,
+                      resourceIds,
+                    })
+                  ),
+                },
+              ]
+        ),
       })}
 
       ${generatePageMeta({
@@ -1462,12 +1783,6 @@ export const prebuild = async (options: {
       ];
     })
   );
-  const assetCompilationPlan = createReachableAssetContentCompilationPlan({
-    props: siteData.build.props.map(([, prop]) => prop),
-    dataSources: siteData.build.dataSources.map(([, dataSource]) => dataSource),
-    resources: siteData.build.resources.map(([, resource]) => resource),
-  });
-
   await materializeAssetIndex({
     index: siteData.assetIndex,
     runtimeAssets: assetsById,

@@ -13,7 +13,6 @@ import {
   portalComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
-  findTreeInstanceIds,
 } from "@webstudio-is/sdk";
 import { transpileExpression } from "@webstudio-is/expression";
 import {
@@ -22,8 +21,15 @@ import {
   getCollectionEntries,
 } from "@webstudio-is/react-sdk";
 import { mapGroupBy } from "~/shared/shim";
-import { $instances } from "../sync/data-stores";
-import { $dataSources, $props, $assets, $resources } from "../sync/data-stores";
+import {
+  $runtimeAssets as $assets,
+  $runtimeDataSources as $dataSources,
+  $runtimeInstances as $instances,
+  $runtimeProps as $props,
+  $runtimeResources as $resources,
+  findRuntimeTreeInstanceIds,
+  getRuntimeInstanceChildren,
+} from "../content-block-content";
 import { $uploadingFilesDataStore, $memoryProps, $isPreviewMode } from "./misc";
 import { $pages } from "../sync/data-stores";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
@@ -334,7 +340,10 @@ export const $propValuesByInstanceSelector = computed(
         }
         return;
       }
-      for (const child of instance.children) {
+      for (const child of getRuntimeInstanceChildren(
+        instance,
+        instanceSelector
+      )) {
         // plain text can be edited from props panel
         if (child.type === "text" && instance.children.length === 1) {
           propValues.set(textContentAttribute, child.value);
@@ -557,7 +566,10 @@ export const $variableValuesByInstanceSelector = computed(
         variableValues = globalVariableValues;
         variableNames = globalVariableNames;
       }
-      for (const child of instance.children) {
+      for (const child of getRuntimeInstanceChildren(
+        instance,
+        instanceSelector
+      )) {
         if (child.type === "id") {
           traverseInstances(
             [child.value, ...instanceSelector],
@@ -593,7 +605,10 @@ const $computedResourceRequests = computed(
     if (page === undefined) {
       return computedResourceRequests;
     }
-    const instanceIds = findTreeInstanceIds(instances, page.rootInstanceId);
+    const instanceIds = findRuntimeTreeInstanceIds(
+      page.rootInstanceId,
+      instances
+    );
     instanceIds.add(ROOT_INSTANCE_ID);
     // load only resources bound to variables on current page
     // action resources should not be loaded automatically

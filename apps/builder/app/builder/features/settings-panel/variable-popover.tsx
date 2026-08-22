@@ -57,8 +57,12 @@ import {
   $permissions,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
-import { $dataSources } from "~/shared/sync/data-stores";
-import { $resources, $instances, $props } from "~/shared/sync/data-stores";
+import {
+  $runtimeDataSources,
+  $runtimeInstances,
+  $runtimeProps,
+  $runtimeResources,
+} from "~/shared/content-block-content";
 import {
   $selectedInstance,
   $selectedInstanceKeyWithRoot,
@@ -169,10 +173,10 @@ const NameField = ({
             }
             return findUnsetVariableNames({
               startingInstanceId: scopeInstanceId,
-              instances: $instances.get(),
-              props: $props.get(),
-              dataSources: $dataSources.get(),
-              resources: $resources.get(),
+              instances: $runtimeInstances.get(),
+              props: $runtimeProps.get(),
+              dataSources: $runtimeDataSources.get(),
+              resources: $runtimeResources.get(),
             });
           }}
           value={value}
@@ -701,7 +705,7 @@ const VariablePreview = ({
     variableType === "graphql-resource" ||
     variableType === "system-resource";
   const hasPendingResources = useStore($hasPendingResources);
-  const resources = useStore($resources);
+  const resources = useStore($runtimeResources);
   const variableValues = useStore($instanceVariableValues);
   const resourcesCache = useStore($resourcesCache);
   const resourceDiagnosticsCache = useStore($resourceDiagnosticsCache);
@@ -858,7 +862,7 @@ const VariablePopoverContent = ({
     }
   });
 
-  const resources = useStore($resources);
+  const resources = useStore($runtimeResources);
   const [variableType, setVariableType] = useState<VariableType>(() => {
     if (variable?.type === "resource") {
       const resource = resources.get(variable.resourceId);

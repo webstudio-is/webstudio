@@ -1,14 +1,17 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { updateProjectAssetContent } from "@webstudio-is/http-client";
+import { AssetRevisionConflictError } from "@webstudio-is/asset-uploader/content-repository";
 import { $authToken } from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
 import { createUpdateAssetContent } from "./update-asset-content";
 
 const requestContentUpdate = vi.fn<typeof updateProjectAssetContent>();
 const commitUpdatedAsset = vi.fn();
+const requireReload = vi.fn();
 const updateAssetContent = createUpdateAssetContent({
   requestContentUpdate,
   commitUpdatedAsset,
+  requireReload,
 });
 
 const asset = {
@@ -25,6 +28,7 @@ const asset = {
 beforeEach(() => {
   requestContentUpdate.mockReset();
   commitUpdatedAsset.mockReset();
+  requireReload.mockReset();
   $project.set({ id: "project" } as never);
   $authToken.set("token");
 });
@@ -64,10 +68,23 @@ test("commits a content revision without changing the asset id", async () => {
 });
 
 test("does not commit a conflicting revision", async () => {
-  requestContentUpdate.mockRejectedValue(new Error("File changed"));
+  requestContentUpdate.mockRejectedValue(
+    new AssetRevisionConflictError("File changed")
+  );
 
   await expect(updateAssetContent({ asset, content: "stale" })).rejects.toThrow(
     "File changed"
   );
   expect(commitUpdatedAsset).not.toHaveBeenCalled();
+  expect(requireReload).toHaveBeenCalledWith("File changed");
+});
+
+test("does not require a reload for another save failure", async () => {
+  requestContentUpdate.mockRejectedValue(new Error("Network unavailable"));
+
+  await expect(
+    updateAssetContent({ asset, content: "changed" })
+  ).rejects.toThrow("Network unavailable");
+  expect(commitUpdatedAsset).not.toHaveBeenCalled();
+  expect(requireReload).not.toHaveBeenCalled();
 });

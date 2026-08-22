@@ -26,7 +26,12 @@ import {
   $selectedPage,
   selectInstance,
 } from "../nano-states";
-import { $instances, $project, $props } from "../sync/data-stores";
+import { $project } from "../sync/data-stores";
+import {
+  getRuntimeAuthoredInstanceChildren,
+  $runtimeInstances as $instances,
+  $runtimeProps as $props,
+} from "../content-block-content";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { executeRuntimeMutation } from "./data";
 
@@ -77,6 +82,7 @@ const getFragmentInsertTarget = (
     onMissingTarget,
     onNoMatch: onNoInsertMatch(fragment),
     allowFragmentContentModelWarnings: options?.allowContentModelWarnings,
+    getInstanceChildren: getRuntimeAuthoredInstanceChildren,
   });
 };
 
@@ -125,6 +131,7 @@ const getComponentInsertTarget = (component: string, from?: Insertable) => {
     onRootTarget,
     onMissingTarget,
     onNoMatch: onNoComponentInsertMatch(component),
+    getInstanceChildren: getRuntimeAuthoredInstanceChildren,
   });
 };
 
@@ -304,6 +311,7 @@ export const findClosestInsertable = (
     onMissingTarget,
     onNoMatch: onNoInsertMatch(fragment),
     allowFragmentContentModelWarnings: options?.allowContentModelWarnings,
+    getInstanceChildren: getRuntimeAuthoredInstanceChildren,
   });
   if (target === undefined) {
     return;

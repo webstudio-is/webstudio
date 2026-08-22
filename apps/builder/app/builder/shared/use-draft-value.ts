@@ -6,7 +6,7 @@ type ValueUpdater<Type> = Type | ((value: Type) => Type);
 
 export const useDraftValue = <Type>(
   savedValue: Type,
-  onSave: (value: Type) => void,
+  onSave: (value: Type) => void | boolean,
   {
     autoSave = true,
     resetOnSave = false,
@@ -35,13 +35,14 @@ export const useDraftValue = <Type>(
   };
 
   const saveDraft = ({ refreshOnReset = true } = {}) => {
-    isEditingRef.current = false;
     if (
       equal(localValueRef.current, savedValueRef.current) === false &&
       shouldSaveRef.current(localValueRef.current)
     ) {
       // To synchronize with setState immediately followed by save
-      onSaveRef.current(localValueRef.current);
+      if (onSaveRef.current(localValueRef.current) === false) {
+        return false;
+      }
       if (resetOnSave) {
         localValueRef.current = savedValueRef.current;
         if (refreshOnReset) {
@@ -49,6 +50,8 @@ export const useDraftValue = <Type>(
         }
       }
     }
+    isEditingRef.current = false;
+    return true;
   };
 
   const save = () => {
@@ -67,6 +70,12 @@ export const useDraftValue = <Type>(
     if (autoSave) {
       saveDebounced();
     }
+  };
+
+  const reset = () => {
+    isEditingRef.current = false;
+    localValueRef.current = savedValueRef.current;
+    refresh();
   };
 
   // onBlur will not trigger if control is unmounted when props panel is closed or similar.
@@ -110,6 +119,7 @@ export const useDraftValue = <Type>(
      * Should be called on onBlur or similar event
      */
     save,
+    reset,
     flush: saveDebounced.flush,
   };
 };

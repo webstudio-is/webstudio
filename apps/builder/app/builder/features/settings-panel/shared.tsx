@@ -40,7 +40,7 @@ import {
   $registeredComponentMetas,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
-import { $dataSources } from "~/shared/sync/data-stores";
+import { $runtimeDataSources } from "~/shared/content-block-content";
 import { humanizeString } from "~/shared/string-utils";
 import {
   $selectedInstance,
@@ -263,7 +263,7 @@ export const $selectedInstanceScope = computed(
   [
     $selectedInstanceKeyWithRoot,
     $variableValuesByInstanceSelector,
-    $dataSources,
+    $runtimeDataSources,
   ],
   (instanceKey, variableValuesByInstanceSelector, dataSources) => {
     const scope: Record<string, unknown> = {};
