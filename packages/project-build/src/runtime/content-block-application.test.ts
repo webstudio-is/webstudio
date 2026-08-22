@@ -15,7 +15,6 @@ import {
   createContentBlockApplicationOperations,
   executeContentBlockPersistencePlan,
   persistContentBlockStorageChangesSerially,
-  recoverContentBlockSession,
 } from "./content-block-application";
 import { createMdxAssetEditingSession } from "./mdx-asset-session";
 
@@ -360,53 +359,6 @@ describe("Content Block application operations", () => {
     expect(flush).toHaveBeenCalledOnce();
   });
 
-  test("marks successful remote recovery as an Asset refresh", async () => {
-    const conflicting = {
-      status: "conflicting",
-      key: "article",
-      diagnostics: [],
-    } as const;
-    const saved = {
-      status: "saved",
-      key: "article-remote",
-      source: "# Remote",
-      diagnostics: [],
-    } as const;
-
-    await expect(
-      recoverContentBlockSession({
-        session: {
-          reloadRemote: vi.fn(async () => saved),
-        } as never,
-        state: conflicting as never,
-        action: "reload-remote",
-      })
-    ).resolves.toEqual({
-      status: "complete",
-      state: saved,
-      changedAsset: true,
-    });
-  });
-
-  test("dry-run rejects recovery actions that the live session cannot run", async () => {
-    await expect(
-      recoverContentBlockSession({
-        session: {} as never,
-        state: {
-          status: "saved",
-          key: "article",
-          source: "# Saved",
-          diagnostics: [],
-        } as never,
-        action: "reload-remote",
-        dryRun: true,
-      })
-    ).resolves.toMatchObject({
-      status: "blocked",
-      code: "content-source-session-failed",
-    });
-  });
-
   test("discovers exact dynamic render scopes and their repair capabilities", async () => {
     const { repository } = createRepository();
     const resolveExpressionAssetId = vi.fn(() => "article");
@@ -542,8 +494,8 @@ describe("Content Block application operations", () => {
     ]);
   });
 
-  test("returns a stale-safe confirmation before replacing persisted body", async () => {
-    const { repository } = createRepository();
+  test("invalidates connection confirmation when the selected file revision changes", async () => {
+    const { repository, setSource } = createRepository();
     const state = createState("asset", true);
     state.props?.clear();
     const session = createMdxAssetEditingSession({
@@ -563,24 +515,23 @@ describe("Content Block application operations", () => {
       blockInstanceId: "block",
       renderScope: "page:/",
       source: { type: "asset", assetId: "article" },
-      authority: "use-file-content",
       dryRun: true,
     });
     expect(preview).toMatchObject({
       status: "confirmation-required",
       code: "content-source-confirmation-required",
-      result: { action: "connect", storageWrites: [] },
+      result: { action: "connect" },
     });
     if (preview.status !== "confirmation-required") {
       throw new Error("Expected confirmation");
     }
+    setSource("# Changed remotely");
     const stale = await operations.applyLifecycle({
       action: "connect",
       blockInstanceId: "block",
       renderScope: "page:/",
       source: { type: "asset", assetId: "article" },
-      authority: "use-file-content",
-      confirmationToken: `${preview.confirmationToken}changed`,
+      confirmationToken: preview.confirmationToken,
     });
     expect(stale.status).toBe("confirmation-required");
   });
@@ -608,17 +559,16 @@ describe("Content Block application operations", () => {
         blockInstanceId: "block",
         renderScope: "page:/",
         source: { type: "asset", assetId: "article" },
-        authority: "use-file-content",
         dryRun: true,
       })
     ).resolves.toMatchObject({
       status: "complete",
-      result: { action: "connect", changesProject: true, storageWrites: [] },
+      result: { action: "connect", changesProject: true },
     });
     expect(commitProjectPayload).not.toHaveBeenCalled();
   });
 
-  test("requires confirmation for disconnect and rejects unavailable recovery actions", async () => {
+  test("requires confirmation for disconnect", async () => {
     const { repository } = createRepository();
     const state = createState();
     const session = createMdxAssetEditingSession({
@@ -638,16 +588,6 @@ describe("Content Block application operations", () => {
       renderScope: "page:/",
     });
 
-    await expect(
-      operations.recover({
-        blockInstanceId: "block",
-        renderScope: "page:/",
-        action: "copy-unsaved-mdx",
-      })
-    ).resolves.toMatchObject({
-      status: "blocked",
-      code: "content-source-session-failed",
-    });
     const preview = await operations.applyLifecycle({
       action: "disconnect",
       blockInstanceId: "block",
@@ -670,41 +610,8 @@ describe("Content Block application operations", () => {
     expect(commitProjectPayload).toHaveBeenCalledTimes(1);
   });
 
-  test("retries a recoverable parse failure through the configured source", async () => {
-    const { repository, setSource } = createRepository('{alert("unsafe")}');
-    const state = createState();
-    const session = createMdxAssetEditingSession({
-      repository,
-      authorizeAsset: () => true,
-    });
-    const operations = createContentBlockApplicationOperations({
-      projectId: "project",
-      session,
-      getState: () => state,
-      context: { createId: () => "generated" },
-    });
-    await expect(
-      operations.inspectSource({
-        blockInstanceId: "block",
-        renderScope: "page:/",
-      })
-    ).resolves.toMatchObject({ sessionStatus: "recoverable" });
-    setSource("# Repaired");
-
-    await expect(
-      operations.recover({
-        blockInstanceId: "block",
-        renderScope: "page:/",
-        action: "retry",
-      })
-    ).resolves.toMatchObject({
-      status: "complete",
-      result: { inspection: { sessionStatus: "saved" } },
-    });
-  });
-
-  test("persists a replacement before connecting the Content Block", async () => {
-    const { repository, updateContent } = createRepository();
+  test("connects after confirmation without writing the selected Asset", async () => {
+    const { repository, updateContent, getSource } = createRepository();
     const state = createState("asset", true);
     state.props?.clear();
     const session = createMdxAssetEditingSession({
@@ -725,7 +632,6 @@ describe("Content Block application operations", () => {
       blockInstanceId: "block",
       renderScope: "page:/",
       source: { type: "asset", assetId: "article" },
-      authority: "replace-file-body-with-block-content",
     });
     expect(confirmation.status).toBe("confirmation-required");
     if (confirmation.status !== "confirmation-required") {
@@ -737,7 +643,6 @@ describe("Content Block application operations", () => {
         blockInstanceId: "block",
         renderScope: "page:/",
         source: { type: "asset", assetId: "article" },
-        authority: "replace-file-body-with-block-content",
         confirmationToken: confirmation.confirmationToken,
       })
     ).resolves.toMatchObject({
@@ -745,82 +650,16 @@ describe("Content Block application operations", () => {
       result: {
         persistence: {
           status: "complete",
-          steps: [
-            { type: "asset", status: "saved" },
-            { type: "project", status: "saved" },
-          ],
+          steps: [{ type: "project", status: "saved" }],
         },
       },
     });
-    expect(session.list()).toEqual([
-      expect.objectContaining({
-        status: "saved",
-        source: '<ws.element ws:tag="p">Persisted body</ws.element>\n',
-      }),
-    ]);
-    expect(updateContent).toHaveBeenCalledOnce();
+    expect(getSource()).toBe("# Original");
+    expect(updateContent).not.toHaveBeenCalled();
     expect(commitProjectPayload).toHaveBeenCalledOnce();
   });
 
-  test("does not attempt the project step when the Asset replacement fails", async () => {
-    const storage = createRepository();
-    const state = createState("asset", true);
-    state.props?.clear();
-    const session = createMdxAssetEditingSession({
-      repository: {
-        ...storage.repository,
-        updateContent: async () => {
-          throw new Error("Asset write failed");
-        },
-      },
-      authorizeAsset: () => true,
-    });
-    const commitProjectPayload = vi.fn();
-    const operations = createContentBlockApplicationOperations({
-      projectId: "project",
-      session,
-      getState: () => state,
-      context: { createId: () => "generated" },
-      commitProjectPayload,
-    });
-    const confirmation = await operations.applyLifecycle({
-      action: "connect",
-      blockInstanceId: "block",
-      renderScope: "page:/",
-      source: { type: "asset", assetId: "article" },
-      authority: "replace-file-body-with-block-content",
-    });
-    if (confirmation.status !== "confirmation-required") {
-      throw new Error("Expected replacement confirmation");
-    }
-
-    await expect(
-      operations.applyLifecycle({
-        action: "connect",
-        blockInstanceId: "block",
-        renderScope: "page:/",
-        source: { type: "asset", assetId: "article" },
-        authority: "replace-file-body-with-block-content",
-        confirmationToken: confirmation.confirmationToken,
-      })
-    ).resolves.toMatchObject({
-      status: "blocked",
-      result: {
-        persistence: {
-          status: "failed",
-          steps: [
-            { type: "asset", status: "failed" },
-            { type: "project", status: "not-attempted" },
-          ],
-          retry: { replan: true, roots: [expect.any(Object)], project: true },
-        },
-      },
-    });
-    expect(commitProjectPayload).not.toHaveBeenCalled();
-    expect(storage.getSource()).toBe("# Original");
-  });
-
-  test("keeps a saved Asset replacement when the project step fails", async () => {
+  test("leaves the selected Asset unchanged when the project connection fails", async () => {
     const storage = createRepository();
     const state = createState("asset", true);
     state.props?.clear();
@@ -842,7 +681,6 @@ describe("Content Block application operations", () => {
       blockInstanceId: "block",
       renderScope: "page:/",
       source: { type: "asset", assetId: "article" },
-      authority: "replace-file-body-with-block-content",
     });
     if (confirmation.status !== "confirmation-required") {
       throw new Error("Expected replacement confirmation");
@@ -854,25 +692,20 @@ describe("Content Block application operations", () => {
         blockInstanceId: "block",
         renderScope: "page:/",
         source: { type: "asset", assetId: "article" },
-        authority: "replace-file-body-with-block-content",
         confirmationToken: confirmation.confirmationToken,
       })
     ).resolves.toMatchObject({
-      status: "partial",
+      status: "blocked",
       result: {
         persistence: {
-          status: "partial",
-          steps: [
-            { type: "asset", status: "saved" },
-            { type: "project", status: "failed" },
-          ],
+          status: "failed",
+          steps: [{ type: "project", status: "failed" }],
           retry: { replan: true, roots: [], project: true },
         },
       },
     });
-    expect(storage.getSource()).toBe(
-      '<ws.element ws:tag="p">Persisted body</ws.element>\n'
-    );
+    expect(storage.getSource()).toBe("# Original");
+    expect(storage.updateContent).not.toHaveBeenCalled();
   });
 
   test("discovers the owning direct source and migrates template references through the pinned session", async () => {

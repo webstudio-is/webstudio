@@ -289,7 +289,7 @@ describe("pasted MDX", () => {
     ]);
   });
 
-  test("positions pasted MDX by rendered children around unresolved names", async () => {
+  test("uses MDX-body-relative insertion indexes around unresolved names", async () => {
     const destinationSource = `<ws.element ws:name="Missing" />\n\nExisting`;
     const document = await parseMdxDocument({ source: destinationSource });
     const root = materializeMdxAuthoredContent({

@@ -19,6 +19,7 @@ import * as commandQueue from "./command-queue";
 import type { SyncStorage } from "~/shared/sync-client";
 import type { Transaction } from "@webstudio-is/sync-client";
 import type { ServerSyncState } from "./sync-stores";
+import { requireBuilderReload } from "./reload-required";
 
 export { commandQueue };
 
@@ -180,21 +181,7 @@ const pollQueue = async (signal: AbortSignal) => {
         const error =
           "The project is outdated. Synchronization was incomplete when the project was opened. " +
           "Please reload the page to get the latest version.";
-        const shouldReload = confirm(error);
-
-        if (shouldReload) {
-          location.reload();
-        }
-
-        // stop synchronization and wait til user reload
-        $syncStatus.set({ status: "fatal", error });
-
-        if (shouldReload === false) {
-          toast.error(
-            "Synchronization has been paused. Please reload to continue.",
-            { id: "outdated-error", duration: Number.POSITIVE_INFINITY }
-          );
-        }
+        requireBuilderReload({ error, toastId: "outdated-error" });
 
         break polling;
       }
@@ -280,19 +267,7 @@ const pollQueue = async (signal: AbortSignal) => {
                 : undefined) ??
               "Unknown version mismatch. Please reload.";
 
-            const shouldReload = confirm(error);
-            if (shouldReload) {
-              location.reload();
-            }
-
-            $syncStatus.set({ status: "fatal", error });
-
-            if (shouldReload === false) {
-              toast.error(
-                "Synchronization has been paused. Please reload to continue.",
-                { duration: Number.POSITIVE_INFINITY }
-              );
-            }
+            requireBuilderReload({ error });
 
             // stop synchronization and wait til user reload
             break polling;

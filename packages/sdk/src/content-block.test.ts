@@ -6,6 +6,7 @@ import type { Prop } from "./schema/props";
 import {
   allocateUniqueContentBlockTemplateName,
   getContentBlockSourceIntegrityIssues,
+  isEqualContentBlockSource,
   parseContentBlockSourceProp,
 } from "./content-block";
 
@@ -63,6 +64,28 @@ describe("Content Block source", () => {
     expect(
       parseContentBlockSourceProp(sourceProp({ type: "string", value: "post" }))
     ).toBeUndefined();
+  });
+
+  test("compares source bindings by their persisted identity", () => {
+    expect(isEqualContentBlockSource(undefined, undefined)).toBe(true);
+    expect(
+      isEqualContentBlockSource(
+        { type: "asset", assetId: "post" },
+        { type: "asset", assetId: "post" }
+      )
+    ).toBe(true);
+    expect(
+      isEqualContentBlockSource(
+        { type: "expression", value: "post.body" },
+        { type: "expression", value: "post.body" }
+      )
+    ).toBe(true);
+    expect(
+      isEqualContentBlockSource(
+        { type: "asset", assetId: "post" },
+        { type: "expression", value: "post" }
+      )
+    ).toBe(false);
   });
 
   test("diagnoses duplicate, invalid, missing, and incompatible sources", () => {

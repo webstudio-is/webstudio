@@ -74,8 +74,6 @@ export const createMdxScopeIdGenerator = ({
     JSON.stringify([
       identity.blockInstanceId,
       identity.assetId,
-      identity.revision,
-      identity.contentRef,
       identity.renderScope,
       path,
     ])

@@ -22,8 +22,11 @@ import type { Resource } from "@webstudio-is/sdk";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
-import { $dataSources } from "~/shared/sync/data-stores";
-import { $props, $resources } from "~/shared/sync/data-stores";
+import {
+  $runtimeDataSources,
+  $runtimeProps,
+  $runtimeResources,
+} from "~/shared/content-block-content";
 import {
   computeExpression,
   createResourceFieldsFromResource,
@@ -88,7 +91,7 @@ const $selectedInstanceResourceScope = computed(
     $selectedPage,
     $selectedInstanceKeyWithRoot,
     $variableValuesByInstanceSelector,
-    $dataSources,
+    $runtimeDataSources,
   ],
   (page, instanceKey, variableValuesByInstanceSelector, dataSources) => {
     return getResourceScopeForInstance({
@@ -204,7 +207,7 @@ const ResourceControlPanel = ({
 };
 
 const $methodPropValue = computed(
-  [$selectedInstance, $props],
+  [$selectedInstance, $runtimeProps],
   (instance, props): Resource["method"] => {
     for (const prop of props.values()) {
       if (
@@ -233,7 +236,7 @@ export const ResourceControl = ({
   propName,
   prop,
 }: ControlProps<"resource">) => {
-  const resources = useStore($resources);
+  const resources = useStore($runtimeResources);
   const { variableValues, scope, aliases } = useStore(
     $selectedInstanceResourceScope
   );

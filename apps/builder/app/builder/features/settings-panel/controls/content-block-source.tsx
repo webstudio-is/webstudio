@@ -16,7 +16,6 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import type { MarkdownToMdxConversionPreview } from "@webstudio-is/content-engine/mdx-conversion";
-import type { ContentBlockSourceAuthority } from "@webstudio-is/project-build/runtime";
 import {
   formatAssetName,
   type Asset,
@@ -39,11 +38,10 @@ export type ContentBlockSourceMutationResult =
 
 export type ContentBlockSourceActionResult =
   | ContentBlockSourceMutationResult
-  | Readonly<{ status: "requires-authority" }>;
+  | Readonly<{ status: "requires-confirmation" }>;
 
 type PendingSource = Readonly<{
   source: ContentBlockSource;
-  action: "connect" | "switch";
 }>;
 
 type PendingConversion = Readonly<{
@@ -51,55 +49,46 @@ type PendingConversion = Readonly<{
   preview: MarkdownToMdxConversionPreview;
 }>;
 
-const SourceAuthorityDialog = ({
-  pending,
+const ConnectSourceDialog = ({
   disabled,
   error,
   onClose,
-  onSelect,
+  onConfirm,
 }: {
-  pending: PendingSource;
   disabled: boolean;
   error?: string;
   onClose: () => void;
-  onSelect: (authority: ContentBlockSourceAuthority) => void;
+  onConfirm: () => void;
 }) => (
   <Dialog open onOpenChange={(open) => open === false && onClose()}>
     <DialogContent>
-      <DialogTitle>
-        {pending.action === "connect"
-          ? "Connect content source"
-          : "Switch content source"}
-      </DialogTitle>
-      <Grid gap="3" css={{ padding: theme.panel.padding }}>
-        <DialogDescription>
-          Both the Content Block and file contain content. Choose which body to
-          keep. File frontmatter is always preserved.
-        </DialogDescription>
-        {error !== undefined && (
-          <Text role="alert" color="destructive" variant="tiny">
-            {error}
-          </Text>
-        )}
-      </Grid>
+      <DialogTitle>Connect content source</DialogTitle>
+      <DialogDescription asChild>
+        <Text css={{ padding: theme.panel.padding }}>
+          Connecting this file will replace the existing Content Block content.
+          The MDX file will not be changed.
+        </Text>
+      </DialogDescription>
+      {error !== undefined && (
+        <Text
+          role="alert"
+          color="destructive"
+          variant="tiny"
+          css={{
+            paddingInline: theme.panel.paddingInline,
+            paddingBottom: theme.panel.paddingBlock,
+          }}
+        >
+          {error}
+        </Text>
+      )}
       <DialogActions>
-        <Button
-          autoFocus
-          disabled={disabled}
-          onClick={() => onSelect("use-file-content")}
-        >
-          Use file content
-        </Button>
-        <Button
-          color="neutral"
-          disabled={disabled}
-          onClick={() => onSelect("replace-file-body-with-block-content")}
-        >
-          Replace file body with block content
+        <Button disabled={disabled} onClick={onConfirm}>
+          Connect
         </Button>
         <DialogClose>
-          <Button color="ghost" disabled={disabled}>
-            Cancel
+          <Button autoFocus color="ghost" disabled={disabled}>
+            Abort
           </Button>
         </DialogClose>
       </DialogActions>
@@ -208,7 +197,7 @@ export const ContentBlockSourceControl = ({
   diagnostics?: readonly ContentBlockDiagnostic[];
   onRequestSource: (input: {
     source: ContentBlockSource;
-    authority?: ContentBlockSourceAuthority;
+    confirmed?: boolean;
   }) => Promise<ContentBlockSourceActionResult>;
   onDisconnect: () => Promise<ContentBlockSourceMutationResult>;
   onOpen: (assetId: string) => void;
@@ -252,7 +241,7 @@ export const ContentBlockSourceControl = ({
 
   const requestSource = async (
     requestedSource: ContentBlockSource,
-    authority?: ContentBlockSourceAuthority
+    confirmed?: boolean
   ) => {
     if (beginOperation() === false) {
       return;
@@ -260,13 +249,10 @@ export const ContentBlockSourceControl = ({
     try {
       const result = await onRequestSource({
         source: requestedSource,
-        authority,
+        confirmed,
       });
-      if (result.status === "requires-authority") {
-        setPendingSource({
-          source: requestedSource,
-          action: connected ? "switch" : "connect",
-        });
+      if (result.status === "requires-confirmation") {
+        setPendingSource({ source: requestedSource });
         return;
       }
       if (result.status === "blocked" || result.status === "partial") {
@@ -341,7 +327,7 @@ export const ContentBlockSourceControl = ({
             title={connected ? "Switch MDX file" : "Choose MDX file"}
             accept=".mdx"
             disabled={isDisabled}
-            triggerLabel={connected ? "Replace or switch" : "Choose file"}
+            triggerLabel={connected ? "Switch file" : "Choose file"}
             onSelect={(assetId) =>
               void requestSource({ type: "asset", assetId })
             }
@@ -437,14 +423,11 @@ export const ContentBlockSourceControl = ({
         )}
 
         {pendingSource !== undefined && (
-          <SourceAuthorityDialog
-            pending={pendingSource}
+          <ConnectSourceDialog
             disabled={isDisabled}
             error={localError ?? error}
             onClose={() => setPendingSource(undefined)}
-            onSelect={(authority) =>
-              void requestSource(pendingSource.source, authority)
-            }
+            onConfirm={() => void requestSource(pendingSource.source, true)}
           />
         )}
 

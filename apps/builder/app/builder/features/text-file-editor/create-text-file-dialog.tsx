@@ -61,18 +61,20 @@ export const createTextFileData = (name: string): File | undefined => {
   });
 };
 
-const createTextFile = async ({
+export const createTextFile = async ({
   name,
   folderId,
+  upload = uploadSingleAsset,
 }: {
   name: string;
   folderId?: string;
+  upload?: typeof uploadSingleAsset;
 }): Promise<Asset | undefined> => {
   const file = createTextFileData(name);
   if (file === undefined) {
     return;
   }
-  return uploadSingleAsset("file", file, { folderId });
+  return upload("file", file, { folderId, deduplicate: false });
 };
 
 const stopEscapePropagation = (event: KeyboardEvent) => {

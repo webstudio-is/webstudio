@@ -239,17 +239,15 @@ test("creates only a new MDX Asset from the source control", () => {
   ).toBe("untitled.mdx");
 });
 
-test("asks which body to keep before switching non-empty content", async () => {
+test("asks for confirmation before connecting over existing content", async () => {
   const onRequestSource = vi
     .fn()
-    .mockResolvedValueOnce({ status: "requires-authority" })
+    .mockResolvedValueOnce({ status: "requires-confirmation" })
     .mockResolvedValueOnce({ status: "applied" });
   act(() => {
     root.render(
       <TooltipProvider>
         <ContentBlockSourceControl
-          source={{ type: "asset", assetId: asset.id }}
-          resolvedAsset={asset}
           onRequestSource={onRequestSource}
           onDisconnect={async () => ({ status: "applied" })}
           onOpen={() => {}}
@@ -263,7 +261,7 @@ test("asks which body to keep before switching non-empty content", async () => {
   });
 
   await act(async () => {
-    findButton("Replace or switch").click();
+    findButton("Choose file").click();
     await new Promise<void>((resolve) =>
       requestAnimationFrame(() => resolve())
     );
@@ -282,17 +280,25 @@ test("asks which body to keep before switching non-empty content", async () => {
     await Promise.resolve();
   });
 
-  expect(document.body.textContent).toContain("Switch content source");
-  expect(document.body.textContent).not.toContain("Switch MDX file");
+  expect(document.body.textContent).toContain("Connect content source");
+  expect(document.body.textContent).toContain(
+    "The MDX file will not be changed."
+  );
+  const dialogButtons = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  )
+    .map((button) => button.textContent?.trim())
+    .filter((label) => label === "Connect" || label === "Abort");
+  expect(dialogButtons).toEqual(["Connect", "Abort"]);
   expect(onRequestSource).toHaveBeenNthCalledWith(1, {
     source: { type: "asset", assetId: targetAsset.id },
-    authority: undefined,
+    confirmed: undefined,
   });
 
-  await act(async () => findButton("Use file content").click());
+  await act(async () => findButton("Connect").click());
   expect(onRequestSource).toHaveBeenNthCalledWith(2, {
     source: { type: "asset", assetId: targetAsset.id },
-    authority: "use-file-content",
+    confirmed: true,
   });
 });
 
@@ -383,6 +389,6 @@ test("previews converted MDX and explains skipped Markdown before creation", asy
   });
   expect(onRequestSource).toHaveBeenCalledWith({
     source: { type: "asset", assetId: "converted" },
-    authority: undefined,
+    confirmed: undefined,
   });
 });

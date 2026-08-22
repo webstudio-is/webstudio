@@ -29,17 +29,8 @@ export type ContentBlockSourceInspection = Readonly<{
     canSwitch: boolean;
     canDisconnectWithCopy: boolean;
     canEdit: boolean;
-    canRetry: boolean;
-    canReloadRemote: boolean;
-    canCopyUnsavedSource: boolean;
   }>;
-  repairRoutes: readonly (
-    | "open-file"
-    | "retry"
-    | "reload-remote"
-    | "copy-unsaved-mdx"
-    | "disconnect-with-copy"
-  )[];
+  repairRoutes: readonly ("open-file" | "disconnect-with-copy")[];
 }>;
 
 export type ContentBlockPersistenceStep = Readonly<{
@@ -97,7 +88,6 @@ export type ContentStorageApplication = Readonly<{
       blockInstanceId: string;
       renderScope: string;
       source?: ContentBlockSource;
-      authority?: "use-file-content" | "replace-file-body-with-block-content";
       dryRun?: boolean;
       confirmationToken?: string;
       variables?: Readonly<Record<string, unknown>>;
@@ -124,30 +114,6 @@ export type ContentStorageApplication = Readonly<{
         code: string;
         message: string;
         result?: ContentBlockLifecyclePlan;
-      }>
-  >;
-  recover?: (input: {
-    blockInstanceId: string;
-    renderScope: string;
-    action: "retry" | "reload-remote" | "copy-unsaved-mdx";
-    dryRun?: boolean;
-  }) => Promise<
-    | Readonly<{
-        status: "complete";
-        result: Readonly<{
-          inspection: ContentBlockSourceInspection;
-          source?: string;
-          changedAsset: boolean;
-        }>;
-      }>
-    | Readonly<{
-        status: "blocked";
-        code: string;
-        message: string;
-        result?: Readonly<{
-          inspection: ContentBlockSourceInspection;
-          changedAsset: boolean;
-        }>;
       }>
   >;
   semanticEdit?: (input: {
@@ -205,12 +171,7 @@ export type ContentStorageApplication = Readonly<{
 type ContentBlockLifecyclePlan = Readonly<{
   action: "connect" | "switch" | "disconnect";
   changesProject: boolean;
-  storageWrites: readonly Readonly<{
-    identity: ContentBlockExternalContentIdentity;
-    expectedRevision: string;
-  }>[];
   diagnostics: readonly ContentBlockDiagnostic[];
-  persistenceOrder: "none" | "storage-before-project";
 }>;
 
 export type BuilderRuntimeContext = {

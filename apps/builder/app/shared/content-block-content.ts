@@ -7,6 +7,8 @@ import {
   applyMdxContentStorageChanges,
   executeContentBlockPersistencePlan,
   findBlockSelector,
+  findAllNavigableTextInstanceSelectors,
+  getContentBlockSessionMessage,
   getContentBlockRenderScopeKey,
   getContentStorageIdentityKey,
   type ContentStorageChange,
@@ -25,14 +27,19 @@ import type {
   Instance,
   Instances,
   Prop,
+  Props,
   Resource,
   StyleDecl,
   StyleSource,
   StyleSourceSelection,
+  WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
+  blockComponent,
   blockTemplateComponent,
+  findTreeInstanceIds,
   getContentBlockSource,
+  ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
 import {
   $assets,
@@ -69,12 +76,6 @@ type StorageSaverEntry = {
   isCurrent: (root: MaterializedContentRoot) => boolean;
 };
 
-type ContentBlockPresentationActions = Readonly<{
-  retry: () => Promise<StorageSaveResult>;
-  reloadRemote: () => Promise<StorageSaveResult>;
-  copyUnsavedSource: () => string | undefined;
-}>;
-
 export type MaterializedContentViewState = Readonly<{
   status:
     | "loading"
@@ -98,12 +99,9 @@ export type ContentBlockPresentationItem = Readonly<{
   id: Instance["id"];
   blockInstanceId: Instance["id"];
   renderScope: string;
-  kind: "loading" | "empty" | "error" | "warning";
-  status: MaterializedContentViewState["status"];
   label: string;
   message: string;
   diagnostic?: ContentBlockDiagnostic;
-  assetId?: Asset["id"];
 }>;
 
 export const $materializedContentRoots = atom<
@@ -203,7 +201,7 @@ export const formatContentBlockDiagnostic = (
       diagnostic.operation === "read" ? "opened" : "saved"
     } with the current permissions.`;
   } else {
-    message = "Some MDX changes could not be saved and require recovery.";
+    message = "Some MDX changes could not be saved. Reload the Builder.";
   }
   return `${message}${formatSourceLocation(diagnostic)}`;
 };
@@ -243,7 +241,7 @@ export const takeNewContentBlockDiagnostics = (
 
 const getSessionMessage = (state: MdxAssetEditingSessionState) => {
   if (state.status === "conflicting") {
-    return "The MDX file changed remotely. Reload the remote file or copy your unsaved MDX before continuing.";
+    return getContentBlockSessionMessage(state);
   }
   if (state.status === "recoverable") {
     return "The MDX file could not be rendered. Open the file to repair it, then retry.";
@@ -320,12 +318,9 @@ const isAuthoredRoot = (
 const createPresentationItem = ({
   blockInstanceId,
   renderScope,
-  kind,
-  status,
   label,
   message,
   diagnostic,
-  assetId,
   discriminator,
 }: Omit<ContentBlockPresentationItem, "id"> & {
   discriminator: unknown;
@@ -335,12 +330,9 @@ const createPresentationItem = ({
   )}`,
   blockInstanceId,
   renderScope,
-  kind,
-  status,
   label,
   message,
   diagnostic,
-  assetId,
 });
 
 const getAuthoredChildren = (
@@ -389,7 +381,6 @@ const $contentStorageProjection = computed(
     const childrenByScope = new Map<string, Instance["children"]>();
     for (const [scopeKey, viewState] of viewStates) {
       const root = materializedRoots.get(scopeKey);
-      const identity = viewState.identity ?? root?.identity;
       const parsedScope = JSON.parse(scopeKey) as [string, string];
       const [blockInstanceId, renderScope] = parsedScope;
       if (
@@ -401,58 +392,7 @@ const $contentStorageProjection = computed(
       ) {
         continue;
       }
-      const blockPresentationItems: ContentBlockPresentationItem[] = [];
-      if (viewState.status === "loading" || viewState.status === "pending") {
-        blockPresentationItems.push(
-          createItem({
-            blockInstanceId,
-            renderScope,
-            kind: "loading",
-            status: viewState.status,
-            label:
-              viewState.status === "pending" ? "Saving MDX" : "Loading MDX",
-            message:
-              viewState.message ??
-              (viewState.status === "pending"
-                ? "Saving MDX content…"
-                : "Loading MDX content…"),
-            assetId: identity?.assetId ?? viewState.assetId,
-            discriminator: viewState.status,
-          })
-        );
-      } else if (viewState.status === "empty") {
-        blockPresentationItems.push(
-          createItem({
-            blockInstanceId,
-            renderScope,
-            kind: "empty",
-            status: viewState.status,
-            label: "Empty MDX file",
-            message: "The connected MDX file has no body content.",
-            assetId: identity?.assetId ?? viewState.assetId,
-            discriminator: "empty",
-          })
-        );
-      } else if (viewState.status !== "ready") {
-        blockPresentationItems.push(
-          createItem({
-            blockInstanceId,
-            renderScope,
-            kind: "error",
-            status: viewState.status,
-            label:
-              viewState.status === "conflicting"
-                ? "MDX conflict"
-                : viewState.status === "recoverable"
-                  ? "Repair MDX file"
-                  : "MDX unavailable",
-            message:
-              viewState.message ?? "The connected MDX file is unavailable.",
-            assetId: identity?.assetId ?? viewState.assetId,
-            discriminator: [viewState.status, viewState.message],
-          })
-        );
-      }
+      const fallbackWarningItems: ContentBlockPresentationItem[] = [];
       const unresolvedDiagnostics = viewState.diagnostics.filter(
         (diagnostic) => diagnostic.code === "unresolved-template"
       );
@@ -486,18 +426,15 @@ const $contentStorageProjection = computed(
           const item = createItem({
             blockInstanceId,
             renderScope,
-            kind: "warning",
-            status: viewState.status,
             label: `Missing template: ${diagnostic.templateName}`,
             message: formatContentBlockDiagnostic(diagnostic),
             diagnostic,
-            assetId: identity?.assetId ?? viewState.assetId,
             discriminator: marker.markerId,
           });
           const parentPath = marker.path.slice(0, -1);
           const parentNode = authoredInstanceByPath.get(getPathKey(parentPath));
           if (parentPath.length > 0 && parentNode?.type !== "element") {
-            blockPresentationItems.push(item);
+            fallbackWarningItems.push(item);
             continue;
           }
           const parentId =
@@ -513,23 +450,19 @@ const $contentStorageProjection = computed(
       }
       for (const diagnostics of diagnosticsByTemplate.values()) {
         for (const diagnostic of diagnostics) {
-          blockPresentationItems.push(
-            createItem({
-              blockInstanceId,
-              renderScope,
-              kind: "warning",
-              status: viewState.status,
-              label: `Missing template: ${diagnostic.templateName}`,
-              message: formatContentBlockDiagnostic(diagnostic),
-              diagnostic,
-              assetId: identity?.assetId ?? viewState.assetId,
-              discriminator: diagnostic,
-            })
-          );
+          const item = createItem({
+            blockInstanceId,
+            renderScope,
+            label: `Missing template: ${diagnostic.templateName}`,
+            message: formatContentBlockDiagnostic(diagnostic),
+            diagnostic,
+            discriminator: diagnostic,
+          });
+          fallbackWarningItems.push(item);
         }
       }
       const presentationItems = [
-        ...blockPresentationItems,
+        ...fallbackWarningItems,
         ...Array.from(warningItemsByParent.values()).flatMap((warningItems) =>
           Array.from(warningItems.values())
         ),
@@ -611,23 +544,23 @@ const $contentStorageProjection = computed(
           );
         }
       }
-      const blockChildrenKey = getContentBlockRenderScopeKey(
-        blockInstanceId,
-        renderScope
-      );
-      const blockChildren =
-        childrenByScope.get(blockChildrenKey) ??
-        projection.getInstanceChildren(
-          instances.get(blockInstanceId) as Instance,
+      if (fallbackWarningItems.length > 0) {
+        const blockChildrenKey = getContentBlockRenderScopeKey(
+          blockInstanceId,
           renderScope
         );
-      childrenByScope.set(blockChildrenKey, [
-        ...blockChildren,
-        ...blockPresentationItems.map(({ id }) => ({
-          type: "id" as const,
-          value: id,
-        })),
-      ]);
+        const block = instances.get(blockInstanceId) as Instance;
+        const blockChildren =
+          childrenByScope.get(blockChildrenKey) ??
+          projection.getInstanceChildren(block, renderScope);
+        childrenByScope.set(blockChildrenKey, [
+          ...blockChildren,
+          ...fallbackWarningItems.map(({ id }) => ({
+            type: "id" as const,
+            value: id,
+          })),
+        ]);
+      }
     }
     return {
       state: { ...projection.state, instances },
@@ -684,13 +617,129 @@ export const $runtimeStyles = computed(
   ({ state }) => state.styles ?? new Map<string, StyleDecl>()
 );
 
+const getRenderScope = (instanceSelector: InstanceSelector) => {
+  const renderScopeSelector =
+    instanceSelector.at(-1) === ROOT_INSTANCE_ID
+      ? instanceSelector.slice(0, -1)
+      : instanceSelector;
+  return JSON.stringify(renderScopeSelector);
+};
+
+const parseRenderScope = (renderScope: string) => {
+  try {
+    const value: unknown = JSON.parse(renderScope);
+    if (
+      Array.isArray(value) &&
+      value.every((instanceId) => typeof instanceId === "string")
+    ) {
+      return value as InstanceSelector;
+    }
+  } catch {
+    return;
+  }
+};
+
 export const getRuntimeInstanceChildren = (
   instance: Instance,
   instanceSelector: InstanceSelector
-) =>
-  $contentStorageProjection
+) => {
+  return $contentStorageProjection
     .get()
-    .getInstanceChildren(instance, JSON.stringify(instanceSelector));
+    .getInstanceChildren(instance, getRenderScope(instanceSelector));
+};
+
+export const getRuntimeAuthoredInstanceChildren = (
+  instance: Instance,
+  instanceSelector: InstanceSelector
+) => {
+  const children = getRuntimeInstanceChildren(instance, instanceSelector);
+  if (
+    instance.component !== blockComponent ||
+    $activeMaterializedContentRoots
+      .get()
+      .has(
+        getContentBlockRenderScopeKey(
+          instance.id,
+          getRenderScope(instanceSelector)
+        )
+      ) === false
+  ) {
+    return children;
+  }
+  return children.slice(instance.children.length);
+};
+
+export const findRuntimeTreeInstanceIds = (
+  rootInstanceId: Instance["id"],
+  instances: Instances = $runtimeInstances.get()
+) => {
+  const instanceIds = findTreeInstanceIds(instances, rootInstanceId);
+  for (const root of $activeMaterializedContentRoots.get().values()) {
+    const renderScope = parseRenderScope(root.identity.renderScope);
+    if (
+      renderScope === undefined ||
+      renderScope.includes(rootInstanceId) === false
+    ) {
+      continue;
+    }
+    for (const instance of root.fragment.instances) {
+      instanceIds.add(instance.id);
+    }
+  }
+  return instanceIds;
+};
+
+export const findRuntimeNavigableTextInstanceSelectors = ({
+  rootInstanceId,
+  instances = $runtimeInstances.get(),
+  props = $runtimeProps.get(),
+  metas,
+}: {
+  rootInstanceId: Instance["id"];
+  instances?: Instances;
+  props?: Props;
+  metas: Map<Instance["component"], WsComponentMeta>;
+}) => {
+  const selectors = findAllNavigableTextInstanceSelectors({
+    instanceSelector: [rootInstanceId],
+    instances,
+    props,
+    metas,
+    getInstanceChildren: getRuntimeInstanceChildren,
+  });
+  const selectorKeys = new Set(
+    selectors.map((selector) => getRenderScope(selector))
+  );
+  for (const root of $activeMaterializedContentRoots.get().values()) {
+    const renderScope = parseRenderScope(root.identity.renderScope);
+    if (
+      renderScope === undefined ||
+      renderScope.includes(rootInstanceId) === false
+    ) {
+      continue;
+    }
+    for (const child of root.fragment.children) {
+      if (child.type !== "id") {
+        continue;
+      }
+      for (const selector of findAllNavigableTextInstanceSelectors({
+        instanceSelector: [child.value, ...renderScope],
+        instances,
+        props,
+        metas,
+        getInstanceChildren: getRuntimeInstanceChildren,
+      })) {
+        const key = getRenderScope(selector);
+        if (selectorKeys.has(key)) {
+          continue;
+        }
+        selectorKeys.add(key);
+        selectors.push(selector);
+      }
+    }
+  }
+  return selectors;
+};
 
 export const getMaterializedContentStatus = ({
   blockInstanceId,
@@ -714,6 +763,47 @@ export const getMaterializedContentViewState = ({
     .get()
     .get(getContentBlockRenderScopeKey(blockInstanceId, renderScope));
 
+const getMaterializedContentForSelector = (
+  instanceSelector: InstanceSelector,
+  instances: Instances
+) => {
+  const blockSelector = findBlockSelector({
+    anchor: instanceSelector,
+    instances,
+  });
+  if (blockSelector === undefined) {
+    return;
+  }
+  return $activeMaterializedContentRoots
+    .get()
+    .get(
+      getContentBlockRenderScopeKey(
+        blockSelector[0],
+        JSON.stringify(blockSelector)
+      )
+    );
+};
+
+export const getMaterializedContentForSelectors = (
+  instanceSelectors: readonly InstanceSelector[],
+  instances: Instances = $runtimeInstances.get()
+) => {
+  const selectedRoots = new Map<string, MaterializedContentRoot>();
+  for (const instanceSelector of instanceSelectors) {
+    const root = getMaterializedContentForSelector(instanceSelector, instances);
+    if (root !== undefined) {
+      selectedRoots.set(
+        getContentBlockRenderScopeKey(
+          root.identity.blockInstanceId,
+          root.identity.renderScope
+        ),
+        root
+      );
+    }
+  }
+  return [...selectedRoots.values()];
+};
+
 export const getMaterializedInstanceEditability = ({
   instanceSelector,
   instances,
@@ -724,27 +814,24 @@ export const getMaterializedInstanceEditability = ({
   if ($contentBlockPresentationItems.get().has(instanceSelector[0])) {
     return false;
   }
-  const blockSelector = findBlockSelector({
-    anchor: instanceSelector,
-    instances,
-  });
-  if (blockSelector === undefined) {
-    return;
-  }
-  const root = $activeMaterializedContentRoots
-    .get()
-    .get(
-      getContentBlockRenderScopeKey(
-        blockSelector[0],
-        JSON.stringify(blockSelector)
-      )
-    );
+  const root = getMaterializedContentForSelector(instanceSelector, instances);
   if (
     root === undefined ||
     root.fragment.instances.some(({ id }) => id === instanceSelector[0]) ===
       false
   ) {
     return;
+  }
+  if (
+    isAuthoredRoot(root) &&
+    root.provenance.nodes.some(
+      (node) =>
+        node.type === "template" &&
+        node.instanceId !== instanceSelector[0] &&
+        node.expandedInstanceIds.includes(instanceSelector[0])
+    )
+  ) {
+    return false;
   }
   const scopeKey = getContentBlockRenderScopeKey(
     root.identity.blockInstanceId,
@@ -785,36 +872,6 @@ export const isMaterializedInstanceEditable = (input: {
 }) => getMaterializedInstanceEditability(input) ?? true;
 
 const storageSavers = new Map<string, StorageSaverEntry>();
-const presentationActions = new Map<string, ContentBlockPresentationActions>();
-
-export const registerContentBlockPresentationActions = ({
-  blockInstanceId,
-  renderScope,
-  actions,
-}: {
-  blockInstanceId: string;
-  renderScope: string;
-  actions: ContentBlockPresentationActions;
-}) => {
-  const key = getContentBlockRenderScopeKey(blockInstanceId, renderScope);
-  presentationActions.set(key, actions);
-  return () => {
-    if (presentationActions.get(key) === actions) {
-      presentationActions.delete(key);
-    }
-  };
-};
-
-export const getContentBlockPresentationActions = ({
-  blockInstanceId,
-  renderScope,
-}: {
-  blockInstanceId: string;
-  renderScope: string;
-}) =>
-  presentationActions.get(
-    getContentBlockRenderScopeKey(blockInstanceId, renderScope)
-  );
 
 export const publishMaterializedContentRoot = (
   root: MaterializedContentRoot,
@@ -1212,7 +1269,6 @@ export const resetMaterializedContent = () => {
   $materializedContentViewStates.set(new Map());
   $switchingContentScopes.set(new Set());
   storageSavers.clear();
-  presentationActions.clear();
   notifiedDiagnosticKeys.clear();
   notifiedStateKeys.clear();
 };

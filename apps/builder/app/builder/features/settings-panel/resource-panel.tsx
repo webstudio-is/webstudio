@@ -59,7 +59,10 @@ import {
   $variableValuesByInstanceSelector,
   getInstanceKey,
 } from "~/shared/nano-states";
-import { $dataSources, $resources } from "~/shared/sync/data-stores";
+import {
+  $runtimeDataSources,
+  $runtimeResources,
+} from "~/shared/content-block-content";
 import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
@@ -466,7 +469,7 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
             $selectedPage,
             $selectedInstancePathWithRoot,
             $variableValuesByInstanceSelector,
-            $dataSources,
+            $runtimeDataSources,
           ],
           (
             page,
@@ -690,7 +693,7 @@ export const ResourceForm = forwardRef<
 >(({ variable }, ref) => {
   const { scope, aliases } = useResourceScope({ variable });
 
-  const resources = useStore($resources);
+  const resources = useStore($runtimeResources);
   const resource =
     variable?.type === "resource"
       ? resources.get(variable.resourceId)
@@ -843,7 +846,7 @@ export const SystemResourceForm = forwardRef<
   }
 >(({ variable, querySourceContainer, onQueryActiveChange }, ref) => {
   const { scope, aliases } = useResourceScope({ variable });
-  const resources = useStore($resources);
+  const resources = useStore($runtimeResources);
   const { allowDynamicData } = useStore($permissions);
 
   const resource =
@@ -988,7 +991,7 @@ export const GraphqlResourceForm = forwardRef<
 >(({ variable }, ref) => {
   const { scope, aliases } = useResourceScope({ variable });
 
-  const resources = useStore($resources);
+  const resources = useStore($runtimeResources);
   const resource =
     variable?.type === "resource"
       ? resources.get(variable.resourceId)

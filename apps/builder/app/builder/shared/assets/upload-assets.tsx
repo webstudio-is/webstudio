@@ -297,6 +297,7 @@ const createUploadTicket = async ({
   projectId,
   fileOrUrl,
   contentHash,
+  deduplicate = true,
   assetType,
   request = fetch,
 }: {
@@ -304,6 +305,7 @@ const createUploadTicket = async ({
   projectId: string;
   fileOrUrl: File | URL;
   contentHash?: string;
+  deduplicate?: boolean;
   assetType: AssetType;
   request?: typeof fetch;
 }): Promise<UploadTicket> => {
@@ -311,7 +313,7 @@ const createUploadTicket = async ({
   const metaFormData = new FormData();
   metaFormData.append("projectId", projectId);
   metaFormData.append("type", assetType);
-  if (contentHash !== undefined) {
+  if (contentHash !== undefined && deduplicate) {
     metaFormData.append("contentHash", contentHash);
   }
   const existingNames = new Set<string>();
@@ -462,7 +464,7 @@ const processUpload = async (
 export const uploadAssets = async <T extends File | URL>(
   type: AssetType,
   filesOrUrls: T[],
-  options: { folderId?: string } = {}
+  options: { folderId?: string; deduplicate?: boolean } = {}
 ): Promise<Map<T, string>> => {
   const projectId = $project.get()?.id;
   const authToken = $authToken.get();
@@ -517,6 +519,7 @@ export const uploadAssets = async <T extends File | URL>(
           fileData.source === "file" ? fileData.file : new URL(fileData.url),
         contentHash:
           fileData.source === "file" ? fileData.contentHash : undefined,
+        deduplicate: options.deduplicate,
         assetType: fileData.type,
       });
       fileData.assetId = ticket.assetId;
@@ -576,7 +579,7 @@ export const uploadAssets = async <T extends File | URL>(
 export const uploadSingleAsset = async (
   type: AssetType,
   file: File,
-  options: { folderId?: string } = {}
+  options: { folderId?: string; deduplicate?: boolean } = {}
 ): Promise<Asset | undefined> => {
   const assetId = (await uploadAssets(type, [file], options)).get(file);
   return assetId === undefined ? undefined : waitForAssetUpload(assetId);

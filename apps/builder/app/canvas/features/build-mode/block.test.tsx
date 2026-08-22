@@ -3,18 +3,21 @@
  */
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test } from "vitest";
+import { blockComponent, blockTemplateComponent } from "@webstudio-is/sdk";
 import {
-  registerContentBlockPresentationActions,
   resetMaterializedContent,
   type ContentBlockPresentationItem,
 } from "~/shared/content-block-content";
-import { ContentBlockPresentation } from "./block";
+import { $instances, $props, resetDataStores } from "~/shared/sync/data-stores";
+import { $builderMode } from "~/shared/nano-states";
+import { Block, ContentBlockPresentation } from "./block";
 import {
   componentAttribute,
   idAttribute,
   selectorIdAttribute,
 } from "@webstudio-is/react-sdk";
+import { rawTheme } from "@webstudio-is/design-system";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -33,19 +36,17 @@ afterEach(() => {
   act(() => root.unmount());
   container.remove();
   resetMaterializedContent();
+  resetDataStores();
+  $builderMode.set("design");
 });
 
-const item = (values: Partial<ContentBlockPresentationItem> = {}) => ({
+const item: ContentBlockPresentationItem = {
   id: "notice",
   blockInstanceId: "block",
   renderScope: "scope:item-1",
-  kind: "error" as const,
-  status: "recoverable" as const,
-  label: "Repair MDX file",
-  message: "The MDX file could not be rendered.",
-  assetId: "article",
-  ...values,
-});
+  label: "Missing template: Hero",
+  message: "Template Hero is unavailable.",
+};
 
 const systemProps = {
   [componentAttribute]: "ws:content-presentation",
@@ -53,112 +54,77 @@ const systemProps = {
   [selectorIdAttribute]: "notice,block",
 };
 
-test("renders an accessible selectable recovery notice and retries its exact scope", async () => {
-  const retry = vi.fn(async () => ({ status: "applied" as const }));
-  registerContentBlockPresentationActions({
-    blockInstanceId: "block",
-    renderScope: "scope:item-1",
-    actions: {
-      retry,
-      reloadRemote: async () => ({ status: "applied" }),
-      copyUnsavedSource: () => undefined,
-    },
-  });
-  act(() => {
-    root.render(<ContentBlockPresentation item={item()} {...systemProps} />);
-  });
-
-  const notice = container.querySelector<HTMLElement>('[role="alert"]');
-  expect(notice?.tabIndex).toBe(0);
-  expect(notice?.textContent).toContain("Repair MDX file");
-  const retryButton = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Retry loading MDX content"]'
+test("keeps a connected empty Content Block selectable without an empty-state message", () => {
+  $builderMode.set("content");
+  $instances.set(
+    new Map([
+      [
+        "block",
+        {
+          type: "instance" as const,
+          id: "block",
+          component: blockComponent,
+          children: [{ type: "id" as const, value: "templates" }],
+        },
+      ],
+      [
+        "templates",
+        {
+          type: "instance" as const,
+          id: "templates",
+          component: blockTemplateComponent,
+          children: [],
+        },
+      ],
+    ])
   );
-  await act(async () => retryButton?.click());
-  expect(retry).toHaveBeenCalledOnce();
-});
+  $props.set(
+    new Map([
+      [
+        "source",
+        {
+          id: "source",
+          instanceId: "block",
+          name: "src",
+          type: "asset" as const,
+          value: "article",
+        },
+      ],
+    ])
+  );
 
-test("offers explicit conflict recovery without a blind retry", () => {
-  const reloadRemote = vi.fn(async () => ({ status: "applied" as const }));
-  registerContentBlockPresentationActions({
-    blockInstanceId: "block",
-    renderScope: "scope:item-1",
-    actions: {
-      retry: async () => ({ status: "applied" }),
-      reloadRemote,
-      copyUnsavedSource: () => "unsaved",
-    },
-  });
-  Object.assign(navigator, {
-    clipboard: { writeText: vi.fn(async () => undefined) },
-  });
   act(() => {
     root.render(
-      <ContentBlockPresentation
-        item={item({ status: "conflicting", label: "MDX conflict" })}
-        {...systemProps}
-      />
+      <Block
+        {...{
+          [componentAttribute]: blockComponent,
+          [idAttribute]: "block",
+          [selectorIdAttribute]: "block,body",
+        }}
+      >
+        <div />
+      </Block>
     );
   });
 
-  expect(container.textContent).not.toContain("Retry");
-  expect(container.textContent).toContain("Reload remote file");
-  expect(container.textContent).toContain("Copy unsaved MDX");
+  const block = container.querySelector<HTMLElement>('[data-ws-id="block"]');
+  expect(block).not.toBeNull();
+  expect(block?.style.minHeight).toBe(rawTheme.spacing[9]);
+  expect(container.textContent).toBe("");
+
+  act(() => $builderMode.set("preview"));
+  expect(container.querySelector('[data-ws-id="block"]')).toBeNull();
 });
 
-test("announces unresolved templates as warnings without recovery controls", () => {
+test("renders an accessible selectable unresolved-template warning without file controls", () => {
   act(() => {
-    root.render(
-      <ContentBlockPresentation
-        item={item({
-          kind: "warning",
-          status: "ready",
-          label: "Missing template: Hero",
-          message: "Template Hero is unavailable.",
-          assetId: undefined,
-        })}
-        {...systemProps}
-      />
-    );
+    root.render(<ContentBlockPresentation item={item} {...systemProps} />);
   });
 
-  const warning = container.querySelector('[role="status"]');
-  expect(warning?.textContent).toContain("Missing template: Hero");
-  expect(warning?.getAttribute("aria-live")).toBe("off");
+  const notice = container.querySelector<HTMLElement>('[role="status"]');
+  expect(notice?.tabIndex).toBe(0);
+  expect(notice?.textContent).toContain("Missing template: Hero");
+  expect(notice?.getAttribute("aria-live")).toBe("off");
   expect(container.querySelector("button")).toBeNull();
-});
-
-test.each([
-  {
-    kind: "loading" as const,
-    status: "loading" as const,
-    label: "Loading MDX",
-    busy: "true",
-  },
-  {
-    kind: "loading" as const,
-    status: "pending" as const,
-    label: "Saving MDX",
-    busy: "true",
-  },
-  {
-    kind: "empty" as const,
-    status: "empty" as const,
-    label: "Empty MDX file",
-    busy: null,
-  },
-])("announces $status content without recovery controls", (state) => {
-  act(() => {
-    root.render(
-      <ContentBlockPresentation
-        item={item({ ...state, message: state.label, assetId: undefined })}
-        {...systemProps}
-      />
-    );
-  });
-
-  const notice = container.querySelector('[role="status"]');
-  expect(notice?.textContent).toContain(state.label);
-  expect(notice?.getAttribute("aria-busy")).toBe(state.busy);
-  expect(container.querySelector("button")).toBeNull();
+  expect(container.textContent).not.toContain("Open file");
 });

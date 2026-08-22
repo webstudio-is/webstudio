@@ -12,7 +12,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { AlertIcon } from "@webstudio-is/icons";
-import { $instances } from "~/shared/sync/data-stores";
+import { $runtimeInstances } from "~/shared/content-block-content";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
@@ -27,7 +27,9 @@ import { getTextContentUpdateOperation } from "./text-content-utils";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
-    return computed($instances, (instances) => instances.get(instanceId));
+    return computed($runtimeInstances, (instances) =>
+      instances.get(instanceId)
+    );
   }, [instanceId]);
   return useStore($store);
 };

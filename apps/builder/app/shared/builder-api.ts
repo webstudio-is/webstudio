@@ -12,6 +12,7 @@ import {
   createAssetContentBridge,
   initAssetContentBridge,
 } from "./asset-content-bridge.client";
+import { requireBuilderReload } from "./sync/reload-required";
 
 const apiWindowNamespace = "__webstudio__$__builderApi";
 
@@ -150,6 +151,7 @@ export const initBuilderApi = () => {
         origin: window.location.origin,
         request: (input, init) => builderFetch(input, init),
         authorize: authorizeAssetContent,
+        requireReload: (error) => requireBuilderReload({ error }),
       })
     );
   }

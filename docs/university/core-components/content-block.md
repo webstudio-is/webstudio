@@ -120,7 +120,9 @@ the same children in the project.
 
 ### Connect a content source
 
-Select the Content Block, then use **Content source** in its settings. You can:
+Switch to Design mode, select the Content Block, then use **Content source** in
+its settings. Content source settings are hidden in Content mode, where editors
+work only with the connected file's body on the canvas. You can:
 
 - Choose an existing `.mdx` Asset.
 - Create an empty `.mdx` Asset.
@@ -142,24 +144,23 @@ can select them once per route after base Resources load. Publication rejects
 candidate action Resources, Collection-item-scoped selection with
 candidate-local Resources, and source/resource dependency cycles.
 
-When both the block and the selected file already have body content, choose
-which one becomes authoritative:
+When the block already has body content, Webstudio validates the selected file,
+then asks you to **Abort** or **Connect**. Connecting removes the block's
+persisted body, preserves its Templates list, and displays the selected file.
+The file and its frontmatter are never changed by connecting. An empty block
+connects without this confirmation.
 
-- **Use file content** removes the block's persisted body and displays the
-  selected file.
-- **Replace file body with block content** writes the supported block body to
-  the file, then removes the persisted body.
-
-Webstudio never merges the two bodies implicitly. The file's frontmatter is
-preserved when its body is replaced. If only one side has body content,
-Webstudio selects that side automatically.
+When a source is connected, use the **Frontmatter** code editor in Settings to
+edit the complete frontmatter object as JSON. This includes strings, numbers,
+booleans, arrays, objects, and `null`, and lets you add, rename, or remove keys.
+Saving rewrites the file through the same exact-revision check as canvas edits;
+invalid JSON is not saved.
 
 Lifecycle and semantic edits validate every target first, then save each target
-in a deterministic order. For **Replace file body with block content**, Webstudio
-saves the file before connecting the Content Block. If a later step fails, the
-earlier writes remain saved and the result identifies the failed and
-not-attempted steps. Reinspect the current source and retry only those steps;
-Webstudio does not roll back completed file writes.
+in a deterministic order. If a later step fails, earlier writes remain saved
+and the result identifies the failed and not-attempted steps. Reinspect the
+current source and retry only those steps; Webstudio does not roll back
+completed file writes.
 
 ### Convert Markdown to MDX
 
@@ -175,10 +176,9 @@ content.
 
 ### Switch or disconnect a source
 
-Use **Replace or switch** to select another `.mdx` file. Webstudio validates and
-loads the new file before replacing the last usable canvas view. If both sides
-have content, choose **Use file content** or **Replace file body with block
-content** again.
+Use **Switch file** to select another `.mdx` file. Webstudio validates and loads
+the new file before replacing the last usable canvas view. Switching changes
+the source binding but does not modify either file.
 
 Disconnecting always requires **Copy file content and disconnect**. Webstudio
 copies the current resolved file body into ordinary project instances, removes
@@ -225,7 +225,8 @@ attributes. Webstudio rejects arbitrary component names, imports, exports,
 expression blocks, attribute expressions and spreads, event-handler attributes,
 unsafe tags, and unsafe URLs.
 
-Webstudio serializes edited files into one deterministic form. A save may
+Webstudio serializes standard elements back to ordinary Markdown and keeps JSX
+only when Markdown cannot preserve the element or its properties. A save may
 normalize whitespace, quoting, table alignment, and frontmatter key order while
 preserving the document's meaning, frontmatter, comments, unresolved template
 references, and ignored authored props.
@@ -265,9 +266,9 @@ show the filename, source location, render scope, reason, and a route to open
 the file when available.
 
 - **Retry** retries a failed save or load against the same pinned Asset.
-- **Reload remote file** accepts the current remote revision after a conflict.
-- **Copy unsaved MDX** preserves your local source before reloading or repairing
-  the file.
+- If the file revision changed after loading, Webstudio pauses synchronization.
+  Reload the Builder before continuing; the stale canvas state cannot overwrite
+  the newer file.
 
 If a `ws:name` has no matching template, Builder keeps the authored subtree and
 shows a selectable warning box. Warning boxes exist only in Builder: they are
@@ -285,20 +286,20 @@ checks. The focused Content Block operations can:
 
 - Inspect a configured source, its resolved Asset/revision/render scope,
   capabilities, pending state, diagnostics, and repair routes.
-- Connect and switch with the same content-authority choices, and disconnect by
-  copying the current file body into the block.
+- Connect by replacing the persisted block body with the validated file,
+  switch files without modifying either file, and disconnect by copying the
+  current file body into the block.
 - Apply semantic instance edits to the resolved MDX body.
-- Within the same live editing session, retry, reload remote content, or return
-  unsaved local MDX for recovery.
+- Within the same live editing session, retry eligible failed loads or saves.
 - Preview a bounded, AST-based `ws:name` rename or removal across automatically
   discovered or explicitly reviewed `.mdx` Assets, then update selected files
   with exact revision checks.
 
-Use a dry run before a replacement or migration. Operations that require
-approval return a short-lived confirmation token bound to the inspected
-project, block, files, and revisions. Review the per-file update and omission
-counts before confirming. A stale token or revision is rejected rather than
-overwriting newer content. Migration reports partial per-file failures without
+Use a dry run before a destructive lifecycle change or migration. Operations
+that require approval return a short-lived confirmation token bound to the
+inspected project, block, files, and revisions. Review the per-file update and
+omission counts before confirming. A stale token or revision is rejected rather
+than overwriting newer content. Migration reports partial per-file failures without
 silently retrying them.
 
 The operations return stable diagnostic and error codes through MCP, direct CLI
@@ -306,11 +307,9 @@ calls, and the HTTP API. Lifecycle and semantic edits return ordered per-target
 results. They stop after a failed dependent step, leave completed writes in
 place, and identify which steps must be replanned and retried. Template
 migration similarly applies each explicitly reviewed file with its own revision
-check and can return a partial result. Recovery of
-unsaved local MDX requires the same live Builder or MCP session; a fresh
-one-shot CLI process or stateless HTTP request returns a not-loaded result
-instead of guessing which local state to recover. See [Webstudio MCP](../mcp.md)
-for discovery and command syntax.
+check and can return a partial result. A changed revision is rejected and must
+be resolved by reloading current state, not by overwriting or merging from a
+stale session. See [Webstudio MCP](../mcp.md) for discovery and command syntax.
 
 ## Related
 

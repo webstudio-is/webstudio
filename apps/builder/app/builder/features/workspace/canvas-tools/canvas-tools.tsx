@@ -6,7 +6,7 @@ import {
   $dragAndDropState,
   $canvasToolsVisible,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import { $runtimeInstances } from "~/shared/content-block-content";
 import {
   CollaborativeInstanceOutline,
   HoveredInstanceOutline,
@@ -47,7 +47,7 @@ export const CanvasTools = () => {
   const canvasToolsVisible = useStore($canvasToolsVisible);
   const isPreviewMode = useStore($isPreviewMode);
   const dragAndDropState = useStore($dragAndDropState);
-  const instances = useStore($instances);
+  const instances = useStore($runtimeInstances);
   const scale = useStore($scale);
   const clampingRect = useStore($clampingRect);
   const isStylePanelGridVisible = useStore($isStylePanelGridVisible);

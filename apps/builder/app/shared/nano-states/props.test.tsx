@@ -8,7 +8,10 @@ import {
   ROOT_INSTANCE_ID,
   type Resource,
   SYSTEM_VARIABLE_ID,
+  blockComponent,
+  blockTemplateComponent,
   collectionComponent,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
 import {
@@ -25,7 +28,12 @@ import {
 } from "./props";
 import { $dataSourceVariables } from "./variables";
 import { $selectedPageId } from "./pages";
-import { getInstanceKey } from "../nano-states";
+import {
+  clearInstanceSelection,
+  getInstanceKey,
+  getInstanceKeyWithRoot,
+  selectInstance,
+} from "../nano-states";
 import {
   $,
   expression,
@@ -38,6 +46,11 @@ import {
 import { $systemDataByPage, updateCurrentSystem } from "../system";
 import { registerContainers } from "../sync/sync-stores";
 import { $resourcesCache, getResourceKey } from "../resources";
+import {
+  publishMaterializedContentRoot,
+  resetMaterializedContent,
+} from "../content-block-content";
+import { $selectedInstanceScope } from "~/builder/features/settings-panel/shared";
 
 const initialSystem = {
   origin: "https://undefined.wstd.work",
@@ -75,12 +88,101 @@ const selectPageRoot = (
 };
 
 beforeEach(() => {
+  clearInstanceSelection();
+  resetMaterializedContent();
   $instances.set(new Map());
   $props.set(new Map());
   $resources.set(new Map());
   $dataSources.set(new Map());
   $dataSourceVariables.set(new Map());
   $resourcesCache.set(new Map());
+});
+
+test("collects variables inside materialized MDX content", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [{ type: "id", value: "block" }],
+      },
+      {
+        id: "block",
+        type: "instance",
+        component: blockComponent,
+        children: [{ type: "id", value: "templates" }],
+      },
+      {
+        id: "templates",
+        type: "instance",
+        component: blockTemplateComponent,
+        children: [],
+      },
+    ] satisfies Instance[])
+  );
+  $props.set(
+    toMap([
+      {
+        id: "source",
+        instanceId: "block",
+        name: "src",
+        type: "asset",
+        value: "article",
+      },
+    ])
+  );
+  selectPageRoot("body");
+  publishMaterializedContentRoot({
+    identity: {
+      blockInstanceId: "block",
+      assetId: "article",
+      contentRef: "article.mdx",
+      revision: "sha256:one",
+      renderScope: JSON.stringify(["block", "body"]),
+      format: "mdx",
+    },
+    fragment: {
+      children: [{ type: "id", value: "mdx-box" }],
+      instances: [
+        {
+          id: "mdx-box",
+          type: "instance",
+          component: elementComponent,
+          tag: "div",
+          children: [],
+        },
+      ],
+      props: [],
+      dataSources: [
+        {
+          id: "mdx-variable",
+          scopeInstanceId: "mdx-box",
+          type: "variable",
+          name: "Message",
+          value: { type: "string", value: "From MDX" },
+        },
+      ],
+      resources: [],
+      assets: [],
+      breakpoints: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+    },
+  });
+
+  expect(
+    $variableValuesByInstanceSelector
+      .get()
+      .get(getInstanceKeyWithRoot(["mdx-box", "block", "body"]))
+      ?.get("mdx-variable")
+  ).toBe("From MDX");
+
+  selectInstance(["mdx-box", "block", "body"]);
+  expect(Array.from($selectedInstanceScope.get().aliases.values())).toContain(
+    "Message"
+  );
 });
 
 test("collect prop values", () => {

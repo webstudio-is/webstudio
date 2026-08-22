@@ -242,6 +242,7 @@ test("resolves instance and child-list mutation targets to one storage root", ()
 
 test("preserves ordinary Content Block behavior without materialized content", () => {
   const state = createState();
+  state.props = new Map();
   const projection = createContentStorageProjection({
     state,
     materializedRoots: [],
@@ -252,6 +253,26 @@ test("preserves ordinary Content Block behavior without materialized content", (
     resolveContentStorageRoot(projection, {
       type: "children",
       parentInstanceId: "block",
+    })
+  ).toEqual({ type: "project" });
+});
+
+test("rejects a connected Content Block body without materialized content", () => {
+  const projection = createContentStorageProjection({
+    state: createState(),
+    materializedRoots: [],
+  });
+
+  expect(() =>
+    resolveContentStorageRoot(projection, {
+      type: "children",
+      parentInstanceId: "block",
+    })
+  ).toThrow("source is not ready for editing");
+  expect(
+    resolveContentStorageRoot(projection, {
+      type: "children",
+      parentInstanceId: "templates",
     })
   ).toEqual({ type: "project" });
 });
@@ -1494,6 +1515,48 @@ test("inserts a component into direct authored Content Block children", () => {
       },
     })
   ).toThrow("must handle authored storage changes");
+});
+
+test("does not persist inserted content while a connected source is unavailable", () => {
+  const state = createStructuralState();
+
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.insertComponent",
+      state,
+      input: {
+        parentInstanceId: "block",
+        component: elementComponent,
+        tag: "section",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [],
+      },
+    })
+  ).toThrow("source is not ready for editing");
+  expect(state.instances?.get("block")?.children).toEqual([
+    { type: "id", value: "templates" },
+  ]);
+});
+
+test("does not attach a Slot while a connected source is unavailable", () => {
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "slots.attach",
+      state: createStructuralState(),
+      input: {
+        sourceSlotId: "source-slot",
+        parentInstanceId: "block",
+      },
+      context: {
+        createId: createIdFactory(),
+        returnStorageChanges: true,
+        materializedContent: [],
+      },
+    })
+  ).toThrow("source is not ready for editing");
 });
 
 test.each([

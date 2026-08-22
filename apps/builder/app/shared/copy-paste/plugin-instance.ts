@@ -16,7 +16,7 @@ import {
 import { findClosestInsertable } from "../instance-utils/insert";
 import {
   executeRuntimeMutationAsync,
-  getWebstudioData,
+  getRuntimeWebstudioData,
 } from "../instance-utils/data";
 import { type Insertable } from "../instance-utils/insert";
 import { shallowEqual } from "shallow-equal";
@@ -27,7 +27,11 @@ import {
   findChildReferenceIndex,
   isComponentDetachable,
 } from "@webstudio-is/sdk";
-import { $instances } from "~/shared/sync/data-stores";
+import {
+  $runtimeInstances,
+  getRuntimeAuthoredInstanceChildren,
+  getRuntimeInstanceChildren,
+} from "~/shared/content-block-content";
 import {
   type InstanceSelector,
   sortInstancePathsForChildMutation,
@@ -55,7 +59,7 @@ const getTreeData = (
   instanceSelector: InstanceSelector,
   { showToast = true }: { showToast?: boolean } = {}
 ) => {
-  const instances = $instances.get();
+  const instances = $runtimeInstances.get();
   const [targetInstanceId] = instanceSelector;
   const instance = instances.get(targetInstanceId);
   if (instance && !isComponentDetachable(instance.component)) {
@@ -74,7 +78,7 @@ const getTreeData = (
 
   return {
     instanceSelector,
-    ...extractWebstudioFragment(getWebstudioData(), targetInstanceId),
+    ...extractWebstudioFragment(getRuntimeWebstudioData(), targetInstanceId),
   };
 };
 
@@ -105,7 +109,7 @@ const findMultiSelectionInsertable = (
   if (selectedInstanceSelectors.length < 2) {
     return;
   }
-  const instances = $instances.get();
+  const instances = $runtimeInstances.get();
   const selectedPaths = selectedInstanceSelectors
     .map((instanceSelector) => getInstancePath(instanceSelector, instances))
     .filter((path): path is NonNullable<typeof path> => path !== undefined);
@@ -124,8 +128,12 @@ const findMultiSelectionInsertable = (
     if (parentInstance === undefined) {
       return;
     }
+    const parentChildren = getRuntimeAuthoredInstanceChildren(
+      parentInstance,
+      directParentSelector
+    );
     const selectedSiblingIndexes = selectedPaths.map((path) =>
-      findChildReferenceIndex(parentInstance.children, path[0].instance.id)
+      findChildReferenceIndex(parentChildren, path[0].instance.id)
     );
     if (selectedSiblingIndexes.includes(-1)) {
       return;
@@ -157,7 +165,7 @@ const findPasteTargetForFragment = (
   fragment: WebstudioFragment,
   insertable?: Insertable
 ): undefined | Insertable => {
-  const instances = $instances.get();
+  const instances = $runtimeInstances.get();
 
   insertable = findClosestInsertable(fragment, insertable, {
     allowContentModelWarnings: true,
@@ -175,7 +183,7 @@ const findPasteTargetForFragment = (
 const findPasteTarget = (
   data: InstanceTransferData
 ): undefined | Insertable => {
-  const instances = $instances.get();
+  const instances = $runtimeInstances.get();
 
   const instanceSelector = $selectedInstanceSelector.get();
 
@@ -191,9 +199,15 @@ const findPasteTarget = (
     if (parentInstance === undefined) {
       return;
     }
-    const indexWithinChildren = parentInstance.children.findIndex(
+    const indexWithinChildren = getRuntimeAuthoredInstanceChildren(
+      parentInstance,
+      instanceSelector.slice(1)
+    ).findIndex(
       (child) => child.type === "id" && child.value === currentInstanceId
     );
+    if (indexWithinChildren === -1) {
+      return;
+    }
     return {
       parentSelector: instanceSelector.slice(1),
       position: indexWithinChildren + 1,
@@ -338,7 +352,7 @@ const handleCopyInstance = () => {
 const handleCutInstance = () => {
   const selectedInstanceSelectors = $allSelectedInstanceSelectors.get();
   if (selectedInstanceSelectors.length > 1) {
-    const instances = $instances.get();
+    const instances = $runtimeInstances.get();
     const selectedPaths = selectedInstanceSelectors
       .map((instanceSelector) => {
         const data = getTreeData(instanceSelector, { showToast: false });
@@ -368,7 +382,8 @@ const handleCutInstance = () => {
     }
     const clipboardData = stringifyMultiRootSelection(selectedPathData);
     for (const { instancePath } of sortInstancePathsForChildMutation(
-      selectedPaths
+      selectedPaths,
+      getRuntimeInstanceChildren
     )) {
       deleteInstanceBySelector(instancePath[0].instanceSelector);
     }

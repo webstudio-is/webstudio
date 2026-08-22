@@ -12,12 +12,27 @@ const createBridge = ({
 } = {}) => {
   const request = vi.fn(async () => new Response("ok"));
   const authorize = vi.fn(() => authorized);
+  const requireReload = vi.fn();
   return {
-    bridge: createAssetContentBridge({ origin, request, authorize }),
+    bridge: createAssetContentBridge({
+      origin,
+      request,
+      authorize,
+      requireReload,
+    }),
     request,
     authorize,
+    requireReload,
   };
 };
+
+test("delegates stale revision handling to the bridge owner", () => {
+  const { bridge, requireReload } = createBridge();
+
+  bridge.requireReload("The file changed.");
+
+  expect(requireReload).toHaveBeenCalledWith("The file changed.");
+});
 
 test("forwards only an authorized Asset content request", async () => {
   const { bridge, request, authorize } = createBridge();

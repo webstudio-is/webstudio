@@ -286,27 +286,25 @@ Use the focused tools instead of downloading and rewriting the file as text:
    Collection variables required to resolve it. Inspect the configured source,
    resolved Asset/revision/scope, capabilities, pending session state,
    diagnostics, and repair routes.
-2. Use `connect-content-block-source` or `switch-content-block-source`. When
-   both sides contain body content, choose exactly `use-file-content` or
-   `replace-file-body-with-block-content`; content is never merged implicitly.
+2. Use `connect-content-block-source` or `switch-content-block-source`.
+   Connecting a non-empty block requires confirmation, removes its persisted
+   body, and leaves the selected file unchanged. Switching changes only the
+   source binding.
 3. Use `edit-content-block-source` for semantic text, prop, insert, move,
    reorder, or delete operations against the materialized MDX instances. Do not
    edit generated instance IDs in the file.
 4. Use `disconnect-content-block-source` to copy the resolved file content into
    ordinary project instances and remove the source. The file remains
    unchanged; disconnect never discards the visible body.
-5. If inspection reports a recoverable state, use
-   `recover-content-block-source` only for an advertised action: retry, reload
-   the remote revision, or copy unsaved local MDX. Recovery must run in the same
-   live MCP or `mcp run` session that owns that state. A fresh one-shot CLI
-   process or stateless HTTP request returns `content-source-not-loaded` rather
-   than reconstructing unsaved in-memory content.
+5. If an operation fails, inspect the source again to reload current project
+   and Asset state before replanning. Never overwrite or merge from the stale
+   session.
 
-Run replacement and migration operations with `--dry-run` first. A required
-approval returns a short-lived confirmation token bound to the inspected
-project, Content Block, files, and revisions. Review the plan, then repeat the
-operation with that token. Stale or replayed tokens and changed Asset revisions
-are rejected. Disconnect also requires confirmation because it copies the file
+Run destructive lifecycle and migration operations with `--dry-run` first. A
+required approval returns a short-lived confirmation token bound to the
+inspected project, Content Block, files, and revisions. Review the plan, then
+repeat the operation with that token. Stale or replayed tokens and changed Asset
+revisions are rejected. Disconnect also requires confirmation because it copies the file
 body into project storage and removes the source, although it leaves the file
 itself unchanged.
 

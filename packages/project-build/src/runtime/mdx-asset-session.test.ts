@@ -993,14 +993,11 @@ describe("MDX Asset editing session", () => {
     const flushing = session.flush(loaded.key);
     await Promise.resolve();
 
-    await expect(session.reloadRemote(loaded.key)).rejects.toThrow(
-      "Cannot reload an MDX Asset while its write is in flight"
-    );
     release();
     expectStatus(await flushing, "saved");
   });
 
-  test("preserves a conflicting local source for retry and remote reload", async () => {
+  test("preserves a conflicting local source without overwriting remote content", async () => {
     const writable = createWritableRepository(new Map([["post", "Remote"]]));
     const session = createMdxAssetEditingSession({
       repository: writable.repository,
@@ -1024,19 +1021,16 @@ describe("MDX Asset editing session", () => {
     });
     writable.names.set("post", "post_remote.mdx");
 
-    expectStatus(await session.flush(loaded.key), "conflicting");
-    expect(session.copyUnsavedSource(loaded.key)).toContain("Local");
-    expectStatus(await session.retry(loaded.key), "conflicting");
-
-    const remote = expectStatus(
-      await session.reloadRemote(loaded.key),
-      "saved"
+    const conflicting = expectStatus(
+      await session.flush(loaded.key),
+      "conflicting"
     );
-    expect(remote.identity.contentRef).toBe("post_remote.mdx");
-    expect(remote.root.fragment.instances[0].children).toEqual([
-      { type: "text", value: "Remote" },
-    ]);
-    expect(session.copyUnsavedSource(loaded.key)).toContain("Local");
+    if (!("localSource" in conflicting)) {
+      throw new Error("Expected conflicting local source");
+    }
+    expect(conflicting.localSource).toContain("Local");
+    expectStatus(await session.retry(loaded.key), "conflicting");
+    expect(writable.sources.get("post")).toBe("Remote");
   });
 
   test("keeps failed local writes retryable", async () => {
@@ -1073,10 +1067,10 @@ describe("MDX Asset editing session", () => {
 
     const failed = expectStatus(await session.flush(loaded.key), "failed");
     expect(failed.error.message).toBe("Offline");
-    expect(session.copyUnsavedSource(loaded.key)).toContain("After");
     if (!("localSource" in failed)) {
       throw new Error("Expected failed write state");
     }
+    expect(failed.localSource).toContain("After");
     expect(
       session.canReplaceSource({
         key: loaded.key,
@@ -1129,7 +1123,10 @@ describe("MDX Asset editing session", () => {
       "MDX Asset is not authorized for writing"
     );
     expect(writable.updates).toHaveLength(0);
-    expect(session.copyUnsavedSource(loaded.key)).toContain("After");
+    if (!("localSource" in failed)) {
+      throw new Error("Expected failed local source");
+    }
+    expect(failed.localSource).toContain("After");
   });
 
   test("flushes independent Assets concurrently without scope leakage", async () => {
@@ -1273,12 +1270,15 @@ describe("MDX Asset editing session", () => {
     expect("error" in conflict && conflict.error.message).toBe(
       "Asset repository returned a stale MDX revision"
     );
-    expect(stale.copyUnsavedSource(staleLoaded.key)).toContain("Stale");
+    if (!("localSource" in conflict)) {
+      throw new Error("Expected conflicting local source");
+    }
+    expect(conflict.localSource).toContain("Stale");
     stale.cancel(staleLoaded.key);
     expect(
       stale.canReplaceSource({
         key: staleLoaded.key,
-        expectedSource: stale.copyUnsavedSource(staleLoaded.key)!,
+        expectedSource: conflict.localSource,
       })
     ).toMatchObject({ status: "blocked", reason: "unresolved-write" });
   });

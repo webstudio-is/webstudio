@@ -1032,9 +1032,6 @@ describe("project session", () => {
         canSwitch: true,
         canDisconnectWithCopy: true,
         canEdit: true,
-        canRetry: false,
-        canReloadRemote: false,
-        canCopyUnsavedSource: false,
       },
       repairRoutes: ["disconnect-with-copy" as const],
     }));
@@ -1050,11 +1047,6 @@ describe("project session", () => {
         },
       }),
       inspectSource,
-      recover: async () => ({
-        status: "blocked" as const,
-        code: "content-source-not-loaded",
-        message: "not loaded",
-      }),
       applyLifecycle: async (
         input: { action: "connect" | "switch" | "disconnect" },
         execution?: {
@@ -1080,9 +1072,7 @@ describe("project session", () => {
           result: {
             action: input.action,
             changesProject: true,
-            storageWrites: [],
             diagnostics: [],
-            persistenceOrder: "none" as const,
           },
         };
       },
@@ -1102,7 +1092,6 @@ describe("project session", () => {
       blockInstanceId: "instance-root",
       renderScope: "page:/",
       source: { type: "asset", assetId: "article" },
-      authority: "use-file-content",
     });
 
     expect(result.state.committed).toBe(true);

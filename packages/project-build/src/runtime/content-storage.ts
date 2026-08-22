@@ -2,6 +2,7 @@ import {
   blockComponent,
   blockTemplateComponent,
   decodeDataVariableId,
+  findParentInstanceReference,
   getStyleDeclKey,
   getContentBlockSource,
   prop as propSchema,
@@ -588,6 +589,49 @@ export const resolveContentStorageRoot = (
   projection: ContentStorageProjection,
   target: ContentStorageTarget
 ): ContentStorageRoot => {
+  const instances = projection.state.instances;
+  if (instances === undefined) {
+    return projectStorageRoot;
+  }
+  if (
+    target.type === "instance" &&
+    instances.get(target.instanceId)?.component === blockTemplateComponent
+  ) {
+    return projectStorageRoot;
+  }
+  let ancestorId =
+    target.type === "children"
+      ? target.parentInstanceId
+      : findParentInstanceReference(instances, target.instanceId)?.instance.id;
+  const visited = new Set<Instance["id"]>();
+  while (ancestorId !== undefined && visited.has(ancestorId) === false) {
+    visited.add(ancestorId);
+    const ancestor = instances.get(ancestorId);
+    if (ancestor === undefined) {
+      break;
+    }
+    if (ancestor.component === blockTemplateComponent) {
+      break;
+    }
+    if (ancestor.component === blockComponent) {
+      const source = getContentBlockSource({
+        blockInstanceId: ancestor.id,
+        props: projection.state.props?.values() ?? [],
+      });
+      if (source !== undefined) {
+        const identity = projection.externalRootByBlockId.get(ancestor.id);
+        if (identity === undefined) {
+          return throwBuilderRuntimeError(
+            "BAD_REQUEST",
+            "The connected Content Block source is not ready for editing."
+          );
+        }
+        return { type: "external", identity };
+      }
+    }
+    ancestorId = findParentInstanceReference(instances, ancestor.id)?.instance
+      .id;
+  }
   const identity =
     target.type === "children"
       ? (projection.externalRootByBlockId.get(target.parentInstanceId) ??
@@ -791,8 +835,25 @@ const isProtectedTemplatesList = ({
   projection: ContentStorageProjection;
   materializedRoots: readonly MaterializedContentRoot[];
   instanceId: Instance["id"];
-}) =>
-  materializedRoots.some(({ identity }) =>
+}) => {
+  const instances = projection.state.instances;
+  const instance = instances?.get(instanceId);
+  if (
+    instances !== undefined &&
+    instance?.component === blockTemplateComponent
+  ) {
+    const block = findParentInstanceReference(instances, instance.id)?.instance;
+    if (
+      block?.component === blockComponent &&
+      getContentBlockSource({
+        blockInstanceId: block.id,
+        props: projection.state.props?.values() ?? [],
+      }) !== undefined
+    ) {
+      return true;
+    }
+  }
+  return materializedRoots.some(({ identity }) =>
     projection.state.instances
       ?.get(identity.blockInstanceId)
       ?.children.some(
@@ -803,6 +864,7 @@ const isProtectedTemplatesList = ({
             blockTemplateComponent
       )
   );
+};
 
 export const executeContentStorageMutation = <
   Mutation extends BuilderRuntimeMutation,
@@ -844,12 +906,10 @@ export const executeContentStorageMutation = <
     sourceRoot?: ContentStorageRoot
   ) => Mutation;
 }): Mutation => {
-  if (materializedRoots === undefined || materializedRoots.length === 0) {
-    return execute(state, projectStorageRoot);
-  }
+  const roots = materializedRoots ?? [];
   const projection = createContentStorageProjection({
     state,
-    materializedRoots,
+    materializedRoots: roots,
   });
   const resolvedTarget =
     typeof target === "function" ? target(projection.state) : target;
@@ -867,7 +927,7 @@ export const executeContentStorageMutation = <
         candidate?.type === "instance" &&
         isProtectedTemplatesList({
           projection,
-          materializedRoots,
+          materializedRoots: roots,
           instanceId: candidate.instanceId,
         })
     )
@@ -982,12 +1042,9 @@ export const executeContentStorageTextReplacement = <
   returnStorageChanges?: boolean;
   execute: (state: BuilderState) => Mutation;
 }): Mutation => {
-  if (materializedRoots === undefined || materializedRoots.length === 0) {
-    return execute(state);
-  }
   const projection = createContentStorageProjection({
     state,
-    materializedRoots,
+    materializedRoots: materializedRoots ?? [],
   });
   const mutation = execute(projection.state);
   const projectPatches: BuilderPatchChange["patches"] = [];
@@ -1261,12 +1318,9 @@ export const executeContentStoragePropMutation = <
   returnStorageChanges?: boolean;
   execute: (state: BuilderState) => Mutation;
 }): Mutation => {
-  if (materializedRoots === undefined || materializedRoots.length === 0) {
-    return execute(state);
-  }
   const projection = createContentStorageProjection({
     state,
-    materializedRoots,
+    materializedRoots: materializedRoots ?? [],
   });
   const mutation = execute(projection.state);
   const projectChanges = new Map<
@@ -1471,18 +1525,16 @@ export const executeContentStorageStructuralMutation = <
   ownershipTransfers?: readonly ContentStorageOwnershipTransfer[];
   execute: (state: BuilderState) => Mutation;
 }): Mutation => {
-  if (materializedRoots === undefined || materializedRoots.length === 0) {
-    return execute(state);
-  }
+  const roots = materializedRoots ?? [];
   const projection = createContentStorageProjection({
     state,
-    materializedRoots,
+    materializedRoots: roots,
   });
   for (const instanceId of protectedInstanceIds) {
     if (
       isProtectedTemplatesList({
         projection,
-        materializedRoots,
+        materializedRoots: roots,
         instanceId,
       })
     ) {
@@ -1491,6 +1543,20 @@ export const executeContentStorageStructuralMutation = <
         "The source-backed Content Block Templates list cannot be changed."
       );
     }
+  }
+  if (roots.length === 0) {
+    for (const instanceId of protectedInstanceIds) {
+      resolveContentStorageRoot(projection, { type: "instance", instanceId });
+    }
+    for (const { source, target } of rootPairs) {
+      resolveContentStorageRoot(projection, source);
+      resolveContentStorageRoot(projection, target);
+    }
+    for (const { source, target } of ownershipTransfers) {
+      resolveContentStorageRoot(projection, source);
+      resolveContentStorageRoot(projection, target);
+    }
+    return execute(state);
   }
   let hasExternalPair = false;
   for (const pair of rootPairs) {

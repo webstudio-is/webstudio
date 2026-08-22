@@ -8,7 +8,7 @@ import {
 import type { BuilderState } from "../state/builder-state";
 import { applyBuilderPatchTransactions } from "../state/patch";
 import {
-  ContentBlockSourceAuthorityRequiredError,
+  ContentBlockSourceRevisionConflictError,
   prepareContentBlockConnect,
   prepareContentBlockDisconnect,
   prepareContentBlockSwitch,
@@ -199,24 +199,28 @@ const applyPayload = (
   ]).state;
 
 describe("Content Block source lifecycle", () => {
-  test("requires an explicit authority when block and file both have content", async () => {
-    const { repository } = createRepository({ first: "File body" });
+  test("requires confirmation before replacing a persisted block body", async () => {
+    const { repository, sources, writes } = createRepository({
+      first: "File body",
+    });
     const session = createMdxAssetEditingSession({
       repository,
       authorizeAsset: () => true,
     });
 
-    await expect(
-      prepareContentBlockConnect({
-        state: createState(),
-        blockInstanceId: "block",
-        source: { type: "asset", assetId: "first" },
-        renderScope: "page:/",
-        projectId: "project",
-        session,
-        context: createContext(),
-      })
-    ).rejects.toThrow(ContentBlockSourceAuthorityRequiredError);
+    const prepared = await prepareContentBlockConnect({
+      state: createState(),
+      blockInstanceId: "block",
+      source: { type: "asset", assetId: "first" },
+      renderScope: "page:/",
+      projectId: "project",
+      session,
+      context: createContext(),
+    });
+
+    expect(prepared.requiresConfirmation).toBe(true);
+    expect(writes).toEqual([]);
+    expect(sources.get("first")).toBe("File body");
   });
 
   test("uses validated file content and removes every persisted body child", async () => {
@@ -232,7 +236,6 @@ describe("Content Block source lifecycle", () => {
       source: { type: "asset", assetId: "first" },
       renderScope: "page:/",
       projectId: "project",
-      authority: "use-file-content",
       session,
       context: createContext(),
     });
@@ -245,11 +248,11 @@ describe("Content Block source lifecycle", () => {
     expect(Array.from(next.props?.values() ?? [])).toMatchObject([
       { name: "src", type: "asset", value: "first" },
     ]);
-    expect(prepared.storageWrites).toEqual([]);
+    expect(prepared.requiresConfirmation).toBe(true);
   });
 
-  test("replaces only the file body while preserving target frontmatter", async () => {
-    const { repository } = createRepository({
+  test("never writes the selected file while preparing a connection", async () => {
+    const { repository, sources, writes } = createRepository({
       first: "---\ntitle: Existing\n---\n\nFile body\n",
     });
     const session = createMdxAssetEditingSession({
@@ -257,22 +260,20 @@ describe("Content Block source lifecycle", () => {
       authorizeAsset: () => true,
     });
     const state = createState();
-    const prepared = await prepareContentBlockConnect({
+    await prepareContentBlockConnect({
       state,
       blockInstanceId: "block",
       source: { type: "asset", assetId: "first" },
       renderScope: "page:/",
       projectId: "project",
-      authority: "replace-file-body-with-block-content",
       session,
       context: createContext(),
     });
 
-    expect(prepared.persistenceOrder).toBe("storage-before-project");
-    expect(prepared.storageWrites).toHaveLength(1);
-    expect(prepared.storageWrites[0].source).toContain("title: Existing");
-    expect(prepared.storageWrites[0].source).toContain("Block body");
-    expect(prepared.storageWrites[0].source).not.toContain("File body");
+    expect(writes).toEqual([]);
+    expect(sources.get("first")).toBe(
+      "---\ntitle: Existing\n---\n\nFile body\n"
+    );
   });
 
   test("disconnects by copying resolved content with fresh project ids", async () => {
@@ -298,6 +299,7 @@ describe("Content Block source lifecycle", () => {
       blockInstanceId: "block",
       currentSessionKey: loaded.key,
       renderScope: "page:/",
+      projectId: "project",
       session,
       context: createContext(),
     });
@@ -312,6 +314,41 @@ describe("Content Block source lifecycle", () => {
       { name: "src" },
     ]);
     expect(sources.get("first")).toBe("# File body");
+  });
+
+  test("rejects disconnect when the loaded file revision changed", async () => {
+    const { repository, sources, writes } = createRepository({
+      first: "First",
+    });
+    const state = createState({ body: false, source: "first" });
+    const session = createMdxAssetEditingSession({
+      repository,
+      authorizeAsset: () => true,
+    });
+    const loaded = await session.open({
+      blockInstanceId: "block",
+      source: { type: "asset", assetId: "first" },
+      renderScope: "page:/",
+      state,
+      projectId: "project",
+    });
+    if (loaded.status !== "saved") {
+      throw new Error("Expected loaded source");
+    }
+    sources.set("first", "Changed remotely");
+
+    await expect(
+      prepareContentBlockDisconnect({
+        state,
+        blockInstanceId: "block",
+        currentSessionKey: loaded.key,
+        renderScope: "page:/",
+        projectId: "project",
+        session,
+        context: createContext(),
+      })
+    ).rejects.toBeInstanceOf(ContentBlockSourceRevisionConflictError);
+    expect(writes).toEqual([]);
   });
 
   test("switch validates the new dynamic source before changing the old source prop", async () => {
@@ -397,8 +434,8 @@ describe("Content Block source lifecycle", () => {
     });
   });
 
-  test("defaults to the only non-empty content authority", async () => {
-    const { repository } = createRepository({ first: "" });
+  test("does not copy a non-empty block body into an empty file", async () => {
+    const { repository, sources, writes } = createRepository({ first: "" });
     const session = createMdxAssetEditingSession({
       repository,
       authorizeAsset: () => true,
@@ -413,8 +450,9 @@ describe("Content Block source lifecycle", () => {
       context: createContext(),
     });
 
-    expect(prepared.storageWrites).toHaveLength(1);
-    expect(prepared.storageWrites[0].source).toContain("Block body");
+    expect(prepared.requiresConfirmation).toBe(true);
+    expect(writes).toEqual([]);
+    expect(sources.get("first")).toBe("");
   });
 
   test("does not persist pending writes while preparing a source switch", async () => {
@@ -455,7 +493,6 @@ describe("Content Block source lifecycle", () => {
         source: { type: "asset", assetId: "second" },
         renderScope: "page:/",
         projectId: "project",
-        authority: "use-file-content",
         session,
         context: createContext(),
       })
@@ -469,7 +506,7 @@ describe("Content Block source lifecycle", () => {
     });
   });
 
-  test("switches source contracts without an authority choice when they resolve to the same file", async () => {
+  test("switches source contracts when they resolve to the same file", async () => {
     const { repository, writes } = createRepository({ first: "First" });
     const state = createState({ body: false, source: "first" });
     const session = createMdxAssetEditingSession({
@@ -514,7 +551,6 @@ describe("Content Block source lifecycle", () => {
       type: "expression",
       value: "$ws$dataSource$asset",
     });
-    expect(prepared.storageWrites).toEqual([]);
     expect(prepared.sourceState).toMatchObject({
       status: "pending",
       localSource: "Unsaved first",
@@ -572,7 +608,6 @@ describe("Content Block source lifecycle", () => {
         source: { type: "asset", assetId: "second" },
         renderScope: "page:/",
         projectId: "project",
-        authority: "use-file-content",
         session,
         context: createContext(),
       })
@@ -583,8 +618,8 @@ describe("Content Block source lifecycle", () => {
     expect(writes).toEqual([]);
   });
 
-  test("switches by replacing only the target body", async () => {
-    const { repository } = createRepository({
+  test("switches files without changing either file body", async () => {
+    const { repository, sources, writes } = createRepository({
       first: "First",
       second: "---\ntitle: Target\n---\n\nSecond\n",
     });
@@ -611,15 +646,19 @@ describe("Content Block source lifecycle", () => {
       source: { type: "asset", assetId: "second" },
       renderScope: "page:/",
       projectId: "project",
-      authority: "replace-file-body-with-block-content",
       session,
       context: createContext(),
     });
 
-    expect(prepared.storageWrites).toHaveLength(1);
-    expect(prepared.storageWrites[0].source).toContain("title: Target");
-    expect(prepared.storageWrites[0].source).toContain("First");
-    expect(prepared.storageWrites[0].source).not.toContain("Second");
+    const next = applyPayload(state, prepared.projectPayload);
+    expect(prepared.requiresConfirmation).toBe(false);
+    expect(writes).toEqual([]);
+    expect(sources.get("first")).toBe("First");
+    expect(sources.get("second")).toBe("---\ntitle: Target\n---\n\nSecond\n");
+    expect(next.props?.get("src")).toMatchObject({
+      type: "asset",
+      value: "second",
+    });
   });
 
   test("rejects invalid switch targets without replacing the usable source", async () => {
@@ -685,6 +724,7 @@ describe("Content Block source lifecycle", () => {
       blockInstanceId: "block",
       currentSessionKey: loaded.key,
       renderScope: "page:/",
+      projectId: "project",
       session,
       context: createContext(),
     });
@@ -749,6 +789,7 @@ describe("Content Block source lifecycle", () => {
         blockInstanceId: "block",
         currentSessionKey: otherSource.key,
         renderScope: "page:/",
+        projectId: "project",
         session,
         context: createContext(),
       })
@@ -759,6 +800,7 @@ describe("Content Block source lifecycle", () => {
         blockInstanceId: "block",
         currentSessionKey: otherScope.key,
         renderScope: "page:/",
+        projectId: "project",
         session,
         context: createContext(),
       })
@@ -800,6 +842,7 @@ describe("Content Block source lifecycle", () => {
         blockInstanceId: "block",
         currentSessionKey: loaded.key,
         renderScope: "page:/",
+        projectId: "project",
         session,
         context: createContext(),
       })
@@ -837,8 +880,33 @@ describe("Content Block source lifecycle", () => {
     });
 
     expect(repeated.projectPayload).toEqual([]);
-    expect(repeated.storageWrites).toEqual([]);
     expect(repeated.sourceState?.status).toBe("saved");
+  });
+
+  test("repairs a connected block that still contains persisted body content", async () => {
+    const { repository } = createRepository({ first: "File body" });
+    const session = createMdxAssetEditingSession({
+      repository,
+      authorizeAsset: () => true,
+    });
+    const state = createState({ source: "first" });
+
+    const prepared = await prepareContentBlockConnect({
+      state,
+      blockInstanceId: "block",
+      source: { type: "asset", assetId: "first" },
+      renderScope: "page:/",
+      projectId: "project",
+      session,
+      context: createContext(),
+    });
+    const repaired = applyPayload(state, prepared.projectPayload);
+
+    expect(repaired.instances?.get("block")?.children).toEqual([
+      { type: "id", value: "templates" },
+    ]);
+    expect(repaired.instances?.has("body")).toBe(false);
+    expect(prepared.requiresConfirmation).toBe(false);
   });
 
   test("repeated disconnect is a project-only noop", async () => {
@@ -863,6 +931,7 @@ describe("Content Block source lifecycle", () => {
       blockInstanceId: "block",
       currentSessionKey: loaded.key,
       renderScope: "page:/",
+      projectId: "project",
       session,
       context: createContext(),
     });
@@ -872,11 +941,11 @@ describe("Content Block source lifecycle", () => {
       state: disconnected,
       blockInstanceId: "block",
       renderScope: "page:/",
+      projectId: "project",
       session,
       context: createContext(),
     });
 
     expect(repeated.projectPayload).toEqual([]);
-    expect(repeated.storageWrites).toEqual([]);
   });
 });

@@ -15,8 +15,10 @@ import {
   $selectedInstancePath,
   $selectedPage,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
-import { $props } from "~/shared/sync/data-stores";
+import {
+  $runtimeInstances as $instances,
+  $runtimeProps as $props,
+} from "~/shared/content-block-content";
 import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import { InstanceIcon } from "~/builder/shared/instance-label";
 import { getValidElementChildTags } from "@webstudio-is/project-build/runtime";

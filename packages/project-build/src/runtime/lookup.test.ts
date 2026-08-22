@@ -251,6 +251,35 @@ describe("findAllNavigableTextInstanceSelectors", () => {
     ).toEqual(["paragraph", "body"]);
   });
 
+  test("collects editable descendants through projected children", () => {
+    const instances = new Map([
+      ["body", instance("body", "Body", [{ type: "id", value: "block" }])],
+      ["block", instance("block", "Block")],
+      ["paragraph", instance("paragraph", "Paragraph")],
+    ]);
+    const props = new Map<string, Prop>();
+    const metas = new Map([
+      ["Body", meta(["instance"])],
+      ["Block", meta(["instance"])],
+      ["Paragraph", meta(["rich-text"])],
+    ]);
+    const input = {
+      instanceSelector: ["body"],
+      instances,
+      props,
+      metas,
+      getInstanceChildren: (current: Instance) =>
+        current.id === "block"
+          ? [{ type: "id" as const, value: "paragraph" }]
+          : current.children,
+    };
+
+    expect(findAllNavigableTextInstanceSelectors(input)).toEqual([
+      ["paragraph", "block", "body"],
+    ]);
+    expect(findTextEditorTarget(input)).toEqual(["paragraph", "block", "body"]);
+  });
+
   test("finds literal descendants within a rich-text tree containing expressions", () => {
     const instances = new Map([
       [

@@ -112,7 +112,6 @@ export const builderRuntimeCutoverManifests = [
       "contentBlocks.connectSource",
       "contentBlocks.switchSource",
       "contentBlocks.disconnectSource",
-      "contentBlocks.recoverSource",
       "contentBlocks.migrateTemplateReferences",
       "contentBlocks.semanticEdit",
     ] as const,

@@ -38,6 +38,7 @@ type TemplateProvenance = Readonly<{
   type: "template";
   path: readonly number[];
   instanceId: Instance["id"];
+  editableTextChildren: boolean;
   editablePropNames: readonly string[];
   expandedInstanceIds: readonly Instance["id"][];
   namespaceKeys: readonly Readonly<{
@@ -251,6 +252,22 @@ export const materializeMdxAuthoredContent = ({
         }
         const rootId = getSingleTemplateRootId(template);
         mergeTemplateFragment(fragment, template.fragment);
+        const rootInstance = fragment.instances.find(({ id }) => id === rootId);
+        if (rootInstance === undefined) {
+          throw new Error("Resolved MDX template root is missing");
+        }
+        const editableTextChildren = rootInstance.children.every(
+          (child) => child.type === "text"
+        );
+        if (
+          editableTextChildren &&
+          node.children.length > 0 &&
+          node.children.every(
+            (child) => child.type === "text" || child.type === "comment"
+          )
+        ) {
+          rootInstance.children = visit(node.children, path);
+        }
         const rootPropNames = new Set(
           template.fragment.props
             .filter(({ instanceId }) => instanceId === rootId)
@@ -262,6 +279,7 @@ export const materializeMdxAuthoredContent = ({
           type: "template",
           path,
           instanceId: rootId,
+          editableTextChildren,
           editablePropNames: node.props
             .map(({ name }) => name)
             .filter((name) => rootPropNames.has(name) && !ignored.has(name)),
@@ -551,12 +569,19 @@ export const reconcileMdxAuthoredContent = ({
   }
   for (const original of root.fragment.instances) {
     const template = templateByExpandedInstanceId.get(original.id);
+    const next = instanceById.get(original.id);
+    const isEditableTemplateText =
+      template?.instanceId === original.id &&
+      template.editableTextChildren &&
+      next !== undefined &&
+      next.children.every((child) => child.type === "text") &&
+      equal({ ...next, children: original.children }, original);
     if (
       templateInternalIds.has(original.id) &&
       (template?.type !== "template" ||
-        deletedTemplateRootIds.has(template.instanceId) === false)
+        deletedTemplateRootIds.has(template.instanceId) === false) &&
+      isEditableTemplateText === false
     ) {
-      const next = instanceById.get(original.id);
       if (next === undefined || !equal(next, original)) {
         throw new Error(
           "Expanded template internals cannot be represented losslessly in MDX"
@@ -685,9 +710,30 @@ export const reconcileMdxAuthoredContent = ({
         return next === undefined ? [] : [next];
       });
       props.push(...nextByName.values());
-      return mode === "text"
-        ? { ...original, props, mdxMode: "text" }
-        : { ...original, props };
+      let children = original.children;
+      const originalInstance = originalInstanceById.get(instanceId);
+      if (
+        provenance.editableTextChildren &&
+        originalInstance !== undefined &&
+        (original.children.length > 0 ||
+          equal(instance.children, originalInstance.children) === false)
+      ) {
+        children = reconcileChildren({
+          original: original.children,
+          children: instance.children,
+          mode: original.mdxMode,
+          active,
+        });
+        if (children.length === 0) {
+          throw new Error(
+            "Empty template text cannot be represented losslessly in MDX"
+          );
+        }
+      }
+      return mode === "text" ||
+        (provenance.editableTextChildren && children.length > 0)
+        ? { ...original, props, children, mdxMode: "text" }
+        : { ...original, props, children };
     }
     if (instance.component !== elementComponent || instance.tag === undefined) {
       throw new Error(

@@ -33,7 +33,7 @@ import {
   $memoryProps,
   $selectedBreakpoint,
 } from "~/shared/nano-states";
-import { $props } from "~/shared/sync/data-stores";
+import { $runtimeProps } from "~/shared/content-block-content";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
   $selectedInstance,
@@ -100,17 +100,19 @@ const shouldRenderPropsSectionContainer = ({
   propsMetasSize,
   hasVisibleProps,
   isContentMode,
+  isDesignMode,
 }: {
   component: Instance["component"];
   propsMetasSize: number;
   hasVisibleProps: boolean;
   isContentMode: boolean;
+  isDesignMode: boolean;
 }) => {
   if (component === rootComponent) {
     return false;
   }
   if (component === blockComponent) {
-    return true;
+    return isDesignMode || (isContentMode && hasVisibleProps);
   }
   return propsMetasSize > 0 || (isContentMode && hasVisibleProps);
 };
@@ -182,7 +184,7 @@ const forbiddenProperties = new Set(["style"]);
 const $availableProps = computed(
   [
     $selectedInstance,
-    $props,
+    $runtimeProps,
     $selectedInstancePropsMetas,
     $selectedInstanceInitialPropNames,
   ],
@@ -430,6 +432,7 @@ export const PropsSectionContainer = ({
   });
 
   const propsMetas = useStore($selectedInstancePropsMetas);
+  const isDesignMode = useStore($isDesignMode);
   const isContentMode = useStore($isContentMode);
   const hasVisibleProps =
     logic.systemProps.length > 0 ||
@@ -441,6 +444,7 @@ export const PropsSectionContainer = ({
       propsMetasSize: propsMetas.size,
       hasVisibleProps,
       isContentMode,
+      isDesignMode,
     }) === false
   ) {
     return;
@@ -451,7 +455,7 @@ export const PropsSectionContainer = ({
       style={{ display: "contents" }}
       disabled={instance.component === descendantComponent}
     >
-      {instance.component === blockComponent && (
+      {isDesignMode && instance.component === blockComponent && (
         <>
           <Box css={{ padding: theme.panel.padding }}>
             <ContentBlockSourceSection

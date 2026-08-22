@@ -358,7 +358,7 @@ describe("materializeMdxTemplates", () => {
     ).rejects.toThrow('Resolved MDX template instance "hero" is missing');
   });
 
-  test("generates stable IDs scoped by revision, render scope, and usage path", async () => {
+  test("generates stable IDs scoped by Asset, render scope, and usage path", async () => {
     const materialize = (
       nextIdentity: ContentBlockExternalContentIdentity,
       nextResolution: MdxTemplateResolution = resolution
@@ -387,6 +387,9 @@ describe("materializeMdxTemplates", () => {
     expect(await materializeRootId(identity)).toEqual(first);
     expect(
       await materializeRootId({ ...identity, revision: "revision-2" })
+    ).toEqual(first);
+    expect(
+      await materializeRootId({ ...identity, assetId: "other-asset" })
     ).not.toEqual(first);
     expect(
       await materializeRootId({ ...identity, renderScope: "route:/other" })
@@ -395,7 +398,7 @@ describe("materializeMdxTemplates", () => {
     expect(await materializeMarkerId(identity)).toBe(markerId);
     expect(
       await materializeMarkerId({ ...identity, revision: "revision-2" })
-    ).not.toBe(markerId);
+    ).toBe(markerId);
     expect(
       await materializeMarkerId({ ...identity, renderScope: "route:/other" })
     ).not.toBe(markerId);

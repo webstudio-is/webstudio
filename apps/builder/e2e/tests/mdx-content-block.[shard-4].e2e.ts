@@ -1,6 +1,8 @@
 import type { Page, Response } from "playwright";
+import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
 import {
   configureDynamicDetailContentBlock,
+  configureEmptyHeadingTemplate,
   configureRepresentableContentBlockBody,
   configureRepeatedContentBlock,
 } from "../fixtures/mdx-content-block-project";
@@ -21,18 +23,23 @@ import {
   chooseContentBlockSource,
   disconnectContentBlockSource,
   selectContentBlock,
-  useFileContent,
+  confirmContentBlockConnection,
 } from "../flows/content-block-source";
 import { replaceCanvasText } from "../flows/content-editing";
+import { waitForContentEditMode } from "../flows/content-editing";
 import { waitForSyncStatus } from "../flows/sync-status";
+import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
+import { openNavigatorPanel, selectNavigatorItem } from "../flows/navigator";
 import { getProjectBuilderUrl, newIsolatedPage, test } from "../harness";
 
 const sourceFilename = "content-source.mdx";
 const alternateFilename = "alternate-source.mdx";
 const unresolvedFilename = "unresolved-source.mdx";
+const emptyFilename = "empty-source.mdx";
 
 const sourceHeading = "MDX source heading";
 const editedHeading = "Edited MDX source heading";
+const editedTemplateText = "Edited MDX template heading";
 const alternateHeading = "Alternate MDX heading";
 
 const isAssetContentResponse = (response: Response, method = "PUT") =>
@@ -45,6 +52,79 @@ const waitForAssetWrite = (page: Page) =>
     (response) => isAssetContentResponse(response) && response.status() === 200,
     { timeout: 30_000 }
   );
+
+const waitForReorderedAssetWrite = ({
+  page,
+  before,
+  after,
+}: {
+  page: Page;
+  before: string;
+  after: string;
+}) =>
+  page.waitForResponse(
+    (response) => {
+      if (isAssetContentResponse(response) === false) {
+        return false;
+      }
+      const source = response.request().postData() ?? "";
+      const beforeIndex = source.indexOf(before);
+      const afterIndex = source.indexOf(after);
+      return (
+        beforeIndex !== -1 && afterIndex !== -1 && beforeIndex < afterIndex
+      );
+    },
+    { timeout: 30_000 }
+  );
+
+const expectCanvasTextOrder = async ({
+  page,
+  before,
+  after,
+}: {
+  page: Page;
+  before: string;
+  after: string;
+}) => {
+  const canvas = await waitForCanvasFrame({ page });
+  const beforeElement = canvas.getByText(before, { exact: true });
+  const afterElement = canvas.getByText(after, { exact: true });
+  const deadline = Date.now() + 10_000;
+  while (Date.now() < deadline) {
+    const afterHandle = await afterElement.elementHandle();
+    if (afterHandle !== null) {
+      const isBefore = await beforeElement.evaluate(
+        (element, afterElement) =>
+          (element.compareDocumentPosition(afterElement) &
+            Node.DOCUMENT_POSITION_FOLLOWING) !==
+          0,
+        afterHandle
+      );
+      if (isBefore) {
+        return;
+      }
+    }
+    await page.waitForTimeout(100);
+  }
+  throw new Error(`Expected "${before}" before "${after}" on the canvas`);
+};
+
+const insertTemplateIntoEmptyContentBlock = async ({
+  page,
+  templateName,
+}: {
+  page: Page;
+  templateName: string;
+}) => {
+  await waitForContentEditMode({ page });
+  const canvas = await waitForCanvasFrame({ page });
+  const block = canvas.locator('[data-ws-component="ws:block"]').last();
+  await block.hover();
+  const insert = page.getByRole("button", { name: "Insert block" }).last();
+  await insert.waitFor({ state: "visible" });
+  await insert.click();
+  await page.getByRole("menuitemradio", { name: templateName }).click();
+};
 
 const openFixture = async ({
   page,
@@ -75,7 +155,7 @@ test("Content Block MDX source lifecycle persists edits and disconnect copy", as
     await openFixture({
       page,
       projectId: fixture.projectId,
-      authToken: fixture.editorToken,
+      authToken: fixture.builderToken,
     });
     await openAssetsPanel({ page });
     await uploadAsset({ page, filename: sourceFilename });
@@ -83,9 +163,103 @@ test("Content Block MDX source lifecycle persists edits and disconnect copy", as
 
     await selectContentBlock({ page });
     await chooseContentBlockSource({ page, filename: sourceFilename });
-    await useFileContent({ page });
+    await confirmContentBlockConnection({ page });
     await waitForCanvasText({ page, text: sourceHeading });
-
+    await waitForSyncStatus({ page, status: "idle" });
+    await openFixture({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
+    });
+    const templateWrite = waitForAssetWrite(page).catch((error: unknown) =>
+      error instanceof Error ? error : new Error("Asset write failed")
+    );
+    await insertTemplateAfterCanvasText({
+      page,
+      anchorText: sourceHeading,
+      templateName: fixture.editableTextTemplateName,
+    });
+    await waitForCanvasText({
+      page,
+      text: fixture.editableTextTemplateText,
+    });
+    const templateResponse = await templateWrite;
+    if (templateResponse instanceof Error) {
+      throw templateResponse;
+    }
+    const templateDocument = await parseMdxDocument({
+      source: templateResponse.request().postData() ?? "",
+    });
+    if (
+      templateDocument.children.some(
+        (node) =>
+          node.type === "element" &&
+          node.syntax === "markdown" &&
+          node.tag === "p" &&
+          node.children.some(
+            (child) =>
+              child.type === "text" &&
+              child.value === fixture.editableTextTemplateText
+          )
+      ) === false
+    ) {
+      throw new Error(
+        "Inserting a plain Content Block template must persist as Markdown"
+      );
+    }
+    const templateTextWrite = waitForAssetWrite(page);
+    await replaceCanvasText({
+      page,
+      currentText: fixture.editableTextTemplateText,
+      text: editedTemplateText,
+      waitForProjectSync: false,
+    });
+    const templateTextRequestBody = (await templateTextWrite)
+      .request()
+      .postData();
+    const templateTextDocument = await parseMdxDocument({
+      source: templateTextRequestBody ?? "",
+    });
+    if (
+      templateTextDocument.children.some(
+        (node) =>
+          node.type === "element" &&
+          node.syntax === "markdown" &&
+          node.tag === "p" &&
+          node.children.some(
+            (child) =>
+              child.type === "text" && child.value === editedTemplateText
+          )
+      ) === false
+    ) {
+      throw new Error(
+        "Editing a plain Content Block template must persist as Markdown"
+      );
+    }
+    await openFixture({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
+    });
+    await selectContentBlock({ page });
+    await page.getByRole("button", { name: "Open", exact: true }).click();
+    const fileEditor = page.getByRole("dialog").locator(".cm-content");
+    await fileEditor.waitFor({ state: "visible" });
+    if (
+      (await fileEditor.textContent())?.includes(editedTemplateText) !== true
+    ) {
+      throw new Error(
+        "Opening an MDX Asset after a canvas save must show the latest content"
+      );
+    }
+    await page.keyboard.press("Escape");
+    await openFixture({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
+    });
     await Promise.all([
       waitForAssetWrite(page),
       replaceCanvasText({
@@ -95,13 +269,39 @@ test("Content Block MDX source lifecycle persists edits and disconnect copy", as
         waitForProjectSync: false,
       }),
     ]);
+    await openNavigatorPanel({ page });
+    const contentBlockItem = page
+      .locator("[data-navigator-tree] [data-tree-button]")
+      .filter({ hasText: "Content Block" })
+      .last();
+    await contentBlockItem.press("ArrowRight");
+    await selectNavigatorItem({ page, name: "p" });
+    await Promise.all([
+      waitForReorderedAssetWrite({
+        page,
+        before: "Editable MDX source text.",
+        after: editedTemplateText,
+      }),
+      page.keyboard.press("Control+ArrowUp"),
+    ]);
+    await expectCanvasTextOrder({
+      page,
+      before: "Editable MDX source text.",
+      after: editedTemplateText,
+    });
 
     await openFixture({
       page,
       projectId: fixture.projectId,
-      authToken: fixture.editorToken,
+      authToken: fixture.builderToken,
     });
     await waitForCanvasText({ page, text: editedHeading });
+    await waitForCanvasText({ page, text: editedTemplateText });
+    await expectCanvasTextOrder({
+      page,
+      before: "Editable MDX source text.",
+      after: editedTemplateText,
+    });
     await selectContentBlock({ page });
 
     let releaseRead: (() => void) | undefined;
@@ -127,7 +327,7 @@ test("Content Block MDX source lifecycle persists edits and disconnect copy", as
     await chooseContentBlockSource({
       page,
       filename: alternateFilename,
-      action: "Replace or switch",
+      action: "Switch file",
     });
     await waitForCanvasText({ page, text: editedHeading });
     await page.getByText("Updating content source…", { exact: true }).waitFor();
@@ -146,9 +346,8 @@ test("Content Block MDX source lifecycle persists edits and disconnect copy", as
     await chooseContentBlockSource({
       page,
       filename: alternateFilename,
-      action: "Replace or switch",
+      action: "Switch file",
     });
-    await useFileContent({ page });
     await waitForCanvasText({ page, text: alternateHeading });
     await waitForCanvasTextHidden({ page, text: editedHeading });
 
@@ -169,7 +368,7 @@ test("Content Block MDX source lifecycle persists edits and disconnect copy", as
     await openFixture({
       page,
       projectId: fixture.projectId,
-      authToken: fixture.editorToken,
+      authToken: fixture.builderToken,
     });
     await waitForCanvasText({ page, text: alternateHeading });
     await selectContentBlock({ page });
@@ -179,7 +378,86 @@ test("Content Block MDX source lifecycle persists edits and disconnect copy", as
   }
 });
 
-test("Content Block shows recoverable conflicts without overwriting the file", async () => {
+test("Empty MDX content supports insertion and keeps the next paragraph focused", async () => {
+  const fixture = await createContentModeProject({
+    email: "empty-mdx-content-source-e2e@webstudio.test",
+    title: "Empty MDX Content Source E2E",
+  });
+  await configureEmptyHeadingTemplate(fixture.projectId);
+  const { page, close } = await newIsolatedPage();
+
+  try {
+    await openFixture({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
+    });
+    await openAssetsPanel({ page });
+    await uploadAsset({ page, filename: emptyFilename });
+    await selectContentBlock({ page });
+    await chooseContentBlockSource({ page, filename: emptyFilename });
+    await confirmContentBlockConnection({ page });
+    await waitForSyncStatus({ page, status: "idle" });
+
+    await openFixture({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
+    });
+    await insertTemplateIntoEmptyContentBlock({
+      page,
+      templateName: "Empty Heading Template",
+    });
+    const canvas = await waitForCanvasFrame({ page });
+    const headingEditor = canvas.locator("h1[contenteditable]");
+    await headingEditor.waitFor({ state: "visible" });
+    await page.keyboard.type("First heading");
+    await headingEditor.getByText("First heading", { exact: true }).waitFor();
+    await page.keyboard.press("Enter");
+
+    const paragraphEditor = canvas.locator("p[contenteditable]");
+    await paragraphEditor.waitFor({ state: "visible" });
+    await page.keyboard.press("/");
+    await page
+      .getByRole("menuitemradio", { name: "Empty Heading Template" })
+      .last()
+      .waitFor({ state: "visible" });
+    await page.keyboard.press("Escape");
+    await page.keyboard.type("Focused paragraph");
+    const paragraphId = await paragraphEditor.getAttribute("data-ws-id");
+    if (paragraphId === null) {
+      throw new Error("Expected the focused paragraph instance id");
+    }
+    await page.keyboard.press("Enter");
+    await canvas
+      .locator(`p[contenteditable]:not([data-ws-id="${paragraphId}"])`)
+      .waitFor({ state: "visible" });
+    const finalWrite = waitForAssetWrite(page);
+    await page.mouse.click(5, 5);
+    const finalSource = (await finalWrite).request().postData() ?? "";
+    if (
+      finalSource.includes("# First heading") === false ||
+      finalSource.includes("Focused paragraph") === false ||
+      finalSource.includes('ws:tag="p"')
+    ) {
+      throw new Error(`Unexpected final MDX source: ${finalSource}`);
+    }
+
+    await openFixture({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
+    });
+    await waitForCanvasText({ page, text: "First heading" });
+    await waitForCanvasText({ page, text: "Focused paragraph" });
+  } finally {
+    await close();
+  }
+});
+
+test("Content Block requires a Builder reload after a stale file revision", async () => {
   const fixture = await createContentModeProject({
     email: "mdx-content-conflict-e2e@webstudio.test",
     title: "MDX Content Conflict E2E",
@@ -190,14 +468,21 @@ test("Content Block shows recoverable conflicts without overwriting the file", a
     await openFixture({
       page,
       projectId: fixture.projectId,
-      authToken: fixture.editorToken,
+      authToken: fixture.builderToken,
     });
     await openAssetsPanel({ page });
     await uploadAsset({ page, filename: sourceFilename });
     await selectContentBlock({ page });
     await chooseContentBlockSource({ page, filename: sourceFilename });
-    await useFileContent({ page });
+    await confirmContentBlockConnection({ page });
     await waitForCanvasText({ page, text: sourceHeading });
+    await waitForSyncStatus({ page, status: "idle" });
+    await openFixture({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
+    });
 
     await page.route("**/rest/assets/*/content?*", async (route) => {
       if (route.request().method() === "PUT") {
@@ -211,28 +496,43 @@ test("Content Block shows recoverable conflicts without overwriting the file", a
       await route.continue();
     });
 
+    let reloadPromptMessage: string | undefined;
+    const reloadPromptHandled = new Promise<void>((resolve) => {
+      page.once("dialog", (dialog) => {
+        reloadPromptMessage = dialog.message();
+        void dialog.dismiss().then(resolve);
+      });
+    });
     await replaceCanvasText({
       page,
       currentText: sourceHeading,
       text: "Unsaved conflict heading",
       waitForProjectSync: false,
     });
-    const canvas = await waitForCanvasFrame({ page });
-    await canvas.getByText("MDX conflict", { exact: true }).waitFor();
-    await canvas.getByRole("button", { name: "Copy unsaved MDX" }).click();
-    const copied = await page.evaluate(async () =>
-      navigator.clipboard.readText()
-    );
-    if (copied.includes("Unsaved conflict heading") === false) {
-      throw new Error("Expected conflict recovery to copy the unsaved MDX");
+    await reloadPromptHandled;
+    if (
+      reloadPromptMessage !==
+      "This file changed since it was opened. Reload it before saving again."
+    ) {
+      throw new Error(
+        `Expected stale revision reload prompt: ${reloadPromptMessage}`
+      );
     }
+    await page
+      .getByRole("status")
+      .filter({
+        hasText: "Synchronization has been paused. Please reload to continue.",
+      })
+      .first()
+      .waitFor();
 
     await page.unroute("**/rest/assets/*/content?*");
-    await canvas.getByRole("button", { name: "Reload remote file" }).click();
-    await waitForCanvasText({ page, text: sourceHeading });
-    await canvas.getByText("MDX conflict", { exact: true }).waitFor({
-      state: "hidden",
+    await openFixture({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
     });
+    await waitForCanvasText({ page, text: sourceHeading });
   } finally {
     await close();
   }
@@ -249,13 +549,14 @@ test("Unresolved MDX templates are selectable only in the Builder canvas", async
     await openFixture({
       page,
       projectId: fixture.projectId,
-      authToken: fixture.editorToken,
+      authToken: fixture.builderToken,
     });
     await openAssetsPanel({ page });
     await uploadAsset({ page, filename: unresolvedFilename });
     await selectContentBlock({ page });
     await chooseContentBlockSource({ page, filename: unresolvedFilename });
-    await useFileContent({ page });
+    await confirmContentBlockConnection({ page });
+    await waitForSyncStatus({ page, status: "idle" });
 
     await waitForCanvasText({ page, text: "Valid MDX sibling" });
     await waitForCanvasText({

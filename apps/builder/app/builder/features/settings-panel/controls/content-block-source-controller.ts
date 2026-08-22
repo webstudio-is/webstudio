@@ -1,7 +1,8 @@
 import {
-  ContentBlockSourceAuthorityRequiredError,
   builderRuntimeContext,
+  ContentBlockSourceRevisionConflictError,
   computeExpression,
+  createContentBlockBodyRemoval,
   createMdxAssetEditingSession,
   getContentBlockSessionErrorCode,
   getContentBlockSessionMessage,
@@ -11,16 +12,18 @@ import {
   prepareContentBlockConnect,
   prepareContentBlockDisconnect,
   prepareContentBlockSwitch,
-  recoverContentBlockSession,
   isContentBlockSessionSourceCommitted,
-  type ContentBlockSourceAuthority,
   type ContentBlockPersistenceResult,
   type ContentStorageChange,
   type MaterializedContentRoot,
   type MdxAssetEditingSessionState,
+  type PreparedContentBlockSourceLifecycle,
 } from "@webstudio-is/project-build/runtime";
+import { serializeMdxDocument } from "@webstudio-is/content-engine/mdx";
 import {
   getContentBlockSource,
+  isEqualContentBlockSource,
+  type ContentBlockDiagnostic,
   type ContentBlockSource,
 } from "@webstudio-is/sdk";
 import { createBuilderHttpAssetContentRepository } from "~/builder/shared/assets/builder-mdx-content-repository.client";
@@ -41,7 +44,6 @@ import {
   publishMaterializedContentSessionState,
   registerContentStorageSaver,
   removeMaterializedContentRoot,
-  registerContentBlockPresentationActions,
 } from "~/shared/content-block-content";
 
 export type ContentBlockSourceControllerResult =
@@ -49,7 +51,7 @@ export type ContentBlockSourceControllerResult =
       status: "applied";
       state?: MdxAssetEditingSessionState;
     }>
-  | Readonly<{ status: "requires-authority" }>
+  | Readonly<{ status: "requires-confirmation" }>
   | Readonly<{
       status: "partial";
       code: "content-source-partial-persistence";
@@ -73,6 +75,7 @@ type ContentBlockSourceControllerDependencies = Readonly<{
   publishMaterializedRoot?: (root: MaterializedContentRoot) => void;
   publishSessionState?: (state: MdxAssetEditingSessionState) => void;
   removeMaterializedRoot?: () => void;
+  onRevisionConflict?: (message: string) => void;
 }>;
 
 const getConfiguredSource = ({
@@ -103,10 +106,28 @@ export const createContentBlockSourceController = ({
   publishMaterializedRoot,
   publishSessionState,
   removeMaterializedRoot,
+  onRevisionConflict,
 }: ContentBlockSourceControllerDependencies) => {
   let currentSessionKey: string | undefined;
   let openVersion = 0;
   let disposed = false;
+  let pendingConnectConfirmation:
+    | Readonly<{
+        source: ContentBlockSource;
+        state: ReturnType<typeof readBuilderStateStores>;
+      }>
+    | undefined;
+  let frontmatterSaveQueue = Promise.resolve();
+  const getBlockedSessionResult = (
+    state: MdxAssetEditingSessionState
+  ): ContentBlockSourceControllerResult => {
+    const code = getContentBlockSessionErrorCode(state);
+    const message = getContentBlockSessionMessage(state);
+    if (code === "content-source-write-conflict") {
+      onRevisionConflict?.(message);
+    }
+    return { status: "blocked", code, message };
+  };
   const open = async (source: ContentBlockSource) => {
     const version = ++openVersion;
     const state = await session.open({
@@ -117,6 +138,22 @@ export const createContentBlockSourceController = ({
       projectId,
     });
     if (disposed === false && version === openVersion) {
+      if (state.status === "saved") {
+        const currentState = getState();
+        const configuredSource = getConfiguredSource({
+          state: currentState,
+          blockInstanceId,
+        });
+        if (isEqualContentBlockSource(configuredSource, source)) {
+          const removal = createContentBlockBodyRemoval({
+            state: currentState,
+            blockInstanceId,
+          });
+          if (removal.hasBody) {
+            commitProjectPayload([...removal.payload]);
+          }
+        }
+      }
       if ("key" in state) {
         currentSessionKey = state.key;
       }
@@ -129,13 +166,7 @@ export const createContentBlockSourceController = ({
   };
 
   const applyPrepared = async (
-    prepared: Awaited<
-      ReturnType<
-        | typeof prepareContentBlockConnect
-        | typeof prepareContentBlockDisconnect
-        | typeof prepareContentBlockSwitch
-      >
-    >,
+    prepared: PreparedContentBlockSourceLifecycle,
     expectedState: ReturnType<typeof readBuilderStateStores>
   ): Promise<ContentBlockSourceControllerResult> => {
     if (disposed) {
@@ -146,12 +177,18 @@ export const createContentBlockSourceController = ({
     }
     const persisted = await persistPreparedContentBlockLifecycle({
       prepared,
-      session,
       commitProjectPayload: (payload) => commitProjectPayload([...payload]),
       canCommitProjectPayload: () =>
+        disposed === false &&
         hasSameBuilderStateStoreReferences(expectedState, getState()),
     });
     if (persisted.status !== "complete") {
+      if (disposed) {
+        return {
+          status: "blocked",
+          message: "The MDX Asset session is closed.",
+        };
+      }
       const failedStep = persisted.persistence.steps.find(
         ({ status }) => status === "failed"
       );
@@ -193,9 +230,6 @@ export const createContentBlockSourceController = ({
         publishMaterializedRoot?.(persisted.state.root);
       }
     }
-    if (prepared.storageWrites.length > 0) {
-      invalidate();
-    }
     if (prepared.action === "disconnect") {
       currentSessionKey = undefined;
       removeMaterializedRoot?.();
@@ -205,18 +239,25 @@ export const createContentBlockSourceController = ({
 
   const requestSource = async ({
     source,
-    authority,
+    confirmed = false,
   }: {
     source: ContentBlockSource;
-    authority?: ContentBlockSourceAuthority;
+    confirmed?: boolean;
   }): Promise<ContentBlockSourceControllerResult> => {
     if (disposed) {
       return { status: "blocked", message: "The MDX Asset session is closed." };
     }
     const state = getState();
     const configuredSource = getConfiguredSource({ state, blockInstanceId });
-    try {
-      if (configuredSource === undefined) {
+    if (configuredSource === undefined) {
+      const pending = pendingConnectConfirmation;
+      if (
+        confirmed &&
+        pending !== undefined &&
+        isEqualContentBlockSource(pending.source, source) &&
+        hasSameBuilderStateStoreReferences(pending.state, state)
+      ) {
+        pendingConnectConfirmation = undefined;
         return await applyPrepared(
           await prepareContentBlockConnect({
             state,
@@ -224,46 +265,55 @@ export const createContentBlockSourceController = ({
             source,
             renderScope,
             projectId,
-            authority,
             session,
             context: builderRuntimeContext,
           }),
           state
         );
       }
-      if (currentSessionKey === undefined) {
-        const current = await open(configuredSource);
-        if (!("key" in current) || !("root" in current)) {
-          return {
-            status: "blocked",
-            message: "The current MDX file could not be loaded.",
-          };
-        }
+      const prepared = await prepareContentBlockConnect({
+        state,
+        blockInstanceId,
+        source,
+        renderScope,
+        projectId,
+        session,
+        context: builderRuntimeContext,
+      });
+      if (prepared.requiresConfirmation) {
+        pendingConnectConfirmation = { source, state };
+        return { status: "requires-confirmation" };
       }
-      const currentKey = currentSessionKey;
-      if (currentKey === undefined) {
-        return { status: "blocked", message: "The MDX Asset is not loaded." };
-      }
-      return await applyPrepared(
-        await prepareContentBlockSwitch({
-          state,
-          blockInstanceId,
-          currentSessionKey: currentKey,
-          source,
-          renderScope,
-          projectId,
-          authority,
-          session,
-          context: builderRuntimeContext,
-        }),
-        state
-      );
-    } catch (error) {
-      if (error instanceof ContentBlockSourceAuthorityRequiredError) {
-        return { status: "requires-authority" };
-      }
-      throw error;
+      pendingConnectConfirmation = undefined;
+      return await applyPrepared(prepared, state);
     }
+    pendingConnectConfirmation = undefined;
+    if (currentSessionKey === undefined) {
+      const current = await open(configuredSource);
+      if (!("key" in current) || !("root" in current)) {
+        return {
+          status: "blocked",
+          message: "The current MDX file could not be loaded.",
+        };
+      }
+    }
+    const currentKey = currentSessionKey;
+    if (currentKey === undefined) {
+      return { status: "blocked", message: "The MDX Asset is not loaded." };
+    }
+    return await applyPrepared(
+      await prepareContentBlockSwitch({
+        state,
+        blockInstanceId,
+        currentSessionKey: currentKey,
+        source,
+        renderScope,
+        projectId,
+        session,
+        context: builderRuntimeContext,
+      }),
+      state
+    );
   };
 
   const disconnect = async (): Promise<ContentBlockSourceControllerResult> => {
@@ -281,17 +331,26 @@ export const createContentBlockSourceController = ({
         };
       }
     }
-    return await applyPrepared(
-      await prepareContentBlockDisconnect({
-        state,
-        blockInstanceId,
-        currentSessionKey,
-        renderScope,
-        session,
-        context: builderRuntimeContext,
-      }),
-      state
-    );
+    try {
+      return await applyPrepared(
+        await prepareContentBlockDisconnect({
+          state,
+          blockInstanceId,
+          currentSessionKey,
+          renderScope,
+          projectId,
+          session,
+          context: builderRuntimeContext,
+        }),
+        state
+      );
+    } catch (error) {
+      if (error instanceof ContentBlockSourceRevisionConflictError) {
+        publishSessionState?.(error.state);
+        return getBlockedSessionResult(error.state);
+      }
+      throw error;
+    }
   };
 
   const saveStorageChanges = async (
@@ -306,11 +365,7 @@ export const createContentBlockSourceController = ({
       publishSessionState?.(pending);
     }
     if (pending.status !== "pending" && pending.status !== "saved") {
-      return {
-        status: "blocked",
-        code: getContentBlockSessionErrorCode(pending),
-        message: getContentBlockSessionMessage(pending),
-      };
+      return getBlockedSessionResult(pending);
     }
     if (disposed) {
       if (pending.status === "pending") {
@@ -333,6 +388,12 @@ export const createContentBlockSourceController = ({
     if (disposed === false && currentSessionKey === key) {
       publishSessionState?.(saved);
     }
+    if (disposed) {
+      return {
+        status: "blocked",
+        message: "The MDX Asset editing session was closed.",
+      };
+    }
     const committed = isContentBlockSessionSourceCommitted({
       state: saved,
       source: expectedSource,
@@ -340,17 +401,7 @@ export const createContentBlockSourceController = ({
     const committedWithProjectionError =
       committed && saved.status === "recoverable";
     if (committed === false) {
-      return {
-        status: "blocked",
-        code: getContentBlockSessionErrorCode(saved),
-        message: getContentBlockSessionMessage(saved),
-      };
-    }
-    if (disposed) {
-      return {
-        status: "blocked",
-        message: "The MDX Asset editing session was closed.",
-      };
+      return getBlockedSessionResult(saved);
     }
     const savedCurrentSource = currentSessionKey === key;
     if (savedCurrentSource && "key" in saved) {
@@ -383,112 +434,68 @@ export const createContentBlockSourceController = ({
       : { status: "blocked", message: preflight.reason };
   };
 
-  const retry = async (): Promise<ContentBlockSourceControllerResult> => {
-    if (disposed) {
-      return { status: "blocked", message: "The MDX Asset session is closed." };
-    }
-    const current =
-      currentSessionKey === undefined
-        ? undefined
-        : session.get(currentSessionKey);
-    if (current === undefined || currentSessionKey === undefined) {
-      const source = getConfiguredSource({
-        state: getState(),
-        blockInstanceId,
-      });
-      if (source === undefined) {
-        return {
-          status: "blocked",
-          message: "The MDX source is disconnected.",
-        };
-      }
-      const state = await open(source);
-      return state.status === "saved" || state.status === "pending"
-        ? { status: "applied", state }
-        : {
-            status: "blocked",
-            message: getContentBlockSessionMessage(state),
-          };
+  const persistFrontmatter = async (
+    properties: Readonly<Record<string, unknown>>
+  ): Promise<ContentBlockSourceControllerResult> => {
+    if (disposed || currentSessionKey === undefined) {
+      return { status: "blocked", message: "The MDX Asset is not loaded." };
     }
     const key = currentSessionKey;
-    const source = getConfiguredSource({ state: getState(), blockInstanceId });
-    const recovered = await recoverContentBlockSession({
-      session,
-      state: current,
-      action: "retry",
-      reopen:
-        source === undefined
-          ? undefined
-          : () =>
-              session.open({
-                blockInstanceId,
-                source,
-                renderScope,
-                state: getState(),
-                projectId,
-              }),
-    });
-    if (disposed || currentSessionKey !== key) {
-      return { status: "blocked", message: "The MDX Asset session changed." };
-    }
-    publishSessionState?.(recovered.state);
-    if (recovered.status === "blocked") {
+    const current = session.get(key);
+    if (current?.status !== "saved") {
       return {
         status: "blocked",
-        code: recovered.code,
-        message: recovered.message,
+        message: `Frontmatter cannot be saved while the MDX Asset session is ${current?.status ?? "not loaded"}.`,
       };
     }
-    if (recovered.state.status === "saved") {
-      currentSessionKey = recovered.state.key;
-      publishMaterializedRoot?.(recovered.state.root);
+    const source = serializeMdxDocument({
+      ...current.root.document,
+      frontmatter: { ...current.root.document.frontmatter, properties },
+    });
+    const persisted = await session.persistSourceReplacement({
+      key,
+      expectedSource: current.source,
+      source,
+      isCurrent: () => disposed === false && currentSessionKey === key,
+    });
+    const state = persisted.state;
+    if (disposed === false && currentSessionKey === key) {
+      publishSessionState?.(state);
     }
-    if (recovered.changedAsset) {
-      invalidate();
+    if (disposed) {
+      return {
+        status: "blocked",
+        message: "The MDX Asset editing session was closed.",
+      };
     }
-    return { status: "applied", state: recovered.state };
+    if (persisted.status === "blocked") {
+      return getBlockedSessionResult(state);
+    }
+    if (!isContentBlockSessionSourceCommitted({ state, source })) {
+      return getBlockedSessionResult(state);
+    }
+    if ("key" in state) {
+      currentSessionKey = state.key;
+    }
+    if (state.status === "saved") {
+      publishMaterializedRoot?.(state.root);
+    }
+    invalidate();
+    return { status: "applied", state };
   };
 
-  const reloadRemote =
-    async (): Promise<ContentBlockSourceControllerResult> => {
-      if (disposed || currentSessionKey === undefined) {
-        return { status: "blocked", message: "The MDX Asset is not loaded." };
-      }
-      const key = currentSessionKey;
-      const current = session.get(key);
-      if (current === undefined) {
-        return { status: "blocked", message: "The MDX Asset is not loaded." };
-      }
-      const recovered = await recoverContentBlockSession({
-        session,
-        state: current,
-        action: "reload-remote",
-      });
-      if (disposed || currentSessionKey !== key) {
-        return { status: "blocked", message: "The MDX Asset session changed." };
-      }
-      const state = recovered.state;
-      if ("key" in state) {
-        currentSessionKey = state.key;
-      }
-      publishSessionState?.(state);
-      if (recovered.status === "complete" && state.status === "saved") {
-        publishMaterializedRoot?.(state.root);
-        invalidate();
-      }
-      return recovered.status === "complete"
-        ? { status: "applied", state }
-        : {
-            status: "blocked",
-            code: recovered.code,
-            message: recovered.message,
-          };
-    };
-
-  const copyUnsavedSource = () =>
-    currentSessionKey === undefined
-      ? undefined
-      : session.copyUnsavedSource(currentSessionKey);
+  const saveFrontmatter = (
+    properties: Readonly<Record<string, unknown>>
+  ): Promise<ContentBlockSourceControllerResult> => {
+    const saving = frontmatterSaveQueue.then(() =>
+      persistFrontmatter(properties)
+    );
+    frontmatterSaveQueue = saving.then(
+      () => undefined,
+      () => undefined
+    );
+    return saving;
+  };
 
   const isCurrent = ({ identity }: MaterializedContentRoot) => {
     const state =
@@ -502,6 +509,11 @@ export const createContentBlockSourceController = ({
         getContentStorageIdentityKey(identity)
     );
   };
+
+  const getSessionState = () =>
+    currentSessionKey === undefined
+      ? undefined
+      : session.get(currentSessionKey);
 
   const dispose = () => {
     if (disposed) {
@@ -523,10 +535,9 @@ export const createContentBlockSourceController = ({
     disconnect,
     preflightStorageChanges,
     saveStorageChanges,
-    retry,
-    reloadRemote,
-    copyUnsavedSource,
+    saveFrontmatter,
     isCurrent,
+    getSessionState,
     dispose,
   };
 };
@@ -538,7 +549,6 @@ type BuilderContentBlockSourceController = ReturnType<
 type BuilderControllerEntry = {
   controller: BuilderContentBlockSourceController;
   unregisterSaver: () => void;
-  unregisterPresentationActions: () => void;
   references: number;
 };
 
@@ -549,11 +559,13 @@ const acquireBuilderController = ({
   entry,
   blockInstanceId,
   renderScope,
+  onMaterializedRootRemoved,
 }: {
   controllerKey: string;
   entry: BuilderControllerEntry;
   blockInstanceId: string;
   renderScope: string;
+  onMaterializedRootRemoved?: () => void;
 }) => {
   let released = false;
   return {
@@ -569,9 +581,9 @@ const acquireBuilderController = ({
       }
       builderControllers.delete(controllerKey);
       entry.unregisterSaver();
-      entry.unregisterPresentationActions();
       entry.controller.dispose();
       removeMaterializedContentRoot({ blockInstanceId, renderScope });
+      onMaterializedRootRemoved?.();
     },
   };
 };
@@ -580,10 +592,17 @@ export const createBuilderContentBlockSourceController = ({
   blockInstanceId,
   renderScope,
   projectId,
+  onMaterializedRoot,
+  onMaterializedRootRemoved,
 }: {
   blockInstanceId: string;
   renderScope: string;
   projectId: string;
+  onMaterializedRoot?: (
+    root: MaterializedContentRoot,
+    diagnostics: readonly ContentBlockDiagnostic[]
+  ) => void;
+  onMaterializedRootRemoved?: () => void;
 }) => {
   const controllerKey = JSON.stringify([
     projectId,
@@ -598,6 +617,7 @@ export const createBuilderContentBlockSourceController = ({
       entry: existing,
       blockInstanceId,
       renderScope,
+      onMaterializedRootRemoved,
     });
   }
   const repository = createBuilderHttpAssetContentRepository({ projectId });
@@ -647,10 +667,17 @@ export const createBuilderContentBlockSourceController = ({
           renderScope,
           state,
         });
+        if ("root" in state) {
+          onMaterializedRoot?.(state.root, state.diagnostics);
+        }
       }
     },
-    removeMaterializedRoot: () =>
-      removeMaterializedContentRoot({ blockInstanceId, renderScope }),
+    removeMaterializedRoot: () => {
+      removeMaterializedContentRoot({ blockInstanceId, renderScope });
+      onMaterializedRootRemoved?.();
+    },
+    onRevisionConflict: (message) =>
+      getAssetContentBridge().requireReload(message),
   });
   const unregisterSaver = registerContentStorageSaver({
     blockInstanceId,
@@ -662,8 +689,8 @@ export const createBuilderContentBlockSourceController = ({
         : {
             status: "blocked",
             message:
-              result.status === "requires-authority"
-                ? "Saving MDX content cannot require content authority."
+              result.status === "requires-confirmation"
+                ? "Saving MDX content cannot require source confirmation."
                 : result.message,
           };
     },
@@ -671,41 +698,18 @@ export const createBuilderContentBlockSourceController = ({
     save: async (changes) => {
       const result = await controller.saveStorageChanges(changes);
       const saveResult =
-        result.status === "requires-authority"
+        result.status === "requires-confirmation"
           ? {
               status: "blocked" as const,
-              message: "Saving MDX content cannot require content authority.",
+              message: "Saving MDX content cannot require source confirmation.",
             }
           : result;
       return saveResult;
     },
   });
-  const toStorageResult = (result: ContentBlockSourceControllerResult) =>
-    result.status === "applied"
-      ? ({ status: "applied" } as const)
-      : {
-          status: "blocked" as const,
-          message:
-            result.status === "blocked"
-              ? result.message
-              : "The MDX operation requires content authority.",
-        };
-  const unregisterPresentationActions = registerContentBlockPresentationActions(
-    {
-      blockInstanceId,
-      renderScope,
-      actions: {
-        retry: async () => toStorageResult(await controller.retry()),
-        reloadRemote: async () =>
-          toStorageResult(await controller.reloadRemote()),
-        copyUnsavedSource: controller.copyUnsavedSource,
-      },
-    }
-  );
   const entry = {
     controller,
     unregisterSaver,
-    unregisterPresentationActions,
     references: 1,
   };
   builderControllers.set(controllerKey, entry);

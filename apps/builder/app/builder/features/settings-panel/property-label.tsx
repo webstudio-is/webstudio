@@ -22,7 +22,7 @@ import {
   $selectedInstance,
 } from "~/shared/nano-states";
 import { getPropIdsToDelete } from "@webstudio-is/project-build/runtime";
-import { $props } from "~/shared/sync/data-stores";
+import { $runtimeProps } from "~/shared/content-block-content";
 import {
   $selectedInstanceInitialPropNames,
   $selectedInstancePropsMetas,
@@ -45,7 +45,7 @@ const usePropMeta = (name: string) => {
 };
 
 const $selectedInstanceProps = computed(
-  [$selectedInstance, $props],
+  [$selectedInstance, $runtimeProps],
   (instance, props) => {
     const instanceProps = new Map<Prop["name"], Prop>();
     for (const prop of props.values()) {

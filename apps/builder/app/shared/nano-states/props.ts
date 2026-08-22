@@ -13,7 +13,6 @@ import {
   portalComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
-  findTreeInstanceIds,
 } from "@webstudio-is/sdk";
 import { transpileExpression } from "@webstudio-is/expression";
 import {
@@ -28,6 +27,7 @@ import {
   $runtimeInstances as $instances,
   $runtimeProps as $props,
   $runtimeResources as $resources,
+  findRuntimeTreeInstanceIds,
   getRuntimeInstanceChildren,
 } from "../content-block-content";
 import { $uploadingFilesDataStore, $memoryProps, $isPreviewMode } from "./misc";
@@ -605,7 +605,10 @@ const $computedResourceRequests = computed(
     if (page === undefined) {
       return computedResourceRequests;
     }
-    const instanceIds = findTreeInstanceIds(instances, page.rootInstanceId);
+    const instanceIds = findRuntimeTreeInstanceIds(
+      page.rootInstanceId,
+      instances
+    );
     instanceIds.add(ROOT_INSTANCE_ID);
     // load only resources bound to variables on current page
     // action resources should not be loaded automatically

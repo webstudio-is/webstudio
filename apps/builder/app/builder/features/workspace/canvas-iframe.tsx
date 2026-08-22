@@ -13,6 +13,12 @@ import {
 } from "~/builder/shared/nano-states";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { mergeRefs } from "@react-aria/utils";
+import { useSubscribe } from "~/shared/pubsub";
+import { $project } from "~/shared/sync/data-stores";
+import {
+  publishMaterializedContentRoot,
+  removeMaterializedContentRoot,
+} from "~/shared/content-block-content";
 
 const iframeStyle = css({
   border: "none",
@@ -80,6 +86,23 @@ const CanvasRectUpdater = ({
 export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
   (props, ref) => {
     const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+    useSubscribe(
+      "contentBlockMaterialized",
+      ({ projectId, root, diagnostics }) => {
+        if ($project.get()?.id === projectId) {
+          publishMaterializedContentRoot(root, diagnostics);
+        }
+      }
+    );
+    useSubscribe(
+      "contentBlockMaterializedRemoved",
+      ({ projectId, blockInstanceId, renderScope }) => {
+        if ($project.get()?.id === projectId) {
+          removeMaterializedContentRoot({ blockInstanceId, renderScope });
+        }
+      }
+    );
 
     const merrgedRef = useMemo(() => mergeRefs(ref, iframeRef), [ref]);
 

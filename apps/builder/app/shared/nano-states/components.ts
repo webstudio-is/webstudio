@@ -17,6 +17,7 @@ import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import {
   $runtimeInstances as $instances,
   $runtimeProps as $props,
+  getRuntimeInstanceChildren,
 } from "../content-block-content";
 import { $memoryProps } from "./misc";
 import { $selectedPage } from "./pages";
@@ -34,7 +35,8 @@ const createHookContext = (): HookContext => {
   const indexesWithinAncestors = getIndexesWithinAncestors(
     metas,
     instances,
-    page ? [page.rootInstanceId] : []
+    page ? [page.rootInstanceId] : [],
+    getRuntimeInstanceChildren
   );
 
   return {

@@ -1,5 +1,6 @@
 import {
   reparentInstance,
+  canReparentInstance,
   toggleInstanceShow,
 } from "~/shared/instance-utils/mutation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
@@ -69,11 +70,11 @@ import {
   $runtimeProps as $props,
   getRuntimeInstanceChildren,
   contentBlockPresentationComponent,
+  getMaterializedInstanceEditability,
 } from "~/shared/content-block-content";
 import { suppressCommandsForEvent } from "~/shared/commands-emitter";
 import {
   areInstanceSelectorsEqual,
-  canDropInstanceSelector,
   isDescendantOrSelf,
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
@@ -643,14 +644,22 @@ const canDrag = (instance: Instance, instanceSelector: InstanceSelector) => {
     return false;
   }
 
+  if (instance.component === contentBlockPresentationComponent) {
+    return false;
+  }
+
   if ($isContentMode.get()) {
-    const parentId = instanceSelector[1];
-    const parentInstance = $instances.get().get(parentId);
-    if (parentInstance === undefined) {
-      return false;
-    }
-    if (parentInstance.component !== blockComponent) {
-      return false;
+    const instances = $instances.get();
+    if (
+      getMaterializedInstanceEditability({
+        instanceSelector,
+        instances,
+      }) !== true
+    ) {
+      const parentInstance = instances.get(instanceSelector[1]);
+      if (parentInstance?.component !== blockComponent) {
+        return false;
+      }
     }
   }
   // prevent moving block template out of first position
@@ -678,14 +687,9 @@ const canDrop = (
   dropTarget: ItemDropTarget
 ) => {
   const dropSelector = dropTarget.itemSelector;
-  return canDropInstanceSelector({
-    dragSelector,
-    dropSelector,
-    instances: $instances.get(),
-    props: $props.get(),
-    metas: $registeredComponentMetas.get(),
-    htmlTagsByInstanceId: $propsIndex.get().htmlTagsByInstanceId,
-    contentMode: $isContentMode.get(),
+  return canReparentInstance(dragSelector, {
+    parentSelector: dropSelector,
+    position: dropTarget.indexWithinChildren,
   });
 };
 

@@ -59,7 +59,7 @@ describe("MDX authored content", () => {
     expect(otherScope.fragment.instances[0].id).not.toBe(
       first.fragment.instances[0].id
     );
-    expect(otherRevision.fragment.instances[0].id).not.toBe(
+    expect(otherRevision.fragment.instances[0].id).toBe(
       first.fragment.instances[0].id
     );
     expect(
@@ -535,5 +535,81 @@ describe("MDX authored content", () => {
         },
       }).children
     ).toEqual([]);
+  });
+
+  test("persists direct text edits on a template root", async () => {
+    const document = await parseMdxDocument({
+      source: `<ws.element ws:name="Heading" />`,
+    });
+    const authoredTemplate = document.children[0];
+    if (authoredTemplate?.type !== "template") {
+      throw new Error("Expected authored template");
+    }
+    const templateFragment: WebstudioFragment = {
+      children: [{ type: "id", value: "template-heading" }],
+      instances: [
+        {
+          type: "instance",
+          id: "template-heading",
+          component: elementComponent,
+          tag: "h2",
+          children: [{ type: "text", value: "Default heading" }],
+        },
+      ],
+      props: [],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+    };
+    const templateMaterialization = {
+      templates: [
+        {
+          type: "resolved-template" as const,
+          reference: {
+            type: "resolved-template" as const,
+            path: [0],
+            templateName: "Heading",
+            templateInstanceId: "heading-template",
+            props: authoredTemplate.props,
+          },
+          fragment: templateFragment,
+        },
+      ],
+      diagnostics: [],
+      dependencies: { templateNames: ["Heading"], templates: [] },
+    };
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization,
+    });
+    const next = structuredClone(root.fragment);
+    next.instances[0]!.children = [{ type: "text", value: "Authored heading" }];
+
+    const nextDocument = reconcileMdxAuthoredContent({
+      root,
+      fragment: next,
+    });
+    expect(nextDocument.children[0]).toMatchObject({
+      type: "template",
+      name: "Heading",
+      children: [{ type: "text", value: "Authored heading" }],
+    });
+    const persistedDocument = await parseMdxDocument({
+      source: serializeMdxDocument(nextDocument),
+    });
+
+    const rematerialized = materializeMdxAuthoredContent({
+      identity,
+      document: persistedDocument,
+      templateMaterialization,
+    });
+    expect(rematerialized.fragment.instances[0]?.children).toEqual([
+      { type: "text", value: "Authored heading" },
+    ]);
   });
 });

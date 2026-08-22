@@ -5,7 +5,7 @@ import { Box, Combobox, Text, theme } from "@webstudio-is/design-system";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
-import { $props } from "~/shared/sync/data-stores";
+import { $runtimeProps } from "~/shared/content-block-content";
 import {
   type ControlProps,
   ResponsiveLayout,
@@ -90,7 +90,7 @@ const matchOrSuggestTimeZone = (
 };
 
 const getStringProp = (
-  props: ReturnType<typeof $props.get>,
+  props: ReturnType<typeof $runtimeProps.get>,
   instanceId: string,
   name: string,
   defaultValue: string
@@ -188,7 +188,7 @@ export const TimeZoneControl = ({
   onChange,
 }: ControlProps<"timeZone">) => {
   const id = useId();
-  const props = useStore($props);
+  const props = useStore($runtimeProps);
   const savedValue = String(
     computedValue ?? meta.defaultValue ?? defaultTimeZone
   );

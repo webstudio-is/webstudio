@@ -1,5 +1,6 @@
 import { afterEach, expect, test } from "vitest";
 import type { Project } from "@webstudio-is/project";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import type { MaterializedMdxAuthoredContentRoot } from "@webstudio-is/project-build/runtime";
 import {
   blockComponent,
@@ -25,9 +26,13 @@ import {
   $contentBlockPresentationItems,
   $materializedContentViewStates,
   $runtimeInstances,
+  findRuntimeNavigableTextInstanceSelectors,
+  findRuntimeTreeInstanceIds,
   formatContentBlockDiagnostic,
   getMaterializedInstanceEditability,
+  getMaterializedContentForSelectors,
   getMaterializedContentViewStateFromSession,
+  getRuntimeAuthoredInstanceChildren,
   getRuntimeInstanceChildren,
   publishMaterializedContentRoot,
   publishMaterializedContentSessionState,
@@ -136,6 +141,18 @@ test("projects repeated MDX roots by selector without changing persisted instanc
   }
   expect($runtimeInstances.get().has("first-content")).toBe(true);
   expect($runtimeInstances.get().has("second-content")).toBe(true);
+  expect(findRuntimeTreeInstanceIds("block")).toEqual(
+    new Set(["block", "templates", "first-content", "second-content"])
+  );
+  expect(findRuntimeTreeInstanceIds("collection[0]")).toEqual(
+    new Set(["collection[0]", "first-content"])
+  );
+  expect(
+    findRuntimeNavigableTextInstanceSelectors({
+      rootInstanceId: "collection[0]",
+      metas: componentMetas,
+    })
+  ).toEqual([["first-content", "block", "collection[0]"]]);
   expect(
     getRuntimeInstanceChildren(runtimeBlock, ["block", "collection[0]"])
   ).toEqual([
@@ -148,6 +165,12 @@ test("projects repeated MDX roots by selector without changing persisted instanc
     { type: "id", value: "templates" },
     { type: "id", value: "second-content" },
   ]);
+  expect(
+    getMaterializedContentForSelectors([
+      ["first-content", "block", "collection[0]"],
+      ["second-content", "block", "collection[1]"],
+    ]).map(({ identity }) => identity.renderScope)
+  ).toEqual([firstScope, secondScope]);
   expect($instances.get()).toEqual(
     new Map([
       [persistedBlock.id, persistedBlock],
@@ -270,7 +293,7 @@ test("keeps previous materialized content read-only while its source switches", 
   expect(getMaterializedInstanceEditability(input)).toBe(true);
 });
 
-test("projects selectable Builder-only loading and unresolved-template notices per exact scope", () => {
+test("omits loading states and projects unresolved-template warnings per exact scope", () => {
   $project.set({ id: "project" } as Project);
   const block = {
     type: "instance" as const,
@@ -307,57 +330,36 @@ test("projects selectable Builder-only loading and unresolved-template notices p
     ])
   );
   const renderScope = JSON.stringify(["block", "collection[1]"]);
+  publishMaterializedContentRoot({
+    identity: identity(renderScope),
+    fragment: { ...fragment("unused"), children: [], instances: [] },
+  });
+  expect($contentBlockPresentationItems.get()).toEqual(new Map());
+  expect(getRuntimeInstanceChildren(block, ["block", "collection[1]"])).toEqual(
+    block.children
+  );
+  expect(
+    getRuntimeAuthoredInstanceChildren(block, ["block", "collection[1]"])
+  ).toEqual([]);
+
   setMaterializedContentStatus({
     blockInstanceId: "block",
     renderScope,
     status: "loading",
   });
-
-  const loadingChildren = getRuntimeInstanceChildren(block, [
-    "block",
-    "collection[1]",
-  ]);
-  const loadingId = loadingChildren.at(-1)?.value;
-  expect(
-    $contentBlockPresentationItems.get().get(loadingId ?? "")
-  ).toMatchObject({
-    blockInstanceId: "block",
-    renderScope,
-    kind: "loading",
-    label: "Loading MDX",
-  });
-  expect($instances.get().has(loadingId ?? "")).toBe(false);
-  $instances.set(
-    new Map($instances.get()).set(loadingId ?? "", {
-      type: "instance",
-      id: loadingId ?? "",
-      component: elementComponent,
-      tag: "div",
-      children: [],
-    })
+  expect($contentBlockPresentationItems.get()).toEqual(new Map());
+  expect(getRuntimeInstanceChildren(block, ["block", "collection[1]"])).toEqual(
+    block.children
   );
-  const collisionSafeLoadingId = getRuntimeInstanceChildren(block, [
-    "block",
-    "collection[1]",
-  ]).at(-1)?.value;
-  expect(collisionSafeLoadingId).toBe(`${loadingId}-1`);
-  expect(
-    $contentBlockPresentationItems.get().get(collisionSafeLoadingId ?? "")
-  ).toMatchObject({ kind: "loading" });
   const otherRenderScope = JSON.stringify(["block", "collection[2]"]);
   setMaterializedContentStatus({
     blockInstanceId: "block",
     renderScope: otherRenderScope,
     status: "loading",
   });
-  const otherLoadingId = getRuntimeInstanceChildren(block, [
-    "block",
-    "collection[2]",
-  ]).at(-1)?.value;
-  expect(otherLoadingId).not.toBe(loadingId);
-  expect(
-    getRuntimeInstanceChildren(block, ["block", "collection[1]"])
-  ).not.toContainEqual({ type: "id", value: otherLoadingId });
+  expect(getRuntimeInstanceChildren(block, ["block", "collection[2]"])).toEqual(
+    block.children
+  );
 
   const diagnostic = {
     code: "unresolved-template" as const,
@@ -384,7 +386,6 @@ test("projects selectable Builder-only loading and unresolved-template notices p
   expect(
     $contentBlockPresentationItems.get().get(warningId ?? "")
   ).toMatchObject({
-    kind: "warning",
     label: "Missing template: Hero Card",
     message:
       'Template "Hero Card" is not available and was skipped. Line 4, column 2.',

@@ -8,6 +8,7 @@ import {
   Fragment,
   type ReactNode,
   type JSX,
+  useState,
 } from "react";
 import { $getSelection, $isRangeSelection } from "lexical";
 import { computed } from "nanostores";
@@ -61,8 +62,11 @@ import {
   $runtimeProps as $props,
   $runtimeAssets as $assets,
   $materializedContentStatuses,
+  getMaterializedContentForSelectors,
+  getMaterializedInstanceEditability,
   getRuntimeInstanceChildren,
   isMaterializedInstanceEditable,
+  publishMaterializedContentRoot,
   $contentBlockPresentationItems,
   contentBlockPresentationComponent,
 } from "~/shared/content-block-content";
@@ -83,7 +87,7 @@ import {
 } from "~/shared/nano-states";
 import { selectInstance } from "~/shared/nano-states";
 import { $currentSystem } from "~/shared/system";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { executeRuntimeMutationAsync } from "~/shared/instance-utils/data";
 import {
   createInstanceChildrenElements,
   type WebstudioComponentProps,
@@ -101,7 +105,7 @@ import {
   setContentBlockSourceSwitching,
   setMaterializedContentStatus,
 } from "~/shared/content-block-content";
-import { subscribe } from "~/shared/pubsub";
+import { publish, subscribe } from "~/shared/pubsub";
 
 const computeComponentKey = (props: Record<string, unknown>) => {
   const assetId = props.$webstudio$canvasOnly$assetId;
@@ -136,7 +140,51 @@ const getPreviewCurrentUrl = (
   return currentUrl;
 };
 
-export const __testing__ = { computeComponentKey, getPreviewCurrentUrl };
+const shouldDiscardNewEmptyMaterializedTextInstance = ({
+  rootInstanceId,
+  instances,
+  isNew,
+  isMaterialized,
+}: {
+  rootInstanceId: Instance["id"];
+  instances: readonly Instance[];
+  isNew: boolean;
+  isMaterialized: boolean;
+}) => {
+  if (isNew === false || isMaterialized === false) {
+    return false;
+  }
+  const instancesById = new Map(
+    instances.map((instance) => [instance.id, instance])
+  );
+  const visited = new Set<Instance["id"]>();
+  const hasContent = (instanceId: Instance["id"]): boolean => {
+    if (visited.has(instanceId)) {
+      return true;
+    }
+    visited.add(instanceId);
+    const instance = instancesById.get(instanceId);
+    if (instance === undefined) {
+      return true;
+    }
+    return instance.children.some((child) => {
+      if (child.type === "id") {
+        return hasContent(child.value);
+      }
+      if (child.type === "text") {
+        return child.value.trim().length > 0;
+      }
+      return true;
+    });
+  };
+  return hasContent(rootInstanceId) === false;
+};
+
+export const __testing__ = {
+  computeComponentKey,
+  getPreviewCurrentUrl,
+  shouldDiscardNewEmptyMaterializedTextInstance,
+};
 
 const PreviewLinkCurrentUrlProvider = ({
   children,
@@ -353,7 +401,8 @@ const $indexesWithinAncestors = computed(
     return getIndexesWithinAncestors(
       metas,
       instances,
-      page ? [page.rootInstanceId] : []
+      page ? [page.rootInstanceId] : [],
+      getRuntimeInstanceChildren
     );
   }
 );
@@ -423,6 +472,7 @@ const useContentBlockMaterialization = ({
   const variableValues = useStore($variableValuesByInstanceSelector);
   const renderScope = getInstanceKey(instanceSelector);
   const rootedRenderScope = getInstanceKeyWithRoot(instanceSelector);
+  const [sourceReloadVersion, setSourceReloadVersion] = useState(0);
   useEffect(() => {
     if (instance.component !== blockComponent || project === undefined) {
       return;
@@ -447,6 +497,38 @@ const useContentBlockMaterialization = ({
         renderScope,
         switching: false,
       });
+    };
+  }, [instance.component, instance.id, project, renderScope]);
+  useEffect(() => {
+    if (instance.component !== blockComponent || project === undefined) {
+      return;
+    }
+    let editingFrame: number | undefined;
+    const unsubscribe = subscribe("contentBlockSourceReload", (message) => {
+      if (
+        message.projectId === project.id &&
+        message.blockInstanceId === instance.id &&
+        message.renderScope === renderScope
+      ) {
+        if (message.root !== undefined) {
+          publishMaterializedContentRoot(message.root, message.diagnostics);
+        }
+        setSourceReloadVersion((version) => version + 1);
+        const editingInstanceSelector = message.editingInstanceSelector;
+        if (editingInstanceSelector !== undefined) {
+          cancelAnimationFrame(editingFrame ?? 0);
+          editingFrame = requestAnimationFrame(() => {
+            $textEditingInstanceSelector.set({
+              selector: editingInstanceSelector,
+              reason: "new",
+            });
+          });
+        }
+      }
+    });
+    return () => {
+      unsubscribe();
+      cancelAnimationFrame(editingFrame ?? 0);
     };
   }, [instance.component, instance.id, project, renderScope]);
   const source = useMemo(() => {
@@ -495,6 +577,20 @@ const useContentBlockMaterialization = ({
             blockInstanceId: instance.id,
             renderScope,
             projectId: project.id,
+            onMaterializedRoot: (root, diagnostics) =>
+              publish({
+                type: "contentBlockMaterialized",
+                payload: { projectId: project.id, root, diagnostics },
+              }),
+            onMaterializedRootRemoved: () =>
+              publish({
+                type: "contentBlockMaterializedRemoved",
+                payload: {
+                  projectId: project.id,
+                  blockInstanceId: instance.id,
+                  renderScope,
+                },
+              }),
           }),
     [instance.id, project, renderScope, sourceKey]
   );
@@ -506,7 +602,7 @@ const useContentBlockMaterialization = ({
     [controller]
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (
       controller === undefined ||
       sourceKey === undefined ||
@@ -548,6 +644,7 @@ const useContentBlockMaterialization = ({
     resolvedAssetId,
     resolvedAssetVersion,
     sourceKey,
+    sourceReloadVersion,
   ]);
 };
 
@@ -837,13 +934,40 @@ export const WebstudioComponentCanvas = forwardRef<
           )}
         />
       }
-      onChange={(instancesList) => {
-        const result = executeRuntimeMutation({
+      onChange={async (instancesList) => {
+        const editing = $textEditingInstanceSelector.get();
+        const materializedContent = getMaterializedContentForSelectors(
+          [instanceSelector],
+          instances
+        );
+        if (
+          shouldDiscardNewEmptyMaterializedTextInstance({
+            rootInstanceId: instance.id,
+            instances: instancesList,
+            isNew:
+              editing?.reason === "new" &&
+              areInstanceSelectorsEqual(editing.selector, instanceSelector),
+            isMaterialized:
+              getMaterializedInstanceEditability({
+                instanceSelector,
+                instances,
+              }) !== undefined,
+          })
+        ) {
+          await executeRuntimeMutationAsync({
+            id: "instances.deleteBySelector",
+            input: { instanceSelector },
+            context: { materializedContent },
+          });
+          return;
+        }
+        const result = await executeRuntimeMutationAsync({
           id: "instances.updateTextTree",
           input: {
             rootInstanceId: instance.id,
             instances: instancesList,
           },
+          context: { materializedContent },
         });
         return result?.result.idMap;
       }}

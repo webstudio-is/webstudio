@@ -13,7 +13,10 @@ import {
   materializeMdxAuthoredContent,
   type MaterializedMdxAuthoredContentRoot,
 } from "./mdx-authored-content";
-import { prepareMdxContentStorageWrites } from "./mdx-storage-adapter";
+import {
+  prepareMdxContentStorageWrites,
+  serializeMdxTemplateInsertion,
+} from "./mdx-storage-adapter";
 import type { ContentStorageChange } from "./mutation";
 
 const identity = (
@@ -148,6 +151,82 @@ const insertClonedTemplateExpansion = (
 };
 
 describe("MDX storage adapter", () => {
+  test("serializes plain element templates as Markdown for insertion", async () => {
+    const fragment: WebstudioFragment = {
+      children: [
+        { type: "id", value: "heading" },
+        { type: "id", value: "paragraph" },
+      ],
+      instances: [
+        {
+          type: "instance",
+          id: "heading",
+          component: elementComponent,
+          tag: "h1",
+          label: "Heading 1",
+          children: [{ type: "text", value: "Test" }],
+        },
+        {
+          type: "instance",
+          id: "paragraph",
+          component: elementComponent,
+          tag: "p",
+          label: "Paragraph",
+          children: [{ type: "text", value: "asdf" }],
+        },
+      ],
+      props: [],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+    };
+
+    await expect(
+      serializeMdxTemplateInsertion({
+        identity: identity("article"),
+        fragment,
+        templateName: "Article",
+      })
+    ).resolves.toBe("# Test\n\nasdf\n");
+  });
+
+  test("keeps the template reference when design data needs Webstudio", async () => {
+    const fragment: WebstudioFragment = {
+      children: [{ type: "id", value: "heading" }],
+      instances: [
+        {
+          type: "instance",
+          id: "heading",
+          component: elementComponent,
+          tag: "h1",
+          children: [{ type: "text", value: "Test" }],
+        },
+      ],
+      props: [],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSourceSelections: [
+        { instanceId: "heading", values: ["heading-style"] },
+      ],
+      styleSources: [{ type: "local", id: "heading-style" }],
+      styles: [],
+    };
+
+    await expect(
+      serializeMdxTemplateInsertion({
+        identity: identity("article"),
+        fragment,
+        templateName: "Styled Heading",
+      })
+    ).resolves.toBe('<ws.element ws:name="Styled Heading" />\n');
+  });
+
   test("applies text and prop changes while preserving authored metadata", async () => {
     const root = await load(
       "article",
@@ -194,6 +273,9 @@ describe("MDX storage adapter", () => {
     expect(repeatedWrite).toEqual(write);
     expect(write.root.identity).toEqual(root.identity);
     expect(write.expectedRevision).toBe(root.identity.revision);
+    expect(write.source).toContain(
+      '<ws.element ws:tag="p" class="after">After</ws.element>'
+    );
     expect(document.frontmatter.properties).toEqual({ title: "Article" });
     expect(document.children).toMatchObject([
       { type: "comment", value: "/* keep */" },
@@ -245,6 +327,103 @@ describe("MDX storage adapter", () => {
     expect(
       (await parseMdxDocument({ source: write.source })).children[1]
     ).toMatchObject({ type: "element", tag: "aside" });
+  });
+
+  test("serializes standard inserted content as Markdown instead of JSX", async () => {
+    const root = await load("article", "");
+    const instances: Instance[] = [
+      {
+        type: "instance",
+        id: "paragraph",
+        component: elementComponent,
+        tag: "p",
+        children: [
+          { type: "text", value: "Read the " },
+          { type: "id", value: "link" },
+          { type: "text", value: "." },
+        ],
+      },
+      {
+        type: "instance",
+        id: "link",
+        component: elementComponent,
+        tag: "a",
+        children: [{ type: "text", value: "guide" }],
+      },
+      {
+        type: "instance",
+        id: "list",
+        component: elementComponent,
+        tag: "ul",
+        children: [
+          { type: "id", value: "first-item" },
+          { type: "id", value: "second-item" },
+        ],
+      },
+      {
+        type: "instance",
+        id: "first-item",
+        component: elementComponent,
+        tag: "li",
+        children: [{ type: "text", value: "First" }],
+      },
+      {
+        type: "instance",
+        id: "second-item",
+        component: elementComponent,
+        tag: "li",
+        children: [{ type: "text", value: "Second" }],
+      },
+    ];
+    const [write] = await prepareMdxContentStorageWrites({
+      loadedRoots: [root],
+      changes: [
+        storageChange(root, [
+          {
+            namespace: "instances",
+            patches: instances.map((instance) => ({
+              op: "add" as const,
+              path: [instance.id],
+              value: instance,
+            })),
+          },
+          {
+            namespace: "props",
+            patches: [
+              {
+                op: "add",
+                path: ["href"],
+                value: {
+                  id: "href",
+                  instanceId: "link",
+                  name: "href",
+                  type: "string",
+                  value: "https://wstd.us/content-block",
+                },
+              },
+            ],
+          },
+          {
+            namespace: "fragment",
+            patches: [
+              {
+                op: "replace",
+                path: ["children"],
+                value: [
+                  { type: "id", value: "paragraph" },
+                  { type: "id", value: "list" },
+                ],
+              },
+            ],
+          },
+        ]),
+      ],
+      authorizeAssetWrite,
+    });
+
+    expect(write.source).toBe(
+      "Read the [guide](https://wstd.us/content-block).\n\n-   First\n-   Second\n"
+    );
   });
 
   test("combines repeated changes and preserves first-root ordering", async () => {
@@ -508,8 +687,7 @@ describe("MDX storage adapter", () => {
     });
 
     expect(write.source).toContain('src="./hero.png"');
-    expect(write.source).toContain('href="../files/guide.pdf"');
-    expect(write.source).toContain("Download");
+    expect(write.source).toContain("[Download](../files/guide.pdf)");
   });
 
   test("fails all roots atomically when any change is invalid", async () => {

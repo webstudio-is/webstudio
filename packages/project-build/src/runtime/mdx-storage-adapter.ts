@@ -1,6 +1,7 @@
 import equal from "fast-deep-equal";
 import {
   parseMdxDocument,
+  preferMarkdownSyntax,
   serializeMdxDocument,
   type MdxAuthoredNode,
   type MdxDocument,
@@ -25,6 +26,7 @@ import {
   type ContentStorageRoot,
 } from "./content-storage";
 import {
+  materializeMdxAuthoredContent,
   reconcileMdxAuthoredContent,
   type MaterializedMdxAuthoredContentRoot,
 } from "./mdx-authored-content";
@@ -35,6 +37,51 @@ export type PendingMdxContentStorageWrite = Readonly<{
   expectedRevision: string;
   source: string;
 }>;
+
+/**
+ * Serializes a detached template fragment only when its complete authored
+ * meaning can be stored in MDX without a Webstudio template reference.
+ */
+export const serializeMdxTemplateInsertion = async ({
+  identity,
+  fragment,
+  templateName,
+}: {
+  identity: ContentBlockExternalContentIdentity;
+  fragment: WebstudioFragment;
+  templateName: string;
+}): Promise<string> => {
+  const document: MdxDocument = {
+    frontmatter: { properties: {} },
+    children: [],
+  };
+  const root = materializeMdxAuthoredContent({
+    identity,
+    document,
+    templateMaterialization: {
+      templates: [],
+      diagnostics: [],
+      dependencies: { templateNames: [], templates: [] },
+    },
+  });
+  try {
+    const reconciled = reconcileMdxAuthoredContent({ root, fragment });
+    return serializeMdxDocument(await preferMarkdownSyntax(reconciled));
+  } catch {
+    return serializeMdxDocument({
+      frontmatter: { properties: {} },
+      children: [
+        {
+          type: "template",
+          name: templateName,
+          props: [],
+          children: [],
+          mdxMode: "flow",
+        },
+      ],
+    });
+  }
+};
 
 const fragmentNamespaces = [
   "instances",
@@ -495,7 +542,7 @@ export const prepareMdxContentStorageWrites = async ({
         `MDX storage root "${root.identity.blockInstanceId}" authored provenance is stale`
       );
     }
-    const document = rootChanges.some(
+    const reconciledDocument = rootChanges.some(
       ({ mdxInsert }) => mdxInsert !== undefined
     )
       ? await reconcileMdxInsert({ root, changes: rootChanges })
@@ -506,6 +553,7 @@ export const prepareMdxContentStorageWrites = async ({
             changes: rootChanges,
           }),
         });
+    const document = await preferMarkdownSyntax(reconciledDocument);
     writes.push({
       root: { type: "external", identity: root.identity },
       expectedRevision: root.identity.revision,

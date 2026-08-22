@@ -88,31 +88,13 @@ const contentBlockSourceInspection = z.object({
     canSwitch: z.boolean(),
     canDisconnectWithCopy: z.boolean(),
     canEdit: z.boolean(),
-    canRetry: z.boolean(),
-    canReloadRemote: z.boolean(),
-    canCopyUnsavedSource: z.boolean(),
   }),
-  repairRoutes: z.array(
-    z.enum([
-      "open-file",
-      "retry",
-      "reload-remote",
-      "copy-unsaved-mdx",
-      "disconnect-with-copy",
-    ])
-  ),
+  repairRoutes: z.array(z.enum(["open-file", "disconnect-with-copy"])),
 });
 const contentBlockLifecyclePlan = z.object({
   action: z.enum(["connect", "switch", "disconnect"]),
   changesProject: z.boolean(),
-  storageWrites: z.array(
-    z.object({
-      identity: contentBlockExternalContentIdentity,
-      expectedRevision: z.string(),
-    })
-  ),
   diagnostics: z.array(contentBlockDiagnostic),
-  persistenceOrder: z.enum(["none", "storage-before-project"]),
   persistence: z
     .object({
       status: z.enum(["complete", "partial", "failed"]),
@@ -142,14 +124,6 @@ const contentBlockApplicationResult = z.object({
   confirmation: z
     .object({ token: z.string(), expiresAt: z.string() })
     .optional(),
-});
-const contentBlockRecoveryResult = z.object({
-  status: z.enum(["complete", "partial", "blocked"]),
-  code: z.string().optional(),
-  message: z.string().optional(),
-  source: contentBlockSourceInspection,
-  localMdx: z.string().optional(),
-  changedAsset: z.boolean(),
 });
 const contentBlockTemplateMigrationResult = z.object({
   status: z.enum(["complete", "partial", "blocked", "confirmation-required"]),
@@ -598,7 +572,6 @@ export const runtimeOutputSchemas = {
   "contentBlocks.connectSource": contentBlockApplicationResult,
   "contentBlocks.switchSource": contentBlockApplicationResult,
   "contentBlocks.disconnectSource": contentBlockApplicationResult,
-  "contentBlocks.recoverSource": contentBlockRecoveryResult,
   "contentBlocks.semanticEdit": contentBlockSemanticEditResult,
   "contentBlocks.migrateTemplateReferences":
     contentBlockTemplateMigrationResult,

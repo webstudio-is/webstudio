@@ -1,4 +1,3 @@
-import { findAllNavigableTextInstanceSelectors } from "@webstudio-is/project-build/runtime";
 import { color } from "@webstudio-is/css-engine";
 import {
   useState,
@@ -49,6 +48,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
+import { useStore } from "@nanostores/react";
 
 import { nanoid } from "nanoid";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
@@ -76,7 +76,10 @@ import {
   $textEditorContextMenu,
   execTextEditorContextMenuCommand,
 } from "~/shared/nano-states";
-import { $runtimeInstances as $instances } from "~/shared/content-block-content";
+import {
+  $runtimeInstances as $instances,
+  findRuntimeNavigableTextInstanceSelectors,
+} from "~/shared/content-block-content";
 import {
   findBlockChildSelector,
   findBlockTemplates,
@@ -99,6 +102,7 @@ import {
   insertTemplateAt,
 } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
 import { richTextPlaceholders } from "@webstudio-is/project-build/runtime";
+import { toast } from "@webstudio-is/design-system";
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -192,6 +196,14 @@ const isChrome = () =>
     (brand) => brand.brand === "Google Chrome"
   );
 
+const reportTextSaveError = (error: unknown) => {
+  toast.error(
+    error instanceof Error
+      ? error.message
+      : "The current text could not be saved."
+  );
+};
+
 const OnChangeOnBlurPlugin = ({
   onChange,
 }: {
@@ -227,7 +239,9 @@ const OnChangeOnBlurPlugin = ({
 
       // Safari and FF support as no blur event is triggered in some cases
       editor.read(() => {
-        handleChange(editor.getEditorState(), "unmount");
+        void Promise.resolve(
+          handleChange(editor.getEditorState(), "unmount")
+        ).catch(reportTextSaveError);
       });
     },
     [editor]
@@ -237,7 +251,9 @@ const OnChangeOnBlurPlugin = ({
     const handleBlur = () => {
       // force read to get the latest state
       editor.read(() => {
-        handleChange(editor.getEditorState(), "blur");
+        void Promise.resolve(
+          handleChange(editor.getEditorState(), "blur")
+        ).catch(reportTextSaveError);
       });
     };
 
@@ -598,9 +614,17 @@ const InitCursorPlugin = () => {
       return;
     }
 
+    const textEditingInstanceSelector = $textEditingInstanceSelector.get();
+    if (textEditingInstanceSelector?.reason === "new") {
+      editor.getRootElement()?.focus({ preventScroll: true });
+      editor.update(() => $selectAll(), {
+        tag: "skip-scroll-into-view",
+      });
+      return;
+    }
+
     editor.update(
       () => {
-        const textEditingInstanceSelector = $textEditingInstanceSelector.get();
         if (textEditingInstanceSelector === undefined) {
           return;
         }
@@ -779,11 +803,6 @@ const InitCursorPlugin = () => {
 
           return;
         }
-        if (reason === "new") {
-          $selectAll();
-          return;
-        }
-
         reason satisfies never;
       },
       {
@@ -1016,25 +1035,35 @@ type RichTextContentPluginProps = {
     params: undefined | ContextMenuParams
   ) => void;
   onNext: (editorState: EditorState, params: HandleNextParams) => void;
+  onBeforeInsert: (editorState: EditorState) => Promise<void>;
 };
 
 const RichTextContentPlugin = (props: RichTextContentPluginProps) => {
-  const [templates] = useState(() =>
-    findBlockTemplates({
-      anchor: props.rootInstanceSelector,
-      instances: $instances.get(),
-    })
+  const instances = useStore($instances);
+  const templates = findBlockTemplates({
+    anchor: props.rootInstanceSelector,
+    instances,
+  });
+  const templatesKey = JSON.stringify(templates);
+  const stableTemplates = useRef({ key: templatesKey, value: templates });
+  if (stableTemplates.current.key !== templatesKey) {
+    stableTemplates.current = { key: templatesKey, value: templates };
+  }
+
+  if (stableTemplates.current.value === undefined) {
+    return;
+  }
+
+  if (stableTemplates.current.value.length === 0) {
+    return;
+  }
+
+  return (
+    <RichTextContentPluginInternal
+      {...props}
+      templates={stableTemplates.current.value}
+    />
   );
-
-  if (templates === undefined) {
-    return;
-  }
-
-  if (templates.length === 0) {
-    return;
-  }
-
-  return <RichTextContentPluginInternal {...props} templates={templates} />;
 };
 
 const getTag = (instanceId: Instance["id"]) => {
@@ -1054,6 +1083,7 @@ const RichTextContentPluginInternal = ({
   onOpen,
   templates,
   onNext,
+  onBeforeInsert,
 }: RichTextContentPluginProps & {
   templates: [instance: Instance, instanceSelector: InstanceSelector][];
 }) => {
@@ -1061,6 +1091,7 @@ const RichTextContentPluginInternal = ({
   const [preservedSelection] = useState(rootInstanceSelector);
 
   const handleOpen = useEffectEvent(onOpen);
+  const handleBeforeInsert = useEffectEvent(onBeforeInsert);
 
   useEffect(() => {
     if (!editor.isEditable()) {
@@ -1247,7 +1278,15 @@ const RichTextContentPluginInternal = ({
 
               */
 
-              insertTemplateAt(templateSelector, rootInstanceSelector, false);
+              void handleBeforeInsert(editor.getEditorState())
+                .then(() =>
+                  insertTemplateAt(
+                    templateSelector,
+                    rootInstanceSelector,
+                    false
+                  )
+                )
+                .catch(reportTextSaveError);
 
               if (tag === "li" && $getRoot().getTextContentSize() === 0) {
                 const parentInstanceSelector = rootInstanceSelector.slice(1);
@@ -1425,7 +1464,9 @@ type TextEditorProps = {
   props: Props;
   contentEditable: JSX.Element;
   editable?: boolean;
-  onChange: (instancesList: Instance[]) => void | Record<string, string>;
+  onChange: (
+    instancesList: Instance[]
+  ) => void | Record<string, string> | Promise<void | Record<string, string>>;
   onSelectInstance: (instanceId: Instance["id"]) => void;
 };
 
@@ -1514,38 +1555,73 @@ export const TextEditor = ({
   const [paragraphClassName] = useState(() => `a${nanoid()}`);
   const [italicClassName] = useState(() => `a${nanoid()}`);
   const lastSavedStateJsonRef = useRef<SerializedEditorState | null>(null);
+  const didPersistNewInstanceRef = useRef(false);
+  const pendingChangeRef = useRef<{
+    state: SerializedEditorState;
+    promise: Promise<void | Record<string, string>>;
+  }>();
   const [newLinkKeyToInstanceId] = useState(() => new Map());
 
   const handleChange = useEffectEvent(
-    (editorState: EditorState, reason: "blur" | "unmount" | "next") => {
+    async (editorState: EditorState, reason: "blur" | "unmount" | "next") => {
+      let change: Promise<void | Record<string, string>> | undefined;
+      let requestedState: SerializedEditorState | undefined;
       editorState.read(() => {
         const treeRootInstance = instances.get(rootInstanceSelector[0]);
         if (treeRootInstance) {
           const jsonState = editorState.toJSON();
-          if (deepEqual(jsonState, lastSavedStateJsonRef.current)) {
+          requestedState = jsonState;
+          const editing = $textEditingInstanceSelector.get();
+          const isNewInstance =
+            editing?.reason === "new" &&
+            shallowEqual(editing.selector, rootInstanceSelector);
+          if (
+            deepEqual(jsonState, lastSavedStateJsonRef.current) &&
+            (isNewInstance === false || didPersistNewInstanceRef.current)
+          ) {
             inflateInstance(rootInstanceSelector[0], false);
             return;
           }
 
-          const idMap = onChange(
-            $convertToUpdates(
-              treeRootInstance,
-              refs,
-              newLinkKeyToInstanceId,
-              builderRuntimeContext.createId
+          if (deepEqual(jsonState, pendingChangeRef.current?.state)) {
+            change = pendingChangeRef.current?.promise;
+            return;
+          }
+
+          change = Promise.resolve(
+            onChange(
+              $convertToUpdates(
+                treeRootInstance,
+                refs,
+                newLinkKeyToInstanceId,
+                builderRuntimeContext.createId
+              )
             )
           );
-          if (idMap !== undefined) {
-            for (const [key, instanceId] of refs) {
-              refs.set(key, idMap[instanceId] ?? instanceId);
-            }
-          }
+          pendingChangeRef.current = { state: jsonState, promise: change };
           newLinkKeyToInstanceId.clear();
-          lastSavedStateJsonRef.current = jsonState;
         }
 
         inflateInstance(rootInstanceSelector[0], false);
       });
+
+      let idMap: void | Record<string, string>;
+      try {
+        idMap = await change;
+        if (requestedState !== undefined) {
+          lastSavedStateJsonRef.current = requestedState;
+          didPersistNewInstanceRef.current = true;
+        }
+        if (idMap !== undefined) {
+          for (const [key, instanceId] of refs) {
+            refs.set(key, idMap[instanceId] ?? instanceId);
+          }
+        }
+      } finally {
+        if (change === pendingChangeRef.current?.promise) {
+          pendingChangeRef.current = undefined;
+        }
+      }
 
       const textEditingSelector = $textEditingInstanceSelector.get()?.selector;
       if (textEditingSelector === undefined) {
@@ -1616,12 +1692,13 @@ export const TextEditor = ({
         return;
       }
 
-      const editableInstanceSelectors = findAllNavigableTextInstanceSelectors({
-        instanceSelector: [rootInstanceId],
-        instances,
-        props,
-        metas,
-      });
+      const editableInstanceSelectors =
+        findRuntimeNavigableTextInstanceSelectors({
+          rootInstanceId,
+          instances,
+          props,
+          metas,
+        });
 
       const currentIndex = editableInstanceSelectors.findIndex(
         (instanceSelector) => {
@@ -1675,7 +1752,7 @@ export const TextEditor = ({
           }
         }
 
-        handleChange(state, "next");
+        void handleChange(state, "next").catch(reportTextSaveError);
 
         $textEditingInstanceSelector.set({
           selector: nextSelector,
@@ -1752,6 +1829,8 @@ export const TextEditor = ({
         rootInstanceSelector={rootInstanceSelector}
         // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
         onNext={handleNext}
+        // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
+        onBeforeInsert={(editorState) => handleChange(editorState, "next")}
       />
       {/* oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback */}
       <OnChangeOnBlurPlugin onChange={handleChange} />

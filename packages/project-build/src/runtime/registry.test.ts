@@ -425,9 +425,6 @@ describe("builder runtime read families", () => {
         canSwitch: true,
         canDisconnectWithCopy: true,
         canEdit: true,
-        canRetry: false,
-        canReloadRemote: false,
-        canCopyUnsavedSource: false,
       },
       repairRoutes: ["open-file", "disconnect-with-copy"] as const,
     }));
@@ -471,7 +468,7 @@ describe("builder runtime read families", () => {
     });
   });
 
-  test("keeps recovery dry-runs non-mutating and exposes one-shot semantic editing", async () => {
+  test("exposes one-shot semantic editing", async () => {
     const inspection = {
       blockInstanceId: "block",
       renderScope: "page:/",
@@ -483,16 +480,9 @@ describe("builder runtime read families", () => {
         canSwitch: true,
         canDisconnectWithCopy: false,
         canEdit: false,
-        canRetry: true,
-        canReloadRemote: false,
-        canCopyUnsavedSource: true,
       },
-      repairRoutes: ["retry" as const],
+      repairRoutes: [],
     };
-    const recover = vi.fn(async () => ({
-      status: "complete" as const,
-      result: { inspection, changedAsset: false },
-    }));
     const semanticEdit = vi.fn(async () => ({
       status: "complete" as const,
       result: {
@@ -516,30 +506,8 @@ describe("builder runtime read families", () => {
         },
       }),
       inspectSource: async () => inspection,
-      recover,
       semanticEdit,
     };
-
-    await executeBuilderRuntimeOperation({
-      id: "contentBlocks.recoverSource",
-      state,
-      input: {
-        blockInstanceId: "block",
-        renderScope: "page:/",
-        action: "retry",
-      },
-      context: {
-        createId: () => "unused",
-        applicationDryRun: true,
-        contentStorageApplication,
-      },
-    });
-    expect(recover).toHaveBeenCalledWith({
-      blockInstanceId: "block",
-      renderScope: "page:/",
-      action: "retry",
-      dryRun: true,
-    });
 
     const edit = await executeBuilderRuntimeOperation<{
       status: string;

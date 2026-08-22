@@ -1,5 +1,4 @@
 import {
-  blockTemplateComponent,
   getContentBlockSource,
   type ContentBlockSource,
 } from "@webstudio-is/sdk";
@@ -13,11 +12,10 @@ import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
 import { parseJsonExpression } from "@webstudio-is/expression";
 import { resolvePublishedMdxAssetCandidates } from "../content-database";
 import {
-  ContentBlockSourceAuthorityRequiredError,
+  ContentBlockSourceRevisionConflictError,
   prepareContentBlockConnect,
   prepareContentBlockDisconnect,
   prepareContentBlockSwitch,
-  type ContentBlockSourceAuthority,
   type PreparedContentBlockSourceLifecycle,
 } from "./content-block-source-lifecycle";
 import type {
@@ -62,7 +60,6 @@ export type MdxAssetEditingSession = ReturnType<
 export type ContentBlockApplicationErrorCode =
   | "content-source-not-configured"
   | "content-source-not-loaded"
-  | "content-source-authority-required"
   | "content-source-confirmation-required"
   | "content-source-stale-confirmation"
   | "content-source-session-failed"
@@ -119,10 +116,10 @@ export const getContentBlockSessionErrorCode = (
 export const getContentBlockSessionMessage = (
   state: MdxAssetEditingSessionState
 ) =>
-  "error" in state
-    ? state.error.message
-    : state.status === "conflicting"
-      ? "The MDX Asset changed remotely"
+  state.status === "conflicting"
+    ? "This file changed since it was opened. Reload it before saving again."
+    : "error" in state
+      ? state.error.message
       : `The MDX Asset session is ${state.status}`;
 
 export type { ContentBlockPersistenceResult, ContentBlockPersistenceStep };
@@ -247,12 +244,10 @@ const getContentStorageSessionState = (
 
 export const persistPreparedContentBlockLifecycle = async ({
   prepared,
-  session,
   commitProjectPayload,
   canCommitProjectPayload = () => true,
 }: {
   prepared: PreparedContentBlockSourceLifecycle;
-  session: MdxAssetEditingSession;
   commitProjectPayload?: (
     payload: readonly BuilderPatchChange[]
   ) => void | Promise<void>;
@@ -264,65 +259,6 @@ export const persistPreparedContentBlockLifecycle = async ({
     persistence: ContentBlockPersistenceResult;
   }>
 > => {
-  let state = prepared.sourceState;
-  const owners: Array<{ key: string; expectedSource: string } | undefined> = [];
-  const assetPlan = prepared.storageWrites.map((write, index) => ({
-    type: "asset" as const,
-    root: write.root.identity,
-    preflight: async () => {
-      const owner = getContentStorageSessionState(session, write.root.identity);
-      const expectedSource = getContentBlockSessionSource(owner);
-      if (
-        owner === undefined ||
-        !("key" in owner) ||
-        expectedSource === undefined
-      ) {
-        return {
-          status: "failed" as const,
-          code: "content-source-not-loaded",
-          message: "The MDX Asset is not loaded",
-        };
-      }
-      const preflight = await session.prepareSourceReplacement({
-        key: owner.key,
-        expectedSource,
-        source: write.source,
-      });
-      if (preflight.status === "blocked") {
-        state = preflight.state;
-        return {
-          status: "failed" as const,
-          code: getContentBlockSessionErrorCode(preflight.state),
-          message: getContentBlockSessionMessage(preflight.state),
-        };
-      }
-      owners[index] = { key: owner.key, expectedSource };
-      return { status: "ready" as const };
-    },
-    persist: async () => {
-      const owner = owners[index];
-      if (owner === undefined) {
-        return {
-          status: "failed" as const,
-          code: "content-source-session-failed",
-          message: "The MDX Asset persistence plan is stale",
-        };
-      }
-      const persisted = await session.persistSourceReplacement({
-        key: owner.key,
-        expectedSource: owner.expectedSource,
-        source: write.source,
-      });
-      state = persisted.state;
-      return persisted.status === "applied"
-        ? { status: "saved" as const }
-        : {
-            status: "failed" as const,
-            code: getContentBlockSessionErrorCode(persisted.state),
-            message: getContentBlockSessionMessage(persisted.state),
-          };
-    },
-  }));
   const projectPlan =
     prepared.projectPayload.length === 0
       ? []
@@ -371,111 +307,12 @@ export const persistPreparedContentBlockLifecycle = async ({
             },
           },
         ];
-  const persistence = await executeContentBlockPersistencePlan([
-    ...assetPlan,
-    ...projectPlan,
-  ]);
+  const persistence = await executeContentBlockPersistencePlan(projectPlan);
   return {
     status: persistence.status,
-    state,
+    state: prepared.sourceState,
     persistence,
   };
-};
-
-export const recoverContentBlockSession = async ({
-  session,
-  state,
-  action,
-  dryRun = false,
-  reopen,
-}: {
-  session: MdxAssetEditingSession;
-  state: MdxAssetEditingSessionState;
-  action: "retry" | "reload-remote" | "copy-unsaved-mdx";
-  dryRun?: boolean;
-  reopen?: () => Promise<MdxAssetEditingSessionState>;
-}): Promise<
-  | Readonly<{
-      status: "complete";
-      state: MdxAssetEditingSessionState;
-      source?: string;
-      changedAsset: boolean;
-    }>
-  | Readonly<{
-      status: "blocked";
-      code: ContentBlockApplicationErrorCode;
-      message: string;
-      state: MdxAssetEditingSessionState;
-    }>
-> => {
-  if (action === "copy-unsaved-mdx") {
-    const source =
-      "key" in state ? session.copyUnsavedSource(state.key) : undefined;
-    return source === undefined
-      ? {
-          status: "blocked",
-          code: "content-source-session-failed",
-          message: "The MDX Asset session has no unsaved local source",
-          state,
-        }
-      : { status: "complete", state, source, changedAsset: false };
-  }
-  if (!("key" in state)) {
-    return {
-      status: "blocked",
-      code: "content-source-not-loaded",
-      message: "The MDX Asset is not loaded",
-      state,
-    };
-  }
-  if (action === "retry") {
-    if (
-      (state.status !== "failed" || !("localSource" in state)) &&
-      (state.status !== "recoverable" || reopen === undefined)
-    ) {
-      return {
-        status: "blocked",
-        code: "content-source-session-failed",
-        message: `Retry is not available while the MDX Asset session is ${state.status}`,
-        state,
-      };
-    }
-  } else if (state.status !== "conflicting") {
-    return {
-      status: "blocked",
-      code: "content-source-session-failed",
-      message: `Remote reload is not available while the MDX Asset session is ${state.status}`,
-      state,
-    };
-  }
-  if (dryRun) {
-    return { status: "complete", state, changedAsset: false };
-  }
-  const next =
-    action === "reload-remote"
-      ? await session.reloadRemote(state.key)
-      : state.status === "recoverable" && reopen !== undefined
-        ? await reopen()
-        : await session.retry(state.key);
-  const committedRetry =
-    action === "retry" &&
-    "localSource" in state &&
-    isContentBlockSessionSourceCommitted({
-      state: next,
-      source: state.localSource,
-    });
-  return next.status === "saved" || committedRetry
-    ? {
-        status: "complete",
-        state: next,
-        changedAsset: action === "reload-remote" || committedRetry,
-      }
-    : {
-        status: "blocked",
-        code: getContentBlockSessionErrorCode(next),
-        message: getContentBlockSessionMessage(next),
-        state: next,
-      };
 };
 
 export const persistContentBlockStorageChanges = async ({
@@ -685,7 +522,6 @@ const getLifecycleConfirmationPayload = ({
   blockInstanceId,
   renderScope,
   source,
-  authority,
 }: {
   projectId: string;
   projectVersion?: number;
@@ -693,7 +529,6 @@ const getLifecycleConfirmationPayload = ({
   blockInstanceId: string;
   renderScope: string;
   source?: ContentBlockSource;
-  authority?: ContentBlockSourceAuthority;
 }) => ({
   operation: `content-block-${prepared.action}`,
   projectId,
@@ -701,25 +536,22 @@ const getLifecycleConfirmationPayload = ({
   blockInstanceId,
   renderScope,
   source,
-  authority,
+  resolvedSource:
+    prepared.sourceState !== undefined && "identity" in prepared.sourceState
+      ? {
+          assetId: prepared.sourceState.identity.assetId,
+          contentRef: prepared.sourceState.identity.contentRef,
+          revision: prepared.sourceState.identity.revision,
+          renderScope: prepared.sourceState.identity.renderScope,
+        }
+      : undefined,
   changesProject: prepared.projectPayload.length > 0,
-  storageWrites: prepared.storageWrites.map((write) => ({
-    identity: write.root.identity,
-    expectedContentRef: write.root.identity.contentRef,
-    expectedRevision: write.expectedRevision,
-    source: write.source,
-  })),
 });
 
 export type ContentBlockLifecyclePlan = Readonly<{
   action: PreparedContentBlockSourceLifecycle["action"];
   changesProject: boolean;
-  storageWrites: readonly Readonly<{
-    identity: PendingMdxContentStorageWrite["root"]["identity"];
-    expectedRevision: string;
-  }>[];
   diagnostics: PreparedContentBlockSourceLifecycle["diagnostics"];
-  persistenceOrder: PreparedContentBlockSourceLifecycle["persistenceOrder"];
   persistence?: ContentBlockPersistenceResult;
 }>;
 
@@ -728,12 +560,7 @@ const serializeLifecyclePlan = (
 ): ContentBlockLifecyclePlan => ({
   action: prepared.action,
   changesProject: prepared.projectPayload.length > 0,
-  storageWrites: prepared.storageWrites.map((write) => ({
-    identity: write.root.identity,
-    expectedRevision: write.expectedRevision,
-  })),
   diagnostics: prepared.diagnostics,
-  persistenceOrder: prepared.persistenceOrder,
 });
 
 export const createContentBlockApplicationOperations = ({
@@ -809,15 +636,6 @@ export const createContentBlockApplicationOperations = ({
     if (sourceState !== undefined && "identity" in sourceState) {
       repairRoutes.push("open-file");
     }
-    if (sourceState?.status === "failed") {
-      repairRoutes.push("retry");
-    }
-    if (sourceState?.status === "conflicting") {
-      repairRoutes.push("reload-remote");
-    }
-    if (sourceState !== undefined && "localSource" in sourceState) {
-      repairRoutes.push("copy-unsaved-mdx");
-    }
     if (configuredSource !== undefined) {
       repairRoutes.push("disconnect-with-copy");
     }
@@ -837,10 +655,6 @@ export const createContentBlockApplicationOperations = ({
         canSwitch: configuredSource !== undefined,
         canDisconnectWithCopy: configuredSource !== undefined && canEdit,
         canEdit,
-        canRetry: sourceState?.status === "failed",
-        canReloadRemote: sourceState?.status === "conflicting",
-        canCopyUnsavedSource:
-          sourceState !== undefined && "localSource" in sourceState,
       },
       repairRoutes,
     };
@@ -851,14 +665,12 @@ export const createContentBlockApplicationOperations = ({
     blockInstanceId,
     renderScope,
     source,
-    authority,
     variables,
   }: {
     action: "connect" | "switch" | "disconnect";
     blockInstanceId: string;
     renderScope: string;
     source?: ContentBlockSource;
-    authority?: ContentBlockSourceAuthority;
     variables?: Readonly<Record<string, unknown>>;
   }) => {
     const state = getState();
@@ -872,7 +684,6 @@ export const createContentBlockApplicationOperations = ({
         source,
         renderScope,
         projectId,
-        authority,
         session,
         context,
         variables,
@@ -901,7 +712,6 @@ export const createContentBlockApplicationOperations = ({
         source,
         renderScope,
         projectId,
-        authority,
         session,
         context,
         variables,
@@ -912,6 +722,8 @@ export const createContentBlockApplicationOperations = ({
       blockInstanceId,
       currentSessionKey: active.key,
       renderScope,
+      projectId,
+      variables,
       session,
       context,
     });
@@ -923,7 +735,6 @@ export const createContentBlockApplicationOperations = ({
       blockInstanceId,
       renderScope,
       source,
-      authority,
       dryRun = false,
       confirmationToken,
       variables,
@@ -932,7 +743,6 @@ export const createContentBlockApplicationOperations = ({
       blockInstanceId: string;
       renderScope: string;
       source?: ContentBlockSource;
-      authority?: ContentBlockSourceAuthority;
       dryRun?: boolean;
       confirmationToken?: string;
       variables?: Readonly<Record<string, unknown>>;
@@ -945,19 +755,6 @@ export const createContentBlockApplicationOperations = ({
   ): Promise<ContentBlockApplicationResult<ContentBlockLifecyclePlan>> => {
     const projectVersionBeforePreparation =
       getProjectVersion?.() ?? context.projectVersion;
-    const stateBeforePreparation = getState();
-    const blockBeforePreparation =
-      stateBeforePreparation.instances?.get(blockInstanceId);
-    const hadPersistedBody =
-      blockBeforePreparation?.children.some(
-        (child) =>
-          child.type !== "id" ||
-          stateBeforePreparation.instances?.get(child.value)?.component !==
-            blockTemplateComponent
-      ) === true;
-    const hadConfiguredSource =
-      getConfiguredSource(stateBeforePreparation, blockInstanceId) !==
-      undefined;
     let prepared: PreparedContentBlockSourceLifecycle;
     try {
       prepared = await prepareLifecycle({
@@ -965,15 +762,15 @@ export const createContentBlockApplicationOperations = ({
         blockInstanceId,
         renderScope,
         source,
-        authority,
         variables,
       });
     } catch (error) {
-      if (error instanceof ContentBlockSourceAuthorityRequiredError) {
+      if (error instanceof ContentBlockSourceRevisionConflictError) {
+        publishSession(error.state);
         return {
           status: "blocked",
-          code: "content-source-authority-required",
-          message: error.message,
+          code: "content-source-write-conflict",
+          message: getContentBlockSessionMessage(error.state),
         };
       }
       return {
@@ -990,13 +787,8 @@ export const createContentBlockApplicationOperations = ({
       blockInstanceId,
       renderScope,
       source,
-      authority,
     });
-    const destructive =
-      prepared.storageWrites.length > 0 ||
-      (action === "connect" && hadPersistedBody) ||
-      (action === "switch" && authority === "use-file-content") ||
-      (action === "disconnect" && hadConfiguredSource);
+    const destructive = prepared.requiresConfirmation;
     const confirmed =
       destructive === false
         ? true
@@ -1024,7 +816,6 @@ export const createContentBlockApplicationOperations = ({
       execution?.commitProjectPayload ?? commitProjectPayload;
     const persisted = await persistPreparedContentBlockLifecycle({
       prepared,
-      session,
       commitProjectPayload: projectCommit,
       canCommitProjectPayload: () =>
         prepared.projectPayload.length === 0 ||
@@ -1232,72 +1023,6 @@ export const createContentBlockApplicationOperations = ({
           : "The content changes could not be saved."),
       result: { ...mutation, persistence },
     };
-  };
-
-  const recover = async ({
-    blockInstanceId,
-    renderScope,
-    action,
-    dryRun = false,
-  }: {
-    blockInstanceId: string;
-    renderScope: string;
-    action: "retry" | "reload-remote" | "copy-unsaved-mdx";
-    dryRun?: boolean;
-  }) => {
-    const active = getActiveState(blockInstanceId, renderScope);
-    if (active === undefined || !("key" in active)) {
-      return {
-        status: "blocked" as const,
-        code: "content-source-not-loaded" as const,
-        message: "The MDX Asset is not loaded",
-      };
-    }
-    const recovered = await recoverContentBlockSession({
-      session,
-      state: active,
-      action,
-      dryRun,
-      reopen:
-        action === "retry" && active.status === "recoverable"
-          ? async () => {
-              const configured = getConfiguredSource(
-                getState(),
-                blockInstanceId
-              );
-              return configured === undefined
-                ? active
-                : session.open({
-                    blockInstanceId,
-                    source: configured,
-                    renderScope,
-                    state: getState(),
-                    projectId,
-                  });
-            }
-          : undefined,
-    });
-    publishSession(recovered.state);
-    const inspection = await inspectSource({
-      blockInstanceId,
-      renderScope,
-      load: false,
-    });
-    return recovered.status === "complete"
-      ? ({
-          status: "complete",
-          result: {
-            source: recovered.source,
-            inspection,
-            changedAsset: recovered.changedAsset,
-          },
-        } as const)
-      : ({
-          status: "blocked",
-          code: recovered.code,
-          message: recovered.message,
-          result: { inspection, changedAsset: false },
-        } as const);
   };
 
   const getMaterializedContent = () =>
@@ -1647,7 +1372,6 @@ export const createContentBlockApplicationOperations = ({
     inspectSource,
     applyLifecycle,
     semanticEdit,
-    recover,
     migrateTemplateReferences,
     getMaterializedContent,
     preflightStorageChanges,

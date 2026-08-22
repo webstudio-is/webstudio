@@ -1468,19 +1468,9 @@ export class ProjectSession {
         },
       },
     });
-    const status = result.status;
-    const plan = result.plan;
     const changedAsset = result.changedAsset === true;
     const committed =
-      options.dryRun !== true &&
-      (transaction !== undefined ||
-        changedAsset ||
-        (status === "complete" &&
-          typeof plan === "object" &&
-          plan !== null &&
-          "storageWrites" in plan &&
-          Array.isArray(plan.storageWrites) &&
-          plan.storageWrites.length > 0));
+      options.dryRun !== true && (transaction !== undefined || changedAsset);
     let resultSnapshot = this.#snapshot ?? snapshot;
     if (options.dryRun !== true && changedAsset) {
       resultSnapshot = {

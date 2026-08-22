@@ -10,6 +10,7 @@ export type AssetContentAuthorization = Readonly<{
 export type AssetContentBridge = Readonly<{
   request: (input: string, init?: RequestInit) => Promise<Response>;
   authorize: (input: AssetContentAuthorization) => boolean;
+  requireReload: (error: string) => void;
 }>;
 
 const namespace = "__webstudio__$__assetContentBridge";
@@ -18,12 +19,15 @@ export const createAssetContentBridge = ({
   origin,
   request,
   authorize,
+  requireReload,
 }: {
   origin: string;
   request: (input: string, init?: RequestInit) => Promise<Response>;
   authorize: (input: AssetContentAuthorization) => boolean;
+  requireReload: (error: string) => void;
 }): AssetContentBridge => ({
   authorize,
+  requireReload,
   request: async (input, init) => {
     const url = new URL(input, origin);
     const method = init?.method?.toUpperCase() ?? "GET";

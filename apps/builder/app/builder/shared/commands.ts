@@ -29,7 +29,6 @@ import {
   $templateIdToDelete,
   toggleBuilderMode,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
 
 // Declare command for type safety
 declare module "~/shared/pubsub" {
@@ -61,6 +60,12 @@ import {
   selectInstances,
   selectPage,
 } from "~/shared/nano-states";
+import {
+  $contentBlockPresentationItems,
+  $runtimeInstances,
+  getRuntimeAuthoredInstanceChildren,
+  getRuntimeInstanceChildren,
+} from "~/shared/content-block-content";
 import {
   getInstancePath,
   type InstancePath,
@@ -290,7 +295,7 @@ type SelectedInstancePath = {
 };
 
 const getAllSelectedInstancePaths = () => {
-  const instances = $instances.get();
+  const instances = $runtimeInstances.get();
   const selectedInstanceSelectors = $allSelectedInstanceSelectors.get();
   const selectedInstancePaths: SelectedInstancePath[] = [];
   selectedInstanceSelectors.forEach((instanceSelector, index) => {
@@ -323,8 +328,14 @@ const getSiblingSelection = (selectedInstancePaths: SelectedInstancePath[]) => {
   ) {
     return;
   }
-  const siblingIds = parentItem.instance.children.flatMap((child) =>
-    child.type === "id" ? [child.value] : []
+  const siblingIds = getRuntimeAuthoredInstanceChildren(
+    parentItem.instance,
+    parentSelector
+  ).flatMap((child) =>
+    child.type === "id" &&
+    $contentBlockPresentationItems.get().has(child.value) === false
+      ? [child.value]
+      : []
   );
   const selectedIndexes = selectedInstancePaths
     .map(({ instancePath }) => siblingIds.indexOf(instancePath[0].instance.id))
@@ -427,7 +438,7 @@ const deleteSelectedInstances = () => {
   if (selectedInstancePaths.length < 2) {
     return false;
   }
-  const instances = $instances.get();
+  const instances = $runtimeInstances.get();
   const isContentMode = $isContentMode.get();
   const actionableInstancePaths = selectedInstancePaths.filter(
     ({ instancePath, instanceSelector }) =>
@@ -446,7 +457,8 @@ const deleteSelectedInstances = () => {
     id: "instances.delete",
     input: {
       instanceIds: sortInstancePathsForChildMutation(
-        actionableInstancePaths
+        actionableInstancePaths,
+        getRuntimeInstanceChildren
       ).map(({ instancePath }) => instancePath[0].instance.id),
     },
   });
@@ -474,7 +486,8 @@ const duplicateSelectedInstances = () => {
   const newInstanceSelectors = new Map<number, InstanceSelector>();
 
   for (const { index, instancePath } of sortInstancePathsForChildMutation(
-    actionableInstancePaths
+    actionableInstancePaths,
+    getRuntimeInstanceChildren
   )) {
     const newInstanceSelector = duplicateInstanceAfterItself({ instancePath });
     if (newInstanceSelector !== undefined) {
@@ -508,7 +521,10 @@ const getOutdentMoveTarget = (
       return;
     }
     const slotPosition = findChildReferenceIndex(
-      slotParentItem.instance.children,
+      getRuntimeInstanceChildren(
+        slotParentItem.instance,
+        slotParentItem.instanceSelector
+      ),
       directSlotBoundary.slotId
     );
     if (slotPosition === -1) {
@@ -523,7 +539,10 @@ const getOutdentMoveTarget = (
 
   const parent = parentItem.instance;
   const parentIndex = findChildReferenceIndex(
-    grandparentItem.instance.children,
+    getRuntimeInstanceChildren(
+      grandparentItem.instance,
+      grandparentItem.instanceSelector
+    ),
     parent.id
   );
   if (parentIndex === -1) {
@@ -549,8 +568,12 @@ const getInstanceMoveTarget = (direction: InstanceMoveDirection) => {
   }
 
   const parent = parentItem.instance;
+  const parentChildren = getRuntimeInstanceChildren(
+    parent,
+    parentItem.instanceSelector
+  );
   const selectedIndex = findChildReferenceIndex(
-    parent.children,
+    parentChildren,
     selectedItem.instance.id
   );
   if (selectedIndex === -1) {
@@ -568,7 +591,7 @@ const getInstanceMoveTarget = (direction: InstanceMoveDirection) => {
   }
 
   if (direction === "down") {
-    if (selectedIndex >= parent.children.length - 1) {
+    if (selectedIndex >= parentChildren.length - 1) {
       return getOutdentMoveTarget(instancePath, "after");
     }
     return {
@@ -581,7 +604,7 @@ const getInstanceMoveTarget = (direction: InstanceMoveDirection) => {
     if (selectedIndex === 0) {
       return;
     }
-    const previousChild = parent.children[selectedIndex - 1];
+    const previousChild = parentChildren[selectedIndex - 1];
     if (previousChild?.type !== "id") {
       return;
     }
@@ -599,9 +622,10 @@ const getInstanceMoveTarget = (direction: InstanceMoveDirection) => {
 
 const moveSelectedInstance = (direction: InstanceMoveDirection) => {
   if (
-    guardDesignModeCommand({
+    guardDesignOrContentModeCommand({
+      isContentMode: $isContentMode.get(),
       isDesignMode: $isDesignMode.get(),
-      message: "Moving is only allowed in design mode.",
+      message: "Moving is only allowed in design or content mode.",
     }) === false
   ) {
     return;

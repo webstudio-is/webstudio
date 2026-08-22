@@ -35,6 +35,27 @@ export interface AssetContentRepository {
   }): Promise<AssetContentDescriptor>;
 }
 
+export class AssetContentIntegrityError extends Error {}
+
+export const readAssetContentBytes = async ({
+  repository,
+  assetId,
+  maxSize,
+}: {
+  repository: Pick<AssetContentRepository, "readContent">;
+  assetId: Asset["id"];
+  maxSize: number;
+}) => {
+  const content = await repository.readContent({ assetId });
+  const bytes = await readBoundedBytes(content.data, maxSize);
+  if (bytes.byteLength !== content.asset.size) {
+    throw new AssetContentIntegrityError(
+      "Asset content does not match its declared size"
+    );
+  }
+  return { asset: content.asset, bytes };
+};
+
 export class AssetRevisionConflictError extends Error {}
 
 export class AssetContentAuthorizationError extends Error {}

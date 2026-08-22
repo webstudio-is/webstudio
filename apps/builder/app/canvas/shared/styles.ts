@@ -41,6 +41,7 @@ import {
   $runtimeStyleSourceSelections as $styleSourceSelections,
   $runtimeStyles as $styles,
   $activeMaterializedContentRoots,
+  findRuntimeNavigableTextInstanceSelectors,
 } from "~/shared/content-block-content";
 import { setDifference } from "~/shared/shim";
 import { $ephemeralStyles } from "../stores";
@@ -50,10 +51,7 @@ import {
   $selectedInstanceSelector,
   $selectedPage,
 } from "~/shared/nano-states";
-import {
-  findAllNavigableTextInstanceSelectors,
-  type InstanceSelector,
-} from "@webstudio-is/project-build/runtime";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import type { MaterializedContentRoot } from "@webstudio-is/project-build/runtime";
 import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
 import { createComputedStyleDeclStore } from "~/builder/features/style-panel/shared/model";
@@ -237,12 +235,13 @@ const subscribeContentEditModeHelperStyles = () => {
     if (rootInstanceId !== undefined) {
       const instances = $instances.get();
 
-      const editableInstanceSelectors = findAllNavigableTextInstanceSelectors({
-        instanceSelector: [rootInstanceId],
-        instances,
-        props: $props.get(),
-        metas: $registeredComponentMetas.get(),
-      });
+      const editableInstanceSelectors =
+        findRuntimeNavigableTextInstanceSelectors({
+          rootInstanceId,
+          instances,
+          props: $props.get(),
+          metas: $registeredComponentMetas.get(),
+        });
 
       for (const rule of computeEditableCursorRules(
         editableInstanceSelectors

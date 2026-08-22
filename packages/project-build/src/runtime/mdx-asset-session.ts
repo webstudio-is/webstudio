@@ -1,12 +1,11 @@
 import { createAssetContentRevision } from "@webstudio-is/asset-uploader/content-revision";
 import {
+  AssetContentIntegrityError,
   AssetRevisionConflictError,
+  readAssetContentBytes,
   type AssetContentRepository,
 } from "@webstudio-is/asset-uploader/content-repository";
-import {
-  decodeUtf8,
-  readBoundedBytes,
-} from "@webstudio-is/content-engine/compiler";
+import { decodeUtf8 } from "@webstudio-is/content-engine/compiler";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import {
   MdxDocumentError,
@@ -478,27 +477,30 @@ export const createMdxAssetEditingSession = ({
       };
     }
 
-    let read: Awaited<ReturnType<AssetContentRepository["readContent"]>>;
+    let read: Awaited<ReturnType<typeof readAssetContentBytes>>;
     let bytes: Uint8Array;
     try {
-      read = await repository.readContent({ assetId });
-      bytes = await readBoundedBytes(
-        read.data,
-        contentEngineLimits.hydratedFileBytes
-      );
+      read = await readAssetContentBytes({
+        repository,
+        assetId,
+        maxSize: contentEngineLimits.hydratedFileBytes,
+      });
+      bytes = read.bytes;
     } catch (error) {
       return {
         status: "failed",
         blockInstanceId: input.blockInstanceId,
         renderScope: input.renderScope,
         diagnostics: [],
-        error: error instanceof Error ? error : new Error("Asset read failed"),
+        error:
+          error instanceof AssetContentIntegrityError
+            ? new Error("Asset content identity does not match its bytes")
+            : error instanceof Error
+              ? error
+              : new Error("Asset read failed"),
       };
     }
-    if (
-      read.asset.projectId !== input.projectId ||
-      bytes.byteLength !== read.asset.size
-    ) {
+    if (read.asset.projectId !== input.projectId) {
       return {
         status: "failed",
         blockInstanceId: input.blockInstanceId,
@@ -993,36 +995,6 @@ export const createMdxAssetEditingSession = ({
 
   const retry = (key: string) => flushOne(key);
 
-  const reloadRemote = async (key: string) => {
-    const resolvedKey = resolveKey(key);
-    const entry = queueEntries.get(resolvedKey);
-    if (entry === undefined) {
-      throw new Error("MDX Asset editing session does not exist");
-    }
-    if (entry.inFlight !== undefined) {
-      throw new Error(
-        "Cannot reload an MDX Asset while its write is in flight"
-      );
-    }
-    if (entry.timer !== undefined) {
-      cancelScheduled(entry.timer);
-      entry.timer = undefined;
-    }
-    const unsavedSource = entry.unsavedSource;
-    states.delete(resolvedKey);
-    const state = await open({
-      ...entry.input,
-      source: { type: "asset", assetId: entry.assetId },
-      expectedRevision: undefined,
-    });
-    const migrated = queueEntries.get(resolveKey(entry.key)) ?? entry;
-    migrated.unsavedSource = unsavedSource;
-    return state;
-  };
-
-  const copyUnsavedSource = (key: string) =>
-    queueEntries.get(resolveKey(key))?.unsavedSource;
-
   const canReplaceSource = ({
     key,
     expectedSource,
@@ -1355,8 +1327,6 @@ export const createMdxAssetEditingSession = ({
     queueSave,
     flush,
     retry,
-    reloadRemote,
-    copyUnsavedSource,
     canReplaceSource,
     prepareSourceReplacement,
     persistSourceReplacement,

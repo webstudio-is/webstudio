@@ -5,6 +5,8 @@ type InstanceData = {
   type: "instance";
   id: string;
   component: string;
+  tag?: string;
+  label?: string;
   children: Array<{ type: string; value: string }>;
 };
 
@@ -49,6 +51,25 @@ export const configureRepresentableContentBlockBody = async (
     { type: "id", value: "list-item" },
     { type: "id", value: templateId },
   ];
+  await updateBuild(build.id, { instances: JSON.stringify(instances) });
+};
+
+export const configureEmptyHeadingTemplate = async (projectId: string) => {
+  const { build, instances } = await getBuildData(projectId);
+  const templates = instances.find((instance) => instance.id === templateId);
+  if (templates === undefined) {
+    throw new Error("Expected the Content Block templates fixture instance");
+  }
+  const emptyHeadingId = "empty-heading-template";
+  templates.children.push({ type: "id", value: emptyHeadingId });
+  instances.push({
+    type: "instance",
+    id: emptyHeadingId,
+    component: "ws:element",
+    tag: "h1",
+    label: "Empty Heading Template",
+    children: [],
+  });
   await updateBuild(build.id, { instances: JSON.stringify(instances) });
 };
 

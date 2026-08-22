@@ -103,6 +103,40 @@ describe("child mutation order", () => {
 
     expect(sorted.map((item) => item.id)).toEqual(["nested", "third", "first"]);
   });
+
+  test("sorts projected siblings using their projected order", () => {
+    const body = createInstance("body", "Body");
+    const first = createInstance("first", "Box");
+    const second = createInstance("second", "Box");
+
+    const sorted = sortInstancePathsForChildMutation(
+      [
+        {
+          id: "first",
+          instancePath: [
+            { instance: first, instanceSelector: ["first", "body"] },
+            { instance: body, instanceSelector: ["body"] },
+          ],
+        },
+        {
+          id: "second",
+          instancePath: [
+            { instance: second, instanceSelector: ["second", "body"] },
+            { instance: body, instanceSelector: ["body"] },
+          ],
+        },
+      ],
+      (instance) =>
+        instance.id === body.id
+          ? [
+              { type: "id", value: first.id },
+              { type: "id", value: second.id },
+            ]
+          : instance.children
+    );
+
+    expect(sorted.map((item) => item.id)).toEqual(["second", "first"]);
+  });
 });
 
 describe("drop targets", () => {
@@ -339,7 +373,7 @@ describe("drop targets", () => {
     ).toBe(false);
   });
 
-  test("checks content-mode drop target within the same block", () => {
+  test("checks content-mode drop targets across editable block trees", () => {
     const instances = new Map([
       [
         "body",
@@ -380,7 +414,7 @@ describe("drop targets", () => {
         metas: componentMetas,
         contentMode: true,
       })
-    ).toBe(false);
+    ).toBe(true);
   });
 
   test("finds closest droppable selector for canvas inserts and reparenting", () => {

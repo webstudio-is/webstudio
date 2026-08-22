@@ -22,13 +22,17 @@ import {
 } from "@webstudio-is/icons";
 import {
   findParentFolderByChildId,
-  findTreeInstanceIds,
   getAllPages,
   type Folder,
   type Instance,
   type Page,
 } from "@webstudio-is/sdk";
-import { $instances, $pages, $props } from "~/shared/sync/data-stores";
+import { $pages } from "~/shared/sync/data-stores";
+import {
+  findRuntimeTreeInstanceIds,
+  $runtimeInstances,
+  $runtimeProps,
+} from "~/shared/content-block-content";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
@@ -282,16 +286,16 @@ const BaseEmail = ({
 };
 
 const instancesPerPageStore = computed(
-  [$instances, $pages],
+  [$runtimeInstances, $pages],
   (instances, pages) =>
     (pages ? getAllPages(pages) : []).map((page) => ({
       pageId: page.id,
-      instancesIds: findTreeInstanceIds(instances, page.rootInstanceId),
+      instancesIds: findRuntimeTreeInstanceIds(page.rootInstanceId, instances),
     }))
 );
 
 const $sections = computed(
-  [instancesPerPageStore, $props],
+  [instancesPerPageStore, $runtimeProps],
   (instancesPerPage, props) => {
     const sections: Array<{
       pageId: Page["id"];

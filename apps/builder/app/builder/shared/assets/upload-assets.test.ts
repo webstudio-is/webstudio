@@ -137,6 +137,29 @@ describe("upload-assets", () => {
     expect(init.body.get("contentHash")).toBe("a".repeat(64));
   });
 
+  test("can reserve an independent asset with identical content", async () => {
+    request.mockResolvedValue(
+      Response.json({
+        assetId: "new-asset-id",
+        name: "new-name",
+        deduplicated: false,
+      })
+    );
+
+    await createUploadTicket({
+      authToken: "token",
+      projectId: "project-id",
+      fileOrUrl: new File([], "empty.mdx", { type: "text/mdx" }),
+      contentHash: "a".repeat(64),
+      deduplicate: false,
+      assetType: "file",
+      request,
+    });
+
+    const [, init] = request.mock.calls[0] as [string, { body: FormData }];
+    expect(init.body.get("contentHash")).toBeNull();
+  });
+
   test("reports non-error upload failures", async () => {
     request.mockRejectedValue("network down");
     const onCompleted = vi.fn();

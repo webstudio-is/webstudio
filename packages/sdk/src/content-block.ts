@@ -49,6 +49,21 @@ export const getContentBlockSource = ({
     : parseContentBlockSourceProp(sourceProp);
 };
 
+export const isEqualContentBlockSource = (
+  left: ContentBlockSource | undefined,
+  right: ContentBlockSource | undefined
+) => {
+  if (left?.type !== right?.type) {
+    return false;
+  }
+  if (left?.type === "asset" && right?.type === "asset") {
+    return left.assetId === right.assetId;
+  }
+  return left?.type === "expression" && right?.type === "expression"
+    ? left.value === right.value
+    : left === undefined && right === undefined;
+};
+
 export type ContentBlockSourceIntegrityIssue =
   | {
       type: "duplicateContentBlockSource";

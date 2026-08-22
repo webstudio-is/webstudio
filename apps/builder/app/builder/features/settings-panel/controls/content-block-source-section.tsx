@@ -1,18 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  decodeUtf8,
-  readBoundedBytes,
-} from "@webstudio-is/content-engine/compiler";
+import { readAssetContentBytes } from "@webstudio-is/asset-uploader/content-repository";
+import { decodeUtf8 } from "@webstudio-is/content-engine/compiler";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { previewMarkdownToMdxConversion } from "@webstudio-is/content-engine/mdx-conversion";
 import { getContentBlockRenderScopeKey } from "@webstudio-is/project-build/runtime";
+import { Grid, Label, Text } from "@webstudio-is/design-system";
 import {
   formatAssetName,
   formatContentBlockSourceIntegrityIssue,
   getFileNameParts,
   getContentBlockSourceIntegrityIssues,
   getContentBlockSource,
+  isEqualContentBlockSource,
   type ContentBlockSource,
 } from "@webstudio-is/sdk";
 import { TextFileEditor } from "~/builder/features/text-file-editor/text-file-editor";
@@ -32,6 +32,7 @@ import {
   formatContentBlockDiagnostic,
 } from "~/shared/content-block-content";
 import { $publisher } from "~/shared/pubsub";
+import { CodeEditor } from "~/shared/code-editor";
 
 const getSource = (
   blockInstanceId: string,
@@ -97,8 +98,19 @@ export const ContentBlockSourceSection = ({
       ? undefined
       : formatContentBlockSourceIntegrityIssue(sourceIntegrityIssue);
   const [loading, setLoading] = useState(source !== undefined);
+  const [sourceUpdating, setSourceUpdating] = useState(false);
   const [error, setError] = useState<string>();
+  const [frontmatterSource, setFrontmatterSource] = useState<string>();
+  const [frontmatterError, setFrontmatterError] = useState<string>();
+  const frontmatterSourceRef = useRef<string>();
+  const frontmatterAssetIdRef = useRef<string>();
+  const frontmatterDirtyRef = useRef(false);
   const [openedAssetId, setOpenedAssetId] = useState<string>();
+  const frontmatterReadOnly =
+    authPermit === "view" ||
+    loading ||
+    sourceUpdating ||
+    (viewState?.status !== "ready" && viewState?.status !== "empty");
   const controller = useMemo(
     () =>
       project === undefined
@@ -123,6 +135,11 @@ export const ContentBlockSourceSection = ({
     if (source === undefined || controller === undefined) {
       setLoading(false);
       setError(undefined);
+      setFrontmatterSource(undefined);
+      setFrontmatterError(undefined);
+      frontmatterSourceRef.current = undefined;
+      frontmatterAssetIdRef.current = undefined;
+      frontmatterDirtyRef.current = false;
       return;
     }
     setLoading(true);
@@ -131,6 +148,22 @@ export const ContentBlockSourceSection = ({
       .then((state) => {
         if (active) {
           setError(getStateError(state));
+          if ("root" in state && "identity" in state) {
+            const source = JSON.stringify(
+              state.root.document.frontmatter.properties,
+              null,
+              2
+            );
+            if (
+              frontmatterAssetIdRef.current !== state.identity.assetId ||
+              frontmatterDirtyRef.current === false
+            ) {
+              frontmatterSourceRef.current = source;
+              frontmatterDirtyRef.current = false;
+              setFrontmatterSource(source);
+            }
+            frontmatterAssetIdRef.current = state.identity.assetId;
+          }
         }
       })
       .catch(() => {
@@ -172,16 +205,11 @@ export const ContentBlockSourceSection = ({
 
   const requestSource = async (input: {
     source: ContentBlockSource;
-    authority?: Parameters<typeof controller.requestSource>[0]["authority"];
+    confirmed?: Parameters<typeof controller.requestSource>[0]["confirmed"];
   }) => {
     const isSwitch = source !== undefined;
     const sourceChanged =
-      source === undefined ||
-      (source.type === "asset"
-        ? input.source.type !== "asset" ||
-          source.assetId !== input.source.assetId
-        : input.source.type !== "expression" ||
-          source.value !== input.source.value);
+      isEqualContentBlockSource(source, input.source) === false;
     const publishStatus = (status: "loading" | "ready") => {
       if (isSwitch) {
         $publisher.get().publish?.({
@@ -196,6 +224,7 @@ export const ContentBlockSourceSection = ({
       }
     };
     publishStatus("loading");
+    setSourceUpdating(true);
     try {
       const result = await controller.requestSource(input);
       if (result.status === "applied") {
@@ -212,6 +241,8 @@ export const ContentBlockSourceSection = ({
     } catch (error) {
       publishStatus("ready");
       throw error;
+    } finally {
+      setSourceUpdating(false);
     }
   };
 
@@ -226,24 +257,26 @@ export const ContentBlockSourceSection = ({
         diagnostics={viewState?.diagnostics}
         onRequestSource={requestSource}
         onDisconnect={async () => {
-          const result = await controller.disconnect();
-          return result.status === "requires-authority"
-            ? {
-                status: "blocked",
-                message: "Disconnect does not accept a content authority.",
-              }
-            : result;
+          setSourceUpdating(true);
+          try {
+            const result = await controller.disconnect();
+            return result.status === "requires-confirmation"
+              ? {
+                  status: "blocked",
+                  message: "Disconnect confirmation is handled by the dialog.",
+                }
+              : result;
+          } finally {
+            setSourceUpdating(false);
+          }
         }}
         onOpen={setOpenedAssetId}
         onPreviewMarkdown={async (assetId) => {
-          const content = await repository.readContent({ assetId });
-          const bytes = await readBoundedBytes(
-            content.data,
-            contentEngineLimits.hydratedFileBytes
-          );
-          if (bytes.byteLength !== content.asset.size) {
-            throw new Error("Markdown Asset content does not match its size");
-          }
+          const { bytes } = await readAssetContentBytes({
+            repository,
+            assetId,
+            maxSize: contentEngineLimits.hydratedFileBytes,
+          });
           return await previewMarkdownToMdxConversion({
             source: decodeUtf8(bytes),
           });
@@ -259,11 +292,68 @@ export const ContentBlockSourceSection = ({
             new File([preview.source], `${basename}.mdx`, {
               type: "text/mdx",
             }),
-            { folderId: markdownAsset.folderId }
+            { folderId: markdownAsset.folderId, deduplicate: false }
           );
           return created?.id;
         }}
       />
+      {source !== undefined && frontmatterSource !== undefined && (
+        <Grid gap="2">
+          <Label>Frontmatter</Label>
+          <Text color="subtle" variant="tiny">
+            Edit the complete frontmatter object as JSON.
+          </Text>
+          <CodeEditor
+            title="Frontmatter"
+            lang="json"
+            size="small"
+            readOnly={frontmatterReadOnly}
+            value={frontmatterSource}
+            onChange={(value) => {
+              frontmatterSourceRef.current = value;
+              frontmatterDirtyRef.current = true;
+              setFrontmatterSource(value);
+              setFrontmatterError(undefined);
+            }}
+            onChangeComplete={async (value) => {
+              let properties: unknown;
+              try {
+                properties = JSON.parse(value);
+              } catch {
+                setFrontmatterError("Frontmatter must be valid JSON.");
+                return;
+              }
+              if (
+                typeof properties !== "object" ||
+                properties === null ||
+                Array.isArray(properties)
+              ) {
+                setFrontmatterError("Frontmatter must be a JSON object.");
+                return;
+              }
+              const result = await controller.saveFrontmatter(
+                properties as Record<string, unknown>
+              );
+              if (result.status !== "applied") {
+                setFrontmatterError(
+                  "message" in result
+                    ? result.message
+                    : "Frontmatter could not be saved."
+                );
+                return;
+              }
+              if (frontmatterSourceRef.current === value) {
+                frontmatterDirtyRef.current = false;
+              }
+            }}
+          />
+          {frontmatterError !== undefined && (
+            <Text role="alert" color="destructive" variant="tiny">
+              {frontmatterError}
+            </Text>
+          )}
+        </Grid>
+      )}
       {openedAssetId !== undefined && (
         <TextFileEditor
           key={openedAssetId}

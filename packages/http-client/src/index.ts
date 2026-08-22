@@ -1331,10 +1331,6 @@ export const disconnectContentBlockSource = runtimeProjectMutation(
   "disconnect-content-block-source"
 );
 
-export const recoverContentBlockSource = runtimeProjectMutation(
-  "recover-content-block-source"
-);
-
 export const migrateContentBlockTemplateReferences = runtimeProjectMutation(
   "migrate-content-block-template-references"
 );

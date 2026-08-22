@@ -4,7 +4,11 @@
 import { describe, test, expect } from "vitest";
 import { __testing__ } from "./webstudio-component";
 
-const { computeComponentKey, getPreviewCurrentUrl } = __testing__;
+const {
+  computeComponentKey,
+  getPreviewCurrentUrl,
+  shouldDiscardNewEmptyMaterializedTextInstance,
+} = __testing__;
 
 describe("computeComponentKey - key generation logic", () => {
   test("prioritizes assetId over other props", () => {
@@ -97,5 +101,65 @@ describe("getPreviewCurrentUrl", () => {
     expect(url.pathname).toBe("/my-page");
     expect(url.search).toBe("?tag=blue&empty=");
     expect(url.hash).toBe("#section");
+  });
+});
+
+describe("new empty materialized text instances", () => {
+  const paragraph = {
+    type: "instance" as const,
+    id: "paragraph",
+    component: "ws:element",
+    tag: "p",
+    children: [],
+  };
+
+  test("discards a newly inserted empty instance", () => {
+    expect(
+      shouldDiscardNewEmptyMaterializedTextInstance({
+        rootInstanceId: paragraph.id,
+        instances: [paragraph],
+        isNew: true,
+        isMaterialized: true,
+      })
+    ).toBe(true);
+  });
+
+  test("preserves authored, project, and non-empty instances", () => {
+    expect(
+      shouldDiscardNewEmptyMaterializedTextInstance({
+        rootInstanceId: paragraph.id,
+        instances: [paragraph],
+        isNew: false,
+        isMaterialized: true,
+      })
+    ).toBe(false);
+    expect(
+      shouldDiscardNewEmptyMaterializedTextInstance({
+        rootInstanceId: paragraph.id,
+        instances: [paragraph],
+        isNew: true,
+        isMaterialized: false,
+      })
+    ).toBe(false);
+    expect(
+      shouldDiscardNewEmptyMaterializedTextInstance({
+        rootInstanceId: paragraph.id,
+        instances: [
+          { ...paragraph, children: [{ type: "text", value: "Written" }] },
+        ],
+        isNew: true,
+        isMaterialized: true,
+      })
+    ).toBe(false);
+    expect(
+      shouldDiscardNewEmptyMaterializedTextInstance({
+        rootInstanceId: paragraph.id,
+        instances: [
+          { ...paragraph, children: [{ type: "text", value: "   " }] },
+        ],
+        isNew: true,
+        isMaterialized: true,
+      })
+    ).toBe(true);
   });
 });

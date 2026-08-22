@@ -55,6 +55,7 @@ describe("shouldRenderPropsSectionContainer", () => {
         propsMetasSize: 1,
         hasVisibleProps: false,
         isContentMode: false,
+        isDesignMode: true,
       })
     ).toBe(true);
   });
@@ -66,6 +67,7 @@ describe("shouldRenderPropsSectionContainer", () => {
         propsMetasSize: 0,
         hasVisibleProps: true,
         isContentMode: true,
+        isDesignMode: false,
       })
     ).toBe(true);
   });
@@ -77,8 +79,21 @@ describe("shouldRenderPropsSectionContainer", () => {
         propsMetasSize: 0,
         hasVisibleProps: false,
         isContentMode: false,
+        isDesignMode: true,
       })
     ).toBe(true);
+  });
+
+  test("hides Content Block source controls outside Design mode", () => {
+    expect(
+      shouldRenderPropsSectionContainer({
+        component: blockComponent,
+        propsMetasSize: 0,
+        hasVisibleProps: false,
+        isContentMode: true,
+        isDesignMode: false,
+      })
+    ).toBe(false);
   });
 
   test("hides root and empty metadata without content-visible props", () => {
@@ -88,6 +103,7 @@ describe("shouldRenderPropsSectionContainer", () => {
         propsMetasSize: 1,
         hasVisibleProps: true,
         isContentMode: true,
+        isDesignMode: false,
       })
     ).toBe(false);
     expect(
@@ -96,6 +112,7 @@ describe("shouldRenderPropsSectionContainer", () => {
         propsMetasSize: 0,
         hasVisibleProps: true,
         isContentMode: false,
+        isDesignMode: false,
       })
     ).toBe(false);
     expect(
@@ -104,6 +121,7 @@ describe("shouldRenderPropsSectionContainer", () => {
         propsMetasSize: 0,
         hasVisibleProps: false,
         isContentMode: true,
+        isDesignMode: false,
       })
     ).toBe(false);
   });

@@ -29,7 +29,10 @@ import {
   $modifierKeys,
   type BlockChildOutline,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import {
+  $runtimeInstances,
+  getRuntimeInstanceChildren,
+} from "~/shared/content-block-content";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import {
@@ -74,7 +77,7 @@ export const TemplatesMenu = ({
   inert: boolean;
   preventFocusOnHover: boolean;
 }) => {
-  const instances = useStore($instances);
+  const instances = useStore($runtimeInstances);
   const modifierKeys = useStore($modifierKeys);
 
   const blockInstanceSelector = findBlockSelector({ anchor, instances });
@@ -101,7 +104,8 @@ export const TemplatesMenu = ({
   }
 
   // 1 child is Templates instance
-  const hasChildren = blockInstance.children.length > 1;
+  const hasChildren =
+    getRuntimeInstanceChildren(blockInstance, blockInstanceSelector).length > 1;
 
   const menuItems = templates?.map(([template, templateSelector]) => ({
     id: template.id,
@@ -228,7 +232,7 @@ export const BlockChildHoveredInstanceOutline = () => {
   const scale = useStore($scale);
   const isContentMode = useStore($isContentMode);
   const modifierKeys = useStore($modifierKeys);
-  const instances = useStore($instances);
+  const instances = useStore($runtimeInstances);
   const clampingRect = useStore($clampingRect);
 
   const timeoutRef = useRef<undefined | ReturnType<typeof setTimeout>>(
@@ -280,12 +284,13 @@ export const BlockChildHoveredInstanceOutline = () => {
   }
 
   // 1 child is Templates instance
-  const hasChildren = blockInstance.children.length > 1;
+  const hasChildren =
+    getRuntimeInstanceChildren(blockInstance, blockInstanceSelector).length > 1;
 
   const rect = applyScale(outline.rect, scale);
 
   // Check if the top edge of the component is hidden (clipped by viewport/clamping)
-  const isTopEdgeHidden = rect.top < clampingRect.top;
+  const isTopEdgeHidden = rect.top <= clampingRect.top;
 
   const canDeleteHoveredInstance =
     shallowEqual(outline.selector, outline.hoveredSelector) &&

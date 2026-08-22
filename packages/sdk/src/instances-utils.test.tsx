@@ -320,6 +320,39 @@ test("get indexes within ancestors", () => {
   );
 });
 
+test("get indexes within ancestors through projected children", () => {
+  const { instances } = renderData(
+    <$.Body ws:id="body">
+      <$.Box ws:id="block"></$.Box>
+    </$.Body>
+  );
+  const projected = renderData(
+    <$.Tabs ws:id="tabs">
+      <$.TabsTrigger ws:id="first"></$.TabsTrigger>
+      <$.TabsTrigger ws:id="second"></$.TabsTrigger>
+    </$.Tabs>
+  );
+  for (const [instanceId, instance] of projected.instances) {
+    instances.set(instanceId, instance);
+  }
+  const metas = new Map<Instance["component"], WsComponentMeta>([
+    ["TabsTrigger", { indexWithinAncestor: "Tabs" }],
+  ]);
+
+  expect(
+    getIndexesWithinAncestors(metas, instances, ["body"], (instance) =>
+      instance.id === "block"
+        ? [{ type: "id", value: "tabs" }]
+        : instance.children
+    )
+  ).toEqual(
+    new Map([
+      ["first", 0],
+      ["second", 1],
+    ])
+  );
+});
+
 test("ignore ws:block-template when compute indexes within ancestors", () => {
   const BlockTemplate = ws["block-template"];
   const { instances } = renderData(

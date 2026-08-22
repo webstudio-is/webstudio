@@ -17,16 +17,20 @@ export const chooseContentBlockSource = async ({
 }: {
   page: Page;
   filename: string;
-  action?: "Choose file" | "Replace or switch";
+  action?: "Choose file" | "Switch file";
 }) => {
   await page.getByRole("button", { name: action, exact: true }).click();
   await chooseAssetByFilename({ page, filename });
 };
 
-export const useFileContent = async ({ page }: { page: Page }) => {
+export const confirmContentBlockConnection = async ({
+  page,
+}: {
+  page: Page;
+}) => {
   const dialog = page.getByRole("dialog", { name: /content source$/i });
   await dialog.waitFor({ state: "visible" });
-  await dialog.getByRole("button", { name: "Use file content" }).click();
+  await dialog.getByRole("button", { name: "Connect", exact: true }).click();
   await dialog.waitFor({ state: "hidden" });
 };
 

@@ -98,9 +98,6 @@ describe("api runtime adapter", () => {
                 canSwitch: false,
                 canDisconnectWithCopy: false,
                 canEdit: false,
-                canRetry: false,
-                canReloadRemote: false,
-                canCopyUnsavedSource: false,
               },
               repairRoutes: [],
             }),
@@ -128,9 +125,6 @@ describe("api runtime adapter", () => {
         canSwitch: true,
         canDisconnectWithCopy: true,
         canEdit: true,
-        canRetry: false,
-        canReloadRemote: false,
-        canCopyUnsavedSource: false,
       },
       repairRoutes: ["disconnect-with-copy" as const],
     };
@@ -142,7 +136,6 @@ describe("api runtime adapter", () => {
           blockInstanceId: "root-1",
           renderScope: "page:/",
           source: { type: "asset", assetId: "article" },
-          authority: "use-file-content",
         },
         context: {
           commitApplicationProjectPayload: async ({ expectedVersion }) => {
@@ -169,9 +162,7 @@ describe("api runtime adapter", () => {
                 result: {
                   action: "connect",
                   changesProject: true,
-                  storageWrites: [],
                   diagnostics: [],
-                  persistenceOrder: "none",
                 },
               };
             },

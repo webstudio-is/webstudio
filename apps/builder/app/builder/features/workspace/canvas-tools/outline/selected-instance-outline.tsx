@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { $instances } from "~/shared/sync/data-stores";
+import { $runtimeInstances } from "~/shared/content-block-content";
 import {
   $selectedInstanceOutlines,
   $textEditingInstanceSelector,
@@ -12,7 +12,7 @@ import { findClosestSlot } from "~/shared/instance-utils/slot";
 import { $ephemeralStyles } from "~/canvas/stores";
 
 export const SelectedInstanceOutline = () => {
-  const instances = useStore($instances);
+  const instances = useStore($runtimeInstances);
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
   const outlines = useStore($selectedInstanceOutlines);
   const scale = useStore($scale);

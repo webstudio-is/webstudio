@@ -18,6 +18,7 @@ import {
   parseMarkdownAst,
   type SyntaxTreeNode,
 } from "./markdown-ast";
+import { serializeMdxDocument } from "./mdx-serialization";
 
 export type MdxSourcePoint = Readonly<{
   line: number;
@@ -949,4 +950,174 @@ export const parseMdxDocument = async ({
   };
 };
 
-export { serializeMdxDocument } from "./mdx-serialization";
+const areAuthoredPropsEqual = (
+  left: readonly MdxAuthoredProp[],
+  right: readonly MdxAuthoredProp[]
+) => {
+  if (left.length !== right.length) {
+    return false;
+  }
+  const leftNames = new Set(left.map((prop) => prop.name));
+  const rightByName = new Map(right.map((prop) => [prop.name, prop.value]));
+  return (
+    leftNames.size === left.length &&
+    rightByName.size === right.length &&
+    left.every((prop) => rightByName.get(prop.name) === prop.value)
+  );
+};
+
+const areAuthoredNodesEquivalent = (
+  left: MdxAuthoredNode,
+  right: MdxAuthoredNode
+): boolean => {
+  if (left.type !== right.type) {
+    return false;
+  }
+  if (left.type === "text" && right.type === "text") {
+    return left.value === right.value;
+  }
+  if (left.type === "comment" && right.type === "comment") {
+    return left.value === right.value;
+  }
+  if (left.type === "template" && right.type === "template") {
+    return (
+      left.name === right.name &&
+      areAuthoredPropsEqual(left.props, right.props) &&
+      areAuthoredNodeListsEquivalent(left.children, right.children)
+    );
+  }
+  if (left.type === "element" && right.type === "element") {
+    return (
+      left.tag === right.tag &&
+      areAuthoredPropsEqual(left.props, right.props) &&
+      areAuthoredNodeListsEquivalent(left.children, right.children)
+    );
+  }
+  return false;
+};
+
+const areAuthoredNodeListsEquivalent = (
+  left: readonly MdxAuthoredNode[],
+  right: readonly MdxAuthoredNode[]
+) =>
+  left.length === right.length &&
+  left.every((node, index) => {
+    const other = right[index];
+    return other !== undefined && areAuthoredNodesEquivalent(node, other);
+  });
+
+const withMarkdownSyntax = (node: MdxAuthoredNode): MdxAuthoredNode => {
+  if (node.type !== "element" || node.syntax !== "mdx") {
+    return node;
+  }
+  return {
+    type: "element",
+    syntax: "markdown",
+    tag: node.tag,
+    props: node.props,
+    children: node.children,
+  };
+};
+
+const withMarkdownSyntaxDeep = (node: MdxAuthoredNode): MdxAuthoredNode => {
+  if (node.type === "text" || node.type === "comment") {
+    return node;
+  }
+  return withMarkdownSyntax({
+    ...node,
+    children: node.children.map(withMarkdownSyntaxDeep),
+  });
+};
+
+const parseMarkdownCandidate = async (
+  nodes: readonly MdxAuthoredNode[]
+): Promise<readonly MdxAuthoredNode[] | undefined> => {
+  try {
+    return (
+      await parseMdxDocument({
+        source: serializeMdxDocument({
+          frontmatter: { properties: {} },
+          children: nodes,
+        }),
+      })
+    ).children;
+  } catch {
+    return;
+  }
+};
+
+const preferMarkdownNode = async (
+  node: MdxAuthoredNode
+): Promise<MdxAuthoredNode> => {
+  if (node.type === "text" || node.type === "comment") {
+    return node;
+  }
+  const children = await preferMarkdownNodes(node.children);
+  const withChildren = { ...node, children };
+  if (withChildren.type !== "element" || withChildren.syntax !== "mdx") {
+    return withChildren;
+  }
+
+  const candidate = withMarkdownSyntaxDeep(withChildren);
+  const parsed = await parseMarkdownCandidate([candidate]);
+  const direct = parsed?.length === 1 ? parsed[0] : undefined;
+  if (direct !== undefined && areAuthoredNodesEquivalent(candidate, direct)) {
+    return direct;
+  }
+  if (
+    direct?.type === "element" &&
+    direct.syntax === "markdown" &&
+    direct.tag === "p" &&
+    direct.props.length === 0 &&
+    direct.children.length === 1 &&
+    direct.children[0] !== undefined &&
+    areAuthoredNodesEquivalent(candidate, direct.children[0])
+  ) {
+    return direct.children[0];
+  }
+  const parsedWithChildren = await parseMarkdownCandidate([withChildren]);
+  const preserved =
+    parsedWithChildren?.length === 1 ? parsedWithChildren[0] : undefined;
+  if (preserved !== undefined && areAuthoredNodesEquivalent(node, preserved)) {
+    return preserved;
+  }
+  return node;
+};
+
+const preferMarkdownNodes = async (
+  nodes: readonly MdxAuthoredNode[]
+): Promise<MdxAuthoredNode[]> => {
+  const result: MdxAuthoredNode[] = [];
+  for (const node of nodes) {
+    result.push(await preferMarkdownNode(node));
+  }
+  return result;
+};
+
+/**
+ * Uses ordinary Markdown for generic MDX elements only when the canonical
+ * serializer and parser prove that doing so preserves their authored meaning.
+ */
+export const preferMarkdownSyntax = async (
+  document: MdxDocument
+): Promise<MdxDocument> => {
+  const allMarkdown = document.children.map(withMarkdownSyntaxDeep);
+  const parsed = await parseMarkdownCandidate(allMarkdown);
+  if (
+    parsed !== undefined &&
+    areAuthoredNodeListsEquivalent(document.children, parsed)
+  ) {
+    return { ...document, children: parsed };
+  }
+  const preferredChildren = await preferMarkdownNodes(document.children);
+  const reparsed = await parseMarkdownCandidate(preferredChildren);
+  if (
+    reparsed !== undefined &&
+    areAuthoredNodeListsEquivalent(document.children, reparsed)
+  ) {
+    return { ...document, children: reparsed };
+  }
+  return document;
+};
+
+export { serializeMdxDocument };

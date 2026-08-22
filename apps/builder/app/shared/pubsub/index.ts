@@ -1,4 +1,10 @@
 import { atom } from "nanostores";
+import type { ContentBlockDiagnostic } from "@webstudio-is/sdk";
+import type {
+  DroppableTarget,
+  InstanceSelector,
+  MaterializedContentRoot,
+} from "@webstudio-is/project-build/runtime";
 import { createPubsub } from "./create";
 
 // Allow commands to declare their types
@@ -21,6 +27,33 @@ export interface PubsubMap extends NamespacedCommands {
     blockInstanceId: string;
     renderScope: string;
     status: "loading" | "ready";
+  };
+  contentBlockSourceReload: {
+    projectId: string;
+    blockInstanceId: string;
+    renderScope: string;
+    root?: MaterializedContentRoot;
+    diagnostics: readonly ContentBlockDiagnostic[];
+    editingInstanceSelector?: InstanceSelector;
+  };
+  contentBlockMaterialized: {
+    projectId: string;
+    root: MaterializedContentRoot;
+    diagnostics: readonly ContentBlockDiagnostic[];
+  };
+  contentBlockMaterializedRemoved: {
+    projectId: string;
+    blockInstanceId: string;
+    renderScope: string;
+  };
+  contentBlockReparentRequest: {
+    requestId: string;
+    sourceInstanceSelector: InstanceSelector;
+    dropTarget: DroppableTarget;
+  };
+  contentBlockReparentResult: {
+    requestId: string;
+    success: boolean;
   };
 }
 

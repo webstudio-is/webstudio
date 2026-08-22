@@ -26,7 +26,6 @@ export const migrateLoadedData = (state: BuilderState) => {
     didBreakCycles = true;
     breakCyclesMutable(instances.values(), (node) => node.component === "Slot");
   });
-
   return createRuntimeMutation({
     payload: createBuilderPatchPayloadFromImmerPatches(patches),
     result: { didBreakCycles },

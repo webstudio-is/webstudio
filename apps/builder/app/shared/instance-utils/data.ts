@@ -9,6 +9,7 @@ import {
   executeBuilderRuntimeOperation,
   createRuntimeMutationAccumulator,
   getRuntimeMutationPersistenceOrder,
+  type MaterializedContentRoot,
   type BuilderRuntimeOperationInput,
   type BuilderRuntimeMutationOperationId,
   type BuilderRuntimeOperationResult,
@@ -33,10 +34,19 @@ import {
 } from "../nano-states";
 import {
   getMaterializedContentStatus,
+  getMaterializedContentForSelectors,
   getMaterializedContentSaveBlocker,
-  $activeMaterializedContentRoots,
   saveMaterializedContentChanges,
   $contentBlockPresentationItems,
+  $runtimeAssets,
+  $runtimeBreakpoints,
+  $runtimeDataSources,
+  $runtimeInstances,
+  $runtimeProps,
+  $runtimeResources,
+  $runtimeStyles,
+  $runtimeStyleSources,
+  $runtimeStyleSourceSelections,
   failPendingMaterializedContentChanges,
 } from "../content-block-content";
 
@@ -111,34 +121,8 @@ export const migrateLoadedWebstudioData = () => {
   }
 };
 
-const isScopeSelected = (renderScope: string) => {
-  const selectedSelectors = $allSelectedInstanceSelectors.get();
-  if (selectedSelectors.length === 0) {
-    return false;
-  }
-  let scope: unknown;
-  try {
-    scope = JSON.parse(renderScope);
-  } catch {
-    return false;
-  }
-  if (Array.isArray(scope) === false) {
-    return false;
-  }
-  return selectedSelectors.some(
-    (selected) =>
-      scope.length <= selected.length &&
-      scope.every(
-        (instanceId, index) =>
-          instanceId === selected[selected.length - scope.length + index]
-      )
-  );
-};
-
 const getSelectedMaterializedContent = () =>
-  Array.from($activeMaterializedContentRoots.get().values()).filter(
-    ({ identity }) => isScopeSelected(identity.renderScope)
-  );
+  getMaterializedContentForSelectors($allSelectedInstanceSelectors.get());
 
 const getRuntimeMutationContext = () => ({
   createId: builderRuntimeContext.createId,
@@ -147,8 +131,12 @@ const getRuntimeMutationContext = () => ({
   returnStorageChanges: true,
 });
 
-const canEditSelectedMaterializedContent = () => {
+const canEditMaterializedContent = (
+  roots: readonly MaterializedContentRoot[],
+  checkSelectedPresentation = true
+) => {
   if (
+    checkSelectedPresentation &&
     $allSelectedInstanceSelectors
       .get()
       .some(([instanceId]) =>
@@ -158,7 +146,6 @@ const canEditSelectedMaterializedContent = () => {
     toast.error("MDX diagnostic notices cannot be edited.");
     return false;
   }
-  const roots = getSelectedMaterializedContent();
   for (const { identity } of roots) {
     const status = getMaterializedContentStatus({
       blockInstanceId: identity.blockInstanceId,
@@ -174,7 +161,7 @@ const canEditSelectedMaterializedContent = () => {
 
 type RuntimeMutationContext = Pick<
   BuilderRuntimeContext,
-  "allowLegacyContentModelWarnings"
+  "allowLegacyContentModelWarnings" | "materializedContent"
 >;
 
 const requireSynchronousResult = <Result>(
@@ -318,7 +305,12 @@ export const executeRuntimeMutation = <
   if (canCommitWebstudioData() === false) {
     return;
   }
-  if (canEditSelectedMaterializedContent() === false) {
+  if (
+    canEditMaterializedContent(
+      context?.materializedContent ?? getSelectedMaterializedContent(),
+      context?.materializedContent === undefined
+    ) === false
+  ) {
     return;
   }
   try {
@@ -396,7 +388,7 @@ export const executeRuntimeMutationSequence = (
   if (canCommitWebstudioData() === false) {
     return;
   }
-  if (canEditSelectedMaterializedContent() === false) {
+  if (canEditMaterializedContent(getSelectedMaterializedContent()) === false) {
     return;
   }
   const accumulator = createRuntimeMutationAccumulator(getWebstudioData());
@@ -430,7 +422,12 @@ export const executeRuntimeMutationAsync = async <
   if (canCommitWebstudioData() === false) {
     return;
   }
-  if (canEditSelectedMaterializedContent() === false) {
+  if (
+    canEditMaterializedContent(
+      context?.materializedContent ?? getSelectedMaterializedContent(),
+      context?.materializedContent === undefined
+    ) === false
+  ) {
     return;
   }
   const result = await executeBuilderRuntimeOperation<
@@ -454,3 +451,16 @@ export const getWebstudioData = () => {
     projectSettings,
   };
 };
+
+export const getRuntimeWebstudioData = () => ({
+  ...getWebstudioData(),
+  assets: $runtimeAssets.get(),
+  breakpoints: $runtimeBreakpoints.get(),
+  dataSources: $runtimeDataSources.get(),
+  instances: $runtimeInstances.get(),
+  props: $runtimeProps.get(),
+  resources: $runtimeResources.get(),
+  styles: $runtimeStyles.get(),
+  styleSources: $runtimeStyleSources.get(),
+  styleSourceSelections: $runtimeStyleSourceSelections.get(),
+});

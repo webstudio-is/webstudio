@@ -501,6 +501,73 @@ test("preserves asset references when cloning instance props", () => {
     ],
   });
 });
+
+test("clones a connected Content Block with its Templates list and source", () => {
+  const block = createInstance("block", blockComponent, [
+    { type: "id", value: "templates" },
+  ]);
+  const templates = createInstance("templates", blockTemplateComponent);
+  const ids = ["block-copy", "templates-copy", "src-copy"];
+
+  const result = createInstanceClonePayload({
+    instances: new Map([
+      [block.id, block],
+      [templates.id, templates],
+      ["parent", createInstance("parent", elementComponent)],
+    ]),
+    sourceInstanceId: block.id,
+    targetParent: createInstance("parent", elementComponent),
+    insertIndex: 0,
+    props: [
+      {
+        id: "src",
+        instanceId: block.id,
+        name: contentBlockSourceProp,
+        type: "asset",
+        value: "article.mdx",
+      },
+    ],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: new Map(),
+    createId: () => ids.shift() ?? "missing",
+  });
+
+  expect(result?.payload).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        namespace: "instances",
+        patches: expect.arrayContaining([
+          expect.objectContaining({
+            value: expect.objectContaining({
+              id: "block-copy",
+              children: [{ type: "id", value: "templates-copy" }],
+            }),
+          }),
+          expect.objectContaining({
+            value: expect.objectContaining({
+              id: "templates-copy",
+              component: blockTemplateComponent,
+            }),
+          }),
+        ]),
+      }),
+      expect.objectContaining({
+        namespace: "props",
+        patches: [
+          expect.objectContaining({
+            value: expect.objectContaining({
+              instanceId: "block-copy",
+              name: contentBlockSourceProp,
+              type: "asset",
+              value: "article.mdx",
+            }),
+          }),
+        ],
+      }),
+    ])
+  );
+});
 describe("text content utils", () => {
   test("creates text and expression children", () => {
     expect(createTextContentChild({ type: "text", value: "Hello" })).toEqual({

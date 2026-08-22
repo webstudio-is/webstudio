@@ -6,6 +6,7 @@ import {
   discoverMdxAssetReferences,
   MdxDocumentError,
   parseMdxDocument,
+  preferMarkdownSyntax,
   serializeMdxDocument,
 } from "./mdx";
 
@@ -499,6 +500,33 @@ Paragraph with <ws.element ws:tag="span">inline</ws.element> content.
 
     const reparsed = await parseMdxDocument({ source: serialized });
     expect(omitSourceRanges(reparsed)).toEqual(omitSourceRanges(document));
+  });
+
+  test("prefers Markdown while preserving elements that require JSX", async () => {
+    const document = await parseMdxDocument({
+      source: `<ws.element ws:tag="p">Read the <ws.element ws:tag="a" href="/guide">guide</ws.element>.</ws.element>
+
+<ws.element ws:tag="ul">
+  <ws.element ws:tag="li">First</ws.element>
+
+  <ws.element ws:tag="li">Second</ws.element>
+</ws.element>
+
+<ws.element ws:tag="section" data-kind="hero"><ws.element ws:tag="h2">Title</ws.element></ws.element>`,
+    });
+    const source = serializeMdxDocument(await preferMarkdownSyntax(document));
+
+    expect(source).toContain("Read the [guide](/guide).");
+    expect(source).toContain("-   First\n-   Second");
+    expect(source).not.toContain('<ws.element ws:tag="p"');
+    expect(source).not.toContain('<ws.element ws:tag="ul"');
+    expect(source).toContain('<ws.element ws:tag="section" data-kind="hero">');
+    expect(source).toContain('<ws.element ws:tag="h2">Title</ws.element>');
+    expect(
+      serializeMdxDocument(
+        await preferMarkdownSyntax(await parseMdxDocument({ source }))
+      )
+    ).toBe(source);
   });
 
   test("preserves elements that Markdown cannot represent losslessly", async () => {

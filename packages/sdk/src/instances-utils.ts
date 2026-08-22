@@ -153,10 +153,16 @@ export const getHtmlTagFromInstance = ({
 
 export type IndexesWithinAncestors = Map<Instance["id"], number>;
 
+export type GetInstanceChildren = (
+  instance: Instance,
+  instanceSelector: Instance["id"][]
+) => Instance["children"];
+
 export const getIndexesWithinAncestors = (
   metas: Map<Instance["component"], WsComponentMeta>,
   instances: Instances,
-  rootIds: Instance["id"][]
+  rootIds: Instance["id"][],
+  getInstanceChildren: GetInstanceChildren = (instance) => instance.children
 ) => {
   const ancestors = new Set<Instance["component"]>();
   for (const meta of metas.values()) {
@@ -170,6 +176,7 @@ export const getIndexesWithinAncestors = (
   const traverseInstances = (
     instances: Instances,
     instanceId: Instance["id"],
+    instanceSelector: Instance["id"][],
     latestIndexes = new Map<
       Instance["component"],
       Map<Instance["component"], number>
@@ -203,16 +210,21 @@ export const getIndexesWithinAncestors = (
       }
     }
 
-    for (const child of instance.children) {
+    for (const child of getInstanceChildren(instance, instanceSelector)) {
       if (child.type === "id") {
-        traverseInstances(instances, child.value, latestIndexes);
+        traverseInstances(
+          instances,
+          child.value,
+          [child.value, ...instanceSelector],
+          latestIndexes
+        );
       }
     }
   };
 
   const latestIndexes = new Map();
   for (const instanceId of rootIds) {
-    traverseInstances(instances, instanceId, latestIndexes);
+    traverseInstances(instances, instanceId, [instanceId], latestIndexes);
   }
 
   return indexes;

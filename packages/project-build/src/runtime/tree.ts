@@ -1,9 +1,9 @@
 import {
-  blockComponent,
   collectionComponent,
   elementComponent,
   type Instance,
   type Instances,
+  type GetInstanceChildren,
   type Props,
   type WebstudioFragment,
   type WsComponentMeta,
@@ -15,6 +15,7 @@ import {
 } from "./content-model";
 import { findClosestInstanceMatchingFragment } from "./matcher";
 import { getSlotFragmentDropTargetMutable } from "./slot";
+import { findBlockSelector } from "./block";
 import type { InstancePath, InstanceSelector } from "./instance-path";
 
 export type { InstanceSelector } from "./instance-path";
@@ -53,13 +54,19 @@ export const isDescendantOrSelf = (
   });
 };
 
-const getInstancePathSiblingIndex = (instancePath: InstancePath) => {
+const getInstancePathSiblingIndex = (
+  instancePath: InstancePath,
+  getInstanceChildren?: GetInstanceChildren
+) => {
   const selectedItem = instancePath[0];
   const parentItem = instancePath[1];
   if (selectedItem === undefined || parentItem === undefined) {
     return -1;
   }
-  return parentItem.instance.children.findIndex(
+  return (
+    getInstanceChildren?.(parentItem.instance, parentItem.instanceSelector) ??
+    parentItem.instance.children
+  ).findIndex(
     (child) => child.type === "id" && child.value === selectedItem.instance.id
   );
 };
@@ -67,7 +74,8 @@ const getInstancePathSiblingIndex = (instancePath: InstancePath) => {
 export const sortInstancePathsForChildMutation = <
   Item extends { instancePath: InstancePath },
 >(
-  items: Item[]
+  items: Item[],
+  getInstanceChildren?: GetInstanceChildren
 ) =>
   [...items].sort((left, right) => {
     const depthDiff = right.instancePath.length - left.instancePath.length;
@@ -75,8 +83,8 @@ export const sortInstancePathsForChildMutation = <
       return depthDiff;
     }
     return (
-      getInstancePathSiblingIndex(right.instancePath) -
-      getInstancePathSiblingIndex(left.instancePath)
+      getInstancePathSiblingIndex(right.instancePath, getInstanceChildren) -
+      getInstancePathSiblingIndex(left.instancePath, getInstanceChildren)
     );
   });
 
@@ -212,11 +220,10 @@ export const canDropInstanceSelector = ({
   contentMode?: boolean;
 }) => {
   if (contentMode) {
-    const parentInstance = instances.get(dropSelector[0]);
-    if (parentInstance?.component !== blockComponent) {
-      return false;
-    }
-    if (dropSelector[0] !== dragSelector[1]) {
+    if (
+      findBlockSelector({ anchor: dragSelector, instances }) === undefined ||
+      findBlockSelector({ anchor: dropSelector, instances }) === undefined
+    ) {
       return false;
     }
   }

@@ -17,6 +17,7 @@ import {
 import {
   $runtimeInstances as $instances,
   $runtimeProps as $props,
+  getRuntimeInstanceChildren,
 } from "~/shared/content-block-content";
 import {
   CLEAR_FORMAT_COMMAND,
@@ -92,6 +93,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           props: $props.get(),
           metas: $registeredComponentMetas.get(),
           htmlTagsByInstanceId: $propsIndex.get().htmlTagsByInstanceId,
+          getInstanceChildren: getRuntimeInstanceChildren,
         });
 
         if (editableInstanceSelector === undefined) {

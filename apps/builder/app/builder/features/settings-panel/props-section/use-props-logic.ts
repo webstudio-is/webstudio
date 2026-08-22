@@ -27,9 +27,11 @@ import {
   $isContentMode,
   $registeredComponentMetas,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
-import { $props } from "~/shared/sync/data-stores";
-import { $styleSources } from "~/shared/sync/data-stores";
+import {
+  $runtimeInstances,
+  $runtimeProps,
+  $runtimeStyleSources,
+} from "~/shared/content-block-content";
 import { $selectedInstancePath } from "~/shared/nano-states";
 import {
   $selectedInstanceInitialPropNames,
@@ -155,9 +157,9 @@ export const usePropsLogic = ({
 }: UsePropsLogicInput) => {
   const isContentMode = useStore($isContentMode);
   const propsMetas = useStore($selectedInstancePropsMetas);
-  const instances = useStore($instances);
-  const allProps = useStore($props);
-  const styleSources = useStore($styleSources);
+  const instances = useStore($runtimeInstances);
+  const allProps = useStore($runtimeProps);
+  const styleSources = useStore($runtimeStyleSources);
   const metas = useStore($registeredComponentMetas);
   const selectedInstancePath = useStore($selectedInstancePath);
   const contentModeCapabilities = isContentMode

@@ -1,41 +1,23 @@
 import {
-  parseMdxDocument,
-  serializeMdxDocument,
-  type MdxDocument,
-} from "@webstudio-is/content-engine/mdx";
-import {
   blockComponent,
   blockTemplateComponent,
   contentBlockSourceProp,
+  isEqualContentBlockSource,
   parseContentBlockSourceProp,
   type ContentBlockDiagnostic,
   type ContentBlockSource,
   type Instance,
   type Prop,
-  type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import type { BuilderPatchChange } from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
-import { getRequiredComponentInsertData, insertFragment } from "./components";
+import { insertFragment } from "./components";
 import type { BuilderRuntimeContext } from "./context";
-import { extractWebstudioFragment, mergeWebstudioFragments } from "./fragment";
 import { createInstanceDeletePayload } from "./instances";
-import {
-  materializeMdxAuthoredContent,
-  reconcileMdxAuthoredContent,
-} from "./mdx-authored-content";
 import type {
   MdxAssetEditingSessionState,
   MdxAssetSourceController,
 } from "./mdx-asset-session";
-import type { MdxTemplateMaterialization } from "./mdx-materialization";
-import type { PendingMdxContentStorageWrite } from "./mdx-storage-adapter";
-
-export type ContentBlockSourceAuthority =
-  | "use-file-content"
-  | "replace-file-body-with-block-content";
-
-export class ContentBlockSourceAuthorityRequiredError extends Error {}
 
 type LifecycleSession = MdxAssetSourceController &
   Readonly<{
@@ -55,17 +37,24 @@ export type PreparedContentBlockSourceLifecycle = Readonly<{
   status: "prepared";
   action: "connect" | "switch" | "disconnect";
   projectPayload: readonly BuilderPatchChange[];
-  storageWrites: readonly PendingMdxContentStorageWrite[];
   diagnostics: readonly ContentBlockDiagnostic[];
   sourceState?: MdxAssetEditingSessionState;
-  persistenceOrder: "none" | "storage-before-project";
+  requiresConfirmation: boolean;
 }>;
 
-const emptyTemplateMaterialization: MdxTemplateMaterialization = {
-  templates: [],
-  diagnostics: [],
-  dependencies: { templateNames: [], templates: [] },
-};
+export class ContentBlockSourceRevisionConflictError extends Error {
+  readonly state: Extract<
+    MdxAssetEditingSessionState,
+    { status: "conflicting" }
+  >;
+
+  constructor(
+    state: Extract<MdxAssetEditingSessionState, { status: "conflicting" }>
+  ) {
+    super("The MDX Asset changed after it was loaded");
+    this.state = state;
+  }
+}
 
 const mergePayload = (
   ...payloads: readonly (readonly BuilderPatchChange[])[]
@@ -150,21 +139,6 @@ const toSourceProp = ({
         value: source.value,
       };
 
-const isSameSource = (
-  left: ContentBlockSource | undefined,
-  right: ContentBlockSource
-) => {
-  if (left?.type !== right.type) {
-    return false;
-  }
-  if (left.type === "asset" && right.type === "asset") {
-    return left.assetId === right.assetId;
-  }
-  return left.type === "expression" && right.type === "expression"
-    ? left.value === right.value
-    : false;
-};
-
 const createSourcePayload = ({
   state,
   blockInstanceId,
@@ -210,50 +184,6 @@ const createSourcePayload = ({
       ],
     },
   ];
-};
-
-const extractBlockBodyFragment = ({
-  state,
-  bodyChildren,
-}: {
-  state: BuilderState;
-  bodyChildren: Instance["children"];
-}): WebstudioFragment => {
-  const data = getRequiredComponentInsertData(state);
-  const rootIds = bodyChildren.flatMap((child) =>
-    child.type === "id" ? [child.value] : []
-  );
-  const fragment = mergeWebstudioFragments(
-    rootIds,
-    rootIds.map((rootId) => extractWebstudioFragment(data, rootId))
-  );
-  return { ...fragment, children: structuredClone(bodyChildren) };
-};
-
-const serializeBlockBody = ({
-  state,
-  bodyChildren,
-  target,
-}: {
-  state: BuilderState;
-  bodyChildren: Instance["children"];
-  target: Extract<MdxAssetEditingSessionState, { status: "saved" }>;
-}) => {
-  const emptyDocument: MdxDocument = {
-    frontmatter: target.root.document.frontmatter,
-    children: [],
-  };
-  const emptyRoot = materializeMdxAuthoredContent({
-    identity: target.identity,
-    document: emptyDocument,
-    templateMaterialization: emptyTemplateMaterialization,
-  });
-  return serializeMdxDocument(
-    reconcileMdxAuthoredContent({
-      root: emptyRoot,
-      fragment: extractBlockBodyFragment({ state, bodyChildren }),
-    })
-  );
 };
 
 const createRemoveBodyPayload = ({
@@ -302,6 +232,26 @@ const createRemoveBodyPayload = ({
   ]);
 };
 
+export const createContentBlockBodyRemoval = ({
+  state,
+  blockInstanceId,
+}: {
+  state: BuilderState;
+  blockInstanceId: string;
+}) => {
+  const block = getBlock(state, blockInstanceId);
+  const { templateChild, bodyChildren } = getBlockParts(state, block);
+  return {
+    hasBody: bodyChildren.length > 0,
+    payload: createRemoveBodyPayload({
+      state,
+      block,
+      bodyChildren,
+      templateChild,
+    }),
+  };
+};
+
 const requireSaved = (
   state: MdxAssetEditingSessionState
 ): Extract<MdxAssetEditingSessionState, { status: "saved" }> => {
@@ -338,74 +288,6 @@ const assertLoadedSource = ({
   }
 };
 
-const getSavedSession = (session: LifecycleSession, key: string) => {
-  const current = session.get(key);
-  if (current === undefined) {
-    throw new Error("MDX Asset editing session does not exist");
-  }
-  return requireSaved(current);
-};
-
-const getAuthority = ({
-  blockHasBody,
-  fileHasBody,
-  authority,
-}: {
-  blockHasBody: boolean;
-  fileHasBody: boolean;
-  authority?: ContentBlockSourceAuthority;
-}) => {
-  if (
-    authority !== undefined &&
-    authority !== "use-file-content" &&
-    authority !== "replace-file-body-with-block-content"
-  ) {
-    throw new Error("Content authority is invalid");
-  }
-  if (blockHasBody && fileHasBody && authority === undefined) {
-    throw new ContentBlockSourceAuthorityRequiredError(
-      "Connecting non-empty content requires an explicit content authority"
-    );
-  }
-  return (
-    authority ??
-    (fileHasBody ? "use-file-content" : "replace-file-body-with-block-content")
-  );
-};
-
-const prepareReplacement = async ({
-  session,
-  target,
-  source,
-}: {
-  session: LifecycleSession;
-  target: Extract<MdxAssetEditingSessionState, { status: "saved" }>;
-  source: string;
-}) => {
-  if (source === target.source) {
-    return {
-      changesSource: false,
-      source,
-    };
-  }
-  const prepared = await session.prepareSourceReplacement({
-    key: target.key,
-    expectedSource: target.source,
-    source,
-  });
-  if (prepared.status === "blocked") {
-    throw new Error(`MDX Asset replacement is blocked: ${prepared.reason}`);
-  }
-  const preflight = prepared.canApply();
-  if (preflight.status === "blocked") {
-    throw new Error(`MDX Asset replacement is blocked: ${preflight.reason}`);
-  }
-  return {
-    changesSource: true,
-    source,
-  };
-};
-
 const createNoopResult = ({
   action,
   sourceState,
@@ -416,10 +298,9 @@ const createNoopResult = ({
   status: "prepared",
   action,
   projectPayload: [],
-  storageWrites: [],
   diagnostics: sourceState?.diagnostics ?? [],
   sourceState,
-  persistenceOrder: "none",
+  requiresConfirmation: false,
 });
 
 export const prepareContentBlockConnect = async ({
@@ -428,7 +309,6 @@ export const prepareContentBlockConnect = async ({
   source,
   renderScope,
   projectId,
-  authority,
   variables,
   session,
   context,
@@ -438,16 +318,15 @@ export const prepareContentBlockConnect = async ({
   source: ContentBlockSource;
   renderScope: string;
   projectId: string;
-  authority?: ContentBlockSourceAuthority;
   variables?: Readonly<Record<string, unknown>>;
   session: LifecycleSession;
   context: BuilderRuntimeContext;
 }): Promise<PreparedContentBlockSourceLifecycle> => {
-  const block = getBlock(state, blockInstanceId);
+  getBlock(state, blockInstanceId);
   const existingSource = getSourceProp(state, blockInstanceId);
   if (existingSource !== undefined) {
     const parsed = parseContentBlockSourceProp(existingSource);
-    if (isSameSource(parsed, source) === false) {
+    if (isEqualContentBlockSource(parsed, source) === false) {
       throw new Error("Content Block is already connected; use switch instead");
     }
     const sourceState = requireUsable(
@@ -460,6 +339,17 @@ export const prepareContentBlockConnect = async ({
         variables,
       })
     );
+    const removal = createContentBlockBodyRemoval({ state, blockInstanceId });
+    if (removal.hasBody && sourceState.status === "saved") {
+      return {
+        status: "prepared",
+        action: "connect",
+        projectPayload: removal.payload,
+        diagnostics: sourceState.diagnostics,
+        sourceState,
+        requiresConfirmation: false,
+      };
+    }
     return createNoopResult({
       action: "connect",
       sourceState,
@@ -475,19 +365,9 @@ export const prepareContentBlockConnect = async ({
       variables,
     })
   );
-  const { templateChild, bodyChildren } = getBlockParts(state, block);
-  const selectedAuthority = getAuthority({
-    blockHasBody: bodyChildren.length > 0,
-    fileHasBody: target.root.document.children.length > 0,
-    authority,
-  });
+  const removal = createContentBlockBodyRemoval({ state, blockInstanceId });
   const projectPayload = mergePayload(
-    createRemoveBodyPayload({
-      state,
-      block,
-      bodyChildren,
-      templateChild,
-    }),
+    removal.payload,
     createSourcePayload({
       state,
       blockInstanceId,
@@ -495,33 +375,13 @@ export const prepareContentBlockConnect = async ({
       createId: context.createId,
     })
   );
-  const replacement =
-    selectedAuthority === "replace-file-body-with-block-content"
-      ? await prepareReplacement({
-          session,
-          target,
-          source: serializeBlockBody({ state, bodyChildren, target }),
-        })
-      : undefined;
-  const storageWrites =
-    replacement?.changesSource === true
-      ? [
-          {
-            root: { type: "external" as const, identity: target.identity },
-            expectedRevision: target.identity.revision,
-            source: replacement.source,
-          },
-        ]
-      : [];
   return {
     status: "prepared",
     action: "connect",
     projectPayload,
-    storageWrites,
     diagnostics: target.diagnostics,
     sourceState: target,
-    persistenceOrder:
-      storageWrites.length === 1 ? "storage-before-project" : "none",
+    requiresConfirmation: removal.hasBody,
   };
 };
 
@@ -530,6 +390,8 @@ export const prepareContentBlockDisconnect = async ({
   blockInstanceId,
   currentSessionKey,
   renderScope,
+  projectId,
+  variables,
   session,
   context,
 }: {
@@ -537,6 +399,8 @@ export const prepareContentBlockDisconnect = async ({
   blockInstanceId: string;
   currentSessionKey?: string;
   renderScope: string;
+  projectId: string;
+  variables?: Readonly<Record<string, unknown>>;
   session: LifecycleSession;
   context: BuilderRuntimeContext;
 }): Promise<PreparedContentBlockSourceLifecycle> => {
@@ -548,17 +412,18 @@ export const prepareContentBlockDisconnect = async ({
   if (currentSessionKey === undefined) {
     throw new Error("Disconnect requires the loaded MDX Asset session key");
   }
-  const loaded = session.get(currentSessionKey);
-  if (loaded === undefined) {
+  const existing = session.get(currentSessionKey);
+  if (existing === undefined) {
     throw new Error("MDX Asset editing session does not exist");
   }
-  const usable = requireUsable(loaded);
+  const usable = requireUsable(existing);
   if (usable.identity.blockInstanceId !== blockInstanceId) {
     throw new Error("Loaded MDX Asset does not belong to this Content Block");
   }
+  const source = parseContentBlockSourceProp(sourceProp);
   assertLoadedSource({
     state: usable,
-    source: parseContentBlockSourceProp(sourceProp),
+    source,
     renderScope,
   });
   if (getBlockParts(state, block).bodyChildren.length > 0) {
@@ -566,7 +431,23 @@ export const prepareContentBlockDisconnect = async ({
       "Source-backed Content Block contains persisted body content"
     );
   }
-  const current = getSavedSession(session, currentSessionKey);
+  if (source === undefined) {
+    throw new Error("Content Block source prop is invalid");
+  }
+  const loaded = requireSaved(usable);
+  const refreshed = await session.open({
+    blockInstanceId,
+    source,
+    renderScope,
+    expectedRevision: loaded.identity.revision,
+    state,
+    projectId,
+    variables,
+  });
+  if (refreshed.status === "conflicting") {
+    throw new ContentBlockSourceRevisionConflictError(refreshed);
+  }
+  const current = requireSaved(refreshed);
   const insertion = insertFragment(
     state,
     {
@@ -589,10 +470,9 @@ export const prepareContentBlockDisconnect = async ({
     status: "prepared",
     action: "disconnect",
     projectPayload,
-    storageWrites: [],
     diagnostics: current.diagnostics,
     sourceState: current,
-    persistenceOrder: "none",
+    requiresConfirmation: true,
   };
 };
 
@@ -603,7 +483,6 @@ export const prepareContentBlockSwitch = async ({
   source,
   renderScope,
   projectId,
-  authority,
   variables,
   session,
   context,
@@ -614,7 +493,6 @@ export const prepareContentBlockSwitch = async ({
   source: ContentBlockSource;
   renderScope: string;
   projectId: string;
-  authority?: ContentBlockSourceAuthority;
   variables?: Readonly<Record<string, unknown>>;
   session: LifecycleSession;
   context: BuilderRuntimeContext;
@@ -638,11 +516,10 @@ export const prepareContentBlockSwitch = async ({
     source: existingSource,
     renderScope,
   });
-  if (isSameSource(existingSource, source)) {
-    const previous = getSavedSession(session, currentSessionKey);
+  if (isEqualContentBlockSource(existingSource, source)) {
     return createNoopResult({
       action: "switch",
-      sourceState: previous,
+      sourceState: usablePrevious,
     });
   }
   const loadedTarget = requireUsable(
@@ -666,56 +543,25 @@ export const prepareContentBlockSwitch = async ({
         source,
         createId: context.createId,
       }),
-      storageWrites: [],
       diagnostics: usablePrevious.diagnostics,
       sourceState: usablePrevious,
-      persistenceOrder: "none",
+      requiresConfirmation: false,
     };
   }
-  const selectedAuthority = getAuthority({
-    blockHasBody: usablePrevious.root.document.children.length > 0,
-    fileHasBody: loadedTarget.root.document.children.length > 0,
-    authority,
-  });
-  const savedTarget = requireSaved(loadedTarget);
-  const previous = getSavedSession(session, currentSessionKey);
-  const target = savedTarget;
-  const replacement =
-    selectedAuthority === "replace-file-body-with-block-content"
-      ? await prepareReplacement({
-          session,
-          target,
-          source: serializeMdxDocument({
-            ...target.root.document,
-            children: (await parseMdxDocument({ source: previous.source }))
-              .children,
-          }),
-        })
-      : undefined;
+  requireSaved(usablePrevious);
+  const target = requireSaved(loadedTarget);
   const projectPayload = createSourcePayload({
     state,
     blockInstanceId,
     source,
     createId: context.createId,
   });
-  const storageWrites =
-    replacement?.changesSource === true
-      ? [
-          {
-            root: { type: "external" as const, identity: target.identity },
-            expectedRevision: target.identity.revision,
-            source: replacement.source,
-          },
-        ]
-      : [];
   return {
     status: "prepared",
     action: "switch",
     projectPayload,
-    storageWrites,
     diagnostics: target.diagnostics,
     sourceState: target,
-    persistenceOrder:
-      storageWrites.length === 1 ? "storage-before-project" : "none",
+    requiresConfirmation: false,
   };
 };

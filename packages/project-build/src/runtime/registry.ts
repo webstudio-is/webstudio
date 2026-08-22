@@ -491,15 +491,7 @@ const contentBlockLifecycleBaseInput = contentBlockSourceInspectionInput
   });
 const contentBlockSourceChangeInput = contentBlockLifecycleBaseInput.extend({
   source: contentBlockSource,
-  authority: z
-    .enum(["use-file-content", "replace-file-body-with-block-content"])
-    .optional(),
 });
-const contentBlockRecoveryInput = contentBlockSourceInspectionInput
-  .omit({ load: true, variables: true })
-  .extend({
-    action: z.enum(["retry", "reload-remote", "copy-unsaved-mdx"]),
-  });
 const contentBlockTemplateMigrationInput = z.object({
   templateInstanceId: z.string().min(1),
   migration: z.discriminatedUnion("type", [
@@ -546,7 +538,6 @@ const executeContentBlockLifecycleApplication = async ({
   action: "connect" | "switch" | "disconnect";
   input: z.infer<typeof contentBlockLifecycleBaseInput> & {
     source?: z.infer<typeof contentBlockSource>;
-    authority?: "use-file-content" | "replace-file-body-with-block-content";
   };
   context: BuilderRuntimeContext;
 }) => {
@@ -605,7 +596,6 @@ const executeContentBlockLifecycleApplication = async ({
         ? undefined
         : {
             ...result.result,
-            storageWrites: [...result.result.storageWrites],
             diagnostics: [...result.result.diagnostics],
           },
     confirmation:
@@ -679,51 +669,6 @@ export const builderRuntimeOperations = [
         input,
         context,
       })
-  ),
-  runtimeOperation(
-    "contentBlocks.recoverSource",
-    api("recover-content-block-source", "recoverContentBlockSource", "edit"),
-    contentBlockApplicationContract,
-    contentBlockRecoveryInput,
-    async ({ input, context }) => {
-      const application = context.contentStorageApplication;
-      if (application === undefined) {
-        return throwBuilderRuntimeError(
-          "CONFLICT",
-          "Content Block source recovery requires an Asset editing session"
-        );
-      }
-      const recover = application.recover;
-      const inspectSource = application.inspectSource;
-      if (recover === undefined || inspectSource === undefined) {
-        return throwBuilderRuntimeError(
-          "CONFLICT",
-          "Content Block source recovery requires recovery and inspection capabilities"
-        );
-      }
-      const result = await recover({
-        ...input,
-        dryRun: context.applicationDryRun === true,
-      });
-      const inspection =
-        result.result?.inspection ??
-        (await inspectSource({
-          blockInstanceId: input.blockInstanceId,
-          renderScope: input.renderScope,
-          load: false,
-        }));
-      return {
-        status: result.status,
-        code: "code" in result ? result.code : undefined,
-        message: "message" in result ? result.message : undefined,
-        source: serializeContentBlockInspection(inspection),
-        localMdx:
-          result.result !== undefined && "source" in result.result
-            ? result.result.source
-            : undefined,
-        changedAsset: result.result?.changedAsset ?? false,
-      };
-    }
   ),
   runtimeOperation(
     "contentBlocks.migrateTemplateReferences",
@@ -1301,7 +1246,17 @@ export const builderRuntimeOperations = [
     }),
     runtimeUi.integrateRuntimeUiInput,
     ({ state, input, context }) =>
-      runtimeUi.integrateRuntimeUi(state, input, context)
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target: {
+          type: "children",
+          parentInstanceId: input.parentInstanceId,
+        },
+        execute: (mutationState) =>
+          runtimeUi.integrateRuntimeUi(mutationState, input, context),
+      })
   ),
   runtimeOperation(
     "instances.insertComponent",
@@ -1411,8 +1366,9 @@ export const builderRuntimeOperations = [
       const childIndex =
         input.mode === "replace" || input.mode === "prepend"
           ? 0
-          : (input.insertIndex ??
-            Math.max(0, parent.children.length - protectedChildCount));
+          : input.insertIndex === undefined
+            ? Math.max(0, parent.children.length - protectedChildCount)
+            : input.insertIndex;
       const mutation = await mdxPaste.insertMdxText({
         state: projection.state,
         input,
@@ -1481,7 +1437,21 @@ export const builderRuntimeOperations = [
       writeNamespaces: ["instances"],
     }),
     slot.attachSharedSlotInput,
-    ({ state, input, context }) => slot.attachSharedSlot(state, input, context)
+    ({ state, input, context }) =>
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        source: { type: "instance", instanceId: input.sourceSlotId },
+        target: {
+          type: "children",
+          parentInstanceId: input.parentInstanceId,
+        },
+        crossRootError:
+          "Attaching a Slot across authored storage roots is not supported.",
+        execute: (mutationState) =>
+          slot.attachSharedSlot(mutationState, input, context),
+      })
   ),
   runtimeOperation(
     "slots.extract",
@@ -1491,7 +1461,18 @@ export const builderRuntimeOperations = [
       writeNamespaces: ["instances"],
     }),
     slot.extractSharedSlotInput,
-    ({ state, input, context }) => slot.extractSharedSlot(state, input, context)
+    ({ state, input, context }) =>
+      executeContentStorageMutation({
+        state,
+        materializedRoots: context.materializedContent,
+        returnStorageChanges: context.returnStorageChanges,
+        target: {
+          type: "instance",
+          instanceId: input.instanceSelector[0],
+        },
+        execute: (mutationState) =>
+          slot.extractSharedSlot(mutationState, input, context),
+      })
   ),
   runtimeOperation(
     "instances.move",
