@@ -74,7 +74,11 @@ const getPathnameVariants = (pathname: string) => {
   return Array.from(new Set([pathname, decodePathname(pathname)]));
 };
 
-const preserveRequestSearch = (target: string, search: string) => {
+const preserveRequestSearch = (
+  target: string,
+  search: string,
+  requestPathname: string
+) => {
   if (search === "") {
     return target;
   }
@@ -92,7 +96,11 @@ const preserveRequestSearch = (target: string, search: string) => {
   if (path.search !== undefined && path.search !== "") {
     return target;
   }
-  return createPath({ ...path, search });
+  return createPath({
+    ...path,
+    pathname: path.pathname ?? requestPathname,
+    search,
+  });
 };
 
 const isOptionalSegmentMarker = (source: string, index: number) => {
@@ -153,7 +161,8 @@ export const matchRedirect = (
         return {
           url: preserveRequestSearch(
             generateRedirectUrl(redirect.new, {}),
-            url.search
+            url.search,
+            url.pathname
           ),
           status: getRedirectStatus(redirect.status),
         };
@@ -176,7 +185,8 @@ export const matchRedirect = (
     return {
       url: preserveRequestSearch(
         generateRedirectUrl(redirect.new, match.params),
-        url.search
+        url.search,
+        url.pathname
       ),
       status: getRedirectStatus(redirect.status),
     };

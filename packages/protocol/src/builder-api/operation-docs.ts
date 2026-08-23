@@ -822,7 +822,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "upload-assets",
     description:
-      "Upload local asset files from descriptors, optionally into Asset Manager folders; returns uploaded and failed files separately so failed files can be retried",
+      "Upload local asset files from descriptors, optionally into Asset Manager folders; returns uploaded, retryable failures, and commit-ambiguous forced uploads separately so only safe retries are suggested",
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio upload-assets --input assets.json --assets-dir .webstudio/assets --json",

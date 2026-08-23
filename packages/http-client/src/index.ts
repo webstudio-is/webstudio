@@ -367,10 +367,19 @@ type AssetUploadDescriptor = {
 type UploadedAsset = Asset & { deduplicated?: boolean };
 type AssetUploadBatchResult =
   | { status: "fulfilled"; uploadedAssets: UploadedAsset[] }
-  | { status: "rejected"; asset: Asset; error: unknown };
+  | { status: "rejected"; asset: Asset; index: number; error: unknown }
+  | { status: "ambiguous"; asset: Asset; index: number; error: unknown };
 
 const formatError = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
+
+const getErrorStatus = (error: unknown) =>
+  typeof error === "object" &&
+  error !== null &&
+  "status" in error &&
+  typeof error.status === "number"
+    ? error.status
+    : undefined;
 
 const retryOnce = async <Result>(task: () => Promise<Result>) => {
   try {
@@ -481,7 +490,7 @@ const uploadAssetsSettled = async (
               : await getBinaryAssetDataHash(data),
         };
       } catch (error) {
-        results[index] = { status: "rejected", asset, error };
+        results[index] = { status: "rejected", asset, index, error };
       }
     })
   );
@@ -498,7 +507,7 @@ const uploadAssetsSettled = async (
     Array.from(groups.values(), async (uploads) => {
       for (const { asset, data, force, index } of uploads) {
         try {
-          const uploadedAssets = await retryOnce(async () => {
+          const upload = async () => {
             return await uploadAsset({
               authToken: params.authToken,
               headers: params.headers,
@@ -510,10 +519,21 @@ const uploadAssetsSettled = async (
                 force,
               },
             });
-          });
+          };
+          const uploadedAssets =
+            force === true ? await upload() : await retryOnce(upload);
           results[index] = { status: "fulfilled", uploadedAssets };
         } catch (error) {
-          results[index] = { status: "rejected", asset, error };
+          const status = getErrorStatus(error);
+          results[index] = {
+            status:
+              force === true && (status === undefined || status >= 500)
+                ? "ambiguous"
+                : "rejected",
+            asset,
+            index,
+            error,
+          };
         }
       }
     })
@@ -530,6 +550,16 @@ export const uploadAssets = async (
   }
 ): Promise<UploadedAsset[]> => {
   const results = await uploadAssetsSettled(params);
+  const ambiguous = results.flatMap((result) =>
+    result.status === "ambiguous" ? [result] : []
+  );
+  if (ambiguous.length > 0) {
+    throw new Error(
+      `Forced asset upload may already be committed: ${ambiguous
+        .map(({ asset, error }) => `${asset.name}: ${formatError(error)}`)
+        .join("; ")}. Inspect the Assets list before retrying.`
+    );
+  }
   const failed = results.flatMap((result) =>
     result.status === "rejected"
       ? [{ asset: result.asset, error: result.error }]
@@ -654,7 +684,24 @@ export const uploadProjectAssets = async (
     ),
     failed: results.flatMap((result) =>
       result.status === "rejected"
-        ? [{ name: result.asset.name, error: formatError(result.error) }]
+        ? [
+            {
+              index: result.index,
+              name: result.asset.name,
+              error: formatError(result.error),
+            },
+          ]
+        : []
+    ),
+    ambiguous: results.flatMap((result) =>
+      result.status === "ambiguous"
+        ? [
+            {
+              index: result.index,
+              name: result.asset.name,
+              error: formatError(result.error),
+            },
+          ]
         : []
     ),
   };

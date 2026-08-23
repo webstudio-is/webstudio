@@ -621,10 +621,17 @@ const isAmbiguousCommitError = (error: unknown) => {
       return true;
     }
     if (
-      "status" in current &&
-      typeof current.status === "number" &&
-      current.status >= 500 &&
-      current.status <= 599
+      ("status" in current &&
+        typeof current.status === "number" &&
+        current.status >= 500 &&
+        current.status <= 599) ||
+      ("data" in current &&
+        typeof current.data === "object" &&
+        current.data !== null &&
+        "httpStatus" in current.data &&
+        typeof current.data.httpStatus === "number" &&
+        current.data.httpStatus >= 500 &&
+        current.data.httpStatus <= 599)
     ) {
       return true;
     }
@@ -648,9 +655,7 @@ const createCommitConfirmationError = ({
       { cause: confirmationError }
     ),
     {
-      code: isVersionConflictError(commitError)
-        ? "CONFLICT"
-        : "AMBIGUOUS_COMMIT",
+      code: "AMBIGUOUS_COMMIT",
       confirmationFailure: {
         code: getProjectSessionErrorCode(confirmationError),
         message:
@@ -685,7 +690,10 @@ const commitWithConfirmation = async ({
         confirmedAfterRetry: true,
       };
     } catch (confirmationError) {
-      if (isVersionConflictError(confirmationError)) {
+      if (
+        isVersionConflictError(commitError) &&
+        isVersionConflictError(confirmationError)
+      ) {
         throw confirmationError;
       }
       throw createCommitConfirmationError({

@@ -261,7 +261,7 @@ export const createIssueReportFailure = (
       : getValidationIssues(error)
           ?.slice(0, 30)
           .map((issue) => ({
-            path: issue.path,
+            path: [],
             code: issue.code,
             constraint: issue.constraint,
           }));

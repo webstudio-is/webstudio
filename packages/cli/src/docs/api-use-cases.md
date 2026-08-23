@@ -145,10 +145,11 @@ Commands:
 
 Notes:
 
+- Enter this workflow only when the user explicitly requests visual verification or opts in after being asked. Do not start preview, screenshots, diffs, OCR, or rendered audits automatically after a mutation.
 - `preview.status` reports whether generated output is `stale`. When no preview is running, `url`, `pid`, and `mode` are omitted. When present, `renderedProjectVersion` is the last project version materialized into the preview.
 - A managed `screenshot` or another `preview.start` refreshes stale generated output before capture.
 
-- Use this after page/content/style mutations so a vision-capable AI can see the generated site from the current MCP session. Use `path`; never pass a Webstudio Builder/share URL or capture Builder chrome.
+- After opt-in, use this so a vision-capable AI can see the generated site from the current MCP session. Use `path`; never pass a Webstudio Builder/share URL or capture Builder chrome.
 - For multi-page work, capture every changed page by `path` through the same preview server; no click navigation is required.
 - Iterative mode is the default: after MCP mutations, path screenshots ensure generated project files are current, wait for the exact session version, and perform an ordinary page reload without Vite HMR. The preview server and browser stay alive. Use `{"mode":"production"}` only for release-like verification; rendered audit does this automatically.
 - Calling `preview.start` after a committed mutation restarts a stale iterative server so external browsers and HTTP clients receive the newly generated project.
@@ -903,7 +904,10 @@ Commands:
 
 Notes:
 
-- Multi-file uploads return `uploaded` and `failed` lists. Retry only the files in `failed`; successful uploads remain committed.
+- Multi-file uploads return `uploaded`, `failed`, and `ambiguous` lists with the
+  original input index. Retry only `failed` files. A forced upload in
+  `ambiguous` may already be committed; inspect the Assets list before deciding
+  whether to upload it again. Successful uploads remain committed.
 
 ## Duplicate asset
 
@@ -1239,7 +1243,7 @@ Commands:
 - MCP tool: define-css-variable {"vars":"vars.json contents"}
 - MCP tool: list-breakpoints {}
 - MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag='section'><ws.element ws:tag='p'>Section copy</ws.element></ws.element>"}
-- MCP tool: update-styles {"updates":[{"instanceId":"<instanceId>","breakpointId":"<breakpointId-from-list-breakpoints>","property":"padding-left","value":{"type":"unit","unit":"px","value":24}}]}
+- MCP tool: update-styles {"updates":[{"instanceId":"<instanceId>","breakpoint":"<breakpointId-from-list-breakpoints>","property":"padding-left","value":{"type":"unit","unit":"px","value":24}}]}
 - MCP tool: preview.start {"host":"127.0.0.1","port":5173}
 - MCP tool: screenshot {"path":"/landing","output":"landing-desktop.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 - MCP tool: screenshot {"path":"/landing","output":"landing-mobile.png","viewport":{"width":390,"height":844},"waitUntil":"load","waitForTimeout":250}
@@ -1252,8 +1256,10 @@ Notes:
 - Inspect and reuse existing variables, tokens, styles, components, assets, and
   page patterns before authoring. Build semantic editable structure rather than
   flattening the design into an image or absolute-positioned approximation.
-- Verify one familiar viewport inside every distinct Builder breakpoint range,
-  then run rendered audit and inspect the screenshots before completion.
+- Ask whether the user wants visual verification unless they explicitly requested
+  it. If they decline, stop after focused reads and a static audit. If they opt
+  in, verify one familiar viewport inside every distinct Builder breakpoint
+  range, then run rendered audit and inspect the screenshots before completion.
 
 ## Cross-project maintenance
 

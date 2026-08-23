@@ -185,11 +185,7 @@ const isLabelableFormControl = ({
   if (typeof type !== "string") {
     return true;
   }
-  return (
-    ["hidden", "button", "submit", "reset", "image"].includes(
-      type.toLocaleLowerCase()
-    ) === false
-  );
+  return type.toLocaleLowerCase() !== "hidden";
 };
 
 const requiresFormLabel = ({
@@ -200,10 +196,23 @@ const requiresFormLabel = ({
   component: string;
   tag?: string;
   props: ReadonlyMap<string, unknown> | undefined;
-}) =>
-  component !== "Button" &&
-  tag !== "button" &&
-  isLabelableFormControl({ component, tag, props });
+}) => {
+  if (
+    component === "Button" ||
+    tag === "button" ||
+    isLabelableFormControl({ component, tag, props }) === false
+  ) {
+    return false;
+  }
+  const type = props?.get("type");
+  return (
+    (component !== "Input" && tag !== "input") ||
+    typeof type !== "string" ||
+    ["button", "submit", "reset", "image"].includes(
+      type.toLocaleLowerCase()
+    ) === false
+  );
+};
 
 const createParentIdsByInstance = (
   instances: NonNullable<BuilderState["instances"]>

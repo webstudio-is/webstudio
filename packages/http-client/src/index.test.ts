@@ -1529,7 +1529,11 @@ test("uploads project asset descriptors with local data readers", async () => {
       ],
       readAssetData: async () => new Uint8Array([1, 2, 3]),
     })
-  ).resolves.toEqual({ uploaded: [uploadedAsset], failed: [] });
+  ).resolves.toEqual({
+    uploaded: [uploadedAsset],
+    failed: [],
+    ambiguous: [],
+  });
 
   const calls = fetch.mock.calls as unknown as Array<[URL, RequestInit]>;
   expect(new URL(calls[0][0].toString()).searchParams.get("folderId")).toBe(
@@ -1592,7 +1596,101 @@ test("reports successful and failed project asset uploads separately", async () 
     })
   ).resolves.toEqual({
     uploaded: [uploadedAsset],
-    failed: [{ name: "failed.png", error: "Upload failed" }],
+    failed: [{ index: 1, name: "failed.png", error: "Upload failed" }],
+    ambiguous: [],
+  });
+});
+
+test("does not retry a forced upload after an ambiguous server failure", async () => {
+  const fetch = vi.fn(
+    async () => new Response("response failed after commit", { status: 504 })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    uploadProjectAssets({
+      ...apiParams,
+      assets: [
+        {
+          name: "hero.png",
+          type: "image",
+          format: "png",
+          meta: { width: 10, height: 20 },
+          force: true,
+        },
+      ],
+      readAssetData: async () => new Uint8Array([1, 2, 3]),
+    })
+  ).resolves.toEqual({
+    uploaded: [],
+    failed: [],
+    ambiguous: [
+      {
+        index: 0,
+        name: "hero.png",
+        error: expect.stringContaining("HTTP status: 504"),
+      },
+    ],
+  });
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test("warns before retrying one ambiguous forced upload", async () => {
+  const fetch = vi.fn(
+    async () => new Response("response failed after commit", { status: 504 })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    uploadProjectAsset({
+      ...apiParams,
+      asset: {
+        name: "hero.png",
+        type: "image",
+        format: "png",
+        meta: { width: 10, height: 20 },
+        force: true,
+      },
+      readAssetData: async () => new Uint8Array([1, 2, 3]),
+    })
+  ).rejects.toThrow("Forced asset upload may already be committed: hero.png:");
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test("identifies failed duplicate asset names by input index", async () => {
+  const uploadedAsset = createImageAssetFixture({ name: "duplicate.png" });
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (request: URL | RequestInfo) => {
+      if (new URL(request.toString()).searchParams.get("force") !== "true") {
+        return new Response(
+          JSON.stringify({
+            uploadedAssets: [uploadedAsset],
+            deduplicated: false,
+          }),
+          { headers: { "content-type": "application/json" } }
+        );
+      }
+      return new Response(JSON.stringify({ errors: "Upload failed" }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    })
+  );
+
+  await expect(
+    uploadProjectAssets({
+      ...apiParams,
+      assets: [
+        { name: "duplicate.png", type: "file", format: "txt" },
+        { name: "duplicate.png", type: "file", format: "txt", force: true },
+      ],
+      readAssetData: async (asset) => new Blob([asset.description ?? ""]),
+    })
+  ).resolves.toEqual({
+    uploaded: [uploadedAsset],
+    failed: [{ index: 1, name: "duplicate.png", error: "Upload failed" }],
+    ambiguous: [],
   });
 });
 

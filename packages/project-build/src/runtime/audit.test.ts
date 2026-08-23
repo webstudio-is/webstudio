@@ -1441,6 +1441,71 @@ describe("project audit and analysis", () => {
     );
   });
 
+  test("accepts a label that references a submit input", () => {
+    const instances = new Map<string, Instance>(state.instances);
+    instances.set("body", {
+      ...instances.get("body")!,
+      children: [
+        { type: "id", value: "submit-label" },
+        { type: "id", value: "submit-input" },
+      ],
+    });
+    instances.set("submit-label", {
+      type: "instance",
+      id: "submit-label",
+      component: "Label",
+      tag: "label",
+      children: [{ type: "text", value: "Send" }],
+    });
+    instances.set("submit-input", {
+      type: "instance",
+      id: "submit-input",
+      component: "Input",
+      tag: "input",
+      children: [],
+    });
+    const props = new Map(state.props);
+    props.set("submit-label-for", {
+      id: "submit-label-for",
+      instanceId: "submit-label",
+      name: "for",
+      type: "string",
+      value: "submit-control",
+    });
+    props.set("submit-input-id", {
+      id: "submit-input-id",
+      instanceId: "submit-input",
+      name: "id",
+      type: "string",
+      value: "submit-control",
+    });
+    props.set("submit-input-type", {
+      id: "submit-input-type",
+      instanceId: "submit-input",
+      name: "type",
+      type: "string",
+      value: "submit",
+    });
+
+    const matches = analyzeProject(
+      { ...state, instances, props },
+      { scopes: ["accessibility"], pageId: "home" }
+    ).matches;
+    expect(matches).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ instanceId: "submit-label" }),
+      ])
+    );
+    expect(matches).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          issue: "missing-form-label",
+          instanceId: "submit-input",
+        }),
+      ])
+    );
+  });
+
   test("audits deterministic keyboard, ARIA state, and autoplay media issues", () => {
     const instances = new Map<string, Instance>(state.instances);
     instances.set("positive-tabindex", {

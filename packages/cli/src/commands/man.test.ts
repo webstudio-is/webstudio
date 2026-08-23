@@ -478,7 +478,7 @@ test("prints llm manual as json with implementation process", () => {
     "Pass --json only to commands whose help/schema documents it. Do not add --json to top-level commands such as sync unless supported."
   );
   expect(output.rules).toContain(
-    "For visual/design work, verify the rendered result with vision before finishing."
+    "Never run visual verification automatically. Ask first unless the user explicitly requested screenshots, visual verification, or a rendered audit; if they do not opt in, use focused non-visual assertions."
   );
   expect(output.rules).toContain(
     "Use direct values for static strings and bindings only for dynamic expressions/resources/actions."
@@ -547,7 +547,7 @@ test("prints mcp manual as json", () => {
   expect(output.discovery).toContain("meta.index");
   expect(output.resources).toContain("webstudio://project/tools");
   expect(output.rules).toContain(
-    "For visual/design work, verify the rendered result with vision before finishing."
+    "Never run visual verification automatically. Ask first unless the user explicitly requested screenshots, visual verification, or a rendered audit; if they do not opt in, use focused non-visual assertions."
   );
   expect(output.visionVerificationLoop).toContain(
     getVisionVerificationLoop({ includeDiff: true })[1]

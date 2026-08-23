@@ -499,6 +499,12 @@ for (const {
         ],
         expected: { url: "/path?x=1", status: 301 },
       },
+      {
+        name: "hash-only target preserves the request path and query",
+        requestPath: "/old?x=1",
+        redirects: [{ old: "/old", new: "#top" }],
+        expected: { url: "/old?x=1#top", status: 301 },
+      },
     ];
 
     test.each(matchingCases)(

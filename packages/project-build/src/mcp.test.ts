@@ -556,9 +556,10 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
 
 const testMcpGuidance: ProjectSessionMcpGuidance = {
   visualVerificationRule:
-    "Verify rendered visual/design work before finishing.",
+    "Ask before visual verification unless the user explicitly requested it.",
   getVisionVerificationLoop: ({ includeDiff }) =>
     [
+      "Ask whether the user wants visual verification and stop until they opt in.",
       "Make focused changes.",
       "Start preview.",
       "Install dependencies if missing.",
@@ -2508,6 +2509,8 @@ describe("project session mcp adapter", () => {
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
       executeOperation,
+      startPreview: vi.fn(),
+      captureScreenshot: vi.fn(),
     });
 
     expect(adapter.listTools().map(({ name }) => name)).toContain(
@@ -2562,6 +2565,13 @@ describe("project session mcp adapter", () => {
         },
       },
     });
+    expect(result.structuredContent.meta.next).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          "Ask whether the user wants visual verification"
+        ),
+      ])
+    );
 
     const failingVerification = createExecuteOperation(async ({ command }) => {
       if (command === "verify-bindings") {
@@ -2777,6 +2787,34 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).not.toHaveBeenCalled();
   });
 
+  test("names breakpoint when rejecting the breakpointId style field", async () => {
+    const executeOperation = createExecuteOperation();
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "update-styles",
+        input: {
+          updates: [
+            {
+              instanceId: "body",
+              breakpointId: "mobile",
+              property: "display",
+              value: { type: "keyword", value: "block" },
+            },
+          ],
+        },
+      })
+    ).rejects.toThrow(
+      "update-styles input.updates[0].breakpointId is not supported. Use input.updates[0].breakpoint instead."
+    );
+    expect(executeOperation).not.toHaveBeenCalled();
+  });
+
   test("normalizes insert-component position alias to mode", async () => {
     const executeOperation = createExecuteOperation(async () =>
       createEnvelope({
@@ -2811,6 +2849,8 @@ describe("project session mcp adapter", () => {
       operations,
       createProjectSession: createSessionFactory(),
       executeOperation,
+      startPreview: vi.fn(),
+      captureScreenshot: vi.fn(),
     });
 
     const result = await adapter.callTool({
@@ -2835,6 +2875,9 @@ describe("project session mcp adapter", () => {
     expect(result.structuredContent.meta).toMatchObject({
       next: [
         expect.stringContaining("Run audit when the change is structural"),
+        expect.stringContaining(
+          "Ask whether the user wants visual verification"
+        ),
       ],
     });
   });
@@ -4155,6 +4198,9 @@ describe("project session mcp adapter", () => {
       })
     );
     const indexData = index.structuredContent.data as { readThisFirst: string };
+    expect(indexData.readThisFirst).toContain(
+      "Never start preview, screenshots, diffs, OCR, or rendered audits automatically"
+    );
     expect(indexData.readThisFirst).toEqual(
       expect.stringContaining("delegated or non-streaming agent")
     );
@@ -4715,6 +4761,33 @@ describe("project session mcp adapter", () => {
       name: "meta.guide",
       input: { brief: "Add a section that preserves this Craft project" },
     });
+    const expectConsentBeforeVisualVerification = (
+      guide: typeof markdownBlogGuide
+    ) => {
+      const workflow = (guide.structuredContent.data as { workflow: string[] })
+        .workflow;
+      const consentIndex = workflow.findIndex(
+        (step) =>
+          step.toLocaleLowerCase().includes("ask") &&
+          step.toLocaleLowerCase().includes("user wants visual verification")
+      );
+      const verificationIndex = workflow.findIndex((step) =>
+        workflow.some((candidate) =>
+          candidate.includes("verify-page-responsive")
+        )
+          ? step.includes("verify-page-responsive")
+          : step.includes("preview")
+      );
+      expect(consentIndex).toBeGreaterThanOrEqual(0);
+      expect(verificationIndex).toBeGreaterThanOrEqual(consentIndex);
+      expect(workflow[consentIndex]?.toLocaleLowerCase()).toContain(
+        "if they decline"
+      );
+    };
+    expectConsentBeforeVisualVerification(markdownBlogGuide);
+    expectConsentBeforeVisualVerification(expressionGuide);
+    expectConsentBeforeVisualVerification(authenticatedPageGuide);
+    expectConsentBeforeVisualVerification(designInputGuide);
     const authenticatedPageGuideTools = (
       authenticatedPageGuide.structuredContent.data as {
         tools: Array<Record<string, unknown>>;
@@ -4731,12 +4804,9 @@ describe("project session mcp adapter", () => {
       }
     ).tools;
     expect(
-      designInputGuideTools.every((tool) => {
-        const keys = Object.keys(tool).join(",");
-        return tool.name === "update-styles"
-          ? keys === "name,inputSchema"
-          : keys === "name";
-      })
+      designInputGuideTools.every(
+        (tool) => Object.keys(tool).join(",") === "name"
+      )
     ).toBe(true);
     const getComponentToolNames = (
       getComponentDetails.structuredContent.data as {
@@ -4947,7 +5017,9 @@ describe("project session mcp adapter", () => {
             "Do not bind that server-only resource into local preview rendering"
           ),
           expect.stringContaining("insert-fragment-verified"),
-          expect.stringContaining("Call verify-page-responsive once"),
+          expect.stringContaining(
+            "If they opt in, call verify-page-responsive once"
+          ),
           expect.stringContaining(
             "Do not call preview.start, screenshot, screenshot.responsive, or audit separately"
           ),
@@ -5022,14 +5094,7 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({ name: "insert-fragment-verified" }),
           expect.objectContaining({ name: "attach-design-token" }),
           expect.objectContaining({ name: "verify-page-responsive" }),
-          expect.objectContaining({
-            name: "update-styles",
-            inputSchema: expect.objectContaining({
-              properties: expect.objectContaining({
-                updates: expect.objectContaining({ type: "array" }),
-              }),
-            }),
-          }),
+          expect.objectContaining({ name: "update-styles" }),
         ]),
       })
     );
@@ -6507,6 +6572,9 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    expect(
+      (index.structuredContent.data as { visionLoop: string[] }).visionLoop[0]
+    ).toBe(testMcpGuidance.getVisionVerificationLoop({ includeDiff: true })[0]);
     expect(guide.structuredContent.data).toEqual(
       expect.objectContaining({
         workflow: expect.arrayContaining([
@@ -7495,7 +7563,7 @@ describe("project session mcp adapter", () => {
         updates: [
           {
             instanceId: "body",
-            breakpointId: "base",
+            breakpoint: "base",
             property: "display",
             value: "grid",
           },
@@ -8845,6 +8913,47 @@ describe("project session mcp adapter", () => {
           message:
             'Page input is invalid.\nvalues.title: Invalid Webstudio expression (valid_webstudio_expression). Example: "pageTitle ?? \\"Pricing\\"". Detail: Unexpected token at 1:4',
           issues: [issue],
+        },
+        meta: {},
+      });
+    } finally {
+      await close();
+    }
+  });
+
+  test("returns an INVALID_INPUT breakpoint hint through MCP", async () => {
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "update-styles",
+        arguments: {
+          updates: [
+            {
+              instanceId: "body",
+              breakpointId: "mobile",
+              property: "display",
+              value: { type: "keyword", value: "block" },
+            },
+          ],
+        },
+      });
+      expect(result.structuredContent).toEqual({
+        ok: false,
+        error: {
+          code: "INVALID_INPUT",
+          message: expect.stringContaining("use breakpoint instead"),
+          issues: [
+            expect.objectContaining({
+              path: ["updates", "0", "breakpointId"],
+              constraint: "field:breakpoint",
+            }),
+          ],
         },
         meta: {},
       });
