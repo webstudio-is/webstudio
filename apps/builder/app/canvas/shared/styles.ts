@@ -3,6 +3,8 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   type Instance,
+  type Instances,
+  type Props,
   ROOT_INSTANCE_ID,
   getStyleDeclKey,
   descendantComponent,
@@ -10,6 +12,7 @@ import {
   type Breakpoint,
   type StyleDecl,
   type StyleSourceSelection,
+  type WsComponentMeta,
   createImageValueTransformer,
   addFontRules,
 } from "@webstudio-is/sdk";
@@ -29,9 +32,11 @@ import {
 } from "@webstudio-is/css-engine";
 import {
   $registeredComponentMetas,
+  $propValuesByInstanceSelectorWithMemoryProps,
   $selectedBreakpoint,
   $selectedStyleState,
   assetBaseUrl,
+  createComputedCollectionItemSelectorResolver,
 } from "~/shared/nano-states";
 import {
   $runtimeAssets as $assets,
@@ -217,6 +222,41 @@ const computeEditableCursorRules = (
   return rules;
 };
 
+const computeContentEditModeCursorRules = ({
+  rootInstanceId,
+  instances,
+  props,
+  metas,
+  propValuesByInstanceSelector,
+}: {
+  rootInstanceId: Instance["id"];
+  instances: Instances;
+  props: Props;
+  metas: Map<Instance["component"], WsComponentMeta>;
+  propValuesByInstanceSelector: ReadonlyMap<
+    string,
+    ReadonlyMap<string, unknown>
+  >;
+}) =>
+  computeEditableCursorRules(
+    findRuntimeNavigableTextInstanceSelectors({
+      rootInstanceId,
+      instances,
+      props,
+      metas,
+      getCollectionItemSelectors: createComputedCollectionItemSelectorResolver(
+        propValuesByInstanceSelector
+      ),
+    })
+  );
+
+const subscribeContentEditModeHelperStyleChanges = (listener: () => void) =>
+  computed(
+    [$instances, $selectedPage, $propValuesByInstanceSelectorWithMemoryProps],
+    (instances, selectedPage, propValues) =>
+      [instances, selectedPage, propValues] as const
+  ).listen(listener);
+
 const subscribeContentEditModeHelperStyles = () => {
   const renderHelperStyles = () => {
     helpersSheet.clear();
@@ -233,19 +273,14 @@ const subscribeContentEditModeHelperStyles = () => {
     // to better distinguish clickable vs editable elements, needs more investigation
     const rootInstanceId = $selectedPage.get()?.rootInstanceId;
     if (rootInstanceId !== undefined) {
-      const instances = $instances.get();
-
-      const editableInstanceSelectors =
-        findRuntimeNavigableTextInstanceSelectors({
-          rootInstanceId,
-          instances,
-          props: $props.get(),
-          metas: $registeredComponentMetas.get(),
-        });
-
-      for (const rule of computeEditableCursorRules(
-        editableInstanceSelectors
-      )) {
+      for (const rule of computeContentEditModeCursorRules({
+        rootInstanceId,
+        instances: $instances.get(),
+        props: $props.get(),
+        metas: $registeredComponentMetas.get(),
+        propValuesByInstanceSelector:
+          $propValuesByInstanceSelectorWithMemoryProps.get(),
+      })) {
         helpersSheet.addPlaintextRule(rule);
       }
     }
@@ -266,12 +301,12 @@ const subscribeContentEditModeHelperStyles = () => {
     idleId = requestIdleCallbackFn(renderHelperStyles);
   };
 
-  const unsubscribeInstances = $instances.listen(renderHelperStylesIdle);
-  const unsubscribeSelectedPage = $selectedPage.listen(renderHelperStylesIdle);
+  const unsubscribeChanges = subscribeContentEditModeHelperStyleChanges(
+    renderHelperStylesIdle
+  );
 
   return () => {
-    unsubscribeInstances();
-    unsubscribeSelectedPage();
+    unsubscribeChanges();
     helpersSheet.clear();
     helpersSheet.render();
   };
@@ -909,6 +944,8 @@ export const __testing__ = {
   computeDescendantSelectors,
   computeInstanceStyles,
   computeEditableCursorRules,
+  computeContentEditModeCursorRules,
+  subscribeContentEditModeHelperStyleChanges,
   computeStylesDiff,
   toDeclarationParams,
   toVarValue,

@@ -27,7 +27,6 @@ import {
   blockComponent,
   blockTemplateComponent,
   getContentBlockSource,
-  getIndexesWithinAncestors,
   elementComponent,
 } from "@webstudio-is/sdk";
 import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
@@ -51,6 +50,7 @@ import {
 import { LinkCurrentUrlContext } from "@webstudio-is/sdk-components-react";
 import {
   $propValuesByInstanceSelectorWithMemoryProps,
+  createComputedCollectionItemSelectorResolver,
   getIndexedInstanceId,
   $registeredComponentMetas,
   $selectedInstanceRenderState,
@@ -61,10 +61,12 @@ import {
   $runtimeInstances as $instances,
   $runtimeProps as $props,
   $runtimeAssets as $assets,
+  $activeMaterializedContentRoots,
   $materializedContentStatuses,
   getMaterializedContentForSelectors,
   getMaterializedInstanceEditability,
   getRuntimeInstanceChildren,
+  getRuntimeIndexesWithinAncestors,
   isMaterializedInstanceEditable,
   publishMaterializedContentRoot,
   $contentBlockPresentationItems,
@@ -396,15 +398,23 @@ const getInstanceSelector = (
 };
 
 const $indexesWithinAncestors = computed(
-  [$registeredComponentMetas, $instances, $selectedPage],
-  (metas, instances, page) => {
-    return getIndexesWithinAncestors(
+  [
+    $registeredComponentMetas,
+    $instances,
+    $selectedPage,
+    $activeMaterializedContentRoots,
+    $propValuesByInstanceSelectorWithMemoryProps,
+  ],
+  (metas, instances, page, materializedRoots, propValuesByInstanceSelector) =>
+    getRuntimeIndexesWithinAncestors({
       metas,
       instances,
-      page ? [page.rootInstanceId] : [],
-      getRuntimeInstanceChildren
-    );
-  }
+      rootIds: page ? [page.rootInstanceId] : [],
+      materializedRoots: materializedRoots.values(),
+      getCollectionItemSelectors: createComputedCollectionItemSelectorResolver(
+        propValuesByInstanceSelector
+      ),
+    })
 );
 
 const useInstanceProps = (instanceSelector: InstanceSelector) => {

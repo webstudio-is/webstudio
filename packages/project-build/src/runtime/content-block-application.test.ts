@@ -95,6 +95,20 @@ const createState = (
   assets: new Map(),
 });
 
+const addTemplateHeading = (state: BuilderState) => {
+  state.instances?.set("template-heading", {
+    type: "instance",
+    id: "template-heading",
+    component: elementComponent,
+    tag: "h2",
+    children: [{ type: "text", value: "Before" }],
+  });
+  state.instances?.set("templates", {
+    ...state.instances.get("templates")!,
+    children: [{ type: "id", value: "template-heading" }],
+  });
+};
+
 const createRepository = (initialSource = "# Original") => {
   let source = initialSource;
   let name = "article-initial.mdx";
@@ -282,6 +296,44 @@ describe("Content Block application operations", () => {
     expect(queueSave).not.toHaveBeenCalled();
   });
 
+  test("rejects multiple writable roots for one Asset before preflight", async () => {
+    const preflight = vi.fn(async () => ({ status: "ready" as const }));
+    const persist = vi.fn(async () => ({ status: "saved" as const }));
+    const firstRoot = {
+      blockInstanceId: "first-block",
+      assetId: "shared-asset",
+      revision: "sha256:shared",
+      contentRef: "shared_revision.mdx",
+      format: "mdx" as const,
+      renderScope: "page:/first",
+    };
+    const secondRoot = {
+      ...firstRoot,
+      blockInstanceId: "second-block",
+      renderScope: "page:/second",
+    };
+
+    await expect(
+      executeContentBlockPersistencePlan([
+        { type: "asset", root: firstRoot, preflight, persist },
+        { type: "asset", root: secondRoot, preflight, persist },
+      ])
+    ).resolves.toMatchObject({
+      status: "failed",
+      steps: [
+        { type: "asset", status: "not-attempted", root: firstRoot },
+        {
+          type: "asset",
+          status: "failed",
+          root: secondRoot,
+          code: "content-source-duplicate-asset",
+        },
+      ],
+    });
+    expect(preflight).not.toHaveBeenCalled();
+    expect(persist).not.toHaveBeenCalled();
+  });
+
   test("combines accumulated changes for one root into one revisioned write", async () => {
     const identity = {
       blockInstanceId: "block",
@@ -403,6 +455,80 @@ describe("Content Block application operations", () => {
     });
   });
 
+  test("does not activate a superseded source inspection", async () => {
+    const { repository } = createRepository();
+    let releaseFirstRead!: () => void;
+    const firstReadGate = new Promise<void>((resolve) => {
+      releaseFirstRead = resolve;
+    });
+    let readCount = 0;
+    const session = createMdxAssetEditingSession({
+      repository: {
+        ...repository,
+        readContent: async ({ assetId }) => {
+          readCount += 1;
+          const currentRead = readCount;
+          if (currentRead === 1) {
+            await firstReadGate;
+          }
+          const source = currentRead === 1 ? "Old" : "New";
+          const bytes = encoder.encode(source);
+          return {
+            asset: {
+              id: assetId,
+              projectId: "project",
+              type: "file" as const,
+              format: "file",
+              name: `article-${source.toLowerCase()}.mdx`,
+              filename: "article.mdx",
+              size: bytes.byteLength,
+              description: null,
+              createdAt: "2026-01-01T00:00:00.000Z",
+              updatedAt: "2026-01-02T00:00:00.000Z",
+              meta: {},
+            },
+            data: {
+              async *[Symbol.asyncIterator]() {
+                yield bytes;
+              },
+            },
+          };
+        },
+      },
+      authorizeAsset: () => true,
+    });
+    const operations = createContentBlockApplicationOperations({
+      projectId: "project",
+      session,
+      getState: () => createState(),
+      context: { createId: () => "generated" },
+    });
+    const input = {
+      blockInstanceId: "block",
+      renderScope: "page:/",
+    };
+
+    const superseded = operations.inspectSource(input);
+    await vi.waitFor(() => expect(readCount).toBe(1));
+    const current = await operations.inspectSource(input);
+    releaseFirstRead();
+
+    expect(current).toMatchObject({
+      sessionStatus: "saved",
+      resolvedIdentity: { contentRef: "article-new.mdx" },
+    });
+    await expect(superseded).resolves.toMatchObject({
+      sessionStatus: "failed",
+      resolvedIdentity: undefined,
+    });
+    await expect(
+      operations.inspectSource({ ...input, load: false })
+    ).resolves.toMatchObject({
+      sessionStatus: "saved",
+      resolvedIdentity: { contentRef: "article-new.mdx" },
+    });
+  });
+
   test("routes semantic edits through the shared runtime and persists only MDX", async () => {
     const { repository, updateContent, getSource } = createRepository();
     const state = createState();
@@ -441,6 +567,89 @@ describe("Content Block application operations", () => {
     expect(commitProjectPayload).not.toHaveBeenCalled();
     expect(getSource()).toContain("# Updated");
     expect(state.instances?.has(headingId)).toBe(false);
+  });
+
+  test("rejects a stale project-only semantic edit", async () => {
+    const { repository, updateContent } = createRepository();
+    const state = createState();
+    addTemplateHeading(state);
+    const session = createMdxAssetEditingSession({
+      repository,
+      authorizeAsset: () => true,
+    });
+    const commitProjectPayload = vi.fn();
+    let projectVersion = 1;
+    const operations = createContentBlockApplicationOperations({
+      projectId: "project",
+      session,
+      getState: () => state,
+      getProjectVersion: () => projectVersion,
+      commitProjectPayload,
+      context: { createId: () => "generated" },
+    });
+    await operations.inspectSource({
+      blockInstanceId: "block",
+      renderScope: "page:/",
+    });
+
+    const editing = operations.semanticEdit({
+      operationId: "instances.updateText",
+      input: {
+        instanceId: "template-heading",
+        childIndex: 0,
+        text: "After",
+      },
+      blockInstanceId: "block",
+      renderScope: "page:/",
+    });
+    projectVersion += 1;
+
+    await expect(editing).resolves.toMatchObject({
+      status: "blocked",
+      code: "content-source-session-failed",
+    });
+    expect(commitProjectPayload).not.toHaveBeenCalled();
+    expect(updateContent).not.toHaveBeenCalled();
+  });
+
+  test("reports a project-only semantic edit persistence failure", async () => {
+    const { repository } = createRepository();
+    const state = createState();
+    addTemplateHeading(state);
+    const session = createMdxAssetEditingSession({
+      repository,
+      authorizeAsset: () => true,
+    });
+    const operations = createContentBlockApplicationOperations({
+      projectId: "project",
+      session,
+      getState: () => state,
+      commitProjectPayload: async () => {
+        throw new Error("Project write failed");
+      },
+      context: { createId: () => "generated" },
+    });
+    await operations.inspectSource({
+      blockInstanceId: "block",
+      renderScope: "page:/",
+    });
+
+    await expect(
+      operations.semanticEdit({
+        operationId: "instances.updateText",
+        input: {
+          instanceId: "template-heading",
+          childIndex: 0,
+          text: "After",
+        },
+        blockInstanceId: "block",
+        renderScope: "page:/",
+      })
+    ).resolves.toMatchObject({
+      status: "blocked",
+      code: "content-source-session-failed",
+      message: "Project write failed",
+    });
   });
 
   test("reports a committed semantic edit when projection recovery is needed", async () => {

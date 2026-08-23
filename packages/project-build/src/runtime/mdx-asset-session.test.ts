@@ -1,8 +1,9 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   getAssetContentHash,
   blockComponent,
   blockTemplateComponent,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import type { AssetRepository } from "@webstudio-is/asset-uploader/server";
 import { AssetRevisionConflictError } from "@webstudio-is/asset-uploader/server";
@@ -11,6 +12,9 @@ import {
   createMdxAssetEditingSession,
   type MdxAssetEditingSessionState,
 } from "./mdx-asset-session";
+import { executeBuilderRuntimeOperation } from "./registry";
+import { createDefaultPages } from "../shared/pages-utils";
+import type { BuilderRuntimeMutation } from "./mutation";
 
 const encoder = new TextEncoder();
 
@@ -416,7 +420,7 @@ describe("MDX Asset editing session", () => {
     }
     const latest = expectStatus(await session.open(input), "saved");
     releaseFirstRead?.();
-    await olderOpen;
+    expectStatus(await olderOpen, "failed");
 
     expect(latest.source).toBe("New");
     expect(session.get(latest.key)).toBe(latest);
@@ -549,6 +553,263 @@ describe("MDX Asset editing session", () => {
     expect(saved.identity.contentRef).toBe("post_revision_1.mdx");
     expect(await session.flush(loaded.key)).toBe(saved);
     expect(writable.updates).toHaveLength(1);
+  });
+
+  test("serializes concurrent save preparation against the latest pending source", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    let releaseFirstWriteAuthorization!: () => void;
+    const firstWriteAuthorization = new Promise<void>((resolve) => {
+      releaseFirstWriteAuthorization = resolve;
+    });
+    let writeAuthorizationCount = 0;
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: async ({ operation }) => {
+        if (operation === "write") {
+          writeAuthorizationCount += 1;
+          if (writeAuthorizationCount === 1) {
+            await firstWriteAuthorization;
+          }
+        }
+        return true;
+      },
+      schedule: () => 0,
+      cancelScheduled: () => {},
+    });
+    const loaded = expectStatus(
+      await session.open({
+        blockInstanceId: "block",
+        source: { type: "asset", assetId: "post" },
+        renderScope: "page:/one",
+        state: createState(),
+        projectId: "project",
+      }),
+      "saved"
+    );
+
+    const first = session.queueSave({
+      key: loaded.key,
+      changes: [textChange(loaded, "First")],
+    });
+    const second = session.queueSave({
+      key: loaded.key,
+      changes: [textChange(loaded, "Second")],
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(writeAuthorizationCount).toBe(1);
+    releaseFirstWriteAuthorization();
+
+    await first;
+    const pending = expectStatus(await second, "pending");
+    expect(pending.localSource).toContain("Second");
+    expect(writeAuthorizationCount).toBe(2);
+  });
+
+  test("prepares a real save queued after a concurrent no-op", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: async () => true,
+      schedule: () => 0,
+      cancelScheduled: () => {},
+    });
+    const loaded = expectStatus(
+      await session.open({
+        blockInstanceId: "block",
+        source: { type: "asset", assetId: "post" },
+        renderScope: "page:/one",
+        state: createState(),
+        projectId: "project",
+      }),
+      "saved"
+    );
+
+    const noOp = session.queueSave({ key: loaded.key, changes: [] });
+    const realSave = session.queueSave({
+      key: loaded.key,
+      changes: [textChange(loaded, "After")],
+    });
+
+    expect(await noOp).toBe(loaded);
+    expect(expectStatus(await realSave, "pending").localSource).toContain(
+      "After"
+    );
+  });
+
+  test("does not prepare a later save after an earlier preparation fails", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    let releaseWriteAuthorization!: () => void;
+    const writeAuthorization = new Promise<void>((resolve) => {
+      releaseWriteAuthorization = resolve;
+    });
+    let writeAuthorizationCount = 0;
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: async ({ operation }) => {
+        if (operation === "write") {
+          writeAuthorizationCount += 1;
+          await writeAuthorization;
+          return false;
+        }
+        return true;
+      },
+      schedule: () => 0,
+      cancelScheduled: () => {},
+    });
+    const loaded = expectStatus(
+      await session.open({
+        blockInstanceId: "block",
+        source: { type: "asset", assetId: "post" },
+        renderScope: "page:/one",
+        state: createState(),
+        projectId: "project",
+      }),
+      "saved"
+    );
+
+    const first = session.queueSave({
+      key: loaded.key,
+      changes: [textChange(loaded, "First")],
+    });
+    const second = session.queueSave({
+      key: loaded.key,
+      changes: [textChange(loaded, "Second")],
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(writeAuthorizationCount).toBe(1);
+    releaseWriteAuthorization();
+
+    expect(expectStatus(await first, "failed").error).toBeInstanceOf(Error);
+    expect(expectStatus(await second, "failed").error).toBeInstanceOf(Error);
+    expect(writeAuthorizationCount).toBe(1);
+  });
+
+  test("copies between loaded MDX roots", async () => {
+    const writable = createWritableRepository(
+      new Map([
+        ["source", "Source paragraph"],
+        ["target", "Target paragraph"],
+      ])
+    );
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: async () => true,
+      schedule: () => 0,
+      cancelScheduled: () => {},
+    });
+    const state = createState();
+    state.instances?.set("target-block", {
+      type: "instance",
+      id: "target-block",
+      component: blockComponent,
+      children: [{ type: "id", value: "target-templates" }],
+    });
+    state.instances?.set("target-templates", {
+      type: "instance",
+      id: "target-templates",
+      component: blockTemplateComponent,
+      children: [],
+    });
+    state.instances?.set("body", {
+      type: "instance",
+      id: "body",
+      component: elementComponent,
+      tag: "body",
+      children: [
+        { type: "id", value: "block" },
+        { type: "id", value: "target-block" },
+      ],
+    });
+    state.pages = createDefaultPages({ rootInstanceId: "body" });
+    state.props?.set("source-prop", {
+      id: "source-prop",
+      instanceId: "block",
+      name: "src",
+      type: "asset",
+      value: "source",
+    });
+    state.props?.set("target-prop", {
+      id: "target-prop",
+      instanceId: "target-block",
+      name: "src",
+      type: "asset",
+      value: "target",
+    });
+    const source = expectStatus(
+      await session.open({
+        blockInstanceId: "block",
+        source: { type: "asset", assetId: "source" },
+        renderScope: "page:/source",
+        state,
+        projectId: "project",
+      }),
+      "saved"
+    );
+    const target = expectStatus(
+      await session.open({
+        blockInstanceId: "target-block",
+        source: { type: "asset", assetId: "target" },
+        renderScope: "page:/target",
+        state,
+        projectId: "project",
+      }),
+      "saved"
+    );
+    const sourceChild = source.root.fragment.children[0];
+    if (sourceChild?.type !== "id") {
+      throw new Error("Expected source instance");
+    }
+    const mutation =
+      await executeBuilderRuntimeOperation<BuilderRuntimeMutation>({
+        id: "instances.clone",
+        state,
+        input: {
+          sourceInstanceId: sourceChild.value,
+          targetParentInstanceId: "target-block",
+        },
+        context: {
+          createId: () => "cloned",
+          projectId: "project",
+          returnStorageChanges: true,
+          materializedContent: [source.root, target.root],
+        },
+      });
+    const changes = mutation.storageChanges ?? [];
+    expect(changes).toHaveLength(1);
+
+    const pending = expectStatus(
+      await session.queueSave({ key: target.key, changes }),
+      "pending"
+    );
+    expect(pending.localSource).toContain("Source paragraph");
+    expect(pending.localSource).toContain("Target paragraph");
+    const saved = expectStatus(await session.flush(target.key), "saved");
+    expect(saved.source).toBe(writable.sources.get("target"));
+    expect(writable.updates).toEqual([
+      expect.objectContaining({
+        assetId: "target",
+        source: expect.stringContaining("Source paragraph"),
+      }),
+    ]);
+
+    const reopenedSession = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: async () => true,
+    });
+    const reopened = expectStatus(
+      await reopenedSession.open({
+        blockInstanceId: "target-block",
+        source: { type: "asset", assetId: "target" },
+        renderScope: "page:/target",
+        state,
+        projectId: "project",
+      }),
+      "saved"
+    );
+    expect(reopened.source).toContain("Source paragraph");
+    expect(reopened.source).toContain("Target paragraph");
   });
 
   test("replaces pending source locally and persists the next replacement", async () => {
@@ -1283,6 +1544,408 @@ describe("MDX Asset editing session", () => {
     ).toMatchObject({ status: "blocked", reason: "unresolved-write" });
   });
 
+  test("does not revive a cancelled session after save preparation resumes", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    let releaseAuthorization!: () => void;
+    const authorizationGate = new Promise<void>((resolve) => {
+      releaseAuthorization = resolve;
+    });
+    let writeAuthorizations = 0;
+    let scheduledSaves = 0;
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: async ({ operation }) => {
+        if (operation === "write") {
+          writeAuthorizations += 1;
+          await authorizationGate;
+        }
+        return true;
+      },
+      schedule: () => {
+        scheduledSaves += 1;
+        return 0;
+      },
+      cancelScheduled: () => {},
+    });
+    const loaded = expectStatus(
+      await session.open({
+        blockInstanceId: "block",
+        source: { type: "asset", assetId: "post" },
+        renderScope: "page:/one",
+        state: createState(),
+        projectId: "project",
+      }),
+      "saved"
+    );
+
+    const preparing = session.queueSave({
+      key: loaded.key,
+      changes: [textChange(loaded, "Cancelled")],
+    });
+    await vi.waitFor(() => expect(writeAuthorizations).toBe(1));
+    expectStatus(session.cancel(loaded.key), "cancelled");
+    releaseAuthorization();
+
+    expectStatus(await preparing, "cancelled");
+    expect(scheduledSaves).toBe(0);
+    expectStatus(await session.flush(loaded.key), "cancelled");
+    expect(writable.updates).toHaveLength(0);
+  });
+
+  test("does not schedule stale pending preparation after switching sources", async () => {
+    const writable = createWritableRepository(
+      new Map([
+        ["post", "Before"],
+        ["other", "Other"],
+      ])
+    );
+    let releaseAuthorization!: () => void;
+    const authorizationGate = new Promise<void>((resolve) => {
+      releaseAuthorization = resolve;
+    });
+    let writeAuthorizations = 0;
+    let scheduledSaves = 0;
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: async ({ operation }) => {
+        if (operation === "write") {
+          writeAuthorizations += 1;
+          if (writeAuthorizations === 2) {
+            await authorizationGate;
+          }
+        }
+        return true;
+      },
+      schedule: () => {
+        scheduledSaves += 1;
+        return 0;
+      },
+      cancelScheduled: () => {},
+    });
+    const input = {
+      blockInstanceId: "block",
+      renderScope: "page:/one",
+      state: createState(),
+      projectId: "project",
+    };
+    const loaded = expectStatus(
+      await session.open({
+        ...input,
+        source: { type: "asset", assetId: "post" },
+      }),
+      "saved"
+    );
+    const pending = expectStatus(
+      await session.queueSave({
+        key: loaded.key,
+        changes: [textChange(loaded, "First")],
+      }),
+      "pending"
+    );
+    const preparing = session.queueSave({
+      key: loaded.key,
+      changes: [textChange(pending, "Second")],
+    });
+    await vi.waitFor(() => expect(writeAuthorizations).toBe(2));
+    expectStatus(
+      await session.open({
+        ...input,
+        source: { type: "asset", assetId: "other" },
+      }),
+      "saved"
+    );
+    releaseAuthorization();
+
+    expectStatus(await preparing, "cancelled");
+    expect(scheduledSaves).toBe(1);
+    expect(writable.updates).toHaveLength(0);
+  });
+
+  test("preserves cancellation while a committed write is being hashed", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    let releaseHash!: () => void;
+    const hashGate = new Promise<void>((resolve) => {
+      releaseHash = resolve;
+    });
+    let hashCount = 0;
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: () => true,
+      computeContentHash: async (content) => {
+        hashCount += 1;
+        if (hashCount === 2) {
+          await hashGate;
+        }
+        return getAssetContentHash(content);
+      },
+      schedule: () => 0,
+      cancelScheduled: () => {},
+    });
+    const input = {
+      blockInstanceId: "block",
+      source: { type: "asset" as const, assetId: "post" },
+      renderScope: "page:/one",
+      state: createState(),
+      projectId: "project",
+    };
+    const loaded = expectStatus(await session.open(input), "saved");
+    await session.queueSave({
+      key: loaded.key,
+      changes: [textChange(loaded, "After")],
+    });
+    const flushing = session.flush(loaded.key);
+    await vi.waitFor(() => expect(hashCount).toBe(2));
+    expectStatus(session.cancel(loaded.key), "cancelled");
+    releaseHash();
+
+    expectStatus(await flushing, "cancelled");
+    expectStatus(session.get(loaded.key)!, "cancelled");
+    expect(writable.updates).toHaveLength(1);
+    const reopened = expectStatus(await session.open(input), "saved");
+    expect(reopened.source).toContain("After");
+  });
+
+  test("incorporates slow preparation that races the preceding flush", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    const updateContent = writable.repository.updateContent;
+    let releaseFirstWrite!: () => void;
+    const firstWriteGate = new Promise<void>((resolve) => {
+      releaseFirstWrite = resolve;
+    });
+    let releaseSecondPreparation!: () => void;
+    const secondPreparationGate = new Promise<void>((resolve) => {
+      releaseSecondPreparation = resolve;
+    });
+    let updates = 0;
+    let writeAuthorizations = 0;
+    const session = createMdxAssetEditingSession({
+      repository: {
+        ...writable.repository,
+        updateContent: async (input) => {
+          updates += 1;
+          if (updates === 1) {
+            await firstWriteGate;
+          }
+          return updateContent(input);
+        },
+      },
+      authorizeAsset: async ({ operation }) => {
+        if (operation === "write") {
+          writeAuthorizations += 1;
+          if (writeAuthorizations === 3) {
+            await secondPreparationGate;
+          }
+        }
+        return true;
+      },
+      schedule: () => 0,
+      cancelScheduled: () => {},
+    });
+    const loaded = expectStatus(
+      await session.open({
+        blockInstanceId: "block",
+        source: { type: "asset", assetId: "post" },
+        renderScope: "page:/one",
+        state: createState(),
+        projectId: "project",
+      }),
+      "saved"
+    );
+    const firstPending = expectStatus(
+      await session.queueSave({
+        key: loaded.key,
+        changes: [textChange(loaded, "First")],
+      }),
+      "pending"
+    );
+    const flushing = session.flush(loaded.key);
+    let flushSettled = false;
+    void flushing.then(() => {
+      flushSettled = true;
+    });
+    await vi.waitFor(() => expect(updates).toBe(1));
+    const secondPreparation = session.queueSave({
+      key: loaded.key,
+      changes: [textChange(firstPending, "Second")],
+    });
+    await vi.waitFor(() => expect(writeAuthorizations).toBe(3));
+    releaseFirstWrite();
+    await vi.waitFor(() => expect(writable.updates).toHaveLength(1));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const settledBeforePreparation = flushSettled;
+    releaseSecondPreparation();
+
+    expect(settledBeforePreparation).toBe(false);
+    expectStatus(await secondPreparation, "pending");
+    expectStatus(await flushing, "saved");
+    expect(writable.updates.map(({ source }) => source.trim())).toEqual([
+      "First",
+      "Second",
+    ]);
+  });
+
+  test("blocks preflight invalidated by a source switch", async () => {
+    const writable = createWritableRepository(
+      new Map([
+        ["post", "Before"],
+        ["other", "Other"],
+      ])
+    );
+    let releaseAuthorization!: () => void;
+    const authorizationGate = new Promise<void>((resolve) => {
+      releaseAuthorization = resolve;
+    });
+    let writeAuthorizations = 0;
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: async ({ operation }) => {
+        if (operation === "write") {
+          writeAuthorizations += 1;
+          await authorizationGate;
+        }
+        return true;
+      },
+    });
+    const input = {
+      blockInstanceId: "block",
+      renderScope: "page:/one",
+      state: createState(),
+      projectId: "project",
+    };
+    const loaded = expectStatus(
+      await session.open({
+        ...input,
+        source: { type: "asset", assetId: "post" },
+      }),
+      "saved"
+    );
+    const preflight = session.preflightSave({
+      key: loaded.key,
+      changes: [textChange(loaded, "After")],
+    });
+    await vi.waitFor(() => expect(writeAuthorizations).toBe(1));
+    expectStatus(
+      await session.open({
+        ...input,
+        source: { type: "asset", assetId: "other" },
+      }),
+      "saved"
+    );
+    releaseAuthorization();
+
+    await expect(preflight).resolves.toMatchObject({ status: "blocked" });
+    expect(writable.updates).toHaveLength(0);
+  });
+
+  test("does not let obsolete preparation poison an edit after reopen", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    let releaseOldAuthorization!: () => void;
+    const oldAuthorizationGate = new Promise<void>((resolve) => {
+      releaseOldAuthorization = resolve;
+    });
+    let writeAuthorizations = 0;
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: async ({ operation }) => {
+        if (operation === "write") {
+          writeAuthorizations += 1;
+          if (writeAuthorizations === 1) {
+            await oldAuthorizationGate;
+          }
+        }
+        return true;
+      },
+      schedule: () => 0,
+      cancelScheduled: () => {},
+    });
+    const input = {
+      blockInstanceId: "block",
+      source: { type: "asset" as const, assetId: "post" },
+      renderScope: "page:/one",
+      state: createState(),
+      projectId: "project",
+    };
+    const loaded = expectStatus(await session.open(input), "saved");
+    const obsolete = session.queueSave({
+      key: loaded.key,
+      changes: [textChange(loaded, "Obsolete")],
+    });
+    await vi.waitFor(() => expect(writeAuthorizations).toBe(1));
+    expectStatus(session.cancel(loaded.key), "cancelled");
+    const reopened = expectStatus(await session.open(input), "saved");
+    const current = session.queueSave({
+      key: reopened.key,
+      changes: [textChange(reopened, "Current")],
+    });
+    await vi.waitFor(() => expect(writeAuthorizations).toBe(2));
+    releaseOldAuthorization();
+
+    expectStatus(await obsolete, "cancelled");
+    const pending = expectStatus(await current, "pending");
+    expectStatus(await session.flush(pending.key), "saved");
+    expect(writable.updates.map(({ source }) => source.trim())).toEqual([
+      "Current",
+    ]);
+  });
+
+  test("does not chain a reopened edit behind obsolete preparation", async () => {
+    const writable = createWritableRepository(new Map([["post", "Before"]]));
+    let releaseObsoleteAuthorization!: () => void;
+    const obsoleteAuthorizationGate = new Promise<void>((resolve) => {
+      releaseObsoleteAuthorization = resolve;
+    });
+    let writeAuthorizations = 0;
+    const session = createMdxAssetEditingSession({
+      repository: writable.repository,
+      authorizeAsset: async ({ operation }) => {
+        if (operation === "write") {
+          writeAuthorizations += 1;
+          if (writeAuthorizations === 2) {
+            await obsoleteAuthorizationGate;
+          }
+        }
+        return true;
+      },
+      schedule: () => 0,
+      cancelScheduled: () => {},
+    });
+    const input = {
+      blockInstanceId: "block",
+      source: { type: "asset" as const, assetId: "post" },
+      renderScope: "page:/one",
+      state: createState(),
+      projectId: "project",
+    };
+    const loaded = expectStatus(await session.open(input), "saved");
+    const pending = expectStatus(
+      await session.queueSave({
+        key: loaded.key,
+        changes: [textChange(loaded, "First")],
+      }),
+      "pending"
+    );
+    const obsolete = session.queueSave({
+      key: pending.key,
+      changes: [textChange(pending, "Obsolete")],
+    });
+    await vi.waitFor(() => expect(writeAuthorizations).toBe(2));
+
+    expectStatus(await session.open(input), "pending");
+    const current = session.queueSave({
+      key: pending.key,
+      changes: [textChange(pending, "Current")],
+    });
+    await vi.waitFor(() => expect(writeAuthorizations).toBe(3));
+    releaseObsoleteAuthorization();
+
+    expectStatus(await obsolete, "cancelled");
+    const currentPending = expectStatus(await current, "pending");
+    expectStatus(await session.flush(currentPending.key), "saved");
+    expect(writable.updates.map(({ source }) => source.trim())).toEqual([
+      "Current",
+    ]);
+  });
+
   test("cancels an in-flight flush before storage starts", async () => {
     const writable = createWritableRepository(new Map([["post", "Before"]]));
     let releaseAuthorization!: () => void;
@@ -1380,6 +2043,73 @@ describe("MDX Asset editing session", () => {
     expect(reopened.root.fragment.instances[0].children).toEqual([
       { type: "text", value: "After" },
     ]);
+  });
+
+  test("does not return a superseded reopen after awaiting a cancelled write", async () => {
+    const writable = createWritableRepository(
+      new Map([
+        ["post", "Before"],
+        ["other", "Other"],
+      ])
+    );
+    const updateContent = writable.repository.updateContent;
+    let releaseWrite!: () => void;
+    const writeGate = new Promise<void>((resolve) => {
+      releaseWrite = resolve;
+    });
+    let writeStarted!: () => void;
+    const storageStarted = new Promise<void>((resolve) => {
+      writeStarted = resolve;
+    });
+    const session = createMdxAssetEditingSession({
+      repository: {
+        ...writable.repository,
+        updateContent: async (input) => {
+          writeStarted();
+          await writeGate;
+          return updateContent(input);
+        },
+      },
+      authorizeAsset: () => true,
+      schedule: () => 0,
+      cancelScheduled: () => {},
+    });
+    const input = {
+      blockInstanceId: "block",
+      renderScope: "page:/one",
+      state: createState(),
+      projectId: "project",
+    };
+    const loaded = expectStatus(
+      await session.open({
+        ...input,
+        source: { type: "asset", assetId: "post" },
+      }),
+      "saved"
+    );
+    await session.queueSave({
+      key: loaded.key,
+      changes: [textChange(loaded, "After")],
+    });
+    const flushing = session.flush(loaded.key);
+    await storageStarted;
+    session.cancel(loaded.key);
+    const superseded = session.open({
+      ...input,
+      source: { type: "asset", assetId: "post" },
+    });
+    const current = expectStatus(
+      await session.open({
+        ...input,
+        source: { type: "asset", assetId: "other" },
+      }),
+      "saved"
+    );
+    releaseWrite();
+
+    expectStatus(await flushing, "cancelled");
+    expectStatus(await superseded, "failed");
+    expect(session.get(current.key)).toBe(current);
   });
 
   test("reports changed direct bindings and stale revisions as conflicts", async () => {

@@ -1,4 +1,4 @@
-import { expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { createMdxAssetEditingSession } from "@webstudio-is/project-build/runtime";
 import { AssetRevisionConflictError } from "@webstudio-is/asset-uploader/content-repository";
 import {
@@ -8,8 +8,20 @@ import {
   type ContentBlockSource,
 } from "@webstudio-is/sdk";
 import { createContentBlockSourceController } from "./content-block-source-controller";
+import {
+  publishMaterializedContentRoot,
+  registerContentStorageSaver,
+  resetMaterializedContent,
+  saveMaterializedContentChanges,
+} from "~/shared/content-block-content";
+import { $instances, $props, resetDataStores } from "~/shared/sync/data-stores";
 
 const encoder = new TextEncoder();
+
+afterEach(() => {
+  resetMaterializedContent();
+  resetDataStores();
+});
 
 const createRepository = (
   source: string,
@@ -544,6 +556,113 @@ test("persists a single-Asset content edit and invalidates Asset resources", asy
   expect(setup.storage.updateContent).toHaveBeenCalledTimes(1);
   expect(setup.invalidateAssets).toHaveBeenCalledTimes(1);
   expect(setup.commitProjectPayload).not.toHaveBeenCalled();
+});
+
+test("accepts a planned copy source after the real Asset name advances", async () => {
+  const state = createState({
+    body: false,
+    source: { type: "asset", assetId: "post" },
+  });
+  $instances.set(state.instances);
+  $props.set(state.props);
+  const sourceSetup = createController({
+    state,
+    fileSource: "Source paragraph",
+  });
+  const loadedSource = await sourceSetup.controller.open({
+    type: "asset",
+    assetId: "post",
+  });
+  if (loadedSource.status !== "saved") {
+    throw new Error("Expected the source Asset to load");
+  }
+  const sourceInstance = loadedSource.root.fragment.instances[0];
+  if (sourceInstance === undefined) {
+    throw new Error("Expected a source instance");
+  }
+  const plannedSourceRoot = loadedSource.root;
+  const sourceSave = await sourceSetup.controller.saveStorageChanges([
+    {
+      root: { type: "external", identity: loadedSource.identity },
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: [sourceInstance.id, "children", 0, "value"],
+              value: "Updated source",
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+  if (sourceSave.status !== "applied" || sourceSave.state?.status !== "saved") {
+    throw new Error("Expected the source Asset to save");
+  }
+  expect(sourceSave.state.identity.contentRef).toBe("post_revision_1.mdx");
+  expect(sourceSetup.storage.updateContent).toHaveBeenCalledOnce();
+  expect(sourceSetup.storage.getSource()).toContain("Updated source");
+  expect(sourceSetup.controller.isCurrent(sourceSave.state.root)).toBe(true);
+  publishMaterializedContentRoot(sourceSave.state.root);
+
+  const targetRoot = {
+    ...plannedSourceRoot,
+    identity: {
+      ...plannedSourceRoot.identity,
+      assetId: "target",
+      revision: "sha256:target",
+      contentRef: "target_revision.mdx",
+      renderScope: "target-scope",
+    },
+    fragment: {
+      ...plannedSourceRoot.fragment,
+      children: [],
+      instances: [],
+    },
+  };
+  publishMaterializedContentRoot(targetRoot);
+  const sourcePreflight = vi.fn(async () => ({ status: "applied" as const }));
+  const sourcePersist = vi.fn(async () => ({ status: "applied" as const }));
+  const targetPreflight = vi.fn(async () => ({ status: "applied" as const }));
+  const targetPersist = vi.fn(async () => ({ status: "applied" as const }));
+  const unregisterSource = registerContentStorageSaver({
+    blockInstanceId: loadedSource.identity.blockInstanceId,
+    renderScope: loadedSource.identity.renderScope,
+    preflight: sourcePreflight,
+    save: sourcePersist,
+    isCurrent: sourceSetup.controller.isCurrent,
+  });
+  const unregisterTarget = registerContentStorageSaver({
+    blockInstanceId: targetRoot.identity.blockInstanceId,
+    renderScope: targetRoot.identity.renderScope,
+    preflight: targetPreflight,
+    save: targetPersist,
+    isCurrent: () => true,
+  });
+
+  const result = await saveMaterializedContentChanges(
+    [
+      {
+        root: { type: "external", identity: targetRoot.identity },
+        payload: [],
+        copySource: {
+          root: { type: "external", identity: plannedSourceRoot.identity },
+          instanceId: sourceInstance.id,
+        },
+      },
+    ],
+    { loadedRoots: [plannedSourceRoot, targetRoot] }
+  );
+
+  expect(result.status).toBe("applied");
+  expect(targetPreflight).toHaveBeenCalledOnce();
+  expect(targetPersist).toHaveBeenCalledOnce();
+  expect(sourcePreflight).not.toHaveBeenCalled();
+  expect(sourcePersist).not.toHaveBeenCalled();
+  unregisterTarget();
+  unregisterSource();
 });
 
 test("preserves the failed source for recovery when an Asset save fails", async () => {

@@ -48,10 +48,16 @@ import { pasteHandled } from "./copy-paste";
 import { initBuilderApi } from "../builder-api";
 import {
   $materializedContentRoots,
+  $runtimeInstances,
   publishMaterializedContentRoot,
   registerContentStorageSaver,
   resetMaterializedContent,
 } from "../content-block-content";
+import {
+  $pendingTemplateNameConfirmation,
+  abortPendingTemplateNameConfirmation,
+  confirmPendingTemplateNameChange,
+} from "../instance-utils/data";
 
 const expectString = expect.any(String) as unknown as string;
 
@@ -59,6 +65,7 @@ enableMapSet();
 registerContainers();
 
 afterEach(() => {
+  abortPendingTemplateNameConfirmation();
   resetMaterializedContent();
   $builderMode.set("design");
 });
@@ -145,7 +152,7 @@ describe("copy and cut guards", () => {
     expect($instances.get()).toEqual(instances);
   });
 
-  test("copies and pastes an instance after its materialized MDX sibling", async () => {
+  test("copies, pastes, and multi-cuts materialized MDX siblings", async () => {
     $instances.set(
       toMap([
         createInstance("body0", "Body", [{ type: "id", value: "block" }]),
@@ -277,7 +284,54 @@ describe("copy and cut guards", () => {
     expect(children?.[1]).toEqual({ type: "id", value: expect.any(String) });
     expect(children?.[1]).not.toEqual({ type: "id", value: "mdx-second" });
     expect(children?.[2]).toEqual({ type: "id", value: "mdx-second" });
+
     unregister();
+    selectInstances([
+      ["mdx-paragraph", "block", "body0"],
+      ["mdx-second", "block", "body0"],
+    ]);
+    expect(instanceText.onCut?.()).toBeUndefined();
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      ["mdx-paragraph", "block", "body0"],
+      ["mdx-second", "block", "body0"],
+    ]);
+    expect(
+      $materializedContentRoots
+        .get()
+        .get(JSON.stringify(["block", renderScope]))?.fragment.children
+    ).toEqual(children);
+
+    const unregisterCut = registerContentStorageSaver({
+      blockInstanceId: "block",
+      renderScope,
+      preflight: async () => ({ status: "applied" }),
+      isCurrent: () => true,
+      save,
+    });
+    const cutData = instanceText.onCut?.() ?? "";
+    expect(JSON.parse(cutData)).toMatchObject({
+      "@webstudio/instances/v0.1": {
+        rootInstanceIds: ["mdx-paragraph", "mdx-second"],
+      },
+    });
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    expect(
+      $materializedContentRoots
+        .get()
+        .get(JSON.stringify(["block", renderScope]))?.fragment.children
+    ).toEqual([children?.[1]]);
+    unregisterCut();
+
+    const remainingChildId = children?.[1]?.value;
+    if (remainingChildId === undefined) {
+      throw new Error("Expected a remaining MDX child");
+    }
+    selectInstance([remainingChildId, "block", "body0"]);
+    expect(instanceText.onCut?.()).toBeUndefined();
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      [remainingChildId, "block", "body0"],
+    ]);
+    expect($runtimeInstances.get().has(remainingChildId)).toBe(true);
   });
 
   test("copies multiple selected roots into one combined fragment", () => {
@@ -554,6 +608,66 @@ describe("copy and cut guards", () => {
       ["template1", "body0"],
       ["template2", "body0"],
     ]);
+  });
+
+  test("confirms a referenced template multi-cut as one sequence", () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "block" },
+          { type: "id", value: "outer" },
+        ]),
+        createInstance("block", blockComponent, [
+          { type: "id", value: "templates" },
+        ]),
+        createInstance("templates", blockTemplateComponent, [
+          { type: "id", value: "card" },
+        ]),
+        createInstance("card", "Box", []),
+        createInstance("outer", "Box", [{ type: "id", value: "inner" }]),
+        createInstance("inner", "Box", [{ type: "id", value: "deep" }]),
+        createInstance("deep", "Box", [{ type: "id", value: "other" }]),
+        createInstance("other", "Box", []),
+      ] satisfies Instance[])
+    );
+    $props.set(
+      toMap([
+        {
+          id: "source",
+          instanceId: "block",
+          name: "src",
+          type: "asset",
+          value: "article",
+        },
+      ] satisfies Prop[])
+    );
+    const selection = [
+      ["card", "templates", "block", "body0"],
+      ["other", "deep", "inner", "outer", "body0"],
+    ];
+    selectInstances(selection);
+
+    expect(instanceText.onCut?.()).toBeUndefined();
+    expect($pendingTemplateNameConfirmation.get()?.confirmation).toEqual({
+      action: "delete",
+      templates: [{ instanceId: "card", oldName: "Box" }],
+    });
+    expect($instances.get().has("card")).toBe(true);
+    expect($instances.get().has("other")).toBe(true);
+    expect($allSelectedInstanceSelectors.get()).toEqual(selection);
+
+    abortPendingTemplateNameConfirmation();
+    expect($instances.get().has("card")).toBe(true);
+    expect($instances.get().has("other")).toBe(true);
+    expect($allSelectedInstanceSelectors.get()).toEqual(selection);
+
+    expect(instanceText.onCut?.()).toBeUndefined();
+    confirmPendingTemplateNameChange();
+
+    expect($pendingTemplateNameConfirmation.get()).toBeUndefined();
+    expect($instances.get().has("card")).toBe(false);
+    expect($instances.get().has("other")).toBe(false);
+    expect($allSelectedInstanceSelectors.get()).toEqual([]);
   });
 });
 
@@ -1267,6 +1381,52 @@ describe("paste target", () => {
     ]);
     expect($instances.get().get("fragment")?.children).toEqual([]);
     expect($instances.get().has("box")).toBe(false);
+  });
+
+  test("multi-cuts a legacy shared slot child and another root", () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+          { type: "id", value: "other" },
+        ]),
+        createInstance("slot1", "Slot", [
+          { type: "id", value: "box" },
+          { type: "id", value: "heading" },
+        ]),
+        createInstance("slot2", "Slot", [
+          { type: "id", value: "box" },
+          { type: "id", value: "heading" },
+        ]),
+        createInstance("box", "Box", []),
+        createInstance("heading", "Heading", []),
+        createInstance("other", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstances([
+      ["box", "slot1", "body0"],
+      ["box", "slot2", "body0"],
+      ["other", "body0"],
+    ]);
+
+    const clipboardData = instanceText.onCut?.();
+
+    expect(JSON.parse(clipboardData ?? "")).toMatchObject({
+      "@webstudio/instances/v0.1": {
+        rootInstanceIds: ["box", "other"],
+      },
+    });
+    const fragmentId = expectSlotsShareFragment($instances.get(), [
+      "slot1",
+      "slot2",
+    ]);
+    expect($instances.get().get(fragmentId ?? "")?.children).toEqual([
+      { type: "id", value: "heading" },
+    ]);
+    expect($instances.get().has("box")).toBe(false);
+    expect($instances.get().has("other")).toBe(false);
+    expect($allSelectedInstanceSelectors.get()).toEqual([]);
   });
 
   test("cuts legacy shared slot child from all slot occurrences", () => {

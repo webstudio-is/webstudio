@@ -158,11 +158,17 @@ export type GetInstanceChildren = (
   instanceSelector: Instance["id"][]
 ) => Instance["children"];
 
+export type GetChildInstanceSelectors = (
+  instance: Instance,
+  instanceSelector: Instance["id"][]
+) => Instance["id"][][];
+
 export const getIndexesWithinAncestors = (
   metas: Map<Instance["component"], WsComponentMeta>,
   instances: Instances,
   rootIds: Instance["id"][],
-  getInstanceChildren: GetInstanceChildren = (instance) => instance.children
+  getInstanceChildren: GetInstanceChildren = (instance) => instance.children,
+  getChildInstanceSelectors?: GetChildInstanceSelectors
 ) => {
   const ancestors = new Set<Instance["component"]>();
   for (const meta of metas.values()) {
@@ -210,15 +216,20 @@ export const getIndexesWithinAncestors = (
       }
     }
 
-    for (const child of getInstanceChildren(instance, instanceSelector)) {
-      if (child.type === "id") {
-        traverseInstances(
-          instances,
-          child.value,
-          [child.value, ...instanceSelector],
-          latestIndexes
-        );
-      }
+    const childInstanceSelectors =
+      getChildInstanceSelectors?.(instance, instanceSelector) ??
+      getInstanceChildren(instance, instanceSelector).flatMap((child) =>
+        child.type === "id"
+          ? [[child.value, ...instanceSelector] as Instance["id"][]]
+          : []
+      );
+    for (const childSelector of childInstanceSelectors) {
+      traverseInstances(
+        instances,
+        childSelector[0],
+        childSelector,
+        latestIndexes
+      );
     }
   };
 

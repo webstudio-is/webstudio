@@ -15,7 +15,9 @@ import {
 } from "@webstudio-is/project-build/transfer";
 import { findClosestInsertable } from "../instance-utils/insert";
 import {
+  executeRuntimeMutation,
   executeRuntimeMutationAsync,
+  tryExecuteRuntimeMutationSequence,
   getRuntimeWebstudioData,
 } from "../instance-utils/data";
 import { type Insertable } from "../instance-utils/insert";
@@ -36,7 +38,6 @@ import {
   type InstanceSelector,
   sortInstancePathsForChildMutation,
 } from "@webstudio-is/project-build/runtime";
-import { deleteInstanceBySelector } from "../instance-utils/mutation";
 import {
   $allSelectedInstanceSelectors,
   clearInstanceSelection,
@@ -376,16 +377,27 @@ const handleCutInstance = () => {
     if (selectedPaths.length === 0) {
       return;
     }
-    const selectedPathData = selectedPaths.map(({ data }) => data);
-    if (selectedPathData.length < selectedInstanceSelectors.length) {
-      reportSkippedSelectedInstances("cut");
-    }
+    const uniqueSelectedPaths = Array.from(
+      new Map(
+        selectedPaths.map((item) => [item.data.instanceSelector[0], item])
+      ).values()
+    );
+    const selectedPathData = uniqueSelectedPaths.map(({ data }) => data);
     const clipboardData = stringifyMultiRootSelection(selectedPathData);
-    for (const { instancePath } of sortInstancePathsForChildMutation(
-      selectedPaths,
-      getRuntimeInstanceChildren
-    )) {
-      deleteInstanceBySelector(instancePath[0].instanceSelector);
+    const accepted = tryExecuteRuntimeMutationSequence(
+      sortInstancePathsForChildMutation(
+        uniqueSelectedPaths,
+        getRuntimeInstanceChildren
+      ).map(({ data }) => ({
+        id: "instances.deleteBySelector" as const,
+        input: { instanceSelector: data.instanceSelector },
+      }))
+    );
+    if (accepted === false) {
+      return;
+    }
+    if (selectedPaths.length < selectedInstanceSelectors.length) {
+      reportSkippedSelectedInstances("cut");
     }
     clearInstanceSelection();
     return clipboardData;
@@ -403,8 +415,12 @@ const handleCutInstance = () => {
   if (data === undefined) {
     return;
   }
-  deleteInstanceBySelector(instancePath[0].instanceSelector);
-  if (data === undefined) {
+  const result = executeRuntimeMutation({
+    id: "instances.deleteBySelector",
+    input: { instanceSelector: instancePath[0].instanceSelector },
+    returnPendingResult: true,
+  });
+  if (result === undefined) {
     return;
   }
   return stringify(data);

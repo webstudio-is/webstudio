@@ -10,8 +10,10 @@ import {
   findAllNavigableTextInstanceSelectors,
   getContentBlockSessionMessage,
   getContentBlockRenderScopeKey,
+  getContentStorageChangeRoots,
   getContentStorageIdentityKey,
   type ContentStorageChange,
+  type ContentStorageRoot,
   type ContentBlockPersistenceResult,
   type InstanceSelector,
   type MaterializedContentRoot,
@@ -24,6 +26,8 @@ import type {
   ContentBlockDiagnostic,
   ContentBlockExternalContentIdentity,
   DataSource,
+  GetChildInstanceSelectors,
+  GetInstanceChildren,
   Instance,
   Instances,
   Prop,
@@ -37,8 +41,10 @@ import type {
 import {
   blockComponent,
   blockTemplateComponent,
+  collectionComponent,
   findTreeInstanceIds,
   getContentBlockSource,
+  getIndexesWithinAncestors,
   ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
 import {
@@ -67,7 +73,8 @@ type StorageSaveResult =
     }>;
 
 type StorageSaver = (
-  changes: readonly ContentStorageChange[]
+  changes: readonly ContentStorageChange[],
+  loadedRoots: readonly MaterializedMdxAuthoredContentRoot[]
 ) => Promise<StorageSaveResult>;
 
 type StorageSaverEntry = {
@@ -310,7 +317,7 @@ const $contentStorageBaseProjection = computed(
   }
 );
 
-const isAuthoredRoot = (
+export const isAuthoredRoot = (
   root: MaterializedContentRoot
 ): root is MaterializedMdxAuthoredContentRoot =>
   "provenance" in root && "document" in root;
@@ -648,6 +655,73 @@ export const getRuntimeInstanceChildren = (
     .getInstanceChildren(instance, getRenderScope(instanceSelector));
 };
 
+type GetCollectionItemSelectors = (
+  collectionSelector: InstanceSelector
+) => InstanceSelector[];
+
+const createRuntimeChildInstanceSelectorResolver =
+  ({
+    getCollectionItemSelectors,
+    getInstanceChildren = getRuntimeInstanceChildren,
+  }: {
+    getCollectionItemSelectors: GetCollectionItemSelectors;
+    getInstanceChildren?: GetInstanceChildren;
+  }): GetChildInstanceSelectors =>
+  (instance, instanceSelector) => {
+    const parentSelectors =
+      instance.component === collectionComponent
+        ? getCollectionItemSelectors(instanceSelector)
+        : [instanceSelector];
+    return parentSelectors.flatMap((parentSelector) =>
+      getInstanceChildren(instance, parentSelector).flatMap((child) =>
+        child.type === "id" ? [[child.value, ...parentSelector]] : []
+      )
+    );
+  };
+
+export const getRuntimeIndexesWithinAncestors = ({
+  metas,
+  instances,
+  rootIds,
+  materializedRoots,
+  getCollectionItemSelectors,
+}: {
+  metas: Map<Instance["component"], WsComponentMeta>;
+  instances: Instances;
+  rootIds: Instance["id"][];
+  materializedRoots: Iterable<MaterializedContentRoot>;
+  getCollectionItemSelectors: GetCollectionItemSelectors;
+}) => {
+  const roots = Array.from(materializedRoots);
+  const rootsByScope = new Map(
+    roots.map((root) => [
+      getContentBlockRenderScopeKey(
+        root.identity.blockInstanceId,
+        root.identity.renderScope
+      ),
+      root,
+    ])
+  );
+  return getIndexesWithinAncestors(
+    metas,
+    instances,
+    rootIds,
+    getRuntimeInstanceChildren,
+    createRuntimeChildInstanceSelectorResolver({
+      getCollectionItemSelectors,
+      getInstanceChildren: (instance, instanceSelector) => {
+        const renderScope = getRenderScope(instanceSelector);
+        return (
+          rootsByScope.get(
+            getContentBlockRenderScopeKey(instance.id, renderScope)
+          )?.fragment.children ??
+          getRuntimeInstanceChildren(instance, instanceSelector)
+        );
+      },
+    })
+  );
+};
+
 export const getRuntimeAuthoredInstanceChildren = (
   instance: Instance,
   instanceSelector: InstanceSelector
@@ -694,22 +768,29 @@ export const findRuntimeNavigableTextInstanceSelectors = ({
   instances = $runtimeInstances.get(),
   props = $runtimeProps.get(),
   metas,
+  getCollectionItemSelectors,
 }: {
   rootInstanceId: Instance["id"];
   instances?: Instances;
   props?: Props;
   metas: Map<Instance["component"], WsComponentMeta>;
+  getCollectionItemSelectors: GetCollectionItemSelectors;
 }) => {
   const selectors = findAllNavigableTextInstanceSelectors({
     instanceSelector: [rootInstanceId],
     instances,
     props,
     metas,
-    getInstanceChildren: getRuntimeInstanceChildren,
+    getChildInstanceSelectors: createRuntimeChildInstanceSelectorResolver({
+      getCollectionItemSelectors,
+    }),
   });
   const selectorKeys = new Set(
     selectors.map((selector) => getRenderScope(selector))
   );
+
+  // A collection item selector is synthetic and cannot be traversed directly.
+  // Include its materialized roots when callers scope navigation to one item.
   for (const root of $activeMaterializedContentRoots.get().values()) {
     const renderScope = parseRenderScope(root.identity.renderScope);
     if (
@@ -996,6 +1077,19 @@ export const publishMaterializedContentSessionState = ({
   $materializedContentViewStates.set(states);
 };
 
+export const applyMaterializedContentChanges = (
+  root: MaterializedContentRoot | undefined,
+  changes: readonly ContentStorageChange[]
+) => {
+  if (root === undefined || isAuthoredRoot(root) === false) {
+    throw new Error("The MDX authored content is not loaded.");
+  }
+  return {
+    ...root,
+    fragment: applyMdxContentStorageChanges({ root, changes }),
+  };
+};
+
 export const publishPendingMaterializedContentChanges = (
   changes: readonly ContentStorageChange[]
 ) => {
@@ -1011,21 +1105,16 @@ export const publishPendingMaterializedContentChanges = (
   }
   for (const [scopeKey, scopeChanges] of changesByScope) {
     const root = $activeMaterializedContentRoots.get().get(scopeKey);
-    if (root === undefined || isAuthoredRoot(root) === false) {
-      throw new Error("The MDX authored content is not loaded.");
-    }
+    const updatedRoot = applyMaterializedContentChanges(root, scopeChanges);
     const roots = new Map($materializedContentRoots.get());
-    roots.set(scopeKey, {
-      ...root,
-      fragment: applyMdxContentStorageChanges({ root, changes: scopeChanges }),
-    });
+    roots.set(scopeKey, updatedRoot);
     $materializedContentRoots.set(roots);
     const states = new Map($materializedContentViewStates.get());
     const current = states.get(scopeKey);
     states.set(scopeKey, {
       status: "pending",
-      identity: root.identity,
-      assetId: root.identity.assetId,
+      identity: updatedRoot.identity,
+      assetId: updatedRoot.identity.assetId,
       diagnostics: current?.diagnostics ?? [],
       hasUnsavedSource: true,
       message: "Saving MDX content…",
@@ -1036,7 +1125,8 @@ export const publishPendingMaterializedContentChanges = (
 
 export const failPendingMaterializedContentChanges = (
   changes: readonly ContentStorageChange[],
-  message: string
+  message: string,
+  { includeReady = false }: { includeReady?: boolean } = {}
 ) => {
   const states = new Map($materializedContentViewStates.get());
   let changed = false;
@@ -1046,7 +1136,11 @@ export const failPendingMaterializedContentChanges = (
       change.root.identity.renderScope
     );
     const current = states.get(scopeKey);
-    if (current?.status !== "pending") {
+    const canFail =
+      current?.status === "pending" ||
+      (includeReady &&
+        (current?.status === "ready" || current?.status === "empty"));
+    if (canFail === false) {
       continue;
     }
     states.set(scopeKey, { ...current, status: "failed", message });
@@ -1105,15 +1199,19 @@ export const saveMaterializedContentChanges = async (
   changes: readonly ContentStorageChange[],
   {
     projectStep,
+    loadedRoots = [],
   }: {
     projectStep?: Readonly<{
       order: "before" | "after";
       preflight: () => Promise<StorageSaveResult> | StorageSaveResult;
       save: () => Promise<StorageSaveResult> | StorageSaveResult;
     }>;
+    loadedRoots?: readonly MaterializedMdxAuthoredContentRoot[];
   } = {}
 ): Promise<StorageSaveResult> => {
-  const blocker = getMaterializedContentSaveBlocker(changes);
+  const blocker = getMaterializedContentSaveBlocker(changes, {
+    copySourceRoots: loadedRoots,
+  });
   if (blocker !== undefined) {
     return blocker;
   }
@@ -1136,17 +1234,53 @@ export const saveMaterializedContentChanges = async (
     group.changes.push(change);
     groupedChanges.set(key, group);
   }
+  const rootsByIdentity = new Map(
+    loadedRoots.map((root) => [
+      getContentStorageIdentityKey(root.identity),
+      root,
+    ])
+  );
+  const activeRoots = $activeMaterializedContentRoots.get();
   const assetSteps = [...groupedChanges.values()].map((group) => {
     const scopeKey = getContentBlockRenderScopeKey(
       group.identity.blockInstanceId,
       group.identity.renderScope
     );
     const saver = storageSavers.get(scopeKey)!;
+    const relevantRoots = new Map<string, MaterializedMdxAuthoredContentRoot>();
+    for (const change of group.changes) {
+      for (const root of getContentStorageChangeRoots(change)) {
+        if (root.type !== "external") {
+          continue;
+        }
+        const key = getContentStorageIdentityKey(root.identity);
+        let loadedRoot = rootsByIdentity.get(key);
+        if (loadedRoot === undefined) {
+          const activeRoot = activeRoots.get(
+            getContentBlockRenderScopeKey(
+              root.identity.blockInstanceId,
+              root.identity.renderScope
+            )
+          );
+          if (
+            activeRoot !== undefined &&
+            isAuthoredRoot(activeRoot) &&
+            getContentStorageIdentityKey(activeRoot.identity) === key
+          ) {
+            loadedRoot = activeRoot;
+          }
+        }
+        if (loadedRoot !== undefined) {
+          relevantRoots.set(key, loadedRoot);
+        }
+      }
+    }
+    const saverRoots = [...relevantRoots.values()];
     return {
       type: "asset" as const,
       root: group.identity,
       preflight: async () => {
-        const result = await saver.preflight(group.changes);
+        const result = await saver.preflight(group.changes, saverRoots);
         return result.status === "applied"
           ? { status: "ready" as const }
           : {
@@ -1156,8 +1290,7 @@ export const saveMaterializedContentChanges = async (
             };
       },
       persist: async () => {
-        publishPendingMaterializedContentChanges(group.changes);
-        const result = await saver.save(group.changes);
+        const result = await saver.save(group.changes, saverRoots);
         return result.status === "applied"
           ? { status: "saved" as const }
           : {
@@ -1217,19 +1350,30 @@ export const saveMaterializedContentChanges = async (
 };
 
 export const getMaterializedContentSaveBlocker = (
-  changes: readonly ContentStorageChange[]
+  changes: readonly ContentStorageChange[],
+  {
+    copySourceRoots = [],
+  }: {
+    copySourceRoots?: readonly MaterializedMdxAuthoredContentRoot[];
+  } = {}
 ): Readonly<{ status: "blocked"; message: string }> | undefined => {
   if (changes.length === 0) {
     return;
   }
-  for (const change of changes) {
+  const copySourceRootKeys = new Set(
+    copySourceRoots.map((root) => getContentStorageIdentityKey(root.identity))
+  );
+  const validateRoot = (
+    root: Extract<ContentStorageRoot, { type: "external" }>,
+    allowNewerRevision: boolean
+  ): Readonly<{ status: "blocked"; message: string }> | undefined => {
     const scopeKey = getContentBlockRenderScopeKey(
-      change.root.identity.blockInstanceId,
-      change.root.identity.renderScope
+      root.identity.blockInstanceId,
+      root.identity.renderScope
     );
     const status = getMaterializedContentStatus({
-      blockInstanceId: change.root.identity.blockInstanceId,
-      renderScope: change.root.identity.renderScope,
+      blockInstanceId: root.identity.blockInstanceId,
+      renderScope: root.identity.renderScope,
     });
     if (status !== "ready" && status !== "empty" && status !== "pending") {
       return {
@@ -1240,8 +1384,11 @@ export const getMaterializedContentSaveBlocker = (
     const currentRoot = $activeMaterializedContentRoots.get().get(scopeKey);
     if (
       currentRoot === undefined ||
-      getContentStorageIdentityKey(currentRoot.identity) !==
-        getContentStorageIdentityKey(change.root.identity)
+      (allowNewerRevision
+        ? currentRoot.identity.assetId !== root.identity.assetId ||
+          currentRoot.identity.format !== root.identity.format
+        : getContentStorageIdentityKey(currentRoot.identity) !==
+          getContentStorageIdentityKey(root.identity))
     ) {
       return {
         status: "blocked",
@@ -1261,10 +1408,38 @@ export const getMaterializedContentSaveBlocker = (
         message: "The MDX content source changed before the edit was saved.",
       };
     }
+  };
+  for (const change of changes) {
+    const targetBlocker = validateRoot(change.root, false);
+    if (targetBlocker !== undefined) {
+      return targetBlocker;
+    }
+    const copySource = change.copySource?.root;
+    if (copySource?.type !== "external") {
+      continue;
+    }
+    const hasCopySourceSnapshot = copySourceRootKeys.has(
+      getContentStorageIdentityKey(copySource.identity)
+    );
+    const sourceBlocker = validateRoot(copySource, hasCopySourceSnapshot);
+    if (sourceBlocker !== undefined) {
+      return sourceBlocker;
+    }
   }
 };
 
+let materializedContentGeneration = 0;
+let materializedContentAbortController = new AbortController();
+
+export const getMaterializedContentGeneration = () =>
+  materializedContentGeneration;
+export const getMaterializedContentAbortSignal = () =>
+  materializedContentAbortController.signal;
+
 export const resetMaterializedContent = () => {
+  materializedContentAbortController.abort();
+  materializedContentAbortController = new AbortController();
+  materializedContentGeneration += 1;
   $materializedContentRoots.set(new Map());
   $materializedContentViewStates.set(new Map());
   $switchingContentScopes.set(new Set());

@@ -25,6 +25,7 @@ import {
 import {
   $propValuesByInstanceSelector,
   $variableValuesByInstanceSelector,
+  getComputedCollectionItemSelectors,
 } from "./props";
 import { $dataSourceVariables } from "./variables";
 import { $selectedPageId } from "./pages";
@@ -67,6 +68,24 @@ const getIdValuePair = <T extends { id: string }>(item: T) =>
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map(getIdValuePair));
+
+test("gets collection item selectors in computed data order", () => {
+  const collectionSelector = ["collection", "body"];
+  expect(
+    getComputedCollectionItemSelectors({
+      collectionSelector,
+      propValuesByInstanceSelector: new Map([
+        [
+          getInstanceKey(collectionSelector),
+          new Map([["data", { second: {}, first: {} }]]),
+        ],
+      ]),
+    })
+  ).toEqual([
+    ["collection[second]", "collection", "body"],
+    ["collection[first]", "collection", "body"],
+  ]);
+});
 
 const setBoxInstance = (id: Instance["id"]) => {
   $instances.set(

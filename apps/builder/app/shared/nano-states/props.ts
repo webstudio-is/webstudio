@@ -53,6 +53,42 @@ export const getIndexedInstanceId = (
   index: number | string
 ) => `${instanceId}[${index}]`;
 
+export const getComputedCollectionItemSelectors = ({
+  collectionSelector,
+  propValuesByInstanceSelector,
+}: {
+  collectionSelector: InstanceSelector;
+  propValuesByInstanceSelector: ReadonlyMap<
+    string,
+    ReadonlyMap<string, unknown>
+  >;
+}) => {
+  const [collectionId] = collectionSelector;
+  const data = propValuesByInstanceSelector
+    .get(getInstanceKey(collectionSelector))
+    ?.get("data");
+  if (collectionId === undefined) {
+    return [];
+  }
+  return getCollectionEntries(data).map(([key]) => [
+    getIndexedInstanceId(collectionId, key),
+    ...collectionSelector,
+  ]);
+};
+
+export const createComputedCollectionItemSelectorResolver =
+  (
+    propValuesByInstanceSelector: ReadonlyMap<
+      string,
+      ReadonlyMap<string, unknown>
+    >
+  ) =>
+  (collectionSelector: InstanceSelector) =>
+    getComputedCollectionItemSelectors({
+      collectionSelector,
+      propValuesByInstanceSelector,
+    });
+
 /**
  * (arg1) => {
  * let $ws$dataSource$id = _getVariable('id')

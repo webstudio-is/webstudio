@@ -1,6 +1,7 @@
 import type {
   Instance,
   Instances,
+  GetChildInstanceSelectors,
   GetInstanceChildren,
   Pages,
   Props,
@@ -88,6 +89,7 @@ type TextEditorLookupInput = {
   metas: Map<string, WsComponentMeta>;
   htmlTagsByInstanceId?: Map<Instance["id"], string>;
   getInstanceChildren?: GetInstanceChildren;
+  getChildInstanceSelectors?: GetChildInstanceSelectors;
 };
 
 const hasExpressionInTree = (
@@ -152,6 +154,16 @@ export const findAllNavigableTextInstanceSelectors = (
     }
     const instance = args.instances.get(instanceId);
     if (instance === undefined) {
+      return;
+    }
+    const childInstanceSelectors = args.getChildInstanceSelectors?.(
+      instance,
+      instanceSelector
+    );
+    if (childInstanceSelectors !== undefined) {
+      for (const childInstanceSelector of childInstanceSelectors) {
+        visit(childInstanceSelector);
+      }
       return;
     }
     const children =

@@ -140,6 +140,40 @@ export type ContentBlockPersistencePlanStep = Readonly<{
 export const executeContentBlockPersistencePlan = async (
   plan: readonly ContentBlockPersistencePlanStep[]
 ): Promise<ContentBlockPersistenceResult> => {
+  const failBeforePersistence = (
+    failedIndex: number,
+    failure: Readonly<{ code: string; message: string }>
+  ): ContentBlockPersistenceResult => ({
+    status: "failed",
+    steps: plan.map((step, index) => ({
+      type: step.type,
+      status: index === failedIndex ? "failed" : "not-attempted",
+      ...(step.root === undefined ? {} : { root: step.root }),
+      ...(index === failedIndex ? failure : {}),
+    })),
+    retry: {
+      replan: true,
+      roots: plan.flatMap(({ type, root }) =>
+        type === "asset" && root !== undefined ? [root] : []
+      ),
+      project: plan.some(({ type }) => type === "project"),
+    },
+  });
+  const writableAssetIds = new Set<string>();
+  for (const [index, planned] of plan.entries()) {
+    if (planned.type !== "asset" || planned.root === undefined) {
+      continue;
+    }
+    if (writableAssetIds.has(planned.root.assetId) === false) {
+      writableAssetIds.add(planned.root.assetId);
+      continue;
+    }
+    return failBeforePersistence(index, {
+      code: "content-source-duplicate-asset",
+      message:
+        "One content operation cannot write the same MDX Asset through multiple Content Blocks.",
+    });
+  }
   for (const [index, planned] of plan.entries()) {
     let preflight: Awaited<ReturnType<typeof planned.preflight>>;
     try {
@@ -154,24 +188,7 @@ export const executeContentBlockPersistencePlan = async (
     if (preflight.status === "ready") {
       continue;
     }
-    return {
-      status: "failed",
-      steps: plan.map((step, stepIndex) => ({
-        type: step.type,
-        status: stepIndex === index ? "failed" : "not-attempted",
-        ...(step.root === undefined ? {} : { root: step.root }),
-        ...(stepIndex === index
-          ? { code: preflight.code, message: preflight.message }
-          : {}),
-      })),
-      retry: {
-        replan: true,
-        roots: plan.flatMap(({ type, root }) =>
-          type === "asset" && root !== undefined ? [root] : []
-        ),
-        project: plan.some(({ type }) => type === "project"),
-      },
-    };
+    return failBeforePersistence(index, preflight);
   }
   const steps: ContentBlockPersistenceStep[] = [];
   for (const [index, planned] of plan.entries()) {
@@ -876,6 +893,9 @@ export const createContentBlockApplicationOperations = ({
   > => {
     const projectVersionBeforeMutation =
       getProjectVersion?.() ?? context.projectVersion;
+    const isProjectVersionCurrent = () =>
+      (getProjectVersion?.() ?? context.projectVersion) ===
+      projectVersionBeforeMutation;
     let active = getActiveState(blockInstanceId, renderScope);
     if (active === undefined) {
       await inspectSource({ blockInstanceId, renderScope, variables });
@@ -936,7 +956,27 @@ export const createContentBlockApplicationOperations = ({
             result: mutation,
           };
         }
-        await commitProjectPayload(mutation.payload);
+        if (isProjectVersionCurrent() === false) {
+          return {
+            status: "blocked",
+            code: "content-source-session-failed",
+            message: "The project changed before the content edit was saved",
+            result: mutation,
+          };
+        }
+        try {
+          await commitProjectPayload(mutation.payload);
+        } catch (error) {
+          return {
+            status: "blocked",
+            code: "content-source-session-failed",
+            message:
+              error instanceof Error
+                ? error.message
+                : "Project persistence failed",
+            result: mutation,
+          };
+        }
       }
       return { status: "complete", result: mutation };
     }
@@ -952,9 +992,7 @@ export const createContentBlockApplicationOperations = ({
         : {
             type: "project",
             preflight: async () =>
-              commitProjectPayload !== undefined &&
-              (getProjectVersion?.() ?? context.projectVersion) ===
-                projectVersionBeforeMutation
+              commitProjectPayload !== undefined && isProjectVersionCurrent()
                 ? { status: "ready" }
                 : {
                     status: "failed",
@@ -965,10 +1003,7 @@ export const createContentBlockApplicationOperations = ({
                         : "The project changed before the content edit was saved",
                   },
             persist: async () => {
-              if (
-                (getProjectVersion?.() ?? context.projectVersion) !==
-                projectVersionBeforeMutation
-              ) {
+              if (isProjectVersionCurrent() === false) {
                 return {
                   status: "failed",
                   code: "content-source-session-failed",

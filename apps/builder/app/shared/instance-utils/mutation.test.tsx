@@ -12,10 +12,14 @@ import { enableMapSet } from "immer";
 import { describe, test, expect, beforeEach, vi } from "vitest";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
 import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 import {
   canConvertInstance,
+  materializeMdxAuthoredContent,
+  prepareMdxContentStorageWrites,
   reparentInstanceMutable,
+  type ContentStorageChange,
 } from "@webstudio-is/project-build/runtime";
 import { $, ws, expression, renderData } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
@@ -216,7 +220,7 @@ describe("reparent instance", () => {
     ]);
   });
 
-  test("serializes repeated MDX moves against the latest pending root", async () => {
+  test("serializes repeated MDX moves and overlapping project transfers", async () => {
     $registeredComponentMetas.set(defaultMetasMap);
     $builderMode.set("content");
     $pages.set(createDefaultPages({ rootInstanceId: "body" }));
@@ -263,6 +267,7 @@ describe("reparent instance", () => {
         children: [
           { type: "id", value: "first" },
           { type: "id", value: "second" },
+          { type: "id", value: "third" },
         ],
         instances: [
           {
@@ -274,6 +279,12 @@ describe("reparent instance", () => {
           {
             ...createInstance("second", elementComponent, [
               { type: "text", value: "Second" },
+            ]),
+            tag: "p",
+          },
+          {
+            ...createInstance("third", elementComponent, [
+              { type: "text", value: "Third" },
             ]),
             tag: "p",
           },
@@ -304,26 +315,57 @@ describe("reparent instance", () => {
             props: [],
             children: [{ type: "text", value: "Second" }],
           },
+          {
+            type: "element",
+            syntax: "markdown",
+            tag: "p",
+            props: [],
+            children: [{ type: "text", value: "Third" }],
+          },
         ],
       },
       provenance: {
         nodes: [
           { type: "element", path: [0], instanceId: "first", assetProps: [] },
           { type: "element", path: [1], instanceId: "second", assetProps: [] },
+          { type: "element", path: [2], instanceId: "third", assetProps: [] },
         ],
         unresolvedTemplates: [],
       },
     };
-    publishMaterializedContentRoot(root);
+    let persistedRoot = root;
+    publishMaterializedContentRoot(persistedRoot);
     let finishFirstSave: (() => void) | undefined;
     let saveCount = 0;
-    const save = vi.fn(() => {
+    const save = vi.fn(async (changes: readonly ContentStorageChange[]) => {
       saveCount += 1;
-      return saveCount === 1
-        ? new Promise<{ status: "applied" }>((resolve) => {
-            finishFirstSave = () => resolve({ status: "applied" });
-          })
-        : Promise.resolve({ status: "applied" as const });
+      if (saveCount === 1) {
+        await new Promise<void>((resolve) => {
+          finishFirstSave = resolve;
+        });
+      }
+      const [write] = await prepareMdxContentStorageWrites({
+        loadedRoots: [persistedRoot],
+        changes,
+        authorizeAssetWrite: () => true,
+      });
+      if (write === undefined) {
+        throw new Error("Expected an MDX storage write");
+      }
+      persistedRoot = materializeMdxAuthoredContent({
+        identity: {
+          ...persistedRoot.identity,
+          revision: `sha256:saved-${saveCount}`,
+        },
+        document: await parseMdxDocument({ source: write.source }),
+        templateMaterialization: {
+          templates: [],
+          diagnostics: [],
+          dependencies: { templateNames: [], templates: [] },
+        },
+      });
+      publishMaterializedContentRoot(persistedRoot);
+      return { status: "applied" as const };
     });
     const unregister = registerContentStorageSaver({
       blockInstanceId: "block",
@@ -335,7 +377,7 @@ describe("reparent instance", () => {
 
     const firstTarget: DroppableTarget = {
       parentSelector: ["block", "body"],
-      position: 3,
+      position: 4,
     };
     expect(canReparentInstance(["first", "block", "body"], firstTarget)).toBe(
       true
@@ -344,13 +386,11 @@ describe("reparent instance", () => {
       canReparentInstance(["templates", "block", "body"], firstTarget)
     ).toBe(false);
     const firstMove = reparentInstance(["first", "block", "body"], firstTarget);
-    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
-    const secondMove = reparentInstance(["first", "block", "body"], {
+    const secondMove = reparentInstance(["second", "block", "body"], {
       parentSelector: ["block", "body"],
-      position: 1,
+      position: 4,
     });
-    await Promise.resolve();
-    expect(save).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
     finishFirstSave?.();
     await expect(Promise.all([firstMove, secondMove])).resolves.toEqual([
       true,
@@ -360,14 +400,76 @@ describe("reparent instance", () => {
     const pendingRoot = $materializedContentRoots
       .get()
       .get(JSON.stringify(["block", renderScope]));
-    expect(pendingRoot?.fragment.children).toEqual([
-      { type: "id", value: "first" },
-      { type: "id", value: "second" },
-    ]);
+    const instances = new Map(
+      pendingRoot?.fragment.instances.map((instance) => [instance.id, instance])
+    );
+    expect(
+      pendingRoot?.fragment.children.map((child) =>
+        child.type === "id"
+          ? instances.get(child.value)?.children[0]?.value
+          : child.value
+      )
+    ).toEqual(["Third", "First", "Second"]);
+    const getInstanceIdByText = (text: string) => {
+      const instance = Array.from(instances.values()).find(
+        (candidate) => candidate.children[0]?.value === text
+      );
+      if (instance === undefined) {
+        throw new Error(`Expected materialized ${text} instance`);
+      }
+      return instance.id;
+    };
+    const thirdInstanceId = getInstanceIdByText("Third");
+    const firstInstanceId = getInstanceIdByText("First");
 
     unregister();
-    resetMaterializedContent();
     $builderMode.set("design");
+    let finishProjectPreflight!: () => void;
+    const projectPreflight = new Promise<void>((resolve) => {
+      finishProjectPreflight = resolve;
+    });
+    const preflightProjectMove = vi.fn(async () => {
+      await projectPreflight;
+      return { status: "applied" as const };
+    });
+    const unregisterProjectMove = registerContentStorageSaver({
+      blockInstanceId: "block",
+      renderScope,
+      preflight: preflightProjectMove,
+      isCurrent: () => true,
+      save: async () => ({ status: "applied" }),
+    });
+    const firstProjectMove = reparentInstance(
+      [thirdInstanceId, "block", "body"],
+      {
+        parentSelector: ["body"],
+        position: "end",
+      }
+    );
+    await vi.waitFor(() => expect(preflightProjectMove).toHaveBeenCalledOnce());
+    toggleInstanceShow("body");
+    expect(
+      Array.from($props.get().values()).some(
+        (prop) => prop.instanceId === "body" && prop.name === showAttribute
+      )
+    ).toBe(false);
+    const blockedProjectMove = reparentInstance(
+      [firstInstanceId, "block", "body"],
+      {
+        parentSelector: ["body"],
+        position: "end",
+      }
+    );
+    await expect(blockedProjectMove).resolves.toBe(false);
+    expect(preflightProjectMove).toHaveBeenCalledOnce();
+    resetMaterializedContent();
+    finishProjectPreflight();
+    await expect(firstProjectMove).resolves.toBe(false);
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "block" },
+    ]);
+    expect($materializedContentRoots.get()).toEqual(new Map());
+    unregisterProjectMove();
   });
 
   test("before itself", () => {

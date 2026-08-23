@@ -8,18 +8,19 @@ import type {
   HookContext,
   InstanceData,
 } from "@webstudio-is/react-sdk";
-import {
-  getIndexesWithinAncestors,
-  type Instance,
-  type WsComponentMeta,
-} from "@webstudio-is/sdk";
+import { type Instance, type WsComponentMeta } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import {
   $runtimeInstances as $instances,
   $runtimeProps as $props,
-  getRuntimeInstanceChildren,
+  $activeMaterializedContentRoots,
+  getRuntimeIndexesWithinAncestors,
 } from "../content-block-content";
 import { $memoryProps } from "./misc";
+import {
+  $propValuesByInstanceSelectorWithMemoryProps,
+  createComputedCollectionItemSelectorResolver,
+} from "./props";
 import { $selectedPage } from "./pages";
 import { $selectedInstanceSelector, getInstanceKey } from "./instances";
 import {
@@ -32,12 +33,17 @@ const createHookContext = (): HookContext => {
   const metas = $registeredComponentMetas.get();
   const instances = $instances.get();
   const page = $selectedPage.get();
-  const indexesWithinAncestors = getIndexesWithinAncestors(
+  const propValuesByInstanceSelector =
+    $propValuesByInstanceSelectorWithMemoryProps.get();
+  const indexesWithinAncestors = getRuntimeIndexesWithinAncestors({
     metas,
     instances,
-    page ? [page.rootInstanceId] : [],
-    getRuntimeInstanceChildren
-  );
+    rootIds: page ? [page.rootInstanceId] : [],
+    materializedRoots: $activeMaterializedContentRoots.get().values(),
+    getCollectionItemSelectors: createComputedCollectionItemSelectorResolver(
+      propValuesByInstanceSelector
+    ),
+  });
 
   return {
     indexesWithinAncestors,

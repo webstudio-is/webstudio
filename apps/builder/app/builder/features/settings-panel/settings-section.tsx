@@ -46,9 +46,13 @@ export const SettingsSection = () => {
   );
   const resetLocalValue = localValue.reset;
   useEffect(() => {
+    const pendingOperation =
+      pendingConfirmation !== undefined && "operation" in pendingConfirmation
+        ? pendingConfirmation.operation
+        : undefined;
     const isPendingForInstance =
-      pendingConfirmation?.operation.id === "instances.setLabel" &&
-      pendingConfirmation.operation.input.instanceId === selectedInstance?.id;
+      pendingOperation?.id === "instances.setLabel" &&
+      pendingOperation.input.instanceId === selectedInstance?.id;
     if (isPendingForInstance) {
       hadPendingConfirmation.current = true;
       return;

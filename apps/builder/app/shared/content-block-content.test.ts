@@ -1,13 +1,19 @@
 import { afterEach, expect, test } from "vitest";
 import type { Project } from "@webstudio-is/project";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
-import type { MaterializedMdxAuthoredContentRoot } from "@webstudio-is/project-build/runtime";
+import type {
+  MaterializedContentRoot,
+  MaterializedMdxAuthoredContentRoot,
+} from "@webstudio-is/project-build/runtime";
 import {
   blockComponent,
   blockTemplateComponent,
+  collectionComponent,
   elementComponent,
+  type Instance,
   type ContentBlockExternalContentIdentity,
   type WebstudioFragment,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
   $instances,
@@ -34,6 +40,7 @@ import {
   getMaterializedContentViewStateFromSession,
   getRuntimeAuthoredInstanceChildren,
   getRuntimeInstanceChildren,
+  getRuntimeIndexesWithinAncestors,
   publishMaterializedContentRoot,
   publishMaterializedContentSessionState,
   $materializedContentRoots,
@@ -79,6 +86,105 @@ afterEach(() => {
   resetMaterializedContent();
   resetDataStores();
   $project.set(undefined);
+});
+
+test("computes ancestor indexes in collection data order instead of root publication order", () => {
+  const instances = new Map<Instance["id"], Instance>([
+    [
+      "body",
+      {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: [{ type: "id", value: "tabs" }],
+      },
+    ],
+    [
+      "tabs",
+      {
+        type: "instance",
+        id: "tabs",
+        component: "Tabs",
+        children: [{ type: "id", value: "collection" }],
+      },
+    ],
+    [
+      "collection",
+      {
+        type: "instance",
+        id: "collection",
+        component: collectionComponent,
+        children: [{ type: "id", value: "block" }],
+      },
+    ],
+    [
+      "block",
+      {
+        type: "instance",
+        id: "block",
+        component: blockComponent,
+        children: [],
+      },
+    ],
+    [
+      "first",
+      {
+        type: "instance",
+        id: "first",
+        component: "TabsTrigger",
+        children: [],
+      },
+    ],
+    [
+      "second",
+      {
+        type: "instance",
+        id: "second",
+        component: "TabsTrigger",
+        children: [],
+      },
+    ],
+  ]);
+  $instances.set(instances);
+  const firstRoot: MaterializedContentRoot = {
+    identity: identity(
+      JSON.stringify(["block", "collection[0]", "collection", "tabs", "body"])
+    ),
+    fragment: {
+      ...fragment("first"),
+      instances: [instances.get("first") as Instance],
+    },
+  };
+  const secondRoot: MaterializedContentRoot = {
+    identity: identity(
+      JSON.stringify(["block", "collection[1]", "collection", "tabs", "body"])
+    ),
+    fragment: {
+      ...fragment("second"),
+      instances: [instances.get("second") as Instance],
+    },
+  };
+  const metas = new Map<Instance["component"], WsComponentMeta>([
+    ["TabsTrigger", { indexWithinAncestor: "Tabs" }],
+  ]);
+
+  expect(
+    getRuntimeIndexesWithinAncestors({
+      metas,
+      instances,
+      rootIds: ["body"],
+      materializedRoots: [secondRoot, firstRoot],
+      getCollectionItemSelectors: (collectionSelector) => [
+        ["collection[0]", ...collectionSelector],
+        ["collection[1]", ...collectionSelector],
+      ],
+    })
+  ).toEqual(
+    new Map([
+      ["first", 0],
+      ["second", 1],
+    ])
+  );
 });
 
 test("projects repeated MDX roots by selector without changing persisted instances", () => {
@@ -151,6 +257,7 @@ test("projects repeated MDX roots by selector without changing persisted instanc
     findRuntimeNavigableTextInstanceSelectors({
       rootInstanceId: "collection[0]",
       metas: componentMetas,
+      getCollectionItemSelectors: () => [],
     })
   ).toEqual([["first-content", "block", "collection[0]"]]);
   expect(
@@ -230,6 +337,163 @@ test("projects repeated MDX roots by selector without changing persisted instanc
 
   $project.set({ id: "other-project" } as Project);
   expect($runtimeInstances.get().has("first-content")).toBe(false);
+});
+
+test("lists collection-scoped MDX text in rendered order", () => {
+  $project.set({ id: "project" } as Project);
+  const paragraph = (id: string) => ({
+    type: "instance" as const,
+    id,
+    component: elementComponent,
+    tag: "p",
+    children: [{ type: "text" as const, value: id }],
+  });
+  $instances.set(
+    new Map(
+      [
+        {
+          type: "instance" as const,
+          id: "body",
+          component: elementComponent,
+          tag: "body",
+          children: [
+            { type: "id" as const, value: "before" },
+            { type: "id" as const, value: "collection" },
+            { type: "id" as const, value: "after" },
+          ],
+        },
+        paragraph("before"),
+        {
+          type: "instance" as const,
+          id: "collection",
+          component: collectionComponent,
+          children: [
+            { type: "id" as const, value: "item-before" },
+            { type: "id" as const, value: "block" },
+            { type: "id" as const, value: "item-after" },
+          ],
+        },
+        paragraph("item-before"),
+        {
+          type: "instance" as const,
+          id: "block",
+          component: blockComponent,
+          children: [{ type: "id" as const, value: "templates" }],
+        },
+        {
+          type: "instance" as const,
+          id: "templates",
+          component: blockTemplateComponent,
+          children: [],
+        },
+        paragraph("item-after"),
+        paragraph("after"),
+      ].map((instance) => [instance.id, instance])
+    )
+  );
+  $props.set(
+    new Map([
+      [
+        "source",
+        {
+          id: "source",
+          instanceId: "block",
+          name: "src",
+          type: "expression" as const,
+          value: "article",
+        },
+      ],
+    ])
+  );
+  $assets.set(new Map());
+  $breakpoints.set(new Map());
+  $dataSources.set(new Map());
+  $resources.set(new Map());
+  $styleSourceSelections.set(new Map());
+  $styleSources.set(new Map());
+  $styles.set(new Map());
+  const firstScope = JSON.stringify([
+    "block",
+    "collection[0]",
+    "collection",
+    "body",
+  ]);
+  const secondScope = JSON.stringify([
+    "block",
+    "collection[1]",
+    "collection",
+    "body",
+  ]);
+  publishMaterializedContentRoot({
+    identity: identity(secondScope),
+    fragment: fragment("second-content"),
+  });
+  publishMaterializedContentRoot({
+    identity: identity(firstScope),
+    fragment: fragment("first-content"),
+  });
+
+  expect(
+    findRuntimeNavigableTextInstanceSelectors({
+      rootInstanceId: "body",
+      metas: componentMetas,
+      getCollectionItemSelectors: (collectionSelector) => [
+        ["collection[0]", ...collectionSelector],
+        ["collection[1]", ...collectionSelector],
+      ],
+    })
+  ).toEqual([
+    ["before", "body"],
+    ["item-before", "collection[0]", "collection", "body"],
+    ["first-content", "block", "collection[0]", "collection", "body"],
+    ["item-after", "collection[0]", "collection", "body"],
+    ["item-before", "collection[1]", "collection", "body"],
+    ["second-content", "block", "collection[1]", "collection", "body"],
+    ["item-after", "collection[1]", "collection", "body"],
+    ["after", "body"],
+  ]);
+
+  resetMaterializedContent();
+  const firstKeyScope = JSON.stringify([
+    "block",
+    "collection[first]",
+    "collection",
+    "body",
+  ]);
+  const secondKeyScope = JSON.stringify([
+    "block",
+    "collection[second]",
+    "collection",
+    "body",
+  ]);
+  publishMaterializedContentRoot({
+    identity: identity(firstKeyScope),
+    fragment: fragment("first-key-content"),
+  });
+  publishMaterializedContentRoot({
+    identity: identity(secondKeyScope),
+    fragment: fragment("second-key-content"),
+  });
+
+  expect(
+    findRuntimeNavigableTextInstanceSelectors({
+      rootInstanceId: "body",
+      metas: componentMetas,
+      getCollectionItemSelectors: (collectionSelector) => [
+        ["collection[second]", ...collectionSelector],
+        ["collection[first]", ...collectionSelector],
+      ],
+    })
+  ).toEqual([
+    ["before", "body"],
+    ["item-before", "collection[second]", "collection", "body"],
+    ["second-key-content", "block", "collection[second]", "collection", "body"],
+    ["item-after", "collection[second]", "collection", "body"],
+    ["item-before", "collection[first]", "collection", "body"],
+    ["first-key-content", "block", "collection[first]", "collection", "body"],
+    ["item-after", "collection[first]", "collection", "body"],
+    ["after", "body"],
+  ]);
 });
 
 test("keeps previous materialized content read-only while its source switches", () => {

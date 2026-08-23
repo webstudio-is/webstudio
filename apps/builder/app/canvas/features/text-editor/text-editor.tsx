@@ -72,9 +72,11 @@ import {
   $hoveredInstanceOutline,
   $hoveredInstanceSelector,
   $registeredComponentMetas,
+  $propValuesByInstanceSelectorWithMemoryProps,
   $textEditingInstanceSelector,
   $textEditorContextMenu,
   execTextEditorContextMenuCommand,
+  createComputedCollectionItemSelectorResolver,
 } from "~/shared/nano-states";
 import {
   $runtimeInstances as $instances,
@@ -1692,12 +1694,18 @@ export const TextEditor = ({
         return;
       }
 
+      const propValuesByInstanceSelector =
+        $propValuesByInstanceSelectorWithMemoryProps.get();
       const editableInstanceSelectors =
         findRuntimeNavigableTextInstanceSelectors({
           rootInstanceId,
           instances,
           props,
           metas,
+          getCollectionItemSelectors:
+            createComputedCollectionItemSelectorResolver(
+              propValuesByInstanceSelector
+            ),
         });
 
       const currentIndex = editableInstanceSelectors.findIndex(

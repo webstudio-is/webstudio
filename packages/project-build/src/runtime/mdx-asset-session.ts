@@ -23,9 +23,13 @@ import type { BuilderState } from "../state/builder-state";
 import { getRequiredComponentInsertData } from "./components";
 import {
   getContentBlockRenderScopeKey,
+  getContentStorageChangeRoots,
   getContentStorageIdentityKey,
 } from "./content-storage";
-import { materializeMdxAuthoredContent } from "./mdx-authored-content";
+import {
+  materializeMdxAuthoredContent,
+  type MaterializedMdxAuthoredContentRoot,
+} from "./mdx-authored-content";
 import { materializeMdxTemplates } from "./mdx-materialization";
 import {
   prepareMdxContentStorageWrites,
@@ -120,11 +124,19 @@ type MdxAssetSessionQueueEntry = {
   version: number;
   timer?: unknown;
   inFlight?: Promise<MdxAssetEditingSessionState>;
+  preparation?: Promise<MdxAssetEditingSessionState>;
+  preparationOpenVersion?: number;
+  lifecycleAbortController: AbortController;
   unsavedSource?: string;
   persisted?: LoadedSessionBase;
   cancelled: boolean;
   remoteStateUnknown: boolean;
 };
+
+type KeyedSessionState = Extract<
+  MdxAssetEditingSessionState,
+  { key: string; identity: ContentBlockExternalContentIdentity }
+>;
 
 export type MdxAssetSourceReplacementResult =
   | Readonly<{
@@ -229,7 +241,9 @@ const createRecoverableState = ({
 
 const getUnsavedState = (
   state: MdxAssetEditingSessionState | undefined
-): UnsavedSessionBase | undefined => {
+):
+  | Extract<MdxAssetEditingSessionState, { localSource: string }>
+  | undefined => {
   if (
     state !== undefined &&
     "localSource" in state &&
@@ -244,6 +258,7 @@ export const createMdxAssetEditingSession = ({
   repository,
   authorizeAsset,
   resolveExpressionAssetId,
+  computeContentHash = getAssetContentHash,
   schedule = (callback, delayMilliseconds) =>
     setTimeout(callback, delayMilliseconds),
   cancelScheduled = (handle) =>
@@ -259,6 +274,7 @@ export const createMdxAssetEditingSession = ({
     renderScope: string;
     variables?: Readonly<Record<string, unknown>>;
   }) => string | undefined | Promise<string | undefined>;
+  computeContentHash?: typeof getAssetContentHash;
   schedule?: MdxAssetSessionSchedule;
   cancelScheduled?: (handle: unknown) => void;
   debounceMilliseconds?: number;
@@ -267,6 +283,12 @@ export const createMdxAssetEditingSession = ({
   const queueEntries = new Map<string, MdxAssetSessionQueueEntry>();
   const keyAliases = new Map<string, string>();
   const openVersions = new Map<string, number>();
+  const invalidateLifecycle = (entry: MdxAssetSessionQueueEntry) => {
+    entry.preparation = undefined;
+    entry.preparationOpenVersion = undefined;
+    entry.lifecycleAbortController.abort();
+    entry.lifecycleAbortController = new AbortController();
+  };
 
   const resolveKey = (key: string) => {
     let resolved = key;
@@ -276,6 +298,33 @@ export const createMdxAssetEditingSession = ({
       resolved = keyAliases.get(resolved)!;
     }
     return resolved;
+  };
+
+  const getLoadedRootsForChanges = (
+    changes: readonly ContentStorageChange[],
+    additionalRoots: readonly MaterializedMdxAuthoredContentRoot[] = []
+  ) => {
+    const loadedRoots = new Map<string, MaterializedMdxAuthoredContentRoot>();
+    for (const root of additionalRoots) {
+      loadedRoots.set(getContentStorageIdentityKey(root.identity), root);
+    }
+    for (const change of changes) {
+      for (const root of getContentStorageChangeRoots(change)) {
+        if (root.type !== "external") {
+          continue;
+        }
+        const identityKey = getContentStorageIdentityKey(root.identity);
+        const state = states.get(resolveKey(identityKey));
+        if (
+          state !== undefined &&
+          "root" in state &&
+          getContentStorageIdentityKey(state.identity) === identityKey
+        ) {
+          loadedRoots.set(identityKey, state.root);
+        }
+      }
+    }
+    return [...loadedRoots.values()];
   };
 
   const materializeSource = async ({
@@ -363,6 +412,7 @@ export const createMdxAssetEditingSession = ({
         renderScope: input.renderScope,
       });
     if (existing !== undefined) {
+      invalidateLifecycle(existing);
       existing.input = input;
       existing.version += 1;
       setQueueEntryKey(existing, key);
@@ -373,12 +423,111 @@ export const createMdxAssetEditingSession = ({
       input,
       assetId,
       version: 0,
+      lifecycleAbortController: new AbortController(),
       cancelled: false,
       remoteStateUnknown: false,
     };
     queueEntries.set(key, entry);
     return entry;
   };
+
+  const captureLifecycle = ({
+    key,
+    state,
+    entry,
+  }: {
+    key: string;
+    state: KeyedSessionState;
+    entry: MdxAssetSessionQueueEntry;
+  }) => {
+    const openScopeKey = getContentBlockRenderScopeKey(
+      state.identity.blockInstanceId,
+      state.identity.renderScope
+    );
+    return {
+      key,
+      state,
+      entry,
+      entryVersion: entry.version,
+      openScopeKey,
+      openVersion: openVersions.get(openScopeKey),
+      abortSignal: entry.lifecycleAbortController.signal,
+    };
+  };
+
+  const getLifecycleState = (lifecycle: ReturnType<typeof captureLifecycle>) =>
+    states.get(resolveKey(lifecycle.entry.key)) ??
+    states.get(resolveKey(lifecycle.key)) ??
+    lifecycle.state;
+
+  const isLifecycleCurrent = (
+    lifecycle: ReturnType<typeof captureLifecycle>,
+    {
+      allowOpenChange = false,
+      allowVersionChange = false,
+    }: { allowOpenChange?: boolean; allowVersionChange?: boolean } = {}
+  ) => {
+    const liveKey = resolveKey(lifecycle.key);
+    const liveState = states.get(liveKey);
+    return (
+      lifecycle.abortSignal.aborted === false &&
+      (allowOpenChange ||
+        openVersions.get(lifecycle.openScopeKey) === lifecycle.openVersion) &&
+      (allowVersionChange ||
+        lifecycle.entry.version === lifecycle.entryVersion) &&
+      lifecycle.entry.cancelled === false &&
+      lifecycle.entry.key === liveKey &&
+      queueEntries.get(liveKey) === lifecycle.entry &&
+      liveState !== undefined &&
+      "identity" in liveState &&
+      getContentStorageIdentityKey(liveState.identity) === lifecycle.state.key
+    );
+  };
+
+  const getInvalidatedLifecycleState = (
+    lifecycle: ReturnType<typeof captureLifecycle>
+  ): MdxAssetEditingSessionState => {
+    const live = getLifecycleState(lifecycle);
+    return live.status === "cancelled"
+      ? live
+      : {
+          status: "cancelled",
+          key: lifecycle.state.key,
+          identity: lifecycle.state.identity,
+          diagnostics: lifecycle.state.diagnostics,
+        };
+  };
+
+  const waitForLifecycle = async (
+    lifecycle: ReturnType<typeof captureLifecycle>,
+    operation: Promise<unknown>
+  ) => {
+    let stopWaiting!: () => void;
+    const invalidated = new Promise<void>((resolve) => {
+      stopWaiting = resolve;
+      lifecycle.abortSignal.addEventListener("abort", stopWaiting, {
+        once: true,
+      });
+      if (lifecycle.abortSignal.aborted) {
+        stopWaiting();
+      }
+    });
+    try {
+      await Promise.race([operation, invalidated]);
+    } finally {
+      lifecycle.abortSignal.removeEventListener("abort", stopWaiting);
+    }
+  };
+
+  const createSupersededOpenState = (
+    input: MdxAssetSessionOpenInput
+  ): MdxAssetEditingSessionState => ({
+    status: "failed",
+    blockInstanceId: input.blockInstanceId,
+    renderScope: input.renderScope,
+    diagnostics: [],
+    error: new Error("MDX Asset session open was superseded"),
+  });
 
   const open = async (
     input: MdxAssetSessionOpenInput
@@ -413,6 +562,9 @@ export const createMdxAssetEditingSession = ({
             : new Error("Content Block source resolution failed"),
       };
     }
+    if (isCurrentOpen() === false) {
+      return createSupersededOpenState(input);
+    }
     if (assetId === undefined || assetId.length === 0) {
       return {
         status: "failed",
@@ -429,6 +581,9 @@ export const createMdxAssetEditingSession = ({
     });
     if (activeEntry?.cancelled && activeEntry.inFlight !== undefined) {
       await activeEntry.inFlight;
+      if (isCurrentOpen() === false) {
+        return createSupersededOpenState(input);
+      }
     }
     const unsaved = Array.from(states.values()).find((state) => {
       const candidate = getUnsavedState(state);
@@ -457,6 +612,9 @@ export const createMdxAssetEditingSession = ({
             ? error
             : new Error("MDX Asset read authorization failed"),
       };
+    }
+    if (isCurrentOpen() === false) {
+      return createSupersededOpenState(input);
     }
     if (readAuthorized === false) {
       return {
@@ -500,6 +658,9 @@ export const createMdxAssetEditingSession = ({
               : new Error("Asset read failed"),
       };
     }
+    if (isCurrentOpen() === false) {
+      return createSupersededOpenState(input);
+    }
     if (read.asset.projectId !== input.projectId) {
       return {
         status: "failed",
@@ -509,7 +670,10 @@ export const createMdxAssetEditingSession = ({
         error: new Error("Asset content identity does not match its bytes"),
       };
     }
-    const contentHash = await getAssetContentHash(new Uint8Array(bytes).buffer);
+    const contentHash = await computeContentHash(new Uint8Array(bytes).buffer);
+    if (isCurrentOpen() === false) {
+      return createSupersededOpenState(input);
+    }
     const revisionInput = {
       storageName: read.asset.name,
       updatedAt: read.asset.updatedAt ?? read.asset.createdAt,
@@ -618,7 +782,7 @@ export const createMdxAssetEditingSession = ({
         status: "saved" as const,
       };
       if (isCurrentOpen() === false) {
-        return saved;
+        return createSupersededOpenState(input);
       }
       states.set(key, saved);
       const entry = getOrCreateQueueEntry({ key, input, assetId });
@@ -628,6 +792,9 @@ export const createMdxAssetEditingSession = ({
       entry.remoteStateUnknown = false;
       return saved;
     } catch (error) {
+      if (isCurrentOpen() === false) {
+        return createSupersededOpenState(input);
+      }
       if (error instanceof MdxDocumentError) {
         const recoverable = createRecoverableState({ error, identity });
         if (isCurrentOpen()) {
@@ -653,9 +820,11 @@ export const createMdxAssetEditingSession = ({
   const prepareSave = async ({
     key,
     changes,
+    loadedRoots,
   }: {
     key: string;
     changes: readonly ContentStorageChange[];
+    loadedRoots?: readonly MaterializedMdxAuthoredContentRoot[];
   }): Promise<MdxAssetEditingSessionState> => {
     const resolvedKey = resolveKey(key);
     const current = states.get(resolvedKey);
@@ -669,9 +838,10 @@ export const createMdxAssetEditingSession = ({
     ) {
       throw new Error("MDX Asset editing session is not ready to save");
     }
+    const lifecycle = captureLifecycle({ key, state: current, entry });
     try {
       const writes = await prepareMdxContentStorageWrites({
-        loadedRoots: [current.root],
+        loadedRoots: getLoadedRootsForChanges(changes, loadedRoots),
         changes,
         authorizeAssetWrite: async (identity) =>
           identity.assetId === current.identity.assetId &&
@@ -682,6 +852,9 @@ export const createMdxAssetEditingSession = ({
             identity: current.identity,
           })),
       });
+      if (isLifecycleCurrent(lifecycle) === false) {
+        return getInvalidatedLifecycleState(lifecycle);
+      }
       if (writes.length === 0) {
         return current;
       }
@@ -694,6 +867,9 @@ export const createMdxAssetEditingSession = ({
         source: localSource,
         input: entry.input,
       });
+      if (isLifecycleCurrent(lifecycle) === false) {
+        return getInvalidatedLifecycleState(lifecycle);
+      }
       const pending = {
         ...loaded,
         status: "pending" as const,
@@ -706,6 +882,9 @@ export const createMdxAssetEditingSession = ({
       states.set(resolvedKey, pending);
       return pending;
     } catch (error) {
+      if (isLifecycleCurrent(lifecycle) === false) {
+        return getInvalidatedLifecycleState(lifecycle);
+      }
       const failed = {
         status: "failed" as const,
         blockInstanceId: current.identity.blockInstanceId,
@@ -723,16 +902,21 @@ export const createMdxAssetEditingSession = ({
   const preflightSave = async ({
     key,
     changes,
+    loadedRoots,
   }: {
     key: string;
     changes: readonly ContentStorageChange[];
+    loadedRoots?: readonly MaterializedMdxAuthoredContentRoot[];
   }): Promise<
     | Readonly<{ status: "ready" }>
     | Readonly<{ status: "blocked"; reason: string }>
   > => {
-    const current = states.get(resolveKey(key));
+    const resolvedKey = resolveKey(key);
+    const current = states.get(resolvedKey);
+    const entry = queueEntries.get(resolvedKey);
     if (
       current === undefined ||
+      entry === undefined ||
       (current.status !== "saved" &&
         current.status !== "pending" &&
         !(current.status === "failed" && "root" in current))
@@ -742,9 +926,10 @@ export const createMdxAssetEditingSession = ({
         reason: "MDX Asset editing session is not ready to save",
       };
     }
+    const lifecycle = captureLifecycle({ key, state: current, entry });
     try {
       await prepareMdxContentStorageWrites({
-        loadedRoots: [current.root],
+        loadedRoots: getLoadedRootsForChanges(changes, loadedRoots),
         changes,
         authorizeAssetWrite: async (identity) =>
           identity.assetId === current.identity.assetId &&
@@ -755,8 +940,20 @@ export const createMdxAssetEditingSession = ({
             identity: current.identity,
           })),
       });
+      if (isLifecycleCurrent(lifecycle) === false) {
+        return {
+          status: "blocked",
+          reason: "MDX Asset editing session changed during preflight",
+        };
+      }
       return { status: "ready" };
     } catch (error) {
+      if (isLifecycleCurrent(lifecycle) === false) {
+        return {
+          status: "blocked",
+          reason: "MDX Asset editing session changed during preflight",
+        };
+      }
       return {
         status: "blocked",
         reason:
@@ -813,6 +1010,7 @@ export const createMdxAssetEditingSession = ({
 
     const flushVersion = entry.version;
     const flushKey = entry.key;
+    const lifecycle = captureLifecycle({ key, state: unsaved, entry });
     const operation = (async (): Promise<MdxAssetEditingSessionState> => {
       let storageCommitted = false;
       let committed:
@@ -821,6 +1019,17 @@ export const createMdxAssetEditingSession = ({
             source: string;
           }>
         | undefined;
+      const getInvalidatedFlushState = () => {
+        if (storageCommitted) {
+          entry.remoteStateUnknown = true;
+        }
+        return getInvalidatedLifecycleState(lifecycle);
+      };
+      const isCurrentFlush = () =>
+        isLifecycleCurrent(lifecycle, {
+          allowOpenChange: true,
+          allowVersionChange: true,
+        });
       try {
         const writeAuthorized = await authorizeAsset({
           assetId: unsaved.identity.assetId,
@@ -830,8 +1039,8 @@ export const createMdxAssetEditingSession = ({
         if (writeAuthorized !== true) {
           throw new Error("MDX Asset is not authorized for writing");
         }
-        if (entry.cancelled) {
-          return states.get(entry.key) ?? initial;
+        if (isCurrentFlush() === false) {
+          return getInvalidatedFlushState();
         }
         const bytes = new TextEncoder().encode(unsaved.localSource);
         const asset = await updateContent({
@@ -845,8 +1054,8 @@ export const createMdxAssetEditingSession = ({
           }),
         });
         storageCommitted = true;
-        if (entry.cancelled) {
-          return states.get(entry.key) ?? initial;
+        if (isCurrentFlush() === false) {
+          return getInvalidatedFlushState();
         }
         if (
           asset.id !== unsaved.identity.assetId ||
@@ -862,9 +1071,12 @@ export const createMdxAssetEditingSession = ({
           );
         }
 
-        const contentHash = await getAssetContentHash(
+        const contentHash = await computeContentHash(
           new Uint8Array(bytes).buffer
         );
+        if (isCurrentFlush() === false) {
+          return getInvalidatedFlushState();
+        }
         const identity: ContentBlockExternalContentIdentity = {
           ...unsaved.identity,
           revision: createAssetContentRevision({
@@ -881,20 +1093,45 @@ export const createMdxAssetEditingSession = ({
           source: unsaved.localSource,
           input: entry.input,
         });
-        entry.persisted = persisted;
-        const latest = getUnsavedState(states.get(entry.key));
+        if (isCurrentFlush() === false) {
+          return getInvalidatedFlushState();
+        }
+        let loaded = persisted;
+        let latest: UnsavedSessionBase | undefined;
+        while (true) {
+          const preparation = entry.preparation;
+          if (preparation !== undefined) {
+            await waitForLifecycle(lifecycle, preparation);
+            if (isCurrentFlush() === false) {
+              return getInvalidatedFlushState();
+            }
+          }
+          const preparedVersion = entry.version;
+          latest = getUnsavedState(states.get(entry.key));
+          const localSource = latest?.localSource ?? unsaved.localSource;
+          loaded =
+            latest === undefined
+              ? persisted
+              : await materializeSource({
+                  identity,
+                  source: localSource,
+                  input: entry.input,
+                });
+          if (isCurrentFlush() === false) {
+            return getInvalidatedFlushState();
+          }
+          if (
+            entry.version === preparedVersion &&
+            (entry.preparation === undefined ||
+              entry.preparation === preparation)
+          ) {
+            break;
+          }
+        }
         const hasNewerChanges =
           entry.version !== flushVersion && latest !== undefined;
-        const localSource = hasNewerChanges
-          ? latest.localSource
-          : unsaved.localSource;
-        const loaded = hasNewerChanges
-          ? await materializeSource({
-              identity,
-              source: localSource,
-              input: entry.input,
-            })
-          : persisted;
+        const localSource = latest?.localSource ?? unsaved.localSource;
+        entry.persisted = persisted;
         setQueueEntryKey(entry, loaded.key);
         if (hasNewerChanges) {
           const pending = {
@@ -917,8 +1154,8 @@ export const createMdxAssetEditingSession = ({
         states.set(entry.key, saved);
         return saved;
       } catch (error) {
-        if (entry.cancelled) {
-          return states.get(entry.key) ?? initial;
+        if (isCurrentFlush() === false) {
+          return getInvalidatedFlushState();
         }
         if (committed !== undefined) {
           entry.persisted = undefined;
@@ -975,19 +1212,55 @@ export const createMdxAssetEditingSession = ({
   const queueSave = async ({
     key,
     changes,
+    loadedRoots,
   }: {
     key: string;
     changes: readonly ContentStorageChange[];
+    loadedRoots?: readonly MaterializedMdxAuthoredContentRoot[];
   }) => {
-    const state = await prepareSave({ key, changes });
-    if (state.status !== "pending") {
-      return state;
-    }
     const entry = queueEntries.get(resolveKey(key));
     if (entry === undefined) {
       throw new Error("MDX Asset editing session does not exist");
     }
-    scheduleEntry(entry);
+    const preparationOpenVersion = openVersions.get(
+      getContentBlockRenderScopeKey(
+        entry.input.blockInstanceId,
+        entry.input.renderScope
+      )
+    );
+    const previousPreparation =
+      entry.preparationOpenVersion === preparationOpenVersion
+        ? entry.preparation
+        : undefined;
+    const preparation = (
+      previousPreparation ??
+      Promise.resolve<MdxAssetEditingSessionState | undefined>(undefined)
+    ).then((previous) =>
+      previous === undefined ||
+      previous.status === "pending" ||
+      previous.status === "saved"
+        ? prepareSave({ key, changes, loadedRoots })
+        : previous
+    );
+    entry.preparation = preparation;
+    entry.preparationOpenVersion = preparationOpenVersion;
+    let state: MdxAssetEditingSessionState;
+    try {
+      state = await preparation;
+    } finally {
+      if (entry.preparation === preparation) {
+        entry.preparation = undefined;
+        entry.preparationOpenVersion = undefined;
+      }
+    }
+    if (state.status !== "pending") {
+      return state;
+    }
+    const currentEntry = queueEntries.get(resolveKey(key));
+    if (currentEntry === undefined) {
+      throw new Error("MDX Asset editing session does not exist");
+    }
+    scheduleEntry(currentEntry);
     return state;
   };
 
@@ -1126,6 +1399,7 @@ export const createMdxAssetEditingSession = ({
           }
           entry.unsavedSource = undefined;
           entry.cancelled = false;
+          invalidateLifecycle(entry);
           entry.version += 1;
           const saved = { ...persisted, status: "saved" as const };
           states.set(resolveKey(key), saved);
@@ -1189,6 +1463,7 @@ export const createMdxAssetEditingSession = ({
             },
           ],
         };
+        invalidateLifecycle(entry);
         entry.version += 1;
         entry.unsavedSource = source;
         entry.cancelled = false;
@@ -1306,6 +1581,7 @@ export const createMdxAssetEditingSession = ({
       cancelScheduled(entry.timer);
       entry.timer = undefined;
     }
+    invalidateLifecycle(entry);
     entry.cancelled = true;
     entry.remoteStateUnknown =
       entry.inFlight !== undefined || current.status === "conflicting";

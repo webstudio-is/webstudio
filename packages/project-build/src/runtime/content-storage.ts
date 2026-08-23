@@ -66,6 +66,13 @@ export const getContentStorageRootKey = (root: ContentStorageRoot) =>
     ? "project"
     : `external:${getContentStorageIdentityKey(root.identity)}`;
 
+export const getContentStorageChangeRoots = (
+  change: ContentStorageChange
+): readonly ContentStorageRoot[] => [
+  change.root,
+  ...(change.copySource === undefined ? [] : [change.copySource.root]),
+];
+
 export type ContentStorageTarget =
   | Readonly<{ type: "instance"; instanceId: Instance["id"] }>
   | Readonly<{

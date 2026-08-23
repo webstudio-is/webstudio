@@ -1,7 +1,10 @@
-import { describe, test, expect } from "vitest";
-import type { Instance, StyleDecl } from "@webstudio-is/sdk";
+import { describe, test, expect, vi } from "vitest";
+import type { Instance, Prop, StyleDecl } from "@webstudio-is/sdk";
 import {
+  collectionComponent,
+  coreMetas,
   descendantComponent,
+  elementComponent,
   ROOT_INSTANCE_ID,
   rootComponent,
 } from "@webstudio-is/sdk";
@@ -14,6 +17,10 @@ import {
 import "css.escape";
 
 import { __testing__ } from "./styles";
+import {
+  $memoryProps,
+  $propValuesByInstanceSelectorWithMemoryProps,
+} from "~/shared/nano-states";
 
 const {
   getEphemeralProperty,
@@ -22,6 +29,8 @@ const {
   computeDescendantSelectors,
   computeInstanceStyles,
   computeEditableCursorRules,
+  computeContentEditModeCursorRules,
+  subscribeContentEditModeHelperStyleChanges,
   computeStylesDiff,
   toDeclarationParams,
   toVarValue,
@@ -29,6 +38,66 @@ const {
   simulateConditionBreakpoints,
   shouldRenderInBackgroundTask,
 } = __testing__;
+
+test("content edit helper styles react to computed prop values", () => {
+  const instances = new Map(
+    [
+      {
+        type: "instance" as const,
+        id: "body",
+        component: rootComponent,
+        children: [{ type: "id" as const, value: "collection" }],
+      },
+      {
+        type: "instance" as const,
+        id: "collection",
+        component: collectionComponent,
+        children: [{ type: "id" as const, value: "paragraph" }],
+      },
+      {
+        type: "instance" as const,
+        id: "paragraph",
+        component: elementComponent,
+        tag: "p",
+        children: [{ type: "text" as const, value: "Post" }],
+      },
+    ].map((instance) => [instance.id, instance])
+  );
+  const metas = new Map(Object.entries(coreMetas));
+  const computeRules = () =>
+    computeContentEditModeCursorRules({
+      rootInstanceId: "body",
+      instances,
+      props: new Map(),
+      metas,
+      propValuesByInstanceSelector:
+        $propValuesByInstanceSelectorWithMemoryProps.get(),
+    });
+
+  expect(computeRules()).toEqual([]);
+  const listener = vi.fn();
+  const unsubscribe = subscribeContentEditModeHelperStyleChanges(listener);
+  const prop: Prop = {
+    id: "collection-data",
+    instanceId: "collection",
+    name: "data",
+    type: "json",
+    value: [{ title: "Post" }],
+  };
+
+  $memoryProps.set(
+    new Map([
+      [JSON.stringify(["collection", "body"]), new Map([["data", prop]])],
+    ])
+  );
+
+  expect(listener).toHaveBeenCalledOnce();
+  expect(computeRules()).toEqual([
+    ':is([data-ws-id="paragraph"]), :is([data-ws-id="paragraph"]) a { cursor: text; }',
+  ]);
+  unsubscribe();
+  $memoryProps.set(new Map());
+});
 
 const createTestSheet = () =>
   createRegularStyleSheet({ element: new FakeStyleElement() });

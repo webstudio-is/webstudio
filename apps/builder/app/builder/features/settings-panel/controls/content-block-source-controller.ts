@@ -16,6 +16,7 @@ import {
   type ContentBlockPersistenceResult,
   type ContentStorageChange,
   type MaterializedContentRoot,
+  type MaterializedMdxAuthoredContentRoot,
   type MdxAssetEditingSessionState,
   type PreparedContentBlockSourceLifecycle,
 } from "@webstudio-is/project-build/runtime";
@@ -354,13 +355,18 @@ export const createContentBlockSourceController = ({
   };
 
   const saveStorageChanges = async (
-    changes: readonly ContentStorageChange[]
+    changes: readonly ContentStorageChange[],
+    loadedRoots: readonly MaterializedMdxAuthoredContentRoot[] = []
   ): Promise<ContentBlockSourceControllerResult> => {
     if (disposed || currentSessionKey === undefined) {
       return { status: "blocked", message: "The MDX Asset is not loaded." };
     }
     const key = currentSessionKey;
-    const pending = await session.queueSave({ key, changes });
+    const pending = await session.queueSave({
+      key,
+      changes,
+      ...(loadedRoots.length === 0 ? {} : { loadedRoots }),
+    });
     if (disposed === false && currentSessionKey === key) {
       publishSessionState?.(pending);
     }
@@ -420,7 +426,8 @@ export const createContentBlockSourceController = ({
   };
 
   const preflightStorageChanges = async (
-    changes: readonly ContentStorageChange[]
+    changes: readonly ContentStorageChange[],
+    loadedRoots: readonly MaterializedMdxAuthoredContentRoot[] = []
   ): Promise<ContentBlockSourceControllerResult> => {
     if (disposed || currentSessionKey === undefined) {
       return { status: "blocked", message: "The MDX Asset is not loaded." };
@@ -428,6 +435,7 @@ export const createContentBlockSourceController = ({
     const preflight = await session.preflightSave({
       key: currentSessionKey,
       changes,
+      ...(loadedRoots.length === 0 ? {} : { loadedRoots }),
     });
     return preflight.status === "ready"
       ? { status: "applied" }
@@ -682,8 +690,11 @@ export const createBuilderContentBlockSourceController = ({
   const unregisterSaver = registerContentStorageSaver({
     blockInstanceId,
     renderScope,
-    preflight: async (changes) => {
-      const result = await controller.preflightStorageChanges(changes);
+    preflight: async (changes, loadedRoots) => {
+      const result = await controller.preflightStorageChanges(
+        changes,
+        loadedRoots
+      );
       return result.status === "applied"
         ? result
         : {
@@ -695,8 +706,8 @@ export const createBuilderContentBlockSourceController = ({
           };
     },
     isCurrent: controller.isCurrent,
-    save: async (changes) => {
-      const result = await controller.saveStorageChanges(changes);
+    save: async (changes, loadedRoots) => {
+      const result = await controller.saveStorageChanges(changes, loadedRoots);
       const saveResult =
         result.status === "requires-confirmation"
           ? {
