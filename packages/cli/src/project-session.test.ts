@@ -87,6 +87,31 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
     tool: "unknown",
     code: "MCP_TOOL_FAILED",
   });
+
+  expect(
+    createIssueReportFailure("insert-fragment", {
+      code: "INVALID_INPUT",
+      issues: [
+        {
+          path: ["fragment"],
+          code: "invalid_webstudio_jsx",
+          message: "Fragment contains private project content",
+          constraint: "valid_webstudio_jsx_syntax",
+          detail: "Unexpected token near customer data",
+        },
+      ],
+    })
+  ).toEqual({
+    tool: "insert-fragment",
+    code: "INVALID_INPUT",
+    issues: [
+      {
+        path: ["fragment"],
+        code: "invalid_webstudio_jsx",
+        constraint: "valid_webstudio_jsx_syntax",
+      },
+    ],
+  });
 });
 
 test("scopes project session files for explicitly selected projects", () => {

@@ -256,15 +256,15 @@ export const createIssueReportFailure = (
 ): IssueReportRecentFailure => {
   const errorCode = getStableErrorCode(error);
   const issues =
-    errorCode === "PROJECT_BUNDLE_INVALID"
-      ? getValidationIssues(error)
+    errorCode === undefined
+      ? undefined
+      : getValidationIssues(error)
           ?.slice(0, 30)
           .map((issue) => ({
             path: issue.path,
             code: issue.code,
             constraint: issue.constraint,
-          }))
-      : undefined;
+          }));
   return {
     tool: canonicalTool,
     code: errorCode ?? "MCP_TOOL_FAILED",
