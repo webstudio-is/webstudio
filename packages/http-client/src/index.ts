@@ -111,7 +111,10 @@ const fetchJsonResponse: typeof fetch = async (request, init) => {
   const contentType = response.headers.get("content-type");
 
   if (contentType?.includes("json") !== true) {
-    throw new Error(await createApiResponseErrorMessage(request, response));
+    throw Object.assign(
+      new Error(await createApiResponseErrorMessage(request, response)),
+      { status: response.status }
+    );
   }
 
   return response;
@@ -454,13 +457,13 @@ export const uploadAsset = async (
     : result.uploadedAssets;
 };
 
-export const uploadAssets = async (
+const uploadAssetsSettled = async (
   params: AuthProjectParams & {
     assets: Asset[];
     readAssetData: (asset: Asset) => Promise<BinaryAssetData>;
     force?: (asset: Asset) => boolean;
   }
-): Promise<UploadedAsset[]> => {
+): Promise<AssetUploadBatchResult[]> => {
   const results: AssetUploadBatchResult[] = Array(params.assets.length);
   const prepared = await Promise.all(
     params.assets.map(async (asset, index) => {
@@ -516,14 +519,25 @@ export const uploadAssets = async (
     })
   );
 
-  const failedUploads = results.flatMap((result) =>
+  return results;
+};
+
+export const uploadAssets = async (
+  params: AuthProjectParams & {
+    assets: Asset[];
+    readAssetData: (asset: Asset) => Promise<BinaryAssetData>;
+    force?: (asset: Asset) => boolean;
+  }
+): Promise<UploadedAsset[]> => {
+  const results = await uploadAssetsSettled(params);
+  const failed = results.flatMap((result) =>
     result.status === "rejected"
       ? [{ asset: result.asset, error: result.error }]
       : []
   );
-  if (failedUploads.length > 0) {
+  if (failed.length > 0) {
     throw new Error(
-      `Failed to upload assets: ${failedUploads
+      `Failed to upload assets: ${failed
         .map(({ asset, error }) => `${asset.name}: ${formatError(error)}`)
         .join("; ")}`
     );
@@ -613,27 +627,37 @@ export const uploadProjectAssets = async (
     readAssetData: (asset: AssetUploadDescriptor) => Promise<BinaryAssetData>;
   }
 ) => {
-  const descriptorByName = new Map(
-    params.assets.map((descriptor) => [descriptor.name, descriptor])
+  const assets = params.assets.map((descriptor) =>
+    toUploadAsset({ descriptor, projectId: params.projectId })
   );
-  const uploaded = await uploadAssets({
+  const descriptorByAsset = new Map(
+    assets.map((asset, index) => [asset, params.assets[index]!])
+  );
+  const results = await uploadAssetsSettled({
     authToken: params.authToken,
     headers: params.headers,
     origin: params.origin,
     projectId: params.projectId,
-    assets: params.assets.map((descriptor) =>
-      toUploadAsset({ descriptor, projectId: params.projectId })
-    ),
+    assets,
     readAssetData: (asset) => {
-      const descriptor = descriptorByName.get(asset.name);
+      const descriptor = descriptorByAsset.get(asset);
       if (descriptor === undefined) {
         throw new Error(`Asset descriptor not found for ${asset.name}.`);
       }
       return params.readAssetData(descriptor);
     },
-    force: (asset) => descriptorByName.get(asset.name)?.force === true,
+    force: (asset) => descriptorByAsset.get(asset)?.force === true,
   });
-  return { uploaded };
+  return {
+    uploaded: results.flatMap((result) =>
+      result.status === "fulfilled" ? result.uploadedAssets : []
+    ),
+    failed: results.flatMap((result) =>
+      result.status === "rejected"
+        ? [{ name: result.asset.name, error: formatError(result.error) }]
+        : []
+    ),
+  };
 };
 
 const createAssetRestUrl = ({

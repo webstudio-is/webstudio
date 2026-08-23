@@ -1383,6 +1383,64 @@ describe("project audit and analysis", () => {
     );
   });
 
+  test("accepts a label that references a generic button", () => {
+    const instances = new Map<string, Instance>(state.instances);
+    instances.set("body", {
+      ...instances.get("body")!,
+      children: [
+        { type: "id", value: "button-label" },
+        { type: "id", value: "generic-button" },
+      ],
+    });
+    instances.set("button-label", {
+      type: "instance",
+      id: "button-label",
+      component: "Element",
+      tag: "label",
+      children: [{ type: "text", value: "Open menu" }],
+    });
+    instances.set("generic-button", {
+      type: "instance",
+      id: "generic-button",
+      component: "Element",
+      tag: "button",
+      children: [{ type: "text", value: "Open" }],
+    });
+    const props = new Map(state.props);
+    props.set("button-label-for", {
+      id: "button-label-for",
+      instanceId: "button-label",
+      name: "for",
+      type: "string",
+      value: "menu-button",
+    });
+    props.set("generic-button-id", {
+      id: "generic-button-id",
+      instanceId: "generic-button",
+      name: "id",
+      type: "string",
+      value: "menu-button",
+    });
+
+    const matches = analyzeProject(
+      { ...state, instances, props },
+      { scopes: ["accessibility"], pageId: "home" }
+    ).matches;
+    expect(matches).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ instanceId: "button-label" }),
+      ])
+    );
+    expect(matches).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          issue: "missing-form-label",
+          instanceId: "generic-button",
+        }),
+      ])
+    );
+  });
+
   test("audits deterministic keyboard, ARIA state, and autoplay media issues", () => {
     const instances = new Map<string, Instance>(state.instances);
     instances.set("positive-tabindex", {

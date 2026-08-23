@@ -680,8 +680,9 @@ export const createMcpPreviewHandlers = ({
         progress?.report(
           `tool screenshot capturing ${new Set(urls).size} pages across ${inputs.length} viewport widths`
         );
-        const timeout = Math.max(
-          ...inputs.map((input) => input.timeout ?? defaultScreenshotTimeout)
+        const timeout = inputs.reduce(
+          (total, input) => total + (input.timeout ?? defaultScreenshotTimeout),
+          0
         );
         const results = await captureWithTimeout(
           async () => {

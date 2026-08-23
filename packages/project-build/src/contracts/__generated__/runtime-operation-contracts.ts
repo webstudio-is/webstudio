@@ -62748,6 +62748,8 @@ export const runtimeOperationContractData = [
                 ],
               },
               breakpoint: {
+                description:
+                  "Breakpoint id from list-breakpoints; omit for the base.",
                 type: "string",
               },
               state: {
@@ -62761,6 +62763,7 @@ export const runtimeOperationContractData = [
               },
             },
             required: ["instanceId", "property", "value"],
+            additionalProperties: false,
           },
         },
       },
@@ -62889,6 +62892,8 @@ export const runtimeOperationContractData = [
                 ],
               },
               breakpoint: {
+                description:
+                  "Breakpoint id from list-breakpoints; omit for the base.",
                 type: "string",
               },
               state: {
@@ -62902,6 +62907,7 @@ export const runtimeOperationContractData = [
               },
             },
             required: ["instanceId", "property", "value", "styleSourceId"],
+            additionalProperties: false,
           },
         },
       },

@@ -170,9 +170,11 @@ const isLabelableFormControl = ({
     component !== "Input" &&
     component !== "Select" &&
     component !== "Textarea" &&
+    component !== "Button" &&
     tag !== "input" &&
     tag !== "select" &&
-    tag !== "textarea"
+    tag !== "textarea" &&
+    tag !== "button"
   ) {
     return false;
   }
@@ -189,6 +191,19 @@ const isLabelableFormControl = ({
     ) === false
   );
 };
+
+const requiresFormLabel = ({
+  component,
+  tag,
+  props,
+}: {
+  component: string;
+  tag?: string;
+  props: ReadonlyMap<string, unknown> | undefined;
+}) =>
+  component !== "Button" &&
+  tag !== "button" &&
+  isLabelableFormControl({ component, tag, props });
 
 const createParentIdsByInstance = (
   instances: NonNullable<BuilderState["instances"]>
@@ -836,7 +851,7 @@ export const analyzeProject = (
         });
       }
       if (
-        isLabelableFormControl({
+        requiresFormLabel({
           component: instance.component,
           tag: instance.tag,
           props,

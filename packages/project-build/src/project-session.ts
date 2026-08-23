@@ -609,22 +609,48 @@ const shouldRefreshPermissionsAfterError = (error: unknown) => {
 const isVersionConflictError = (error: unknown) =>
   getProjectSessionErrorCode(error) === "CONFLICT";
 
-const createCommitConfirmationConflictError = ({
-  conflictError,
+const isAmbiguousCommitError = (error: unknown) => {
+  const seen = new Set<unknown>();
+  let current = error;
+  while (typeof current === "object" && current !== null) {
+    if (seen.has(current)) {
+      return false;
+    }
+    seen.add(current);
+    if (isVersionConflictError(current)) {
+      return true;
+    }
+    if (
+      "status" in current &&
+      typeof current.status === "number" &&
+      current.status >= 500 &&
+      current.status <= 599
+    ) {
+      return true;
+    }
+    current = "cause" in current ? current.cause : undefined;
+  }
+  return false;
+};
+
+const createCommitConfirmationError = ({
+  commitError,
   confirmationError,
 }: {
-  conflictError: unknown;
+  commitError: unknown;
   confirmationError: unknown;
 }) =>
   Object.assign(
     new Error(
-      conflictError instanceof Error
-        ? conflictError.message
-        : "Build version conflict",
+      commitError instanceof Error
+        ? commitError.message
+        : "Commit result could not be confirmed",
       { cause: confirmationError }
     ),
     {
-      code: "CONFLICT",
+      code: isVersionConflictError(commitError)
+        ? "CONFLICT"
+        : "AMBIGUOUS_COMMIT",
       confirmationFailure: {
         code: getProjectSessionErrorCode(confirmationError),
         message:
@@ -635,7 +661,7 @@ const createCommitConfirmationConflictError = ({
     }
   );
 
-const commitWithConflictConfirmation = async ({
+const commitWithConfirmation = async ({
   commit,
   input,
 }: {
@@ -649,9 +675,9 @@ const commitWithConflictConfirmation = async ({
       result: await commit(input),
       confirmedAfterRetry: false,
     };
-  } catch (conflictError) {
-    if (isVersionConflictError(conflictError) === false) {
-      throw conflictError;
+  } catch (commitError) {
+    if (isAmbiguousCommitError(commitError) === false) {
+      throw commitError;
     }
     try {
       return {
@@ -662,8 +688,8 @@ const commitWithConflictConfirmation = async ({
       if (isVersionConflictError(confirmationError)) {
         throw confirmationError;
       }
-      throw createCommitConfirmationConflictError({
-        conflictError,
+      throw createCommitConfirmationError({
+        commitError,
         confirmationError,
       });
     }
@@ -676,6 +702,9 @@ const commitRetryConfirmedDiagnostic: ProjectSessionDiagnostic = {
   message:
     "The transaction was confirmed committed after retrying the same transaction ID.",
 };
+
+const isAmbiguousCommitConfirmationError = (error: unknown) =>
+  getProjectSessionErrorCode(error) === "AMBIGUOUS_COMMIT";
 
 const isProjectSessionBusyError = (error: unknown) =>
   getProjectSessionErrorCode(error) === "PROJECT_SESSION_BUSY";
@@ -915,7 +944,7 @@ export class ProjectSession {
         });
       }
       const { result: commit, confirmedAfterRetry } =
-        await commitWithConflictConfirmation({
+        await commitWithConfirmation({
           commit: (input) => this.#options.transport.commitRestorePoint(input),
           input: {
             projectId: snapshot.projectId,
@@ -1277,16 +1306,29 @@ export class ProjectSession {
       this.clearPermissionsAfterAuthorizationError(error);
       let latestSnapshot = snapshot;
       const diagnostics = [errorDiagnostic(error)];
-      if (isVersionConflictError(error)) {
+      if (
+        isVersionConflictError(error) ||
+        isAmbiguousCommitConfirmationError(error)
+      ) {
         try {
           latestSnapshot = await this.fetchAndSave(requiredNamespaces);
-          diagnostics.push({
-            level: "info",
-            code: "CONFLICT_REFRESHED",
-            message:
-              "Remote build changed. Required namespaces were refreshed; rerun the operation against the latest snapshot.",
-          });
+          diagnostics.push(
+            isVersionConflictError(error)
+              ? {
+                  level: "info",
+                  code: "CONFLICT_REFRESHED",
+                  message:
+                    "Remote build changed. Required namespaces were refreshed; rerun the operation against the latest snapshot.",
+                }
+              : {
+                  level: "info",
+                  code: "COMMIT_STATE_REFRESHED",
+                  message:
+                    "The commit result could not be confirmed. Required namespaces were refreshed; inspect the current state before retrying.",
+                }
+          );
           if (
+            isVersionConflictError(error) &&
             contract.retryOnConflict &&
             options.dryRun !== true &&
             getCommitConfirmationFailureCode(error) === undefined
@@ -1401,7 +1443,7 @@ export class ProjectSession {
       transactions: [transaction],
     };
     const { result: commit, confirmedAfterRetry } =
-      await commitWithConflictConfirmation({
+      await commitWithConfirmation({
         commit: (input) => this.#options.transport.commitPatch(input),
         input: commitInput,
       });

@@ -901,6 +901,10 @@ Commands:
 
 - MCP tool: upload-assets {"assets":[{"name":"image.png","type":"image","format":"png","meta":{"width":1200,"height":630}}],"assetsDir":".webstudio/assets"}
 
+Notes:
+
+- Multi-file uploads return `uploaded` and `failed` lists. Retry only the files in `failed`; successful uploads remain committed.
+
 ## Duplicate asset
 
 Commands:
