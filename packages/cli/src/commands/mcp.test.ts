@@ -1263,6 +1263,7 @@ test("exposes asset content editing through MCP discovery", () => {
     name: "update-asset-content",
     inputSchema: {
       required: ["assetId", "expectedName"],
+      oneOf: [{ required: ["path"] }, { required: ["content"] }],
       properties: {
         assetId: expect.any(Object),
         expectedName: expect.any(Object),
