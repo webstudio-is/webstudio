@@ -10,7 +10,7 @@ import {
   SYSTEM_VARIABLE_ID,
   collectionComponent,
 } from "@webstudio-is/sdk";
-import { textContentAttribute } from "@webstudio-is/react-sdk";
+import { showAttribute, textContentAttribute } from "@webstudio-is/react-sdk";
 import {
   $instances,
   $pages,
@@ -20,6 +20,7 @@ import {
   $resources,
 } from "../sync/data-stores";
 import {
+  __testing__,
   $propValuesByInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "./props";
@@ -38,6 +39,8 @@ import {
 import { $systemDataByPage, updateCurrentSystem } from "../system";
 import { registerContainers } from "../sync/sync-stores";
 import { $resourcesCache, getResourceKey } from "../resources";
+
+const { $computedResourceRequests } = __testing__;
 
 const initialSystem = {
   origin: "https://undefined.wstd.work",
@@ -81,6 +84,92 @@ beforeEach(() => {
   $dataSources.set(new Map());
   $dataSourceVariables.set(new Map());
   $resourcesCache.set(new Map());
+});
+
+test("does not preload resources in statically hidden subtrees", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "root",
+        type: "instance",
+        component: "Body",
+        children: [
+          { type: "id", value: "hidden" },
+          { type: "id", value: "visible" },
+          { type: "id", value: "dynamic" },
+        ],
+      },
+      {
+        id: "hidden",
+        type: "instance",
+        component: "Box",
+        children: [{ type: "id", value: "hidden-child" }],
+      },
+      {
+        id: "hidden-child",
+        type: "instance",
+        component: "Box",
+        children: [],
+      },
+      {
+        id: "visible",
+        type: "instance",
+        component: "Box",
+        children: [],
+      },
+      {
+        id: "dynamic",
+        type: "instance",
+        component: "Box",
+        children: [],
+      },
+    ])
+  );
+  selectPageRoot("root");
+  $props.set(
+    toMap([
+      {
+        id: "hidden-show",
+        instanceId: "hidden",
+        name: showAttribute,
+        type: "boolean",
+        value: false,
+      },
+      {
+        id: "dynamic-show",
+        instanceId: "dynamic",
+        name: showAttribute,
+        type: "expression",
+        value: "false",
+      },
+    ])
+  );
+  $dataSources.set(
+    toMap(
+      ["hidden", "hidden-child", "visible", "dynamic"].map((instanceId) => ({
+        id: `${instanceId}-data-source`,
+        scopeInstanceId: instanceId,
+        type: "resource" as const,
+        name: instanceId,
+        resourceId: `${instanceId}-resource`,
+      }))
+    )
+  );
+  $resources.set(
+    toMap(
+      ["hidden", "hidden-child", "visible", "dynamic"].map((name) => ({
+        id: `${name}-resource`,
+        name,
+        url: JSON.stringify(`https://example.com/${name}`),
+        method: "get" as const,
+        headers: [],
+      }))
+    )
+  );
+
+  expect(
+    $computedResourceRequests.get().map((request) => request.name)
+  ).toEqual(["visible", "dynamic"]);
 });
 
 test("collect prop values", () => {
