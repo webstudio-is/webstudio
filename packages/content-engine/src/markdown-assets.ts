@@ -1,10 +1,8 @@
 import { parse, postprocess, preprocess } from "micromark";
 import { decodeString } from "micromark-util-decode-string";
 import { createCanonicalAssetPath } from "./asset-path";
-import {
-  createAssetIdResolver,
-  createUniqueAssetIdsByPath,
-} from "./asset-path-resolution";
+import { createUniqueAssetIdsByPath } from "./asset-path-resolution";
+import { createAssetReferenceResolver } from "./asset-reference-utils";
 import type { MarkdownAssetReference } from "./markdown-references";
 
 const getMarkdownUrlTokens = (markdown: string) => {
@@ -41,15 +39,16 @@ export const discoverMarkdownAssetReferenceRanges = ({
   sourcePath: string;
   assetIdsByPath: ReadonlyMap<string, string>;
 }): MarkdownAssetReference[] => {
-  const resolveAssetId = createAssetIdResolver(assetIdsByPath, sourcePath);
+  const resolveAssetReference = createAssetReferenceResolver({
+    assetIdsByPath,
+    sourcePath,
+  });
   return getMarkdownUrlTokens(markdown).flatMap(({ start, end, url }) => {
-    const assetId = resolveAssetId(url);
-    if (assetId === undefined) {
+    const reference = resolveAssetReference(url);
+    if (reference === undefined) {
       return [];
     }
-    const parsed = new URL(url, "https://content.webstudio.invalid/");
-    const suffix = `${parsed.search}${parsed.hash}`;
-    return [{ start, end, assetId, ...(suffix === "" ? {} : { suffix }) }];
+    return [{ start, end, ...reference }];
   });
 };
 

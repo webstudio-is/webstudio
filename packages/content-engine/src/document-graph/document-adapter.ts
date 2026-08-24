@@ -14,27 +14,22 @@ import {
   selectMarkdownDocumentRepresentation,
   type MarkdownDocument,
 } from "./markdown-document";
+import {
+  analyzeMdxDocument,
+  assembleMdxDocument,
+  parseMdxDocumentSource,
+  selectMdxDocumentRepresentation,
+  type MdxAdaptedDocument,
+} from "./mdx-document";
 import type { DocumentRepresentation } from "./reference";
 import type { SourceReferenceOccurrence } from "./reference-codec";
 import { isJsonObject } from "./document-utils";
-
-export type DocumentFormat = "json" | "markdown";
-
-export const getDocumentFormatByContentType = (
-  contentType: string
-): DocumentFormat | undefined => {
-  const mimeType = contentType.split(";", 1)[0].trim().toLowerCase();
-  if (mimeType === "application/json") {
-    return "json";
-  }
-  if (mimeType === "text/markdown") {
-    return "markdown";
-  }
-};
+import type { DocumentFormat } from "./document-format";
 
 export type AdaptedDocument =
   | Readonly<{ format: "json"; value: JsonValue }>
-  | Readonly<{ format: "markdown"; value: MarkdownDocument }>;
+  | Readonly<{ format: "markdown"; value: MarkdownDocument }>
+  | Readonly<{ format: "mdx"; value: MdxAdaptedDocument }>;
 
 export type AnalyzedDocument =
   | Readonly<{
@@ -46,13 +41,16 @@ export type AnalyzedDocument =
       format: "markdown";
       value: MarkdownDocument;
       references: readonly SourceReferenceOccurrence[];
+    }>
+  | Readonly<{
+      format: "mdx";
+      value: MdxAdaptedDocument;
+      references: readonly SourceReferenceOccurrence[];
     }>;
 
 export const getAdaptedDocumentProperties = (document: AdaptedDocument) => {
   const value =
-    document.format === "markdown"
-      ? document.value.frontmatter
-      : document.value;
+    document.format === "json" ? document.value : document.value.frontmatter;
   return isJsonObject(value) ? value : undefined;
 };
 
@@ -76,9 +74,15 @@ export const parseDocumentSource = async ({
       value: await parseJsonDocumentSource({ source, maximumBytes }),
     });
   }
+  if (format === "markdown") {
+    return freezeDocument({
+      format,
+      value: await parseMarkdownDocumentSource({ source, maximumBytes }),
+    });
+  }
   return freezeDocument({
     format,
-    value: await parseMarkdownDocumentSource({ source, maximumBytes }),
+    value: await parseMdxDocumentSource({ source, maximumBytes }),
   });
 };
 
@@ -109,7 +113,20 @@ export const analyzeDocumentSource = async ({
       references: analyzed.references,
     });
   }
-  const analyzed = await analyzeMarkdownDocument({
+  if (format === "markdown") {
+    const analyzed = await analyzeMarkdownDocument({
+      source,
+      sourceDocumentId,
+      documentUrl,
+      maximumBytes,
+    });
+    return freezeDocument({
+      format,
+      value: analyzed.document,
+      references: analyzed.references,
+    });
+  }
+  const analyzed = await analyzeMdxDocument({
     source,
     sourceDocumentId,
     documentUrl,
@@ -141,9 +158,19 @@ export const assembleDocument = ({
       }),
     });
   }
+  if (document.format === "markdown") {
+    return freezeDocument({
+      format: document.format,
+      value: assembleMarkdownDocument({
+        document: document.value,
+        references,
+        allowUnresolvedReferences,
+      }),
+    });
+  }
   return freezeDocument({
     format: document.format,
-    value: assembleMarkdownDocument({
+    value: assembleMdxDocument({
       document: document.value,
       references,
       allowUnresolvedReferences,
@@ -164,7 +191,13 @@ export const selectDocumentRepresentation = ({
       representation,
     });
   }
-  return selectMarkdownDocumentRepresentation({
+  if (document.format === "markdown") {
+    return selectMarkdownDocumentRepresentation({
+      document: document.value,
+      representation,
+    });
+  }
+  return selectMdxDocumentRepresentation({
     document: document.value,
     representation,
   });

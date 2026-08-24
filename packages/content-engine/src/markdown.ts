@@ -1,9 +1,12 @@
 import { contentEngineLimits } from "./limits";
-import remarkParse from "remark-parse";
-import { unified } from "unified";
 import { getUtf8ByteLength, type ByteSource } from "./byte-stream";
 import { MarkdownMetadataError } from "./markdown-errors";
 import { extractMarkdownBody } from "./markdown-body";
+import {
+  getSyntaxTreeChildren,
+  parseMarkdownAst,
+  type SyntaxTreeNode,
+} from "./markdown-ast";
 
 export {
   MarkdownMetadataError,
@@ -15,12 +18,6 @@ export {
   type MarkdownFrontmatter,
 } from "./frontmatter";
 
-type MarkdownNode = {
-  type: string;
-  value?: unknown;
-  children?: MarkdownNode[];
-};
-
 const textNodeTypes = new Set(["text", "inlineCode", "code"]);
 const separatingNodeTypes = new Set([
   "paragraph",
@@ -31,16 +28,16 @@ const separatingNodeTypes = new Set([
 ]);
 
 const markdownToPlainText = (body: string) => {
-  const tree = unified().use(remarkParse).parse(body) as MarkdownNode;
+  const tree = parseMarkdownAst(body);
   const parts: string[] = [];
-  const visit = (node: MarkdownNode) => {
+  const visit = (node: SyntaxTreeNode) => {
     if (textNodeTypes.has(node.type) && typeof node.value === "string") {
       parts.push(node.value);
     }
     if (node.type === "html" || node.type === "yaml") {
       return;
     }
-    for (const child of node.children ?? []) {
+    for (const child of getSyntaxTreeChildren(node)) {
       visit(child);
     }
     if (separatingNodeTypes.has(node.type)) {
