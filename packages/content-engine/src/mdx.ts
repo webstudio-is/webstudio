@@ -1,0 +1,1146 @@
+import {
+  defaultHandlers,
+  toHast,
+  type Handler,
+  type Handlers,
+} from "mdast-util-to-hast";
+import {
+  discoverAssetValueReferences,
+  type AssetValueReference,
+} from "./asset-value-references";
+import { createAssetReferenceResolver } from "./asset-reference-utils";
+import { getUtf8ByteLength } from "./byte-stream";
+import { extractMarkdownFrontmatter } from "./frontmatter";
+import { contentEngineLimits } from "./limits";
+import {
+  getSyntaxTreeChildren,
+  isSyntaxTreeNode,
+  parseMarkdownAst,
+  type SyntaxTreeNode,
+} from "./markdown-ast";
+import { serializeMdxDocument } from "./mdx-serialization";
+
+export type MdxSourcePoint = Readonly<{
+  line: number;
+  column: number;
+  offset?: number;
+}>;
+
+export type MdxSourceRange = Readonly<{
+  start: MdxSourcePoint;
+  end: MdxSourcePoint;
+}>;
+
+export type MdxAuthoredProp = Readonly<{
+  name: string;
+  value: string | true;
+}>;
+
+export type MdxMode = "flow" | "text";
+
+export type MdxMarkdownListItem = Readonly<{
+  checked?: boolean;
+  spread: boolean;
+}>;
+
+export type MdxAuthoredNode =
+  | Readonly<{
+      type: "text";
+      value: string;
+      sourceRange?: MdxSourceRange;
+    }>
+  | Readonly<{
+      type: "comment";
+      value: string;
+      mdxMode: MdxMode;
+      sourceRange?: MdxSourceRange;
+    }>
+  | Readonly<{
+      type: "element";
+      syntax: "markdown";
+      tag: string;
+      props: readonly MdxAuthoredProp[];
+      children: readonly MdxAuthoredNode[];
+      markdownListItem?: MdxMarkdownListItem;
+      preserveTextWhitespace?: true;
+      sourceRange?: MdxSourceRange;
+    }>
+  | Readonly<{
+      type: "element";
+      syntax: "mdx";
+      tag: string;
+      props: readonly MdxAuthoredProp[];
+      children: readonly MdxAuthoredNode[];
+      mdxMode: MdxMode;
+      sourceRange?: MdxSourceRange;
+    }>
+  | Readonly<{
+      type: "template";
+      name: string;
+      props: readonly MdxAuthoredProp[];
+      children: readonly MdxAuthoredNode[];
+      mdxMode: MdxMode;
+      sourceRange?: MdxSourceRange;
+    }>;
+
+export type MdxDocument = Readonly<{
+  frontmatter: Readonly<{
+    properties: Readonly<Record<string, unknown>>;
+    sourceRange?: MdxSourceRange;
+  }>;
+  children: readonly MdxAuthoredNode[];
+}>;
+
+export type MdxDocumentErrorCode = "invalid-mdx" | "unsafe-mdx";
+
+export class MdxDocumentError extends Error {
+  readonly code: MdxDocumentErrorCode;
+  readonly nodeType?: string;
+  readonly reason?: string;
+  readonly sourceRange?: MdxSourceRange;
+
+  constructor({
+    code,
+    message,
+    nodeType,
+    reason,
+    sourceRange,
+    cause,
+  }: {
+    code: MdxDocumentErrorCode;
+    message: string;
+    nodeType?: string;
+    reason?: string;
+    sourceRange?: MdxSourceRange;
+    cause?: unknown;
+  }) {
+    super(message, { cause });
+    this.name = "MdxDocumentError";
+    this.code = code;
+    this.nodeType = nodeType;
+    this.reason = reason;
+    this.sourceRange = sourceRange;
+  }
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const toSourcePoint = (value: unknown): MdxSourcePoint | undefined => {
+  if (
+    isRecord(value) === false ||
+    typeof value.line !== "number" ||
+    typeof value.column !== "number" ||
+    Number.isInteger(value.line) === false ||
+    Number.isInteger(value.column) === false ||
+    value.line < 1 ||
+    value.column < 1
+  ) {
+    return;
+  }
+  const point: { line: number; column: number; offset?: number } = {
+    line: value.line,
+    column: value.column,
+  };
+  if (
+    typeof value.offset === "number" &&
+    Number.isInteger(value.offset) &&
+    value.offset >= 0
+  ) {
+    point.offset = value.offset;
+  }
+  return point;
+};
+
+const toSourceRange = (position: unknown): MdxSourceRange | undefined => {
+  if (isRecord(position) === false) {
+    return;
+  }
+  const start = toSourcePoint(position.start);
+  const end = toSourcePoint(position.end);
+  if (start !== undefined && end !== undefined) {
+    return { start, end };
+  }
+};
+
+const getParserErrorSourceRange = (error: unknown) => {
+  if (isRecord(error) === false) {
+    return;
+  }
+  const sourceRange = toSourceRange(error.position);
+  if (sourceRange !== undefined) {
+    return sourceRange;
+  }
+  if (typeof error.name !== "string") {
+    return;
+  }
+  const [lineSource, columnSource] = error.name.split(":", 2);
+  const line = Number(lineSource);
+  const column = Number(columnSource);
+  if (
+    Number.isInteger(line) === false ||
+    Number.isInteger(column) === false ||
+    line < 1 ||
+    column < 1
+  ) {
+    return;
+  }
+  const point = { line, column };
+  return { start: point, end: point };
+};
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
+const throwUnsafeNode = (
+  node: SyntaxTreeNode,
+  reason: string,
+  fallbackNode?: SyntaxTreeNode
+): never => {
+  throw new MdxDocumentError({
+    code: "unsafe-mdx",
+    message: reason,
+    nodeType: node.type,
+    reason,
+    sourceRange:
+      toSourceRange(node.position) ?? toSourceRange(fallbackNode?.position),
+  });
+};
+
+const unsupportedElementTags = new Set([
+  "base",
+  "link",
+  "meta",
+  "noscript",
+  "script",
+  "style",
+  "template",
+  "title",
+]);
+
+const urlPropNames = new Set([
+  "action",
+  "cite",
+  "data",
+  "formaction",
+  "href",
+  "poster",
+  "src",
+  "xlink:href",
+  "xlinkhref",
+]);
+
+const isSafeStaticUrl = (value: string, propName: string) => {
+  let url: URL;
+  try {
+    url = new URL(value, "https://webstudio.invalid");
+  } catch {
+    return false;
+  }
+  if (url.protocol === "http:" || url.protocol === "https:") {
+    return true;
+  }
+  return (
+    propName === "href" &&
+    (url.protocol === "mailto:" || url.protocol === "tel:")
+  );
+};
+
+const validateStaticProp = (node: SyntaxTreeNode, prop: MdxAuthoredProp) => {
+  const normalizedName = prop.name.toLowerCase();
+  if (
+    normalizedName.startsWith("on") ||
+    normalizedName === "srcdoc" ||
+    normalizedName === "dangerouslysetinnerhtml" ||
+    normalizedName === "srcset"
+  ) {
+    throwUnsafeNode(node, `MDX JSX prop ${prop.name} is not supported`);
+  }
+  if (
+    urlPropNames.has(normalizedName) &&
+    typeof prop.value === "string" &&
+    isSafeStaticUrl(prop.value, normalizedName) === false
+  ) {
+    throwUnsafeNode(node, `MDX JSX prop ${prop.name} contains an unsafe URL`);
+  }
+};
+
+const validateAstLimits = (root: SyntaxTreeNode) => {
+  const pending: Array<{ node: SyntaxTreeNode; depth: number }> = [
+    { node: root, depth: 0 },
+  ];
+  let nodeCount = 0;
+  let propCount = 0;
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (current === undefined) {
+      break;
+    }
+    nodeCount += 1;
+    if (nodeCount > contentEngineLimits.mdxNodes) {
+      throw new MdxDocumentError({
+        code: "invalid-mdx",
+        message: "MDX content exceeds the node limit",
+        sourceRange: toSourceRange(current.node.position),
+      });
+    }
+    if (current.depth > contentEngineLimits.mdxDepth) {
+      throw new MdxDocumentError({
+        code: "invalid-mdx",
+        message: "MDX content exceeds the nesting limit",
+        sourceRange: toSourceRange(current.node.position),
+      });
+    }
+    if (Array.isArray(current.node.attributes)) {
+      propCount += current.node.attributes.length;
+      if (propCount > contentEngineLimits.mdxProps) {
+        throw new MdxDocumentError({
+          code: "invalid-mdx",
+          message: "MDX content exceeds the prop limit",
+          sourceRange: toSourceRange(current.node.position),
+        });
+      }
+    }
+    for (const child of getSyntaxTreeChildren(current.node)) {
+      pending.push({ node: child, depth: current.depth + 1 });
+    }
+  }
+};
+
+const createElement = ({
+  node,
+  tag,
+  props = [],
+  children,
+  mdxMode,
+  markdownListItem,
+  preserveTextWhitespace,
+}: {
+  node: SyntaxTreeNode;
+  tag: string;
+  props?: readonly MdxAuthoredProp[];
+  children: readonly MdxAuthoredNode[];
+  mdxMode?: MdxMode;
+  markdownListItem?: MdxMarkdownListItem;
+  preserveTextWhitespace?: true;
+}): MdxAuthoredNode => {
+  const sourceRange = toSourceRange(node.position);
+  if (mdxMode !== undefined) {
+    return {
+      type: "element",
+      syntax: "mdx",
+      tag,
+      props,
+      children,
+      mdxMode,
+      sourceRange,
+    };
+  }
+  return {
+    type: "element",
+    syntax: "markdown",
+    tag,
+    props,
+    children,
+    ...(markdownListItem === undefined ? {} : { markdownListItem }),
+    ...(preserveTextWhitespace === undefined ? {} : { preserveTextWhitespace }),
+    sourceRange,
+  };
+};
+
+const getMdxMode = (node: SyntaxTreeNode): MdxMode =>
+  node.type === "mdxJsxTextElement" || node.type === "mdxTextExpression"
+    ? "text"
+    : "flow";
+
+const setHastData = (node: SyntaxTreeNode, data: Record<string, unknown>) => {
+  node.data = { ...(isRecord(node.data) ? node.data : {}), ...data };
+};
+
+const isCommentExpression = (node: SyntaxTreeNode) => {
+  if (isRecord(node.data) === false || isRecord(node.data.estree) === false) {
+    return false;
+  }
+  const { body, comments } = node.data.estree;
+  return (
+    Array.isArray(body) &&
+    body.length === 0 &&
+    Array.isArray(comments) &&
+    comments.length > 0
+  );
+};
+
+const mapStaticProps = (node: SyntaxTreeNode) => {
+  if (Array.isArray(node.attributes) === false) {
+    return [];
+  }
+  const props: MdxAuthoredProp[] = [];
+  const names = new Set<string>();
+  for (const attribute of node.attributes) {
+    if (isSyntaxTreeNode(attribute) === false) {
+      throwUnsafeNode(node, "MDX JSX contains an invalid attribute");
+    }
+    if (attribute.type === "mdxJsxExpressionAttribute") {
+      throwUnsafeNode(
+        attribute,
+        "MDX JSX attribute spreads are not supported",
+        node
+      );
+    }
+    if (
+      attribute.type !== "mdxJsxAttribute" ||
+      typeof attribute.name !== "string"
+    ) {
+      throwUnsafeNode(
+        attribute,
+        "MDX JSX contains an unsupported attribute",
+        node
+      );
+    }
+    if (names.has(attribute.name)) {
+      throwUnsafeNode(attribute, "MDX JSX attributes must be unique", node);
+    }
+    names.add(attribute.name);
+    if (isRecord(attribute.value)) {
+      throwUnsafeNode(
+        attribute.value.type === "mdxJsxAttributeValueExpression"
+          ? (attribute.value as SyntaxTreeNode)
+          : attribute,
+        "MDX JSX attribute expressions are not supported",
+        node
+      );
+    }
+    if (attribute.value !== null && typeof attribute.value !== "string") {
+      throwUnsafeNode(
+        attribute,
+        "MDX JSX attribute values must be static",
+        node
+      );
+    }
+    props.push({
+      name: attribute.name,
+      value: attribute.value === null ? true : attribute.value,
+    });
+  }
+  return props;
+};
+
+const mapMdxExpression: Handler = (state, value) => {
+  const node = value as SyntaxTreeNode;
+  if (isCommentExpression(node) && typeof node.value === "string") {
+    const comment = {
+      type: "comment",
+      value: node.value,
+      data: { mdxMode: getMdxMode(node) },
+    } as const;
+    state.patch(value, comment);
+    return comment;
+  }
+  return throwUnsafeNode(node, "Executable MDX expressions are not supported");
+};
+
+const mapMdxJsxElement: Handler = (state, value) => {
+  const node = value as SyntaxTreeNode;
+  if (node.name !== "ws.element") {
+    return throwUnsafeNode(
+      node,
+      "Only the ws.element component is supported in authored MDX"
+    );
+  }
+  const properties = Object.fromEntries(
+    mapStaticProps(node).map((prop) => [prop.name, prop.value])
+  );
+  const result = state(value, "ws.element", properties, state.all(value));
+  if (isSyntaxTreeNode(result)) {
+    setHastData(result, { mdxMode: getMdxMode(node) });
+  }
+  return result;
+};
+
+const mapListItem: Handler = (state, value, parent) => {
+  const node = value as SyntaxTreeNode;
+  const result = defaultHandlers.listItem(state, value, parent);
+  if (isSyntaxTreeNode(result)) {
+    setHastData(result, {
+      markdownListItem: {
+        ...(typeof node.checked === "boolean" ? { checked: node.checked } : {}),
+        spread:
+          node.spread === true ||
+          (isSyntaxTreeNode(parent) && parent.spread === true),
+      },
+    });
+  }
+  return result;
+};
+
+const preserveWhitespace =
+  (handler: Handler): Handler =>
+  (state, value, parent) => {
+    const result = handler(state, value, parent);
+    if (isSyntaxTreeNode(result)) {
+      setHastData(result, { preserveTextWhitespace: true });
+    }
+    return result;
+  };
+
+const mapParagraph: Handler = (state, value) => {
+  const children = getSyntaxTreeChildren(value as SyntaxTreeNode);
+  if (children.length === 1 && children[0].type === "mdxJsxTextElement") {
+    return state.one(value.children[0], value);
+  }
+  return defaultHandlers.paragraph(state, value);
+};
+
+const rejectUnsupportedNode: Handler = (_state, value) => {
+  const node = value as SyntaxTreeNode;
+  return throwUnsafeNode(node, `MDX node type ${node.type} is not supported`);
+};
+
+const mdxHandlers: Handlers = {
+  code: preserveWhitespace(defaultHandlers.code),
+  html: rejectUnsupportedNode,
+  inlineCode: preserveWhitespace(defaultHandlers.inlineCode),
+  mdxFlowExpression: mapMdxExpression,
+  mdxJsxFlowElement: mapMdxJsxElement,
+  mdxJsxTextElement: mapMdxJsxElement,
+  mdxTextExpression: mapMdxExpression,
+  mdxjsEsm: rejectUnsupportedNode,
+  listItem: mapListItem,
+  paragraph: mapParagraph,
+};
+
+const createMarkdownHastForMdx = (root: SyntaxTreeNode) => {
+  const hast = toHast(root as Parameters<typeof toHast>[0], {
+    allowDangerousHtml: true,
+    handlers: {
+      code: mdxHandlers.code,
+      inlineCode: mdxHandlers.inlineCode,
+      listItem: mdxHandlers.listItem,
+    },
+    unknownHandler: rejectUnsupportedNode,
+  });
+  if (isSyntaxTreeNode(hast) === false) {
+    return throwUnsafeNode(root, "Markdown did not produce an HTML document");
+  }
+  return hast;
+};
+
+const findHastMdxMode = (node: SyntaxTreeNode): MdxMode | undefined => {
+  if (
+    isRecord(node.data) &&
+    (node.data.mdxMode === "flow" || node.data.mdxMode === "text")
+  ) {
+    return node.data.mdxMode;
+  }
+};
+
+type MapHastOptions = {
+  shouldOmitUnsafePart?: (error: MdxDocumentError) => boolean;
+};
+
+const canOmitUnsafePart = (error: unknown, options: MapHastOptions) =>
+  error instanceof MdxDocumentError &&
+  error.code === "unsafe-mdx" &&
+  options.shouldOmitUnsafePart?.(error) === true;
+
+const mapHastProperties = (node: SyntaxTreeNode, options: MapHastOptions) => {
+  if (node.properties === undefined) {
+    return { props: [], requiresMdxFallback: false };
+  }
+  if (isRecord(node.properties) === false) {
+    return throwUnsafeNode(node, "HTML properties must be an object");
+  }
+  const props: MdxAuthoredProp[] = [];
+  const propertyNames = new Set<string>();
+  let requiresMdxFallback = false;
+  for (const [propertyName, value] of Object.entries(node.properties)) {
+    try {
+      if (value === undefined || value === null || value === false) {
+        continue;
+      }
+      let propValue: MdxAuthoredProp["value"];
+      if (value === true) {
+        propValue = true;
+      } else if (typeof value === "string" || typeof value === "number") {
+        propValue = String(value);
+      } else if (
+        Array.isArray(value) &&
+        value.every(
+          (item) => typeof item === "string" || typeof item === "number"
+        )
+      ) {
+        propValue = value.join(" ");
+      } else {
+        return throwUnsafeNode(
+          node,
+          `HTML property ${propertyName} is invalid`
+        );
+      }
+      const name = propertyName === "className" ? "class" : propertyName;
+      if (propertyNames.has(name)) {
+        return throwUnsafeNode(node, "HTML properties must be unique");
+      }
+      const prop: MdxAuthoredProp = { name, value: propValue };
+      validateStaticProp(node, prop);
+      propertyNames.add(name);
+      props.push(prop);
+    } catch (error) {
+      if (canOmitUnsafePart(error, options)) {
+        requiresMdxFallback ||=
+          (node.tagName === "a" && propertyName === "href") ||
+          (node.tagName === "img" && propertyName === "src");
+        continue;
+      }
+      throw error;
+    }
+  }
+  return { props, requiresMdxFallback };
+};
+
+const mapHastChildren = (
+  node: SyntaxTreeNode,
+  options: MapHastOptions = {}
+): MdxAuthoredNode[] => {
+  const children: MdxAuthoredNode[] = [];
+  for (const child of getSyntaxTreeChildren(node)) {
+    if (
+      child.position === undefined &&
+      child.type === "text" &&
+      child.value === "\n"
+    ) {
+      continue;
+    }
+    try {
+      children.push(mapHastNode(child, options));
+    } catch (error) {
+      if (canOmitUnsafePart(error, options)) {
+        continue;
+      }
+      throw error;
+    }
+  }
+  return children;
+};
+
+const getHastMdxMode = (node: SyntaxTreeNode) => {
+  const mode = findHastMdxMode(node);
+  if (mode !== undefined) {
+    return mode;
+  }
+  return throwUnsafeNode(node, "MDX node mode is missing");
+};
+
+const getMarkdownListItem = (
+  node: SyntaxTreeNode
+): MdxMarkdownListItem | undefined => {
+  if (isRecord(node.data) === false) {
+    return;
+  }
+  const value = node.data.markdownListItem;
+  if (
+    isRecord(value) === false ||
+    typeof value.spread !== "boolean" ||
+    (value.checked !== undefined && typeof value.checked !== "boolean")
+  ) {
+    return;
+  }
+  return {
+    ...(typeof value.checked === "boolean" ? { checked: value.checked } : {}),
+    spread: value.spread,
+  };
+};
+
+const preservesTextWhitespace = (node: SyntaxTreeNode) =>
+  isRecord(node.data) && node.data.preserveTextWhitespace === true
+    ? true
+    : undefined;
+
+const mapWebstudioElement = (
+  node: SyntaxTreeNode,
+  props: readonly MdxAuthoredProp[],
+  options: MapHastOptions
+): MdxAuthoredNode => {
+  const nameProp = props.find((prop) => prop.name === "ws:name");
+  const tagProp = props.find((prop) => prop.name === "ws:tag");
+  if (nameProp !== undefined && tagProp !== undefined) {
+    return throwUnsafeNode(node, "ws:name and ws:tag cannot be used together");
+  }
+  if (nameProp !== undefined) {
+    if (typeof nameProp.value !== "string" || nameProp.value.length === 0) {
+      return throwUnsafeNode(node, "ws:name must be a non-empty static string");
+    }
+    return {
+      type: "template",
+      name: nameProp.value,
+      props: props.filter((prop) => prop.name !== "ws:name"),
+      children: mapHastChildren(node, options),
+      mdxMode: getHastMdxMode(node),
+      sourceRange: toSourceRange(node.position),
+    };
+  }
+
+  let tag = "div";
+  if (tagProp !== undefined) {
+    if (typeof tagProp.value !== "string" || tagProp.value.length === 0) {
+      return throwUnsafeNode(node, "ws:tag must be a non-empty static string");
+    }
+    tag = tagProp.value;
+  }
+  if (unsupportedElementTags.has(tag.toLowerCase())) {
+    return throwUnsafeNode(
+      node,
+      `Webstudio element tag ${tag} is not supported`
+    );
+  }
+  return createElement({
+    node,
+    tag,
+    props: props.filter((prop) => prop.name !== "ws:tag"),
+    children: mapHastChildren(node, options),
+    mdxMode: getHastMdxMode(node),
+  });
+};
+
+const mapHastNode = (
+  node: SyntaxTreeNode,
+  options: MapHastOptions
+): MdxAuthoredNode => {
+  if (node.type === "text") {
+    if (typeof node.value !== "string") {
+      return throwUnsafeNode(node, "HTML text must contain a string value");
+    }
+    return {
+      type: "text",
+      value: node.value,
+      sourceRange: toSourceRange(node.position),
+    };
+  }
+  if (node.type === "comment") {
+    if (typeof node.value !== "string") {
+      return throwUnsafeNode(node, "HTML comments must contain a string value");
+    }
+    return {
+      type: "comment",
+      value: node.value,
+      mdxMode: getHastMdxMode(node),
+      sourceRange: toSourceRange(node.position),
+    };
+  }
+  if (node.type !== "element" || typeof node.tagName !== "string") {
+    return throwUnsafeNode(
+      node,
+      `HTML node type ${node.type} is not supported`
+    );
+  }
+  const authoredMdxMode = findHastMdxMode(node);
+  if (
+    node.tagName !== "ws.element" &&
+    authoredMdxMode !== undefined &&
+    unsupportedElementTags.has(node.tagName.toLowerCase())
+  ) {
+    return throwUnsafeNode(
+      node,
+      `Webstudio element tag ${node.tagName} is not supported`
+    );
+  }
+  const { props, requiresMdxFallback } = mapHastProperties(node, options);
+  if (node.tagName === "ws.element") {
+    return mapWebstudioElement(node, props, options);
+  }
+  let mdxMode = authoredMdxMode ?? (requiresMdxFallback ? "text" : undefined);
+  const children = mapHastChildren(node, options);
+  const onlyChild = children.length === 1 ? children[0] : undefined;
+  if (
+    mdxMode === undefined &&
+    node.tagName === "p" &&
+    onlyChild !== undefined &&
+    ((onlyChild.type === "element" &&
+      onlyChild.syntax === "mdx" &&
+      onlyChild.mdxMode === "text") ||
+      (onlyChild.type === "template" && onlyChild.mdxMode === "text") ||
+      (onlyChild.type === "comment" && onlyChild.mdxMode === "text"))
+  ) {
+    mdxMode = "flow";
+  }
+  return createElement({
+    node,
+    tag: node.tagName,
+    props,
+    children,
+    mdxMode,
+    markdownListItem: getMarkdownListItem(node),
+    preserveTextWhitespace: preservesTextWhitespace(node),
+  });
+};
+
+const mapAuthoredChildren = (root: SyntaxTreeNode) => {
+  const hast = toHast(root as Parameters<typeof toHast>[0], {
+    handlers: mdxHandlers,
+    unknownHandler: rejectUnsupportedNode,
+  });
+  if (isSyntaxTreeNode(hast) === false || hast.type !== "root") {
+    return throwUnsafeNode(root, "MDX did not produce an HTML document");
+  }
+  return mapHastChildren(hast);
+};
+
+const validateMdxSourceBytes = ({
+  source,
+  maximumBytes,
+}: {
+  source: string;
+  maximumBytes: number;
+}) => {
+  if (
+    Number.isInteger(maximumBytes) === false ||
+    maximumBytes <= 0 ||
+    maximumBytes > contentEngineLimits.hydratedFileBytes ||
+    getUtf8ByteLength(source) > maximumBytes
+  ) {
+    throw new MdxDocumentError({
+      code: "invalid-mdx",
+      message: "MDX content exceeds the byte limit",
+    });
+  }
+};
+
+const parseMdxFrontmatter = async (
+  root: SyntaxTreeNode,
+  source: string
+): Promise<MdxDocument["frontmatter"]> => {
+  const frontmatterNode = getSyntaxTreeChildren(root).find(
+    (node) => node.type === "yaml"
+  );
+  try {
+    return {
+      properties: (await extractMarkdownFrontmatter(source)).properties,
+      sourceRange: toSourceRange(frontmatterNode?.position),
+    };
+  } catch (cause) {
+    throw new MdxDocumentError({
+      code: "invalid-mdx",
+      message: getErrorMessage(cause),
+      sourceRange: toSourceRange(frontmatterNode?.position),
+      cause,
+    });
+  }
+};
+
+/** Converts bounded Markdown through a caller-supplied structural HAST transform. */
+export const createMdxDocumentFromMarkdown = async ({
+  source,
+  maximumBytes = contentEngineLimits.hydratedFileBytes,
+  transformHast,
+  shouldOmitUnsafePart,
+}: {
+  source: string;
+  maximumBytes?: number;
+  transformHast: (input: {
+    sourceRoot: SyntaxTreeNode;
+    hastRoot: SyntaxTreeNode;
+  }) => SyntaxTreeNode | Promise<SyntaxTreeNode>;
+  shouldOmitUnsafePart?: (error: MdxDocumentError) => boolean;
+}): Promise<MdxDocument> => {
+  validateMdxSourceBytes({ source, maximumBytes });
+  const sourceRoot = parseMarkdownAst(source);
+  validateAstLimits(sourceRoot);
+  const hastRoot = await transformHast({
+    sourceRoot,
+    hastRoot: createMarkdownHastForMdx(sourceRoot),
+  });
+  validateAstLimits(hastRoot);
+  return {
+    frontmatter: await parseMdxFrontmatter(sourceRoot, source),
+    children: mapHastChildren(hastRoot, { shouldOmitUnsafePart }),
+  };
+};
+
+export const discoverMdxBodyAssetReferences = ({
+  document,
+  sourcePath,
+  assetIdsByPath,
+}: {
+  document: MdxDocument;
+  sourcePath: string;
+  assetIdsByPath: ReadonlyMap<string, string>;
+}): AssetValueReference[] => {
+  const references: AssetValueReference[] = [];
+  const resolveAssetReference = createAssetReferenceResolver({
+    sourcePath,
+    assetIdsByPath,
+  });
+  const visit = (
+    nodes: readonly MdxAuthoredNode[],
+    parentPath: Array<string | number>
+  ) => {
+    for (const [nodeIndex, node] of nodes.entries()) {
+      if (node.type === "text" || node.type === "comment") {
+        continue;
+      }
+      const nodePath = [...parentPath, nodeIndex];
+      for (const [propIndex, prop] of node.props.entries()) {
+        if (
+          typeof prop.value !== "string" ||
+          urlPropNames.has(prop.name.toLowerCase()) === false
+        ) {
+          continue;
+        }
+        const reference = resolveAssetReference(prop.value);
+        if (reference !== undefined) {
+          references.push({
+            path: [...nodePath, "props", propIndex, "value"],
+            ...reference,
+          });
+        }
+      }
+      visit(node.children, [...nodePath, "children"]);
+    }
+  };
+  visit(document.children, ["children"]);
+  return references;
+};
+
+export const discoverMdxAssetReferences = ({
+  document,
+  sourcePath,
+  assetIdsByPath,
+}: {
+  document: MdxDocument;
+  sourcePath: string;
+  assetIdsByPath: ReadonlyMap<string, string>;
+}): AssetValueReference[] => [
+  ...discoverAssetValueReferences({
+    properties: document.frontmatter.properties,
+    sourcePath,
+    assetIdsByPath,
+    rootPath: ["frontmatter", "properties"],
+  }),
+  ...discoverMdxBodyAssetReferences({
+    document,
+    sourcePath,
+    assetIdsByPath,
+  }),
+];
+
+export const parseMdxDocument = async ({
+  source,
+  maximumBytes = contentEngineLimits.hydratedFileBytes,
+}: {
+  source: string;
+  maximumBytes?: number;
+}): Promise<MdxDocument> => {
+  validateMdxSourceBytes({ source, maximumBytes });
+
+  let root: SyntaxTreeNode;
+  try {
+    root = parseMarkdownAst(source, "mdx");
+  } catch (cause) {
+    throw new MdxDocumentError({
+      code: "invalid-mdx",
+      message: getErrorMessage(cause),
+      sourceRange: getParserErrorSourceRange(cause),
+      cause,
+    });
+  }
+  validateAstLimits(root);
+
+  return {
+    frontmatter: await parseMdxFrontmatter(root, source),
+    children: mapAuthoredChildren(root),
+  };
+};
+
+const withMarkdownSyntax = (node: MdxAuthoredNode): MdxAuthoredNode => {
+  if (node.type !== "element" || node.syntax !== "mdx") {
+    return node;
+  }
+  const { mdxMode: _mdxMode, ...element } = node;
+  return {
+    ...element,
+    syntax: "markdown",
+  };
+};
+
+const withMarkdownSyntaxDeep = (node: MdxAuthoredNode): MdxAuthoredNode => {
+  if (node.type === "text" || node.type === "comment") {
+    return node;
+  }
+  return withMarkdownSyntax({
+    ...node,
+    children: node.children.map(withMarkdownSyntaxDeep),
+  });
+};
+
+const parseMarkdownCandidate = async (
+  nodes: readonly MdxAuthoredNode[]
+): Promise<readonly MdxAuthoredNode[] | undefined> => {
+  try {
+    return (
+      await parseMdxDocument({
+        source: serializeMdxDocument({
+          frontmatter: { properties: {} },
+          children: nodes,
+        }),
+      })
+    ).children;
+  } catch {
+    return;
+  }
+};
+
+const areAuthoredPropsEqual = (
+  left: readonly MdxAuthoredProp[],
+  right: readonly MdxAuthoredProp[]
+) => {
+  if (left.length !== right.length) {
+    return false;
+  }
+  const rightByName = new Map(right.map((prop) => [prop.name, prop.value]));
+  return (
+    rightByName.size === right.length &&
+    left.every((prop) => rightByName.get(prop.name) === prop.value)
+  );
+};
+
+const unwrapSingleParagraph = (nodes: readonly MdxAuthoredNode[]) => {
+  const onlyChild = nodes.length === 1 ? nodes[0] : undefined;
+  return onlyChild?.type === "element" &&
+    onlyChild.syntax === "markdown" &&
+    onlyChild.tag === "p" &&
+    onlyChild.props.length === 0
+    ? onlyChild.children
+    : nodes;
+};
+
+const areAuthoredNodesEquivalent = (
+  left: MdxAuthoredNode,
+  right: MdxAuthoredNode
+): boolean => {
+  if (left.type !== right.type) {
+    return false;
+  }
+  if (left.type === "text" && right.type === "text") {
+    return left.value === right.value;
+  }
+  if (left.type === "comment" && right.type === "comment") {
+    return left.value === right.value;
+  }
+  if (left.type === "template" && right.type === "template") {
+    return (
+      left.name === right.name &&
+      areAuthoredPropsEqual(left.props, right.props) &&
+      areAuthoredNodeListsEquivalent(left.children, right.children, false)
+    );
+  }
+  if (left.type === "element" && right.type === "element") {
+    return (
+      left.tag === right.tag &&
+      areAuthoredPropsEqual(left.props, right.props) &&
+      areAuthoredNodeListsEquivalent(
+        left.children,
+        right.children,
+        left.tag !== "p"
+      )
+    );
+  }
+  return false;
+};
+
+const areAuthoredNodeListsEquivalent = (
+  left: readonly MdxAuthoredNode[],
+  right: readonly MdxAuthoredNode[],
+  allowParagraphWrapper: boolean
+) => {
+  const normalizedLeft = allowParagraphWrapper
+    ? unwrapSingleParagraph(left)
+    : left;
+  const normalizedRight = allowParagraphWrapper
+    ? unwrapSingleParagraph(right)
+    : right;
+  return (
+    normalizedLeft.length === normalizedRight.length &&
+    normalizedLeft.every((node, index) => {
+      const other = normalizedRight[index];
+      return other !== undefined && areAuthoredNodesEquivalent(node, other);
+    })
+  );
+};
+
+const findCanonicalMarkdownElement = ({
+  candidate,
+  nodes,
+}: {
+  candidate: Extract<MdxAuthoredNode, { type: "element" }>;
+  nodes: readonly MdxAuthoredNode[] | undefined;
+}) => {
+  const direct = nodes?.length === 1 ? nodes[0] : undefined;
+  const wrapped =
+    direct?.type === "element" &&
+    direct.syntax === "markdown" &&
+    direct.tag === "p" &&
+    direct.props.length === 0 &&
+    direct.children.length === 1
+      ? direct.children[0]
+      : undefined;
+  for (const node of [direct, wrapped]) {
+    if (
+      node?.type === "element" &&
+      node.syntax === "markdown" &&
+      areAuthoredNodesEquivalent(candidate, node)
+    ) {
+      return node;
+    }
+  }
+};
+
+const preferMarkdownNode = async (
+  node: MdxAuthoredNode
+): Promise<MdxAuthoredNode> => {
+  if (node.type === "text" || node.type === "comment") {
+    return node;
+  }
+  const children = await preferMarkdownNodes(node.children);
+  const withChildren = { ...node, children };
+  if (withChildren.type !== "element" || withChildren.syntax !== "mdx") {
+    return withChildren;
+  }
+
+  const candidate = withMarkdownSyntaxDeep(withChildren);
+  const parsed = await parseMarkdownCandidate([candidate]);
+  const markdownElement = findCanonicalMarkdownElement({
+    candidate: withChildren,
+    nodes: parsed,
+  });
+  if (markdownElement !== undefined) {
+    return markdownElement;
+  }
+  return withChildren;
+};
+
+const preferMarkdownNodes = async (
+  nodes: readonly MdxAuthoredNode[]
+): Promise<MdxAuthoredNode[]> => {
+  const result: MdxAuthoredNode[] = [];
+  for (const node of nodes) {
+    result.push(await preferMarkdownNode(node));
+  }
+  return result;
+};
+
+/**
+ * Canonicalizes generic elements through the Markdown serializer and parser.
+ * Elements recognized by Markdown use Markdown syntax. Templates and elements
+ * without a Markdown representation keep their MDX syntax.
+ */
+export const preferMarkdownSyntax = async (
+  document: MdxDocument
+): Promise<MdxDocument> => {
+  const preferredChildren = await preferMarkdownNodes(document.children);
+  const reparsed = await parseMarkdownCandidate(preferredChildren);
+  if (reparsed !== undefined) {
+    return { ...document, children: reparsed };
+  }
+  return document;
+};
+
+export { serializeMdxDocument };
