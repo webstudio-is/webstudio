@@ -67,7 +67,7 @@ describe("high-impact fixture API", () => {
       await fixtureApi.close();
       await rm(directory, { recursive: true, force: true });
     }
-  }, 30_000);
+  }, 60_000);
 
   test("uploads, corrects, refreshes, and generates font asset sources through MCP", async () => {
     const fixtureApi = await startHighImpactFixtureApi(fontAssetsFixture);

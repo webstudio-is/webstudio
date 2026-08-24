@@ -198,14 +198,21 @@ test("runs generated project production build", async () => {
   resolveProcessExit(process);
 
   await runPreviewBuild(
-    createDependencies({ spawn: spawn as never }),
+    createDependencies({
+      spawn: spawn as never,
+      nodeExecPath: "/opt/webstudio-node/bin/node",
+    }),
     "/tmp/preview"
   );
 
   expect(spawn).toHaveBeenCalledWith("npm", ["run", "build"], {
     cwd: "/tmp/preview",
     stdio: "inherit",
-    env: expect.objectContaining({ CI: "1", NODE_ENV: "production" }),
+    env: expect.objectContaining({
+      CI: "1",
+      NODE_ENV: "production",
+      PATH: expect.stringMatching(/^\/opt\/webstudio-node\/bin:/),
+    }),
   });
 });
 

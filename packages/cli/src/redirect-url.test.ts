@@ -205,10 +205,22 @@ for (const {
         expected: { url: "/new", status: 301 },
       },
       {
-        name: "path-only source ignores request query",
+        name: "path-only source preserves request query",
         requestPath: "/old?x=1",
         redirects: [{ old: "/old", new: "/new", status: 302 }],
-        expected: { url: "/new", status: 302 },
+        expected: { url: "/new?x=1", status: 302 },
+      },
+      {
+        name: "pattern source preserves request query",
+        requestPath: "/blog/post?utm_source=test",
+        redirects: [{ old: "/blog/:slug", new: "/articles/:slug" }],
+        expected: { url: "/articles/post?utm_source=test", status: 301 },
+      },
+      {
+        name: "target query replaces request query",
+        requestPath: "/old?utm_source=test",
+        redirects: [{ old: "/old", new: "/new?from=legacy" }],
+        expected: { url: "/new?from=legacy", status: 301 },
       },
       {
         name: "matches exact path with trailing slash",
@@ -485,7 +497,13 @@ for (const {
           { old: "/old", new: "/path" },
           { old: "/old?x=1", new: "/query" },
         ],
-        expected: { url: "/path", status: 301 },
+        expected: { url: "/path?x=1", status: 301 },
+      },
+      {
+        name: "hash-only target preserves the request path and query",
+        requestPath: "/old?x=1",
+        redirects: [{ old: "/old", new: "#top" }],
+        expected: { url: "/old?x=1#top", status: 301 },
       },
     ];
 

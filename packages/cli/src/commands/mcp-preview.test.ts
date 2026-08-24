@@ -1116,6 +1116,51 @@ test("captures one session page across multiple viewports through resize", async
   expect(preview.startAndWait).not.toHaveBeenCalled();
 });
 
+test("allows each resized capture its configured timeout", async () => {
+  vi.useFakeTimers();
+  try {
+    const preview = {
+      status: vi.fn(() => ({
+        url: "http://127.0.0.1:3000/",
+        running: true,
+        mode: "iterative" as const,
+      })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+    };
+    const capture = createCaptureScreenshotMock([]);
+    const capturePage = vi.fn(
+      async (optionsList: Array<Parameters<typeof capture>[0]>) => {
+        await new Promise<void>((resolve) => setTimeout(resolve, 6));
+        return await Promise.all(optionsList.map(capture));
+      }
+    );
+    const handlers = createMcpPreviewHandlers({
+      preview,
+      isStale: () => false,
+      createCaptureSession: () => ({
+        capture,
+        capturePage,
+        close: vi.fn(async () => undefined),
+      }),
+    });
+
+    const captures = handlers.capturePageScreenshots(
+      [375, 1440].map((width) => ({
+        path: "/responsive",
+        source: "session" as const,
+        viewport: { width, height: 900 },
+        timeout: 5,
+      }))
+    );
+    await vi.advanceTimersByTimeAsync(6);
+
+    await expect(captures).resolves.toHaveLength(2);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
 test("prepares one local page for multiple viewport captures", async () => {
   let running = false;
   const preview = {

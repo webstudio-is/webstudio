@@ -414,7 +414,7 @@ Use this process for user requests that change Webstudio content, layout, styles
 2. When a value or id is known, call `search-project` once instead of passing broad snapshots or several lists to the model. Use semantic list/get reads such as `get-project-settings`, `list-pages`, `get-page-by-path`, `list-instances`, `inspect-instance`, `get-styles`, `list-assets`, and `list-breakpoints` when the structure or target is not known. Use `snapshot` only when exact raw patch paths are needed. Before changing a project, read `get-project-settings` and follow any non-empty `meta.agentInstructions`. These are shared project instructions, not a place for secrets.
 3. Mutate the Webstudio project with semantic MCP write tools first. Prefer MCP `insert-fragment` for authored/styled sections, use `insert-component` only for one automatic component template, then `update-text`, `update-props`, `update-styles`, `upload-asset`, `create-page`, and page/project settings tools over raw patches.
 4. Use `apply-patch` only when no semantic tool covers the required change, and only after reading the latest snapshot/version.
-5. For visual/design work, regenerate or preview the generated app, capture a screenshot, inspect it with vision, and iterate before final response.
+5. For visual/design work, ask whether the user wants visual verification unless they explicitly requested it. Only after they opt in, regenerate or preview the generated app, capture a screenshot, inspect it with vision, and iterate.
 6. Report what changed and what verification ran.
 
 ::doc-section{field="visualDesignWorkflow"}
@@ -426,9 +426,10 @@ For requests involving visible HTML/CSS, layout, typography, colors, imagery, re
 1. Read editable Webstudio structure first: pages, instances, props, styles, breakpoints, assets, and relevant text.
 2. Do not use generated route/component files as the source of truth for editable content.
 3. Make edits through Webstudio semantic commands/MCP tools so the result stays editable in Builder and survives the next `webstudio build`.
-4. Keep generated project files current, start preview, and capture the changed page with `screenshot`.
-5. Use `screenshot.diff` when a baseline exists and inspect screenshot/diff artifacts with vision before finishing.
-6. If vision or screenshot tooling is unavailable, state that explicitly and explain what fallback verification was used.
+4. Ask whether the user wants visual verification unless they explicitly requested screenshots, visual verification, or a rendered audit. Do not start preview, screenshots, screenshot diffs, OCR installation, or rendered audits until they opt in.
+5. After they opt in, keep generated project files current, start preview, and capture the changed page with `screenshot`.
+6. Use `screenshot.diff` when a baseline exists and inspect screenshot/diff artifacts with vision before finishing.
+7. If the user declines or vision tooling is unavailable, use focused non-visual assertions and state that vision was not run.
 
 ::doc-section{field="responsiveVerification"}
 
@@ -438,10 +439,11 @@ For responsive page work, use Builder breakpoints as the source of truth:
 
 1. Read breakpoints with `list-breakpoints` before deciding responsive behavior.
 2. Apply responsive styles with existing Builder breakpoint ids; do not invent CSS media queries or breakpoint names when Webstudio breakpoint data exists.
-3. Pick screenshot viewport widths from the project breakpoints: include a desktop width, each defined max-width or min-width edge, and a narrow mobile width.
-4. Capture each viewport with `screenshot`, for example `{"path":"/","output":"home-375.png","viewport":{"width":375,"height":812}}` and `{"path":"/","output":"home-1440.png","viewport":{"width":1440,"height":900}}`.
-5. Inspect every viewport screenshot with vision before finishing, checking layout, overflow, hidden content, text wrapping, and breakpoint-specific style changes.
-6. If any viewport fails, update styles through semantic Webstudio tools and repeat screenshots for the affected breakpoints.
+3. Ask whether the user wants visual verification unless they explicitly requested it. Do not capture responsive screenshots until they opt in.
+4. Pick screenshot viewport widths from the project breakpoints: include a desktop width, each defined max-width or min-width edge, and a narrow mobile width.
+5. Capture each viewport with `screenshot`, for example `{"path":"/","output":"home-375.png","viewport":{"width":375,"height":812}}` and `{"path":"/","output":"home-1440.png","viewport":{"width":1440,"height":900}}`.
+6. Inspect every viewport screenshot with vision before finishing, checking layout, overflow, hidden content, text wrapping, and breakpoint-specific style changes.
+7. If any viewport fails, update styles through semantic Webstudio tools and repeat screenshots for the affected breakpoints.
 
 ::doc-section{field="generatedFileGuardrails"}
 
@@ -519,7 +521,7 @@ MCP tools receive JSON argument objects, not CLI flags. Use these shapes:
 - Pass --json only to commands whose help/schema documents it. Do not add --json to top-level commands such as sync unless supported.
 - On VERSION_CONFLICT, read MCP snapshot again, regenerate the patch, then retry.
 - Treat stdout JSON as the API contract and stderr as diagnostics.
-- For visual/design work, verify the rendered result with vision before finishing.
+- Never run visual verification automatically. Ask first unless the user explicitly requested screenshots, visual verification, or a rendered audit; if they do not opt in, use focused non-visual assertions.
 - Do not edit generated files for normal Webstudio content/design requests.
 - Use direct values for static strings and bindings only for dynamic expressions/resources/actions.
 - Use plain fixed text where documented. Only encode a quoted JavaScript string literal when a field is explicitly documented as an expression-only value.

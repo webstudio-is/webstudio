@@ -15,9 +15,12 @@ has no findings.
    anything. It detects deterministic metadata issues such as labels, landmark
    structure, positive tabindex values, invalid static ARIA states, and unmuted
    autoplay. Fix confirmed static findings first.
-3. For each changed route, use `preview.start` and capture screenshots with
-   `screenshot` at desktop, tablet, and mobile widths. Use `waitForSelector`
-   or `waitForTimeout` only when the page has an actual delayed ready state.
+3. Ask whether the user wants visual verification unless they explicitly
+   requested it. Only after they opt in, use `preview.start` and capture each
+   changed route with `screenshot` at desktop, tablet, and mobile widths. Use
+   `waitForSelector` or `waitForTimeout` only when the page has an actual
+   delayed ready state. If they do not opt in, continue with static evidence
+   and mark visual findings as manual verification items.
 4. Use `get-page-by-path`, `list-instances`, `inspect-instance`, and focused
    prop/style reads to verify semantics and authored state that screenshots
    cannot prove.

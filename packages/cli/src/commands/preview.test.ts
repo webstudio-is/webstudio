@@ -465,7 +465,9 @@ test("installs isolated generated dependencies when the cli does not ship them",
     }),
     readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
     writeFile,
+    nodeExecPath: "/opt/webstudio-node/bin/node",
     platform: "linux",
+    env: { PATH: "/usr/bin" },
   });
 
   expect(execFile).toHaveBeenCalledWith(
@@ -473,6 +475,9 @@ test("installs isolated generated dependencies when the cli does not ship them",
     expect.arrayContaining(["install", "--legacy-peer-deps"]),
     expect.objectContaining({
       cwd: "/tmp/project/.webstudio/preview",
+      env: expect.objectContaining({
+        PATH: "/opt/webstudio-node/bin:/usr/bin",
+      }),
       timeout: 120_000,
     })
   );
@@ -610,7 +615,10 @@ test("uses npm-cli from an npx launcher and forwards a writable npm cache", asyn
     ]),
     {
       cwd: "C:/project/.webstudio/preview",
-      env,
+      env: {
+        ...env,
+        Path: "C:\\Program Files\\nodejs",
+      },
       timeout: 120_000,
     }
   );

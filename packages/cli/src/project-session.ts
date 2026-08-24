@@ -256,15 +256,15 @@ export const createIssueReportFailure = (
 ): IssueReportRecentFailure => {
   const errorCode = getStableErrorCode(error);
   const issues =
-    errorCode === "PROJECT_BUNDLE_INVALID"
-      ? getValidationIssues(error)
+    errorCode === undefined
+      ? undefined
+      : getValidationIssues(error)
           ?.slice(0, 30)
           .map((issue) => ({
-            path: issue.path,
+            path: [],
             code: issue.code,
             constraint: issue.constraint,
-          }))
-      : undefined;
+          }));
   return {
     tool: canonicalTool,
     code: errorCode ?? "MCP_TOOL_FAILED",
@@ -326,7 +326,8 @@ const withMappedRemoteError = async <Result>(task: () => Promise<Result>) => {
       throw error;
     }
     const mapped = new Error(
-      error instanceof Error ? error.message : String(error)
+      error instanceof Error ? error.message : String(error),
+      { cause: error }
     ) as Error & { code: string };
     mapped.name = code;
     mapped.code = code;

@@ -1067,6 +1067,32 @@ const instance = (id: string): Instance => ({
 });
 
 describe("runtime style operations", () => {
+  test("rejects an unknown breakpoint coordinate", () => {
+    const result = styleUpdateInput.safeParse({
+      instanceId: "box",
+      property: "padding",
+      value: { type: "keyword", value: "8px" },
+      breakpointId: "mobile",
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("Expected the unknown breakpoint field to be rejected");
+    }
+    expect(
+      getZodValidationIssues(
+        result.error,
+        getInputSchemaMetadata(styleUpdateInput).inputJsonSchema
+      )
+    ).toEqual([
+      expect.objectContaining({
+        code: "unrecognized_keys",
+        path: ["breakpointId"],
+        constraint: "recognized_keys_only",
+      }),
+    ]);
+  });
+
   test.each([
     ":hover, body",
     "body:hover",

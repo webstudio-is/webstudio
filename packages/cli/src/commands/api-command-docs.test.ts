@@ -177,6 +177,35 @@ test("documents MCP use cases with JSON object inputs", () => {
   }
 });
 
+test("requires consent before the documented visual workflow", () => {
+  const scenario = useCaseScenarios.find(
+    ({ useCase }) => useCase === "Visually verify rendered work with AI vision"
+  );
+  expect(scenario?.commands).toEqual(
+    expect.arrayContaining([expect.stringContaining("preview.start")])
+  );
+  expect(scenario?.notes?.[0]).toContain(
+    "only when the user explicitly requests visual verification or opts in"
+  );
+  expect(scenario?.notes?.[0]).toContain("Do not start preview");
+});
+
+test("keeps the documented breakpoint style input executable", async () => {
+  const line = readCliDoc("api-use-cases")
+    .split("\n")
+    .find(
+      (candidate) =>
+        candidate.startsWith("- MCP tool: update-styles ") &&
+        candidate.includes("<breakpointId-from-list-breakpoints>")
+    );
+  expect(line).toBeDefined();
+  const input = JSON.parse(line!.slice("- MCP tool: update-styles ".length));
+
+  await expect(
+    createMetadataOnlyMcpAdapter().callTool({ name: "update-styles", input })
+  ).rejects.toThrow("MCP metadata reads must not execute operations.");
+});
+
 test("does not require publishing or sync before MCP editing", () => {
   for (const document of ["manual-llm", "manual-mcp"] as const) {
     const manual = readCliDoc(document);

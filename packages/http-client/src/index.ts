@@ -111,7 +111,10 @@ const fetchJsonResponse: typeof fetch = async (request, init) => {
   const contentType = response.headers.get("content-type");
 
   if (contentType?.includes("json") !== true) {
-    throw new Error(await createApiResponseErrorMessage(request, response));
+    throw Object.assign(
+      new Error(await createApiResponseErrorMessage(request, response)),
+      { status: response.status }
+    );
   }
 
   return response;
@@ -364,10 +367,19 @@ type AssetUploadDescriptor = {
 type UploadedAsset = Asset & { deduplicated?: boolean };
 type AssetUploadBatchResult =
   | { status: "fulfilled"; uploadedAssets: UploadedAsset[] }
-  | { status: "rejected"; asset: Asset; error: unknown };
+  | { status: "rejected"; asset: Asset; index: number; error: unknown }
+  | { status: "ambiguous"; asset: Asset; index: number; error: unknown };
 
 const formatError = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
+
+const getErrorStatus = (error: unknown) =>
+  typeof error === "object" &&
+  error !== null &&
+  "status" in error &&
+  typeof error.status === "number"
+    ? error.status
+    : undefined;
 
 const retryOnce = async <Result>(task: () => Promise<Result>) => {
   try {
@@ -454,13 +466,13 @@ export const uploadAsset = async (
     : result.uploadedAssets;
 };
 
-export const uploadAssets = async (
+const uploadAssetsSettled = async (
   params: AuthProjectParams & {
     assets: Asset[];
     readAssetData: (asset: Asset) => Promise<BinaryAssetData>;
     force?: (asset: Asset) => boolean;
   }
-): Promise<UploadedAsset[]> => {
+): Promise<AssetUploadBatchResult[]> => {
   const results: AssetUploadBatchResult[] = Array(params.assets.length);
   const prepared = await Promise.all(
     params.assets.map(async (asset, index) => {
@@ -478,7 +490,7 @@ export const uploadAssets = async (
               : await getBinaryAssetDataHash(data),
         };
       } catch (error) {
-        results[index] = { status: "rejected", asset, error };
+        results[index] = { status: "rejected", asset, index, error };
       }
     })
   );
@@ -495,7 +507,7 @@ export const uploadAssets = async (
     Array.from(groups.values(), async (uploads) => {
       for (const { asset, data, force, index } of uploads) {
         try {
-          const uploadedAssets = await retryOnce(async () => {
+          const upload = async () => {
             return await uploadAsset({
               authToken: params.authToken,
               headers: params.headers,
@@ -507,23 +519,55 @@ export const uploadAssets = async (
                 force,
               },
             });
-          });
+          };
+          const uploadedAssets =
+            force === true ? await upload() : await retryOnce(upload);
           results[index] = { status: "fulfilled", uploadedAssets };
         } catch (error) {
-          results[index] = { status: "rejected", asset, error };
+          const status = getErrorStatus(error);
+          results[index] = {
+            status:
+              force === true && (status === undefined || status >= 500)
+                ? "ambiguous"
+                : "rejected",
+            asset,
+            index,
+            error,
+          };
         }
       }
     })
   );
 
-  const failedUploads = results.flatMap((result) =>
+  return results;
+};
+
+export const uploadAssets = async (
+  params: AuthProjectParams & {
+    assets: Asset[];
+    readAssetData: (asset: Asset) => Promise<BinaryAssetData>;
+    force?: (asset: Asset) => boolean;
+  }
+): Promise<UploadedAsset[]> => {
+  const results = await uploadAssetsSettled(params);
+  const ambiguous = results.flatMap((result) =>
+    result.status === "ambiguous" ? [result] : []
+  );
+  if (ambiguous.length > 0) {
+    throw new Error(
+      `Forced asset upload may already be committed: ${ambiguous
+        .map(({ asset, error }) => `${asset.name}: ${formatError(error)}`)
+        .join("; ")}. Inspect the Assets list before retrying.`
+    );
+  }
+  const failed = results.flatMap((result) =>
     result.status === "rejected"
       ? [{ asset: result.asset, error: result.error }]
       : []
   );
-  if (failedUploads.length > 0) {
+  if (failed.length > 0) {
     throw new Error(
-      `Failed to upload assets: ${failedUploads
+      `Failed to upload assets: ${failed
         .map(({ asset, error }) => `${asset.name}: ${formatError(error)}`)
         .join("; ")}`
     );
@@ -613,27 +657,54 @@ export const uploadProjectAssets = async (
     readAssetData: (asset: AssetUploadDescriptor) => Promise<BinaryAssetData>;
   }
 ) => {
-  const descriptorByName = new Map(
-    params.assets.map((descriptor) => [descriptor.name, descriptor])
+  const assets = params.assets.map((descriptor) =>
+    toUploadAsset({ descriptor, projectId: params.projectId })
   );
-  const uploaded = await uploadAssets({
+  const descriptorByAsset = new Map(
+    assets.map((asset, index) => [asset, params.assets[index]!])
+  );
+  const results = await uploadAssetsSettled({
     authToken: params.authToken,
     headers: params.headers,
     origin: params.origin,
     projectId: params.projectId,
-    assets: params.assets.map((descriptor) =>
-      toUploadAsset({ descriptor, projectId: params.projectId })
-    ),
+    assets,
     readAssetData: (asset) => {
-      const descriptor = descriptorByName.get(asset.name);
+      const descriptor = descriptorByAsset.get(asset);
       if (descriptor === undefined) {
         throw new Error(`Asset descriptor not found for ${asset.name}.`);
       }
       return params.readAssetData(descriptor);
     },
-    force: (asset) => descriptorByName.get(asset.name)?.force === true,
+    force: (asset) => descriptorByAsset.get(asset)?.force === true,
   });
-  return { uploaded };
+  return {
+    uploaded: results.flatMap((result) =>
+      result.status === "fulfilled" ? result.uploadedAssets : []
+    ),
+    failed: results.flatMap((result) =>
+      result.status === "rejected"
+        ? [
+            {
+              index: result.index,
+              name: result.asset.name,
+              error: formatError(result.error),
+            },
+          ]
+        : []
+    ),
+    ambiguous: results.flatMap((result) =>
+      result.status === "ambiguous"
+        ? [
+            {
+              index: result.index,
+              name: result.asset.name,
+              error: formatError(result.error),
+            },
+          ]
+        : []
+    ),
+  };
 };
 
 const createAssetRestUrl = ({
