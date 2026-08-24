@@ -707,6 +707,59 @@ test("rejects incomplete project session snapshots before preview generation", (
 });
 
 describe("cli project session transport", () => {
+  test("preserves JSON gateway status when mapping remote error codes", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify([
+              {
+                error: {
+                  message: "Gateway Timeout",
+                  code: -32603,
+                  data: {
+                    code: "INTERNAL_SERVER_ERROR",
+                    httpStatus: 504,
+                    path: "builderApi.apply-patch",
+                  },
+                },
+              },
+            ]),
+            {
+              status: 504,
+              headers: { "content-type": "application/json" },
+            }
+          )
+      )
+    );
+    const transport = createCliProjectSessionTransport({
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+    });
+
+    await expect(
+      transport.commitPatch({
+        projectId: "project-1",
+        buildId: "build-1",
+        baseVersion: 1,
+        transactions: [],
+      })
+    ).rejects.toMatchObject({
+      name: "INTERNAL_SERVER_ERROR",
+      code: "INTERNAL_SERVER_ERROR",
+      cause: {
+        data: {
+          code: "INTERNAL_SERVER_ERROR",
+          httpStatus: 504,
+        },
+      },
+    });
+  });
+
   test("adapts public API build snapshots into project-session state", async () => {
     const transport = createCliProjectSessionTransport({
       connection: {

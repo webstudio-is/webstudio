@@ -326,7 +326,8 @@ const withMappedRemoteError = async <Result>(task: () => Promise<Result>) => {
       throw error;
     }
     const mapped = new Error(
-      error instanceof Error ? error.message : String(error)
+      error instanceof Error ? error.message : String(error),
+      { cause: error }
     ) as Error & { code: string };
     mapped.name = code;
     mapped.code = code;
