@@ -20,10 +20,10 @@ import {
   normalizeProps,
   generateRemixRoute,
   generateRemixParams,
+  findTreeInstanceIdsExcludingStaticHidden,
 } from "@webstudio-is/react-sdk";
 import {
   createScope,
-  findTreeInstanceIds,
   getAllPages,
   isAssetsResource,
   getPagePath,
@@ -961,13 +961,17 @@ export const prebuild = async (options: {
     pages,
     source: "prebuild",
   });
+  const normalizedPropsMap = new Map(
+    normalizedProps.map((prop) => [prop.id, prop])
+  );
 
   for (const page of generatedPages) {
     const instanceMap = new Map(siteData.build.instances);
-    const pageInstanceSet = findTreeInstanceIds(
-      instanceMap,
-      page.rootInstanceId
-    );
+    const pageInstanceSet = findTreeInstanceIdsExcludingStaticHidden({
+      instances: instanceMap,
+      props: normalizedPropsMap,
+      rootInstanceId: page.rootInstanceId,
+    });
     // support global data variables
     pageInstanceSet.add(ROOT_INSTANCE_ID);
     // collect used instances and metas

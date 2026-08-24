@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import { $, renderData, ws } from "@webstudio-is/template";
 import {
   findTreeInstanceIds,
+  findTreeInstanceIdsExcludingSubtrees,
   findTreeInstanceIdsExcludingSlotDescendants,
   getHtmlTagsFromProps,
   getHtmlTagFromInstance,
@@ -23,6 +24,21 @@ test("find all tree instances", () => {
     </$.Body>
   );
   expect(findTreeInstanceIds(instances, "3")).toEqual(new Set(["3", "4", "5"]));
+});
+
+test("find tree instances excluding complete subtrees", () => {
+  const { instances } = renderData(
+    <$.Body ws:id="root">
+      <$.Box ws:id="hidden">
+        <$.Box ws:id="hidden-child"></$.Box>
+      </$.Box>
+      <$.Box ws:id="visible"></$.Box>
+    </$.Body>
+  );
+
+  expect(
+    findTreeInstanceIdsExcludingSubtrees(instances, "root", new Set(["hidden"]))
+  ).toEqual(new Set(["root", "visible"]));
 });
 
 test("find all tree instances excluding slot descendants", () => {
