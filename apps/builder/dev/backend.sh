@@ -46,7 +46,20 @@ builder_backend_down() {
 }
 
 builder_backend_pull_db() {
-  builder_compose pull --policy missing db
+  local max_attempts="${BUILDER_DOCKER_PULL_ATTEMPTS:-4}"
+  local attempt=1
+
+  until builder_compose pull --policy missing db; do
+    if [ "$attempt" -ge "$max_attempts" ]; then
+      echo "Failed to pull the database image after ${max_attempts} attempts" >&2
+      return 1
+    fi
+
+    local delay_seconds="$((5 * (1 << (attempt - 1)) + RANDOM % 6))"
+    echo "Database image pull failed; retrying in ${delay_seconds}s" >&2
+    sleep "$delay_seconds"
+    attempt="$((attempt + 1))"
+  done
 }
 
 builder_backend_start_db() {
