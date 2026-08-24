@@ -6146,7 +6146,7 @@ const getMetaGuide = (
       : {}),
     more:
       goalGuide === undefined
-        ? "The MCP handshake provides top-level argument contracts and required fields, while this guide includes exact examples plus complete schemas for selected complex tools. Call meta.get-more-tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover."
+        ? "The MCP handshake provides tool argument contracts and required fields. This guide includes focused examples; call meta.get-more-tools once with all needed tool names when you need a focused copy of nested input schemas or server/local behavior."
         : "Follow this workflow and recipe without additional discovery unless the workflow explicitly requests it.",
   };
 };
