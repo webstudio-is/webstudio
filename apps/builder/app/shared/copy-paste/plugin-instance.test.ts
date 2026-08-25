@@ -2,6 +2,7 @@ import { describe, test, expect, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { toast } from "@webstudio-is/design-system";
 import type {
+  Asset,
   Instance,
   Instances,
   Prop,
@@ -24,7 +25,7 @@ import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { registerContainers } from "../sync/sync-stores";
 import { $registeredComponentMetas } from "../nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import { $assets, $instances } from "~/shared/sync/data-stores";
 import {
   $dataSources,
   $pages,
@@ -152,6 +153,7 @@ describe("copy and cut guards", () => {
 
     expect(JSON.parse(clipboardData ?? "")).toMatchObject({
       "@webstudio/instances/v0.1": {
+        sourceOrigin: window.location.origin,
         rootInstanceIds: ["box1", "box2"],
         fragment: {
           children: [
@@ -202,6 +204,82 @@ describe("copy and cut guards", () => {
     expect($allSelectedInstanceSelectors.get()).toEqual([
       [pastedRootIds?.[0], "body0"],
       [pastedRootIds?.[1], "body0"],
+    ]);
+  });
+
+  test("transfers assets from another deployment before inserting", async () => {
+    $instances.set(
+      toMap([createInstance("body0", "Body", [])] satisfies Instance[])
+    );
+    $assets.set(new Map());
+    selectInstance(["body0"]);
+    const sourceAsset = {
+      id: "source-asset",
+      projectId: "source-project",
+      name: "hero.png",
+      type: "image",
+      size: 128,
+      format: "png",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      description: null,
+      meta: { width: 1200, height: 800 },
+    } satisfies Asset;
+    const importedAsset = {
+      ...sourceAsset,
+      id: "imported-asset",
+      projectId: "my-project",
+    } satisfies Asset;
+    initBuilderApi();
+    const importAssets = vi
+      .spyOn(window.__webstudio__$__builderApi, "importAssets")
+      .mockRejectedValueOnce(new Error("Source is unavailable"))
+      .mockImplementation(
+        async () => new Map([[sourceAsset.id, importedAsset]])
+      );
+    const clipboardData = JSON.stringify({
+      "@webstudio/instance/v0.1": {
+        sourceOrigin: "https://source.example.com",
+        instanceSelector: ["image", "source-body"],
+        children: [{ type: "id", value: "image" }],
+        instances: [createInstance("image", "Image", [])],
+        assets: [sourceAsset],
+        dataSources: [],
+        resources: [],
+        props: [
+          {
+            id: "image-src",
+            instanceId: "image",
+            name: "src",
+            type: "asset",
+            value: sourceAsset.id,
+          },
+        ],
+        breakpoints: [],
+        styleSourceSelections: [],
+        styleSources: [],
+        styles: [],
+      },
+    });
+
+    expect(await instanceText.onPaste?.(clipboardData)).toEqual({
+      success: false,
+      error:
+        "Could not transfer assets from the source Webstudio deployment. Make sure it is reachable and try again.",
+    });
+    expect($instances.get().get("body0")?.children).toEqual([]);
+
+    expect(await instanceText.onPaste?.(clipboardData)).toEqual(pasteHandled);
+    expect($instances.get().get("body0")?.children).toEqual([
+      { type: "id", value: expect.any(String) },
+    ]);
+    expect(importAssets).toHaveBeenLastCalledWith("my-project", [
+      {
+        asset: sourceAsset,
+        url: "https://source.example.com/cgi/image/hero.png?format=raw",
+      },
+    ]);
+    expect(Array.from($props.get().values())).toEqual([
+      expect.objectContaining({ type: "asset", value: importedAsset.id }),
     ]);
   });
 

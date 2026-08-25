@@ -5,6 +5,7 @@ import {
   encodeDataSourceVariable,
   ROOT_FOLDER_ID,
   ROOT_INSTANCE_ID,
+  type Asset,
   type DataSource,
   type Instance,
 } from "@webstudio-is/sdk";
@@ -349,6 +350,208 @@ test("copies page data across projects", async () => {
   expect($dataSources.get().has("source-variable")).toBe(false);
 });
 
+test("transfers assets copied from another deployment before inserting the page", async () => {
+  $project.set({ id: "source-project" } as Project);
+  resetBuildStores();
+
+  const sourcePages = createDefaultPages({
+    homePageId: "source-page",
+    rootInstanceId: "source-root",
+  });
+  const sourceAsset = {
+    id: "source-asset",
+    projectId: "source-project",
+    name: "hero.png",
+    type: "image",
+    size: 128,
+    format: "png",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    description: null,
+    meta: { width: 1200, height: 800 },
+  } satisfies Asset;
+  const importedAsset = {
+    ...sourceAsset,
+    id: "imported-asset",
+    projectId: "target-project",
+  } satisfies Asset;
+  const sourcePage = sourcePages.pages.get("source-page");
+  if (sourcePage === undefined) {
+    throw new Error("Expected source page");
+  }
+  sourcePage.meta.socialImageAssetId = sourceAsset.id;
+  sourcePage.marketplace = { thumbnailAssetId: sourceAsset.id };
+  $pages.set(sourcePages);
+  $selectedPageId.set(sourcePages.homePageId);
+  $instances.set(
+    new Map([
+      [
+        "source-root",
+        {
+          type: "instance",
+          id: "source-root",
+          component: "Body",
+          children: [],
+        } satisfies Instance,
+      ],
+    ])
+  );
+  $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
+  const clipboardData = JSON.parse(copyPageData("source-page") ?? "");
+  expect(clipboardData["@webstudio/page/v0.1"].sourceOrigin).toBe(
+    window.location.origin
+  );
+  clipboardData["@webstudio/page/v0.1"].sourceOrigin =
+    "https://source.example.com";
+
+  $project.set({ id: "target-project" } as Project);
+  resetBuildStores();
+  const targetPages = createDefaultPages({
+    homePageId: "target-page",
+    rootInstanceId: "target-root",
+  });
+  $pages.set(targetPages);
+  $selectedPageId.set(targetPages.homePageId);
+  $instances.set(
+    new Map([
+      [
+        "target-root",
+        {
+          type: "instance",
+          id: "target-root",
+          component: "Body",
+          children: [],
+        } satisfies Instance,
+      ],
+    ])
+  );
+  const importAssets = vi
+    .spyOn(window.__webstudio__$__builderApi, "importAssets")
+    .mockImplementation(async (projectId, sources) => {
+      expect(projectId).toBe("target-project");
+      expect(sources).toEqual([
+        {
+          asset: sourceAsset,
+          url: "https://source.example.com/cgi/image/hero.png?format=raw",
+        },
+      ]);
+      $assets.set(new Map([[importedAsset.id, importedAsset]]));
+      return new Map([[sourceAsset.id, importedAsset]]);
+    });
+
+  const incompleteClipboardData = structuredClone(clipboardData);
+  incompleteClipboardData["@webstudio/page/v0.1"].bodyFragment.assets = [];
+  expect(
+    await handlePastePage(
+      JSON.stringify(incompleteClipboardData),
+      ROOT_FOLDER_ID
+    )
+  ).toEqual({
+    success: false,
+    error:
+      "Could not paste Webstudio page data. The clipboard data appears to be incomplete or invalid.",
+  });
+  expect(importAssets).not.toHaveBeenCalled();
+
+  expect(
+    await handlePastePage(JSON.stringify(clipboardData), ROOT_FOLDER_ID)
+  ).toEqual(pasteHandled);
+  const pastedPage = Array.from($pages.get()?.pages.values() ?? []).find(
+    (page) => page.id !== "target-page"
+  );
+  expect(pastedPage?.meta.socialImageAssetId).toBe(importedAsset.id);
+  expect(pastedPage?.marketplace?.thumbnailAssetId).toBe(importedAsset.id);
+  expect(importAssets).toHaveBeenCalledOnce();
+  expect($assets.get().has(sourceAsset.id)).toBe(false);
+});
+
+test("preserves legacy page metadata assets that exist in the destination", async () => {
+  $project.set({ id: "source-project" } as Project);
+  resetBuildStores();
+  const sourcePages = createDefaultPages({
+    homePageId: "source-page",
+    rootInstanceId: "source-root",
+  });
+  const sourcePage = sourcePages.pages.get("source-page");
+  if (sourcePage === undefined) {
+    throw new Error("Expected source page");
+  }
+  const sourceAsset = {
+    id: "legacy-meta-asset",
+    projectId: "source-project",
+    name: "social.png",
+    type: "image",
+    size: 128,
+    format: "png",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    meta: { width: 1200, height: 630 },
+  } satisfies Asset;
+  sourcePage.meta.socialImageAssetId = sourceAsset.id;
+  sourcePage.marketplace = { thumbnailAssetId: sourceAsset.id };
+  $pages.set(sourcePages);
+  $selectedPageId.set(sourcePages.homePageId);
+  $instances.set(
+    new Map([
+      [
+        "source-root",
+        {
+          type: "instance",
+          id: "source-root",
+          component: "Body",
+          children: [],
+        } satisfies Instance,
+      ],
+    ])
+  );
+  $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
+  const currentData = JSON.parse(copyPageData("source-page") ?? "")[
+    "@webstudio/page/v0.1"
+  ];
+  delete currentData.sourceOrigin;
+  currentData.bodyFragment.assets = [];
+  const clipboardData = JSON.stringify({
+    "@webstudio/page/v0.1": currentData,
+  });
+
+  $project.set({ id: "target-project" } as Project);
+  resetBuildStores();
+  const targetPages = createDefaultPages({
+    homePageId: "target-page",
+    rootInstanceId: "target-root",
+  });
+  $pages.set(targetPages);
+  $selectedPageId.set(targetPages.homePageId);
+  $instances.set(
+    new Map([
+      [
+        "target-root",
+        {
+          type: "instance",
+          id: "target-root",
+          component: "Body",
+          children: [],
+        } satisfies Instance,
+      ],
+    ])
+  );
+  $assets.set(
+    new Map([[sourceAsset.id, { ...sourceAsset, projectId: "target-project" }]])
+  );
+  const importAssets = vi.spyOn(
+    window.__webstudio__$__builderApi,
+    "importAssets"
+  );
+
+  expect(await handlePastePage(clipboardData, ROOT_FOLDER_ID)).toEqual(
+    pasteHandled
+  );
+  const pastedPage = Array.from($pages.get()?.pages.values() ?? []).find(
+    (page) => page.id !== "target-page"
+  );
+  expect(pastedPage?.meta.socialImageAssetId).toBe(sourceAsset.id);
+  expect(pastedPage?.marketplace?.thumbnailAssetId).toBe(sourceAsset.id);
+  expect(importAssets).not.toHaveBeenCalled();
+});
+
 test.each([
   ["ours", "blue"],
   ["theirs", "red"],
@@ -410,6 +613,23 @@ test("cancels page paste when global root style resolution is cancelled", async 
     styleSourceId: "source-local",
     color: "red",
   });
+  const sourceAsset = {
+    id: "source-asset",
+    projectId: "source-project",
+    name: "hero.png",
+    type: "image",
+    size: 128,
+    format: "png",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    description: null,
+    meta: { width: 1200, height: 800 },
+  } satisfies Asset;
+  const sourcePage = $pages.get()?.pages.get("source-page");
+  if (sourcePage === undefined) {
+    throw new Error("Expected source page");
+  }
+  sourcePage.meta.socialImageAssetId = sourceAsset.id;
+  $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
   const clipboardData = copyPageData("source-page");
 
   const targetPages = setupProjectWithRootStyle({
@@ -424,10 +644,15 @@ test("cancels page paste when global root style resolution is cancelled", async 
     window.__webstudio__$__builderApi,
     "showRootStyleConflictDialog"
   ).mockResolvedValue("cancel");
+  const importAssets = vi.spyOn(
+    window.__webstudio__$__builderApi,
+    "importAssets"
+  );
 
   await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
 
   expect($pages.get()?.pages.size).toBe(initialPageCount);
+  expect(importAssets).not.toHaveBeenCalled();
   expect($styles.get().get("target-local:base:color:")?.value).toEqual({
     type: "keyword",
     value: "blue",

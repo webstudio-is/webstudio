@@ -76,6 +76,10 @@ Right-click a page or folder and choose **Copy**, then right-click the destinati
 
 When pasted, Webstudio creates new internal IDs and automatically adjusts names, paths, folder slugs, tokens, assets, variables, and styles as needed to fit the destination project.
 
+{% hint style="info" %}
+When copying between separate Webstudio deployments, the destination downloads referenced asset files from the source before inserting the content. The source deployment must remain publicly reachable until the paste finishes. Use the [CLI](../cli.md) to sync and import the complete project when moving an entire site.
+{% endhint %}
+
 ## Content mode
 
 Content editors can create pages from existing page templates when they have editing access. This gives editors a controlled page creation workflow without giving them full design control.
