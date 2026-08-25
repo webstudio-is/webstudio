@@ -1348,7 +1348,9 @@ export class ProjectSession {
               contract,
               snapshot: latestSnapshot,
               diagnostics: [
-                ...diagnostics,
+                ...diagnostics.filter(
+                  (diagnostic) => diagnostic.level !== "error"
+                ),
                 {
                   level: "info",
                   code: "CONFLICT_RETRY",
