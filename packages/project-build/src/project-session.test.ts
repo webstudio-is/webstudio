@@ -1237,15 +1237,59 @@ describe("project session", () => {
 
     expect(result.state.committed).toBe(true);
     expect(result.version).toBe(3);
+    expect(serializeProjectSessionMeta(result)).toMatchObject({
+      version: 3,
+      commitStatus: "committed",
+      committed: true,
+      diagnosticCount: 2,
+    });
     expect(result.diagnostics).toEqual([
-      expect.objectContaining({ code: "CONFLICT" }),
-      expect.objectContaining({ code: "CONFLICT_REFRESHED" }),
-      expect.objectContaining({ code: "CONFLICT_RETRY" }),
+      expect.objectContaining({ level: "info", code: "CONFLICT_REFRESHED" }),
+      expect.objectContaining({ level: "info", code: "CONFLICT_RETRY" }),
     ]);
     expect(transport.loadedNamespaces).toEqual([
       ["pages", "instances", "dataSources"],
     ]);
     expect(transport.commits).toHaveLength(3);
+  });
+
+  test("reports a project settings conflict retry as committed", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const remote = createSnapshot({ version: 2 });
+    const transport = createMutableTransport(remote);
+    let attempts = 0;
+    const commitPatch = transport.commitPatch;
+    transport.commitPatch = async (input) => {
+      attempts += 1;
+      if (attempts <= 2) {
+        throw Object.assign(new Error("Build version mismatch"), {
+          code: "CONFLICT",
+        });
+      }
+      return await commitPatch(input);
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("projectSettings.update", {
+      meta: { code: "console.log('committed')" },
+    });
+
+    expect(result.state.committed).toBe(true);
+    expect(result.version).toBe(3);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        level: "info",
+        code: "CONFLICT_REFRESHED",
+      }),
+      expect.objectContaining({ level: "info", code: "CONFLICT_RETRY" }),
+    ]);
+
+    await session.refresh(["projectSettings"]);
+    const settings = await session.read("projectSettings.get", {});
+    expect(settings.result).toMatchObject({
+      meta: { code: "console.log('committed')" },
+    });
   });
 
   test("confirms an ambiguous commit with the same transaction", async () => {
