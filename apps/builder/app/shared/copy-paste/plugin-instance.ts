@@ -26,7 +26,7 @@ import {
   type WebstudioFragment,
   isComponentDetachable,
 } from "@webstudio-is/sdk";
-import { $instances } from "~/shared/sync/data-stores";
+import { $instances, $project } from "~/shared/sync/data-stores";
 import {
   type InstanceSelector,
   sortInstancePathsForChildMutation,
@@ -47,6 +47,7 @@ import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
 import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime";
 import { resolveFragmentTokenConflicts } from "../resolve-token-conflicts";
 import { reportFragmentContentModelWarnings } from "./fragment-utils";
+import { transferFragmentAssets } from "./asset-transfer-utils";
 
 const invalidPasteDataMessage =
   "Could not paste Webstudio instance data. The clipboard data appears to be incomplete or invalid.";
@@ -54,7 +55,7 @@ const invalidPasteDataMessage =
 const getTreeData = (
   instanceSelector: InstanceSelector,
   { showToast = true }: { showToast?: boolean } = {}
-) => {
+): InstanceTransferData | undefined => {
   const instances = $instances.get();
   const [targetInstanceId] = instanceSelector;
   const instance = instances.get(targetInstanceId);
@@ -73,6 +74,7 @@ const getTreeData = (
   }
 
   return {
+    sourceOrigin: window.location.origin,
     instanceSelector,
     ...extractWebstudioFragment(getWebstudioData(), targetInstanceId),
   };
@@ -87,8 +89,13 @@ const stringifyMultiRoot = (data: InstancesTransferData) => {
 };
 
 const stringifyMultiRootSelection = (selectedData: InstanceTransferData[]) => {
+  const firstData = selectedData[0];
+  if (firstData === undefined) {
+    return;
+  }
   const rootInstanceIds = selectedData.map((data) => data.instanceSelector[0]);
   return stringifyMultiRoot({
+    sourceOrigin: firstData.sourceOrigin,
     rootInstanceIds,
     fragment: mergeWebstudioFragments(rootInstanceIds, selectedData),
   });
@@ -173,7 +180,7 @@ const findPasteTargetForFragment = (
 };
 
 const findPasteTarget = (
-  data: InstanceTransferData
+  data: WebstudioFragment & { instanceSelector: string[] }
 ): undefined | Insertable => {
   const instances = $instances.get();
 
@@ -207,10 +214,14 @@ const insertPastedFragment = async ({
   fragment,
   pasteTarget,
   selectRootInstances,
+  sourceOrigin,
+  projectId,
 }: {
   fragment: WebstudioFragment;
   pasteTarget: Insertable;
   selectRootInstances: (rootInstanceIds: Instance["id"][]) => void;
+  sourceOrigin: string | undefined;
+  projectId: string;
 }) => {
   try {
     const contentModelWarnings = getFragmentContentModelWarnings({
@@ -219,13 +230,31 @@ const insertPastedFragment = async ({
     });
     const conflictResolution = await resolveFragmentTokenConflicts(fragment);
     if (conflictResolution === "cancel") {
-      return;
+      return pasteHandled;
+    }
+    const transferred = await transferFragmentAssets({
+      sourceOrigin,
+      projectId,
+      fragments: [fragment],
+    });
+    if (transferred.success === false) {
+      return transferred;
+    }
+    if ($project.get()?.id !== projectId) {
+      return {
+        success: false,
+        error: "Project changed while pasting.",
+      } as const;
+    }
+    const transferredFragment = transferred.fragments.get(fragment);
+    if (transferredFragment === undefined) {
+      return pasteHandled;
     }
     const result = await executeRuntimeMutationAsync({
       id: "instances.insertFragment",
       input: {
         parentInstanceId: pasteTarget.parentSelector[0],
-        fragment,
+        fragment: transferredFragment,
         conflictResolution,
         insertIndex:
           typeof pasteTarget.position === "number"
@@ -236,18 +265,17 @@ const insertPastedFragment = async ({
     });
     const rootInstanceIds = result?.result.rootInstanceIds;
     if (rootInstanceIds === undefined || rootInstanceIds.length === 0) {
-      return false;
+      return pasteHandled;
     }
     if (result?.result.didMergeBreakpointsDueToLimit === true) {
       toast.warn(breakpointPasteLimitWarning);
     }
     reportFragmentContentModelWarnings(contentModelWarnings);
     selectRootInstances(rootInstanceIds);
-  } catch (error) {
-    // User cancelled
-    return false;
+    return pasteHandled;
+  } catch {
+    return pasteHandled;
   }
-  return true;
 };
 
 const handlePasteInstance = async (clipboardData: string) => {
@@ -257,6 +285,10 @@ const handlePasteInstance = async (clipboardData: string) => {
   }
   if (transferData.valid === false) {
     return { success: false, error: invalidPasteDataMessage } as const;
+  }
+  const projectId = $project.get()?.id;
+  if (projectId === undefined) {
+    return pasteHandled;
   }
   if (transferData.type === "multi-root") {
     const pasteRootInstanceIds = getPasteRootInstanceIds(transferData.data);
@@ -274,9 +306,11 @@ const handlePasteInstance = async (clipboardData: string) => {
     if (pasteTarget === undefined) {
       return pasteHandled;
     }
-    await insertPastedFragment({
+    return insertPastedFragment({
       fragment,
       pasteTarget,
+      sourceOrigin: transferData.data.sourceOrigin ?? window.location.origin,
+      projectId,
       selectRootInstances: (rootInstanceIds) => {
         selectInstances(
           rootInstanceIds.map((newRootInstanceId) => [
@@ -286,7 +320,6 @@ const handlePasteInstance = async (clipboardData: string) => {
         );
       },
     });
-    return pasteHandled;
   }
   const fragment = transferData.data;
 
@@ -294,9 +327,11 @@ const handlePasteInstance = async (clipboardData: string) => {
   if (pasteTarget === undefined) {
     return pasteHandled;
   }
-  await insertPastedFragment({
+  return insertPastedFragment({
     fragment,
     pasteTarget,
+    sourceOrigin: transferData.data.sourceOrigin ?? window.location.origin,
+    projectId,
     selectRootInstances: (rootInstanceIds) => {
       const newRootInstanceId = rootInstanceIds[0];
       if (newRootInstanceId === undefined) {
@@ -305,7 +340,6 @@ const handlePasteInstance = async (clipboardData: string) => {
       selectInstances([[newRootInstanceId, ...pasteTarget.parentSelector]]);
     },
   });
-  return pasteHandled;
 };
 
 const handleCopyInstance = () => {

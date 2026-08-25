@@ -1,6 +1,8 @@
 import { beforeEach, describe, test, expect, vi } from "vitest";
-import { assetType } from "@webstudio-is/sdk";
-import { __testing__ } from "./upload-assets";
+import { assetType, type Asset } from "@webstudio-is/sdk";
+import type { Project } from "@webstudio-is/project";
+import { $assets, $project } from "~/shared/sync/data-stores";
+import { __testing__, importAssets } from "./upload-assets";
 
 const {
   createUploadTicket,
@@ -14,6 +16,8 @@ const request = vi.fn<typeof fetch>();
 describe("upload-assets", () => {
   beforeEach(() => {
     request.mockReset();
+    $project.set(undefined);
+    $assets.set(new Map());
   });
 
   test("requests upload tickets without client-supplied asset ids", async () => {
@@ -105,6 +109,178 @@ describe("upload-assets", () => {
     expect(init.body.get("displayFilename")).toBe("Campaign photo");
   });
 
+  test("imports every asset type through the production upload queue", async () => {
+    $project.set({ id: "target-project" } as Project);
+    $assets.set(new Map());
+    const sources: Asset[] = [
+      {
+        id: "font",
+        projectId: "source-project",
+        name: "brand.woff2",
+        type: "font",
+        format: "woff2",
+        size: 1,
+        createdAt: "2026-01-01",
+        description: "Brand font",
+        meta: { family: "Brand", style: "normal", weight: 400 },
+      },
+      {
+        id: "video",
+        projectId: "source-project",
+        name: "demo.mp4",
+        type: "video",
+        format: "mp4",
+        size: 1,
+        createdAt: "2026-01-01",
+        meta: { width: 1920, height: 1080 },
+      },
+      {
+        id: "file",
+        projectId: "source-project",
+        name: "guide.pdf",
+        type: "file",
+        format: "pdf",
+        size: 1,
+        createdAt: "2026-01-01",
+        meta: {},
+      },
+    ];
+    const importedById = new Map(
+      sources.map((asset) => [
+        `imported-${asset.id}`,
+        { ...asset, id: `imported-${asset.id}`, projectId: "target-project" },
+      ])
+    );
+    const upload: NonNullable<
+      NonNullable<Parameters<typeof importAssets>[2]>["upload"]
+    > = vi.fn(async (type, [url]) => {
+      return new Map([[url, `imported-${type}`]]);
+    });
+    const waitForUpload = vi.fn(async (assetId: string) => {
+      const asset = importedById.get(assetId);
+      if (asset === undefined) {
+        throw new Error("Missing imported test asset");
+      }
+      return asset;
+    });
+
+    await expect(
+      importAssets(
+        "target-project",
+        sources.map((asset) => ({
+          asset,
+          url: `https://source.example.com/${asset.name}`,
+        })),
+        { upload, waitForUpload }
+      )
+    ).resolves.toEqual(
+      new Map(
+        sources.map((asset) => [
+          asset.id,
+          importedById.get(`imported-${asset.id}`),
+        ])
+      )
+    );
+
+    expect(upload).toHaveBeenNthCalledWith(
+      1,
+      "font",
+      [new URL("https://source.example.com/brand.woff2")],
+      {}
+    );
+    expect(upload).toHaveBeenNthCalledWith(
+      2,
+      "video",
+      [new URL("https://source.example.com/demo.mp4")],
+      { dimensions: { width: 1920, height: 1080 } }
+    );
+    expect(upload).toHaveBeenNthCalledWith(
+      3,
+      "file",
+      [new URL("https://source.example.com/guide.pdf")],
+      {}
+    );
+  });
+
+  test("uploads cross-deployment assets when destination metadata matches", async () => {
+    $project.set({ id: "target-project" } as Project);
+    const sourceAsset = {
+      id: "shared-id",
+      projectId: "source-project",
+      name: "hero.png",
+      type: "image",
+      format: "png",
+      size: 1,
+      createdAt: "2026-01-01",
+      description: null,
+      meta: { width: 100, height: 100 },
+    } satisfies Asset;
+    const existingAsset = {
+      ...sourceAsset,
+      projectId: "target-project",
+    } satisfies Asset;
+    const importedAsset = {
+      ...sourceAsset,
+      id: "imported-id",
+      projectId: "target-project",
+    } satisfies Asset;
+    $assets.set(new Map([[existingAsset.id, existingAsset]]));
+    const upload = vi.fn(async (_type, [url]: URL[]) => {
+      return new Map([[url, importedAsset.id]]);
+    });
+    const waitForUpload = vi.fn(async () => importedAsset);
+
+    await expect(
+      importAssets(
+        "target-project",
+        [
+          {
+            asset: sourceAsset,
+            url: "https://source.example.com/cgi/image/hero.png?format=raw",
+          },
+        ],
+        { upload, waitForUpload }
+      )
+    ).resolves.toEqual(new Map([[sourceAsset.id, importedAsset]]));
+
+    expect(upload).toHaveBeenCalledOnce();
+    expect(waitForUpload).toHaveBeenCalledWith(importedAsset.id);
+  });
+
+  test("reuses matching assets from the current deployment", async () => {
+    $project.set({ id: "target-project" } as Project);
+    const existingAsset = {
+      id: "existing-id",
+      projectId: "target-project",
+      name: "hero.png",
+      type: "image",
+      format: "png",
+      size: 1,
+      createdAt: "2026-01-01",
+      description: null,
+      meta: { width: 100, height: 100 },
+    } satisfies Asset;
+    $assets.set(new Map([[existingAsset.id, existingAsset]]));
+    const upload = vi.fn();
+    const waitForUpload = vi.fn();
+
+    await expect(
+      importAssets(
+        "target-project",
+        [
+          {
+            asset: existingAsset,
+            url: `${window.location.origin}/cgi/image/hero.png?format=raw`,
+          },
+        ],
+        { upload, waitForUpload }
+      )
+    ).resolves.toEqual(new Map([[existingAsset.id, existingAsset]]));
+
+    expect(upload).not.toHaveBeenCalled();
+    expect(waitForUpload).not.toHaveBeenCalled();
+  });
+
   test("passes the existing browser content hash to the shared upload ticket", async () => {
     request.mockResolvedValue(
       new Response(
@@ -171,6 +347,27 @@ describe("upload-assets", () => {
 
     const [, init] = request.mock.calls[0] as [string, { headers: Headers }];
     expect(init.headers.get("x-webstudio-asset-source")).toBe("url");
+  });
+
+  test("passes source video dimensions with URL uploads", async () => {
+    request.mockResolvedValue(
+      Response.json({ uploadedAssets: [{ id: "asset" }] })
+    );
+
+    await submitAssetUpload({
+      authToken: undefined,
+      uploadName: "video.mp4",
+      fileOrUrl: new URL("https://example.com/video.mp4"),
+      width: 1920,
+      height: 1080,
+      onCompleted: vi.fn(),
+      onError: vi.fn(),
+      request,
+    });
+
+    expect(request.mock.calls[0]?.[0]).toBe(
+      "/rest/assets/uploads/video.mp4?width=1920&height=1080"
+    );
   });
 
   test("keeps the selected folder throughout upload preparation", async () => {

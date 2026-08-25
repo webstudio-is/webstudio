@@ -1,19 +1,34 @@
 import { expect, test } from "vitest";
-import { parsePageTransferData } from "./page-transfer";
+import { pageTransferItemInput, parsePageTransferData } from "./page-transfer";
+
+const fragment = {
+  children: [],
+  instances: [],
+  assets: [],
+  dataSources: [],
+  resources: [],
+  props: [],
+  breakpoints: [],
+  styleSourceSelections: [],
+  styleSources: [],
+  styles: [],
+};
+
+const pageTransferItem = {
+  type: "page" as const,
+  page: {
+    id: "page",
+    name: "Page",
+    path: "/page",
+    title: `"Page"`,
+    meta: {},
+    rootInstanceId: "body",
+  },
+  rootFragment: fragment,
+  bodyFragment: fragment,
+};
 
 test("validates page transfer data", () => {
-  const fragment = {
-    children: [],
-    instances: [],
-    assets: [],
-    dataSources: [],
-    resources: [],
-    props: [],
-    breakpoints: [],
-    styleSourceSelections: [],
-    styleSources: [],
-    styles: [],
-  };
   const valid = parsePageTransferData(
     JSON.stringify({
       "@webstudio/page/v0.1": {
@@ -46,4 +61,33 @@ test("validates page transfer data", () => {
     owned: false,
     valid: false,
   });
+});
+
+test("accepts optional source origin metadata", () => {
+  const result = parsePageTransferData(
+    JSON.stringify({
+      "@webstudio/page/v0.1": {
+        ...pageTransferItem,
+        sourceOrigin: "https://source.example.com",
+      },
+    })
+  );
+
+  expect(result).toMatchObject({
+    owned: true,
+    valid: true,
+    data: {
+      type: "page",
+      sourceOrigin: "https://source.example.com",
+    },
+  });
+});
+
+test("keeps clipboard source metadata out of the runtime input", () => {
+  expect(
+    pageTransferItemInput.parse({
+      ...pageTransferItem,
+      sourceOrigin: "https://source.example.com",
+    })
+  ).toEqual(pageTransferItem);
 });
