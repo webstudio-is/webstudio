@@ -70,6 +70,7 @@ import { KeyboardShortcutsDialog } from "./features/keyboard-shortcuts-dialog";
 import { TokenConflictDialog } from "~/shared/token-conflict-dialog";
 import { RootStyleConflictDialog } from "~/shared/root-style-conflict-dialog";
 import { DesignTokenImportDialog } from "~/shared/design-token-import-dialog";
+import { TemplateNameConfirmationDialog } from "./features/template-name-confirmation-dialog";
 import type { User } from "~/shared/db/user.server";
 
 import {
@@ -529,6 +530,7 @@ export const Builder = (props: BuilderProps) => {
         <DesignTokenImportDialog />
         <TokenConflictDialog />
         <RootStyleConflictDialog />
+        <TemplateNameConfirmationDialog />
         <RemoteDialog />
         <Toaster />
       </div>

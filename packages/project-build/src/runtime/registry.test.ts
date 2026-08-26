@@ -41,6 +41,7 @@ import {
   state,
 } from "./runtime.test-fixtures";
 import { createResourceCollectionIntegrationFixture } from "./runtime-ui.test-fixture";
+import type { ContentBlockApplication } from "./content-block-application";
 
 const hasDirectInputProperty = (
   schema: InputJsonSchema | undefined,
@@ -131,6 +132,48 @@ const getMutationResult = (operation: unknown): unknown => {
   expect(operation).toHaveProperty("result");
   return (operation as { result: unknown }).result;
 };
+
+test("contentBlocks.editSource preserves invalid MDX and returns diagnostics", async () => {
+  const source = "# Kept\n\n<ws.element";
+  const diagnostic = {
+    code: "invalid-mdx" as const,
+    severity: "error" as const,
+    blockInstanceId: "block",
+    assetId: "asset",
+    contentRef: "article.mdx",
+    renderScope: "page",
+    message: "Unexpected end of file",
+    sourceRange: {
+      start: { line: 3, column: 12, offset: source.length },
+      end: { line: 3, column: 12, offset: source.length },
+    },
+  };
+  const result = await executeBuilderRuntimeOperation({
+    id: "contentBlocks.editSource",
+    state,
+    input: { blockInstanceId: "block", renderScope: "page", source },
+    context: {
+      ...context,
+      contentBlockApplication: {
+        editSource: async () => ({
+          state: {
+            asset: { id: "asset" },
+            status: "saved" as const,
+          },
+          source,
+          diagnostics: [diagnostic],
+        }),
+      } as unknown as ContentBlockApplication,
+    },
+  });
+
+  expect(getMutationResult(result)).toEqual({
+    assetId: "asset",
+    source,
+    status: "saved",
+    diagnostics: [diagnostic],
+  });
+});
 
 test.each([
   {
@@ -2321,6 +2364,12 @@ describe("builder runtime registry", () => {
 
   test("validates every mutation input at the runtime boundary", () => {
     const invalidInputByOperation = new Map<string, unknown>([
+      ["contentBlocks.connectSource", {}],
+      ["contentBlocks.switchSource", {}],
+      ["contentBlocks.disconnectSource", {}],
+      ["contentBlocks.editSource", {}],
+      ["contentBlocks.updateFrontmatter", {}],
+      ["contentBlocks.migrateTemplateReferences", {}],
       ["pages.create", {}],
       ["pages.update", {}],
       ["pages.updateSettings", {}],
@@ -2354,6 +2403,7 @@ describe("builder runtime registry", () => {
       ["pageTree.reparentOrphans", "invalid"],
       ["runtimeUi.integrate", {}],
       ["instances.insertComponent", { parentInstanceId: "body" }],
+      ["instances.insertMdxText", { parentInstanceId: "body" }],
       ["instances.insertCollection", { parentInstanceId: "body" }],
       ["instances.insertFragment", { parentInstanceId: "body" }],
       ["slots.attach", {}],
@@ -2522,7 +2572,7 @@ describe("builder runtime registry", () => {
     );
   });
 
-  test("does not mutate caller state across representative public mutation surfaces", () => {
+  test("does not mutate caller state across representative public mutation surfaces", async () => {
     const inputs = new Map<string, unknown>([
       ["pages.create", { projectId: "project-1", name: "Docs", path: "/docs" }],
       [
@@ -2714,7 +2764,28 @@ describe("builder runtime registry", () => {
       ],
       ["assets.delete", { assetIdsOrPrefixes: ["asset"] }],
       ["assets.replace", { fromAssetId: "asset", toAssetId: "next" }],
+      [
+        "contentBlocks.migrateTemplateReferences",
+        {
+          assetIds: ["asset"],
+          migration: { type: "rename", from: "Old", to: "New" },
+        },
+      ],
     ]);
+
+    const immutabilityContext = {
+      ...context,
+      contentBlockApplication: {
+        migrateTemplateReferences: async () => ({
+          status: "complete" as const,
+          migration: { type: "rename" as const, from: "Old", to: "New" },
+          files: [],
+          updateCount: 0,
+          omissionCount: 0,
+          changedFileCount: 0,
+        }),
+      } as unknown as ContentBlockApplication,
+    };
 
     const mutationIds = new Set(mutationOperationIds);
     for (const manifest of builderRuntimeCutoverManifests) {
@@ -2732,11 +2803,14 @@ describe("builder runtime registry", () => {
     for (const [id, input] of inputs) {
       const before = structuredClone(state);
       let nextId = 0;
-      executeBuilderRuntimeOperation({
+      await executeBuilderRuntimeOperation({
         id,
         state,
         input,
-        context: { createId: () => `runtime-id-${++nextId}` },
+        context: {
+          ...immutabilityContext,
+          createId: () => `runtime-id-${++nextId}`,
+        },
       });
       expect(state).toEqual(before);
     }

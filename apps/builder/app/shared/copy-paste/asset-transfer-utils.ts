@@ -26,6 +26,7 @@ export const transferFragmentAssets = async ({
       success: true,
       fragments: new Map(fragments.map((fragment) => [fragment, fragment])),
       assetIds: new Map<Asset["id"], Asset["id"]>(),
+      assets: new Map<Asset["id"], Asset>(),
     } as const;
   }
 
@@ -87,5 +88,6 @@ export const transferFragmentAssets = async ({
     success: true,
     fragments: transferredFragments,
     assetIds,
+    assets: importedAssets,
   } as const;
 };

@@ -2,7 +2,7 @@ import {
   reparentInstance,
   toggleInstanceShow,
 } from "~/shared/instance-utils/mutation";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { atom, computed } from "nanostores";
 import { mergeRefs } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
@@ -74,8 +74,15 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import {
+  executeRuntimeMutation,
+  getDuplicateTemplateNameMessage,
+} from "~/shared/instance-utils/data";
 import { isRichTextContent } from "@webstudio-is/project-build/runtime";
+import {
+  $externalContentRoots,
+  resolveExternalContentOccurrence,
+} from "~/shared/external-content-mutations";
 import {
   getInstanceLabel,
   InstanceIcon,
@@ -224,6 +231,7 @@ export const $flatTree = computed(
     $propValuesByInstanceSelector,
     $dropTarget,
     $isContentMode,
+    $externalContentRoots,
   ],
   (
     page,
@@ -231,7 +239,8 @@ export const $flatTree = computed(
     expandedItems,
     propValuesByInstanceSelector,
     dropTarget,
-    isContentMode
+    isContentMode,
+    externalContentRoots
   ) => {
     const flatTree: TreeItem[] = [];
     if (page === undefined) {
@@ -246,11 +255,23 @@ export const $flatTree = computed(
       isLastChild = false,
       indexWithinChildren = 0
     ) => {
-      const instance = instances.get(instanceId);
+      let instance = instances.get(instanceId);
       if (instance === undefined) {
         // log instead of failing navigator tree
         console.error(`Unknown instance ${instanceId}`);
         return;
+      }
+      if (isContentMode && instance.component === blockComponent) {
+        const occurrence = resolveExternalContentOccurrence({
+          sourceInstance: instance,
+          sourceSelector: selector,
+          instances,
+          roots: externalContentRoots,
+        });
+        if (occurrence !== undefined) {
+          instance = occurrence.instance;
+          selector = occurrence.selector;
+        }
       }
       const propValues = propValuesByInstanceSelector.get(
         getInstanceKey(selector)
@@ -502,6 +523,11 @@ const EditableTreeNodeLabel = styled("div", {
         userSelect: "text",
       },
     },
+    hasError: {
+      true: {
+        outline: `1px solid ${theme.colors.borderDestructiveMain}`,
+      },
+    },
   },
 });
 
@@ -515,6 +541,7 @@ const TreeNodeContent = ({
   onIsEditingChange: (isEditing: boolean) => void;
 }) => {
   const editableRef = useRef<HTMLDivElement | null>(null);
+  const [error, setError] = useState<string>();
 
   const label = getInstanceLabel(instance);
   const { ref, handlers } = useContentEditable({
@@ -522,24 +549,39 @@ const TreeNodeContent = ({
     isEditable: true,
     isEditing,
     onChangeValue: (value: string) => {
-      executeRuntimeMutation({
-        id: "instances.setLabel",
-        input: { instanceId: instance.id, label: value },
-      });
-      editableRef.current?.closest("button")?.focus();
+      try {
+        executeRuntimeMutation({
+          id: "instances.setLabel",
+          input: { instanceId: instance.id, label: value },
+        });
+        setError(undefined);
+        editableRef.current?.closest("button")?.focus();
+      } catch (error) {
+        const message = getDuplicateTemplateNameMessage(error);
+        if (message === undefined) {
+          throw error;
+        }
+        setError(message);
+        onIsEditingChange(true);
+      }
     },
     onChangeEditing: onIsEditingChange,
   });
 
   return (
     <TreeNodeLabel prefix={<InstanceIcon instance={instance} />}>
-      <EditableTreeNodeLabel
-        ref={mergeRefs(editableRef, ref)}
-        {...handlers}
-        isEditing={isEditing}
-      >
-        {label}
-      </EditableTreeNodeLabel>
+      <Tooltip content={error} delayDuration={0}>
+        <EditableTreeNodeLabel
+          ref={mergeRefs(editableRef, ref)}
+          {...handlers}
+          isEditing={isEditing}
+          hasError={error !== undefined}
+          aria-invalid={error === undefined ? undefined : true}
+          onInput={() => setError(undefined)}
+        >
+          {label}
+        </EditableTreeNodeLabel>
+      </Tooltip>
     </TreeNodeLabel>
   );
 };

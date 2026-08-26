@@ -21,6 +21,10 @@ import type {
   MdxMarkdownListItem,
   MdxMode,
 } from "./mdx";
+import {
+  assertUniqueAttributeNames,
+  mapAttributeNames,
+} from "./jsx-attributes";
 
 type SerializationNode = {
   type: string;
@@ -32,7 +36,9 @@ type SerializationNode = {
     listItem?: MdxMarkdownListItem;
     mode?: MdxMode;
     props?: readonly MdxAuthoredProp[];
+    propsUseJsxNames?: boolean;
     rawText?: string;
+    rawSource?: string;
   };
 };
 
@@ -41,10 +47,17 @@ const protectTextWhitespace = (value: string) =>
 
 const toHastProperties = (props: readonly MdxAuthoredProp[]) =>
   Object.fromEntries(
-    props.map(({ name, value }) => [
-      name === "class" ? "className" : name,
-      name === "class" && typeof value === "string" ? value.split(" ") : value,
-    ])
+    mapAttributeNames({
+      attributes: props.map(({ name, value }) => ({
+        name,
+        value:
+          name === "class" && typeof value === "string"
+            ? value.split(" ")
+            : value,
+      })),
+      direction: "instance-to-jsx",
+      acceptsHtmlAttributes: true,
+    }).map(({ name, value }) => [name, value])
   );
 
 const toTextNode = (
@@ -63,16 +76,18 @@ const toWebstudioElement = ({
   mode,
   props,
   children,
+  propsUseJsxNames,
 }: {
   mode: MdxMode;
   props: readonly MdxAuthoredProp[];
   children: readonly MdxAuthoredNode[];
+  propsUseJsxNames: boolean;
 }): SerializationNode => ({
   type: "element",
   tagName: "ws.element",
   properties: {},
   children: children.map((child) => toSerializationNode(child)),
-  data: { mode, props },
+  data: { mode, props, propsUseJsxNames },
 });
 
 const toSerializationNode = (
@@ -85,11 +100,19 @@ const toSerializationNode = (
   if (node.type === "comment") {
     return { type: "comment", value: node.value, data: { mode: node.mdxMode } };
   }
+  if (node.type === "opaque") {
+    return {
+      type: "opaque",
+      value: node.value,
+      data: { mode: node.mdxMode, rawSource: node.value },
+    };
+  }
   if (node.type === "template") {
     return toWebstudioElement({
       mode: node.mdxMode,
       props: [{ name: "ws:name", value: node.name }, ...node.props],
       children: node.children,
+      propsUseJsxNames: true,
     });
   }
   if (node.syntax === "mdx") {
@@ -97,6 +120,7 @@ const toSerializationNode = (
       mode: node.mdxMode,
       props: [{ name: "ws:tag", value: node.tag }, ...node.props],
       children: node.children,
+      propsUseJsxNames: false,
     });
   }
 
@@ -129,7 +153,17 @@ const getSerializationData = (node: { data?: unknown }) =>
 
 const mapWebstudioElement: Handle = (state, node) => {
   const data = getSerializationData(node);
-  const attributes: MdxJsxAttribute[] = (data?.props ?? []).map((prop) => ({
+  const props = data?.props ?? [];
+  const mappedProps =
+    data?.propsUseJsxNames === true
+      ? props
+      : mapAttributeNames({
+          attributes: props,
+          direction: "instance-to-jsx",
+          acceptsHtmlAttributes: true,
+        });
+  assertUniqueAttributeNames(mappedProps);
+  const attributes: MdxJsxAttribute[] = mappedProps.map((prop) => ({
     type: "mdxJsxAttribute",
     name: prop.name,
     value: prop.value === true ? null : prop.value,
@@ -166,6 +200,11 @@ const mapText: NodeHandle = (_state, node) => ({
     (typeof node.value === "string" ? node.value : ""),
 });
 
+const mapOpaque: NodeHandle = (_state, node) => ({
+  type: "html",
+  value: getSerializationData(node)?.rawSource ?? "",
+});
+
 const mapListItem: Handle = (state, node) => {
   const result = defaultHandlers.li(state, node);
   const listItem = getSerializationData(node)?.listItem;
@@ -180,6 +219,17 @@ const mapListItem: Handle = (state, node) => {
   return result;
 };
 
+export const serializeMdxFrontmatter = (
+  properties: Readonly<Record<string, unknown>>
+) => {
+  const yaml = stringifyYaml(properties, {
+    aliasDuplicateObjects: false,
+    lineWidth: 0,
+    sortMapEntries: true,
+  }).trimEnd();
+  return `---\n${yaml}\n---\n\n`;
+};
+
 const serializeFrontmatter = (document: MdxDocument) => {
   if (
     document.frontmatter.sourceRange === undefined &&
@@ -187,12 +237,7 @@ const serializeFrontmatter = (document: MdxDocument) => {
   ) {
     return "";
   }
-  const yaml = stringifyYaml(document.frontmatter.properties, {
-    aliasDuplicateObjects: false,
-    lineWidth: 0,
-    sortMapEntries: true,
-  }).trimEnd();
-  return `---\n${yaml}\n---\n\n`;
+  return serializeMdxFrontmatter(document.frontmatter.properties);
 };
 
 export const serializeMdxDocument = (document: MdxDocument) => {
@@ -203,7 +248,7 @@ export const serializeMdxDocument = (document: MdxDocument) => {
   const mdast = toMdast(hast, {
     document: true,
     handlers: { li: mapListItem, "ws.element": mapWebstudioElement },
-    nodeHandlers: { comment: mapComment, text: mapText },
+    nodeHandlers: { comment: mapComment, opaque: mapOpaque, text: mapText },
   });
   return (
     serializeFrontmatter(document) +

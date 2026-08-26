@@ -1103,7 +1103,7 @@ test("CodeBlock", async () => {
     },
   });
 
-  equalFragment(fragment, <$.CodeText lang="javascript" code="test" />);
+  equalFragment(fragment, <$.CodeText lang="javascript">test</$.CodeText>);
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       w-code-block {

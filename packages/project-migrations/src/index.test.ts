@@ -136,3 +136,96 @@ test("migrates styles inside webstudio data", () => {
     },
   ]);
 });
+
+test("moves legacy Code Text properties into text content", () => {
+  const data = structuredClone(emptyData);
+  data.instances.set("literal", {
+    type: "instance",
+    id: "literal",
+    component: "CodeText",
+    children: [{ type: "text", value: "ignored legacy child" }],
+  });
+  data.instances.set("bound", {
+    type: "instance",
+    id: "bound",
+    component: "CodeText",
+    children: [],
+  });
+  data.props.set("literal-code", {
+    id: "literal-code",
+    instanceId: "literal",
+    name: "code",
+    type: "string",
+    value: "const answer = 42;",
+  });
+  data.props.set("bound-code", {
+    id: "bound-code",
+    instanceId: "bound",
+    name: "code",
+    type: "expression",
+    value: "$ws$dataSource$code",
+  });
+
+  migrateWebstudioDataMutable(data);
+  migrateWebstudioDataMutable(data);
+
+  expect(data.instances.get("literal")?.children).toEqual([
+    { type: "text", value: "const answer = 42;" },
+  ]);
+  expect(data.instances.get("bound")?.children).toEqual([
+    { type: "expression", value: "$ws$dataSource$code" },
+  ]);
+  expect(Array.from(data.props.values())).toEqual([]);
+});
+
+test("removes redundant Code Text defaults and preserves custom selections", () => {
+  const data = structuredClone(emptyData);
+  data.instances.set("defaults", {
+    type: "instance",
+    id: "defaults",
+    component: "CodeText",
+    children: [],
+  });
+  data.instances.set("custom", {
+    type: "instance",
+    id: "custom",
+    component: "CodeText",
+    children: [],
+  });
+  data.props.set("default-language", {
+    id: "default-language",
+    instanceId: "defaults",
+    name: "language",
+    type: "string",
+    value: "javascript",
+  });
+  data.props.set("default-theme", {
+    id: "default-theme",
+    instanceId: "defaults",
+    name: "theme",
+    type: "string",
+    value: "github-light",
+  });
+  data.props.set("custom-language", {
+    id: "custom-language",
+    instanceId: "custom",
+    name: "language",
+    type: "string",
+    value: "css",
+  });
+  data.props.set("custom-theme", {
+    id: "custom-theme",
+    instanceId: "custom",
+    name: "theme",
+    type: "string",
+    value: "nord",
+  });
+
+  migrateWebstudioDataMutable(data);
+  migrateWebstudioDataMutable(data);
+
+  expect(Array.from(data.props.values())).toEqual([
+    expect.objectContaining({ name: "language", value: "css" }),
+    expect.objectContaining({ name: "theme", value: "nord" }),
+  ]);
+});

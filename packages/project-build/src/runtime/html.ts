@@ -14,7 +14,6 @@ import {
   type StyleSource,
   type StyleSourceSelection,
 } from "@webstudio-is/sdk";
-import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
 import {
   camelCaseProperty,
   parseCss,
@@ -33,49 +32,12 @@ import {
 import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import * as csstree from "css-tree";
 import { titleCase } from "title-case";
+import { getHtmlAttributeTypes } from "./html-attribute-utils";
 
 type ElementNode = DefaultTreeAdapterMap["element"];
 
 const spaceRegex = /^\s*$/;
 const wsAttributePrefix = "data-ws-";
-
-const getAttributeType = (
-  attribute: (typeof ariaAttributes)[number]
-): "string" | "boolean" | "number" => {
-  if (
-    attribute.type === "string" ||
-    attribute.type === "select" ||
-    attribute.type === "url"
-  ) {
-    return "string";
-  }
-  if (attribute.type === "number" || attribute.type === "boolean") {
-    return attribute.type;
-  }
-  attribute.type satisfies never;
-  throw Error("Unknown type");
-};
-
-const getAttributeTypes = () => {
-  const attributeTypes = new Map<string, "string" | "number" | "boolean">();
-  for (const attribute of ariaAttributes) {
-    attributeTypes.set(attribute.name, getAttributeType(attribute));
-  }
-  for (const attribute of attributesByTag["*"] ?? []) {
-    attributeTypes.set(attribute.name, getAttributeType(attribute));
-  }
-  for (const [tag, attributes] of Object.entries(attributesByTag)) {
-    if (attributes) {
-      for (const attribute of attributes) {
-        attributeTypes.set(
-          `${tag}:${attribute.name}`,
-          getAttributeType(attribute)
-        );
-      }
-    }
-  }
-  return attributeTypes;
-};
 
 const findContentTags = (element: ElementNode, tags = new Set<string>()) => {
   for (const childNode of element.childNodes) {
@@ -462,7 +424,7 @@ const resolveOverlappingBreakpoints = (breakpoints: Breakpoint[]) => {
 export const generateFragmentFromHtml = (
   html: string
 ): WebstudioFragment & { skippedSelectors: string[] } => {
-  const attributeTypes = getAttributeTypes();
+  const attributeTypes = getHtmlAttributeTypes();
   const instances = new Map<Instance["id"], Instance>();
   const styleSourceSelections: StyleSourceSelection[] = [];
   const styleSources: StyleSource[] = [];

@@ -8,6 +8,23 @@ import {
 import { showTokenConflictDialog } from "./token-conflict-dialog";
 import { showRootStyleConflictDialog } from "./root-style-conflict-dialog";
 import { showDesignTokenImportDialog } from "./design-token-import-dialog";
+import { fetch as builderFetch } from "./fetch.client";
+import { $assets, $project } from "./sync/data-stores";
+import { $authPermit } from "./nano-states";
+import {
+  createAssetContentBridge,
+  initAssetContentBridge,
+} from "./asset-content-bridge.client";
+import { requireBuilderReload } from "./sync/reload-required";
+import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
+import { createHttpAssetContentRepository } from "~/builder/shared/assets/mdx-content-repository";
+import { $authToken } from "./nano-states";
+import { isMdxFileAsset } from "@webstudio-is/sdk";
+import { createTransactionFromBuilderPatchPayload } from "./sync/builder-patch";
+import { getWebstudioData } from "./instance-utils/data";
+import { invalidateAssets } from "./resources";
+import { onNextTransactionComplete } from "./sync/project-queue";
+import { disposeExternalContentProject } from "./external-content-roots";
 
 const apiWindowNamespace = "__webstudio__$__builderApi";
 
@@ -19,6 +36,24 @@ const isSafeMode = (() => {
   }
   return new URLSearchParams(window.location.search).get("safemode") === "true";
 })();
+
+const authorizeAssetContent = ({
+  projectId,
+  assetId,
+  operation,
+}: {
+  projectId: string;
+  assetId: string;
+  operation: "read" | "write";
+}) => {
+  const asset = $assets.get().get(assetId);
+  return (
+    $project.get()?.id === projectId &&
+    asset?.projectId === projectId &&
+    isMdxFileAsset(asset) &&
+    (operation === "read" || $authPermit.get() !== "view")
+  );
+};
 
 const _builderApi = {
   isInitialized: () => true,
@@ -121,6 +156,157 @@ export const builderApi = createRecursiveProxy((options) => {
 export const initBuilderApi = () => {
   if (isInTop()) {
     window[apiWindowNamespace] = _builderApi;
+    type ContentSessionEntry = {
+      projectId: string;
+      session: ReturnType<typeof createAssetContentSession>;
+      active: boolean;
+      retiring?: Promise<void>;
+    };
+    const contentSessions = new Map<string, ContentSessionEntry>();
+    let activeContentSession: ContentSessionEntry | undefined;
+    const retireContentSession = (contentSession: ContentSessionEntry) => {
+      contentSession.active = false;
+      if (activeContentSession === contentSession) {
+        activeContentSession = undefined;
+      }
+      if (contentSession.retiring !== undefined) {
+        return;
+      }
+      const retiring = disposeExternalContentProject({
+        projectId: contentSession.projectId,
+        session: contentSession.session,
+        shouldCleanup: () => contentSession.active === false,
+      })
+        .then((cleanedUp) => {
+          if (cleanedUp === false || contentSession.active) {
+            return;
+          }
+          if (
+            contentSessions.get(contentSession.projectId) === contentSession
+          ) {
+            contentSessions.delete(contentSession.projectId);
+          }
+          contentSession.session.dispose();
+        })
+        .catch(() => {
+          toast.error(
+            "Some MDX changes could not be saved. Return to this project to retry."
+          );
+        })
+        .finally(() => {
+          if (contentSession.retiring === retiring) {
+            contentSession.retiring = undefined;
+          }
+        });
+      contentSession.retiring = retiring;
+    };
+    const unlistenProject = $project.listen((project) => {
+      if (
+        activeContentSession !== undefined &&
+        activeContentSession.projectId !== project?.id
+      ) {
+        retireContentSession(activeContentSession);
+      }
+    });
+    initAssetContentBridge(
+      createAssetContentBridge({
+        origin: window.location.origin,
+        request: (input, init) => builderFetch(input, init),
+        authorize: authorizeAssetContent,
+        requireReload: (error) => requireBuilderReload({ error }),
+        getContentSession: (projectId) => {
+          if ($project.get()?.id !== projectId) {
+            throw new Error("Asset content session belongs to another project");
+          }
+          const existing = contentSessions.get(projectId);
+          if (existing !== undefined) {
+            existing.active = true;
+            activeContentSession = existing;
+            return existing.session;
+          }
+          if (activeContentSession !== undefined) {
+            retireContentSession(activeContentSession);
+          }
+          let sessionAuthToken = $authToken.get();
+          let canWrite = $authPermit.get() !== "view";
+          const authorizedAssetIds = new Set(
+            Array.from($assets.get().values())
+              .filter(
+                (asset) =>
+                  asset.projectId === projectId && isMdxFileAsset(asset)
+              )
+              .map((asset) => asset.id)
+          );
+          const session = createAssetContentSession({
+            repository: createHttpAssetContentRepository({
+              projectId,
+              origin: window.location.origin,
+              authToken: () => {
+                if ($project.get()?.id === projectId) {
+                  sessionAuthToken = $authToken.get();
+                }
+                return sessionAuthToken;
+              },
+              request: (input, init) => builderFetch(input, init),
+            }),
+            authorize: ({ assetId, operation }) => {
+              if ($project.get()?.id === projectId) {
+                canWrite = $authPermit.get() !== "view";
+                const asset = $assets.get().get(assetId);
+                if (asset?.projectId === projectId && isMdxFileAsset(asset)) {
+                  authorizedAssetIds.add(assetId);
+                }
+              }
+              return (
+                authorizedAssetIds.has(assetId) &&
+                (operation === "read" || canWrite)
+              );
+            },
+          });
+          session.subscribe((_assetId, state) => {
+            if (state.status !== "saved" || $project.get()?.id !== projectId) {
+              return;
+            }
+            const current = $assets.get().get(state.asset.id);
+            if (current === undefined) {
+              return;
+            }
+            if (
+              current.name === state.asset.name &&
+              current.size === state.asset.size &&
+              current.updatedAt === state.asset.updatedAt
+            ) {
+              return;
+            }
+            createTransactionFromBuilderPatchPayload({
+              data: getWebstudioData(),
+              payload: [
+                {
+                  namespace: "assets",
+                  patches: [
+                    {
+                      op: "replace",
+                      path: [current.id],
+                      value: { ...current, ...state.asset },
+                    },
+                  ],
+                },
+              ],
+            });
+            onNextTransactionComplete(invalidateAssets);
+          });
+          activeContentSession = { projectId, session, active: true };
+          contentSessions.set(projectId, activeContentSession);
+          return session;
+        },
+      })
+    );
+    return () => {
+      unlistenProject();
+      for (const contentSession of contentSessions.values()) {
+        retireContentSession(contentSession);
+      }
+    };
   }
   return () => {};
 };

@@ -13,6 +13,7 @@ import {
   toggleSelectedInstance,
 } from "./instances";
 import { $selectedPageId } from "./pages";
+import { $externalContentRoots } from "../external-content-mutations";
 
 const createInstance = (
   id: Instance["id"],
@@ -29,6 +30,7 @@ beforeEach(() => {
   $pages.set(undefined);
   $selectedPageId.set(undefined);
   selectInstance(undefined);
+  $externalContentRoots.set(new Map());
 });
 
 describe("selectInstance", () => {
@@ -224,6 +226,24 @@ describe("selection store invariants", () => {
     expect($allSelectedInstanceSelectors.get()).toEqual([]);
   });
 
+  test("keeps selectors that resolve through canonical Content Block children", () => {
+    const instances = new Map([
+      ["body", createInstance("body", [{ type: "id", value: "block" }])],
+      ["block", createInstance("block", [{ type: "id", value: "heading" }])],
+      ["heading", createInstance("heading")],
+    ]);
+    $instances.set(instances);
+    selectInstance(["heading", "block", "body"]);
+
+    $instances.set(new Map(instances));
+
+    expect($selectedInstanceSelector.get()).toEqual([
+      "heading",
+      "block",
+      "body",
+    ]);
+  });
+
   test("keeps virtual collection item selectors when their base instance still exists", () => {
     $instances.set(
       new Map([
@@ -247,6 +267,87 @@ describe("selection store invariants", () => {
     $instances.set(new Map([["body", createInstance("body")]]));
 
     expect($allSelectedInstanceSelectors.get()).toEqual([]);
+  });
+
+  test("keeps children selected inside a virtual collection item", () => {
+    const instances = new Map([
+      ["body", createInstance("body", [{ type: "id", value: "collection" }])],
+      [
+        "collection",
+        createInstance("collection", [{ type: "id", value: "block" }]),
+      ],
+      ["block", createInstance("block")],
+    ]);
+    $instances.set(instances);
+    selectInstance(["block", "collection[first]", "collection", "body"]);
+
+    $instances.set(new Map(instances));
+
+    expect($selectedInstanceSelector.get()).toEqual([
+      "block",
+      "collection[first]",
+      "collection",
+      "body",
+    ]);
+  });
+
+  test("keeps selected external content inside a scoped Content Block", () => {
+    const instances = new Map([
+      ["body", createInstance("body", [{ type: "id", value: "collection" }])],
+      [
+        "collection",
+        createInstance("collection", [{ type: "id", value: "block" }]),
+      ],
+      ["block", createInstance("block")],
+      [
+        "scoped-block",
+        createInstance("scoped-block", [{ type: "id", value: "heading" }]),
+      ],
+      ["heading", createInstance("heading")],
+    ]);
+    $instances.set(instances);
+    $externalContentRoots.set(
+      new Map([
+        [
+          "root",
+          {
+            sourceBlockInstanceId: "block",
+            sourceRenderScope: JSON.stringify([
+              "block",
+              "collection[first]",
+              "collection",
+              "body",
+            ]),
+            blockInstanceId: "scoped-block",
+            renderScope: JSON.stringify([
+              "scoped-block",
+              "collection[first]",
+              "collection",
+              "body",
+            ]),
+            instanceIds: new Set(["heading"]),
+            mutationRevision: 0,
+          },
+        ],
+      ])
+    );
+    selectInstance([
+      "heading",
+      "scoped-block",
+      "collection[first]",
+      "collection",
+      "body",
+    ]);
+
+    $instances.set(new Map(instances));
+
+    expect($selectedInstanceSelector.get()).toEqual([
+      "heading",
+      "scoped-block",
+      "collection[first]",
+      "collection",
+      "body",
+    ]);
   });
 });
 

@@ -64,7 +64,12 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
-import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
+import {
+  type Refs,
+  $convertToLexical,
+  $convertToPlainTextUpdate,
+  $convertToUpdates,
+} from "./interop";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { deleteInstanceBySelector } from "~/shared/instance-utils/mutation";
 import {
@@ -1425,6 +1430,7 @@ type TextEditorProps = {
   props: Props;
   contentEditable: JSX.Element;
   editable?: boolean;
+  plainText?: boolean;
   onChange: (instancesList: Instance[]) => void | Record<string, string>;
   onSelectInstance: (instanceId: Instance["id"]) => void;
 };
@@ -1506,6 +1512,7 @@ export const TextEditor = ({
   props,
   contentEditable,
   editable,
+  plainText = false,
   onChange,
   onSelectInstance,
 }: TextEditorProps) => {
@@ -1527,14 +1534,15 @@ export const TextEditor = ({
             return;
           }
 
-          const idMap = onChange(
-            $convertToUpdates(
-              treeRootInstance,
-              refs,
-              newLinkKeyToInstanceId,
-              builderRuntimeContext.createId
-            )
-          );
+          const updates = plainText
+            ? $convertToPlainTextUpdate(treeRootInstance)
+            : $convertToUpdates(
+                treeRootInstance,
+                refs,
+                newLinkKeyToInstanceId,
+                builderRuntimeContext.createId
+              );
+          const idMap = onChange(updates);
           if (idMap !== undefined) {
             for (const [key, instanceId] of refs) {
               refs.set(key, idMap[instanceId] ?? instanceId);
@@ -1724,14 +1732,16 @@ export const TextEditor = ({
     <LexicalComposer initialConfig={initialConfig}>
       <RemoveParagaphsPlugin />
       <CaretColorPlugin />
-      <ToolbarConnectorPlugin
-        onSelectNode={(nodeKey) => {
-          const instanceId = refs.get(`${nodeKey}:span`);
-          if (instanceId !== undefined) {
-            onSelectInstance(instanceId);
-          }
-        }}
-      />
+      {plainText === false && (
+        <ToolbarConnectorPlugin
+          onSelectNode={(nodeKey) => {
+            const instanceId = refs.get(`${nodeKey}:span`);
+            if (instanceId !== undefined) {
+              onSelectInstance(instanceId);
+            }
+          }}
+        />
+      )}
       <BindInstanceToNodePlugin
         refs={refs}
         rootInstanceSelector={rootInstanceSelector}
@@ -1740,26 +1750,30 @@ export const TextEditor = ({
         ErrorBoundary={LexicalErrorBoundary}
         contentEditable={contentEditable}
       />
-      <LinkPlugin />
+      {plainText === false && <LinkPlugin />}
 
-      <LinkSanitizePlugin />
+      {plainText === false && <LinkSanitizePlugin />}
       <HistoryPlugin />
 
       {/* oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback */}
       <SwitchBlockPlugin onNext={handleNext} />
-      <RichTextContentPlugin
-        onOpen={handleContextMenuOpen}
-        rootInstanceSelector={rootInstanceSelector}
-        // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
-        onNext={handleNext}
-      />
+      {plainText === false && (
+        <RichTextContentPlugin
+          onOpen={handleContextMenuOpen}
+          rootInstanceSelector={rootInstanceSelector}
+          // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
+          onNext={handleNext}
+        />
+      )}
       {/* oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback */}
       <OnChangeOnBlurPlugin onChange={handleChange} />
       <InitCursorPlugin />
-      <LinkSelectionPlugin
-        rootInstanceSelector={rootInstanceSelector}
-        registerNewLink={registerNewLink}
-      />
+      {plainText === false && (
+        <LinkSelectionPlugin
+          rootInstanceSelector={rootInstanceSelector}
+          registerNewLink={registerNewLink}
+        />
+      )}
       <AnyKeyDownPlugin onKeyDown={handleAnyKeydown} />
       <InitialJSONStatePlugin
         onInitialState={(json) => {

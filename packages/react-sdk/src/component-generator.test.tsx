@@ -1408,6 +1408,88 @@ test("ignore ws:block-template when generate index attribute", () => {
   );
 });
 
+test("renders pre-materialized dynamic Content Block candidates without loading", () => {
+  const instances = new Map([
+    [
+      "body",
+      {
+        type: "instance" as const,
+        id: "body",
+        component: elementComponent,
+        tag: "main",
+        children: [{ type: "id" as const, value: "block" }],
+      },
+    ],
+    [
+      "block",
+      {
+        type: "instance" as const,
+        id: "block",
+        component: "ws:block",
+        children: [],
+      },
+    ],
+    [
+      "article-heading",
+      {
+        type: "instance" as const,
+        id: "article-heading",
+        component: elementComponent,
+        tag: "h1",
+        children: [{ type: "text" as const, value: "Article" }],
+      },
+    ],
+    [
+      "other-heading",
+      {
+        type: "instance" as const,
+        id: "other-heading",
+        component: elementComponent,
+        tag: "h1",
+        children: [{ type: "text" as const, value: "Other" }],
+      },
+    ],
+  ]);
+  const generated = generateWebstudioComponent({
+    classesMap: new Map(),
+    scope: createScope(),
+    name: "Page",
+    rootInstanceId: "body",
+    parameters: [],
+    metas: new Map(),
+    instances,
+    props: new Map(),
+    dataSources: new Map(),
+    publishedContentBlocks: new Map([
+      [
+        "block",
+        {
+          sourceExpression: '"article"',
+          candidates: [
+            {
+              assetId: "article",
+              dependencyRevision: "article-revision",
+              children: [{ type: "id", value: "article-heading" }],
+            },
+            {
+              assetId: "other",
+              dependencyRevision: "other-revision",
+              children: [{ type: "id", value: "other-heading" }],
+            },
+          ],
+        },
+      ],
+    ]),
+  });
+
+  expect(generated).toContain('contentSource === "article"');
+  expect(generated).toContain('contentSource === "other"');
+  expect(generated.split('("article")')).toHaveLength(2);
+  expect(generated).toContain("<h1>");
+  expect(generated).not.toContain("fetch(");
+  expect(isValidJSX(generated)).toBe(true);
+});
+
 test("render empty component when no instances found", () => {
   expect(
     generateWebstudioComponent({
@@ -1452,6 +1534,42 @@ test("render tag property on components", () => {
       return <Body>
       <Box
       data-ws-tag="span" />
+      </Body>
+      }
+    `)
+    )
+  );
+});
+
+test("converts instance attributes when tag enables HTML attributes", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map(),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Box
+            ws:id="labelId"
+            ws:tag="label"
+            tabindex={0}
+            readonly={true}
+          ></$.Box>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      const Page = () => {
+      return <Body>
+      <Box
+      data-ws-tag="label"
+      tabIndex={0}
+      readOnly={true} />
       </Body>
       }
     `)
@@ -1678,7 +1796,7 @@ test("ignore props similar to standard attributes when react components defines 
   );
 });
 
-test("ignore props similar to standard attributes on react components without tags", () => {
+test("only converts the universal class alias on components without tags", () => {
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
@@ -1703,9 +1821,9 @@ test("ignore props similar to standard attributes on react components without ta
        const Page = () => {
        return <Body>
        <HeadSlot
-       class={"my-class"}
        for={"my-id"}
-       autocomplete={"off"} />
+       autocomplete={"off"}
+       className={\`\${"my-class"}\`} />
        </Body>
        }
      `)

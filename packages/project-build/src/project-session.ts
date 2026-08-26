@@ -1401,6 +1401,7 @@ export class ProjectSession {
       context: {
         ...this.#options.runtimeContext,
         projectVersion: snapshot.version,
+        dryRun: options.dryRun,
       },
     });
     if (mutation.noop) {

@@ -63,7 +63,7 @@ export const matchCodeTextEditorLanguage = (selectedLanguage: unknown) => {
   );
 };
 
-const useCodeTextLanguageSupport = (selectedLanguage: unknown) => {
+export const useCodeTextLanguageSupport = (selectedLanguage: unknown) => {
   const [languageSupport, setLanguageSupport] = useState<LanguageSupport>();
 
   useEffect(() => {

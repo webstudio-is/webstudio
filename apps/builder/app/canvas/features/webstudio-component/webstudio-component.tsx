@@ -26,6 +26,7 @@ import {
   blockComponent,
   blockTemplateComponent,
   getIndexesWithinAncestors,
+  getContentBlockSource,
   elementComponent,
 } from "@webstudio-is/sdk";
 import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
@@ -39,7 +40,7 @@ import {
   standardAttributesToReactProps,
   getCollectionEntries,
 } from "@webstudio-is/react-sdk";
-import { rawTheme } from "@webstudio-is/design-system";
+import { rawTheme, toast } from "@webstudio-is/design-system";
 import {
   Input,
   Link,
@@ -51,10 +52,12 @@ import {
   $propValuesByInstanceSelectorWithMemoryProps,
   getIndexedInstanceId,
   $registeredComponentMetas,
+  $variableValuesByInstanceSelector,
+  $isDesignMode,
   $selectedInstanceRenderState,
   $selectedPageHash,
 } from "~/shared/nano-states";
-import { $props } from "~/shared/sync/data-stores";
+import { $project, $props } from "~/shared/sync/data-stores";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import {
@@ -80,6 +83,18 @@ import {
   editingPlaceholderVariable,
 } from "~/canvas/shared/styles";
 import { richTextPlaceholders } from "@webstudio-is/project-build/runtime";
+import { acquireExternalContentRoot } from "~/shared/external-content-roots";
+import {
+  $externalContentRoots,
+  findExternalContentRoot,
+  getExternalContentRoots,
+  resolveExternalContentOccurrence,
+} from "~/shared/external-content-mutations";
+import {
+  formatContentBlockDiagnostic,
+  takeNewContentBlockDiagnostics,
+} from "~/shared/content-block-diagnostics";
+import { resolveContentBlockOccurrenceAssetId } from "~/shared/content-block-source-utils";
 
 const computeComponentKey = (props: Record<string, unknown>) => {
   const assetId = props.$webstudio$canvasOnly$assetId;
@@ -476,7 +491,130 @@ const getEditableComponentPlaceholder = (
   return placeholder;
 };
 
-export const WebstudioComponentCanvas = forwardRef<
+const ExternalContentRootLoader = ({
+  instance,
+  instanceSelector,
+  includeUnresolvedTemplatePlaceholders,
+  showDiagnostics,
+}: {
+  instance: Instance;
+  instanceSelector: InstanceSelector;
+  includeUnresolvedTemplatePlaceholders: boolean;
+  showDiagnostics: boolean;
+}) => {
+  const allProps = useStore($props);
+  const project = useStore($project);
+  const variableValues = useStore($variableValuesByInstanceSelector);
+  const externalContentRoots = useStore($externalContentRoots);
+  const renderScope = getInstanceKey(instanceSelector);
+  const source = useMemo(
+    () =>
+      getContentBlockSource({
+        blockInstanceId: instance.id,
+        props: allProps.values(),
+      }),
+    [allProps, instance.id]
+  );
+  const sourceAssetId = useMemo(() => {
+    if (source === undefined) {
+      return;
+    }
+    return resolveContentBlockOccurrenceAssetId({
+      source,
+      instanceSelector,
+      variableValuesByRenderScope: variableValues,
+    });
+  }, [instanceSelector, source, variableValues]);
+
+  const diagnosticsSnapshot = findExternalContentRoot(
+    externalContentRoots,
+    instance.id,
+    renderScope
+  );
+
+  useEffect(() => {
+    if (showDiagnostics === false) {
+      return;
+    }
+    for (const diagnostic of takeNewContentBlockDiagnostics(
+      diagnosticsSnapshot?.diagnostics ?? [],
+      diagnosticsSnapshot?.identity?.revision
+    )) {
+      toast.warn(formatContentBlockDiagnostic(diagnostic));
+    }
+  }, [
+    diagnosticsSnapshot?.diagnostics,
+    diagnosticsSnapshot?.identity?.revision,
+    showDiagnostics,
+  ]);
+
+  useLayoutEffect(() => {
+    if (project === undefined || sourceAssetId === undefined) {
+      return;
+    }
+    let active = true;
+    const controller = new AbortController();
+    let release: (() => void) | undefined;
+    void acquireExternalContentRoot({
+      projectId: project.id,
+      assetId: sourceAssetId,
+      blockInstanceId: instance.id,
+      renderScope,
+      includeUnresolvedTemplatePlaceholders,
+      signal: controller.signal,
+    })
+      .then((nextRelease) => {
+        if (active === false) {
+          nextRelease();
+          return;
+        }
+        release = nextRelease;
+      })
+      .catch((error) => {
+        if (active) {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Unable to load MDX content"
+          );
+        }
+      });
+    return () => {
+      active = false;
+      controller.abort();
+      release?.();
+    };
+  }, [
+    includeUnresolvedTemplatePlaceholders,
+    instance.id,
+    project,
+    renderScope,
+    sourceAssetId,
+  ]);
+  return null;
+};
+
+const getExternalContentInstance = ({
+  sourceInstance,
+  sourceInstanceSelector,
+  instances,
+}: {
+  sourceInstance: Instance;
+  sourceInstanceSelector: InstanceSelector;
+  instances: Instances;
+}) => {
+  const occurrence = resolveExternalContentOccurrence({
+    sourceInstance,
+    sourceSelector: sourceInstanceSelector,
+    instances,
+    roots: getExternalContentRoots(),
+  });
+  return occurrence === undefined
+    ? undefined
+    : { instance: occurrence.instance, instanceSelector: occurrence.selector };
+};
+
+const WebstudioComponentCanvasInner = forwardRef<
   HTMLElement,
   WebstudioComponentProps
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
@@ -627,11 +765,16 @@ export const WebstudioComponentCanvas = forwardRef<
     return instanceElement;
   }
 
+  const contentModel = metas.get(instance.component)?.contentModel;
   return (
     <TextEditor
       rootInstanceSelector={instanceSelector}
       instances={instances}
       props={allProps}
+      plainText={
+        contentModel?.children.length === 1 &&
+        contentModel.children[0] === "text"
+      }
       contentEditable={
         <ContentEditable
           placeholder={getEditableComponentPlaceholder(
@@ -642,7 +785,11 @@ export const WebstudioComponentCanvas = forwardRef<
             "editing"
           )}
           renderComponentWithRef={(elementRef) => (
-            <Component {...props} ref={mergeRefs(ref, elementRef)}>
+            <Component
+              {...props}
+              data-ws-text-editing=""
+              ref={mergeRefs(ref, elementRef)}
+            >
               {initialContentEditableContent.current}
             </Component>
           )}
@@ -672,7 +819,43 @@ export const WebstudioComponentCanvas = forwardRef<
   );
 });
 
-export const WebstudioComponentPreview = forwardRef<
+export const WebstudioComponentCanvas = forwardRef<
+  HTMLElement,
+  WebstudioComponentProps
+>(({ instance, instanceSelector, ...props }, ref) => {
+  const instances = useStore($instances);
+  const isDesignMode = useStore($isDesignMode);
+  const externalContent = isDesignMode
+    ? undefined
+    : getExternalContentInstance({
+        sourceInstance: instance,
+        sourceInstanceSelector: instanceSelector,
+        instances,
+      });
+  const renderedInstance = externalContent?.instance ?? instance;
+  const renderedInstanceSelector =
+    externalContent?.instanceSelector ?? instanceSelector;
+  return (
+    <>
+      {instance.component === blockComponent ? (
+        <ExternalContentRootLoader
+          instance={instance}
+          instanceSelector={instanceSelector}
+          includeUnresolvedTemplatePlaceholders={true}
+          showDiagnostics={true}
+        />
+      ) : null}
+      <WebstudioComponentCanvasInner
+        {...props}
+        ref={ref}
+        instance={renderedInstance}
+        instanceSelector={renderedInstanceSelector}
+      />
+    </>
+  );
+});
+
+const WebstudioComponentPreviewInner = forwardRef<
   HTMLElement,
   WebstudioComponentProps
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
@@ -777,4 +960,37 @@ export const WebstudioComponentPreview = forwardRef<
   }
 
   return element;
+});
+
+export const WebstudioComponentPreview = forwardRef<
+  HTMLElement,
+  WebstudioComponentProps
+>(({ instance, instanceSelector, ...props }, ref) => {
+  const instances = useStore($instances);
+  const externalContent = getExternalContentInstance({
+    sourceInstance: instance,
+    sourceInstanceSelector: instanceSelector,
+    instances,
+  });
+  const renderedInstance = externalContent?.instance ?? instance;
+  const renderedInstanceSelector =
+    externalContent?.instanceSelector ?? instanceSelector;
+  return (
+    <>
+      {instance.component === blockComponent ? (
+        <ExternalContentRootLoader
+          instance={instance}
+          instanceSelector={instanceSelector}
+          includeUnresolvedTemplatePlaceholders={false}
+          showDiagnostics={false}
+        />
+      ) : null}
+      <WebstudioComponentPreviewInner
+        {...props}
+        ref={ref}
+        instance={renderedInstance}
+        instanceSelector={renderedInstanceSelector}
+      />
+    </>
+  );
 });

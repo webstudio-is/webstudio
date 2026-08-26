@@ -264,6 +264,31 @@ test("prevents pasting a portal fragment into one of its preserved children", ()
   ).toEqual({ parentSelector: ["body"], position: "end" });
 });
 
+test("includes assets referenced by copied variable values", () => {
+  const data = createStub(<$.Box ws:id="boxId" />);
+  data.assets.set("post", {
+    id: "post",
+    projectId: "source-project",
+    type: "file",
+    format: "mdx",
+    name: "post.mdx",
+    size: 1,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    meta: {},
+  });
+  data.dataSources.set("items", {
+    id: "items",
+    scopeInstanceId: "boxId",
+    type: "variable",
+    name: "items",
+    value: { type: "json", value: [{ source: "post" }] },
+  });
+
+  expect(extractWebstudioFragment(data, "boxId").assets).toEqual([
+    data.assets.get("post"),
+  ]);
+});
+
 const insertStyles = ({
   data,
   breakpointId,
@@ -393,6 +418,30 @@ test("preserves legacy HtmlEmbed code when copying internal fragments", () => {
       value: "<div><span></div>",
     })
   );
+});
+
+test("moves legacy Code Text properties into copied text content", () => {
+  const data = renderData(<$.Body ws:id="bodyId" />);
+  const fragment = renderTemplate(<$.CodeText code="const answer = 42;" />);
+
+  insertWebstudioFragmentCopy({
+    data,
+    fragment,
+    availableVariables: [],
+    projectId: "",
+  });
+
+  const codeText = Array.from(data.instances.values()).find(
+    (instance) => instance.component === "CodeText"
+  );
+  expect(codeText?.children).toEqual([
+    { type: "text", value: "const answer = 42;" },
+  ]);
+  expect(
+    Array.from(data.props.values()).find(
+      (prop) => prop.instanceId === codeText?.id && prop.name === "code"
+    )
+  ).toBeUndefined();
 });
 
 test("insert instances with multiple roots", () => {

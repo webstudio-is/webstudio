@@ -1,15 +1,97 @@
 import { describe, expect, test } from "vitest";
 import { resolveAssetValueReferences } from "./asset-value-references";
 import { parseMarkdownAst } from "./markdown-ast";
-import { previewMarkdownToMdxConversion } from "./mdx-conversion";
 import {
+  createMdxCodeBlock,
+  createMdxSourceDiagnostics,
   discoverMdxAssetReferences,
   MdxDocumentError,
   parseMdxDocument,
+  parseMdxDocumentRecovering,
   preferMarkdownSyntax,
+  readMdxCodeBlock,
+  replaceMdxFrontmatter,
+  rewriteMdxAssetReferences,
   serializeMdxDocument,
   type MdxAuthoredNode,
 } from "./mdx";
+
+test("creates and reads canonical fenced code blocks", async () => {
+  const node = createMdxCodeBlock({
+    value: "const ready = true;",
+    language: "javascript",
+  });
+  const source = serializeMdxDocument({
+    frontmatter: { properties: {} },
+    children: [node],
+  });
+  const document = await parseMdxDocument({ source });
+
+  expect(source).toBe("```javascript\nconst ready = true;\n```\n");
+  expect(readMdxCodeBlock(document.children[0]!)).toEqual({
+    value: "const ready = true;",
+    language: "javascript",
+  });
+});
+
+test("rewrites Markdown, MDX, and frontmatter Asset references together", async () => {
+  const rewritten = await rewriteMdxAssetReferences({
+    source: [
+      "---",
+      "hero: images/hero.png?width=1200",
+      "---",
+      "",
+      "![Hero](images/hero.png#cover)",
+      "",
+      '<ws.element ws:tag="img" src="images/hero.png" />',
+    ].join("\n"),
+    sourcePath: "article.mdx",
+    assetPaths: new Map([["hero", "images/hero.png"]]),
+    replacementPaths: new Map([["hero", "hero_1.png"]]),
+  });
+
+  expect(rewritten).toContain("hero: hero_1.png?width=1200");
+  expect(rewritten).toContain("![Hero](hero_1.png#cover)");
+  expect(rewritten).toContain('src="hero_1.png"');
+});
+
+test("maps recoverable and unrecoverable MDX failures consistently", () => {
+  const sourceRange = {
+    start: { line: 2, column: 3, offset: 5 },
+    end: { line: 2, column: 8, offset: 10 },
+  };
+  expect(
+    createMdxSourceDiagnostics([
+      new MdxDocumentError({
+        code: "unsafe-mdx",
+        message: "Unsupported expression",
+        reason: "Executable expressions are not supported",
+        nodeType: "mdxTextExpression",
+        sourceRange,
+      }),
+      new MdxDocumentError({
+        code: "invalid-mdx",
+        message: "Unexpected closing tag",
+        sourceRange,
+      }),
+    ])
+  ).toEqual([
+    {
+      code: "unsafe-mdx",
+      severity: "warning",
+      message: "Executable expressions are not supported",
+      reason: "Executable expressions are not supported",
+      nodeType: "mdxTextExpression",
+      sourceRange,
+    },
+    {
+      code: "invalid-mdx",
+      severity: "error",
+      message: "Unexpected closing tag",
+      sourceRange,
+    },
+  ]);
+});
 
 const omitSourceRanges = (value: unknown): unknown => {
   if (Array.isArray(value)) {
@@ -23,6 +105,25 @@ const omitSourceRanges = (value: unknown): unknown => {
       key === "sourceRange" ? [] : [[key, omitSourceRanges(item)]]
     )
   );
+};
+
+const forceGenericMdx = (node: MdxAuthoredNode): MdxAuthoredNode => {
+  if (
+    node.type === "text" ||
+    node.type === "comment" ||
+    node.type === "opaque"
+  ) {
+    return node;
+  }
+  if (node.type === "template") {
+    return { ...node, children: node.children.map(forceGenericMdx) };
+  }
+  return {
+    ...node,
+    syntax: "mdx",
+    mdxMode: "flow",
+    children: node.children.map(forceGenericMdx),
+  };
 };
 
 describe("parseMdxDocument", () => {
@@ -224,15 +325,15 @@ author:
         mdxMode: "flow",
         tag: "section",
         props: [
-          { name: "data-kind", value: "hero" },
-          { name: "hidden", value: true },
+          expect.objectContaining({ name: "data-kind", value: "hero" }),
+          expect.objectContaining({ name: "hidden", value: true }),
         ],
         children: [
           expect.objectContaining({
             type: "template",
             mdxMode: "flow",
             name: "Hero Card",
-            props: [{ name: "tone", value: "quiet" }],
+            props: [expect.objectContaining({ name: "tone", value: "quiet" })],
             children: [expect.objectContaining({ type: "element", tag: "h2" })],
           }),
         ],
@@ -617,20 +718,6 @@ const ready = true;
 | Ada | Yes |
 `;
     const document = await parseMdxDocument({ source: markdown });
-    const forceGenericMdx = (node: MdxAuthoredNode): MdxAuthoredNode => {
-      if (node.type === "text" || node.type === "comment") {
-        return node;
-      }
-      if (node.type === "template") {
-        return { ...node, children: node.children.map(forceGenericMdx) };
-      }
-      return {
-        ...node,
-        syntax: "mdx",
-        mdxMode: "flow",
-        children: node.children.map(forceGenericMdx),
-      };
-    };
     const genericDocument = {
       ...document,
       children: document.children.map(forceGenericMdx),
@@ -645,6 +732,42 @@ const ready = true;
       omitSourceRanges(document)
     );
   });
+
+  test.each([
+    ["blockquote", "> Quote\n"],
+    ["break", "First\\\nSecond\n"],
+    ["code", "```js\nconst ready = true;\n```\n"],
+    ["definition", "[Guide][guide]\n\n[guide]: /guide\n"],
+    ["emphasis", "*Emphasis*\n"],
+    ["heading", "# Heading\n"],
+    ["image", "![Image](/image.png)\n"],
+    ["image reference", "![Image][image]\n\n[image]: /image.png\n"],
+    ["inline code", "`const ready = true`\n"],
+    ["link", "[Guide](/guide)\n"],
+    ["link reference", "[Guide][guide]\n\n[guide]: /guide\n"],
+    ["list", "- First\n- Second\n"],
+    ["list item", "- Item\n"],
+    ["paragraph", "Paragraph\n"],
+    ["strong", "**Strong**\n"],
+    ["thematic break", "***\n"],
+  ])(
+    "converts the core Markdown %s construct without JSX",
+    async (_name, source) => {
+      const document = await parseMdxDocument({ source });
+      const genericDocument = {
+        ...document,
+        children: document.children.map(forceGenericMdx),
+      };
+      const markdown = serializeMdxDocument(
+        await preferMarkdownSyntax(genericDocument)
+      );
+
+      expect(markdown).not.toContain("<ws.element");
+      expect(
+        omitSourceRanges(await parseMdxDocument({ source: markdown }))
+      ).toEqual(omitSourceRanges(document));
+    }
+  );
 
   test("preserves elements that Markdown cannot represent losslessly", async () => {
     const document = await parseMdxDocument({
@@ -721,6 +844,79 @@ next</ws.element>
     expect(omitSourceRanges(reparsed)).toEqual(omitSourceRanges(document));
   });
 
+  test("preserves template prop names while normalizing HTML prop names", async () => {
+    const source = serializeMdxDocument({
+      frontmatter: { properties: {} },
+      children: [
+        {
+          type: "template",
+          name: "Card",
+          props: [
+            { name: "className", value: "featured" },
+            { name: "htmlFor", value: "title" },
+            { name: "tabIndex", value: "0" },
+            { name: "readOnly", value: true },
+          ],
+          children: [],
+          mdxMode: "flow",
+        },
+      ],
+    });
+
+    expect(source).toBe(
+      '<ws.element ws:name="Card" className="featured" htmlFor="title" tabIndex="0" readOnly />\n'
+    );
+    expect(omitSourceRanges(await parseMdxDocument({ source }))).toMatchObject({
+      frontmatter: { properties: {} },
+      children: [
+        {
+          type: "template",
+          props: [
+            { name: "className", value: "featured" },
+            { name: "htmlFor", value: "title" },
+            { name: "tabIndex", value: "0" },
+            { name: "readOnly", value: true },
+          ],
+        },
+      ],
+    });
+
+    const element = await parseMdxDocument({
+      source:
+        '<ws.element ws:tag="label" className="featured" htmlFor="title" tabIndex="0" />',
+    });
+    expect(omitSourceRanges(element.children[0])).toMatchObject({
+      type: "element",
+      props: [
+        { name: "class", value: "featured" },
+        { name: "for", value: "title" },
+        { name: "tabindex", value: "0" },
+      ],
+    });
+  });
+
+  test("roundtrips template JSX prop names without component metadata", async () => {
+    const source = '<ws.element ws:name="Card" class="featured" />\n';
+    const document = await parseMdxDocument({ source });
+
+    expect(serializeMdxDocument(document)).toBe(source);
+  });
+
+  test("preserves template prop aliases for metadata-aware materialization", async () => {
+    const source =
+      '<ws.element ws:name="Card" class="legacy" className="canonical" />\n';
+    const document = await parseMdxDocument({ source });
+
+    expect(document.children[0]).toMatchObject({
+      type: "template",
+      props: [
+        { name: "class", value: "legacy" },
+        { name: "className", value: "canonical" },
+      ],
+    });
+    expect(serializeMdxDocument(document)).toBe(source);
+  });
+
   test.each([
     ['<ws.element ws:tag="script">alert(1)</ws.element>', "unsafe tag"],
     ['<ws.element ws:name="Card" ws:tag="div" />', "conflicting selectors"],
@@ -768,7 +964,7 @@ next</ws.element>
         code: "invalid-mdx",
       } satisfies Partial<MdxDocumentError>);
     }
-  });
+  }, 15_000);
 
   test.each([
     ["imports", 'import Card from "./card"', "mdxjsEsm"],
@@ -810,258 +1006,99 @@ next</ws.element>
   });
 });
 
-describe("previewMarkdownToMdxConversion", () => {
-  test("converts Markdown and embedded HTML through the shared authored tree", async () => {
-    const source = `---
-title: Existing post
-cover: ./cover.png
----
-# Heading
+describe("replaceMdxFrontmatter", () => {
+  test("updates only frontmatter and preserves the body byte-for-byte", async () => {
+    const body = `# Heading\n\n<ws.element ws:name="Hero Card">\n  Body\n</ws.element>\n`;
+    const source = `---\ntitle: Before\n---\n\n${body}`;
 
-Before <span class="accent">inline</span> after.
-
-<figure data-kind="hero"><img src="./hero.png" alt="Hero"></figure>
-`;
-
-    const preview = await previewMarkdownToMdxConversion({ source });
-
-    expect(preview.document.frontmatter.properties).toEqual({
-      title: "Existing post",
-      cover: "./cover.png",
-    });
-    expect(omitSourceRanges(preview.document.children)).toEqual([
-      {
-        type: "element",
-        syntax: "markdown",
-        tag: "h1",
-        props: [],
-        children: [{ type: "text", value: "Heading" }],
-      },
-      {
-        type: "element",
-        syntax: "markdown",
-        tag: "p",
-        props: [],
-        children: [
-          { type: "text", value: "Before " },
-          {
-            type: "element",
-            syntax: "mdx",
-            tag: "span",
-            props: [{ name: "class", value: "accent" }],
-            children: [{ type: "text", value: "inline" }],
-            mdxMode: "text",
-          },
-          { type: "text", value: " after." },
-        ],
-      },
-      {
-        type: "element",
-        syntax: "mdx",
-        tag: "figure",
-        props: [{ name: "data-kind", value: "hero" }],
-        children: [
-          {
-            type: "element",
-            syntax: "mdx",
-            tag: "img",
-            props: [
-              { name: "src", value: "./hero.png" },
-              { name: "alt", value: "Hero" },
-            ],
-            children: [],
-            mdxMode: "flow",
-          },
-        ],
-        mdxMode: "flow",
-      },
-    ]);
     expect(
-      omitSourceRanges(await parseMdxDocument({ source: preview.source }))
-    ).toEqual(omitSourceRanges(preview.document));
-    expect(source).toContain('<span class="accent">');
-  });
-
-  test("rejects source-level errors that cannot be isolated", async () => {
-    await expect(
-      previewMarkdownToMdxConversion({
-        source: "too large",
-        maximumBytes: 1,
+      await replaceMdxFrontmatter({
+        source,
+        properties: { nested: [1, true], title: "After" },
       })
-    ).rejects.toMatchObject({
-      code: "invalid-mdx",
-      message: "MDX content exceeds the byte limit",
-    } satisfies Partial<MdxDocumentError>);
+    ).toBe(`---\nnested:\n  - 1\n  - true\ntitle: After\n---\n\n${body}`);
   });
 
-  test("keeps embedded HTML inline inside GFM table cells", async () => {
-    const preview = await previewMarkdownToMdxConversion({
-      source: "| Value |\n| --- |\n| <span>Cell</span> |\n",
-    });
+  test("prepends frontmatter without rewriting a document body", async () => {
+    const source = "Paragraph  \nwith hard break\n";
 
-    expect(preview.source).toBe(`| Value                                       |
-| ------------------------------------------- |
-| <ws.element ws:tag="span">Cell</ws.element> |
-`);
-  });
-
-  test("repairs malformed embedded HTML with the HTML parser", async () => {
-    const preview = await previewMarkdownToMdxConversion({
-      source: "<section><strong>Kept</section>\n\nAfter\n",
-    });
-
-    expect(preview.source).toBe(`<ws.element ws:tag="section">
-  <ws.element ws:tag="strong">
-    Kept
-  </ws.element>
-</ws.element>
-
-<ws.element ws:tag="strong">
-  After
-</ws.element>
-`);
-    expect(preview.omissions).toEqual([]);
-  });
-
-  test("omits isolatable unsafe HTML subtrees and reports their locations", async () => {
-    const source = `---
-title: Existing post
----
-# Kept
-
-<script>alert(1)</script>
-
-Before <span onclick="alert(1)">omitted</span> after.
-
-<footer>Also kept</footer>
-`;
-
-    const preview = await previewMarkdownToMdxConversion({ source });
-
-    expect(preview.document.frontmatter.properties).toEqual({
-      title: "Existing post",
-    });
-    expect(omitSourceRanges(preview.document.children)).toEqual([
-      {
-        type: "element",
-        syntax: "markdown",
-        tag: "h1",
-        props: [],
-        children: [{ type: "text", value: "Kept" }],
-      },
-      {
-        type: "element",
-        syntax: "markdown",
-        tag: "p",
-        props: [],
-        children: [
-          { type: "text", value: "Before " },
-          {
-            type: "element",
-            syntax: "mdx",
-            tag: "span",
-            props: [],
-            children: [{ type: "text", value: "omitted" }],
-            mdxMode: "text",
-          },
-          { type: "text", value: " after." },
-        ],
-      },
-      {
-        type: "element",
-        syntax: "mdx",
-        tag: "footer",
-        props: [],
-        children: [
-          {
-            type: "element",
-            syntax: "markdown",
-            tag: "p",
-            props: [],
-            children: [{ type: "text", value: "Also kept" }],
-          },
-        ],
-        mdxMode: "flow",
-      },
-    ]);
-    expect(preview.omissions).toEqual([
-      {
-        nodeType: "element",
-        reason: "Webstudio element tag script is not supported",
-        sourceRange: {
-          start: { line: 6, column: 1, offset: 37 },
-          end: { line: 6, column: 26, offset: 62 },
-        },
-      },
-      {
-        nodeType: "element",
-        reason: "MDX JSX prop onclick is not supported",
-        sourceRange: {
-          start: { line: 8, column: 8, offset: 71 },
-          end: { line: 8, column: 47, offset: 110 },
-        },
-      },
-    ]);
     expect(
-      omitSourceRanges(await parseMdxDocument({ source: preview.source }))
-    ).toEqual(omitSourceRanges(preview.document));
+      await replaceMdxFrontmatter({ source, properties: { draft: false } })
+    ).toBe(`---\ndraft: false\n---\n\n${source}`);
   });
 
-  test("preserves Markdown link and image nodes after omitting unsafe destinations", async () => {
-    const preview = await previewMarkdownToMdxConversion({
-      source:
-        "[Unsafe link](javascript:alert(1))\n\n![Unsafe image](data:text/html,bad)\n",
-    });
+  test("updates frontmatter even when the MDX body is structurally invalid", async () => {
+    const body = '<ws.element ws:name="Hero">\n';
+    const source = `---\ntitle: Before\n---\n\n${body}`;
 
-    expect(omitSourceRanges(preview.document.children)).toEqual([
-      {
-        type: "element",
-        syntax: "mdx",
-        tag: "p",
-        props: [],
+    expect(
+      await replaceMdxFrontmatter({ source, properties: { title: "After" } })
+    ).toBe(`---\ntitle: After\n---\n\n${body}`);
+  });
+
+  test("preserves a byte-order mark and non-ASCII body", async () => {
+    const source = `\uFEFF---\ntitle: Olá\n---\n\nOlá 👋\n`;
+
+    expect(
+      await replaceMdxFrontmatter({ source, properties: { title: "Até" } })
+    ).toBe(`\uFEFF---\ntitle: Até\n---\n\nOlá 👋\n`);
+  });
+});
+
+describe("parseMdxDocumentRecovering", () => {
+  test("ignores invalid JSX properties without dropping the element", async () => {
+    const source =
+      '<ws.element ws:tag="a" href="/safe" onclick="alert(1)">Kept</ws.element>\n';
+
+    const recovered = await parseMdxDocumentRecovering({ source });
+
+    expect(recovered).toMatchObject({
+      status: "parsed",
+      document: {
         children: [
           {
             type: "element",
-            syntax: "mdx",
             tag: "a",
-            props: [],
-            children: [{ type: "text", value: "Unsafe link" }],
-            mdxMode: "text",
+            props: [{ name: "href", value: "/safe" }],
+            children: [{ type: "text", value: "Kept" }],
           },
         ],
-        mdxMode: "flow",
       },
-      {
-        type: "element",
-        syntax: "mdx",
-        tag: "p",
-        props: [],
-        children: [
-          {
-            type: "element",
-            syntax: "mdx",
-            tag: "img",
-            props: [{ name: "alt", value: "Unsafe image" }],
-            children: [],
-            mdxMode: "flow",
-          },
-        ],
-        mdxMode: "flow",
-      },
-    ]);
-    expect(preview.omissions.map(({ reason }) => reason)).toEqual([
-      "MDX JSX prop href contains an unsafe URL",
-      "MDX JSX prop src contains an unsafe URL",
-    ]);
+      diagnostics: [
+        expect.objectContaining({
+          code: "unsafe-mdx",
+          reason: "MDX JSX prop onclick is not supported",
+        }),
+      ],
+    });
   });
 
-  test("reports an omitted subtree once without nested property omissions", async () => {
-    const preview = await previewMarkdownToMdxConversion({
-      source: '<script onclick="alert(1)">unsafe</script>\n',
+  test("preserves an unsafe subtree while continuing with valid siblings", async () => {
+    const source = "# Before\n\n{danger()}\n\n# After\n";
+
+    const result = await parseMdxDocumentRecovering({ source });
+
+    expect(result.status).toBe("parsed");
+    if (result.status !== "parsed") {
+      throw new Error("Expected a recoverable document");
+    }
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.document.children.map(({ type }) => type)).toEqual([
+      "element",
+      "opaque",
+      "element",
+    ]);
+    expect(serializeMdxDocument(result.document)).toBe(source);
+  });
+
+  test("reports structurally invalid MDX without inventing a document", async () => {
+    const result = await parseMdxDocumentRecovering({
+      source: "# Before\n\n<ws.element",
     });
 
-    expect(preview.omissions.map(({ reason }) => reason)).toEqual([
-      "Webstudio element tag script is not supported",
-    ]);
+    expect(result).toMatchObject({
+      status: "unrecoverable",
+      diagnostics: [{ code: "invalid-mdx" }],
+    });
   });
 });

@@ -27,6 +27,7 @@ import {
   $hoveredInstanceSelector,
   $isContentMode,
   $modifierKeys,
+  $textEditingInstanceSelector,
   type BlockChildOutline,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
@@ -46,6 +47,7 @@ import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
+import { useOutlineControlPosition } from "./use-outline-control-position";
 
 export const TemplatesMenu = ({
   onOpenChange,
@@ -76,10 +78,12 @@ export const TemplatesMenu = ({
 }) => {
   const instances = useStore($instances);
   const modifierKeys = useStore($modifierKeys);
+  const preventCloseAutoFocusRef = useRef(false);
 
   const blockInstanceSelector = findBlockSelector({ anchor, instances });
 
   const handleValueChangeComplete = useEffectEvent((value: string) => {
+    preventCloseAutoFocusRef.current = true;
     const templateSelector = JSON.parse(value) as InstanceSelector;
     onValueChangeComplete(templateSelector);
   });
@@ -125,6 +129,15 @@ export const TemplatesMenu = ({
         collisionPadding={16}
         side="bottom"
         loop
+        onCloseAutoFocus={(event) => {
+          if (preventCloseAutoFocusRef.current === false) {
+            return;
+          }
+          preventCloseAutoFocusRef.current = false;
+          if ($textEditingInstanceSelector.get() !== undefined) {
+            event.preventDefault();
+          }
+        }}
         // @todo remove inert after creation
         {...(inert ? { inert: "" } : {})}
       >
@@ -239,6 +252,9 @@ export const BlockChildHoveredInstanceOutline = () => {
   >(undefined);
 
   const outline = blockChildOutline ?? buttonOutline;
+  const rect =
+    outline === undefined ? undefined : applyScale(outline.rect, scale);
+  const [controlRef, controlPosition] = useOutlineControlPosition(rect);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -247,6 +263,10 @@ export const BlockChildHoveredInstanceOutline = () => {
   }
 
   if (outline === undefined) {
+    return;
+  }
+
+  if (rect === undefined) {
     return;
   }
 
@@ -282,11 +302,6 @@ export const BlockChildHoveredInstanceOutline = () => {
   // 1 child is Templates instance
   const hasChildren = blockInstance.children.length > 1;
 
-  const rect = applyScale(outline.rect, scale);
-
-  // Check if the top edge of the component is hidden (clipped by viewport/clamping)
-  const isTopEdgeHidden = rect.top < clampingRect.top;
-
   const canDeleteHoveredInstance =
     shallowEqual(outline.selector, outline.hoveredSelector) &&
     canDeleteInstanceInContentMode({
@@ -318,18 +333,21 @@ export const BlockChildHoveredInstanceOutline = () => {
   return (
     <Outline rect={rect} clampingRect={clampingRect}>
       <Flex
+        ref={controlRef}
         css={{
           position: "absolute",
           left: 0,
           paddingRight: theme.sizes.controlHeight,
-          ...(isTopEdgeHidden
+          ...(controlPosition === "top"
             ? {
-                bottom: `calc(-${theme.sizes.controlHeight} )`,
-                clipPath: `polygon(0% 0%, 100% 0%, ${theme.sizes.controlHeight} 100%, 0% 100%)`,
-              }
-            : {
                 top: `calc(-${theme.sizes.controlHeight})`,
                 clipPath: `polygon(0% 0%, ${theme.sizes.controlHeight} 0%, 100% 100%, 0% 100%)`,
+              }
+            : {
+                ...(controlPosition === "bottom"
+                  ? { bottom: `calc(-${theme.sizes.controlHeight})` }
+                  : { top: 0 }),
+                clipPath: `polygon(0% 0%, 100% 0%, ${theme.sizes.controlHeight} 100%, 0% 100%)`,
               }),
           // Define grace area for the button
           pointerEvents: isMenuOpen ? "none" : "all",
@@ -399,14 +417,14 @@ export const BlockChildHoveredInstanceOutline = () => {
                 ? `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`
                 : undefined,
               borderRadius: theme.borderRadius[4],
-              ...(isTopEdgeHidden
+              ...(controlPosition === "top"
                 ? {
-                    borderTopLeftRadius: 0,
-                    borderTopRightRadius: 0,
-                  }
-                : {
                     borderBottomLeftRadius: 0,
                     borderBottomRightRadius: 0,
+                  }
+                : {
+                    borderTopLeftRadius: 0,
+                    borderTopRightRadius: 0,
                   }),
               // Define grace area for the button
               pointerEvents: isMenuOpen ? "none" : "all",

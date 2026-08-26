@@ -9,6 +9,7 @@ import {
   inputJsonSchemaAcceptsType,
   parseComponentName,
   toInputJsonSchemaObject,
+  type ContentBlockDiagnostic,
   type InputJsonSchema,
   type InputJsonSchemaValue,
 } from "@webstudio-is/sdk";
@@ -299,6 +300,21 @@ export type ProjectSessionDownloadAssetInput = {
 export type ProjectSessionDownloadAssetResult = {
   assetId: string;
   path: string;
+  source?: string;
+  diagnostics?: readonly (
+    | ContentBlockDiagnostic
+    | Readonly<{
+        code: "invalid-mdx" | "unsafe-mdx";
+        severity: "error" | "warning";
+        message: string;
+        nodeType?: string;
+        reason?: string;
+        sourceRange?: Readonly<{
+          start: Readonly<{ line: number; column: number; offset?: number }>;
+          end: Readonly<{ line: number; column: number; offset?: number }>;
+        }>;
+      }>
+  )[];
 };
 
 type DownloadAsset = (
@@ -1621,7 +1637,7 @@ const importInputSchema = {
 const downloadAssetInputSchema = {
   ...emptyInputSchema,
   description:
-    "Download one project asset to the local filesystem and return its absolute path.",
+    "Download one project asset to the local filesystem and return its absolute path. MDX Assets also return exact source and diagnostics.",
   properties: {
     assetId: {
       type: "string",
@@ -3283,13 +3299,52 @@ const importTool = createProjectSessionMcpTool({
 const downloadAssetTool = createProjectSessionMcpTool({
   name: "download-asset",
   description:
-    "Download one project asset into .webstudio/assets or a specified directory and return its local path.",
+    "Download one project asset into .webstudio/assets or a specified directory and return its local path. MDX Assets also return exact source and source-located diagnostics.",
   inputSchema: downloadAssetInputSchema,
   outputSchema: getMcpOutputSchema({
     type: "object",
     properties: {
       assetId: { type: "string" },
       path: { type: "string" },
+      source: { type: "string" },
+      diagnostics: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            code: { type: "string", enum: ["invalid-mdx", "unsafe-mdx"] },
+            severity: { type: "string", enum: ["error", "warning"] },
+            message: { type: "string" },
+            nodeType: { type: "string" },
+            reason: { type: "string" },
+            sourceRange: {
+              type: "object",
+              properties: {
+                start: {
+                  type: "object",
+                  properties: {
+                    line: { type: "number" },
+                    column: { type: "number" },
+                    offset: { type: "number" },
+                  },
+                  required: ["line", "column"],
+                },
+                end: {
+                  type: "object",
+                  properties: {
+                    line: { type: "number" },
+                    column: { type: "number" },
+                    offset: { type: "number" },
+                  },
+                  required: ["line", "column"],
+                },
+              },
+              required: ["start", "end"],
+            },
+          },
+          required: ["code", "severity", "message"],
+        },
+      },
     },
     required: ["assetId", "path"],
     additionalProperties: false,

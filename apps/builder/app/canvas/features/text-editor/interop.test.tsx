@@ -3,7 +3,12 @@ import { createHeadlessEditor } from "@lexical/headless";
 import { LinkNode } from "@lexical/link";
 import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 import { $, renderData, renderTemplate, ws } from "@webstudio-is/template";
-import { $convertToLexical, $convertToUpdates, type Refs } from "./interop";
+import {
+  $convertToLexical,
+  $convertToPlainTextUpdate,
+  $convertToUpdates,
+  type Refs,
+} from "./interop";
 
 const { instances } = renderData(
   <$.Body ws:id="bodyId">
@@ -221,4 +226,35 @@ test("convert lexical to instances uses supplied id generator for new formatting
       </$.Box>
     ).instances
   );
+});
+
+test("convert lexical formatting to plain text content", async () => {
+  const editor = createHeadlessEditor({ nodes: [LinkNode] });
+  await new Promise<void>((resolve) => {
+    editor.update(
+      () => {
+        const paragraph = $createParagraphNode();
+        const text = $createTextNode("const answer = 42;");
+        text.toggleFormat("bold");
+        paragraph.append(text);
+        $getRoot().append(paragraph);
+      },
+      { onUpdate: resolve }
+    );
+  });
+  const treeRootInstance = instances.get("emptyBoxId");
+  if (treeRootInstance === undefined) {
+    throw Error("Tree root instance should be in test data");
+  }
+
+  expect(
+    editor
+      .getEditorState()
+      .read(() => $convertToPlainTextUpdate(treeRootInstance))
+  ).toEqual([
+    {
+      ...treeRootInstance,
+      children: [{ type: "text", value: "const answer = 42;" }],
+    },
+  ]);
 });

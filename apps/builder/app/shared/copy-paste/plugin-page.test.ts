@@ -1,7 +1,10 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import type { PageTransferItem } from "@webstudio-is/project-build/transfer";
 import {
+  blockComponent,
+  blockTemplateComponent,
   encodeDataSourceVariable,
   ROOT_FOLDER_ID,
   ROOT_INSTANCE_ID,
@@ -36,6 +39,7 @@ import {
   copyTemplateData,
   handlePastePage,
   pageText,
+  __testing__,
 } from "./plugin-page";
 import { pasteHandled, pasteIgnored } from "./copy-paste";
 import { initBuilderApi } from "../builder-api";
@@ -43,6 +47,7 @@ import { initBuilderApi } from "../builder-api";
 enableMapSet();
 registerContainers();
 initBuilderApi();
+const { preparePageTransferItem } = __testing__;
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -196,7 +201,7 @@ const setupProjectWithRootStyle = ({
   return pages;
 };
 
-test("copies the selected page root from the copy plugin", () => {
+test("copies the selected page root from the copy plugin", async () => {
   $project.set({ id: "source-project" } as Project);
   resetBuildStores();
 
@@ -226,11 +231,11 @@ test("copies the selected page root from the copy plugin", () => {
     ])
   );
 
-  expect(pageText.onCopy?.()).toContain('"type":"page"');
-  expect(pageText.onCopy?.()).toContain('"name":"Selected Page"');
+  expect(await pageText.onCopy?.()).toContain('"type":"page"');
+  expect(await pageText.onCopy?.()).toContain('"name":"Selected Page"');
 });
 
-test("copies the edited folder from the copy plugin", () => {
+test("copies the edited folder from the copy plugin", async () => {
   $project.set({ id: "source-project" } as Project);
   resetBuildStores();
 
@@ -260,8 +265,8 @@ test("copies the edited folder from the copy plugin", () => {
     ])
   );
 
-  expect(pageText.onCopy?.()).toContain('"type":"folder"');
-  expect(pageText.onCopy?.()).toContain('"name":"Edited Folder"');
+  expect(await pageText.onCopy?.()).toContain('"type":"folder"');
+  expect(await pageText.onCopy?.()).toContain('"name":"Edited Folder"');
 });
 
 test("copies page data across projects", async () => {
@@ -306,7 +311,7 @@ test("copies page data across projects", async () => {
   );
   $dataSources.set(new Map([[variable.id, variable]]));
 
-  const clipboardData = copyPageData("source-page");
+  const clipboardData = await copyPageData("source-page");
   expect(clipboardData).toBeDefined();
 
   $project.set({ id: "target-project" } as Project);
@@ -396,10 +401,13 @@ test("transfers assets copied from another deployment before inserting the page"
     ])
   );
   $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
-  const clipboardData = JSON.parse(copyPageData("source-page") ?? "");
+  const clipboardData = JSON.parse((await copyPageData("source-page")) ?? "");
   expect(clipboardData["@webstudio/page/v0.1"].sourceOrigin).toBe(
     window.location.origin
   );
+  expect(clipboardData["@webstudio/page/v0.1"].assetPaths).toEqual({
+    "source-asset": "hero.png",
+  });
   clipboardData["@webstudio/page/v0.1"].sourceOrigin =
     "https://source.example.com";
 
@@ -503,7 +511,7 @@ test("preserves legacy page metadata assets that exist in the destination", asyn
     ])
   );
   $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
-  const currentData = JSON.parse(copyPageData("source-page") ?? "")[
+  const currentData = JSON.parse((await copyPageData("source-page")) ?? "")[
     "@webstudio/page/v0.1"
   ];
   delete currentData.sourceOrigin;
@@ -571,7 +579,7 @@ test.each([
       property: "fontSize",
       value: { type: "keyword", value: "medium" },
     });
-    const clipboardData = copyPageData("source-page");
+    const clipboardData = await copyPageData("source-page");
 
     setupProjectWithRootStyle({
       projectId: "target-project",
@@ -630,7 +638,7 @@ test("cancels page paste when global root style resolution is cancelled", async 
   }
   sourcePage.meta.socialImageAssetId = sourceAsset.id;
   $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
-  const clipboardData = copyPageData("source-page");
+  const clipboardData = await copyPageData("source-page");
 
   const targetPages = setupProjectWithRootStyle({
     projectId: "target-project",
@@ -668,7 +676,7 @@ test("checks current root styles after resolving token conflicts", async () => {
     color: "red",
   });
   addRootTokenStyle({ styleSourceId: "source-token", value: "red" });
-  const clipboardData = copyPageData("source-page");
+  const clipboardData = await copyPageData("source-page");
 
   setupProjectWithRootStyle({
     projectId: "target-project",
@@ -722,7 +730,7 @@ test("handles page paste data without falling through when insertion cannot comp
     ])
   );
 
-  const clipboardData = copyPageData("source-page");
+  const clipboardData = await copyPageData("source-page");
   expect(clipboardData).toBeDefined();
 
   resetBuildStores();
@@ -819,7 +827,7 @@ test("copies folder data with nested pages across projects", async () => {
   );
   setRootLocalStyle({ styleSourceId: "source-local", value: "red" });
 
-  const clipboardData = copyFolderData("source-folder");
+  const clipboardData = await copyFolderData("source-folder");
   expect(clipboardData).toBeDefined();
 
   $project.set({ id: "target-project" } as Project);
@@ -906,7 +914,7 @@ test("preserves empty folder slugs when pasting folder data", async () => {
     ])
   );
 
-  const clipboardData = copyFolderData("source-folder");
+  const clipboardData = await copyFolderData("source-folder");
   expect(clipboardData).toBeDefined();
 
   $project.set({ id: "target-project" } as Project);
@@ -985,7 +993,7 @@ test("copies template data as a template", async () => {
   );
   setRootLocalStyle({ styleSourceId: "source-local", value: "red" });
 
-  const clipboardData = copyTemplateData("template-id");
+  const clipboardData = await copyTemplateData("template-id");
   expect(clipboardData).toBeDefined();
 
   $project.set({ id: "target-project" } as Project);
@@ -1038,3 +1046,152 @@ test("copies template data as a template", async () => {
   );
   expect(pastedPage).toBeUndefined();
 });
+
+test.each(["page", "template", "folder"] as const)(
+  "prepares connected MDX dependencies when copying a %s",
+  async (type) => {
+    const sourceAsset = {
+      id: "article",
+      projectId: "source-project",
+      name: "article.mdx",
+      type: "file",
+      format: "mdx",
+      size: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      description: null,
+      meta: {},
+    } satisfies Asset;
+    const dependency = {
+      ...sourceAsset,
+      id: "hero",
+      name: "hero.png",
+      format: "png",
+    } satisfies Asset;
+    $assets.set(
+      new Map([
+        [sourceAsset.id, sourceAsset],
+        [dependency.id, dependency],
+      ])
+    );
+    const emptyFragment = {
+      children: [],
+      instances: [],
+      props: [],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSources: [],
+      styleSourceSelections: [],
+      styles: [],
+    };
+    const bodyFragment = {
+      ...emptyFragment,
+      children: [{ type: "id" as const, value: "body" }],
+      instances: [
+        {
+          type: "instance" as const,
+          id: "body",
+          component: "Body",
+          children: [{ type: "id" as const, value: "block" }],
+        },
+        {
+          type: "instance" as const,
+          id: "block",
+          component: blockComponent,
+          children: [
+            { type: "id" as const, value: "templates" },
+            { type: "id" as const, value: "authored" },
+          ],
+        },
+        {
+          type: "instance" as const,
+          id: "templates",
+          component: blockTemplateComponent,
+          children: [],
+        },
+        {
+          type: "instance" as const,
+          id: "authored",
+          component: "Paragraph",
+          children: [{ type: "text" as const, value: "Loaded" }],
+        },
+      ],
+      props: [
+        {
+          id: "source",
+          instanceId: "block",
+          name: "src",
+          type: "asset" as const,
+          value: sourceAsset.id,
+        },
+      ],
+      assets: [sourceAsset],
+    };
+    const page = {
+      type: "page" as const,
+      page: {
+        id: "page",
+        name: "Page",
+        path: "/page",
+        title: "Page",
+        rootInstanceId: "body",
+        meta: {},
+      },
+      rootFragment: emptyFragment,
+      bodyFragment,
+    };
+    const template = {
+      type: "template" as const,
+      template: {
+        id: "template",
+        name: "Template",
+        title: "Template",
+        rootInstanceId: "body",
+        meta: {},
+      },
+      rootFragment: emptyFragment,
+      bodyFragment,
+    };
+    const item: PageTransferItem =
+      type === "page"
+        ? page
+        : type === "template"
+          ? template
+          : {
+              type: "folder",
+              folder: {
+                id: "folder",
+                name: "Folder",
+                slug: "folder",
+                children: ["page"],
+              },
+              children: [page],
+            };
+    const includeDependencies = vi.fn(async ({ fragment }) => ({
+      fragment:
+        fragment.assets.length === 0
+          ? fragment
+          : { ...fragment, assets: [...fragment.assets, dependency] },
+      skippedAssetIds: [],
+    }));
+
+    const prepared = await preparePageTransferItem({
+      item,
+      projectId: "source-project",
+      assets: $assets.get(),
+      assetFolders: new Map(),
+      includeDependencies,
+    });
+    const preparedItem =
+      prepared.type === "folder" ? prepared.children[0] : prepared;
+    if (preparedItem === undefined || preparedItem.type === "folder") {
+      throw new Error("Expected a prepared page-like item");
+    }
+
+    expect(preparedItem.bodyFragment.assets).toEqual([sourceAsset, dependency]);
+    expect(preparedItem.bodyFragment.instances).not.toContainEqual(
+      expect.objectContaining({ id: "authored" })
+    );
+  }
+);

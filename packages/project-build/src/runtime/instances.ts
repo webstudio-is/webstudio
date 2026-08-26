@@ -1,5 +1,8 @@
 import {
+  blockTemplateComponent,
   elementComponent,
+  findChildReferenceIndex,
+  findParentInstanceReference,
   findTreeInstanceIds,
   getHtmlTagsFromProps,
   getStyleDeclKey,
@@ -16,6 +19,9 @@ import {
   type WebstudioData,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
+
+// Preserve the runtime API while the shared tree utilities are owned by SDK.
+export { findChildReferenceIndex, findParentInstanceReference };
 import {
   compactBuilderPatchPayload,
   type BuilderPatchChange,
@@ -69,9 +75,79 @@ import {
   serializeStyleDeclarations,
 } from "./style-utils";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
-import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk/standard-attributes";
+import { mapAttributeNames } from "@webstudio-is/content-engine/jsx-attributes";
 import equal from "fast-deep-equal";
 import { z } from "zod";
+import {
+  assignUniqueBlockTemplateNamesMutable,
+  type BlockTemplateNameConfirmation,
+  findBlockTemplateNameCollision,
+  getBlockTemplateNameConfirmation,
+} from "./block";
+
+const throwDuplicateBlockTemplateName = ({
+  name,
+  path,
+}: {
+  name: string;
+  path: "component" | "label" | "tag";
+}): never =>
+  throwBuilderValidationError("Template name must be unique", [
+    {
+      code: "duplicate_template_name",
+      path: [path],
+      message: `Template name "${name}" is already in use.`,
+      constraint: "unique_within:block_templates",
+      example: `${name} 2`,
+    },
+  ]);
+
+export const blockTemplateNameConfirmationInput = z
+  .object({
+    action: z.enum(["rename", "delete"]),
+    templates: z.array(
+      z.object({
+        instanceId: z.string(),
+        oldName: z.string(),
+        newName: z.string().optional(),
+      })
+    ),
+  })
+  .describe(
+    "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval."
+  );
+
+export const requireBlockTemplateNameConfirmation = ({
+  required,
+  confirm,
+  path,
+}: {
+  required: BlockTemplateNameConfirmation | undefined;
+  confirm: BlockTemplateNameConfirmation | undefined;
+  path:
+    | "component"
+    | "instanceIds"
+    | "instanceSelector"
+    | "label"
+    | "mode"
+    | "tag";
+}) => {
+  if (required === undefined || equal(required, confirm)) {
+    return;
+  }
+  throwBuilderValidationError("Template name change requires confirmation", [
+    {
+      code: "template_name_change_requires_confirmation",
+      path: [path],
+      message:
+        required.action === "delete"
+          ? "Deleting this template may disconnect references in MDX files."
+          : "Renaming this template may disconnect references in MDX files.",
+      constraint: "requires_confirmation:template_name_references",
+      example: required,
+    },
+  ]);
+};
 
 export const insertIndexInput = z.number().int().nonnegative();
 const instanceEndPositionInput = z.literal("end");
@@ -127,10 +203,12 @@ export const cloneInstanceInput = z.object({
 
 export const deleteInstancesInput = z.object({
   instanceIds: z.array(z.string()).min(1),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const deleteInstanceBySelectorInput = z.object({
   instanceSelector: z.array(z.string()).min(2),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const fillGridInput = z.object({
@@ -160,6 +238,7 @@ export const convertInstanceInput = z.object({
   component: instanceInput.shape.component,
   tag: z.string().min(1).optional(),
   currentTag: z.string().min(1).optional(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const unwrapInstanceInput = z.object({
@@ -175,11 +254,13 @@ export const setInstanceTagInput = z.object({
   instanceId: z.string(),
   tag: z.string(),
   legacyPropName: z.string().optional(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const setInstanceLabelInput = z.object({
   instanceId: z.string(),
   label: z.string(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const updateTextInstanceInput = z.object({
@@ -486,14 +567,6 @@ const getRequiredInstances = (
   return state.instances;
 };
 
-export const findChildReferenceIndex = (
-  children: Instance["children"],
-  instanceId: Instance["id"]
-) =>
-  children.findIndex(
-    (child) => child.type === "id" && child.value === instanceId
-  );
-
 export const createInstanceChild = (instanceId: Instance["id"]) =>
   ({ type: "id", value: instanceId }) as const;
 
@@ -664,18 +737,6 @@ export const getSameParentAdjustedInsertIndex = ({
   currentIndex: number;
   requestedIndex: number;
 }) => (requestedIndex > currentIndex ? requestedIndex - 1 : requestedIndex);
-
-export const findParentInstanceReference = (
-  instances: Instances,
-  instanceId: Instance["id"]
-) => {
-  for (const instance of instances.values()) {
-    const childIndex = findChildReferenceIndex(instance.children, instanceId);
-    if (childIndex !== -1) {
-      return { instance, childIndex };
-    }
-  }
-};
 
 export const getInstanceDepths = (
   instances: Pick<Instances, "get" | "values">,
@@ -1066,6 +1127,27 @@ export const createInstanceMovePatches = ({
             requestedIndex: requestedInsertIndex,
           })
         : requestedInsertIndex;
+    if (
+      parent.instance.id === nextParent.id &&
+      insertIndex === parent.childIndex
+    ) {
+      continue;
+    }
+    if (parent.instance.id !== nextParent.id) {
+      const previousLabel = instance.label;
+      assignUniqueBlockTemplateNamesMutable({
+        instanceIds: [instance.id],
+        parent: nextParent,
+        instances: mutableInstances,
+      });
+      if (instance.label !== previousLabel && instance.label !== undefined) {
+        patches.push({
+          op: previousLabel === undefined ? "add" : "replace",
+          path: [instance.id, "label"],
+          value: instance.label,
+        });
+      }
+    }
     patches.push({
       op: "remove" as const,
       path: [parent.instance.id, "children", parent.childIndex] as [
@@ -1459,6 +1541,15 @@ export const createInstanceClonePayload = ({
   if (clonedRootId === undefined) {
     return;
   }
+  const instancesWithClones = new Map(instances);
+  for (const [instanceId, instance] of clonedInstances) {
+    instancesWithClones.set(instanceId, instance);
+  }
+  assignUniqueBlockTemplateNamesMutable({
+    instanceIds: [clonedRootId],
+    parent: targetParent,
+    instances: instancesWithClones,
+  });
   const propPatches = createPropClonePatches({
     nextIdById,
     props,
@@ -1773,6 +1864,13 @@ const moveInstanceToParentMutable = (
   const [newParentId] = dropTarget.parentSelector;
   const newParent = data.instances.get(newParentId);
   const newChild = createInstanceChild(rootInstanceId);
+  if (newParent !== undefined) {
+    assignUniqueBlockTemplateNamesMutable({
+      instanceIds: [rootInstanceId],
+      parent: newParent,
+      instances: data.instances,
+    });
+  }
   if (dropTarget.position === "end") {
     newParent?.children.push(newChild);
   } else {
@@ -1954,6 +2052,11 @@ export const wrapInstance = (
       selectedItem.instance.id,
       wrapperInstanceId
     );
+    assignUniqueBlockTemplateNamesMutable({
+      instanceIds: [wrapperInstanceId],
+      parent: parentInstance,
+      instances: nextInstances,
+    });
     const wrapperSelector = [wrapperInstanceId, ...parentItem.instanceSelector];
     const isSatisfying = isTreeSatisfyingContentModel({
       instances: nextInstances,
@@ -2027,6 +2130,12 @@ export const wrapInstance = (
     createInstanceChild(wrapperInstanceId);
   nextInstances.set(parentInstanceId, nextParentInstance);
   nextInstances.set(wrapperInstanceId, wrapperInstance);
+  assignUniqueBlockTemplateNamesMutable({
+    instanceIds: [wrapperInstanceId],
+    parent: nextParentInstance,
+    replacedInstanceIds: [instanceId],
+    instances: nextInstances,
+  });
   const wrapperSelector = [
     wrapperInstanceId,
     ...input.instanceSelector.slice(1),
@@ -2251,6 +2360,13 @@ const unwrapInstanceMutable = ({
     parentInstance.children,
     selectedItem.instance.id
   );
+  assignUniqueBlockTemplateNamesMutable({
+    instanceIds: [selectedInstance.id],
+    parent: grandparentInstance,
+    replacedInstanceIds:
+      parentInstance.children.length === 0 ? [parentInstance.id] : [],
+    instances,
+  });
   if (parentInstance.children.length === 0) {
     instances.delete(parentItem.instance.id);
   }
@@ -2284,6 +2400,25 @@ const unwrapInstanceMutable = ({
     ? { success: true }
     : { success: false, error: "Cannot unwrap instance" };
 };
+
+const getStandardPropRenames = ({
+  props,
+  instanceId,
+}: {
+  props: Iterable<Prop>;
+  instanceId: Instance["id"];
+}) =>
+  mapAttributeNames({
+    attributes: Array.from(props)
+      .filter((prop) => prop.instanceId === instanceId)
+      .map((prop) => ({ ...prop, originalName: prop.name })),
+    direction: "jsx-to-instance",
+    acceptsHtmlAttributes: true,
+  }).flatMap((prop) =>
+    prop.name === prop.originalName
+      ? []
+      : [{ propId: prop.id, name: prop.name, propIdPrefix: prop.instanceId }]
+  );
 
 export const convertInstance = (
   state: Pick<BuilderState, "instances" | "props"> &
@@ -2331,6 +2466,7 @@ export const convertInstance = (
       );
       const [selectedItem] = nextInstancePath;
       const selectedInstance = selectedItem.instance;
+      const previousInstance = { ...selectedInstance };
       if (selectedInstance.component === "Slot" && input.component !== "Slot") {
         detachSharedSlotChildrenMutable({
           data: draft,
@@ -2355,14 +2491,9 @@ export const convertInstance = (
             props: draft.props.values(),
           }).payload
         );
-        const renames = Array.from(draft.props.values()).flatMap((prop) => {
-          if (prop.instanceId !== selectedInstance.id) {
-            return [];
-          }
-          const name = reactPropsToStandardAttributes[prop.name];
-          return name === undefined
-            ? []
-            : [{ propId: prop.id, name, propIdPrefix: prop.instanceId }];
+        const renames = getStandardPropRenames({
+          props: draft.props.values(),
+          instanceId: selectedInstance.id,
         });
         if (renames.length > 0) {
           applyBuilderPatchPayloadMutable(
@@ -2379,6 +2510,17 @@ export const convertInstance = (
           nextInstance.tag = defaultTag;
         }
       }
+      const collision = findBlockTemplateNameCollision({
+        instance: previousInstance,
+        nextInstance,
+        instances: draft.instances,
+      });
+      if (collision !== undefined) {
+        return throwDuplicateBlockTemplateName({
+          name: collision.name,
+          path: "component",
+        });
+      }
       const isSatisfying = isTreeSatisfyingContentModel({
         instances: draft.instances,
         props: draft.props,
@@ -2391,6 +2533,15 @@ export const convertInstance = (
           "Converted tree violates content model"
         );
       }
+      requireBlockTemplateNameConfirmation({
+        required: getBlockTemplateNameConfirmation({
+          changes: [{ instance: previousInstance, nextInstance }],
+          instances: draft.instances,
+          props: draft.props.values(),
+        }),
+        confirm: input.templateNameConfirmation,
+        path: "component",
+      });
     });
     return createRuntimeMutation({
       payload,
@@ -2450,14 +2601,9 @@ export const convertInstance = (
         props: state.props.values(),
       }).payload
     );
-    const renames = Array.from(state.props.values()).flatMap((prop) => {
-      if (prop.instanceId !== instanceId) {
-        return [];
-      }
-      const name = reactPropsToStandardAttributes[prop.name];
-      return name === undefined
-        ? []
-        : [{ propId: prop.id, name, propIdPrefix: prop.instanceId }];
+    const renames = getStandardPropRenames({
+      props: state.props.values(),
+      instanceId,
     });
     if (renames.length > 0) {
       payload.push(
@@ -2489,6 +2635,17 @@ export const convertInstance = (
     }
   }
 
+  const collision = findBlockTemplateNameCollision({
+    instance,
+    nextInstance,
+    instances,
+  });
+  if (collision !== undefined) {
+    return throwDuplicateBlockTemplateName({
+      name: collision.name,
+      path: "component",
+    });
+  }
   const isSatisfying = canConvertInstance({
     instanceId,
     instanceSelector: input.instanceSelector,
@@ -2505,6 +2662,15 @@ export const convertInstance = (
       "Converted tree violates content model"
     );
   }
+  requireBlockTemplateNameConfirmation({
+    required: getBlockTemplateNameConfirmation({
+      changes: [{ instance, nextInstance }],
+      instances,
+      props: state.props.values(),
+    }),
+    confirm: input.templateNameConfirmation,
+    path: "component",
+  });
 
   payload.push({ namespace: "instances", patches: instancePatches });
   return createRuntimeMutation({
@@ -2714,6 +2880,18 @@ export const unwrapInstance = (
     );
   }
   nextInstances.set(grandparentInstanceId, nextGrandparentInstance);
+  let nextSelectedInstance = selectedInstance;
+  if (nextGrandparentInstance.component === blockTemplateComponent) {
+    nextSelectedInstance = { ...selectedInstance };
+    nextInstances.set(instanceId, nextSelectedInstance);
+    assignUniqueBlockTemplateNamesMutable({
+      instanceIds: [instanceId],
+      parent: nextGrandparentInstance,
+      replacedInstanceIds:
+        nextParentInstance.children.length === 0 ? [parentInstanceId] : [],
+      instances: nextInstances,
+    });
+  }
   const nextInstanceSelector = [instanceId, ...input.instanceSelector.slice(2)];
   const isSatisfying = isTreeSatisfyingContentModel({
     instances: nextInstances,
@@ -2726,6 +2904,13 @@ export const unwrapInstance = (
   }
 
   const patches: BuilderPatchChange["patches"] = [];
+  if (nextSelectedInstance.label !== selectedInstance.label) {
+    patches.push({
+      op: selectedInstance.label === undefined ? "add" : "replace",
+      path: [instanceId, "label"],
+      value: nextSelectedInstance.label,
+    });
+  }
   if (nextParentInstance.children.length === 0) {
     patches.push({ op: "remove", path: [parentInstanceId] });
   } else {
@@ -2883,6 +3068,27 @@ export const setInstanceTag = (
   if (instance === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }
+  const nextInstance = { ...instance, tag: input.tag };
+  const collision = findBlockTemplateNameCollision({
+    instance,
+    nextInstance,
+    instances,
+  });
+  if (collision !== undefined) {
+    return throwDuplicateBlockTemplateName({
+      name: collision.name,
+      path: "tag",
+    });
+  }
+  requireBlockTemplateNameConfirmation({
+    required: getBlockTemplateNameConfirmation({
+      changes: [{ instance, nextInstance }],
+      instances,
+      props: state.props.values(),
+    }),
+    confirm: input.templateNameConfirmation,
+    path: "tag",
+  });
 
   const payload: BuilderPatchChange[] = [];
   if (input.legacyPropName !== undefined) {
@@ -2920,7 +3126,7 @@ export const setInstanceTag = (
 };
 
 export const setInstanceLabel = (
-  state: Pick<BuilderState, "instances">,
+  state: Pick<BuilderState, "instances"> & Partial<Pick<BuilderState, "props">>,
   input: z.infer<typeof setInstanceLabelInput>
 ) => {
   const instances = getRequiredInstances(state);
@@ -2939,6 +3145,36 @@ export const setInstanceLabel = (
               getSlotChildrenSignature(instance)
         )
       : [instance];
+
+  const prospectiveInstances = new Map(instances);
+  for (const targetInstance of targetInstances) {
+    prospectiveInstances.set(targetInstance.id, { ...targetInstance, label });
+  }
+  for (const targetInstance of targetInstances) {
+    const collision = findBlockTemplateNameCollision({
+      instance: targetInstance,
+      nextInstance: prospectiveInstances.get(targetInstance.id)!,
+      instances: prospectiveInstances,
+    });
+    if (collision !== undefined) {
+      return throwDuplicateBlockTemplateName({
+        name: collision.name,
+        path: "label",
+      });
+    }
+  }
+  requireBlockTemplateNameConfirmation({
+    required: getBlockTemplateNameConfirmation({
+      changes: targetInstances.map((targetInstance) => ({
+        instance: targetInstance,
+        nextInstance: prospectiveInstances.get(targetInstance.id),
+      })),
+      instances,
+      props: state.props?.values() ?? [],
+    }),
+    confirm: input.templateNameConfirmation,
+    path: "label",
+  });
 
   const patches: BuilderPatchChange["patches"] = [];
   for (const targetInstance of targetInstances) {
@@ -2995,6 +3231,18 @@ export const deleteInstances = (
   if (error?.type === "parent-not-found") {
     return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
   }
+  requireBlockTemplateNameConfirmation({
+    required: getBlockTemplateNameConfirmation({
+      changes: input.instanceIds.flatMap((instanceId) => {
+        const instance = mutationState.instances.get(instanceId);
+        return instance === undefined ? [] : [{ instance }];
+      }),
+      instances: mutationState.instances,
+      props: mutationState.props.values(),
+    }),
+    confirm: input.templateNameConfirmation,
+    path: "instanceIds",
+  });
   return createRuntimeMutation({
     payload,
     result: { instanceIds },
@@ -3054,6 +3302,15 @@ export const deleteInstanceBySelector = (
     if (error?.type === "parent-not-found") {
       return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
     }
+    requireBlockTemplateNameConfirmation({
+      required: getBlockTemplateNameConfirmation({
+        changes: [{ instance: targetInstance }],
+        instances: draft.instances,
+        props: draft.props.values(),
+      }),
+      confirm: input.templateNameConfirmation,
+      path: "instanceSelector",
+    });
     instanceIds = deletePayload.instanceIds;
     applyBuilderPatchPayloadMutable(
       (namespace) => getWebstudioDataNamespace(draft, namespace),

@@ -27,7 +27,7 @@ import {
   pickedCompletion,
 } from "@codemirror/autocomplete";
 import { javascript } from "@codemirror/lang-javascript";
-import { textVariants, css, rawTheme } from "@webstudio-is/design-system";
+import { css } from "@webstudio-is/design-system";
 import {
   lintExpression,
   allowedStringMethods,
@@ -43,6 +43,7 @@ import {
   type EditorApi,
   foldGutterExtension,
   getCodeEditorCssVars,
+  linterTooltipTheme,
   normalizeEditorValue,
 } from "~/shared/code-editor-base";
 import {
@@ -538,28 +539,6 @@ const wrapperStyle = css({
     },
   },
   defaultVariants: { size: "default" },
-});
-
-const linterTooltipTheme = EditorView.theme({
-  ".cm-tooltip:has(.cm-tooltip-lint)": {
-    backgroundColor: "transparent",
-    borderWidth: 0,
-    paddingTop: rawTheme.spacing[5],
-    paddingBottom: rawTheme.spacing[5],
-    pointerEvents: "none",
-  },
-  ".cm-tooltip-lint": {
-    backgroundColor: rawTheme.colors.backgroundTooltipMain,
-    color: rawTheme.colors.foregroundContrastMain,
-    borderRadius: rawTheme.borderRadius[7],
-    padding: rawTheme.spacing[5],
-  },
-  ".cm-tooltip-lint .cm-diagnostic": {
-    borderWidth: 0,
-    padding: 0,
-    margin: 0,
-    ...textVariants.regular,
-  },
 });
 
 const fullSizeEditorTheme = EditorView.theme({

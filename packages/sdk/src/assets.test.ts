@@ -139,6 +139,7 @@ describe("allowed-file-types", () => {
       ["txt", "plain"],
       ["csv", "plain"],
       ["md", "markdown"],
+      ["mdx", "markdown"],
       ["js", "javascript"],
       ["css", "css"],
       ["json", "json"],
@@ -163,12 +164,14 @@ describe("allowed-file-types", () => {
       expect(getMimeTypeByExtension("png")).toBe("image/png");
       expect(getMimeTypeByExtension("pdf")).toBe("application/pdf");
       expect(getMimeTypeByExtension("mp4")).toBe("video/mp4");
+      expect(getMimeTypeByExtension("mdx")).toBe("text/mdx");
     });
 
     test("is case-insensitive", () => {
       expect(getMimeTypeByExtension("JPG")).toBe("image/jpeg");
       expect(getMimeTypeByExtension("PNG")).toBe("image/png");
       expect(getMimeTypeByExtension("PDF")).toBe("application/pdf");
+      expect(getMimeTypeByExtension("MDX")).toBe("text/mdx");
     });
 
     test("returns undefined for invalid extension", () => {

@@ -1,4 +1,3 @@
-import { useCallback, useState } from "react";
 import { styled, type Rect } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { theme } from "@webstudio-is/design-system";
@@ -6,39 +5,7 @@ import {
   InstanceIcon,
   getInstanceLabel,
 } from "~/builder/shared/instance-label";
-
-type LabelPosition = "top" | "inside" | "bottom";
-type LabelRefCallback = (element: HTMLElement | null) => void;
-
-/**
- * Detects if there is no space on top and for the label and tells to show it inside.
- * - if there is enough space for the label on top of the instance - top
- * - else if instance height is more than 250px - bottom
- * - else inside-top - last resort because it covers a bit of the instance content
- */
-const useLabelPosition = (
-  instanceRect: Rect
-): [LabelRefCallback, LabelPosition] => {
-  const [position, setPosition] = useState<LabelPosition>("top");
-
-  const ref = useCallback(
-    (element: null | HTMLElement) => {
-      if (element === null || instanceRect === undefined) {
-        return;
-      }
-      const labelRect = element.getBoundingClientRect();
-      let nextPosition: LabelPosition = "top";
-      // Label won't fit above the instance outline
-      if (labelRect.height > instanceRect.top) {
-        nextPosition = instanceRect.height < 250 ? "bottom" : "inside";
-      }
-      setPosition(nextPosition);
-    },
-    [instanceRect]
-  );
-
-  return [ref, position];
-};
+import { useOutlineControlPosition } from "./use-outline-control-position";
 
 const LabelContainer = styled(
   "div",
@@ -98,7 +65,7 @@ type LabelProps = {
 };
 
 export const Label = ({ instance, instanceRect, variant }: LabelProps) => {
-  const [labelRef, position] = useLabelPosition(instanceRect);
+  const [labelRef, position] = useOutlineControlPosition(instanceRect);
   return (
     <LabelContainer position={position} variant={variant} ref={labelRef}>
       <InstanceIcon size="1em" instance={instance} />
