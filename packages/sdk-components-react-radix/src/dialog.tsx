@@ -16,43 +16,17 @@ import {
   getClosestInstance,
   type Hook,
 } from "@webstudio-is/react-sdk/runtime";
-
-/**
- * Naive heuristic to determine if a click event will cause navigate
- */
-const willNavigate = (event: MouseEvent) => {
-  const { target } = event;
-
-  if (target instanceof HTMLAnchorElement === false) {
-    return false;
-  }
-
-  if (target.hasAttribute("href") === false) {
-    return false;
-  }
-
-  if (target.href === "#") {
-    return false;
-  }
-
-  if (target.hasAttribute("target") && target.target === "_blank") {
-    return false;
-  }
-
-  if (event.ctrlKey || event.metaKey) {
-    return false;
-  }
-
-  return true;
-};
+import {
+  getLinkActivation,
+  NavigationOverlayContext,
+  useNavigationOverlay,
+} from "./navigation-overlay";
 
 // wrap in forwardRef because Root is functional component without ref
 export const Dialog = forwardRef<
   HTMLDivElement,
   Omit<ComponentProps<typeof DialogPrimitive.Root>, "defaultOpen">
 >((props, _ref) => {
-  const { renderer } = useContext(ReactSdkContext);
-
   const currentOpen = props.open ?? false;
   const [open, setOpen] = useState(currentOpen);
   // synchronize external value with local one when changed
@@ -62,45 +36,18 @@ export const Dialog = forwardRef<
     await interactionResponse();
     setOpen(open);
   }, []);
-
-  /**
-   * Close the dialog when a navigable link within it is clicked.
-   */
-  useEffect(() => {
-    if (renderer !== undefined) {
-      return;
-    }
-
-    if (open === false) {
-      return;
-    }
-
-    const handleClick = (event: MouseEvent) => {
-      const { target } = event;
-
-      if (willNavigate(event) === false) {
-        return;
-      }
-
-      if (target instanceof HTMLAnchorElement === false) {
-        return false;
-      }
-
-      if (target.closest('[role="dialog"]')) {
-        onOpenChangeHandler?.(false);
-      }
-    };
-
-    window.addEventListener("click", handleClick);
-    return () => window.removeEventListener("click", handleClick);
-  }, [open, onOpenChangeHandler, renderer]);
+  const close = useCallback(() => {
+    void onOpenChangeHandler(false);
+  }, [onOpenChangeHandler]);
 
   return (
-    <DialogPrimitive.Root
-      {...props}
-      onOpenChange={onOpenChangeHandler}
-      open={open}
-    />
+    <NavigationOverlayContext.Provider value={close}>
+      <DialogPrimitive.Root
+        {...props}
+        onOpenChange={onOpenChangeHandler}
+        open={open}
+      />
+    </NavigationOverlayContext.Provider>
   );
 });
 
@@ -137,45 +84,24 @@ export const DialogOverlay = forwardRef<
 export const DialogContent = forwardRef<
   HTMLDivElement,
   ComponentProps<typeof DialogPrimitive.Content>
->((props, ref) => {
+>(({ onClickCapture, onCloseAutoFocus, ...props }, ref) => {
   const preventAutoFocusOnClose = useRef(false);
   const { renderer } = useContext(ReactSdkContext);
-
-  /**
-   * Prevent focusing on the trigger after a navigable link in a dialog is clicked and closes the dialog.
-   */
-  useEffect(() => {
-    if (renderer !== undefined) {
-      return;
-    }
-
-    preventAutoFocusOnClose.current = false;
-
-    const handleClick = (event: MouseEvent) => {
-      const { target } = event;
-
-      if (willNavigate(event) === false) {
-        return;
-      }
-
-      if (target instanceof HTMLAnchorElement === false) {
-        return false;
-      }
-
-      if (target.closest('[role="dialog"]')) {
-        preventAutoFocusOnClose.current = true;
-      }
-    };
-
-    window.addEventListener("click", handleClick);
-    return () => window.removeEventListener("click", handleClick);
-  }, [renderer]);
+  const close = useNavigationOverlay();
 
   return (
     <DialogPrimitive.Content
       ref={ref}
       {...props}
+      onClickCapture={(event) => {
+        onClickCapture?.(event);
+        if (renderer === undefined && getLinkActivation(event)) {
+          preventAutoFocusOnClose.current = true;
+          close?.();
+        }
+      }}
       onCloseAutoFocus={(event) => {
+        onCloseAutoFocus?.(event);
         if (preventAutoFocusOnClose.current) {
           event.preventDefault();
         }

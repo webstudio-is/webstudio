@@ -2,7 +2,10 @@ import {
   Children,
   forwardRef,
   type ComponentPropsWithoutRef,
+  useCallback,
   useContext,
+  useEffect,
+  useState,
 } from "react";
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
 import { getIndexWithinAncestorFromProps } from "@webstudio-is/sdk/runtime";
@@ -11,6 +14,11 @@ import {
   ReactSdkContext,
   type Hook,
 } from "@webstudio-is/react-sdk/runtime";
+import {
+  getLinkActivation,
+  NavigationOverlayContext,
+  useNavigationOverlay,
+} from "./navigation-overlay";
 
 export const NavigationMenu = forwardRef<
   HTMLLIElement,
@@ -18,7 +26,7 @@ export const NavigationMenu = forwardRef<
     ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root>,
     "orientation" | "aria-orientation"
   >
->(({ value: propsValue, ...props }, ref) => {
+>(({ value: propsValue, defaultValue, onValueChange, ...props }, ref) => {
   /**
    * If the value is an empty string, "NavigationMenuViewport" isn't in the tree.
    * This is Radix's way to differentiate animations. However, in the builder, we can't style non-existing elements.
@@ -26,18 +34,63 @@ export const NavigationMenu = forwardRef<
    * This ensures "NavigationMenuViewport" always appears in the HTML tree.
    **/
   const { renderer } = useContext(ReactSdkContext);
-  let value = propsValue;
+  const currentValue = propsValue ?? defaultValue ?? "";
+  const [openValue, setOpenValue] = useState(currentValue);
+  useEffect(() => setOpenValue(currentValue), [currentValue]);
+  const handleValueChange = useCallback(
+    (value: string) => {
+      setOpenValue(value);
+      onValueChange?.(value);
+    },
+    [onValueChange]
+  );
+  const close = useCallback(() => handleValueChange(""), [handleValueChange]);
+
+  let value = openValue;
   if (renderer === "canvas") {
     value = value === "" ? "-1" : value;
   }
 
-  return <NavigationMenuPrimitive.Root ref={ref} value={value} {...props} />;
+  return (
+    <NavigationOverlayContext.Provider value={close}>
+      <NavigationMenuPrimitive.Root
+        {...props}
+        ref={ref}
+        value={value}
+        onValueChange={handleValueChange}
+      />
+    </NavigationOverlayContext.Provider>
+  );
 });
 
 export const NavigationMenuList = NavigationMenuPrimitive.List;
 
 export const NavigationMenuViewport = NavigationMenuPrimitive.Viewport;
-export const NavigationMenuContent = NavigationMenuPrimitive.Content;
+export const NavigationMenuContent = forwardRef<
+  HTMLDivElement,
+  ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Content>
+>(({ onClickCapture, ...props }, ref) => {
+  const close = useNavigationOverlay();
+  const { renderer } = useContext(ReactSdkContext);
+
+  return (
+    <NavigationMenuPrimitive.Content
+      ref={ref}
+      {...props}
+      onClickCapture={(event) => {
+        onClickCapture?.(event);
+        const anchor = getLinkActivation(event);
+        if (
+          renderer === undefined &&
+          anchor !== undefined &&
+          anchor.hasAttribute("data-radix-collection-item") === false
+        ) {
+          close?.();
+        }
+      }}
+    />
+  );
+});
 
 export const NavigationMenuItem = forwardRef<
   HTMLLIElement,
