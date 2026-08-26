@@ -1988,7 +1988,10 @@ test("FormBlockLabel", async () => {
     },
   });
 
-  equalFragment(fragment, <$.Label htmlFor="email">Email Address</$.Label>);
+  equalFragment(
+    fragment,
+    <$.Label {...{ for: "email" }}>Email Address</$.Label>
+  );
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       label {
@@ -2122,7 +2125,10 @@ test("FormBlockLabel", async () => {
     },
   });
 
-  equalFragment(fragment, <$.Label htmlFor="email">Email Address</$.Label>);
+  equalFragment(
+    fragment,
+    <$.Label {...{ for: "email" }}>Email Address</$.Label>
+  );
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       label {
