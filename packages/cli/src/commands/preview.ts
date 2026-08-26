@@ -27,11 +27,11 @@ import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "../config";
 import { HandledCliError } from "../errors";
 import {
   getPreviewUrl,
-  getNpmInvocation,
   getNodeRuntimeEnv,
   previewBuildCacheMarker,
   previewProcessOwnerFile,
   runPreviewBuild,
+  resolvePreviewPackageManager,
   startPreviewServer,
   waitForPreviewExit,
 } from "../preview-server";
@@ -106,7 +106,8 @@ export const previewOptions = (yargs: CommonYargsArgv) =>
         "Preview builds the generated app and starts its production server.",
         "Preview dependencies are isolated under .webstudio/preview and reused across regenerations.",
         "Do not add generated-preview dependencies to the repository root package.json or pnpm-lock.yaml.",
-        "If dependency installation fails, check npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.",
+        "Preview uses the npm or pnpm launcher that started Webstudio. Set WEBSTUDIO_PREVIEW_PACKAGE_MANAGER to an npm or pnpm executable or JavaScript launcher to override it.",
+        "If dependency installation fails, check the reported package-manager path and network configuration, then reinstall or update the Webstudio CLI if the problem persists.",
       ].join("\n")
     );
 
@@ -185,6 +186,7 @@ type PreviewDependencyOperations = {
   ) => Promise<void>;
   writeFile: (path: string, data: string) => Promise<void>;
   nodeExecPath: string;
+  packageManagerExecPath?: string;
   npmExecPath?: string;
   platform: NodeJS.Platform;
   env: NodeJS.ProcessEnv;
@@ -266,6 +268,7 @@ export const ensurePreviewDependencies = async (
     symlink,
     writeFile,
     nodeExecPath: process.execPath,
+    packageManagerExecPath: process.env.WEBSTUDIO_PREVIEW_PACKAGE_MANAGER,
     npmExecPath: process.env.npm_execpath,
     platform: process.platform,
     env: process.env,
@@ -354,16 +357,27 @@ export const ensurePreviewDependencies = async (
     }
   }
 
-  const installArgs = [
-    "install",
-    "--legacy-peer-deps",
-    "--no-audit",
-    "--no-fund",
-    "--package-lock=false",
-    "--loglevel=error",
-    "--workspaces=false",
-  ];
-  const invocation = getNpmInvocation(installArgs, operations);
+  const packageManager = resolvePreviewPackageManager(operations);
+  const installArgs =
+    packageManager.name === "pnpm"
+      ? ["install", "--no-lockfile", "--loglevel=error", "--ignore-workspace"]
+      : [
+          "install",
+          "--legacy-peer-deps",
+          "--no-audit",
+          "--no-fund",
+          "--package-lock=false",
+          "--loglevel=error",
+          "--workspaces=false",
+        ];
+  const invocation = {
+    command: packageManager.command,
+    args: [...packageManager.argsPrefix, ...installArgs],
+  };
+  const packageManagerPath =
+    invocation.command === operations.nodeExecPath
+      ? invocation.args[0]
+      : invocation.command;
 
   try {
     await operations.execFile(invocation.command, invocation.args, {
@@ -377,13 +391,13 @@ export const ensurePreviewDependencies = async (
     });
   } catch (error) {
     throw new Error(
-      `PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies. Check the npm/network configuration, then reinstall or update webstudio if the problem persists.\n\nPackage-manager diagnostics:\n${getPreviewInstallFailureDiagnostics(error)}`,
+      `PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies with ${packageManager.name} at ${packageManagerPath}. Check the package-manager/network configuration, set WEBSTUDIO_PREVIEW_PACKAGE_MANAGER to an npm or pnpm executable or JavaScript launcher, then reinstall or update webstudio if the problem persists.\n\nPackage-manager diagnostics:\n${getPreviewInstallFailureDiagnostics(error)}`,
       { cause: error }
     );
   }
   if ((await hasRequiredDependencies(previewNodeModules)) === false) {
     throw new Error(
-      "PREVIEW_DEPENDENCIES_MISSING: npm completed without installing every dependency declared by the generated preview. Reinstall or update webstudio, then retry."
+      `PREVIEW_DEPENDENCIES_MISSING: ${packageManager.name} completed without installing every dependency declared by the generated preview. Reinstall or update webstudio, then retry.`
     );
   }
   await operations.writeFile(

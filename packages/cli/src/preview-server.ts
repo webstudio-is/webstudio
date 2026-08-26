@@ -43,6 +43,7 @@ export type PreviewServerDependencies = {
   writeFile: typeof writeFile;
   sleep: (ms: number) => Promise<void>;
   nodeExecPath: string;
+  packageManagerExecPath?: string;
   npmExecPath?: string;
   processExecArgv: string[];
   supervisorPath: string;
@@ -69,6 +70,7 @@ export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   writeFile,
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   nodeExecPath: process.execPath,
+  packageManagerExecPath: process.env.WEBSTUDIO_PREVIEW_PACKAGE_MANAGER,
   npmExecPath: process.env.npm_execpath,
   processExecArgv: process.execArgv,
   supervisorPath,
@@ -159,41 +161,73 @@ export const getPreviewStartArgs = (options: PreviewServerOptions) =>
       ]
     : ["run", "start"];
 
-export const getNpmInvocation = (
-  args: string[],
-  {
-    nodeExecPath = process.execPath,
-    npmExecPath = process.env.npm_execpath,
-    platform = process.platform,
-  }: {
-    nodeExecPath?: string;
-    npmExecPath?: string;
-    platform?: typeof process.platform;
-  } = {}
-) => {
-  const npmCliName =
-    npmExecPath === undefined
+type PreviewPackageManagerOptions = {
+  nodeExecPath?: string;
+  packageManagerExecPath?: string;
+  npmExecPath?: string;
+  platform?: typeof process.platform;
+};
+
+type PreviewPackageManager = {
+  name: "npm" | "pnpm";
+  command: string;
+  argsPrefix: string[];
+};
+
+export const resolvePreviewPackageManager = (
+  options: PreviewPackageManagerOptions = defaultPreviewServerDependencies
+): PreviewPackageManager => {
+  const nodeExecPath = options.nodeExecPath ?? process.execPath;
+  const packageManagerExecPath = options.packageManagerExecPath;
+  const npmExecPath = options.npmExecPath;
+  const platform = options.platform ?? process.platform;
+  const configuredExecPath = packageManagerExecPath ?? npmExecPath;
+  const executableName =
+    configuredExecPath === undefined
       ? undefined
       : platform === "win32"
-        ? win32.basename(npmExecPath)
-        : basename(npmExecPath);
-  if (npmExecPath !== undefined && npmCliName !== undefined) {
+        ? win32.basename(configuredExecPath).toLowerCase()
+        : basename(configuredExecPath).toLowerCase();
+  if (configuredExecPath !== undefined && executableName !== undefined) {
     const npmCliPath =
-      npmCliName === "npm-cli.js"
-        ? npmExecPath
-        : npmCliName === "npx-cli.js"
+      executableName === "npm-cli.js"
+        ? configuredExecPath
+        : executableName === "npx-cli.js"
           ? platform === "win32"
-            ? win32.join(win32.dirname(npmExecPath), "npm-cli.js")
-            : join(dirname(npmExecPath), "npm-cli.js")
+            ? win32.join(win32.dirname(configuredExecPath), "npm-cli.js")
+            : join(dirname(configuredExecPath), "npm-cli.js")
           : undefined;
     if (npmCliPath !== undefined) {
-      return { command: nodeExecPath, args: [npmCliPath, ...args] };
+      return {
+        name: "npm",
+        command: nodeExecPath,
+        argsPrefix: [npmCliPath],
+      };
+    }
+    if (["pnpm.js", "pnpm.cjs", "pnpm.mjs"].includes(executableName)) {
+      return {
+        name: "pnpm",
+        command: nodeExecPath,
+        argsPrefix: [configuredExecPath],
+      };
+    }
+    if (["pnpm", "pnpm.cmd", "pnpm.exe"].includes(executableName)) {
+      return { name: "pnpm", command: configuredExecPath, argsPrefix: [] };
+    }
+    if (["npm", "npm.cmd", "npm.exe"].includes(executableName)) {
+      return { name: "npm", command: configuredExecPath, argsPrefix: [] };
+    }
+    if (packageManagerExecPath !== undefined) {
+      throw new Error(
+        `PREVIEW_PACKAGE_MANAGER_UNSUPPORTED: WEBSTUDIO_PREVIEW_PACKAGE_MANAGER must point to an npm or pnpm executable or JavaScript launcher. Received: ${packageManagerExecPath}`
+      );
     }
   }
   if (platform === "win32") {
     return {
+      name: "npm",
       command: nodeExecPath,
-      args: [
+      argsPrefix: [
         win32.join(
           win32.dirname(nodeExecPath),
           "node_modules",
@@ -201,11 +235,21 @@ export const getNpmInvocation = (
           "bin",
           "npm-cli.js"
         ),
-        ...args,
       ],
     };
   }
-  return { command: "npm", args };
+  return { name: "npm", command: "npm", argsPrefix: [] };
+};
+
+export const getPackageManagerInvocation = (
+  args: string[],
+  options: PreviewPackageManagerOptions = defaultPreviewServerDependencies
+) => {
+  const packageManager = resolvePreviewPackageManager(options);
+  return {
+    command: packageManager.command,
+    args: [...packageManager.argsPrefix, ...args],
+  };
 };
 
 export const runPreviewBuild = async (
@@ -213,7 +257,10 @@ export const runPreviewBuild = async (
   cwd?: string,
   stdio: StdioOptions = "inherit"
 ) => {
-  const invocation = getNpmInvocation(getPreviewBuildArgs(), dependencies);
+  const invocation = getPackageManagerInvocation(
+    getPreviewBuildArgs(),
+    dependencies
+  );
   const buildProcess = dependencies.spawn(invocation.command, invocation.args, {
     cwd,
     stdio,
@@ -278,7 +325,7 @@ export const startPreviewServer = (
   },
   dependencies = defaultPreviewServerDependencies
 ): PreviewServerResult => {
-  const invocation = getNpmInvocation(
+  const invocation = getPackageManagerInvocation(
     getPreviewStartArgs(options),
     dependencies
   );

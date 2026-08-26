@@ -466,6 +466,7 @@ test("installs isolated generated dependencies when the cli does not ship them",
     readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
     writeFile,
     nodeExecPath: "/opt/webstudio-node/bin/node",
+    npmExecPath: undefined,
     platform: "linux",
     env: { PATH: "/usr/bin" },
   });
@@ -529,7 +530,10 @@ test("replaces a parent workspace dependency link for published previews", async
       "dir"
     );
 
-    await ensurePreviewDependencies(previewProjectDir, { execFile });
+    await ensurePreviewDependencies(previewProjectDir, {
+      execFile,
+      npmExecPath: undefined,
+    });
 
     expect(await realpath(join(previewProjectDir, "node_modules"))).not.toBe(
       await realpath(parentNodeModules)
@@ -624,6 +628,44 @@ test("uses npm-cli from an npx launcher and forwards a writable npm cache", asyn
   );
 });
 
+test("installs generated dependencies through the available windows pnpm launcher", async () => {
+  let installed = false;
+  const execFile = vi.fn(async () => {
+    installed = true;
+    return { stdout: "", stderr: "" };
+  });
+
+  await ensurePreviewDependencies("C:/project/.webstudio/preview", {
+    access: vi.fn(async (path) => {
+      if (installed && path.startsWith("C:/project/.webstudio/preview")) {
+        return;
+      }
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    execFile,
+    lstat: vi.fn(async () => {
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+    nodeExecPath: "C:\\Program Files\\Codex\\node.exe",
+    npmExecPath: "C:\\Program Files\\Codex\\node_modules\\pnpm\\bin\\pnpm.cjs",
+    platform: "win32",
+    writeFile: vi.fn(async () => undefined),
+  });
+
+  expect(execFile).toHaveBeenCalledWith(
+    "C:\\Program Files\\Codex\\node.exe",
+    [
+      "C:\\Program Files\\Codex\\node_modules\\pnpm\\bin\\pnpm.cjs",
+      "install",
+      "--no-lockfile",
+      "--loglevel=error",
+      "--ignore-workspace",
+    ],
+    expect.objectContaining({ cwd: "C:/project/.webstudio/preview" })
+  );
+});
+
 test("reports an actionable error when generated dependencies cannot install", async () => {
   const access = vi.fn(async () => {
     throw Object.assign(new Error("missing"), { code: "ENOENT" });
@@ -665,9 +707,15 @@ test("reports sanitized package-manager diagnostics for preview install failures
       throw Object.assign(new Error("missing"), { code: "ENOENT" });
     }),
     readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+    nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+    npmExecPath:
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
     platform: "win32",
   });
 
+  await expect(promise).rejects.toThrow(
+    "with npm at C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js"
+  );
   await expect(promise).rejects.toThrow("npm error code EACCES");
   await expect(promise).rejects.toThrow("authToken=[redacted]");
   await expect(promise).rejects.not.toThrow("private-token");
@@ -684,6 +732,7 @@ test("rejects an incomplete generated dependency tree", async () => {
         throw Object.assign(new Error("missing"), { code: "ENOENT" });
       }),
       readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+      npmExecPath: undefined,
       platform: "linux",
     })
   ).rejects.toThrow(
@@ -842,7 +891,8 @@ test("documents generated app dependency setup", () => {
   expect(epilogueText).toContain("isolated under .webstudio/preview");
   expect(epilogueText).toContain("reused across regenerations");
   expect(epilogueText).toContain("Do not add generated-preview dependencies");
-  expect(epilogueText).toContain("check npm and network configuration");
+  expect(epilogueText).toContain("WEBSTUDIO_PREVIEW_PACKAGE_MANAGER");
+  expect(epilogueText).toContain("reported package-manager path");
 });
 
 test("reports the locked preview path, owned PID, and scoped recovery", async () => {

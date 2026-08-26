@@ -7,7 +7,7 @@ import {
   createPreviewController,
   findAvailablePort,
   getPreviewBuildArgs,
-  getNpmInvocation,
+  getPackageManagerInvocation,
   getPreviewStartArgs,
   getPreviewUrl,
   isPreviewPortAvailable,
@@ -141,7 +141,7 @@ test("builds iterative preview args for an ordinary reload server", () => {
 
 test("reuses the npm cli that launched webstudio for preview commands", () => {
   expect(
-    getNpmInvocation(["run", "build"], {
+    getPackageManagerInvocation(["run", "build"], {
       nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
       npmExecPath:
         "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
@@ -159,7 +159,7 @@ test("reuses the npm cli that launched webstudio for preview commands", () => {
 
 test("uses npm-cli when webstudio was launched through npx on windows", () => {
   expect(
-    getNpmInvocation(["run", "build"], {
+    getPackageManagerInvocation(["run", "build"], {
       nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
       npmExecPath:
         "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
@@ -175,9 +175,53 @@ test("uses npm-cli when webstudio was launched through npx on windows", () => {
   });
 });
 
+test("uses the pnpm launcher that launched webstudio on windows", () => {
+  expect(
+    getPackageManagerInvocation(["run", "build"], {
+      nodeExecPath: "C:\\Program Files\\Codex\\node.exe",
+      npmExecPath:
+        "C:\\Program Files\\Codex\\node_modules\\pnpm\\bin\\pnpm.cjs",
+      platform: "win32",
+    })
+  ).toEqual({
+    command: "C:\\Program Files\\Codex\\node.exe",
+    args: [
+      "C:\\Program Files\\Codex\\node_modules\\pnpm\\bin\\pnpm.cjs",
+      "run",
+      "build",
+    ],
+  });
+});
+
+test("uses an explicit preview package-manager override", () => {
+  expect(
+    getPackageManagerInvocation(["run", "build"], {
+      nodeExecPath: "C:\\Program Files\\Codex\\node.exe",
+      packageManagerExecPath: "C:\\Tools\\pnpm\\pnpm.cjs",
+      npmExecPath:
+        "C:\\Program Files\\Codex\\node_modules\\npm\\bin\\npm-cli.js",
+      platform: "win32",
+    })
+  ).toEqual({
+    command: "C:\\Program Files\\Codex\\node.exe",
+    args: ["C:\\Tools\\pnpm\\pnpm.cjs", "run", "build"],
+  });
+});
+
+test("rejects an unsupported preview package-manager override", () => {
+  expect(() =>
+    getPackageManagerInvocation(["run", "build"], {
+      packageManagerExecPath: "C:\\Tools\\yarn.cjs",
+      platform: "win32",
+    })
+  ).toThrow(
+    "PREVIEW_PACKAGE_MANAGER_UNSUPPORTED: WEBSTUDIO_PREVIEW_PACKAGE_MANAGER must point to an npm or pnpm executable or JavaScript launcher. Received: C:\\Tools\\yarn.cjs"
+  );
+});
+
 test("uses npm-cli when windows npm launcher metadata is unavailable", () => {
   expect(
-    getNpmInvocation(["run", "build"], {
+    getPackageManagerInvocation(["run", "build"], {
       nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
       npmExecPath: undefined,
       platform: "win32",
@@ -214,6 +258,33 @@ test("runs generated project production build", async () => {
       PATH: expect.stringMatching(/^\/opt\/webstudio-node\/bin:/),
     }),
   });
+});
+
+test("runs generated project production build through windows pnpm", async () => {
+  const process = createPreviewProcess();
+  const spawn = vi.fn(() => process);
+  resolveProcessExit(process);
+
+  await runPreviewBuild(
+    createDependencies({
+      spawn: spawn as never,
+      nodeExecPath: "C:\\Program Files\\Codex\\node.exe",
+      npmExecPath:
+        "C:\\Program Files\\Codex\\node_modules\\pnpm\\bin\\pnpm.cjs",
+      platform: "win32",
+    }),
+    "C:/project/.webstudio/preview"
+  );
+
+  expect(spawn).toHaveBeenCalledWith(
+    "C:\\Program Files\\Codex\\node.exe",
+    [
+      "C:\\Program Files\\Codex\\node_modules\\pnpm\\bin\\pnpm.cjs",
+      "run",
+      "build",
+    ],
+    expect.objectContaining({ cwd: "C:/project/.webstudio/preview" })
+  );
 });
 
 test("materializes downloaded assets into the production client tree", async () => {
@@ -382,6 +453,44 @@ test("starts generated project production server through windows npm-cli", () =>
         NODE_ENV: "production",
       }),
     }
+  );
+});
+
+test("starts generated project production server through windows pnpm", () => {
+  const process = {} as ReturnType<typeof startPreviewServer>["process"];
+  const spawn = vi.fn(() => process);
+
+  startPreviewServer(
+    {
+      host: "127.0.0.1",
+      port: 5173,
+      cwd: "C:/project/.webstudio/preview",
+    },
+    createDependencies({
+      spawn: spawn as never,
+      nodeExecPath: "C:\\Program Files\\Codex\\node.exe",
+      npmExecPath:
+        "C:\\Program Files\\Codex\\node_modules\\pnpm\\bin\\pnpm.cjs",
+      platform: "win32",
+    })
+  );
+
+  expect(spawn).toHaveBeenCalledWith(
+    "C:\\Program Files\\Codex\\node.exe",
+    [
+      "/tmp/preview-process-supervisor.js",
+      JSON.stringify({
+        command: "C:\\Program Files\\Codex\\node.exe",
+        args: [
+          "C:\\Program Files\\Codex\\node_modules\\pnpm\\bin\\pnpm.cjs",
+          "run",
+          "start",
+        ],
+        cwd: "C:/project/.webstudio/preview",
+        ownerFile: "C:/project/.webstudio/preview-process.json",
+      }),
+    ],
+    expect.objectContaining({ cwd: "C:/project/.webstudio/preview" })
   );
 });
 
