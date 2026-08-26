@@ -330,7 +330,14 @@ test("Editor can edit text and content props but not design props", async () => 
       message: "Expected Style tab to be unavailable in content mode",
     });
     await expectTextHidden({ page, text: "Style sources" });
-    await expectTextHidden({ page, text: "Target" });
+    await page
+      .getByText("Target", { exact: true })
+      .first()
+      .waitFor({ state: "visible" });
+    await page
+      .getByText("Download", { exact: true })
+      .first()
+      .waitFor({ state: "visible" });
 
     await selectCanvasTextInstanceForProps({
       page,
