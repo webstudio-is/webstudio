@@ -259,6 +259,31 @@ test.each([
   expect(screen.getByText("Destination")).toBeDefined();
 });
 
+test("keeps a popover open when the document target opens another context", () => {
+  const base = document.createElement("base");
+  base.target = "_blank";
+  document.head.append(base);
+
+  try {
+    render(
+      <Popover open>
+        <PopoverTrigger>
+          <button>Open</button>
+        </PopoverTrigger>
+        <PopoverContent>
+          <Link />
+        </PopoverContent>
+      </Popover>
+    );
+
+    fireEvent.click(screen.getByText("Destination"));
+
+    expect(screen.getByText("Destination")).toBeDefined();
+  } finally {
+    base.remove();
+  }
+});
+
 test("keeps navigation overlays interactive on the builder canvas", () => {
   render(
     <ReactSdkContext.Provider

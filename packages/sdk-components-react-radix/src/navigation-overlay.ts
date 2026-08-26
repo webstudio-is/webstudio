@@ -33,7 +33,12 @@ export const getLinkActivation = (event: LinkActivationEvent) => {
     return;
   }
 
-  const target = anchor.getAttribute("target");
+  const target =
+    anchor.getAttribute("target") ??
+    anchor.ownerDocument
+      .querySelector<HTMLBaseElement>("base[target]")
+      ?.getAttribute("target") ??
+    null;
   const targetKeyword = target?.toLowerCase();
   const currentWindow = anchor.ownerDocument.defaultView;
   const targetsCurrentContext =
