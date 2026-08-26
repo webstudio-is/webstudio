@@ -4,7 +4,6 @@ import {
   type ComponentPropsWithoutRef,
   useCallback,
   useContext,
-  useEffect,
   useState,
 } from "react";
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
@@ -34,19 +33,21 @@ export const NavigationMenu = forwardRef<
    * This ensures "NavigationMenuViewport" always appears in the HTML tree.
    **/
   const { renderer } = useContext(ReactSdkContext);
-  const currentValue = propsValue ?? defaultValue ?? "";
-  const [openValue, setOpenValue] = useState(currentValue);
-  useEffect(() => setOpenValue(currentValue), [currentValue]);
+  const [uncontrolledValue, setUncontrolledValue] = useState(
+    () => defaultValue ?? ""
+  );
   const handleValueChange = useCallback(
     (value: string) => {
-      setOpenValue(value);
+      if (propsValue === undefined) {
+        setUncontrolledValue(value);
+      }
       onValueChange?.(value);
     },
-    [onValueChange]
+    [onValueChange, propsValue]
   );
   const close = useCallback(() => handleValueChange(""), [handleValueChange]);
 
-  let value = openValue;
+  let value = propsValue ?? uncontrolledValue;
   if (renderer === "canvas") {
     value = value === "" ? "-1" : value;
   }

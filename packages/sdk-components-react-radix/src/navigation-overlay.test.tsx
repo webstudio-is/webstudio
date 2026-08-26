@@ -16,6 +16,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogTitle,
+  DialogTrigger,
 } from "./dialog";
 import {
   NavigationMenu,
@@ -26,8 +27,12 @@ import {
   NavigationMenuTrigger,
 } from "./navigation-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+import { getLinkActivation } from "./navigation-overlay";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  window.history.replaceState(null, "", "/");
+});
 
 const Link = forwardRef<
   HTMLAnchorElement,
@@ -38,7 +43,7 @@ const Link = forwardRef<
   </a>
 ));
 
-test("closes a popover when a nested link element is activated", () => {
+test("closes a popover and preserves hash navigation", async () => {
   render(
     <Popover open>
       <PopoverTrigger>
@@ -53,12 +58,13 @@ test("closes a popover when a nested link element is activated", () => {
   fireEvent.click(screen.getByText("Destination"));
 
   expect(screen.queryByText("Destination")).toBeNull();
+  await waitFor(() => expect(window.location.hash).toBe("#destination"));
 });
 
 test("closes a navigation menu when a plain link is activated", () => {
   const onValueChange = vi.fn();
   render(
-    <NavigationMenu value="menu" onValueChange={onValueChange}>
+    <NavigationMenu defaultValue="menu" onValueChange={onValueChange}>
       <NavigationMenuList>
         <NavigationMenuItem value="menu">
           <NavigationMenuTrigger>
@@ -78,10 +84,34 @@ test("closes a navigation menu when a plain link is activated", () => {
   expect(onValueChange).toHaveBeenCalledExactlyOnceWith("");
 });
 
+test("preserves controlled Navigation Menu state", () => {
+  const onValueChange = vi.fn();
+  const menu = (
+    <NavigationMenu value="menu" onValueChange={onValueChange}>
+      <NavigationMenuList>
+        <NavigationMenuItem value="menu">
+          <NavigationMenuTrigger>
+            <button>Menu</button>
+          </NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <Link />
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
+  );
+  render(menu);
+
+  fireEvent.click(screen.getByText("Destination"));
+
+  expect(screen.getByText("Destination")).toBeDefined();
+  expect(onValueChange).toHaveBeenCalledExactlyOnceWith("");
+});
+
 test("preserves Navigation Menu Link dismissal behavior", () => {
   const onValueChange = vi.fn();
   render(
-    <NavigationMenu value="menu" onValueChange={onValueChange}>
+    <NavigationMenu defaultValue="menu" onValueChange={onValueChange}>
       <NavigationMenuList>
         <NavigationMenuItem value="menu">
           <NavigationMenuTrigger>
@@ -106,6 +136,9 @@ test("preserves Navigation Menu Link dismissal behavior", () => {
 test("closes a dialog when a nested link element is activated", async () => {
   render(
     <Dialog open>
+      <DialogTrigger>
+        <button>Open navigation</button>
+      </DialogTrigger>
       <DialogContent>
         <DialogTitle>Navigation</DialogTitle>
         <DialogDescription>Choose a destination</DialogDescription>
@@ -117,7 +150,60 @@ test("closes a dialog when a nested link element is activated", async () => {
   fireEvent.click(screen.getByText("Destination"));
 
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(document.activeElement).not.toBe(
+    screen.getByRole("button", { name: "Open navigation" })
+  );
 });
+
+test.each(["_parent", "_top"])(
+  "closes an overlay for target=%s in the top-level context",
+  (target) => {
+    render(
+      <Popover open>
+        <PopoverTrigger>
+          <button>Open</button>
+        </PopoverTrigger>
+        <PopoverContent>
+          <Link target={target} />
+        </PopoverContent>
+      </Popover>
+    );
+
+    fireEvent.click(screen.getByText("Destination"));
+
+    expect(screen.queryByText("Destination")).toBeNull();
+  }
+);
+
+test.each(["_parent", "_top"])(
+  "keeps an overlay open for target=%s in a child context",
+  (target) => {
+    const iframe = document.createElement("iframe");
+    document.body.append(iframe);
+    const iframeDocument = iframe.contentDocument;
+    if (iframeDocument === null) {
+      throw new Error("Expected iframe document");
+    }
+    const anchor = iframeDocument.createElement("a");
+    const child = iframeDocument.createElement("span");
+    anchor.setAttribute("href", "#destination");
+    anchor.setAttribute("target", target);
+    anchor.append(child);
+
+    expect(
+      getLinkActivation({
+        target: child,
+        button: 0,
+        altKey: false,
+        ctrlKey: false,
+        metaKey: false,
+        shiftKey: false,
+      })
+    ).toBeUndefined();
+
+    iframe.remove();
+  }
+);
 
 test.each([
   ["a modified click", { ctrlKey: true }, {}],

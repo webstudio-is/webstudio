@@ -21,8 +21,11 @@ export const getLinkActivation = (event: LinkActivationEvent) => {
     return;
   }
 
-  const anchor = event.target.closest("a[href]");
-  if (anchor instanceof HTMLAnchorElement === false) {
+  const anchor = event.target.closest<HTMLAnchorElement>("a[href]");
+  if (
+    anchor === null ||
+    anchor.namespaceURI !== "http://www.w3.org/1999/xhtml"
+  ) {
     return;
   }
 
@@ -30,8 +33,18 @@ export const getLinkActivation = (event: LinkActivationEvent) => {
     return;
   }
 
-  const target = anchor.getAttribute("target")?.toLowerCase();
-  if (target !== undefined && target !== "" && target !== "_self") {
+  const target = anchor.getAttribute("target");
+  const targetKeyword = target?.toLowerCase();
+  const currentWindow = anchor.ownerDocument.defaultView;
+  const targetsCurrentContext =
+    target === null ||
+    target === "" ||
+    targetKeyword === "_self" ||
+    (targetKeyword === "_parent" && currentWindow?.parent === currentWindow) ||
+    (targetKeyword === "_top" && currentWindow?.top === currentWindow) ||
+    (targetKeyword?.startsWith("_") === false &&
+      target === currentWindow?.name);
+  if (targetsCurrentContext === false) {
     return;
   }
 
