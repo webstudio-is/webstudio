@@ -114,7 +114,11 @@ Click on any asset to view its details panel, which shows:
 
 - **Download** – Download the original asset file to your computer (Pro plan required)
 - **Review & Delete** – When an asset is in use, shows where it's used before confirming deletion. Unused assets can be deleted directly.
-- **Delete unused assets** – Click the brush icon in the Assets Panel header to find and remove all unused assets at once. A dialog lists every unused asset so you can review before confirming deletion. This command is also available from the [Command Panel](commands-and-search.md).
+- **Delete unused assets** – Click the brush icon in the Assets Panel header to
+  review unused assets. All assets are selected by default; uncheck any you want
+  to keep or use **Select all** to change the complete selection. Confirming
+  deletes only selected assets. This command is also available from the
+  [Command Panel](commands-and-search.md).
 
 {% hint style="info" %}
 Assets that are currently used in your project will show a settings gear icon. Attempting to delete them will display a list of all usages so you can review before confirming.
