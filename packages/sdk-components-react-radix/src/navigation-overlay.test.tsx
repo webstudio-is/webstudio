@@ -133,6 +133,37 @@ test("preserves Navigation Menu Link dismissal behavior", () => {
   expect(onValueChange).toHaveBeenCalledExactlyOnceWith("");
 });
 
+test.each([
+  ["a modified click", { ctrlKey: true }, {}],
+  ["a link opening another context", {}, { target: "_blank" }],
+] as const)(
+  "keeps a navigation menu open for %s",
+  (_name, eventInit, linkProps) => {
+    const onValueChange = vi.fn();
+    render(
+      <NavigationMenu defaultValue="menu" onValueChange={onValueChange}>
+        <NavigationMenuList>
+          <NavigationMenuItem value="menu">
+            <NavigationMenuTrigger>
+              <button>Menu</button>
+            </NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <NavigationMenuLink>
+                <Link {...linkProps} />
+              </NavigationMenuLink>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
+    );
+
+    fireEvent.click(screen.getByText("Destination"), eventInit);
+
+    expect(screen.getByText("Destination")).toBeDefined();
+    expect(onValueChange).not.toHaveBeenCalled();
+  }
+);
+
 test("closes a dialog when a nested link element is activated", async () => {
   render(
     <Dialog open>

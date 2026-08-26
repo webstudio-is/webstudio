@@ -4,6 +4,7 @@ import {
   type ComponentPropsWithoutRef,
   useCallback,
   useContext,
+  useRef,
   useState,
 } from "react";
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
@@ -84,7 +85,7 @@ export const NavigationMenuContent = forwardRef<
         if (
           renderer === undefined &&
           anchor !== undefined &&
-          anchor.hasAttribute("data-radix-collection-item") === false
+          anchor.hasAttribute("data-ws-navigation-menu-link") === false
         ) {
           close?.();
         }
@@ -106,11 +107,27 @@ export const NavigationMenuItem = forwardRef<
 export const NavigationMenuLink = forwardRef<
   HTMLAnchorElement,
   ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Link>
->(({ children, ...props }, ref) => {
+>(({ children, onClickCapture, onSelect, ...props }, ref) => {
   const firstChild = Children.toArray(children)[0];
+  const shouldDismissRef = useRef(false);
 
   return (
-    <NavigationMenuPrimitive.Link asChild={true} ref={ref} {...props}>
+    <NavigationMenuPrimitive.Link
+      asChild={true}
+      ref={ref}
+      {...props}
+      data-ws-navigation-menu-link=""
+      onClickCapture={(event) => {
+        onClickCapture?.(event);
+        shouldDismissRef.current = getLinkActivation(event) !== undefined;
+      }}
+      onSelect={(event) => {
+        onSelect?.(event);
+        if (shouldDismissRef.current === false) {
+          event.preventDefault();
+        }
+      }}
+    >
       {firstChild ?? <a>Add link component</a>}
     </NavigationMenuPrimitive.Link>
   );
