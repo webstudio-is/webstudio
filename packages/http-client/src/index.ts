@@ -6,6 +6,9 @@ import {
   type AssetFolder,
 } from "@webstudio-is/sdk";
 import {
+  assetContentDescriptor,
+  assetContentDescriptorHeader,
+  parseAssetContentDescriptor,
   type AssetFolderUpdateRequest,
   type AssetMetadataUpdate,
   type AssetQueryRequestInput,
@@ -974,6 +977,66 @@ export const readProjectAssetContent = async (
   return response;
 };
 
+export const createProjectAssetContentTransport = ({
+  projectId,
+  origin,
+  requestOrigin = origin,
+  authToken = () => undefined,
+  headers,
+  request = fetch,
+}: {
+  projectId: string;
+  origin: string;
+  requestOrigin?: string;
+  authToken?: () => string | undefined;
+  headers?: RequestHeaders;
+  request?: typeof fetch;
+}) => ({
+  read: ({
+    assetId,
+    range,
+  }: {
+    assetId: string;
+    range?: { offset: number; length: number };
+  }) =>
+    readProjectAssetContent({
+      projectId,
+      origin,
+      requestOrigin,
+      authToken: authToken(),
+      headers,
+      request,
+      assetId,
+      range,
+    }),
+  update: async ({
+    assetId,
+    expectedName,
+    data,
+  }: {
+    assetId: string;
+    expectedName: string;
+    data: Uint8Array;
+  }) => {
+    const { asset } = await updateProjectAssetContent({
+      projectId,
+      origin,
+      requestOrigin,
+      authToken: authToken(),
+      headers,
+      request,
+      assetId,
+      expectedName,
+      readAssetData: async () => Uint8Array.from(data),
+    });
+    return assetContentDescriptor.parse(asset);
+  },
+  parseAsset: (response: Response) =>
+    parseAssetContentDescriptor(
+      response.headers.get(assetContentDescriptorHeader)
+    ),
+});
+
 export const listProjectAssetFolders = async (
   params: AuthProjectParams & {
     request?: typeof fetch;
@@ -1446,6 +1509,38 @@ export const integrateRuntimeUi = runtimeProjectMutation(
 export const updateAsset = runtimeProjectMutation("update-asset");
 
 export const addAsset = runtimeProjectMutation("add-asset");
+
+export const inspectContentBlockSource =
+  projectQueryInput<RuntimeOperationParams>("inspect-content-block-source");
+
+export const connectContentBlockSource = runtimeProjectMutation(
+  "connect-content-block-source"
+);
+
+export const switchContentBlockSource = runtimeProjectMutation(
+  "switch-content-block-source"
+);
+
+export const disconnectContentBlockSource = runtimeProjectMutation(
+  "disconnect-content-block-source"
+);
+
+export const editContentBlockSource = runtimeProjectMutation(
+  "edit-content-block-source"
+);
+
+export const updateContentBlockFrontmatter = runtimeProjectMutation(
+  "update-content-block-frontmatter"
+);
+
+export const reloadContentBlockSource =
+  projectQueryInput<RuntimeOperationParams>("reload-content-block-source");
+
+export const migrateContentBlockTemplateReferences = runtimeProjectMutation(
+  "migrate-content-block-template-references"
+);
+
+export const insertMdxText = runtimeProjectMutation("insert-mdx-text");
 
 type ProjectSettingsInput = {
   meta?: {

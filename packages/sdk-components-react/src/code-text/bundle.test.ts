@@ -54,7 +54,7 @@ test("bundles only directly selected Shiki assets", async () => {
 test("keeps Shiki out of plain Code Text bundles", async () => {
   const inputs = await getBundleInputs(`
     import { CodeText } from "@webstudio-is/sdk-components-react/components";
-    export const code = <CodeText code="plain" />;
+    export const code = <CodeText>plain</CodeText>;
   `);
 
   expect(inputs.filter((path) => path.includes("shiki"))).toEqual([]);

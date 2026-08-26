@@ -356,7 +356,11 @@ describe("drop targets", () => {
         ]),
       ],
       ["first", createInstance("first", "Box")],
-      ["second", createInstance("second", "Box")],
+      [
+        "second",
+        createInstance("second", "Box", [{ type: "id", value: "nested" }]),
+      ],
+      ["nested", createInstance("nested", "Box")],
       ["other-block", createInstance("other-block", blockComponent)],
     ]);
 
@@ -364,6 +368,17 @@ describe("drop targets", () => {
       canDropInstanceSelector({
         dragSelector: ["first", "block", "body"],
         dropSelector: ["block", "body"],
+        instances,
+        props,
+        metas: componentMetas,
+        contentMode: true,
+      })
+    ).toBe(true);
+
+    expect(
+      canDropInstanceSelector({
+        dragSelector: ["first", "block", "body"],
+        dropSelector: ["second", "block", "body"],
         instances,
         props,
         metas: componentMetas,

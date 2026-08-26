@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -39,7 +40,12 @@ import {
   TextStrikethroughIcon,
 } from "@webstudio-is/icons";
 import { formatAssetName } from "@webstudio-is/project-build/runtime";
-import { getAssetUrl, getPagePath, type Asset } from "@webstudio-is/sdk";
+import {
+  getAssetUrl,
+  getPagePath,
+  isMdxFileAsset,
+  type Asset,
+} from "@webstudio-is/sdk";
 import { CodeEditor } from "~/shared/code-editor";
 import { EditorDialog, type EditorApi } from "~/shared/code-editor-base";
 import {
@@ -61,10 +67,15 @@ import {
 } from "~/builder/features/settings-panel/controls/url";
 import {
   getTextFileEditorExtensions,
+  getMdxPersistenceFeedback,
   isMarkdownAsset,
+  type MdxPersistenceFeedback,
   normalizeTextFileContent,
 } from "./text-file-utils";
 import { MarkdownSplitView } from "./markdown-preview";
+import { getAssetContentBridge } from "~/shared/asset-content-bridge.client";
+import { $externalContentRoots } from "~/shared/external-content-mutations";
+import type { AssetContentSessionState } from "@webstudio-is/content-engine/asset-content-session";
 
 type TextFileState =
   | { status: "loading" }
@@ -429,16 +440,43 @@ export const TextFileEditor = ({
 }) => {
   const assets = useStore($assets);
   const assetFolders = useStore($assetFolders);
+  const externalContentRoots = useStore($externalContentRoots);
   const asset = assets.get(assetId);
   const { assetContainers } = useAssets();
   const canEdit = useStore($authPermit) !== "view";
   const [state, setState] = useState<TextFileState>({ status: "loading" });
+  const [persistenceFeedback, setPersistenceFeedback] =
+    useState<MdxPersistenceFeedback>();
   const [previewOpen, setPreviewOpen] = useState(false);
   const currentAssetRef = useRef<Asset>();
   const persistedContentRef = useRef<string>();
   const requestedContentRef = useRef<string>();
   const saveQueueRef = useRef(Promise.resolve());
   const editorApiRef = useRef<EditorApi>();
+  const reportedConflictRef = useRef<string>();
+  const mdxSession =
+    asset !== undefined &&
+    isMdxFileAsset(asset) &&
+    asset.projectId !== undefined
+      ? getAssetContentBridge().getContentSession?.(asset.projectId)
+      : undefined;
+  const semanticDiagnostics = useMemo(
+    () =>
+      Array.from(externalContentRoots.values()).flatMap((root) =>
+        root.identity?.assetId === assetId &&
+        (root.projectId === undefined || root.projectId === asset?.projectId)
+          ? (root.diagnostics ?? [])
+          : []
+      ),
+    [asset?.projectId, assetId, externalContentRoots]
+  );
+  const languageExtensions = useMemo(
+    () =>
+      asset === undefined
+        ? []
+        : getTextFileEditorExtensions(asset, semanticDiagnostics),
+    [asset, semanticDiagnostics]
+  );
 
   useEffect(() => {
     const assetToLoad = $assets.get().get(assetId);
@@ -450,9 +488,44 @@ export const TextFileEditor = ({
 
     const controller = new AbortController();
     setState({ status: "loading" });
+    setPersistenceFeedback(undefined);
+    reportedConflictRef.current = undefined;
+
+    const applySessionState = (sessionState: AssetContentSessionState) => {
+      const feedback = getMdxPersistenceFeedback(sessionState);
+      setPersistenceFeedback(feedback);
+      if (
+        feedback?.kind === "conflicting" &&
+        reportedConflictRef.current !== feedback.message
+      ) {
+        reportedConflictRef.current = feedback.message;
+        getAssetContentBridge().requireReload(feedback.message);
+      }
+      if (feedback?.kind !== "conflicting") {
+        reportedConflictRef.current = undefined;
+      }
+    };
 
     const load = async () => {
       try {
+        if (isMdxFileAsset(assetToLoad)) {
+          const session = getAssetContentBridge().getContentSession?.(
+            assetToLoad.projectId
+          );
+          if (session === undefined) {
+            throw new Error("MDX content session is not available");
+          }
+          const opened = await session.open(assetId);
+          if (controller.signal.aborted) {
+            return;
+          }
+          currentAssetRef.current = assetToLoad;
+          persistedContentRef.current = opened.source;
+          requestedContentRef.current = opened.source;
+          applySessionState(opened);
+          setState({ status: "loaded", content: opened.source });
+          return;
+        }
         const response = await fetch(
           getAssetUrl(assetToLoad, window.location.origin),
           { signal: controller.signal }
@@ -475,7 +548,27 @@ export const TextFileEditor = ({
     };
 
     void load();
-    return () => controller.abort();
+    const unsubscribe = isMdxFileAsset(assetToLoad)
+      ? getAssetContentBridge()
+          .getContentSession?.(assetToLoad.projectId)
+          .subscribe((changedAssetId, sessionState) => {
+            if (changedAssetId !== assetId || controller.signal.aborted) {
+              return;
+            }
+            currentAssetRef.current = sessionState.asset as Asset;
+            persistedContentRef.current = sessionState.source;
+            applySessionState(sessionState);
+            if (requestedContentRef.current === sessionState.source) {
+              return;
+            }
+            requestedContentRef.current = sessionState.source;
+            setState({ status: "loaded", content: sessionState.source });
+          })
+      : undefined;
+    return () => {
+      controller.abort();
+      unsubscribe?.();
+    };
   }, [assetId]);
 
   const save = (content: string) => {
@@ -497,6 +590,29 @@ export const TextFileEditor = ({
       setState({ status: "loaded", content: normalizedContent });
     }
     requestedContentRef.current = normalizedContent;
+    if (isMdxFileAsset(currentAsset) && mdxSession !== undefined) {
+      try {
+        mdxSession.save(assetId, normalizedContent);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unable to save this file.";
+        const feedback = getMdxPersistenceFeedback(
+          mdxSession.get(assetId) ?? {
+            status: "failed",
+            error: new Error(message),
+          }
+        ) ?? { kind: "failed", message };
+        setPersistenceFeedback(feedback);
+        if (
+          feedback.kind === "conflicting" &&
+          reportedConflictRef.current !== message
+        ) {
+          reportedConflictRef.current = message;
+          getAssetContentBridge().requireReload(message);
+        }
+      }
+      return;
+    }
     saveQueueRef.current = saveQueueRef.current.then(async () => {
       const requestedContent = requestedContentRef.current;
       if (
@@ -534,13 +650,16 @@ export const TextFileEditor = ({
       <CodeEditor
         editorApiRef={editorApiRef}
         value={state.content}
-        languageExtensions={getTextFileEditorExtensions(asset)}
+        languageExtensions={languageExtensions}
         size="full"
         expandable={false}
         chromeless
         readOnly={canEdit === false}
         onChange={(content) => {
           setState({ status: "loaded", content });
+          if (isMdxFileAsset(asset)) {
+            save(content);
+          }
         }}
         onChangeComplete={save}
       />
@@ -578,11 +697,43 @@ export const TextFileEditor = ({
               css={{
                 display: "grid",
                 gridTemplateRows: isMarkdown
-                  ? "auto minmax(0, 1fr)"
+                  ? persistenceFeedback === undefined
+                    ? "auto minmax(0, 1fr)"
+                    : "auto auto minmax(0, 1fr)"
                   : "minmax(0, 1fr)",
                 height: "100%",
               }}
             >
+              {persistenceFeedback !== undefined && (
+                <Flex
+                  gap="2"
+                  align="center"
+                  css={{ padding: rawTheme.spacing[5] }}
+                >
+                  <Text role="alert" color="destructive" variant="tiny">
+                    {persistenceFeedback.message}
+                  </Text>
+                  {persistenceFeedback.kind === "failed" &&
+                    mdxSession !== undefined && (
+                      <Button
+                        color="ghost"
+                        onClick={() => {
+                          void mdxSession.retry(assetId).catch((error) => {
+                            setPersistenceFeedback({
+                              kind: "failed",
+                              message:
+                                error instanceof Error
+                                  ? error.message
+                                  : "Unable to save this file.",
+                            });
+                          });
+                        }}
+                      >
+                        Retry
+                      </Button>
+                    )}
+                </Flex>
+              )}
               {isMarkdown && (
                 <MarkdownToolbar
                   editorApiRef={editorApiRef}

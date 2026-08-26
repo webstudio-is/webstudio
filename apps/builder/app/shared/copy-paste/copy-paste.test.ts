@@ -221,6 +221,30 @@ test("does not copy page to clipboard when copy permission is disabled", async (
   expect(writeText).not.toHaveBeenCalled();
 });
 
+test("writes asynchronously prepared page data from a clipboard event", async () => {
+  resetStores();
+  setupPage();
+  $project.set({ id: "project" } as Project);
+  selectInstance(["body-id"]);
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal("navigator", {
+    ...navigator,
+    clipboard: { writeText },
+  });
+  const abortController = new AbortController();
+  initCopyPaste({ signal: abortController.signal });
+  const { event } = createClipboardEvent("copy");
+
+  document.dispatchEvent(event);
+  await waitForClipboardEvent();
+
+  expect(event.defaultPrevented).toBe(true);
+  expect(writeText).toHaveBeenCalledWith(
+    expect.stringContaining('"@webstudio/page/v0.1"')
+  );
+  abortController.abort();
+});
+
 test("does not copy instance to clipboard when no instance is selected", async () => {
   resetStores();
   const writeText = vi.fn().mockResolvedValue(undefined);

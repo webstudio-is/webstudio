@@ -114,6 +114,12 @@ test("imports and remaps every fragment asset reference", async () => {
   if (result.success === false) {
     return;
   }
+  expect(result.assets).toEqual(
+    new Map<Asset["id"], Asset>([
+      [imageAsset.id, importedImage],
+      [fontAsset.id, importedFont],
+    ])
+  );
   expect(result.fragments.get(fragment)).toEqual({
     ...fragment,
     assets: [],

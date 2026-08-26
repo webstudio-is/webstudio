@@ -7,6 +7,7 @@ import {
 } from "@webstudio-is/template";
 import type { Page } from "./schema/pages";
 import { createScope } from "./scope";
+import { encodeDataSourceVariable } from "./expression";
 import {
   generateResources,
   replaceFormActionsWithResources,
@@ -44,7 +45,7 @@ test("generate resources loader", () => {
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
-    export const getResources = (_props: { system: System }) => {
+    export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
       const resourceName: ResourceRequest = {
         name: "resourceName",
         url: "https://my-json.com",
@@ -59,12 +60,109 @@ test("generate resources loader", () => {
       const _data = new Map<string, ResourceRequest>([
         ["resourceName", resourceName],
       ])
+      const _contentData = new Map<string, ResourceRequest>()
       const _action = new Map<string, ResourceRequest>([
       ])
-      return { data: _data, action: _action }
+      return { data: _data, action: _action, contentData: _contentData }
     }
     "
   `);
+});
+
+test("selects only Resources used by the resolved dynamic MDX candidate", () => {
+  const generated = generateResources({
+    scope: createScope(),
+    page: { rootInstanceId: "body" } as Page,
+    dataSources: toMap([
+      {
+        id: "selectedAsset",
+        scopeInstanceId: "body",
+        type: "variable",
+        name: "Selected Asset",
+        value: { type: "string", value: "article" },
+      },
+      {
+        id: "articleVariable",
+        scopeInstanceId: "article",
+        type: "resource",
+        name: "Article API",
+        resourceId: "articleResource",
+      },
+      {
+        id: "otherVariable",
+        scopeInstanceId: "other",
+        type: "resource",
+        name: "Other API",
+        resourceId: "otherResource",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "articleResource",
+        name: "Article API",
+        url: '"https://example.com/article"',
+        method: "get",
+        headers: [],
+      },
+      {
+        id: "otherResource",
+        name: "Other API",
+        url: '"https://example.com/other"',
+        method: "get",
+        headers: [],
+      },
+    ]),
+    props: new Map(),
+    contentBlockResourceSelections: [
+      {
+        sourceExpression: encodeDataSourceVariable("selectedAsset"),
+        candidates: [
+          { assetId: "article", resourceIds: ["articleResource"] },
+          { assetId: "other", resourceIds: ["otherResource"] },
+        ],
+      },
+    ],
+  });
+
+  expect(generated).toContain('if (SelectedAsset === "article")');
+  expect(generated).toContain('_contentData.set("ArticleAPI", ArticleAPI)');
+  expect(generated).toContain('if (SelectedAsset === "other")');
+  expect(generated).toContain('_contentData.set("OtherAPI", OtherAPI)');
+});
+
+test("does not add dynamic selection inputs to ordinary Resources", () => {
+  const generated = generateResources({
+    scope: createScope(),
+    page: { rootInstanceId: "body" } as Page,
+    dataSources: toMap([
+      {
+        id: "sourceVariable",
+        scopeInstanceId: "body",
+        type: "resource",
+        name: "Source",
+        resourceId: "sourceResource",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "sourceResource",
+        name: "Source",
+        url: '"https://example.com/source"',
+        method: "get",
+        headers: [],
+      },
+      {
+        id: "dependentResource",
+        name: "Dependent",
+        url: `${encodeDataSourceVariable("sourceVariable")}.url`,
+        method: "get",
+        headers: [],
+      },
+    ]),
+    props: new Map(),
+  });
+
+  expect(generated).not.toContain(" = _props.resources");
 });
 
 test("generates a configured Assets request on the standard endpoint", () => {
@@ -140,7 +238,7 @@ test("generate variable and use in resources loader", () => {
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
-    export const getResources = (_props: { system: System }) => {
+    export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
       let AccessToken = "my-token"
       const resourceName: ResourceRequest = {
         name: "resourceName",
@@ -156,9 +254,10 @@ test("generate variable and use in resources loader", () => {
       const _data = new Map<string, ResourceRequest>([
         ["resourceName", resourceName],
       ])
+      const _contentData = new Map<string, ResourceRequest>()
       const _action = new Map<string, ResourceRequest>([
       ])
-      return { data: _data, action: _action }
+      return { data: _data, action: _action, contentData: _contentData }
     }
     "
   `);
@@ -202,7 +301,7 @@ test("generate page system variable and use in resources loader", () => {
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
-    export const getResources = (_props: { system: System }) => {
+    export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
       const system = _props.system
       const resourceName: ResourceRequest = {
         name: "resourceName",
@@ -218,9 +317,10 @@ test("generate page system variable and use in resources loader", () => {
       const _data = new Map<string, ResourceRequest>([
         ["resourceName", resourceName],
       ])
+      const _contentData = new Map<string, ResourceRequest>()
       const _action = new Map<string, ResourceRequest>([
       ])
-      return { data: _data, action: _action }
+      return { data: _data, action: _action, contentData: _contentData }
     }
     "
   `);
@@ -246,7 +346,7 @@ test("generate global system variable and use in resources loader", () => {
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
-    export const getResources = (_props: { system: System }) => {
+    export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
       const system = _props.system
       const MyResource: ResourceRequest = {
         name: "My Resource",
@@ -263,9 +363,10 @@ test("generate global system variable and use in resources loader", () => {
       const _data = new Map<string, ResourceRequest>([
         ["MyResource", MyResource],
       ])
+      const _contentData = new Map<string, ResourceRequest>()
       const _action = new Map<string, ResourceRequest>([
       ])
-      return { data: _data, action: _action }
+      return { data: _data, action: _action, contentData: _contentData }
     }
     "
   `);
@@ -282,12 +383,13 @@ test("generate empty resources loader", () => {
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
-    export const getResources = (_props: { system: System }) => {
+    export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
       const _data = new Map<string, ResourceRequest>([
       ])
+      const _contentData = new Map<string, ResourceRequest>()
       const _action = new Map<string, ResourceRequest>([
       ])
-      return { data: _data, action: _action }
+      return { data: _data, action: _action, contentData: _contentData }
     }
     "
   `);
@@ -333,7 +435,7 @@ test("generate resource loader with search params", () => {
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
-    export const getResources = (_props: { system: System }) => {
+    export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
       let term = "my-term"
       const resourceName: ResourceRequest = {
         name: "resourceName",
@@ -348,9 +450,10 @@ test("generate resource loader with search params", () => {
       const _data = new Map<string, ResourceRequest>([
         ["resourceName", resourceName],
       ])
+      const _contentData = new Map<string, ResourceRequest>()
       const _action = new Map<string, ResourceRequest>([
       ])
-      return { data: _data, action: _action }
+      return { data: _data, action: _action, contentData: _contentData }
     }
     "
   `);
@@ -375,12 +478,13 @@ test("prevent generating unused variables", () => {
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
-    export const getResources = (_props: { system: System }) => {
+    export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
       const _data = new Map<string, ResourceRequest>([
       ])
+      const _contentData = new Map<string, ResourceRequest>()
       const _action = new Map<string, ResourceRequest>([
       ])
-      return { data: _data, action: _action }
+      return { data: _data, action: _action, contentData: _contentData }
     }
     "
   `);
@@ -407,12 +511,13 @@ test("prevent generating unused system variable", () => {
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
-    export const getResources = (_props: { system: System }) => {
+    export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
       const _data = new Map<string, ResourceRequest>([
       ])
+      const _contentData = new Map<string, ResourceRequest>()
       const _action = new Map<string, ResourceRequest>([
       ])
-      return { data: _data, action: _action }
+      return { data: _data, action: _action, contentData: _contentData }
     }
     "
   `);
@@ -456,7 +561,7 @@ test("generate action resource without loading a stale data source", () => {
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
-    export const getResources = (_props: { system: System }) => {
+    export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
       const resourceName: ResourceRequest = {
         name: "resourceName",
         url: "https://my-url.com",
@@ -468,10 +573,11 @@ test("generate action resource without loading a stale data source", () => {
       }
       const _data = new Map<string, ResourceRequest>([
       ])
+      const _contentData = new Map<string, ResourceRequest>()
       const _action = new Map<string, ResourceRequest>([
         ["resourceName", resourceName],
       ])
-      return { data: _data, action: _action }
+      return { data: _data, action: _action, contentData: _contentData }
     }
     "
   `);
@@ -496,12 +602,13 @@ test("skip missing resource referenced by data source", () => {
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
-    export const getResources = (_props: { system: System }) => {
+    export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
       const _data = new Map<string, ResourceRequest>([
       ])
+      const _contentData = new Map<string, ResourceRequest>()
       const _action = new Map<string, ResourceRequest>([
       ])
-      return { data: _data, action: _action }
+      return { data: _data, action: _action, contentData: _contentData }
     }
     "
   `);
@@ -526,12 +633,13 @@ test("skip missing resource referenced by action prop", () => {
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
-    export const getResources = (_props: { system: System }) => {
+    export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
       const _data = new Map<string, ResourceRequest>([
       ])
+      const _contentData = new Map<string, ResourceRequest>()
       const _action = new Map<string, ResourceRequest>([
       ])
-      return { data: _data, action: _action }
+      return { data: _data, action: _action, contentData: _contentData }
     }
     "
   `);

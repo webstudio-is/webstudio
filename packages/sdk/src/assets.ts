@@ -56,6 +56,26 @@ export const getAssetContentHash = async (
   ).join("");
 };
 
+const contentHashPattern = /^[0-9a-f]{64}$/;
+
+export const isContentHash = (value: unknown): value is string =>
+  typeof value === "string" && contentHashPattern.test(value);
+
+export const createAssetContentRevision = ({
+  storageName,
+  updatedAt,
+  size,
+  contentHash,
+}: {
+  storageName: string;
+  updatedAt: string;
+  size: number;
+  contentHash?: string | null;
+}) =>
+  isContentHash(contentHash)
+    ? `sha256:${contentHash}`
+    : `file:${encodeURIComponent(storageName)}:${updatedAt}:${size}`;
+
 export type ParsedAssetName = {
   basename: string;
   hash: string;
@@ -139,6 +159,7 @@ const assetFileTypes = {
   // Code
   txt: textFile("text/plain", "plain"),
   md: textFile("text/markdown", "markdown"),
+  mdx: textFile("text/mdx", "markdown"),
   js: textFile("text/javascript", "javascript"),
   css: textFile("text/css", "css"),
   json: textFile("application/json", "json"),
@@ -311,6 +332,10 @@ export const getAssetTextEditorLanguage = (
 
 export const isTextFileAsset = (asset: Pick<Asset, "format">): boolean =>
   getAssetTextEditorLanguage(asset) !== undefined;
+
+export const isMdxFileAsset = (
+  asset: Readonly<{ type: string; format: string }>
+) => asset.type === "file" && asset.format.toLowerCase() === "mdx";
 
 /**
  * Get MIME type from a filename

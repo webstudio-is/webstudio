@@ -11,7 +11,12 @@ import {
   type Page,
   type PageTemplate,
 } from "@webstudio-is/sdk";
-import { $pages, $project } from "~/shared/sync/data-stores";
+import {
+  $assetFolders,
+  $assets,
+  $pages,
+  $project,
+} from "~/shared/sync/data-stores";
 import { detectFragmentTokenConflicts } from "@webstudio-is/project-build/runtime";
 import { resolveTokenConflicts } from "../resolve-token-conflicts";
 import { resolveRootStyleConflicts } from "../resolve-root-style-conflicts";
@@ -34,17 +39,150 @@ import { getPageActionTarget } from "../page-action-target";
 import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
 import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime";
 import { transferFragmentAssets } from "./asset-transfer-utils";
+import { rewriteTransferredMdxAssets } from "./mdx-asset-transfer";
+import {
+  createClipboardAssetPaths,
+  hasDynamicContentBlockSource,
+  includeMdxAssetDependencies,
+  prepareConnectedContentBlockFragment,
+} from "./content-block-fragment";
 
 const invalidPasteDataMessage =
   "Could not paste Webstudio page data. The clipboard data appears to be incomplete or invalid.";
 
-const stringify = (data: PageTransferItem) => {
+const stringify = (
+  data: PageTransferItem,
+  assetFolders: ReturnType<typeof $assetFolders.get>
+) => {
+  const assets = new Map(
+    collectPageTransferItems(data).flatMap((item) =>
+      [item.rootFragment, item.bodyFragment].flatMap((fragment) =>
+        fragment.assets.map((asset) => [asset.id, asset] as const)
+      )
+    )
+  );
   return JSON.stringify({
     [pageTransferDataVersion]: {
       ...data,
       sourceOrigin: window.location.origin,
+      assetPaths: createClipboardAssetPaths(
+        Array.from(assets.values()),
+        assetFolders
+      ),
     },
   });
+};
+
+const preparePageTransferItemRecursive = async ({
+  item,
+  projectId,
+  assets,
+  assetFolders,
+  includeDependencies,
+  discoveryCache,
+  warnings,
+}: {
+  item: PageTransferItem;
+  projectId: string | undefined;
+  assets: ReturnType<typeof $assets.get>;
+  assetFolders: ReturnType<typeof $assetFolders.get>;
+  includeDependencies: typeof includeMdxAssetDependencies;
+  discoveryCache: Map<string, Promise<readonly string[] | undefined>>;
+  warnings: { skippedDependencies: boolean };
+}): Promise<PageTransferItem> => {
+  if (item.type === "folder") {
+    return {
+      ...item,
+      children: (await Promise.all(
+        item.children.map((child) =>
+          preparePageTransferItemRecursive({
+            item: child,
+            projectId,
+            assets,
+            assetFolders,
+            includeDependencies,
+            discoveryCache,
+            warnings,
+          })
+        )
+      )) as FolderTransferData["children"],
+    };
+  }
+  const prepared = {
+    ...item,
+    rootFragment: prepareConnectedContentBlockFragment({
+      fragment: item.rootFragment,
+      projectId,
+      assets,
+    }),
+    bodyFragment: prepareConnectedContentBlockFragment({
+      fragment: item.bodyFragment,
+      projectId,
+      assets,
+    }),
+  };
+  if (projectId === undefined) {
+    return prepared;
+  }
+  const [root, body] = await Promise.all(
+    [prepared.rootFragment, prepared.bodyFragment].map((fragment) =>
+      includeDependencies({
+        fragment,
+        projectId,
+        assets,
+        assetFolders,
+        discoveryCache,
+      })
+    )
+  );
+  if (root.skippedAssetIds.length > 0 || body.skippedAssetIds.length > 0) {
+    warnings.skippedDependencies = true;
+  }
+  return {
+    ...prepared,
+    rootFragment: root.fragment,
+    bodyFragment: body.fragment,
+  };
+};
+
+const preparePageTransferItem = async ({
+  item,
+  projectId,
+  assets,
+  assetFolders,
+  includeDependencies = includeMdxAssetDependencies,
+}: {
+  item: PageTransferItem;
+  projectId: string | undefined;
+  assets: ReturnType<typeof $assets.get>;
+  assetFolders: ReturnType<typeof $assetFolders.get>;
+  includeDependencies?: typeof includeMdxAssetDependencies;
+}) => {
+  if (
+    collectPageTransferItems(item).some(({ rootFragment, bodyFragment }) =>
+      [rootFragment, bodyFragment].some(hasDynamicContentBlockSource)
+    )
+  ) {
+    toast.warn(
+      "Dynamic MDX sources are copied from the Collection items currently rendered on the canvas."
+    );
+  }
+  const warnings = { skippedDependencies: false };
+  const prepared = await preparePageTransferItemRecursive({
+    item,
+    projectId,
+    assets,
+    assetFolders,
+    includeDependencies,
+    discoveryCache: new Map(),
+    warnings,
+  });
+  if (warnings.skippedDependencies) {
+    toast.warn(
+      "Some MDX dependencies could not be inspected and were skipped while copying."
+    );
+  }
+  return prepared;
 };
 
 const getDefaultTargetFolderId = () => {
@@ -220,33 +358,58 @@ const handleCopyPage = () => {
   }
 };
 
-export const copyPageData = (pageId: Page["id"]) => {
+export const copyPageData = async (pageId: Page["id"]) => {
   const data = getWebstudioData();
   const pageData = getPageCopyData(data, pageId);
   if (pageData === undefined) {
     return;
   }
-  return stringify(pageData);
+  return stringify(
+    await preparePageTransferItem({
+      item: pageData,
+      projectId: $project.get()?.id,
+      assets: data.assets,
+      assetFolders: data.assetFolders,
+    }),
+    data.assetFolders
+  );
 };
 
-export const copyTemplateData = (templateId: PageTemplate["id"]) => {
+export const copyTemplateData = async (templateId: PageTemplate["id"]) => {
   const data = getWebstudioData();
   const template = data.pages.pageTemplates?.get(templateId);
   if (template === undefined) {
     return;
   }
   return stringify(
-    addTemplateType(createTemplateCopyData({ data, template }), data.assets)
+    await preparePageTransferItem({
+      item: addTemplateType(
+        createTemplateCopyData({ data, template }),
+        data.assets
+      ),
+      projectId: $project.get()?.id,
+      assets: data.assets,
+      assetFolders: data.assetFolders,
+    }),
+    data.assetFolders
   );
 };
 
-export const copyFolderData = (folderId: Folder["id"]) => {
+export const copyFolderData = async (folderId: Folder["id"]) => {
   const data = getWebstudioData();
   const folderData = createFolderCopyData({ data, folderId });
   if (folderData === undefined) {
     return;
   }
-  return stringify(addFolderType(folderData, data.assets));
+  return stringify(
+    await preparePageTransferItem({
+      item: addFolderType(folderData, data.assets),
+      projectId: $project.get()?.id,
+      assets: data.assets,
+      assetFolders: data.assetFolders,
+    }),
+    data.assetFolders
+  );
 };
 
 export const handlePastePage = async (
@@ -260,7 +423,7 @@ export const handlePastePage = async (
   if (transferData.valid === false) {
     return { success: false, error: invalidPasteDataMessage } as const;
   }
-  const { sourceOrigin, ...transferItem } = transferData.data;
+  const { sourceOrigin, assetPaths, ...transferItem } = transferData.data;
   let item: PageTransferItem = transferItem;
 
   const pages = $pages.get();
@@ -342,6 +505,40 @@ export const handlePastePage = async (
         error: "Project changed while pasting.",
       } as const;
     }
+    if (sourceOrigin !== undefined) {
+      const sourceAssets = new Map(
+        sourcePageItems.flatMap((item) =>
+          [item.rootFragment, item.bodyFragment].flatMap((fragment) =>
+            fragment.assets.map((asset) => [asset.id, asset] as const)
+          )
+        )
+      );
+      try {
+        const { skippedInvalidAssetIds } = await rewriteTransferredMdxAssets({
+          sourceOrigin,
+          projectId,
+          sourceAssets: Array.from(sourceAssets.values()),
+          sourceAssetPaths: assetPaths,
+          importedAssets: transferred.assets,
+        });
+        if (skippedInvalidAssetIds.length > 0) {
+          toast.warn(
+            "Some invalid MDX files were copied unchanged. Open them to review their diagnostics."
+          );
+        }
+      } catch {
+        return {
+          success: false,
+          error: "Could not update Asset references in the copied MDX files.",
+        } as const;
+      }
+    }
+    if ($project.get()?.id !== projectId) {
+      return {
+        success: false,
+        error: "Project changed while pasting.",
+      } as const;
+    }
     item = remapPageTransferAssets(
       item,
       transferred.fragments,
@@ -384,3 +581,5 @@ export const pageText: Plugin = {
   onCopy: handleCopyPage,
   onPaste: (clipboardData) => handlePastePage(clipboardData),
 };
+
+export const __testing__ = { preparePageTransferItem };

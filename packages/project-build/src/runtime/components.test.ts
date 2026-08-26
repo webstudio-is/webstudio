@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import {
+  blockTemplateComponent,
   collectionComponent,
   elementComponent,
   encodeDataVariableId,
@@ -114,6 +115,37 @@ const createIdFactory = () => {
   let index = 0;
   return () => `generated-${index++}`;
 };
+
+test("assigns a unique name when inserting into a Templates list", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "templates",
+    component: blockTemplateComponent,
+    children: [{ type: "id", value: "existing" }],
+  };
+  const state = createState(parent);
+  state.instances.set("existing", {
+    type: "instance",
+    id: "existing",
+    component: "Box",
+    children: [],
+  });
+  const fragment = await parseWebstudioJsxFragment("<$.Box />");
+
+  const mutation = insertFragment(
+    state,
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory() }
+  );
+
+  expect(getAddedValues<Instance>(mutation, "instances")).toContainEqual(
+    expect.objectContaining({
+      id: "generated-0",
+      component: "Box",
+      label: "Box 2",
+    })
+  );
+});
 
 const getAddedValues = <Value>(
   mutation: { payload: Awaited<ReturnType<typeof insertComponent>>["payload"] },
@@ -1558,13 +1590,26 @@ test("reports unsupported existing resource references in jsx", async () => {
 
 test("converts react prop aliases in webstudio jsx fragments", async () => {
   expect(
-    (await parseWebstudioJsxFragment(`<$.Box className="panel">Hello</$.Box>`))
-      .props
+    (
+      await parseWebstudioJsxFragment(
+        `<$.Box className="panel" tabIndex={2} readOnly>Hello</$.Box>`
+      )
+    ).props
   ).toEqual([
     expect.objectContaining({
       name: "class",
       type: "string",
       value: "panel",
+    }),
+    expect.objectContaining({
+      name: "tabindex",
+      type: "number",
+      value: 2,
+    }),
+    expect.objectContaining({
+      name: "readonly",
+      type: "boolean",
+      value: true,
     }),
   ]);
   expect(

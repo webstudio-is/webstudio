@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
+  blockComponent,
   blockTemplateComponent,
   type DataSource,
   type Instance,
@@ -1613,6 +1614,65 @@ describe("move instance commands", () => {
       { type: "id", value: "heading" },
       { type: "id", value: "box" },
       { type: "id", value: "paragraph" },
+    ]);
+  });
+
+  test("moves direct Content Block children in content mode", () => {
+    setupMoveInstanceProject();
+    $instances.set(
+      new Map($instances.get()).set("body", {
+        ...$instances.get().get("body")!,
+        component: blockComponent,
+      })
+    );
+    $builderMode.set("content");
+    selectInstance(["heading", "body"]);
+
+    emitCommand("moveInstanceUp");
+
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "heading" },
+      { type: "id", value: "box" },
+      { type: "id", value: "paragraph" },
+    ]);
+  });
+
+  test("does not move Content Block children outside it in content mode", () => {
+    setupMoveInstanceProject();
+    $instances.set(
+      new Map($instances.get()).set("body", {
+        ...$instances.get().get("body")!,
+        component: blockComponent,
+      })
+    );
+    $builderMode.set("content");
+    selectInstance(["box", "body"]);
+
+    emitCommand("moveInstanceUp");
+
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: "heading" },
+      { type: "id", value: "paragraph" },
+    ]);
+  });
+
+  test("moves Content Block descendants into siblings in content mode", () => {
+    setupMoveInstanceProject();
+    $instances.set(
+      new Map($instances.get()).set("body", {
+        ...$instances.get().get("body")!,
+        component: blockComponent,
+      })
+    );
+    $builderMode.set("content");
+    selectInstance(["heading", "body"]);
+
+    emitCommand("moveInstanceIntoPreviousSibling");
+
+    expect($instances.get().get("box")?.children).toEqual([
+      { type: "id", value: "nested" },
+      { type: "id", value: "heading" },
     ]);
   });
 

@@ -21,6 +21,16 @@ import * as httpClient from "@webstudio-is/http-client";
 import packageJson from "../../package.json" with { type: "json" };
 import type { ProjectSessionSnapshot } from "@webstudio-is/project-build/project-session";
 import type { SemanticValidationIssue } from "@webstudio-is/project-build/runtime";
+import {
+  inspectMdxAssetSource,
+  mdxAssetInspectionNamespaces,
+} from "@webstudio-is/project-build/runtime";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import {
+  createMdxSourceDiagnostics,
+  parseMdxDocumentRecovering,
+} from "@webstudio-is/content-engine/mdx";
+import { getFileExtension, isMdxFileAsset } from "@webstudio-is/sdk";
 import { resolveApiConnection } from "../api-connection";
 import {
   getCliErrorIssues,
@@ -41,6 +51,7 @@ import {
   getSupportedPublicApiOperations,
   type CliServerApiContract,
   writeCliProjectSessionPreviewDataFile,
+  type CliProjectSession,
 } from "../project-session";
 import { executeProjectSessionApiOperation } from "../project-session-api";
 import { createPreviewController } from "../preview-server";
@@ -211,7 +222,7 @@ const getMcpUpdateAssetContentInput = (input: unknown) => {
       "update-asset-content requires assetId and expectedName strings."
     );
   }
-  return createLocalUpdateAssetContentInput({
+  const prepared = createLocalUpdateAssetContentInput({
     assetId: input.assetId,
     expectedName: input.expectedName,
     extension:
@@ -220,6 +231,86 @@ const getMcpUpdateAssetContentInput = (input: unknown) => {
     content: typeof input.content === "string" ? input.content : undefined,
     readFile,
   });
+  let content: Promise<unknown> | undefined;
+  return {
+    ...prepared,
+    readAssetData: () => (content ??= prepared.readAssetData()),
+  };
+};
+
+const inspectMdxSource = async (source: string) => {
+  const parsed = await parseMdxDocumentRecovering({ source });
+  return createMdxSourceDiagnostics(parsed.diagnostics);
+};
+
+const decodeMdxSource = (value: unknown) => {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value instanceof Uint8Array) {
+    return new TextDecoder("utf-8", { fatal: true }).decode(value);
+  }
+  throw new Error("MDX Asset content must be UTF-8 text.");
+};
+
+const withMdxAssetWriteFeedback = async <Envelope extends { result: unknown }>({
+  command,
+  input,
+  operationInput,
+  result,
+  session,
+}: {
+  command: string;
+  input: unknown;
+  operationInput: unknown;
+  result: Envelope;
+  session?: Pick<CliProjectSession, "ensureNamespaces">;
+}): Promise<Envelope> => {
+  if (
+    command !== "update-asset-content" ||
+    isPlainRecord(input) === false ||
+    isPlainRecord(operationInput) === false ||
+    typeof operationInput.readAssetData !== "function" ||
+    (typeof input.extension === "string"
+      ? input.extension
+      : typeof input.expectedName === "string"
+        ? getFileExtension(input.expectedName)
+        : undefined
+    )?.toLowerCase() !== "mdx"
+  ) {
+    return result;
+  }
+  const source = decodeMdxSource(await operationInput.readAssetData());
+  const assetId =
+    typeof input.assetId === "string"
+      ? input.assetId
+      : isPlainRecord(result.result) &&
+          typeof result.result.assetId === "string"
+        ? result.result.assetId
+        : undefined;
+  const snapshot =
+    assetId === undefined || session === undefined
+      ? undefined
+      : await session.ensureNamespaces(mdxAssetInspectionNamespaces);
+  return {
+    ...result,
+    result: {
+      ...(isPlainRecord(result.result)
+        ? result.result
+        : { result: result.result }),
+      source,
+      diagnostics:
+        assetId === undefined || snapshot === undefined
+          ? await inspectMdxSource(source)
+          : await inspectMdxAssetSource({
+              source,
+              assetId,
+              state: snapshot.state,
+              metas: componentMetas,
+              projectId: snapshot.projectId,
+            }),
+    },
+  };
 };
 
 const getMcpOperationInput = (command: string, input: unknown) => {
@@ -1061,9 +1152,10 @@ const createCliMcpHost = async ({
     createProjectSession: () => session,
     onProjectSessionChange: previewFreshness.markStale,
     executeOperation: async ({ command, input, dryRun }) => {
+      const operationInput = getMcpOperationInput(command, input);
       const result = await executeProjectSessionApiOperation({
         command,
-        input: getMcpOperationInput(command, input),
+        input: operationInput,
         connection: apiConnection,
         createProjectSession: () => session,
         dryRun,
@@ -1071,7 +1163,13 @@ const createCliMcpHost = async ({
       if (dryRun !== true && shouldInvalidatePreview(command)) {
         previewFreshness.markStale();
       }
-      return result;
+      return withMdxAssetWriteFeedback({
+        command,
+        input,
+        operationInput,
+        result,
+        session,
+      });
     },
     restorePoints: {
       async create({ name }) {
@@ -1143,9 +1241,28 @@ const createCliMcpHost = async ({
         assetsDirectory: input.assetsDir,
         origin: connection.origin,
       });
+      const localPath = getLocalAssetPath(asset.name, input.assetsDir);
+      if (isMdxFileAsset(asset)) {
+        const source = await readFile(localPath, "utf8");
+        const inspectionSnapshot = await session.ensureNamespaces(
+          mdxAssetInspectionNamespaces
+        );
+        return {
+          assetId: asset.id,
+          path: localPath,
+          source,
+          diagnostics: await inspectMdxAssetSource({
+            source,
+            assetId: asset.id,
+            state: inspectionSnapshot.state,
+            metas: componentMetas,
+            projectId: inspectionSnapshot.projectId,
+          }),
+        };
+      }
       return {
         assetId: asset.id,
-        path: getLocalAssetPath(asset.name, input.assetsDir),
+        path: localPath,
       };
     },
     async startPreview(input, progress) {
@@ -1868,6 +1985,7 @@ export const __testing__ = {
   createMcpRunCheckpointStopPayload,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
+  withMdxAssetWriteFeedback,
   parseMcpSingleOpCallInput,
   validateSingleOpCallInput,
   isMcpToolCallFailure,

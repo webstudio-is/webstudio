@@ -480,7 +480,7 @@ export const replaceDataSourcesInExpression = (
 
 export const computeExpression = (
   expression: string,
-  variables: Map<DataSource["name"], unknown>
+  variables: ReadonlyMap<DataSource["name"], unknown>
 ) => {
   try {
     const proxiedVariables = new Map<DataSource["name"], unknown>();
@@ -503,6 +503,14 @@ export const computeExpression = (
   } catch {
     return undefined;
   }
+};
+
+export const computeStringExpression = (
+  expression: string,
+  variables: ReadonlyMap<DataSource["name"], unknown>
+) => {
+  const value = computeExpression(expression, variables);
+  return typeof value === "string" && value !== "" ? value : undefined;
 };
 
 export const computeExpressionWithinScope = (

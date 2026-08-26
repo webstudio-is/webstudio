@@ -63,12 +63,13 @@ test("validates page transfer data", () => {
   });
 });
 
-test("accepts optional source origin metadata", () => {
+test("accepts optional source Asset metadata", () => {
   const result = parsePageTransferData(
     JSON.stringify({
       "@webstudio/page/v0.1": {
         ...pageTransferItem,
         sourceOrigin: "https://source.example.com",
+        assetPaths: { image: "media/hero.png" },
       },
     })
   );
@@ -79,6 +80,7 @@ test("accepts optional source origin metadata", () => {
     data: {
       type: "page",
       sourceOrigin: "https://source.example.com",
+      assetPaths: { image: "media/hero.png" },
     },
   });
 });

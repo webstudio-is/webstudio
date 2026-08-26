@@ -782,6 +782,234 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test("materializes direct MDX Content Blocks into generated page code", async () => {
+    const source = "# Published from MDX";
+    const article: AssetFileDocument = {
+      ...indexedDocument,
+      _id: "article",
+      name: "article.mdx",
+      path: "article.mdx",
+      key: "article",
+      extension: "mdx",
+      mimeType: "text/mdx",
+      size: new TextEncoder().encode(source).byteLength,
+      revision: "article-revision",
+      contentRef: "article.mdx",
+      properties: {},
+    };
+    const siteData = createSiteData({
+      assets: [createAssetForIndexedDocument(article)],
+      instances: [
+        [
+          "root",
+          {
+            id: "root",
+            component: "Box",
+            children: [{ type: "id", value: "content" }],
+          },
+        ],
+        [
+          "content",
+          {
+            id: "content",
+            component: "ws:block",
+            children: [],
+          },
+        ],
+      ],
+      props: [
+        [
+          "content-src",
+          {
+            id: "content-src",
+            instanceId: "content",
+            name: "src",
+            type: "asset",
+            value: "article",
+          },
+        ],
+      ],
+    });
+    const siteDataWithIndex = {
+      ...siteData,
+      assetIndex: await createTestAssetIndex(article, {
+        "article.mdx": source,
+      }),
+    };
+    await writeSiteData(siteDataWithIndex);
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    const generatedPage = await readFile(
+      "app/__generated__/_index.tsx",
+      "utf8"
+    );
+    expect(generatedPage).toContain("Published from MDX");
+    expect(generatedPage).not.toContain("fetch(");
+  });
+
+  test("materializes finite dynamic MDX candidates without publishing unrelated files", async () => {
+    const createDocument = (
+      id: string,
+      extension: "json" | "mdx",
+      properties?: Record<string, string>
+    ): AssetFileDocument => ({
+      ...indexedDocument,
+      _id: id,
+      name: `${id}.${extension}`,
+      path: `${id}.${extension}`,
+      key: id,
+      extension,
+      mimeType: extension === "mdx" ? "text/mdx" : "application/json",
+      revision: `${id}-revision`,
+      contentRef: `${id}.${extension}`,
+      properties: properties ?? {},
+    });
+    const post = createDocument("post", "json", {
+      category: "published",
+      mdx: "article",
+    });
+    const privatePost = createDocument("private-post", "json", {
+      category: "private",
+      mdx: "private",
+    });
+    const article = createDocument("article", "mdx");
+    const privateArticle = createDocument("private", "mdx");
+    const documents = [post, privatePost, article, privateArticle];
+    const sourceExpression = `${encodeDataSourceVariable(
+      "posts-data"
+    )}.data.properties.mdx`;
+    const siteData = createSiteData({
+      assets: documents.map(createAssetForIndexedDocument),
+      instances: [
+        [
+          "root",
+          {
+            id: "root",
+            component: "Box",
+            children: [{ type: "id", value: "content" }],
+          },
+        ],
+        [
+          "content",
+          {
+            id: "content",
+            component: "ws:block",
+            children: [],
+          },
+        ],
+      ],
+      props: [
+        [
+          "content-src",
+          {
+            id: "content-src",
+            instanceId: "content",
+            name: "src",
+            type: "expression",
+            value: sourceExpression,
+          },
+        ],
+      ],
+    });
+    siteData.build.dataSources = [
+      [
+        "posts-data",
+        {
+          type: "resource",
+          id: "posts-data",
+          scopeInstanceId: "root",
+          name: "posts",
+          resourceId: "posts",
+        },
+      ],
+    ] as never;
+    siteData.build.resources = [
+      [
+        "posts",
+        {
+          ...createQueryResource(),
+          body: createStructuredAssetQueryResourceBody({
+            where: {
+              all: [
+                {
+                  field: ["properties", "category"],
+                  operator: "eq",
+                  value: '"published"',
+                },
+              ],
+            },
+            sort: [],
+            limit: "100",
+            offset: "0",
+            output: { mode: "all", includeMetadata: true },
+            content: { mode: "none" },
+          }),
+        },
+      ],
+    ] as never;
+    const siteDataWithIndex = {
+      ...siteData,
+      assetIndex: await createTestAssetIndex(documents, {
+        "article.mdx": "# Public article",
+        "private.mdx": "# Private article",
+      }),
+    };
+    await writeSiteData(siteDataWithIndex);
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    const generatedPage = await readFile(
+      "app/__generated__/_index.tsx",
+      "utf8"
+    );
+    expect(generatedPage).toContain("Public article");
+    expect(generatedPage).not.toContain("Private article");
+    expect(generatedPage).toContain('=== "article"');
+  });
+
+  test("warns and skips a dynamic MDX source without finite candidates", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const siteData = createSiteData({
+      instances: [
+        [
+          "root",
+          {
+            id: "root",
+            component: "Box",
+            children: [{ type: "id", value: "content" }],
+          },
+        ],
+        ["content", { id: "content", component: "ws:block", children: [] }],
+      ],
+      props: [
+        [
+          "content-src",
+          {
+            id: "content-src",
+            instanceId: "content",
+            name: "src",
+            type: "expression",
+            value: "post.body",
+          },
+        ],
+      ],
+    });
+    await writeSiteData(siteData);
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    expect(
+      warn.mock.calls
+        .map(([message]) => JSON.parse(String(message)))
+        .find(({ feature }) => feature === "content-block-mdx")
+    ).toMatchObject({
+      type: "webstudio-build-warning",
+      code: "invalid-mdx",
+      blockInstanceId: "content",
+    });
+  });
+
   test("excludes resources in statically hidden subtrees", async () => {
     const siteData = createSiteData({
       instances: [

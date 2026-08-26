@@ -24,6 +24,7 @@ import { useBindableControl } from "./use-bindable-control";
 import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
 import { getEditableTextTarget } from "@webstudio-is/project-build/runtime";
 import { getTextContentUpdateOperation } from "./text-content-utils";
+import { useCodeTextLanguageSupport } from "./code";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
@@ -35,8 +36,14 @@ const useInstance = (instanceId: Instance["id"]) => {
 export const TextContent = ({
   instanceId,
   computedValue,
+  computedProps,
 }: ControlProps<"textContent">) => {
   const instance = useInstance(instanceId);
+  const languageSupport = useCodeTextLanguageSupport(
+    instance?.component === "CodeText"
+      ? computedProps?.get("language")
+      : undefined
+  );
   const childrenCount = instance?.children.length ?? 0;
   const hasChildren = childrenCount > 0;
   const hasMixedContent = childrenCount > 1;
@@ -168,6 +175,7 @@ export const TextContent = ({
               </DialogTitle>
             }
             size="small"
+            languageSupport={languageSupport}
             readOnly={readOnly}
             value={localValue.value}
             onChange={localValue.set}

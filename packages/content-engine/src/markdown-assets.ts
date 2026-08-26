@@ -1,8 +1,9 @@
 import { parse, postprocess, preprocess } from "micromark";
 import { decodeString } from "micromark-util-decode-string";
-import { createCanonicalAssetPath } from "./asset-path";
-import { createUniqueAssetIdsByPath } from "./asset-path-resolution";
-import { createAssetReferenceResolver } from "./asset-reference-utils";
+import {
+  createAssetReferenceResolver,
+  createNamedAssetReferenceContext,
+} from "./asset-reference-utils";
 import type { MarkdownAssetReference } from "./markdown-references";
 
 const getMarkdownUrlTokens = (markdown: string) => {
@@ -67,11 +68,5 @@ export const discoverNamedMarkdownAssetReferenceRanges = ({
 }) =>
   discoverMarkdownAssetReferenceRanges({
     markdown,
-    sourcePath: createCanonicalAssetPath(source),
-    assetIdsByPath: createUniqueAssetIdsByPath(
-      Array.from(assets, (asset) => ({
-        id: asset.id,
-        path: createCanonicalAssetPath(asset),
-      }))
-    ),
+    ...createNamedAssetReferenceContext({ source, assets }),
   });

@@ -1116,6 +1116,29 @@ test("render ws:tag property", () => {
   expect(props).toEqual([]);
 });
 
+test("converts JSX attributes when ws:tag enables HTML attributes", () => {
+  const { props } = renderTemplate(
+    <$.Box ws:tag="label" tabIndex={0} readOnly={true}></$.Box>
+  );
+
+  expect(props).toEqual([
+    {
+      id: "0:tabindex",
+      instanceId: "0",
+      name: "tabindex",
+      type: "number",
+      value: 0,
+    },
+    {
+      id: "0:readonly",
+      instanceId: "0",
+      name: "readonly",
+      type: "boolean",
+      value: true,
+    },
+  ]);
+});
+
 test("preserves empty ws:tag for schema validation", () => {
   const { instances } = renderTemplate(<$.Box ws:tag=""></$.Box>);
   expect(instances[0]?.tag).toEqual("");

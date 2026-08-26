@@ -86,6 +86,7 @@ import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
+import { $externalContentRoots } from "../external-content-mutations";
 
 enableMapSet();
 // safari structuredClone fix
@@ -93,6 +94,7 @@ setAutoFreeze(false);
 
 export const clientSyncStore = new Store();
 export const serverSyncStore = new Store();
+export const externalContentSyncStore = new Store();
 
 const serverSyncStores = {
   pages: $pages,
@@ -126,6 +128,10 @@ export const registerContainers = () => {
   // synchronize patches
   for (const name of serverSyncStoreNames) {
     serverSyncStore.register<ServerSyncStoreValue>(
+      name,
+      serverSyncStores[name]
+    );
+    externalContentSyncStore.register<ServerSyncStoreValue>(
       name,
       serverSyncStores[name]
     );
@@ -306,6 +312,7 @@ export const __testing__ = {
 export const createObjectPool = () => {
   return new SyncObjectPool([
     new ImmerhinSyncObject("server", serverSyncStore),
+    new ImmerhinSyncObject("externalContent", externalContentSyncStore),
     new ImmerhinSyncObject("client", clientSyncStore),
     new SelectedPageAndInstanceSyncObject(),
     new NanostoresSyncObject("pointerPosition", $pointerPosition),
@@ -379,6 +386,7 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("registeredTemplates", $registeredTemplates),
     new NanostoresSyncObject("canvasScrollbarWidth", $canvasScrollbarSize),
     new NanostoresSyncObject("systemDataByPage", $systemDataByPage),
+    new NanostoresSyncObject("externalContentRoots", $externalContentRoots),
   ]);
 };
 

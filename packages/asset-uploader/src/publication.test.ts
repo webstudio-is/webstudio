@@ -93,4 +93,44 @@ describe("published asset data", () => {
     expect(prepareIndex).toHaveBeenCalledTimes(2);
     expect(loadAssetDataByProject).toHaveBeenCalledTimes(4);
   });
+
+  test("recompiles and validates bounded dynamic publication dependencies", async () => {
+    const preliminaryArtifact = { documents: [{ _id: "post" }] } as never;
+    const finalArtifact = {
+      documents: [{ _id: "post" }, { _id: "article.mdx" }],
+    } as never;
+    const initialPlan = { queries: [{ id: "posts" }] } as never;
+    const resolvedPlan = {
+      queries: [{ id: "posts" }, { id: "mdx:article" }],
+    } as never;
+    const prepareIndex = vi
+      .fn()
+      .mockResolvedValueOnce(preliminaryArtifact)
+      .mockResolvedValueOnce(finalArtifact);
+    const resolvePlan = vi.fn(() => resolvedPlan);
+    const assetData = { assets: [], assetFolders: [] };
+
+    const result = await preparePublishedAssetData(
+      {
+        projectId: "project-1",
+        context: {} as never,
+        assetStore: {} as never,
+        contentDatabaseMaxBytes: 512_000,
+        plan: initialPlan,
+        retainedAssetIds: [],
+        resolvePlan,
+      },
+      {
+        createRepository: vi.fn(() => ({ prepareIndex })),
+        loadAssetDataByProject: vi.fn().mockResolvedValue(assetData),
+      } as never
+    );
+
+    expect(result.artifact).toBe(finalArtifact);
+    expect(prepareIndex.mock.calls).toEqual([[initialPlan], [resolvedPlan]]);
+    expect(resolvePlan.mock.calls).toEqual([
+      [preliminaryArtifact],
+      [finalArtifact],
+    ]);
+  });
 });

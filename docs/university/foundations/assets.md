@@ -17,7 +17,7 @@ The Assets panel is located on the left side of the builder. It stores all stati
 | **Video** | MP4, MOV, AVI, WebM |
 | **Audio** | MP3, WAV, OGG, M4A |
 | **Documents** | PDF, DOC, DOCX, XLS, XLSX, CSV, PPT, PPTX |
-| **Code & text** | TXT, MD, JS, CSS, JSON, HTML, XML |
+| **Code & text** | TXT, MD, MDX, JS, CSS, JSON, HTML, XML |
 | **Archives** | ZIP, RAR |
 
 {% hint style="info" %}
@@ -40,15 +40,20 @@ multiple selected assets does not insert multiple Image components.
 ### Create and edit text files
 
 Open the add menu in the Assets panel and choose **Create text file**. Enter a
-supported filename, such as `notes.md` or `data.json`.
+supported filename, such as `notes.md`, `article.mdx`, or `data.json`.
 Webstudio creates the file in the current folder and opens it in the code
 editor. New JSON files start with an empty object so the Content Engine can
 index them immediately.
 
-You can open uploaded `txt`, `csv`, `md`, `js`, `css`, `json`, `html`, `xml`,
+You can open uploaded `txt`, `csv`, `md`, `mdx`, `js`, `css`, `json`, `html`, `xml`,
 and `svg` assets in the same editor. Syntax highlighting follows the file type;
 unsupported text types use plain text. Markdown files also provide formatting
 controls and a preview.
+
+MDX files use the same Markdown document features and additionally support
+Webstudio elements for content that Markdown cannot represent. Rename a `.md`
+file to `.mdx` to enable MDX parsing. Webstudio does not rewrite the file while
+renaming it; invalid MDX remains editable and reports source-located errors.
 
 Edits save when the editor loses focus or when you press `Command + S` on
 macOS, `Ctrl + S` on Windows, or `Command/Ctrl + Enter`. Edit the complete
@@ -62,7 +67,7 @@ Converting an empty text file to `.json` initializes it with an empty object.
 
 ### Use assets as content
 
-Markdown and JSON files in Assets can be the source of truth for a site. The
+Markdown, MDX, and JSON files in Assets can be the source of truth for a site. The
 Content Engine reads their structured fields, queries the files, and resolves
 links between them. See [Content Engine](content-engine.md) for the supported
 file structure and a complete article workflow.

@@ -18,15 +18,15 @@ Use [Text](text.md) for prose that does not need syntax highlighting.
 1. Open the **Components** panel.
 2. Expand **Typography**.
 3. Drag **Code Text** onto the canvas.
-4. Enter the source in **Code** in the Settings panel, or edit it on the canvas.
+4. Enter the source in **Text Content** in the Settings panel, or edit it on the canvas.
 5. Select the matching **Language**.
 6. Select a **Theme**.
 
-You can bind **Code**, **Language**, and **Theme** to variables or resource
-values. A fixed Language or Theme includes only that selected asset in the
-published build. A bound Language or Theme makes the available catalog part of
-the server build so any runtime value can be rendered. The browser loads only
-the language and theme selected at runtime.
+You can bind **Text Content**, **Language**, and **Theme** to variables or
+resource values. A fixed Language or Theme includes only that selected asset in
+the published build. A bound Language or Theme makes the available catalog part
+of the server build so any runtime value can be rendered. The browser loads
+only the language and theme selected at runtime.
 
 The highlighted markup is rendered with SSR and SSG output, so it appears
 consistently when the page first loads and after it becomes interactive.

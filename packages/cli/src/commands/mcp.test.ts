@@ -31,6 +31,7 @@ const {
   createMcpStatusReporter,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
+  withMdxAssetWriteFeedback,
   reportMcpSingleOpCallTermination,
   reportMcpRunTermination,
   createMcpRunTerminationController,
@@ -1252,6 +1253,39 @@ test("adapts MCP asset content input to the shared revision client", async () =>
     extension: "json",
   });
   await expect(input.readAssetData()).resolves.toBe('{"theme":"dark"}');
+});
+
+test("returns diagnostics without rejecting an invalid MDX Asset write", async () => {
+  const source = "# Kept\n\n<ws.element";
+  const operationInput = getMcpOperationInput("update-asset-content", {
+    assetId: "asset-id",
+    expectedName: "article_hash.mdx",
+    content: source,
+  });
+
+  await expect(
+    withMdxAssetWriteFeedback({
+      command: "update-asset-content",
+      input: {
+        assetId: "asset-id",
+        expectedName: "article_hash.mdx",
+        content: source,
+      },
+      operationInput,
+      result: { result: { assetId: "asset-id" } },
+    })
+  ).resolves.toEqual({
+    result: {
+      assetId: "asset-id",
+      source,
+      diagnostics: [
+        expect.objectContaining({
+          code: "invalid-mdx",
+          severity: "error",
+        }),
+      ],
+    },
+  });
 });
 
 test("exposes asset content editing through MCP discovery", () => {

@@ -8,12 +8,9 @@ const CanvasCodeText = canvasComponents.CodeText;
 
 test("loads highlighting without replacing the code element", async () => {
   const { container, rerender } = render(
-    <CanvasCodeText
-      code="const answer = 42;"
-      language="javascript"
-      theme="github-light"
-      tabIndex={0}
-    />
+    <CanvasCodeText language="javascript" theme="github-light" tabIndex={0}>
+      const answer = 42;
+    </CanvasCodeText>
   );
 
   const codeElement = container.querySelector("code");
@@ -26,12 +23,9 @@ test("loads highlighting without replacing the code element", async () => {
   expect(document.activeElement).toBe(codeElement);
 
   rerender(
-    <CanvasCodeText
-      code="const answer = 42;"
-      language="javascript"
-      theme="nord"
-      tabIndex={0}
-    />
+    <CanvasCodeText language="javascript" theme="nord" tabIndex={0}>
+      const answer = 42;
+    </CanvasCodeText>
   );
   await waitFor(() => {
     const updatedCodeElement = container.querySelector("code");
@@ -44,4 +38,23 @@ test("loads highlighting without replacing the code element", async () => {
   });
   expect(container.querySelector("code")).toBe(codeElement);
   expect(document.activeElement).toBe(codeElement);
+});
+
+test("renders stable plain text while editing", async () => {
+  const { container } = render(
+    <CanvasCodeText
+      data-ws-text-editing=""
+      language="javascript"
+      theme="github-light"
+    >
+      const answer = 42;
+    </CanvasCodeText>
+  );
+
+  await waitFor(() =>
+    expect(container.querySelector("code")?.textContent).toBe(
+      "const answer = 42;"
+    )
+  );
+  expect(container.querySelector("code span")).toBeNull();
 });

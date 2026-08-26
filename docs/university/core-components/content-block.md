@@ -62,6 +62,32 @@ Doing so will provide an initial setup for editors.
 
 Editors can delete direct children of the Content Block. They cannot delete the Templates container, templates, or nested instances independently.
 
+### Store content in an MDX file
+
+In Design mode, use **Content source** to connect a `.mdx` file from Assets. The file becomes the source of the Content Block's ordinary children; the Templates container remains part of the project.
+
+Connecting a file replaces the Content Block's existing ordinary children. Disconnecting copies the current file content back into the Content Block before removing the connection.
+
+Editors continue to use the normal Content mode controls. Their changes appear immediately on the canvas and then save to the connected file. Changes made in the file editor also update every Content Block connected to that file.
+
+Use Markdown for headings, paragraphs, links, lists, tables, code, and other standard document content. MDX uses Webstudio elements only for content that Markdown cannot represent:
+
+```mdx
+# Product update
+
+Regular document content stays Markdown.
+
+<ws.element ws:name="Promotion Card" />
+```
+
+The `ws:name` value must exactly match a unique top-level instance name in the Content Block's Templates list. Missing templates show a warning in Builder and are omitted from the published site. Invalid or unsupported MDX remains editable; Builder reports the source location and renders the valid content it can recover.
+
+You can connect multiple Content Blocks to the same MDX file. Editing any connected occurrence updates the shared file and the other connected occurrences.
+
+If the file changes after a canvas edit starts but before it is saved, Builder asks you to reload. It preserves the local canvas state until reload and does not merge or overwrite either version automatically.
+
+When a connected file contains frontmatter, select the Content Block in Design mode to edit every frontmatter value as code in Settings. Frontmatter saves independently from the document body.
+
 ## Content Block in Content mode
 
 In [Content mode](../foundations/modes.md#content), you can edit existing content inside Content Blocks. But what if you want to add _new_ content?

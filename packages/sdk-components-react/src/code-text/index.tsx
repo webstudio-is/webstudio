@@ -21,6 +21,10 @@ import {
   type ThemeRegistrationAny,
 } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+import {
+  codeTextDefaultLanguage,
+  codeTextDefaultTheme,
+} from "@webstudio-is/sdk";
 import { CodeText, defaultTag } from "./base";
 import {
   codeTextThemeBackgroundVariable,
@@ -206,7 +210,16 @@ export const createCodeText = ({
   const CodeTextContent = forwardRef<
     ElementRef<typeof defaultTag>,
     CodeTextProps
-  >(({ code, children, language, theme, className, style, ...props }, ref) => {
+  >((allProps, ref) => {
+    const {
+      code: legacyCode,
+      children,
+      language,
+      theme,
+      className,
+      style,
+      ...props
+    } = allProps;
     const [, rerender] = useState(0);
     const didCommit = useRef(false);
 
@@ -214,35 +227,33 @@ export const createCodeText = ({
       didCommit.current = true;
     }, []);
 
-    const hasSelection =
-      typeof language === "string" && typeof theme === "string";
-    const assetsReady = hasSelection && isSelectionLoaded(language, theme);
+    const effectiveLanguage = language ?? codeTextDefaultLanguage;
+    const effectiveTheme = theme ?? codeTextDefaultTheme;
+    const assetsReady = isSelectionLoaded(effectiveLanguage, effectiveTheme);
     if (suspense && didCommit.current === false && assetsReady === false) {
-      if (hasSelection) {
-        const key = JSON.stringify([language, theme]);
-        let promise = suspenseLoads.get(key);
-        if (promise === undefined) {
-          const assets = loadAssets(language, theme);
-          if (assets !== undefined) {
-            promise = assets.then((loaded) => {
-              if (loaded === false) {
-                return new Promise<void>(() => {});
-              }
-            });
-            suspenseLoads.set(key, promise);
-          }
+      const key = JSON.stringify([effectiveLanguage, effectiveTheme]);
+      let promise = suspenseLoads.get(key);
+      if (promise === undefined) {
+        const assets = loadAssets(effectiveLanguage, effectiveTheme);
+        if (assets !== undefined) {
+          promise = assets.then((loaded) => {
+            if (loaded === false) {
+              return new Promise<void>(() => {});
+            }
+          });
+          suspenseLoads.set(key, promise);
         }
-        if (promise !== undefined) {
-          throw promise;
-        }
+      }
+      if (promise !== undefined) {
+        throw promise;
       }
     }
 
     useEffect(() => {
-      if (hasSelection === false || assetsReady) {
+      if (assetsReady) {
         return;
       }
-      const promise = loadAssets(language, theme);
+      const promise = loadAssets(effectiveLanguage, effectiveTheme);
       if (promise === undefined) {
         return;
       }
@@ -256,20 +267,26 @@ export const createCodeText = ({
       return () => {
         active = false;
       };
-    }, [assetsReady, hasSelection, language, theme]);
+    }, [assetsReady, effectiveLanguage, effectiveTheme]);
 
+    const source = typeof children === "string" ? children : legacyCode;
+    const isTextEditing = props["data-ws-text-editing"] !== undefined;
     const highlighted = useMemo(() => {
       if (
+        isTextEditing ||
         assetsReady === false ||
-        typeof code !== "string" ||
-        code.trim().length === 0 ||
-        typeof language !== "string" ||
-        typeof theme !== "string"
+        typeof source !== "string" ||
+        source.trim().length === 0
       ) {
         return;
       }
-      return highlightCode({ highlighter, code, language, theme });
-    }, [assetsReady, code, language, theme]);
+      return highlightCode({
+        highlighter,
+        code: source,
+        language: effectiveLanguage,
+        theme: effectiveTheme,
+      });
+    }, [assetsReady, effectiveLanguage, effectiveTheme, isTextEditing, source]);
 
     if (highlighted === undefined) {
       return (
@@ -278,7 +295,7 @@ export const createCodeText = ({
           ref={ref}
           className={className}
           style={style}
-          code={code}
+          code={legacyCode}
         >
           {children}
         </CodeText>

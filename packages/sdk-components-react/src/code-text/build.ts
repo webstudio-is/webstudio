@@ -1,9 +1,11 @@
-import type {
-  ComponentBuildHook,
-  Instances,
-  Prop,
-  Props,
-  WsComponentMeta,
+import {
+  codeTextDefaultLanguage,
+  codeTextDefaultTheme,
+  type ComponentBuildHook,
+  type Instances,
+  type Prop,
+  type Props,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 
 export const codeTextComponent = "CodeText";
@@ -61,6 +63,11 @@ export const collectCodeTextAssets = ({
   meta: WsComponentMeta | undefined;
 }) => {
   const selections = new Map<string, Selection>();
+  for (const instance of instances.values()) {
+    if (instance.component === codeTextComponent) {
+      selections.set(instance.id, {});
+    }
+  }
   for (const prop of props.values()) {
     if (prop.name !== "language" && prop.name !== "theme") {
       continue;
@@ -69,9 +76,11 @@ export const collectCodeTextAssets = ({
     if (instance?.component !== codeTextComponent) {
       continue;
     }
-    const selection = selections.get(instance.id) ?? {};
+    const selection = selections.get(instance.id);
+    if (selection === undefined) {
+      continue;
+    }
     selection[prop.name] = prop;
-    selections.set(instance.id, selection);
   }
 
   if (selections.size === 0) {
@@ -85,23 +94,24 @@ export const collectCodeTextAssets = ({
   let dynamicLanguages = false;
   let dynamicThemes = false;
   for (const [instanceId, selection] of selections) {
-    if (selection.language === undefined || selection.theme === undefined) {
-      throw new Error(
-        `Code Text "${instanceId}" requires both Language and Theme selections.`
-      );
-    }
-    const language = readSelection({
-      instanceId,
-      label: "Language",
-      prop: selection.language,
-      supportedValues: supportedLanguages,
-    });
-    const theme = readSelection({
-      instanceId,
-      label: "Theme",
-      prop: selection.theme,
-      supportedValues: supportedThemes,
-    });
+    const language =
+      selection.language === undefined
+        ? codeTextDefaultLanguage
+        : readSelection({
+            instanceId,
+            label: "Language",
+            prop: selection.language,
+            supportedValues: supportedLanguages,
+          });
+    const theme =
+      selection.theme === undefined
+        ? codeTextDefaultTheme
+        : readSelection({
+            instanceId,
+            label: "Theme",
+            prop: selection.theme,
+            supportedValues: supportedThemes,
+          });
     if (language === undefined) {
       dynamicLanguages = true;
     } else if (language !== "plaintext") {

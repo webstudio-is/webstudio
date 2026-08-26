@@ -95,11 +95,16 @@ test("collects the deduplicated union of configured Code Text assets", () => {
   });
 });
 
-test("keeps legacy Code Text instances on the plain renderer", () => {
-  expect(collect(new Map())).toBeUndefined();
+test("collects default assets for Code Text without authored props", () => {
+  expect(collect(new Map())).toEqual({
+    staticLanguages: ["javascript"],
+    staticThemes: ["github-light"],
+    dynamicLanguages: false,
+    dynamicThemes: false,
+  });
 });
 
-test("keeps legacy HTML language instances on the plain renderer", () => {
+test("does not confuse the HTML lang attribute with the code language", () => {
   const props = new Map([
     [
       "code-1-lang",
@@ -113,10 +118,15 @@ test("keeps legacy HTML language instances on the plain renderer", () => {
     ],
   ]) satisfies Props;
 
-  expect(collect(props)).toBeUndefined();
+  expect(collect(props)).toEqual({
+    staticLanguages: ["javascript"],
+    staticThemes: ["github-light"],
+    dynamicLanguages: false,
+    dynamicThemes: false,
+  });
 });
 
-test("rejects incomplete highlighting selections", () => {
+test("uses the implicit language for a theme-only selection", () => {
   const props = new Map([
     [
       "code-1-theme",
@@ -130,9 +140,34 @@ test("rejects incomplete highlighting selections", () => {
     ],
   ]) satisfies Props;
 
-  expect(() => collect(props)).toThrow(
-    'Code Text "code-1" requires both Language and Theme selections.'
-  );
+  expect(collect(props)).toEqual({
+    staticLanguages: ["javascript"],
+    staticThemes: ["github-light"],
+    dynamicLanguages: false,
+    dynamicThemes: false,
+  });
+});
+
+test("uses the implicit theme for a language-only selection", () => {
+  const props = new Map([
+    [
+      "code-1-language",
+      {
+        id: "code-1-language",
+        instanceId: "code-1",
+        name: "language",
+        type: "string" as const,
+        value: "javascript",
+      },
+    ],
+  ]) satisfies Props;
+
+  expect(collect(props)).toEqual({
+    staticLanguages: ["javascript"],
+    staticThemes: ["github-light"],
+    dynamicLanguages: false,
+    dynamicThemes: false,
+  });
 });
 
 test("marks expression-bound selections as dynamic", () => {
@@ -160,7 +195,7 @@ test("marks expression-bound selections as dynamic", () => {
   ]) satisfies Props;
 
   expect(collect(props)).toEqual({
-    staticLanguages: [],
+    staticLanguages: ["javascript"],
     staticThemes: ["github-light"],
     dynamicLanguages: true,
     dynamicThemes: false,

@@ -188,6 +188,18 @@ export const canResolveInstanceSelector = (
       continue;
     }
 
+    const indexedParentId = getIndexedBaseInstanceId(parentId);
+    if (
+      indexedParentId !== undefined &&
+      instances
+        .get(indexedParentId)
+        ?.children.some(
+          (child) => child.type === "id" && child.value === instanceId
+        ) === true
+    ) {
+      continue;
+    }
+
     const parentInstance = instances.get(parentId);
     if (
       parentInstance?.children.some(

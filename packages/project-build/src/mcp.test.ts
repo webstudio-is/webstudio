@@ -1045,6 +1045,7 @@ describe("project session mcp adapter", () => {
       "contentMode",
       "mode",
       "insertIndex",
+      "templateNameConfirmation",
       "dryRun",
     ]);
     const fragmentSchema = insertFragmentTool?.inputSchema.properties?.fragment;
@@ -1366,7 +1367,19 @@ describe("project session mcp adapter", () => {
   test("downloads assets through the MCP host", async () => {
     const downloadAsset = vi.fn(async ({ assetId }: { assetId: string }) => ({
       assetId,
-      path: `/workspace/.webstudio/assets/${assetId}.png`,
+      path: `/workspace/.webstudio/assets/${assetId}.mdx`,
+      source: "# Kept\n\n{danger()}\n",
+      diagnostics: [
+        {
+          code: "unsafe-mdx" as const,
+          severity: "warning" as const,
+          message: "Executable MDX expressions are not supported",
+          sourceRange: {
+            start: { line: 3, column: 1, offset: 8 },
+            end: { line: 3, column: 11, offset: 18 },
+          },
+        },
+      ],
     }));
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,
@@ -1384,7 +1397,14 @@ describe("project session mcp adapter", () => {
     expect(result.structuredContent).toMatchObject({
       data: {
         assetId: "hero",
-        path: "/workspace/.webstudio/assets/hero.png",
+        path: "/workspace/.webstudio/assets/hero.mdx",
+        source: "# Kept\n\n{danger()}\n",
+        diagnostics: [
+          expect.objectContaining({
+            code: "unsafe-mdx",
+            severity: "warning",
+          }),
+        ],
       },
     });
   });

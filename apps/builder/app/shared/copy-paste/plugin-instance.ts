@@ -1,10 +1,15 @@
 import {
+  breakpointPasteLimitWarning,
   extractWebstudioFragment,
+  findChildReferenceIndex,
   findSafeFragmentPasteTarget,
   getCommonAncestorSelector,
+  getInstancePath,
   getPasteRootInstanceIds,
   getFragmentContentModelWarnings,
   mergeWebstudioFragments,
+  type InstanceSelector,
+  sortInstancePathsForChildMutation,
 } from "@webstudio-is/project-build/runtime";
 import {
   instanceTransferDataVersion,
@@ -22,16 +27,14 @@ import { type Insertable } from "../instance-utils/insert";
 import { shallowEqual } from "shallow-equal";
 import { toast } from "@webstudio-is/design-system";
 import {
+  blockComponent,
+  getContentBlockSource,
+  isMdxFileAsset,
   type Instance,
   type WebstudioFragment,
   isComponentDetachable,
 } from "@webstudio-is/sdk";
-import { $instances, $project } from "~/shared/sync/data-stores";
-import {
-  type InstanceSelector,
-  sortInstancePathsForChildMutation,
-} from "@webstudio-is/project-build/runtime";
-import { findChildReferenceIndex } from "@webstudio-is/project-build/runtime";
+import { $assetFolders, $instances, $project } from "~/shared/sync/data-stores";
 import { deleteInstanceBySelector } from "../instance-utils/mutation";
 import {
   $allSelectedInstanceSelectors,
@@ -39,15 +42,24 @@ import {
   $selectedInstancePath,
   $selectedInstanceSelector,
   $registeredComponentMetas,
+  $variableValuesByInstanceSelector,
   selectInstances,
 } from "~/shared/nano-states";
-import { getInstancePath } from "@webstudio-is/project-build/runtime";
 import { builderApi } from "../builder-api";
 import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
-import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime";
 import { resolveFragmentTokenConflicts } from "../resolve-token-conflicts";
 import { reportFragmentContentModelWarnings } from "./fragment-utils";
 import { transferFragmentAssets } from "./asset-transfer-utils";
+import {
+  isRepeatedContentBlockOccurrence,
+  resolveContentBlockOccurrenceAssetId,
+} from "../content-block-source-utils";
+import { rewriteTransferredMdxAssets } from "./mdx-asset-transfer";
+import {
+  createClipboardAssetPaths,
+  hasDynamicContentBlockSource,
+  prepareConnectedContentBlockFragment,
+} from "./content-block-fragment";
 
 const invalidPasteDataMessage =
   "Could not paste Webstudio instance data. The clipboard data appears to be incomplete or invalid.";
@@ -73,10 +85,60 @@ const getTreeData = (
     return;
   }
 
+  const data = getWebstudioData();
+  const project = $project.get();
+  const fragment = prepareConnectedContentBlockFragment({
+    fragment: extractWebstudioFragment(data, targetInstanceId),
+    projectId: project?.id,
+    assets: data.assets,
+  });
+  const hasDynamicContentSource = hasDynamicContentBlockSource(fragment);
+  if (
+    showToast &&
+    instance?.component !== blockComponent &&
+    hasDynamicContentSource
+  ) {
+    toast.warn(
+      "Dynamic MDX sources are copied from the Collection items currently rendered on the canvas."
+    );
+  }
+  const isRepeatedOccurrence = isRepeatedContentBlockOccurrence({
+    instanceSelector,
+    instances,
+  });
+  if (instance?.component === blockComponent && isRepeatedOccurrence) {
+    const source = getContentBlockSource({
+      blockInstanceId: targetInstanceId,
+      props: data.props.values(),
+    });
+    if (source?.type === "expression") {
+      const resolvedAssetId = resolveContentBlockOccurrenceAssetId({
+        source,
+        instanceSelector,
+        variableValuesByRenderScope: $variableValuesByInstanceSelector.get(),
+      });
+      const asset =
+        resolvedAssetId === undefined
+          ? undefined
+          : data.assets.get(resolvedAssetId);
+      if (asset !== undefined && isMdxFileAsset(asset)) {
+        fragment.props = fragment.props.map((prop) =>
+          prop.instanceId === targetInstanceId && prop.name === "src"
+            ? { ...prop, type: "asset" as const, value: asset.id }
+            : prop
+        );
+        if (fragment.assets.some(({ id }) => id === asset.id) === false) {
+          fragment.assets.push(asset);
+        }
+      }
+    }
+  }
+
   return {
     sourceOrigin: window.location.origin,
+    assetPaths: createClipboardAssetPaths(fragment.assets, $assetFolders.get()),
     instanceSelector,
-    ...extractWebstudioFragment(getWebstudioData(), targetInstanceId),
+    ...fragment,
   };
 };
 
@@ -96,6 +158,10 @@ const stringifyMultiRootSelection = (selectedData: InstanceTransferData[]) => {
   const rootInstanceIds = selectedData.map((data) => data.instanceSelector[0]);
   return stringifyMultiRoot({
     sourceOrigin: firstData.sourceOrigin,
+    assetPaths: Object.assign(
+      {},
+      ...selectedData.map(({ assetPaths }) => assetPaths ?? {})
+    ),
     rootInstanceIds,
     fragment: mergeWebstudioFragments(rootInstanceIds, selectedData),
   });
@@ -215,12 +281,14 @@ const insertPastedFragment = async ({
   pasteTarget,
   selectRootInstances,
   sourceOrigin,
+  assetPaths,
   projectId,
 }: {
   fragment: WebstudioFragment;
   pasteTarget: Insertable;
   selectRootInstances: (rootInstanceIds: Instance["id"][]) => void;
   sourceOrigin: string | undefined;
+  assetPaths?: Readonly<Record<string, string>>;
   projectId: string;
 }) => {
   try {
@@ -239,6 +307,33 @@ const insertPastedFragment = async ({
     });
     if (transferred.success === false) {
       return transferred;
+    }
+    if ($project.get()?.id !== projectId) {
+      return {
+        success: false,
+        error: "Project changed while pasting.",
+      } as const;
+    }
+    if (sourceOrigin !== undefined) {
+      try {
+        const { skippedInvalidAssetIds } = await rewriteTransferredMdxAssets({
+          sourceOrigin,
+          projectId,
+          sourceAssets: fragment.assets,
+          sourceAssetPaths: assetPaths,
+          importedAssets: transferred.assets,
+        });
+        if (skippedInvalidAssetIds.length > 0) {
+          toast.warn(
+            "Some invalid MDX files were copied unchanged. Open them to review their diagnostics."
+          );
+        }
+      } catch {
+        return {
+          success: false,
+          error: "Could not update Asset references in the copied MDX files.",
+        } as const;
+      }
     }
     if ($project.get()?.id !== projectId) {
       return {
@@ -310,6 +405,7 @@ const handlePasteInstance = async (clipboardData: string) => {
       fragment,
       pasteTarget,
       sourceOrigin: transferData.data.sourceOrigin ?? window.location.origin,
+      assetPaths: transferData.data.assetPaths,
       projectId,
       selectRootInstances: (rootInstanceIds) => {
         selectInstances(
@@ -331,6 +427,7 @@ const handlePasteInstance = async (clipboardData: string) => {
     fragment,
     pasteTarget,
     sourceOrigin: transferData.data.sourceOrigin ?? window.location.origin,
+    assetPaths: transferData.data.assetPaths,
     projectId,
     selectRootInstances: (rootInstanceIds) => {
       const newRootInstanceId = rootInstanceIds[0];

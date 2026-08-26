@@ -38,6 +38,7 @@ import {
   EditorDialogControl,
   foldGutterExtension,
   getCodeEditorCssVars,
+  linterTooltipTheme,
 } from "~/shared/code-editor-base";
 
 const wrapperStyle = css({
@@ -216,6 +217,7 @@ export const CodeEditor = forwardRef<
       ...builtInExtensions,
       ...dynamicLanguageExtensions,
       ...languageExtensions,
+      linterTooltipTheme,
     ],
     [builtInExtensions, dynamicLanguageExtensions, languageExtensions]
   );
