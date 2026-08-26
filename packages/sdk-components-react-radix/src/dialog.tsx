@@ -95,7 +95,7 @@ export const DialogContent = forwardRef<
       {...props}
       onClickCapture={(event) => {
         onClickCapture?.(event);
-        if (renderer === undefined && getLinkActivation(event)) {
+        if (renderer !== "canvas" && getLinkActivation(event)) {
           preventAutoFocusOnClose.current = true;
           close?.();
         }

@@ -83,7 +83,7 @@ export const PopoverContent = forwardRef<
           {...props}
           onClickCapture={(event) => {
             onClickCapture?.(event);
-            if (renderer === undefined && getLinkActivation(event)) {
+            if (renderer !== "canvas" && getLinkActivation(event)) {
               close?.();
             }
           }}

@@ -311,3 +311,31 @@ test("keeps navigation overlays interactive on the builder canvas", () => {
 
   expect(screen.getByText("Destination")).toBeDefined();
 });
+
+test("closes navigation overlays in builder preview", () => {
+  render(
+    <ReactSdkContext.Provider
+      value={{
+        assetBaseUrl: "/",
+        imageLoader: ({ src }) => src,
+        resources: {},
+        breakpoints: [],
+        onError: () => {},
+        renderer: "preview",
+      }}
+    >
+      <Popover open>
+        <PopoverTrigger>
+          <button>Open</button>
+        </PopoverTrigger>
+        <PopoverContent>
+          <Link />
+        </PopoverContent>
+      </Popover>
+    </ReactSdkContext.Provider>
+  );
+
+  fireEvent.click(screen.getByText("Destination"));
+
+  expect(screen.queryByText("Destination")).toBeNull();
+});

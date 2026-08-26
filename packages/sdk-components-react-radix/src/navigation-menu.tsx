@@ -83,7 +83,7 @@ export const NavigationMenuContent = forwardRef<
         onClickCapture?.(event);
         const anchor = getLinkActivation(event);
         if (
-          renderer === undefined &&
+          renderer !== "canvas" &&
           anchor !== undefined &&
           anchor.hasAttribute("data-ws-navigation-menu-link") === false
         ) {
