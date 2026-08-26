@@ -1020,7 +1020,7 @@ export const createPageTemplate = (
     draft.pages.pageTemplates.set(templateId, {
       id: templateId,
       name: input.name,
-      title: input.title ?? "",
+      title: input.title ?? JSON.stringify(input.name),
       rootInstanceId,
       meta:
         input.meta === undefined

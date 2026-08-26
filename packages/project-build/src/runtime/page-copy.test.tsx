@@ -5,6 +5,7 @@ import {
   encodeDataVariableId,
   elementComponent,
   getHomePage,
+  pageTemplate,
   type Asset,
   type DataSource,
   type Instance,
@@ -1585,6 +1586,29 @@ describe("insert page copy", () => {
         },
       ]),
     });
+  });
+
+  test("creates a valid page template when title is omitted", () => {
+    const data = getWebstudioDataStub();
+    const ids = ["templateId", "templateBodyId"];
+
+    const result = createPageTemplate(
+      data,
+      { name: "Landing Template" },
+      { createId: () => ids.shift() ?? "extraId" }
+    );
+    const updated = applyBuilderPatchTransactions(data, [
+      { id: "create-page-template", payload: result.payload },
+    ]).state as WebstudioData;
+
+    expect(
+      pageTemplate.parse(updated.pages.pageTemplates?.get("templateId"))
+    ).toEqual(
+      expect.objectContaining({
+        name: "Landing Template",
+        title: '"Landing Template"',
+      })
+    );
   });
 
   test("updates page templates through page field validation semantics", () => {
