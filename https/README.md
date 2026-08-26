@@ -1,5 +1,8 @@
 # Admin only
 
+> `privkey.pem` and `haproxy.pem` are generated locally by the steps below and are
+> intentionally untracked (they carry the TLS private key). Run the block to recreate them.
+
 Based on this article https://dev.to/istarkov/fast-and-easy-way-to-setup-web-developer-certificates-450e
 
 ```bash

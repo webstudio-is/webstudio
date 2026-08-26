@@ -20,7 +20,8 @@ _build
 # misc
 .DS_Store
 *.pem
-!https/*.pem
+# keep the public chain tracked; privkey.pem / haproxy.pem are generated locally (see https/README.md)
+!https/fullchain.pem
 /.idea
 
 # logs
