@@ -1267,7 +1267,7 @@ describe("prebuild", () => {
         legacyCode.attrs.map(({ name, value }) => [name, value])
       )
     ).toMatchObject({ class: "w-code-text", lang: "en" });
-    expect(findElementsByTagName(legacyCode, "span")).toHaveLength(0);
+    expect(findElementsByTagName(legacyCode, "span").length).toBeGreaterThan(0);
     expect(getTextContent(legacyCode)).toBe("legacy <code>");
   }, 30_000);
 
