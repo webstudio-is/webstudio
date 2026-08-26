@@ -135,7 +135,10 @@ Delete and download buttons are available inside the asset detail panel (gear ic
 
 - **Unused assets** can be deleted immediately.
 - **Assets in use** show a "Review & delete" button that lists every usage with clickable links to each location, so you can review the impact before confirming.
-- **Delete all unused assets** — click the brush icon in the Assets panel header to find and batch-delete all unreferenced assets in one action.
+- **Delete unused assets** — click the brush icon in the Assets panel header to
+  review all unreferenced assets. Every asset is selected by default. Uncheck
+  assets you want to keep, or use **Select all** to change the complete
+  selection. Confirming deletes only the selected assets.
 
 ## Downloading assets
 
