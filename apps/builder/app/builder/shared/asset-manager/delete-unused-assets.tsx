@@ -37,13 +37,21 @@ export const openDeleteUnusedAssetsDialog = () => {
   $isDeleteUnusedAssetsDialogOpen.set(true);
 };
 
-const getUnusedAssets = () => {
-  const assets = $assets.get();
+const DeleteUnusedAssetsDialogContent = ({
+  onClose,
+}: {
+  onClose: () => void;
+}) => {
+  const assets = useStore($assets);
+  const pages = useStore($pages);
+  const projectSettings = useStore($projectSettings);
+  const props = useStore($props);
+  const styles = useStore($styles);
   const usagesByAssetId = calculateUsagesByAssetId({
-    pages: $pages.get(),
-    projectSettings: $projectSettings.get(),
-    props: $props.get(),
-    styles: $styles.get(),
+    pages,
+    projectSettings,
+    props,
+    styles,
     assets,
   });
   const unusedAssets: Asset[] = [];
@@ -53,19 +61,14 @@ const getUnusedAssets = () => {
       unusedAssets.push(asset);
     }
   }
-  return unusedAssets;
-};
-
-const DeleteUnusedAssetsDialogContent = ({
-  onClose,
-}: {
-  onClose: () => void;
-}) => {
-  const unusedAssets = getUnusedAssets();
   const [selectedAssetIds, setSelectedAssetIds] = useState(
     () => new Set(unusedAssets.map((asset) => asset.id))
   );
-  const allAssetsSelected = selectedAssetIds.size === unusedAssets.length;
+  const selectedUnusedAssetIds = unusedAssets.flatMap((asset) =>
+    selectedAssetIds.has(asset.id) ? [asset.id] : []
+  );
+  const allAssetsSelected =
+    selectedUnusedAssetIds.length === unusedAssets.length;
 
   return (
     <>
@@ -124,11 +127,11 @@ const DeleteUnusedAssetsDialogContent = ({
         {unusedAssets.length > 0 && (
           <Button
             color="destructive"
-            disabled={selectedAssetIds.size === 0}
+            disabled={selectedUnusedAssetIds.length === 0}
             onClick={() => {
-              const assetIds = Array.from(selectedAssetIds);
+              const assetIds = selectedUnusedAssetIds;
               const count = assetIds.length;
-              deleteAssets(assetIds);
+              deleteAssets(assetIds, { force: false });
               onClose();
               toast.success(
                 `Deleted ${count} unused ${count === 1 ? "asset" : "assets"}`

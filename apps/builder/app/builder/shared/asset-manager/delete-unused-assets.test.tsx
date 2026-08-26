@@ -155,3 +155,48 @@ test("selects unused assets individually and deletes only selected assets", () =
   expect($assets.get().has("first")).toBe(false);
   expect($assets.get().has("second")).toBe(true);
 });
+
+test("does not delete a selected asset that becomes used while open", () => {
+  act(() => openDeleteUnusedAssetsDialog());
+  renderer.render(
+    <TooltipProvider>
+      <DeleteUnusedAssetsDialog />
+    </TooltipProvider>
+  );
+
+  act(() => {
+    $props.set(
+      new Map([
+        [
+          "image-source",
+          {
+            id: "image-source",
+            instanceId: "body",
+            name: "src",
+            type: "asset" as const,
+            value: "second",
+          },
+        ],
+      ])
+    );
+  });
+  expect(document.querySelector("#unused-asset-second")).toBeNull();
+
+  act(() => {
+    document.querySelector<HTMLButtonElement>("#unused-asset-first")?.click();
+  });
+  expect(
+    Array.from(document.querySelectorAll("button")).find(
+      (button) => button.textContent === "Delete"
+    )?.disabled
+  ).toBe(true);
+
+  act(() => {
+    Array.from(document.querySelectorAll("button"))
+      .find((button) => button.textContent === "Delete")
+      ?.click();
+  });
+
+  expect($assets.get().has("first")).toBe(true);
+  expect($assets.get().has("second")).toBe(true);
+});
