@@ -4,10 +4,10 @@ import { selectNavigatorItem } from "./navigator";
 
 export const selectContentBlock = async ({ page }: { page: Page }) => {
   await selectNavigatorItem({ page, name: "Content Block" });
-  await page.getByText("Content source", { exact: true }).waitFor({
-    state: "visible",
-    timeout: 10_000,
-  });
+  await page
+    .getByRole("button", { name: /^(Connect \.mdx file|Open)$/ })
+    .first()
+    .waitFor({ state: "visible", timeout: 10_000 });
 };
 
 export const chooseContentBlockSource = async ({
@@ -48,6 +48,6 @@ export const disconnectContentBlockSource = async ({
 }: {
   page: Page;
 }) => {
-  await page.getByText("Content source", { exact: true }).click();
+  await page.getByText("Source", { exact: true }).click();
   await page.getByRole("button", { name: "Reset value", exact: true }).click();
 };

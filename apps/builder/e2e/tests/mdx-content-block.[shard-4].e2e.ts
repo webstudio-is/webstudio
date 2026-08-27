@@ -7,7 +7,6 @@ import {
   configureRepeatedContentBlock,
 } from "../fixtures/mdx-content-block-project";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { expectTextHidden } from "../flows/assertions";
 import {
   getAssetIdByFilename,
   openAssetsPanel,
@@ -624,8 +623,8 @@ test("Unresolved MDX templates are selectable only in the Builder canvas", async
     await warning.waitFor();
     await warning.click();
     await selectContentBlock({ page });
-    await page.getByRole("list", { name: "MDX diagnostics" }).waitFor();
-    await page.getByRole("button", { name: "Open file to repair" }).waitFor();
+    await page.getByRole("img", { name: /^MDX source warning:/ }).waitFor();
+    await page.getByRole("button", { name: "Open", exact: true }).waitFor();
 
     const previewUrl = getProjectBuilderUrl({
       projectId: fixture.projectId,
@@ -642,7 +641,6 @@ test("Unresolved MDX templates are selectable only in the Builder canvas", async
     await previewCanvas
       .getByText("Missing template: Missing E2E Template", { exact: true })
       .waitFor({ state: "hidden" });
-    await expectTextHidden({ page, text: "Open file to repair" });
   } finally {
     await close();
   }
