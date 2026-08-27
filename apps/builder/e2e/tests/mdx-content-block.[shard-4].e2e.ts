@@ -146,7 +146,7 @@ const openFixture = async ({
   await waitForSyncStatus({ page, status: "idle" });
 };
 
-test("Content Block MDX source lifecycle persists edits and disconnect copy", async () => {
+test("Content Block MDX source lifecycle persists edits and resets to empty", async () => {
   const fixture = await createContentModeProject({
     email: "mdx-content-source-e2e@webstudio.test",
     title: "MDX Content Source E2E",
@@ -391,29 +391,20 @@ test("Content Block MDX source lifecycle persists edits and disconnect copy", as
       );
     }
     await page.keyboard.press("Escape");
-    await page.getByRole("button", { name: "Disconnect", exact: true }).click();
-    const disconnectDialog = page.getByRole("dialog", {
-      name: "Disconnect content source",
-    });
-    await disconnectDialog.waitFor();
-    await disconnectDialog
-      .getByRole("button", { name: "Abort", exact: true })
-      .click();
-    await page
-      .getByRole("button", { name: "Disconnect", exact: true })
-      .waitFor();
     await disconnectContentBlockSource({ page });
     await waitForSyncStatus({ page, status: "idle" });
-    await waitForCanvasText({ page, text: alternateHeading });
+    await waitForCanvasTextHidden({ page, text: alternateHeading });
 
     await openFixture({
       page,
       projectId: fixture.projectId,
       authToken: fixture.builderToken,
     });
-    await waitForCanvasText({ page, text: alternateHeading });
+    await waitForCanvasTextHidden({ page, text: alternateHeading });
     await selectContentBlock({ page });
-    await page.getByText("No content source", { exact: true }).waitFor();
+    await page
+      .getByRole("button", { name: "Connect .mdx file", exact: true })
+      .waitFor();
   } finally {
     await close();
   }

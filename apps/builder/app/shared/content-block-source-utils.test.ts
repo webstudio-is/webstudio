@@ -39,6 +39,25 @@ describe("Content Block occurrence source", () => {
     ).toBe("article");
   });
 
+  test("resolves each bound Collection occurrence independently", () => {
+    const first = ["block", "collection[first]", "collection", "body"];
+    const second = ["block", "collection[second]", "collection", "body"];
+    const values = new Map([
+      [JSON.stringify(first), new Map([["asset", "a.mdx"]])],
+      [JSON.stringify(second), new Map([["asset", "b.mdx"]])],
+    ]);
+
+    expect(
+      [first, second].map((instanceSelector) =>
+        resolveContentBlockOccurrenceAssetId({
+          source: { type: "expression", value: "asset" },
+          instanceSelector,
+          variableValuesByRenderScope: values,
+        })
+      )
+    ).toEqual(["a.mdx", "b.mdx"]);
+  });
+
   test("detects repeated selectors consistently", () => {
     const instances = new Map(
       ["block", "collection", "body"].map((id) => [

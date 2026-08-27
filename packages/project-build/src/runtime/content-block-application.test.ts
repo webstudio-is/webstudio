@@ -179,7 +179,7 @@ describe("createContentBlockApplication", () => {
     ]);
   });
 
-  test("connects with the normal lifecycle payload and disconnects with materialized content", async () => {
+  test("connects with the normal lifecycle payload and disconnects to an empty block", async () => {
     const fixture = createFixture();
     const connected = await fixture.application.connect({
       state: fixture.state,
@@ -196,20 +196,13 @@ describe("createContentBlockApplication", () => {
     const disconnected = await fixture.application.disconnect({
       state: connectedState,
       blockInstanceId: "block",
-      renderScope: "page",
     });
     const disconnectedState = applyBuilderPatchTransactions(connectedState, [
       { id: "disconnect", payload: [...disconnected.projectPayload] },
     ]).state;
     const block = disconnectedState.instances?.get("block");
-    const headingId = block?.children.find(
-      (child) => child.type === "id" && child.value !== "templates"
-    );
-    expect(
-      headingId?.type === "id"
-        ? disconnectedState.instances?.get(headingId.value)?.tag
-        : undefined
-    ).toBe("h1");
+    expect(block?.children).toEqual([{ type: "id", value: "templates" }]);
+    expect(disconnectedState.props?.has("src")).toBe(false);
   });
 
   test("edits and reloads the whole MDX source through the shared session", async () => {

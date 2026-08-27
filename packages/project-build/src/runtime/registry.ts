@@ -574,11 +574,11 @@ export const builderRuntimeOperations = [
         }
       );
       return createRuntimeMutation({
-        payload: input.confirm === true ? [...prepared.projectPayload] : [],
+        payload: [...prepared.projectPayload],
         result: {
           action: "disconnect" as const,
-          requiresConfirmation: input.confirm !== true,
-          diagnostics: [...prepared.inspection.diagnostics],
+          requiresConfirmation: false,
+          diagnostics: [],
         },
         invalidatesNamespaces: contentBlockNamespaces,
       });

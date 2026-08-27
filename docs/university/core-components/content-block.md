@@ -66,7 +66,7 @@ Editors can delete direct children of the Content Block. They cannot delete the 
 
 In Design mode, use the **Source** property under **Properties & attributes** to connect a `.mdx` file from Assets. Create the file in Assets first, then select it directly or bind the property to an Asset ID. The file becomes the source of the Content Block's ordinary children; the Templates container remains part of the project.
 
-Connecting a file replaces the Content Block's existing ordinary children. Select the connected filename to switch files, or select **Open** to edit it. To disconnect, select the **Source** property label and choose **Reset value**. Disconnecting copies the current file content back into the Content Block before removing the connection.
+Connecting a file replaces the Content Block's existing ordinary children. Select the connected filename to switch files, or select **Open** to edit it. To disconnect, select the **Source** property label and choose **Reset value**. Disconnecting leaves the MDX file unchanged, removes its derived content from the canvas, and leaves the Content Block empty.
 
 Editors continue to use the normal Content mode controls. Their changes appear immediately on the canvas and then save to the connected file. Changes made in the file editor also update every Content Block connected to that file.
 
@@ -86,7 +86,9 @@ You can connect multiple Content Blocks to the same MDX file. Editing any connec
 
 If the file changes after a canvas edit starts but before it is saved, Builder asks you to reload. It preserves the local canvas state until reload and does not merge or overwrite either version automatically.
 
-When a connected file contains frontmatter, select the Content Block in Design mode to edit every frontmatter value as code in Settings. Frontmatter saves independently from the document body.
+Edit frontmatter as YAML in the MDX file editor. Canvas edits update only the document body and preserve the frontmatter source, including its comments and formatting. Content-mode users with Asset access can open the MDX file from Assets to edit its frontmatter.
+
+To create another post with the same structure, duplicate the existing MDX Asset, edit the duplicate, and connect or bind the appropriate Content Block occurrence to it.
 
 ## Content Block in Content mode
 

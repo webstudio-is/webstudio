@@ -206,39 +206,10 @@ export const createContentBlockSourceController = ({
   };
 
   const disconnect = async (): Promise<MutationResult> => {
-    const initialState = getState();
-    const initialSource = getContentBlockSource({
-      blockInstanceId,
-      props: initialState.props?.values() ?? [],
-    });
-    const assetId =
-      initialSource?.type === "asset"
-        ? initialSource.assetId
-        : initialSource === undefined
-          ? undefined
-          : resolveExpressionAssetId(initialSource.value, renderScope);
-    if (assetId === undefined) {
-      return { status: "blocked", message: "MDX content is not loaded yet." };
-    }
-    await flushAsset(assetId);
     const state = getState();
-    const currentSource = getContentBlockSource({
-      blockInstanceId,
-      props: state.props?.values() ?? [],
-    });
-    if (
-      currentSource === undefined ||
-      isEqualContentBlockSource(currentSource, initialSource) === false
-    ) {
-      return {
-        status: "blocked",
-        message: "The content source changed before it was disconnected.",
-      };
-    }
     const prepared = await application.disconnect({
       state,
       blockInstanceId,
-      renderScope,
     });
     const current = getState();
     if (
@@ -257,15 +228,6 @@ export const createContentBlockSourceController = ({
   return {
     requestSource,
     disconnect,
-    saveFrontmatter: async (properties: Readonly<Record<string, unknown>>) => {
-      await application.updateFrontmatter({
-        state: getState(),
-        blockInstanceId,
-        renderScope,
-        properties,
-      });
-      return { status: "applied" as const };
-    },
     open: async (source: ContentBlockSource) =>
       (
         await application.inspect({

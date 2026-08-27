@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import {
   Button,
+  Box,
   Dialog,
   DialogActions,
   DialogClose,
@@ -10,8 +11,11 @@ import {
   Flex,
   Grid,
   Text,
+  Tooltip,
+  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
+import { AlertIcon } from "@webstudio-is/icons";
 import {
   formatAssetName,
   type Asset,
@@ -106,50 +110,6 @@ const ConnectSourceDialog = ({
   </Dialog>
 );
 
-const DisconnectDialog = ({
-  disabled,
-  error,
-  repeatedRenderScope,
-  onClose,
-  onConfirm,
-}: {
-  disabled: boolean;
-  error?: string;
-  repeatedRenderScope: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-}) => (
-  <Dialog open onOpenChange={(open) => open === false && onClose()}>
-    <DialogContent>
-      <DialogTitle>Disconnect content source</DialogTitle>
-      <Grid gap="3" css={{ padding: theme.panel.padding }}>
-        <DialogDescription asChild>
-          <Text>
-            {repeatedRenderScope
-              ? "This source binding is shared by every Collection item. The selected item’s file content will become the ordinary Content Block content used by every item. The file will not be changed."
-              : "The current file content will be copied into the Content Block. The file will not be changed."}
-          </Text>
-        </DialogDescription>
-        {error !== undefined && (
-          <Text role="alert" color="destructive" variant="tiny">
-            {error}
-          </Text>
-        )}
-      </Grid>
-      <DialogActions>
-        <Button autoFocus disabled={disabled} onClick={onConfirm}>
-          Confirm
-        </Button>
-        <DialogClose>
-          <Button color="ghost" disabled={disabled}>
-            Abort
-          </Button>
-        </DialogClose>
-      </DialogActions>
-    </DialogContent>
-  </Dialog>
-);
-
 /**
  * Presentation and interaction boundary for Content Block source lifecycle.
  * The caller owns loading, exact-Asset authorization, lifecycle preparation,
@@ -162,15 +122,10 @@ export const ContentBlockSourceControl = ({
   loading = false,
   error,
   diagnostics = [],
-  revision,
   persistenceStatus,
   persistenceError,
-  repeatedRenderScope = false,
-  disconnecting,
-  onDisconnectingChange,
   onRetry,
   onRequestSource,
-  onDisconnect,
   onOpen,
 }: {
   source?: ContentBlockSource;
@@ -179,18 +134,13 @@ export const ContentBlockSourceControl = ({
   loading?: boolean;
   error?: string;
   diagnostics?: readonly ContentBlockDiagnostic[];
-  revision?: string;
   persistenceStatus?: "saved" | "pending" | "saving" | "failed" | "conflicting";
   persistenceError?: string;
-  repeatedRenderScope?: boolean;
-  disconnecting: boolean;
-  onDisconnectingChange: (disconnecting: boolean) => void;
   onRetry?: () => Promise<void>;
   onRequestSource: (input: {
     source: ContentBlockSource;
     confirmed?: boolean;
   }) => Promise<ContentBlockSourceActionResult>;
-  onDisconnect: () => Promise<ContentBlockSourceMutationResult>;
   onOpen: (assetId: string) => void;
 }) => {
   const [pendingSource, setPendingSource] = useState<PendingSource>();
@@ -287,16 +237,51 @@ export const ContentBlockSourceControl = ({
           renderControl={() =>
             connected ? (
               <Grid columns={2} gap="2" aria-label="Content source actions">
-                <SelectAsset
-                  assetId={resolvedAsset?.id}
-                  title="Switch MDX file"
-                  accept=".mdx"
-                  disabled={isDisabled}
-                  triggerLabel={sourceLabel}
-                  onChange={(assetId) =>
-                    void requestSource({ type: "asset", assetId })
-                  }
-                />
+                <Flex align="center" gap="1">
+                  <Box css={{ flex: 1, minWidth: 0 }}>
+                    <SelectAsset
+                      assetId={resolvedAsset?.id}
+                      title="Switch MDX file"
+                      accept=".mdx"
+                      disabled={isDisabled}
+                      triggerLabel={sourceLabel}
+                      onChange={(assetId) =>
+                        void requestSource({ type: "asset", assetId })
+                      }
+                    />
+                  </Box>
+                  {uniqueDiagnostics.length > 0 && (
+                    <Tooltip
+                      content={
+                        <Grid gap="1">
+                          <Text>
+                            {formatContentBlockDiagnostic(uniqueDiagnostics[0])}
+                          </Text>
+                          {uniqueDiagnostics.length > 1 && (
+                            <Text>
+                              {uniqueDiagnostics.length - 1} more diagnostic
+                              {uniqueDiagnostics.length === 2 ? "" : "s"}
+                            </Text>
+                          )}
+                        </Grid>
+                      }
+                    >
+                      <Flex
+                        as="span"
+                        align="center"
+                        role="img"
+                        tabIndex={0}
+                        aria-label={`MDX source warning: ${formatContentBlockDiagnostic(uniqueDiagnostics[0])}${uniqueDiagnostics.length > 1 ? ` ${uniqueDiagnostics.length - 1} more diagnostic${uniqueDiagnostics.length === 2 ? "" : "s"}.` : ""}`}
+                        css={{
+                          color: rawTheme.colors.backgroundAlertMain,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <AlertIcon size={14} />
+                      </Flex>
+                    </Tooltip>
+                  )}
+                </Flex>
                 <Button
                   color="neutral"
                   disabled={isDisabled || resolvedAsset === undefined}
@@ -324,13 +309,11 @@ export const ContentBlockSourceControl = ({
           }
         />
 
-        {(localError ?? error) !== undefined &&
-          pendingSource === undefined &&
-          disconnecting === false && (
-            <Text role="alert" color="destructive" variant="tiny">
-              {localError ?? error}
-            </Text>
-          )}
+        {(localError ?? error) !== undefined && pendingSource === undefined && (
+          <Text role="alert" color="destructive" variant="tiny">
+            {localError ?? error}
+          </Text>
+        )}
 
         {(persistenceStatus === "pending" ||
           persistenceStatus === "saving") && (
@@ -373,47 +356,6 @@ export const ContentBlockSourceControl = ({
           </Text>
         )}
 
-        {uniqueDiagnostics.length > 0 && (
-          <Grid as="ul" gap="2" aria-label="MDX diagnostics">
-            {uniqueDiagnostics.map((diagnostic) => (
-              <Flex
-                as="li"
-                key={JSON.stringify(diagnostic)}
-                direction="column"
-                gap="1"
-              >
-                <Text
-                  color={
-                    diagnostic.severity === "error" ? "destructive" : "subtle"
-                  }
-                  variant="tiny"
-                >
-                  {diagnostic.contentRef ?? resolvedAsset?.name ?? "MDX file"}
-                  {": "}
-                  {formatContentBlockDiagnostic(diagnostic)}
-                </Text>
-                <Text color="subtle" variant="tiny">
-                  Render scope: {diagnostic.renderScope ?? "current block"}
-                </Text>
-                {revision !== undefined && (
-                  <Text color="subtle" variant="tiny">
-                    Revision: {revision}
-                  </Text>
-                )}
-                {resolvedAsset !== undefined && (
-                  <Button
-                    color="ghost"
-                    disabled={isDisabled}
-                    onClick={() => onOpen(resolvedAsset.id)}
-                  >
-                    Open file to repair
-                  </Button>
-                )}
-              </Flex>
-            ))}
-          </Grid>
-        )}
-
         {pendingSource !== undefined && (
           <ConnectSourceDialog
             disabled={isDisabled}
@@ -421,39 +363,6 @@ export const ContentBlockSourceControl = ({
             diagnostics={pendingSource.diagnostics}
             onClose={() => setPendingSource(undefined)}
             onConfirm={() => void requestSource(pendingSource.source, true)}
-          />
-        )}
-
-        {disconnecting && (
-          <DisconnectDialog
-            disabled={isDisabled}
-            error={localError ?? error}
-            repeatedRenderScope={repeatedRenderScope}
-            onClose={() => onDisconnectingChange(false)}
-            onConfirm={() => {
-              if (beginOperation() === false) {
-                return;
-              }
-              void onDisconnect()
-                .then((result) => {
-                  if (
-                    result.status === "blocked" ||
-                    result.status === "partial"
-                  ) {
-                    setLocalError(result.message);
-                    return;
-                  }
-                  if (result.status === "applied") {
-                    onDisconnectingChange(false);
-                  }
-                })
-                .catch((error) =>
-                  setLocalError(
-                    getErrorMessage(error, "Unable to disconnect source")
-                  )
-                )
-                .finally(finishOperation);
-            }}
           />
         )}
       </Grid>

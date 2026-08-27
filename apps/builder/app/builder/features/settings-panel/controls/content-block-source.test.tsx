@@ -101,67 +101,52 @@ const chooseAsset = async (triggerLabel: string, assetName: string) => {
 };
 
 const renderControl = ({
-  onDisconnect = async () => ({ status: "applied" as const }),
-  onDisconnectingChange = () => {},
   onRequestSource = async () => ({ status: "applied" as const }),
+  onOpen = () => {},
   source = { type: "asset" as const, assetId: asset.id },
-  disconnecting = false,
+  resolvedAsset = asset,
   loading = false,
   diagnostics,
-  revision,
   persistenceStatus,
   persistenceError,
   onRetry,
-  repeatedRenderScope,
 }: {
-  onDisconnect?: ComponentProps<
-    typeof ContentBlockSourceControl
-  >["onDisconnect"];
-  onDisconnectingChange?: ComponentProps<
-    typeof ContentBlockSourceControl
-  >["onDisconnectingChange"];
   onRequestSource?: ComponentProps<
     typeof ContentBlockSourceControl
   >["onRequestSource"];
+  onOpen?: ComponentProps<typeof ContentBlockSourceControl>["onOpen"];
   source?:
     | { type: "asset"; assetId: string }
     | { type: "expression"; value: string };
+  resolvedAsset?: Asset;
   loading?: boolean;
   diagnostics?: ComponentProps<typeof ContentBlockSourceControl>["diagnostics"];
-  revision?: string;
   persistenceStatus?: ComponentProps<
     typeof ContentBlockSourceControl
   >["persistenceStatus"];
   persistenceError?: string;
   onRetry?: () => Promise<void>;
-  repeatedRenderScope?: boolean;
-  disconnecting?: boolean;
 } = {}) => {
   act(() => {
     root.render(
       <TooltipProvider>
         <ContentBlockSourceControl
           source={source}
-          resolvedAsset={asset}
+          resolvedAsset={resolvedAsset}
           loading={loading}
           diagnostics={diagnostics}
-          revision={revision}
           persistenceStatus={persistenceStatus}
           persistenceError={persistenceError}
           onRetry={onRetry}
-          repeatedRenderScope={repeatedRenderScope}
-          disconnecting={disconnecting}
-          onDisconnectingChange={onDisconnectingChange}
           onRequestSource={onRequestSource}
-          onDisconnect={onDisconnect}
-          onOpen={() => {}}
+          onOpen={onOpen}
         />
       </TooltipProvider>
     );
   });
 };
 
-test("shows persistent actionable diagnostics with file, location, and render scope", () => {
+test("shows a warning indicator for source diagnostics", () => {
   const diagnostic = {
     code: "ignored-template-prop" as const,
     severity: "warning" as const,
@@ -179,20 +164,12 @@ test("shows persistent actionable diagnostics with file, location, and render sc
   };
   renderControl({
     diagnostics: [diagnostic, diagnostic],
-    revision: "asset-revision-2",
   });
 
   expect(
-    container.querySelector('[aria-label="MDX diagnostics"]')?.textContent
-  ).toContain(
-    'post.mdx: Property "tone" on template "Hero" was ignored because it is design only. Line 7, column 4.'
-  );
-  expect(container.textContent).toContain("Render scope: collection:item-2");
-  expect(container.textContent).toContain("Revision: asset-revision-2");
-  expect(
-    container.querySelectorAll('[aria-label="MDX diagnostics"] > li')
-  ).toHaveLength(1);
-  expect(findButton("Open file to repair")).not.toBeNull();
+    container.querySelector('[aria-label^="MDX source warning:"]')
+  ).not.toBeNull();
+  expect(container.textContent).not.toContain("Render scope:");
 });
 
 test("keeps the resolved filename visible while refreshed content loads", () => {
@@ -215,6 +192,19 @@ test("shows equal filename and Open actions for a connected source", () => {
   ).toEqual(["post.mdx", "Open"]);
 });
 
+test("opens the resolved Asset for a bound source", () => {
+  const onOpen = vi.fn();
+  renderControl({
+    source: { type: "expression", value: "post.body" },
+    resolvedAsset: targetAsset,
+    onOpen,
+  });
+
+  act(() => findButton("Open").click());
+
+  expect(onOpen).toHaveBeenCalledWith(targetAsset.id);
+});
+
 test("switches a connected source from the filename button", async () => {
   const onRequestSource = vi.fn(async () => ({ status: "applied" as const }));
   renderControl({ onRequestSource });
@@ -225,78 +215,6 @@ test("switches a connected source from the filename button", async () => {
     source: { type: "asset", assetId: targetAsset.id },
     confirmed: undefined,
   });
-});
-
-test("requires copying loaded file content before disconnecting", async () => {
-  const onDisconnect = vi.fn(async () => ({ status: "applied" as const }));
-  const onDisconnectingChange = vi.fn();
-  renderControl({ onDisconnect, onDisconnectingChange, disconnecting: true });
-  expect(document.body.textContent).toContain(
-    "The current file content will be copied into the Content Block."
-  );
-  expect(
-    Array.from(
-      document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')
-    )
-      .map((button) => button.textContent?.trim())
-      .filter((label) => label === "Abort" || label === "Confirm")
-  ).toEqual(["Confirm", "Abort"]);
-  expect(onDisconnect).not.toHaveBeenCalled();
-
-  await act(async () => {
-    findButton("Confirm").click();
-  });
-  expect(onDisconnect).toHaveBeenCalledOnce();
-  expect(onDisconnectingChange).toHaveBeenCalledWith(false);
-});
-
-test("explains that disconnecting a repeated block changes every Collection item", () => {
-  renderControl({ repeatedRenderScope: true, disconnecting: true });
-
-  expect(document.body.textContent).toContain(
-    "This source binding is shared by every Collection item."
-  );
-  expect(document.body.textContent).toContain("used by every item");
-  expect(findButton("Abort")).not.toBeNull();
-  expect(findButton("Confirm")).not.toBeNull();
-});
-
-test("keeps a partial lifecycle result visible without claiming complete success", async () => {
-  renderControl({
-    disconnecting: true,
-    onDisconnect: async () => ({
-      status: "partial",
-      message: "The file was saved, but the Content Block was not connected.",
-    }),
-  });
-
-  await act(async () => {
-    findButton("Confirm").click();
-  });
-
-  expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-    "The file was saved, but the Content Block was not connected."
-  );
-  expect(document.body.textContent).toContain("Disconnect content source");
-});
-
-test("submits a disconnect only once while it is pending", async () => {
-  let resolveDisconnect: (result: { status: "applied" }) => void = () => {};
-  const onDisconnect = vi.fn(
-    () =>
-      new Promise<{ status: "applied" }>((resolve) => {
-        resolveDisconnect = resolve;
-      })
-  );
-  renderControl({ onDisconnect, disconnecting: true });
-  const confirm = findButton("Confirm");
-  act(() => {
-    confirm.click();
-    confirm.click();
-  });
-
-  expect(onDisconnect).toHaveBeenCalledOnce();
-  await act(async () => resolveDisconnect({ status: "applied" }));
 });
 
 test("shows the resolved filename while retaining a dynamic binding", () => {
@@ -312,9 +230,6 @@ test("shows only a full-width bindable connect button without a source", () => {
       <TooltipProvider>
         <ContentBlockSourceControl
           onRequestSource={async () => ({ status: "applied" })}
-          onDisconnect={async () => ({ status: "applied" })}
-          disconnecting={false}
-          onDisconnectingChange={() => {}}
           onOpen={() => {}}
         />
       </TooltipProvider>
@@ -352,9 +267,6 @@ test("asks for confirmation before connecting over existing content", async () =
       <TooltipProvider>
         <ContentBlockSourceControl
           onRequestSource={onRequestSource}
-          onDisconnect={async () => ({ status: "applied" })}
-          disconnecting={false}
-          onDisconnectingChange={() => {}}
           onOpen={() => {}}
         />
       </TooltipProvider>

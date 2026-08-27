@@ -19,7 +19,16 @@ export const chooseContentBlockSource = async ({
   filename: string;
   action?: "Choose file" | "Switch file";
 }) => {
-  await page.getByRole("button", { name: action, exact: true }).click();
+  if (action === "Choose file") {
+    await page
+      .getByRole("button", { name: "Connect .mdx file", exact: true })
+      .click();
+  } else {
+    await page
+      .locator('[aria-label="Content source actions"] button')
+      .first()
+      .click();
+  }
   await chooseAssetByFilename({ page, filename });
 };
 
@@ -39,11 +48,6 @@ export const disconnectContentBlockSource = async ({
 }: {
   page: Page;
 }) => {
-  await page.getByRole("button", { name: "Disconnect", exact: true }).click();
-  const dialog = page.getByRole("dialog", {
-    name: "Disconnect content source",
-  });
-  await dialog.waitFor({ state: "visible" });
-  await dialog.getByRole("button", { name: "Confirm", exact: true }).click();
-  await dialog.waitFor({ state: "hidden" });
+  await page.getByText("Content source", { exact: true }).click();
+  await page.getByRole("button", { name: "Reset value", exact: true }).click();
 };
