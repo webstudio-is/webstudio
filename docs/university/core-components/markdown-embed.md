@@ -22,13 +22,13 @@ Markdown Embed is located in Components > Data.
 
 Once added to the canvas, the right panel will show a Code field. You can either add Markdown directly to it or, more commonly, bind Markdown to it from a Resource.
 
-<figure><img src="../../.gitbook/assets/markdown-embed-code.png" alt="Markdown bound to Markdown Embed component"><figcaption><p>CMS data bound to Markdown Embed Code</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/markdown-embed-code.webp" alt="Markdown bound to Markdown Embed component"><figcaption><p>CMS data bound to Markdown Embed Code</p></figcaption></figure>
 
 ### 2. Style
 
 In the Navigator, Markdown Embed has various HTML tags nested. Expand Markdown Embed, and you’ll see tags such as Heading 1, Link, Image, and much more.
 
-<figure><img src="../../.gitbook/assets/markdown-embed-style.png" alt="Markdown Embed List styled"><figcaption><p>List selected and styled</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/markdown-embed-style.webp" alt="Markdown Embed List styled"><figcaption><p>List selected and styled</p></figcaption></figure>
 
 Styles applied to each of these tags will apply to all occurrences of that tag within the Markdown Embed. For example, if you apply a border on the Image tag, then all images contained within the HTML will have a border.
 
