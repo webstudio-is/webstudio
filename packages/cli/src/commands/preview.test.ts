@@ -717,6 +717,7 @@ test("reports sanitized package-manager diagnostics for preview install failures
     "with npm at C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js"
   );
   await expect(promise).rejects.toThrow("npm error code EACCES");
+  await expect(promise).rejects.toThrow("package-manager exit code 1");
   await expect(promise).rejects.toThrow("authToken=[redacted]");
   await expect(promise).rejects.not.toThrow("private-token");
 });
@@ -891,7 +892,7 @@ test("documents generated app dependency setup", () => {
   expect(epilogueText).toContain("isolated under .webstudio/preview");
   expect(epilogueText).toContain("reused across regenerations");
   expect(epilogueText).toContain("Do not add generated-preview dependencies");
-  expect(epilogueText).toContain("WEBSTUDIO_PREVIEW_PACKAGE_MANAGER");
+  expect(epilogueText).not.toContain("WEBSTUDIO_PREVIEW_PACKAGE_MANAGER");
   expect(epilogueText).toContain("reported package-manager path");
 });
 

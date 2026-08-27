@@ -106,7 +106,7 @@ export const previewOptions = (yargs: CommonYargsArgv) =>
         "Preview builds the generated app and starts its production server.",
         "Preview dependencies are isolated under .webstudio/preview and reused across regenerations.",
         "Do not add generated-preview dependencies to the repository root package.json or pnpm-lock.yaml.",
-        "Preview uses the npm or pnpm launcher that started Webstudio. Set WEBSTUDIO_PREVIEW_PACKAGE_MANAGER to an npm or pnpm executable or JavaScript launcher to override it.",
+        "Preview uses the npm or pnpm launcher that started Webstudio.",
         "If dependency installation fails, check the reported package-manager path and network configuration, then reinstall or update the Webstudio CLI if the problem persists.",
       ].join("\n")
     );
@@ -186,7 +186,6 @@ type PreviewDependencyOperations = {
   ) => Promise<void>;
   writeFile: (path: string, data: string) => Promise<void>;
   nodeExecPath: string;
-  packageManagerExecPath?: string;
   npmExecPath?: string;
   platform: NodeJS.Platform;
   env: NodeJS.ProcessEnv;
@@ -209,7 +208,7 @@ const getPreviewInstallFailureDiagnostics = (error: unknown) => {
     typeof record.code === "string" || typeof record.code === "number"
       ? String(record.code)
       : undefined;
-  return `${code === undefined ? "" : `npm exit code ${code}. `}${diagnostics}`;
+  return `${code === undefined ? "" : `package-manager exit code ${code}. `}${diagnostics}`;
 };
 
 export const getPreviewProjectDir = (projectDir = cwd()) =>
@@ -268,7 +267,6 @@ export const ensurePreviewDependencies = async (
     symlink,
     writeFile,
     nodeExecPath: process.execPath,
-    packageManagerExecPath: process.env.WEBSTUDIO_PREVIEW_PACKAGE_MANAGER,
     npmExecPath: process.env.npm_execpath,
     platform: process.platform,
     env: process.env,
@@ -391,7 +389,7 @@ export const ensurePreviewDependencies = async (
     });
   } catch (error) {
     throw new Error(
-      `PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies with ${packageManager.name} at ${packageManagerPath}. Check the package-manager/network configuration, set WEBSTUDIO_PREVIEW_PACKAGE_MANAGER to an npm or pnpm executable or JavaScript launcher, then reinstall or update webstudio if the problem persists.\n\nPackage-manager diagnostics:\n${getPreviewInstallFailureDiagnostics(error)}`,
+      `PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies with ${packageManager.name} at ${packageManagerPath}. Check the package-manager/network configuration, then reinstall or update webstudio if the problem persists.\n\nPackage-manager diagnostics:\n${getPreviewInstallFailureDiagnostics(error)}`,
       { cause: error }
     );
   }

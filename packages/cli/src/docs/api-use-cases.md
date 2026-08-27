@@ -160,7 +160,7 @@ Notes:
 - The screenshot timeout bounds browser capture after the preview is ready. A timeout returns `SCREENSHOT_TIMEOUT`, resets the reusable browser session, and releases the shared preview lifecycle for cleanup.
 - Preview installs generated app dependencies under `.webstudio/preview` and reuses them across regenerations.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
-- Preview uses the npm or pnpm launcher that started Webstudio. Set `WEBSTUDIO_PREVIEW_PACKAGE_MANAGER` to an npm or pnpm executable or JavaScript launcher to override it.
+- Preview uses the npm or pnpm launcher that started Webstudio.
 - If dependency installation fails, check the reported package-manager path and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
 - When a baseline exists, use screenshot.diff once per baseline/current page or viewport pair to get changed regions, OCR textAnalysis, and diff artifact paths before deciding whether the result matches. Pass expectedText for explicit pass/fail current-screen text assertions with found and missing text. Pass expectedVisual for pass/fail limits on pixel mismatch percentage, changed-region count, or the overall dominant color/brightness direction.
 - If screenshot.diff reports OCR unavailable and the user agrees to install it, call vision.install-ocr {"confirm":true}; otherwise continue with pixel diff and visual inspection.

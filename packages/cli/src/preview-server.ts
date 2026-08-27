@@ -43,7 +43,6 @@ export type PreviewServerDependencies = {
   writeFile: typeof writeFile;
   sleep: (ms: number) => Promise<void>;
   nodeExecPath: string;
-  packageManagerExecPath?: string;
   npmExecPath?: string;
   processExecArgv: string[];
   supervisorPath: string;
@@ -70,7 +69,6 @@ export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   writeFile,
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   nodeExecPath: process.execPath,
-  packageManagerExecPath: process.env.WEBSTUDIO_PREVIEW_PACKAGE_MANAGER,
   npmExecPath: process.env.npm_execpath,
   processExecArgv: process.execArgv,
   supervisorPath,
@@ -163,7 +161,6 @@ export const getPreviewStartArgs = (options: PreviewServerOptions) =>
 
 type PreviewPackageManagerOptions = {
   nodeExecPath?: string;
-  packageManagerExecPath?: string;
   npmExecPath?: string;
   platform?: typeof process.platform;
 };
@@ -178,24 +175,22 @@ export const resolvePreviewPackageManager = (
   options: PreviewPackageManagerOptions = defaultPreviewServerDependencies
 ): PreviewPackageManager => {
   const nodeExecPath = options.nodeExecPath ?? process.execPath;
-  const packageManagerExecPath = options.packageManagerExecPath;
   const npmExecPath = options.npmExecPath;
   const platform = options.platform ?? process.platform;
-  const configuredExecPath = packageManagerExecPath ?? npmExecPath;
   const executableName =
-    configuredExecPath === undefined
+    npmExecPath === undefined
       ? undefined
       : platform === "win32"
-        ? win32.basename(configuredExecPath).toLowerCase()
-        : basename(configuredExecPath).toLowerCase();
-  if (configuredExecPath !== undefined && executableName !== undefined) {
+        ? win32.basename(npmExecPath).toLowerCase()
+        : basename(npmExecPath).toLowerCase();
+  if (npmExecPath !== undefined && executableName !== undefined) {
     const npmCliPath =
       executableName === "npm-cli.js"
-        ? configuredExecPath
+        ? npmExecPath
         : executableName === "npx-cli.js"
           ? platform === "win32"
-            ? win32.join(win32.dirname(configuredExecPath), "npm-cli.js")
-            : join(dirname(configuredExecPath), "npm-cli.js")
+            ? win32.join(win32.dirname(npmExecPath), "npm-cli.js")
+            : join(dirname(npmExecPath), "npm-cli.js")
           : undefined;
     if (npmCliPath !== undefined) {
       return {
@@ -208,19 +203,8 @@ export const resolvePreviewPackageManager = (
       return {
         name: "pnpm",
         command: nodeExecPath,
-        argsPrefix: [configuredExecPath],
+        argsPrefix: [npmExecPath],
       };
-    }
-    if (["pnpm", "pnpm.cmd", "pnpm.exe"].includes(executableName)) {
-      return { name: "pnpm", command: configuredExecPath, argsPrefix: [] };
-    }
-    if (["npm", "npm.cmd", "npm.exe"].includes(executableName)) {
-      return { name: "npm", command: configuredExecPath, argsPrefix: [] };
-    }
-    if (packageManagerExecPath !== undefined) {
-      throw new Error(
-        `PREVIEW_PACKAGE_MANAGER_UNSUPPORTED: WEBSTUDIO_PREVIEW_PACKAGE_MANAGER must point to an npm or pnpm executable or JavaScript launcher. Received: ${packageManagerExecPath}`
-      );
     }
   }
   if (platform === "win32") {

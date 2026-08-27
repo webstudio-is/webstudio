@@ -193,32 +193,6 @@ test("uses the pnpm launcher that launched webstudio on windows", () => {
   });
 });
 
-test("uses an explicit preview package-manager override", () => {
-  expect(
-    getPackageManagerInvocation(["run", "build"], {
-      nodeExecPath: "C:\\Program Files\\Codex\\node.exe",
-      packageManagerExecPath: "C:\\Tools\\pnpm\\pnpm.cjs",
-      npmExecPath:
-        "C:\\Program Files\\Codex\\node_modules\\npm\\bin\\npm-cli.js",
-      platform: "win32",
-    })
-  ).toEqual({
-    command: "C:\\Program Files\\Codex\\node.exe",
-    args: ["C:\\Tools\\pnpm\\pnpm.cjs", "run", "build"],
-  });
-});
-
-test("rejects an unsupported preview package-manager override", () => {
-  expect(() =>
-    getPackageManagerInvocation(["run", "build"], {
-      packageManagerExecPath: "C:\\Tools\\yarn.cjs",
-      platform: "win32",
-    })
-  ).toThrow(
-    "PREVIEW_PACKAGE_MANAGER_UNSUPPORTED: WEBSTUDIO_PREVIEW_PACKAGE_MANAGER must point to an npm or pnpm executable or JavaScript launcher. Received: C:\\Tools\\yarn.cjs"
-  );
-});
-
 test("uses npm-cli when windows npm launcher metadata is unavailable", () => {
   expect(
     getPackageManagerInvocation(["run", "build"], {
