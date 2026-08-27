@@ -1,7 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import { elementComponent, type Instance, type Prop } from "@webstudio-is/sdk";
-import { isExternalContentMutation } from "./external-content-mutations";
+import {
+  isExternalContentInstance,
+  isExternalContentMutation,
+} from "./external-content-mutations";
 
 const instance = (
   id: string,
@@ -147,4 +150,21 @@ describe("external content mutation detection", () => {
       })
     ).toBe(false);
   });
+});
+
+test("identifies only instances authored by external content", () => {
+  const roots = new Map([
+    [
+      "scope",
+      {
+        blockInstanceId: "block",
+        instanceIds: new Set(["external"]),
+        mutationRevision: 0,
+      },
+    ],
+  ]);
+
+  expect(isExternalContentInstance(roots, "external")).toBe(true);
+  expect(isExternalContentInstance(roots, "block")).toBe(false);
+  expect(isExternalContentInstance(roots, "ordinary")).toBe(false);
 });

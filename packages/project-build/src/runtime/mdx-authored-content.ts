@@ -36,6 +36,7 @@ import {
 } from "./fragment";
 import {
   materializeMdxComponent,
+  normalizeMdxComponentProps,
   serializeMdxComponent,
   serializeMdxComponentFallback,
 } from "./mdx-component-adapters";
@@ -45,6 +46,7 @@ import {
   type MdxStaticPropType,
 } from "./mdx-static-props";
 import { getHtmlAttributeType } from "./html-attribute-utils";
+import { getMdxPropValuePathKey } from "./mdx-asset-references";
 
 type AuthoredElementProvenance = Readonly<{
   type: "element";
@@ -61,6 +63,7 @@ type AuthoredComponentProvenance = Readonly<{
   type: "component";
   path: readonly number[];
   instanceId: Instance["id"];
+  assetProps: AuthoredElementProvenance["assetProps"];
 }>;
 
 type TemplateProvenance = Readonly<{
@@ -77,6 +80,7 @@ type TemplateProvenance = Readonly<{
   preservedJsxPropNames?: readonly string[];
   ignoredJsxPropNames: readonly string[];
   expandedInstanceIds: readonly Instance["id"][];
+  assetProps: AuthoredElementProvenance["assetProps"];
   namespaceKeys: readonly Readonly<{
     namespace: UnsupportedNamespace;
     key: string;
@@ -101,6 +105,9 @@ const isEditableTemplateProp = ({
     ({ name, type }) => (name === prop.name ? [type] : [])
   );
   if (provenance.editablePropNames.includes(prop.name)) {
+    if (prop.type === "asset") {
+      return true;
+    }
     return (
       expectedTypes.length === 0 ||
       (isStaticProp(prop) && expectedTypes.includes(prop.type))
@@ -176,6 +183,7 @@ export type MaterializedMdxAuthoredContentRoot = Readonly<{
   fragment: WebstudioFragment;
   document: MdxDocument;
   provenance: MdxAuthoredContentProvenance;
+  assetReferenceValues?: ReadonlyMap<string, string>;
 }>;
 
 const isMdxValueEqual = (left: unknown, right: unknown): boolean => {
@@ -637,12 +645,14 @@ export const materializeMdxAuthoredContent = ({
   document,
   templateMaterialization,
   assetReferences = [],
+  assetReferenceValues,
   createUnresolvedTemplateInstance,
 }: {
   identity: ContentBlockExternalContentIdentity;
   document: MdxDocument;
   templateMaterialization: MdxTemplateMaterialization;
   assetReferences?: readonly AssetValueReference[];
+  assetReferenceValues?: ReadonlyMap<string, string>;
   createUnresolvedTemplateInstance?: (input: {
     markerId: string;
     templateName: string;
@@ -727,6 +737,35 @@ export const materializeMdxAuthoredContent = ({
           }),
           ...template.editablePropNames,
         ]);
+        const assetProps: AuthoredElementProvenance["assetProps"][number][] =
+          [];
+        node.props.forEach((prop, propIndex) => {
+          const assetReference = assetReferenceByPath.get(
+            getMdxPropValuePathKey({ nodePath: path, propIndex })
+          );
+          if (assetReference === undefined) {
+            return;
+          }
+          const instancePropName =
+            instancePropNameByJsxName.get(prop.name) ?? prop.name;
+          const materializedProp = fragment.props.find(
+            (candidate) =>
+              candidate.instanceId === rootId &&
+              candidate.name === instancePropName &&
+              candidate.type === "asset" &&
+              candidate.value === assetReference.assetId
+          );
+          if (
+            materializedProp !== undefined &&
+            typeof prop.value === "string"
+          ) {
+            assetProps.push({
+              propId: materializedProp.id,
+              assetId: assetReference.assetId,
+              authoredValue: prop.value,
+            });
+          }
+        });
         nodes.push({
           type: "template",
           path,
@@ -744,6 +783,7 @@ export const materializeMdxAuthoredContent = ({
           preservedJsxPropNames: template.preservedJsxPropNames,
           ignoredJsxPropNames: template.ignoredJsxPropNames,
           expandedInstanceIds: template.fragment.instances.map(({ id }) => id),
+          assetProps,
           namespaceKeys: unsupportedNamespaces.flatMap((namespace) =>
             template.fragment[namespace].map((record) => ({
               namespace,
@@ -765,12 +805,43 @@ export const materializeMdxAuthoredContent = ({
           component: materializedComponent.component,
           children: materializedComponent.children,
         });
-        for (const prop of materializedComponent.props) {
+        const assetProps: AuthoredElementProvenance["assetProps"][number][] =
+          [];
+        for (const {
+          prop,
+          source,
+          requiresAssetReference,
+        } of materializedComponent.props) {
+          const propId = createId();
+          const assetReference =
+            source === undefined
+              ? undefined
+              : assetReferenceByPath.get(
+                  getMdxPropValuePathKey({
+                    nodePath: [...path, ...source.nodePath],
+                    propIndex: source.propIndex,
+                  })
+                );
+          if (requiresAssetReference && assetReference === undefined) {
+            continue;
+          }
           fragment.props.push(
-            createLiteralProp({ id: createId(), instanceId, prop })
+            createLiteralProp({
+              id: propId,
+              instanceId,
+              prop,
+              assetId: assetReference?.assetId,
+            })
           );
+          if (assetReference !== undefined && typeof prop.value === "string") {
+            assetProps.push({
+              propId,
+              assetId: assetReference.assetId,
+              authoredValue: prop.value,
+            });
+          }
         }
-        nodes.push({ type: "component", path, instanceId });
+        nodes.push({ type: "component", path, instanceId, assetProps });
         children.push({ type: "id", value: instanceId });
         continue;
       }
@@ -789,11 +860,7 @@ export const materializeMdxAuthoredContent = ({
       node.props.forEach((prop, propIndex) => {
         const propId = createId();
         const assetReference = assetReferenceByPath.get(
-          ["children", ...path.flatMap((segment) => [segment, "children"])]
-            .slice(0, -1)
-            .concat("props", propIndex, "value")
-            .map(String)
-            .join("/")
+          getMdxPropValuePathKey({ nodePath: path, propIndex })
         );
         fragment.props.push(
           createLiteralProp({
@@ -836,6 +903,7 @@ export const materializeMdxAuthoredContent = ({
     fragment,
     document,
     provenance: { nodes, unresolvedTemplates },
+    assetReferenceValues,
   };
 };
 
@@ -960,6 +1028,16 @@ export const adoptMdxAuthoredContentFragment = ({
     }
     return mapped;
   };
+  const mapAssetProps = (assetProps: AuthoredElementProvenance["assetProps"]) =>
+    assetProps.map((assetProp) => {
+      const propId = propIds.get(assetProp.propId);
+      if (propId === undefined) {
+        throw new Error(
+          `Live MDX fragment is missing prop "${assetProp.propId}"`
+        );
+      }
+      return { ...assetProp, propId };
+    });
   return {
     ...root,
     fragment,
@@ -970,20 +1048,13 @@ export const adoptMdxAuthoredContentFragment = ({
           ? {
               ...node,
               instanceId: mapInstanceId(node.instanceId),
-              assetProps: node.assetProps.map((assetProp) => {
-                const propId = propIds.get(assetProp.propId);
-                if (propId === undefined) {
-                  throw new Error(
-                    `Live MDX fragment is missing prop "${assetProp.propId}"`
-                  );
-                }
-                return { ...assetProp, propId };
-              }),
+              assetProps: mapAssetProps(node.assetProps),
             }
           : node.type === "template"
             ? {
                 ...node,
                 instanceId: mapInstanceId(node.instanceId),
+                assetProps: mapAssetProps(node.assetProps),
                 expandedInstanceIds:
                   node.expandedInstanceIds.map(mapInstanceId),
                 namespaceKeys: node.namespaceKeys.map((entry) => {
@@ -1001,6 +1072,7 @@ export const adoptMdxAuthoredContentFragment = ({
             : {
                 ...node,
                 instanceId: mapInstanceId(node.instanceId),
+                assetProps: mapAssetProps(node.assetProps),
               }
       ),
     },
@@ -1017,6 +1089,42 @@ const assertSupportedNamespaces = ({
   deletedTemplateRootIds: ReadonlySet<string>;
 }) => {
   for (const namespace of unsupportedNamespaces) {
+    if (namespace === "assets" && root.assetReferenceValues !== undefined) {
+      const originalById = new Map(
+        root.fragment.assets.map((asset) => [asset.id, asset])
+      );
+      const referencedAssetIds = new Set(
+        fragment.props.flatMap((prop) =>
+          prop.type === "asset" ? [prop.value] : []
+        )
+      );
+      const assetIds = new Set<string>();
+      for (const asset of fragment.assets) {
+        const original = originalById.get(asset.id);
+        if (
+          assetIds.has(asset.id) ||
+          (original === undefined
+            ? referencedAssetIds.has(asset.id) === false ||
+              root.assetReferenceValues.has(asset.id) === false
+            : equal(original, asset) === false)
+        ) {
+          throw new Error(
+            "Changes to assets cannot be represented losslessly in MDX"
+          );
+        }
+        assetIds.add(asset.id);
+      }
+      if (
+        Array.from(referencedAssetIds).some(
+          (assetId) => assetIds.has(assetId) === false
+        )
+      ) {
+        throw new Error(
+          "Changes to assets cannot be represented losslessly in MDX"
+        );
+      }
+      continue;
+    }
     const removableKeys = new Set<string>();
     const requiredKeys = new Set<string>();
     for (const node of root.provenance.nodes) {
@@ -1073,10 +1181,12 @@ const toAuthoredProps = ({
   original,
   props,
   assetProps = [],
+  assetReferenceValues,
 }: {
   original: readonly MdxAuthoredProp[];
   props: readonly Prop[];
   assetProps?: AuthoredElementProvenance["assetProps"];
+  assetReferenceValues?: ReadonlyMap<string, string>;
 }) => {
   const values = new Map<string, string | true>();
   const assetPropsById = new Map(assetProps.map((prop) => [prop.propId, prop]));
@@ -1093,6 +1203,11 @@ const toAuthoredProps = ({
       const assetProp = assetPropsById.get(prop.id);
       if (assetProp?.assetId === prop.value) {
         values.set(prop.name, assetProp.authoredValue);
+        continue;
+      }
+      const authoredValue = assetReferenceValues?.get(prop.value);
+      if (authoredValue !== undefined) {
+        values.set(prop.name, authoredValue);
         continue;
       }
       throw new Error(
@@ -1402,6 +1517,8 @@ export const reconcileMdxAuthoredContent = ({
           return editableNames.has(name) ? [{ ...prop, name }] : [];
         }),
         props: editableProps,
+        assetProps: provenance.assetProps,
+        assetReferenceValues: root.assetReferenceValues,
       });
       const nextByName = new Map(nextEditable.map((prop) => [prop.name, prop]));
       const props = original.props.flatMap((prop) => {
@@ -1424,7 +1541,12 @@ export const reconcileMdxAuthoredContent = ({
           name: toJsxName(prop.name),
         }))
       );
-      assertUniqueAttributeNames(props);
+      const normalizedProps = normalizeMdxComponentProps({
+        instance,
+        props,
+        instanceProps: editableProps,
+      });
+      assertUniqueAttributeNames(normalizedProps);
       let children = original.children;
       const originalInstance = originalInstanceById.get(instanceId);
       if (
@@ -1446,7 +1568,8 @@ export const reconcileMdxAuthoredContent = ({
         }
       }
       if (
-        props.every(
+        provenance.namespaceKeys.length === 0 &&
+        normalizedProps.every(
           ({ name }) =>
             ignoredJsxPropNames.has(name) === false &&
             editableNames.has(toInstancePropName(name))
@@ -1454,7 +1577,8 @@ export const reconcileMdxAuthoredContent = ({
       ) {
         const componentNode = serializeMdxComponent({
           instance,
-          props: editableProps,
+          props: nextEditable,
+          instanceProps: editableProps,
           original,
         });
         if (componentNode !== undefined) {
@@ -1463,23 +1587,41 @@ export const reconcileMdxAuthoredContent = ({
       }
       return mode === "text" ||
         (provenance.editableTextChildren && children.length > 0)
-        ? { ...original, props, children, mdxMode: "text" }
-        : { ...original, props, children };
+        ? { ...original, props: normalizedProps, children, mdxMode: "text" }
+        : { ...original, props: normalizedProps, children };
     }
-    const componentNode = serializeMdxComponent({
-      instance,
-      props: propsByInstanceId.get(instanceId) ?? [],
-      original:
-        provenance?.type === "component"
-          ? originalNodeByPath.get(pathKey(provenance.path))
-          : undefined,
-    });
+    const instanceProps = propsByInstanceId.get(instanceId) ?? [];
+    const authoredComponentProps =
+      instance.component === elementComponent
+        ? []
+        : toAuthoredProps({
+            original: [],
+            props: instanceProps,
+            assetProps:
+              provenance?.type === "component"
+                ? provenance.assetProps
+                : undefined,
+            assetReferenceValues: root.assetReferenceValues,
+          });
+    const componentNode =
+      instance.component === elementComponent
+        ? undefined
+        : serializeMdxComponent({
+            instance,
+            props: authoredComponentProps,
+            instanceProps,
+            original:
+              provenance?.type === "component"
+                ? originalNodeByPath.get(pathKey(provenance.path))
+                : undefined,
+          });
     const serializedComponent =
       componentNode ??
       (provenance?.type === "component"
         ? serializeMdxComponentFallback({
             instance,
-            props: propsByInstanceId.get(instanceId) ?? [],
+            props: authoredComponentProps,
+            instanceProps,
           })
         : undefined);
     if (serializedComponent !== undefined) {
@@ -1544,6 +1686,7 @@ export const reconcileMdxAuthoredContent = ({
       props: propsByInstanceId.get(instanceId) ?? [],
       assetProps:
         provenance?.type === "element" ? provenance.assetProps : undefined,
+      assetReferenceValues: root.assetReferenceValues,
     });
     if (original !== undefined) {
       if (original.syntax === "mdx") {
@@ -1681,11 +1824,26 @@ export const reconcileMdxAuthoredContent = ({
   };
 };
 
+const transientEmptyMarkdownTags = new Set([
+  "p",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "blockquote",
+  "ul",
+  "ol",
+  "li",
+]);
+
 /**
- * Markdown has no syntax for an empty paragraph. Keep newly inserted empty
- * paragraphs in memory as editing drafts until they contain authored content.
+ * Markdown cannot distinguish an empty editable draft from authored empty
+ * syntax. Keep newly inserted empty Markdown containers in memory until they
+ * contain content, while preserving empty nodes that already came from MDX.
  */
-export const omitTransientEmptyParagraphs = ({
+export const omitTransientEmptyMarkdownDrafts = ({
   root,
   fragment,
 }: {
@@ -1715,19 +1873,41 @@ export const omitTransientEmptyParagraphs = ({
       );
     }
   }
-  const omittedIds = new Set(
-    fragment.instances.flatMap((instance) =>
-      instance.component === elementComponent &&
-      instance.tag === "p" &&
-      instance.children.length === 0 &&
-      referenceCountByInstanceId.get(instance.id) === 1 &&
-      authoredInstanceIds.has(instance.id) === false &&
-      instanceIdsWithProps.has(instance.id) === false &&
-      instanceIdsWithStyleSources.has(instance.id) === false
-        ? [instance.id]
-        : []
-    )
+  const instancesById = new Map(
+    fragment.instances.map((instance) => [instance.id, instance])
   );
+  const omittedIds = new Set<string>();
+  const visiting = new Set<string>();
+  const isTransientEmpty = (instanceId: string): boolean => {
+    if (omittedIds.has(instanceId)) {
+      return true;
+    }
+    const instance = instancesById.get(instanceId);
+    if (
+      instance === undefined ||
+      instance.component !== elementComponent ||
+      transientEmptyMarkdownTags.has(instance.tag ?? "") === false ||
+      referenceCountByInstanceId.get(instance.id) !== 1 ||
+      authoredInstanceIds.has(instance.id) ||
+      instanceIdsWithProps.has(instance.id) ||
+      instanceIdsWithStyleSources.has(instance.id) ||
+      visiting.has(instance.id)
+    ) {
+      return false;
+    }
+    visiting.add(instance.id);
+    const isEmpty = instance.children.every(
+      (child) => child.type === "id" && isTransientEmpty(child.value)
+    );
+    visiting.delete(instance.id);
+    if (isEmpty) {
+      omittedIds.add(instance.id);
+    }
+    return isEmpty;
+  };
+  for (const instance of fragment.instances) {
+    isTransientEmpty(instance.id);
+  }
   if (omittedIds.size === 0) {
     return fragment;
   }
@@ -1758,7 +1938,7 @@ export const serializeMdxAuthoredContent = async ({
     await preferMarkdownSyntax(
       reconcileMdxAuthoredContent({
         root,
-        fragment: omitTransientEmptyParagraphs({ root, fragment }),
+        fragment: omitTransientEmptyMarkdownDrafts({ root, fragment }),
       })
     )
   );
@@ -1767,10 +1947,12 @@ export const serializeMdxTemplateInsertion = async ({
   identity,
   fragment,
   templateName,
+  assetReferenceValues,
 }: {
   identity: ContentBlockExternalContentIdentity;
   fragment: WebstudioFragment;
   templateName: string;
+  assetReferenceValues?: ReadonlyMap<string, string>;
 }) => {
   const emptyDocument: MdxDocument = {
     frontmatter: { properties: {} },
@@ -1784,6 +1966,7 @@ export const serializeMdxTemplateInsertion = async ({
       diagnostics: [],
       dependencies: { templateNames: [], templates: [] },
     },
+    assetReferenceValues,
   });
   try {
     return preferMarkdownSyntax(
@@ -1800,7 +1983,14 @@ export const serializeMdxTemplateInsertion = async ({
         ? undefined
         : serializeMdxComponentFallback({
             instance: rootInstance,
-            props: fragment.props.filter(
+            props: toAuthoredProps({
+              original: [],
+              props: fragment.props.filter(
+                ({ instanceId }) => instanceId === rootInstance.id
+              ),
+              assetReferenceValues,
+            }),
+            instanceProps: fragment.props.filter(
               ({ instanceId }) => instanceId === rootInstance.id
             ),
             templateName,
@@ -1885,6 +2075,7 @@ const reconcileMdxAuthoredContentWithTemplateInsertions = async ({
           identity: root.identity,
           fragment: insertionFragment,
           templateName,
+          assetReferenceValues: root.assetReferenceValues,
         }).then((document) => ({
           rootInstanceId: child.value,
           fragment: insertionFragment,
@@ -2027,7 +2218,7 @@ export const rebaseMdxAuthoredContent = async ({
   }
   const local = await reconcileMdxAuthoredContentWithTemplateInsertions({
     root,
-    fragment: omitTransientEmptyParagraphs({ root, fragment }),
+    fragment: omitTransientEmptyMarkdownDrafts({ root, fragment }),
     insertedTemplateNames,
   });
   return preferMarkdownSyntax(

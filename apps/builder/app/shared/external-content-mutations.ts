@@ -147,6 +147,21 @@ export const registerExternalContentRoot = (
 
 export const getExternalContentRoots = () => $externalContentRoots.get();
 
+export const isExternalContentInstance = (
+  roots: ReadonlyMap<string, ExternalContentRoot>,
+  instanceId: Instance["id"]
+) => {
+  for (const { instanceIds } of roots.values()) {
+    if (instanceIds.has(instanceId)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+export const externalContentInstanceNameMessage =
+  "Names cannot be edited for MDX content.";
+
 export const subscribeExternalContentMutations = (
   listener: (rootKeys: readonly string[]) => void
 ) => {

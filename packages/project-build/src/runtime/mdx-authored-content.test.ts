@@ -366,6 +366,113 @@ describe("MDX authored content", () => {
     );
   });
 
+  test("serializes a sibling inserted into an authored list as a Markdown item", async () => {
+    const document = await parseMdxDocument({ source: "1. First\n" });
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization: emptyTemplates,
+    });
+    const fragment = structuredClone(root.fragment);
+    const list = fragment.instances.find(({ tag }) => tag === "ol");
+    if (list === undefined) {
+      throw new Error("Expected an ordered list");
+    }
+    list.children.push({ type: "id", value: "second-item" });
+    fragment.instances.push({
+      type: "instance",
+      id: "second-item",
+      component: elementComponent,
+      tag: "li",
+      children: [{ type: "text", value: "Second" }],
+    });
+
+    await expect(serializeMdxAuthoredContent({ root, fragment })).resolves.toBe(
+      "1.  First\n2.  Second\n"
+    );
+  });
+
+  test("does not persist newly inserted empty Markdown drafts", async () => {
+    const document = await parseMdxDocument({ source: "" });
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization: emptyTemplates,
+    });
+    const fragment: WebstudioFragment = {
+      ...root.fragment,
+      children: [
+        { type: "id", value: "heading" },
+        { type: "id", value: "empty-list" },
+        { type: "id", value: "list" },
+      ],
+      instances: [
+        {
+          type: "instance",
+          id: "heading",
+          component: elementComponent,
+          tag: "h6",
+          children: [],
+        },
+        {
+          type: "instance",
+          id: "empty-list",
+          component: elementComponent,
+          tag: "ul",
+          children: [{ type: "id", value: "empty-list-item" }],
+        },
+        {
+          type: "instance",
+          id: "empty-list-item",
+          component: elementComponent,
+          tag: "li",
+          children: [],
+        },
+        {
+          type: "instance",
+          id: "list",
+          component: elementComponent,
+          tag: "ul",
+          children: [
+            { type: "id", value: "empty-item" },
+            { type: "id", value: "kept-item" },
+          ],
+        },
+        {
+          type: "instance",
+          id: "empty-item",
+          component: elementComponent,
+          tag: "li",
+          children: [],
+        },
+        {
+          type: "instance",
+          id: "kept-item",
+          component: elementComponent,
+          tag: "li",
+          children: [{ type: "text", value: "Kept" }],
+        },
+      ],
+    };
+
+    await expect(serializeMdxAuthoredContent({ root, fragment })).resolves.toBe(
+      "-   Kept\n"
+    );
+  });
+
+  test("preserves empty Markdown nodes authored in the file", async () => {
+    const document = await parseMdxDocument({ source: "######\n\n-\n" });
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization: emptyTemplates,
+    });
+
+    await expect(
+      serializeMdxAuthoredContent({ root, fragment: root.fragment })
+    ).resolves.toBe("######\n\n-\n");
+  });
+
   test("serializes a lossless template insertion as Markdown", async () => {
     const fragment: WebstudioFragment = {
       children: [{ type: "id", value: "heading" }],
@@ -398,6 +505,107 @@ describe("MDX authored content", () => {
         })
       )
     ).toBe("# Test\n");
+  });
+
+  test("serializes Markdown-compatible Image props as an image", async () => {
+    const fragment: WebstudioFragment = {
+      children: [{ type: "id", value: "image" }],
+      instances: [
+        {
+          type: "instance",
+          id: "image",
+          component: "Image",
+          children: [],
+        },
+      ],
+      props: [
+        {
+          id: "image-src",
+          instanceId: "image",
+          name: "src",
+          type: "string",
+          value: "/hero.png",
+        },
+        {
+          id: "image-alt",
+          instanceId: "image",
+          name: "alt",
+          type: "string",
+          value: "Hero",
+        },
+        {
+          id: "image-title",
+          instanceId: "image",
+          name: "title",
+          type: "string",
+          value: "Cover",
+        },
+      ],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+    };
+
+    expect(
+      serializeMdxDocument(
+        await serializeMdxTemplateInsertion({
+          identity,
+          fragment,
+          templateName: "Image",
+        })
+      )
+    ).toBe('![Hero](/hero.png "Cover")\n');
+  });
+
+  test("uses JSX when an Image has props Markdown cannot express", async () => {
+    const fragment: WebstudioFragment = {
+      children: [{ type: "id", value: "image" }],
+      instances: [
+        {
+          type: "instance",
+          id: "image",
+          component: "Image",
+          children: [],
+        },
+      ],
+      props: [
+        {
+          id: "image-src",
+          instanceId: "image",
+          name: "src",
+          type: "string",
+          value: "/hero.png",
+        },
+        {
+          id: "image-width",
+          instanceId: "image",
+          name: "width",
+          type: "number",
+          value: 640,
+        },
+      ],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+    };
+
+    expect(
+      serializeMdxDocument(
+        await serializeMdxTemplateInsertion({
+          identity,
+          fragment,
+          templateName: "Image",
+        })
+      )
+    ).toBe('<ws.element ws:name="Image" src="/hero.png" width="640" />\n');
   });
 
   test("uses canonical JSX names in a generic template insertion", async () => {

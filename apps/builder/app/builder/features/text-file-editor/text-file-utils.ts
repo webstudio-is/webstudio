@@ -72,19 +72,17 @@ export const getMdxEditorDiagnostics = async (
       severity: diagnostic.severity,
       message: diagnostic.message,
     })),
-    ...semanticDiagnostics.flatMap((diagnostic) =>
-      diagnostic.code === "invalid-mdx" || diagnostic.code === "unsafe-mdx"
-        ? []
-        : [
-            {
-              sourceRange: diagnostic.sourceRange,
-              severity: diagnostic.severity,
-              message: formatContentBlockDiagnostic(diagnostic),
-            },
-          ]
-    ),
-  ];
-  return diagnostics.map((diagnostic) => {
+    ...semanticDiagnostics.map((diagnostic) => ({
+      sourceRange: diagnostic.sourceRange,
+      severity: diagnostic.severity,
+      message:
+        diagnostic.code === "invalid-mdx"
+          ? diagnostic.message
+          : diagnostic.code === "unsafe-mdx"
+            ? diagnostic.reason
+            : formatContentBlockDiagnostic(diagnostic),
+    })),
+  ].map((diagnostic) => {
     const from =
       diagnostic.sourceRange === undefined
         ? 0
@@ -100,6 +98,11 @@ export const getMdxEditorDiagnostics = async (
       message: diagnostic.message,
     };
   });
+  return Array.from(
+    new Map(
+      diagnostics.map((diagnostic) => [JSON.stringify(diagnostic), diagnostic])
+    ).values()
+  );
 };
 
 const getMdxExtensions = (

@@ -148,6 +148,37 @@ describe("createContentBlockApplication", () => {
     ]);
   });
 
+  test("reports content-model errors when inspecting a connected Asset", async () => {
+    const fixture = createFixture();
+    const connected = await fixture.application.connect({
+      state: fixture.state,
+      blockInstanceId: "block",
+      renderScope: "page",
+      source: { type: "asset", assetId: "asset" },
+    });
+    const connectedState = applyBuilderPatchTransactions(fixture.state, [
+      { id: "connect", payload: [...connected.projectPayload] },
+    ]).state;
+
+    await expect(
+      inspectMdxAssetSource({
+        source: `1. test
+
+   <ws.element ws:tag="li">nested item</ws.element>
+`,
+        assetId: "asset",
+        state: connectedState,
+        metas: componentMetas,
+        projectId: "project",
+      })
+    ).resolves.toEqual([
+      expect.objectContaining({
+        code: "invalid-mdx",
+        message: "Placing <li> element inside a <li> violates HTML spec.",
+      }),
+    ]);
+  });
+
   test("connects with the normal lifecycle payload and disconnects with materialized content", async () => {
     const fixture = createFixture();
     const connected = await fixture.application.connect({

@@ -33,6 +33,11 @@ import {
   toggleBuilderMode,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
+import {
+  externalContentInstanceNameMessage,
+  getExternalContentRoots,
+  isExternalContentInstance,
+} from "~/shared/external-content-mutations";
 
 // Declare command for type safety
 declare module "~/shared/pubsub" {
@@ -1035,6 +1040,15 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           return;
         }
         const [selectedItem] = instancePath;
+        if (
+          isExternalContentInstance(
+            getExternalContentRoots(),
+            selectedItem.instance.id
+          )
+        ) {
+          toast.info(externalContentInstanceNameMessage);
+          return;
+        }
         $editingItemSelector.set(selectedItem.instanceSelector);
       },
     },

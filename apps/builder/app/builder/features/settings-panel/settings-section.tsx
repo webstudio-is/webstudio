@@ -9,9 +9,15 @@ import {
   executeRuntimeMutation,
   getDuplicateTemplateNameMessage,
 } from "~/shared/instance-utils/data";
+import {
+  $externalContentRoots,
+  externalContentInstanceNameMessage,
+  isExternalContentInstance,
+} from "~/shared/external-content-mutations";
 
 export const SettingsSection = () => {
   const selectedInstance = useStore($selectedInstance);
+  const externalContentRoots = useStore($externalContentRoots);
   const id = useId();
   const [error, setError] = useState<string>();
   useEffect(() => setError(undefined), [selectedInstance?.id]);
@@ -19,6 +25,14 @@ export const SettingsSection = () => {
     selectedInstance?.label ?? "",
     (value) => {
       if (selectedInstance === undefined) {
+        return;
+      }
+      if (
+        isExternalContentInstance(
+          $externalContentRoots.get(),
+          selectedInstance.id
+        )
+      ) {
         return;
       }
       try {
@@ -43,11 +57,17 @@ export const SettingsSection = () => {
   }
 
   const placeholder = getInstanceLabel(selectedInstance);
+  const isNameEditable =
+    isExternalContentInstance(externalContentRoots, selectedInstance.id) ===
+    false;
 
   return (
     <Row>
       <HorizontalLayout label={<Label htmlFor={id}>Name</Label>}>
-        <Tooltip content={error} delayDuration={0}>
+        <Tooltip
+          content={isNameEditable ? error : externalContentInstanceNameMessage}
+          delayDuration={0}
+        >
           <InputField
             id={id}
             /* Key is required, otherwise when label is undefined, previous value stayed */
@@ -56,6 +76,7 @@ export const SettingsSection = () => {
             value={localValue.value}
             color={error === undefined ? undefined : "error"}
             aria-invalid={error === undefined ? undefined : true}
+            disabled={isNameEditable === false}
             onChange={(event) => {
               setError(undefined);
               localValue.set(event.target.value);

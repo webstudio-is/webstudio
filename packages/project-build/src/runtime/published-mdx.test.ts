@@ -126,6 +126,37 @@ describe("published MDX materialization", () => {
     expect(getFragmentText(result.roots[0].fragment)).toContain("Published");
   });
 
+  test("warns about authored elements that violate the HTML content model", async () => {
+    const result = await materializePublishedMdx({
+      route: "/blog/article",
+      data: createData({}),
+      artifact: createArtifact([
+        {
+          id: "article",
+          source: `1. test
+
+   <ws.element ws:tag="li">nested item</ws.element>
+`,
+        },
+      ]),
+      metas: new Map(),
+      projectId: "project",
+    });
+
+    expect(result.warnings).toEqual([
+      {
+        route: "/blog/article",
+        diagnostic: expect.objectContaining({
+          code: "invalid-mdx",
+          message: "Placing <li> element inside a <li> violates HTML spec.",
+          sourceRange: expect.objectContaining({
+            start: expect.objectContaining({ line: 3 }),
+          }),
+        }),
+      },
+    ]);
+  });
+
   test("materializes only rendered blocks and ignores template definitions", async () => {
     const data = createData({});
     data.instances.set("template-block", {

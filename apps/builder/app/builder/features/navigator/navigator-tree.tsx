@@ -81,6 +81,8 @@ import {
 import { isRichTextContent } from "@webstudio-is/project-build/runtime";
 import {
   $externalContentRoots,
+  externalContentInstanceNameMessage,
+  isExternalContentInstance,
   resolveExternalContentOccurrence,
 } from "~/shared/external-content-mutations";
 import {
@@ -534,10 +536,12 @@ const EditableTreeNodeLabel = styled("div", {
 const TreeNodeContent = ({
   instance,
   isEditing,
+  isNameEditable,
   onIsEditingChange,
 }: {
   instance: Instance;
   isEditing: boolean;
+  isNameEditable: boolean;
   onIsEditingChange: (isEditing: boolean) => void;
 }) => {
   const editableRef = useRef<HTMLDivElement | null>(null);
@@ -546,9 +550,12 @@ const TreeNodeContent = ({
   const label = getInstanceLabel(instance);
   const { ref, handlers } = useContentEditable({
     value: label,
-    isEditable: true,
-    isEditing,
+    isEditable: isNameEditable,
+    isEditing: isNameEditable && isEditing,
     onChangeValue: (value: string) => {
+      if (isExternalContentInstance($externalContentRoots.get(), instance.id)) {
+        return;
+      }
       try {
         executeRuntimeMutation({
           id: "instances.setLabel",
@@ -570,7 +577,10 @@ const TreeNodeContent = ({
 
   return (
     <TreeNodeLabel prefix={<InstanceIcon instance={instance} />}>
-      <Tooltip content={error} delayDuration={0}>
+      <Tooltip
+        content={isNameEditable ? error : externalContentInstanceNameMessage}
+        delayDuration={0}
+      >
         <EditableTreeNodeLabel
           ref={mergeRefs(editableRef, ref)}
           {...handlers}
@@ -746,6 +756,7 @@ const commitNavigatorDrop = ({
 export const NavigatorTree = () => {
   const isContentMode = useStore($isContentMode);
   const flatTree = useStore($flatTree);
+  const externalContentRoots = useStore($externalContentRoots);
   const selectedInstanceSelectors = useStore($allSelectedInstanceSelectors);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const selectedKeys = useMemo(
@@ -1153,6 +1164,12 @@ export const NavigatorTree = () => {
                   >
                     <TreeNodeContent
                       instance={item.instance}
+                      isNameEditable={
+                        isExternalContentInstance(
+                          externalContentRoots,
+                          item.instance.id
+                        ) === false
+                      }
                       isEditing={areInstanceSelectorsEqual(
                         item.selector,
                         editingItemSelector

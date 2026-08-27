@@ -1564,7 +1564,15 @@ const preferMarkdownNode = async (
   }
   const children = await preferMarkdownNodes(node.children, cache);
   const withChildren = { ...node, children };
-  if (withChildren.type !== "element" || withChildren.syntax !== "mdx") {
+  if (withChildren.type !== "element") {
+    return withChildren;
+  }
+  if (
+    withChildren.syntax === "markdown" &&
+    withChildren.children.some(
+      (child) => child.type === "element" && child.syntax === "mdx"
+    ) === false
+  ) {
     return withChildren;
   }
 

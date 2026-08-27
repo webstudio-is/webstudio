@@ -30,3 +30,23 @@ test("keeps standalone Code Text defaults out of instance props", () => {
 test("keeps Content Block Code Text defaults out of template props", () => {
   expectCodeTextDefaultsToStayImplicit(coreTemplates[blockComponent]);
 });
+
+test("keeps the Content Block Image template representable as Markdown", () => {
+  const template = coreTemplates[blockComponent];
+  if (template === undefined) {
+    throw new Error("Expected Content Block template");
+  }
+  const fragment = renderTemplate(template.template);
+  const image = fragment.instances.find(
+    ({ component }) => component === "Image"
+  );
+  if (image === undefined) {
+    throw new Error("Expected Image template");
+  }
+
+  expect(
+    fragment.styleSourceSelections.filter(
+      ({ instanceId }) => instanceId === image.id
+    )
+  ).toEqual([]);
+});

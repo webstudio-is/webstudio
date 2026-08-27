@@ -27,7 +27,6 @@ import {
   $hoveredInstanceSelector,
   $isContentMode,
   $modifierKeys,
-  $textEditingInstanceSelector,
   type BlockChildOutline,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
@@ -134,9 +133,7 @@ export const TemplatesMenu = ({
             return;
           }
           preventCloseAutoFocusRef.current = false;
-          if ($textEditingInstanceSelector.get() !== undefined) {
-            event.preventDefault();
-          }
+          event.preventDefault();
         }}
         // @todo remove inert after creation
         {...(inert ? { inert: "" } : {})}
