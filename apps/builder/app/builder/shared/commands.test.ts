@@ -370,6 +370,7 @@ describe("cut", () => {
 
     expect(JSON.parse(writeText.mock.calls[0]?.[0] ?? "")).toMatchObject({
       "@webstudio/instances/v0.1": {
+        sourceOrigin: "http://localhost:3000",
         rootInstanceIds: ["box1", "box2"],
       },
     });

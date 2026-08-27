@@ -1237,15 +1237,59 @@ describe("project session", () => {
 
     expect(result.state.committed).toBe(true);
     expect(result.version).toBe(3);
+    expect(serializeProjectSessionMeta(result)).toMatchObject({
+      version: 3,
+      commitStatus: "committed",
+      committed: true,
+      diagnosticCount: 2,
+    });
     expect(result.diagnostics).toEqual([
-      expect.objectContaining({ code: "CONFLICT" }),
-      expect.objectContaining({ code: "CONFLICT_REFRESHED" }),
-      expect.objectContaining({ code: "CONFLICT_RETRY" }),
+      expect.objectContaining({ level: "info", code: "CONFLICT_REFRESHED" }),
+      expect.objectContaining({ level: "info", code: "CONFLICT_RETRY" }),
     ]);
     expect(transport.loadedNamespaces).toEqual([
       ["pages", "instances", "dataSources"],
     ]);
     expect(transport.commits).toHaveLength(3);
+  });
+
+  test("reports a project settings conflict retry as committed", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const remote = createSnapshot({ version: 2 });
+    const transport = createMutableTransport(remote);
+    let attempts = 0;
+    const commitPatch = transport.commitPatch;
+    transport.commitPatch = async (input) => {
+      attempts += 1;
+      if (attempts <= 2) {
+        throw Object.assign(new Error("Build version mismatch"), {
+          code: "CONFLICT",
+        });
+      }
+      return await commitPatch(input);
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("projectSettings.update", {
+      meta: { code: "console.log('committed')" },
+    });
+
+    expect(result.state.committed).toBe(true);
+    expect(result.version).toBe(3);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        level: "info",
+        code: "CONFLICT_REFRESHED",
+      }),
+      expect.objectContaining({ level: "info", code: "CONFLICT_RETRY" }),
+    ]);
+
+    await session.refresh(["projectSettings"]);
+    const settings = await session.read("projectSettings.get", {});
+    expect(settings.result).toMatchObject({
+      meta: { code: "console.log('committed')" },
+    });
   });
 
   test("confirms an ambiguous commit with the same transaction", async () => {
@@ -1281,7 +1325,69 @@ describe("project session", () => {
     expect(transport.commits[0]?.[0]?.id).toBe(transport.commits[1]?.[0]?.id);
   });
 
-  test("refreshes without replaying after confirmation fails", async () => {
+  test("confirms a gateway timeout with the same transaction", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport();
+    let committedTransactionId: string | undefined;
+    transport.commitPatch = async (input) => {
+      transport.commits.push([...input.transactions]);
+      const transactionId = input.transactions[0]?.id;
+      if (transactionId === committedTransactionId) {
+        return { version: input.baseVersion + 1 };
+      }
+      committedTransactionId = transactionId;
+      throw Object.assign(new Error("Gateway Timeout"), { status: 504 });
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: "Home updated" },
+    });
+
+    expect(result.state.committed).toBe(true);
+    expect(result.version).toBe(2);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: "COMMIT_RETRY_CONFIRMED" }),
+    ]);
+    expect(transport.commits).toHaveLength(2);
+    expect(transport.commits[0]?.[0]?.id).toBe(transport.commits[1]?.[0]?.id);
+  });
+
+  test("confirms a JSON API gateway error with the same transaction", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport();
+    let committedTransactionId: string | undefined;
+    transport.commitPatch = async (input) => {
+      transport.commits.push([...input.transactions]);
+      const transactionId = input.transactions[0]?.id;
+      if (transactionId === committedTransactionId) {
+        return { version: input.baseVersion + 1 };
+      }
+      committedTransactionId = transactionId;
+      throw Object.assign(new Error("Gateway Timeout"), {
+        data: { httpStatus: 504 },
+      });
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: "Home updated" },
+    });
+
+    expect(result.state.committed).toBe(true);
+    expect(result.version).toBe(2);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: "COMMIT_RETRY_CONFIRMED" }),
+    ]);
+    expect(transport.commits).toHaveLength(2);
+    expect(transport.commits[0]?.[0]?.id).toBe(transport.commits[1]?.[0]?.id);
+  });
+
+  test("keeps a conflict confirmation timeout ambiguous", async () => {
     const storage = createStorage(createPersistedSnapshot());
     const transport = createTransport();
     let attempts = 0;
@@ -1307,7 +1413,7 @@ describe("project session", () => {
     expect(result.state.committed).toBe(false);
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
-        code: "CONFLICT",
+        code: "AMBIGUOUS_COMMIT",
         details: expect.objectContaining({
           confirmationFailure: {
             code: "ECONNRESET",
@@ -1315,10 +1421,84 @@ describe("project session", () => {
           },
         }),
       }),
-      expect.objectContaining({ code: "CONFLICT_REFRESHED" }),
+      expect.objectContaining({ code: "COMMIT_STATE_REFRESHED" }),
     ]);
     expect(transport.loadedNamespaces).toEqual([
       ["pages", "instances", "dataSources"],
+    ]);
+    expect(attempts).toBe(2);
+  });
+
+  test("reports an unconfirmed gateway timeout without calling it a conflict", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport();
+    let attempts = 0;
+    transport.commitPatch = async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        throw Object.assign(new Error("Gateway Timeout"), { status: 504 });
+      }
+      throw Object.assign(new Error("Connection reset"), {
+        code: "ECONNRESET",
+      });
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: "Possibly committed" },
+    });
+
+    expect(result.state.committed).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "AMBIGUOUS_COMMIT",
+        details: expect.objectContaining({
+          confirmationFailure: {
+            code: "ECONNRESET",
+            message: "Connection reset",
+          },
+        }),
+      }),
+      expect.objectContaining({ code: "COMMIT_STATE_REFRESHED" }),
+    ]);
+    expect(attempts).toBe(2);
+  });
+
+  test("keeps a gateway timeout ambiguous when confirmation conflicts", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport();
+    let attempts = 0;
+    transport.commitPatch = async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        throw Object.assign(new Error("Gateway Timeout"), { status: 504 });
+      }
+      throw Object.assign(new Error("Build version mismatch"), {
+        code: "CONFLICT",
+      });
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: "Possibly committed" },
+    });
+
+    expect(result.state.committed).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "AMBIGUOUS_COMMIT",
+        details: expect.objectContaining({
+          confirmationFailure: {
+            code: "CONFLICT",
+            message: "Build version mismatch",
+          },
+        }),
+      }),
+      expect.objectContaining({ code: "COMMIT_STATE_REFRESHED" }),
     ]);
     expect(attempts).toBe(2);
   });

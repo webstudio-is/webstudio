@@ -80,12 +80,17 @@ export const pageTransferItemInput = z.union([
   pageTransferFolderInput,
 ]);
 
+const pageClipboardTransferItemInput = pageTransferItemInput.and(
+  z.object({ sourceOrigin: z.string().url().optional() })
+);
 export const pageTransferDataVersion = "@webstudio/page/v0.1";
 
 export const parsePageTransferData = (serializedData: string) => {
   const transferData = parseDataEnvelope({
     serializedData,
-    schemas: [[pageTransferDataVersion, pageTransferItemInput]] as const,
+    schemas: [
+      [pageTransferDataVersion, pageClipboardTransferItemInput],
+    ] as const,
   });
   if (transferData.valid === false) {
     return transferData;

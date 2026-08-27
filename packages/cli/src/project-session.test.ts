@@ -11,6 +11,7 @@ import {
   createCliProjectRestorePointStorage,
   createCliProjectSessionStorage,
   createCliProjectSessionTransport,
+  createIssueReportFailure,
   addIssueReportRuntime,
   getCliServerApiContract,
   getCliProjectSessionFile,
@@ -30,6 +31,18 @@ test("adds anonymous local runtime metadata only to issue reports", () => {
     architecture: "arm64",
     executionMode: "mcp" as const,
     apiContractVersion: "public-api:client",
+    bundleVersion: "bundle:client",
+    recentFailure: {
+      tool: "preview.start",
+      code: "PROJECT_BUNDLE_INVALID",
+      issues: [
+        {
+          path: ["assets", "0", "type"],
+          code: "invalid_value",
+          constraint: "one of supported asset types",
+        },
+      ],
+    },
   };
 
   expect(addIssueReportRuntime("report-issue", report, runtime)).toEqual({
@@ -37,6 +50,85 @@ test("adds anonymous local runtime metadata only to issue reports", () => {
     runtime,
   });
   expect(addIssueReportRuntime("audit", report, runtime)).toBe(report);
+});
+
+test("keeps only anonymous structured fields from the latest tool failure", () => {
+  const error = Object.assign(new Error("Asset customer-logo.png is invalid"), {
+    code: "PROJECT_BUNDLE_INVALID",
+    issues: [
+      {
+        path: ["assets", "0", "type"],
+        code: "invalid_value",
+        message: "Customer-specific value is unsupported",
+        constraint: "one of supported asset types",
+        detail: "Asset customer-logo.png belongs to project-123",
+      },
+    ],
+  });
+
+  expect(createIssueReportFailure("preview.start", error)).toEqual({
+    tool: "preview.start",
+    code: "PROJECT_BUNDLE_INVALID",
+    issues: [
+      {
+        path: [],
+        code: "invalid_value",
+        constraint: "one of supported asset types",
+      },
+    ],
+  });
+
+  expect(
+    createIssueReportFailure("unknown", {
+      code: "dynamic-code",
+      issues: error.issues,
+    })
+  ).toEqual({
+    tool: "unknown",
+    code: "MCP_TOOL_FAILED",
+  });
+
+  expect(
+    createIssueReportFailure("insert-fragment", {
+      code: "INVALID_INPUT",
+      issues: [
+        {
+          path: ["fragment"],
+          code: "invalid_webstudio_jsx",
+          message: "Fragment contains private project content",
+          constraint: "valid_webstudio_jsx_syntax",
+          detail: "Unexpected token near customer data",
+        },
+      ],
+    })
+  ).toEqual({
+    tool: "insert-fragment",
+    code: "INVALID_INPUT",
+    issues: [
+      {
+        path: [],
+        code: "invalid_webstudio_jsx",
+        constraint: "valid_webstudio_jsx_syntax",
+      },
+    ],
+  });
+
+  const sensitiveKey = "customer-secret-key";
+  const serialized = JSON.stringify(
+    createIssueReportFailure("update-styles", {
+      code: "INVALID_INPUT",
+      issues: [
+        {
+          path: ["updates", "0", sensitiveKey],
+          code: "invalid_type",
+          message: "Expected string",
+          constraint: "type:string",
+        },
+      ],
+    })
+  );
+  expect(serialized).not.toContain(sensitiveKey);
+  expect(JSON.parse(serialized).issues[0].path).toEqual([]);
 });
 
 test("scopes project session files for explicitly selected projects", () => {
@@ -615,6 +707,59 @@ test("rejects incomplete project session snapshots before preview generation", (
 });
 
 describe("cli project session transport", () => {
+  test("preserves JSON gateway status when mapping remote error codes", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify([
+              {
+                error: {
+                  message: "Gateway Timeout",
+                  code: -32603,
+                  data: {
+                    code: "INTERNAL_SERVER_ERROR",
+                    httpStatus: 504,
+                    path: "builderApi.apply-patch",
+                  },
+                },
+              },
+            ]),
+            {
+              status: 504,
+              headers: { "content-type": "application/json" },
+            }
+          )
+      )
+    );
+    const transport = createCliProjectSessionTransport({
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+    });
+
+    await expect(
+      transport.commitPatch({
+        projectId: "project-1",
+        buildId: "build-1",
+        baseVersion: 1,
+        transactions: [],
+      })
+    ).rejects.toMatchObject({
+      name: "INTERNAL_SERVER_ERROR",
+      code: "INTERNAL_SERVER_ERROR",
+      cause: {
+        data: {
+          code: "INTERNAL_SERVER_ERROR",
+          httpStatus: 504,
+        },
+      },
+    });
+  });
+
   test("adapts public API build snapshots into project-session state", async () => {
     const transport = createCliProjectSessionTransport({
       connection: {
@@ -949,6 +1094,7 @@ describe("cli project session transport", () => {
       architecture: process.arch,
       executionMode: "mcp",
       apiContractVersion: expect.any(String),
+      bundleVersion: expect.any(String),
     });
   });
 });

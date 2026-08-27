@@ -6,10 +6,12 @@ export const instanceTransferDataVersion = "@webstudio/instance/v0.1";
 export const instancesTransferDataVersion = "@webstudio/instances/v0.1";
 
 export const instanceTransferData = webstudioFragment.extend({
+  sourceOrigin: z.string().url().optional(),
   instanceSelector: z.array(z.string()),
 });
 
 export const instancesTransferData = z.object({
+  sourceOrigin: z.string().url().optional(),
   rootInstanceIds: z.array(z.string()),
   fragment: webstudioFragment,
 });

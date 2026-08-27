@@ -36,6 +36,22 @@ export const findTreeInstanceIds = (
   return ids;
 };
 
+export const findTreeInstanceIdsExcludingSubtrees = (
+  instances: Instances,
+  rootInstanceId: Instance["id"],
+  excludedRootIds: Set<Instance["id"]>
+) => {
+  const ids = new Set<Instance["id"]>([rootInstanceId]);
+  traverseInstances(instances, rootInstanceId, (instance) => {
+    if (excludedRootIds.has(instance.id)) {
+      ids.delete(instance.id);
+      return false;
+    }
+    ids.add(instance.id);
+  });
+  return ids;
+};
+
 export const findTreeInstanceIdsExcludingSlotDescendants = (
   instances: Instances,
   rootInstanceId: Instance["id"]

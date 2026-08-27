@@ -1067,7 +1067,38 @@ const instance = (id: string): Instance => ({
 });
 
 describe("runtime style operations", () => {
-  test.each([":hover, body", ":hover > div", "body:hover"])(
+  test("rejects an unknown breakpoint coordinate", () => {
+    const result = styleUpdateInput.safeParse({
+      instanceId: "box",
+      property: "padding",
+      value: { type: "keyword", value: "8px" },
+      breakpointId: "mobile",
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("Expected the unknown breakpoint field to be rejected");
+    }
+    expect(
+      getZodValidationIssues(
+        result.error,
+        getInputSchemaMetadata(styleUpdateInput).inputJsonSchema
+      )
+    ).toEqual([
+      expect.objectContaining({
+        code: "unrecognized_keys",
+        path: ["breakpointId"],
+        constraint: "recognized_keys_only",
+      }),
+    ]);
+  });
+
+  test.each([
+    ":hover, body",
+    "body:hover",
+    ":hover + .tooltip",
+    ":hover ~ .tooltip",
+  ])(
     "rejects state selectors that escape the styled element when writing: %s",
     (state) => {
       expect(
@@ -1103,56 +1134,74 @@ describe("runtime style operations", () => {
     ).toMatchObject({ success: true });
   });
 
-  test("preserves an editable compound state through mutation and generated CSS", () => {
-    const state = ":hover:focus-visible";
-    const mutation = updateStyleDeclarations(
-      {
-        breakpoints: runtimeBreakpoints,
-        instances: toMap([instance("box")]),
-        styles: new Map(),
-        styleSources: sources([local("local")]),
-        styleSourceSelections: new Map([
-          ["box", { instanceId: "box", values: ["local"] }],
-        ]),
-      },
-      {
-        updates: [
-          {
-            instanceId: "box",
-            property: "borderTopColor",
-            value: { type: "keyword", value: "currentcolor" },
-            state,
-          },
-        ],
-      },
-      { createId }
-    );
-    const patch = mutation.payload
-      .find((change) => change.namespace === "styles")
-      ?.patches.at(0);
-    if (patch === undefined || patch.op === "remove") {
-      throw new Error("Expected a style declaration patch");
+  test.each([
+    [":hover .button", ".box:hover .button"],
+    [":focus-within input", ".box:focus-within input"],
+    [
+      "[data-state=open] > [data-part=content]",
+      ".box[data-state=open] > [data-part=content]",
+    ],
+  ])(
+    "preserves an editable descendant state through mutation and generated CSS: %s",
+    (state, generatedSelector) => {
+      expect(
+        styleUpdateInput.safeParse({
+          instanceId: "box",
+          property: "borderTopColor",
+          value: { type: "keyword", value: "currentcolor" },
+          state,
+        })
+      ).toMatchObject({ success: true });
+
+      const mutation = updateStyleDeclarations(
+        {
+          breakpoints: runtimeBreakpoints,
+          instances: toMap([instance("box")]),
+          styles: new Map(),
+          styleSources: sources([local("local")]),
+          styleSourceSelections: new Map([
+            ["box", { instanceId: "box", values: ["local"] }],
+          ]),
+        },
+        {
+          updates: [
+            {
+              instanceId: "box",
+              property: "borderTopColor",
+              value: { type: "keyword", value: "currentcolor" },
+              state,
+            },
+          ],
+        },
+        { createId }
+      );
+      const patch = mutation.payload
+        .find((change) => change.namespace === "styles")
+        ?.patches.at(0);
+      if (patch === undefined || patch.op === "remove") {
+        throw new Error("Expected a style declaration patch");
+      }
+      const declaration = patch.value as StyleDecl;
+
+      expect(declaration).toMatchObject({
+        property: "borderTopColor",
+        state,
+        breakpointId: "desktop",
+      });
+
+      const sheet = createRegularStyleSheet();
+      const rule = sheet.addNestingRule(".box");
+      rule.setDeclaration({
+        breakpoint: declaration.breakpointId,
+        selector: declaration.state ?? "",
+        property: declaration.property,
+        value: declaration.value,
+      });
+      expect(rule.toString({ breakpoint: "desktop" })).toContain(
+        `${generatedSelector} {\n  border-top-color: currentcolor\n}`
+      );
     }
-    const declaration = patch.value as StyleDecl;
-
-    expect(declaration).toMatchObject({
-      property: "borderTopColor",
-      state,
-      breakpointId: "desktop",
-    });
-
-    const sheet = createRegularStyleSheet();
-    const rule = sheet.addNestingRule(".box");
-    rule.setDeclaration({
-      breakpoint: declaration.breakpointId,
-      selector: declaration.state ?? "",
-      property: declaration.property,
-      value: declaration.value,
-    });
-    expect(rule.toString({ breakpoint: "desktop" })).toContain(
-      ".box:hover:focus-visible {\n  border-top-color: currentcolor\n}"
-    );
-  });
+  );
 
   test("rejects declarations for unknown breakpoints", () => {
     expect(() =>

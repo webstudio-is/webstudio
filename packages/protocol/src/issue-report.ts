@@ -38,6 +38,22 @@ const issueReportAgent = z
   })
   .strict();
 
+const issueReportFailureIssue = z
+  .object({
+    path: z.array(z.string().max(200)).max(30),
+    code: z.string().trim().min(1).max(100),
+    constraint: z.string().trim().min(1).max(500),
+  })
+  .strict();
+
+const issueReportRecentFailure = z
+  .object({
+    tool: z.string().trim().min(1).max(160),
+    code: z.string().trim().min(1).max(160),
+    issues: z.array(issueReportFailureIssue).max(30).optional(),
+  })
+  .strict();
+
 const issueReportRuntime = z
   .object({
     cliVersion: z.string().trim().min(1).max(100),
@@ -47,6 +63,8 @@ const issueReportRuntime = z
     architecture: z.string().trim().min(1).max(100),
     executionMode: z.enum(["mcp"]),
     apiContractVersion: z.string().trim().min(1).max(100),
+    bundleVersion: z.string().trim().min(1).max(100).optional(),
+    recentFailure: issueReportRecentFailure.optional(),
   })
   .strict()
   .describe(
@@ -101,3 +119,4 @@ export const issueReportResult = z
 export type IssueReportInput = z.infer<typeof issueReportInput>;
 export type IssueReportResult = z.infer<typeof issueReportResult>;
 export type IssueReportRuntime = z.infer<typeof issueReportRuntime>;
+export type IssueReportRecentFailure = z.infer<typeof issueReportRecentFailure>;

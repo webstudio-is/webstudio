@@ -1,5 +1,8 @@
 import { expect, test, vi } from "vitest";
-import { BrowserStartupError } from "@webstudio-is/vision/browser";
+import {
+  BrowserSessionClosedError,
+  BrowserStartupError,
+} from "@webstudio-is/vision/browser";
 import {
   createScreenshotCaptureSession,
   defaultScreenshotDependencies,
@@ -653,6 +656,93 @@ test("reuses and closes one browser capture session for session screenshots", as
   expect(preview.stop).toHaveBeenCalledOnce();
 });
 
+test("reconnects a screenshot session after preview restart", async () => {
+  let running = false;
+  const preview = {
+    status: vi.fn(() =>
+      running
+        ? {
+            url: "http://127.0.0.1:3000/",
+            running: true as const,
+            mode: "iterative" as const,
+          }
+        : { running: false as const }
+    ),
+    startAndWait: vi.fn(async () => {
+      running = true;
+      return {
+        url: "http://127.0.0.1:3000/",
+        running: true as const,
+        mode: "iterative" as const,
+      };
+    }),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+  };
+  const connectionClosed = new BrowserSessionClosedError(
+    "Browser DevTools connection closed."
+  );
+  const firstClose = vi.fn(async () => undefined);
+  const firstCapturePage = vi.fn(async () => {
+    throw connectionClosed;
+  });
+  const captureScreenshot = createCaptureScreenshotMock([]);
+  const secondCapturePage = vi.fn(
+    async (optionsList) => await Promise.all(optionsList.map(captureScreenshot))
+  );
+  const createCaptureSession = vi
+    .fn()
+    .mockReturnValueOnce({
+      capture: vi.fn(),
+      capturePage: firstCapturePage,
+      close: firstClose,
+    })
+    .mockReturnValueOnce({
+      capture: vi.fn(),
+      capturePage: secondCapturePage,
+      close: vi.fn(async () => undefined),
+    });
+  const progress: string[] = [];
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => false,
+    preparePreview: vi.fn(async () => ({ cwd: "/tmp/preview" })),
+    createCaptureSession,
+  });
+
+  await handlers.startPreview({ source: "session", mode: "iterative" });
+  await expect(
+    handlers.capturePageScreenshots(
+      [
+        {
+          path: "/",
+          source: "session",
+          viewport: { width: 1440, height: 900 },
+          fullPage: true,
+        },
+      ],
+      { report: (message) => progress.push(message) }
+    )
+  ).resolves.toEqual([
+    expect.objectContaining({
+      viewport: { width: 1440, height: 900 },
+    }),
+  ]);
+
+  expect(preview.startAndWait).toHaveBeenCalledOnce();
+  expect(createCaptureSession).toHaveBeenCalledTimes(2);
+  expect(firstCapturePage).toHaveBeenCalledOnce();
+  expect(firstClose).toHaveBeenCalledOnce();
+  expect(secondCapturePage).toHaveBeenCalledWith([
+    expect.objectContaining({
+      url: "http://127.0.0.1:3000/",
+      width: 1440,
+      height: 900,
+      fullPage: true,
+    }),
+  ]);
+  expect(progress).toContain("tool screenshot reconnecting browser session");
+});
+
 test("times out a stalled screenshot after preview start and releases its session", async () => {
   let running = false;
   const stop = vi.fn(async () => {
@@ -1024,6 +1114,51 @@ test("captures one session page across multiple viewports through resize", async
     }),
   ]);
   expect(preview.startAndWait).not.toHaveBeenCalled();
+});
+
+test("allows each resized capture its configured timeout", async () => {
+  vi.useFakeTimers();
+  try {
+    const preview = {
+      status: vi.fn(() => ({
+        url: "http://127.0.0.1:3000/",
+        running: true,
+        mode: "iterative" as const,
+      })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+    };
+    const capture = createCaptureScreenshotMock([]);
+    const capturePage = vi.fn(
+      async (optionsList: Array<Parameters<typeof capture>[0]>) => {
+        await new Promise<void>((resolve) => setTimeout(resolve, 6));
+        return await Promise.all(optionsList.map(capture));
+      }
+    );
+    const handlers = createMcpPreviewHandlers({
+      preview,
+      isStale: () => false,
+      createCaptureSession: () => ({
+        capture,
+        capturePage,
+        close: vi.fn(async () => undefined),
+      }),
+    });
+
+    const captures = handlers.capturePageScreenshots(
+      [375, 1440].map((width) => ({
+        path: "/responsive",
+        source: "session" as const,
+        viewport: { width, height: 900 },
+        timeout: 5,
+      }))
+    );
+    await vi.advanceTimersByTimeAsync(6);
+
+    await expect(captures).resolves.toHaveLength(2);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 test("prepares one local page for multiple viewport captures", async () => {

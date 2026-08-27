@@ -40,6 +40,7 @@ import {
   SYSTEM_VARIABLE_ID,
   type Resource,
 } from "@webstudio-is/sdk";
+import { showAttribute } from "@webstudio-is/react-sdk";
 import {
   generateRedirectsModule,
   getAssetResourcePrerenderPaths,
@@ -781,6 +782,98 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test("excludes resources in statically hidden subtrees", async () => {
+    const siteData = createSiteData({
+      instances: [
+        [
+          "root",
+          {
+            id: "root",
+            component: "Body",
+            children: [
+              { type: "id", value: "hidden" },
+              { type: "id", value: "visible" },
+              { type: "id", value: "dynamic" },
+            ],
+          },
+        ],
+        [
+          "hidden",
+          {
+            id: "hidden",
+            component: "Box",
+            children: [{ type: "id", value: "hidden-child" }],
+          },
+        ],
+        [
+          "hidden-child",
+          { id: "hidden-child", component: "Box", children: [] },
+        ],
+        ["visible", { id: "visible", component: "Box", children: [] }],
+        ["dynamic", { id: "dynamic", component: "Box", children: [] }],
+      ],
+      props: [
+        [
+          "hidden-show",
+          {
+            id: "hidden-show",
+            instanceId: "hidden",
+            name: showAttribute,
+            type: "boolean",
+            value: false,
+          },
+        ],
+        [
+          "dynamic-show",
+          {
+            id: "dynamic-show",
+            instanceId: "dynamic",
+            name: showAttribute,
+            type: "expression",
+            value: "false",
+          },
+        ],
+      ],
+    });
+    const resourceNames = ["hidden", "hidden-child", "visible", "dynamic"];
+    siteData.build.dataSources = resourceNames.map((name) => [
+      `${name}-data-source`,
+      {
+        id: `${name}-data-source`,
+        scopeInstanceId: name,
+        type: "resource",
+        name,
+        resourceId: `${name}-resource`,
+      },
+    ]) as never;
+    siteData.build.resources = resourceNames.map((name) => [
+      `${name}-resource`,
+      {
+        id: `${name}-resource`,
+        name,
+        url: JSON.stringify(`https://example.com/${name}`),
+        method: "get",
+        headers: [],
+      },
+    ]) as never;
+    await writeSiteData(siteData);
+
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
+
+    const generatedServer = await readFile(
+      "app/__generated__/_index.server.tsx",
+      "utf8"
+    );
+    expect(generatedServer).not.toContain("https://example.com/hidden");
+    expect(generatedServer).not.toContain("https://example.com/hidden-child");
+    expect(generatedServer).toContain("https://example.com/visible");
+    expect(generatedServer).toContain("https://example.com/dynamic");
+  });
+
   test("imports only configured Code Text language and theme assets", async () => {
     await writeSiteData(
       createCodeTextSiteData([
@@ -2999,5 +3092,29 @@ sitemap.map((page) => page.path);`
     ).rejects.toThrow(
       "Project bundle is invalid, please make sure the project is synced. Invalid fields: page: Required"
     );
+  });
+
+  test("exposes anonymous structured diagnostics for invalid asset fields", async () => {
+    const data = structuredClone(createSiteData()) as unknown as {
+      assets: Array<Record<string, unknown>>;
+    };
+    data.assets[0] = { ...data.assets[0], type: "future-video" };
+    await writeFile(".webstudio/data.json", JSON.stringify(data));
+
+    try {
+      await prebuild({ assets: false, template: ["defaults"] });
+      throw new Error("Expected invalid bundle to fail.");
+    } catch (error) {
+      expect(error).toMatchObject({
+        code: "PROJECT_BUNDLE_INVALID",
+        bundleVersion,
+        issues: expect.arrayContaining([
+          expect.objectContaining({
+            path: ["assets", "0", "type"],
+            code: "invalid_value",
+          }),
+        ]),
+      });
+    }
   });
 });

@@ -103,21 +103,38 @@ const getAncestorBinPaths = (directory: string) => {
   }
 };
 
-const getPreviewEnv = (
-  cwd: string | undefined,
-  extraEnv: NodeJS.ProcessEnv
-) => {
-  if (cwd === undefined) {
-    return extraEnv;
-  }
-  const key = pathKey({ env: extraEnv });
+const getPreviewEnv = ({
+  cwd,
+  extraEnv,
+  nodeExecPath,
+  platform,
+}: {
+  cwd?: string;
+  extraEnv: NodeJS.ProcessEnv;
+  nodeExecPath: string;
+  platform: NodeJS.Platform;
+}) => {
+  const key = pathKey({ env: extraEnv, platform });
+  const separator = platform === "win32" ? win32.delimiter : delimiter;
+  const nodeBinDirectory =
+    platform === "win32" ? win32.dirname(nodeExecPath) : dirname(nodeExecPath);
   return {
     ...extraEnv,
-    [key]: [...getAncestorBinPaths(cwd), extraEnv[key]]
+    [key]: [
+      nodeBinDirectory,
+      ...(cwd === undefined ? [] : getAncestorBinPaths(cwd)),
+      extraEnv[key],
+    ]
       .filter(Boolean)
-      .join(delimiter),
+      .join(separator),
   };
 };
+
+export const getNodeRuntimeEnv = (
+  nodeExecPath: string,
+  env: NodeJS.ProcessEnv,
+  platform: NodeJS.Platform
+) => getPreviewEnv({ extraEnv: env, nodeExecPath, platform });
 
 export const getPreviewUrl = ({
   host,
@@ -200,10 +217,15 @@ export const runPreviewBuild = async (
   const buildProcess = dependencies.spawn(invocation.command, invocation.args, {
     cwd,
     stdio,
-    env: getPreviewEnv(cwd, {
-      ...processEnv(),
-      CI: "1",
-      NODE_ENV: "production",
+    env: getPreviewEnv({
+      cwd,
+      extraEnv: {
+        ...processEnv(),
+        CI: "1",
+        NODE_ENV: "production",
+      },
+      nodeExecPath: dependencies.nodeExecPath,
+      platform: dependencies.platform,
     }),
   });
   let output = "";
@@ -291,17 +313,22 @@ export const startPreviewServer = (
       cwd: options.cwd,
       ...(options.detached === undefined ? {} : { detached: options.detached }),
       stdio: supervisorStdio,
-      env: getPreviewEnv(options.cwd, {
-        ...processEnv(),
-        HOST: options.host,
-        PORT: String(options.port),
-        ...(options.imageDomains === undefined
-          ? {}
-          : { DOMAINS: options.imageDomains.join(",") }),
-        NODE_ENV: options.mode === "iterative" ? "development" : "production",
-        ...(options.mode === "iterative"
-          ? { WEBSTUDIO_PREVIEW_HMR: "disabled" }
-          : {}),
+      env: getPreviewEnv({
+        cwd: options.cwd,
+        extraEnv: {
+          ...processEnv(),
+          HOST: options.host,
+          PORT: String(options.port),
+          ...(options.imageDomains === undefined
+            ? {}
+            : { DOMAINS: options.imageDomains.join(",") }),
+          NODE_ENV: options.mode === "iterative" ? "development" : "production",
+          ...(options.mode === "iterative"
+            ? { WEBSTUDIO_PREVIEW_HMR: "disabled" }
+            : {}),
+        },
+        nodeExecPath: dependencies.nodeExecPath,
+        platform: dependencies.platform,
       }),
     }
   );

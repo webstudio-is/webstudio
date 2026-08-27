@@ -35,8 +35,33 @@ const formatRuntime = (runtime: IssueReportInput["runtime"]) =>
           `- Operating system: ${runtime.os} ${runtime.osVersion} (${runtime.architecture})`,
           `- Execution mode: ${runtime.executionMode}`,
           `- API contract: ${runtime.apiContractVersion}`,
+          `- Bundle contract: ${runtime.bundleVersion ?? "unknown"}`,
         ]),
   ].join("\n");
+
+const formatFailureDiagnostics = (runtime: IssueReportInput["runtime"]) => {
+  const failure = runtime?.recentFailure;
+  if (failure === undefined) {
+    return "";
+  }
+  const issues = failure.issues ?? [];
+  return [
+    "## Captured failure diagnostics",
+    "",
+    `- Tool: \`${failure.tool}\``,
+    `- Error code: \`${failure.code}\``,
+    ...(issues.length === 0
+      ? []
+      : [
+          "- Invalid fields:",
+          ...issues.map(
+            (issue) =>
+              `  - \`${issue.path.join(".") || "input"}\`: \`${issue.code}\` (${issue.constraint})`
+          ),
+        ]),
+    "",
+  ].join("\n");
+};
 
 export const formatIssueReport = ({
   agent,
@@ -89,6 +114,8 @@ ${report.technicalContext}
 - Category: ${category}
 
 ${formatRuntime(runtime)}
+
+${formatFailureDiagnostics(runtime)}
 
 ## Acceptance criteria
 

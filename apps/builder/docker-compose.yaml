@@ -1,6 +1,6 @@
 services:
   db:
-    image: public.ecr.aws/supabase/postgres:15.8.1.085
+    image: ghcr.io/supabase/postgres:15.8.1.085@sha256:af083ef64d0408c8f098ee6f5c364a59b26f36fbc0f3a334a62c5c1d57362e9b
     environment:
       # The image initializes its required roles as supabase_admin. Supplying
       # POSTGRES_USER overrides that bootstrap user and breaks its init scripts.

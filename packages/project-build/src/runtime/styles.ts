@@ -330,15 +330,20 @@ const typedStyleValueInput = z
   .transform((value) => value as StyleValue)
   .describe("Typed CSS StyleValue object.");
 
-export const styleUpdateInput = z.object({
-  instanceId: z.string(),
-  property: z.string(),
-  value: typedStyleValueInput,
-  breakpoint: z.string().optional(),
-  state: styleStateInput.optional(),
-  listed: z.boolean().optional(),
-  createLocalIfMissing: z.boolean().optional(),
-});
+export const styleUpdateInput = z
+  .object({
+    instanceId: z.string(),
+    property: z.string(),
+    value: typedStyleValueInput,
+    breakpoint: z
+      .string()
+      .optional()
+      .describe("Breakpoint id from list-breakpoints; omit for the base."),
+    state: styleStateInput.optional(),
+    listed: z.boolean().optional(),
+    createLocalIfMissing: z.boolean().optional(),
+  })
+  .strict();
 
 export const styleDeleteInput = z.object({
   instanceId: z.string(),

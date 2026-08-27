@@ -33,12 +33,18 @@ import { $selectedPage } from "../nano-states";
 import { getPageActionTarget } from "../page-action-target";
 import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
 import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime";
+import { transferFragmentAssets } from "./asset-transfer-utils";
 
 const invalidPasteDataMessage =
   "Could not paste Webstudio page data. The clipboard data appears to be incomplete or invalid.";
 
 const stringify = (data: PageTransferItem) => {
-  return JSON.stringify({ [pageTransferDataVersion]: data });
+  return JSON.stringify({
+    [pageTransferDataVersion]: {
+      ...data,
+      sourceOrigin: window.location.origin,
+    },
+  });
 };
 
 const getDefaultTargetFolderId = () => {
@@ -75,27 +81,62 @@ const mergeWebstudioFragments = (
   } satisfies WebstudioFragment;
 };
 
+const includeMetaAssets = (
+  fragment: WebstudioFragment,
+  assetIds: Array<string | undefined>,
+  assets: ReturnType<typeof getWebstudioData>["assets"]
+) => {
+  const fragmentAssets = new Map(
+    fragment.assets.map((asset) => [asset.id, asset])
+  );
+  for (const assetId of assetIds) {
+    const asset = assetId === undefined ? undefined : assets.get(assetId);
+    if (asset !== undefined) {
+      fragmentAssets.set(asset.id, asset);
+    }
+  }
+  return { ...fragment, assets: Array.from(fragmentAssets.values()) };
+};
+
 const addPageType = (
-  data: ReturnType<typeof createPageCopyData>
+  data: ReturnType<typeof createPageCopyData>,
+  assets: ReturnType<typeof getWebstudioData>["assets"]
 ): PageTransferData => ({
   ...data,
+  bodyFragment: includeMetaAssets(
+    data.bodyFragment,
+    [
+      data.page.meta.socialImageAssetId,
+      data.page.marketplace?.thumbnailAssetId,
+    ],
+    assets
+  ),
   type: "page",
 });
 
 const addTemplateType = (
-  data: ReturnType<typeof createTemplateCopyData>
+  data: ReturnType<typeof createTemplateCopyData>,
+  assets: ReturnType<typeof getWebstudioData>["assets"]
 ): TemplateTransferData => ({
   ...data,
+  bodyFragment: includeMetaAssets(
+    data.bodyFragment,
+    [data.template.meta.socialImageAssetId],
+    assets
+  ),
   type: "template",
 });
 
 const addFolderType = (
-  data: NonNullable<ReturnType<typeof createFolderCopyData>>
+  data: NonNullable<ReturnType<typeof createFolderCopyData>>,
+  assets: ReturnType<typeof getWebstudioData>["assets"]
 ): FolderTransferData => ({
   type: "folder",
   folder: data.folder,
   children: data.children.map((child) =>
-    "folder" in child ? addFolderType(child) : addPageType(child)
+    "folder" in child
+      ? addFolderType(child, assets)
+      : addPageType(child, assets)
   ),
 });
 
@@ -107,7 +148,63 @@ const getPageCopyData = (
   if (page === undefined) {
     return;
   }
-  return addPageType(createPageCopyData({ data, page }));
+  return addPageType(createPageCopyData({ data, page }), data.assets);
+};
+
+const remapPageTransferAssets = (
+  item: PageTransferItem,
+  fragments: Map<WebstudioFragment, WebstudioFragment>,
+  assetIds: Map<string, string>
+): PageTransferItem => {
+  const remapAssetId = (assetId: string | undefined) => {
+    return assetId === undefined
+      ? undefined
+      : (assetIds.get(assetId) ?? assetId);
+  };
+  if (item.type === "folder") {
+    return {
+      ...item,
+      children: item.children.map((child) =>
+        remapPageTransferAssets(child, fragments, assetIds)
+      ) as FolderTransferData["children"],
+    };
+  }
+  if (item.type === "page") {
+    const socialImageAssetId = item.page.meta.socialImageAssetId;
+    const thumbnailAssetId = item.page.marketplace?.thumbnailAssetId;
+    return {
+      ...item,
+      rootFragment: fragments.get(item.rootFragment) ?? item.rootFragment,
+      bodyFragment: fragments.get(item.bodyFragment) ?? item.bodyFragment,
+      page: {
+        ...item.page,
+        marketplace:
+          item.page.marketplace === undefined
+            ? undefined
+            : {
+                ...item.page.marketplace,
+                thumbnailAssetId: remapAssetId(thumbnailAssetId),
+              },
+        meta: {
+          ...item.page.meta,
+          socialImageAssetId: remapAssetId(socialImageAssetId),
+        },
+      },
+    };
+  }
+  const socialImageAssetId = item.template.meta.socialImageAssetId;
+  return {
+    ...item,
+    rootFragment: fragments.get(item.rootFragment) ?? item.rootFragment,
+    bodyFragment: fragments.get(item.bodyFragment) ?? item.bodyFragment,
+    template: {
+      ...item.template,
+      meta: {
+        ...item.template.meta,
+        socialImageAssetId: remapAssetId(socialImageAssetId),
+      },
+    },
+  };
 };
 
 const handleCopyPage = () => {
@@ -138,7 +235,9 @@ export const copyTemplateData = (templateId: PageTemplate["id"]) => {
   if (template === undefined) {
     return;
   }
-  return stringify(addTemplateType(createTemplateCopyData({ data, template })));
+  return stringify(
+    addTemplateType(createTemplateCopyData({ data, template }), data.assets)
+  );
 };
 
 export const copyFolderData = (folderId: Folder["id"]) => {
@@ -147,7 +246,7 @@ export const copyFolderData = (folderId: Folder["id"]) => {
   if (folderData === undefined) {
     return;
   }
-  return stringify(addFolderType(folderData));
+  return stringify(addFolderType(folderData, data.assets));
 };
 
 export const handlePastePage = async (
@@ -161,7 +260,8 @@ export const handlePastePage = async (
   if (transferData.valid === false) {
     return { success: false, error: invalidPasteDataMessage } as const;
   }
-  const item = transferData.data;
+  const { sourceOrigin, ...transferItem } = transferData.data;
+  let item: PageTransferItem = transferItem;
 
   const pages = $pages.get();
   const folderId = targetFolderId ?? getDefaultTargetFolderId();
@@ -179,8 +279,31 @@ export const handlePastePage = async (
     if (projectId === undefined) {
       return pasteHandled;
     }
-    const pageItems = collectPageTransferItems(item);
-    const conflicts = pageItems.flatMap((item) =>
+    const sourcePageItems = collectPageTransferItems(item);
+    if (sourceOrigin !== undefined) {
+      const assetIds = new Set(
+        sourcePageItems.flatMap((item) => [
+          ...item.rootFragment.assets.map((asset) => asset.id),
+          ...item.bodyFragment.assets.map((asset) => asset.id),
+        ])
+      );
+      const hasMissingMetaAsset = sourcePageItems.some((item) => {
+        const metaAssetIds =
+          item.type === "page"
+            ? [
+                item.page.meta.socialImageAssetId,
+                item.page.marketplace?.thumbnailAssetId,
+              ]
+            : [item.template.meta.socialImageAssetId];
+        return metaAssetIds.some(
+          (assetId) => assetId !== undefined && assetIds.has(assetId) === false
+        );
+      });
+      if (hasMissingMetaAsset) {
+        return { success: false, error: invalidPasteDataMessage } as const;
+      }
+    }
+    const conflicts = sourcePageItems.flatMap((item) =>
       detectFragmentTokenConflicts({
         fragment: mergeWebstudioFragments(item.rootFragment, item.bodyFragment),
         targetData,
@@ -191,7 +314,7 @@ export const handlePastePage = async (
       return pasteHandled;
     }
     const rootStyleTargetData = getWebstudioData();
-    const firstPageLikeItem = pageItems[0];
+    const firstPageLikeItem = sourcePageItems[0];
     const rootStyleConflictResolution =
       firstPageLikeItem === undefined
         ? undefined
@@ -202,7 +325,28 @@ export const handlePastePage = async (
     if (rootStyleConflictResolution === "cancel") {
       return pasteHandled;
     }
-
+    const transferred = await transferFragmentAssets({
+      sourceOrigin: sourceOrigin ?? window.location.origin,
+      projectId,
+      fragments: sourcePageItems.flatMap((item) => [
+        item.rootFragment,
+        item.bodyFragment,
+      ]),
+    });
+    if (transferred.success === false) {
+      return transferred;
+    }
+    if ($project.get()?.id !== projectId) {
+      return {
+        success: false,
+        error: "Project changed while pasting.",
+      } as const;
+    }
+    item = remapPageTransferAssets(
+      item,
+      transferred.fragments,
+      transferred.assetIds
+    );
     const result = executeRuntimeMutation({
       id: "pageTransfer.insert",
       input: {
@@ -227,11 +371,11 @@ export const handlePastePage = async (
       );
       return pasteHandled;
     }
+
+    return pasteHandled;
   } catch {
     return pasteHandled;
   }
-
-  return pasteHandled;
 };
 
 export const pageText: Plugin = {

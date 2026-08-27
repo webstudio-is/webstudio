@@ -1,7 +1,10 @@
 import { createRecursiveProxy } from "@trpc/server/shared";
 import invariant from "tiny-invariant";
 import { toast } from "@webstudio-is/design-system";
-import { uploadAssets } from "~/builder/shared/assets/upload-assets";
+import {
+  importAssets,
+  uploadAssets,
+} from "~/builder/shared/assets/upload-assets";
 import { showTokenConflictDialog } from "./token-conflict-dialog";
 import { showRootStyleConflictDialog } from "./root-style-conflict-dialog";
 import { showDesignTokenImportDialog } from "./design-token-import-dialog";
@@ -34,6 +37,7 @@ const _builderApi = {
 
     return new Map([...urlToIds.entries()].map(([url, id]) => [url.href, id]));
   },
+  importAssets,
   showDesignTokenImportDialog,
   showTokenConflictDialog,
   showRootStyleConflictDialog,

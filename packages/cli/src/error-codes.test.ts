@@ -20,6 +20,12 @@ describe("getStableErrorCode", () => {
       )
     ).toBe("NOT_FOUND");
   });
+
+  test("rejects dynamic values as stable error codes", () => {
+    expect(getStableErrorCode({ code: "customer-specific-code" })).toBe(
+      undefined
+    );
+  });
 });
 
 describe("getCliErrorMessage", () => {

@@ -99,6 +99,7 @@ import {
   getValidationIssues,
   getZodValidationIssues,
   semanticValidationIssuesJsonSchema,
+  throwBuilderValidationError,
   type SemanticValidationIssue,
 } from "./runtime/errors";
 import { z } from "zod";
@@ -1400,6 +1401,14 @@ const getMcpOperationInputSchema = (
   let schema = constrainUnconstrainedInputSchemas(
     options.schema ?? getOperationInputSchema(operation)
   );
+  if (operation.command === "report-issue") {
+    const { runtime: _runtime, ...properties } = schema.properties ?? {};
+    schema = {
+      ...schema,
+      properties,
+      required: schema.required?.filter((field) => field !== "runtime"),
+    };
+  }
   const properties = getInputJsonSchemaProperties(schema);
   if (
     schema.additionalProperties === true &&
@@ -3930,6 +3939,28 @@ const normalizeMcpOperationInput = async (name: string, input: unknown) => {
   if (name === "insert-collection") {
     return await getInsertCollectionInput(input);
   }
+  if (
+    name === "update-styles" &&
+    isPlainRecord(input) &&
+    Array.isArray(input.updates)
+  ) {
+    const updateIndex = input.updates.findIndex(
+      (update) => isPlainRecord(update) && "breakpointId" in update
+    );
+    if (updateIndex !== -1) {
+      throwBuilderValidationError(
+        `update-styles input.updates[${updateIndex}].breakpointId is not supported. Use input.updates[${updateIndex}].breakpoint instead.`,
+        [
+          {
+            code: "unrecognized_keys",
+            path: ["updates", String(updateIndex), "breakpointId"],
+            message: "breakpointId is not supported; use breakpoint instead",
+            constraint: "field:breakpoint",
+          },
+        ]
+      );
+    }
+  }
   return input;
 };
 
@@ -4440,8 +4471,8 @@ const filterCapabilities = (tools: readonly ProjectSessionMcpTool[]) => {
 };
 
 const startupGuidance = [
-  "For any multi-step authoring task, first call meta.guide with the user's objective and follow its proportional workflow. Small corrections stop after focused assertions; preview and screenshots are required only when the requested outcome is visual or runtime-dependent.",
-  "Mutation responses can include meta.next. Treat those steps as required before reporting completion.",
+  "For any multi-step authoring task, first call meta.guide with the user's objective and follow its proportional workflow. Small corrections stop after focused assertions. Never start preview, screenshots, diffs, OCR, or rendered audits automatically: ask whether the user wants visual verification unless they explicitly requested it.",
+  "Mutation responses can include meta.next. Follow non-visual steps before reporting completion. A visual-consent step pauses the visual workflow until the user opts in; if they decline, stop after the listed focused or static checks.",
   "Every local-capable mutation exposes dryRun. Destructive delete, replace, and replace-all calls plan first; review the transaction, ask the user to confirm, then retry the unchanged call with confirmDestructive: true and meta.confirmation.token. Never retry blindly because changed input, version, or plan invalidates the short-lived token.",
   readProjectBuildDoc("mcp-startup-guidance").trim(),
 ].join("\n\n");
@@ -5554,7 +5585,7 @@ const getMetaIndex = (
       expressions:
         "Read webstudio://project/expressions before authoring unfamiliar expressions, Collection item bindings, or dynamic resource fields.",
       accessibility:
-        "For an accessibility review, read webstudio://project/accessibility-review, run audit with scopes [accessibility], then verify changed routes with preview and screenshots.",
+        "For an accessibility review, read webstudio://project/accessibility-review and run audit with scopes [accessibility]. Ask before using preview and screenshots unless the user explicitly requested visual verification.",
       workflow:
         'Use workflow.next({"goal":"design-system-page"}) for one bounded phase when delegated/non-streaming agents must return progress instead of silently running a broad task.',
       details:
@@ -5582,6 +5613,7 @@ const getMetaIndex = (
 
 const metaGoalGuides = [
   {
+    id: "markdown-blog",
     pattern:
       /markdown(?:-|\s)*(?:based|backed)?\s*blog|blog.*markdown|assets?(?:-|\s)*backed\s*blog/i,
     tools: [
@@ -5607,7 +5639,7 @@ const metaGoalGuides = [
       'Create exactly one scoped Assets resource per page by copying recipe.overviewResource and recipe.detailResource unchanged except for id placeholders. Keep the detail query result as "one" and bind it directly without a Collection. Do not add query defaults or create placeholder resources.',
       "Insert recipe.overviewCollection under the overview root with insert-collection, then insert recipe.detailFragment under the detail root with insert-fragment. The overview repeats posts; the detail page binds post.data directly.",
       "Apply the page settings with update-page using recipe.detailPageSettings so the article title, description, social image, and 404 status use the same post resource as the page content.",
-      'After both insertions succeed, call verify-page-responsive once for "/blog" and once for one concrete detail path with desktop and mobile viewports. Confirm Assets-backed content and empty/not-found behavior. Stop on an error instead of retrying.',
+      'After both insertions succeed, ask whether the user wants visual verification unless they explicitly requested it. If they decline, use focused reads and a static audit. If they opt in, call verify-page-responsive once for "/blog" and once for one concrete detail path with desktop and mobile viewports. Confirm Assets-backed content and empty/not-found behavior. Stop on an error instead of retrying.',
     ],
     recipe: {
       overviewResource: {
@@ -5723,6 +5755,7 @@ const metaGoalGuides = [
     },
   },
   {
+    id: "json-ld",
     pattern: /json\s*-?\s*ld|structured\s+data/i,
     tools: [
       "components.get",
@@ -5767,6 +5800,7 @@ const metaGoalGuides = [
     },
   },
   {
+    id: "collection",
     pattern:
       /collection|repeat(?:ed|ing)?\s+(?:list|item|card|row|content)|render\s+(?:an?\s+)?array|array\s+(?:as|into)\s+(?:a\s+)?(?:list|grid|table|cards?)/i,
     tools: [
@@ -5785,6 +5819,7 @@ const metaGoalGuides = [
     ],
   },
   {
+    id: "expression",
     pattern:
       /\bexpressions?\b|computed\s+(?:text|value|prop|metadata|url)|dynamic\s+(?:text|prop|binding)/i,
     tools: [
@@ -5800,10 +5835,11 @@ const metaGoalGuides = [
       "Read webstudio://project/expressions for the supported syntax, method allowlist, scope rules, and encoding examples.",
       "Read variables, resources, the target instance, and existing bindings before writing an expression; do not guess scoped identifier names.",
       "Use one expression rather than a statement or function. Use direct values for fixed content and expressions only for runtime-computed values.",
-      "Preview the affected route with representative and empty data; successful syntax validation does not prove the runtime data shape or scope is correct.",
+      "A successful syntax validation does not prove the runtime data shape or scope is correct. Ask whether the user wants visual verification unless they explicitly requested it. If they decline, stop after focused binding and data-shape checks. If they opt in, preview the affected route with representative and empty data.",
     ],
   },
   {
+    id: "authenticated-page",
     pattern:
       /authenticated?\s+(?:page|route|screen)|(?:supabase|firebase)\s+auth|sign(?:ed)?[- ]?(?:in|out)|login\s+(?:page|flow)|user\s+session/i,
     tools: [
@@ -5828,7 +5864,7 @@ const metaGoalGuides = [
       'Insert signed-out, loading, signed-in, and failed-auth panels together as one expression-free semantic fragment that acts as a state gallery. Keep all four panels visible together for local visual verification; do not add conditional visibility bindings or mutate fixture state solely to capture more screenshots. Use that exact fragment verbatim without adding styles, props, expressions, components, or changing its nesting: <ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-out</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Loading</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-in</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Failed-auth</ws.element></ws.element></ws.element>.',
       "Do not call selector-based structural tools such as wrap-instance unless a focused list-instances result supplied the complete non-empty selector from the target through its page root. Prefer direct style, prop, or binding corrections when the structure is already sound.",
       'Insert the complete account fragment with insert-fragment-verified and {"pagePath":"/account"} so persisted bindings are checked in the same call. Resolve every returned validity, scope, and reference finding before previewing. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /account. Updating only a fixture variable\'s literal state does not require another binding verification.',
-      'Call verify-page-responsive once with path "/account" and the required desktop and mobile viewports; it starts or refreshes the session preview, captures both viewports in one browser session, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately. Do not run discovery, inspect-instance, mutate, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
+      'Ask whether the user wants visual verification unless they explicitly requested it. If they decline, run a focused static audit and stop without preview or screenshots. If they opt in, call verify-page-responsive once with path "/account" and the required desktop and mobile viewports; it starts or refreshes the session preview, captures both viewports in one browser session, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately. Do not run discovery, inspect-instance, mutate, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
     ],
     recipe: {
       createResourceInput: {
@@ -5845,6 +5881,7 @@ const metaGoalGuides = [
     },
   },
   {
+    id: "font-assets",
     pattern:
       /(?:upload|import|add|update|manage).*\bfonts?\b|\bfonts?\b.*(?:upload|import|add|update|manage)|font\s+assets?/i,
     tools: [
@@ -5864,8 +5901,9 @@ const metaGoalGuides = [
     ],
   },
   {
+    id: "design-input",
     pattern:
-      /(?:figma|wireframe|screenshot|design\s*(?:guide|input|file)|design\.md|inception).*(?:page|site|build|implement|recreate)|(?:build|implement|recreate).*(?:figma|wireframe|screenshot|design\s*(?:guide|input|file)|design\.md|inception)/i,
+      /(?:figma|wireframe|screenshot|(?:this|supplied|provided)\s+design|design\s*(?:guide|input|file)|design\.md|inception).*(?:page|site|build|implement|recreate)|(?:build|implement|recreate).*(?:figma|wireframe|screenshot|(?:this|supplied|provided)\s+design|design\s*(?:guide|input|file)|design\.md|inception)/i,
     tools: [
       "inspect-design-context",
       "list-style-sources",
@@ -5888,10 +5926,11 @@ const metaGoalGuides = [
       "Implement responsive behavior inside the project's actual breakpoint ranges.",
       'Represent literal CSS values as {"type":"keyword","value":"..."}, including lengths such as "48px" and colors such as "#fff". Do not invent value types such as "length"; use {"type":"unit","value":48,"unit":"px"} only when numeric structure is specifically needed.',
       "Each update-styles updates item is flat: include instanceId, property, value, and optional breakpoint directly on every item. Do not group properties under styles or declarations.",
-      'Call insert-fragment-verified exactly once with {"pagePath":"/summer"} so insertion and persisted binding verification share one bounded call; do not guess a page id or alternate input shape. Treat its verification result as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /summer. Later fixed-value mutations do not require another binding verification. Finish them before visual verification, then call verify-page-responsive once with path "/summer" and exactly the two supplied viewports, 1440x900 and 390x844. It starts or refreshes preview automatically, captures both viewports, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately, and do not add exploratory or intermediate captures. Do not mutate, rediscover, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
+      'Call insert-fragment-verified exactly once with {"pagePath":"/summer"} so insertion and persisted binding verification share one bounded call; do not guess a page id or alternate input shape. Treat its verification result as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /summer. Later fixed-value mutations do not require another binding verification. Finish them before asking whether the user wants visual verification, unless they explicitly requested it. If they decline, run a focused static audit and stop without preview or screenshots. If they opt in, call verify-page-responsive once with path "/summer" and exactly the two supplied viewports, 1440x900 and 390x844. It starts or refreshes preview automatically, captures both viewports, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately, and do not add exploratory or intermediate captures. Do not mutate, rediscover, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
     ],
   },
   {
+    id: "craft",
     pattern: /\bcraft\b/i,
     tools: [
       "audit",
@@ -5910,8 +5949,16 @@ const metaGoalGuides = [
   },
 ] as const;
 
-const metaGuideDetailedInputSchemaTools = new Set(["update-styles"]);
 const metaGuideExampleTools = new Set(["upload-assets"]);
+const workflowOnlyGuideToolNames = new Set([
+  "inspect-auth-context",
+  "inspect-design-context",
+]);
+const designSystemGuideToolNames = new Set([
+  "list-design-tokens",
+  "attach-design-token",
+  "update-design-token-styles",
+]);
 
 const taskScopes = [
   "small-value-or-reference-correction",
@@ -5932,7 +5979,7 @@ const classifyTaskScope = (brief: string): TaskScope => {
     return "project-wide-migration";
   }
   if (
-    /\b(visual|layout|responsive|screenshot|typography|spacing|color|design)\b/i.test(
+    /\b(visual|layout|responsive|screenshot|typography|spacing|color|design\s+(?:file|guide|input|reference|system))\b|\b(?:this|supplied|provided)\s+design\b/i.test(
       brief
     )
   ) {
@@ -5968,17 +6015,11 @@ const serializeMetaGuideTool = (
         inputFields: tool.annotations.inputFields,
         requiredInputFields: tool.annotations.requiredInputFields,
         mcpExamples: tool.mcpExamples ?? [],
-        ...(metaGuideDetailedInputSchemaTools.has(tool.name)
-          ? { inputSchema: getDetailedProjectSessionMcpInputSchema(tool) }
-          : {}),
       }
     : {
         name: tool.name,
         ...(metaGuideExampleTools.has(tool.name)
           ? { mcpExamples: tool.mcpExamples ?? [] }
-          : {}),
-        ...(metaGuideDetailedInputSchemaTools.has(tool.name)
-          ? { inputSchema: getDetailedProjectSessionMcpInputSchema(tool) }
           : {}),
       };
 
@@ -5990,9 +6031,25 @@ const getMetaGuide = (
   const taskScope = classifyTaskScope(brief);
   const isSmallCorrection = taskScope === "small-value-or-reference-correction";
   const goalGuide = metaGoalGuides.find(({ pattern }) => pattern.test(brief));
+  const isAuthoredFragment =
+    /\binsert-fragment\b|\bauthored\s+(?:component|element|fragment|section)\b/i.test(
+      brief
+    );
+  const requestsDesignSystem = /\bdesign\s+(?:system|tokens?)\b/i.test(brief);
   const matchedTools =
     goalGuide === undefined
-      ? getMatchingTools(brief, tools).slice(0, 12)
+      ? getMatchingTools(brief, tools)
+          .filter(
+            (tool) =>
+              workflowOnlyGuideToolNames.has(tool.name) === false &&
+              (isAuthoredFragment === false ||
+                (tool.name.startsWith("components.") === false &&
+                  tool.name.startsWith("templates.") === false)) &&
+              (isAuthoredFragment === false ||
+                requestsDesignSystem ||
+                designSystemGuideToolNames.has(tool.name) === false)
+          )
+          .slice(0, 12)
       : getExactToolSelection(goalGuide.tools, tools).tools;
   const searchProjectTool = tools.find(
     (tool) => tool.name === "search-project"
@@ -6031,8 +6088,42 @@ const getMetaGuide = (
       ? guidance.getVisionWorkflowSummary({ includeDiff: canDiffScreenshots })
       : undefined,
   ].filter(Boolean);
+  const generalGuide =
+    goalGuide === undefined
+      ? {
+          taskScope,
+          routing: {
+            matchedBy: "general-tool-ranking",
+            workflow: "general",
+            broadContextTools: [],
+            authoredFragment: isAuthoredFragment,
+          },
+          delegatedAgentRule:
+            "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
+          visionLoop:
+            needsVisualVerification &&
+            canVerifyVisually &&
+            guidance !== undefined
+              ? guidance.getVisionVerificationLoop({
+                  includeDiff: canDiffScreenshots,
+                })
+              : [],
+          slowOperation: {
+            confirmationRequired: true,
+            operation: "full production preview",
+            estimatedDuration: "30–60 seconds",
+            reason:
+              "Builds complete rendered output and is unnecessary for a focused value correction unless the requested outcome depends on layout or runtime behavior.",
+            fasterAlternative: {
+              operation: "targeted route validation",
+              estimatedDuration: "2–5 seconds",
+              limitations: "Does not visually inspect layout.",
+            },
+          },
+        }
+      : {};
   return {
-    taskScope,
+    ...generalGuide,
     ...(isSmallCorrection && goalGuide === undefined
       ? {
           focusedCorrection: {
@@ -6046,27 +6137,7 @@ const getMetaGuide = (
           },
         }
       : {}),
-    delegatedAgentRule:
-      "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
     workflow: goalGuide?.workflow ?? generalWorkflow,
-    visionLoop:
-      needsVisualVerification && canVerifyVisually && guidance !== undefined
-        ? guidance.getVisionVerificationLoop({
-            includeDiff: canDiffScreenshots,
-          })
-        : [],
-    slowOperation: {
-      confirmationRequired: true,
-      operation: "full production preview",
-      estimatedDuration: "30–60 seconds",
-      reason:
-        "Builds complete rendered output and is unnecessary for a focused value correction unless the requested outcome depends on layout or runtime behavior.",
-      fasterAlternative: {
-        operation: "targeted route validation",
-        estimatedDuration: "2–5 seconds",
-        limitations: "Does not visually inspect layout.",
-      },
-    },
     tools: matches.map((tool) =>
       serializeMetaGuideTool(tool, goalGuide === undefined)
     ),
@@ -6075,7 +6146,7 @@ const getMetaGuide = (
       : {}),
     more:
       goalGuide === undefined
-        ? "The MCP handshake provides top-level argument contracts and required fields, while this guide includes exact examples plus complete schemas for selected complex tools. Call meta.get-more-tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover."
+        ? "The MCP handshake provides tool argument contracts and required fields. This guide includes focused examples; call meta.get-more-tools once with all needed tool names when you need a focused copy of nested input schemas or server/local behavior."
         : "Follow this workflow and recipe without additional discovery unless the workflow explicitly requests it.",
   };
 };
@@ -8084,7 +8155,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
               "Before reporting completion, run audit for the changed page or project.",
               ...(startPreview !== undefined && captureScreenshot !== undefined
                 ? [
-                    "For visual changes, start a session preview and capture desktop and mobile screenshots before reporting completion.",
+                    "Ask whether the user wants visual verification unless they explicitly requested it. If they decline, stop after the binding verification and static audit; if they opt in, start a session preview and capture desktop and mobile screenshots.",
                   ]
                 : []),
             ],
@@ -8272,7 +8343,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
               "For a small fixed-value or reference correction, re-read the changed value and run only relevant focused assertions; stop when they pass. Run audit when the change is structural or broader.",
               ...(startPreview !== undefined && captureScreenshot !== undefined
                 ? [
-                    "Only when the requested outcome is visual or runtime-dependent, start a session preview and capture the necessary screenshots. Production preview requires a slow-operation preflight and explicit confirmation.",
+                    "Ask whether the user wants visual verification unless they explicitly requested it. If they decline, stop after focused assertions or the static audit; if they opt in, start a session preview and capture only the necessary screenshots. Production preview also requires a slow-operation preflight and explicit confirmation.",
                   ]
                 : []),
             ]
@@ -8405,12 +8476,14 @@ export const createProjectSessionMcpServer = async <
   onInitialized,
   toolNameFormat = "canonical",
   toolHeartbeatIntervalMs = 10_000,
+  onToolFailure,
 }: Omit<ProjectSessionMcpCoreOptions<Command>, "reportToolProgress"> & {
   getErrorCode?: McpErrorCodeResolver;
   reportLog?: (level: McpLogLevel, message: string) => void;
   onInitialized?: (clientName: string | undefined) => void;
   toolNameFormat?: "canonical" | "underscores";
   toolHeartbeatIntervalMs?: number;
+  onToolFailure?: (canonicalTool: string, error: unknown) => void;
 }) => {
   const server = new Server(
     { name: "webstudio", version: "0.0.0" },
@@ -8526,6 +8599,7 @@ export const createProjectSessionMcpServer = async <
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const params = getRequestParams(request);
     const exposedName = typeof params.name === "string" ? params.name : "";
+    const canonicalName = toolNameIndex.get(exposedName)?.name;
     const name = toolNameIndex.resolve(exposedName);
     const { input, dryRun } = getToolCallInput(params.arguments ?? {});
     const startedAt = Date.now();
@@ -8549,6 +8623,7 @@ export const createProjectSessionMcpServer = async <
       sendLog("info", `tool ${name} succeeded in ${Date.now() - startedAt}ms`);
       return result;
     } catch (error) {
+      onToolFailure?.(canonicalName ?? "unknown", error);
       sendLog(
         "error",
         `tool ${name} failed in ${Date.now() - startedAt}ms: ${

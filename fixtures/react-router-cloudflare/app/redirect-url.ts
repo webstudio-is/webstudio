@@ -74,6 +74,35 @@ const getPathnameVariants = (pathname: string) => {
   return Array.from(new Set([pathname, decodePathname(pathname)]));
 };
 
+const preserveRequestSearch = (
+  target: string,
+  search: string,
+  requestPathname: string
+) => {
+  if (search === "") {
+    return target;
+  }
+  if (URL.canParse(target) || target.startsWith("//")) {
+    const url = new URL(target, "https://webstudio.invalid");
+    if (url.search !== "") {
+      return target;
+    }
+    url.search = search;
+    return target.startsWith("//")
+      ? url.href.slice(url.protocol.length)
+      : url.href;
+  }
+  const path = parsePath(target);
+  if (path.search !== undefined && path.search !== "") {
+    return target;
+  }
+  return createPath({
+    ...path,
+    pathname: path.pathname ?? requestPathname,
+    search,
+  });
+};
+
 const isOptionalSegmentMarker = (source: string, index: number) => {
   const nextChar = source[index + 1];
   if (nextChar !== undefined && nextChar !== "/") {
@@ -130,7 +159,11 @@ export const matchRedirect = (
     if (isRedirectPattern(source) === false) {
       if (requestPathnames.includes(source)) {
         return {
-          url: generateRedirectUrl(redirect.new, {}),
+          url: preserveRequestSearch(
+            generateRedirectUrl(redirect.new, {}),
+            url.search,
+            url.pathname
+          ),
           status: getRedirectStatus(redirect.status),
         };
       }
@@ -150,7 +183,11 @@ export const matchRedirect = (
     }
 
     return {
-      url: generateRedirectUrl(redirect.new, match.params),
+      url: preserveRequestSearch(
+        generateRedirectUrl(redirect.new, match.params),
+        url.search,
+        url.pathname
+      ),
       status: getRedirectStatus(redirect.status),
     };
   }

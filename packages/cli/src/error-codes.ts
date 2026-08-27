@@ -9,6 +9,7 @@ import {
 
 const missingProjectOwnerForTokenPattern =
   /^Project owner can't be found for token\b/;
+const stableErrorCodePattern = /^[A-Z][A-Z0-9_]{0,159}$/;
 
 const getErrorMessage = (error: unknown) =>
   typeof error === "object" &&
@@ -21,16 +22,14 @@ const getErrorMessage = (error: unknown) =>
       : String(error);
 
 export const getStableErrorCode = (error: unknown) => {
-  const apiErrorCode = getApiErrorCode(error);
-  if (apiErrorCode !== undefined) {
-    return apiErrorCode;
-  }
-  if (typeof error === "object" && error !== null && "code" in error) {
-    const code = (error as { code?: unknown }).code;
-    if (typeof code === "string") {
-      return code;
-    }
-  }
+  const directErrorCode =
+    typeof error === "object" && error !== null && "code" in error
+      ? (error as { code?: unknown }).code
+      : undefined;
+  const code = getApiErrorCode(error) ?? directErrorCode;
+  return typeof code === "string" && stableErrorCodePattern.test(code)
+    ? code
+    : undefined;
 };
 
 export const isMissingApiAccessError = (error: unknown) => {

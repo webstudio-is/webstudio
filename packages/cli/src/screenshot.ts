@@ -790,7 +790,8 @@ export const captureScreenshot = async (
   });
 
 const createBrowserStartupError = (
-  failures: readonly { browser: BrowserCandidate; error: unknown }[]
+  failures: readonly { browser: BrowserCandidate; error: unknown }[],
+  options: Pick<CaptureScreenshotOptions, "browser" | "browserPath">
 ) =>
   Object.assign(
     new BrowserStartupError(
@@ -800,6 +801,11 @@ const createBrowserStartupError = (
           ({ browser, error }) =>
             `- ${browser.browser} (${browser.source}): ${browser.path}: ${error instanceof Error ? error.message : String(error)}`
         ),
+        ...(options.browser !== "auto" && options.browserPath === undefined
+          ? [
+              `Retry with browser: "auto" to let Webstudio use another installed Chromium-family browser.`,
+            ]
+          : []),
       ].join("\n")
     ),
     {
@@ -842,7 +848,7 @@ const withBrowserStartupFallback = async <Result>({
       );
     } catch (error) {
       if (error instanceof BrowserNotFoundError && state.failures.length > 0) {
-        throw createBrowserStartupError(state.failures);
+        throw createBrowserStartupError(state.failures, options);
       }
       throw error;
     }
@@ -858,7 +864,7 @@ const withBrowserStartupFallback = async <Result>({
         state.failedPaths.add(browser.path);
       }
       if (options.browserPath !== undefined) {
-        throw createBrowserStartupError(state.failures);
+        throw createBrowserStartupError(state.failures, options);
       }
     }
   }

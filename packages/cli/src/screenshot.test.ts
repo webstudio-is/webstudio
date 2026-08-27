@@ -798,6 +798,40 @@ test("does not start a fallback browser for an explicit browser path", async () 
   await session.close();
 });
 
+test("reports how to recover when a selected browser fails during startup", async () => {
+  const bravePath = "/usr/bin/brave-browser";
+  const dependencies = createDependencies({
+    access: vi.fn(async (path) => {
+      if (path === bravePath) {
+        return;
+      }
+      throw new Error("missing");
+    }),
+    which: vi.fn(async (command) =>
+      command === "brave-browser" ? bravePath : undefined
+    ),
+    createBrowserScreenshotSession: vi.fn(async () => {
+      throw new BrowserStartupError(
+        "Browser exited before its DevTools endpoint became ready (signal SIGABRT)."
+      );
+    }),
+  });
+  const session = createScreenshotCaptureSession(dependencies);
+
+  await expect(
+    session.capture({
+      url: "https://example.com",
+      width: 800,
+      height: 600,
+      browser: "brave",
+    })
+  ).rejects.toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
+    message: expect.stringContaining('Retry with browser: "auto"'),
+  });
+  await session.close();
+});
+
 test("reports every browser that failed during startup", async () => {
   const createBrowserScreenshotSession = vi.fn(async (options) => {
     throw new BrowserStartupError(

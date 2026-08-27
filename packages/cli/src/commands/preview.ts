@@ -28,6 +28,7 @@ import { HandledCliError } from "../errors";
 import {
   getPreviewUrl,
   getNpmInvocation,
+  getNodeRuntimeEnv,
   previewBuildCacheMarker,
   previewProcessOwnerFile,
   runPreviewBuild,
@@ -367,7 +368,11 @@ export const ensurePreviewDependencies = async (
   try {
     await operations.execFile(invocation.command, invocation.args, {
       cwd: previewProjectDir,
-      env: operations.env,
+      env: getNodeRuntimeEnv(
+        operations.nodeExecPath,
+        operations.env,
+        operations.platform
+      ),
       timeout: previewDependencyInstallTimeout,
     });
   } catch (error) {

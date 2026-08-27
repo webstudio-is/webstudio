@@ -20,6 +20,18 @@ const report = {
     architecture: "arm64",
     executionMode: "mcp",
     apiContractVersion: "public-api:client",
+    bundleVersion: "bundle:client",
+    recentFailure: {
+      tool: "preview.start",
+      code: "PROJECT_BUNDLE_INVALID",
+      issues: [
+        {
+          path: ["assets", "0", "type"],
+          code: "invalid_value",
+          constraint: 'one of "font"|"image"|"video"|"file"',
+        },
+      ],
+    },
   },
   report: {
     userStory:

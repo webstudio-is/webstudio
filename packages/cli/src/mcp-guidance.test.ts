@@ -18,6 +18,9 @@ test("documents generated app setup for visual verification", () => {
   expect(visualVerificationRule).toContain(
     "generated project files are current"
   );
+  expect(visualVerificationRule).toContain(
+    "Ask the user whether they want visual verification"
+  );
   expect(screenshotVerificationSummary).toContain("preview.start");
   expect(screenshotVerificationSummary).toContain(
     "Iterative mode is the default"
@@ -32,6 +35,10 @@ test("documents generated app setup for visual verification", () => {
 
 test("builds vision loop with optional screenshot diff guidance", () => {
   const visionLoopWithDiff = getVisionVerificationLoop({ includeDiff: true });
+
+  expect(visionLoopWithDiff[0]).toContain(
+    "Ask the user whether they want visual verification"
+  );
 
   expect(getVisionVerificationLoop({ includeDiff: false })).not.toEqual(
     expect.arrayContaining([expect.stringContaining("screenshot.diff")])

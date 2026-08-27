@@ -170,9 +170,11 @@ const isLabelableFormControl = ({
     component !== "Input" &&
     component !== "Select" &&
     component !== "Textarea" &&
+    component !== "Button" &&
     tag !== "input" &&
     tag !== "select" &&
-    tag !== "textarea"
+    tag !== "textarea" &&
+    tag !== "button"
   ) {
     return false;
   }
@@ -183,8 +185,30 @@ const isLabelableFormControl = ({
   if (typeof type !== "string") {
     return true;
   }
+  return type.toLocaleLowerCase() !== "hidden";
+};
+
+const requiresFormLabel = ({
+  component,
+  tag,
+  props,
+}: {
+  component: string;
+  tag?: string;
+  props: ReadonlyMap<string, unknown> | undefined;
+}) => {
+  if (
+    component === "Button" ||
+    tag === "button" ||
+    isLabelableFormControl({ component, tag, props }) === false
+  ) {
+    return false;
+  }
+  const type = props?.get("type");
   return (
-    ["hidden", "button", "submit", "reset", "image"].includes(
+    (component !== "Input" && tag !== "input") ||
+    typeof type !== "string" ||
+    ["button", "submit", "reset", "image"].includes(
       type.toLocaleLowerCase()
     ) === false
   );
@@ -836,7 +860,7 @@ export const analyzeProject = (
         });
       }
       if (
-        isLabelableFormControl({
+        requiresFormLabel({
           component: instance.component,
           tag: instance.tag,
           props,
