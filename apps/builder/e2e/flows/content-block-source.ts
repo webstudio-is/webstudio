@@ -48,6 +48,6 @@ export const disconnectContentBlockSource = async ({
 }: {
   page: Page;
 }) => {
-  await page.getByText("Source", { exact: true }).click();
+  await page.getByRole("button", { name: "Source", exact: true }).click();
   await page.getByRole("button", { name: "Reset value", exact: true }).click();
 };
