@@ -108,6 +108,8 @@ export type MdxAuthoredNode =
 export type MdxDocument = Readonly<{
   frontmatter: Readonly<{
     properties: Readonly<Record<string, unknown>>;
+    /** Exact authored frontmatter envelope, retained while only the body changes. */
+    authoredSource?: string;
     sourceRange?: MdxSourceRange;
   }>;
   children: readonly MdxAuthoredNode[];
@@ -1148,6 +1150,17 @@ const validateMdxSourceBytes = ({
   }
 };
 
+const getMdxFrontmatterAuthoredSource = (source: string) => {
+  const bytes = new TextEncoder().encode(source);
+  const located = findMarkdownFrontmatter(bytes, true);
+  if (located === null || located === undefined) {
+    return;
+  }
+  return new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+    bytes.subarray(0, located.blockEnd)
+  );
+};
+
 const parseMdxFrontmatter = async (
   root: SyntaxTreeNode,
   source: string
@@ -1158,6 +1171,7 @@ const parseMdxFrontmatter = async (
   try {
     return {
       properties: (await extractMarkdownFrontmatter(source)).properties,
+      authoredSource: getMdxFrontmatterAuthoredSource(source),
       sourceRange: toSourceRange(frontmatterNode?.position),
     };
   } catch (cause) {
@@ -1310,15 +1324,27 @@ export const rewriteMdxAssetReferences = async ({
   if (references.length === 0) {
     return source;
   }
-  return serializeMdxDocument(
-    resolveAssetValueReferences({
-      value: document,
-      references,
-      runtimeAssets: Object.fromEntries(
-        Array.from(replacementPaths, ([id, url]) => [id, { url }])
-      ),
-    })
+  const resolved = resolveAssetValueReferences({
+    value: document,
+    references,
+    runtimeAssets: Object.fromEntries(
+      Array.from(replacementPaths, ([id, url]) => [id, { url }])
+    ),
+  });
+  const rewritesFrontmatter = references.some(
+    ({ path }) => path[0] === "frontmatter"
   );
+  return serializeMdxDocument({
+    ...resolved,
+    frontmatter: rewritesFrontmatter
+      ? {
+          ...resolved.frontmatter,
+          // A rewritten frontmatter reference makes the authored spelling
+          // stale. Body-only rewrites keep the exact authored frontmatter.
+          authoredSource: undefined,
+        }
+      : resolved.frontmatter,
+  });
 };
 
 export const parseMdxDocument = async ({
@@ -1375,10 +1401,27 @@ export const parseMdxDocumentRecovering = async ({
     validateAstLimits(root);
     const diagnostics: MdxDocumentError[] = [];
     const recovery = createRecoveringHandlers({ source, diagnostics });
+    let frontmatter: MdxDocument["frontmatter"];
+    try {
+      frontmatter = await parseMdxFrontmatter(root, source);
+    } catch (error) {
+      if (error instanceof MdxDocumentError === false) {
+        throw error;
+      }
+      diagnostics.push(error);
+      const frontmatterNode = getSyntaxTreeChildren(root).find(
+        (node) => node.type === "yaml"
+      );
+      frontmatter = {
+        properties: {},
+        authoredSource: getMdxFrontmatterAuthoredSource(source),
+        sourceRange: toSourceRange(frontmatterNode?.position),
+      };
+    }
     return {
       status: "parsed",
       document: {
-        frontmatter: await parseMdxFrontmatter(root, source),
+        frontmatter,
         children: mapAuthoredChildren(root, recovery),
       },
       diagnostics,

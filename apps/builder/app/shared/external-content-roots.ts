@@ -812,6 +812,30 @@ export const updateExternalContentAssetSource = ({
     update: ({ source }) => update(source),
   });
 
+export const replaceExternalContentAssetSource = ({
+  projectId,
+  assetId,
+  expectedSource,
+  source,
+}: {
+  projectId: string;
+  assetId: string;
+  expectedSource: string;
+  source: string;
+}) =>
+  enqueueAssetUpdate({
+    projectId,
+    assetId,
+    update: ({ source: currentSource }) => {
+      if (currentSource !== expectedSource) {
+        throw new MdxAuthoredContentConflictError(
+          "The MDX content source changed before the file edit was saved."
+        );
+      }
+      return source;
+    },
+  });
+
 export const acquireExternalContentRoot = async ({
   projectId,
   assetId,

@@ -115,55 +115,7 @@ test("validates before confirmation and revalidates before replacing existing co
   });
 });
 
-test("serializes frontmatter updates against the latest Asset source", async () => {
-  const state = createState();
-  state.props.set("src", {
-    id: "src",
-    instanceId: "block",
-    name: "src",
-    type: "asset",
-    value: "asset",
-  });
-  const source = `---\ntitle: Before\n---\n\n# Body  \n`;
-  let savedSource = source;
-  const openAsset = vi.fn(async () => ({
-    asset: {
-      id: "asset",
-      projectId: "project",
-      name: "article.mdx",
-      type: "file" as const,
-      format: "mdx",
-      size: new TextEncoder().encode(savedSource).byteLength,
-      createdAt: "2026-01-01T00:00:00.000Z",
-    },
-    source: savedSource,
-    status: "saved" as const,
-  }));
-  const controller = createContentBlockSourceController({
-    blockInstanceId: "block",
-    renderScope: '["block"]',
-    projectId: "project",
-    getState: () => state,
-    openAsset,
-    reloadAsset: vi.fn(),
-    resolveExpressionAssetId: () => undefined,
-    flushAsset: vi.fn(),
-    updateAssetSource: async (_assetId, update) => {
-      savedSource = await update(savedSource);
-    },
-    commitProjectPayload: vi.fn(),
-    createId: () => "generated",
-  });
-
-  await expect(
-    controller.saveFrontmatter({ title: "After", nested: [1, true] })
-  ).resolves.toEqual({ status: "applied" });
-  expect(savedSource).toBe(
-    `---\nnested:\n  - 1\n  - true\ntitle: After\n---\n\n# Body  \n`
-  );
-});
-
-test("disconnects by copying the latest Asset source", async () => {
+test("disconnects without loading or copying the Asset source", async () => {
   let state = createState();
   state.props.set("src", {
     id: "src",
@@ -194,25 +146,21 @@ test("disconnects by copying the latest Asset source", async () => {
     openAsset,
     reloadAsset: vi.fn(),
     resolveExpressionAssetId: () => undefined,
-    flushAsset: async () => {
-      state = { ...state, instances: new Map(state.instances) };
-    },
+    flushAsset: vi.fn(),
     updateAssetSource: vi.fn(),
     commitProjectPayload: (payload) => {
       state = applyBuilderPatchTransactions(state, [
         { id: "test", payload: [...payload] },
       ]).state as typeof state;
     },
-    createId: () => "copied-heading",
+    createId: () => "unused",
   });
 
   await expect(controller.disconnect()).resolves.toEqual({ status: "applied" });
+  expect(openAsset).not.toHaveBeenCalled();
   expect(state.props.has("src")).toBe(false);
-  expect(state.instances.get("block")?.children).toContainEqual({
-    type: "id",
-    value: "copied-heading",
-  });
-  expect(state.instances.get("copied-heading")?.children).toEqual([
-    { type: "text", value: "From MDX" },
+  expect(state.instances.get("block")?.children).toEqual([
+    { type: "id", value: "templates" },
+    { type: "id", value: "body" },
   ]);
 });

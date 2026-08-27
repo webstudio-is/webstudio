@@ -6,11 +6,9 @@ import {
   parseContentBlockSourceProp,
   type ContentBlockSource,
   type Prop,
-  type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import type { BuilderPatchChange } from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
-import { insertFragment } from "./components";
 import type { BuilderRuntimeContext } from "./context";
 import { createInstanceDeletePayload } from "./instances";
 import { mergeBuilderPatchChanges } from "./mutation";
@@ -93,7 +91,7 @@ const createSourcePayload = ({
   state: BuilderState;
   blockInstanceId: string;
   source?: ContentBlockSource;
-  createId: () => string;
+  createId?: () => string;
 }): BuilderPatchChange[] => {
   const existing = getSourceProp(state, blockInstanceId);
   if (source === undefined) {
@@ -106,8 +104,12 @@ const createSourcePayload = ({
           },
         ];
   }
+  const id = existing?.id ?? createId?.();
+  if (id === undefined) {
+    throw new Error("Creating a Content Block source requires an id");
+  }
   const next = toSourceProp({
-    id: existing?.id ?? createId(),
+    id,
     blockInstanceId,
     source,
   });
@@ -243,13 +245,9 @@ export const prepareContentBlockSwitch = ({
 export const prepareContentBlockDisconnect = ({
   state,
   blockInstanceId,
-  fragment,
-  context,
 }: {
   state: BuilderState;
   blockInstanceId: string;
-  fragment: WebstudioFragment;
-  context: BuilderRuntimeContext;
 }): PreparedContentBlockSourceLifecycle => {
   const source = getSourceProp(state, blockInstanceId);
   if (source === undefined) {
@@ -259,29 +257,13 @@ export const prepareContentBlockDisconnect = ({
       requiresConfirmation: false,
     };
   }
-  const { block, templateChild } = getBlockParts(state, blockInstanceId);
-  const instances = new Map(state.instances);
-  instances.set(block.id, { ...block, children: [templateChild] });
-  const insertion = insertFragment(
-    { ...state, instances },
-    {
-      parentInstanceId: blockInstanceId,
-      fragment,
-      mode: "append",
-      contentMode: false,
-    },
-    context
-  );
+  getBlockParts(state, blockInstanceId);
   return {
     action: "disconnect",
-    projectPayload: mergeBuilderPatchChanges(
-      insertion.payload,
-      createSourcePayload({
-        state,
-        blockInstanceId,
-        createId: context.createId,
-      })
-    ),
-    requiresConfirmation: true,
+    projectPayload: createSourcePayload({
+      state,
+      blockInstanceId,
+    }),
+    requiresConfirmation: false,
   };
 };

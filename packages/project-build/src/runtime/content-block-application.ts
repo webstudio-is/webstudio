@@ -13,7 +13,6 @@ import {
   type ContentBlockDiagnostic,
   type ContentBlockSource,
   type WebstudioData,
-  type WebstudioFragment,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
@@ -321,48 +320,16 @@ export const createContentBlockApplication = ({
     };
   };
 
-  const disconnect = async ({
+  const disconnect = ({
     state,
     blockInstanceId,
-    renderScope,
-    variables,
   }: {
     state: BuilderState;
     blockInstanceId: string;
-    renderScope: string;
-    variables?: Readonly<Record<string, unknown>>;
-  }) => {
-    const inspection = await inspect({
-      state,
-      blockInstanceId,
-      renderScope,
-      variables,
-    });
-    return {
-      ...prepareContentBlockDisconnect({
-        state,
-        blockInstanceId,
-        fragment: inspection.fragment,
-        context: { createId, projectId },
-      }),
-      inspection,
-    };
-  };
-
-  const disconnectFragment = ({
-    state,
-    blockInstanceId,
-    fragment,
-  }: {
-    state: BuilderState;
-    blockInstanceId: string;
-    fragment: WebstudioFragment;
   }) =>
     prepareContentBlockDisconnect({
       state,
       blockInstanceId,
-      fragment,
-      context: { createId, projectId },
     });
 
   const prepareSourceUpdate = async ({
@@ -529,7 +496,6 @@ export const createContentBlockApplication = ({
     connect,
     switchSource,
     disconnect,
-    disconnectFragment,
     editSource: (
       input: Omit<Parameters<typeof updateSource>[0], "update"> & {
         source: string;

@@ -3,7 +3,6 @@ import {
   blockComponent,
   blockTemplateComponent,
   elementComponent,
-  type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
 import { applyBuilderPatchTransactions } from "../state/patch";
@@ -130,58 +129,16 @@ describe("Content Block source lifecycle", () => {
     expect(switched.props?.get("src")).toMatchObject({ value: "second" });
   });
 
-  test("disconnect copies the current materialized fragment with fresh ids", () => {
+  test("disconnect removes only the source property", () => {
     const current = state({ source: true });
-    const block = current.instances?.get("block");
-    if (block === undefined) {
-      throw new Error("Expected block");
-    }
-    block.children = [
-      { type: "id", value: "templates" },
-      { type: "id", value: "materialized" },
-    ];
-    current.instances?.set("materialized", {
-      type: "instance",
-      id: "materialized",
-      component: elementComponent,
-      tag: "h2",
-      children: [{ type: "text", value: "From file" }],
-    });
-    const fragment: WebstudioFragment = {
-      children: [{ type: "id", value: "materialized" }],
-      instances: [current.instances!.get("materialized")!],
-      props: [],
-      assets: [],
-      dataSources: [],
-      resources: [],
-      breakpoints: [],
-      styleSources: [],
-      styleSourceSelections: [],
-      styles: [],
-    };
-
     const prepared = prepareContentBlockDisconnect({
       state: current,
       blockInstanceId: "block",
-      fragment,
-      context,
     });
     const disconnected = apply(current, prepared.projectPayload);
-    const copiedChild = disconnected.instances
-      ?.get("block")
-      ?.children.find(
-        (child) => child.type === "id" && child.value !== "templates"
-      );
 
-    expect(copiedChild?.type).toBe("id");
-    if (copiedChild?.type !== "id") {
-      throw new Error("Expected copied child");
-    }
-    expect(copiedChild.value).not.toBe("materialized");
-    expect(disconnected.instances?.get(copiedChild.value)).toMatchObject({
-      tag: "h2",
-      children: [{ type: "text", value: "From file" }],
-    });
+    expect(disconnected.instances).toEqual(current.instances);
     expect(disconnected.props?.has("src")).toBe(false);
+    expect(prepared.requiresConfirmation).toBe(false);
   });
 });

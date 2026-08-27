@@ -55,6 +55,22 @@ test("rewrites Markdown, MDX, and frontmatter Asset references together", async 
   expect(rewritten).toContain('src="hero_1.png"');
 });
 
+test("preserves authored frontmatter during body-only Asset rewrites", async () => {
+  const frontmatter = `---
+# keep formatting
+title: 'Example'
+---
+`;
+  const rewritten = await rewriteMdxAssetReferences({
+    source: `${frontmatter}![Hero](images/hero.png)`,
+    sourcePath: "article.mdx",
+    assetPaths: new Map([["hero", "images/hero.png"]]),
+    replacementPaths: new Map([["hero", "hero_1.png"]]),
+  });
+
+  expect(rewritten).toBe(`${frontmatter}![Hero](hero_1.png)\n`);
+});
+
 test("maps recoverable and unrecoverable MDX failures consistently", () => {
   const sourceRange = {
     start: { line: 2, column: 3, offset: 5 },
@@ -181,6 +197,12 @@ author:
         title: "Hello",
         author: { $ref: "./author.json" },
       },
+      authoredSource: `---
+title: Hello
+author:
+  $ref: ./author.json
+---
+`,
       sourceRange: {
         start: { line: 1, column: 1, offset: 0 },
         end: { line: 5, column: 4, offset: 50 },
@@ -593,8 +615,8 @@ Paragraph with <ws.element ws:tag="span">inline</ws.element> content.
     const serialized = serializeMdxDocument(document);
     expect(serializeMdxDocument(document)).toBe(serialized);
     expect(serialized).toContain("$ref: ./author.json");
-    expect(serialized.indexOf("author:")).toBeLessThan(
-      serialized.indexOf("title:")
+    expect(serialized.indexOf("title:")).toBeLessThan(
+      serialized.indexOf("author:")
     );
     expect(serialized).toContain('<ws.element ws:tag="section"');
     expect(serialized).toContain('<ws.element ws:name="Hero Card"');
@@ -602,6 +624,49 @@ Paragraph with <ws.element ws:tag="span">inline</ws.element> content.
 
     const reparsed = await parseMdxDocument({ source: serialized });
     expect(omitSourceRanges(reparsed)).toEqual(omitSourceRanges(document));
+  });
+
+  test("preserves authored frontmatter while serializing body edits", async () => {
+    const frontmatter = `\uFEFF---\r\n# Keep this comment\r\ntitle: 'Quoted title'\r\ndraft: FALSE\r\n---\r\n`;
+    const document = await parseMdxDocument({
+      source: `${frontmatter}# Before\n`,
+    });
+
+    const source = serializeMdxDocument({
+      ...document,
+      children: [
+        {
+          type: "element",
+          syntax: "markdown",
+          tag: "h1",
+          props: [],
+          children: [{ type: "text", value: "After" }],
+        },
+      ],
+    });
+
+    expect(source).toBe(`${frontmatter}# After\n`);
+  });
+
+  test("separates an added body from frontmatter that ended at EOF", async () => {
+    const document = await parseMdxDocument({
+      source: "---\ntitle: Empty post\n---",
+    });
+
+    const source = serializeMdxDocument({
+      ...document,
+      children: [
+        {
+          type: "element",
+          syntax: "markdown",
+          tag: "p",
+          props: [],
+          children: [{ type: "text", value: "New body" }],
+        },
+      ],
+    });
+
+    expect(source).toBe("---\ntitle: Empty post\n---\nNew body\n");
   });
 
   test("prefers Markdown while preserving elements that require JSX", async () => {
@@ -1104,6 +1169,39 @@ describe("parseMdxDocumentRecovering", () => {
       "opaque",
       "element",
     ]);
+    expect(serializeMdxDocument(result.document)).toBe(source);
+  });
+
+  test("keeps a valid body available when frontmatter is invalid", async () => {
+    const source = `---
+title: [broken
+---
+# Visible body
+`;
+
+    const result = await parseMdxDocumentRecovering({ source });
+
+    expect(result).toMatchObject({
+      status: "parsed",
+      document: {
+        frontmatter: {
+          properties: {},
+          authoredSource: "---\ntitle: [broken\n---\n",
+        },
+        children: [
+          {
+            type: "element",
+            syntax: "markdown",
+            tag: "h1",
+            children: [{ type: "text", value: "Visible body" }],
+          },
+        ],
+      },
+      diagnostics: [{ code: "invalid-mdx" }],
+    });
+    if (result.status !== "parsed") {
+      throw new Error("Expected a recoverable body");
+    }
     expect(serializeMdxDocument(result.document)).toBe(source);
   });
 

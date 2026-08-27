@@ -20,6 +20,7 @@ import {
   getExternalContentRootAssets,
   getExternalContentRootSnapshot,
   getExternalContentRootChildren,
+  replaceExternalContentAssetSource,
   retryExternalContentAsset,
   subscribeExternalContentAsset,
   updateExternalContentAssetSource,
@@ -122,6 +123,60 @@ afterEach(() => {
   for (const session of sessions.splice(0)) {
     session.dispose();
   }
+});
+
+test("rejects a stale raw editor replacement behind a newer queued edit", async () => {
+  let continueCanvasEdit: (() => void) | undefined;
+  const canvasEditGate = new Promise<void>((resolve) => {
+    continueCanvasEdit = resolve;
+  });
+  const session = createAssetContentSession({
+    repository: {
+      readContent: async () => ({
+        asset,
+        data: (async function* () {
+          yield new TextEncoder().encode("# Hello");
+        })(),
+      }),
+      updateContent: async () => asset,
+    },
+    authorize: () => true,
+  });
+  sessions.push(session);
+  const requireReload = vi.fn();
+  initAssetContentBridge(
+    createAssetContentBridge({
+      origin: window.location.origin,
+      request: fetch,
+      authorize: () => true,
+      requireReload,
+      getContentSession: () => session,
+    })
+  );
+  await session.open(asset.id);
+
+  const canvasEdit = updateExternalContentAssetSource({
+    projectId: "project",
+    assetId: asset.id,
+    update: async () => {
+      await canvasEditGate;
+      return "# Canvas";
+    },
+  });
+  const staleEditorEdit = replaceExternalContentAssetSource({
+    projectId: "project",
+    assetId: asset.id,
+    expectedSource: "# Hello",
+    source: "# Editor",
+  });
+
+  continueCanvasEdit?.();
+  await canvasEdit;
+  await expect(staleEditorEdit).rejects.toThrow(
+    "The MDX content source changed before the file edit was saved."
+  );
+  expect(session.get(asset.id)?.source).toBe("# Canvas");
+  expect(requireReload).toHaveBeenCalledOnce();
 });
 
 test("does not install an Asset load after its Content Block unmounts", async () => {

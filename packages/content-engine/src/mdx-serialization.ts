@@ -230,7 +230,11 @@ export const serializeMdxFrontmatter = (
   return `---\n${yaml}\n---\n\n`;
 };
 
-const serializeFrontmatter = (document: MdxDocument) => {
+const serializeFrontmatter = (document: MdxDocument, hasBody: boolean) => {
+  if (document.frontmatter.authoredSource !== undefined) {
+    const source = document.frontmatter.authoredSource;
+    return hasBody && source.endsWith("\n") === false ? `${source}\n` : source;
+  }
   if (
     document.frontmatter.sourceRange === undefined &&
     Object.keys(document.frontmatter.properties).length === 0
@@ -250,19 +254,17 @@ export const serializeMdxDocument = (document: MdxDocument) => {
     handlers: { li: mapListItem, "ws.element": mapWebstudioElement },
     nodeHandlers: { comment: mapComment, opaque: mapOpaque, text: mapText },
   });
-  return (
-    serializeFrontmatter(document) +
-    toMarkdown(mdast, {
-      bullet: "-",
-      bulletOther: "*",
-      bulletOrderedOther: ")",
-      emphasis: "_",
-      extensions: [
-        gfmToMarkdown(),
-        mdxExpressionToMarkdown,
-        mdxJsxToMarkdown({ quote: '"' }),
-      ],
-      fences: true,
-    })
-  );
+  const body = toMarkdown(mdast, {
+    bullet: "-",
+    bulletOther: "*",
+    bulletOrderedOther: ")",
+    emphasis: "_",
+    extensions: [
+      gfmToMarkdown(),
+      mdxExpressionToMarkdown,
+      mdxJsxToMarkdown({ quote: '"' }),
+    ],
+    fences: true,
+  });
+  return serializeFrontmatter(document, body !== "") + body;
 };
