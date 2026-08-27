@@ -62851,7 +62851,7 @@ export const runtimeOperationContractData = [
     ],
     writeNamespaces: ["styles"],
     invalidatesNamespaces: ["styles"],
-    retryOnConflict: false,
+    retryOnConflict: true,
     requiresConfirm: true,
   },
   {

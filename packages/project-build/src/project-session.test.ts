@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { encodeDataVariableId } from "@webstudio-is/sdk";
+import { encodeDataVariableId, getStyleDeclKey } from "@webstudio-is/sdk";
 import type { BuilderNamespace } from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
 import {
@@ -27,6 +27,7 @@ import { build } from "./state/fixtures.test-utils";
 import { parseWebstudioJsxFragment } from "./runtime/jsx";
 import { executeBuilderRuntimeOperation } from "./runtime/registry";
 import type { BuilderRuntimeMutation } from "./runtime/mutation";
+import { createStyleDecl } from "./runtime/styles";
 
 const compatibilityVersion = "test-session";
 const compatibility: ProjectSessionCompatibility = {
@@ -47,6 +48,31 @@ const createSnapshot = (
     state,
     ...overrides,
   };
+};
+
+const createBulkStyleDeletionSnapshot = (version: number) => {
+  const snapshot = createSnapshot({ version });
+  const styleSourceId = "local-style-source";
+  snapshot.state.styleSources?.set(styleSourceId, {
+    id: styleSourceId,
+    type: "local",
+  });
+  snapshot.state.styleSourceSelections?.set("instance-root", {
+    instanceId: "instance-root",
+    values: [styleSourceId],
+  });
+  const deletions = Array.from({ length: 185 }, (_, index) => {
+    const property = `--variable-${index}`;
+    const declaration = createStyleDecl({
+      styleSourceId,
+      breakpointId: "base",
+      property,
+      value: { type: "keyword", value: "red" },
+    });
+    snapshot.state.styles?.set(getStyleDeclKey(declaration), declaration);
+    return { instanceId: "instance-root", property };
+  });
+  return { snapshot, deletions };
 };
 
 const createPersistedSnapshot = (
@@ -1251,6 +1277,47 @@ describe("project session", () => {
       ["pages", "instances", "dataSources"],
     ]);
     expect(transport.commits).toHaveLength(3);
+  });
+
+  test("retries a bulk CSS variable deletion after a conflict", async () => {
+    const local = createBulkStyleDeletionSnapshot(1);
+    const remote = createBulkStyleDeletionSnapshot(2);
+    const storage = createStorage(
+      createPersistedSnapshot({ version: 1, state: local.snapshot.state })
+    );
+    const transport = createMutableTransport(remote.snapshot);
+    const commitPatch = transport.commitPatch;
+    let attempts = 0;
+    transport.commitPatch = async (input) => {
+      attempts += 1;
+      if (attempts <= 2) {
+        throw Object.assign(new Error("Build version mismatch"), {
+          code: "CONFLICT",
+        });
+      }
+      return await commitPatch(input);
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("styles.deleteDeclarations", {
+      deletions: local.deletions,
+    });
+
+    expect(result.state.committed).toBe(true);
+    expect(result.version).toBe(3);
+    expect(result.result.styleKeys).toHaveLength(185);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ level: "info", code: "CONFLICT_REFRESHED" }),
+      expect.objectContaining({ level: "info", code: "CONFLICT_RETRY" }),
+    ]);
+    expect(attempts).toBe(3);
+
+    const styles = await session.read<{ declarations: unknown[] }>(
+      "styles.getDeclarations",
+      { propertyFilter: "--", limit: 200 }
+    );
+    expect(styles.result.declarations).toEqual([]);
   });
 
   test("reports a project settings conflict retry as committed", async () => {
