@@ -1394,6 +1394,7 @@ export const builderRuntimeOperations = [
     mutationContract({
       readNamespaces: ["instances", ...styleNamespaces, "breakpoints"],
       writeNamespaces: ["styles"],
+      retryOnConflict: true,
     }),
     styles.styleDeleteDeclarationsInput,
     ({ state, input }) => styles.deleteStyleDeclarations(state, input)
