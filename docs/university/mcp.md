@@ -422,7 +422,7 @@ Vision-capable AI can use MCP to see what it is building:
 4. Read `preview.status.stale` before relying on generated output. When present, `renderedProjectVersion` identifies the last project version materialized into the preview; a stale preview refreshes automatically on the next managed screenshot or `preview.start` call.
 5. `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
 6. Session previews download missing project assets into `.webstudio/assets`. If `PREVIEW_ASSET_DOWNLOAD_FAILED` occurs, restore network and project asset access, then retry `preview.start`.
-7. Dependency installation uses the npm or pnpm launcher that started Webstudio.
+7. When launcher metadata is available, dependency installation reuses a supported npm or pnpm launcher. Without launcher metadata, it defaults to npm.
 8. When npm is selected, dependency installation honors `npm_config_cache`, including a caller-provided writable cache on Windows.
 9. Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
 10. If dependency installation fails, the error includes the selected package-manager path and sanitized diagnostics. Check that path and the network configuration, then reinstall or update the Webstudio CLI if the problem persists.
@@ -442,7 +442,7 @@ Generated app setup:
 
 - `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
 - Session previews download missing project assets into `.webstudio/assets`. If `PREVIEW_ASSET_DOWNLOAD_FAILED` occurs, restore network and project asset access, then retry `preview.start`.
-- Dependency installation uses the npm or pnpm launcher that started Webstudio.
+- When launcher metadata is available, dependency installation reuses a supported npm or pnpm launcher. Without launcher metadata, it defaults to npm.
 - When npm is selected, dependency installation honors `npm_config_cache`, including a caller-provided writable cache on Windows.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
 - If dependency installation fails, the error includes the selected package-manager path and sanitized diagnostics. Check that path and the network configuration, then reinstall or update the Webstudio CLI if the problem persists.

@@ -1,4 +1,11 @@
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -47,6 +54,23 @@ test("repeatedly reports an unoccupied explicit preview port as available", asyn
   );
 });
 
+const readWindowsPackageFile = (path: string) => {
+  if (path.endsWith("node_modules\\pnpm\\package.json")) {
+    return JSON.stringify({
+      name: "pnpm",
+      bin: { pnpm: "bin/pnpm.cjs" },
+    });
+  }
+  if (path.endsWith("node_modules\\npm\\package.json")) {
+    return JSON.stringify({
+      name: "npm",
+      bin: { npm: "bin/npm-cli.js", npx: "bin/npx-cli.js" },
+    });
+  }
+  throw Object.assign(new Error("missing"), { code: "ENOENT" });
+};
+const resolveWindowsLauncherPath = (path: string) => path;
+
 const createDependencies = (
   overrides: Partial<PreviewServerDependencies> = {}
 ): PreviewServerDependencies => ({
@@ -56,6 +80,8 @@ const createDependencies = (
   mkdir: vi.fn(async () => undefined),
   readdir: vi.fn(async () => []),
   readFile: vi.fn(async () => "") as never,
+  readPackageFile: readWindowsPackageFile,
+  resolveLauncherPath: resolveWindowsLauncherPath,
   writeFile: vi.fn(async () => undefined) as never,
   sleep: vi.fn(async () => undefined),
   parentProcess: {
@@ -146,6 +172,8 @@ test("reuses the npm cli that launched webstudio for preview commands", () => {
       npmExecPath:
         "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
       platform: "win32",
+      readPackageFile: readWindowsPackageFile,
+      resolveLauncherPath: resolveWindowsLauncherPath,
     })
   ).toEqual({
     command: "C:\\Program Files\\nodejs\\node.exe",
@@ -164,6 +192,8 @@ test("uses npm-cli when webstudio was launched through npx on windows", () => {
       npmExecPath:
         "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
       platform: "win32",
+      readPackageFile: readWindowsPackageFile,
+      resolveLauncherPath: resolveWindowsLauncherPath,
     })
   ).toEqual({
     command: "C:\\Program Files\\nodejs\\node.exe",
@@ -175,22 +205,80 @@ test("uses npm-cli when webstudio was launched through npx on windows", () => {
   });
 });
 
-test("uses the pnpm launcher that launched webstudio on windows", () => {
+test("detects pnpm from the launcher's owning package metadata", () => {
   expect(
     getPackageManagerInvocation(["run", "build"], {
       nodeExecPath: "C:\\Program Files\\Codex\\node.exe",
       npmExecPath:
-        "C:\\Program Files\\Codex\\node_modules\\pnpm\\bin\\pnpm.cjs",
+        "C:\\Program Files\\Codex\\node_modules\\bundled-manager\\bin\\launcher.cjs",
       platform: "win32",
+      readPackageFile: (path) => {
+        if (path.endsWith("node_modules\\bundled-manager\\package.json")) {
+          return JSON.stringify({
+            name: "pnpm",
+            bin: { pnpm: "bin/launcher.cjs" },
+          });
+        }
+        throw Object.assign(new Error("missing"), { code: "ENOENT" });
+      },
+      resolveLauncherPath: resolveWindowsLauncherPath,
     })
   ).toEqual({
     command: "C:\\Program Files\\Codex\\node.exe",
     args: [
-      "C:\\Program Files\\Codex\\node_modules\\pnpm\\bin\\pnpm.cjs",
+      "C:\\Program Files\\Codex\\node_modules\\bundled-manager\\bin\\launcher.cjs",
       "run",
       "build",
     ],
   });
+});
+
+test.skipIf(process.platform === "win32")(
+  "detects pnpm through a package-owned launcher symlink",
+  async () => {
+    const directory = await mkdtemp(join(tmpdir(), "webstudio-pnpm-launcher-"));
+    const packageDirectory = join(directory, "node_modules", "corepack");
+    const launcher = join(packageDirectory, "dist", "pnpm.js");
+    const shim = join(directory, "bin", "pnpm");
+    try {
+      await mkdir(join(packageDirectory, "dist"), { recursive: true });
+      await mkdir(join(directory, "bin"));
+      await writeFile(
+        join(packageDirectory, "package.json"),
+        JSON.stringify({
+          name: "corepack",
+          bin: { pnpm: "dist/pnpm.js", yarn: "dist/yarn.js" },
+        })
+      );
+      await writeFile(launcher, "#!/usr/bin/env node\n");
+      await symlink(launcher, shim);
+
+      expect(
+        getPackageManagerInvocation(["run", "build"], {
+          nodeExecPath: process.execPath,
+          npmExecPath: shim,
+          platform: process.platform,
+        })
+      ).toEqual({ command: shim, args: ["run", "build"] });
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  }
+);
+
+test("rejects a detected package manager without preview support", () => {
+  expect(() =>
+    getPackageManagerInvocation(["run", "build"], {
+      nodeExecPath: "C:\\Program Files\\Codex\\node.exe",
+      npmExecPath: "C:\\Program Files\\Codex\\node_modules\\yarn\\bin\\yarn.js",
+      platform: "win32",
+      readPackageFile: () =>
+        JSON.stringify({ name: "yarn", bin: { yarn: "bin/yarn.js" } }),
+      resolveLauncherPath: resolveWindowsLauncherPath,
+    })
+  ).toThrow(
+    "PREVIEW_PACKAGE_MANAGER_UNSUPPORTED: Preview supports npm and pnpm"
+  );
 });
 
 test("uses npm-cli when windows npm launcher metadata is unavailable", () => {

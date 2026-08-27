@@ -29,6 +29,23 @@ import {
 import type { CommonYargsArgv } from "./yargs-types";
 import { generatedFilesManifest } from "../prebuild";
 
+const readWindowsPackageFile = (path: string) => {
+  if (path.endsWith("node_modules\\pnpm\\package.json")) {
+    return JSON.stringify({
+      name: "pnpm",
+      bin: { pnpm: "bin/pnpm.cjs" },
+    });
+  }
+  if (path.endsWith("node_modules\\npm\\package.json")) {
+    return JSON.stringify({
+      name: "npm",
+      bin: { npm: "bin/npm-cli.js", npx: "bin/npx-cli.js" },
+    });
+  }
+  throw Object.assign(new Error("missing"), { code: "ENOENT" });
+};
+const resolveWindowsLauncherPath = (path: string) => path;
+
 test("rejects empty preview host", async () => {
   await expect(
     preview({
@@ -569,6 +586,8 @@ test("reuses the npm cli that launched webstudio on windows", async () => {
     nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
     npmExecPath:
       "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+    readPackageFile: readWindowsPackageFile,
+    resolveLauncherPath: resolveWindowsLauncherPath,
     platform: "win32",
     writeFile: vi.fn(async () => undefined),
   });
@@ -606,6 +625,8 @@ test("uses npm-cli from an npx launcher and forwards a writable npm cache", asyn
     nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
     npmExecPath:
       "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
+    readPackageFile: readWindowsPackageFile,
+    resolveLauncherPath: resolveWindowsLauncherPath,
     platform: "win32",
     env,
     writeFile: vi.fn(async () => undefined),
@@ -649,6 +670,8 @@ test("installs generated dependencies through the available windows pnpm launche
     readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
     nodeExecPath: "C:\\Program Files\\Codex\\node.exe",
     npmExecPath: "C:\\Program Files\\Codex\\node_modules\\pnpm\\bin\\pnpm.cjs",
+    readPackageFile: readWindowsPackageFile,
+    resolveLauncherPath: resolveWindowsLauncherPath,
     platform: "win32",
     writeFile: vi.fn(async () => undefined),
   });
@@ -710,6 +733,8 @@ test("reports sanitized package-manager diagnostics for preview install failures
     nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
     npmExecPath:
       "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+    readPackageFile: readWindowsPackageFile,
+    resolveLauncherPath: resolveWindowsLauncherPath,
     platform: "win32",
   });
 
@@ -738,9 +763,7 @@ test("distinguishes package-manager process errors from exit codes", async () =>
     platform: "linux",
   });
 
-  await expect(promise).rejects.toThrow(
-    "package-manager process error ENOENT"
-  );
+  await expect(promise).rejects.toThrow("package-manager process error ENOENT");
   await expect(promise).rejects.not.toThrow("exit code ENOENT");
 });
 
