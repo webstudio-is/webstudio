@@ -66,9 +66,13 @@ Editors can delete direct children of the Content Block. They cannot delete the 
 
 In Design mode, use the **Source** property under **Properties & attributes** to connect a `.mdx` file from Assets. Create the file in Assets first, then select it directly or bind the property to an Asset ID. The file becomes the source of the Content Block's ordinary children; the Templates container remains part of the project.
 
-Connecting a file replaces the Content Block's existing ordinary children. Select the connected filename to switch files, or select **Open** to edit it. To disconnect, select the **Source** property label and choose **Reset value**. Disconnecting leaves the MDX file unchanged, removes its derived content from the canvas, and leaves the Content Block empty.
+Connecting a file replaces the Content Block's existing ordinary children. In Design mode, select the connected filename to switch files, or select **Open** to edit it. To disconnect, select the **Source** property label and choose **Reset value**. Disconnecting leaves the MDX file unchanged, removes its derived content from the canvas, and leaves the Content Block empty.
+
+In Content mode, **Source** shows the connected filename and an **Open** button so editors can identify and edit the file. Changing, binding, resetting, and disconnecting the source remain available only in Design mode.
 
 Editors continue to use the normal Content mode controls. Their changes appear immediately on the canvas and then save to the connected file. Changes made in the file editor also update every Content Block connected to that file.
+
+Component properties in Content mode are limited to authored content, such as links, media sources and alternative text, form labels and placeholders, code, and date values. Layout, dimensions, visual themes, form wiring, and interaction settings remain available only in Design mode.
 
 Use Markdown for headings, paragraphs, links, lists, tables, code, and other standard document content. MDX uses Webstudio elements only for content that Markdown cannot represent:
 

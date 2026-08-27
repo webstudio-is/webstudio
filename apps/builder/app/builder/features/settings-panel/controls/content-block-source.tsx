@@ -118,6 +118,7 @@ const ConnectSourceDialog = ({
 export const ContentBlockSourceControl = ({
   source,
   resolvedAsset,
+  readOnly = false,
   disabled = false,
   loading = false,
   error,
@@ -130,6 +131,7 @@ export const ContentBlockSourceControl = ({
 }: {
   source?: ContentBlockSource;
   resolvedAsset?: Asset;
+  readOnly?: boolean;
   disabled?: boolean;
   loading?: boolean;
   error?: string;
@@ -148,6 +150,7 @@ export const ContentBlockSourceControl = ({
   const busyRef = useRef(false);
   const [localError, setLocalError] = useState<string>();
   const isDisabled = disabled || loading || busy;
+  const isSourceMutationDisabled = readOnly || isDisabled;
   const connected = source !== undefined;
   const binding = useBindableControl({
     boundExpression: source?.type === "expression" ? source.value : undefined,
@@ -183,7 +186,7 @@ export const ContentBlockSourceControl = ({
     requestedSource: ContentBlockSource,
     confirmed?: boolean
   ) => {
-    if (beginOperation() === false) {
+    if (readOnly || beginOperation() === false) {
       return;
     }
     try {
@@ -215,6 +218,7 @@ export const ContentBlockSourceControl = ({
       <Grid gap="2">
         <BindableExpressionControl
           {...binding}
+          showBinding={readOnly === false}
           value={resolvedAsset?.id}
           validate={(value) =>
             typeof value === "string" && value !== ""
@@ -243,7 +247,7 @@ export const ContentBlockSourceControl = ({
                       assetId={resolvedAsset?.id}
                       title="Switch MDX file"
                       accept=".mdx"
-                      disabled={isDisabled}
+                      disabled={isSourceMutationDisabled}
                       triggerLabel={sourceLabel}
                       onChange={(assetId) =>
                         void requestSource({ type: "asset", assetId })
@@ -295,7 +299,7 @@ export const ContentBlockSourceControl = ({
                   Open
                 </Button>
               </Grid>
-            ) : (
+            ) : readOnly ? null : (
               <SelectAsset
                 title="Choose MDX file"
                 accept=".mdx"
@@ -358,7 +362,7 @@ export const ContentBlockSourceControl = ({
 
         {pendingSource !== undefined && (
           <ConnectSourceDialog
-            disabled={isDisabled}
+            disabled={isSourceMutationDisabled}
             error={localError ?? error}
             diagnostics={pendingSource.diagnostics}
             onClose={() => setPendingSource(undefined)}

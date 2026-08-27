@@ -7,6 +7,7 @@ import {
 import { TextFileEditor } from "~/builder/features/text-file-editor/text-file-editor";
 import {
   $authPermit,
+  $isContentMode,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import type { AssetContentSessionState } from "@webstudio-is/content-engine/asset-content-session";
@@ -39,6 +40,7 @@ export const ContentBlockSourceSection = ({
   const props = useStore($props);
   const assets = useStore($assets);
   const authPermit = useStore($authPermit);
+  const isContentMode = useStore($isContentMode);
   const variableValues = useStore($variableValuesByInstanceSelector);
   const externalContentRoots = useStore($externalContentRoots);
   const source = useMemo(
@@ -132,7 +134,8 @@ export const ContentBlockSourceSection = ({
       label={
         <PropertyLabel
           name={contentBlockSourceProp}
-          deletable={authPermit !== "view"}
+          readOnly={isContentMode}
+          deletable={isContentMode === false && authPermit !== "view"}
           onDelete={() => {
             if (disconnecting) {
               return;
@@ -161,6 +164,7 @@ export const ContentBlockSourceSection = ({
       <ContentBlockSourceControl
         source={source}
         resolvedAsset={resolvedAsset}
+        readOnly={isContentMode}
         disabled={authPermit === "view" || disconnecting}
         loading={loading}
         error={error}

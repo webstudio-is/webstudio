@@ -3,12 +3,21 @@ import { themeNames } from "@shikijs/themes";
 import { bundledLanguagesInfo } from "shiki/langs";
 import { meta } from "./meta";
 
-test("exposes static language and theme selections", () => {
+test("exposes code content and language without exposing its design theme", () => {
   expect(meta.deprecated).toBeUndefined();
   expect(meta.initialProps).toEqual(["id", "class", "language", "theme"]);
   expect(meta.contentModel).toEqual({
     category: "instance",
     children: ["text"],
+  });
+  expect(meta.textContent).toEqual({
+    control: "textContent",
+    type: "string",
+    required: false,
+    editor: {
+      control: "code",
+      languageProp: "language",
+    },
   });
   expect(meta.props?.code).toBeUndefined();
   expect(meta.props?.language).toEqual({
@@ -25,7 +34,6 @@ test("exposes static language and theme selections", () => {
     required: false,
     control: "select",
     type: "string",
-    contentMode: true,
     defaultValue: "github-light",
     options: [...themeNames],
   });

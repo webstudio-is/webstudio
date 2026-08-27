@@ -6,7 +6,11 @@ import type {
   Props,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { descendantComponent } from "@webstudio-is/sdk";
+import {
+  blockComponent,
+  contentBlockSourceProp,
+  descendantComponent,
+} from "@webstudio-is/sdk";
 import {
   canHaveTextContent,
   createStartingPropValueFromMeta,
@@ -49,12 +53,14 @@ export type PropAndMeta = {
 };
 
 const isPropVisibleInContentMode = ({
+  component,
   propName,
   props,
   propsMetas,
   selectedInstanceSelector,
   capabilities,
 }: {
+  component: Instance["component"];
   propName: string;
   props: Prop[];
   propsMetas: Map<string, PropMeta>;
@@ -69,6 +75,13 @@ const isPropVisibleInContentMode = ({
   }
   if (propName === textContentAttribute) {
     return true;
+  }
+  if (component === blockComponent && propName === contentBlockSourceProp) {
+    return props.some(
+      (prop) =>
+        prop.name === contentBlockSourceProp &&
+        (prop.type === "asset" || prop.type === "expression")
+    );
   }
   const propMeta = propsMetas.get(propName);
   if (propMeta?.contentMode === false) {
@@ -184,6 +197,7 @@ export const usePropsLogic = ({
       return false;
     }
     return isPropVisibleInContentMode({
+      component: instance.component,
       propName,
       props,
       propsMetas,
@@ -259,7 +273,7 @@ export const usePropsLogic = ({
       propName: textContentAttribute,
       instanceId: textContentTarget.instanceId,
       instanceSelector: textContentTarget.instanceSelector,
-      meta: {
+      meta: metas.get(instance.component)?.textContent ?? {
         required: false,
         control: "textContent",
         type: "string",

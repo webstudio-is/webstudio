@@ -22,6 +22,10 @@ Use [Text](text.md) for prose that does not need syntax highlighting.
 5. Select the matching **Language**.
 6. Select a **Theme**.
 
+**Text Content** opens a code editor that uses the selected language for syntax highlighting.
+
+In Content mode, editors can change **Text Content** and **Language**. Change **Theme** in Design mode.
+
 You can bind **Text Content**, **Language**, and **Theme** to variables or
 resource values. A fixed Language or Theme includes only that selected asset in
 the published build. A bound Language or Theme makes the available catalog part

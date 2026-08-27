@@ -106,6 +106,7 @@ const renderControl = ({
   source = { type: "asset" as const, assetId: asset.id },
   resolvedAsset = asset,
   loading = false,
+  readOnly = false,
   diagnostics,
   persistenceStatus,
   persistenceError,
@@ -120,6 +121,7 @@ const renderControl = ({
     | { type: "expression"; value: string };
   resolvedAsset?: Asset;
   loading?: boolean;
+  readOnly?: boolean;
   diagnostics?: ComponentProps<typeof ContentBlockSourceControl>["diagnostics"];
   persistenceStatus?: ComponentProps<
     typeof ContentBlockSourceControl
@@ -134,6 +136,7 @@ const renderControl = ({
           source={source}
           resolvedAsset={resolvedAsset}
           loading={loading}
+          readOnly={readOnly}
           diagnostics={diagnostics}
           persistenceStatus={persistenceStatus}
           persistenceError={persistenceError}
@@ -203,6 +206,21 @@ test("opens the resolved Asset for a bound source", () => {
   act(() => findButton("Open").click());
 
   expect(onOpen).toHaveBeenCalledWith(targetAsset.id);
+});
+
+test("keeps a connected source visible and openable when read-only", () => {
+  const onOpen = vi.fn();
+  const onRequestSource = vi.fn(async () => ({ status: "applied" as const }));
+  renderControl({ readOnly: true, onOpen, onRequestSource });
+
+  expect(findButton("post.mdx")).not.toBeNull();
+  expect(findButton("post.mdx").matches(":disabled")).toBe(true);
+  expect(container.querySelector('[data-variant="bound"]')).toBeNull();
+
+  act(() => findButton("Open").click());
+
+  expect(onOpen).toHaveBeenCalledWith(asset.id);
+  expect(onRequestSource).not.toHaveBeenCalled();
 });
 
 test("switches a connected source from the filename button", async () => {
@@ -313,5 +331,19 @@ test("keeps a failed Asset write visible and retryable", async () => {
     "Temporary storage failure"
   );
   await act(async () => findButton("Retry").click());
+  expect(onRetry).toHaveBeenCalledOnce();
+});
+
+test("allows retrying a failed Asset write when the source is read-only", async () => {
+  const onRetry = vi.fn(async () => {});
+  renderControl({
+    readOnly: true,
+    persistenceStatus: "failed",
+    persistenceError: "Temporary storage failure",
+    onRetry,
+  });
+
+  await act(async () => findButton("Retry").click());
+
   expect(onRetry).toHaveBeenCalledOnce();
 });
