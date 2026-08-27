@@ -204,11 +204,13 @@ const getPreviewInstallFailureDiagnostics = (error: unknown) => {
   )
     .trim()
     .slice(-2000);
-  const code =
-    typeof record.code === "string" || typeof record.code === "number"
-      ? String(record.code)
-      : undefined;
-  return `${code === undefined ? "" : `package-manager exit code ${code}. `}${diagnostics}`;
+  const codeDiagnostics =
+    typeof record.code === "number"
+      ? `package-manager exit code ${record.code}. `
+      : typeof record.code === "string"
+        ? `package-manager process error ${record.code}. `
+        : "";
+  return `${codeDiagnostics}${diagnostics}`;
 };
 
 export const getPreviewProjectDir = (projectDir = cwd()) =>

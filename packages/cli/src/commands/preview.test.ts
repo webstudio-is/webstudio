@@ -722,6 +722,28 @@ test("reports sanitized package-manager diagnostics for preview install failures
   await expect(promise).rejects.not.toThrow("private-token");
 });
 
+test("distinguishes package-manager process errors from exit codes", async () => {
+  const promise = ensurePreviewDependencies("/tmp/project/.webstudio/preview", {
+    access: vi.fn(async () => {
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    execFile: vi.fn(async () => {
+      throw Object.assign(new Error("spawn npm ENOENT"), { code: "ENOENT" });
+    }),
+    lstat: vi.fn(async () => {
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }),
+    readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+    npmExecPath: undefined,
+    platform: "linux",
+  });
+
+  await expect(promise).rejects.toThrow(
+    "package-manager process error ENOENT"
+  );
+  await expect(promise).rejects.not.toThrow("exit code ENOENT");
+});
+
 test("rejects an incomplete generated dependency tree", async () => {
   await expect(
     ensurePreviewDependencies("/tmp/project/.webstudio/preview", {
