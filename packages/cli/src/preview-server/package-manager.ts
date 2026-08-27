@@ -23,7 +23,15 @@ const findLauncherPackage = (
   resolveLauncherPath: (path: string) => string
 ) => {
   const pathApi = platform === "win32" ? win32 : posix;
-  const resolvedExecutablePath = resolveLauncherPath(executablePath);
+  let resolvedExecutablePath: string;
+  try {
+    resolvedExecutablePath = resolveLauncherPath(executablePath);
+  } catch (error) {
+    throw new Error(
+      `PREVIEW_PACKAGE_MANAGER_UNKNOWN: Could not resolve package-manager launcher ${executablePath}.`,
+      { cause: error }
+    );
+  }
   const normalizePath = (path: string) =>
     platform === "win32" ? path.toLowerCase() : path;
   let directory = pathApi.dirname(resolvedExecutablePath);

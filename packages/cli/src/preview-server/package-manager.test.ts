@@ -76,6 +76,72 @@ test("detects pnpm from the launcher's owning package metadata", () => {
   });
 });
 
+test("detects a package manager declared with a string bin", () => {
+  expect(
+    getPackageManagerInvocation(["run", "build"], {
+      nodeExecPath: "/usr/local/bin/node",
+      npmExecPath: "/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs",
+      platform: "linux",
+      readPackageFile: (path) => {
+        if (path === "/usr/local/lib/node_modules/pnpm/package.json") {
+          return JSON.stringify({ name: "pnpm", bin: "bin/pnpm.cjs" });
+        }
+        throw Object.assign(new Error("missing"), { code: "ENOENT" });
+      },
+      resolveLauncherPath: (path) => path,
+    })
+  ).toEqual({
+    command: "/usr/local/bin/node",
+    args: ["/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs", "run", "build"],
+  });
+});
+
+test("continues past a nested package that does not own the launcher", () => {
+  expect(
+    getPackageManagerInvocation(["run", "build"], {
+      nodeExecPath: "/usr/local/bin/node",
+      npmExecPath: "/opt/corepack/dist/pnpm.js",
+      platform: "linux",
+      readPackageFile: (path) => {
+        if (path === "/opt/corepack/dist/package.json") {
+          return JSON.stringify({ name: "internal", bin: "other.js" });
+        }
+        if (path === "/opt/corepack/package.json") {
+          return JSON.stringify({
+            name: "corepack",
+            bin: { pnpm: "dist/pnpm.js" },
+          });
+        }
+        throw Object.assign(new Error("missing"), { code: "ENOENT" });
+      },
+      resolveLauncherPath: (path) => path,
+    })
+  ).toEqual({
+    command: "/usr/local/bin/node",
+    args: ["/opt/corepack/dist/pnpm.js", "run", "build"],
+  });
+});
+
+test("matches windows launcher paths without case sensitivity", () => {
+  expect(
+    getPackageManagerInvocation(["run", "build"], {
+      nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+      npmExecPath: "C:\\TOOLS\\PNPM\\BIN\\PNPM.CJS",
+      platform: "win32",
+      readPackageFile: (path) => {
+        if (path.toLowerCase() === "c:\\tools\\pnpm\\package.json") {
+          return JSON.stringify({ name: "pnpm", bin: "bin/pnpm.cjs" });
+        }
+        throw Object.assign(new Error("missing"), { code: "ENOENT" });
+      },
+      resolveLauncherPath: (path) => path,
+    })
+  ).toEqual({
+    command: "C:\\Program Files\\nodejs\\node.exe",
+    args: ["C:\\TOOLS\\PNPM\\BIN\\PNPM.CJS", "run", "build"],
+  });
+});
+
 test.skipIf(process.platform === "win32")(
   "detects pnpm through a package-owned launcher symlink",
   async () => {
@@ -121,6 +187,51 @@ test("rejects a detected package manager without preview support", () => {
     })
   ).toThrow(
     "PREVIEW_PACKAGE_MANAGER_UNSUPPORTED: Preview supports npm and pnpm"
+  );
+});
+
+test("reports invalid package-manager metadata", () => {
+  expect(() =>
+    getPackageManagerInvocation(["run", "build"], {
+      npmExecPath: "/opt/pnpm/bin/pnpm.cjs",
+      platform: "linux",
+      readPackageFile: () => "not json",
+      resolveLauncherPath: (path) => path,
+    })
+  ).toThrow(
+    "PREVIEW_PACKAGE_MANAGER_INVALID: Could not read package-manager metadata at /opt/pnpm/bin/package.json."
+  );
+});
+
+test("reports when no package owns the launcher", () => {
+  expect(() =>
+    getPackageManagerInvocation(["run", "build"], {
+      npmExecPath: "/opt/pnpm/bin/pnpm.cjs",
+      platform: "linux",
+      readPackageFile: () => {
+        throw Object.assign(new Error("missing"), { code: "ENOENT" });
+      },
+      resolveLauncherPath: (path) => path,
+    })
+  ).toThrow(
+    "PREVIEW_PACKAGE_MANAGER_UNKNOWN: Could not find package-manager metadata for launcher /opt/pnpm/bin/pnpm.cjs."
+  );
+});
+
+test("reports when the launcher path cannot be resolved", () => {
+  expect(() =>
+    getPackageManagerInvocation(["run", "build"], {
+      npmExecPath: "/missing/pnpm",
+      platform: "linux",
+      readPackageFile: () => {
+        throw new Error("should not read package metadata");
+      },
+      resolveLauncherPath: () => {
+        throw Object.assign(new Error("missing"), { code: "ENOENT" });
+      },
+    })
+  ).toThrow(
+    "PREVIEW_PACKAGE_MANAGER_UNKNOWN: Could not resolve package-manager launcher /missing/pnpm."
   );
 });
 
