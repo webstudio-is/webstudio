@@ -11,10 +11,14 @@ test("documents generated app setup for visual verification", () => {
   expect(generatedAppDependencyNotes).toEqual([
     expect.stringContaining("install generated app dependencies"),
     expect.stringContaining("PREVIEW_ASSET_DOWNLOAD_FAILED"),
+    expect.stringContaining("npm or pnpm launcher"),
     expect.stringContaining("npm_config_cache"),
     expect.stringContaining("Do not add generated-preview dependencies"),
-    expect.stringContaining("Check the reported npm and network configuration"),
+    expect.stringContaining("selected package-manager path"),
   ]);
+  expect(generatedAppDependencyNotes.join("\n")).not.toContain(
+    "WEBSTUDIO_PREVIEW_PACKAGE_MANAGER"
+  );
   expect(visualVerificationRule).toContain(
     "generated project files are current"
   );

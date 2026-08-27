@@ -53,7 +53,7 @@ export default defineConfig({
       esmExternals: true,
     },
     lib: {
-      entry: ["src/cli.ts", "src/preview-process-supervisor.ts"],
+      entry: ["src/cli.ts", "src/preview-server/preview-process-supervisor.ts"],
       formats: ["es"],
     },
     rollupOptions: {
