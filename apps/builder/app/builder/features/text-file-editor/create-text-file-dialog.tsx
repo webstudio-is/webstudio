@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, type KeyboardEvent } from "react";
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import isValidFilename from "valid-filename";
 import {
   Button,
@@ -105,6 +105,8 @@ export const CreateTextFileDialog = ({
   const [name, setName] = useState(defaultName);
   const [error, setError] = useState<string>();
   const [creating, setCreating] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const dialogContentRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     if (open) {
@@ -151,9 +153,20 @@ export const CreateTextFileDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        ref={dialogContentRef}
         minWidth={360}
         aria-describedby={undefined}
         onKeyDown={stopEscapePropagation}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          if (disabled) {
+            dialogContentRef.current?.focus();
+            return;
+          }
+          const focusName = () => nameInputRef.current?.focus();
+          focusName();
+          requestAnimationFrame(focusName);
+        }}
       >
         <DialogTitle>{title}</DialogTitle>
         <Grid gap={3} css={{ padding: theme.panel.padding }}>
@@ -161,7 +174,7 @@ export const CreateTextFileDialog = ({
             <Label htmlFor="asset-text-file-name">File name</Label>
             <InputField
               id="asset-text-file-name"
-              autoFocus
+              inputRef={nameInputRef}
               disabled={creating || disabled}
               value={name}
               color={error === undefined ? undefined : "error"}

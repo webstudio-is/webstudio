@@ -78,9 +78,34 @@ const findButton = (label: string) => {
   return button;
 };
 
+const chooseAsset = async (triggerLabel: string, assetName: string) => {
+  await act(async () => {
+    findButton(triggerLabel).click();
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve())
+    );
+  });
+  const option = Array.from(
+    document.body.querySelectorAll<HTMLElement>('[role="option"]')
+  ).find((element) => element.textContent?.includes(assetName));
+  const target = option?.querySelector<HTMLElement>(
+    "[data-asset-thumbnail] > div"
+  );
+  if (target === undefined || target === null) {
+    throw new Error(`Expected compatible Asset "${assetName}"`);
+  }
+  await act(async () => {
+    target.click();
+    await Promise.resolve();
+  });
+};
+
 const renderControl = ({
   onDisconnect = async () => ({ status: "applied" as const }),
+  onDisconnectingChange = () => {},
+  onRequestSource = async () => ({ status: "applied" as const }),
   source = { type: "asset" as const, assetId: asset.id },
+  disconnecting = false,
   loading = false,
   diagnostics,
   revision,
@@ -92,6 +117,12 @@ const renderControl = ({
   onDisconnect?: ComponentProps<
     typeof ContentBlockSourceControl
   >["onDisconnect"];
+  onDisconnectingChange?: ComponentProps<
+    typeof ContentBlockSourceControl
+  >["onDisconnectingChange"];
+  onRequestSource?: ComponentProps<
+    typeof ContentBlockSourceControl
+  >["onRequestSource"];
   source?:
     | { type: "asset"; assetId: string }
     | { type: "expression"; value: string };
@@ -104,6 +135,7 @@ const renderControl = ({
   persistenceError?: string;
   onRetry?: () => Promise<void>;
   repeatedRenderScope?: boolean;
+  disconnecting?: boolean;
 } = {}) => {
   act(() => {
     root.render(
@@ -118,7 +150,9 @@ const renderControl = ({
           persistenceError={persistenceError}
           onRetry={onRetry}
           repeatedRenderScope={repeatedRenderScope}
-          onRequestSource={async () => ({ status: "applied" })}
+          disconnecting={disconnecting}
+          onDisconnectingChange={onDisconnectingChange}
+          onRequestSource={onRequestSource}
           onDisconnect={onDisconnect}
           onOpen={() => {}}
         />
@@ -164,33 +198,60 @@ test("shows persistent actionable diagnostics with file, location, and render sc
 test("keeps the resolved filename visible while refreshed content loads", () => {
   renderControl({ loading: true });
 
-  expect(document.body.textContent).toContain("post.mdx");
+  expect(findButton("post.mdx")).not.toBeNull();
   expect(findButton("Open").matches(":disabled")).toBe(true);
+});
+
+test("shows equal filename and Open actions for a connected source", () => {
+  renderControl();
+
+  const actions = document.querySelector(
+    '[aria-label="Content source actions"]'
+  );
+  expect(
+    Array.from(actions?.querySelectorAll("button") ?? []).map((button) =>
+      button.textContent?.trim()
+    )
+  ).toEqual(["post.mdx", "Open"]);
+});
+
+test("switches a connected source from the filename button", async () => {
+  const onRequestSource = vi.fn(async () => ({ status: "applied" as const }));
+  renderControl({ onRequestSource });
+
+  await chooseAsset("post.mdx", "other.mdx");
+
+  expect(onRequestSource).toHaveBeenCalledWith({
+    source: { type: "asset", assetId: targetAsset.id },
+    confirmed: undefined,
+  });
 });
 
 test("requires copying loaded file content before disconnecting", async () => {
   const onDisconnect = vi.fn(async () => ({ status: "applied" as const }));
-  renderControl({ onDisconnect });
-
-  act(() => findButton("Disconnect").click());
+  const onDisconnectingChange = vi.fn();
+  renderControl({ onDisconnect, onDisconnectingChange, disconnecting: true });
   expect(document.body.textContent).toContain(
     "The current file content will be copied into the Content Block."
   );
+  expect(
+    Array.from(
+      document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')
+    )
+      .map((button) => button.textContent?.trim())
+      .filter((label) => label === "Abort" || label === "Confirm")
+  ).toEqual(["Confirm", "Abort"]);
   expect(onDisconnect).not.toHaveBeenCalled();
 
   await act(async () => {
     findButton("Confirm").click();
   });
   expect(onDisconnect).toHaveBeenCalledOnce();
-  expect(document.body.textContent).not.toContain(
-    "The current file content will be copied into the Content Block."
-  );
+  expect(onDisconnectingChange).toHaveBeenCalledWith(false);
 });
 
 test("explains that disconnecting a repeated block changes every Collection item", () => {
-  renderControl({ repeatedRenderScope: true });
-
-  act(() => findButton("Disconnect").click());
+  renderControl({ repeatedRenderScope: true, disconnecting: true });
 
   expect(document.body.textContent).toContain(
     "This source binding is shared by every Collection item."
@@ -202,13 +263,13 @@ test("explains that disconnecting a repeated block changes every Collection item
 
 test("keeps a partial lifecycle result visible without claiming complete success", async () => {
   renderControl({
+    disconnecting: true,
     onDisconnect: async () => ({
       status: "partial",
       message: "The file was saved, but the Content Block was not connected.",
     }),
   });
 
-  act(() => findButton("Disconnect").click());
   await act(async () => {
     findButton("Confirm").click();
   });
@@ -227,9 +288,7 @@ test("submits a disconnect only once while it is pending", async () => {
         resolveDisconnect = resolve;
       })
   );
-  renderControl({ onDisconnect });
-
-  act(() => findButton("Disconnect").click());
+  renderControl({ onDisconnect, disconnecting: true });
   const confirm = findButton("Confirm");
   act(() => {
     confirm.click();
@@ -243,19 +302,28 @@ test("submits a disconnect only once while it is pending", async () => {
 test("shows the resolved filename while retaining a dynamic binding", () => {
   renderControl({ source: { type: "expression", value: "post.body" } });
 
-  expect(container.textContent).toContain("post.mdx");
+  expect(findButton("post.mdx")).not.toBeNull();
   expect(container.querySelector('[data-variant="bound"]')).not.toBeNull();
 });
 
-test("creates only a new MDX Asset from the source control", () => {
-  renderControl();
+test("shows only a full-width bindable connect button without a source", () => {
+  act(() => {
+    root.render(
+      <TooltipProvider>
+        <ContentBlockSourceControl
+          onRequestSource={async () => ({ status: "applied" })}
+          onDisconnect={async () => ({ status: "applied" })}
+          disconnecting={false}
+          onDisconnectingChange={() => {}}
+          onOpen={() => {}}
+        />
+      </TooltipProvider>
+    );
+  });
 
-  act(() => findButton("Create MDX file").click());
-
-  expect(document.body.textContent).toContain("New MDX file");
-  expect(
-    document.querySelector<HTMLInputElement>("#asset-text-file-name")?.value
-  ).toBe("untitled.mdx");
+  expect(document.querySelector("input")).toBeNull();
+  expect(findButton("Connect .mdx file")).not.toBeNull();
+  expect(document.body.textContent).not.toContain("Create MDX file");
 });
 
 test("asks for confirmation before connecting over existing content", async () => {
@@ -285,31 +353,15 @@ test("asks for confirmation before connecting over existing content", async () =
         <ContentBlockSourceControl
           onRequestSource={onRequestSource}
           onDisconnect={async () => ({ status: "applied" })}
+          disconnecting={false}
+          onDisconnectingChange={() => {}}
           onOpen={() => {}}
         />
       </TooltipProvider>
     );
   });
 
-  await act(async () => {
-    findButton("Choose file").click();
-    await new Promise<void>((resolve) =>
-      requestAnimationFrame(() => resolve())
-    );
-  });
-  const targetOption = Array.from(
-    document.body.querySelectorAll<HTMLElement>('[role="option"]')
-  ).find((button) => button.textContent?.includes("other.mdx"));
-  const target = targetOption?.querySelector<HTMLElement>(
-    "[data-asset-thumbnail] > div"
-  );
-  if (target === undefined || target === null) {
-    throw new Error("Expected compatible MDX Asset");
-  }
-  await act(async () => {
-    target.click();
-    await Promise.resolve();
-  });
+  await chooseAsset("Connect .mdx file", "other.mdx");
 
   expect(document.body.textContent).toContain("Connect content source");
   expect(document.body.textContent).toContain(
