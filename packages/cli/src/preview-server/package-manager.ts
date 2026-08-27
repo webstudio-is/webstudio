@@ -28,7 +28,7 @@ const findLauncherPackage = (
     resolvedExecutablePath = resolveLauncherPath(executablePath);
   } catch (error) {
     throw new Error(
-      `PREVIEW_PACKAGE_MANAGER_UNKNOWN: Could not resolve package-manager launcher ${executablePath}.`,
+      `Could not resolve package-manager launcher ${executablePath}.`,
       { cause: error }
     );
   }
@@ -78,7 +78,7 @@ const findLauncherPackage = (
         (error.code !== "ENOENT" && error.code !== "ENOTDIR")
       ) {
         throw new Error(
-          `PREVIEW_PACKAGE_MANAGER_INVALID: Could not read package-manager metadata at ${packagePath}.`,
+          `Could not read package-manager metadata at ${packagePath}.`,
           { cause: error }
         );
       }
@@ -128,11 +128,11 @@ const resolveLauncherPackage = (
   }
   if (packageInfo !== undefined) {
     throw new Error(
-      `PREVIEW_PACKAGE_MANAGER_UNSUPPORTED: Preview supports npm and pnpm, but ${executablePath} is the ${commandName} command from ${packageName ?? "an unidentified package"}.`
+      `Preview supports npm and pnpm, but ${executablePath} is the ${commandName} command from ${packageName ?? "an unidentified package"}.`
     );
   }
   throw new Error(
-    `PREVIEW_PACKAGE_MANAGER_UNKNOWN: Could not find package-manager metadata for launcher ${executablePath}.`
+    `Could not identify the package manager for launcher ${executablePath}.`
   );
 };
 

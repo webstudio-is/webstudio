@@ -185,9 +185,7 @@ test("rejects a detected package manager without preview support", () => {
         JSON.stringify({ name: "yarn", bin: { yarn: "bin/yarn.js" } }),
       resolveLauncherPath: resolveWindowsLauncherPath,
     })
-  ).toThrow(
-    "PREVIEW_PACKAGE_MANAGER_UNSUPPORTED: Preview supports npm and pnpm"
-  );
+  ).toThrow("Preview supports npm and pnpm");
 });
 
 test("reports invalid package-manager metadata", () => {
@@ -199,7 +197,7 @@ test("reports invalid package-manager metadata", () => {
       resolveLauncherPath: (path) => path,
     })
   ).toThrow(
-    "PREVIEW_PACKAGE_MANAGER_INVALID: Could not read package-manager metadata at /opt/pnpm/bin/package.json."
+    "Could not read package-manager metadata at /opt/pnpm/bin/package.json."
   );
 });
 
@@ -214,7 +212,7 @@ test("reports when no package owns the launcher", () => {
       resolveLauncherPath: (path) => path,
     })
   ).toThrow(
-    "PREVIEW_PACKAGE_MANAGER_UNKNOWN: Could not find package-manager metadata for launcher /opt/pnpm/bin/pnpm.cjs."
+    "Could not identify the package manager for launcher /opt/pnpm/bin/pnpm.cjs."
   );
 });
 
@@ -230,9 +228,7 @@ test("reports when the launcher path cannot be resolved", () => {
         throw Object.assign(new Error("missing"), { code: "ENOENT" });
       },
     })
-  ).toThrow(
-    "PREVIEW_PACKAGE_MANAGER_UNKNOWN: Could not resolve package-manager launcher /missing/pnpm."
-  );
+  ).toThrow("Could not resolve package-manager launcher /missing/pnpm.");
 });
 
 test("uses npm-cli when windows npm launcher metadata is unavailable", () => {
