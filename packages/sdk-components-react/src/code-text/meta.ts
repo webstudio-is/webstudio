@@ -60,6 +60,15 @@ export const meta: WsComponentMeta = {
     category: "instance",
     children: ["text"],
   },
+  textContent: {
+    control: "textContent",
+    type: "string",
+    required: false,
+    editor: {
+      control: "code",
+      languageProp: "language",
+    },
+  },
   initialProps: ["id", "class", "language", "theme"],
   props: {
     language: {
@@ -76,7 +85,6 @@ export const meta: WsComponentMeta = {
       required: false,
       control: "select",
       type: "string",
-      contentMode: true,
       defaultValue: codeTextDefaultTheme,
       options: codeTextThemeNames,
     },

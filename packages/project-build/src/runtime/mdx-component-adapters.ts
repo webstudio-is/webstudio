@@ -118,13 +118,7 @@ const readMdxImage = (node: MdxAuthoredNode) => {
   return image;
 };
 
-const omitDerivedImageAssetProps = ({
-  props,
-  instanceProps,
-}: {
-  props: readonly MdxAuthoredProp[];
-  instanceProps: readonly Prop[];
-}) => {
+const getDerivedImageAssetPropIds = (instanceProps: readonly Prop[]) => {
   const source = instanceProps.find(
     (prop) => prop.name === "src" && prop.type === "asset"
   );
@@ -138,20 +132,27 @@ const omitDerivedImageAssetProps = ({
       : derivedAssetProps.length >= 2 && derivedAssetIds.size === 1
         ? derivedAssetProps[0]?.value
         : undefined;
-  if (assetId === undefined) {
-    return props;
-  }
-  const derivedNames = new Set(
+  return new Set(
     instanceProps.flatMap((prop) =>
       prop.type === "asset" &&
       prop.value === assetId &&
       derivedImageAssetPropNames.has(prop.name)
-        ? [prop.name]
+        ? [prop.id]
         : []
     )
   );
-  return props.filter(({ name }) => derivedNames.has(name) === false);
 };
+
+export const getDerivedMdxComponentPropIds = ({
+  instance,
+  instanceProps,
+}: {
+  instance: Instance;
+  instanceProps: readonly Prop[];
+}) =>
+  instance.component === imageComponent
+    ? getDerivedImageAssetPropIds(instanceProps)
+    : new Set<Prop["id"]>();
 
 export const normalizeMdxComponentProps = ({
   instance,
@@ -161,10 +162,21 @@ export const normalizeMdxComponentProps = ({
   instance: Instance;
   props: readonly MdxAuthoredProp[];
   instanceProps: readonly Prop[];
-}) =>
-  instance.component === imageComponent
-    ? omitDerivedImageAssetProps({ props, instanceProps })
-    : props;
+}) => {
+  const derivedPropIds = getDerivedMdxComponentPropIds({
+    instance,
+    instanceProps,
+  });
+  if (derivedPropIds.size === 0) {
+    return props;
+  }
+  const derivedPropNames = new Set(
+    instanceProps.flatMap((prop) =>
+      derivedPropIds.has(prop.id) ? [prop.name] : []
+    )
+  );
+  return props.filter(({ name }) => derivedPropNames.has(name) === false);
+};
 
 const imageAdapter: MdxComponentAdapter = {
   component: imageComponent,

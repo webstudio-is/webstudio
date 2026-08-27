@@ -35,6 +35,7 @@ import {
   extractWebstudioFragment,
 } from "./fragment";
 import {
+  getDerivedMdxComponentPropIds,
   materializeMdxComponent,
   normalizeMdxComponentProps,
   serializeMdxComponent,
@@ -1267,12 +1268,17 @@ export const reconcileMdxAuthoredContent = ({
   const originalInstanceById = new Map(
     root.fragment.instances.map((instance) => [instance.id, instance])
   );
-  const propsByInstanceId = new Map<string, Prop[]>();
-  for (const prop of fragment.props) {
-    const props = propsByInstanceId.get(prop.instanceId) ?? [];
-    props.push(prop);
-    propsByInstanceId.set(prop.instanceId, props);
-  }
+  const indexPropsByInstanceId = (props: readonly Prop[]) => {
+    const index = new Map<Instance["id"], Prop[]>();
+    for (const prop of props) {
+      const instanceProps = index.get(prop.instanceId) ?? [];
+      instanceProps.push(prop);
+      index.set(prop.instanceId, instanceProps);
+    }
+    return index;
+  };
+  const propsByInstanceId = indexPropsByInstanceId(fragment.props);
+  const originalPropsByInstanceId = indexPropsByInstanceId(root.fragment.props);
   const provenanceById = new Map(
     root.provenance.nodes.map((node) => [node.instanceId, node])
   );
@@ -1308,6 +1314,32 @@ export const reconcileMdxAuthoredContent = ({
     )
   );
   const templateInternalIds = new Set(templateByExpandedInstanceId.keys());
+  const derivedTemplatePropIds = new Set<Prop["id"]>();
+  for (const node of root.provenance.nodes) {
+    if (node.type !== "template") {
+      continue;
+    }
+    for (const [instance, props] of [
+      [
+        instanceById.get(node.instanceId),
+        propsByInstanceId.get(node.instanceId) ?? [],
+      ],
+      [
+        originalInstanceById.get(node.instanceId),
+        originalPropsByInstanceId.get(node.instanceId) ?? [],
+      ],
+    ] as const) {
+      if (instance === undefined) {
+        continue;
+      }
+      for (const propId of getDerivedMdxComponentPropIds({
+        instance,
+        instanceProps: props,
+      })) {
+        derivedTemplatePropIds.add(propId);
+      }
+    }
+  }
   const editableTemplatePropIds = new Set<string>();
   for (const node of root.provenance.nodes) {
     if (node.type !== "template") {
@@ -1370,6 +1402,7 @@ export const reconcileMdxAuthoredContent = ({
       original !== undefined &&
       templateInternalIds.has(original.instanceId) &&
       !editableTemplatePropIds.has(prop.id) &&
+      !derivedTemplatePropIds.has(prop.id) &&
       !equal(prop, original)
     ) {
       throw new Error(
@@ -1380,6 +1413,7 @@ export const reconcileMdxAuthoredContent = ({
     if (
       template !== undefined &&
       isEditableTemplateProp({ provenance: template, prop }) === false &&
+      derivedTemplatePropIds.has(prop.id) === false &&
       (original === undefined || !equal(original, prop))
     ) {
       throw new Error(
@@ -1394,6 +1428,7 @@ export const reconcileMdxAuthoredContent = ({
         templateByExpandedInstanceId.get(original.instanceId)?.instanceId ?? ""
       ) === false &&
       !editableTemplatePropIds.has(original.id) &&
+      !derivedTemplatePropIds.has(original.id) &&
       fragment.props.some(({ id }) => id === original.id) === false
     ) {
       throw new Error(

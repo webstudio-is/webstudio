@@ -5,6 +5,7 @@ import type {
   PropMeta,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
+import { blockComponent, contentBlockSourceProp } from "@webstudio-is/sdk";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
 import { __testing__ } from "./use-props-logic";
 import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime";
@@ -15,6 +16,7 @@ const { isPropVisibleInContentMode, getAndDelete, canShowTextContent } =
 const getInput = (
   input: Partial<Parameters<typeof isPropVisibleInContentMode>[0]> = {}
 ): Parameters<typeof isPropVisibleInContentMode>[0] => ({
+  component: "Box",
   propName: "title",
   props: [],
   propsMetas: new Map(),
@@ -119,6 +121,42 @@ describe("isPropVisibleInContentMode", () => {
         getInput({
           propName: "src",
           propsMetas: new Map([["src", fileMeta]]),
+        })
+      )
+    ).toBe(false);
+  });
+
+  test("shows an existing Content Block source without making it editable", () => {
+    const source: Prop = {
+      id: "source-prop",
+      instanceId: "editable-instance",
+      name: contentBlockSourceProp,
+      type: "asset",
+      value: "post",
+    };
+    const sourceMeta: PropMeta = {
+      type: "string",
+      control: "file",
+      required: false,
+      contentMode: false,
+    };
+
+    expect(
+      isPropVisibleInContentMode(
+        getInput({
+          component: blockComponent,
+          propName: contentBlockSourceProp,
+          props: [source],
+          propsMetas: new Map([[contentBlockSourceProp, sourceMeta]]),
+        })
+      )
+    ).toBe(true);
+    expect(
+      isPropVisibleInContentMode(
+        getInput({
+          component: blockComponent,
+          propName: contentBlockSourceProp,
+          propsMetas: new Map([[contentBlockSourceProp, sourceMeta]]),
         })
       )
     ).toBe(false);

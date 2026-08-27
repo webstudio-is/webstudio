@@ -31,3 +31,22 @@ test("allows only safe resource fields in generated component props", () => {
   expect(wsComponentMeta.safeParse(createMeta("method")).success).toBe(true);
   expect(wsComponentMeta.safeParse(createMeta("url")).success).toBe(false);
 });
+
+test("accepts component text content editor metadata", () => {
+  const textContent = {
+    control: "textContent" as const,
+    type: "string" as const,
+    required: false,
+    editor: {
+      control: "code" as const,
+      languageProp: "language",
+    },
+  };
+  expect(
+    wsComponentMeta.parse({
+      textContent: {
+        ...textContent,
+      },
+    }).textContent
+  ).toEqual(textContent);
+});

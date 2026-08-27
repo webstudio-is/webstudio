@@ -35,14 +35,14 @@ const useInstance = (instanceId: Instance["id"]) => {
 
 export const TextContent = ({
   instanceId,
+  meta,
   computedValue,
   computedProps,
 }: ControlProps<"textContent">) => {
   const instance = useInstance(instanceId);
+  const languageProp = meta.editor?.languageProp;
   const languageSupport = useCodeTextLanguageSupport(
-    instance?.component === "CodeText"
-      ? computedProps?.get("language")
-      : undefined
+    languageProp === undefined ? undefined : computedProps?.get(languageProp)
   );
   const childrenCount = instance?.children.length ?? 0;
   const hasChildren = childrenCount > 0;

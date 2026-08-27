@@ -20,6 +20,7 @@ export const meta: WsComponentMeta = {
       required: true,
       control: "json-code",
       type: "string",
+      contentMode: true,
     },
   },
 };

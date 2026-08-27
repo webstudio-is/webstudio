@@ -25,5 +25,19 @@ export const meta: WsComponentMeta = {
     "required",
     "autofocus",
   ],
-  props,
+  props: {
+    ...props,
+    placeholder: {
+      type: "string",
+      control: "text",
+      required: false,
+      contentMode: true,
+    },
+    "aria-label": {
+      type: "string",
+      control: "text",
+      required: false,
+      contentMode: true,
+    },
+  },
 };
