@@ -6,7 +6,7 @@ description: >-
 
 # 🏠 Dashboard
 
-<figure><img src="../../.gitbook/assets/dashboard.png" alt="Webstudio dashboard showing project cards"><figcaption><p>The Webstudio Dashboard</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/dashboard.webp" alt="Webstudio dashboard showing project cards"><figcaption><p>The Webstudio Dashboard</p></figcaption></figure>
 
 The Dashboard is the first screen you see after logging into Webstudio. It provides an overview of your workspaces and projects, with powerful features for organization and quick access.
 
