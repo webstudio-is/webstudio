@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { blockComponent, blockTemplateComponent } from "./core-metas";
+import {
+  blockComponent,
+  blockTemplateComponent,
+  coreMetas,
+} from "./core-metas";
 import type { FileAsset } from "./schema/assets";
 import type { Instance } from "./schema/instances";
 import type { Prop } from "./schema/props";
@@ -10,6 +14,23 @@ import {
   isEqualContentBlockSource,
   parseContentBlockSourceProp,
 } from "./content-block";
+
+test("declares the Content Block source as a Design-mode MDX property", () => {
+  expect(coreMetas[blockComponent]).toMatchObject({
+    initialProps: ["src"],
+    props: {
+      src: {
+        type: "string",
+        control: "file",
+        label: "Source",
+        description:
+          "Create an .mdx file in Assets, then select or bind it here.",
+        accept: ".mdx",
+        contentMode: false,
+      },
+    },
+  });
+});
 
 const block: Instance = {
   type: "instance",

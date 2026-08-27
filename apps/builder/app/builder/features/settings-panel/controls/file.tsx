@@ -90,9 +90,9 @@ export const FileControl = ({
           )}
         />
         <SelectAsset
-          prop={prop?.type === "asset" ? prop : undefined}
+          assetId={prop?.type === "asset" ? prop.value : undefined}
           accept={meta.accept}
-          onChange={onChange}
+          onChange={(assetId) => onChange({ type: "asset", value: assetId })}
         />
       </Flex>
     </VerticalLayout>

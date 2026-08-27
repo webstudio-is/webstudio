@@ -2,7 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { parseMdxDocumentRecovering } from "@webstudio-is/content-engine/mdx";
 import { Grid, Label, Text } from "@webstudio-is/design-system";
-import { getContentBlockSource } from "@webstudio-is/sdk";
+import {
+  contentBlockSourceProp,
+  getContentBlockSource,
+} from "@webstudio-is/sdk";
 import { TextFileEditor } from "~/builder/features/text-file-editor/text-file-editor";
 import {
   $authPermit,
@@ -31,6 +34,8 @@ import {
   parseContentBlockRenderScope,
   resolveContentBlockOccurrenceAssetId,
 } from "~/shared/content-block-source-utils";
+import { PropertyLabel } from "../property-label";
+import { VerticalLayout } from "../shared";
 
 export const ContentBlockSourceSection = ({
   blockInstanceId,
@@ -77,6 +82,7 @@ export const ContentBlockSourceSection = ({
   const frontmatterSourceRef = useRef<string>();
   const frontmatterDirtyRef = useRef(false);
   const [openedAssetId, setOpenedAssetId] = useState<string>();
+  const [disconnecting, setDisconnecting] = useState(false);
   const [contentState, setContentState] = useState<AssetContentSessionState>();
   const controller = useMemo(
     () =>
@@ -158,7 +164,15 @@ export const ContentBlockSourceSection = ({
   );
 
   return (
-    <>
+    <VerticalLayout
+      label={
+        <PropertyLabel
+          name={contentBlockSourceProp}
+          deletable={authPermit !== "view"}
+          onDelete={() => setDisconnecting(true)}
+        />
+      }
+    >
       <ContentBlockSourceControl
         source={source}
         resolvedAsset={resolvedAsset}
@@ -170,6 +184,8 @@ export const ContentBlockSourceSection = ({
         persistenceStatus={contentState?.status}
         persistenceError={contentState?.error?.message}
         repeatedRenderScope={repeatedRenderScope}
+        disconnecting={disconnecting}
+        onDisconnectingChange={setDisconnecting}
         onRetry={
           resolvedAssetId === undefined
             ? undefined
@@ -249,6 +265,6 @@ export const ContentBlockSourceSection = ({
           onOpenChange={(open) => open === false && setOpenedAssetId(undefined)}
         />
       )}
-    </>
+    </VerticalLayout>
   );
 };

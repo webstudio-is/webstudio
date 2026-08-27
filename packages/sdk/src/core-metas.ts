@@ -11,6 +11,7 @@ import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance } from "./schema/instances";
 import { tagProperty } from "./runtime";
 import { tags } from "./__generated__/tags";
+import { contentBlockSourceProp } from "./schema/content-block";
 
 export const rootComponent = "ws:root";
 
@@ -131,6 +132,19 @@ const blockMeta: WsComponentMeta = {
   contentModel: {
     category: "instance",
     children: [blockTemplateComponent, "instance"],
+  },
+  initialProps: [contentBlockSourceProp],
+  props: {
+    [contentBlockSourceProp]: {
+      type: "string",
+      control: "file",
+      label: "Source",
+      description:
+        "Create an .mdx file in Assets, then select or bind it here.",
+      required: false,
+      accept: ".mdx",
+      contentMode: false,
+    },
   },
 };
 

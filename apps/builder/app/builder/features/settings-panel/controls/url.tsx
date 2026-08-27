@@ -426,8 +426,8 @@ const BasePage = ({ prop, onChange }: BaseControlProps) => {
 const BaseAttachment = ({ prop, onChange }: BaseControlProps) => (
   <Row>
     <SelectAsset
-      prop={prop?.type === "asset" ? prop : undefined}
-      onChange={onChange}
+      assetId={prop?.type === "asset" ? prop.value : undefined}
+      onChange={(assetId) => onChange({ type: "asset", value: assetId })}
     />
   </Row>
 );

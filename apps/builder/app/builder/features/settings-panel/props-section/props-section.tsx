@@ -137,10 +137,20 @@ const renderProperty = (
     propValuesByInstanceSelector,
     component,
     instanceId,
+    selectedInstanceKey,
   }: PropsSectionProps,
   item: PropAndMeta
 ) => {
   const { prop, propName, meta } = item;
+  if (component === blockComponent && propName === contentBlockSourceProp) {
+    return (
+      <ContentBlockSourceSection
+        key={propName}
+        blockInstanceId={instanceId}
+        renderScope={selectedInstanceKey}
+      />
+    );
+  }
   const targetInstanceId = item.instanceId ?? instanceId;
   const targetPropValues =
     item.instanceSelector === undefined
@@ -282,16 +292,8 @@ export const PropsSection = (props: PropsSectionProps) => {
 
   const matchMediaValue = matchMediaBreakpoints(matchingBreakpoints);
 
-  const addedProps = logic.addedProps.filter(
-    (item) =>
-      props.component !== blockComponent ||
-      item.propName !== contentBlockSourceProp
-  );
-  const initialProps = logic.initialProps.filter(
-    (item) =>
-      props.component !== blockComponent ||
-      item.propName !== contentBlockSourceProp
-  );
+  const addedProps = logic.addedProps;
+  const initialProps = logic.initialProps;
   const hasProperties = addedProps.length > 0 || initialProps.length > 0;
   const hasItems = hasProperties || (isDesignMode && addingProp);
 
@@ -455,17 +457,6 @@ export const PropsSectionContainer = ({
       style={{ display: "contents" }}
       disabled={instance.component === descendantComponent}
     >
-      {isDesignMode && instance.component === blockComponent && (
-        <>
-          <Box css={{ padding: theme.panel.padding }}>
-            <ContentBlockSourceSection
-              blockInstanceId={instance.id}
-              renderScope={selectedInstanceKey}
-            />
-          </Box>
-          <Separator />
-        </>
-      )}
       <PropsSection
         propsLogic={logic}
         propValues={propValues ?? new Map()}

@@ -106,6 +106,24 @@ describe("isPropVisibleInContentMode", () => {
     ).toBe(true);
   });
 
+  test("keeps explicitly Design-mode file controls out of Content mode", () => {
+    const fileMeta: PropMeta = {
+      type: "string",
+      control: "file",
+      required: false,
+      contentMode: false,
+    };
+
+    expect(
+      isPropVisibleInContentMode(
+        getInput({
+          propName: "src",
+          propsMetas: new Map([["src", fileMeta]]),
+        })
+      )
+    ).toBe(false);
+  });
+
   test("shows only props marked as content mode in metadata", () => {
     const contentModeMeta: PropMeta = {
       type: "string",

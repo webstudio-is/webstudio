@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vitest";
-import type { Instance, Prop } from "@webstudio-is/sdk";
 import {
+  blockComponent,
+  contentBlockSourceProp,
+  type Instance,
+  type Prop,
+} from "@webstudio-is/sdk";
+import {
+  bindProps,
   clonePropForInstance,
   createPropDeletePayload,
   createPropBindingFromInput,
@@ -11,6 +17,7 @@ import {
   createValidatedPropBindingFromInput,
   createValidatedPropValueFromInput,
   createPropValue,
+  deleteProps,
   findProp,
   getDefaultPropMetaForType,
   getPropDeletePlan,
@@ -501,6 +508,70 @@ describe("createPropUpsertPayload", () => {
 });
 
 describe("updateProps", () => {
+  test("requires Content Block source lifecycle operations", () => {
+    const contentBlock: Instance = {
+      type: "instance",
+      id: "content-block-id",
+      component: blockComponent,
+      children: [],
+    };
+    const source: Prop = {
+      id: "source-id",
+      instanceId: contentBlock.id,
+      name: contentBlockSourceProp,
+      type: "asset",
+      value: "asset-id",
+    };
+    const state = {
+      instances: new Map([[contentBlock.id, contentBlock]]),
+      props: new Map([[source.id, source]]),
+    };
+
+    expect(() =>
+      updateProps(
+        state,
+        {
+          updates: [
+            {
+              instanceId: contentBlock.id,
+              name: contentBlockSourceProp,
+              type: "asset",
+              value: "next-asset-id",
+            },
+          ],
+        },
+        { createId: () => "next-source-id" }
+      )
+    ).toThrow("Content Block source operations");
+
+    expect(() =>
+      bindProps(
+        state,
+        {
+          bindings: [
+            {
+              instanceId: contentBlock.id,
+              name: contentBlockSourceProp,
+              binding: { type: "expression", value: "selectedAssetId" },
+            },
+          ],
+        },
+        { createId: () => "next-source-id" }
+      )
+    ).toThrow("Content Block source operations");
+
+    expect(() =>
+      deleteProps(state, {
+        deletions: [
+          {
+            instanceId: contentBlock.id,
+            name: contentBlockSourceProp,
+          },
+        ],
+      })
+    ).toThrow("Content Block source operations");
+  });
+
   test("parses CSS strings in animation action keyframes", () => {
     const input = propUpdatesInput.parse({
       updates: [

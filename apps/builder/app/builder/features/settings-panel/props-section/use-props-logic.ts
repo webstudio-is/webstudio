@@ -70,6 +70,10 @@ const isPropVisibleInContentMode = ({
   if (propName === textContentAttribute) {
     return true;
   }
+  const propMeta = propsMetas.get(propName);
+  if (propMeta?.contentMode === false) {
+    return false;
+  }
   if (
     props.some(
       (prop) =>
@@ -78,7 +82,6 @@ const isPropVisibleInContentMode = ({
   ) {
     return true;
   }
-  const propMeta = propsMetas.get(propName);
   if (propMeta?.type === "string" && propMeta.control === "file") {
     return true;
   }

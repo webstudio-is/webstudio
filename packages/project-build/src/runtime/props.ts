@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { parseCssValue } from "@webstudio-is/css-data";
 import {
+  blockComponent,
+  contentBlockSourceProp,
   createAnimationActionInput,
   prop as propSchema,
   type Instance,
@@ -801,6 +803,21 @@ const assertRuntimeInstance = (
 const throwPropErrors = (errors: string[]) =>
   throwBuilderRuntimeError("BAD_REQUEST", errors.join("\n"));
 
+const assertGenericPropMutationAllowed = (
+  instance: Instance,
+  name: Prop["name"]
+) => {
+  if (
+    instance.component === blockComponent &&
+    name === contentBlockSourceProp
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Use Content Block source operations to connect, switch, or disconnect its source."
+    );
+  }
+};
+
 const getHtmlEmbedCodeErrors = (instance: Instance, update: PropValueInput) => {
   if (
     instance.component !== "HtmlEmbed" ||
@@ -838,6 +855,7 @@ export const updateProps = (
   const nextProps = input.updates.map((update) => {
     assertRuntimeInstance(instances, update.instanceId);
     const instance = instances.get(update.instanceId)!;
+    assertGenericPropMutationAllowed(instance, update.name);
     const htmlEmbedCodeErrors = getHtmlEmbedCodeErrors(instance, update);
     const codeErrors = [
       ...htmlEmbedCodeErrors,
@@ -962,6 +980,8 @@ export const bindProps = (
   const { instances, props } = getRequiredPropState(state);
   const nextProps = input.bindings.map((binding) => {
     assertRuntimeInstance(instances, binding.instanceId);
+    const instance = instances.get(binding.instanceId)!;
+    assertGenericPropMutationAllowed(instance, binding.name);
     const existing = findProp(props.values(), binding.instanceId, binding.name);
     const nextProp = createValidatedPropBindingFromInput(
       { ...binding, propId: binding.propId ?? existing?.id },
@@ -988,6 +1008,12 @@ export const deleteProps = (
   input: z.infer<typeof propDeletionsInput>
 ) => {
   const { instances, props } = getRequiredPropState(state);
+  for (const deletion of input.deletions) {
+    const instance = instances.get(deletion.instanceId);
+    if (instance !== undefined) {
+      assertGenericPropMutationAllowed(instance, deletion.name);
+    }
+  }
   const { missingInstanceId, payload, propIds } = createPropDeletePayload({
     instances,
     props: props.values(),

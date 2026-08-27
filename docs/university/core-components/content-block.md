@@ -64,9 +64,9 @@ Editors can delete direct children of the Content Block. They cannot delete the 
 
 ### Store content in an MDX file
 
-In Design mode, use **Content source** to connect a `.mdx` file from Assets. The file becomes the source of the Content Block's ordinary children; the Templates container remains part of the project.
+In Design mode, use the **Source** property under **Properties & attributes** to connect a `.mdx` file from Assets. Create the file in Assets first, then select it directly or bind the property to an Asset ID. The file becomes the source of the Content Block's ordinary children; the Templates container remains part of the project.
 
-Connecting a file replaces the Content Block's existing ordinary children. Disconnecting copies the current file content back into the Content Block before removing the connection.
+Connecting a file replaces the Content Block's existing ordinary children. Select the connected filename to switch files, or select **Open** to edit it. To disconnect, select the **Source** property label and choose **Reset value**. Disconnecting copies the current file content back into the Content Block before removing the connection.
 
 Editors continue to use the normal Content mode controls. Their changes appear immediately on the canvas and then save to the connected file. Changes made in the file editor also update every Content Block connected to that file.
 

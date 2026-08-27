@@ -8,7 +8,6 @@ import {
   DialogDescription,
   DialogTitle,
   Flex,
-  FloatingPanel,
   Grid,
   Text,
   theme,
@@ -19,10 +18,9 @@ import {
   type ContentBlockDiagnostic,
   type ContentBlockSource,
 } from "@webstudio-is/sdk";
-import { AssetManager } from "~/builder/shared/asset-manager";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
-import { CreateTextFileDialog } from "~/builder/features/text-file-editor/create-text-file-dialog";
 import { useBindableControl } from "./use-bindable-control";
+import { SelectAsset } from "./select-asset";
 import {
   deduplicateContentBlockDiagnostics,
   formatContentBlockDiagnostic,
@@ -125,10 +123,12 @@ const DisconnectDialog = ({
     <DialogContent>
       <DialogTitle>Disconnect content source</DialogTitle>
       <Grid gap="3" css={{ padding: theme.panel.padding }}>
-        <DialogDescription>
-          {repeatedRenderScope
-            ? "This source binding is shared by every Collection item. The selected item’s file content will become the ordinary Content Block content used by every item. The file will not be changed."
-            : "The current file content will be copied into the Content Block. The file will not be changed."}
+        <DialogDescription asChild>
+          <Text>
+            {repeatedRenderScope
+              ? "This source binding is shared by every Collection item. The selected item’s file content will become the ordinary Content Block content used by every item. The file will not be changed."
+              : "The current file content will be copied into the Content Block. The file will not be changed."}
+          </Text>
         </DialogDescription>
         {error !== undefined && (
           <Text role="alert" color="destructive" variant="tiny">
@@ -137,54 +137,18 @@ const DisconnectDialog = ({
         )}
       </Grid>
       <DialogActions>
+        <Button autoFocus disabled={disabled} onClick={onConfirm}>
+          Confirm
+        </Button>
         <DialogClose>
           <Button color="ghost" disabled={disabled}>
             Abort
           </Button>
         </DialogClose>
-        <Button autoFocus disabled={disabled} onClick={onConfirm}>
-          Confirm
-        </Button>
       </DialogActions>
     </DialogContent>
   </Dialog>
 );
-
-const SourcePicker = ({
-  title,
-  accept,
-  disabled,
-  triggerLabel,
-  onSelect,
-}: {
-  title: string;
-  accept: string;
-  disabled: boolean;
-  triggerLabel: string;
-  onSelect: (assetId: string) => void;
-}) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <FloatingPanel
-      title={title}
-      open={open}
-      onOpenChange={setOpen}
-      content={
-        <AssetManager
-          accept={accept}
-          onChange={(assetId) => {
-            setOpen(false);
-            onSelect(assetId);
-          }}
-        />
-      }
-    >
-      <Button color="neutral" disabled={disabled}>
-        {triggerLabel}
-      </Button>
-    </FloatingPanel>
-  );
-};
 
 /**
  * Presentation and interaction boundary for Content Block source lifecycle.
@@ -202,6 +166,8 @@ export const ContentBlockSourceControl = ({
   persistenceStatus,
   persistenceError,
   repeatedRenderScope = false,
+  disconnecting,
+  onDisconnectingChange,
   onRetry,
   onRequestSource,
   onDisconnect,
@@ -217,6 +183,8 @@ export const ContentBlockSourceControl = ({
   persistenceStatus?: "saved" | "pending" | "saving" | "failed" | "conflicting";
   persistenceError?: string;
   repeatedRenderScope?: boolean;
+  disconnecting: boolean;
+  onDisconnectingChange: (disconnecting: boolean) => void;
   onRetry?: () => Promise<void>;
   onRequestSource: (input: {
     source: ContentBlockSource;
@@ -226,11 +194,9 @@ export const ContentBlockSourceControl = ({
   onOpen: (assetId: string) => void;
 }) => {
   const [pendingSource, setPendingSource] = useState<PendingSource>();
-  const [disconnecting, setDisconnecting] = useState(false);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [localError, setLocalError] = useState<string>();
-  const [creatingMdx, setCreatingMdx] = useState(false);
   const isDisabled = disabled || loading || busy;
   const connected = source !== undefined;
   const binding = useBindableControl({
@@ -238,6 +204,15 @@ export const ContentBlockSourceControl = ({
     fallbackExpression: JSON.stringify(resolvedAsset?.id ?? ""),
   });
   const uniqueDiagnostics = deduplicateContentBlockDiagnostics(diagnostics);
+  const sourceLabel = resolvedAsset
+    ? formatAssetName(resolvedAsset)
+    : loading
+      ? "Loading content source…"
+      : source?.type === "expression"
+        ? "Dynamic content source"
+        : source?.type === "asset"
+          ? "Missing MDX Asset"
+          : "No content source";
 
   const beginOperation = () => {
     if (disabled || loading || busyRef.current) {
@@ -287,9 +262,6 @@ export const ContentBlockSourceControl = ({
 
   return (
     <fieldset disabled={isDisabled} style={{ display: "contents" }}>
-      <Text as="legend" variant="labels">
-        Content source
-      </Text>
       <Grid gap="2">
         <BindableExpressionControl
           {...binding}
@@ -312,59 +284,45 @@ export const ContentBlockSourceControl = ({
               void requestSource({ type: "asset", assetId: value });
             }
           }}
-          renderControl={() => (
-            <Flex gap="2" align="center" wrap="wrap">
-              <Text>
-                {resolvedAsset
-                  ? formatAssetName(resolvedAsset)
-                  : loading
-                    ? "Loading content source…"
-                    : source?.type === "expression"
-                      ? "Dynamic content source"
-                      : source?.type === "asset"
-                        ? "Missing MDX Asset"
-                        : "No content source"}
-              </Text>
-              {resolvedAsset !== undefined && (
-                <Button
-                  color="ghost"
+          renderControl={() =>
+            connected ? (
+              <Grid columns={2} gap="2" aria-label="Content source actions">
+                <SelectAsset
+                  assetId={resolvedAsset?.id}
+                  title="Switch MDX file"
+                  accept=".mdx"
                   disabled={isDisabled}
-                  onClick={() => onOpen(resolvedAsset.id)}
+                  triggerLabel={sourceLabel}
+                  onChange={(assetId) =>
+                    void requestSource({ type: "asset", assetId })
+                  }
+                />
+                <Button
+                  color="neutral"
+                  disabled={isDisabled || resolvedAsset === undefined}
+                  css={{ width: "100%" }}
+                  onClick={() => {
+                    if (resolvedAsset !== undefined) {
+                      onOpen(resolvedAsset.id);
+                    }
+                  }}
                 >
                   Open
                 </Button>
-              )}
-            </Flex>
-          )}
+              </Grid>
+            ) : (
+              <SelectAsset
+                title="Choose MDX file"
+                accept=".mdx"
+                disabled={isDisabled}
+                triggerLabel="Connect .mdx file"
+                onChange={(assetId) =>
+                  void requestSource({ type: "asset", assetId })
+                }
+              />
+            )
+          }
         />
-
-        <Flex gap="2" wrap="wrap">
-          <SourcePicker
-            title={connected ? "Switch MDX file" : "Choose MDX file"}
-            accept=".mdx"
-            disabled={isDisabled}
-            triggerLabel={connected ? "Switch file" : "Choose file"}
-            onSelect={(assetId) =>
-              void requestSource({ type: "asset", assetId })
-            }
-          />
-          <Button
-            color="neutral"
-            disabled={isDisabled}
-            onClick={() => setCreatingMdx(true)}
-          >
-            Create MDX file
-          </Button>
-          {connected && (
-            <Button
-              color="ghost"
-              disabled={isDisabled}
-              onClick={() => setDisconnecting(true)}
-            >
-              Disconnect
-            </Button>
-          )}
-        </Flex>
 
         {(localError ?? error) !== undefined &&
           pendingSource === undefined &&
@@ -471,7 +429,7 @@ export const ContentBlockSourceControl = ({
             disabled={isDisabled}
             error={localError ?? error}
             repeatedRenderScope={repeatedRenderScope}
-            onClose={() => setDisconnecting(false)}
+            onClose={() => onDisconnectingChange(false)}
             onConfirm={() => {
               if (beginOperation() === false) {
                 return;
@@ -486,7 +444,7 @@ export const ContentBlockSourceControl = ({
                     return;
                   }
                   if (result.status === "applied") {
-                    setDisconnecting(false);
+                    onDisconnectingChange(false);
                   }
                 })
                 .catch((error) =>
@@ -498,18 +456,6 @@ export const ContentBlockSourceControl = ({
             }}
           />
         )}
-
-        <CreateTextFileDialog
-          open={creatingMdx}
-          defaultName="untitled.mdx"
-          allowedExtensions={["mdx"]}
-          title="New MDX file"
-          disabled={isDisabled}
-          onOpenChange={setCreatingMdx}
-          onCreated={(assetId) =>
-            void requestSource({ type: "asset", assetId })
-          }
-        />
       </Grid>
     </fieldset>
   );
