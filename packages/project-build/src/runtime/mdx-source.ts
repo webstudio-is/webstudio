@@ -15,7 +15,11 @@ import {
   materializeMdxAuthoredContent,
   type MaterializedMdxAuthoredContentRoot,
 } from "./mdx-authored-content";
-import { createMdxDiagnostics } from "./mdx-diagnostics";
+import {
+  createMdxContentModelDiagnostics,
+  createMdxDiagnostics,
+} from "./mdx-diagnostics";
+import { createMdxAssetReferenceValues } from "./mdx-asset-references";
 import { materializeMdxTemplates } from "./mdx-materialization";
 import { resolveMdxTemplates } from "./mdx-template-resolution";
 
@@ -61,13 +65,6 @@ export const materializeMdxSource = async ({
     instances: data.instances,
     metas,
   });
-  const templates = await materializeMdxTemplates({
-    identity,
-    resolution,
-    data,
-    metas,
-    projectId,
-  });
   const sourceAsset = data.assets.get(identity.assetId);
   const hierarchy = createAssetFolderHierarchy(data.assetFolders ?? new Map());
   const getNamedAsset = (asset: Asset) => ({
@@ -83,11 +80,27 @@ export const materializeMdxSource = async ({
           source: getNamedAsset(sourceAsset),
           assets: Array.from(data.assets.values(), getNamedAsset),
         });
+  const templates = await materializeMdxTemplates({
+    identity,
+    resolution,
+    data,
+    metas,
+    projectId,
+    assetReferences,
+  });
   const root = materializeMdxAuthoredContent({
     identity,
     document,
     templateMaterialization: templates,
     assetReferences,
+    assetReferenceValues:
+      sourceAsset === undefined
+        ? undefined
+        : createMdxAssetReferenceValues({
+            source: sourceAsset,
+            assets: data.assets.values(),
+            assetFolders: data.assetFolders ?? new Map(),
+          }),
     createUnresolvedTemplateInstance,
   });
   const includedAssetIds = new Set(root.fragment.assets.map(({ id }) => id));
@@ -106,6 +119,7 @@ export const materializeMdxSource = async ({
         diagnostics: parsedSource.diagnostics,
       }),
       ...templates.diagnostics,
+      ...createMdxContentModelDiagnostics({ root, metas }),
     ],
   };
 };

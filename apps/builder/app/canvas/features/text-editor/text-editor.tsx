@@ -79,6 +79,7 @@ import {
   $registeredComponentMetas,
   $textEditingInstanceSelector,
   $textEditorContextMenu,
+  $textEditorContextMenuCommand,
   execTextEditorContextMenuCommand,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
@@ -795,6 +796,9 @@ const InitCursorPlugin = () => {
         // We are controlling scroll ourself in instance-selected.ts see updateScroll.
         // Without skipping we are getting side effects of composition in scrollBy, scrollIntoView calls
         tag: "skip-scroll-into-view",
+        onUpdate: () => {
+          editor.focus();
+        },
       }
     );
   }, [editor]);
@@ -1075,15 +1079,18 @@ const RichTextContentPluginInternal = ({
     let menuState: "closed" | "opening" | "opened" = "closed";
 
     let slashNodeKey: NodeKey | undefined = undefined;
+    let removeSlashWhenSelectionChanges = false;
 
     const closeMenu = () => {
-      if (menuState === "closed") {
+      if (menuState === "closed" && removeSlashWhenSelectionChanges === false) {
         return;
       }
 
-      menuState = "closed";
+      if (menuState !== "closed") {
+        menuState = "closed";
 
-      handleOpen(editor.getEditorState(), undefined);
+        handleOpen(editor.getEditorState(), undefined);
+      }
 
       if (slashNodeKey === undefined) {
         return;
@@ -1103,6 +1110,8 @@ const RichTextContentPluginInternal = ({
 
       if (!isSelectionInSameComponent) {
         node?.remove();
+        slashNodeKey = undefined;
+        removeSlashWhenSelectionChanges = false;
 
         // Delete current
         if ($getRoot().getTextContentSize() === 0) {
@@ -1127,6 +1136,17 @@ const RichTextContentPluginInternal = ({
 
       selection.setStyle("");
     };
+
+    const unsubscribeContextMenuCommand = $textEditorContextMenuCommand.listen(
+      (command) => {
+        if (command?.type === "templateInsertionStarted") {
+          removeSlashWhenSelectionChanges = true;
+        }
+        if (command?.type === "templateInsertionCancelled") {
+          removeSlashWhenSelectionChanges = false;
+        }
+      }
+    );
 
     const unsubscibeSelectionChange = editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
@@ -1340,7 +1360,7 @@ const RichTextContentPluginInternal = ({
     );
 
     const closeMenuWithUpdate = () => {
-      if (menuState === "closed") {
+      if (menuState === "closed" && removeSlashWhenSelectionChanges === false) {
         return;
       }
 
@@ -1412,6 +1432,7 @@ const RichTextContentPluginInternal = ({
       unsubscribeUpdateListener();
       unsubscibeSelectionChange();
       unsubscribeBlurListener();
+      unsubscribeContextMenuCommand();
       // Safari and FF support as no blur event is triggered in some cases
       closeMenuWithUpdate();
     };

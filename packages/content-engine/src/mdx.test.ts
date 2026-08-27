@@ -633,6 +633,22 @@ Paragraph with <ws.element ws:tag="span">inline</ws.element> content.
   });
 
   test.each([
+    ["ul", "- First\n\n* Second", "-   First\n\n*   Second\n"],
+    ["ol", "1. First\n\n1) Second", "1.  First\n\n1)  Second\n"],
+  ])(
+    "keeps adjacent %s elements separate with MDX-safe Markdown",
+    async (tag, input, expected) => {
+      const document = await parseMdxDocument({ source: input });
+      const source = serializeMdxDocument(document);
+
+      expect(source).toBe(expected);
+      await expect(parseMdxDocument({ source })).resolves.toMatchObject({
+        children: [{ tag }, { tag }],
+      });
+    }
+  );
+
+  test.each([
     `<ws.element ws:tag="a" href="https://google.com/">Test link</ws.element>`,
     `<ws.element ws:tag="a" href="https://google.com/">
 Test link

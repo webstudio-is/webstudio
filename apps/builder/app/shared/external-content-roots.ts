@@ -10,7 +10,7 @@ import {
   materializeMdxSource,
   mergeWebstudioFragments,
   MdxAuthoredContentConflictError,
-  omitTransientEmptyParagraphs,
+  omitTransientEmptyMarkdownDrafts,
   rebaseMdxAuthoredContent,
   createMdxScopeIdGenerator,
   type MaterializedMdxAuthoredContentRoot,
@@ -709,7 +709,7 @@ subscribeExternalContentMutations((rootKeys) => {
     // after the newest local document is installed in the session.
     entry.openVersion += 1;
     const fragment = extractCurrentFragment(entry);
-    const persistedFragment = omitTransientEmptyParagraphs({
+    const persistedFragment = omitTransientEmptyMarkdownDrafts({
       root: entry.root,
       fragment,
     });
@@ -750,7 +750,7 @@ subscribeExternalContentMutations((rootKeys) => {
         if (roots.get(entry.key) === entry) {
           const currentFragment = extractCurrentFragment(entry);
           saveRoot = entry.root;
-          saveFragment = omitTransientEmptyParagraphs({
+          saveFragment = omitTransientEmptyMarkdownDrafts({
             root: saveRoot,
             fragment: currentFragment,
           });

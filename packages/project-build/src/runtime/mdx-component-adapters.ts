@@ -6,29 +6,40 @@ import {
 } from "@webstudio-is/content-engine/mdx";
 import { mapAttributeNames } from "@webstudio-is/content-engine/jsx-attributes";
 import type { Instance, Prop } from "@webstudio-is/sdk";
-import { serializeMdxStaticProp } from "./mdx-static-props";
+
+type MaterializedComponentProp = Readonly<{
+  prop: MdxAuthoredProp;
+  source?: Readonly<{
+    nodePath: readonly number[];
+    propIndex: number;
+  }>;
+  requiresAssetReference?: boolean;
+}>;
 
 type MaterializedComponent = Readonly<{
   children: Instance["children"];
-  props: readonly MdxAuthoredProp[];
+  props: readonly MaterializedComponentProp[];
 }>;
 
 type MdxComponentAdapter = Readonly<{
   component: Instance["component"];
   toMdx: (input: {
     instance: Instance;
-    props: readonly Prop[];
+    props: readonly MdxAuthoredProp[];
+    instanceProps: readonly Prop[];
     original?: MdxAuthoredNode;
   }) => MdxAuthoredNode | undefined;
   fromMdx: (node: MdxAuthoredNode) => MaterializedComponent | undefined;
 }>;
 
 const codeTextComponent = "CodeText";
+const imageComponent = "Image";
+const derivedImageAssetPropNames = new Set(["width", "height", "alt"]);
 
-const getStringProps = (props: readonly Prop[]) => {
+const getStringProps = (props: readonly MdxAuthoredProp[]) => {
   const values = new Map<string, string>();
   for (const prop of props) {
-    if (prop.type !== "string" || values.has(prop.name)) {
+    if (typeof prop.value !== "string" || values.has(prop.name)) {
       return;
     }
     values.set(prop.name, prop.value);
@@ -80,35 +91,202 @@ const codeTextAdapter: MdxComponentAdapter = {
       props:
         code.language === undefined
           ? []
-          : [{ name: "language", value: code.language }],
+          : [{ prop: { name: "language", value: code.language } }],
     };
+  },
+};
+
+const readMdxImage = (node: MdxAuthoredNode) => {
+  if (
+    node.type !== "element" ||
+    node.syntax !== "markdown" ||
+    node.tag !== "p" ||
+    node.props.length > 0 ||
+    node.children.length !== 1
+  ) {
+    return;
+  }
+  const image = node.children[0];
+  if (
+    image?.type !== "element" ||
+    image.syntax !== "markdown" ||
+    image.tag !== "img" ||
+    image.children.length > 0
+  ) {
+    return;
+  }
+  return image;
+};
+
+const omitDerivedImageAssetProps = ({
+  props,
+  instanceProps,
+}: {
+  props: readonly MdxAuthoredProp[];
+  instanceProps: readonly Prop[];
+}) => {
+  const source = instanceProps.find(
+    (prop) => prop.name === "src" && prop.type === "asset"
+  );
+  const derivedAssetProps = instanceProps.filter(
+    (prop) => prop.type === "asset" && derivedImageAssetPropNames.has(prop.name)
+  );
+  const derivedAssetIds = new Set(derivedAssetProps.map(({ value }) => value));
+  const assetId =
+    source?.type === "asset"
+      ? source.value
+      : derivedAssetProps.length >= 2 && derivedAssetIds.size === 1
+        ? derivedAssetProps[0]?.value
+        : undefined;
+  if (assetId === undefined) {
+    return props;
+  }
+  const derivedNames = new Set(
+    instanceProps.flatMap((prop) =>
+      prop.type === "asset" &&
+      prop.value === assetId &&
+      derivedImageAssetPropNames.has(prop.name)
+        ? [prop.name]
+        : []
+    )
+  );
+  return props.filter(({ name }) => derivedNames.has(name) === false);
+};
+
+export const normalizeMdxComponentProps = ({
+  instance,
+  props,
+  instanceProps,
+}: {
+  instance: Instance;
+  props: readonly MdxAuthoredProp[];
+  instanceProps: readonly Prop[];
+}) =>
+  instance.component === imageComponent
+    ? omitDerivedImageAssetProps({ props, instanceProps })
+    : props;
+
+const imageAdapter: MdxComponentAdapter = {
+  component: imageComponent,
+  toMdx: ({ instance, props, instanceProps }) => {
+    if (instance.children.length > 0) {
+      return;
+    }
+    const values = getStringProps(
+      normalizeMdxComponentProps({ instance, props, instanceProps })
+    );
+    if (
+      values === undefined ||
+      Array.from(values.keys()).some(
+        (name) => name !== "src" && name !== "alt" && name !== "title"
+      )
+    ) {
+      return;
+    }
+    const imageProps: MdxAuthoredProp[] = [
+      { name: "src", value: values.get("src") ?? "" },
+      { name: "alt", value: values.get("alt") ?? "" },
+    ];
+    const title = values.get("title");
+    if (title !== undefined) {
+      imageProps.push({ name: "title", value: title });
+    }
+    return {
+      type: "element",
+      syntax: "mdx",
+      tag: "p",
+      props: [],
+      children: [
+        {
+          type: "element",
+          syntax: "mdx",
+          tag: "img",
+          props: imageProps,
+          children: [],
+          mdxMode: "text",
+        },
+      ],
+      mdxMode: "flow",
+    };
+  },
+  fromMdx: (node) => {
+    const image = readMdxImage(node);
+    if (image === undefined) {
+      return;
+    }
+    const props: MaterializedComponentProp[] = [];
+    const names = new Set<string>();
+    for (const [propIndex, prop] of image.props.entries()) {
+      if (
+        typeof prop.value !== "string" ||
+        (prop.name !== "src" && prop.name !== "alt" && prop.name !== "title") ||
+        names.has(prop.name)
+      ) {
+        return;
+      }
+      names.add(prop.name);
+      if (prop.value !== "") {
+        props.push({
+          prop,
+          source: { nodePath: [0], propIndex },
+        });
+      }
+    }
+    const sourceIndex = image.props.findIndex(({ name }) => name === "src");
+    const source = image.props[sourceIndex];
+    if (sourceIndex !== -1 && typeof source?.value === "string") {
+      const sourceLocation = { nodePath: [0], propIndex: sourceIndex };
+      for (const name of ["width", "height"] as const) {
+        props.push({
+          prop: { name, value: source.value },
+          source: sourceLocation,
+          requiresAssetReference: true,
+        });
+      }
+      if (
+        image.props.some(({ name, value }) => name === "alt" && value !== "")
+      ) {
+        return { children: [], props };
+      }
+      props.push({
+        prop: { name: "alt", value: source.value },
+        source: sourceLocation,
+        requiresAssetReference: true,
+      });
+    }
+    return { children: [], props };
   },
 };
 
 const componentAdapters = new Map<Instance["component"], MdxComponentAdapter>([
   [codeTextAdapter.component, codeTextAdapter],
+  [imageAdapter.component, imageAdapter],
 ]);
 
 export const serializeMdxComponent = ({
   instance,
   props,
+  instanceProps,
   original,
 }: {
   instance: Instance;
-  props: readonly Prop[];
+  props: readonly MdxAuthoredProp[];
+  instanceProps: readonly Prop[];
   original?: MdxAuthoredNode;
 }) =>
   componentAdapters
     .get(instance.component)
-    ?.toMdx({ instance, props, original });
+    ?.toMdx({ instance, props, instanceProps, original });
 
 export const serializeMdxComponentFallback = ({
   instance,
   props,
+  instanceProps,
   templateName,
 }: {
   instance: Instance;
-  props: readonly Prop[];
+  props: readonly MdxAuthoredProp[];
+  instanceProps: readonly Prop[];
   templateName?: string;
 }): MdxAuthoredNode | undefined => {
   const adapter = componentAdapters.get(instance.component);
@@ -118,9 +296,14 @@ export const serializeMdxComponentFallback = ({
   const authoredProps: MdxAuthoredProp[] = [];
   const propNames = new Set<string>();
   let legacyCode: string | undefined;
-  for (const prop of props) {
+  const componentProps = normalizeMdxComponentProps({
+    instance,
+    props,
+    instanceProps,
+  });
+  for (const prop of componentProps) {
     if (adapter.component === codeTextComponent && prop.name === "code") {
-      if (prop.type !== "string" || legacyCode !== undefined) {
+      if (typeof prop.value !== "string" || legacyCode !== undefined) {
         return;
       }
       legacyCode = prop.value;
@@ -130,11 +313,7 @@ export const serializeMdxComponentFallback = ({
       return;
     }
     propNames.add(prop.name);
-    const authoredProp = serializeMdxStaticProp(prop);
-    if (authoredProp === undefined) {
-      return;
-    }
-    authoredProps.push(authoredProp);
+    authoredProps.push(prop);
   }
   let children = instance.children.flatMap((child) =>
     child.type === "text" ? [{ type: "text" as const, value: child.value }] : []

@@ -254,6 +254,8 @@ export const serializeMdxDocument = (document: MdxDocument) => {
     serializeFrontmatter(document) +
     toMarkdown(mdast, {
       bullet: "-",
+      bulletOther: "*",
+      bulletOrderedOther: ")",
       emphasis: "_",
       extensions: [
         gfmToMarkdown(),

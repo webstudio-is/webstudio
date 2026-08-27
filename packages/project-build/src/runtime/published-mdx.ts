@@ -32,7 +32,10 @@ import {
   type MdxTemplateDependency,
 } from "./mdx-materialization";
 import { resolveMdxTemplates } from "./mdx-template-resolution";
-import { createMdxDiagnostics } from "./mdx-diagnostics";
+import {
+  createMdxContentModelDiagnostics,
+  createMdxDiagnostics,
+} from "./mdx-diagnostics";
 
 export type PublishedMdxWarning = Readonly<{
   route: string;
@@ -386,6 +389,12 @@ export const materializePublishedMdx = async ({
         continue;
       }
       for (const diagnostic of templates.diagnostics) {
+        warnings.push({ route, diagnostic });
+      }
+      for (const diagnostic of createMdxContentModelDiagnostics({
+        root: materialized,
+        metas,
+      })) {
         warnings.push({ route, diagnostic });
       }
       roots.push({

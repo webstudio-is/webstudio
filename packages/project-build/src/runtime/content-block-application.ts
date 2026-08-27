@@ -57,10 +57,20 @@ export const inspectMdxAssetSource = async ({
   projectId: string;
 }) => {
   const parsed = await parseMdxDocumentRecovering({ source });
+  const sourceDiagnostics = createMdxSourceDiagnostics(parsed.diagnostics);
   const diagnostics: Array<
     | ReturnType<typeof createMdxSourceDiagnostics>[number]
     | ContentBlockDiagnostic
-  > = [...createMdxSourceDiagnostics(parsed.diagnostics)];
+  > = [...sourceDiagnostics];
+  const sourceDiagnosticKeys = new Set(
+    sourceDiagnostics.map((diagnostic) =>
+      JSON.stringify([
+        diagnostic.code,
+        diagnostic.message,
+        diagnostic.sourceRange,
+      ])
+    )
+  );
   const asset = state.assets?.get(assetId);
   if (asset === undefined || isMdxFileAsset(asset) === false) {
     return diagnostics;
@@ -96,10 +106,23 @@ export const inspectMdxAssetSource = async ({
       parsed: { source, result: parsed },
     });
     diagnostics.push(
-      ...materialized.diagnostics.filter(
-        (diagnostic) =>
-          diagnostic.code !== "invalid-mdx" && diagnostic.code !== "unsafe-mdx"
-      )
+      ...materialized.diagnostics.filter((diagnostic) => {
+        if (
+          diagnostic.code !== "invalid-mdx" &&
+          diagnostic.code !== "unsafe-mdx"
+        ) {
+          return true;
+        }
+        const message =
+          diagnostic.code === "invalid-mdx"
+            ? diagnostic.message
+            : diagnostic.reason;
+        return (
+          sourceDiagnosticKeys.has(
+            JSON.stringify([diagnostic.code, message, diagnostic.sourceRange])
+          ) === false
+        );
+      })
     );
   }
   return diagnostics;

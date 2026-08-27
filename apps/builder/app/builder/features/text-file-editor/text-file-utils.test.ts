@@ -137,6 +137,32 @@ describe("text file assets", () => {
     ]);
   });
 
+  test("reports connected Content Block content-model errors", async () => {
+    const source = '<ws.element ws:tag="li">nested item</ws.element>';
+    await expect(
+      getMdxEditorDiagnostics(source, [
+        {
+          code: "invalid-mdx",
+          severity: "error",
+          blockInstanceId: "block",
+          assetId: "asset",
+          message: "Placing <li> element inside a <li> violates HTML spec.",
+          sourceRange: {
+            start: { line: 1, column: 1, offset: 0 },
+            end: { line: 1, column: source.length + 1, offset: source.length },
+          },
+        },
+      ])
+    ).resolves.toEqual([
+      {
+        from: 0,
+        to: source.length,
+        severity: "error",
+        message: "Placing <li> element inside a <li> violates HTML spec.",
+      },
+    ]);
+  });
+
   test("keeps failed and conflicting MDX saves visible", () => {
     expect(
       getMdxPersistenceFeedback({

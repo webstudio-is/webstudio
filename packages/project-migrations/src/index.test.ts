@@ -229,3 +229,62 @@ test("removes redundant Code Text defaults and preserves custom selections", () 
     expect.objectContaining({ name: "theme", value: "nord" }),
   ]);
 });
+
+test("removes the legacy local styles from Content Block Image templates", () => {
+  const data = structuredClone(emptyData);
+  data.instances.set("templates", {
+    type: "instance",
+    id: "templates",
+    component: "ws:block-template",
+    children: [{ type: "id", value: "image" }],
+  });
+  data.instances.set("image", {
+    type: "instance",
+    id: "image",
+    component: "Image",
+    children: [],
+  });
+  data.styleSources.set("image-local", {
+    type: "local",
+    id: "image-local",
+  });
+  data.styleSources.set("custom-local", {
+    type: "local",
+    id: "custom-local",
+  });
+  data.styleSourceSelections.set("image", {
+    instanceId: "image",
+    values: ["image-local", "custom-local"],
+  });
+  for (const [property, value] of [
+    ["marginRight", { type: "keyword", value: "auto" }],
+    ["marginLeft", { type: "keyword", value: "auto" }],
+    ["width", { type: "unit", unit: "%", value: 100 }],
+    ["height", { type: "keyword", value: "auto" }],
+  ] as const) {
+    data.styles.set(`image-local:base:${property}:`, {
+      breakpointId: "base",
+      styleSourceId: "image-local",
+      property,
+      value,
+    });
+  }
+  data.styles.set("custom-local:base:color:", {
+    breakpointId: "base",
+    styleSourceId: "custom-local",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  });
+
+  migrateWebstudioDataMutable(data);
+  migrateWebstudioDataMutable(data);
+
+  expect(data.styleSourceSelections.get("image")?.values).toEqual([
+    "custom-local",
+  ]);
+  expect(data.styleSources.has("image-local")).toBe(false);
+  expect(data.styleSources.has("custom-local")).toBe(true);
+  expect(Array.from(data.styles.values())).toEqual([
+    expect.objectContaining({ styleSourceId: "custom-local" }),
+  ]);
+});

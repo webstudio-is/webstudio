@@ -89,14 +89,7 @@ const blockMeta: TemplateMeta = {
           <ws.element ws:label="List Item" ws:tag="li"></ws.element>
         </ws.element>
         <ws.element ws:label="Link" ws:tag="a"></ws.element>
-        <$.Image
-          ws:style={css`
-            margin-right: auto;
-            margin-left: auto;
-            width: 100%;
-            height: auto;
-          `}
-        />
+        <$.Image />
         <ws.element ws:label="Separator" ws:tag="hr" />
         <ws.element ws:label="Blockquote" ws:tag="blockquote"></ws.element>
         <$.HtmlEmbed />

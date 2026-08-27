@@ -1,5 +1,6 @@
 import hash from "@emotion/hash";
 import { migrateCodeTextPropMutable } from "@webstudio-is/project-migrations";
+import type { AssetValueReference } from "@webstudio-is/content-engine";
 import { serializeJsonDeterministically } from "@webstudio-is/content-engine/compiler";
 import {
   getInstancePropName,
@@ -37,6 +38,7 @@ import type {
 import { createPropValue, findProp } from "./props";
 import { getHtmlAttributeType } from "./html-attribute-utils";
 import { parseMdxStaticProp, type MdxStaticPropType } from "./mdx-static-props";
+import { getMdxPropValuePathKey } from "./mdx-asset-references";
 
 const getMdxPropEligibility = ({
   capabilities,
@@ -186,12 +188,14 @@ export const materializeMdxTemplates = async ({
   data,
   metas,
   projectId,
+  assetReferences = [],
 }: {
   identity: ContentBlockExternalContentIdentity;
   resolution: MdxTemplateResolution;
   data: Omit<WebstudioData, "pages">;
   metas: Map<string, WsComponentMeta>;
   projectId: string;
+  assetReferences?: readonly AssetValueReference[];
 }): Promise<MdxTemplateMaterialization> => {
   const materializedTemplates: MaterializedMdxTemplate[] = [];
   const diagnostics: ContentBlockDiagnostic[] = [...resolution.diagnostics];
@@ -202,6 +206,12 @@ export const materializeMdxTemplates = async ({
       dependency: MdxTemplateDependency;
     }
   >();
+  const assetReferenceByPath = new Map(
+    assetReferences.map((reference) => [
+      reference.path.map(String).join("/"),
+      reference,
+    ])
+  );
   for (const reference of resolution.references) {
     if (reference.type === "unresolved-template") {
       materializedTemplates.push({
@@ -464,10 +474,18 @@ export const materializeMdxTemplates = async ({
         );
       }
       const existingProp = canonicalExistingProp ?? aliasedExistingProp;
+      const assetReference = assetReferenceByPath.get(
+        getMdxPropValuePathKey({
+          nodePath: reference.path,
+          propIndex: index,
+        })
+      );
       const rawBinding =
-        authoredProp.value === true
-          ? ({ type: "boolean", value: true } as const)
-          : ({ type: "string", value: authoredProp.value } as const);
+        assetReference !== undefined
+          ? ({ type: "asset", value: assetReference.assetId } as const)
+          : authoredProp.value === true
+            ? ({ type: "boolean", value: true } as const)
+            : ({ type: "string", value: authoredProp.value } as const);
       if (
         migrateCodeTextPropMutable({
           instance: rootInstance,
@@ -485,18 +503,27 @@ export const materializeMdxTemplates = async ({
         }
         continue;
       }
-      const binding = getMdxPropBinding({
-        capabilities,
-        instance: rootInstance,
-        prop: instanceProp,
-        jsxPropName: authoredProp.name,
-        existingType:
-          existingProp?.type === "string" ||
-          existingProp?.type === "number" ||
-          existingProp?.type === "boolean"
-            ? existingProp.type
-            : undefined,
-      });
+      const binding =
+        rawBinding.type === "asset" &&
+        getMdxPropEligibility({
+          capabilities,
+          instance: rootInstance,
+          prop: { name: instancePropName, type: rawBinding.type },
+          jsxPropName: authoredProp.name,
+        }).editable
+          ? rawBinding
+          : getMdxPropBinding({
+              capabilities,
+              instance: rootInstance,
+              prop: instanceProp,
+              jsxPropName: authoredProp.name,
+              existingType:
+                existingProp?.type === "string" ||
+                existingProp?.type === "number" ||
+                existingProp?.type === "boolean"
+                  ? existingProp.type
+                  : undefined,
+            });
       if (binding !== undefined) {
         const prop = createPropValue({
           id: existingProp?.id ?? createId(),

@@ -1,8 +1,16 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { Instance, WebstudioFragment } from "@webstudio-is/sdk";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  blockComponent,
+  blockTemplateComponent,
+  coreMetas,
+  elementComponent,
+  type Instance,
+  type WebstudioFragment,
+} from "@webstudio-is/sdk";
+import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { __testing__, insertListItemAt } from "./block-utils";
+import { __testing__, insertListItemAt, insertTemplateAt } from "./block-utils";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import {
   $instances,
@@ -12,7 +20,10 @@ import {
 } from "~/shared/sync/data-stores";
 import {
   $selectedInstanceSelector,
+  $builderMode,
+  $registeredComponentMetas,
   $textEditingInstanceSelector,
+  selectPage,
   selectInstance,
 } from "~/shared/nano-states";
 
@@ -117,5 +128,76 @@ describe("insertListItemAt", () => {
       selector: [insertedId, "list", "body"],
       reason: "new",
     });
+  });
+});
+
+describe("insertTemplateAt", () => {
+  beforeEach(() => {
+    $project.set({ id: "projectId" } as Project);
+    $pages.set(
+      createDefaultPages({ homePageId: "home", rootInstanceId: "body" })
+    );
+    selectPage("home");
+    $props.set(new Map());
+    $builderMode.set("content");
+    $registeredComponentMetas.set(
+      new Map(Object.entries({ ...defaultMetas, ...coreMetas }))
+    );
+    selectInstance(["current", "block", "body"]);
+    $textEditingInstanceSelector.set(undefined);
+  });
+
+  afterEach(() => {
+    $builderMode.set("design");
+  });
+
+  test("inserts synchronously when content mode has no token conflicts", async () => {
+    $instances.set(
+      new Map<Instance["id"], Instance>([
+        [
+          "body",
+          createInstance("body", "Body", [{ type: "id", value: "block" }]),
+        ],
+        [
+          "block",
+          createInstance("block", blockComponent, [
+            { type: "id", value: "templates" },
+            { type: "id", value: "current" },
+          ]),
+        ],
+        [
+          "templates",
+          createInstance("templates", blockTemplateComponent, [
+            { type: "id", value: "template" },
+          ]),
+        ],
+        [
+          "template",
+          {
+            ...createInstance("template", elementComponent),
+            tag: "p",
+          },
+        ],
+        [
+          "current",
+          {
+            ...createInstance("current", elementComponent),
+            tag: "p",
+          },
+        ],
+      ])
+    );
+
+    const insertion = insertTemplateAt(
+      ["template", "templates", "block", "body"],
+      ["current", "block", "body"],
+      false
+    );
+
+    const insertedSelector = $selectedInstanceSelector.get();
+    expect(insertedSelector?.[0]).not.toBe("current");
+    expect(insertedSelector?.slice(1)).toEqual(["block", "body"]);
+
+    await expect(insertion).resolves.toBe(true);
   });
 });
