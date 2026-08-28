@@ -1,7 +1,7 @@
 # Color tokens
 
 `colors.resolver.json` is the source of truth for design-system colors. Do not
-edit the generated TypeScript files in `src/colors/` directly.
+edit the generated TypeScript files in `src/colors/__generated__/` directly.
 
 The standard DTCG Resolver section defines the seven light and dark theme
 controllers. The namespaced `org.webstudio.colorRecipes` extension defines the

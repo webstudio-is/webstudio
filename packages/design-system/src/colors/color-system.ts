@@ -2,8 +2,11 @@ import {
   colorControllerNames,
   darkColorControllers,
   lightColorControllers,
-} from "./color-controllers.generated";
-import { compatibilityColor, semanticColor } from "./color-recipes.generated";
+} from "./__generated__/color-controllers";
+import {
+  compatibilityColor,
+  semanticColor,
+} from "./__generated__/color-recipes";
 
 export const color = {
   ...lightColorControllers,

@@ -15,11 +15,11 @@ const controllerNames = [
 
 const sourceUrl = new URL("../../tokens/colors.resolver.json", import.meta.url);
 const controllerOutputUrl = new URL(
-  "./color-controllers.generated.ts",
+  "./__generated__/color-controllers.ts",
   import.meta.url
 );
 const recipeOutputUrl = new URL(
-  "./color-recipes.generated.ts",
+  "./__generated__/color-recipes.ts",
   import.meta.url
 );
 
