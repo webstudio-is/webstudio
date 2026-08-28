@@ -103,10 +103,6 @@ const createFixture = () => {
       projectId: "project",
       session,
       metas: componentMetas,
-      createId: (() => {
-        let index = 0;
-        return () => `generated-${index++}`;
-      })(),
     }),
   };
 };

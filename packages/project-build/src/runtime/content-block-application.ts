@@ -131,13 +131,11 @@ export const createContentBlockApplication = ({
   projectId,
   session,
   metas,
-  createId,
   resolveSourceAssetId,
 }: {
   projectId: string;
   session: Pick<AssetContentSession, "open" | "reload" | "save" | "flush">;
   metas: Map<string, WsComponentMeta>;
-  createId: () => string;
   resolveSourceAssetId?: (input: {
     source: ContentBlockSource;
     state: BuilderState;
@@ -289,7 +287,6 @@ export const createContentBlockApplication = ({
         state,
         blockInstanceId,
         source,
-        context: { createId },
       }),
       inspection,
     };
@@ -314,7 +311,6 @@ export const createContentBlockApplication = ({
         state,
         blockInstanceId,
         source,
-        context: { createId },
       }),
       inspection,
     };

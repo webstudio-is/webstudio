@@ -629,7 +629,6 @@ export const createCliProjectSession = ({
         projectId: connection.projectId,
         session: contentSession,
         metas: componentMetas,
-        createId: randomUUID,
       }),
     },
   });

@@ -56,7 +56,7 @@ import {
   loadApiToken,
 } from "./api-permits.server";
 import { componentMetas } from "~/shared/component-metas.server";
-import { createId, type Asset, type AssetFolder } from "@webstudio-is/sdk";
+import type { Asset, AssetFolder } from "@webstudio-is/sdk";
 import {
   applyContentModeTransaction,
   createContentBlockApplication,
@@ -498,7 +498,6 @@ const createServerContentBlockApplication = ({
     projectId,
     session,
     metas: componentMetas,
-    createId: () => createId("nano"),
   });
 };
 
