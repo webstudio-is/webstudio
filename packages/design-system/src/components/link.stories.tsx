@@ -1,6 +1,7 @@
 import { Box } from "./box";
 import { Link } from "./link";
 import { StorySection, StoryGrid } from "./storybook";
+import { cssVar } from "../css-var";
 
 export default {
   title: "Link",
@@ -57,7 +58,7 @@ const LinkStory = () => (
         <Link color="main" href="">
           Main
         </Link>
-        <Box css={{ backgroundColor: "black" }}>
+        <Box css={{ backgroundColor: cssVar("--background-inverse") }}>
           <Link color="contrast" href="">
             Contrast
           </Link>

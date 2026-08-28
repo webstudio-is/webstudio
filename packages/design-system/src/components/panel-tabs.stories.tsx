@@ -8,13 +8,21 @@ import {
 import { Box } from "./box";
 import { Text } from "./text";
 import { theme } from "../stitches.config";
+import { cssVar } from "../css-var";
 
 export default {
   title: "Panel Tabs",
 };
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ width: 240, border: "dashed 3px #e3e3e3" }}>{children}</div>
+  <div
+    style={{
+      width: 240,
+      border: `dashed 3px ${cssVar("--border-default")}`,
+    }}
+  >
+    {children}
+  </div>
 );
 
 const Content = ({ children }: { children: React.ReactNode }) => (

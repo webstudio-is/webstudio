@@ -9,7 +9,7 @@ import {
   PlacementIndicator,
 } from "./placement-indicator";
 import { useAutoScroll } from "./use-auto-scroll";
-import { theme } from "../../../stitches.config";
+import { cssVar } from "../../../css-var";
 import type { Placement } from "./geometry-utils";
 
 const ROOT_ID = "root";
@@ -36,8 +36,8 @@ const Item = ({
         minHeight: 100,
         margin: 10,
         padding: 10,
-        background: theme.colors.backgroundCanvas,
-        border: `1px solid ${theme.colors.borderContrast}`,
+        background: cssVar("--background-secondary"),
+        border: `1px solid ${cssVar("--border-default")}`,
       }}
       style={data.style}
       data-id={data.id}
@@ -328,7 +328,7 @@ export const Canvas = () => {
     <StorySection title="Canvas">
       <Box
         css={{
-          background: "white",
+          background: cssVar("--background-primary"),
           padding: 10,
           width: 500,
           height: 500,

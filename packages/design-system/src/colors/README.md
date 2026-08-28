@@ -23,6 +23,11 @@ Components consume only semantic colors with `cssVar()`. Colors are not copied
 into the Stitches theme, and components cannot access theme parameters or
 derivation values through the generated public type.
 
+The existing Stitches color scale remains unchanged only for the Builder's
+later atomic migration. It is a separate temporary boundary, not a mapping or
+fallback for Craft colors. Design-system components and story chrome do not
+consume it.
+
 Changing a theme parameter updates both color schemes. Dark mode changes
 scheme derivation bounds rather than maintaining a second theme or semantic
 color set. Cross-hue variants mix in `oklab`, so the neutral family cannot

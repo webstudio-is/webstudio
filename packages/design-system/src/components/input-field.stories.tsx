@@ -7,6 +7,7 @@ import {
 import { NestedIconLabel } from "./nested-icon-label";
 import { NestedInputButton } from "./nested-input-button";
 import { StorySection, StoryGrid } from "./storybook";
+import { cssVar } from "../css-var";
 
 export default {
   title: "Input Field",
@@ -77,7 +78,13 @@ export const InputField = () => (
       <StoryGrid>
         {[300, 100].map((width) => (
           <>
-            <Flex css={{ width, background: "black", height: 4 }} />
+            <Flex
+              css={{
+                width,
+                background: cssVar("--foreground-primary"),
+                height: 4,
+              }}
+            />
             <Flex
               css={{ width, justifyItems: "stretch", flexDirection: "column" }}
             >

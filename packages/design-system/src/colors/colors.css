@@ -402,7 +402,7 @@
   );
   --color-negative-foreground: color-mix(
     in oklab,
-    oklch(from var(--color-negative) calc(l - 0.025) calc(c * 0.9) h)
+    oklch(from var(--color-negative) calc(l - 0.04) calc(c * 0.9) h)
       var(--scheme-chromatic-foreground-mix),
     var(--color-foreground)
   );
@@ -437,7 +437,7 @@
   --background-negative: var(--color-negative);
   --background-negative-subtle: color-mix(
     in oklab,
-    var(--color-negative) 7%,
+    var(--color-negative) 12%,
     var(--color-background)
   );
   --background-warning-subtle: light-dark(

@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import { StorySection } from "../../storybook";
 import { Box } from "../../box";
 import { styled } from "../../../stitches.config";
+import { cssVar } from "../../../css-var";
 import { useDrop, type DropTarget } from "./use-drop";
 import { useDrag } from "./use-drag";
 import {
@@ -10,7 +11,6 @@ import {
   PlacementIndicator,
 } from "./placement-indicator";
 import { useAutoScroll } from "./use-auto-scroll";
-import { theme } from "../../../stitches.config";
 import type { Placement } from "./geometry-utils";
 
 type ItemData = { id: string; text: string };
@@ -18,7 +18,7 @@ type ItemData = { id: string; text: string };
 const ListItem = styled("li", {
   display: "block",
   margin: 10,
-  background: theme.colors.foregroundMoreSubtle,
+  background: cssVar("--background-secondary"),
   padding: 10,
   userSelect: "none",
 });
@@ -160,8 +160,8 @@ export const SortableList = ({
           height: direction === "horizontal" ? "auto" : 500,
           width: direction === "horizontal" ? 500 : 200,
           overflow: "auto",
-          background: "white",
-          color: "black",
+          background: cssVar("--background-primary"),
+          color: cssVar("--foreground-primary"),
 
           // these are needed to make scroll work with column-reverse/row-reverse below
           display: "flex",

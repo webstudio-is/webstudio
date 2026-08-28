@@ -81,14 +81,17 @@ describe("Craft color contrast", () => {
       for (const [name, expectedHex] of Object.entries(legacyLightColors)) {
         const actual = Array.from(readColor(name));
         const expected = parseHex(expectedHex);
-        const tolerance =
-          name === "--background-warning-subtle"
-            ? 9
-            : name.includes("subtle") ||
-                name.startsWith("--border-") ||
-                name === "--foreground-negative"
-              ? 24
-              : 9;
+        let tolerance = 9;
+        if (name === "--background-negative-subtle") {
+          tolerance = 4;
+        } else if (
+          name !== "--background-warning-subtle" &&
+          (name.includes("subtle") ||
+            name.startsWith("--border-") ||
+            name === "--foreground-negative")
+        ) {
+          tolerance = 24;
+        }
 
         for (const [index, expectedChannel] of expected.entries()) {
           expect
