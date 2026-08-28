@@ -4,8 +4,6 @@ import { rawTheme, theme } from "../stitches.config";
 describe("CSS-native Craft colors", () => {
   test("keeps colors out of the Stitches theme", () => {
     for (const scale of [
-      "seed",
-      "profile",
       "theme",
       "foreground",
       "background",

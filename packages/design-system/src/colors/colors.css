@@ -1,183 +1,260 @@
 /*
  * Craft color source of truth.
  *
- * Components consume only foreground, background, border, and overlay
- * variables. Seeds, profiles, and theme colors are authoring inputs.
+ * Theme authors set only --theme-* parameters. Components consume only
+ * foreground, background, border, and overlay semantic variables.
  */
 
 :root {
   color-scheme: light;
 
-  /* Seeds: define complete base colors once for every theme. */
-  --seed-neutral: oklch(50% 0.015 250);
-  --seed-accent: oklch(50% 0.21 255);
-  --seed-positive: oklch(50% 0.14 152);
-  --seed-negative: oklch(50% 0.19 27);
-  --seed-warning: oklch(50% 0.14 75);
-  --seed-informative: oklch(50% 0.14 225);
+  /* Sets the color family shared by surfaces, content, borders, and shadows. */
+  --theme-color-neutral: oklch(50% 0.01 250);
+  /* Sets the color family used for interactive emphasis and keyboard focus. */
+  --theme-color-accent: oklch(50% 0.21 255);
+  /* Sets the color family used to communicate successful outcomes. */
+  --theme-color-positive: oklch(50% 0.14 152);
+  /* Sets the color family used for errors, danger, and destructive actions. */
+  --theme-color-negative: oklch(50% 0.19 27);
+  /* Sets the color family used to communicate caution and warnings. */
+  --theme-color-warning: oklch(50% 0.14 75);
+  /* Sets the color family used to communicate neutral information. */
+  --theme-color-informative: oklch(50% 0.14 225);
 
-  /* Light profile: controls how all seeds behave in the light scheme. */
-  --profile-background-lightness-offset: 0.485;
-  --profile-background-chroma-scale: 0.133333333333;
-  --profile-foreground-lightness-offset: -0.295;
-  --profile-foreground-chroma-scale: 1;
-  --profile-intent-lightness-offset: 0.04;
-  --profile-intent-chroma-scale: 1;
+  /* Sets content contrast: 0% is softest accessible; 100% is strongest. */
+  --theme-contrast-content: 50%;
+  /* Sets surface separation: 0% is subtle; 100% is strongest. */
+  --theme-contrast-surface: 25%;
+  /* Sets border contrast: 0% is softest accessible; 100% is strongest. */
+  --theme-contrast-border: 0%;
 
-  /* Theme colors: derived from seeds through the active profile. */
-  --theme-background: oklch(
-    from var(--seed-neutral)
-      calc(l + var(--profile-background-lightness-offset))
-      calc(c * var(--profile-background-chroma-scale)) h
+  /* Light-scheme derivation bounds. */
+  --scheme-lightness-influence: 0.02;
+  --scheme-background-lightness: 0.975;
+  --scheme-background-chroma-scale: 0.2;
+  --scheme-foreground-soft-lightness: 0.195;
+  --scheme-foreground-strong-lightness: 0.1;
+  --scheme-foreground-chroma-scale: 1.5;
+  --scheme-chromatic-lightness: 0.47;
+  --scheme-chromatic-chroma-scale: 1;
+
+  /* Colors derived from the bounded theme parameters. */
+  --color-background: oklch(
+    from var(--theme-color-neutral)
+      calc(
+        var(--scheme-background-lightness) + l *
+          var(--scheme-lightness-influence)
+      )
+      calc(min(c, 0.02) * var(--scheme-background-chroma-scale)) h
   );
-  --theme-foreground: oklch(
-    from var(--seed-neutral)
-      calc(l + var(--profile-foreground-lightness-offset))
-      calc(c * var(--profile-foreground-chroma-scale)) h
+  --color-foreground-soft: oklch(
+    from var(--theme-color-neutral)
+      calc(
+        var(--scheme-foreground-soft-lightness) + l *
+          var(--scheme-lightness-influence)
+      )
+      calc(min(c, 0.02) * var(--scheme-foreground-chroma-scale)) h
   );
-  --theme-accent: oklch(
-    from var(--seed-accent) calc(l + var(--profile-intent-lightness-offset))
-      calc(c * var(--profile-intent-chroma-scale)) h
+  --color-foreground-strong: oklch(
+    from var(--theme-color-neutral)
+      calc(
+        var(--scheme-foreground-strong-lightness) + l *
+          var(--scheme-lightness-influence)
+      )
+      calc(min(c, 0.02) * var(--scheme-foreground-chroma-scale)) h
   );
-  --theme-positive: oklch(
-    from var(--seed-positive) calc(l + var(--profile-intent-lightness-offset))
-      calc(c * var(--profile-intent-chroma-scale)) h
+  --color-foreground: color-mix(
+    in oklab,
+    var(--color-foreground-soft) calc(100% - var(--theme-contrast-content)),
+    var(--color-foreground-strong)
   );
-  --theme-negative: oklch(
-    from var(--seed-negative) calc(l + var(--profile-intent-lightness-offset))
-      calc(c * var(--profile-intent-chroma-scale)) h
+  --color-accent: oklch(
+    from var(--theme-color-accent)
+      calc(
+        var(--scheme-chromatic-lightness) + l *
+          var(--scheme-lightness-influence)
+      )
+      calc(min(c, 0.21) * var(--scheme-chromatic-chroma-scale)) h
   );
-  --theme-warning: oklch(
-    from var(--seed-warning) calc(l + var(--profile-intent-lightness-offset))
-      calc(c * var(--profile-intent-chroma-scale)) h
+  --color-positive: oklch(
+    from var(--theme-color-positive)
+      calc(
+        var(--scheme-chromatic-lightness) + l *
+          var(--scheme-lightness-influence)
+      )
+      calc(min(c, 0.21) * var(--scheme-chromatic-chroma-scale)) h
   );
-  --theme-informative: oklch(
-    from var(--seed-informative)
-      calc(l + var(--profile-intent-lightness-offset))
-      calc(c * var(--profile-intent-chroma-scale)) h
+  --color-negative: oklch(
+    from var(--theme-color-negative)
+      calc(
+        var(--scheme-chromatic-lightness) + l *
+          var(--scheme-lightness-influence)
+      )
+      calc(min(c, 0.21) * var(--scheme-chromatic-chroma-scale)) h
+  );
+  --color-warning: oklch(
+    from var(--theme-color-warning)
+      calc(
+        var(--scheme-chromatic-lightness) + l *
+          var(--scheme-lightness-influence)
+      )
+      calc(min(c, 0.21) * var(--scheme-chromatic-chroma-scale)) h
+  );
+  --color-informative: oklch(
+    from var(--theme-color-informative)
+      calc(
+        var(--scheme-chromatic-lightness) + l *
+          var(--scheme-lightness-influence)
+      )
+      calc(min(c, 0.21) * var(--scheme-chromatic-chroma-scale)) h
+  );
+  --color-shadow: oklch(from var(--theme-color-neutral) 20% min(c, 0.02) h);
+  --color-surface-soft: color-mix(
+    in oklab,
+    var(--color-background) 96%,
+    var(--color-foreground)
+  );
+  --color-surface-strong: color-mix(
+    in oklab,
+    var(--color-background) 88%,
+    var(--color-foreground)
+  );
+  --color-surface-secondary: color-mix(
+    in oklab,
+    var(--color-surface-soft) calc(100% - var(--theme-contrast-surface)),
+    var(--color-surface-strong)
+  );
+  --color-border-soft: color-mix(
+    in oklab,
+    var(--color-background) 44%,
+    var(--color-foreground)
+  );
+  --color-border-strong: color-mix(
+    in oklab,
+    var(--color-background) 24%,
+    var(--color-foreground)
+  );
+  --color-border: color-mix(
+    in oklab,
+    var(--color-border-soft) calc(100% - var(--theme-contrast-border)),
+    var(--color-border-strong)
   );
 
   /* Background */
-  --background-primary: var(--theme-background);
-  --background-secondary: color-mix(
-    in oklch,
-    var(--theme-background) 94%,
-    var(--theme-foreground)
-  );
+  --background-primary: var(--color-background);
+  --background-secondary: var(--color-surface-secondary);
   --background-disabled: color-mix(
-    in oklch,
-    var(--theme-background) 96%,
-    var(--theme-foreground)
+    in oklab,
+    var(--color-background) 96%,
+    var(--color-foreground)
   );
-  --background-inverse: var(--theme-foreground);
-  --background-accent: var(--theme-accent);
-  --background-positive: var(--theme-positive);
-  --background-negative: var(--theme-negative);
+  --background-inverse: var(--color-foreground);
+  --background-accent: var(--color-accent);
+  --background-positive: var(--color-positive);
+  --background-negative: var(--color-negative);
   --background-negative-subtle: color-mix(
-    in oklch,
-    var(--theme-negative) 12%,
-    var(--theme-background)
+    in oklab,
+    var(--color-negative) 12%,
+    var(--color-background)
   );
   --background-warning-subtle: color-mix(
-    in oklch,
-    var(--theme-warning) 12%,
-    var(--theme-background)
+    in oklab,
+    var(--color-warning) 12%,
+    var(--color-background)
   );
   --background-informative-subtle: color-mix(
-    in oklch,
-    var(--theme-informative) 12%,
-    var(--theme-background)
+    in oklab,
+    var(--color-informative) 12%,
+    var(--color-background)
   );
 
   /* Foreground */
-  --foreground-primary: var(--theme-foreground);
+  --foreground-primary: var(--color-foreground);
   --foreground-secondary: color-mix(
-    in oklch,
-    var(--theme-foreground) 68%,
-    var(--theme-background)
+    in oklab,
+    var(--color-foreground) 68%,
+    var(--color-background)
   );
   --foreground-muted: color-mix(
-    in oklch,
-    var(--theme-foreground) 56%,
-    var(--theme-background)
+    in oklab,
+    var(--color-foreground) 56%,
+    var(--color-background)
   );
   --foreground-disabled: color-mix(
-    in oklch,
-    var(--theme-foreground) 34%,
-    var(--theme-background)
+    in oklab,
+    var(--color-foreground) 34%,
+    var(--color-background)
   );
-  --foreground-on-inverse: var(--theme-background);
-  --foreground-on-accent: var(--theme-background);
-  --foreground-on-positive: var(--theme-background);
-  --foreground-on-negative: var(--theme-background);
+  --foreground-on-inverse: var(--color-background);
+  --foreground-on-accent: var(--color-background);
+  --foreground-on-positive: var(--color-background);
+  --foreground-on-negative: var(--color-background);
   --foreground-accent: color-mix(
-    in oklch,
-    var(--theme-accent) 86%,
-    var(--theme-foreground)
+    in oklab,
+    var(--color-accent) 86%,
+    var(--color-foreground)
   );
   --foreground-positive: color-mix(
-    in oklch,
-    var(--theme-positive) 86%,
-    var(--theme-foreground)
+    in oklab,
+    var(--color-positive) 86%,
+    var(--color-foreground)
   );
   --foreground-negative: color-mix(
-    in oklch,
-    var(--theme-negative) 86%,
-    var(--theme-foreground)
+    in oklab,
+    var(--color-negative) 86%,
+    var(--color-foreground)
   );
   --foreground-warning: color-mix(
-    in oklch,
-    var(--theme-warning) 86%,
-    var(--theme-foreground)
+    in oklab,
+    var(--color-warning) 86%,
+    var(--color-foreground)
   );
   --foreground-informative: color-mix(
-    in oklch,
-    var(--theme-informative) 86%,
-    var(--theme-foreground)
+    in oklab,
+    var(--color-informative) 86%,
+    var(--color-foreground)
   );
 
   /* Border */
-  --border-default: color-mix(
-    in oklch,
-    var(--theme-background) 80%,
-    var(--theme-foreground)
-  );
-  --border-focus: var(--theme-accent);
+  --border-default: var(--color-border);
+  --border-focus: var(--color-accent);
   --border-negative: color-mix(
-    in oklch,
-    var(--theme-negative) 78%,
-    var(--theme-background)
+    in oklab,
+    var(--color-negative) 86%,
+    var(--color-background)
   );
   --border-warning: color-mix(
-    in oklch,
-    var(--theme-warning) 78%,
-    var(--theme-background)
+    in oklab,
+    var(--color-warning) 86%,
+    var(--color-background)
   );
   --border-informative: color-mix(
-    in oklch,
-    var(--theme-informative) 78%,
-    var(--theme-background)
+    in oklab,
+    var(--color-informative) 86%,
+    var(--color-background)
   );
 
   /* Overlay */
-  --overlay-interaction-hover: oklch(from var(--theme-foreground) l c h / 6%);
+  --overlay-interaction-hover: oklch(from var(--color-foreground) l c h / 6%);
   --overlay-interaction-pressed: oklch(
-    from var(--theme-foreground) l c h / 11%
+    from var(--color-foreground) l c h / 11%
   );
-  --overlay-on-inverse-hover: oklch(from var(--theme-background) l c h / 10%);
-  --overlay-on-inverse-pressed: oklch(from var(--theme-background) l c h / 16%);
-  --overlay-scrim: oklch(from var(--theme-foreground) l c h / 48%);
+  --overlay-on-inverse-hover: oklch(from var(--color-background) l c h / 10%);
+  --overlay-on-inverse-pressed: oklch(from var(--color-background) l c h / 16%);
+  --overlay-scrim: oklch(from var(--color-shadow) l c h / 48%);
 }
 
-/* Dark mode changes the shared transformation profile, not individual colors. */
+/* Dark mode changes derivation bounds, not theme parameters or semantic colors. */
 :root[data-color-scheme="dark"] {
   color-scheme: dark;
-  --profile-background-lightness-offset: -0.33;
-  --profile-background-chroma-scale: 0.8;
-  --profile-foreground-lightness-offset: 0.44;
-  --profile-foreground-chroma-scale: 0.4;
-  --profile-intent-lightness-offset: 0.22;
-  --profile-intent-chroma-scale: 0.82;
+  --scheme-lightness-influence: 0.02;
+  --scheme-background-lightness: 0.16;
+  --scheme-background-chroma-scale: 1.2;
+  --scheme-foreground-soft-lightness: 0.93;
+  --scheme-foreground-strong-lightness: 0.99;
+  --scheme-foreground-chroma-scale: 0.6;
+  --scheme-chromatic-lightness: 0.71;
+  --scheme-chromatic-chroma-scale: 0.82;
 }
 
 :root[data-color-scheme="light"] {

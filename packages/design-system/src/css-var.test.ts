@@ -4,7 +4,7 @@ import { cssVar } from "./css-var";
 const verifyPublicVariableType = () => {
   cssVar("--foreground-primary");
   // @ts-expect-error Authoring inputs are not public component variables.
-  cssVar("--theme-accent");
+  cssVar("--theme-color-accent");
 };
 void verifyPublicVariableType;
 

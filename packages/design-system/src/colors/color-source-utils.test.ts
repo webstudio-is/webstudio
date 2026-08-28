@@ -74,14 +74,15 @@ describe("Craft color CSS source", () => {
     ]);
   });
 
-  test("parses seeds, profiles, theme colors, and semantic categories", () => {
+  test("parses theme parameters, scheme bounds, and semantic categories", () => {
     const colors = parseColorSource(source);
 
-    expect(Object.keys(colors.seed)).toHaveLength(6);
-    expect(Object.keys(colors.profile.light)).toEqual(
-      Object.keys(colors.profile.dark)
+    expect(Object.keys(colors.theme.color)).toHaveLength(6);
+    expect(Object.keys(colors.theme.contrast)).toHaveLength(3);
+    expect(Object.keys(colors.scheme.light)).toEqual(
+      Object.keys(colors.scheme.dark)
     );
-    expect(Object.keys(colors.theme)).toHaveLength(7);
+    expect(Object.keys(colors.derived)).toHaveLength(16);
     expect(Object.keys(colors.semantic)).toEqual([
       "background",
       "foreground",
@@ -100,17 +101,17 @@ describe("Craft color CSS source", () => {
 
   test("derives structural groups from the CSS source", () => {
     const extendedSource = addRootDeclarations(source, {
-      "--seed-custom": "oklch(50% 0.1 300)",
-      "--theme-custom":
-        "oklch(from var(--seed-custom) calc(l + var(--profile-intent-lightness-offset)) calc(c * var(--profile-intent-chroma-scale)) h)",
+      "--theme-color-custom": "oklch(50% 0.1 300)",
+      "--color-custom":
+        "oklch(from var(--theme-color-custom) var(--scheme-chromatic-lightness) calc(min(c, 0.21) * var(--scheme-chromatic-chroma-scale)) h)",
       "--foreground-custom":
-        "color-mix(in oklch, var(--theme-custom) 86%, var(--theme-foreground))",
+        "color-mix(in oklab, var(--color-custom) 86%, var(--color-foreground))",
     });
     const colors = parseColorSource(extendedSource);
 
-    expect(colors.seed.custom).toBe("oklch(50% 0.1 300)");
-    expect(colors.theme.custom).toContain("var(--seed-custom)");
-    expect(colors.semantic.foreground.custom).toContain("var(--theme-custom)");
+    expect(colors.theme.color.custom).toBe("oklch(50% 0.1 300)");
+    expect(colors.derived.custom).toContain("var(--theme-color-custom)");
+    expect(colors.semantic.foreground.custom).toContain("var(--color-custom)");
   });
 
   test("rejects standalone semantic color literals", () => {

@@ -10,12 +10,15 @@ const colorCategories = [
 type ColorCategory = (typeof colorCategories)[number];
 
 export type ColorSource = {
-  seed: Record<string, string>;
-  profile: {
+  theme: {
+    color: Record<string, string>;
+    contrast: Record<string, string>;
+  };
+  scheme: {
     light: Record<string, string>;
     dark: Record<string, string>;
   };
-  theme: Record<string, string>;
+  derived: Record<string, string>;
   semantic: Record<ColorCategory, Record<string, string>>;
 };
 
@@ -211,10 +214,11 @@ export const parseColorSource = (css: string): ColorSource => {
     ':root[data-color-scheme="dark"]'
   );
 
-  const seed = getGroup(lightDeclarations, "--seed-");
-  const lightProfile = getGroup(lightDeclarations, "--profile-");
-  const darkProfile = getGroup(darkDeclarations, "--profile-");
-  const theme = getGroup(lightDeclarations, "--theme-");
+  const themeColor = getGroup(lightDeclarations, "--theme-color-");
+  const themeContrast = getGroup(lightDeclarations, "--theme-contrast-");
+  const lightScheme = getGroup(lightDeclarations, "--scheme-");
+  const darkScheme = getGroup(darkDeclarations, "--scheme-");
+  const derived = getGroup(lightDeclarations, "--color-");
   const semantic = Object.fromEntries(
     colorCategories.map((category) => [
       category,
@@ -222,27 +226,37 @@ export const parseColorSource = (css: string): ColorSource => {
     ])
   ) as ColorSource["semantic"];
 
-  expectValues("Color seeds", seed);
-  expectValues("Light color profile", lightProfile);
-  expectValues("Dark color profile", darkProfile);
-  expectValues("Theme colors", theme);
+  expectValues("Theme color parameters", themeColor);
+  expectValues("Theme contrast parameters", themeContrast);
+  expectValues("Light scheme bounds", lightScheme);
+  expectValues("Dark scheme bounds", darkScheme);
+  expectValues("Derived colors", derived);
   for (const [category, colors] of Object.entries(semantic)) {
     expectValues(`${category} semantic colors`, colors);
   }
-  expectSameNames("Light and dark color profiles", lightProfile, darkProfile);
+  expectSameNames("Light and dark scheme bounds", lightScheme, darkScheme);
 
   const allDeclarations = {
     ...Object.fromEntries(
-      Object.entries(seed).map(([name, value]) => [`--seed-${name}`, value])
-    ),
-    ...Object.fromEntries(
-      Object.entries(lightProfile).map(([name, value]) => [
-        `--profile-${name}`,
+      Object.entries(themeColor).map(([name, value]) => [
+        `--theme-color-${name}`,
         value,
       ])
     ),
     ...Object.fromEntries(
-      Object.entries(theme).map(([name, value]) => [`--theme-${name}`, value])
+      Object.entries(themeContrast).map(([name, value]) => [
+        `--theme-contrast-${name}`,
+        value,
+      ])
+    ),
+    ...Object.fromEntries(
+      Object.entries(lightScheme).map(([name, value]) => [
+        `--scheme-${name}`,
+        value,
+      ])
+    ),
+    ...Object.fromEntries(
+      Object.entries(derived).map(([name, value]) => [`--color-${name}`, value])
     ),
     ...Object.fromEntries(
       Object.entries(semantic).flatMap(([category, values]) =>
@@ -262,32 +276,44 @@ export const parseColorSource = (css: string): ColorSource => {
       `Uncategorized color variables: ${uncategorized.join(", ")}`
     );
   }
-  const darkNonProfile = Object.keys(darkDeclarations).filter(
-    (name) => name.startsWith("--profile-") === false
+  const darkNonScheme = Object.keys(darkDeclarations).filter(
+    (name) => name.startsWith("--scheme-") === false
   );
-  if (darkNonProfile.length > 0) {
+  if (darkNonScheme.length > 0) {
     throw new Error(
-      `Dark mode may override only profile variables: ${darkNonProfile.join(", ")}`
+      `Dark mode may override only scheme bounds: ${darkNonScheme.join(", ")}`
     );
   }
 
-  const seedDeclarations = Object.fromEntries(
-    Object.entries(seed).map(([name, value]) => [`--seed-${name}`, value])
+  const themeDeclarations = Object.fromEntries(
+    Object.entries(themeColor)
+      .map(([name, value]) => [`--theme-color-${name}`, value])
+      .concat(
+        Object.entries(themeContrast).map(([name, value]) => [
+          `--theme-contrast-${name}`,
+          value,
+        ])
+      )
   );
-  const profileDeclarations = Object.fromEntries(
-    Object.entries(lightProfile).map(([name, value]) => [
-      `--profile-${name}`,
+  const schemeDeclarations = Object.fromEntries(
+    Object.entries(lightScheme).map(([name, value]) => [
+      `--scheme-${name}`,
       value,
     ])
   );
-  const themeDeclarations = Object.fromEntries(
-    Object.entries(theme).map(([name, value]) => [`--theme-${name}`, value])
+  const derivedDeclarations = Object.fromEntries(
+    Object.entries(derived).map(([name, value]) => [`--color-${name}`, value])
   );
 
   validateReferences({
-    declarations: themeDeclarations,
+    declarations: derivedDeclarations,
     names,
-    allowedPrefixes: ["--seed-", "--profile-"],
+    allowedPrefixes: [
+      "--theme-color-",
+      "--theme-contrast-",
+      "--scheme-",
+      "--color-",
+    ],
     requireReference: true,
   });
 
@@ -306,7 +332,7 @@ export const parseColorSource = (css: string): ColorSource => {
     declarations: semanticDeclarations,
     names,
     allowedPrefixes: [
-      "--theme-",
+      "--color-",
       "--background-",
       "--foreground-",
       "--border-",
@@ -314,27 +340,26 @@ export const parseColorSource = (css: string): ColorSource => {
     ],
     requireReference: true,
   });
-  validateConsumed({
-    label: "color seeds",
-    declarations: seedDeclarations,
-    consumers: themeDeclarations,
-  });
-  validateConsumed({
-    label: "light profile values",
-    declarations: profileDeclarations,
-    consumers: themeDeclarations,
-  });
-  validateConsumed({
-    label: "theme colors",
-    declarations: themeDeclarations,
-    consumers: semanticDeclarations,
-  });
   validateCycles(allDeclarations);
-
+  validateConsumed({
+    label: "theme parameters",
+    declarations: themeDeclarations,
+    consumers: derivedDeclarations,
+  });
+  validateConsumed({
+    label: "light scheme bounds",
+    declarations: schemeDeclarations,
+    consumers: derivedDeclarations,
+  });
+  validateConsumed({
+    label: "derived colors",
+    declarations: derivedDeclarations,
+    consumers: { ...derivedDeclarations, ...semanticDeclarations },
+  });
   return {
-    seed,
-    profile: { light: lightProfile, dark: darkProfile },
-    theme,
+    theme: { color: themeColor, contrast: themeContrast },
+    scheme: { light: lightScheme, dark: darkScheme },
+    derived,
     semantic,
   };
 };

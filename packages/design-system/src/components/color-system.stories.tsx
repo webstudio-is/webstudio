@@ -89,7 +89,7 @@ const TokenGrid = ({
   </div>
 );
 
-const Profile = ({ mode }: { mode: ColorMode }) => (
+const ThemeContrast = () => (
   <dl
     style={{
       ...cardStyle,
@@ -100,9 +100,9 @@ const Profile = ({ mode }: { mode: ColorMode }) => (
       margin: 0,
     }}
   >
-    {Object.entries(source.profile[mode]).map(([name, value]) => (
+    {Object.entries(source.theme.contrast).map(([name, value]) => (
       <div key={name}>
-        <dt style={labelStyle}>{`--profile-${name}`}</dt>
+        <dt style={labelStyle}>{`--theme-contrast-${name}`}</dt>
         <dd style={{ ...codeStyle, marginInline: 0 }}>{value}</dd>
       </div>
     ))}
@@ -170,8 +170,7 @@ const Section = ({
   </section>
 );
 
-export const ColorSystem = () => {
-  const [mode, setMode] = useState<ColorMode>("light");
+const useColorMode = (mode: ColorMode) => {
   useLayoutEffect(() => {
     const root = document.documentElement;
     const previousMode = root.getAttribute("data-color-scheme");
@@ -184,6 +183,11 @@ export const ColorSystem = () => {
       }
     };
   }, [mode]);
+};
+
+const ColorSystemPreview = ({ initialMode }: { initialMode: ColorMode }) => {
+  const [mode, setMode] = useState<ColorMode>(initialMode);
+  useColorMode(mode);
 
   return (
     <main
@@ -225,10 +229,8 @@ export const ColorSystem = () => {
                 font: "14px/1.55 system-ui, sans-serif",
               }}
             >
-              CSS derives {Object.keys(source.theme).length} theme colors and a
-              small Craft semantic vocabulary from{" "}
-              {Object.keys(source.seed).length} seeds and one shared scheme
-              profile. Every card shows its declaration directly from
+              CSS derives a small Craft semantic vocabulary from nine bounded
+              theme parameters. Every card shows its declaration directly from
               colors.css.
             </p>
           </div>
@@ -268,17 +270,17 @@ export const ColorSystem = () => {
         </header>
 
         <Section
-          title={`Color seeds · ${Object.keys(source.seed).length}`}
-          description="Theme authors define each hue and maximum chroma once. Components cannot consume seeds."
+          title={`Theme colors · ${Object.keys(source.theme.color).length}`}
+          description="Theme authors choose each color family once. The recipe normalizes them into safe semantic roles."
         >
-          <TokenGrid group="seed" values={source.seed} />
+          <TokenGrid group="theme-color" values={source.theme.color} />
         </Section>
 
         <Section
-          title={`${mode[0].toUpperCase() + mode.slice(1)} profile`}
-          description={`${Object.keys(source.profile[mode]).length} controls transform every seed for the active color scheme.`}
+          title={`Theme contrast · ${Object.keys(source.theme.contrast).length}`}
+          description="Bounded percentages shape content, surface, and border relationships in both color schemes."
         >
-          <Profile mode={mode} />
+          <ThemeContrast />
         </Section>
 
         <Section
@@ -289,10 +291,10 @@ export const ColorSystem = () => {
         </Section>
 
         <Section
-          title={`Theme colors · ${Object.keys(source.theme).length}`}
-          description="Theme colors combine seeds with the active profile and feed the semantic graph."
+          title={`Derived colors · ${Object.keys(source.derived).length}`}
+          description="Derived colors normalize theme parameters before they feed the semantic graph."
         >
-          <TokenGrid group="theme" values={source.theme} />
+          <TokenGrid group="color" values={source.derived} />
         </Section>
 
         {Object.entries(source.semantic).map(([category, colors]) => (
@@ -308,3 +310,89 @@ export const ColorSystem = () => {
     </main>
   );
 };
+
+const CompactTokenGrid = ({
+  group,
+  values,
+}: {
+  group: string;
+  values: Record<string, string>;
+}) => (
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(8, minmax(0, 1fr))",
+      gap: 6,
+    }}
+  >
+    {Object.keys(values).map((name) => {
+      const variableName = `--${group}-${name}`;
+      return (
+        <div
+          key={name}
+          style={{
+            display: "grid",
+            alignItems: "end",
+            minWidth: 0,
+            height: 52,
+            padding: 6,
+            boxSizing: "border-box",
+            border: `1px solid ${variable("--border-default")}`,
+            borderRadius: 4,
+            background:
+              group === "overlay"
+                ? `linear-gradient(${variable(variableName)}, ${variable(variableName)}), ${variable("--background-primary")}`
+                : variable(variableName),
+          }}
+        >
+          <code
+            style={{
+              overflow: "hidden",
+              padding: 2,
+              borderRadius: 2,
+              background: variable("--background-primary"),
+              color: variable("--foreground-primary"),
+              font: "9px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {variableName}
+          </code>
+        </div>
+      );
+    })}
+  </div>
+);
+
+const ColorSystemDarkSnapshot = () => {
+  useColorMode("dark");
+
+  return (
+    <main
+      style={{
+        minHeight: "100vh",
+        boxSizing: "border-box",
+        display: "grid",
+        alignContent: "start",
+        gap: 14,
+        padding: 16,
+        background: variable("--background-primary"),
+        color: variable("--foreground-primary"),
+      }}
+    >
+      <h1 style={{ margin: 0, font: "700 20px/1.25 system-ui, sans-serif" }}>
+        Dark color system
+      </h1>
+      <ThemeContrast />
+      <CompactTokenGrid group="theme-color" values={source.theme.color} />
+      {Object.entries(source.semantic).map(([category, colors]) => (
+        <CompactTokenGrid key={category} group={category} values={colors} />
+      ))}
+    </main>
+  );
+};
+
+export const ColorSystem = () => <ColorSystemPreview initialMode="light" />;
+
+export const ColorSystemDark = () => <ColorSystemDarkSnapshot />;
