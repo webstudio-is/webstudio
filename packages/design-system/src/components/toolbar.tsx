@@ -9,12 +9,25 @@ import { separatorStyle } from "./separator";
 import { textVariants } from "./text";
 import { forwardRef, type Ref } from "react";
 import { focusRingStyle } from "./focus-ring";
+import { cssVar } from "../css-var";
+
+const toolbarBackground = `light-dark(color-mix(in oklab, ${cssVar(
+  "--background-inverse"
+)} 88%, ${cssVar("--background-primary")}), ${cssVar("--background-primary")})`;
+const toolbarForeground = `light-dark(${cssVar(
+  "--foreground-on-inverse"
+)}, ${cssVar("--foreground-primary")})`;
+const toolbarForegroundSubtle = `color-mix(in oklab, ${toolbarForeground} 55%, ${toolbarBackground})`;
+const toolbarBorder = `color-mix(in oklab, ${toolbarForeground} 20%, ${toolbarBackground})`;
+const toolbarHover = `light-dark(${cssVar(
+  "--overlay-on-inverse-hover"
+)}, ${cssVar("--overlay-interaction-hover")})`;
 
 export const Toolbar = styled(ToolbarPrimitive.Root, {
   display: "flex",
   height: theme.spacing[15],
-  background: theme.colors.backgroundTopbar,
-  color: theme.colors.foregroundContrastMain,
+  background: toolbarBackground,
+  color: toolbarForeground,
   alignItems: "center",
   gap: theme.spacing[5],
 });
@@ -51,7 +64,7 @@ const toggleItemStyle = css(textVariants.labels, {
 
   "&:focus-visible": focusRing,
   "&:hover, &[data-state=on], &[data-state=open], &[aria-checked=true]": {
-    background: theme.colors.backgroundTopbarHover,
+    background: toolbarHover,
   },
   variants: {
     // Just for story
@@ -60,22 +73,22 @@ const toggleItemStyle = css(textVariants.labels, {
     },
     variant: {
       subtle: {
-        color: theme.colors.foregroundTextMoreSubtle,
+        color: toolbarForegroundSubtle,
         "&:hover, &[data-state=on], &[aria-checked=true]": {
           color: "inherit",
         },
       },
       preview: {
         "&[data-state=on]": {
-          color: theme.colors.foregroundSuccess,
+          color: cssVar("--foreground-positive"),
         },
       },
       chevron: {
         minWidth: "auto",
         paddingInline: 0,
-        color: theme.colors.foregroundContrastSubtle,
+        color: toolbarForegroundSubtle,
         "&:hover, &:focus-visible, &[aria-expanded=true]": {
-          color: theme.colors.foregroundContrastMain,
+          color: toolbarForeground,
         },
         "&:focus-visible": focusRingStyle({ left: 0, right: 0 }),
       },
@@ -105,5 +118,5 @@ export const ToolbarButton = styled(ToolbarButtonBase, toggleItemStyle);
 export const ToolbarSeparator = styled(
   ToolbarPrimitive.Separator,
   separatorStyle,
-  { background: theme.colors.borderDark }
+  { background: toolbarBorder }
 );

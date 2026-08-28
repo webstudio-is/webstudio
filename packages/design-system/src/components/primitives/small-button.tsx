@@ -5,6 +5,7 @@ import {
   type ReactNode,
 } from "react";
 import { css, theme, type CSS } from "../../stitches.config";
+import { cssVar } from "../../css-var";
 
 export const smallButtonVariants = [
   "normal",
@@ -18,22 +19,26 @@ export const smallButtonVariants = [
  **/
 const smallButtonStates = ["open"] as const;
 
+const contrastForeground = `light-dark(${cssVar(
+  "--foreground-on-inverse"
+)}, ${cssVar("--foreground-primary")})`;
+
 const defaultColors = {
-  normal: theme.colors.foregroundSubtle,
-  destructive: theme.colors.foregroundSubtle,
-  contrast: theme.colors.foregroundContrastMain,
+  normal: cssVar("--foreground-secondary"),
+  destructive: cssVar("--foreground-secondary"),
+  contrast: contrastForeground,
 };
 
 const hoverColors = {
-  normal: theme.colors.foregroundMain,
-  destructive: theme.colors.foregroundDestructive,
-  contrast: theme.colors.foregroundContrastMain,
+  normal: cssVar("--foreground-primary"),
+  destructive: cssVar("--foreground-negative"),
+  contrast: contrastForeground,
 };
 
 const focusColors = {
-  normal: theme.colors.borderFocus,
-  destructive: theme.colors.borderFocus,
-  contrast: theme.colors.borderContrast,
+  normal: cssVar("--border-focus"),
+  destructive: cssVar("--border-focus"),
+  contrast: contrastForeground,
 };
 
 const perVariantStyle = (variant: (typeof smallButtonVariants)[number]) => ({
@@ -43,7 +48,7 @@ const perVariantStyle = (variant: (typeof smallButtonVariants)[number]) => ({
     color: hoverColors[variant],
 
     "&:disabled, &[data-disabled]": {
-      color: theme.colors.foregroundDisabled,
+      color: cssVar("--foreground-disabled"),
     },
   },
   "&[data-focused=true], &:focus-visible": {
@@ -61,7 +66,7 @@ const style = css({
   height: theme.spacing[9],
   position: "relative",
   "&:disabled, &[data-disabled]": {
-    color: theme.colors.foregroundDisabled,
+    color: cssVar("--foreground-disabled"),
   },
   variants: {
     variant: {

@@ -15,6 +15,15 @@ const overwrittenBackground = `color-mix(in oklab, ${cssVar(
 const overwrittenBorder = `color-mix(in oklab, ${cssVar(
   "--background-negative"
 )} 44%, ${cssVar("--background-primary")})`;
+const remoteBackground = `oklch(from ${cssVar(
+  "--background-warning-subtle"
+)} l c calc(h - 50))`;
+const remoteBorder = `oklch(from ${cssVar(
+  "--border-warning"
+)} l c calc(h - 50))`;
+const remoteForeground = `oklch(from ${cssVar(
+  "--foreground-warning"
+)} l c calc(h - 50))`;
 
 const withInteractionOverlay = (background: string) =>
   `linear-gradient(${cssVar("--overlay-interaction-hover")}, ${cssVar(
@@ -49,12 +58,10 @@ const colors = {
     icon: cssVar("--foreground-negative"),
   },
   remote: {
-    border: cssVar("--border-warning"),
-    background: cssVar("--background-warning-subtle"),
-    backgroundHover: withInteractionOverlay(
-      cssVar("--background-warning-subtle")
-    ),
-    icon: cssVar("--foreground-warning"),
+    border: remoteBorder,
+    background: remoteBackground,
+    backgroundHover: withInteractionOverlay(remoteBackground),
+    icon: remoteForeground,
   },
   inactive: {
     border: "transparent",

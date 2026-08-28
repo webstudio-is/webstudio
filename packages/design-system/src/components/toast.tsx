@@ -91,8 +91,8 @@ const ToastVariants = styled("div", {
       neutral: {},
       warning: {
         [backgroundColor]: cssVar("--background-warning-subtle"),
-        [borderAccentBackgroundColor]: cssVar("--foreground-warning"),
-        [borderColor]: cssVar("--foreground-warning"),
+        [borderAccentBackgroundColor]: cssVar("--border-warning"),
+        [borderColor]: cssVar("--border-warning"),
         [iconColor]: cssVar("--foreground-warning"),
       },
       error: {

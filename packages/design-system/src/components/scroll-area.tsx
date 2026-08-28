@@ -1,6 +1,11 @@
 import { forwardRef, type ComponentProps, type Ref } from "react";
 import { styled, theme, css, type CSS } from "../stitches.config";
 import { Root, Viewport, Scrollbar, Thumb } from "@radix-ui/react-scroll-area";
+import { cssVar } from "../css-var";
+
+const scrollbarColor = `oklch(from color-mix(in oklab, ${cssVar(
+  "--foreground-secondary"
+)} 45%, ${cssVar("--foreground-disabled")}) l c h / 60%)`;
 
 const ScrollAreaRoot = styled(Root, {
   boxSizing: "border-box",
@@ -13,7 +18,7 @@ const ScrollAreaRoot = styled(Root, {
 const ScrollAreaThumb = styled(Thumb, {
   position: "relative",
   boxSizing: "border-box",
-  background: theme.colors.foregroundScrollBar,
+  background: scrollbarColor,
   borderRadius: theme.spacing[4],
 });
 
@@ -114,5 +119,5 @@ ScrollArea.displayName = "ScrollArea";
 export const ScrollAreaNative = styled("div", {
   overflow: "auto",
   scrollbarWidth: "thin",
-  scrollbarColor: `${theme.colors.foregroundScrollBar} transparent`,
+  scrollbarColor: `${scrollbarColor} transparent`,
 });

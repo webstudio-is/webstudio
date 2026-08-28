@@ -1,7 +1,15 @@
 import { forwardRef } from "react";
-import { styled, theme } from "../stitches.config";
+import { styled } from "../stitches.config";
 import { textVariants } from "./text";
 import { ExternalLinkIcon } from "@webstudio-is/icons";
+import { cssVar } from "../css-var";
+
+const moreSubtleForeground = `color-mix(in oklab, ${cssVar(
+  "--foreground-secondary"
+)} 56%, ${cssVar("--foreground-disabled")})`;
+const contrastForeground = `light-dark(${cssVar(
+  "--foreground-on-inverse"
+)}, ${cssVar("--foreground-primary")})`;
 
 export const IconLink = forwardRef<
   HTMLAnchorElement,
@@ -16,13 +24,13 @@ export const Link = styled("a", {
   cursor: "pointer",
   "&[aria-disabled=true]": {
     cursor: "default",
-    color: theme.colors.foregroundDisabled,
+    color: cssVar("--foreground-disabled"),
     "&:hover, &:visited": {
-      color: theme.colors.foregroundDisabled,
+      color: cssVar("--foreground-disabled"),
     },
   },
   "&:focus-visible": {
-    outline: `1px solid ${theme.colors.borderFocus}`,
+    outline: `1px solid ${cssVar("--border-focus")}`,
   },
   variants: {
     variant: {
@@ -43,20 +51,20 @@ export const Link = styled("a", {
     },
     color: {
       main: {
-        color: theme.colors.foregroundMain,
-        "&:hover, &:visited": { color: theme.colors.foregroundMain },
+        color: cssVar("--foreground-primary"),
+        "&:hover, &:visited": { color: cssVar("--foreground-primary") },
       },
       contrast: {
-        color: theme.colors.foregroundContrastMain,
-        "&:hover, &:visited": { color: theme.colors.foregroundContrastMain },
+        color: contrastForeground,
+        "&:hover, &:visited": { color: contrastForeground },
       },
       subtle: {
-        color: theme.colors.foregroundTextSubtle,
-        "&:hover, &:visited": { color: theme.colors.foregroundTextSubtle },
+        color: cssVar("--foreground-muted"),
+        "&:hover, &:visited": { color: cssVar("--foreground-muted") },
       },
       moreSubtle: {
-        color: theme.colors.foregroundTextMoreSubtle,
-        "&:hover, &:visited": { color: theme.colors.foregroundTextMoreSubtle },
+        color: moreSubtleForeground,
+        "&:hover, &:visited": { color: moreSubtleForeground },
       },
       inherit: {
         color: "inherit",

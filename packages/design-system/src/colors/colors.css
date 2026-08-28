@@ -17,7 +17,7 @@
   /* Sets the color family used for errors, danger, and destructive actions. */
   --theme-color-negative: #dc2929;
   /* Sets the color family used to communicate caution and warnings. */
-  --theme-color-warning: #b74900;
+  --theme-color-warning: #f5d90a;
   /* Sets the color family used to communicate neutral information. */
   --theme-color-informative: #0175dc;
 
@@ -71,7 +71,8 @@
       srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
   );
   --color-warning-source: color(
-    from oklch(from var(--theme-color-warning) clamp(0.2, l, 0.8) min(c, 0.3) h)
+    from
+      oklch(from var(--theme-color-warning) clamp(0.2, l, 0.95) min(c, 0.3) h)
       srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
   );
   --color-informative-source: color(
@@ -439,10 +440,13 @@
     var(--color-negative) 7%,
     var(--color-background)
   );
-  --background-warning-subtle: color-mix(
-    in oklab,
-    var(--color-warning) 13.02%,
-    var(--color-background)
+  --background-warning-subtle: light-dark(
+    oklch(from var(--color-warning-source) 0.98 calc(c * 0.35) h),
+    color-mix(
+      in oklab,
+      var(--color-warning-source) 13.02%,
+      var(--color-background)
+    )
   );
   --background-informative-subtle: color-mix(
     in oklab,
@@ -481,11 +485,7 @@
   --border-default: var(--color-border);
   --border-focus: var(--color-accent-foreground);
   --border-negative: var(--foreground-negative);
-  --border-warning: color-mix(
-    in oklab,
-    var(--color-warning) 31.91%,
-    var(--color-background)
-  );
+  --border-warning: var(--color-warning-source);
   --border-informative: color-mix(
     in oklab,
     var(--color-informative) 29.97%,

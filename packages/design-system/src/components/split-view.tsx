@@ -5,7 +5,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { css, theme } from "../stitches.config";
+import { css } from "../stitches.config";
+import { cssVar } from "../css-var";
 import { Box } from "./box";
 import { numericScrubControl } from "./primitives/numeric-gesture-control";
 
@@ -18,7 +19,7 @@ const separatorStyle = css({
   cursor: "col-resize",
   touchAction: "none",
   outline: "none",
-  background: theme.colors.borderMain,
+  background: cssVar("--border-default"),
   "&::before": {
     position: "absolute",
     content: '""',
@@ -27,8 +28,10 @@ const separatorStyle = css({
     right: -2,
   },
   "&:hover, &:focus-visible": {
-    background: theme.colors.backgroundPrimaryLight,
-    boxShadow: `-1px 0 ${theme.colors.backgroundPrimaryLight}, 1px 0 ${theme.colors.backgroundPrimaryLight}`,
+    background: cssVar("--border-focus"),
+    boxShadow: `-1px 0 ${cssVar("--border-focus")}, 1px 0 ${cssVar(
+      "--border-focus"
+    )}`,
   },
 });
 
@@ -228,8 +231,10 @@ export const SplitView = ({
           renderedStartSize !== undefined
             ? `minmax(0, ${renderedStartSize}px) ${separatorWidth}px minmax(0, 1fr)`
             : sizeUnitRef.current === "px"
-              ? `minmax(0, ${size}px) ${separatorWidth}px minmax(0, 1fr)`
-              : `minmax(0, ${size / 100}fr) ${separatorWidth}px minmax(0, ${1 - size / 100}fr)`,
+            ? `minmax(0, ${size}px) ${separatorWidth}px minmax(0, 1fr)`
+            : `minmax(0, ${size / 100}fr) ${separatorWidth}px minmax(0, ${
+                1 - size / 100
+              }fr)`,
       }}
     >
       <Box className={paneStyle()}>{start}</Box>
@@ -255,7 +260,7 @@ export const SplitView = ({
         }
         aria-valuenow={Math.round(
           sizeUnitRef.current === "px"
-            ? (renderedStartSize ?? size)
+            ? renderedStartSize ?? size
             : renderedPercentage
         )}
         tabIndex={0}

@@ -25,6 +25,9 @@ import { cssVar } from "../css-var";
 const buttonContentColor = "--section-title-button-content-color";
 const labelTextColor = "--section-title-label-content-color";
 const chevronOpacity = "--section-title-chevron-display";
+const remoteForeground = `oklch(from ${cssVar(
+  "--foreground-warning"
+)} l c calc(h - 50))`;
 
 const StyledButton = styled(Button, {});
 
@@ -97,7 +100,7 @@ const dotStyle = css({
       overwritten: {
         backgroundColor: cssVar("--foreground-negative"),
       },
-      remote: { backgroundColor: cssVar("--foreground-warning") },
+      remote: { backgroundColor: remoteForeground },
     },
   },
 });
@@ -134,7 +137,7 @@ export const SectionTitle = forwardRef(
     ref: Ref<HTMLButtonElement>
   ) => {
     const openState = props["data-state"] ?? "closed";
-    const finalDots = openState === "open" ? [] : dots ?? [];
+    const finalDots = openState === "open" ? [] : (dots ?? []);
 
     return (
       <context.Provider value={{ openState, inactive }}>
@@ -208,8 +211,8 @@ export const SectionTitleLabel = forwardRef(
     const color = inactive
       ? "inactive"
       : openState === "closed"
-      ? "default"
-      : props.color;
+        ? "default"
+        : props.color;
 
     const isButton = isLabelButton(color);
 

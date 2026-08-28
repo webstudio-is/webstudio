@@ -32,7 +32,7 @@ const legacyLightColors = {
   "--background-positive": "#00894a",
   "--background-negative": "#dc2929",
   "--background-negative-subtle": "#ffe9e9",
-  "--background-warning-subtle": "#ffe8d7",
+  "--background-warning-subtle": "#fffbd1",
   "--background-informative-subtle": "#e1f0ff",
   "--foreground-primary": "#11181c",
   "--foreground-secondary": "#656869",
@@ -45,12 +45,13 @@ const legacyLightColors = {
   "--foreground-accent": "#096cff",
   "--foreground-positive": "#008447",
   "--foreground-negative": "#d13a3a",
-  "--foreground-warning": "#b74900",
+  // Darkened from the legacy yellow so warning text meets 4.5:1 contrast.
+  "--foreground-warning": "#786a00",
   "--foreground-informative": "#016ccc",
   "--border-default": "#e6e6e6",
   "--border-focus": "#096cff",
   "--border-negative": "#d13a3a",
-  "--border-warning": "#fbc69f",
+  "--border-warning": "#f5d90a",
   "--border-informative": "#b7d9f8",
   "--overlay-interaction-hover": "#00000010",
   "--overlay-interaction-pressed": "#0000001c",
@@ -71,7 +72,7 @@ const parseHex = (hex: string) => {
 };
 
 describe("Craft color contrast", () => {
-  test("default light semantics reproduce the legacy palette", () => {
+  test("default light semantics preserve the established palette", () => {
     const root = document.documentElement;
     const previousMode = root.getAttribute("data-color-scheme");
     root.dataset.colorScheme = "light";
@@ -81,12 +82,12 @@ describe("Craft color contrast", () => {
         const actual = Array.from(readColor(name));
         const expected = parseHex(expectedHex);
         const tolerance =
-          name.includes("subtle") ||
-          name.startsWith("--border-") ||
-          name === "--foreground-negative"
-            ? 24
-            : name === "--foreground-warning"
-              ? 16
+          name === "--background-warning-subtle"
+            ? 9
+            : name.includes("subtle") ||
+                name.startsWith("--border-") ||
+                name === "--foreground-negative"
+              ? 24
               : 9;
 
         for (const [index, expectedChannel] of expected.entries()) {

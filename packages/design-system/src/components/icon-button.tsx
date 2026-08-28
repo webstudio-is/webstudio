@@ -13,11 +13,28 @@ const openOrHoverStateStyle = {
 };
 
 const withInteractionOverlay = (background: string) =>
-  `linear-gradient(${cssVar("--overlay-interaction-hover")}, ${cssVar("--overlay-interaction-hover")}), ${background}`;
+  `linear-gradient(${cssVar("--overlay-interaction-hover")}, ${cssVar(
+    "--overlay-interaction-hover"
+  )}), ${background}`;
 
-const overwrittenBackground = `color-mix(in oklab, ${cssVar("--background-negative")} 19.68%, ${cssVar("--background-primary")})`;
-const overwrittenBorder = `color-mix(in oklab, ${cssVar("--background-negative")} 43.58%, ${cssVar("--background-primary")})`;
-const overwrittenForeground = `oklch(from color-mix(in oklab, ${cssVar("--background-negative")} 80%, ${cssVar("--foreground-primary")}) l calc(c * 1.23) calc(h + 1.8))`;
+const overwrittenBackground = `color-mix(in oklab, ${cssVar(
+  "--background-negative"
+)} 19.68%, ${cssVar("--background-primary")})`;
+const overwrittenBorder = `color-mix(in oklab, ${cssVar(
+  "--background-negative"
+)} 43.58%, ${cssVar("--background-primary")})`;
+const overwrittenForeground = `oklch(from color-mix(in oklab, ${cssVar(
+  "--background-negative"
+)} 80%, ${cssVar("--foreground-primary")}) l calc(c * 1.23) calc(h + 1.8))`;
+const remoteBackground = `oklch(from ${cssVar(
+  "--background-warning-subtle"
+)} l c calc(h - 50))`;
+const remoteBorder = `oklch(from ${cssVar(
+  "--border-warning"
+)} l c calc(h - 50))`;
+const remoteForeground = `oklch(from ${cssVar(
+  "--foreground-warning"
+)} l c calc(h - 50))`;
 
 const disabledVariantStyles = {
   "&:disabled, &[aria-disabled=true]": {
@@ -116,13 +133,11 @@ export const IconButton = styled("button", {
       },
 
       remote: {
-        backgroundColor: cssVar("--background-warning-subtle"),
-        borderColor: cssVar("--border-warning"),
-        color: cssVar("--foreground-warning"),
+        backgroundColor: remoteBackground,
+        borderColor: remoteBorder,
+        color: remoteForeground,
         "&:hover, &[data-hovered=true]": {
-          background: withInteractionOverlay(
-            cssVar("--background-warning-subtle")
-          ),
+          background: withInteractionOverlay(remoteBackground),
         },
         ...disabledVariantStyles,
       },

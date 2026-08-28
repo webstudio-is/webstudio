@@ -14,6 +14,12 @@ const presetBackground = cssVar("--border-default");
 const overwrittenBackground = `color-mix(in oklab, ${cssVar(
   "--background-negative"
 )} 16%, ${cssVar("--background-primary")})`;
+const remoteBackground = `oklch(from ${cssVar(
+  "--background-warning-subtle"
+)} l c calc(h - 50))`;
+const remoteForeground = `oklch(from ${cssVar(
+  "--foreground-warning"
+)} l c calc(h - 50))`;
 
 const withInteractionOverlay = (background: string) =>
   `linear-gradient(${cssVar("--overlay-interaction-hover")}, ${cssVar(
@@ -97,12 +103,10 @@ const StyledLabel = styled(RadixLabel, {
         },
       },
       remote: {
-        backgroundColor: cssVar("--background-warning-subtle"),
-        color: cssVar("--foreground-warning"),
+        backgroundColor: remoteBackground,
+        color: remoteForeground,
         "&:hover": {
-          background: withInteractionOverlay(
-            cssVar("--background-warning-subtle")
-          ),
+          background: withInteractionOverlay(remoteBackground),
         },
       },
       // Example is collapsible section title label when section has no content.
