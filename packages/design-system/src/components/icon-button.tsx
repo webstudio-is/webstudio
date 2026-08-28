@@ -6,16 +6,20 @@
  */
 import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
+import { cssVar } from "../colors/css-var";
 
 const openOrHoverStateStyle = {
-  backgroundColor: theme.background["secondary-hover"],
+  backgroundColor: cssVar("--overlay-interaction-hover"),
 };
+
+const withInteractionOverlay = (background: string) =>
+  `linear-gradient(${cssVar("--overlay-interaction-hover")}, ${cssVar("--overlay-interaction-hover")}), ${background}`;
 
 const disabledVariantStyles = {
   "&:disabled, &[aria-disabled=true]": {
-    color: theme.foreground.disabled,
+    color: cssVar("--foreground-disabled"),
     "&:hover": {
-      backgroundColor: theme.colors.backgroundHover,
+      backgroundColor: "transparent",
     },
   },
 };
@@ -40,7 +44,7 @@ export const IconButton = styled("button", {
   outline: "none",
 
   "&[data-focused=true], &:focus-visible": {
-    borderColor: theme.border.focus,
+    borderColor: cssVar("--border-focus"),
   },
 
   "&:disabled, &[aria-disabled=true]": {
@@ -54,59 +58,69 @@ export const IconButton = styled("button", {
   variants: {
     variant: {
       default: {
-        color: theme.foreground.primary,
+        color: cssVar("--foreground-primary"),
         "&:hover, &[data-hovered=true]": openOrHoverStateStyle,
         // According to the design https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3199&t=lpT9jFuaiUnz1Foa-0
         // only the default variant has different toggle state
         // https://www.radix-ui.com/docs/primitives/components/toggle#root
         "&[data-state=on]": {
-          backgroundColor: theme.background.muted,
-          borderColor: theme.border.default,
+          backgroundColor: cssVar("--background-secondary"),
+          borderColor: cssVar("--border-default"),
 
-          "&:hover, &[data-hovered=true]": openOrHoverStateStyle,
+          "&:hover, &[data-hovered=true]": {
+            background: withInteractionOverlay(
+              cssVar("--background-secondary")
+            ),
+          },
         },
         "&[data-focused=true], &:focus-visible": {
-          borderColor: theme.border.focus,
+          borderColor: cssVar("--border-focus"),
         },
         ...disabledVariantStyles,
       },
 
       preset: {
-        backgroundColor: theme.background.muted,
-        borderColor: theme.border.default,
-        color: theme.foreground.primary,
+        backgroundColor: cssVar("--background-secondary"),
+        borderColor: cssVar("--border-default"),
+        color: cssVar("--foreground-primary"),
         "&:hover, &[data-hovered=true]": {
-          backgroundColor: theme.background["secondary-hover"],
+          background: withInteractionOverlay(cssVar("--background-secondary")),
         },
         ...disabledVariantStyles,
       },
 
       local: {
-        backgroundColor: theme.background["informative-subtle"],
-        borderColor: theme.border.informative,
-        color: theme.foreground.informative,
+        backgroundColor: cssVar("--background-informative-subtle"),
+        borderColor: cssVar("--border-informative"),
+        color: cssVar("--foreground-informative"),
         "&:hover, &[data-hovered=true]": {
-          backgroundColor: theme.background["informative-subtle-hover"],
+          background: withInteractionOverlay(
+            cssVar("--background-informative-subtle")
+          ),
         },
         ...disabledVariantStyles,
       },
 
       overwritten: {
-        backgroundColor: theme.background["negative-subtle"],
-        borderColor: theme.border.negative,
-        color: theme.foreground.negative,
+        backgroundColor: cssVar("--background-negative-subtle"),
+        borderColor: cssVar("--border-negative"),
+        color: cssVar("--foreground-negative"),
         "&:hover, &[data-hovered=true]": {
-          backgroundColor: theme.background["negative-subtle-hover"],
+          background: withInteractionOverlay(
+            cssVar("--background-negative-subtle")
+          ),
         },
         ...disabledVariantStyles,
       },
 
       remote: {
-        backgroundColor: theme.background["warning-subtle"],
-        borderColor: theme.border.warning,
-        color: theme.foreground.warning,
+        backgroundColor: cssVar("--background-warning-subtle"),
+        borderColor: cssVar("--border-warning"),
+        color: cssVar("--foreground-warning"),
         "&:hover, &[data-hovered=true]": {
-          backgroundColor: theme.background["warning-subtle-hover"],
+          background: withInteractionOverlay(
+            cssVar("--background-warning-subtle")
+          ),
         },
         ...disabledVariantStyles,
       },

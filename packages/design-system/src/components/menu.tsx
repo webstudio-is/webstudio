@@ -25,9 +25,10 @@ import {
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import type { ComponentProps } from "react";
 import { truncate } from "../utilities";
+import { cssVar } from "../colors/css-var";
 
 export const labelCss = css(textVariants.titles, {
-  color: theme.foreground.primary,
+  color: cssVar("--foreground-primary"),
   mx: theme.spacing[3],
   padding: theme.spacing[3],
   order: 1,
@@ -55,7 +56,7 @@ export const menuItemCss = css({
   display: "flex",
   order: 1,
   alignItems: "center",
-  color: theme.foreground.primary,
+  color: cssVar("--foreground-primary"),
   mx: itemMargin,
   padding: theme.spacing[3],
   borderRadius: theme.borderRadius[3],
@@ -63,10 +64,10 @@ export const menuItemCss = css({
   backgroundColor: "transparent",
   "&:focus, &[data-found], &[aria-selected=true], &[data-state=open], &[data-state=checked]:is(:hover,:focus)":
     {
-      backgroundColor: theme.background["secondary-hover"],
+      backgroundColor: cssVar("--overlay-interaction-hover"),
     },
   "&[data-disabled], &[aria-disabled], &[disabled]": {
-    color: theme.foreground.disabled,
+    color: cssVar("--foreground-disabled"),
   },
   variants: {
     text: {
@@ -80,14 +81,14 @@ export const menuItemCss = css({
     },
     destructive: {
       true: {
-        color: theme.foreground.negative,
+        color: cssVar("--foreground-negative"),
       },
     },
     hint: {
       true: {
         ...textVariants.labels,
         px: theme.spacing[5],
-        background: theme.background["secondary-hover"],
+        background: cssVar("--overlay-interaction-hover"),
         borderRadius: theme.borderRadius[2],
         overflow: "hidden",
         "&::before": {
@@ -112,7 +113,7 @@ export const MenuItemButton = styled("button", menuItemCss, {
   width: `calc(100% - ${itemMargin} * 2)`,
   "&:focus:not(:focus-visible)": { backgroundColor: "unset" },
   "&:hover:not([diabled])": {
-    backgroundColor: theme.background["secondary-hover"],
+    backgroundColor: cssVar("--overlay-interaction-hover"),
   },
 });
 
@@ -120,7 +121,7 @@ export const separatorCss = css({
   height: 1,
   minHeight: 1,
   my: theme.spacing[3],
-  backgroundColor: theme.border.default,
+  backgroundColor: cssVar("--border-default"),
   order: 1,
 });
 
@@ -130,9 +131,9 @@ const menuBorderWidth = "1px";
 export const menuCss = css({
   boxSizing: "border-box",
   borderRadius: theme.borderRadius[6],
-  backgroundColor: theme.background.secondary,
-  border: `1px solid ${theme.border.default}`,
-  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.background.primary}`,
+  backgroundColor: cssVar("--background-secondary"),
+  border: `1px solid ${cssVar("--border-default")}`,
+  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${cssVar("--background-primary")}`,
   padding: `${menuPadding} 0`,
   variants: {
     width: {
@@ -158,12 +159,12 @@ export const subContentProps: Partial<ComponentProps<typeof SubContent>> = {
 // Arrow is hard to implement with just CSS,
 // so we implement it as a component
 const ArrowBackground = styled("path", {
-  fill: theme.background.secondary,
+  fill: cssVar("--background-secondary"),
 });
 const ArrowInnerBorder = styled("path", {
-  fill: theme.background.primary,
+  fill: cssVar("--background-primary"),
 });
-const ArrowOuterBorder = styled("path", { fill: theme.border.default });
+const ArrowOuterBorder = styled("path", { fill: cssVar("--border-default") });
 const ArrowSgv = styled("svg", { transform: "translateY(-3px)" });
 export const DropdownMenuArrow = () => (
   <BaseDropdownMenuArrow width={16} height={11} asChild>
@@ -176,7 +177,7 @@ export const DropdownMenuArrow = () => (
 );
 
 const setIconStyle = css({
-  color: theme.foreground.accent,
+  color: cssVar("--foreground-accent"),
 });
 
 // Icon for the "checked" state from Figma

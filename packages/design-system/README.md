@@ -11,12 +11,14 @@ Craft and this package have different responsibilities:
   composite Tokens, Local styles, naming, states, accessibility, extensions,
   and conformance.
 - **This package implements that architecture for Webstudio:** it chooses the
-  theme inputs, derives the semantic values, and provides compatibility for the
-  existing component API.
+  color seeds and scheme profiles, derives theme and semantic colors, and
+  consumes those semantics in composite component styles.
 
-The current color implementation uses seven light/dark theme controllers. That
-number and those controller names are specific to Webstudio's interface; Craft
-does not require other projects to copy them.
+The implementation defines each color seed once. A shared light or dark profile
+transforms those seeds into seven theme colors, which drive a deliberately
+small semantic vocabulary. Components load the CSS directly and compose those
+semantics without component-specific color variables. These implementation
+choices are not requirements for other Craft projects.
 
-See [Color tokens](tokens/README.md) for the source format, recipe operations,
-generation workflow, and naming rules.
+See [Color tokens](src/colors/README.md) for the CSS source format, validation,
+type-only generation workflow, and naming rules.

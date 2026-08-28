@@ -1,6 +1,7 @@
-import { css, theme, styled } from "../stitches.config";
+import { css, styled } from "../stitches.config";
 import { truncate } from "../utilities";
 import { typography } from "../design-tokens";
+import { cssVar } from "../colors/css-var";
 
 const normalize = {
   userSelect: "none",
@@ -25,14 +26,14 @@ export const textStyle = css({
   variants: {
     variant: textVariants,
     color: {
-      main: { color: theme.foreground.primary },
-      contrast: { color: theme.foreground.inverse },
-      subtle: { color: theme.foreground.secondary },
-      moreSubtle: { color: theme.foreground.muted },
-      disabled: { color: theme.foreground.disabled },
-      success: { color: theme.foreground.positive },
+      main: { color: cssVar("--foreground-primary") },
+      contrast: { color: cssVar("--foreground-on-inverse") },
+      subtle: { color: cssVar("--foreground-secondary") },
+      moreSubtle: { color: cssVar("--foreground-muted") },
+      disabled: { color: cssVar("--foreground-disabled") },
+      success: { color: cssVar("--foreground-positive") },
       destructive: {
-        color: theme.foreground.negative,
+        color: cssVar("--foreground-negative"),
         // destructive in most cases used to show 3rd party errors
         // we don't want it to break layout
         overflowWrap: "anywhere",

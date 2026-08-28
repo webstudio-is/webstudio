@@ -13,6 +13,7 @@ import { textVariants } from "./text";
 import { css, styled, theme, type CSS } from "../stitches.config";
 import { LoadingDotsIcon } from "@webstudio-is/icons";
 import { Flex } from "./flex";
+import { cssVar } from "../colors/css-var";
 
 const colors = [
   "primary",
@@ -31,89 +32,96 @@ type ButtonColor = (typeof colors)[number];
 type ButtonState = "auto" | "hover" | "focus" | "pressed" | "pending";
 
 const backgrounds: Record<ButtonColor, string> = {
-  primary: theme.background.accent,
-  neutral: theme.background.muted,
-  "neutral-destructive": theme.background.muted,
-  destructive: theme.background.negative,
-  positive: theme.background.positive,
-  ghost: theme.background["secondary-hover"],
-  dark: theme.background.inverse,
-  gradient: theme.colors.backgroundGradientPrimary,
-  "dark-ghost": theme.background.inverse,
+  primary: cssVar("--background-accent"),
+  neutral: cssVar("--background-secondary"),
+  "neutral-destructive": cssVar("--background-secondary"),
+  destructive: cssVar("--background-negative"),
+  positive: cssVar("--background-positive"),
+  ghost: "transparent",
+  dark: cssVar("--background-inverse"),
+  gradient: `linear-gradient(135deg, ${cssVar("--background-accent")}, oklch(from ${cssVar("--background-accent")} l c calc(h + 72)))`,
+  "dark-ghost": "transparent",
 };
 
-const hoverBackgrounds: Record<ButtonColor, string> = {
-  primary: theme.background["accent-hover"],
-  neutral: theme.background["secondary-hover"],
-  "neutral-destructive": theme.background["secondary-hover"],
-  destructive: theme.background["negative-hover"],
-  positive: theme.background["positive-hover"],
-  ghost: theme.background["secondary-hover"],
-  dark: theme.background["inverse-hover"],
-  gradient: theme.colors.backgroundGradientPrimary,
-  "dark-ghost": theme.background["inverse-hover"],
+const hoverOverlays: Record<ButtonColor, string> = {
+  primary: cssVar("--overlay-interaction-hover"),
+  neutral: cssVar("--overlay-interaction-hover"),
+  "neutral-destructive": cssVar("--overlay-interaction-hover"),
+  destructive: cssVar("--overlay-interaction-hover"),
+  positive: cssVar("--overlay-interaction-hover"),
+  ghost: cssVar("--overlay-interaction-hover"),
+  dark: cssVar("--overlay-on-inverse-hover"),
+  gradient: cssVar("--overlay-interaction-hover"),
+  "dark-ghost": cssVar("--overlay-on-inverse-hover"),
 };
 
-const pressedBackgrounds: Record<ButtonColor, string> = {
-  primary: theme.background["accent-pressed"],
-  neutral: theme.background["secondary-pressed"],
-  "neutral-destructive": theme.background["secondary-pressed"],
-  destructive: theme.background["negative-hover"],
-  positive: theme.background["positive-hover"],
-  ghost: theme.background["secondary-pressed"],
-  dark: theme.background["inverse-hover"],
-  gradient: theme.colors.backgroundGradientPrimary,
-  "dark-ghost": theme.background["inverse-hover"],
+const pressedOverlays: Record<ButtonColor, string> = {
+  primary: cssVar("--overlay-interaction-pressed"),
+  neutral: cssVar("--overlay-interaction-pressed"),
+  "neutral-destructive": cssVar("--overlay-interaction-pressed"),
+  destructive: cssVar("--overlay-interaction-pressed"),
+  positive: cssVar("--overlay-interaction-pressed"),
+  ghost: cssVar("--overlay-interaction-pressed"),
+  dark: cssVar("--overlay-on-inverse-pressed"),
+  gradient: cssVar("--overlay-interaction-pressed"),
+  "dark-ghost": cssVar("--overlay-on-inverse-pressed"),
 };
 
 const foregrounds: Record<ButtonColor, string> = {
-  primary: theme.foreground.inverse,
-  destructive: theme.foreground.inverse,
-  "neutral-destructive": theme.foreground.negative,
-  positive: theme.foreground.inverse,
-  neutral: theme.foreground.primary,
-  ghost: theme.foreground.primary,
-  dark: theme.foreground.inverse,
-  gradient: theme.foreground.inverse,
-  "dark-ghost": theme.foreground.inverse,
+  primary: cssVar("--foreground-on-accent"),
+  destructive: cssVar("--foreground-on-negative"),
+  "neutral-destructive": cssVar("--foreground-negative"),
+  positive: cssVar("--foreground-on-positive"),
+  neutral: cssVar("--foreground-primary"),
+  ghost: cssVar("--foreground-primary"),
+  dark: cssVar("--foreground-on-inverse"),
+  gradient: cssVar("--foreground-on-accent"),
+  "dark-ghost": cssVar("--foreground-on-inverse"),
 };
 
+const withOverlay = (overlay: string, background: string) =>
+  `linear-gradient(${overlay}, ${overlay}), ${background}`;
+
 const perColorStyle = (variant: ButtonColor) => ({
-  background:
-    variant === "ghost" || variant === "dark-ghost"
-      ? "transparent"
-      : backgrounds[variant],
-  color:
-    variant === "dark-ghost"
-      ? theme.foreground["inverse-secondary"]
-      : foregrounds[variant],
+  background: backgrounds[variant],
+  color: foregrounds[variant],
 
   "&[data-state=auto]:hover, &[data-state=hover]": {
     color: foregrounds[variant],
     background:
-      variant === "gradient"
-        ? `linear-gradient(${theme.colors.backgroundButtonHover}, ${theme.colors.backgroundButtonHover}), ${backgrounds[variant]}`
-        : hoverBackgrounds[variant],
+      variant === "ghost" || variant === "dark-ghost"
+        ? hoverOverlays[variant]
+        : withOverlay(hoverOverlays[variant], backgrounds[variant]),
   },
 
   "&[data-state=auto]:focus-visible, &[data-state=focus]": {
     color: foregrounds[variant],
-    outline: `1px solid ${theme.border.focus}`,
+    outline: `1px solid ${cssVar("--border-focus")}`,
     outlineOffset: "1px",
   },
 
   "&[data-state=auto]:active, &[data-state=pressed]": {
     color: foregrounds[variant],
     background:
-      variant === "gradient"
-        ? `linear-gradient(${theme.colors.backgroundButtonPressed}, ${theme.colors.backgroundButtonPressed}), ${backgrounds[variant]}`
-        : pressedBackgrounds[variant],
+      variant === "ghost" || variant === "dark-ghost"
+        ? pressedOverlays[variant]
+        : withOverlay(pressedOverlays[variant], backgrounds[variant]),
   },
 
   "&:disabled:not([data-state=pending]), &[data-state=disabled], &[aria-disabled=true], &[aria-disabled=true]:hover, &[aria-disabled=true]:visited":
     {
-      background: theme.background.disabled,
-      color: theme.foreground.disabled,
+      background:
+        variant === "dark" || variant === "dark-ghost"
+          ? backgrounds[variant]
+          : cssVar("--background-disabled"),
+      color:
+        variant === "dark" || variant === "dark-ghost"
+          ? foregrounds[variant]
+          : cssVar("--foreground-disabled"),
+      opacity:
+        variant === "dark" || variant === "dark-ghost"
+          ? theme.opacity[1]
+          : undefined,
     },
 
   "&[data-state=pending]": {

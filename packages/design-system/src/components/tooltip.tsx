@@ -13,6 +13,7 @@ import { Box } from "./box";
 import { Text } from "./text";
 import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
+import { cssVar } from "../colors/css-var";
 
 export const TooltipProvider = TooltipPrimitive.TooltipProvider;
 
@@ -26,8 +27,8 @@ export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   };
 
 const Content = styled(TooltipPrimitive.Content, {
-  backgroundColor: theme.background.inverse,
-  color: theme.foreground.inverse,
+  backgroundColor: cssVar("--background-inverse"),
+  color: cssVar("--foreground-on-inverse"),
   borderRadius: theme.borderRadius[7],
   padding: theme.panel.padding,
   position: "relative",
@@ -45,7 +46,7 @@ const Content = styled(TooltipPrimitive.Content, {
 });
 
 const Arrow = styled(TooltipPrimitive.Arrow, {
-  fill: theme.background.inverse,
+  fill: cssVar("--background-inverse"),
   marginTop: -0.5,
 });
 

@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Text } from "./text";
 import { StorySection, StoryGrid } from "./storybook";
 import { theme } from "../stitches.config";
+import { cssVar } from "../colors/css-var";
 
 export default {
   title: "Button",
@@ -40,7 +41,10 @@ export const Button = () => (
             key={color}
             css={
               color === "dark-ghost"
-                ? { backgroundColor: "#1E1E1E", padding: 8 }
+                ? {
+                    backgroundColor: cssVar("--background-inverse"),
+                    padding: 8,
+                  }
                 : undefined
             }
           >

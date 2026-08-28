@@ -96,14 +96,34 @@ CSS variable names must:
 - Use complete words unless an abbreviation is part of the approved Craft
   vocabulary.
 - Describe purpose rather than visual appearance at the semantic layer.
-- Follow `category-role-modifier-state` when all four segments are needed.
-- Omit segments that do not add meaning.
+
+Semantic color variables use this grammar:
+
+```text
+--{category}-{purpose}[-{state}]
+```
+
+- **Category** is exactly one of `foreground`, `background`, `border`, or
+  `overlay`.
+- **Purpose** is one or more kebab-case terms that describe the color's reusable
+  meaning. Compound purposes place a variation after its base purpose, such as
+  `negative-subtle`.
+- **State** is an optional final `hover`, `pressed`, `selected`, `disabled`, or
+  `focus` suffix. Treat the final term as a state only when the project's
+  documented registry declares that name as a state variable. For example,
+  `--overlay-interaction-pressed` is a pressed interaction overlay, while
+  `--foreground-disabled` is a registered purpose.
+
+The core color variable list is the registry of universal purposes. Extensions
+must document their additional names and whether the final term is a purpose or
+state. An extension may introduce a compound purpose but must not reinterpret a
+registered core name.
 
 Examples:
 
 ```css
 --foreground-primary
---background-accent-hover
+--overlay-interaction-hover
 --border-negative
 --overlay-scrim
 ```
@@ -124,7 +144,7 @@ Do not encode a literal value in a semantic name:
 
 /* Prefer */
 --foreground-muted
---background-accent-hover
+--background-accent
 ```
 
 ## Semantic colors
@@ -136,87 +156,82 @@ Craft organizes interface colors into four categories:
 - **Border** for boundaries, separators, and focus indicators.
 - **Overlay** for translucent interaction layers and scrims.
 
-The core vocabulary is:
+Common purpose and state terms include:
 
 ```text
-Emphasis: primary, secondary, muted, strong, disabled, inverse
-Intent: accent, positive, negative, warning, informative
-Modifier: subtle
+Emphasis purposes: primary, secondary, muted, disabled, inverse
+Intent purposes: accent, positive, negative, warning, informative
+Purpose variation: subtle
 State: hover, pressed, selected, disabled, focus
 ```
 
-Not every combination needs a variable. Add a state suffix only when that state
-has a reusable value distinct from its base role.
+This vocabulary is not a matrix. Define a semantic variable only for a reusable
+decision that multiple composite Tokens consume or for an explicit
+accessibility pairing. Do not generate every combination of category, intent,
+variation, and state.
 
 ### Core color variables
 
-Craft projects must provide the variables they consume from this core. Shared
-Marketplace resources must declare which variables they require and must not
-silently depend on an undocumented project-specific variable.
+The universal baseline is intentionally small:
 
 ```css
 /* Foreground */
 --foreground-primary
 --foreground-secondary
---foreground-muted
 --foreground-disabled
---foreground-inverse
---foreground-accent
---foreground-positive
---foreground-negative
---foreground-warning
---foreground-informative
 
 /* Background */
 --background-primary
 --background-secondary
---background-muted
---background-strong
 --background-disabled
---background-inverse
---background-accent
---background-positive
---background-negative
---background-warning
---background-informative
 
 /* Border */
 --border-default
---border-strong
 --border-focus
---border-accent
---border-positive
---border-negative
---border-warning
---border-informative
 
 /* Overlay */
---overlay-subtle
---overlay-pressed
 --overlay-scrim
 ```
 
-Add reusable state variables using the same grammar:
+Projects extend this baseline as their composite Tokens establish reusable
+needs. Shared Marketplace resources must declare which variables they require
+and must not silently depend on undocumented project-specific variables.
+
+Intent extensions commonly use matching foreground, background, border, and
+paired foreground names:
 
 ```css
---background-secondary-hover
---background-secondary-pressed
---background-accent-hover
---background-accent-pressed
---background-accent-selected
---background-negative-hover
+--foreground-negative
+--background-negative
+--background-negative-subtle
+--border-negative
+--foreground-on-negative
 ```
 
-Use a modifier between the role and state when a reusable variation is not an
-interaction state. For example, `--background-negative-subtle` is a low-emphasis
-negative surface, while `--background-negative-subtle-hover` is its hover
-state.
+Use paired `foreground-on-*` variables for content placed on a strong semantic
+background. The pair remains explicit even when several pairings resolve to
+the same value because each pairing defines an independently verifiable
+contrast contract.
 
-Component states map to the semantic state that describes their visual meaning.
-For example, `checked`, `on`, and `current` commonly use a selected color;
-`invalid` commonly uses negative colors. A component state does not require a
-new global color variable when an existing semantic state expresses the same
-meaning.
+Compose component states from existing semantic variables inside the composite
+Token. Shared translucent overlays can express hover and pressed states without
+creating a resolved state color for every background:
+
+```css
+--overlay-interaction-hover
+--overlay-interaction-pressed
+--overlay-on-inverse-hover
+--overlay-on-inverse-pressed
+```
+
+Promote a state color to the semantic layer only when it is independently
+reusable and composition cannot express the decision. Component-specific color
+variables are not part of the default Craft architecture. Introduce one only
+when a component intentionally exposes it as a public theming contract.
+
+For example, `checked`, `on`, and `current` commonly compose a selected
+presentation; `invalid` commonly composes negative foreground and border
+colors. These component states do not require new global colors by themselves.
 
 ### Deriving colors
 
@@ -225,23 +240,42 @@ relative color expressions over duplicated literals:
 
 ```css
 :root {
-  --theme-canvas: oklch(98% 0.01 250);
-  --theme-foreground: oklch(20% 0.02 250);
-  --theme-accent: oklch(55% 0.2 255);
+  color-scheme: light dark;
 
-  --background-primary: var(--theme-canvas);
+  --seed-neutral: oklch(50% 0.01 250);
+  --seed-accent: oklch(50% 0.2 255);
+
+  --theme-background: light-dark(
+    oklch(from var(--seed-neutral) 98% 0.002 h),
+    oklch(from var(--seed-neutral) 17% 0.012 h)
+  );
+  --theme-foreground: light-dark(
+    oklch(from var(--seed-neutral) 20% 0.015 h),
+    oklch(from var(--seed-neutral) 94% 0.006 h)
+  );
+  --theme-accent: light-dark(
+    oklch(from var(--seed-accent) 54% c h),
+    oklch(from var(--seed-accent) 72% calc(c * 0.82) h)
+  );
+
+  --background-primary: var(--theme-background);
   --foreground-primary: var(--theme-foreground);
   --background-accent: var(--theme-accent);
-  --background-accent-hover: color-mix(
-    in oklch,
-    var(--theme-accent) 88%,
-    var(--theme-foreground)
+  --overlay-interaction-hover: oklch(
+    from var(--theme-foreground) l c h / 6%
   );
 }
 ```
 
-The example names do not prescribe a fixed number of theme variables. They
-demonstrate the required separation between theme inputs and semantic outputs.
+Define a hue seed once and derive its scheme-specific result. `light-dark()` may
+select between derived expressions when the project supports native
+`color-scheme`. A project may instead override a small shared transformation
+profile for each scheme. Do not maintain independent light and dark copies of
+the semantic layer.
+
+The example does not prescribe a fixed number of seeds or theme variables. It
+demonstrates the required separation between authoring inputs, theme colors,
+and semantic outputs.
 
 ### Other core variables
 
@@ -283,23 +317,30 @@ color for each state name.
 
 ## Accessibility
 
-Themes and extensions must preserve accessible semantic pairings.
+Craft conformance requires WCAG 2.2 Level AA. Themes and extensions must
+preserve accessible semantic pairings.
 
 - Normal text must have a contrast ratio of at least 4.5:1 against its
   background.
 - Large text must have a contrast ratio of at least 3:1 against its background.
 - Meaningful non-text interface graphics must have a contrast ratio of at least
   3:1 against adjacent colors.
-- Keyboard focus must remain visible. A custom focus indicator should provide
-  at least a 3:1 change of contrast and an area at least equivalent to a 2 CSS
-  pixel perimeter.
+- Keyboard focus must remain visible.
 - Color must not be the only way to communicate status or state.
 - Disabled styling may be subtle, but must not obscure information required to
   understand the interface.
 - Every supported theme must satisfy the same requirements.
 
-See [WCAG 2.2 contrast requirements](https://www.w3.org/TR/WCAG22/#contrast-minimum)
-and [focus appearance guidance](https://www.w3.org/WAI/WCAG22/Understanding/focus-appearance.html).
+Craft additionally recommends meeting the WCAG 2.2 Level AAA Focus Appearance
+criterion: a custom focus indicator should provide at least a 3:1 change of
+contrast and an area at least equivalent to a 2 CSS pixel perimeter.
+
+See the WCAG 2.2 criteria for
+[text contrast](https://www.w3.org/TR/WCAG22/#contrast-minimum),
+[non-text contrast](https://www.w3.org/TR/WCAG22/#non-text-contrast),
+[use of color](https://www.w3.org/TR/WCAG22/#use-of-color),
+[focus visibility](https://www.w3.org/TR/WCAG22/#focus-visible), and
+[focus appearance](https://www.w3.org/TR/WCAG22/#focus-appearance).
 
 ## Composite tokens
 

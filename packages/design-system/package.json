@@ -6,16 +6,19 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "generate:colors": "tsx src/colors/generate-colors.ts",
-    "check:colors": "tsx src/colors/generate-colors.ts --check",
+    "generate:color-types": "tsx src/colors/generate-color-types.ts",
+    "check:colors": "tsx src/colors/generate-color-types.ts --check",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run"
   },
   "devDependencies": {
+    "@babel/parser": "^7.29.7",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "colorjs.io": "^0.6.1",
+    "css-tree": "^3.2.1",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "vitest": "^3.1.2",
@@ -84,5 +87,7 @@
   },
   "license": "AGPL-3.0-or-later",
   "private": true,
-  "sideEffects": false
+  "sideEffects": [
+    "**/*.css"
+  ]
 }

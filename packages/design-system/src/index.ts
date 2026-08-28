@@ -1,10 +1,5 @@
 export * from "./stitches.config";
-export {
-  colorControllerNames,
-  darkColorControllers,
-  lightColorControllers,
-  semanticColor,
-} from "./colors/color-system";
+export { cssVar } from "./colors/css-var";
 export * from "./components/storybook";
 export * from "./utilities";
 export { type SlotProps, Slot } from "@radix-ui/react-slot";

@@ -1,53 +1,49 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
-import { colorTokenSource } from "../../tokens/colors";
+import colorSourceCss from "../colors/colors.css?raw";
 import {
-  darkColorControllers,
-  lightColorControllers,
-  semanticColor,
-} from "../colors/color-system";
-import {
-  toColorVariableName,
-  toCompatibilityColorVariableName,
-} from "../colors/color-name-utils";
-import { color } from "../design-tokens";
+  getColorContrast,
+  parseColorSource,
+  type ColorMode,
+} from "../colors/color-source-utils";
 
 export default {
   title: "Foundations/Colors",
   parameters: { layout: "fullscreen" },
 };
 
-type Mode = "light" | "dark";
-type RecipeGroup = "semantic" | "compatibility";
-
-const themeVariableName = (name: string) =>
-  `theme${name[0].toUpperCase()}${name.slice(1)}`;
-
-const colorVariable = (name: string) => `var(${toColorVariableName(name)})`;
-const compatibilityColorVariable = (name: string) =>
-  `var(${toCompatibilityColorVariableName(name)})`;
-
-const getThemeStyles = (mode: Mode) => {
-  const styles: Record<string, string> = {};
-  for (const [name, value] of Object.entries(semanticColor)) {
-    styles[toColorVariableName(name)] = value;
-  }
-  for (const [name, value] of Object.entries(color)) {
-    styles[toCompatibilityColorVariableName(name)] = value;
-  }
-  const controllers =
-    mode === "light" ? lightColorControllers : darkColorControllers;
-  for (const [name, value] of Object.entries(controllers)) {
-    styles[toColorVariableName(themeVariableName(name))] = value;
-  }
-  return styles as CSSProperties;
+const source = parseColorSource(colorSourceCss);
+const contrast = {
+  light: getColorContrast(source, "light"),
+  dark: getColorContrast(source, "dark"),
 };
+
+const variable = (name: string) => `var(${name})`;
+const prefix = (group: string, values: Record<string, string>) =>
+  Object.fromEntries(
+    Object.entries(values).map(([name, value]) => [`--${group}-${name}`, value])
+  );
+
+const getThemeStyles = (mode: ColorMode) =>
+  ({
+    ...prefix("seed", source.seed),
+    ...prefix("profile", source.profile[mode]),
+    ...prefix("theme", source.theme),
+    ...Object.fromEntries(
+      Object.entries(source.semantic).flatMap(([category, colors]) =>
+        Object.entries(colors).map(([name, value]) => [
+          `--${category}-${name}`,
+          value,
+        ])
+      )
+    ),
+  }) as CSSProperties;
 
 const cardStyle: CSSProperties = {
   minWidth: 0,
   overflow: "hidden",
-  border: `1px solid ${colorVariable("borderDefault")}`,
+  border: `1px solid ${variable("--border-default")}`,
   borderRadius: 8,
-  background: colorVariable("backgroundPrimary"),
+  background: variable("--background-primary"),
 };
 
 const labelStyle: CSSProperties = {
@@ -55,143 +51,112 @@ const labelStyle: CSSProperties = {
   overflow: "hidden",
   textOverflow: "ellipsis",
   font: "600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace",
-  color: colorVariable("foregroundPrimary"),
+  color: variable("--foreground-primary"),
 };
 
-const recipeStyle: CSSProperties = {
+const codeStyle: CSSProperties = {
   display: "block",
-  marginTop: 4,
+  marginTop: 8,
   padding: 8,
   borderRadius: 4,
-  background: colorVariable("backgroundSecondary"),
+  background: variable("--background-secondary"),
   overflowWrap: "anywhere",
   whiteSpace: "pre-wrap",
   font: "11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace",
-  color: colorVariable("foregroundSecondary"),
+  color: variable("--foreground-secondary"),
 };
 
-const codeLabelStyle: CSSProperties = {
-  display: "block",
-  marginTop: 10,
-  font: "600 10px/1.4 system-ui, sans-serif",
-  letterSpacing: "0.04em",
-  textTransform: "uppercase",
-  color: colorVariable("foregroundSecondary"),
-};
-
-const TokenCard = ({
-  group,
-  name,
-  recipe,
-  cssValue,
-}: {
-  group: RecipeGroup;
-  name: string;
-  recipe: unknown;
-  cssValue: string;
-}) => (
+const TokenCard = ({ name, value }: { name: string; value: string }) => (
   <article style={cardStyle}>
     <div
       aria-label={`${name} color preview`}
       style={{
         height: 72,
-        background:
-          group === "semantic"
-            ? colorVariable(name)
-            : compatibilityColorVariable(name),
-        borderBottom: `1px solid ${colorVariable("borderDefault")}`,
+        background: variable(name),
+        borderBottom: `1px solid ${variable("--border-default")}`,
       }}
     />
     <div style={{ padding: 10 }}>
       <code title={name} style={labelStyle}>
         {name}
       </code>
-      <span style={codeLabelStyle}>CSS</span>
-      <code
-        style={recipeStyle}
-      >{`${group === "semantic" ? toColorVariableName(name) : toCompatibilityColorVariableName(name)}: ${cssValue};`}</code>
-      <span style={codeLabelStyle}>Source recipe</span>
-      <code style={recipeStyle}>{JSON.stringify(recipe)}</code>
+      <code style={codeStyle}>{`${name}: ${value};`}</code>
     </div>
   </article>
 );
 
-const TokenGrid = ({ group }: { group: RecipeGroup }) => (
+const TokenGrid = ({
+  group,
+  values,
+}: {
+  group: string;
+  values: Record<string, string>;
+}) => (
   <div
     style={{
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+      gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
       gap: 12,
     }}
   >
-    {Object.entries(colorTokenSource[group]).map(([name, recipe]) => (
-      <TokenCard
-        key={name}
-        group={group}
-        name={name}
-        recipe={recipe}
-        cssValue={
-          group === "semantic"
-            ? semanticColor[name as keyof typeof semanticColor]
-            : color[name as keyof typeof color]
-        }
-      />
+    {Object.entries(values).map(([name, value]) => (
+      <TokenCard key={name} name={`--${group}-${name}`} value={value} />
     ))}
   </div>
 );
 
-const Controllers = ({ mode }: { mode: Mode }) => {
-  const values =
-    mode === "light" ? lightColorControllers : darkColorControllers;
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-        gap: 12,
-      }}
-    >
-      {Object.entries(colorTokenSource.controllers).map(
-        ([name, controller]) => {
-          const value = values[name as keyof typeof values];
-          return (
-            <article key={name} style={cardStyle}>
-              <div
-                aria-label={`${name} controller preview`}
-                style={{
-                  height: 96,
-                  background: value,
-                  borderBottom: `1px solid ${colorVariable("borderDefault")}`,
-                }}
-              />
-              <div style={{ padding: 10 }}>
-                <code style={labelStyle}>{name}</code>
-                <span
-                  style={{
-                    display: "block",
-                    marginTop: 4,
-                    font: "12px/1.45 system-ui, sans-serif",
-                    color: colorVariable("foregroundSecondary"),
-                  }}
-                >
-                  {controller.description}
-                </span>
-                <span style={codeLabelStyle}>CSS</span>
-                <code
-                  style={recipeStyle}
-                >{`${toColorVariableName(themeVariableName(name))}: ${value};`}</code>
-                <span style={codeLabelStyle}>Source value</span>
-                <code style={recipeStyle}>
-                  {JSON.stringify(controller[mode])}
-                </code>
-              </div>
-            </article>
-          );
-        }
-      )}
-    </div>
-  );
-};
+const Profile = ({ mode }: { mode: ColorMode }) => (
+  <dl
+    style={{
+      ...cardStyle,
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+      gap: 12,
+      padding: 12,
+      margin: 0,
+    }}
+  >
+    {Object.entries(source.profile[mode]).map(([name, value]) => (
+      <div key={name}>
+        <dt style={labelStyle}>{`--profile-${name}`}</dt>
+        <dd style={{ ...codeStyle, marginInline: 0 }}>{value}</dd>
+      </div>
+    ))}
+  </dl>
+);
+
+const ContrastPairs = ({ mode }: { mode: ColorMode }) => (
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+      gap: 12,
+    }}
+  >
+    {contrast[mode].map((pair) => (
+      <article key={`${pair.foreground}-${pair.background}`} style={cardStyle}>
+        <div
+          style={{
+            display: "grid",
+            placeItems: "center",
+            height: 72,
+            background: variable(pair.background),
+            color: variable(pair.foreground),
+            font: "700 24px/1 system-ui, sans-serif",
+          }}
+        >
+          Aa
+        </div>
+        <div style={{ padding: 10 }}>
+          <code style={labelStyle}>{pair.foreground}</code>
+          <code style={codeStyle}>
+            {`${pair.ratio.toFixed(2)}:1 · minimum ${pair.minimum}:1\non ${pair.background}`}
+          </code>
+        </div>
+      </article>
+    ))}
+  </div>
+);
 
 const Section = ({
   title,
@@ -210,7 +175,7 @@ const Section = ({
       <p
         style={{
           margin: "4px 0 0",
-          color: colorVariable("foregroundSecondary"),
+          color: variable("--foreground-secondary"),
           font: "14px/1.5 system-ui, sans-serif",
         }}
       >
@@ -222,16 +187,18 @@ const Section = ({
 );
 
 export const ColorSystem = () => {
-  const [mode, setMode] = useState<Mode>("light");
+  const [mode, setMode] = useState<ColorMode>("light");
   return (
     <main
+      data-color-scheme={mode}
       style={{
         ...getThemeStyles(mode),
+        colorScheme: mode,
         minHeight: "100vh",
         boxSizing: "border-box",
         padding: 24,
-        background: colorVariable("backgroundPrimary"),
-        color: colorVariable("foregroundPrimary"),
+        background: variable("--background-primary"),
+        color: variable("--foreground-primary"),
       }}
     >
       <div
@@ -258,14 +225,15 @@ export const ColorSystem = () => {
             </h1>
             <p
               style={{
-                maxWidth: 720,
+                maxWidth: 760,
                 margin: "8px 0 0",
-                color: colorVariable("foregroundSecondary"),
+                color: variable("--foreground-secondary"),
                 font: "14px/1.55 system-ui, sans-serif",
               }}
             >
-              Seven theme controllers drive every semantic color through live
-              relative CSS. Compatibility names preserve the current public API.
+              CSS derives seven theme colors and a small Craft semantic
+              vocabulary from six seeds and one shared scheme profile. Every
+              card shows its declaration directly from colors.css.
             </p>
           </div>
           <div
@@ -276,7 +244,7 @@ export const ColorSystem = () => {
               gap: 4,
               padding: 4,
               borderRadius: 8,
-              background: colorVariable("backgroundMuted"),
+              background: variable("--background-secondary"),
             }}
           >
             {(["light", "dark"] as const).map((value) => (
@@ -290,9 +258,9 @@ export const ColorSystem = () => {
                   borderRadius: 6,
                   background:
                     mode === value
-                      ? colorVariable("backgroundPrimary")
+                      ? variable("--background-primary")
                       : "transparent",
-                  color: colorVariable("foregroundPrimary"),
+                  color: variable("--foreground-primary"),
                   font: "600 12px/1 system-ui, sans-serif",
                   cursor: "pointer",
                 }}
@@ -304,40 +272,42 @@ export const ColorSystem = () => {
         </header>
 
         <Section
-          title={`Theme controllers · ${Object.keys(colorTokenSource.controllers).length}`}
-          description="The only theme-specific colors. Change these to propagate through the entire graph."
+          title={`Color seeds · ${Object.keys(source.seed).length}`}
+          description="Theme authors define each hue and maximum chroma once. Components cannot consume seeds."
         >
-          <Controllers mode={mode} />
+          <TokenGrid group="seed" values={source.seed} />
         </Section>
 
         <Section
-          title={`Semantic colors · ${Object.keys(colorTokenSource.semantic).length}`}
-          description="Purpose-based colors derived from controllers. Each card shows its emitted CSS and source recipe."
+          title={`${mode[0].toUpperCase() + mode.slice(1)} profile`}
+          description="Six controls transform every seed for the active color scheme."
         >
-          <TokenGrid group="semantic" />
+          <Profile mode={mode} />
         </Section>
 
-        <details>
-          <summary
-            style={{
-              cursor: "pointer",
-              font: "600 18px/1.4 system-ui, sans-serif",
-            }}
+        <Section
+          title={`Contrast contracts · ${contrast[mode].length}`}
+          description="Required text and non-text pairings are validated in both schemes."
+        >
+          <ContrastPairs mode={mode} />
+        </Section>
+
+        <Section
+          title={`Theme colors · ${Object.keys(source.theme).length}`}
+          description="Theme colors combine seeds with the active profile and feed the semantic graph."
+        >
+          <TokenGrid group="theme" values={source.theme} />
+        </Section>
+
+        {Object.entries(source.semantic).map(([category, colors]) => (
+          <Section
+            key={category}
+            title={`${category[0].toUpperCase() + category.slice(1)} · ${Object.keys(colors).length}`}
+            description={`Reusable Craft ${category} decisions. Component states compose these values instead of adding component-specific colors.`}
           >
-            Compatibility colors ·{" "}
-            {Object.keys(colorTokenSource.compatibility).length}
-          </summary>
-          <p
-            style={{
-              margin: "4px 0 12px",
-              color: colorVariable("foregroundSecondary"),
-              font: "14px/1.5 system-ui, sans-serif",
-            }}
-          >
-            Existing design-system names mapped onto the new semantic graph.
-          </p>
-          <TokenGrid group="compatibility" />
-        </details>
+            <TokenGrid group={category} values={colors} />
+          </Section>
+        ))}
       </div>
     </main>
   );
