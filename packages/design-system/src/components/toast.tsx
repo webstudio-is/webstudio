@@ -76,9 +76,6 @@ const borderAccentBackgroundColor = "--toast-border-accent-background-color";
 const backgroundColor = "--toast-background-color";
 const borderColor = "--toast-border-color";
 const iconColor = "--toast-icon-color";
-const positiveSubtle = `color-mix(in oklab, ${cssVar(
-  "--background-positive"
-)} 12%, ${cssVar("--background-primary")})`;
 
 const ToastVariants = styled("div", {
   [borderAccentBackgroundColor]: cssVar("--foreground-primary"),
@@ -102,7 +99,7 @@ const ToastVariants = styled("div", {
         [iconColor]: cssVar("--foreground-negative"),
       },
       success: {
-        [backgroundColor]: positiveSubtle,
+        [backgroundColor]: cssVar("--background-positive-subtle"),
         [borderAccentBackgroundColor]: cssVar("--background-positive"),
         [borderColor]: cssVar("--background-positive"),
         [iconColor]: cssVar("--foreground-positive"),

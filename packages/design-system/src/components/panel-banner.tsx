@@ -4,10 +4,6 @@ import { cssVar } from "../css-var";
 
 const iconColor = "--panel-banner-icon-color";
 
-const positiveSubtle = `color-mix(in oklab, ${cssVar(
-  "--background-positive"
-)} 12%, ${cssVar("--background-primary")})`;
-
 export const panelBannerIconColor = `var(${iconColor})`;
 
 export const PanelBanner = styled(Box, {
@@ -30,7 +26,7 @@ export const PanelBanner = styled(Box, {
         [iconColor]: cssVar("--foreground-negative"),
       },
       success: {
-        backgroundColor: positiveSubtle,
+        backgroundColor: cssVar("--background-positive-subtle"),
         [iconColor]: cssVar("--foreground-positive"),
       },
       neutral: {

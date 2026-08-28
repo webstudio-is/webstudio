@@ -7,6 +7,7 @@ export type CssVariableName =
   | "--background-inverse"
   | "--background-accent"
   | "--background-positive"
+  | "--background-positive-subtle"
   | "--background-negative"
   | "--background-negative-subtle"
   | "--background-warning-subtle"

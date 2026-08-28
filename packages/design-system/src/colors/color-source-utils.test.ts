@@ -11,26 +11,33 @@ const source = readFileSync(resolve("src/colors/colors.css"), "utf8");
 
 const replaceDeclaration = ({
   css,
+  selector,
   property,
   value,
 }: {
   css: string;
+  selector?: string;
   property: string;
   value: string;
 }) => {
   const stylesheet = csstree.parse(css);
   let replacementCount = 0;
   csstree.walk(stylesheet, {
-    visit: "Declaration",
+    visit: "Rule",
     enter(node) {
-      if (node.type !== "Declaration") {
+      if (
+        node.type !== "Rule" ||
+        (selector !== undefined && csstree.generate(node.prelude) !== selector)
+      ) {
         return;
       }
-      if (node.property !== property) {
-        return;
-      }
-      node.value = csstree.parse(value, { context: "value" });
-      replacementCount += 1;
+      node.block.children.forEach((child) => {
+        if (child.type !== "Declaration" || child.property !== property) {
+          return;
+        }
+        child.value = csstree.parse(value, { context: "value" });
+        replacementCount += 1;
+      });
     },
   });
   expect(replacementCount).toBe(1);
@@ -94,7 +101,8 @@ describe("Craft color CSS source", () => {
         (count, category) => count + Object.keys(category).length,
         0
       )
-    ).toBe(33);
+    ).toBe(34);
+    expect(colors.semantic.background).toHaveProperty("positive-subtle");
     expect(colors.semantic.background).not.toHaveProperty("accent-hover");
     expect(colors.semantic.overlay).toHaveProperty("interaction-hover");
   });
@@ -140,6 +148,22 @@ describe("Craft color CSS source", () => {
 
     expect(() => parseColorSource(cycle)).toThrow(
       "Circular color reference: --background-primary -> --background-secondary -> --background-primary"
+    );
+  });
+
+  test.each([
+    { selector: ":root", mode: "light" },
+    { selector: ':root[data-color-scheme="dark"]', mode: "dark" },
+  ])("rejects missing references in $mode scheme bounds", ({ selector }) => {
+    const invalidSource = replaceDeclaration({
+      css: source,
+      selector,
+      property: "--scheme-background-lightness",
+      value: "var(--scheme-missing)",
+    });
+
+    expect(() => parseColorSource(invalidSource)).toThrow(
+      `--scheme-background-lightness references missing variable --scheme-missing`
     );
   });
 });

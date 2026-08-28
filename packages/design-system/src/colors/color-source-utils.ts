@@ -301,9 +301,23 @@ export const parseColorSource = (css: string): ColorSource => {
       value,
     ])
   );
+  const darkSchemeDeclarations = Object.fromEntries(
+    Object.entries(darkScheme).map(([name, value]) => [
+      `--scheme-${name}`,
+      value,
+    ])
+  );
   const derivedDeclarations = Object.fromEntries(
     Object.entries(derived).map(([name, value]) => [`--color-${name}`, value])
   );
+
+  for (const declarations of [schemeDeclarations, darkSchemeDeclarations]) {
+    validateReferences({
+      declarations,
+      names,
+      allowedPrefixes: ["--theme-color-", "--theme-contrast-", "--scheme-"],
+    });
+  }
 
   validateReferences({
     declarations: derivedDeclarations,
@@ -341,6 +355,7 @@ export const parseColorSource = (css: string): ColorSource => {
     requireReference: true,
   });
   validateCycles(allDeclarations);
+  validateCycles({ ...allDeclarations, ...darkSchemeDeclarations });
   validateConsumed({
     label: "theme parameters",
     declarations: themeDeclarations,

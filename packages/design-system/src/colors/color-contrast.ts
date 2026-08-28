@@ -21,6 +21,7 @@ const contrastContracts = [
   ["--foreground-on-accent", "--background-accent", 4.5],
   ["--foreground-on-positive", "--background-positive", 4.5],
   ["--foreground-on-negative", "--background-negative", 4.5],
+  ["--foreground-positive", "--background-positive-subtle", 4.5],
   ["--foreground-negative", "--background-negative-subtle", 4.5],
   ["--foreground-warning", "--background-warning-subtle", 4.5],
   ["--foreground-informative", "--background-informative-subtle", 4.5],

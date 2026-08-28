@@ -396,7 +396,7 @@
   );
   --color-positive-foreground: color-mix(
     in oklab,
-    color-mix(in oklab, var(--color-positive) 96%, var(--color-foreground))
+    color-mix(in oklab, var(--color-positive) 90%, var(--color-foreground))
       var(--scheme-chromatic-foreground-mix),
     var(--color-foreground)
   );
@@ -434,6 +434,11 @@
   --background-inverse: var(--color-foreground);
   --background-accent: var(--color-accent);
   --background-positive: var(--color-positive);
+  --background-positive-subtle: color-mix(
+    in oklab,
+    var(--color-positive) 12%,
+    var(--color-background)
+  );
   --background-negative: var(--color-negative);
   --background-negative-subtle: color-mix(
     in oklab,

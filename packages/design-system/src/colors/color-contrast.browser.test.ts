@@ -30,6 +30,7 @@ const legacyLightColors = {
   "--background-inverse": "#11181c",
   "--background-accent": "#096cff",
   "--background-positive": "#00894a",
+  "--background-positive-subtle": "#e9f9ee",
   "--background-negative": "#dc2929",
   "--background-negative-subtle": "#ffe9e9",
   "--background-warning-subtle": "#fffbd1",
@@ -43,7 +44,8 @@ const legacyLightColors = {
   "--foreground-on-positive": "#ffffff",
   "--foreground-on-negative": "#ffffff",
   "--foreground-accent": "#096cff",
-  "--foreground-positive": "#008447",
+  // Darkened from the legacy green so positive text remains accessible on its subtle background.
+  "--foreground-positive": "#0b7b45",
   "--foreground-negative": "#d13a3a",
   // Darkened from the legacy yellow so warning text meets 4.5:1 contrast.
   "--foreground-warning": "#786a00",
@@ -186,10 +188,12 @@ describe("Craft color contrast", () => {
     const previousMode = root.getAttribute("data-color-scheme");
     try {
       root.dataset.colorScheme = "light";
+      const positive = readColor("--background-positive-subtle");
       const negative = readColor("--background-negative-subtle");
       const warning = readColor("--background-warning-subtle");
       const informative = readColor("--background-informative-subtle");
 
+      expect(positive[1]).toBeGreaterThan(positive[0]);
       expect(negative[0]).toBeGreaterThan(negative[2]);
       expect(warning[0]).toBeGreaterThan(warning[2]);
       expect(informative[2]).toBeGreaterThan(informative[0]);
