@@ -96,7 +96,7 @@ CSS variable names must:
 - Use complete words unless an abbreviation is part of the approved Craft
   vocabulary.
 - Describe purpose rather than visual appearance at the semantic layer.
-- Follow `category-role-state` when all three segments are needed.
+- Follow `category-role-modifier-state` when all four segments are needed.
 - Omit segments that do not add meaning.
 
 Examples:
@@ -139,8 +139,9 @@ Craft organizes interface colors into four categories:
 The core vocabulary is:
 
 ```text
-Emphasis: primary, secondary, muted, disabled, inverse
+Emphasis: primary, secondary, muted, strong, disabled, inverse
 Intent: accent, positive, negative, warning, informative
+Modifier: subtle
 State: hover, pressed, selected, disabled, focus
 ```
 
@@ -169,6 +170,8 @@ silently depend on an undocumented project-specific variable.
 /* Background */
 --background-primary
 --background-secondary
+--background-muted
+--background-strong
 --background-disabled
 --background-inverse
 --background-accent
@@ -203,6 +206,11 @@ Add reusable state variables using the same grammar:
 --background-accent-selected
 --background-negative-hover
 ```
+
+Use a modifier between the role and state when a reusable variation is not an
+interaction state. For example, `--background-negative-subtle` is a low-emphasis
+negative surface, while `--background-negative-subtle-hover` is its hover
+state.
 
 Component states map to the semantic state that describes their visual meaning.
 For example, `checked`, `on`, and `current` commonly use a selected color;

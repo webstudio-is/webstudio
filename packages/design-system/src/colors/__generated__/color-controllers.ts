@@ -11,21 +11,21 @@ export const colorControllerNames = [
 ] as const;
 
 export const lightColorControllers = {
-  themeCanvas: "oklch(98.5% 0.002 250)",
-  themeInk: "oklch(20.5% 0.015 250)",
-  themeAccent: "oklch(55% 0.21 255)",
-  themePositive: "oklch(50% 0.14 152)",
-  themeNegative: "oklch(54% 0.19 27)",
-  themeWarning: "oklch(57% 0.14 75)",
-  themeInformative: "oklch(55% 0.14 225)",
+  canvas: "oklch(98.5% 0.002 250)",
+  ink: "oklch(20.5% 0.015 250)",
+  accent: "oklch(55% 0.21 255)",
+  positive: "oklch(50% 0.14 152)",
+  negative: "oklch(54% 0.19 27)",
+  warning: "oklch(57% 0.14 75)",
+  informative: "oklch(55% 0.14 225)",
 } as const;
 
 export const darkColorControllers = {
-  themeCanvas: "oklch(17% 0.012 250)",
-  themeInk: "oklch(94% 0.006 250)",
-  themeAccent: "oklch(72% 0.16 255)",
-  themePositive: "oklch(74% 0.14 152)",
-  themeNegative: "oklch(72% 0.17 27)",
-  themeWarning: "oklch(80% 0.14 75)",
-  themeInformative: "oklch(74% 0.13 225)",
+  canvas: "oklch(17% 0.012 250)",
+  ink: "oklch(94% 0.006 250)",
+  accent: "oklch(72% 0.16 255)",
+  positive: "oklch(74% 0.14 152)",
+  negative: "oklch(72% 0.17 27)",
+  warning: "oklch(80% 0.14 75)",
+  informative: "oklch(74% 0.13 225)",
 } as const;

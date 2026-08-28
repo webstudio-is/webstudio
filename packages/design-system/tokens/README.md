@@ -3,6 +3,12 @@
 `colors.ts` is the source of truth for design-system colors. Do not edit the
 generated TypeScript files in `src/colors/__generated__/` directly.
 
+The implementation follows the public
+[Craft specification](https://docs.webstudio.is/university/craft): theme
+variables feed semantic variables, and components consume those semantics
+through the existing design-system API. Craft defines the portable contract;
+this manifest contains Webstudio's theme-specific choices.
+
 The typed manifest contains three layers:
 
 - Seven controllers with light and dark OKLCH tuples.
@@ -33,7 +39,7 @@ A string references a controller or semantic color:
 
 ```ts
 "theme.canvas";
-"semantic.backgroundCanvas";
+"semantic.backgroundPrimary";
 ```
 
 Recipes use typed tuples:
@@ -54,10 +60,16 @@ cycles, and emits live relative CSS expressions.
 
 ## Naming
 
-Token keys use camelCase in TypeScript to preserve the existing package API.
-Generated CSS custom properties use kebab-case exclusively. For example,
-`backgroundNeutralSubtle` is emitted as
-`--colors-background-neutral-subtle`.
+Source keys use camelCase in TypeScript. Theme and semantic CSS variables use
+Craft's unprefixed kebab-case names, such as `--theme-canvas`,
+`--foreground-primary`, and `--background-accent-hover`.
+
+The existing component color APIs remain compatibility adapters under
+Stitches' `--colors-*` namespace. This includes the original color names and
+the first semantic names introduced while this system was being developed. For
+example, `backgroundPanel` resolves through `--colors-background-panel` to a
+Craft semantic variable. New design-system code should consume the Craft
+semantic scales instead of adding compatibility names.
 
 ## Generate colors
 

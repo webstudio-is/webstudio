@@ -10,8 +10,8 @@ describe("color recipe compiler", () => {
       recipes: {
         version: 1,
         semantic: {
-          backgroundCanvas: "theme.canvas",
-          backgroundNeutral: ["mix", "theme.canvas", 92, "theme.ink"],
+          backgroundPrimary: "theme.canvas",
+          backgroundMuted: ["mix", "theme.canvas", 92, "theme.ink"],
         },
         compatibility: {
           white: ["channels", "theme.canvas", 100, 0],
@@ -32,14 +32,14 @@ describe("color recipe compiler", () => {
 
     expect(result).toEqual({
       semantic: {
-        backgroundCanvas: "var(--colors-theme-canvas)",
-        backgroundNeutral:
-          "color-mix(in oklch, var(--colors-theme-canvas) 92%, var(--colors-theme-ink))",
+        backgroundPrimary: "var(--theme-canvas)",
+        backgroundMuted:
+          "color-mix(in oklch, var(--theme-canvas) 92%, var(--theme-ink))",
       },
       compatibility: {
-        white: "oklch(from var(--colors-theme-canvas) 100% 0 h)",
+        white: "oklch(from var(--theme-canvas) 100% 0 h)",
         accentFade:
-          "linear-gradient(180deg, oklch(from var(--colors-theme-accent) l c calc(h + 72)) 0%, oklch(from var(--colors-theme-accent) l c h / 0%) 100%)",
+          "linear-gradient(180deg, oklch(from var(--theme-accent) l c calc(h + 72)) 0%, oklch(from var(--theme-accent) l c h / 0%) 100%)",
       },
     });
   });

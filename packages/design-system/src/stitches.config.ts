@@ -2,7 +2,11 @@ import { createStitches } from "@stitches/react";
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 import * as tokens from "./design-tokens";
-import { toCssColorTokenRecord, toKebabCase } from "./colors/color-name-utils";
+import {
+  toCssColorTokenRecord,
+  toKebabCase,
+  toSemanticColorScales,
+} from "./colors/color-name-utils";
 
 const spacing = {
   0: "0px",
@@ -43,6 +47,8 @@ const spacing = {
   35: "448px",
 };
 
+const semanticColorScales = toSemanticColorScales(tokens.semanticColor);
+
 const {
   styled,
   css,
@@ -55,6 +61,8 @@ const {
 } = createStitches({
   theme: {
     colors: toCssColorTokenRecord(tokens.color),
+    theme: tokens.lightColorControllers,
+    ...semanticColorScales,
     fonts: {
       ...tokens.fontFamilies,
       sans: tokens.fontFamilies.inter,
@@ -222,7 +230,7 @@ export const rawTheme = {
 
 /** Overrides only the seven color controllers; all semantic colors stay live. */
 export const darkTheme = createTheme({
-  colors: toCssColorTokenRecord(tokens.darkColorControllers),
+  theme: tokens.darkColorControllers,
 });
 
 export type CSS = Stitches.CSS<typeof config>;

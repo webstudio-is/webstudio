@@ -51,8 +51,7 @@ const formatControllerNames = () =>
 const formatTheme = (theme: "light" | "dark") =>
   Object.entries(colorTokenSource.controllers)
     .map(([name, controller]) => {
-      const key = `theme${name[0].toUpperCase()}${name.slice(1)}`;
-      return `  ${key}: ${JSON.stringify(formatColor(controller[theme]))},`;
+      return `  ${name}: ${JSON.stringify(formatColor(controller[theme]))},`;
     })
     .join("\n");
 

@@ -2,11 +2,12 @@ import { describe, expect, test } from "vitest";
 import {
   color,
   colorControllerNames,
+  compatibilityColor,
   darkColorControllers,
   lightColorControllers,
   semanticColor,
 } from "./color-system";
-import { toColorVariableName } from "./color-name-utils";
+import { toColorVariableName, toSemanticColorScales } from "./color-name-utils";
 
 describe("color system", () => {
   test("defines exactly the same seven controllers in both themes", () => {
@@ -27,24 +28,52 @@ describe("color system", () => {
 
   test("keeps every semantic color connected to a theme controller", () => {
     for (const [name, value] of Object.entries(semanticColor)) {
-      expect(value, name).toContain("var(--colors-theme-");
+      expect(value, name).toContain("var(--theme-");
     }
   });
 
+  test("organizes semantic colors into the Craft categories", () => {
+    const scales = toSemanticColorScales(semanticColor);
+
+    expect(Object.keys(scales)).toEqual([
+      "foreground",
+      "background",
+      "border",
+      "overlay",
+    ]);
+    expect(scales.foreground.primary).toBe("var(--theme-ink)");
+    expect(scales.background["accent-hover"]).toContain("var(--theme-accent)");
+    expect(scales.border.focus).toBe("var(--theme-accent)");
+    expect(scales.overlay.scrim).toContain("var(--theme-ink)");
+  });
+
+  test("rejects semantic colors outside the Craft categories", () => {
+    expect(() => toSemanticColorScales({ contentPrimary: "black" })).toThrow(
+      "Unknown semantic color category: contentPrimary"
+    );
+  });
+
   test("keeps literal colors out of semantic and compatibility colors", () => {
-    const controllerNames = new Set(Object.keys(lightColorControllers));
-
-    for (const [name, value] of Object.entries(color)) {
-      if (controllerNames.has(name)) {
-        continue;
-      }
-
+    for (const [name, value] of Object.entries({
+      ...semanticColor,
+      ...compatibilityColor,
+    })) {
       expect(value, name).not.toContain("#");
       expect(value, name).not.toContain("rgb(");
       expect(value, name).not.toContain("hsl(");
-      expect(value, name).toContain("var(--colors-");
-      expect(value, name).not.toBe(`var(${toColorVariableName(name)})`);
-      expect(value, name).not.toMatch(/--colors-[a-z0-9-]*[A-Z]/);
+      expect(value, name).toContain("var(--");
+      expect(value, name).not.toMatch(/--[a-z0-9-]*[A-Z]/);
     }
+  });
+
+  test("keeps existing color names as adapters to Craft variables", () => {
+    expect(color.backgroundPanel).toBe("var(--background-primary)");
+    expect(color.contentPrimary).toBe("var(--theme-ink)");
+    expect(color.backgroundNeutralHover).toContain("var(--theme-canvas)");
+    expect(color).not.toHaveProperty("themeCanvas");
+    expect(color.white).toBe(compatibilityColor.white);
+    expect(toColorVariableName("foregroundPrimary")).toBe(
+      "--foreground-primary"
+    );
   });
 });

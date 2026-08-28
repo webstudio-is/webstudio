@@ -2,7 +2,9 @@
 
 export {
   color,
+  compatibilityColor,
   darkColorControllers,
+  lightColorControllers,
   semanticColor,
 } from "./colors/color-system";
 

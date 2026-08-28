@@ -33,7 +33,7 @@ export const inputFieldColors = ["placeholder", "set", "error"] as const;
 
 const inputStyle = css({
   all: "unset",
-  color: theme.colors.contentPrimary,
+  color: theme.foreground.primary,
   flexGrow: 1,
   flexShrink: 1,
   minWidth: 0,
@@ -42,12 +42,12 @@ const inputStyle = css({
   paddingLeft: theme.spacing[3],
   "&[data-color=placeholder]:not(:hover, :disabled, [aria-disabled=true], :focus), &::placeholder":
     {
-      color: theme.colors.contentSecondary,
+      color: theme.foreground.secondary,
     },
-  "&[data-color=error]": { color: theme.colors.contentNegative },
+  "&[data-color=error]": { color: theme.foreground.negative },
   "&:disabled, &[aria-disabled=true]": {
     "&, &::placeholder": {
-      color: theme.colors.contentDisabled,
+      color: theme.foreground.disabled,
     },
   },
   '&[type="number"]': {
@@ -83,22 +83,22 @@ const containerStyle = css({
   alignItems: "center",
   borderRadius: theme.borderRadius[4],
   border: `solid 1px transparent`,
-  backgroundColor: theme.colors.backgroundNeutralSubtle,
+  backgroundColor: theme.background.secondary,
   "&:hover": {
-    borderColor: theme.colors.borderDefault,
+    borderColor: theme.border.default,
   },
   "&:focus-within": {
-    borderColor: theme.colors.borderFocus,
+    borderColor: theme.border.focus,
     outline: "none",
   },
   "&:has([data-input-field-input][data-color=error])": {
-    borderColor: theme.colors.borderNegative,
+    borderColor: theme.border.negative,
   },
   "&:focus-within:has([data-color=error])": {
-    borderColor: theme.colors.borderNegative,
+    borderColor: theme.border.negative,
   },
   "&:has([data-input-field-input]:is(:disabled, [aria-disabled=true]))": {
-    backgroundColor: theme.colors.backgroundNeutralDisabled,
+    backgroundColor: theme.background.disabled,
   },
 
   variants: {

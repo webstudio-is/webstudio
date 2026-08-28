@@ -31,51 +31,51 @@ type ButtonColor = (typeof colors)[number];
 type ButtonState = "auto" | "hover" | "focus" | "pressed" | "pending";
 
 const backgrounds: Record<ButtonColor, string> = {
-  primary: theme.colors.backgroundAccent,
-  neutral: theme.colors.backgroundNeutral,
-  "neutral-destructive": theme.colors.backgroundNeutral,
-  destructive: theme.colors.backgroundNegative,
-  positive: theme.colors.backgroundPositive,
-  ghost: theme.colors.backgroundNeutralHover,
-  dark: theme.colors.backgroundInverse,
+  primary: theme.background.accent,
+  neutral: theme.background.muted,
+  "neutral-destructive": theme.background.muted,
+  destructive: theme.background.negative,
+  positive: theme.background.positive,
+  ghost: theme.background["secondary-hover"],
+  dark: theme.background.inverse,
   gradient: theme.colors.backgroundGradientPrimary,
-  "dark-ghost": theme.colors.backgroundInverse,
+  "dark-ghost": theme.background.inverse,
 };
 
 const hoverBackgrounds: Record<ButtonColor, string> = {
-  primary: theme.colors.backgroundAccentHover,
-  neutral: theme.colors.backgroundNeutralHover,
-  "neutral-destructive": theme.colors.backgroundNeutralHover,
-  destructive: theme.colors.backgroundNegativeHover,
-  positive: theme.colors.backgroundPositiveHover,
-  ghost: theme.colors.backgroundNeutralHover,
-  dark: theme.colors.backgroundInverseHover,
+  primary: theme.background["accent-hover"],
+  neutral: theme.background["secondary-hover"],
+  "neutral-destructive": theme.background["secondary-hover"],
+  destructive: theme.background["negative-hover"],
+  positive: theme.background["positive-hover"],
+  ghost: theme.background["secondary-hover"],
+  dark: theme.background["inverse-hover"],
   gradient: theme.colors.backgroundGradientPrimary,
-  "dark-ghost": theme.colors.backgroundInverseHover,
+  "dark-ghost": theme.background["inverse-hover"],
 };
 
 const pressedBackgrounds: Record<ButtonColor, string> = {
-  primary: theme.colors.backgroundAccentPressed,
-  neutral: theme.colors.backgroundNeutralPressed,
-  "neutral-destructive": theme.colors.backgroundNeutralPressed,
-  destructive: theme.colors.backgroundNegativeHover,
-  positive: theme.colors.backgroundPositiveHover,
-  ghost: theme.colors.backgroundNeutralPressed,
-  dark: theme.colors.backgroundInverseHover,
+  primary: theme.background["accent-pressed"],
+  neutral: theme.background["secondary-pressed"],
+  "neutral-destructive": theme.background["secondary-pressed"],
+  destructive: theme.background["negative-hover"],
+  positive: theme.background["positive-hover"],
+  ghost: theme.background["secondary-pressed"],
+  dark: theme.background["inverse-hover"],
   gradient: theme.colors.backgroundGradientPrimary,
-  "dark-ghost": theme.colors.backgroundInverseHover,
+  "dark-ghost": theme.background["inverse-hover"],
 };
 
 const foregrounds: Record<ButtonColor, string> = {
-  primary: theme.colors.contentInverse,
-  destructive: theme.colors.contentInverse,
-  "neutral-destructive": theme.colors.contentNegative,
-  positive: theme.colors.contentInverse,
-  neutral: theme.colors.contentPrimary,
-  ghost: theme.colors.contentPrimary,
-  dark: theme.colors.contentInverse,
-  gradient: theme.colors.contentInverse,
-  "dark-ghost": theme.colors.contentInverse,
+  primary: theme.foreground.inverse,
+  destructive: theme.foreground.inverse,
+  "neutral-destructive": theme.foreground.negative,
+  positive: theme.foreground.inverse,
+  neutral: theme.foreground.primary,
+  ghost: theme.foreground.primary,
+  dark: theme.foreground.inverse,
+  gradient: theme.foreground.inverse,
+  "dark-ghost": theme.foreground.inverse,
 };
 
 const perColorStyle = (variant: ButtonColor) => ({
@@ -85,7 +85,7 @@ const perColorStyle = (variant: ButtonColor) => ({
       : backgrounds[variant],
   color:
     variant === "dark-ghost"
-      ? theme.colors.contentInverseSecondary
+      ? theme.foreground["inverse-secondary"]
       : foregrounds[variant],
 
   "&[data-state=auto]:hover, &[data-state=hover]": {
@@ -98,7 +98,7 @@ const perColorStyle = (variant: ButtonColor) => ({
 
   "&[data-state=auto]:focus-visible, &[data-state=focus]": {
     color: foregrounds[variant],
-    outline: `1px solid ${theme.colors.borderFocus}`,
+    outline: `1px solid ${theme.border.focus}`,
     outlineOffset: "1px",
   },
 
@@ -112,8 +112,8 @@ const perColorStyle = (variant: ButtonColor) => ({
 
   "&:disabled:not([data-state=pending]), &[data-state=disabled], &[aria-disabled=true], &[aria-disabled=true]:hover, &[aria-disabled=true]:visited":
     {
-      background: theme.colors.backgroundNeutralDisabled,
-      color: theme.colors.contentDisabled,
+      background: theme.background.disabled,
+      color: theme.foreground.disabled,
     },
 
   "&[data-state=pending]": {
