@@ -170,8 +170,11 @@ const getEngrammaDocument = (snapshot: ColorSnapshot) => `
               continue;
             }
             input.setAttribute("data-webstudio-controller-bridge", "");
+            const initialValue = String(input.value);
             input.addEventListener("close", () => {
-              publishController(input.value);
+              if (String(input.value) !== initialValue) {
+                publishController(input.value);
+              }
             });
           }
         };

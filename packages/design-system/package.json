@@ -6,8 +6,8 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "generate:colors": "tsx src/colors/generate-color-controllers.ts",
-    "check:colors": "tsx src/colors/generate-color-controllers.ts --check",
+    "generate:colors": "tsx src/colors/generate-colors.ts",
+    "check:colors": "tsx src/colors/generate-colors.ts --check",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run"
   },
