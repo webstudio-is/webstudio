@@ -21,9 +21,7 @@ import {
   replaceCanvasTextAndApplyInlineFormats,
 } from "../flows/content-editing";
 import {
-  fillSelectedNumberProperty,
   fillSelectedStringProperty,
-  waitForSelectedNumberPropertyValue,
   waitForSelectedStringPropertyValue,
 } from "../flows/props-panel";
 import {
@@ -267,7 +265,6 @@ test("Editor can edit text and content props but not design props", async () => 
   const editedImageSrc =
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80'%3E%3Crect width='120' height='80' fill='%23dff7e8'/%3E%3C/svg%3E";
   const editedImageAlt = "Edited image alt";
-  const editedImageWidth = 240;
   const editedVideoSrc = "https://example.com/edited-video.mp4";
   const editedContent = "Edited isolated content";
   const { page, close } = await newIsolatedPage();
@@ -367,11 +364,7 @@ test("Editor can edit text and content props but not design props", async () => 
       control: "text",
       value: editedImageAlt,
     });
-    await fillSelectedNumberProperty({
-      page,
-      label: "Width",
-      value: editedImageWidth,
-    });
+    await expectTextHidden({ page, text: "Width" });
 
     await selectCanvasVideoSource({
       page,
@@ -427,11 +420,7 @@ test("Editor can edit text and content props but not design props", async () => 
       control: "text",
       value: editedImageAlt,
     });
-    await waitForSelectedNumberPropertyValue({
-      page,
-      label: "Width",
-      value: editedImageWidth,
-    });
+    await expectTextHidden({ page, text: "Width" });
 
     await selectCanvasVideoSource({
       page,
