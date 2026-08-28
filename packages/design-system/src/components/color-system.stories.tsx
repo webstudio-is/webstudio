@@ -49,12 +49,33 @@ const labelStyle: CSSProperties = {
 const recipeStyle: CSSProperties = {
   display: "block",
   marginTop: 4,
+  padding: 8,
+  borderRadius: 4,
+  background: "var(--colors-backgroundNeutralSubtle)",
   overflowWrap: "anywhere",
+  whiteSpace: "pre-wrap",
   font: "11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace",
   color: "var(--colors-contentSecondary)",
 };
 
-const TokenCard = ({ name, recipe }: { name: string; recipe: unknown }) => (
+const codeLabelStyle: CSSProperties = {
+  display: "block",
+  marginTop: 10,
+  font: "600 10px/1.4 system-ui, sans-serif",
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+  color: "var(--colors-contentSecondary)",
+};
+
+const TokenCard = ({
+  name,
+  recipe,
+  cssValue,
+}: {
+  name: string;
+  recipe: unknown;
+  cssValue: string;
+}) => (
   <article style={cardStyle}>
     <div
       aria-label={`${name} color preview`}
@@ -68,6 +89,9 @@ const TokenCard = ({ name, recipe }: { name: string; recipe: unknown }) => (
       <code title={name} style={labelStyle}>
         {name}
       </code>
+      <span style={codeLabelStyle}>CSS</span>
+      <code style={recipeStyle}>{`--colors-${name}: ${cssValue};`}</code>
+      <span style={codeLabelStyle}>Source recipe</span>
       <code style={recipeStyle}>{JSON.stringify(recipe)}</code>
     </div>
   </article>
@@ -82,7 +106,12 @@ const TokenGrid = ({ group }: { group: RecipeGroup }) => (
     }}
   >
     {Object.entries(colorTokenSource[group]).map(([name, recipe]) => (
-      <TokenCard key={name} name={name} recipe={recipe} />
+      <TokenCard
+        key={name}
+        name={name}
+        recipe={recipe}
+        cssValue={color[name as keyof typeof color]}
+      />
     ))}
   </div>
 );
@@ -100,7 +129,8 @@ const Controllers = ({ mode }: { mode: Mode }) => {
     >
       {Object.entries(colorTokenSource.controllers).map(
         ([name, controller]) => {
-          const value = values[controllerKey(name)];
+          const cssName = controllerKey(name);
+          const value = values[cssName];
           return (
             <article key={name} style={cardStyle}>
               <div
@@ -123,7 +153,14 @@ const Controllers = ({ mode }: { mode: Mode }) => {
                 >
                   {controller.description}
                 </span>
-                <code style={recipeStyle}>{value}</code>
+                <span style={codeLabelStyle}>CSS</span>
+                <code
+                  style={recipeStyle}
+                >{`--colors-${cssName}: ${value};`}</code>
+                <span style={codeLabelStyle}>Source value</span>
+                <code style={recipeStyle}>
+                  {JSON.stringify(controller[mode])}
+                </code>
               </div>
             </article>
           );
@@ -252,7 +289,7 @@ export const ColorSystem = () => {
 
         <Section
           title={`Semantic colors · ${Object.keys(colorTokenSource.semantic).length}`}
-          description="Purpose-based colors derived from controllers. Each card shows its source recipe."
+          description="Purpose-based colors derived from controllers. Each card shows its emitted CSS and source recipe."
         >
           <TokenGrid group="semantic" />
         </Section>
