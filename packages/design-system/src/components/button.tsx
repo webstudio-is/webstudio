@@ -13,7 +13,7 @@ import { textVariants } from "./text";
 import { css, styled, theme, type CSS } from "../stitches.config";
 import { LoadingDotsIcon } from "@webstudio-is/icons";
 import { Flex } from "./flex";
-import { cssVar } from "../colors/css-var";
+import { cssVar } from "../css-var";
 
 const colors = [
   "primary",
@@ -43,30 +43,6 @@ const backgrounds: Record<ButtonColor, string> = {
   "dark-ghost": "transparent",
 };
 
-const hoverOverlays: Record<ButtonColor, string> = {
-  primary: cssVar("--overlay-interaction-hover"),
-  neutral: cssVar("--overlay-interaction-hover"),
-  "neutral-destructive": cssVar("--overlay-interaction-hover"),
-  destructive: cssVar("--overlay-interaction-hover"),
-  positive: cssVar("--overlay-interaction-hover"),
-  ghost: cssVar("--overlay-interaction-hover"),
-  dark: cssVar("--overlay-on-inverse-hover"),
-  gradient: cssVar("--overlay-interaction-hover"),
-  "dark-ghost": cssVar("--overlay-on-inverse-hover"),
-};
-
-const pressedOverlays: Record<ButtonColor, string> = {
-  primary: cssVar("--overlay-interaction-pressed"),
-  neutral: cssVar("--overlay-interaction-pressed"),
-  "neutral-destructive": cssVar("--overlay-interaction-pressed"),
-  destructive: cssVar("--overlay-interaction-pressed"),
-  positive: cssVar("--overlay-interaction-pressed"),
-  ghost: cssVar("--overlay-interaction-pressed"),
-  dark: cssVar("--overlay-on-inverse-pressed"),
-  gradient: cssVar("--overlay-interaction-pressed"),
-  "dark-ghost": cssVar("--overlay-on-inverse-pressed"),
-};
-
 const foregrounds: Record<ButtonColor, string> = {
   primary: cssVar("--foreground-on-accent"),
   destructive: cssVar("--foreground-on-negative"),
@@ -82,52 +58,56 @@ const foregrounds: Record<ButtonColor, string> = {
 const withOverlay = (overlay: string, background: string) =>
   `linear-gradient(${overlay}, ${overlay}), ${background}`;
 
-const perColorStyle = (variant: ButtonColor) => ({
-  background: backgrounds[variant],
-  color: foregrounds[variant],
+const perColorStyle = (variant: ButtonColor) => {
+  const isInverse = variant === "dark" || variant === "dark-ghost";
+  const isTransparent = variant === "ghost" || variant === "dark-ghost";
+  const hoverOverlay = isInverse
+    ? cssVar("--overlay-on-inverse-hover")
+    : cssVar("--overlay-interaction-hover");
+  const pressedOverlay = isInverse
+    ? cssVar("--overlay-on-inverse-pressed")
+    : cssVar("--overlay-interaction-pressed");
 
-  "&[data-state=auto]:hover, &[data-state=hover]": {
+  return {
+    background: backgrounds[variant],
     color: foregrounds[variant],
-    background:
-      variant === "ghost" || variant === "dark-ghost"
-        ? hoverOverlays[variant]
-        : withOverlay(hoverOverlays[variant], backgrounds[variant]),
-  },
 
-  "&[data-state=auto]:focus-visible, &[data-state=focus]": {
-    color: foregrounds[variant],
-    outline: `1px solid ${cssVar("--border-focus")}`,
-    outlineOffset: "1px",
-  },
-
-  "&[data-state=auto]:active, &[data-state=pressed]": {
-    color: foregrounds[variant],
-    background:
-      variant === "ghost" || variant === "dark-ghost"
-        ? pressedOverlays[variant]
-        : withOverlay(pressedOverlays[variant], backgrounds[variant]),
-  },
-
-  "&:disabled:not([data-state=pending]), &[data-state=disabled], &[aria-disabled=true], &[aria-disabled=true]:hover, &[aria-disabled=true]:visited":
-    {
-      background:
-        variant === "dark" || variant === "dark-ghost"
-          ? backgrounds[variant]
-          : cssVar("--background-disabled"),
-      color:
-        variant === "dark" || variant === "dark-ghost"
-          ? foregrounds[variant]
-          : cssVar("--foreground-disabled"),
-      opacity:
-        variant === "dark" || variant === "dark-ghost"
-          ? theme.opacity[1]
-          : undefined,
+    "&[data-state=auto]:hover, &[data-state=hover]": {
+      color: foregrounds[variant],
+      background: isTransparent
+        ? hoverOverlay
+        : withOverlay(hoverOverlay, backgrounds[variant]),
     },
 
-  "&[data-state=pending]": {
-    cursor: "wait",
-  },
-});
+    "&[data-state=auto]:focus-visible, &[data-state=focus]": {
+      color: foregrounds[variant],
+      outline: `1px solid ${cssVar("--border-focus")}`,
+      outlineOffset: "1px",
+    },
+
+    "&[data-state=auto]:active, &[data-state=pressed]": {
+      color: foregrounds[variant],
+      background: isTransparent
+        ? pressedOverlay
+        : withOverlay(pressedOverlay, backgrounds[variant]),
+    },
+
+    "&:disabled:not([data-state=pending]), &[data-state=disabled], &[aria-disabled=true], &[aria-disabled=true]:hover, &[aria-disabled=true]:visited":
+      {
+        background: isInverse
+          ? backgrounds[variant]
+          : cssVar("--background-disabled"),
+        color: isInverse
+          ? foregrounds[variant]
+          : cssVar("--foreground-disabled"),
+        opacity: isInverse ? theme.opacity[1] : undefined,
+      },
+
+    "&[data-state=pending]": {
+      cursor: "wait",
+    },
+  };
+};
 
 export const buttonStyle = css({
   all: "unset",

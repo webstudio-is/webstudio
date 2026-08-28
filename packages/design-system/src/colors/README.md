@@ -74,18 +74,22 @@ cssVar("--foreground-primary", "currentColor");
 
 ## Validation and type generation
 
-The generator parses CSS structurally and rejects:
+Type generation parses CSS structurally and rejects:
 
-- Missing or reordered seed, profile, and theme inputs.
+- Empty color layers or mismatched light and dark profiles.
 - Missing variable references.
 - References across forbidden architectural layers.
+- Unused seed, profile, and theme inputs.
 - Standalone semantic color literals.
 - Circular color references.
 - Semantic names outside the Craft grammar.
+
+TypeScript rejects unknown public variable names passed to `cssVar()`.
+
+Browser tests load the real stylesheet and reject:
+
 - Foreground/background text pairs below 4.5:1 contrast.
 - Meaningful border/background pairs below 3:1 contrast.
-- Direct semantic `var(--*)` references that bypass `cssVar()` in components.
-- Public semantic variables without a component consumer.
 
 The generator emits only `CssVariableName` in
 `__generated__/css-variable-names.d.ts`. It does not generate JavaScript or
@@ -93,8 +97,10 @@ duplicate color values. CSS is imported directly and performs all runtime
 derivation and scheme switching.
 
 Run `pnpm generate:color-types` after changing public variables. Run
-`pnpm check:colors` to verify that generated output is current.
+`pnpm check:colors` to verify structural contracts and generated output. Run
+`pnpm test` to verify browser-computed contrast.
 
-The Storybook **Foundations/Colors** page renders seeds, the active profile,
-validated contrast pairs, theme colors, and every semantic color by parsing the
-CSS source directly.
+The Storybook **Foundations/Colors** page loads the runtime stylesheet directly
+and parses the same file only for names and source declarations. It renders
+seeds, the active profile, browser-computed contrast pairs, theme colors, and
+every semantic color.

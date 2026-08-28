@@ -1,7 +1,7 @@
 import { css, styled } from "../stitches.config";
 import { truncate } from "../utilities";
 import { typography } from "../design-tokens";
-import { cssVar } from "../colors/css-var";
+import { cssVar } from "../css-var";
 
 const normalize = {
   userSelect: "none",

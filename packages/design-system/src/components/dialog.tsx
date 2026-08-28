@@ -24,7 +24,7 @@ import { Button } from "./button";
 import { XIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { Separator } from "./separator";
 import { Text } from "./text";
-import { cssVar } from "../colors/css-var";
+import { cssVar } from "../css-var";
 
 const DIALOG_TITLE_HEIGHT = 40;
 const DIALOG_MAXIMIZED_MARGIN = 20;

@@ -6,7 +6,7 @@
  */
 import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
-import { cssVar } from "../colors/css-var";
+import { cssVar } from "../css-var";
 
 const openOrHoverStateStyle = {
   backgroundColor: cssVar("--overlay-interaction-hover"),

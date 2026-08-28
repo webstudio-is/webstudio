@@ -25,7 +25,7 @@ import {
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import type { ComponentProps } from "react";
 import { truncate } from "../utilities";
-import { cssVar } from "../colors/css-var";
+import { cssVar } from "../css-var";
 
 export const labelCss = css(textVariants.titles, {
   color: cssVar("--foreground-primary"),

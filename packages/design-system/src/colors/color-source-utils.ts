@@ -1,39 +1,10 @@
 import * as csstree from "css-tree";
-import Color from "colorjs.io";
 
 const colorCategories = [
   "background",
   "foreground",
   "border",
   "overlay",
-] as const;
-
-const expectedSeedNames = [
-  "neutral",
-  "accent",
-  "positive",
-  "negative",
-  "warning",
-  "informative",
-] as const;
-
-const expectedProfileNames = [
-  "background-lightness",
-  "background-chroma",
-  "foreground-lightness",
-  "foreground-chroma",
-  "intent-lightness",
-  "intent-chroma",
-] as const;
-
-const expectedThemeNames = [
-  "background",
-  "foreground",
-  "accent",
-  "positive",
-  "negative",
-  "warning",
-  "informative",
 ] as const;
 
 type ColorCategory = (typeof colorCategories)[number];
@@ -49,13 +20,6 @@ export type ColorSource = {
 };
 
 export type ColorMode = "light" | "dark";
-
-export type ColorContrastResult = {
-  foreground: string;
-  background: string;
-  minimum: number;
-  ratio: number;
-};
 
 const generateValue = (value: csstree.CssNode) =>
   csstree.generate(value).trim();
@@ -107,18 +71,25 @@ const getGroup = (declarations: Record<string, string>, prefix: string) =>
       .map(([name, value]) => [name.slice(prefix.length), value])
   );
 
-const expectNames = (
+const expectValues = (label: string, values: Record<string, string>) => {
+  if (Object.keys(values).length === 0) {
+    throw new Error(`${label} must define at least one value`);
+  }
+};
+
+const expectSameNames = (
   label: string,
-  values: Record<string, string>,
-  expectedNames: readonly string[]
+  first: Record<string, string>,
+  second: Record<string, string>
 ) => {
-  const names = Object.keys(values);
+  const firstNames = Object.keys(first).sort();
+  const secondNames = Object.keys(second).sort();
   if (
-    names.length !== expectedNames.length ||
-    names.some((name, index) => name !== expectedNames[index])
+    firstNames.length !== secondNames.length ||
+    firstNames.some((name, index) => name !== secondNames[index])
   ) {
     throw new Error(
-      `${label} must define ${expectedNames.join(", ")} in that order; received ${names.join(", ")}`
+      `${label} must define the same values; received ${firstNames.join(", ")} and ${secondNames.join(", ")}`
     );
   }
 };
@@ -206,6 +177,26 @@ const validateCycles = (declarations: Record<string, string>) => {
   }
 };
 
+const validateConsumed = ({
+  label,
+  declarations,
+  consumers,
+}: {
+  label: string;
+  declarations: Record<string, string>;
+  consumers: Record<string, string>;
+}) => {
+  const consumed = new Set(
+    Object.values(consumers).flatMap(getCssVariableReferences)
+  );
+  const unused = Object.keys(declarations).filter(
+    (name) => consumed.has(name) === false
+  );
+  if (unused.length > 0) {
+    throw new Error(`Unused ${label}: ${unused.join(", ")}`);
+  }
+};
+
 const validateSemanticName = (name: string) => {
   if (/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(name) === false) {
     throw new Error(`Invalid Craft semantic color name: ${name}`);
@@ -231,10 +222,14 @@ export const parseColorSource = (css: string): ColorSource => {
     ])
   ) as ColorSource["semantic"];
 
-  expectNames("Color seeds", seed, expectedSeedNames);
-  expectNames("Light color profile", lightProfile, expectedProfileNames);
-  expectNames("Dark color profile", darkProfile, expectedProfileNames);
-  expectNames("Theme colors", theme, expectedThemeNames);
+  expectValues("Color seeds", seed);
+  expectValues("Light color profile", lightProfile);
+  expectValues("Dark color profile", darkProfile);
+  expectValues("Theme colors", theme);
+  for (const [category, colors] of Object.entries(semantic)) {
+    expectValues(`${category} semantic colors`, colors);
+  }
+  expectSameNames("Light and dark color profiles", lightProfile, darkProfile);
 
   const allDeclarations = {
     ...Object.fromEntries(
@@ -259,11 +254,38 @@ export const parseColorSource = (css: string): ColorSource => {
     ),
   };
   const names = new Set(Object.keys(allDeclarations));
+  const uncategorized = Object.keys(lightDeclarations).filter(
+    (name) => names.has(name) === false
+  );
+  if (uncategorized.length > 0) {
+    throw new Error(
+      `Uncategorized color variables: ${uncategorized.join(", ")}`
+    );
+  }
+  const darkNonProfile = Object.keys(darkDeclarations).filter(
+    (name) => name.startsWith("--profile-") === false
+  );
+  if (darkNonProfile.length > 0) {
+    throw new Error(
+      `Dark mode may override only profile variables: ${darkNonProfile.join(", ")}`
+    );
+  }
+
+  const seedDeclarations = Object.fromEntries(
+    Object.entries(seed).map(([name, value]) => [`--seed-${name}`, value])
+  );
+  const profileDeclarations = Object.fromEntries(
+    Object.entries(lightProfile).map(([name, value]) => [
+      `--profile-${name}`,
+      value,
+    ])
+  );
+  const themeDeclarations = Object.fromEntries(
+    Object.entries(theme).map(([name, value]) => [`--theme-${name}`, value])
+  );
 
   validateReferences({
-    declarations: Object.fromEntries(
-      Object.entries(theme).map(([name, value]) => [`--theme-${name}`, value])
-    ),
+    declarations: themeDeclarations,
     names,
     allowedPrefixes: ["--seed-", "--profile-"],
     requireReference: true,
@@ -292,6 +314,21 @@ export const parseColorSource = (css: string): ColorSource => {
     ],
     requireReference: true,
   });
+  validateConsumed({
+    label: "color seeds",
+    declarations: seedDeclarations,
+    consumers: themeDeclarations,
+  });
+  validateConsumed({
+    label: "light profile values",
+    declarations: profileDeclarations,
+    consumers: themeDeclarations,
+  });
+  validateConsumed({
+    label: "theme colors",
+    declarations: themeDeclarations,
+    consumers: semanticDeclarations,
+  });
   validateCycles(allDeclarations);
 
   return {
@@ -300,221 +337,4 @@ export const parseColorSource = (css: string): ColorSource => {
     theme,
     semantic,
   };
-};
-
-const toDeclarations = (source: ColorSource, mode: ColorMode) => ({
-  ...Object.fromEntries(
-    Object.entries(source.seed).map(([name, value]) => [
-      `--seed-${name}`,
-      value,
-    ])
-  ),
-  ...Object.fromEntries(
-    Object.entries(source.profile[mode]).map(([name, value]) => [
-      `--profile-${name}`,
-      value,
-    ])
-  ),
-  ...Object.fromEntries(
-    Object.entries(source.theme).map(([name, value]) => [
-      `--theme-${name}`,
-      value,
-    ])
-  ),
-  ...Object.fromEntries(
-    Object.entries(source.semantic).flatMap(([category, colors]) =>
-      Object.entries(colors).map(([name, value]) => [
-        `--${category}-${name}`,
-        value,
-      ])
-    )
-  ),
-});
-
-const getFunctionReference = (node: csstree.FunctionNode) => {
-  if (node.name !== "var") {
-    throw new Error(`Expected var(), received ${node.name}()`);
-  }
-  const first = node.children.first;
-  if (first?.type !== "Identifier") {
-    throw new Error("Invalid var() color reference");
-  }
-  return first.name;
-};
-
-export const resolveColorSource = (source: ColorSource, mode: ColorMode) => {
-  const declarations = toDeclarations(source, mode);
-  const resolved = new Map<string, Color>();
-
-  const resolveNumericNode = (
-    node: csstree.CssNode,
-    origin?: Color
-  ): number => {
-    if (node.type === "Number") {
-      return Number(node.value);
-    }
-    if (node.type === "Percentage") {
-      return Number(node.value) / 100;
-    }
-    if (node.type === "Identifier" && origin !== undefined) {
-      const [lightness, chroma, hue] = origin.oklch;
-      if (node.name === "l") {
-        return Number(lightness);
-      }
-      if (node.name === "c") {
-        return Number(chroma);
-      }
-      if (node.name === "h") {
-        return Number(hue);
-      }
-    }
-    if (node.type === "Function" && node.name === "var") {
-      const reference = getFunctionReference(node);
-      const value = declarations[reference];
-      if (value === undefined) {
-        throw new Error(`Missing numeric color variable: ${reference}`);
-      }
-      const ast = csstree.parse(value, { context: "value" });
-      if (ast.type !== "Value" || ast.children.size !== 1) {
-        throw new Error(`Invalid numeric color variable: ${reference}`);
-      }
-      return resolveNumericNode(ast.children.first as csstree.CssNode);
-    }
-    if (node.type === "Function" && node.name === "calc") {
-      const children = node.children.toArray();
-      if (
-        children.length !== 3 ||
-        children[1].type !== "Operator" ||
-        children[1].value !== "*"
-      ) {
-        throw new Error(
-          `Unsupported color calculation: ${csstree.generate(node)}`
-        );
-      }
-      return (
-        resolveNumericNode(children[0], origin) *
-        resolveNumericNode(children[2], origin)
-      );
-    }
-    throw new Error(
-      `Unsupported numeric color value: ${csstree.generate(node)}`
-    );
-  };
-
-  const resolveColorNode = (node: csstree.CssNode): Color => {
-    if (node.type !== "Function") {
-      throw new Error(`Unsupported color value: ${csstree.generate(node)}`);
-    }
-    if (node.name === "var") {
-      return resolveVariable(getFunctionReference(node));
-    }
-    if (node.name === "color-mix") {
-      const children = node.children.toArray();
-      if (
-        children.length !== 7 ||
-        children[0].type !== "Identifier" ||
-        children[0].name !== "in" ||
-        children[1].type !== "Identifier" ||
-        children[1].name !== "oklch" ||
-        children[4].type !== "Percentage"
-      ) {
-        throw new Error(`Unsupported color mix: ${csstree.generate(node)}`);
-      }
-      const first = resolveColorNode(children[3]);
-      const second = resolveColorNode(children[6]);
-      const secondWeight = 1 - Number(children[4].value) / 100;
-      return Color.mix(first, second, secondWeight, { space: "oklch" });
-    }
-    if (node.name === "oklch") {
-      const children = node.children.toArray();
-      if (children[0]?.type !== "Identifier" || children[0].name !== "from") {
-        return new Color(csstree.generate(node));
-      }
-      if (children[1]?.type !== "Function") {
-        throw new Error(
-          `Missing relative color origin: ${csstree.generate(node)}`
-        );
-      }
-      const origin = resolveColorNode(children[1]);
-      const lightness = resolveNumericNode(children[2], origin);
-      const chroma = resolveNumericNode(children[3], origin);
-      const hue = resolveNumericNode(children[4], origin);
-      const alpha =
-        children[5]?.type === "Operator" && children[5].value === "/"
-          ? resolveNumericNode(children[6], origin)
-          : origin.alpha;
-      return new Color("oklch", [lightness, chroma, hue], alpha);
-    }
-    throw new Error(`Unsupported color function: ${node.name}()`);
-  };
-
-  const resolveVariable = (name: string): Color => {
-    const cached = resolved.get(name);
-    if (cached !== undefined) {
-      return cached;
-    }
-    const value = declarations[name];
-    if (value === undefined) {
-      throw new Error(`Missing color variable: ${name}`);
-    }
-    const ast = csstree.parse(value, { context: "value" });
-    if (ast.type !== "Value" || ast.children.size !== 1) {
-      throw new Error(`Unsupported color declaration: ${name}`);
-    }
-    const color = resolveColorNode(ast.children.first as csstree.CssNode);
-    resolved.set(name, color);
-    return color;
-  };
-
-  return { resolveVariable };
-};
-
-const contrastContracts = [
-  ["--foreground-primary", "--background-primary", 4.5],
-  ["--foreground-secondary", "--background-primary", 4.5],
-  ["--foreground-muted", "--background-primary", 4.5],
-  ["--foreground-accent", "--background-primary", 4.5],
-  ["--foreground-positive", "--background-primary", 4.5],
-  ["--foreground-negative", "--background-primary", 4.5],
-  ["--foreground-warning", "--background-primary", 4.5],
-  ["--foreground-informative", "--background-primary", 4.5],
-  ["--foreground-on-inverse", "--background-inverse", 4.5],
-  ["--foreground-on-accent", "--background-accent", 4.5],
-  ["--foreground-on-positive", "--background-positive", 4.5],
-  ["--foreground-on-negative", "--background-negative", 4.5],
-  ["--foreground-negative", "--background-negative-subtle", 4.5],
-  ["--foreground-warning", "--background-warning-subtle", 4.5],
-  ["--foreground-informative", "--background-informative-subtle", 4.5],
-  ["--border-focus", "--background-primary", 3],
-  ["--border-negative", "--background-primary", 3],
-  ["--border-warning", "--background-primary", 3],
-  ["--border-informative", "--background-primary", 3],
-] as const;
-
-export const getColorContrast = (
-  source: ColorSource,
-  mode: ColorMode
-): ColorContrastResult[] => {
-  const { resolveVariable } = resolveColorSource(source, mode);
-  return contrastContracts.map(([foreground, background, minimum]) => ({
-    foreground,
-    background,
-    minimum,
-    ratio: resolveVariable(foreground).contrast(
-      resolveVariable(background),
-      "WCAG21"
-    ),
-  }));
-};
-
-export const validateColorContrast = (source: ColorSource) => {
-  for (const mode of ["light", "dark"] as const) {
-    for (const result of getColorContrast(source, mode)) {
-      if (result.ratio < result.minimum) {
-        throw new Error(
-          `${mode} ${result.foreground} on ${result.background} has ${result.ratio.toFixed(2)}:1 contrast; expected at least ${result.minimum}:1`
-        );
-      }
-    }
-  }
 };

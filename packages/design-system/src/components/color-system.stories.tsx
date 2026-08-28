@@ -1,10 +1,13 @@
-import { useState, type CSSProperties, type ReactNode } from "react";
-import colorSourceCss from "../colors/colors.css?raw";
 import {
-  getColorContrast,
-  parseColorSource,
-  type ColorMode,
-} from "../colors/color-source-utils";
+  useLayoutEffect,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import "../colors/colors.css";
+import colorSourceCss from "../colors/colors.css?raw";
+import { getColorContrast } from "../colors/color-contrast";
+import { parseColorSource, type ColorMode } from "../colors/color-source-utils";
 
 export default {
   title: "Foundations/Colors",
@@ -13,30 +16,11 @@ export default {
 
 const source = parseColorSource(colorSourceCss);
 const contrast = {
-  light: getColorContrast(source, "light"),
-  dark: getColorContrast(source, "dark"),
+  light: getColorContrast("light"),
+  dark: getColorContrast("dark"),
 };
 
 const variable = (name: string) => `var(${name})`;
-const prefix = (group: string, values: Record<string, string>) =>
-  Object.fromEntries(
-    Object.entries(values).map(([name, value]) => [`--${group}-${name}`, value])
-  );
-
-const getThemeStyles = (mode: ColorMode) =>
-  ({
-    ...prefix("seed", source.seed),
-    ...prefix("profile", source.profile[mode]),
-    ...prefix("theme", source.theme),
-    ...Object.fromEntries(
-      Object.entries(source.semantic).flatMap(([category, colors]) =>
-        Object.entries(colors).map(([name, value]) => [
-          `--${category}-${name}`,
-          value,
-        ])
-      )
-    ),
-  }) as CSSProperties;
 
 const cardStyle: CSSProperties = {
   minWidth: 0,
@@ -188,12 +172,22 @@ const Section = ({
 
 export const ColorSystem = () => {
   const [mode, setMode] = useState<ColorMode>("light");
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    const previousMode = root.getAttribute("data-color-scheme");
+    root.setAttribute("data-color-scheme", mode);
+    return () => {
+      if (previousMode === null) {
+        root.removeAttribute("data-color-scheme");
+      } else {
+        root.setAttribute("data-color-scheme", previousMode);
+      }
+    };
+  }, [mode]);
+
   return (
     <main
-      data-color-scheme={mode}
       style={{
-        ...getThemeStyles(mode),
-        colorScheme: mode,
         minHeight: "100vh",
         boxSizing: "border-box",
         padding: 24,
@@ -231,9 +225,11 @@ export const ColorSystem = () => {
                 font: "14px/1.55 system-ui, sans-serif",
               }}
             >
-              CSS derives seven theme colors and a small Craft semantic
-              vocabulary from six seeds and one shared scheme profile. Every
-              card shows its declaration directly from colors.css.
+              CSS derives {Object.keys(source.theme).length} theme colors and a
+              small Craft semantic vocabulary from{" "}
+              {Object.keys(source.seed).length} seeds and one shared scheme
+              profile. Every card shows its declaration directly from
+              colors.css.
             </p>
           </div>
           <div
@@ -280,7 +276,7 @@ export const ColorSystem = () => {
 
         <Section
           title={`${mode[0].toUpperCase() + mode.slice(1)} profile`}
-          description="Six controls transform every seed for the active color scheme."
+          description={`${Object.keys(source.profile[mode]).length} controls transform every seed for the active color scheme.`}
         >
           <Profile mode={mode} />
         </Section>

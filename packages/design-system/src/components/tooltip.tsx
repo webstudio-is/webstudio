@@ -13,7 +13,7 @@ import { Box } from "./box";
 import { Text } from "./text";
 import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
-import { cssVar } from "../colors/css-var";
+import { cssVar } from "../css-var";
 
 export const TooltipProvider = TooltipPrimitive.TooltipProvider;
 

@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Text } from "./text";
 import { StorySection, StoryGrid } from "./storybook";
 import { theme } from "../stitches.config";
-import { cssVar } from "../colors/css-var";
+import { cssVar } from "../css-var";
 
 export default {
   title: "Button",

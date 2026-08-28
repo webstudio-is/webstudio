@@ -17,7 +17,7 @@ import { css, theme, type CSS } from "../stitches.config";
 import { ArrowFocus } from "./primitives/arrow-focus";
 import { mergeRefs } from "@react-aria/utils";
 import { useFocusWithin } from "@react-aria/interactions";
-import { cssVar } from "../colors/css-var";
+import { cssVar } from "../css-var";
 
 // we only support types that behave more or less like a regular text input
 export const inputFieldTypes = [

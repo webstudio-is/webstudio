@@ -12,13 +12,13 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@babel/parser": "^7.29.7",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
+    "@vitest/browser": "^3.1.2",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "colorjs.io": "^0.6.1",
     "css-tree": "^3.2.1",
+    "playwright": "^1.50.1",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "vitest": "^3.1.2",

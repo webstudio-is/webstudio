@@ -9,6 +9,9 @@ if (typeof g.CSS === "undefined") {
 
 // jsdom does not implement canvas, while hdr-color-input touches getContext
 // during module evaluation through the design-system barrel import.
-if (g.HTMLCanvasElement !== undefined) {
+if (
+  g.HTMLCanvasElement !== undefined &&
+  g.navigator?.userAgent.includes("jsdom")
+) {
   g.HTMLCanvasElement.prototype.getContext = () => null;
 }
