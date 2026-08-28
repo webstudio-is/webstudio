@@ -102,7 +102,7 @@ describe("Craft color CSS source", () => {
     const extendedSource = addRootDeclarations(source, {
       "--seed-custom": "oklch(50% 0.1 300)",
       "--theme-custom":
-        "oklch(from var(--seed-custom) var(--profile-intent-lightness) calc(c * var(--profile-intent-chroma)) h)",
+        "oklch(from var(--seed-custom) calc(l + var(--profile-intent-lightness-offset)) calc(c * var(--profile-intent-chroma-scale)) h)",
       "--foreground-custom":
         "color-mix(in oklch, var(--theme-custom) 86%, var(--theme-foreground))",
     });

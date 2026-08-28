@@ -8,8 +8,8 @@
 :root {
   color-scheme: light;
 
-  /* Seeds: define hue and maximum chroma once for every theme. */
-  --seed-neutral: oklch(50% 0.012 250);
+  /* Seeds: define complete base colors once for every theme. */
+  --seed-neutral: oklch(50% 0.015 250);
   --seed-accent: oklch(50% 0.21 255);
   --seed-positive: oklch(50% 0.14 152);
   --seed-negative: oklch(50% 0.19 27);
@@ -17,41 +17,44 @@
   --seed-informative: oklch(50% 0.14 225);
 
   /* Light profile: controls how all seeds behave in the light scheme. */
-  --profile-background-lightness: 98.5%;
-  --profile-background-chroma: 0.002;
-  --profile-foreground-lightness: 20.5%;
-  --profile-foreground-chroma: 0.015;
-  --profile-intent-lightness: 54%;
-  --profile-intent-chroma: 1;
+  --profile-background-lightness-offset: 0.485;
+  --profile-background-chroma-scale: 0.133333333333;
+  --profile-foreground-lightness-offset: -0.295;
+  --profile-foreground-chroma-scale: 1;
+  --profile-intent-lightness-offset: 0.04;
+  --profile-intent-chroma-scale: 1;
 
   /* Theme colors: derived from seeds through the active profile. */
   --theme-background: oklch(
-    from var(--seed-neutral) var(--profile-background-lightness)
-      var(--profile-background-chroma) h
+    from var(--seed-neutral)
+      calc(l + var(--profile-background-lightness-offset))
+      calc(c * var(--profile-background-chroma-scale)) h
   );
   --theme-foreground: oklch(
-    from var(--seed-neutral) var(--profile-foreground-lightness)
-      var(--profile-foreground-chroma) h
+    from var(--seed-neutral)
+      calc(l + var(--profile-foreground-lightness-offset))
+      calc(c * var(--profile-foreground-chroma-scale)) h
   );
   --theme-accent: oklch(
-    from var(--seed-accent) var(--profile-intent-lightness)
-      calc(c * var(--profile-intent-chroma)) h
+    from var(--seed-accent) calc(l + var(--profile-intent-lightness-offset))
+      calc(c * var(--profile-intent-chroma-scale)) h
   );
   --theme-positive: oklch(
-    from var(--seed-positive) var(--profile-intent-lightness)
-      calc(c * var(--profile-intent-chroma)) h
+    from var(--seed-positive) calc(l + var(--profile-intent-lightness-offset))
+      calc(c * var(--profile-intent-chroma-scale)) h
   );
   --theme-negative: oklch(
-    from var(--seed-negative) var(--profile-intent-lightness)
-      calc(c * var(--profile-intent-chroma)) h
+    from var(--seed-negative) calc(l + var(--profile-intent-lightness-offset))
+      calc(c * var(--profile-intent-chroma-scale)) h
   );
   --theme-warning: oklch(
-    from var(--seed-warning) var(--profile-intent-lightness)
-      calc(c * var(--profile-intent-chroma)) h
+    from var(--seed-warning) calc(l + var(--profile-intent-lightness-offset))
+      calc(c * var(--profile-intent-chroma-scale)) h
   );
   --theme-informative: oklch(
-    from var(--seed-informative) var(--profile-intent-lightness)
-      calc(c * var(--profile-intent-chroma)) h
+    from var(--seed-informative)
+      calc(l + var(--profile-intent-lightness-offset))
+      calc(c * var(--profile-intent-chroma-scale)) h
   );
 
   /* Background */
@@ -167,16 +170,16 @@
 }
 
 /* Dark mode changes the shared transformation profile, not individual colors. */
-[data-color-scheme="dark"] {
+:root[data-color-scheme="dark"] {
   color-scheme: dark;
-  --profile-background-lightness: 17%;
-  --profile-background-chroma: 0.012;
-  --profile-foreground-lightness: 94%;
-  --profile-foreground-chroma: 0.006;
-  --profile-intent-lightness: 72%;
-  --profile-intent-chroma: 0.82;
+  --profile-background-lightness-offset: -0.33;
+  --profile-background-chroma-scale: 0.8;
+  --profile-foreground-lightness-offset: 0.44;
+  --profile-foreground-chroma-scale: 0.4;
+  --profile-intent-lightness-offset: 0.22;
+  --profile-intent-chroma-scale: 0.82;
 }
 
-[data-color-scheme="light"] {
+:root[data-color-scheme="light"] {
   color-scheme: light;
 }

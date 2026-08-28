@@ -208,7 +208,7 @@ export const parseColorSource = (css: string): ColorSource => {
   const lightDeclarations = selectDeclarations(stylesheet, ":root");
   const darkDeclarations = selectDeclarations(
     stylesheet,
-    '[data-color-scheme="dark"]'
+    ':root[data-color-scheme="dark"]'
   );
 
   const seed = getGroup(lightDeclarations, "--seed-");

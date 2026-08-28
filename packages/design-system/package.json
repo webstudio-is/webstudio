@@ -7,8 +7,7 @@
   "type": "module",
   "scripts": {
     "generate:color-types": "tsx src/colors/generate-color-types.ts",
-    "check:colors": "tsx src/colors/generate-color-types.ts --check",
-    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "typecheck": "tsx src/colors/generate-color-types.ts --check && tsc --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run"
   },
   "devDependencies": {

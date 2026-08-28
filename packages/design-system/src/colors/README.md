@@ -13,8 +13,8 @@ finally composite component styles.
 
 The CSS source contains four stages:
 
-1. Six seeds define neutral, accent, and intent hue and chroma once.
-2. A light or dark profile defines shared lightness and chroma behavior.
+1. Six seeds define complete neutral, accent, and intent base colors once.
+2. A light or dark profile defines shared lightness offsets and chroma scales.
 3. Seven theme colors combine the seeds with the active profile.
 4. Semantic foreground, background, border, and overlay colors derive from the
    theme colors.
@@ -27,17 +27,23 @@ Changing a seed updates both color schemes. Changing a profile value updates
 every color governed by that dimension. Dark mode overrides the profile rather
 than maintaining a second semantic color set.
 
+Every seed channel participates in derivation: profiles offset seed lightness,
+scale seed chroma, and preserve seed hue.
+
+Set `data-color-scheme` on the document root. Scheme profiles are deliberately
+root-scoped; nested light and dark theme islands are not part of this contract.
+
 ## Source format
 
 Use native CSS aliases, relative colors, and `color-mix()`:
 
 ```css
 --seed-accent: oklch(50% 0.21 255);
---profile-intent-lightness: 54%;
+--profile-intent-lightness-offset: 0.04;
 
 --theme-accent: oklch(
-  from var(--seed-accent) var(--profile-intent-lightness)
-    calc(c * var(--profile-intent-chroma)) h
+  from var(--seed-accent) calc(l + var(--profile-intent-lightness-offset))
+    calc(c * var(--profile-intent-chroma-scale)) h
 );
 
 --background-accent: var(--theme-accent);
@@ -96,9 +102,10 @@ The generator emits only `CssVariableName` in
 duplicate color values. CSS is imported directly and performs all runtime
 derivation and scheme switching.
 
-Run `pnpm generate:color-types` after changing public variables. Run
-`pnpm check:colors` to verify structural contracts and generated output. Run
-`pnpm test` to verify browser-computed contrast.
+Run `pnpm generate:color-types` after changing public variables. The package
+`typecheck` verifies that generated declarations are current, and the normal
+workspace CI runs that command. Run `pnpm test` to verify structural contracts
+and browser-computed contrast.
 
 The Storybook **Foundations/Colors** page loads the runtime stylesheet directly
 and parses the same file only for names and source declarations. It renders
