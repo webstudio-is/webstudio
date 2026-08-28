@@ -1,11 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import { kebabCase } from "change-case";
-import engrammaUrl from "engramma?url";
+import { useState, type CSSProperties, type ReactNode } from "react";
+import { colorTokenSource } from "../../tokens/colors";
 import {
-  colorControllerNames,
   darkColorControllers,
   lightColorControllers,
-  semanticColor,
 } from "../colors/color-system";
 import { color } from "../design-tokens";
 
@@ -15,237 +12,273 @@ export default {
 };
 
 type Mode = "light" | "dark";
-type ControllerKey = keyof typeof lightColorControllers;
-type ControllerValues = Record<ControllerKey, string>;
-type ControllerOverrides = Record<Mode, Partial<ControllerValues>>;
-type ColorSnapshot = Record<Mode, Record<string, string>>;
+type RecipeGroup = "semantic" | "compatibility";
 
-const emptyOverrides: ControllerOverrides = { light: {}, dark: {} };
+const controllerKey = (name: string) =>
+  `theme${name[0].toUpperCase()}${name.slice(1)}` as keyof typeof lightColorControllers;
 
-const controllerKey = (name: (typeof colorControllerNames)[number]) =>
-  `theme${name[0].toUpperCase()}${name.slice(1)}` as ControllerKey;
+const getThemeStyles = (mode: Mode) => {
+  const styles: Record<string, string> = {};
+  for (const [name, value] of Object.entries(color)) {
+    styles[`--colors-${name}`] = value;
+  }
+  const controllers =
+    mode === "light" ? lightColorControllers : darkColorControllers;
+  for (const [name, value] of Object.entries(controllers)) {
+    styles[`--colors-${name}`] = value;
+  }
+  return styles as CSSProperties;
+};
 
-const controllerEntries = colorControllerNames.map(
-  (name) => [controllerKey(name), name] as const
+const cardStyle: CSSProperties = {
+  minWidth: 0,
+  overflow: "hidden",
+  border: "1px solid var(--colors-borderDefault)",
+  borderRadius: 8,
+  background: "var(--colors-backgroundCanvas)",
+};
+
+const labelStyle: CSSProperties = {
+  display: "block",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  font: "600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace",
+  color: "var(--colors-contentPrimary)",
+};
+
+const recipeStyle: CSSProperties = {
+  display: "block",
+  marginTop: 4,
+  overflowWrap: "anywhere",
+  font: "11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace",
+  color: "var(--colors-contentSecondary)",
+};
+
+const TokenCard = ({ name, recipe }: { name: string; recipe: unknown }) => (
+  <article style={cardStyle}>
+    <div
+      aria-label={`${name} color preview`}
+      style={{
+        height: 72,
+        background: `var(--colors-${name})`,
+        borderBottom: "1px solid var(--colors-borderDefault)",
+      }}
+    />
+    <div style={{ padding: 10 }}>
+      <code title={name} style={labelStyle}>
+        {name}
+      </code>
+      <code style={recipeStyle}>{JSON.stringify(recipe)}</code>
+    </div>
+  </article>
 );
 
-const controllerKeys = new Set<string>(controllerEntries.map(([name]) => name));
-const controllerNames = new Map<string, string>(controllerEntries);
-const semanticKeys = new Set<string>(Object.keys(semanticColor));
+const TokenGrid = ({ group }: { group: RecipeGroup }) => (
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+      gap: 12,
+    }}
+  >
+    {Object.entries(colorTokenSource[group]).map(([name, recipe]) => (
+      <TokenCard key={name} name={name} recipe={recipe} />
+    ))}
+  </div>
+);
 
-const categoryForColor = (name: string) => {
-  if (controllerKeys.has(name)) {
-    return "controllers";
-  }
-  if (semanticKeys.has(name)) {
-    return "semantic";
-  }
-  return "compatibility";
-};
-
-const adapterName = ({
-  mode,
-  category,
-  name,
-}: {
-  mode: Mode;
-  category: string;
-  name: string;
-}) => `${mode}-${category}-${kebabCase(name)}`;
-
-const editableControllers = Object.fromEntries(
-  (["light", "dark"] as const).flatMap((mode) =>
-    controllerEntries.map(([name, shortName]) => [
-      adapterName({ mode, category: "controllers", name: shortName }),
-      { mode, name },
-    ])
-  )
-) as Record<string, { mode: Mode; name: ControllerKey }>;
-
-const resolveColorSet = (controllers: ControllerValues) => {
-  const scope = document.createElement("div");
-  scope.style.cssText =
-    "position:fixed;pointer-events:none;visibility:hidden;inset:auto;";
-
-  for (const [name, value] of Object.entries(color)) {
-    scope.style.setProperty(`--colors-${name}`, value);
-  }
-  for (const [name, value] of Object.entries(controllers)) {
-    scope.style.setProperty(`--colors-${name}`, value);
-  }
-
-  const probes = Object.entries(color).map(([name, value]) => {
-    const probe = document.createElement("div");
-    if (value.includes("gradient(")) {
-      probe.style.backgroundImage = `var(--colors-${name})`;
-    } else {
-      probe.style.color = `var(--colors-${name})`;
-    }
-    scope.append(probe);
-    return { name, probe, isGradient: value.includes("gradient(") };
-  });
-
-  document.body.append(scope);
-  const resolved: Record<string, string> = {};
-  for (const { name, probe, isGradient } of probes) {
-    const computed = getComputedStyle(probe);
-    const value = isGradient ? computed.backgroundImage : computed.color;
-    if (value !== "" && value !== "none") {
-      resolved[name] = value;
-    }
-  }
-  scope.remove();
-  return resolved;
-};
-
-const getSnapshot = (overrides: ControllerOverrides): ColorSnapshot => ({
-  light: resolveColorSet({
-    ...lightColorControllers,
-    ...overrides.light,
-  }),
-  dark: resolveColorSet({
-    ...darkColorControllers,
-    ...overrides.dark,
-  }),
-});
-
-const getEngrammaCss = (snapshot: ColorSnapshot) => {
-  const declarations: string[] = [];
-  for (const mode of ["light", "dark"] as const) {
-    for (const [name, value] of Object.entries(snapshot[mode])) {
-      declarations.push(
-        `--${adapterName({ mode, category: categoryForColor(name), name: controllerNames.get(name) ?? name })}: ${value};`
-      );
-    }
-  }
-  return `:root {\n${declarations.join("\n")}\n}`;
-};
-
-const getEngrammaDocument = (snapshot: ColorSnapshot) => `
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="color-scheme" content="light dark" />
-    <style>
-      html, body { height: 100%; margin: 0; }
-      ${getEngrammaCss(snapshot)}
-    </style>
-  </head>
-  <body>
-    <engramma-app></engramma-app>
-    <script type="module" src="${engrammaUrl}"></script>
-    <script type="module">
-      const editable = ${JSON.stringify(editableControllers)};
-      const connect = () => {
-        const app = document.querySelector("engramma-app");
-        const root = app?.shadowRoot;
-        if (!root) {
-          requestAnimationFrame(connect);
-          return;
+const Controllers = ({ mode }: { mode: Mode }) => {
+  const values =
+    mode === "light" ? lightColorControllers : darkColorControllers;
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+        gap: 12,
+      }}
+    >
+      {Object.entries(colorTokenSource.controllers).map(
+        ([name, controller]) => {
+          const value = values[controllerKey(name)];
+          return (
+            <article key={name} style={cardStyle}>
+              <div
+                aria-label={`${name} controller preview`}
+                style={{
+                  height: 96,
+                  background: value,
+                  borderBottom: "1px solid var(--colors-borderDefault)",
+                }}
+              />
+              <div style={{ padding: 10 }}>
+                <code style={labelStyle}>{name}</code>
+                <span
+                  style={{
+                    display: "block",
+                    marginTop: 4,
+                    font: "12px/1.45 system-ui, sans-serif",
+                    color: "var(--colors-contentSecondary)",
+                  }}
+                >
+                  {controller.description}
+                </span>
+                <code style={recipeStyle}>{value}</code>
+              </div>
+            </article>
+          );
         }
-        const publishController = (editedValue) => {
-          const selectedText =
-            root.querySelector('[role="treeitem"][aria-selected="true"]')
-              ?.textContent ?? "";
-          const adapterName = Object.keys(editable).find((name) =>
-            selectedText.includes(name)
-          );
-          if (!adapterName) {
-            return;
-          }
-          const value = String(editedValue);
-          parent.postMessage(
-            {
-              type: "webstudio-engramma-controller",
-              controller: editable[adapterName],
-              value,
-            },
-            "*"
-          );
-        };
-        const wireColorInputs = () => {
-          for (const input of root.querySelectorAll("color-input")) {
-            if (input.hasAttribute("data-webstudio-controller-bridge")) {
-              continue;
-            }
-            input.setAttribute("data-webstudio-controller-bridge", "");
-            const initialValue = String(input.value);
-            input.addEventListener("close", () => {
-              if (String(input.value) !== initialValue) {
-                publishController(input.value);
-              }
-            });
-          }
-        };
-        wireColorInputs();
-        new MutationObserver(wireColorInputs).observe(root, {
-          childList: true,
-          subtree: true,
-        });
-      };
-      customElements.whenDefined("engramma-app").then(connect);
-    </script>
-  </body>
-</html>
-`;
+      )}
+    </div>
+  );
+};
+
+const Section = ({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) => (
+  <section style={{ display: "grid", gap: 12 }}>
+    <div>
+      <h2 style={{ margin: 0, font: "600 18px/1.4 system-ui, sans-serif" }}>
+        {title}
+      </h2>
+      <p
+        style={{
+          margin: "4px 0 0",
+          color: "var(--colors-contentSecondary)",
+          font: "14px/1.5 system-ui, sans-serif",
+        }}
+      >
+        {description}
+      </p>
+    </div>
+    {children}
+  </section>
+);
 
 export const ColorSystem = () => {
-  const [overrides, setOverrides] =
-    useState<ControllerOverrides>(emptyOverrides);
-  const [snapshot, setSnapshot] = useState<ColorSnapshot>();
-  const engrammaFrameRef = useRef<HTMLIFrameElement>(null);
-
-  useEffect(() => {
-    setSnapshot(getSnapshot(overrides));
-  }, [overrides]);
-
-  useEffect(() => {
-    const receiveController = (event: MessageEvent) => {
-      if (event.source !== engrammaFrameRef.current?.contentWindow) {
-        return;
-      }
-      if (event.data?.type !== "webstudio-engramma-controller") {
-        return;
-      }
-
-      const controller = event.data.controller as
-        | { mode?: unknown; name?: unknown }
-        | undefined;
-      const value = event.data.value;
-      if (
-        (controller?.mode !== "light" && controller?.mode !== "dark") ||
-        typeof controller.name !== "string" ||
-        controllerKeys.has(controller.name) === false ||
-        typeof value !== "string" ||
-        CSS.supports("color", value) === false
-      ) {
-        return;
-      }
-
-      const mode = controller.mode;
-      const name = controller.name as ControllerKey;
-      setOverrides((current) => ({
-        ...current,
-        [mode]: { ...current[mode], [name]: value },
-      }));
-    };
-
-    window.addEventListener("message", receiveController);
-    return () => window.removeEventListener("message", receiveController);
-  }, []);
-
-  if (snapshot === undefined) {
-    return null;
-  }
-
+  const [mode, setMode] = useState<Mode>("light");
   return (
-    <iframe
-      key={JSON.stringify(overrides)}
-      ref={engrammaFrameRef}
-      title="Engramma color system"
-      srcDoc={getEngrammaDocument(snapshot)}
-      style={{ display: "block", width: "100%", height: "100vh", border: 0 }}
-    />
+    <main
+      style={{
+        ...getThemeStyles(mode),
+        minHeight: "100vh",
+        boxSizing: "border-box",
+        padding: 24,
+        background: "var(--colors-backgroundCanvas)",
+        color: "var(--colors-contentPrimary)",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gap: 32,
+          width: "min(1440px, 100%)",
+          margin: "0 auto",
+        }}
+      >
+        <header
+          style={{
+            display: "flex",
+            alignItems: "start",
+            justifyContent: "space-between",
+            gap: 24,
+          }}
+        >
+          <div>
+            <h1
+              style={{ margin: 0, font: "700 28px/1.25 system-ui, sans-serif" }}
+            >
+              Color system
+            </h1>
+            <p
+              style={{
+                maxWidth: 720,
+                margin: "8px 0 0",
+                color: "var(--colors-contentSecondary)",
+                font: "14px/1.55 system-ui, sans-serif",
+              }}
+            >
+              Seven theme controllers drive every semantic color through live
+              relative CSS. Compatibility names preserve the current public API.
+            </p>
+          </div>
+          <div
+            aria-label="Color mode"
+            role="group"
+            style={{
+              display: "flex",
+              gap: 4,
+              padding: 4,
+              borderRadius: 8,
+              background: "var(--colors-backgroundNeutral)",
+            }}
+          >
+            {(["light", "dark"] as const).map((value) => (
+              <button
+                key={value}
+                aria-pressed={mode === value}
+                onClick={() => setMode(value)}
+                style={{
+                  padding: "7px 12px",
+                  border: 0,
+                  borderRadius: 6,
+                  background:
+                    mode === value
+                      ? "var(--colors-backgroundCanvas)"
+                      : "transparent",
+                  color: "var(--colors-contentPrimary)",
+                  font: "600 12px/1 system-ui, sans-serif",
+                  cursor: "pointer",
+                }}
+              >
+                {value[0].toUpperCase() + value.slice(1)}
+              </button>
+            ))}
+          </div>
+        </header>
+
+        <Section
+          title={`Theme controllers · ${Object.keys(colorTokenSource.controllers).length}`}
+          description="The only theme-specific colors. Change these to propagate through the entire graph."
+        >
+          <Controllers mode={mode} />
+        </Section>
+
+        <Section
+          title={`Semantic colors · ${Object.keys(colorTokenSource.semantic).length}`}
+          description="Purpose-based colors derived from controllers. Each card shows its source recipe."
+        >
+          <TokenGrid group="semantic" />
+        </Section>
+
+        <details>
+          <summary
+            style={{
+              cursor: "pointer",
+              font: "600 18px/1.4 system-ui, sans-serif",
+            }}
+          >
+            Compatibility colors ·{" "}
+            {Object.keys(colorTokenSource.compatibility).length}
+          </summary>
+          <p
+            style={{
+              margin: "4px 0 12px",
+              color: "var(--colors-contentSecondary)",
+              font: "14px/1.5 system-ui, sans-serif",
+            }}
+          >
+            Existing design-system names mapped onto the new semantic graph.
+          </p>
+          <TokenGrid group="compatibility" />
+        </details>
+      </div>
+    </main>
   );
 };

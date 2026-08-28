@@ -18,7 +18,7 @@ type RadialGradientRecipe = readonly [
   },
   readonly ColorStop[],
 ];
-type ColorRecipe =
+export type ColorRecipe =
   | ColorReference
   | readonly ["mix", ColorRecipe, number, ColorRecipe]
   | readonly ["alpha", ColorRecipe, number]
@@ -30,6 +30,20 @@ type ColorRecipe =
       "layers",
       readonly (LinearGradientRecipe | RadialGradientRecipe)[],
     ];
+
+export type ColorTokenSource = {
+  version: 1;
+  controllers: Record<
+    string,
+    {
+      description: string;
+      light: readonly [number, number, number, number?];
+      dark: readonly [number, number, number, number?];
+    }
+  >;
+  semantic: Record<string, ColorRecipe>;
+  compatibility: Record<string, ColorRecipe>;
+};
 
 const percentageSchema = z.number().finite().min(0).max(100);
 const referenceSchema = z

@@ -1855,9 +1855,6 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
     devDependencies:
-      '@terrazzo/parser':
-        specifier: 2.7.1
-        version: 2.7.1
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -1870,9 +1867,6 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
-      engramma:
-        specifier: 0.1.2
-        version: 0.1.2
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -4599,10 +4593,6 @@ packages:
     peerDependencies:
       hono: ^4
 
-  '@humanwhocodes/momoa@3.3.12':
-    resolution: {integrity: sha512-xS9xl4ieqTqhSZfKV3YXj/htwJCUxbgvkTVaK1fkESgrOzvoVSOTRQeQ8tTLOZUS0Csi2xqtJQXgVTRH5OEbHQ==}
-    engines: {node: '>=18'}
-
   '@hyperjump/json-pointer@1.1.2':
     resolution: {integrity: sha512-zPNgu1zdhtjQHFNLGzvEsLDsLOEvhRj6u6ktIQmlz7YPESv5uF8SnAe3Dq0oL6gZ6OGWSLq2n7pphRNF6Hpg6w==}
 
@@ -6682,29 +6672,6 @@ packages:
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
 
-  '@terrazzo/json-schema-tools@0.3.0':
-    resolution: {integrity: sha512-uF6tpAi+slKtvycLvwZGN1siLUTTqVri1iF2b05Dx1hvYM0WWzUdLC9RD7tAwQ39tTPf9rmI6czA8W0rGB5wUQ==}
-    peerDependencies:
-      '@humanwhocodes/momoa': ^3.0.0
-      yaml-to-momoa: 0.1.0
-    peerDependenciesMeta:
-      yaml-to-momoa:
-        optional: true
-
-  '@terrazzo/parser@2.7.1':
-    resolution: {integrity: sha512-dZPVp1mndx81PEbXe9NM8lZRh50TfwzyV0mOIaAcq1r3MiWGkr/K2WLObJjcDivP/5VbScxtGXbTbAW0oB1WIg==}
-    peerDependencies:
-      yaml-to-momoa: 0.1.0
-    peerDependenciesMeta:
-      yaml-to-momoa:
-        optional: true
-
-  '@terrazzo/token-tools@2.7.1':
-    resolution: {integrity: sha512-ylPpuUi5se/uzvpTiiTnOZqXMqVEpfhYBt8UY4D10NijZV76tjN55KNyRlSMPA1zg+loO06BktL1CR1/EhBtvQ==}
-
-  '@terrazzo/token-types@2.7.1':
-    resolution: {integrity: sha512-ahMSS4i4yXbtVyXRupbdMP2gkotSIh2sXHEyM2fBVRcmcydggxeVs9qJ+x7e6M4hacqFDiaDigcbpRRS2lrvdQ==}
-
   '@testing-library/dom@10.4.0':
     resolution: {integrity: sha512-pemlzrSESWbdAloYml3bAJMEfNh1Z7EduzqPKprCH5S341frlpYnUEW0H72dLxa6IsYr+mPno20GiSm+h9dEdQ==}
     engines: {node: '>=18'}
@@ -6779,9 +6746,6 @@ packages:
 
   '@types/aria-query@5.0.4':
     resolution: {integrity: sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw==}
-
-  '@types/babel__code-frame@7.27.0':
-    resolution: {integrity: sha512-Dwlo+LrxDx/0SpfmJ/BKveHf7QXWvLBLc+x03l5sbzykj3oB9nHygCpSECF1a+s+QIxbghe+KHqC90vGtxLRAA==}
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -7669,9 +7633,6 @@ packages:
   colorjs.io@0.6.1:
     resolution: {integrity: sha512-8lyR2wHzuIykCpqHKgluGsqQi5iDm3/a2IgP2GBZrasn2sBRkE4NOGsglZxWLs/jZQoNkmA/KM/8NV16rLUdBg==}
 
-  colorjs.io@0.7.1:
-    resolution: {integrity: sha512-LY7OHnJZxHwT5UlzNa9bbhHHDbzB6yE5+3MIPwJEQKRvSCt/T4G7epsj+9j2BExUIIfXFIJGsIXUKdfrK9Q5tA==}
-
   colors@1.2.5:
     resolution: {integrity: sha512-erNRLao/Y3Fv54qUa0LBB+//Uf3YwMUmdJinN20yMXm9zdKKqH9wt7R9IIVZ+K7ShzfpLV/Zg8+VyrBJYB4lpg==}
     engines: {node: '>=0.1.90'}
@@ -8110,9 +8071,6 @@ packages:
 
   end-of-stream@1.4.4:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
-
-  engramma@0.1.2:
-    resolution: {integrity: sha512-roWfxXgQdEM0/fC/6cfoaxLMTiqnS/nHhR2QxRv2peybR7ty/nXnNQvIqt90uM3joid+AJCnsaPNxUkgygvNkQ==}
 
   enquirer@2.4.1:
     resolution: {integrity: sha512-rRqJg/6gd538VHvR3PSrdRBb/1Vy2YfzHqzvbhGIQpDRKIa4FgV/54b5Q1xYSxOOwKvjXweS26E0Q+nAMwp2pQ==}
@@ -9046,10 +9004,6 @@ packages:
     resolution: {integrity: sha512-mE00Gnza5EEB3Ds0HfMyllZzbBrmLOX3vfWoj9A9PEnTfratQ/BcaJOuMhnkhjXvb2+FkY3VuHqtAGpTPmglFQ==}
     engines: {node: '>=18'}
 
-  is-what@4.1.16:
-    resolution: {integrity: sha512-ZhMwEosbFJkA0YhFnNDgTM4ZxDRsS6HqTo7qsZM08fehyRYIYa0yHu5R6mgo1n/8MgaPBXiPimPD77baVFYg+A==}
-    engines: {node: '>=12.13'}
-
   is-wsl@2.2.0:
     resolution: {integrity: sha512-fKzAra0rGJUUBwGBgNkHZuToZcn+TtXHpeCgmkMJMMYx1sQDYaCSyjJBSCa2nH1DGm7s3n1oBnohoVTBaN7Lww==}
     engines: {node: '>=8'}
@@ -9521,10 +9475,6 @@ packages:
 
   memoizerific@1.11.3:
     resolution: {integrity: sha512-/EuHYwAPdLtXwAwSZkh/Gutery6pD2KYd44oQLhAvQp/50mpyduZh8Q7PYHXTCJ+wuXxt7oij2LXyIJOOYFPog==}
-
-  merge-anything@5.1.7:
-    resolution: {integrity: sha512-eRtbOb1N5iyH0tkQDAoQ4Ipsp/5qSR79Dzrz8hEPxRX10RWWR/iQXdoKmBSRCThY1Fh5EhISDtpSc93fpxUniQ==}
-    engines: {node: '>=12.13'}
 
   merge-descriptors@1.0.3:
     resolution: {integrity: sha512-gaNvAS7TZ897/rVaZ0nMtAyxNyi/pdbjbAwUpFQpN70GqnVfOiXpeUUMKRBmzXaSQ8DdTX4/0ms62r2K+hE6mQ==}
@@ -10919,9 +10869,6 @@ packages:
   scheduler@0.24.0-canary-14898b6a9-20240318:
     resolution: {integrity: sha512-ifDO3bUdooS4OlxvGxMyoDEC/aq14MvJLDd0thjrUSZGeLJA7WBc+sr9NZxIxrXfVqMl1GTGGPwXqRJZDNW76w==}
 
-  scule@1.3.0:
-    resolution: {integrity: sha512-6FtHJEvt+pVMIB9IBY+IcCJ6Z5f1iQnytgyfKMhDKgmzYG+TeH/wx1y3l27rshSbLiSanrR9ffZDrEsmjlQF2g==}
-
   selfsigned@2.1.1:
     resolution: {integrity: sha512-GSL3aowiF7wa/WtSFwnUrludWFoNhftq8bUkH9pkzjpN2XSPOAYEgg6e0sS9s0rZwgJzJiQRPU18A6clnoW5wQ==}
     engines: {node: '>=10'}
@@ -11915,9 +11862,6 @@ packages:
     resolution: {integrity: sha512-hUrmaWBdVDcxvYqnyh09zunKzROWjbZTiNy8dBEjkS7ehEDQibXJ7XvlmtbwuTclUiIyN+CyXQD4Vmko8fNm8w==}
     engines: {node: '>=8'}
     hasBin: true
-
-  wildcard-match@5.1.4:
-    resolution: {integrity: sha512-wldeCaczs8XXq7hj+5d/F38JE2r7EXgb6WQDM84RVwxy81T/sxB5e9+uZLK9Q9oNz1mlvjut+QtvgaOQFPVq/g==}
 
   workerd@1.20240701.0:
     resolution: {integrity: sha512-qSgNVqauqzNCij9MaJLF2c2ko3AnFioVSIxMSryGbRK+LvtGr9BKBt6JOxCb24DoJASoJDx3pe3DJHBVydUiBg==}
@@ -13666,8 +13610,6 @@ snapshots:
   '@hono/node-server@1.19.14(hono@4.12.27)':
     dependencies:
       hono: 4.12.27
-
-  '@humanwhocodes/momoa@3.3.12': {}
 
   '@hyperjump/json-pointer@1.1.2': {}
 
@@ -16085,31 +16027,6 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@terrazzo/json-schema-tools@0.3.0(@humanwhocodes/momoa@3.3.12)':
-    dependencies:
-      '@humanwhocodes/momoa': 3.3.12
-
-  '@terrazzo/parser@2.7.1':
-    dependencies:
-      '@humanwhocodes/momoa': 3.3.12
-      '@terrazzo/json-schema-tools': 0.3.0(@humanwhocodes/momoa@3.3.12)
-      '@terrazzo/token-tools': 2.7.1
-      '@terrazzo/token-types': 2.7.1
-      '@types/babel__code-frame': 7.27.0
-      colorjs.io: 0.7.1
-      merge-anything: 5.1.7
-      picocolors: 1.1.1
-      scule: 1.3.0
-
-  '@terrazzo/token-tools@2.7.1':
-    dependencies:
-      '@humanwhocodes/momoa': 3.3.12
-      '@terrazzo/token-types': 2.7.1
-      colorjs.io: 0.7.1
-      wildcard-match: 5.1.4
-
-  '@terrazzo/token-types@2.7.1': {}
-
   '@testing-library/dom@10.4.0':
     dependencies:
       '@babel/code-frame': 7.29.7
@@ -16206,8 +16123,6 @@ snapshots:
   '@types/argparse@1.0.38': {}
 
   '@types/aria-query@5.0.4': {}
-
-  '@types/babel__code-frame@7.27.0': {}
 
   '@types/babel__core@7.20.5':
     dependencies:
@@ -17161,8 +17076,6 @@ snapshots:
 
   colorjs.io@0.6.1: {}
 
-  colorjs.io@0.7.1: {}
-
   colors@1.2.5: {}
 
   combine-errors@3.0.3:
@@ -17527,8 +17440,6 @@ snapshots:
   end-of-stream@1.4.4:
     dependencies:
       once: 1.4.0
-
-  engramma@0.1.2: {}
 
   enquirer@2.4.1:
     dependencies:
@@ -18783,8 +18694,6 @@ snapshots:
 
   is-unicode-supported@2.1.0: {}
 
-  is-what@4.1.16: {}
-
   is-wsl@2.2.0:
     dependencies:
       is-docker: 2.2.1
@@ -19431,10 +19340,6 @@ snapshots:
   memoizerific@1.11.3:
     dependencies:
       map-or-similar: 1.5.0
-
-  merge-anything@5.1.7:
-    dependencies:
-      is-what: 4.1.16
 
   merge-descriptors@1.0.3: {}
 
@@ -21217,8 +21122,6 @@ snapshots:
     dependencies:
       loose-envify: 1.4.0
 
-  scule@1.3.0: {}
-
   selfsigned@2.1.1:
     dependencies:
       node-forge: 1.3.1
@@ -22338,8 +22241,6 @@ snapshots:
     dependencies:
       siginfo: 2.0.0
       stackback: 0.0.2
-
-  wildcard-match@5.1.4: {}
 
   workerd@1.20240701.0:
     optionalDependencies:
