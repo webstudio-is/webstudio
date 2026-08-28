@@ -1,6 +1,7 @@
 import {
   blockComponent,
   contentBlockSourceProp,
+  createId,
   findContentBlockTemplateContainers,
   isEqualContentBlockSource,
   parseContentBlockSourceProp,
@@ -9,7 +10,6 @@ import {
 } from "@webstudio-is/sdk";
 import type { BuilderPatchChange } from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
-import type { BuilderRuntimeContext } from "./context";
 import { createInstanceDeletePayload } from "./instances";
 import { mergeBuilderPatchChanges } from "./mutation";
 
@@ -86,12 +86,10 @@ const createSourcePayload = ({
   state,
   blockInstanceId,
   source,
-  createId,
 }: {
   state: BuilderState;
   blockInstanceId: string;
   source?: ContentBlockSource;
-  createId?: () => string;
 }): BuilderPatchChange[] => {
   const existing = getSourceProp(state, blockInstanceId);
   if (source === undefined) {
@@ -104,12 +102,8 @@ const createSourcePayload = ({
           },
         ];
   }
-  const id = existing?.id ?? createId?.();
-  if (id === undefined) {
-    throw new Error("Creating a Content Block source requires an id");
-  }
   const next = toSourceProp({
-    id,
+    id: existing?.id ?? createId("nano"),
     blockInstanceId,
     source,
   });
@@ -184,12 +178,10 @@ export const prepareContentBlockConnect = ({
   state,
   blockInstanceId,
   source,
-  context,
 }: {
   state: BuilderState;
   blockInstanceId: string;
   source: ContentBlockSource;
-  context: Pick<BuilderRuntimeContext, "createId">;
 }): PreparedContentBlockSourceLifecycle => {
   const existing = getSourceProp(state, blockInstanceId);
   if (
@@ -208,7 +200,6 @@ export const prepareContentBlockConnect = ({
         state,
         blockInstanceId,
         source,
-        createId: context.createId,
       })
     ),
     requiresConfirmation: existing === undefined && removal.hasBody,
@@ -219,12 +210,10 @@ export const prepareContentBlockSwitch = ({
   state,
   blockInstanceId,
   source,
-  context,
 }: {
   state: BuilderState;
   blockInstanceId: string;
   source: ContentBlockSource;
-  context: Pick<BuilderRuntimeContext, "createId">;
 }): PreparedContentBlockSourceLifecycle => {
   getBlockParts(state, blockInstanceId);
   if (getSourceProp(state, blockInstanceId) === undefined) {
@@ -236,7 +225,6 @@ export const prepareContentBlockSwitch = ({
       state,
       blockInstanceId,
       source,
-      createId: context.createId,
     }),
     requiresConfirmation: false,
   };

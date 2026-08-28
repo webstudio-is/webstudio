@@ -37,6 +37,7 @@ export * from "./page-meta-generator";
 export * from "./url-pattern";
 export * from "./link-utils";
 export * from "./json-ld";
+export * from "./id";
 export * from "./css";
 export * from "./__generated__/tags";
 export {

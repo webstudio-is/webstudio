@@ -81,14 +81,6 @@ const apply = (
     { id: "test", payload: [...payload] },
   ]).state;
 
-const context = (() => {
-  let id = 0;
-  return {
-    createId: () => `generated-${id++}`,
-    projectId: "project",
-  };
-})();
-
 describe("Content Block source lifecycle", () => {
   test("connect replaces ordinary body content without producing Asset writes", () => {
     const current = state();
@@ -96,7 +88,6 @@ describe("Content Block source lifecycle", () => {
       state: current,
       blockInstanceId: "block",
       source: { type: "asset", assetId: "asset" },
-      context,
     });
     const connected = apply(current, prepared.projectPayload);
 
@@ -105,6 +96,8 @@ describe("Content Block source lifecycle", () => {
       { type: "id", value: "templates" },
     ]);
     expect(connected.instances?.has("body")).toBe(false);
+    const [sourceProp] = Array.from(connected.props?.values() ?? []);
+    expect(sourceProp?.id).toMatch(/^[\w-]{21}$/);
     expect(Array.from(connected.props?.values() ?? [])).toEqual([
       expect.objectContaining({
         instanceId: "block",
@@ -121,7 +114,6 @@ describe("Content Block source lifecycle", () => {
       state: current,
       blockInstanceId: "block",
       source: { type: "asset", assetId: "second" },
-      context,
     });
     const switched = apply(current, prepared.projectPayload);
 

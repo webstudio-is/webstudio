@@ -90,7 +90,6 @@ test("validates before confirmation and revalidates before replacing existing co
         { id: "test", payload: [...payload] },
       ]).state as typeof state;
     },
-    createId: () => "src",
   });
 
   await expect(
@@ -109,7 +108,11 @@ test("validates before confirmation and revalidates before replacing existing co
   ).resolves.toMatchObject({ status: "applied" });
   expect(reloadAsset).toHaveBeenCalledWith("asset", "article_v1.mdx");
   expect(state.instances.has("body")).toBe(false);
-  expect(state.props.get("src")).toMatchObject({
+  expect(
+    Array.from(state.props.values()).find(
+      (prop) => prop.instanceId === "block" && prop.name === "src"
+    )
+  ).toMatchObject({
     type: "asset",
     value: "asset",
   });
@@ -153,7 +156,6 @@ test("disconnects without loading or copying the Asset source", async () => {
         { id: "test", payload: [...payload] },
       ]).state as typeof state;
     },
-    createId: () => "unused",
   });
 
   await expect(controller.disconnect()).resolves.toEqual({ status: "applied" });

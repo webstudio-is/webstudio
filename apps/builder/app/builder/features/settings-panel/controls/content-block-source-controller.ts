@@ -1,10 +1,7 @@
 import type { AssetContentSessionState } from "@webstudio-is/content-engine/asset-content-session";
 import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import type { BuilderState } from "@webstudio-is/project-build/state";
-import {
-  builderRuntimeContext,
-  createContentBlockApplication,
-} from "@webstudio-is/project-build/runtime";
+import { createContentBlockApplication } from "@webstudio-is/project-build/runtime";
 import {
   getContentBlockSource,
   isEqualContentBlockSource,
@@ -49,7 +46,6 @@ export const createContentBlockSourceController = ({
   flushAsset,
   updateAssetSource,
   commitProjectPayload,
-  createId,
 }: {
   blockInstanceId: string;
   renderScope: string;
@@ -70,13 +66,11 @@ export const createContentBlockSourceController = ({
     update: (source: string) => string | Promise<string>
   ) => Promise<unknown>;
   commitProjectPayload: (payload: readonly BuilderPatchChange[]) => void;
-  createId: () => string;
 }) => {
   const stagedSources = new Map<string, string>();
   const application = createContentBlockApplication({
     projectId,
     metas: componentMetas,
-    createId,
     resolveSourceAssetId: ({ source }) =>
       source.type === "asset"
         ? source.assetId
@@ -276,5 +270,4 @@ export const createBuilderContentBlockSourceController = ({
         data: getWebstudioData(),
         payload: [...payload],
       }),
-    createId: builderRuntimeContext.createId,
   });
