@@ -16,6 +16,11 @@
 
 import { clamp } from "@react-aria/utils";
 import { css } from "../../stitches.config";
+import { cssVar } from "../../css-var";
+
+const cursorForeground = cssVar("--foreground-primary");
+const cursorBackground = cssVar("--background-primary");
+const cursorShadow = `oklch(from ${cursorForeground} l c h / 40%)`;
 
 const scrubUI = css({
   "*": {
@@ -491,8 +496,8 @@ const requestPointerLock = (
                 `
               <svg id="numeric-guesture-control-cursor" version="1.1" xmlns="http://www.w3.org/2000/svg" width="46" height="15">
                <g transform="translate(2 3)">
-                 <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd" stroke="#FFF" stroke-width="2"></path>
-                  <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd"></path>
+                 <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="${cursorForeground}" fill-rule="evenodd" stroke="${cursorBackground}" stroke-width="2"></path>
+                  <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="${cursorForeground}" fill-rule="evenodd"></path>
                 </g>
               </svg>`,
                 "application/xml"
@@ -500,7 +505,7 @@ const requestPointerLock = (
 
             cursorNode.style.filter = `drop-shadow(${
               state.direction === "horizontal" ? "0 1px" : "1px 0"
-            } 1.1px rgba(0,0,0,.4))`;
+            } 1.1px ${cursorShadow})`;
             cursorNode.style.position = "fixed";
             cursorNode.style.zIndex = Number.MAX_SAFE_INTEGER.toString();
 

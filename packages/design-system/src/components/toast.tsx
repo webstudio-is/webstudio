@@ -207,10 +207,10 @@ export const Toast = ({
         <Button
           css={{
             "&[data-state=auto]:hover": {
-              background: "rgba(0, 0, 0, 0.07)",
+              background: cssVar("--overlay-interaction-hover"),
             },
             "&[data-state=auto]:active": {
-              background: "rgba(0, 0, 0, 0.04)",
+              background: cssVar("--overlay-interaction-pressed"),
             },
           }}
           color="ghost"
@@ -224,10 +224,10 @@ export const Toast = ({
         <Button
           css={{
             "&[data-state=auto]:hover": {
-              background: "rgba(0, 0, 0, 0.07)",
+              background: cssVar("--overlay-interaction-hover"),
             },
             "&[data-state=auto]:active": {
-              background: "rgba(0, 0, 0, 0.04)",
+              background: cssVar("--overlay-interaction-pressed"),
             },
           }}
           color="ghost"
