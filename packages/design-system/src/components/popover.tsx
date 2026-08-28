@@ -11,6 +11,7 @@ import { PanelTitle } from "./panel-title";
 import { Flex } from "./flex";
 import { Button } from "./button";
 import { XIcon } from "@webstudio-is/icons";
+import { cssVar } from "../css-var";
 
 export const Popover = Primitive.Root;
 
@@ -19,9 +20,11 @@ export const PopoverPortal = Primitive.Portal;
 export const PopoverAnchor = Primitive.Anchor;
 
 const contentStyle = css({
-  border: `1px solid ${theme.colors.borderMain}`,
-  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
-  background: theme.colors.backgroundMenu,
+  border: `1px solid ${cssVar("--border-default")}`,
+  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${cssVar(
+    "--background-primary"
+  )}`,
+  background: cssVar("--background-primary"),
   borderRadius: theme.borderRadius[6],
   display: "flex",
   flexDirection: "column",

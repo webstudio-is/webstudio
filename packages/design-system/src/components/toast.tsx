@@ -15,6 +15,7 @@ import { Flex } from "./flex";
 import { Tooltip } from "./tooltip";
 import { Button } from "./button";
 import { CopyIcon, LargeXIcon } from "@webstudio-is/icons";
+import { cssVar } from "../css-var";
 
 const ANIMATION_SLIDE_LENGTH = 30;
 
@@ -71,45 +72,46 @@ const AnimatedToast = styled(ToastPrimitive.Root, {
   },
 });
 
-const borderAccentBackgroundColor = "--ws-toast-border-accent-background-color";
-const backgroundColor = "--ws-toast-background-color";
-const borderColor = "--ws-toast-border-color";
-const iconColor = "--ws-toast-icon-color";
+const borderAccentBackgroundColor = "--toast-border-accent-background-color";
+const backgroundColor = "--toast-background-color";
+const borderColor = "--toast-border-color";
+const iconColor = "--toast-icon-color";
+const positiveSubtle = `color-mix(in oklab, ${cssVar(
+  "--background-positive"
+)} 12%, ${cssVar("--background-primary")})`;
 
 const ToastVariants = styled("div", {
-  [borderAccentBackgroundColor]: theme.colors.foregroundMain,
-  [backgroundColor]: theme.colors.backgroundNeutralNotification,
-  [borderColor]: theme.colors.borderNeutral,
-  [iconColor]: theme.colors.foregroundMain,
+  [borderAccentBackgroundColor]: cssVar("--foreground-primary"),
+  [backgroundColor]: cssVar("--background-secondary"),
+  [borderColor]: cssVar("--border-default"),
+  [iconColor]: cssVar("--foreground-primary"),
 
   variants: {
     variant: {
       neutral: {},
       warning: {
-        [backgroundColor]: theme.colors.backgroundAlertNotification,
-        [borderAccentBackgroundColor]: theme.colors.backgroundAlertMain,
-        [borderColor]: theme.colors.backgroundAlertMain,
-        [iconColor]: theme.colors.backgroundAlertMain,
+        [backgroundColor]: cssVar("--background-warning-subtle"),
+        [borderAccentBackgroundColor]: cssVar("--foreground-warning"),
+        [borderColor]: cssVar("--foreground-warning"),
+        [iconColor]: cssVar("--foreground-warning"),
       },
       error: {
-        [backgroundColor]: theme.colors.backgroundDestructiveNotification,
-        [borderAccentBackgroundColor]: theme.colors.backgroundDestructiveMain,
-        [borderColor]: theme.colors.backgroundDestructiveMain,
-        [iconColor]: theme.colors.foregroundDestructive,
+        [backgroundColor]: cssVar("--background-negative-subtle"),
+        [borderAccentBackgroundColor]: cssVar("--background-negative"),
+        [borderColor]: cssVar("--background-negative"),
+        [iconColor]: cssVar("--foreground-negative"),
       },
       success: {
-        [backgroundColor]: theme.colors.backgroundSuccessNotification,
-        [borderAccentBackgroundColor]: theme.colors.backgroundSuccessMain,
-        [borderColor]: theme.colors.backgroundSuccessMain,
-        [iconColor]: theme.colors.foregroundSuccess,
+        [backgroundColor]: positiveSubtle,
+        [borderAccentBackgroundColor]: cssVar("--background-positive"),
+        [borderColor]: cssVar("--background-positive"),
+        [iconColor]: cssVar("--foreground-positive"),
       },
     },
   },
 });
 
 type ToastVariant = React.ComponentProps<typeof ToastVariants>["variant"];
-
-const cssVar = (name: string) => `var(${name})`;
 
 const InternalToast = ({
   children,
@@ -133,7 +135,7 @@ const InternalToast = ({
       >
         <Box
           css={{
-            backgroundColor: cssVar(borderAccentBackgroundColor),
+            backgroundColor: `var(${borderAccentBackgroundColor})`,
             borderTopLeftRadius: theme.borderRadius[5],
             borderBottomLeftRadius: theme.borderRadius[5],
           }}
@@ -142,18 +144,18 @@ const InternalToast = ({
           gap={"3"}
           align={"center"}
           css={{
-            backgroundColor: cssVar(backgroundColor),
+            backgroundColor: `var(${backgroundColor})`,
             padding: theme.panel.padding,
             gridTemplateColumns: icon ? "auto 1fr auto" : "1fr auto",
             borderBottomRightRadius: theme.borderRadius[5],
             borderTopRightRadius: theme.borderRadius[5],
-            border: `1px solid ${cssVar(borderColor)}`,
+            border: `1px solid var(${borderColor})`,
             borderLeft: "none",
           }}
         >
           <Box
             css={{
-              color: cssVar(iconColor),
+              color: `var(${iconColor})`,
               display: icon ? "contents" : "none",
             }}
           >

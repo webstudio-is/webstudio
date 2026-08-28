@@ -1,7 +1,12 @@
 import { styled, theme } from "../stitches.config";
 import { Box } from "./box";
+import { cssVar } from "../css-var";
 
-const iconColor = "--ws-panel-banner-icon-color";
+const iconColor = "--panel-banner-icon-color";
+
+const positiveSubtle = `color-mix(in oklab, ${cssVar(
+  "--background-positive"
+)} 12%, ${cssVar("--background-primary")})`;
 
 export const panelBannerIconColor = `var(${iconColor})`;
 
@@ -9,28 +14,28 @@ export const PanelBanner = styled(Box, {
   display: "flex",
   gap: theme.spacing[7],
   flexDirection: "column",
-  backgroundColor: theme.colors.backgroundInfoNotification,
+  backgroundColor: cssVar("--background-informative-subtle"),
   padding: theme.panel.padding,
-  [iconColor]: theme.colors.foregroundInfo,
+  [iconColor]: cssVar("--foreground-informative"),
 
   variants: {
     variant: {
       info: {},
       warning: {
-        backgroundColor: theme.colors.backgroundAlertNotification,
-        [iconColor]: theme.colors.backgroundAlertMain,
+        backgroundColor: cssVar("--background-warning-subtle"),
+        [iconColor]: cssVar("--foreground-warning"),
       },
       error: {
-        backgroundColor: theme.colors.backgroundDestructiveNotification,
-        [iconColor]: theme.colors.foregroundDestructive,
+        backgroundColor: cssVar("--background-negative-subtle"),
+        [iconColor]: cssVar("--foreground-negative"),
       },
       success: {
-        backgroundColor: theme.colors.backgroundSuccessNotification,
-        [iconColor]: theme.colors.foregroundSuccess,
+        backgroundColor: positiveSubtle,
+        [iconColor]: cssVar("--foreground-positive"),
       },
       neutral: {
-        backgroundColor: theme.colors.backgroundNeutralNotification,
-        [iconColor]: theme.colors.foregroundMain,
+        backgroundColor: cssVar("--background-secondary"),
+        [iconColor]: cssVar("--foreground-primary"),
       },
     },
   },

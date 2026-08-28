@@ -9,16 +9,17 @@ import { textVariants } from "./text";
 import { Grid } from "./grid";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { ScrollArea } from "./scroll-area";
+import { cssVar } from "../css-var";
 
 const lineHeight = 16;
 const paddingY = 3;
 const borderWidth = 1;
 
 const gridStyle = css({
-  color: theme.colors.foregroundMain,
+  color: cssVar("--foreground-primary"),
   borderRadius: theme.borderRadius[4],
   border: `${borderWidth}px solid transparent`,
-  background: theme.colors.backgroundControls,
+  background: cssVar("--background-secondary"),
   paddingTop: paddingY,
   paddingBottom: paddingY,
   boxSizing: "border-box",
@@ -26,19 +27,19 @@ const gridStyle = css({
   overflow: "auto",
   width: "100%",
   "&:hover": {
-    borderColor: theme.colors.borderMain,
+    borderColor: cssVar("--border-default"),
   },
   "&:focus-within": {
-    borderColor: theme.colors.borderFocus,
+    borderColor: cssVar("--border-focus"),
   },
   "&:has([data-color=error])": {
-    borderColor: theme.colors.borderDestructiveMain,
+    borderColor: cssVar("--border-negative"),
     "&:focus-within": {
-      outlineColor: theme.colors.borderDestructiveMain,
+      outlineColor: cssVar("--border-negative"),
     },
   },
   "&:has(textarea:disabled)": {
-    backgroundColor: theme.colors.backgroundInputDisabled,
+    backgroundColor: cssVar("--background-disabled"),
   },
   variants: {
     grow: {
@@ -73,10 +74,10 @@ const commonStyle = css({
   resize: "none",
   outline: "none",
   "&::placeholder": {
-    color: theme.colors.foregroundContrastSubtle,
+    color: cssVar("--foreground-disabled"),
   },
   "&:disabled": {
-    color: theme.colors.foregroundDisabled,
+    color: cssVar("--foreground-disabled"),
   },
   variants: {
     variant: {

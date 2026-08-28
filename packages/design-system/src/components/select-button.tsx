@@ -15,8 +15,9 @@ import {
 import { textVariants } from "./text";
 import { theme, css, type CSS } from "../stitches.config";
 import { ChevronDownIcon } from "@webstudio-is/icons";
+import { cssVar } from "../css-var";
 
-const chevronColor = `--ws-select-button-chevron-color`;
+const chevronColor = `--select-button-chevron-color`;
 const chevronStyle = css({ color: `var(${chevronColor})` });
 
 const style = css({
@@ -26,29 +27,29 @@ const style = css({
   boxSizing: "border-box",
   display: "flex",
   alignItems: "center",
-  background: theme.colors.backgroundControls,
+  background: cssVar("--background-secondary"),
   border: `1px solid transparent`,
   borderRadius: theme.borderRadius[4],
   paddingRight: theme.spacing[1],
   paddingLeft: theme.spacing[1],
-  color: theme.colors.foregroundMain,
-  [chevronColor]: theme.colors.foregroundSubtle,
+  color: cssVar("--foreground-primary"),
+  [chevronColor]: cssVar("--foreground-secondary"),
   "&:hover": {
-    borderColor: theme.colors.borderMain,
+    borderColor: cssVar("--border-default"),
   },
   "&[data-placeholder]:not([data-state=open], :hover, :disabled)": {
-    color: theme.colors.foregroundSubtle,
+    color: cssVar("--foreground-secondary"),
   },
   "&:hover:not(:disabled), &[data-state=open]": {
-    [chevronColor]: theme.colors.foregroundMain,
+    [chevronColor]: cssVar("--foreground-primary"),
   },
   "&:disabled": {
-    background: theme.colors.backgroundInputDisabled,
-    color: theme.colors.foregroundDisabled,
-    [chevronColor]: theme.colors.borderMain,
+    background: cssVar("--background-disabled"),
+    color: cssVar("--foreground-disabled"),
+    [chevronColor]: cssVar("--border-default"),
   },
   "&:focus-visible": {
-    borderColor: theme.colors.borderFocus,
+    borderColor: cssVar("--border-focus"),
   },
   variants: {
     fullWidth: { true: { width: "100%" } },
@@ -57,7 +58,7 @@ const style = css({
         background: "transparent",
         "&:hover": {
           borderColor: "transparent",
-          background: theme.colors.backgroundHover,
+          background: cssVar("--overlay-interaction-hover"),
         },
       },
     },

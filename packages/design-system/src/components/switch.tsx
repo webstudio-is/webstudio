@@ -6,6 +6,7 @@
 import { forwardRef, type ComponentProps, type Ref } from "react";
 import * as Primitive from "@radix-ui/react-switch";
 import { type CSS, css, theme } from "../stitches.config";
+import { cssVar } from "../css-var";
 
 const padding = theme.spacing[1];
 const thumbOffset = `calc(${padding} + ${theme.spacing[1]})`;
@@ -27,20 +28,22 @@ const switchStyle = css({
     position: "absolute",
     inset: padding,
     borderRadius: theme.borderRadius.pill,
-    backgroundColor: theme.colors.backgroundNeutralDark,
+    backgroundColor: `color-mix(in oklab, ${cssVar(
+      "--background-primary"
+    )} 67%, ${cssVar("--foreground-primary")})`,
   },
 
   "&[data-state=checked]:not([data-disabled]):before, &[aria-checked=true]:not([data-disabled]):before":
     {
-      backgroundColor: theme.colors.backgroundPrimary,
+      backgroundColor: cssVar("--background-accent"),
     },
 
   "&[data-disabled]:before": {
-    backgroundColor: theme.colors.foregroundDisabled,
+    backgroundColor: cssVar("--foreground-disabled"),
   },
 
   "&:focus": {
-    outline: `1px solid ${theme.colors.borderFocus}`,
+    outline: `1px solid ${cssVar("--border-focus")}`,
   },
 });
 
@@ -48,7 +51,7 @@ const thumbStyle = css({
   width: theme.spacing[7],
   height: theme.spacing[7],
   borderRadius: theme.borderRadius.round,
-  backgroundColor: theme.colors.foregroundContrastMain,
+  backgroundColor: cssVar("--foreground-on-accent"),
   position: "absolute",
   top: thumbOffset,
   left: thumbOffset,
