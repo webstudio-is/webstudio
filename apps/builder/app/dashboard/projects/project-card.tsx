@@ -6,9 +6,9 @@ import {
   truncate,
   theme,
   Tooltip,
-  rawTheme,
   Link,
   Box,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -201,7 +201,7 @@ export const ProjectCard = ({
               }
             >
               <InfoCircleIcon
-                color={rawTheme.colors.foregroundSubtle}
+                color={cssVar("--foreground-secondary")}
                 tabIndex={-1}
                 className={infoIconStyle()}
               />

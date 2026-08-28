@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Box, Flex, Progress, theme } from "@webstudio-is/design-system";
 import { WebstudioIcon } from "@webstudio-is/icons";
 import { useInterval } from "~/shared/hook-utils/use-interval";
+import { builderChromeBackground } from "./color-recipes";
 
 export const LoadingBackground = ({
   show,
@@ -24,7 +25,7 @@ export const LoadingBackground = ({
         transitionDuration: "300ms",
         pointerEvents: "none",
         transitionProperty: "opacity",
-        backgroundColor: theme.colors.backgroundTopbar,
+        backgroundColor: builderChromeBackground,
         opacity: show ? 1 : 0,
         isolation: "isolate",
       }}

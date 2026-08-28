@@ -28,6 +28,7 @@ import {
   SmallIconButton,
   Text,
   TextArea,
+  cssVar,
   theme,
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
@@ -340,12 +341,12 @@ const Group = <FieldType extends string, Operator extends string>({
         ...(root
           ? {
               paddingInline: shared.sectionPaddingInline,
-              borderTop: `1px solid ${theme.colors.borderMain}`,
+              borderTop: `1px solid ${cssVar("--border-default")}`,
               paddingTop: theme.spacing[7],
             }
           : {
               paddingLeft: theme.spacing[3],
-              borderLeft: `1px solid ${theme.colors.borderMain}`,
+              borderLeft: `1px solid ${cssVar("--border-default")}`,
             }),
       }}
     >
@@ -815,7 +816,7 @@ const QueryParameters = ({
         <Grid
           gap={2}
           css={{
-            borderTop: `1px solid ${theme.colors.borderMain}`,
+            borderTop: `1px solid ${cssVar("--border-default")}`,
             paddingTop: theme.spacing[7],
           }}
         >
@@ -1167,7 +1168,7 @@ export const StructuredQueryBuilder = <
               gap={2}
               css={{
                 paddingInline: sectionPaddingInline,
-                borderTop: `1px solid ${theme.colors.borderMain}`,
+                borderTop: `1px solid ${cssVar("--border-default")}`,
                 paddingTop: theme.spacing[7],
               }}
             >

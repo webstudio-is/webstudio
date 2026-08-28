@@ -15,6 +15,7 @@ import {
   PanelBanner,
   Select,
   Box,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
 import { useState } from "react";
@@ -39,10 +40,10 @@ const thumbnailStyle = css({
   borderRadius: theme.borderRadius[4],
   outlineWidth: 1,
   outlineStyle: "solid",
-  outlineColor: theme.colors.borderMain,
+  outlineColor: cssVar("--border-default"),
   width: theme.spacing[28],
   aspectRatio: "1.91",
-  background: "#DFE3E6",
+  background: cssVar("--background-secondary"),
 });
 
 const thumbnailImageStyle = css({

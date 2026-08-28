@@ -10,7 +10,6 @@ import {
   List,
   ListItem,
   ProChip,
-  rawTheme,
   ScrollArea,
   SearchField,
   SmallIconButton,
@@ -18,6 +17,7 @@ import {
   theme,
   Tooltip,
   buttonStyle,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
@@ -185,7 +185,7 @@ export const SectionAuth = () => {
           variant="wrapped"
         >
           <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
+            color={cssVar("--foreground-secondary")}
             tabIndex={-1}
           />
         </Tooltip>
@@ -317,7 +317,7 @@ export const SectionAuth = () => {
                             bottom: 0,
                             height: "auto",
                             borderRadius: 0,
-                            background: theme.colors.backgroundPanel,
+                            background: cssVar("--background-primary"),
                           },
                           "&:hover > button, &:focus-within > button": {
                             opacity: 1,

@@ -15,6 +15,7 @@ import {
   ProChip,
   TextArea,
   IconButton,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { CopyIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
@@ -36,7 +37,7 @@ const imgStyle = css({
   borderRadius: theme.borderRadius[4],
   borderWidth: 1,
   borderStyle: "solid",
-  borderColor: theme.colors.borderMain,
+  borderColor: cssVar("--border-default"),
 });
 
 const defaultMetaSettings: ProjectMeta = {

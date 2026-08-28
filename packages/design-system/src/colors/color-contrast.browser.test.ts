@@ -37,7 +37,6 @@ const legacyLightColors = {
   "--background-informative-subtle": "#e1f0ff",
   "--foreground-primary": "#11181c",
   "--foreground-secondary": "#656869",
-  "--foreground-muted": "#687076",
   "--foreground-disabled": "#c1c8cd",
   "--foreground-on-inverse": "#ffffff",
   "--foreground-on-accent": "#ffffff",

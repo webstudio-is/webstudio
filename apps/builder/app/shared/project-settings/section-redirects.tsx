@@ -14,7 +14,6 @@ import {
   Link,
   List,
   ListItem,
-  rawTheme,
   ScrollArea,
   SearchField,
   Select,
@@ -22,6 +21,7 @@ import {
   Text,
   theme,
   Tooltip,
+  cssVar,
 } from "@webstudio-is/design-system";
 import {
   AlertIcon,
@@ -231,7 +231,7 @@ export const SectionRedirects = () => {
             }
           >
             <InfoCircleIcon
-              color={rawTheme.colors.foregroundSubtle}
+              color={cssVar("--foreground-secondary")}
               tabIndex={0}
             />
           </Tooltip>
@@ -358,7 +358,7 @@ export const SectionRedirects = () => {
         {fromPathWarnings.length > 0 && (
           <Flex gap="1" align="center">
             <AlertIcon
-              color={rawTheme.colors.backgroundAlertMain}
+              color={cssVar("--foreground-warning")}
               style={{ flexShrink: 0 }}
             />
             <Text color="subtle">{fromPathWarnings.join(". ")}</Text>
@@ -389,7 +389,7 @@ export const SectionRedirects = () => {
                             bottom: 0,
                             height: "auto",
                             borderRadius: 0,
-                            background: theme.colors.backgroundPanel,
+                            background: cssVar("--background-primary"),
                           },
                           "&:hover > button, &:focus-within > button": {
                             opacity: 1,

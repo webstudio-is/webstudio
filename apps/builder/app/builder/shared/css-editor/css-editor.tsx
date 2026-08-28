@@ -20,6 +20,7 @@ import {
   theme,
   toast,
   Tooltip,
+  cssVar,
 } from "@webstudio-is/design-system";
 import {
   camelCaseProperty,
@@ -547,7 +548,7 @@ export const CssEditor = ({
             padding: theme.panel.padding,
             position: "sticky",
             top: 0,
-            background: theme.colors.backgroundPanel,
+            background: cssVar("--background-primary"),
             zIndex: 1,
           }}
         >

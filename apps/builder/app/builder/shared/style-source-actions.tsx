@@ -13,6 +13,7 @@ import {
   theme,
   InputField,
   toast,
+  cssVar,
 } from "@webstudio-is/design-system";
 import type { StyleSource } from "@webstudio-is/sdk";
 import type { RenameStyleSourceError } from "@webstudio-is/project-build/runtime";
@@ -304,7 +305,7 @@ export const DeleteUnusedTokensDialog = () => {
                 css={{
                   maxHeight: 200,
                   overflowY: "auto",
-                  backgroundColor: theme.colors.backgroundPanel,
+                  backgroundColor: cssVar("--background-primary"),
                   borderRadius: theme.borderRadius[4],
                   wordBreak: "break-word",
                 }}

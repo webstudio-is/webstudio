@@ -467,7 +467,9 @@ class VariableWidget extends WidgetType {
   }
   toDOM(): HTMLElement {
     const span = document.createElement("span");
-    span.style.backgroundColor = "rgba(24, 119, 232, 0.2)";
+    span.style.backgroundColor = `color-mix(in oklab, ${cssVar(
+      "--foreground-accent"
+    )} 20%, transparent)`;
     span.textContent = this.text;
     return span;
   }

@@ -6,11 +6,15 @@ body {
   overflow: hidden;
   overscroll-behavior: contain;
   -webkit-font-smoothing: antialiased;
-  /* 
-    This is the top bar and loading screen color (--colors-backgroundTopbar).
-    We are setting it to avoid a white screen flash when opening project from the dashboard.
-   */
-  background-color: #2d2d2d;
+  /* Match the Builder chrome before React renders without adding another token. */
+  background-color: light-dark(
+    color-mix(
+      in oklab,
+      var(--background-inverse) 88%,
+      var(--background-primary)
+    ),
+    var(--background-primary)
+  );
 }
 
 [data-radix-scroll-area-viewport] {
@@ -25,5 +29,10 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--colors-foregroundScrollBar) transparent;
+  scrollbar-color: color-mix(
+      in oklab,
+      var(--foreground-secondary) 60%,
+      transparent
+    )
+    transparent;
 }

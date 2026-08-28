@@ -81,7 +81,7 @@ const StyledLabel = styled(RadixLabel, {
       },
       preset: {
         backgroundColor: presetBackground,
-        color: cssVar("--foreground-muted"),
+        color: cssVar("--foreground-secondary"),
         "&:hover": {
           background: withInteractionOverlay(presetBackground),
         },
@@ -111,7 +111,7 @@ const StyledLabel = styled(RadixLabel, {
       },
       // Example is collapsible section title label when section has no content.
       inactive: {
-        color: cssVar("--foreground-muted"),
+        color: cssVar("--foreground-secondary"),
         "&:hover": {
           color: cssVar("--foreground-primary"),
         },

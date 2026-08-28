@@ -9,9 +9,12 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   Tooltip,
   Kbd,
+  MenuCheckedIcon,
   menuItemCss,
 } from "@webstudio-is/design-system";
 import {
@@ -33,11 +36,17 @@ import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { UpgradeIcon } from "@webstudio-is/icons";
-import { getSetting, setSetting } from "~/builder/shared/client-settings";
+import { $settings, setSetting } from "~/builder/shared/client-settings";
 import { help } from "~/shared/help";
 
+const colorSchemeOptions = [
+  { value: "system", label: "System" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+] as const;
+
 const ViewMenuItem = () => {
-  const navigatorLayout = getSetting("navigatorLayout");
+  const { colorScheme, navigatorLayout } = useStore($settings);
   const isUiHidden = useStore($isUiHidden);
 
   return (
@@ -63,6 +72,31 @@ const ViewMenuItem = () => {
         >
           Undock navigator
         </DropdownMenuCheckboxItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>Color scheme</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent width="regular">
+            <DropdownMenuRadioGroup
+              value={colorScheme}
+              onValueChange={(value) => {
+                setSetting(
+                  "colorScheme",
+                  value as (typeof colorSchemeOptions)[number]["value"]
+                );
+              }}
+            >
+              {colorSchemeOptions.map(({ value, label }) => (
+                <DropdownMenuRadioItem
+                  key={value}
+                  value={value}
+                  icon={<MenuCheckedIcon />}
+                >
+                  {label}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
       </DropdownMenuSubContent>
     </DropdownMenuSub>
   );

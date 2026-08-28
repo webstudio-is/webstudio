@@ -11,7 +11,6 @@ export type ColorContrastResult = {
 const contrastContracts = [
   ["--foreground-primary", "--background-primary", 4.5],
   ["--foreground-secondary", "--background-primary", 4.5],
-  ["--foreground-muted", "--background-primary", 4.5],
   ["--foreground-accent", "--background-primary", 4.5],
   ["--foreground-positive", "--background-primary", 4.5],
   ["--foreground-negative", "--background-primary", 4.5],

@@ -18,6 +18,7 @@ import {
   TextArea,
   theme,
   toast,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
 import type { PageRedirect } from "@webstudio-is/sdk";
@@ -358,12 +359,12 @@ const InputStep = ({
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         css={{
-          border: `2px dashed ${isDragOver ? theme.colors.borderFocus : theme.colors.borderMain}`,
+          border: `2px dashed ${isDragOver ? cssVar("--border-focus") : cssVar("--border-default")}`,
           borderRadius: theme.borderRadius[6],
           padding: theme.spacing[9],
           textAlign: "center",
           backgroundColor: isDragOver
-            ? theme.colors.backgroundHover
+            ? cssVar("--overlay-interaction-hover")
             : "transparent",
           transition: "all 0.2s ease",
           cursor: "pointer",
@@ -379,11 +380,19 @@ const InputStep = ({
 
       <Flex align="center" gap="2">
         <Box
-          css={{ flex: 1, height: 1, backgroundColor: theme.colors.borderMain }}
+          css={{
+            flex: 1,
+            height: 1,
+            backgroundColor: cssVar("--border-default"),
+          }}
         />
         <Text color="subtle">OR</Text>
         <Box
-          css={{ flex: 1, height: 1, backgroundColor: theme.colors.borderMain }}
+          css={{
+            flex: 1,
+            height: 1,
+            backgroundColor: cssVar("--border-default"),
+          }}
         />
       </Flex>
 
@@ -430,7 +439,7 @@ const PreviewStep = ({
 
         <ScrollArea
           css={{
-            border: `1px solid ${theme.colors.borderMain}`,
+            border: `1px solid ${cssVar("--border-default")}`,
             borderRadius: theme.borderRadius[4],
             maxHeight: 200,
             overflow: "auto",
@@ -482,7 +491,7 @@ const PreviewStep = ({
           <Label>Unsupported ({skippedLines.length})</Label>
           <ScrollArea
             css={{
-              border: `1px solid ${theme.colors.borderMain}`,
+              border: `1px solid ${cssVar("--border-default")}`,
               borderRadius: theme.borderRadius[4],
               maxHeight: 120,
               overflow: "auto",
@@ -512,7 +521,7 @@ const PreviewStep = ({
           <Label>Duplicates ({duplicateRedirects.length})</Label>
           <ScrollArea
             css={{
-              border: `1px solid ${theme.colors.borderMain}`,
+              border: `1px solid ${cssVar("--border-default")}`,
               borderRadius: theme.borderRadius[4],
               maxHeight: 120,
               overflow: "auto",

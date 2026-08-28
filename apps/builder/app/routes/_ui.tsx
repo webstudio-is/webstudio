@@ -27,6 +27,8 @@ import {
   createPrivateNoStoreHeaders,
   privateNoStoreResponseHeaders,
 } from "~/services/cache-control.server";
+import { ColorSchemeController } from "~/shared/color-scheme-controller";
+import { colorSchemeBootstrapScript } from "~/shared/color-scheme";
 
 export const links: LinksFunction = () => {
   // `links` returns an array of objects whose
@@ -41,14 +43,18 @@ export const links: LinksFunction = () => {
 
 const Document = (props: { children: React.ReactNode }) => {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script
+          dangerouslySetInnerHTML={{ __html: colorSchemeBootstrapScript }}
+        />
         <Meta />
         <Links />
       </head>
       <body>
+        <ColorSchemeController />
         {props.children}
         <ScrollRestoration />
         <Scripts />

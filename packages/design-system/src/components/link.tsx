@@ -1,12 +1,9 @@
 import { forwardRef } from "react";
 import { styled } from "../stitches.config";
-import { textVariants } from "./text";
+import { moreSubtleForeground, textVariants } from "./text";
 import { ExternalLinkIcon } from "@webstudio-is/icons";
 import { cssVar } from "../css-var";
 
-const moreSubtleForeground = `color-mix(in oklab, ${cssVar(
-  "--foreground-secondary"
-)} 56%, ${cssVar("--foreground-disabled")})`;
 const contrastForeground = `light-dark(${cssVar(
   "--foreground-on-inverse"
 )}, ${cssVar("--foreground-primary")})`;
@@ -59,8 +56,8 @@ export const Link = styled("a", {
         "&:hover, &:visited": { color: contrastForeground },
       },
       subtle: {
-        color: cssVar("--foreground-muted"),
-        "&:hover, &:visited": { color: cssVar("--foreground-muted") },
+        color: cssVar("--foreground-secondary"),
+        "&:hover, &:visited": { color: cssVar("--foreground-secondary") },
       },
       moreSubtle: {
         color: moreSubtleForeground,

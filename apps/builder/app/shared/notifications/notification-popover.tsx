@@ -16,6 +16,7 @@ import {
   Text,
   Tooltip,
   css,
+  cssVar,
   keyframes,
   theme,
   toast,
@@ -46,7 +47,7 @@ const notificationRowStyle = css({
   paddingBlock: theme.spacing[5],
   paddingInline: theme.spacing[7],
   "&:not(:last-child)": {
-    borderBottom: `1px solid ${theme.colors.borderMain}`,
+    borderBottom: `1px solid ${cssVar("--border-default")}`,
   },
 });
 

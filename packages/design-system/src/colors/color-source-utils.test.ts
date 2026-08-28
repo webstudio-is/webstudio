@@ -101,7 +101,7 @@ describe("Craft color CSS source", () => {
         (count, category) => count + Object.keys(category).length,
         0
       )
-    ).toBe(34);
+    ).toBe(33);
     expect(colors.semantic.background).toHaveProperty("positive-subtle");
     expect(colors.semantic.background).not.toHaveProperty("accent-hover");
     expect(colors.semantic.overlay).toHaveProperty("interaction-hover");

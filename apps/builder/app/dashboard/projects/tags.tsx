@@ -23,6 +23,7 @@ import {
   SmallIconButton,
   DropdownMenuContent,
   DropdownMenuItem,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import type { User } from "~/shared/db/user.server";
@@ -129,7 +130,7 @@ const TagsList = ({
                   gap="2"
                   css={{
                     paddingInline: theme.panel.paddingInline,
-                    outlineColor: theme.colors.borderFocus,
+                    outlineColor: cssVar("--border-focus"),
                     outlineOffset: -2,
                     paddingBlock: theme.spacing[2],
                   }}

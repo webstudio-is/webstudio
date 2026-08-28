@@ -14,12 +14,13 @@ import {
   styled,
   Text,
   theme,
+  cssVar,
 } from "@webstudio-is/design-system";
 
 const thumbnailActionVisibility = "--ws-thumbnail-action-visibility";
 const showThumbnailAction = { [thumbnailActionVisibility]: "visible" };
 const focusOutline = {
-  outline: `1px solid ${theme.colors.borderFocus}`,
+  outline: `1px solid ${cssVar("--border-focus")}`,
   outlineOffset: -1,
 };
 
@@ -35,7 +36,7 @@ const ThumbnailGroup = styled(Box, {
   },
   "&:hover, &:focus-within": showThumbnailAction,
   "&:hover > [data-asset-thumbnail]": {
-    backgroundColor: theme.colors.backgroundAssetcardHover,
+    backgroundColor: cssVar("--overlay-interaction-hover"),
   },
 });
 
@@ -124,7 +125,7 @@ const Root = styled("div", {
   padding: 2,
   "&:hover, &:focus-visible": {
     ...showThumbnailAction,
-    backgroundColor: theme.colors.backgroundAssetcardHover,
+    backgroundColor: cssVar("--overlay-interaction-hover"),
   },
   "&:focus-visible": {
     ...focusOutline,
@@ -133,14 +134,14 @@ const Root = styled("div", {
     selected: {
       true: {
         ...focusOutline,
-        backgroundColor: theme.colors.backgroundAssetcardHover,
+        backgroundColor: cssVar("--overlay-interaction-hover"),
         ...showThumbnailAction,
       },
     },
     dropTarget: {
       true: {
-        outline: `2px solid ${theme.colors.borderFocus}`,
-        backgroundColor: theme.colors.backgroundAssetcardHover,
+        outline: `2px solid ${cssVar("--border-focus")}`,
+        backgroundColor: cssVar("--overlay-interaction-hover"),
       },
     },
     clickable: {

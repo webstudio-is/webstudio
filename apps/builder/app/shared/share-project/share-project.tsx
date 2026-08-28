@@ -19,7 +19,6 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  rawTheme,
   Separator,
   Switch,
   theme,
@@ -33,6 +32,7 @@ import {
   Checkbox,
   Grid,
   PanelBanner,
+  cssVar,
 } from "@webstudio-is/design-system";
 import {
   CopyIcon,
@@ -89,7 +89,7 @@ const PermissionTooltip = ({
     }
     variant="wrapped"
   >
-    <InfoCircleIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
+    <InfoCircleIcon color={cssVar("--foreground-secondary")} tabIndex={0} />
   </Tooltip>
 );
 
@@ -471,7 +471,7 @@ const itemStyle = css({
   alignItems: "center",
   gap: theme.spacing[3],
   padding: theme.panel.padding,
-  backgroundColor: theme.colors.backgroundPanel,
+  backgroundColor: cssVar("--background-primary"),
 });
 
 export type LinkOptions = {

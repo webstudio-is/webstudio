@@ -75,7 +75,9 @@ const dotStyle = css({
   "&[data-selected=true], &:hover": {
     background: cssVar("--overlay-interaction-hover"),
     "&::before": {
-      background: cssVar("--foreground-muted"),
+      background: `color-mix(in oklab, ${cssVar(
+        "--foreground-secondary"
+      )} 88%, ${cssVar("--foreground-disabled")})`,
     },
   },
   "&[data-focused=true]": {

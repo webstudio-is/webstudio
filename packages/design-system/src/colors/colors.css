@@ -466,11 +466,6 @@
     var(--color-foreground) 60.91%,
     var(--color-background)
   );
-  --foreground-muted: color-mix(
-    in oklab,
-    var(--color-foreground) 57.74%,
-    var(--color-background)
-  );
   --foreground-disabled: color-mix(
     in oklab,
     var(--color-foreground) 21.51%,

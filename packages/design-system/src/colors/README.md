@@ -119,7 +119,6 @@ The package extends Craft's core registry only for reusable component needs:
 | Family        | Meaning and required pairing                                                                        |
 | ------------- | --------------------------------------------------------------------------------------------------- |
 | `inverse`     | A surface with reversed polarity; pair `--background-inverse` with `--foreground-on-inverse`.       |
-| `muted`       | Readable lower-emphasis content on `--background-primary`.                                          |
 | `accent`      | Interactive emphasis; pair a strong accent background with `--foreground-on-accent`.                |
 | `positive`    | Successful outcomes; pair strong or subtle backgrounds with their registered foreground.            |
 | `negative`    | Errors and destructive actions; pair strong or subtle backgrounds with their registered foreground. |

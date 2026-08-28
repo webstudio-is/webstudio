@@ -1,6 +1,10 @@
 import { atom } from "nanostores";
 import { z } from "zod";
 import { sidebarPanelNames } from "~/builder/sidebar-left/types";
+import {
+  clientSettingsStorageKey,
+  colorSchemePreferences,
+} from "~/shared/color-scheme";
 
 const userSettings = z.object({
   navigatorLayout: z.enum(["docked", "undocked"]).default("undocked"),
@@ -9,18 +13,17 @@ const userSettings = z.object({
     .partialRecord(z.enum(sidebarPanelNames), z.number())
     .default({}),
   lastDashboardSearch: z.string().default(""),
+  colorScheme: z.enum(colorSchemePreferences).default("system"),
 });
 
 export type Settings = z.infer<typeof userSettings>;
 
 const defaultSettings = userSettings.parse({});
 
-const namespace = "__webstudio_user_settings__";
-
 const read = (): Settings => {
   let settingsString;
   try {
-    settingsString = localStorage.getItem(namespace);
+    settingsString = localStorage.getItem(clientSettingsStorageKey);
   } catch {
     // We don't need to handle this one.
   }
@@ -45,7 +48,7 @@ const read = (): Settings => {
 };
 
 const write = (settings: Settings) => {
-  localStorage.setItem(namespace, JSON.stringify(settings));
+  localStorage.setItem(clientSettingsStorageKey, JSON.stringify(settings));
 };
 
 const initialSettings = read();

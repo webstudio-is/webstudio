@@ -39,15 +39,19 @@ import { SafeModeButton } from "~/builder/features/safe-mode";
 import { NotificationPopover } from "~/shared/notifications/notification-popover";
 import { $notifications } from "~/shared/notifications/subscription";
 import { getPageDisplayName } from "~/builder/features/pages/page-utils";
+import {
+  builderChromeBackground,
+  builderChromeForeground,
+} from "./color-recipes";
 
 const topbarContainerStyle = css({
   position: "relative",
   display: "flex",
   justifyContent: "space-between",
-  background: theme.colors.backgroundTopbar,
+  background: builderChromeBackground,
   height: theme.spacing[15],
   paddingRight: theme.panel.paddingInline,
-  color: theme.colors.foregroundContrastMain,
+  color: builderChromeForeground,
 });
 
 type TopbarLayoutProps = Omit<ComponentProps<"nav">, "className"> & {

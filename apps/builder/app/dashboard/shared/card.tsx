@@ -7,6 +7,7 @@ import {
   css,
   Slot,
   type SlotProps,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { forwardRef, type ComponentProps } from "react";
 
@@ -23,7 +24,7 @@ const cardStyle = css({
   flexShrink: 0,
   outline: "none",
   "&:focus-within, &[aria-selected=true]": {
-    [borderColorVar]: theme.colors.borderFocus,
+    [borderColorVar]: cssVar("--border-focus"),
   },
 });
 
@@ -60,7 +61,7 @@ export const CardFooter = styled(Flex, {
   flexShrink: 0,
   alignSelf: "stretch",
   flexGap: theme.spacing[3],
-  background: theme.colors.brandBackgroundProjectCardTextArea,
+  background: cssVar("--background-primary"),
   height: theme.spacing[17],
   paddingBlock: theme.panel.paddingBlock,
 });

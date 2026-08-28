@@ -16,6 +16,7 @@ import {
   Separator,
   Grid,
   IconButton,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { BodyIcon } from "@webstudio-is/icons";
 import {
@@ -105,11 +106,13 @@ const sidebarLinkStyle = css({
   paddingInline: theme.panel.paddingInline,
   outline: "none",
   "&:focus-visible, &:hover": {
-    background: theme.colors.backgroundHover,
+    background: cssVar("--overlay-interaction-hover"),
   },
   "&[aria-current=page]": {
-    background: theme.colors.backgroundItemCurrent,
-    color: theme.colors.foregroundMain,
+    background: `color-mix(in oklab, ${cssVar(
+      "--foreground-accent"
+    )} 12%, ${cssVar("--background-primary")})`,
+    color: cssVar("--foreground-primary"),
   },
 });
 
@@ -262,7 +265,7 @@ export const Dashboard = () => {
           as="aside"
           css={{
             width: theme.sizes.sidebarWidth,
-            borderRight: `1px solid ${theme.colors.borderMain}`,
+            borderRight: `1px solid ${cssVar("--border-default")}`,
             position: "sticky",
             top: 0,
             gridTemplateRows: `auto auto auto 1fr`,

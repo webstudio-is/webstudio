@@ -8,6 +8,7 @@ import {
   List,
   ListItem,
   IconButton,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { ChevronUpIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -35,10 +36,10 @@ const tableStyles = css({
     display: "table-row",
     position: "relative",
     "&:focus-visible": {
-      outline: `1px solid ${theme.colors.borderFocus}`,
+      outline: `1px solid ${cssVar("--border-focus")}`,
     },
     '&:has([role="cell"]):hover': {
-      background: theme.colors.backgroundHover,
+      background: cssVar("--overlay-interaction-hover"),
     },
   },
 
@@ -47,7 +48,7 @@ const tableStyles = css({
     padding: theme.spacing[5],
     paddingBottom: theme.spacing[3],
     textAlign: "left",
-    borderBottom: `1px solid ${theme.colors.borderMain}`,
+    borderBottom: `1px solid ${cssVar("--border-default")}`,
     "&:first-child": {
       width: "35%",
     },

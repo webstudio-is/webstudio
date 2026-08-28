@@ -22,6 +22,7 @@ import {
   Tooltip,
   css,
   theme,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { TrashIcon } from "@webstudio-is/icons";
 import {
@@ -131,7 +132,7 @@ const memberItemStyle = css({
   borderRadius: theme.borderRadius[4],
   outline: "none",
   "&:hover, &:focus-within": {
-    backgroundColor: theme.colors.backgroundHover,
+    backgroundColor: cssVar("--overlay-interaction-hover"),
   },
   "& [data-action]": {
     visibility: "hidden",

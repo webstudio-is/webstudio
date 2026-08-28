@@ -14,7 +14,6 @@ export type CssVariableName =
   | "--background-informative-subtle"
   | "--foreground-primary"
   | "--foreground-secondary"
-  | "--foreground-muted"
   | "--foreground-disabled"
   | "--foreground-on-inverse"
   | "--foreground-on-accent"

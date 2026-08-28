@@ -6,6 +6,7 @@ import {
   rawTheme,
   Text,
   theme,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { GithubIcon, GoogleIcon, WebstudioIcon } from "@webstudio-is/icons";
 import { Form } from "@remix-run/react";
@@ -80,7 +81,7 @@ export const Login = ({
                 prefix={<GithubIcon size={22} fill="currentColor" />}
                 color="ghost"
                 css={{
-                  border: `1px solid ${theme.colors.borderDark}`,
+                  border: `1px solid ${cssVar("--border-default")}`,
                   height: theme.spacing[15],
                 }}
                 formAction={authPath({ provider: "github" })}
