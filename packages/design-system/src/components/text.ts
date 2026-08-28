@@ -25,14 +25,14 @@ export const textStyle = css({
   variants: {
     variant: textVariants,
     color: {
-      main: { color: theme.colors.foregroundMain },
-      contrast: { color: theme.colors.foregroundContrastMain },
-      subtle: { color: theme.colors.foregroundSubtle },
-      moreSubtle: { color: theme.colors.foregroundTextMoreSubtle },
-      disabled: { color: theme.colors.foregroundDisabled },
-      success: { color: theme.colors.foregroundSuccessText },
+      main: { color: theme.colors.contentPrimary },
+      contrast: { color: theme.colors.contentInverse },
+      subtle: { color: theme.colors.contentSecondary },
+      moreSubtle: { color: theme.colors.contentMuted },
+      disabled: { color: theme.colors.contentDisabled },
+      success: { color: theme.colors.contentPositive },
       destructive: {
-        color: theme.colors.foregroundDestructive,
+        color: theme.colors.contentNegative,
         // destructive in most cases used to show 3rd party errors
         // we don't want it to break layout
         overflowWrap: "anywhere",

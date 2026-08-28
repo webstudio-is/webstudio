@@ -26,8 +26,8 @@ export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   };
 
 const Content = styled(TooltipPrimitive.Content, {
-  backgroundColor: theme.colors.backgroundTooltipMain,
-  color: theme.colors.foregroundContrastMain,
+  backgroundColor: theme.colors.backgroundInverse,
+  color: theme.colors.contentInverse,
   borderRadius: theme.borderRadius[7],
   padding: theme.panel.padding,
   position: "relative",
@@ -45,7 +45,7 @@ const Content = styled(TooltipPrimitive.Content, {
 });
 
 const Arrow = styled(TooltipPrimitive.Arrow, {
-  fill: theme.colors.backgroundTooltipMain,
+  fill: theme.colors.backgroundInverse,
   marginTop: -0.5,
 });
 

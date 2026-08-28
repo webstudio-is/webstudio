@@ -42,136 +42,144 @@ const spacing = {
   35: "448px",
 };
 
-const { styled, css, getCssText, globalCss, keyframes, config, reset } =
-  createStitches({
-    theme: {
-      colors: tokens.color,
-      fonts: {
-        ...tokens.fontFamilies,
-        sans: tokens.fontFamilies.inter,
-        mono: tokens.fontFamilies.robotoMono,
-      },
-
-      opacity: {
-        1: "0.4",
-      },
-      spacing,
-      sizes: {
-        sidebarWidth: spacing[30],
-        controlHeight: spacing[11],
-      },
-      /**
-       * Use instead: textVariants / textStyles / <Text />
-       */
-      deprecatedFontSize: {
-        1: "8px",
-        2: "10px",
-        3: "12px",
-        // Legacy - don't use unless specified in Figma
-        4: "14px",
-        5: "19px",
-        6: "21px",
-        7: "27px",
-        8: "35px",
-        9: "59px",
-      },
-
-      borderRadius: {
-        1: "1px",
-        2: "2px",
-        3: "3px",
-        4: "4px",
-        5: "5px",
-        6: "6px",
-        7: "8px",
-        round: "50%",
-        pill: "9999px",
-      },
-      zIndices: {
-        max: "999",
-      },
-      easing: {
-        easeOutQuart: "cubic-bezier(0.25, 1, 0.5, 1)",
-        easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
-      },
-      shadows: tokens.boxShadow,
-
-      // Semantic values
-      panel: {
-        padding: `${spacing[5]} ${spacing[7]}`,
-        paddingInline: spacing[7],
-        paddingBlock: spacing[5],
-      },
+const {
+  styled,
+  css,
+  getCssText,
+  globalCss,
+  keyframes,
+  config,
+  createTheme,
+  reset,
+} = createStitches({
+  theme: {
+    colors: tokens.color,
+    fonts: {
+      ...tokens.fontFamilies,
+      sans: tokens.fontFamilies.inter,
+      mono: tokens.fontFamilies.robotoMono,
     },
-    media: {
-      tablet: "(min-width: 768px)",
-      hover: "(any-hover: hover)",
+
+    opacity: {
+      1: "0.4",
     },
-    utils: {
-      p: (value: Stitches.PropertyValue<"padding">) => ({
-        padding: value,
-      }),
-      pt: (value: Stitches.PropertyValue<"paddingTop">) => ({
-        paddingTop: value,
-      }),
-      pr: (value: Stitches.PropertyValue<"paddingRight">) => ({
-        paddingRight: value,
-      }),
-      pb: (value: Stitches.PropertyValue<"paddingBottom">) => ({
-        paddingBottom: value,
-      }),
-      pl: (value: Stitches.PropertyValue<"paddingLeft">) => ({
-        paddingLeft: value,
-      }),
-      px: (value: Stitches.PropertyValue<"paddingLeft">) => ({
-        paddingInline: value,
-      }),
-      py: (value: Stitches.PropertyValue<"paddingTop">) => ({
-        paddingBlock: value,
-      }),
-
-      m: (value: Stitches.PropertyValue<"margin">) => ({
-        margin: value,
-      }),
-      mt: (value: Stitches.PropertyValue<"marginTop">) => ({
-        marginTop: value,
-      }),
-      mr: (value: Stitches.PropertyValue<"marginRight">) => ({
-        marginRight: value,
-      }),
-      mb: (value: Stitches.PropertyValue<"marginBottom">) => ({
-        marginBottom: value,
-      }),
-      ml: (value: Stitches.PropertyValue<"marginLeft">) => ({
-        marginLeft: value,
-      }),
-      mx: (value: Stitches.PropertyValue<"marginLeft">) => ({
-        marginInline: value,
-      }),
-      my: (value: Stitches.PropertyValue<"marginTop">) => ({
-        marginBlock: value,
-      }),
-
-      userSelect: (value: Stitches.PropertyValue<"userSelect">) => ({
-        WebkitUserSelect: value,
-        userSelect: value,
-      }),
-
-      size: (value: Stitches.PropertyValue<"width">) => ({
-        width: value,
-        height: value,
-      }),
-
-      appearance: (value: Stitches.PropertyValue<"appearance">) => ({
-        WebkitAppearance: value,
-        appearance: value,
-      }),
-      backgroundClip: (value: Stitches.PropertyValue<"backgroundClip">) => ({
-        WebkitBackgroundClip: value,
-        backgroundClip: value,
-      }),
+    spacing,
+    sizes: {
+      sidebarWidth: spacing[30],
+      controlHeight: spacing[11],
     },
-  });
+    /**
+     * Use instead: textVariants / textStyles / <Text />
+     */
+    deprecatedFontSize: {
+      1: "8px",
+      2: "10px",
+      3: "12px",
+      // Legacy - don't use unless specified in Figma
+      4: "14px",
+      5: "19px",
+      6: "21px",
+      7: "27px",
+      8: "35px",
+      9: "59px",
+    },
+
+    borderRadius: {
+      1: "1px",
+      2: "2px",
+      3: "3px",
+      4: "4px",
+      5: "5px",
+      6: "6px",
+      7: "8px",
+      round: "50%",
+      pill: "9999px",
+    },
+    zIndices: {
+      max: "999",
+    },
+    easing: {
+      easeOutQuart: "cubic-bezier(0.25, 1, 0.5, 1)",
+      easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
+    },
+    shadows: tokens.boxShadow,
+
+    // Semantic values
+    panel: {
+      padding: `${spacing[5]} ${spacing[7]}`,
+      paddingInline: spacing[7],
+      paddingBlock: spacing[5],
+    },
+  },
+  media: {
+    tablet: "(min-width: 768px)",
+    hover: "(any-hover: hover)",
+  },
+  utils: {
+    p: (value: Stitches.PropertyValue<"padding">) => ({
+      padding: value,
+    }),
+    pt: (value: Stitches.PropertyValue<"paddingTop">) => ({
+      paddingTop: value,
+    }),
+    pr: (value: Stitches.PropertyValue<"paddingRight">) => ({
+      paddingRight: value,
+    }),
+    pb: (value: Stitches.PropertyValue<"paddingBottom">) => ({
+      paddingBottom: value,
+    }),
+    pl: (value: Stitches.PropertyValue<"paddingLeft">) => ({
+      paddingLeft: value,
+    }),
+    px: (value: Stitches.PropertyValue<"paddingLeft">) => ({
+      paddingInline: value,
+    }),
+    py: (value: Stitches.PropertyValue<"paddingTop">) => ({
+      paddingBlock: value,
+    }),
+
+    m: (value: Stitches.PropertyValue<"margin">) => ({
+      margin: value,
+    }),
+    mt: (value: Stitches.PropertyValue<"marginTop">) => ({
+      marginTop: value,
+    }),
+    mr: (value: Stitches.PropertyValue<"marginRight">) => ({
+      marginRight: value,
+    }),
+    mb: (value: Stitches.PropertyValue<"marginBottom">) => ({
+      marginBottom: value,
+    }),
+    ml: (value: Stitches.PropertyValue<"marginLeft">) => ({
+      marginLeft: value,
+    }),
+    mx: (value: Stitches.PropertyValue<"marginLeft">) => ({
+      marginInline: value,
+    }),
+    my: (value: Stitches.PropertyValue<"marginTop">) => ({
+      marginBlock: value,
+    }),
+
+    userSelect: (value: Stitches.PropertyValue<"userSelect">) => ({
+      WebkitUserSelect: value,
+      userSelect: value,
+    }),
+
+    size: (value: Stitches.PropertyValue<"width">) => ({
+      width: value,
+      height: value,
+    }),
+
+    appearance: (value: Stitches.PropertyValue<"appearance">) => ({
+      WebkitAppearance: value,
+      appearance: value,
+    }),
+    backgroundClip: (value: Stitches.PropertyValue<"backgroundClip">) => ({
+      WebkitBackgroundClip: value,
+      backgroundClip: value,
+    }),
+  },
+});
 
 type VariblesValues = typeof config.theme;
 
@@ -197,6 +205,11 @@ const toVariblesNames = (values: VariblesValues): VariblesNames => {
 export const theme = toVariblesNames(config.theme);
 
 export const rawTheme = config.theme;
+
+/** Overrides only the seven color controllers; all semantic colors stay live. */
+export const darkTheme = createTheme({
+  colors: tokens.darkColorControllers,
+});
 
 export type CSS = Stitches.CSS<typeof config>;
 

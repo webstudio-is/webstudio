@@ -1,0 +1,157 @@
+{
+  "$schema": "https://www.designtokens.org/schemas/2025.10/resolver.json",
+  "name": "Webstudio color themes",
+  "version": "2025.10",
+  "description": "The seven color controls from which the Webstudio design-system color graph is derived.",
+  "modifiers": {
+    "theme": {
+      "description": "Color values for the light and dark design-system themes.",
+      "default": "light",
+      "contexts": {
+        "light": [
+          {
+            "color": {
+              "theme": {
+                "canvas": {
+                  "$type": "color",
+                  "$description": "The page and panel foundation.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.985, 0.002, 250],
+                    "alpha": 1
+                  }
+                },
+                "ink": {
+                  "$type": "color",
+                  "$description": "The foreground and neutral-contrast foundation.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.205, 0.015, 250],
+                    "alpha": 1
+                  }
+                },
+                "accent": {
+                  "$type": "color",
+                  "$description": "The primary action, selection, and focus color.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.55, 0.21, 255],
+                    "alpha": 1
+                  }
+                },
+                "positive": {
+                  "$type": "color",
+                  "$description": "Successful and confirmed outcomes.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.5, 0.14, 152],
+                    "alpha": 1
+                  }
+                },
+                "negative": {
+                  "$type": "color",
+                  "$description": "Destructive actions and invalid states.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.54, 0.19, 27],
+                    "alpha": 1
+                  }
+                },
+                "warning": {
+                  "$type": "color",
+                  "$description": "Conditions requiring attention.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.57, 0.14, 75],
+                    "alpha": 1
+                  }
+                },
+                "informative": {
+                  "$type": "color",
+                  "$description": "Informational and remote-state communication.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.55, 0.14, 225],
+                    "alpha": 1
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "dark": [
+          {
+            "color": {
+              "theme": {
+                "canvas": {
+                  "$type": "color",
+                  "$description": "The page and panel foundation.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.17, 0.012, 250],
+                    "alpha": 1
+                  }
+                },
+                "ink": {
+                  "$type": "color",
+                  "$description": "The foreground and neutral-contrast foundation.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.94, 0.006, 250],
+                    "alpha": 1
+                  }
+                },
+                "accent": {
+                  "$type": "color",
+                  "$description": "The primary action, selection, and focus color.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.72, 0.16, 255],
+                    "alpha": 1
+                  }
+                },
+                "positive": {
+                  "$type": "color",
+                  "$description": "Successful and confirmed outcomes.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.74, 0.14, 152],
+                    "alpha": 1
+                  }
+                },
+                "negative": {
+                  "$type": "color",
+                  "$description": "Destructive actions and invalid states.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.72, 0.17, 27],
+                    "alpha": 1
+                  }
+                },
+                "warning": {
+                  "$type": "color",
+                  "$description": "Conditions requiring attention.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.8, 0.14, 75],
+                    "alpha": 1
+                  }
+                },
+                "informative": {
+                  "$type": "color",
+                  "$description": "Informational and remote-state communication.",
+                  "$value": {
+                    "colorSpace": "oklch",
+                    "components": [0.74, 0.13, 225],
+                    "alpha": 1
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "resolutionOrder": [{ "$ref": "#/modifiers/theme" }]
+}

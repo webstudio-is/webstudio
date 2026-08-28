@@ -8,12 +8,12 @@ import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
 
 const openOrHoverStateStyle = {
-  backgroundColor: theme.colors.backgroundHover,
+  backgroundColor: theme.colors.backgroundNeutralHover,
 };
 
 const disabledVariantStyles = {
   "&:disabled, &[aria-disabled=true]": {
-    color: theme.colors.foregroundDisabled,
+    color: theme.colors.contentDisabled,
     "&:hover": {
       backgroundColor: theme.colors.backgroundHover,
     },
@@ -54,14 +54,14 @@ export const IconButton = styled("button", {
   variants: {
     variant: {
       default: {
-        color: theme.colors.foregroundMain,
+        color: theme.colors.contentPrimary,
         "&:hover, &[data-hovered=true]": openOrHoverStateStyle,
         // According to the design https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3199&t=lpT9jFuaiUnz1Foa-0
         // only the default variant has different toggle state
         // https://www.radix-ui.com/docs/primitives/components/toggle#root
         "&[data-state=on]": {
-          backgroundColor: theme.colors.backgroundPresetMain,
-          borderColor: theme.colors.borderMain,
+          backgroundColor: theme.colors.backgroundNeutral,
+          borderColor: theme.colors.borderDefault,
 
           "&:hover, &[data-hovered=true]": openOrHoverStateStyle,
         },
@@ -72,41 +72,41 @@ export const IconButton = styled("button", {
       },
 
       preset: {
-        backgroundColor: theme.colors.backgroundPresetMain,
-        borderColor: theme.colors.borderMain,
-        color: theme.colors.foregroundMain,
+        backgroundColor: theme.colors.backgroundNeutral,
+        borderColor: theme.colors.borderDefault,
+        color: theme.colors.contentPrimary,
         "&:hover, &[data-hovered=true]": {
-          backgroundColor: theme.colors.backgroundPresetHover,
+          backgroundColor: theme.colors.backgroundNeutralHover,
         },
         ...disabledVariantStyles,
       },
 
       local: {
-        backgroundColor: theme.colors.backgroundLocalMain,
-        borderColor: theme.colors.borderLocalMain,
-        color: theme.colors.foregroundLocalMain,
+        backgroundColor: theme.colors.backgroundInformativeSubtle,
+        borderColor: theme.colors.borderInformative,
+        color: theme.colors.contentInformative,
         "&:hover, &[data-hovered=true]": {
-          backgroundColor: theme.colors.backgroundLocalHover,
+          backgroundColor: theme.colors.backgroundInformativeSubtleHover,
         },
         ...disabledVariantStyles,
       },
 
       overwritten: {
-        backgroundColor: theme.colors.backgroundOverwrittenMain,
-        borderColor: theme.colors.borderOverwrittenMain,
-        color: theme.colors.foregroundOverwrittenMain,
+        backgroundColor: theme.colors.backgroundNegativeSubtle,
+        borderColor: theme.colors.borderNegative,
+        color: theme.colors.contentNegative,
         "&:hover, &[data-hovered=true]": {
-          backgroundColor: theme.colors.backgroundOverwrittenHover,
+          backgroundColor: theme.colors.backgroundNegativeSubtleHover,
         },
         ...disabledVariantStyles,
       },
 
       remote: {
-        backgroundColor: theme.colors.backgroundRemoteMain,
-        borderColor: theme.colors.borderRemoteMain,
-        color: theme.colors.foregroundRemoteMain,
+        backgroundColor: theme.colors.backgroundWarningSubtle,
+        borderColor: theme.colors.borderWarning,
+        color: theme.colors.contentWarning,
         "&:hover, &[data-hovered=true]": {
-          backgroundColor: theme.colors.backgroundRemoteHover,
+          backgroundColor: theme.colors.backgroundWarningSubtleHover,
         },
         ...disabledVariantStyles,
       },
