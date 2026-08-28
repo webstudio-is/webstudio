@@ -11,21 +11,21 @@ export const colorControllerNames = [
 ] as const;
 
 export const lightColorControllers = {
-  "theme-canvas": "oklch(98.5% 0.002 250)",
-  "theme-ink": "oklch(20.5% 0.015 250)",
-  "theme-accent": "oklch(55% 0.21 255)",
-  "theme-positive": "oklch(50% 0.14 152)",
-  "theme-negative": "oklch(54% 0.19 27)",
-  "theme-warning": "oklch(57% 0.14 75)",
-  "theme-informative": "oklch(55% 0.14 225)",
+  themeCanvas: "oklch(98.5% 0.002 250)",
+  themeInk: "oklch(20.5% 0.015 250)",
+  themeAccent: "oklch(55% 0.21 255)",
+  themePositive: "oklch(50% 0.14 152)",
+  themeNegative: "oklch(54% 0.19 27)",
+  themeWarning: "oklch(57% 0.14 75)",
+  themeInformative: "oklch(55% 0.14 225)",
 } as const;
 
 export const darkColorControllers = {
-  "theme-canvas": "oklch(17% 0.012 250)",
-  "theme-ink": "oklch(94% 0.006 250)",
-  "theme-accent": "oklch(72% 0.16 255)",
-  "theme-positive": "oklch(74% 0.14 152)",
-  "theme-negative": "oklch(72% 0.17 27)",
-  "theme-warning": "oklch(80% 0.14 75)",
-  "theme-informative": "oklch(74% 0.13 225)",
+  themeCanvas: "oklch(17% 0.012 250)",
+  themeInk: "oklch(94% 0.006 250)",
+  themeAccent: "oklch(72% 0.16 255)",
+  themePositive: "oklch(74% 0.14 152)",
+  themeNegative: "oklch(72% 0.17 27)",
+  themeWarning: "oklch(80% 0.14 75)",
+  themeInformative: "oklch(74% 0.13 225)",
 } as const;

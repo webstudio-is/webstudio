@@ -7,13 +7,13 @@ import {
 const colorVariable = (name: string) => `var(--colors-${name})`;
 
 const controller = {
-  canvas: colorVariable("theme-canvas"),
-  ink: colorVariable("theme-ink"),
-  accent: colorVariable("theme-accent"),
-  positive: colorVariable("theme-positive"),
-  negative: colorVariable("theme-negative"),
-  warning: colorVariable("theme-warning"),
-  informative: colorVariable("theme-informative"),
+  canvas: colorVariable("themeCanvas"),
+  ink: colorVariable("themeInk"),
+  accent: colorVariable("themeAccent"),
+  positive: colorVariable("themePositive"),
+  negative: colorVariable("themeNegative"),
+  warning: colorVariable("themeWarning"),
+  informative: colorVariable("themeInformative"),
 } as const;
 
 const mix = (first: string, firstWeight: number, second: string) =>
@@ -110,8 +110,8 @@ const transparentInk = alpha(controller.ink, 0);
  * New design-system code should use semanticColor directly.
  */
 const compatibilityColor = {
-  white: "oklch(from var(--colors-theme-canvas) 100% 0 h)",
-  black: "oklch(from var(--colors-theme-ink) 0% 0 h)",
+  white: "oklch(from var(--colors-themeCanvas) 100% 0 h)",
+  black: "oklch(from var(--colors-themeInk) 0% 0 h)",
   backgroundPanel: semantic("backgroundCanvas"),
   backgroundPrimary: semantic("backgroundAccent"),
   backgroundHover: semantic("backgroundNeutralHover"),

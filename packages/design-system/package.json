@@ -17,7 +17,6 @@
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "colorjs.io": "0.6.1",
     "engramma": "0.1.2",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
