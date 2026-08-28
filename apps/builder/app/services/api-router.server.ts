@@ -471,6 +471,8 @@ const loadRuntimeAssetData = async (ctx: AppContext, projectId: string) => {
   });
 };
 
+const createRuntimeId = () => crypto.randomUUID();
+
 const createServerContentBlockApplication = ({
   ctx,
   projectId,
@@ -498,7 +500,7 @@ const createServerContentBlockApplication = ({
     projectId,
     session,
     metas: componentMetas,
-    createId: crypto.randomUUID,
+    createId: createRuntimeId,
   });
 };
 
@@ -1072,4 +1074,5 @@ export const apiRouter = router({
 export const __testing__ = {
   assertContentOrBuildPayload,
   assertApiPublishDomains,
+  createRuntimeId,
 };
