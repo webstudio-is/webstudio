@@ -77,10 +77,16 @@ export const setObjectPathValue = ({
         : update(current[arrayIndex], index + 1);
       return result;
     }
+    if (
+      current !== undefined &&
+      (typeof current !== "object" || current === null)
+    ) {
+      throw new Error("Frontmatter object path is invalid");
+    }
     const record =
-      typeof current === "object" && current !== null
-        ? (current as Readonly<Record<string, unknown>>)
-        : {};
+      current === undefined
+        ? {}
+        : (current as Readonly<Record<string, unknown>>);
     const result = { ...record };
     result[segment] = isLast ? nextValue : update(record[segment], index + 1);
     return result;
@@ -121,8 +127,11 @@ export const isObjectPathWritable = ({
       current = current[arrayIndex];
       continue;
     }
-    if (typeof current !== "object" || current === null) {
+    if (current === undefined) {
       return true;
+    }
+    if (typeof current !== "object" || current === null) {
+      return false;
     }
     if ("$ref" in current) {
       return false;

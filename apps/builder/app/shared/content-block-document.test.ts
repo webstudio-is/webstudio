@@ -95,6 +95,22 @@ describe("Content Block document bindings", () => {
     expect(source.author.name).toBe("Before");
   });
 
+  test("does not replace an existing scalar while traversing a nested path", () => {
+    const source = { author: "Oleg" };
+
+    expect(
+      isObjectPathWritable({ value: source, path: ["author", "name"] })
+    ).toBe(false);
+    expect(() =>
+      setObjectPathValue({
+        value: source,
+        path: ["author", "name"],
+        nextValue: "Ada",
+      })
+    ).toThrow("Frontmatter object path is invalid");
+    expect(source).toEqual({ author: "Oleg" });
+  });
+
   test("updates an array item without changing the array shape", () => {
     const source = { authors: [{ name: "Before" }, { name: "Other" }] };
     const path = ["authors", "0", "name"];

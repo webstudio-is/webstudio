@@ -45,6 +45,7 @@ import {
   toAssetReferenceRuntimeData,
   matchPathnameParams,
   blockComponent,
+  getContentBlockSources,
   findContentBlockBodyContainers,
   parseStructuredAssetQueryResourceBody,
   type StructuredAssetQueryFilterBinding,
@@ -91,6 +92,7 @@ import {
   serializeContentRuntimeArtifact,
   verifyContentArtifact,
 } from "@webstudio-is/content-engine";
+import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import {
   parseJsonExpression,
@@ -1158,21 +1160,48 @@ export const prebuild = async (options: {
       const pageResources = new Map(pageData.build.resources);
       const candidatesByBlock = new Map<string, PublishedContentBlock>();
       const processedBlockIds = new Set<string>();
+      const queuedTreeRootIds = [page.rootInstanceId];
+      const discoveredTreeRootIds = new Set(queuedTreeRootIds);
 
       for (;;) {
+        const sourcesByBlockId = getContentBlockSources({
+          instances: pageInstances.values(),
+          props: materializationProps.values(),
+        });
         const pendingBlockIds = new Set<string>();
-        for (const instanceId of findTreeInstanceIdsExcludingBlockTemplates(
-          pageInstances,
-          page.rootInstanceId
-        )) {
-          if (
-            processedBlockIds.has(instanceId) === false &&
-            pageInstances.get(instanceId)?.component === blockComponent
-          ) {
-            pendingBlockIds.add(instanceId);
+        for (const rootInstanceId of queuedTreeRootIds.splice(0)) {
+          for (const instanceId of findTreeInstanceIdsExcludingBlockTemplates(
+            pageInstances,
+            rootInstanceId
+          )) {
+            if (
+              processedBlockIds.has(instanceId) === false &&
+              pageInstances.get(instanceId)?.component === blockComponent &&
+              sourcesByBlockId.has(instanceId)
+            ) {
+              pendingBlockIds.add(instanceId);
+            }
           }
         }
         if (pendingBlockIds.size === 0) {
+          break;
+        }
+        if (
+          processedBlockIds.size + pendingBlockIds.size >
+          contentEngineLimits.candidateDocuments
+        ) {
+          console.warn(
+            JSON.stringify({
+              type: "webstudio-build-warning",
+              feature: "content-block-mdx",
+              route,
+              code: "invalid-mdx",
+              severity: "error",
+              blockInstanceId: pendingBlockIds.values().next().value,
+              message:
+                "Published MDX Content Block count exceeds the safe limit",
+            })
+          );
           break;
         }
         for (const blockId of pendingBlockIds) {
@@ -1236,6 +1265,15 @@ export const prebuild = async (options: {
           const fragmentData = createWebstudioDataFromFragment(root.fragment);
           mergeRecords(pageInstances, fragmentData.instances, "instance");
           mergeRecords(publishedInstances, fragmentData.instances, "instance");
+          for (const child of root.fragment.children) {
+            if (
+              child.type === "id" &&
+              discoveredTreeRootIds.has(child.value) === false
+            ) {
+              discoveredTreeRootIds.add(child.value);
+              queuedTreeRootIds.push(child.value);
+            }
+          }
           mergeRecords(
             materializationProps,
             fragmentData.props,

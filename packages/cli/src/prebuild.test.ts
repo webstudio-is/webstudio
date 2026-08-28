@@ -33,6 +33,7 @@ import {
   createCanonicalAssetFileEntry,
   createContentRuntimeArtifact,
 } from "@webstudio-is/content-engine/compiler";
+import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { createPublishedAssetResourceFetch } from "@webstudio-is/content-engine/runtime";
 import {
   createStructuredAssetQueryResourceBody,
@@ -848,6 +849,179 @@ describe("prebuild", () => {
     expect(generatedPage).not.toContain("fetch(");
   });
 
+  test("materializes Content Blocks introduced by an MDX template", async () => {
+    const outerSource = '<ws.element ws:name="Nested" />';
+    const innerSource = "# Nested published content";
+    const createMdxDocument = (
+      id: string,
+      source: string
+    ): AssetFileDocument => ({
+      ...indexedDocument,
+      _id: id,
+      name: `${id}.mdx`,
+      path: `${id}.mdx`,
+      key: id,
+      extension: "mdx",
+      mimeType: "text/mdx",
+      size: new TextEncoder().encode(source).byteLength,
+      revision: `${id}-revision`,
+      contentRef: `${id}.mdx`,
+      properties: {},
+    });
+    const outer = createMdxDocument("outer", outerSource);
+    const inner = createMdxDocument("inner", innerSource);
+    const siteData = createSiteData({
+      assets: [outer, inner].map(createAssetForIndexedDocument),
+      instances: [
+        [
+          "root",
+          {
+            id: "root",
+            component: "Box",
+            children: [{ type: "id", value: "outer-block" }],
+          },
+        ],
+        [
+          "outer-block",
+          {
+            id: "outer-block",
+            component: "ws:block",
+            children: [{ type: "id", value: "templates" }],
+          },
+        ],
+        [
+          "templates",
+          {
+            id: "templates",
+            component: "ws:block-template",
+            children: [{ type: "id", value: "nested-block" }],
+          },
+        ],
+        [
+          "nested-block",
+          {
+            id: "nested-block",
+            component: "ws:block",
+            label: "Nested",
+            children: [],
+          },
+        ],
+      ],
+      props: [
+        [
+          "outer-source",
+          {
+            id: "outer-source",
+            instanceId: "outer-block",
+            name: "src",
+            type: "asset",
+            value: "outer",
+          },
+        ],
+        [
+          "inner-source",
+          {
+            id: "inner-source",
+            instanceId: "nested-block",
+            name: "src",
+            type: "asset",
+            value: "inner",
+          },
+        ],
+      ],
+    });
+    const siteDataWithIndex = {
+      ...siteData,
+      assetIndex: await createTestAssetIndex([outer, inner], {
+        "outer.mdx": outerSource,
+        "inner.mdx": innerSource,
+      }),
+    };
+    await writeSiteData(siteDataWithIndex);
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    await expect(
+      readFile("app/__generated__/_index.tsx", "utf8")
+    ).resolves.toContain("Nested published content");
+  });
+
+  test("warns and stops excessive published Content Block expansion", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const source = "# Published";
+    const article: AssetFileDocument = {
+      ...indexedDocument,
+      _id: "article",
+      name: "article.mdx",
+      path: "article.mdx",
+      key: "article",
+      extension: "mdx",
+      mimeType: "text/mdx",
+      size: new TextEncoder().encode(source).byteLength,
+      revision: "article-revision",
+      contentRef: "article.mdx",
+      properties: {},
+    };
+    const blockIds = Array.from(
+      { length: contentEngineLimits.candidateDocuments + 1 },
+      (_, index) => `content-${index}`
+    );
+    const siteData = createSiteData({
+      assets: [createAssetForIndexedDocument(article)],
+      instances: [
+        [
+          "root",
+          {
+            id: "root",
+            component: "Box",
+            children: blockIds.map((value) => ({ type: "id", value })),
+          },
+        ],
+        ...blockIds.map(
+          (id) =>
+            [id, { id, component: "ws:block", children: [] }] as [
+              string,
+              Omit<Instance, "type">,
+            ]
+        ),
+      ],
+      props: blockIds.map((instanceId) => [
+        `${instanceId}-source`,
+        {
+          id: `${instanceId}-source`,
+          instanceId,
+          name: "src",
+          type: "asset",
+          value: "article",
+        },
+      ]),
+    });
+    const siteDataWithIndex = {
+      ...siteData,
+      assetIndex: await createTestAssetIndex(article, {
+        "article.mdx": source,
+      }),
+    };
+    await writeSiteData(siteDataWithIndex);
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    expect(
+      warn.mock.calls
+        .map(([message]) => JSON.parse(String(message)))
+        .find(
+          ({ message }) =>
+            message ===
+            "Published MDX Content Block count exceeds the safe limit"
+        )
+    ).toMatchObject({
+      type: "webstudio-build-warning",
+      feature: "content-block-mdx",
+      code: "invalid-mdx",
+      severity: "error",
+    });
+  });
+
   test("materializes finite dynamic MDX candidates without publishing unrelated files", async () => {
     const createDocument = (
       id: string,
@@ -880,7 +1054,20 @@ describe("prebuild", () => {
       "posts-data"
     )}.data.properties.mdx`;
     const siteData = createSiteData({
-      assets: documents.map(createAssetForIndexedDocument),
+      assets: [
+        ...documents.map(createAssetForIndexedDocument),
+        {
+          id: "dynamic-background",
+          projectId: "project-1",
+          name: "dynamic.png",
+          type: "image",
+          format: "png",
+          size: 1,
+          meta: { width: 1, height: 1 },
+          description: null,
+          createdAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
       instances: [
         [
           "root",
@@ -895,6 +1082,24 @@ describe("prebuild", () => {
           {
             id: "content",
             component: "ws:block",
+            children: [{ type: "id", value: "templates" }],
+          },
+        ],
+        [
+          "templates",
+          {
+            id: "templates",
+            component: "ws:block-template",
+            children: [{ type: "id", value: "dynamic-card" }],
+          },
+        ],
+        [
+          "dynamic-card",
+          {
+            id: "dynamic-card",
+            component: "ws:element",
+            tag: "section",
+            label: "Dynamic card",
             children: [],
           },
         ],
@@ -948,10 +1153,40 @@ describe("prebuild", () => {
         },
       ],
     ] as never;
+    siteData.build.styleSources = [
+      ["dynamic-style", { type: "local", id: "dynamic-style" }],
+    ] as never;
+    siteData.build.styleSourceSelections = [
+      [
+        "dynamic-card",
+        { instanceId: "dynamic-card", values: ["dynamic-style"] },
+      ],
+    ] as never;
+    siteData.build.breakpoints = [["base", { id: "base", label: "" }]] as never;
+    siteData.build.styles = [
+      [
+        "dynamic-background-style",
+        {
+          styleSourceId: "dynamic-style",
+          breakpointId: "base",
+          property: "backgroundImage",
+          value: {
+            type: "layers",
+            value: [
+              {
+                type: "image",
+                value: { type: "asset", value: "dynamic-background" },
+              },
+            ],
+          },
+        },
+      ],
+    ] as never;
     const siteDataWithIndex = {
       ...siteData,
       assetIndex: await createTestAssetIndex(documents, {
-        "article.mdx": "# Public article",
+        "article.mdx":
+          '# Public article\n\n<ws.element ws:name="Dynamic card" />',
         "private.mdx": "# Private article",
       }),
     };
@@ -966,6 +1201,8 @@ describe("prebuild", () => {
     expect(generatedPage).toContain("Public article");
     expect(generatedPage).not.toContain("Private article");
     expect(generatedPage).toContain('=== "article"');
+    expect(generatedPage).toContain("<section");
+    expect(generatedPage).not.toContain('"dynamic.png"');
   });
 
   test("warns and skips a dynamic MDX source without finite candidates", async () => {
