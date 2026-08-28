@@ -35,11 +35,7 @@ import {
 
 const servicesDir = new URL(".", import.meta.url);
 
-const {
-  assertContentOrBuildPayload,
-  assertApiPublishDomains,
-  createRuntimeId,
-} = __testing__;
+const { assertContentOrBuildPayload, assertApiPublishDomains } = __testing__;
 
 const createContext = (
   allowAdditionalPermissions: boolean,
@@ -80,12 +76,6 @@ const createCaller = (context: AppContext) =>
   apiRouter.createCaller(context) as ApiRouterCaller & RuntimeApiCaller;
 
 describe("api router build operation adapters", () => {
-  test("creates Builder data ids without requiring a bound receiver", () => {
-    const createId = createRuntimeId;
-
-    expect(createId()).toMatch(/^[\w-]{21}$/);
-  });
-
   test("submits only configured marketplace products for review", async () => {
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);

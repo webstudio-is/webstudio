@@ -56,10 +56,9 @@ import {
   loadApiToken,
 } from "./api-permits.server";
 import { componentMetas } from "~/shared/component-metas.server";
-import { type Asset, type AssetFolder } from "@webstudio-is/sdk";
+import { createId, type Asset, type AssetFolder } from "@webstudio-is/sdk";
 import {
   applyContentModeTransaction,
-  builderRuntimeContext,
   createContentBlockApplication,
   getContentModeCapabilities,
   type BuilderRuntimeContext,
@@ -472,8 +471,6 @@ const loadRuntimeAssetData = async (ctx: AppContext, projectId: string) => {
   });
 };
 
-const createRuntimeId = () => builderRuntimeContext.createId();
-
 const createServerContentBlockApplication = ({
   ctx,
   projectId,
@@ -501,7 +498,7 @@ const createServerContentBlockApplication = ({
     projectId,
     session,
     metas: componentMetas,
-    createId: createRuntimeId,
+    createId,
   });
 };
 
@@ -1075,5 +1072,4 @@ export const apiRouter = router({
 export const __testing__ = {
   assertContentOrBuildPayload,
   assertApiPublishDomains,
-  createRuntimeId,
 };
