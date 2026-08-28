@@ -1,7 +1,7 @@
-import { createElement, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckMarkIcon, InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
 import Color from "colorjs.io";
-import "engramma";
+import engrammaUrl from "engramma?url";
 import { Button } from "./button";
 import { IconButton } from "./icon-button";
 import { InputField } from "./input-field";
@@ -151,22 +151,62 @@ const rowStyle = css({
 const engrammaPanelStyle = css({
   marginTop: theme.spacing[7],
   height: "min(760px, 80vh)",
-  overflow: "auto",
   border: `1px solid ${theme.colors.borderDefault}`,
   borderRadius: theme.borderRadius[6],
   background: theme.colors.backgroundCanvas,
 });
 
+const engrammaFrameStyle = css({
+  display: "block",
+  width: "100%",
+  height: "100%",
+  border: 0,
+  borderRadius: "inherit",
+});
+
 const controllerTokenName = (name: string) => `theme-${name}`;
 
-const getControllerCss = (mode: "light" | "dark") => {
-  const values =
-    mode === "light" ? lightColorControllers : darkColorControllers;
+const getControllerCss = (values: Record<string, string>) => {
   const declarations = Object.entries(values)
     .map(([name, value]) => `--colors-${name}: ${value};`)
     .join("\n");
   return `:root {\n${declarations}\n}`;
 };
+
+const getEngrammaDocument = (values: Record<string, string>) => `
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="light dark" />
+    <style>
+      html, body { height: 100%; margin: 0; }
+      ${getControllerCss(values)}
+    </style>
+  </head>
+  <body>
+    <engramma-app></engramma-app>
+    <script type="module" src="${engrammaUrl}"></script>
+    <script type="module">
+      const names = ${JSON.stringify(colorControllerNames.map(controllerTokenName))};
+      let previous = "";
+      const publish = () => {
+        const style = getComputedStyle(document.documentElement);
+        const values = Object.fromEntries(
+          names.map((name) => [name, style.getPropertyValue("--colors-" + name).trim()])
+        );
+        const serialized = JSON.stringify(values);
+        if (serialized !== previous) {
+          previous = serialized;
+          parent.postMessage({ type: "webstudio-engramma-colors", values }, "*");
+        }
+      };
+      publish();
+      setInterval(publish, 250);
+    </script>
+  </body>
+</html>
+`;
 
 const ColorSwatch = ({
   name,
@@ -188,8 +228,6 @@ const ColorSwatch = ({
     </div>
   </div>
 );
-
-const EngrammaApp = () => createElement("engramma-app");
 
 const contrastPairs = [
   ["Primary content", "contentPrimary", "backgroundCanvas"],
@@ -261,27 +299,54 @@ const ContrastReport = () => {
 
 export const ColorLaboratory = () => {
   const [mode, setMode] = useState<"light" | "dark">("light");
-  const [isEditorReady, setIsEditorReady] = useState(false);
-  const adoptedStyleSheetsRef = useRef<CSSStyleSheet[]>([]);
+  const [previewControllers, setPreviewControllers] = useState<
+    Record<string, string> | undefined
+  >();
+  const engrammaFrameRef = useRef<HTMLIFrameElement>(null);
+
+  const themeControllers =
+    mode === "light" ? lightColorControllers : darkColorControllers;
 
   useEffect(() => {
-    setIsEditorReady(false);
     document.documentElement.classList.toggle(darkTheme, mode === "dark");
     document.documentElement.style.colorScheme = mode;
-    adoptedStyleSheetsRef.current = [...document.adoptedStyleSheets];
-    const frame = requestAnimationFrame(() => setIsEditorReady(true));
 
     return () => {
-      cancelAnimationFrame(frame);
-      document.adoptedStyleSheets = adoptedStyleSheetsRef.current;
       document.documentElement.classList.remove(darkTheme);
       document.documentElement.style.removeProperty("color-scheme");
     };
   }, [mode]);
 
+  useEffect(() => {
+    setPreviewControllers(undefined);
+    const receiveColors = (event: MessageEvent) => {
+      if (event.source !== engrammaFrameRef.current?.contentWindow) {
+        return;
+      }
+      if (event.data?.type !== "webstudio-engramma-colors") {
+        return;
+      }
+      const values = event.data.values as Record<string, unknown>;
+      const validated: Record<string, string> = {};
+      for (const name of colorControllerNames.map(controllerTokenName)) {
+        const value = values[name];
+        if (
+          typeof value !== "string" ||
+          CSS.supports("color", value) === false
+        ) {
+          return;
+        }
+        validated[name] = value;
+      }
+      setPreviewControllers(validated);
+    };
+    window.addEventListener("message", receiveColors);
+    return () => window.removeEventListener("message", receiveColors);
+  }, [mode]);
+
   return (
     <main className={pageStyle()}>
-      <style>{getControllerCss(mode)}</style>
+      <style>{getControllerCss(previewControllers ?? themeControllers)}</style>
       <header className={headerStyle()}>
         <div>
           <h1 className={headingStyle()}>Color laboratory</h1>
@@ -401,7 +466,13 @@ export const ColorLaboratory = () => {
           values in tokens/colors.resolver.json.
         </Text>
         <div className={engrammaPanelStyle()}>
-          {isEditorReady && <EngrammaApp key={mode} />}
+          <iframe
+            key={mode}
+            ref={engrammaFrameRef}
+            className={engrammaFrameStyle()}
+            title="Engramma color token editor"
+            srcDoc={getEngrammaDocument(themeControllers)}
+          />
         </div>
       </section>
     </main>
