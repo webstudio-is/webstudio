@@ -1,7 +1,11 @@
+import { nanoid } from "nanoid";
+
 /**
  * Creates the canonical ID for new Webstudio records.
  *
- * Use this generator for all new IDs. Treat IDs as opaque strings and keep
- * accepting existing NanoIDs where they are already persisted.
+ * UUID is the default. Pass `"nano"` only when the owning data model requires
+ * the existing compact NanoID format. The execution environment does not
+ * determine the format.
  */
-export const createId = () => crypto.randomUUID();
+export const createId = (format?: "nano") =>
+  format === "nano" ? nanoid() : crypto.randomUUID();

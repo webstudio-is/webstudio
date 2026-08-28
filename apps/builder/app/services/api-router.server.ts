@@ -498,7 +498,7 @@ const createServerContentBlockApplication = ({
     projectId,
     session,
     metas: componentMetas,
-    createId,
+    createId: () => createId("nano"),
   });
 };
 

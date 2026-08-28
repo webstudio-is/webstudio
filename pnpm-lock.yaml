@@ -2564,6 +2564,9 @@ importers:
       json-schema-typed:
         specifier: ^8.0.2
         version: 8.0.2
+      nanoid:
+        specifier: ^5.1.5
+        version: 5.1.5
       reserved-identifiers:
         specifier: ^1.0.0
         version: 1.0.0
