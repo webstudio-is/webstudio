@@ -1,8 +1,7 @@
 ---
 description: >-
-  Design tokens enable the creation of consistent designs by packaging up
-  multiple styles so that on any instance you add that Token, those styles will
-  show up and stay in sync.
+  Tokens package reusable style declarations that stay synchronized across
+  every instance where they are applied.
 ---
 
 # 🖌️ Design tokens
@@ -20,12 +19,20 @@ Scenario: You’re building a website with Webflow. You have two separate elemen
 
 There’s a better way. It’s Design tokens.
 
-## What are Design tokens? <a href="#what-are-design-tokens" id="what-are-design-tokens"></a>
+## What are Tokens? <a href="#what-are-design-tokens" id="what-are-design-tokens"></a>
 
-Design tokens are everything that you wish classes would be - a way to reuse styles without limitations.
+A Webstudio **Token** is a reusable style source that can contain multiple
+declarations and states. [Craft](../craft.md) calls it a **composite Token** to
+distinguish it from individual values stored in CSS variables.
+
+The Design Tokens Community Group also uses _design token_ for values in its
+portable data format. Webstudio imports that format and represents its values
+as CSS variables or Webstudio Tokens according to their type and intended use.
 
 - **Mix-and-match Tokens freely**: You can apply as many Tokens as you want to an instance in any order. There is no combo class silliness and no limitations with breakpoints.
-- **Universal format:** We didn’t invent Design tokens. There is an independent spec (by the [Design Tokens Community Group](https://design-tokens.github.io/community-group/format/)) that defines a data format for Tokens, meaning you can potentially import and export tokens between multiple apps. Soon you’ll be able to sync tokens between Webstudio and Figma through the [Tokens Studio for Figma](https://tokens.studio/) plugin!
+- **Portable input:** The [Design Tokens Community Group format](https://design-tokens.github.io/community-group/format/)
+  provides a format that tools can exchange. Webstudio can import DTCG data and
+  Figma Variables API exports.
 
 ## Import design tokens
 
@@ -76,22 +83,24 @@ See [Atomic CSS](project-settings.md#atomic-css) for more info.
 
 ## Advanced Token Techniques
 
-### Token Composition
+### Token composition
 
 Combine multiple tokens to create flexible, modular designs:
 
-1. **Base token**: Contains core styles (e.g., "card" with padding, background, border-radius)
-2. **Modifier tokens**: Contains variations (e.g., "small" for smaller padding, "featured" for highlight border)
+1. **Base Token**: Contains core styles, such as `card` with padding,
+   background, and border radius.
+2. **Variant or size Tokens**: Contain only the declarations needed for a
+   variation, such as `is-card-featured` or `card-small`.
 
 Apply both to an instance: The styles merge, with later tokens overriding earlier ones for conflicting properties.
 
 **Example:** A card system
 
-- "card" token: padding, background, border-radius
-- "card-small" token: smaller padding
-- "card-featured" token: accent border color
+- `card` Token: padding, background, and border radius
+- `card-small` Token: smaller padding
+- `is-card-featured` Token: accent border color
 
-Apply "card" + "card-featured" for a featured card variant.
+Apply `card` and `is-card-featured` for a featured card variant.
 
 ### Token Priority (Cascading)
 

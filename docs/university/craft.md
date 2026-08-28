@@ -1,75 +1,251 @@
 ---
-description: Craft is the standard for building with Webstudio.
+description: Craft is the standard for building maintainable and reusable projects with Webstudio.
 icon: ruler-triangle
 ---
 
 # Craft
 
+Craft is the universal standard for building maintainable, reusable, and
+portable projects with Webstudio. It defines how to name and use CSS variables,
+Tokens, and Local styles so that people and shared Marketplace resources can
+work together without introducing incompatible conventions.
+
+Craft is recommended, but not mandatory. A project can extend Craft for its
+domain without turning those extensions into requirements for every Craft
+project.
+
 {% hint style="info" %}
 Contribute changes to Craft by commenting on this [GitHub Discussion](https://wstd.us/discuss-craft).
 {% endhint %}
 
-When building highly maintainable and scaleable websites, some conventions prove to work well. Plus, when collaborating with team members and other creators, a standardized system results in a smoother learning curve and easier sharing, such as through the [Marketplace](marketplace.md).
-
-**Craft contains a set of standards, CSS variables, and Tokens that make building websites fast, maintainable, and reusable.** It also enables sharing Projects without mixing different naming conventions.
-
-While Craft is not mandatory, it’s the recommended way to build in Webstudio.
-
 {% embed url="https://youtu.be/EeLoBZvlygI" %}
 
-Here are the standards and guidelines of Craft.
+## Specification language
 
-## Getting Started with Craft
+Craft uses the following terms to distinguish requirements from guidance:
 
-1. Go to **Marketplace → Pages → Craft**
-2. Insert the Style Guide page
-3. Customize your color palette variables on Global Root
-4. Map semantic variables (`--foreground-primary`, `--background-primary`, etc.) to your brand colors
-5. Start building pages using the predefined variables
+- **Must** identifies a requirement for Craft conformance.
+- **Should** identifies a recommendation that may be ignored when a project
+  has a documented reason.
+- **May** identifies an optional feature or extension.
 
-## Switching Between Light and Dark Themes
+## Architecture
 
-Because Craft uses semantic variables like `--foreground-primary` and `--background-primary`, you can switch an entire site from light to dark mode by changing just \~6 variable values.
+Craft has three layers:
 
-**Example:** Swap `--foreground-primary` from a dark color to light, and `--background-primary` from light to dark.
+```text
+Theme variables
+      ↓
+Semantic variables
+      ↓
+Composite Tokens
+```
 
-{% hint style="info" %}
-Webstudio supports pasting CSS, so you can prepare your theme variables in a text editor and paste them into Global Root.
-{% endhint %}
+### Theme variables
 
-## Page Template Workflow
+Theme variables contain the values that make one theme different from another.
+They may contain literal values or reference palette variables such as those
+provided by Open Props.
 
-The Craft style guide includes a page template at the bottom (Nav, Main with Section/Container, Footer structure):
+Craft does not require every project to use the same number of theme variables.
+A project must document its theme variables when it publishes reusable
+resources or a theme for other projects.
 
-1. When creating a new page, copy this template structure
-2. When building sections, duplicate the template section, rename it (e.g., "Hero", "Logos"), design it
-3. Duplicate again for the next section
-4. This keeps a clean template always available at the bottom
+### Semantic variables
+
+Semantic variables describe why a value is used rather than what the value
+looks like. For example, use `--foreground-negative` for an error message
+instead of consuming a red palette value directly.
+
+Semantic variables must reference theme variables or other semantic variables.
+They should not contain standalone literal design values.
+
+### Composite tokens
+
+A Webstudio Token packages multiple style declarations. Craft calls these
+**composite Tokens** to distinguish them from individual values stored in CSS
+variables.
+
+Composite Tokens must consume semantic variables when a suitable variable
+exists. They should not consume palette or theme variables directly.
+
+Components, utilities, variants, and sizes are purposes of composite Tokens,
+not additional layers in the architecture.
+
+### Local styles
+
+Use **Local** for values and declarations that belong to one instance. Move a
+decision into a CSS variable or composite Token when it becomes reusable.
 
 ## CSS variables
 
-Craft uses [Open Props](https://open-props.style/), an MIT-licensed library of CSS variables that helps accelerate adaptive and consistent design.
+Craft projects may use [Open Props](https://open-props.style/), an MIT-licensed
+collection of CSS variables, for palettes and scales. Open Props variables are
+optional theme inputs and utilities; they are not replacements for Craft
+semantic variables.
 
-In addition to the Open Props variables, Craft includes the following CSS variables:
+Define variables that are shared across a project on **Global Root**. Define a
+variable on a closer common ancestor when its meaning is intentionally local to
+one page, section, or component subtree.
 
+### Naming variables
+
+CSS variable names must:
+
+- Use kebab-case.
+- Use complete words unless an abbreviation is part of the approved Craft
+  vocabulary.
+- Describe purpose rather than visual appearance at the semantic layer.
+- Follow `category-role-state` when all three segments are needed.
+- Omit segments that do not add meaning.
+
+Examples:
+
+```css
+--foreground-primary
+--background-accent-hover
+--border-negative
+--overlay-scrim
 ```
+
+Palette and scale variables use numbers:
+
+```css
+--blue-10
+--size-4
+```
+
+Do not encode a literal value in a semantic name:
+
+```css
+/* Avoid */
+--foreground-gray
+--background-blue-hover
+
+/* Prefer */
+--foreground-muted
+--background-accent-hover
+```
+
+## Semantic colors
+
+Craft organizes interface colors into four categories:
+
+- **Foreground** for text, icons, and other marks drawn over a background.
+- **Background** for canvases, surfaces, controls, and filled states.
+- **Border** for boundaries, separators, and focus indicators.
+- **Overlay** for translucent interaction layers and scrims.
+
+The core vocabulary is:
+
+```text
+Emphasis: primary, secondary, muted, disabled, inverse
+Intent: accent, positive, negative, warning, informative
+State: hover, pressed, selected, disabled, focus
+```
+
+Not every combination needs a variable. Add a state suffix only when that state
+has a reusable value distinct from its base role.
+
+### Core color variables
+
+Craft projects must provide the variables they consume from this core. Shared
+Marketplace resources must declare which variables they require and must not
+silently depend on an undocumented project-specific variable.
+
+```css
+/* Foreground */
 --foreground-primary
 --foreground-secondary
---foreground-accent
 --foreground-muted
---foreground-border
+--foreground-disabled
+--foreground-inverse
+--foreground-accent
+--foreground-positive
+--foreground-negative
+--foreground-warning
+--foreground-informative
 
+/* Background */
 --background-primary
 --background-secondary
+--background-disabled
+--background-inverse
 --background-accent
---background-card
+--background-positive
+--background-negative
+--background-warning
+--background-informative
 
+/* Border */
+--border-default
+--border-strong
+--border-focus
+--border-accent
+--border-positive
+--border-negative
+--border-warning
+--border-informative
+
+/* Overlay */
+--overlay-subtle
+--overlay-pressed
+--overlay-scrim
+```
+
+Add reusable state variables using the same grammar:
+
+```css
+--background-secondary-hover
+--background-secondary-pressed
+--background-accent-hover
+--background-accent-pressed
+--background-accent-selected
+--background-negative-hover
+```
+
+Component states map to the semantic state that describes their visual meaning.
+For example, `checked`, `on`, and `current` commonly use a selected color;
+`invalid` commonly uses negative colors. A component state does not require a
+new global color variable when an existing semantic state expresses the same
+meaning.
+
+### Deriving colors
+
+Semantic colors should remain connected to the theme. Prefer aliases and
+relative color expressions over duplicated literals:
+
+```css
+:root {
+  --theme-canvas: oklch(98% 0.01 250);
+  --theme-foreground: oklch(20% 0.02 250);
+  --theme-accent: oklch(55% 0.2 255);
+
+  --background-primary: var(--theme-canvas);
+  --foreground-primary: var(--theme-foreground);
+  --background-accent: var(--theme-accent);
+  --background-accent-hover: color-mix(
+    in oklch,
+    var(--theme-accent) 88%,
+    var(--theme-foreground)
+  );
+}
+```
+
+The example names do not prescribe a fixed number of theme variables. They
+demonstrate the required separation between theme inputs and semantic outputs.
+
+### Other core variables
+
+Craft retains a small vocabulary for reusable layout, focus, and motion values:
+
+```css
 --gap-xs
 --gap-s
 --gap-m
 --gap-l
+--spacing-default
 
---focus-color
 --focus-width
 --focus-offset
 
@@ -77,127 +253,207 @@ In addition to the Open Props variables, Craft includes the following CSS variab
 --easing-default
 ```
 
-{% hint style="info" %}
-Insert Craft from the Marketplace, and it will add the CSS variables to your Global Root. To match your branding, you can customize the values, such as colors, gradients, and more. You can also add custom variables.
-{% endhint %}
+These variables follow the same architecture: their semantic values should
+derive from documented theme or scale inputs where appropriate.
 
-{% hint style="success" %}
-CSS Props doesn't impose style opinions on your site. This library contains variables like `--size-4` and `--gradient-5`. Then, it's up to you to customize their values or use the defaults.
-{% endhint %}
+## Interaction states
 
-| Type                    | Rule         | Examples               |
-| ----------------------- | ------------ | ---------------------- |
-| Size and color palettes | Use numbers. | `--size-4` `--blue-10` |
+Use these semantic states consistently:
 
-## Tokens
+| State      | Meaning                                                        |
+| ---------- | -------------------------------------------------------------- |
+| `hover`    | A pointing device is over an interactive target.               |
+| `pressed`  | A target is being activated. CSS `:active` maps to `pressed`.  |
+| `selected` | An option or item is chosen, current, checked, or switched on. |
+| `disabled` | An interaction is unavailable.                                 |
+| `focus`    | A target has visible keyboard focus.                           |
 
-| Type           | Casing | Examples                                       | Purpose                                                                                                                                                                                                                                                                                   | Help                                                                                                                                                                                                                     |
-| -------------- | ------ | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Utility        | Kebab  | `margin-auto` `container` `button`             | Used for layout and styling purposes without conveying any inherent meaning about the content it contains.                                                                                                                                                                                |                                                                                                                                                                                                                          |
-| Semantic       | Title  | `Card` `Pricing Table`                         | Conveys meaning and context about the content it contains.                                                                                                                                                                                                                                |                                                                                                                                                                                                                          |
-| Semantic Child | Title  |                                                | Indicates that the Token is a child of a parent semantic Token.                                                                                                                                                                                                                           | What should we do here? Some examples/options: `Card Header` `Card - Header` `Card / Header`. What happens if it’s multiple levels deep? Maybe we only reference the top-most Token such as `Card` or the most relevant? |
-| Variant        | Kebab  | `is-button-secondary` `is-pricing-table-small` | This indicates that the Token is intended to be used with another Token. For example, `button` is the “base” Token that carries the default styles and `is-button-secondary` uses some of the base styles and modifies or adds others. The variant should never be used without the base. |                                                                                                                                                                                                                          |
-| Size           | Kebab  | `button-x-small\|small\|medium\|large`         | Appending a size modifier to the end of a Token. “T-shirt” sizing is the accepted naming convention. Abbreviations are allowed here.                                                                                                                                                      |                                                                                                                                                                                                                          |
+States such as `open`, `pending`, `invalid`, and application-specific statuses
+may affect several properties. Express them with composite Token variants and
+reuse the closest semantic colors rather than automatically creating a global
+color for each state name.
 
-### When to use Tokens vs Local?
+## Accessibility
 
-**Use** [**Tokens**](craft.md#tokens) **for the following scenarios:**
+Themes and extensions must preserve accessible semantic pairings.
 
-- There are multiple styles and at least one of which has many options for the value (e.g., size and colors) as opposed to something like text alignment.
-- When there is a common use case that takes more time to select Local and apply manually than using a Token, such as setting the margin left and right to auto.
+- Normal text must have a contrast ratio of at least 4.5:1 against its
+  background.
+- Large text must have a contrast ratio of at least 3:1 against its background.
+- Meaningful non-text interface graphics must have a contrast ratio of at least
+  3:1 against adjacent colors.
+- Keyboard focus must remain visible. A custom focus indicator should provide
+  at least a 3:1 change of contrast and an area at least equivalent to a 2 CSS
+  pixel perimeter.
+- Color must not be the only way to communicate status or state.
+- Disabled styling may be subtle, but must not obscure information required to
+  understand the interface.
+- Every supported theme must satisfy the same requirements.
 
-**Don't use Tokens for the following scenarios:**
+See [WCAG 2.2 contrast requirements](https://www.w3.org/TR/WCAG22/#contrast-minimum)
+and [focus appearance guidance](https://www.w3.org/WAI/WCAG22/Understanding/focus-appearance.html).
 
-- When you can click an item in the Style Panel, such as text alignment or display flex.
-- When there is only one style (use [CSS variables](craft.md#css-variables)).
+## Composite tokens
 
-**More info:**
+Composite Tokens combine reusable declarations. Their values should reference
+CSS variables so a theme can change without editing the Token.
 
-Tokens are great for reusing styles, so you don't have to remember values. They shouldn't be used for simple tasks like centering text since that can be done with a button, and when switching between breakpoints, you may want to adjust the alignment.
+| Purpose   | Naming             | Examples                        |
+| --------- | ------------------ | ------------------------------- |
+| Utility   | Kebab-case         | `margin-auto`, `flex-gap-small` |
+| Component | Kebab-case         | `button`, `input`, `card`       |
+| Semantic  | Title case         | `Pricing Card`, `Team Member`   |
+| Variant   | `is-{base}-{name}` | `is-button-secondary`           |
+| Size      | `{base}-{size}`    | `button-small`, `button-large`  |
 
-However, Tokens can be helpful for flex layouts, for example, when they fall into this rule:
+A variant must be used with its base Token. A size Token should contain only
+the declarations needed to change size.
 
-> Common use case that takes more time to select Local and apply manually than using a Token.
+Prefer a composite Token when a reusable decision needs multiple declarations
+or coordinated states. Prefer a CSS variable for one reusable value. Use Local
+for an instance-specific exception.
 
-For example, it's common to use a flex wrapper to add a gap to the content, which typically requires setting display to flex, direction to vertical, and adding a gap. It's faster to create a utility token like `flex-gap-small` that handles all this in one go.
+When multiple Tokens set the same property, the rightmost style source wins.
+Place Local last when an instance needs to override a Token.
+
+## Extensions and exceptions
+
+A project may extend Craft when the core vocabulary cannot express a reusable
+domain concept.
+
+An extension must:
+
+1. Follow the same naming grammar.
+2. Describe purpose rather than a specific visual value.
+3. Reuse or derive from existing theme and semantic variables when possible.
+4. Introduce a new theme value only when an existing value cannot preserve the
+   intended distinction.
+5. Document its meaning, supported states, accessibility pairings, and theme
+   behavior when it is shared outside the project.
+
+Literal colors are appropriate when the color belongs to user content, an
+external representation, data visualization, or a functional preview that
+must not change with the interface theme. Document shared exceptions so they
+are not mistaken for missing semantic variables.
+
+Project-specific extensions do not become Craft core automatically. Promote an
+extension only when the same semantic need is reusable across unrelated
+projects.
+
+## Conformance
+
+A project conforms to Craft when:
+
+- Shared composite Tokens use semantic variables where suitable.
+- Semantic variables derive from documented theme or semantic variables.
+- Theme changes do not require editing composite Tokens.
+- Variable and Token names follow the Craft grammar.
+- Required foreground and background pairings meet the accessibility rules.
+- Shared extensions and literal exceptions are documented.
+- Reusable resources declare their required Craft variables and extensions.
+
+Conformance does not require every project to define every variable in the
+reference list. It requires every consumed variable and extension to follow the
+contract.
+
+## Getting started
+
+1. Go to **Marketplace → Pages → Craft**.
+2. Insert the **Style Guide** page.
+3. Customize the theme or palette variables on **Global Root**.
+4. Map Craft semantic variables to the theme.
+5. Build with semantic variables and composite Tokens.
+6. Document project extensions in the Style Guide.
+
+## Page template workflow
+
+The Craft Style Guide includes a page template with navigation, a main region,
+sections, containers, and a footer:
+
+1. Copy the template structure when creating a page.
+2. Duplicate the template section and name it for its content, such as `Hero`.
+3. Design the section using Craft variables and Tokens.
+4. Duplicate the clean template section for the next section.
 
 ## Internal Style Guide
 
-The page on the site is used to display and design the various HTML elements like headings, components, brand elements, and more.
-
-| Type                     | Rule                           | Casing | Examples              | Purpose                                                                                                                                      |
-| ------------------------ | ------------------------------ | ------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tokens (for style guide) | Prefix with double underscore. | Kebab  | `__badge` `__outline` | A convention for indicating that the Token is merely for the purpose of dressing up the style guide and _not_ to be used on the actual site. |
-| Page Name                | Style Guide                    | Title  |                       |                                                                                                                                              |
+Use `Style Guide` as the page name. Prefix Tokens used only to present the
+Style Guide with two underscores, such as `__badge` or `__outline`. Do not use
+these presentation Tokens on the published site.
 
 ## Navigator
 
-- **Casing**: Title
+Use title case and semantic labels in the Navigator.
 
-| Item                                  | Rule                                                                                                                                                                             | Examples                                                              | Why                                                                                                        |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Labels                                | If using a custom name, use semantic names.                                                                                                                                      | `Page Wrapper` `Cards` `Team Member`                                  | Default components are title case and the navigator is for humans to understand the structure and purpose. |
-| Box, Slot, HTML Embed, and Collection | <ul><li>Always create a custom name.</li><li>For Boxes, avoid layout-oriented naming such as 1/2 or left. Instead, use a name based on the content like Image Wrapper.</li></ul> | `Wrapper` `Card` `Animation Script`                                   | The purpose of these components are not clear without a custom name.                                       |
-| Parent > Child                        | Use plural for parent and singular for children when they are related.                                                                                                           | <p><code>Cards</code><br> <code>Card</code><br> <code>Card</code></p> | Helps indicate the relationship of instances.                                                              |
-| Sections                              | Prefix Boxes that have the section tag with "Section ".                                                                                                                          | `Section Hero`                                                        | Indicatees where the section is at without digging into settings.                                          |
+- Give Box, Slot, HTML Embed, and Collection instances names that describe
+  their purpose.
+- Name containers after their content rather than position or appearance.
+- Use a plural parent and singular children for repeated content, such as
+  `Cards` containing several `Card` items.
+- Prefix a Box using the `section` element with `Section`, such as
+  `Section Hero`.
+- Keep one HTML Embed instance responsible for one purpose, and begin its code
+  with a comment describing that purpose.
 
-### Structure
+Recommended page structure:
 
-- Page Wrapper
-  - Slot
-    - Global Styles
-    - Nav
-  - Main
-    - Section (generally, but not always)
-      - Container
-  - Slot
-    - Footer
-
-## Misc
-
-### Abbreviations
-
-Avoid abbreviations unless otherwise noted. Universal clarity is a priority, and abbreviations may be counterproductive.
-
-### HTML Embed
-
-- 1 instance = 1 purpose
-- Start the code with a comment about its purpose
-
-## Changelog
-
-### 1.2
-
-- Changed `container` token to use flex for proper compatibility with Craft Library. To adopt this change, go to any container token and set display flex, flex-direction column, and gap to `var(--gap-m)` . Any containers that need a horizontal layout will need to be manually set on Local, such as the style guide navigation.
-
-  ![container flex styles](../.gitbook/assets/craft-container-flex-styles.png)
-
-### 1.1
-
-- Added `—spacing-default`. Common use cases include left/right padding on containers and card padding. Improves consistency within the site and enables marketplace sections to adapt to our default spacing rather than introducing random spacing that deviates from the preferred.
-
-### 1.0
-
-- Release
+```text
+Page Wrapper
+├── Slot
+│   ├── Global Styles
+│   └── Nav
+├── Main
+│   └── Section
+│       └── Container
+└── Slot
+    └── Footer
+```
 
 ## Craft Library
 
-Craft Library is a collection of pre-built section templates built to Craft standards, available in the [Marketplace](marketplace.md).
+Craft Library is a collection of section templates built to Craft standards
+and available in the [Marketplace](marketplace.md).
 
-<figure><img src="../.gitbook/assets/craft-library.png" alt=""><figcaption><p>Craft Library in the Marketplace</p></figcaption></figure>
+Templates must avoid unexplained hardcoded design values. They must consume
+documented Craft variables or documented extensions so that a section adapts
+when inserted into another conforming project.
 
-Templates contain no hardcoded values such as colors or sizes. They rely entirely on [Craft CSS variables](craft.md#css-variables), so each section adapts to your site’s design system.
-
-The library speeds up development while keeping your project clean and fully customizable.
-
-This post demonstrates Craft Library getting inserted on two completely different sites:
+<figure><img src="../.gitbook/assets/craft-library.png" alt="Craft Library in the Webstudio Marketplace"><figcaption><p>Craft Library in the Marketplace</p></figcaption></figure>
 
 {% embed url="https://x.com/getwebstudio/status/1895213059251011768" %}
 
+## Changelog
+
+### Next
+
+- Defined the Craft architecture, naming grammar, color semantics,
+  accessibility requirements, extension rules, and conformance criteria.
+- Defined Webstudio Tokens as composite Tokens and aligned component, utility,
+  semantic, variant, and size naming.
+- Replaced `--foreground-border` with the correctly categorized
+  `--border-default` variable.
+- Replaced the color variable `--focus-color` with `--border-focus`. Existing
+  projects may keep `--focus-color` as a temporary alias while migrating.
+
+### 1.2
+
+- Changed `container` to use flex for compatibility with Craft Library. Set
+  `display` to `flex`, `flex-direction` to `column`, and `gap` to
+  `var(--gap-m)`. Apply horizontal layout changes on Local where needed.
+
+### 1.1
+
+- Added `--spacing-default` for shared container and card padding.
+
+### 1.0
+
+- Released Craft.
+
 ## Related
 
-- [Design tokens](foundations/design-tokens.md) – Create and manage reusable style tokens
-- [CSS variables](foundations/css-variables.md) – Use CSS custom properties in Webstudio
-- [Anatomy of the Webstudio builder](foundations/anatomy-of-the-webstudio-builder.md) – Understand the builder interface
-- [Marketplace](marketplace.md) – Access Craft Library and other templates
-- [Contributing to the Marketplace](../contributing/marketplace.md) – Submit templates built with Craft
+- [Design tokens](foundations/design-tokens.md) – Create and manage reusable composite Tokens
+- [CSS variables](foundations/css-variables.md) – Define and scope reusable values
+- [States and selectors](foundations/states-and-selectors.md) – Style interaction states
+- [Anatomy of the Webstudio builder](foundations/anatomy-of-the-webstudio-builder.md) – Understand the Builder interface
+- [Marketplace](marketplace.md) – Access Craft Library and other resources
+- [Contributing to the Marketplace](../contributing/marketplace.md) – Submit Craft resources

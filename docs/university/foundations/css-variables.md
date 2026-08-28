@@ -22,18 +22,17 @@ Why Use CSS variables?
 
 The concept of “reusability” is present in both CSS variables and [Tokens](design-tokens.md), but they are different and complement each other exceptionally well.
 
-
 Let’s think of these two concepts as layers or building blocks.
 
 ### Layer 1: CSS variables
 
-**CSS variables are the bottom layer. They comprise individual variable names and values** often used for sizes, colors, and other styles with many input options.
+**CSS variables are the bottom layer. They comprise individual variable names and values** often used for sizes, colors, and other styles with many input options. Craft distinguishes theme variables, which contain theme-specific inputs, from semantic variables, which describe how a value is used.
 
 For example, you can create one variable per color in your design system. Those colors are going to be used throughout your site and in Tokens.
 
 ### Layer 2: Tokens
 
-[**Tokens**](design-tokens.md) **are the next layer. They package up&#x20;**_**multiple**_**&#x20;styles.** A `Card` Token may include padding, color, and gap styles, for example.
+[**Tokens**](design-tokens.md) **are the next layer. They package up&#x20;**_**multiple**_**&#x20;styles.** Craft calls these composite Tokens. A `Card` Token may include padding, color, and gap styles, for example.
 
 The values you enter for each style should be defined as variables. This approach ensures consistent designs and allows you to update a value in one place, with the change automatically reflected wherever the variable is used.
 
