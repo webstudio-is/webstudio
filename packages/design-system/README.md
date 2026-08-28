@@ -15,7 +15,7 @@ Craft and this package have different responsibilities:
   consumes those semantics in composite component styles.
 
 The implementation defines each color seed once. A shared light or dark profile
-transforms those seeds into seven theme colors, which drive a deliberately
+transforms six theme colors into a deliberately
 small semantic vocabulary. Components load the CSS directly and compose those
 semantics without component-specific color variables. These implementation
 choices are not requirements for other Craft projects.

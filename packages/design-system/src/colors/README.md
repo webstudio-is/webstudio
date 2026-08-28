@@ -28,30 +28,44 @@ scheme derivation bounds rather than maintaining a second theme or semantic
 color set. Cross-hue variants mix in `oklab`, so the neutral family cannot
 rotate an intent into another color family.
 
+Chromatic fills keep the same bounded luminance in both schemes. Dark mode
+derives lighter foreground and focus variants from the same color family and
+uses light content on strong chromatic fills. This keeps accent buttons stable
+between schemes without making dark-mode accent text unreadable.
+
 ## Theme parameters
 
 Theme authors set colors and relationships, not semantic outputs. Every public
 parameter is commented at its declaration in [`colors.css`](colors.css).
 
-| Parameter                   | Meaning                                                   |
-| --------------------------- | --------------------------------------------------------- |
-| `--theme-color-neutral`     | Surfaces, content, borders, and shadows                   |
-| `--theme-color-accent`      | Interactive emphasis and keyboard focus                   |
-| `--theme-color-positive`    | Successful or positive outcomes                           |
-| `--theme-color-negative`    | Errors, danger, and destructive actions                   |
-| `--theme-color-warning`     | Caution and warning states                                |
-| `--theme-color-informative` | Neutral information                                       |
-| `--theme-contrast-content`  | Content contrast from the accessible minimum to strongest |
-| `--theme-contrast-surface`  | Separation between primary and secondary surfaces         |
-| `--theme-contrast-border`   | Border contrast from the accessible minimum to strongest  |
+| Parameter                   | Meaning                                                 |
+| --------------------------- | ------------------------------------------------------- |
+| `--theme-color-neutral`     | Surfaces, content, borders, and shadows                 |
+| `--theme-color-accent`      | Interactive emphasis and keyboard focus                 |
+| `--theme-color-positive`    | Successful or positive outcomes                         |
+| `--theme-color-negative`    | Errors, danger, and destructive actions                 |
+| `--theme-color-warning`     | Caution and warning states                              |
+| `--theme-color-informative` | Neutral information                                     |
+| `--theme-contrast-content`  | Content contrast from the readable minimum to strongest |
+| `--theme-contrast-surface`  | Separation between primary and secondary surfaces       |
+| `--theme-contrast-border`   | Separation between decorative borders and surfaces      |
 
-Theme colors accept any lightness and hue. The recipe limits neutral chroma to
-`0.02` and chromatic color-family chroma to `0.21` before deriving roles.
-Lightness influences the result only inside a narrow scheme-specific range.
+Theme colors accept any CSS color. The recipe converts chromatic inputs into
+the display gamut, limits their OKLCH source to `0.2–0.8` lightness and `0.3`
+chroma, then bounds luminance for the active scheme by mixing toward black or
+white. Neutral chroma is limited to `0.02`. These bounds preserve the selected
+color family while keeping required text and focus relationships safe.
 
-Contrast parameters are percentages. `0%` selects the soft end of the tested
-range and `100%` selects the strong end. CSS clamps values outside that range,
-so the recipe preserves its relative hierarchy regardless of the authoring UI.
+The default parameters reproduce the design system's established light palette
+within small per-channel tolerances. Decorative subtle backgrounds and borders
+are allowed a wider tolerance because their legacy relationships do not meet a
+meaningful 3:1 contrast threshold.
+
+Contrast parameters are percentages. `0%` selects the soft end and `100%`
+selects the strong end. CSS clamps values outside that range, so the recipe
+preserves its relative hierarchy regardless of the authoring UI. Content and
+focus contracts are tested for accessibility; surface and decorative border
+contrast remain visual theme choices.
 
 ```css
 .custom-theme {
@@ -111,7 +125,8 @@ The package extends Craft's core registry only for reusable component needs:
 
 `--overlay-scrim` always derives from a dark version of the neutral theme
 color, so it dims content in both schemes rather than following foreground
-polarity.
+polarity. Interaction overlays follow scheme polarity: dark overlays in light
+mode and light overlays in dark mode.
 
 `cssVar(name, fallback?)` follows the arguments of native `var()`. The first
 argument is type-checked against public semantic variables parsed from this CSS
@@ -138,7 +153,10 @@ TypeScript rejects unknown public variable names passed to `cssVar()`.
 
 Browser tests load the real stylesheet and sweep theme color and contrast
 boundaries in both schemes. They reject foreground/background text pairs below
-4.5:1 contrast and meaningful border/background pairs below 3:1 contrast.
+4.5:1 contrast and focus borders below 3:1 contrast. They also compare every
+default light semantic color with the established design-system palette and
+protect the dark neutral hierarchy, stable chromatic fills, light on-color
+content, and light interaction overlays.
 
 The generator emits only `CssVariableName` in
 `__generated__/css-variable-names.d.ts`. It does not generate JavaScript or
@@ -150,7 +168,8 @@ package `typecheck` verifies that generated declarations are current, and the
 normal workspace CI runs that command. Run `pnpm test` to verify structural
 contracts and browser-computed contrast.
 
-The Storybook **Foundations/Colors** light and dark stories load the runtime
-stylesheet directly and parse the same file only for names and source
-declarations. They render theme parameters, derived colors,
-browser-computed contrast pairs, and every semantic color.
+The Storybook **Foundations/Colors** story loads the runtime stylesheet directly
+and parses the same file only for names and source declarations. It renders
+theme parameters, derived colors, browser-computed contrast pairs, and every
+semantic color. The global **Theme test case** and **Color scheme** toolbar
+controls switch the entire Storybook, including this overview.

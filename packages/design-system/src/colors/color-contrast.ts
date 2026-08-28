@@ -24,16 +24,14 @@ const contrastContracts = [
   ["--foreground-negative", "--background-negative-subtle", 4.5],
   ["--foreground-warning", "--background-warning-subtle", 4.5],
   ["--foreground-informative", "--background-informative-subtle", 4.5],
-  ["--border-default", "--background-secondary", 3],
   ["--border-focus", "--background-secondary", 3],
-  ["--border-negative", "--background-negative-subtle", 3],
-  ["--border-warning", "--background-warning-subtle", 3],
-  ["--border-informative", "--background-informative-subtle", 3],
 ] as const satisfies readonly (readonly [
   CssVariableName,
   CssVariableName,
   number,
 ])[];
+
+export const colorContrastContractCount = contrastContracts.length;
 
 const toLinearChannel = (channel: number) => {
   const value = channel / 255;

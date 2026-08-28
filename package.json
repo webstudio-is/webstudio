@@ -57,6 +57,7 @@
     "@storybook/addon-actions": "^8.6.4",
     "@storybook/addon-backgrounds": "^8.6.4",
     "@storybook/addon-controls": "^8.6.4",
+    "@storybook/addon-toolbars": "^8.6.4",
     "@storybook/react": "^8.6.4",
     "@storybook/react-vite": "^8.6.4",
     "@types/node": "^22.13.10",

@@ -16,6 +16,7 @@ export default {
     "@storybook/addon-controls",
     "@storybook/addon-actions",
     "@storybook/addon-backgrounds",
+    "@storybook/addon-toolbars",
   ],
   async viteFinal(config) {
     return {

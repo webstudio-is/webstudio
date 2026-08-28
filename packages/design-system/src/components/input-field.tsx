@@ -83,8 +83,11 @@ const containerStyle = css({
   minWidth: 0,
   alignItems: "center",
   borderRadius: theme.borderRadius[4],
-  border: `solid 1px ${cssVar("--border-default")}`,
+  border: "solid 1px transparent",
   backgroundColor: cssVar("--background-secondary"),
+  "&:hover": {
+    borderColor: cssVar("--border-default"),
+  },
   "&:focus-within": {
     borderColor: cssVar("--border-focus"),
     outline: "none",

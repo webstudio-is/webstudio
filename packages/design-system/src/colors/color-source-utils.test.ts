@@ -82,7 +82,7 @@ describe("Craft color CSS source", () => {
     expect(Object.keys(colors.scheme.light)).toEqual(
       Object.keys(colors.scheme.dark)
     );
-    expect(Object.keys(colors.derived)).toHaveLength(16);
+    expect(Object.keys(colors.derived)).toHaveLength(27);
     expect(Object.keys(colors.semantic)).toEqual([
       "background",
       "foreground",
@@ -103,7 +103,7 @@ describe("Craft color CSS source", () => {
     const extendedSource = addRootDeclarations(source, {
       "--theme-color-custom": "oklch(50% 0.1 300)",
       "--color-custom":
-        "oklch(from var(--theme-color-custom) var(--scheme-chromatic-lightness) calc(min(c, 0.21) * var(--scheme-chromatic-chroma-scale)) h)",
+        "oklch(from var(--theme-color-custom) var(--scheme-chromatic-luminance-max) c h)",
       "--foreground-custom":
         "color-mix(in oklab, var(--color-custom) 86%, var(--color-foreground))",
     });

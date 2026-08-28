@@ -15,6 +15,10 @@ const openOrHoverStateStyle = {
 const withInteractionOverlay = (background: string) =>
   `linear-gradient(${cssVar("--overlay-interaction-hover")}, ${cssVar("--overlay-interaction-hover")}), ${background}`;
 
+const overwrittenBackground = `color-mix(in oklab, ${cssVar("--background-negative")} 19.68%, ${cssVar("--background-primary")})`;
+const overwrittenBorder = `color-mix(in oklab, ${cssVar("--background-negative")} 43.58%, ${cssVar("--background-primary")})`;
+const overwrittenForeground = `oklch(from color-mix(in oklab, ${cssVar("--background-negative")} 80%, ${cssVar("--foreground-primary")}) l calc(c * 1.23) calc(h + 1.8))`;
+
 const disabledVariantStyles = {
   "&:disabled, &[aria-disabled=true]": {
     color: cssVar("--foreground-disabled"),
@@ -102,13 +106,11 @@ export const IconButton = styled("button", {
       },
 
       overwritten: {
-        backgroundColor: cssVar("--background-negative-subtle"),
-        borderColor: cssVar("--border-negative"),
-        color: cssVar("--foreground-negative"),
+        backgroundColor: overwrittenBackground,
+        borderColor: overwrittenBorder,
+        color: overwrittenForeground,
         "&:hover, &[data-hovered=true]": {
-          background: withInteractionOverlay(
-            cssVar("--background-negative-subtle")
-          ),
+          background: withInteractionOverlay(overwrittenBackground),
         },
         ...disabledVariantStyles,
       },
