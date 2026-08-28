@@ -20,18 +20,19 @@ import { ArrowFocus } from "./primitives/arrow-focus";
 import { Label, isLabelButton } from "./label";
 import { focusRingStyle } from "./focus-ring";
 import { Flex } from "./flex";
+import { cssVar } from "../css-var";
 
-const buttonContentColor = "--ws-section-title-button-content-color";
-const labelTextColor = "--ws-section-title-label-content-color";
-const chevronOpacity = "--ws-section-title-chevron-display";
+const buttonContentColor = "--section-title-button-content-color";
+const labelTextColor = "--section-title-label-content-color";
+const chevronOpacity = "--section-title-chevron-display";
 
 const StyledButton = styled(Button, {});
 
 const containerStyle = css({
   position: "relative",
   height: theme.spacing[14],
-  [buttonContentColor]: theme.colors.foregroundIconMain,
-  [labelTextColor]: theme.colors.foregroundMain,
+  [buttonContentColor]: cssVar("--foreground-primary"),
+  [labelTextColor]: cssVar("--foreground-primary"),
   "&:hover": {
     [chevronOpacity]: 1,
   },
@@ -73,7 +74,7 @@ const chevronStyle = css({
   opacity: `var(${chevronOpacity}, 0)`,
   translate: "-100%",
   transition: "transform 150ms, opacity 200ms",
-  color: theme.colors.backgroundIconSubtle,
+  color: cssVar("--foreground-secondary"),
   variants: {
     openState: {
       open: {
@@ -92,11 +93,11 @@ const dotStyle = css({
   marginRight: -2,
   variants: {
     color: {
-      local: { backgroundColor: theme.colors.foregroundLocalFlexUi },
+      local: { backgroundColor: cssVar("--foreground-informative") },
       overwritten: {
-        backgroundColor: theme.colors.foregroundOverwrittenFlexUi,
+        backgroundColor: cssVar("--foreground-negative"),
       },
-      remote: { backgroundColor: theme.colors.foregroundRemoteFlexUi },
+      remote: { backgroundColor: cssVar("--foreground-warning") },
     },
   },
 });
@@ -133,7 +134,7 @@ export const SectionTitle = forwardRef(
     ref: Ref<HTMLButtonElement>
   ) => {
     const openState = props["data-state"] ?? "closed";
-    const finalDots = openState === "open" ? [] : (dots ?? []);
+    const finalDots = openState === "open" ? [] : dots ?? [];
 
     return (
       <context.Provider value={{ openState, inactive }}>
@@ -207,8 +208,8 @@ export const SectionTitleLabel = forwardRef(
     const color = inactive
       ? "inactive"
       : openState === "closed"
-        ? "default"
-        : props.color;
+      ? "default"
+      : props.color;
 
     const isButton = isLabelButton(color);
 
