@@ -32,14 +32,14 @@ describe("color recipe compiler", () => {
 
     expect(result).toEqual({
       semantic: {
-        backgroundCanvas: "var(--colors-themeCanvas)",
+        backgroundCanvas: "var(--colors-theme-canvas)",
         backgroundNeutral:
-          "color-mix(in oklch, var(--colors-themeCanvas) 92%, var(--colors-themeInk))",
+          "color-mix(in oklch, var(--colors-theme-canvas) 92%, var(--colors-theme-ink))",
       },
       compatibility: {
-        white: "oklch(from var(--colors-themeCanvas) 100% 0 h)",
+        white: "oklch(from var(--colors-theme-canvas) 100% 0 h)",
         accentFade:
-          "linear-gradient(180deg, oklch(from var(--colors-themeAccent) l c calc(h + 72)) 0%, oklch(from var(--colors-themeAccent) l c h / 0%) 100%)",
+          "linear-gradient(180deg, oklch(from var(--colors-theme-accent) l c calc(h + 72)) 0%, oklch(from var(--colors-theme-accent) l c h / 0%) 100%)",
       },
     });
   });

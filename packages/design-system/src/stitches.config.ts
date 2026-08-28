@@ -2,6 +2,7 @@ import { createStitches } from "@stitches/react";
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 import * as tokens from "./design-tokens";
+import { toCssColorTokenRecord, toKebabCase } from "./colors/color-name-utils";
 
 const spacing = {
   0: "0px",
@@ -53,7 +54,7 @@ const {
   reset,
 } = createStitches({
   theme: {
-    colors: tokens.color,
+    colors: toCssColorTokenRecord(tokens.color),
     fonts: {
       ...tokens.fontFamilies,
       sans: tokens.fontFamilies.inter,
@@ -202,13 +203,26 @@ const toVariblesNames = (values: VariblesValues): VariblesNames => {
   return result as VariblesNames;
 };
 
-export const theme = toVariblesNames(config.theme);
+const variableNames = toVariblesNames(config.theme);
 
-export const rawTheme = config.theme;
+export const theme = {
+  ...variableNames,
+  colors: Object.fromEntries(
+    Object.keys(tokens.color).map((name) => [
+      name,
+      `$colors$${toKebabCase(name)}`,
+    ])
+  ) as Record<keyof typeof tokens.color, string>,
+};
+
+export const rawTheme = {
+  ...config.theme,
+  colors: tokens.color,
+};
 
 /** Overrides only the seven color controllers; all semantic colors stay live. */
 export const darkTheme = createTheme({
-  colors: tokens.darkColorControllers,
+  colors: toCssColorTokenRecord(tokens.darkColorControllers),
 });
 
 export type CSS = Stitches.CSS<typeof config>;

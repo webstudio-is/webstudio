@@ -6,6 +6,7 @@ import {
   lightColorControllers,
   semanticColor,
 } from "./color-system";
+import { toColorVariableName } from "./color-name-utils";
 
 describe("color system", () => {
   test("defines exactly the same seven controllers in both themes", () => {
@@ -26,7 +27,7 @@ describe("color system", () => {
 
   test("keeps every semantic color connected to a theme controller", () => {
     for (const [name, value] of Object.entries(semanticColor)) {
-      expect(value, name).toContain("var(--colors-theme");
+      expect(value, name).toContain("var(--colors-theme-");
     }
   });
 
@@ -42,7 +43,8 @@ describe("color system", () => {
       expect(value, name).not.toContain("rgb(");
       expect(value, name).not.toContain("hsl(");
       expect(value, name).toContain("var(--colors-");
-      expect(value, name).not.toBe(`var(--colors-${name})`);
+      expect(value, name).not.toBe(`var(${toColorVariableName(name)})`);
+      expect(value, name).not.toMatch(/--colors-[a-z0-9-]*[A-Z]/);
     }
   });
 });

@@ -4,6 +4,7 @@ import {
   darkColorControllers,
   lightColorControllers,
 } from "../colors/color-system";
+import { toColorVariableName } from "../colors/color-name-utils";
 import { color } from "../design-tokens";
 
 export default {
@@ -17,15 +18,17 @@ type RecipeGroup = "semantic" | "compatibility";
 const controllerKey = (name: string) =>
   `theme${name[0].toUpperCase()}${name.slice(1)}` as keyof typeof lightColorControllers;
 
+const colorVariable = (name: string) => `var(${toColorVariableName(name)})`;
+
 const getThemeStyles = (mode: Mode) => {
   const styles: Record<string, string> = {};
   for (const [name, value] of Object.entries(color)) {
-    styles[`--colors-${name}`] = value;
+    styles[toColorVariableName(name)] = value;
   }
   const controllers =
     mode === "light" ? lightColorControllers : darkColorControllers;
   for (const [name, value] of Object.entries(controllers)) {
-    styles[`--colors-${name}`] = value;
+    styles[toColorVariableName(name)] = value;
   }
   return styles as CSSProperties;
 };
@@ -33,9 +36,9 @@ const getThemeStyles = (mode: Mode) => {
 const cardStyle: CSSProperties = {
   minWidth: 0,
   overflow: "hidden",
-  border: "1px solid var(--colors-borderDefault)",
+  border: `1px solid ${colorVariable("borderDefault")}`,
   borderRadius: 8,
-  background: "var(--colors-backgroundCanvas)",
+  background: colorVariable("backgroundCanvas"),
 };
 
 const labelStyle: CSSProperties = {
@@ -43,7 +46,7 @@ const labelStyle: CSSProperties = {
   overflow: "hidden",
   textOverflow: "ellipsis",
   font: "600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace",
-  color: "var(--colors-contentPrimary)",
+  color: colorVariable("contentPrimary"),
 };
 
 const recipeStyle: CSSProperties = {
@@ -51,11 +54,11 @@ const recipeStyle: CSSProperties = {
   marginTop: 4,
   padding: 8,
   borderRadius: 4,
-  background: "var(--colors-backgroundNeutralSubtle)",
+  background: colorVariable("backgroundNeutralSubtle"),
   overflowWrap: "anywhere",
   whiteSpace: "pre-wrap",
   font: "11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace",
-  color: "var(--colors-contentSecondary)",
+  color: colorVariable("contentSecondary"),
 };
 
 const codeLabelStyle: CSSProperties = {
@@ -64,7 +67,7 @@ const codeLabelStyle: CSSProperties = {
   font: "600 10px/1.4 system-ui, sans-serif",
   letterSpacing: "0.04em",
   textTransform: "uppercase",
-  color: "var(--colors-contentSecondary)",
+  color: colorVariable("contentSecondary"),
 };
 
 const TokenCard = ({
@@ -81,8 +84,8 @@ const TokenCard = ({
       aria-label={`${name} color preview`}
       style={{
         height: 72,
-        background: `var(--colors-${name})`,
-        borderBottom: "1px solid var(--colors-borderDefault)",
+        background: colorVariable(name),
+        borderBottom: `1px solid ${colorVariable("borderDefault")}`,
       }}
     />
     <div style={{ padding: 10 }}>
@@ -90,7 +93,9 @@ const TokenCard = ({
         {name}
       </code>
       <span style={codeLabelStyle}>CSS</span>
-      <code style={recipeStyle}>{`--colors-${name}: ${cssValue};`}</code>
+      <code
+        style={recipeStyle}
+      >{`${toColorVariableName(name)}: ${cssValue};`}</code>
       <span style={codeLabelStyle}>Source recipe</span>
       <code style={recipeStyle}>{JSON.stringify(recipe)}</code>
     </div>
@@ -138,7 +143,7 @@ const Controllers = ({ mode }: { mode: Mode }) => {
                 style={{
                   height: 96,
                   background: value,
-                  borderBottom: "1px solid var(--colors-borderDefault)",
+                  borderBottom: `1px solid ${colorVariable("borderDefault")}`,
                 }}
               />
               <div style={{ padding: 10 }}>
@@ -148,7 +153,7 @@ const Controllers = ({ mode }: { mode: Mode }) => {
                     display: "block",
                     marginTop: 4,
                     font: "12px/1.45 system-ui, sans-serif",
-                    color: "var(--colors-contentSecondary)",
+                    color: colorVariable("contentSecondary"),
                   }}
                 >
                   {controller.description}
@@ -156,7 +161,7 @@ const Controllers = ({ mode }: { mode: Mode }) => {
                 <span style={codeLabelStyle}>CSS</span>
                 <code
                   style={recipeStyle}
-                >{`--colors-${cssName}: ${value};`}</code>
+                >{`${toColorVariableName(cssName)}: ${value};`}</code>
                 <span style={codeLabelStyle}>Source value</span>
                 <code style={recipeStyle}>
                   {JSON.stringify(controller[mode])}
@@ -187,7 +192,7 @@ const Section = ({
       <p
         style={{
           margin: "4px 0 0",
-          color: "var(--colors-contentSecondary)",
+          color: colorVariable("contentSecondary"),
           font: "14px/1.5 system-ui, sans-serif",
         }}
       >
@@ -207,8 +212,8 @@ export const ColorSystem = () => {
         minHeight: "100vh",
         boxSizing: "border-box",
         padding: 24,
-        background: "var(--colors-backgroundCanvas)",
-        color: "var(--colors-contentPrimary)",
+        background: colorVariable("backgroundCanvas"),
+        color: colorVariable("contentPrimary"),
       }}
     >
       <div
@@ -237,7 +242,7 @@ export const ColorSystem = () => {
               style={{
                 maxWidth: 720,
                 margin: "8px 0 0",
-                color: "var(--colors-contentSecondary)",
+                color: colorVariable("contentSecondary"),
                 font: "14px/1.55 system-ui, sans-serif",
               }}
             >
@@ -253,7 +258,7 @@ export const ColorSystem = () => {
               gap: 4,
               padding: 4,
               borderRadius: 8,
-              background: "var(--colors-backgroundNeutral)",
+              background: colorVariable("backgroundNeutral"),
             }}
           >
             {(["light", "dark"] as const).map((value) => (
@@ -267,9 +272,9 @@ export const ColorSystem = () => {
                   borderRadius: 6,
                   background:
                     mode === value
-                      ? "var(--colors-backgroundCanvas)"
+                      ? colorVariable("backgroundCanvas")
                       : "transparent",
-                  color: "var(--colors-contentPrimary)",
+                  color: colorVariable("contentPrimary"),
                   font: "600 12px/1 system-ui, sans-serif",
                   cursor: "pointer",
                 }}
@@ -307,7 +312,7 @@ export const ColorSystem = () => {
           <p
             style={{
               margin: "4px 0 12px",
-              color: "var(--colors-contentSecondary)",
+              color: colorVariable("contentSecondary"),
               font: "14px/1.5 system-ui, sans-serif",
             }}
           >

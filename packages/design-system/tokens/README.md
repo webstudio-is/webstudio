@@ -52,6 +52,13 @@ Each gradient stop has a `color` recipe and an optional percentage `position`.
 The compiler validates the complete graph, rejects missing references and
 cycles, and emits live relative CSS expressions.
 
+## Naming
+
+Token keys use camelCase in TypeScript to preserve the existing package API.
+Generated CSS custom properties use kebab-case exclusively. For example,
+`backgroundNeutralSubtle` is emitted as
+`--colors-background-neutral-subtle`.
+
 ## Generate colors
 
 Run `pnpm generate:colors` in this package after changing the manifest. Run

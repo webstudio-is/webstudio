@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { toColorVariableName } from "./color-name-utils";
 
 type ColorReference = string;
 type ColorStop = {
@@ -117,7 +118,7 @@ const colorRecipesSchema = z
 const capitalize = (value: string) =>
   `${value[0].toUpperCase()}${value.slice(1)}`;
 
-const colorVariable = (name: string) => `var(--colors-${name})`;
+const colorVariable = (name: string) => `var(${toColorVariableName(name)})`;
 
 export const compileColorRecipes = ({
   controllers,
