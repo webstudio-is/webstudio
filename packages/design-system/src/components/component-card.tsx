@@ -12,6 +12,7 @@ import {
 import { css, theme, type CSS } from "../stitches.config";
 import { textVariants } from "./text";
 import { Tooltip } from "./tooltip";
+import { cssVar } from "../css-var";
 
 const cardStyle = css({
   boxSizing: "border-box",
@@ -22,22 +23,22 @@ const cardStyle = css({
   padding: theme.spacing[3],
   aspectRatio: "1",
   border: `1px solid`,
-  borderColor: theme.colors.borderMain,
+  borderColor: cssVar("--border-default"),
   borderRadius: theme.borderRadius[2],
   outline: "none",
   userSelect: "none",
-  color: theme.colors.foregroundIconMain,
+  color: cssVar("--foreground-primary"),
   cursor: "grab",
-  background: theme.colors.backgroundPanel,
+  background: cssVar("--background-primary"),
   "&:hover, &[data-state=hover]": {
-    background: theme.colors.backgroundHover,
+    background: cssVar("--overlay-interaction-hover"),
   },
   "&[data-state=disabled]": {
-    background: theme.colors.backgroundPanel,
-    color: theme.colors.foregroundDisabled,
+    background: cssVar("--background-primary"),
+    color: cssVar("--foreground-disabled"),
   },
   "&:focus-visible, &[data-state=selected]": {
-    borderColor: theme.colors.borderFocus,
+    borderColor: cssVar("--border-focus"),
   },
   "& svg": {
     flexGrow: 0,

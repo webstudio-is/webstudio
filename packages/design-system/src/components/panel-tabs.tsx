@@ -6,6 +6,11 @@
 import * as Primitive from "@radix-ui/react-tabs";
 import { textVariants } from "./text";
 import { styled, theme } from "../stitches.config";
+import { cssVar } from "../css-var";
+
+const inactiveForeground = `color-mix(in oklab, ${cssVar(
+  "--foreground-secondary"
+)} 56%, ${cssVar("--foreground-disabled")})`;
 
 export const PanelTabs = styled(Primitive.Root, {
   display: "flex",
@@ -21,21 +26,21 @@ export const PanelTabsList = styled(Primitive.List, {
 export const PanelTabsTrigger = styled(Primitive.Trigger, {
   all: "unset", // reset <button>
   ...textVariants.titles,
-  color: theme.colors.foregroundTextMoreSubtle,
+  color: inactiveForeground,
   padding: theme.spacing[3],
   borderRadius: theme.borderRadius[4],
 
   "&:hover": {
-    backgroundColor: theme.colors.backgroundHover,
-    color: theme.colors.foregroundMain,
+    backgroundColor: cssVar("--overlay-interaction-hover"),
+    color: cssVar("--foreground-primary"),
   },
 
   "&:focus-visible": {
-    outline: `1px solid ${theme.colors.borderFocus}`,
+    outline: `1px solid ${cssVar("--border-focus")}`,
     outlineOffset: "-1px",
   },
 
-  "&[data-state=active]": { color: theme.colors.foregroundMain },
+  "&[data-state=active]": { color: cssVar("--foreground-primary") },
 });
 
 export const PanelTabsContent = styled(Primitive.Content, {

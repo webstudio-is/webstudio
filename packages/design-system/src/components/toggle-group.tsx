@@ -14,6 +14,7 @@ import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
 import { styled, theme } from "../stitches.config";
 import { IconButton } from "./icon-button";
 import { textVariants } from "./text";
+import { cssVar } from "../css-var";
 
 type Color = "default" | "preset" | "local" | "remote" | "overwritten";
 
@@ -56,8 +57,8 @@ export const ToggleGroup = styled(BaseToggleGroup, {
   flexDirection: "row",
   alignItems: "center",
   padding: 1,
-  background: theme.colors.backgroundControls,
-  border: `1px solid ${theme.colors.borderMain}`,
+  background: cssVar("--background-secondary"),
+  border: `1px solid ${cssVar("--border-default")}`,
   borderRadius: theme.borderRadius[4],
 });
 
@@ -65,7 +66,7 @@ const IconButtonStyled = styled(IconButton, {
   "&[data-focused=true], &:focus-visible": {
     // To not overlap focus-ring by the next button
     zIndex: 0,
-    outline: `1px solid ${theme.colors.borderFocus}`,
+    outline: `1px solid ${cssVar("--border-focus")}`,
     outlineOffset: -1,
   },
   borderWidth: 0,

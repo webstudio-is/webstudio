@@ -34,17 +34,21 @@ import { useDebounceEffect } from "../utilities";
 import { Flex } from "./flex";
 import { InputField } from "./input-field";
 import { SmallIconButton } from "./small-icon-button";
+import { cssVar } from "../css-var";
 
 const panelWidth = "500px";
 const itemHeight = "32px";
 const inputBorderBottomSize = "--command-input-border-bottom-width";
+const weakForeground = `color-mix(in oklab, ${cssVar(
+  "--foreground-secondary"
+)} 22%, ${cssVar("--foreground-disabled")})`;
 
 const StyledCommand = styled(CommandPrimitive, {
   boxSizing: "border-box",
   width: panelWidth,
   boxShadow: theme.shadows.menuDropShadow,
-  backgroundColor: theme.colors.backgroundControls,
-  border: `1px solid ${theme.colors.borderMain}`,
+  backgroundColor: cssVar("--background-secondary"),
+  border: `1px solid ${cssVar("--border-default")}`,
   borderRadius: theme.borderRadius[7],
   // clip selected item background
   overflow: "clip",
@@ -162,19 +166,21 @@ export const CommandDialog = ({
 };
 
 const CommandInputContainer = styled("div", {
-  borderBottom: `var(${inputBorderBottomSize}) solid ${theme.colors.borderMain}`,
+  borderBottom: `var(${inputBorderBottomSize}) solid ${cssVar(
+    "--border-default"
+  )}`,
 });
 
 export const CommandSearchIcon = styled(SearchIcon, {
   display: "flex",
   width: theme.spacing[11],
-  color: theme.colors.foregroundSubtle,
+  color: cssVar("--foreground-secondary"),
 });
 
 export const CommandBackIcon = styled(ChevronLeftIcon, {
   display: "flex",
   width: theme.spacing[11],
-  color: theme.colors.foregroundSubtle,
+  color: cssVar("--foreground-secondary"),
 });
 
 const CommandInputField = styled(InputField, {
@@ -480,9 +486,9 @@ export const CommandItem = ({
 
 export const CommandGroupHeading = styled("div", {
   ...textVariants.labels,
-  color: theme.colors.foregroundMoreSubtle,
+  color: weakForeground,
   display: "flex",
-  backgroundColor: theme.colors.backgroundControls,
+  backgroundColor: cssVar("--background-secondary"),
   gap: theme.spacing[5],
   alignItems: "center",
   paddingInline: theme.spacing[5],
@@ -491,14 +497,14 @@ export const CommandGroupHeading = styled("div", {
 
 export const CommandGroupFooter = styled("div", {
   ...textVariants.labels,
-  color: theme.colors.foregroundMoreSubtle,
+  color: weakForeground,
   display: "flex",
   gap: theme.spacing[5],
   alignItems: "center",
   paddingInline: theme.spacing[5],
   height: itemHeight,
   justifyContent: "end",
-  borderTop: `1px solid ${theme.colors.borderMain}`,
+  borderTop: `1px solid ${cssVar("--border-default")}`,
 });
 
 export const CommandBackButton = ({ onClick }: { onClick?: () => void }) => {
@@ -520,10 +526,10 @@ const CommandItemStyled = styled(CommandPrimitive.Item, {
   minHeight: itemHeight,
   paddingInline: theme.spacing[9],
   "&:hover": {
-    backgroundColor: theme.colors.backgroundItemMenuItemHover,
+    backgroundColor: cssVar("--overlay-interaction-hover"),
   },
   "&[aria-selected=true]": {
-    backgroundColor: theme.colors.backgroundItemCurrent,
+    backgroundColor: cssVar("--background-informative-subtle"),
   },
 });
 

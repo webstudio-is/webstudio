@@ -98,7 +98,9 @@ export const menuItemCss = css({
           content: '""',
           width: 2,
           height: "100%",
-          background: theme.colors.backgroundGradientVertical,
+          background: `linear-gradient(180deg, ${cssVar(
+            "--background-accent"
+          )}, oklch(from ${cssVar("--background-accent")} l c calc(h + 72)))`,
         },
       },
     },
@@ -133,7 +135,9 @@ export const menuCss = css({
   borderRadius: theme.borderRadius[6],
   backgroundColor: cssVar("--background-secondary"),
   border: `1px solid ${cssVar("--border-default")}`,
-  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${cssVar("--background-primary")}`,
+  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${cssVar(
+    "--background-primary"
+  )}`,
   padding: `${menuPadding} 0`,
   variants: {
     width: {

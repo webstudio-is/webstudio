@@ -22,16 +22,17 @@ import {
 import { SelectButton } from "./select-button";
 import { Box } from "./box";
 import { ScrollArea } from "./scroll-area";
+import { cssVar } from "../css-var";
 
 export const SelectContent = styled(Primitive.Content, menuCss, {
   minWidth: "var(--radix-select-trigger-width)",
   "&[data-side=top]": {
-    "--ws-select-description-display-top": "block",
-    "--ws-select-description-order": 0,
+    "--select-description-display-top": "block",
+    "--select-description-order": 0,
   },
   "&[data-side=bottom]": {
-    "--ws-select-description-display-bottom": "block",
-    "--ws-select-description-order": 2,
+    "--select-description-display-bottom": "block",
+    "--select-description-order": 2,
   },
 });
 
@@ -52,7 +53,7 @@ const scrollButtonStyles = {
   alignItems: "center",
   justifyContent: "center",
   height: 25,
-  color: theme.colors.foregroundMain,
+  color: cssVar("--foreground-primary"),
   cursor: "default",
 };
 
@@ -100,8 +101,8 @@ export const SelectItemDescription = ({
     <>
       <SelectSeparator
         style={{
-          display: `var(--ws-select-description-display-bottom, none)`,
-          order: "var(--ws-select-description-order)",
+          display: `var(--select-description-display-bottom, none)`,
+          order: "var(--select-description-order)",
         }}
       />
 
@@ -111,7 +112,7 @@ export const SelectItemDescription = ({
         }}
         hint
         style={{
-          order: "var(--ws-select-description-order)",
+          order: "var(--select-description-order)",
         }}
       >
         {descriptions.map((descr, index) => (
@@ -138,8 +139,8 @@ export const SelectItemDescription = ({
 
       <SelectSeparator
         style={{
-          display: `var(--ws-select-description-display-top, none)`,
-          order: "var(--ws-select-description-order)",
+          display: `var(--select-description-display-top, none)`,
+          order: "var(--select-description-order)",
         }}
       />
     </>

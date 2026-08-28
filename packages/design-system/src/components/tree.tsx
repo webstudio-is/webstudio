@@ -29,6 +29,7 @@ import { styled, theme } from "../stitches.config";
 import { Box } from "./box";
 import { Text } from "./text";
 import { TreePositionIndicator } from "./list-position-indicator";
+import { cssVar } from "../css-var";
 
 const treeNodeLevel = "--tree-node-level";
 const treeNodeOutline = "--tree-node-outline";
@@ -131,16 +132,18 @@ const NodeContainer = styled("div", {
   position: "relative",
   height: theme.sizes.controlHeight,
   "&:hover, &:has(:focus-visible), &:has([aria-current=true])": {
-    [treeNodeBackgroundColor]: theme.colors.backgroundHover,
+    [treeNodeBackgroundColor]: cssVar("--overlay-interaction-hover"),
     backgroundColor: `var(${treeNodeBackgroundColor})`,
     [treeActionOpacity]: 1,
   },
   '&[data-selection-state="selected-descendant"]': {
-    [treeNodeBackgroundColor]: theme.colors.backgroundItemCurrentChild,
+    [treeNodeBackgroundColor]: `color-mix(in oklab, ${cssVar(
+      "--background-informative-subtle"
+    )} 50%, ${cssVar("--background-primary")})`,
     backgroundColor: `var(${treeNodeBackgroundColor})`,
   },
   '&[data-selection-state="selected"]': {
-    [treeNodeBackgroundColor]: theme.colors.backgroundItemCurrent,
+    [treeNodeBackgroundColor]: cssVar("--background-informative-subtle"),
     backgroundColor: `var(${treeNodeBackgroundColor})`,
   },
 });
