@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import { getContentArtifactReferencedAssetIds } from "./content-artifact";
+import { createContentDatabase } from "./content-database";
 import {
   compileContentSource,
   ContentSourceChangedError,
@@ -180,6 +181,297 @@ describe("content source snapshots", () => {
         sourceId: "post",
         referenceId: "#frontmatter/author",
       }),
+    ]);
+  });
+
+  test("resolves Asset values from referenced document frontmatter", async () => {
+    const post = createFile({
+      id: "post",
+      path: "blog/post.mdx",
+      contentType: "text/mdx",
+    });
+    const author = createFile({
+      id: "author",
+      path: "blog/author.md",
+    });
+    const avatar = createFile({
+      id: "avatar",
+      path: "blog/avatar.png",
+      contentType: "image/png",
+    });
+    const sources = {
+      post: "---\nauthor:\n  $ref: ./author.md#frontmatter\n---\nPost\n",
+      author: "---\nname: Ada\nprofileImage:\n  $ref: ./avatar.png\n---\n",
+    };
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [post, author, avatar],
+          async loadEntries() {
+            const entry = createEntry(post);
+            return [
+              {
+                ...entry,
+                document: {
+                  ...entry.document,
+                  properties: {
+                    author: { $ref: "./author.md#frontmatter" },
+                  },
+                },
+                content: sources.post,
+              } as typeof entry,
+            ];
+          },
+          async loadDocumentSources() {
+            return [
+              { id: "post", source: sources.post },
+              { id: "author", source: sources.author },
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+    const query = {
+      where: { all: [] },
+      sort: [],
+      limit: 1,
+      output: {
+        mode: "fields" as const,
+        includeMetadata: false,
+        fields: [["properties", "author"]],
+      },
+      content: { mode: "full" as const },
+    };
+    const compiled = await compileContentSource({
+      source,
+      projectId,
+      plan: {
+        standardFields: [],
+        structuredPropertyPaths: [["properties", "author"]],
+        excerpt: false,
+        metadataError: false,
+        queries: [
+          {
+            id: "post",
+            ...query,
+            limit: { type: "literal", value: 1 },
+            offset: { type: "literal", value: 0 },
+          },
+        ],
+      },
+    });
+
+    expect(compiled.artifact.assetValueReferences?.author).toEqual([
+      {
+        path: ["properties", "profileImage"],
+        assetId: "avatar",
+        structured: true,
+      },
+    ]);
+    expect(compiled.artifact.contents?.[author.contentRef]).toBe(
+      sources.author
+    );
+    const database = createContentDatabase({ artifact: compiled.artifact });
+    await expect(
+      database.queryWithDocumentGraph({
+        request: { query },
+        load: async (node) => ({
+          format: node.format as "markdown" | "mdx",
+          revision: node.revision,
+          source: sources[node.id as keyof typeof sources],
+        }),
+        runtimeAssets: {
+          avatar: { url: "/cgi/image/avatar.png?format=raw" },
+        },
+      })
+    ).resolves.toMatchObject({
+      items: [
+        {
+          properties: {
+            author: {
+              name: "Ada",
+              profileImage: {
+                id: "avatar",
+                src: "/cgi/image/avatar.png?format=raw",
+              },
+            },
+          },
+        },
+      ],
+    });
+  });
+
+  test("keeps missing nested Asset refs out of the document graph", async () => {
+    const post = createFile({
+      id: "post",
+      path: "blog/post.mdx",
+      contentType: "text/mdx",
+    });
+    const author = createFile({
+      id: "author",
+      path: "authors/author.md",
+    });
+    const avatar = createFile({
+      id: "avatar",
+      path: "authors/avatar.png",
+      contentType: "image/png",
+    });
+    const sources = {
+      post: "---\nauthor:\n  $ref: ../authors/author.md#frontmatter\n---\nPost\n",
+      author:
+        "---\nprofileImage: ./avatar.png\ngallery:\n  - $ref: ./avatar.png\n  - $ref: ./missing.png\n---\n",
+    };
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [post, author, avatar],
+          async loadEntries() {
+            const entry = createEntry(post);
+            return [
+              {
+                ...entry,
+                document: {
+                  ...entry.document,
+                  properties: {
+                    author: { $ref: "../authors/author.md#frontmatter" },
+                  },
+                },
+                content: sources.post,
+              } as typeof entry,
+            ];
+          },
+          async loadDocumentSources() {
+            return [
+              { id: "post", source: sources.post },
+              { id: "author", source: sources.author },
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+    const query = {
+      where: { all: [] },
+      sort: [],
+      limit: 1,
+      output: {
+        mode: "fields" as const,
+        includeMetadata: false,
+        fields: [["properties", "author"]],
+      },
+      content: { mode: "none" as const },
+    };
+
+    const compiled = await compileContentSource({
+      source,
+      projectId,
+      plan: {
+        standardFields: [],
+        structuredPropertyPaths: [["properties", "author"]],
+        excerpt: false,
+        metadataError: false,
+        queries: [
+          {
+            id: "post",
+            ...query,
+            limit: { type: "literal", value: 1 },
+            offset: { type: "literal", value: 0 },
+          },
+        ],
+      },
+    });
+    const database = createContentDatabase({ artifact: compiled.artifact });
+
+    await expect(
+      database.queryWithDocumentGraph({
+        request: { query },
+        load: async (node) => ({
+          format: node.format as "markdown" | "mdx",
+          revision: node.revision,
+          source: sources[node.id as keyof typeof sources],
+        }),
+        runtimeAssets: {
+          avatar: { url: "/cgi/image/avatar.png?format=raw" },
+        },
+      })
+    ).resolves.toMatchObject({
+      items: [
+        {
+          properties: {
+            author: {
+              profileImage: "/cgi/image/avatar.png?format=raw",
+              gallery: [
+                {
+                  id: "avatar",
+                  src: "/cgi/image/avatar.png?format=raw",
+                },
+                { $ref: "./missing.png" },
+              ],
+            },
+          },
+        },
+      ],
+    });
+    expect(compiled.diagnostics.assetReferenceIssues).toEqual([
+      {
+        code: "ASSET_NOT_FOUND",
+        sourceDocumentId: "author",
+        referenceId: "#frontmatter/gallery/1",
+        assetUrl: "https://content.webstudio.local/authors/missing.png",
+      },
+    ]);
+  });
+
+  test("reports a missing Asset ref when the root has no document edges", async () => {
+    const post = createFile({ id: "post", path: "blog/post.mdx" });
+    const source = createDocumentSource({
+      files: [post],
+      sources: {
+        post: "---\ncover:\n  $ref: ./missing.png\n---\nPost\n",
+      },
+    });
+
+    const compiled = await compileContentSource({
+      source,
+      projectId,
+      plan: {
+        standardFields: [],
+        structuredPropertyPaths: [["properties", "cover"]],
+        excerpt: false,
+        metadataError: false,
+        queries: [
+          {
+            id: "post",
+            where: { all: [] },
+            sort: [],
+            limit: { type: "literal", value: 1 },
+            offset: { type: "literal", value: 0 },
+            output: {
+              mode: "fields",
+              includeMetadata: false,
+              fields: [["properties", "cover"]],
+            },
+            content: { mode: "none" },
+          },
+        ],
+      },
+    });
+
+    expect(compiled.documentGraph).toBeUndefined();
+    expect(compiled.diagnostics.assetReferenceIssues).toEqual([
+      {
+        code: "ASSET_NOT_FOUND",
+        sourceDocumentId: "post",
+        referenceId: "#frontmatter/cover",
+        assetUrl: "https://content.webstudio.local/blog/missing.png",
+      },
     ]);
   });
 
@@ -731,6 +1023,46 @@ cover: ./cover.png
       "hero",
       "video",
     ]);
+  });
+
+  test("retains MDX body Asset references without frontmatter references", async () => {
+    const mdx = createFile({
+      id: "post",
+      path: "blog/post.mdx",
+      contentType: "text/mdx",
+    });
+    const hero = createFile({
+      id: "hero",
+      path: "blog/hero.png",
+      contentType: "image/png",
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [mdx, hero],
+          async loadEntries() {
+            const entry = createEntry(mdx);
+            return [
+              {
+                ...entry,
+                document: { ...entry.document, properties: {} },
+                content: "![Hero](./hero.png)",
+              } as typeof entry & { content: string },
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+
+    expect(
+      result.artifact.assetValueReferences?.post?.map(({ assetId }) => assetId)
+    ).toEqual(["hero"]);
   });
 
   test("resolves the same relative URL independently for each Markdown folder", async () => {

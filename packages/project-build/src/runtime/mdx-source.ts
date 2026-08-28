@@ -3,6 +3,7 @@ import {
   parseMdxDocumentRecovering,
   type MdxDocument,
 } from "@webstudio-is/content-engine/mdx";
+import { resolveAssetValueReferences } from "@webstudio-is/content-engine";
 import type {
   Asset,
   ContentBlockDiagnostic,
@@ -10,7 +11,11 @@ import type {
   WebstudioData,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { createAssetFolderHierarchy, formatAssetName } from "@webstudio-is/sdk";
+import {
+  createAssetFolderHierarchy,
+  formatAssetName,
+  toAssetReferenceRuntimeData,
+} from "@webstudio-is/sdk";
 import {
   materializeMdxAuthoredContent,
   type MaterializedMdxAuthoredContentRoot,
@@ -88,7 +93,7 @@ export const materializeMdxSource = async ({
     projectId,
     assetReferences,
   });
-  const root = materializeMdxAuthoredContent({
+  const authoredRoot = materializeMdxAuthoredContent({
     identity,
     document,
     templateMaterialization: templates,
@@ -103,6 +108,27 @@ export const materializeMdxSource = async ({
           }),
     createUnresolvedTemplateInstance,
   });
+  const resolvedDocument = resolveAssetValueReferences({
+    value: document,
+    references: assetReferences.filter(({ assetId, structured }) => {
+      const asset = data.assets.get(assetId);
+      return !(
+        structured === true &&
+        asset?.type === "file" &&
+        ["json", "md", "mdx"].includes(asset.format.toLowerCase())
+      );
+    }),
+    runtimeAssets: Object.fromEntries(
+      Array.from(data.assets.values(), (asset) => [
+        asset.id,
+        toAssetReferenceRuntimeData(asset, "https://webstudio.local"),
+      ])
+    ),
+  });
+  const root: MaterializedMdxAuthoredContentRoot = {
+    ...authoredRoot,
+    resolvedFrontmatter: resolvedDocument.frontmatter.properties,
+  };
   const includedAssetIds = new Set(root.fragment.assets.map(({ id }) => id));
   for (const { assetId } of assetReferences) {
     const asset = data.assets.get(assetId);

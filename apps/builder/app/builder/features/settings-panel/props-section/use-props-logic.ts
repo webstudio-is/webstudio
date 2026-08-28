@@ -67,14 +67,8 @@ const isPropVisibleInContentMode = ({
   selectedInstanceSelector: undefined | Instance["id"][];
   capabilities: ContentModeCapabilities;
 }) => {
-  if (
-    selectedInstanceSelector === undefined ||
-    capabilities.editableInstanceIds.has(selectedInstanceSelector[0]) === false
-  ) {
+  if (selectedInstanceSelector === undefined) {
     return false;
-  }
-  if (propName === textContentAttribute) {
-    return true;
   }
   if (component === blockComponent && propName === contentBlockSourceProp) {
     return props.some(
@@ -82,6 +76,22 @@ const isPropVisibleInContentMode = ({
         prop.name === contentBlockSourceProp &&
         (prop.type === "asset" || prop.type === "expression")
     );
+  }
+  const instanceId = selectedInstanceSelector[0];
+  if (capabilities.editableInstanceIds.has(instanceId) === false) {
+    if (propName === textContentAttribute) {
+      return (
+        capabilities.frontmatterBoundTextInstanceIds?.has(instanceId) === true
+      );
+    }
+    return props.some(
+      (prop) =>
+        prop.name === propName &&
+        capabilities.frontmatterBoundPropIds?.has(prop.id) === true
+    );
+  }
+  if (propName === textContentAttribute) {
+    return true;
   }
   const propMeta = propsMetas.get(propName);
   if (propMeta?.contentMode === false) {

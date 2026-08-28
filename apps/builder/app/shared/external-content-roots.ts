@@ -1,8 +1,22 @@
 import {
+  createCanonicalAssetPath,
   parseMdxDocumentRecovering,
+  replaceMdxFrontmatter,
   serializeMdxDocument,
   type MdxDocument,
 } from "@webstudio-is/content-engine/mdx";
+import {
+  compileDocumentSourceGraph,
+  createDocumentSourceUrl,
+  createUniqueAssetIdsByPath,
+  discoverAssetValueReferences,
+  DocumentGraphError,
+  DocumentSourceCompilationError,
+  getDocumentGraphClosure,
+  resolveDocumentGraphProperties,
+  type AssetValueReference,
+  type DocumentFormat,
+} from "@webstudio-is/content-engine";
 import {
   extractWebstudioFragment,
   adoptMdxAuthoredContentFragment,
@@ -17,9 +31,14 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import {
   blockTemplateComponent,
+  createAssetContentRevision,
+  createAssetFolderHierarchy,
+  formatAssetName,
+  findContentBlockBodyContainerPaths,
   findContentBlockTemplateContainers,
   getInstanceName,
   createContentBlockExternalContentIdentity,
+  toAssetReferenceRuntimeData,
   type ContentBlockDiagnostic,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
@@ -47,6 +66,7 @@ import {
   isRepeatedContentBlockOccurrence,
   parseContentBlockRenderScope,
 } from "./content-block-source-utils";
+import { setObjectPathValue } from "./content-block-document";
 
 type RootEntry = {
   key: string;
@@ -54,6 +74,8 @@ type RootEntry = {
   assetId: string;
   sourceBlockInstanceId: string;
   blockInstanceId: string;
+  sourceContentInstanceId: string;
+  contentInstanceId: string;
   renderScope: string;
   root: MaterializedMdxAuthoredContentRoot;
   installedFragment: WebstudioFragment;
@@ -64,6 +86,7 @@ type RootEntry = {
   references: number;
   openVersion: number;
   saveRevision: number;
+  dependencyAssetIds: ReadonlySet<string>;
 };
 
 type AssetQueue = {
@@ -186,8 +209,11 @@ const getPreservedRootKey = (
 
 const getAuthoredChildren = (entry: RootEntry) => {
   const data = getWebstudioData();
-  const block = data.instances.get(entry.blockInstanceId);
-  return (block?.children ?? []).filter(
+  const content = data.instances.get(entry.contentInstanceId);
+  if (entry.contentInstanceId !== entry.blockInstanceId) {
+    return content?.children ?? [];
+  }
+  return (content?.children ?? []).filter(
     (child) =>
       child.type !== "id" ||
       data.instances.get(child.value)?.component !== blockTemplateComponent
@@ -198,6 +224,9 @@ const getMutationRootChildren = (
   entry: RootEntry,
   authoredChildren = getAuthoredChildren(entry)
 ) => {
+  if (entry.contentInstanceId !== entry.blockInstanceId) {
+    return authoredChildren;
+  }
   const data = getWebstudioData();
   const block =
     data.instances.get(entry.blockInstanceId) ??
@@ -222,6 +251,8 @@ const registerMutationRoot = (
     sourceBlockInstanceId: entry.sourceBlockInstanceId,
     sourceRenderScope: entry.renderScope,
     blockInstanceId: entry.blockInstanceId,
+    sourceContentInstanceId: entry.sourceContentInstanceId,
+    contentInstanceId: entry.contentInstanceId,
     renderScope:
       entry.blockInstanceId === entry.sourceBlockInstanceId ||
       instanceSelector === undefined
@@ -234,6 +265,10 @@ const registerMutationRoot = (
     projectId: entry.projectId,
     identity: entry.root.identity,
     diagnostics: entry.diagnostics,
+    document: entry.root.document,
+    frontmatter:
+      entry.root.resolvedFrontmatter ??
+      entry.root.document.frontmatter.properties,
     transientInstanceIds: entry.transientInstanceIds,
   });
 };
@@ -252,10 +287,12 @@ const installRoot = ({
   if (sourceBlock === undefined) {
     return;
   }
-  const { fragment: installedFragment, transientInstanceIds } =
+  const installedFragment = root.fragment;
+  const transientInstanceIds = new Set(
     entry.includeUnresolvedTemplatePlaceholders
-      ? createBuilderMdxFragment(root)
-      : { fragment: root.fragment, transientInstanceIds: new Set<string>() };
+      ? root.provenance.unresolvedTemplates.map(({ markerId }) => markerId)
+      : []
+  );
   const nextOwned = getExternalContentFragmentOwnership(installedFragment);
   const payload: BuilderPatchChange[] = [];
 
@@ -263,7 +300,10 @@ const installRoot = ({
     const scopedBlock = {
       ...sourceBlock,
       id: entry.blockInstanceId,
-      children: getMutationRootChildren(entry, []),
+      children:
+        entry.contentInstanceId === entry.blockInstanceId
+          ? getMutationRootChildren(entry, [])
+          : sourceBlock.children,
     };
     payload.push({
       namespace: "instances",
@@ -275,6 +315,26 @@ const installRoot = ({
         },
       ],
     });
+    if (entry.contentInstanceId !== entry.blockInstanceId) {
+      const sourceContent = data.instances.get(entry.sourceContentInstanceId);
+      if (sourceContent === undefined) {
+        return;
+      }
+      payload.push({
+        namespace: "instances",
+        patches: [
+          {
+            op: data.instances.has(entry.contentInstanceId) ? "replace" : "add",
+            path: [entry.contentInstanceId],
+            value: {
+              ...sourceContent,
+              id: entry.contentInstanceId,
+              children: [],
+            },
+          },
+        ],
+      });
+    }
   }
 
   for (const [namespace, records] of getExternalContentFragmentRecords(
@@ -308,7 +368,7 @@ const installRoot = ({
     patches: [
       {
         op: "replace",
-        path: [entry.blockInstanceId, "children"],
+        path: [entry.contentInstanceId, "children"],
         value: getMutationRootChildren(entry, installedFragment.children),
       },
     ],
@@ -327,23 +387,23 @@ const installRoot = ({
 const uninstallRoot = (entry: RootEntry) => {
   const data = getWebstudioData();
   const payload: BuilderPatchChange[] = [];
-  const block = data.instances.get(entry.blockInstanceId);
+  const content = data.instances.get(entry.contentInstanceId);
   const owned = getExternalContentFragmentOwnership(entry.installedFragment);
   if (
-    block !== undefined &&
+    content !== undefined &&
     entry.blockInstanceId === entry.sourceBlockInstanceId
   ) {
-    const retainedChildren = block.children.filter(
+    const retainedChildren = content.children.filter(
       (child) =>
         child.type !== "id" || owned.instances.has(child.value) === false
     );
-    if (retainedChildren.length !== block.children.length) {
+    if (retainedChildren.length !== content.children.length) {
       payload.push({
         namespace: "instances",
         patches: [
           {
             op: "replace",
-            path: [entry.blockInstanceId, "children"],
+            path: [entry.contentInstanceId, "children"],
             value: retainedChildren,
           },
         ],
@@ -362,6 +422,12 @@ const uninstallRoot = (entry: RootEntry) => {
     }
   }
   if (entry.blockInstanceId !== entry.sourceBlockInstanceId) {
+    if (entry.contentInstanceId !== entry.blockInstanceId) {
+      payload.push({
+        namespace: "instances",
+        patches: [{ op: "remove", path: [entry.contentInstanceId] }],
+      });
+    }
     payload.push({
       namespace: "instances",
       patches: [{ op: "remove", path: [entry.blockInstanceId] }],
@@ -384,6 +450,178 @@ const createExternalContentIdentity = (
     renderScope: entry.renderScope,
   });
 
+const getDocumentFormat = (format: string): DocumentFormat | undefined => {
+  const normalized = format.toLowerCase();
+  if (normalized === "md") {
+    return "markdown";
+  }
+  if (normalized === "mdx" || normalized === "json") {
+    return normalized;
+  }
+};
+
+const resolveExternalContentFrontmatter = async (
+  entry: RootEntry,
+  sourceState: AssetContentSessionState
+) => {
+  const data = getWebstudioData();
+  const hierarchy = createAssetFolderHierarchy(data.assetFolders ?? new Map());
+  const assets = Array.from(data.assets.values());
+  const getPath = (asset: (typeof assets)[number]) =>
+    createCanonicalAssetPath({
+      name: formatAssetName(asset),
+      folderNames: hierarchy.getPath(asset.folderId).map(({ name }) => name),
+    });
+  const assetPaths = assets.map((asset) => ({
+    id: asset.id,
+    path: getPath(asset),
+  }));
+  const assetPathsById = new Map(
+    assetPaths.map(({ id, path }) => [id, path] as const)
+  );
+  const assetIdsByPath = createUniqueAssetIdsByPath(assetPaths);
+  const documentAssets = assets.flatMap((asset) => {
+    const format = getDocumentFormat(asset.format);
+    return asset.type === "file" && format !== undefined
+      ? [{ asset, format, path: getPath(asset) }]
+      : [];
+  });
+  if (
+    documentAssets.some(({ asset }) => asset.id === entry.assetId) === false
+  ) {
+    return;
+  }
+  const documentAssetIds = new Set(documentAssets.map(({ asset }) => asset.id));
+  const structuredAssetIds = new Set(
+    assets
+      .filter(({ id }) => documentAssetIds.has(id) === false)
+      .map(({ id }) => id)
+  );
+  const session = getSession(entry.projectId);
+  const referencesByDocumentId = new Map<string, AssetValueReference[]>();
+  const getReferencedAssetIds = (documentIds: Iterable<string>) =>
+    Array.from(documentIds).flatMap((id) =>
+      (referencesByDocumentId.get(id) ?? []).map(({ assetId }) => assetId)
+    );
+  const encoder = new TextEncoder();
+  let graph: Awaited<ReturnType<typeof compileDocumentSourceGraph>>;
+  try {
+    graph = await compileDocumentSourceGraph({
+      documents: documentAssets.map(({ asset, format, path }) => ({
+        id: asset.id,
+        documentUrl: createDocumentSourceUrl(path),
+        revision: createAssetContentRevision({
+          storageName: asset.name,
+          updatedAt: asset.updatedAt ?? asset.createdAt,
+          size: asset.size,
+        }),
+        contentRef: asset.name,
+        format,
+        source: {
+          async *[Symbol.asyncIterator]() {
+            yield encoder.encode(
+              asset.id === entry.assetId
+                ? sourceState.source
+                : (await session.open(asset.id)).source
+            );
+          },
+        },
+      })),
+      rootIds: [entry.assetId],
+      ignoredReferenceUrls: new Set(
+        assets
+          .filter(({ id }) => documentAssetIds.has(id) === false)
+          .map((asset) => createDocumentSourceUrl(getPath(asset)))
+      ),
+      onDocumentProperties: ({ id, properties }) => {
+        const sourcePath = assetPathsById.get(id);
+        if (sourcePath !== undefined) {
+          referencesByDocumentId.set(
+            id,
+            discoverAssetValueReferences({
+              properties,
+              sourcePath,
+              assetIdsByPath,
+              structuredAssetIds,
+            })
+          );
+        }
+      },
+    });
+  } catch (error) {
+    let failedDocumentIds: readonly string[] = [];
+    if (
+      error instanceof DocumentSourceCompilationError &&
+      error.documentId !== undefined
+    ) {
+      failedDocumentIds = [error.documentId];
+    } else if (error instanceof DocumentGraphError) {
+      failedDocumentIds = error.documentIds;
+    }
+    entry.dependencyAssetIds = new Set([
+      entry.assetId,
+      ...failedDocumentIds.filter((id) => documentAssetIds.has(id)),
+      ...referencesByDocumentId.keys(),
+      ...getReferencedAssetIds(referencesByDocumentId.keys()),
+    ]);
+    throw error;
+  }
+  const graphNodes = getDocumentGraphClosure({
+    graph,
+    rootIds: [entry.assetId],
+  });
+  entry.dependencyAssetIds = new Set([
+    ...graphNodes.map(({ id }) => id),
+    ...getReferencedAssetIds(graphNodes.map(({ id }) => id)),
+  ]);
+  const runtimeAssets = Object.fromEntries(
+    assets.map((asset) => [
+      asset.id,
+      toAssetReferenceRuntimeData(asset, window.location.origin),
+    ])
+  );
+  const properties = await resolveDocumentGraphProperties({
+    graph,
+    rootId: entry.assetId,
+    assetValueReferences: Object.fromEntries(referencesByDocumentId),
+    runtimeAssets,
+    load: async (node) => {
+      if (node.format === undefined) {
+        throw new Error(`Document ${node.id} has no format`);
+      }
+      return {
+        format: node.format,
+        revision: node.revision,
+        source:
+          node.id === entry.assetId
+            ? sourceState.source
+            : (await session.open(node.id)).source,
+      };
+    },
+  });
+  return properties;
+};
+
+const createBuilderUnresolvedTemplateInstance = ({
+  markerId,
+  templateName,
+}: {
+  markerId: string;
+  templateName: string;
+}) => ({
+  type: "instance" as const,
+  id: markerId,
+  component: "ws:element",
+  tag: "div",
+  label: `Missing template: ${templateName}`,
+  children: [
+    {
+      type: "text" as const,
+      value: `Missing template: ${templateName}`,
+    },
+  ],
+});
+
 const materialize = async ({
   entry,
   sourceState,
@@ -397,54 +635,47 @@ const materialize = async ({
     entry.assetId,
     sourceState.source
   );
-  return materializeMdxSource({
+  const result = await materializeMdxSource({
     source: sourceState.source,
     identity: createExternalContentIdentity(entry, sourceState),
     data,
     metas: componentMetas,
     projectId: entry.projectId,
     parsed: { source: sourceState.source, result: parsed },
+    createUnresolvedTemplateInstance:
+      entry.includeUnresolvedTemplatePlaceholders
+        ? createBuilderUnresolvedTemplateInstance
+        : undefined,
   });
-};
-
-export const createBuilderMdxFragment = (
-  root: MaterializedMdxAuthoredContentRoot
-) => {
-  const transientInstances = root.provenance.unresolvedTemplates.map(
-    ({ markerId, templateName }) => ({
-      type: "instance" as const,
-      id: markerId,
-      component: "ws:element",
-      tag: "div",
-      label: `Missing template: ${templateName}`,
-      children: [
-        {
-          type: "text" as const,
-          value: `Missing template: ${templateName}`,
-        },
-      ],
-    })
-  );
-  const existingInstanceIds = new Set(
-    root.fragment.instances.map(({ id }) => id)
-  );
-  const missingTransientInstances = transientInstances.filter(
-    ({ id }) => existingInstanceIds.has(id) === false
-  );
-  return {
-    fragment: {
-      ...root.fragment,
-      children: [
-        ...root.fragment.children,
-        ...missingTransientInstances.map(({ id }) => ({
-          type: "id" as const,
-          value: id,
-        })),
-      ],
-      instances: [...root.fragment.instances, ...missingTransientInstances],
-    } satisfies WebstudioFragment,
-    transientInstanceIds: new Set(transientInstances.map(({ id }) => id)),
-  };
+  try {
+    const resolved = await resolveExternalContentFrontmatter(
+      entry,
+      sourceState
+    );
+    if (resolved !== undefined) {
+      return {
+        ...result,
+        root: { ...result.root, resolvedFrontmatter: resolved },
+      };
+    }
+  } catch (error) {
+    const diagnostic: ContentBlockDiagnostic = {
+      code: "invalid-mdx",
+      severity: "error",
+      blockInstanceId: entry.sourceBlockInstanceId,
+      assetId: entry.assetId,
+      renderScope: entry.renderScope,
+      message:
+        error instanceof Error
+          ? `Unable to resolve frontmatter references: ${error.message}`
+          : "Unable to resolve frontmatter references",
+    };
+    return {
+      ...result,
+      diagnostics: [...result.diagnostics, diagnostic],
+    };
+  }
+  return result;
 };
 
 const rematerializeAsset = async (
@@ -476,12 +707,20 @@ const rematerializeAsset = async (
       .filter(
         (entry) =>
           entry.projectId === projectId &&
-          entry.assetId === assetId &&
+          (entry.assetId === assetId ||
+            entry.dependencyAssetIds.has(assetId)) &&
           entry.key !== preservedRootKey
       )
       .map(async (entry) => {
         const version = ++entry.openVersion;
-        const result = await materialize({ entry, sourceState });
+        const entrySourceState =
+          entry.assetId === assetId
+            ? sourceState
+            : await getSession(projectId).open(entry.assetId);
+        const result = await materialize({
+          entry,
+          sourceState: entrySourceState,
+        });
         if (roots.get(entry.key) === entry && entry.openVersion === version) {
           installRoot({ entry, ...result });
         }
@@ -520,16 +759,16 @@ const getSession = (projectId: string) => {
 };
 
 const extractRootFragment = ({
-  blockInstanceId,
+  contentInstanceId,
   children: rootChildren,
   transientInstanceIds,
 }: {
-  blockInstanceId: string;
+  contentInstanceId: string;
   children: WebstudioFragment["children"];
   transientInstanceIds: ReadonlySet<string>;
 }) => {
   const data = getWebstudioData();
-  if (data.instances.has(blockInstanceId) === false) {
+  if (data.instances.has(contentInstanceId) === false) {
     throw new Error("Connected Content Block no longer exists");
   }
   const isPersistentChild = (child: WebstudioFragment["children"][number]) =>
@@ -556,7 +795,7 @@ const extractRootFragment = ({
 
 const extractCurrentFragment = (entry: RootEntry) =>
   extractRootFragment({
-    blockInstanceId: entry.blockInstanceId,
+    contentInstanceId: entry.contentInstanceId,
     children: getAuthoredChildren(entry),
     transientInstanceIds: entry.transientInstanceIds,
   });
@@ -812,6 +1051,89 @@ export const updateExternalContentAssetSource = ({
     update: ({ source }) => update(source),
   });
 
+export const updateExternalContentFrontmatter = ({
+  rootKey,
+  path,
+  value,
+  resolvedValue = value,
+}: {
+  rootKey: string;
+  path: readonly string[];
+  value: unknown;
+  resolvedValue?: unknown;
+}) => {
+  const entry = roots.get(rootKey);
+  if (entry === undefined) {
+    return Promise.reject(new Error("Connected Content Block is not open"));
+  }
+  const properties = setObjectPathValue({
+    value: entry.root.document.frontmatter.properties,
+    path,
+    nextValue: value,
+  });
+  entry.root = {
+    ...entry.root,
+    document: {
+      ...entry.root.document,
+      frontmatter: { properties },
+    },
+    resolvedFrontmatter: setObjectPathValue({
+      value:
+        entry.root.resolvedFrontmatter ??
+        entry.root.document.frontmatter.properties,
+      path,
+      nextValue: resolvedValue,
+    }),
+  };
+  registerMutationRoot(entry, entry.installedFragment);
+  return enqueueAssetUpdate({
+    projectId: entry.projectId,
+    assetId: entry.assetId,
+    preservedRootKey: entry.key,
+    update: async (state, queuedDocument) => {
+      if (queuedDocument !== undefined) {
+        const latestProperties = setObjectPathValue({
+          value: queuedDocument.frontmatter.properties,
+          path,
+          nextValue: value,
+        });
+        const document = {
+          ...queuedDocument,
+          frontmatter: { properties: latestProperties },
+        };
+        return { source: serializeMdxDocument(document), document };
+      }
+      const parsed = await parseAssetSource(
+        entry.projectId,
+        entry.assetId,
+        state.source
+      );
+      if (parsed.status !== "parsed") {
+        throw new Error(
+          "The MDX content source must be structurally valid before frontmatter can be saved."
+        );
+      }
+      const latestProperties = setObjectPathValue({
+        value: parsed.document.frontmatter.properties,
+        path,
+        nextValue: value,
+      });
+      const source = await replaceMdxFrontmatter({
+        source: state.source,
+        properties: latestProperties,
+      });
+      const updated = await parseAssetSource(
+        entry.projectId,
+        entry.assetId,
+        source
+      );
+      return updated.status === "parsed"
+        ? { source, document: updated.document }
+        : source;
+    },
+  });
+};
+
 export const replaceExternalContentAssetSource = ({
   projectId,
   assetId,
@@ -890,6 +1212,18 @@ export const acquireExternalContentRoot = async ({
     provenance: { nodes: [], unresolvedTemplates: [] },
   };
   const instanceSelector = parseContentBlockRenderScope(renderScope);
+  const sourceBlock = getWebstudioData().instances.get(blockInstanceId);
+  if (sourceBlock === undefined) {
+    throw new Error("Connected Content Block no longer exists");
+  }
+  const bodyPaths = findContentBlockBodyContainerPaths({
+    blockInstance: sourceBlock,
+    instances: getWebstudioData().instances,
+  });
+  if (bodyPaths.length > 1) {
+    throw new Error("Content Block must contain at most one Body outlet");
+  }
+  const sourceContentInstanceId = bodyPaths[0]?.at(-1)?.id ?? blockInstanceId;
   const runtimeBlockInstanceId =
     instanceSelector !== undefined &&
     isRepeatedContentBlockOccurrence({
@@ -901,12 +1235,24 @@ export const acquireExternalContentRoot = async ({
           path: [-1],
         })()
       : blockInstanceId;
+  const runtimeContentInstanceId =
+    runtimeBlockInstanceId === blockInstanceId ||
+    sourceContentInstanceId === blockInstanceId
+      ? sourceContentInstanceId === blockInstanceId
+        ? runtimeBlockInstanceId
+        : sourceContentInstanceId
+      : createMdxScopeIdGenerator({
+          identity: placeholderRoot.identity,
+          path: [-2],
+        })();
   const entry: RootEntry = {
     key,
     projectId,
     assetId,
     sourceBlockInstanceId: blockInstanceId,
     blockInstanceId: runtimeBlockInstanceId,
+    sourceContentInstanceId,
+    contentInstanceId: runtimeContentInstanceId,
     renderScope,
     root: placeholderRoot,
     installedFragment: placeholderRoot.fragment,
@@ -917,6 +1263,7 @@ export const acquireExternalContentRoot = async ({
     references: 1,
     openVersion: 0,
     saveRevision: 0,
+    dependencyAssetIds: new Set([assetId]),
   };
   roots.set(key, entry);
   registerMutationRoot(entry, placeholderRoot.fragment);
@@ -1082,9 +1429,11 @@ export const getExternalContentRootSnapshot = ({
     assetId: root.identity.assetId,
     diagnostics: root.diagnostics ?? [],
     fragment: extractRootFragment({
-      blockInstanceId: root.blockInstanceId,
+      contentInstanceId: root.contentInstanceId ?? root.blockInstanceId,
       children:
-        getWebstudioData().instances.get(root.blockInstanceId)?.children ?? [],
+        getWebstudioData().instances.get(
+          root.contentInstanceId ?? root.blockInstanceId
+        )?.children ?? [],
       transientInstanceIds: root.transientInstanceIds ?? new Set(),
     }),
     identity: root.identity,
@@ -1112,7 +1461,8 @@ export const getExternalContentRootChildren = ({
   if (root === undefined) {
     return;
   }
-  return (data.instances.get(root.blockInstanceId)?.children ?? []).filter(
+  const contentInstanceId = root.contentInstanceId ?? root.blockInstanceId;
+  return (data.instances.get(contentInstanceId)?.children ?? []).filter(
     (child) =>
       child.type !== "id" ||
       data.instances.get(child.value)?.component !== blockTemplateComponent
@@ -1122,22 +1472,32 @@ export const getExternalContentRootChildren = ({
 export const getExternalContentRootAssets = ({
   projectId,
   blockInstanceIds,
+  renderScopes,
 }: {
   projectId: string;
   blockInstanceIds: ReadonlySet<string>;
+  renderScopes?: ReadonlySet<string>;
 }) => {
   const assets = new Map<string, WebstudioFragment["assets"][number]>();
   const projectAssets = getWebstudioData().assets;
   for (const entry of roots.values()) {
     if (
       entry.projectId !== projectId ||
-      blockInstanceIds.has(entry.sourceBlockInstanceId) === false
+      blockInstanceIds.has(entry.sourceBlockInstanceId) === false ||
+      (renderScopes !== undefined &&
+        renderScopes.has(entry.renderScope) === false)
     ) {
       continue;
     }
     const sourceAsset = projectAssets.get(entry.assetId);
     if (sourceAsset !== undefined) {
       assets.set(sourceAsset.id, sourceAsset);
+    }
+    for (const assetId of entry.dependencyAssetIds) {
+      const asset = projectAssets.get(assetId);
+      if (asset !== undefined) {
+        assets.set(asset.id, asset);
+      }
     }
     for (const asset of entry.root.fragment.assets) {
       assets.set(asset.id, asset);

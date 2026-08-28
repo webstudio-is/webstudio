@@ -135,7 +135,12 @@ describe("materializeMdxSource", () => {
     };
 
     const result = await materializeMdxSource({
-      source: "![Hero](./hero.png)",
+      source: `---
+featureImage:
+  $ref: ./hero.png
+---
+
+![Hero](./hero.png)`,
       identity,
       data: sourceData,
       metas: componentMetas,
@@ -148,6 +153,14 @@ describe("materializeMdxSource", () => {
     expect(result.root.fragment.assets).toEqual([
       expect.objectContaining({ id: "hero" }),
     ]);
+    expect(result.root.resolvedFrontmatter).toMatchObject({
+      featureImage: {
+        id: "hero",
+        src: expect.stringContaining("hero_hash.png"),
+        width: 100,
+        height: 100,
+      },
+    });
   });
 
   test("serializes an Asset selected on an inserted Image template", async () => {

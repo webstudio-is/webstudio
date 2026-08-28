@@ -163,10 +163,14 @@ export const CodeControl = ({
   const editorValue = behavior
     ? behavior.formatValue(computedValue)
     : String(computedValue ?? "");
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    fallbackExpression: JSON.stringify(computedValue),
+  });
   const localValue = useDraftValue(
     editorValue,
     (value) => {
-      if (prop?.type === "expression") {
+      if (binding.bindingState.overwritable === false) {
         return;
       }
       let storedValue = value;
@@ -197,11 +201,6 @@ export const CodeControl = ({
     },
     { autoSave: behavior?.autoSave ?? true }
   );
-
-  const binding = useBindableControl({
-    boundExpression: prop?.type === "expression" ? prop.value : undefined,
-    fallbackExpression: JSON.stringify(computedValue),
-  });
 
   const errorInfo = (
     <ErrorInfo

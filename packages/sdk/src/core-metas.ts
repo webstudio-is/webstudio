@@ -116,7 +116,18 @@ const descendantMeta: WsComponentMeta = {
 
 export const blockComponent = "ws:block";
 
+export const blockBodyComponent = "ws:content-block-body";
+
 export const blockTemplateComponent = "ws:block-template";
+
+export const blockBodyMeta: WsComponentMeta = {
+  category: "hidden",
+  label: "Content Block Body",
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+  },
+};
 
 export const blockTemplateMeta: WsComponentMeta = {
   icon: AddTemplateInstanceIcon,
@@ -131,7 +142,8 @@ const blockMeta: WsComponentMeta = {
   icon: ContentBlockIcon,
   contentModel: {
     category: "instance",
-    children: [blockTemplateComponent, "instance"],
+    children: [blockBodyComponent, blockTemplateComponent, "instance"],
+    descendants: [blockBodyComponent],
   },
   initialProps: [contentBlockSourceProp],
   props: {
@@ -154,6 +166,7 @@ export const coreMetas = {
   [collectionComponent]: collectionMeta,
   [descendantComponent]: descendantMeta,
   [blockComponent]: blockMeta,
+  [blockBodyComponent]: blockBodyMeta,
   [blockTemplateComponent]: blockTemplateMeta,
 };
 
@@ -165,9 +178,11 @@ export const isCoreComponent = (component: Instance["component"]) =>
   component === collectionComponent ||
   component === descendantComponent ||
   component === blockComponent ||
+  component === blockBodyComponent ||
   component === blockTemplateComponent;
 
 export const isComponentDetachable = (component: Instance["component"]) =>
   component !== rootComponent &&
+  component !== blockBodyComponent &&
   component !== blockTemplateComponent &&
   component !== descendantComponent;

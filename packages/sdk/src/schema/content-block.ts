@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prop } from "./props";
 
 export const contentBlockSourceProp = "src";
+export const contentBlockDocumentProp = "document";
 
 export const contentBlockSource = z.discriminatedUnion("type", [
   z.strictObject({

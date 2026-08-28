@@ -1,6 +1,13 @@
 import { createAssetContentRevision, isMdxFileAsset } from "./assets";
-import { parseJsonExpression } from "@webstudio-is/expression";
-import { blockComponent, blockTemplateComponent } from "./core-metas";
+import {
+  parseJsonExpression,
+  parseStaticMemberPath,
+} from "@webstudio-is/expression";
+import {
+  blockBodyComponent,
+  blockComponent,
+  blockTemplateComponent,
+} from "./core-metas";
 import {
   contentBlockSourceProp,
   contentBlockSourcePropSchema,
@@ -10,6 +17,7 @@ import {
 import type { Asset } from "./schema/assets";
 import type { Instance, Instances } from "./schema/instances";
 import type { Prop } from "./schema/props";
+import { decodeDataSourceVariable } from "./expression";
 
 export const createContentBlockExternalContentIdentity = ({
   blockInstanceId,
@@ -142,6 +150,26 @@ export const getStaticContentBlockSourceAssetId = (
   return typeof value === "string" ? value : undefined;
 };
 
+/** Returns the frontmatter path referenced by a direct document binding. */
+export const getContentBlockDocumentBindingPath = ({
+  expression,
+  documentDataSourceId,
+}: {
+  expression: string;
+  documentDataSourceId: string;
+}) => {
+  const path = parseStaticMemberPath(expression);
+  if (
+    path === undefined ||
+    decodeDataSourceVariable(path[0]) !== documentDataSourceId ||
+    path[1] !== "frontmatter" ||
+    path.length < 3
+  ) {
+    return;
+  }
+  return path.slice(2);
+};
+
 export const findContentBlockTemplateContainers = ({
   blockInstance,
   instances,
@@ -152,11 +180,89 @@ export const findContentBlockTemplateContainers = ({
   if (blockInstance.component !== blockComponent) {
     return [];
   }
-  return blockInstance.children.flatMap((child) => {
+  return (blockInstance.children ?? []).flatMap((child) => {
     const instance =
       child.type === "id" ? instances.get(child.value) : undefined;
     return instance?.component === blockTemplateComponent ? [instance] : [];
   });
+};
+
+export const findContentBlockBodyContainers = ({
+  blockInstance,
+  instances,
+}: {
+  blockInstance: Instance;
+  instances: Pick<Instances, "get">;
+}) => {
+  return findContentBlockBodyContainerPaths({
+    blockInstance,
+    instances,
+  }).map((path) => path.at(-1)!);
+};
+
+/** Finds descendant paths from a Content Block child to each Body outlet. */
+export const findContentBlockBodyContainerPaths = ({
+  blockInstance,
+  instances,
+}: {
+  blockInstance: Instance;
+  instances: Pick<Instances, "get">;
+}) => {
+  if (blockInstance.component !== blockComponent) {
+    return [];
+  }
+  const paths: Instance[][] = [];
+  const visiting = new Set<Instance["id"]>();
+  const visit = (instance: Instance, path: Instance[]) => {
+    if (visiting.has(instance.id)) {
+      return;
+    }
+    if (instance.component === blockBodyComponent) {
+      paths.push([...path, instance]);
+      return;
+    }
+    if (
+      instance.component === blockTemplateComponent ||
+      instance.component === blockComponent
+    ) {
+      return;
+    }
+    visiting.add(instance.id);
+    for (const child of instance.children ?? []) {
+      const childInstance =
+        child.type === "id" ? instances.get(child.value) : undefined;
+      if (childInstance !== undefined) {
+        visit(childInstance, [...path, instance]);
+      }
+    }
+    visiting.delete(instance.id);
+  };
+  for (const child of blockInstance.children ?? []) {
+    const childInstance =
+      child.type === "id" ? instances.get(child.value) : undefined;
+    if (childInstance !== undefined) {
+      visit(childInstance, []);
+    }
+  }
+  return paths;
+};
+
+/**
+ * Returns the container whose children represent document.body. Existing
+ * Content Blocks without an explicit Body outlet keep using the block itself.
+ */
+export const getContentBlockBodyContainer = ({
+  blockInstance,
+  instances,
+}: {
+  blockInstance: Instance;
+  instances: Pick<Instances, "get">;
+}) => {
+  const bodies = findContentBlockBodyContainers({ blockInstance, instances });
+  if (bodies.length > 1) {
+    return;
+  }
+  return bodies[0] ?? blockInstance;
 };
 
 export type ContentBlockSourceIntegrityIssue =

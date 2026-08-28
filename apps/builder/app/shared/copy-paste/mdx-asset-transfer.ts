@@ -4,6 +4,14 @@ import {
   rewriteMdxAssetReferences,
 } from "@webstudio-is/content-engine/mdx";
 import {
+  MarkdownAssetReferenceError,
+  rewriteMarkdownAssetReferences,
+} from "@webstudio-is/content-engine/markdown-assets";
+import {
+  JsonAssetReferenceError,
+  rewriteJsonAssetReferences,
+} from "@webstudio-is/content-engine";
+import {
   formatAssetName,
   getAssetUrl,
   isMdxFileAsset,
@@ -15,6 +23,7 @@ import {
   openExternalContentAsset,
   updateExternalContentAssetSource,
 } from "../external-content-roots";
+import { updateAssetContent } from "~/builder/shared/assets/update-asset-content";
 
 const getRootAssetPath = (asset: Asset) =>
   createCanonicalAssetPath({
@@ -22,7 +31,7 @@ const getRootAssetPath = (asset: Asset) =>
     name: formatAssetName(asset),
   });
 
-export const rewriteTransferredMdxAssets = async ({
+export const rewriteTransferredDocumentAssetReferences = async ({
   sourceOrigin,
   projectId,
   sourceAssets,
@@ -32,19 +41,23 @@ export const rewriteTransferredMdxAssets = async ({
     const response = await builderFetch(getAssetUrl(asset, sourceOrigin));
     if (response.ok === false) {
       throw new Error(
-        `Unable to read copied MDX Asset "${formatAssetName(asset)}"`
+        `Unable to read copied content Asset "${formatAssetName(asset)}"`
       );
     }
     return response.text();
   },
-  writeSource = async (assetId: string, source: string) => {
-    await openExternalContentAsset({ projectId, assetId });
+  writeSource = async (asset: Asset, source: string) => {
+    if (isMdxFileAsset(asset) === false) {
+      await updateAssetContent({ asset, content: source });
+      return;
+    }
+    await openExternalContentAsset({ projectId, assetId: asset.id });
     await updateExternalContentAssetSource({
       projectId,
-      assetId,
+      assetId: asset.id,
       update: () => source,
     });
-    await flushExternalContentAsset({ projectId, assetId });
+    await flushExternalContentAsset({ projectId, assetId: asset.id });
   },
 }: {
   sourceOrigin: string;
@@ -53,7 +66,7 @@ export const rewriteTransferredMdxAssets = async ({
   sourceAssetPaths?: Readonly<Record<string, string>>;
   importedAssets: ReadonlyMap<Asset["id"], Asset>;
   readSource?: (asset: Asset) => Promise<string>;
-  writeSource?: (assetId: string, source: string) => Promise<void>;
+  writeSource?: (asset: Asset, source: string) => Promise<void>;
 }) => {
   const assetPaths = new Map(
     sourceAssets.map((asset) => [
@@ -72,8 +85,11 @@ export const rewriteTransferredMdxAssets = async ({
   const skippedInvalidAssetIds: string[] = [];
   for (const sourceAsset of sourceAssets) {
     const imported = importedAssets.get(sourceAsset.id);
+    const format = sourceAsset.format.toLowerCase();
     if (
-      isMdxFileAsset(sourceAsset) === false ||
+      (isMdxFileAsset(sourceAsset) === false &&
+        (sourceAsset.type !== "file" ||
+          (format !== "md" && format !== "json"))) ||
       imported === undefined ||
       imported.id === sourceAsset.id
     ) {
@@ -82,21 +98,31 @@ export const rewriteTransferredMdxAssets = async ({
     const source = await readSource(sourceAsset);
     let rewritten: string;
     try {
-      rewritten = await rewriteMdxAssetReferences({
+      const rewrite =
+        format === "mdx"
+          ? rewriteMdxAssetReferences
+          : format === "md"
+            ? rewriteMarkdownAssetReferences
+            : rewriteJsonAssetReferences;
+      rewritten = await rewrite({
         source,
         sourcePath: assetPaths.get(sourceAsset.id)!,
         assetPaths,
         replacementPaths,
       });
     } catch (error) {
-      if (error instanceof MdxDocumentError) {
+      if (
+        error instanceof MdxDocumentError ||
+        error instanceof MarkdownAssetReferenceError ||
+        error instanceof JsonAssetReferenceError
+      ) {
         skippedInvalidAssetIds.push(sourceAsset.id);
         continue;
       }
       throw error;
     }
     if (rewritten !== source) {
-      await writeSource(imported.id, rewritten);
+      await writeSource(imported, rewritten);
     }
   }
   return { skippedInvalidAssetIds };

@@ -18,8 +18,12 @@ export const JsonControl = ({
 }: ControlProps<"json">) => {
   const [error, setError] = useState<boolean>(false);
   const valueString = formatValue(computedValue ?? "");
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    fallbackExpression: valueString,
+  });
   const localValue = useDraftValue(valueString, (value) => {
-    if (prop?.type === "expression") {
+    if (binding.bindingState.overwritable === false) {
       return;
     }
     const isLiteral = isLiteralExpression(value);
@@ -35,11 +39,6 @@ export const JsonControl = ({
     } catch {
       // empty block
     }
-  });
-
-  const binding = useBindableControl({
-    boundExpression: prop?.type === "expression" ? prop.value : undefined,
-    fallbackExpression: valueString,
   });
 
   return (

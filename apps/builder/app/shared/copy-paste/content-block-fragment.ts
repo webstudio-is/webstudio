@@ -3,16 +3,21 @@ import {
   discoverNamedMdxAssetReferences,
   parseMdxDocumentRecovering,
 } from "@webstudio-is/content-engine/mdx";
+import { discoverNamedMarkdownDocumentAssetReferences } from "@webstudio-is/content-engine/markdown-assets";
+import { discoverNamedJsonAssetReferences } from "@webstudio-is/content-engine";
 import {
   createWebstudioDataFromFragment,
   extractWebstudioFragment,
+  isDescendantOrSelf,
   mergeWebstudioFragments,
 } from "@webstudio-is/project-build/runtime";
 import {
   blockComponent,
   blockTemplateComponent,
+  contentBlockSourceProp,
   createAssetFolderHierarchy,
   formatAssetName,
+  findContentBlockBodyContainers,
   getContentBlockSource,
   getStaticContentBlockSourceAssetId,
   isMdxFileAsset,
@@ -25,14 +30,73 @@ import {
   openExternalContentAsset,
 } from "../external-content-roots";
 
+export const resolveRepeatedContentBlockSourcesForCopy = ({
+  fragment,
+  selectedInstanceSelector,
+  occurrences,
+}: {
+  fragment: WebstudioFragment;
+  selectedInstanceSelector: readonly string[];
+  occurrences: ReadonlyArray<
+    Readonly<{
+      sourceBlockInstanceId: string;
+      sourceRenderScope: string;
+      sourceInstanceSelector: readonly string[];
+      assetId: string;
+    }>
+  >;
+}) => {
+  const selectedOccurrences = occurrences.filter(({ sourceInstanceSelector }) =>
+    isDescendantOrSelf(
+      [...sourceInstanceSelector],
+      [...selectedInstanceSelector]
+    )
+  );
+  const occurrencesByBlockId = new Map<string, typeof selectedOccurrences>();
+  for (const occurrence of selectedOccurrences) {
+    const blockOccurrences =
+      occurrencesByBlockId.get(occurrence.sourceBlockInstanceId) ?? [];
+    blockOccurrences.push(occurrence);
+    occurrencesByBlockId.set(
+      occurrence.sourceBlockInstanceId,
+      blockOccurrences
+    );
+  }
+  return {
+    fragment: {
+      ...fragment,
+      props: fragment.props.map((prop) => {
+        const blockOccurrences = occurrencesByBlockId.get(prop.instanceId);
+        if (
+          prop.name !== contentBlockSourceProp ||
+          prop.type !== "expression" ||
+          blockOccurrences?.length !== 1
+        ) {
+          return prop;
+        }
+        return {
+          ...prop,
+          type: "asset" as const,
+          value: blockOccurrences[0].assetId,
+        };
+      }),
+    },
+    renderScopes: new Set(
+      selectedOccurrences.map(({ sourceRenderScope }) => sourceRenderScope)
+    ),
+  };
+};
+
 export const prepareConnectedContentBlockFragment = ({
   fragment,
   projectId,
   assets,
+  renderScopes,
 }: {
   fragment: WebstudioFragment;
   projectId: string | undefined;
   assets?: ReadonlyMap<Asset["id"], Asset>;
+  renderScopes?: ReadonlySet<string>;
 }) => {
   const data = createWebstudioDataFromFragment(fragment);
   let changed = false;
@@ -52,14 +116,25 @@ export const prepareConnectedContentBlockFragment = ({
     if (staticAssetId !== undefined) {
       staticSourceAssetIds.add(staticAssetId);
     }
-    data.instances.set(instance.id, {
-      ...instance,
-      children: instance.children.filter(
-        (child) =>
-          child.type === "id" &&
-          data.instances.get(child.value)?.component === blockTemplateComponent
-      ),
+    const bodyContainers = findContentBlockBodyContainers({
+      blockInstance: instance,
+      instances: data.instances,
     });
+    if (bodyContainers.length === 0) {
+      data.instances.set(instance.id, {
+        ...instance,
+        children: instance.children.filter(
+          (child) =>
+            child.type === "id" &&
+            data.instances.get(child.value)?.component ===
+              blockTemplateComponent
+        ),
+      });
+    } else {
+      for (const body of bodyContainers) {
+        data.instances.set(body.id, { ...body, children: [] });
+      }
+    }
     changed = true;
   }
   const prepared =
@@ -94,6 +169,7 @@ export const prepareConnectedContentBlockFragment = ({
   for (const asset of getExternalContentRootAssets({
     projectId,
     blockInstanceIds,
+    renderScopes,
   })) {
     if (assetIds.has(asset.id) === false) {
       assetIds.add(asset.id);
@@ -154,8 +230,12 @@ export const includeMdxAssetDependencies = async ({
   discoveryCache?: Map<string, Promise<readonly string[] | undefined>>;
   readSource?: (assetId: string) => Promise<string>;
 }) => {
+  const isContentDocument = (asset: Asset) =>
+    isMdxFileAsset(asset) ||
+    (asset.type === "file" &&
+      ["md", "json"].includes(asset.format.toLowerCase()));
   const included = new Map(fragment.assets.map((asset) => [asset.id, asset]));
-  const pending = fragment.assets.filter(isMdxFileAsset);
+  const pending = fragment.assets.filter(isContentDocument);
   const inspected = new Set<string>();
   const skippedAssetIds: string[] = [];
   const folderHierarchy = createAssetFolderHierarchy(assetFolders);
@@ -177,6 +257,25 @@ export const includeMdxAssetDependencies = async ({
       discovery = (async () => {
         try {
           const source = await readSource(sourceAsset.id);
+          const namedAssets = Array.from(assets.values(), getNamedAsset);
+          if (sourceAsset.format.toLowerCase() === "json") {
+            return (
+              await discoverNamedJsonAssetReferences({
+                source,
+                asset: getNamedAsset(sourceAsset),
+                assets: namedAssets,
+              })
+            ).map(({ assetId }) => assetId);
+          }
+          if (isMdxFileAsset(sourceAsset) === false) {
+            return (
+              await discoverNamedMarkdownDocumentAssetReferences({
+                markdown: source,
+                source: getNamedAsset(sourceAsset),
+                assets: namedAssets,
+              })
+            ).map(({ assetId }) => assetId);
+          }
           const parsed = await parseMdxDocumentRecovering({ source });
           if (parsed.status === "unrecoverable") {
             return;
@@ -184,7 +283,7 @@ export const includeMdxAssetDependencies = async ({
           return discoverNamedMdxAssetReferences({
             document: parsed.document,
             source: getNamedAsset(sourceAsset),
-            assets: Array.from(assets.values(), getNamedAsset),
+            assets: namedAssets,
           }).map(({ assetId }) => assetId);
         } catch {
           return;
@@ -203,7 +302,7 @@ export const includeMdxAssetDependencies = async ({
         continue;
       }
       included.set(assetId, dependency);
-      if (isMdxFileAsset(dependency)) {
+      if (isContentDocument(dependency)) {
         pending.push(dependency);
       }
     }

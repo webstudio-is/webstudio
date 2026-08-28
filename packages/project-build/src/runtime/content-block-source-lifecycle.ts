@@ -1,7 +1,10 @@
 import {
+  blockBodyComponent,
   blockComponent,
+  contentBlockDocumentProp,
   contentBlockSourceProp,
   createId,
+  findContentBlockBodyContainers,
   findContentBlockTemplateContainers,
   isEqualContentBlockSource,
   parseContentBlockSourceProp,
@@ -36,12 +39,25 @@ const getBlockParts = (state: BuilderState, blockInstanceId: string) => {
     type: "id" as const,
     value: templateContainer.id,
   };
+  const bodyContainers = findContentBlockBodyContainers({
+    blockInstance: block,
+    instances: state.instances ?? new Map(),
+  });
+  if (bodyContainers.length > 1) {
+    throw new Error("Content Block must contain at most one Body outlet");
+  }
+  const bodyContainer = bodyContainers[0] ?? block;
   return {
     block,
+    bodyContainer,
     templateChild,
-    bodyChildren: block.children.filter(
-      (child) => child.type !== "id" || child.value !== templateContainer.id
-    ),
+    bodyChildren:
+      bodyContainer === block
+        ? block.children.filter(
+            (child) =>
+              child.type !== "id" || child.value !== templateContainer.id
+          )
+        : bodyContainer.children,
   };
 };
 
@@ -125,6 +141,58 @@ const createSourcePayload = ({
   ];
 };
 
+const createDocumentParameterPayload = (
+  state: BuilderState,
+  blockInstanceId: string
+): BuilderPatchChange[] => {
+  const existing = Array.from(state.props?.values() ?? []).find(
+    (prop) =>
+      prop.instanceId === blockInstanceId &&
+      prop.name === contentBlockDocumentProp
+  );
+  if (existing?.type === "parameter") {
+    return [];
+  }
+  if (existing !== undefined) {
+    throw new Error("Content Block document prop must be a parameter");
+  }
+  const dataSourceId = createId("nano");
+  const propId = createId("nano");
+  return [
+    {
+      namespace: "dataSources",
+      patches: [
+        {
+          op: "add",
+          path: [dataSourceId],
+          value: {
+            type: "parameter",
+            id: dataSourceId,
+            scopeInstanceId: blockInstanceId,
+            name: contentBlockDocumentProp,
+          },
+        },
+      ],
+    },
+    {
+      namespace: "props",
+      patches: [
+        {
+          op: "add",
+          path: [propId],
+          value: {
+            id: propId,
+            instanceId: blockInstanceId,
+            name: contentBlockDocumentProp,
+            type: "parameter",
+            value: dataSourceId,
+          },
+        },
+      ],
+    },
+  ];
+};
+
 const createContentBlockBodyRemoval = ({
   state,
   blockInstanceId,
@@ -132,7 +200,7 @@ const createContentBlockBodyRemoval = ({
   state: BuilderState;
   blockInstanceId: string;
 }) => {
-  const { block, templateChild, bodyChildren } = getBlockParts(
+  const { block, bodyContainer, templateChild, bodyChildren } = getBlockParts(
     state,
     blockInstanceId
   );
@@ -154,18 +222,44 @@ const createContentBlockBodyRemoval = ({
   if (cleanup !== undefined && "errors" in cleanup && cleanup.errors.length) {
     throw new Error("Content Block body is not a valid instance tree");
   }
+  const bodyInstanceId =
+    bodyContainer === block ? createId("nano") : bodyContainer.id;
+  const createBodyPayload: BuilderPatchChange[] =
+    bodyContainer === block
+      ? [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                op: "add",
+                path: [bodyInstanceId],
+                value: {
+                  type: "instance",
+                  id: bodyInstanceId,
+                  component: blockBodyComponent,
+                  children: [],
+                },
+              },
+            ],
+          },
+        ]
+      : [];
   return {
     hasBody: bodyChildren.length > 0,
     projectPayload: mergeBuilderPatchChanges(
       cleanup === undefined || Array.isArray(cleanup) ? [] : cleanup.payload,
+      createBodyPayload,
       [
         {
           namespace: "instances",
           patches: [
             {
               op: "replace",
-              path: [block.id, "children"],
-              value: [templateChild],
+              path: [bodyContainer.id, "children"],
+              value:
+                bodyContainer === block
+                  ? [templateChild, { type: "id", value: bodyInstanceId }]
+                  : [],
             },
           ],
         },
@@ -200,7 +294,8 @@ export const prepareContentBlockConnect = ({
         state,
         blockInstanceId,
         source,
-      })
+      }),
+      createDocumentParameterPayload(state, blockInstanceId)
     ),
     requiresConfirmation: existing === undefined && removal.hasBody,
   };
@@ -221,11 +316,14 @@ export const prepareContentBlockSwitch = ({
   }
   return {
     action: "switch",
-    projectPayload: createSourcePayload({
-      state,
-      blockInstanceId,
-      source,
-    }),
+    projectPayload: mergeBuilderPatchChanges(
+      createSourcePayload({
+        state,
+        blockInstanceId,
+        source,
+      }),
+      createDocumentParameterPayload(state, blockInstanceId)
+    ),
     requiresConfirmation: false,
   };
 };

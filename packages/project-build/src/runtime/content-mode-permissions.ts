@@ -9,7 +9,11 @@ import {
   styleSourceSelection,
   pagePath,
   blockComponent,
+  contentBlockDocumentProp,
   blockTemplateComponent,
+  findContentBlockBodyContainers,
+  getContentBlockSource,
+  getContentBlockDocumentBindingPath,
   getHtmlTagsFromProps,
   getHtmlTagFromInstance,
   isPathnamePattern,
@@ -47,6 +51,8 @@ export type ContentModeCapabilities = {
   styles: Styles;
   breakpoints?: Breakpoints;
   contentRootIds: Set<Instance["id"]>;
+  frontmatterBoundPropIds?: ReadonlySet<Prop["id"]>;
+  frontmatterBoundTextInstanceIds?: ReadonlySet<Instance["id"]>;
 };
 
 type ContentModeTransactionContext = {
@@ -178,10 +184,98 @@ const getDefaultContentRootIds = (instances: Map<Instance["id"], Instance>) => {
   const contentRootIds = new Set<Instance["id"]>();
   for (const instance of instances.values()) {
     if (instance.component === blockComponent) {
-      contentRootIds.add(instance.id);
+      const bodies = findContentBlockBodyContainers({
+        blockInstance: instance,
+        instances,
+      });
+      if (bodies.length === 1) {
+        contentRootIds.add(bodies[0].id);
+      } else if (bodies.length === 0) {
+        contentRootIds.add(instance.id);
+      }
     }
   }
   return contentRootIds;
+};
+
+export const getContentModeFrontmatterBoundTargets = ({
+  instances,
+  props,
+}: {
+  instances: Map<Instance["id"], Instance>;
+  props: Props;
+}) => {
+  const propsByInstanceId = new Map<Instance["id"], Prop[]>();
+  for (const prop of props.values()) {
+    const instanceProps = propsByInstanceId.get(prop.instanceId) ?? [];
+    instanceProps.push(prop);
+    propsByInstanceId.set(prop.instanceId, instanceProps);
+  }
+  const propIds = new Set<Prop["id"]>();
+  const textInstanceIds = new Set<Instance["id"]>();
+  for (const block of instances.values()) {
+    if (
+      block.component !== blockComponent ||
+      getContentBlockSource({
+        blockInstanceId: block.id,
+        props: propsByInstanceId.get(block.id) ?? [],
+      }) === undefined
+    ) {
+      continue;
+    }
+    const documentDataSourceId = propsByInstanceId
+      .get(block.id)
+      ?.find(
+        (prop) =>
+          prop.name === contentBlockDocumentProp && prop.type === "parameter"
+      )?.value;
+    if (typeof documentDataSourceId !== "string") {
+      continue;
+    }
+    const visiting = new Set<Instance["id"]>();
+    const visit = (instanceId: Instance["id"]) => {
+      const instance = instances.get(instanceId);
+      if (
+        instance === undefined ||
+        visiting.has(instanceId) ||
+        instance.component === blockTemplateComponent ||
+        (instance.component === blockComponent && instance.id !== block.id)
+      ) {
+        return;
+      }
+      visiting.add(instanceId);
+      const [onlyChild] = instance.children ?? [];
+      if (
+        instance.children.length === 1 &&
+        onlyChild?.type === "expression" &&
+        getContentBlockDocumentBindingPath({
+          expression: onlyChild.value,
+          documentDataSourceId,
+        }) !== undefined
+      ) {
+        textInstanceIds.add(instance.id);
+      }
+      for (const prop of propsByInstanceId.get(instance.id) ?? []) {
+        if (
+          prop.type === "expression" &&
+          getContentBlockDocumentBindingPath({
+            expression: prop.value,
+            documentDataSourceId,
+          }) !== undefined
+        ) {
+          propIds.add(prop.id);
+        }
+      }
+      for (const child of instance.children ?? []) {
+        if (child.type === "id") {
+          visit(child.value);
+        }
+      }
+      visiting.delete(instanceId);
+    };
+    visit(block.id);
+  }
+  return { propIds, textInstanceIds };
 };
 
 export const getContentModeEditableInstanceIds = ({
@@ -437,6 +531,10 @@ export const getContentModeCapabilities = ({
     contentRootIds,
     instances,
   });
+  const frontmatterTargets = getContentModeFrontmatterBoundTargets({
+    instances,
+    props,
+  });
   const capabilities = {
     editablePropIds,
     editableInstanceIds,
@@ -449,6 +547,8 @@ export const getContentModeCapabilities = ({
     styles,
     breakpoints,
     contentRootIds,
+    frontmatterBoundPropIds: frontmatterTargets.propIds,
+    frontmatterBoundTextInstanceIds: frontmatterTargets.textInstanceIds,
   };
   for (const prop of props.values()) {
     const instance = instances.get(prop.instanceId);
@@ -473,7 +573,7 @@ const isContentModePropPatchValue = ({
   value,
 }: {
   capabilities: ContentModeCapabilities;
-  editableInstanceIds: Set<Instance["id"]>;
+  editableInstanceIds: ReadonlySet<Instance["id"]>;
   expectedPropId: Prop["id"];
   value: unknown;
 }) => {
@@ -1627,7 +1727,14 @@ export const applyContentModeTransaction = ({
     contentRootIds: transactionCapabilities.contentRootIds,
     instances: transactionCapabilities.instances,
   });
+  const frontmatterTargets = getContentModeFrontmatterBoundTargets({
+    instances: transactionCapabilities.instances,
+    props: transactionCapabilities.props,
+  });
   transactionCapabilities.editableInstanceIds = context.editableInstanceIds;
+  transactionCapabilities.frontmatterBoundPropIds = frontmatterTargets.propIds;
+  transactionCapabilities.frontmatterBoundTextInstanceIds =
+    frontmatterTargets.textInstanceIds;
 
   for (const change of transaction.payload) {
     if (change.namespace !== "styleSources") {

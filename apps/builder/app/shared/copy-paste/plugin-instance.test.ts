@@ -47,6 +47,7 @@ import {
 } from "../slot-test-utils";
 import { pasteHandled } from "./copy-paste";
 import { initBuilderApi } from "../builder-api";
+import { $externalContentRoots } from "../external-content-mutations";
 
 const expectString = expect.any(String) as unknown as string;
 
@@ -177,8 +178,9 @@ describe("copy and cut guards", () => {
       toMap([
         createInstance("body", "Body", [{ type: "id", value: "collection" }]),
         createInstance("collection", collectionComponent, [
-          { type: "id", value: "block" },
+          { type: "id", value: "item" },
         ]),
+        createInstance("item", "Box", [{ type: "id", value: "block" }]),
         createInstance("block", blockComponent, [
           { type: "id", value: "templates" },
           { type: "id", value: "mdx-heading" },
@@ -238,7 +240,31 @@ describe("copy and cut guards", () => {
         },
       ])
     );
-    selectInstance(["block", "collection[0]", "collection", "body"]);
+    const renderScope = '["block","item","collection[0]","collection","body"]';
+    $externalContentRoots.set(
+      new Map([
+        [
+          "post-root",
+          {
+            sourceBlockInstanceId: "block",
+            sourceRenderScope: renderScope,
+            blockInstanceId: "runtime-block",
+            renderScope,
+            instanceIds: new Set<string>(),
+            mutationRevision: 0,
+            identity: {
+              blockInstanceId: "block",
+              assetId: "post",
+              revision: "revision",
+              contentRef: "post.mdx",
+              format: "mdx",
+              renderScope,
+            },
+          },
+        ],
+      ])
+    );
+    selectInstance(["item", "collection[0]", "collection", "body"]);
 
     const clipboardData = instanceText.onCopy?.();
     const fragment = JSON.parse(clipboardData ?? "")[
@@ -259,6 +285,7 @@ describe("copy and cut guards", () => {
     expect(fragment.instances).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: "block" }),
+        expect.objectContaining({ id: "item" }),
         expect.objectContaining({ id: "templates" }),
       ])
     );
@@ -296,6 +323,7 @@ describe("copy and cut guards", () => {
     ).toBe(false);
 
     importAssets.mockRestore();
+    $externalContentRoots.set(new Map());
     $props.set(new Map());
     $assets.set(new Map());
     setPageRoot("body0");

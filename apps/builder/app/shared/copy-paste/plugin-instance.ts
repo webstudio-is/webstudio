@@ -28,6 +28,7 @@ import { shallowEqual } from "shallow-equal";
 import { toast } from "@webstudio-is/design-system";
 import {
   blockComponent,
+  contentBlockSourceProp,
   getContentBlockSource,
   isMdxFileAsset,
   type Instance,
@@ -52,14 +53,20 @@ import { reportFragmentContentModelWarnings } from "./fragment-utils";
 import { transferFragmentAssets } from "./asset-transfer-utils";
 import {
   isRepeatedContentBlockOccurrence,
+  parseContentBlockRenderScope,
   resolveContentBlockOccurrenceAssetId,
 } from "../content-block-source-utils";
-import { rewriteTransferredMdxAssets } from "./mdx-asset-transfer";
+import { rewriteTransferredDocumentAssetReferences } from "./mdx-asset-transfer";
 import {
   createClipboardAssetPaths,
   hasDynamicContentBlockSource,
   prepareConnectedContentBlockFragment,
+  resolveRepeatedContentBlockSourcesForCopy,
 } from "./content-block-fragment";
+import {
+  $externalContentRoots,
+  getExternalContentSourceSelector,
+} from "../external-content-mutations";
 
 const invalidPasteDataMessage =
   "Could not paste Webstudio instance data. The clipboard data appears to be incomplete or invalid.";
@@ -87,10 +94,84 @@ const getTreeData = (
 
   const data = getWebstudioData();
   const project = $project.get();
-  const fragment = prepareConnectedContentBlockFragment({
-    fragment: extractWebstudioFragment(data, targetInstanceId),
+  const sourceInstanceSelector =
+    instance?.component === blockComponent
+      ? getExternalContentSourceSelector({
+          selector: instanceSelector,
+          roots: $externalContentRoots.get(),
+        })?.sourceSelector
+      : undefined;
+  const copyInstanceSelector = sourceInstanceSelector ?? instanceSelector;
+  let fragment = extractWebstudioFragment(data, copyInstanceSelector[0]);
+  let renderScopes: ReadonlySet<string> | undefined;
+  const isRepeatedOccurrence = isRepeatedContentBlockOccurrence({
+    instanceSelector,
+    instances,
+  });
+  if (isRepeatedOccurrence) {
+    const resolved = resolveRepeatedContentBlockSourcesForCopy({
+      fragment,
+      selectedInstanceSelector: copyInstanceSelector,
+      occurrences: Array.from($externalContentRoots.get().values()).flatMap(
+        (root) => {
+          const sourceInstanceSelector = parseContentBlockRenderScope(
+            root.sourceRenderScope ?? root.renderScope ?? ""
+          );
+          const sourceBlockInstanceId =
+            root.sourceBlockInstanceId ?? root.blockInstanceId;
+          return root.identity === undefined ||
+            sourceInstanceSelector === undefined
+            ? []
+            : [
+                {
+                  sourceBlockInstanceId,
+                  sourceRenderScope:
+                    root.sourceRenderScope ?? root.renderScope ?? "",
+                  sourceInstanceSelector,
+                  assetId: root.identity.assetId,
+                },
+              ];
+        }
+      ),
+    });
+    fragment = resolved.fragment;
+    renderScopes = resolved.renderScopes;
+  }
+  if (instance?.component === blockComponent) {
+    const source = getContentBlockSource({
+      blockInstanceId: copyInstanceSelector[0],
+      props: data.props.values(),
+    });
+    const resolvedAssetId =
+      source?.type === "expression"
+        ? resolveContentBlockOccurrenceAssetId({
+            source,
+            instanceSelector,
+            variableValuesByRenderScope:
+              $variableValuesByInstanceSelector.get(),
+          })
+        : undefined;
+    const resolvedAsset =
+      resolvedAssetId === undefined
+        ? undefined
+        : data.assets.get(resolvedAssetId);
+    if (resolvedAsset !== undefined && isMdxFileAsset(resolvedAsset)) {
+      fragment = {
+        ...fragment,
+        props: fragment.props.map((prop) =>
+          prop.instanceId === copyInstanceSelector[0] &&
+          prop.name === contentBlockSourceProp
+            ? { ...prop, type: "asset" as const, value: resolvedAsset.id }
+            : prop
+        ),
+      };
+    }
+  }
+  fragment = prepareConnectedContentBlockFragment({
+    fragment,
     projectId: project?.id,
     assets: data.assets,
+    renderScopes,
   });
   const hasDynamicContentSource = hasDynamicContentBlockSource(fragment);
   if (
@@ -102,42 +183,10 @@ const getTreeData = (
       "Dynamic MDX sources are copied from the Collection items currently rendered on the canvas."
     );
   }
-  const isRepeatedOccurrence = isRepeatedContentBlockOccurrence({
-    instanceSelector,
-    instances,
-  });
-  if (instance?.component === blockComponent && isRepeatedOccurrence) {
-    const source = getContentBlockSource({
-      blockInstanceId: targetInstanceId,
-      props: data.props.values(),
-    });
-    if (source?.type === "expression") {
-      const resolvedAssetId = resolveContentBlockOccurrenceAssetId({
-        source,
-        instanceSelector,
-        variableValuesByRenderScope: $variableValuesByInstanceSelector.get(),
-      });
-      const asset =
-        resolvedAssetId === undefined
-          ? undefined
-          : data.assets.get(resolvedAssetId);
-      if (asset !== undefined && isMdxFileAsset(asset)) {
-        fragment.props = fragment.props.map((prop) =>
-          prop.instanceId === targetInstanceId && prop.name === "src"
-            ? { ...prop, type: "asset" as const, value: asset.id }
-            : prop
-        );
-        if (fragment.assets.some(({ id }) => id === asset.id) === false) {
-          fragment.assets.push(asset);
-        }
-      }
-    }
-  }
-
   return {
     sourceOrigin: window.location.origin,
     assetPaths: createClipboardAssetPaths(fragment.assets, $assetFolders.get()),
-    instanceSelector,
+    instanceSelector: copyInstanceSelector,
     ...fragment,
   };
 };
@@ -251,11 +300,21 @@ const findPasteTarget = (
   const instances = $instances.get();
 
   const instanceSelector = $selectedInstanceSelector.get();
+  const selectedSourceSelector =
+    instanceSelector === undefined
+      ? undefined
+      : getExternalContentSourceSelector({
+          selector: instanceSelector,
+          roots: $externalContentRoots.get(),
+        })?.sourceSelector;
 
   // paste after selected instance
   if (
     instanceSelector &&
-    shallowEqual(instanceSelector, data.instanceSelector)
+    shallowEqual(
+      selectedSourceSelector ?? instanceSelector,
+      data.instanceSelector
+    )
   ) {
     // body is not allowed to copy
     // so clipboard always have at least two level instance selector
@@ -316,22 +375,24 @@ const insertPastedFragment = async ({
     }
     if (sourceOrigin !== undefined) {
       try {
-        const { skippedInvalidAssetIds } = await rewriteTransferredMdxAssets({
-          sourceOrigin,
-          projectId,
-          sourceAssets: fragment.assets,
-          sourceAssetPaths: assetPaths,
-          importedAssets: transferred.assets,
-        });
+        const { skippedInvalidAssetIds } =
+          await rewriteTransferredDocumentAssetReferences({
+            sourceOrigin,
+            projectId,
+            sourceAssets: fragment.assets,
+            sourceAssetPaths: assetPaths,
+            importedAssets: transferred.assets,
+          });
         if (skippedInvalidAssetIds.length > 0) {
           toast.warn(
-            "Some invalid MDX files were copied unchanged. Open them to review their diagnostics."
+            "Some invalid content files were copied unchanged. Open them to review their diagnostics."
           );
         }
       } catch {
         return {
           success: false,
-          error: "Could not update Asset references in the copied MDX files.",
+          error:
+            "Could not update Asset references in the copied content files.",
         } as const;
       }
     }

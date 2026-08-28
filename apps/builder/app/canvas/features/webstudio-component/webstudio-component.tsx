@@ -24,6 +24,7 @@ import {
   collectionComponent,
   descendantComponent,
   blockComponent,
+  blockBodyComponent,
   blockTemplateComponent,
   getIndexesWithinAncestors,
   getContentBlockSource,
@@ -77,19 +78,28 @@ import {
   type WebstudioComponentProps,
 } from "~/canvas/elements";
 import { Block } from "../build-mode/block";
+import { BlockBody } from "../build-mode/block-body";
 import { BlockTemplate } from "../build-mode/block-template";
 import {
   editablePlaceholderAttribute,
   editingPlaceholderVariable,
 } from "~/canvas/shared/styles";
 import { richTextPlaceholders } from "@webstudio-is/project-build/runtime";
-import { acquireExternalContentRoot } from "~/shared/external-content-roots";
+import {
+  acquireExternalContentRoot,
+  updateExternalContentFrontmatter,
+} from "~/shared/external-content-roots";
 import {
   $externalContentRoots,
   findExternalContentRoot,
+  findExternalContentRootEntryBySelector,
   getExternalContentRoots,
   resolveExternalContentOccurrence,
 } from "~/shared/external-content-mutations";
+import {
+  getSelectedContentBlockDocumentBindingPath,
+  isObjectPathWritable,
+} from "~/shared/content-block-document";
 import {
   formatContentBlockDiagnostic,
   takeNewContentBlockDiagnostics,
@@ -614,6 +624,36 @@ const getExternalContentInstance = ({
     : { instance: occurrence.instance, instanceSelector: occurrence.selector };
 };
 
+const getUpdatedText = (
+  rootInstanceId: Instance["id"],
+  updates: readonly Instance[]
+) => {
+  const byId = new Map(updates.map((instance) => [instance.id, instance]));
+  const visit = (instanceId: Instance["id"]): string | undefined => {
+    const instance = byId.get(instanceId);
+    if (instance === undefined) {
+      return;
+    }
+    let value = "";
+    for (const child of instance.children) {
+      if (child.type === "expression") {
+        return;
+      }
+      if (child.type === "text") {
+        value += child.value;
+        continue;
+      }
+      const nested = visit(child.value);
+      if (nested === undefined) {
+        return;
+      }
+      value += nested;
+    }
+    return value;
+  };
+  return visit(rootInstanceId);
+};
+
 const WebstudioComponentCanvasInner = forwardRef<
   HTMLElement,
   WebstudioComponentProps
@@ -621,6 +661,7 @@ const WebstudioComponentCanvasInner = forwardRef<
   const instanceId = instance.id;
   const instances = useStore($instances);
   const allProps = useStore($props);
+  const externalContentRoots = useStore($externalContentRoots);
   const metas = useStore($registeredComponentMetas);
 
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
@@ -714,6 +755,10 @@ const WebstudioComponentCanvasInner = forwardRef<
     Component = Block;
   }
 
+  if (instance.component === blockBodyComponent) {
+    Component = BlockBody;
+  }
+
   if (instance.component === blockTemplateComponent) {
     Component = BlockTemplate;
   }
@@ -766,14 +811,36 @@ const WebstudioComponentCanvasInner = forwardRef<
   }
 
   const contentModel = metas.get(instance.component)?.contentModel;
+  const expressionChild =
+    instance.children.length === 1 && instance.children[0].type === "expression"
+      ? instance.children[0]
+      : undefined;
+  const externalEntry = findExternalContentRootEntryBySelector(
+    externalContentRoots,
+    instanceSelector
+  );
+  const candidateRoot = externalEntry?.[1];
+  const frontmatterPath =
+    expressionChild === undefined
+      ? undefined
+      : getSelectedContentBlockDocumentBindingPath({
+          expression: expressionChild.value,
+          instanceSelector,
+          instances,
+          props: allProps,
+          sourceBlockInstanceId:
+            candidateRoot?.sourceBlockInstanceId ??
+            candidateRoot?.blockInstanceId,
+        });
   return (
     <TextEditor
       rootInstanceSelector={instanceSelector}
       instances={instances}
       props={allProps}
       plainText={
-        contentModel?.children.length === 1 &&
-        contentModel.children[0] === "text"
+        frontmatterPath !== undefined ||
+        (contentModel?.children.length === 1 &&
+          contentModel.children[0] === "text")
       }
       contentEditable={
         <ContentEditable
@@ -796,6 +863,43 @@ const WebstudioComponentCanvasInner = forwardRef<
         />
       }
       onChange={(instancesList) => {
+        if (frontmatterPath !== undefined) {
+          const value = getUpdatedText(instance.id, instancesList);
+          if (externalEntry === undefined) {
+            toast.error("The MDX content source is not ready for editing.");
+            return;
+          }
+          const [rootKey, externalRoot] = externalEntry;
+          if (externalRoot.document === undefined) {
+            toast.error("The MDX content source is not ready for editing.");
+            return;
+          }
+          if (
+            isObjectPathWritable({
+              value: externalRoot.document.frontmatter.properties,
+              path: frontmatterPath,
+            }) === false
+          ) {
+            toast.error("Open the referenced file to edit this value.");
+            return;
+          }
+          if (value === undefined) {
+            toast.error("This frontmatter value must remain plain text.");
+            return;
+          }
+          void updateExternalContentFrontmatter({
+            rootKey,
+            path: frontmatterPath,
+            value,
+          }).catch((error) => {
+            toast.error(
+              error instanceof Error
+                ? error.message
+                : "Unable to update MDX frontmatter"
+            );
+          });
+          return;
+        }
         const result = executeRuntimeMutation({
           id: "instances.updateTextTree",
           input: {
@@ -926,6 +1030,10 @@ const WebstudioComponentPreviewInner = forwardRef<
 
   if (instance.component === blockComponent) {
     Component = Block;
+  }
+
+  if (instance.component === blockBodyComponent) {
+    Component = BlockBody;
   }
 
   if (instance.component === blockTemplateComponent) {

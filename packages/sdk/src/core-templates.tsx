@@ -19,6 +19,7 @@ import {
   descendantComponent,
   elementComponent,
 } from "./core-metas";
+import { contentBlockDocumentProp } from "./schema/content-block";
 
 const elementMeta: TemplateMeta = {
   category: "general",
@@ -69,11 +70,13 @@ const descendantMeta: TemplateMeta = {
 };
 
 const BlockTemplate = ws["block-template"];
+const BlockBody = ws["content-block-body"];
+const blockDocument = new Parameter(contentBlockDocumentProp);
 
 const blockMeta: TemplateMeta = {
   category: "general",
   template: (
-    <ws.block>
+    <ws.block document={blockDocument}>
       <BlockTemplate ws:label="Templates">
         <ws.element ws:label="Paragraph" ws:tag="p"></ws.element>
         <ws.element ws:label="Heading 1" ws:tag="h1"></ws.element>
@@ -95,34 +98,36 @@ const blockMeta: TemplateMeta = {
         <$.HtmlEmbed />
         <$.CodeText>{'const status = "ready";'}</$.CodeText>
       </BlockTemplate>
-      <ws.element ws:label="Paragraph" ws:tag="p">
-        The Content Block component designates regions on the page where
-        pre-styled instances can be inserted in{" "}
-        <ws.element
-          ws:label="Link"
-          ws:tag="a"
-          href="https://wstd.us/content-block"
-        >
-          Content mode
+      <BlockBody>
+        <ws.element ws:label="Paragraph" ws:tag="p">
+          The Content Block component designates regions on the page where
+          pre-styled instances can be inserted in{" "}
+          <ws.element
+            ws:label="Link"
+            ws:tag="a"
+            href="https://wstd.us/content-block"
+          >
+            Content mode
+          </ws.element>
+          .
         </ws.element>
-        .
-      </ws.element>
-      <ws.element ws:label="Unordered List" ws:tag="ul">
-        <ws.element ws:label="List Item" ws:tag="li">
-          In Content mode, you can edit content inside this Content Block and
-          add new instances predefined in templates. Content outside Content
-          Blocks is read-only.
+        <ws.element ws:label="Unordered List" ws:tag="ul">
+          <ws.element ws:label="List Item" ws:tag="li">
+            In Content mode, you can edit content inside this Content Block and
+            add new instances predefined in templates. Content outside Content
+            Blocks is read-only.
+          </ws.element>
+          <ws.element ws:label="List Item" ws:tag="li">
+            To predefine instances for insertion in Content mode, switch to
+            Design mode and add them to the Templates container.
+          </ws.element>
+          <ws.element ws:label="List Item" ws:tag="li">
+            To insert predefined instances in Content mode, click the + button
+            while hovering over the Content Block on the canvas and choose an
+            instance from the list.
+          </ws.element>
         </ws.element>
-        <ws.element ws:label="List Item" ws:tag="li">
-          To predefine instances for insertion in Content mode, switch to Design
-          mode and add them to the Templates container.
-        </ws.element>
-        <ws.element ws:label="List Item" ws:tag="li">
-          To insert predefined instances in Content mode, click the + button
-          while hovering over the Content Block on the canvas and choose an
-          instance from the list.
-        </ws.element>
-      </ws.element>
+      </BlockBody>
     </ws.block>
   ),
 };

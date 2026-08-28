@@ -5,9 +5,11 @@ import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
 import {
   type Instance,
+  type Prop,
   type Props,
   blockComponent,
   contentBlockSourceProp,
+  toAssetReferenceRuntimeData,
   descendantComponent,
   rootComponent,
 } from "@webstudio-is/sdk";
@@ -18,6 +20,7 @@ import {
   Flex,
   Box,
   Grid,
+  toast,
 } from "@webstudio-is/design-system";
 import {
   isAttributeNameSafe,
@@ -33,11 +36,17 @@ import {
   $memoryProps,
   $selectedBreakpoint,
 } from "~/shared/nano-states";
-import { $props } from "~/shared/sync/data-stores";
+import {
+  $assetFolders,
+  $assets,
+  $instances,
+  $props,
+} from "~/shared/sync/data-stores";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
   $selectedInstance,
   $selectedInstanceKey,
+  $selectedInstanceSelector,
   getInstanceKey,
 } from "~/shared/nano-states";
 import { renderControl } from "../controls/combined";
@@ -51,6 +60,20 @@ import {
 } from "../shared";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { ContentBlockSourceSection } from "../controls/content-block-source-section";
+import {
+  $externalContentRoots,
+  findExternalContentRootEntryBySelector,
+} from "~/shared/external-content-mutations";
+import { updateExternalContentFrontmatter } from "~/shared/external-content-roots";
+import {
+  getSelectedContentBlockDocumentBindingPath,
+  isObjectPathWritable,
+} from "~/shared/content-block-document";
+import {
+  createMdxAssetReferenceValues,
+  findProp,
+} from "@webstudio-is/project-build/runtime";
+import { resolveAssetValueReferences } from "@webstudio-is/content-engine";
 
 type Item = {
   name: string;
@@ -121,14 +144,37 @@ const shouldSyncMediaAssetProps = ({
   component,
   propName,
   propValue,
+  propType,
 }: {
   component: Instance["component"];
   propName: string;
   propValue: { type: string };
+  propType?: Prop["type"];
 }) =>
   (component === "Image" || component === "Video") &&
   propName === "src" &&
-  propValue.type === "asset";
+  propValue.type === "asset" &&
+  propType !== "expression";
+
+const findExpressionPropByStandardName = ({
+  props,
+  instanceId,
+  propName,
+}: {
+  props: readonly Prop[];
+  instanceId: Instance["id"];
+  propName: Prop["name"];
+}) => {
+  const findExpression = (name: string) => {
+    const prop = findProp(props, instanceId, name);
+    return prop?.type === "expression" ? prop : undefined;
+  };
+  const reactPropName = standardAttributesToReactProps[propName];
+  return (
+    findExpression(propName) ??
+    (reactPropName === undefined ? undefined : findExpression(reactPropName))
+  );
+};
 
 const renderProperty = (
   {
@@ -179,6 +225,7 @@ const renderProperty = (
           component,
           propName,
           propValue,
+          propType: prop?.type,
         })
       ) {
         logic.handleChangeByPropName("width", propValue);
@@ -400,6 +447,7 @@ export const __testing__ = {
   shouldShowPropertiesSection,
   shouldRenderPropsSectionContainer,
   shouldSyncMediaAssetProps,
+  findExpressionPropByStandardName,
 };
 
 const $propValues = computed(
@@ -418,12 +466,125 @@ export const PropsSectionContainer = ({
   const { propsByInstanceId } = useStore($propsIndex);
   const propValues = useStore($propValues);
   const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
+  const externalContentRoots = useStore($externalContentRoots);
+  const assets = useStore($assets);
+  const assetFolders = useStore($assetFolders);
 
   const logic = usePropsLogic({
     instance,
     props: propsByInstanceId.get(instance.id) ?? [],
 
     updateProp: (update) => {
+      const originalProp = findExpressionPropByStandardName({
+        props: propsByInstanceId.get(instance.id) ?? [],
+        instanceId: instance.id,
+        propName: update.name,
+      });
+      const externalEntry =
+        selectedInstanceSelector === undefined
+          ? undefined
+          : findExternalContentRootEntryBySelector(
+              externalContentRoots,
+              selectedInstanceSelector
+            );
+      if (originalProp?.type === "expression") {
+        const candidateRoot = externalEntry?.[1];
+        const path =
+          selectedInstanceSelector === undefined
+            ? undefined
+            : getSelectedContentBlockDocumentBindingPath({
+                expression: originalProp.value,
+                instanceSelector: selectedInstanceSelector,
+                instances: $instances.get(),
+                props: $props.get(),
+                sourceBlockInstanceId:
+                  candidateRoot?.sourceBlockInstanceId ??
+                  candidateRoot?.blockInstanceId,
+              });
+        if (path !== undefined && externalEntry === undefined) {
+          toast.error("The MDX content source is not ready for editing.");
+          return;
+        }
+        if (path === undefined || externalEntry === undefined) {
+          executeRuntimeMutation({
+            id: "instances.updateProps",
+            input: { updates: [update] },
+          });
+          return;
+        }
+        const [rootKey, externalRoot] = externalEntry;
+        let targetPath = path;
+        let nextValue: unknown = update.value;
+        let nextResolvedValue: unknown = update.value;
+        if (update.type === "asset" && externalRoot.identity !== undefined) {
+          const sourceAsset = assets.get(externalRoot.identity.assetId);
+          const targetAsset = assets.get(update.value);
+          const reference =
+            sourceAsset === undefined || targetAsset === undefined
+              ? undefined
+              : createMdxAssetReferenceValues({
+                  source: sourceAsset,
+                  assets: assets.values(),
+                  assetFolders,
+                }).get(targetAsset.id);
+          if (reference !== undefined && targetAsset !== undefined) {
+            targetPath =
+              path.length > 1 && path.at(-1) === "src"
+                ? path.slice(0, -1)
+                : path;
+            nextValue = { $ref: reference };
+            nextResolvedValue = resolveAssetValueReferences({
+              value: nextValue,
+              references: [
+                {
+                  path: [],
+                  assetId: targetAsset.id,
+                  structured: true,
+                },
+              ],
+              runtimeAssets: {
+                [targetAsset.id]: toAssetReferenceRuntimeData(
+                  targetAsset,
+                  window.location.origin
+                ),
+              },
+            });
+          }
+        }
+        if (externalRoot.document === undefined) {
+          toast.error("The MDX content source is not ready for editing.");
+          return;
+        }
+        if (
+          isObjectPathWritable({
+            value: externalRoot.document.frontmatter.properties,
+            path: targetPath,
+          }) === false
+        ) {
+          toast.error("Open the referenced file to edit this value.");
+          return;
+        }
+        if (update.type === "asset" && typeof nextValue !== "object") {
+          toast.error(
+            "The selected Asset cannot be referenced from this file."
+          );
+          return;
+        }
+        void updateExternalContentFrontmatter({
+          rootKey,
+          path: targetPath,
+          value: nextValue,
+          resolvedValue: nextResolvedValue,
+        }).catch((error) => {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Unable to update MDX frontmatter"
+          );
+        });
+        return;
+      }
       executeRuntimeMutation({
         id: "instances.updateProps",
         input: {

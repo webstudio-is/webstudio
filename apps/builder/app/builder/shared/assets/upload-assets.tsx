@@ -619,15 +619,23 @@ export const importAssets = async (
     if (url === undefined) {
       throw new Error("Asset source URL is missing");
     }
-    const options =
-      source.asset.type === "video"
-        ? {
-            dimensions: {
-              width: source.asset.meta.width,
-              height: source.asset.meta.height,
-            },
-          }
-        : {};
+    let options: UploadAssetsOptions = {};
+    if (source.asset.type === "video") {
+      options = {
+        dimensions: {
+          width: source.asset.meta.width,
+          height: source.asset.meta.height,
+        },
+      };
+    }
+    if (
+      source.asset.type === "file" &&
+      ["md", "mdx", "json"].includes(source.asset.format.toLowerCase())
+    ) {
+      // Copy mutable documents independently because reference rewriting must
+      // never modify an existing target Asset that upload deduplication reused.
+      options = { deduplicate: false };
+    }
     const assetId = (await upload(source.asset.type, [url], options)).get(url);
     if (assetId === undefined) {
       throw new Error("Failed to import asset");

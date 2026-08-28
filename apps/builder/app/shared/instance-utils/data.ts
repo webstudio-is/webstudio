@@ -186,7 +186,11 @@ const commitRuntimeMutation = <Mutation extends BuilderRuntimeMutation>(
     beforeOwnership,
     afterOwnership,
     externalBlockInstanceIds: new Set(
-      Array.from(roots.values(), ({ blockInstanceId }) => blockInstanceId)
+      Array.from(
+        roots.values(),
+        ({ blockInstanceId, contentInstanceId }) =>
+          contentInstanceId ?? blockInstanceId
+      )
     ),
     payload,
   });

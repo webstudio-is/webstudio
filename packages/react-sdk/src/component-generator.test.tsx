@@ -1470,11 +1470,13 @@ test("renders pre-materialized dynamic Content Block candidates without loading"
               assetId: "article",
               dependencyRevision: "article-revision",
               children: [{ type: "id", value: "article-heading" }],
+              frontmatter: {},
             },
             {
               assetId: "other",
               dependencyRevision: "other-revision",
               children: [{ type: "id", value: "other-heading" }],
+              frontmatter: {},
             },
           ],
         },
@@ -1487,6 +1489,62 @@ test("renders pre-materialized dynamic Content Block candidates without loading"
   expect(generated.split('("article")')).toHaveLength(2);
   expect(generated).toContain("<h1>");
   expect(generated).not.toContain("fetch(");
+  expect(isValidJSX(generated)).toBe(true);
+});
+
+test("renders a Content Block shell with candidate frontmatter and body", () => {
+  const document = new Parameter("document");
+  const Block = ws.block;
+  const BlockBody = ws["content-block-body"];
+  const data = renderData(
+    <$.Body ws:id="page">
+      <Block ws:id="block" document={document}>
+        <$.Heading ws:id="title">
+          {expression`${document}.frontmatter.title`}
+        </$.Heading>
+        <BlockBody ws:id="content" />
+        <$.Text ws:id="footer">Designed footer</$.Text>
+      </Block>
+    </$.Body>
+  );
+  data.instances.set("article-body", {
+    type: "instance",
+    id: "article-body",
+    component: elementComponent,
+    tag: "p",
+    children: [{ type: "text", value: "MDX body" }],
+  });
+
+  const generated = generateWebstudioComponent({
+    classesMap: new Map(),
+    scope: createScope(),
+    name: "Page",
+    rootInstanceId: "page",
+    parameters: [],
+    metas: new Map(),
+    ...data,
+    publishedContentBlocks: new Map([
+      [
+        "block",
+        {
+          bodyInstanceId: "content",
+          candidates: [
+            {
+              assetId: "article",
+              dependencyRevision: "revision",
+              children: [{ type: "id", value: "article-body" }],
+              frontmatter: { title: "Frontmatter title" },
+            },
+          ],
+        },
+      ],
+    ]),
+  });
+
+  expect(generated).toContain("Frontmatter title");
+  expect(generated).toContain("document?.frontmatter?.title");
+  expect(generated).toContain("MDX body");
+  expect(generated).toContain("Designed footer");
   expect(isValidJSX(generated)).toBe(true);
 });
 

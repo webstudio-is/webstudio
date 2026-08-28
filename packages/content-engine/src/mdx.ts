@@ -8,7 +8,7 @@ import { parse, postprocess, preprocess } from "micromark";
 import { mdxjs } from "micromark-extension-mdxjs";
 import {
   discoverAssetValueReferences,
-  resolveAssetValueReferences,
+  rewriteAssetValueReferences,
   type AssetValueReference,
 } from "./asset-value-references";
 import {
@@ -18,7 +18,10 @@ import {
 import { createUniqueAssetIdsByPath } from "./asset-path-resolution";
 import { getInstancePropName } from "./jsx-attributes";
 import { getUtf8ByteLength } from "./byte-stream";
-import { extractMarkdownFrontmatter } from "./frontmatter";
+import {
+  extractMarkdownFrontmatter,
+  replaceMarkdownFrontmatter,
+} from "./frontmatter";
 import { contentEngineLimits } from "./limits";
 import {
   getSyntaxTreeChildren,
@@ -26,14 +29,8 @@ import {
   parseMarkdownAst,
   type SyntaxTreeNode,
 } from "./markdown-ast";
-import {
-  findMarkdownFrontmatter,
-  markdownByteOrderMark,
-} from "./markdown-scanner";
-import {
-  serializeMdxDocument,
-  serializeMdxFrontmatter,
-} from "./mdx-serialization";
+import { findMarkdownFrontmatter } from "./markdown-scanner";
+import { serializeMdxDocument } from "./mdx-serialization";
 
 export type MdxSourcePoint = Readonly<{
   line: number;
@@ -1275,6 +1272,7 @@ export const discoverMdxAssetReferences = ({
     properties: document.frontmatter.properties,
     sourcePath,
     assetIdsByPath,
+    structuredAssetIds: new Set(assetIdsByPath.values()),
     rootPath: ["frontmatter", "properties"],
   }),
   ...discoverMdxBodyAssetReferences({
@@ -1324,12 +1322,10 @@ export const rewriteMdxAssetReferences = async ({
   if (references.length === 0) {
     return source;
   }
-  const resolved = resolveAssetValueReferences({
+  const resolved = rewriteAssetValueReferences({
     value: document,
     references,
-    runtimeAssets: Object.fromEntries(
-      Array.from(replacementPaths, ([id, url]) => [id, { url }])
-    ),
+    assetUrls: Object.fromEntries(replacementPaths),
   });
   const rewritesFrontmatter = references.some(
     ({ path }) => path[0] === "frontmatter"
@@ -1670,36 +1666,7 @@ export const replaceMdxFrontmatter = async ({
   source: string;
   properties: Readonly<Record<string, unknown>>;
 }) => {
-  const replacement = serializeMdxFrontmatter(properties);
-  // Validate the complete value and the serialized byte limits without parsing
-  // the MDX body. A malformed body must remain independently editable.
-  await extractMarkdownFrontmatter(replacement);
-
-  const encoder = new TextEncoder();
-  const bytes = encoder.encode(source);
-  const range = findMarkdownFrontmatter(bytes, true);
-  const hasByteOrderMark = markdownByteOrderMark.every(
-    (value, index) => bytes[index] === value
-  );
-  const prefix = hasByteOrderMark ? "\uFEFF" : "";
-  if (range === null || range === undefined) {
-    return prefix + replacement + source.slice(prefix.length);
-  }
-
-  const bodyStart = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
-    bytes.subarray(0, range.blockEnd)
-  ).length;
-  const suffix = source.slice(bodyStart);
-  const separatorLength = suffix.startsWith("\r\n\r\n")
-    ? 4
-    : suffix.startsWith("\n\n")
-      ? 2
-      : suffix.startsWith("\r\n")
-        ? 2
-        : suffix.startsWith("\n")
-          ? 1
-          : 0;
-  return prefix + replacement + suffix.slice(separatorLength);
+  return replaceMarkdownFrontmatter({ source, properties });
 };
 
 export { serializeMdxDocument };

@@ -26,7 +26,7 @@ import type {
   InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
 import {
-  findBlockSelector,
+  findBlockContentSelector,
   getBlockTemplateInsertionIndex,
 } from "@webstudio-is/project-build/runtime";
 
@@ -130,7 +130,7 @@ export const insertTemplateAt = async (
     templateSelector[0]
   );
 
-  const parentSelector = findBlockSelector({ anchor, instances });
+  const parentSelector = findBlockContentSelector({ anchor, instances });
 
   if (parentSelector === undefined) {
     return false;

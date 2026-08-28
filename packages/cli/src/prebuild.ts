@@ -45,6 +45,7 @@ import {
   toAssetReferenceRuntimeData,
   matchPathnameParams,
   blockComponent,
+  findContentBlockBodyContainers,
   parseStructuredAssetQueryResourceBody,
   type StructuredAssetQueryFilterBinding,
   type StructuredAssetQueryWhereBinding,
@@ -1092,6 +1093,28 @@ export const prebuild = async (options: {
   }
 
   const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
+  const runtimeAssetsById = Object.fromEntries(
+    siteData.assets.map((asset) => {
+      const runtimeAsset = toAssetReferenceRuntimeData(
+        asset,
+        "https://placeholder.local"
+      );
+      return [
+        asset.id,
+        {
+          ...runtimeAsset,
+          contentRef: asset.name,
+          // SaaS serves project assets through its storage-backed proxy.
+          // Generated projects with downloaded assets serve them locally.
+          url:
+            siteData.build.deployment?.destination === "saas" &&
+            options.assets === false
+              ? new URL(runtimeAsset.url, siteData.origin).href
+              : `${assetBaseUrl}${asset.name}`,
+        },
+      ];
+    })
+  );
   const publishedInstances = new Map(siteData.build.instances);
   const publishedProps = new Map(siteData.build.props);
   const publishedStyleSources = new Map(siteData.build.styleSources);
@@ -1190,6 +1213,7 @@ export const prebuild = async (options: {
           cache,
           dynamicAssetIdsByBlock: pageDynamicCandidates,
           blockInstanceIds: pendingBlockIds,
+          runtimeAssets: runtimeAssetsById,
         });
         for (const root of materialized.roots) {
           const diagnostic = getUnsafeDynamicPublishedMdxDiagnostic({
@@ -1257,7 +1281,18 @@ export const prebuild = async (options: {
             "breakpoint"
           );
           const previous = candidatesByBlock.get(root.identity.blockInstanceId);
+          const blockInstance = pageInstances.get(
+            root.identity.blockInstanceId
+          );
+          const bodyInstanceId =
+            blockInstance === undefined
+              ? undefined
+              : findContentBlockBodyContainers({
+                  blockInstance,
+                  instances: pageInstances,
+                })[0]?.id;
           candidatesByBlock.set(root.identity.blockInstanceId, {
+            ...(bodyInstanceId === undefined ? {} : { bodyInstanceId }),
             ...(root.source.type === "expression"
               ? { sourceExpression: root.source.value }
               : {}),
@@ -1267,6 +1302,7 @@ export const prebuild = async (options: {
                 assetId: root.identity.assetId,
                 dependencyRevision: root.dependencyRevision,
                 children: root.fragment.children,
+                frontmatter: root.resolvedFrontmatter,
                 resourceIds: root.fragment.resources.map(({ id }) => id),
               },
             ],
@@ -1722,34 +1758,11 @@ export const prebuild = async (options: {
     `
   );
 
-  // Generate assets resource file.
-  // Use a placeholder origin to preserve runtime metadata before overriding the
-  // builder-only URL with the generated project's local asset URL.
-  const assetsById = Object.fromEntries(
-    siteData.assets.map((asset) => {
-      const runtimeAsset = toAssetReferenceRuntimeData(
-        asset,
-        "https://placeholder.local"
-      );
-      return [
-        asset.id,
-        {
-          ...runtimeAsset,
-          contentRef: asset.name,
-          // SaaS serves project assets through its storage-backed proxy.
-          // Generated projects with downloaded assets serve them locally.
-          url:
-            siteData.build.deployment?.destination === "saas" &&
-            options.assets === false
-              ? new URL(runtimeAsset.url, siteData.origin).href
-              : `${assetBaseUrl}${asset.name}`,
-        },
-      ];
-    })
-  );
+  // Generate assets resource file. The same deployment URLs are used above
+  // when resolving MDX frontmatter into generated component bindings.
   await materializeVerifiedAssetIndex({
     index: verifiedAssetIndex,
-    runtimeAssets: assetsById,
+    runtimeAssets: runtimeAssetsById,
     includeDocumentRuntimeAssets:
       assetCompilationPlan !== undefined &&
       requiresRuntimeDocumentData(assetCompilationPlan),
@@ -1773,7 +1786,7 @@ export const prebuild = async (options: {
   await writeGeneratedFile(
     join(generatedDir, "$resources.assets.ts"),
     `
-    export const assets = ${JSON.stringify(assetsById, null, 2)};
+    export const assets = ${JSON.stringify(runtimeAssetsById, null, 2)};
     `
   );
 

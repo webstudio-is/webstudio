@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { blockComponent, elementComponent } from "@webstudio-is/sdk";
+import {
+  blockBodyComponent,
+  blockComponent,
+  elementComponent,
+} from "@webstudio-is/sdk";
 import { $flatTree, __testing__ } from "./navigator-tree";
 import {
   $allSelectedInstanceSelectors,
@@ -189,6 +193,15 @@ test("shows the scoped Content Block occurrence in Content mode", () => {
           type: "instance",
           id: "block",
           component: blockComponent,
+          children: [{ type: "id", value: "content" }],
+        },
+      ],
+      [
+        "content",
+        {
+          type: "instance",
+          id: "content",
+          component: blockBodyComponent,
           children: [],
         },
       ],
@@ -198,6 +211,15 @@ test("shows the scoped Content Block occurrence in Content mode", () => {
           type: "instance",
           id: "scoped-block",
           component: blockComponent,
+          children: [{ type: "id", value: "content" }],
+        },
+      ],
+      [
+        "scoped-content",
+        {
+          type: "instance",
+          id: "scoped-content",
+          component: blockBodyComponent,
           children: [{ type: "id", value: "scoped-heading" }],
         },
       ],
@@ -223,6 +245,8 @@ test("shows the scoped Content Block occurrence in Content mode", () => {
           sourceBlockInstanceId: "block",
           sourceRenderScope: '["block","body"]',
           blockInstanceId: "scoped-block",
+          sourceContentInstanceId: "content",
+          contentInstanceId: "scoped-content",
           renderScope: '["scoped-block","body"]',
           instanceIds: new Set(["scoped-heading"]),
           mutationRevision: 0,
@@ -233,7 +257,7 @@ test("shows the scoped Content Block occurrence in Content mode", () => {
 
   expect($flatTree.get().map(({ instance }) => instance.id)).toEqual([
     "scoped-block",
-    "scoped-heading",
+    "scoped-content",
   ]);
 });
 

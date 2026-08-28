@@ -8,6 +8,8 @@ import {
   ROOT_INSTANCE_ID,
   type Resource,
   SYSTEM_VARIABLE_ID,
+  blockComponent,
+  contentBlockDocumentProp,
   collectionComponent,
 } from "@webstudio-is/sdk";
 import { showAttribute, textContentAttribute } from "@webstudio-is/react-sdk";
@@ -39,6 +41,7 @@ import {
 import { $systemDataByPage, updateCurrentSystem } from "../system";
 import { registerContainers } from "../sync/sync-stores";
 import { $resourcesCache, getResourceKey } from "../resources";
+import { $externalContentRoots } from "../external-content-mutations";
 
 const { $computedResourceRequests } = __testing__;
 
@@ -84,6 +87,126 @@ beforeEach(() => {
   $dataSources.set(new Map());
   $dataSourceVariables.set(new Map());
   $resourcesCache.set(new Map());
+  $externalContentRoots.set(new Map());
+});
+
+test("provides occurrence frontmatter to a repeated Content Block", () => {
+  const sourceBlock: Instance = {
+    type: "instance",
+    id: "source-block",
+    component: blockComponent,
+    children: [],
+  };
+  const runtimeBlock: Instance = {
+    ...sourceBlock,
+    id: "runtime-block",
+  };
+  $instances.set(toMap([sourceBlock, runtimeBlock]));
+  $dataSources.set(
+    toMap([
+      {
+        type: "parameter",
+        id: "document-data-source",
+        scopeInstanceId: sourceBlock.id,
+        name: contentBlockDocumentProp,
+      },
+    ])
+  );
+  $props.set(
+    toMap([
+      {
+        id: "document-prop",
+        instanceId: sourceBlock.id,
+        name: contentBlockDocumentProp,
+        type: "parameter",
+        value: "document-data-source",
+      },
+    ])
+  );
+  $externalContentRoots.set(
+    new Map([
+      [
+        "root",
+        {
+          sourceBlockInstanceId: sourceBlock.id,
+          blockInstanceId: runtimeBlock.id,
+          instanceIds: new Set<string>(),
+          mutationRevision: 0,
+          frontmatter: { title: "Occurrence title" },
+        },
+      ],
+    ])
+  );
+  selectPageRoot(runtimeBlock.id);
+
+  expect(
+    $variableValuesByInstanceSelector
+      .get()
+      .get(getInstanceKey([runtimeBlock.id, ROOT_INSTANCE_ID]))
+      ?.get("document-data-source")
+  ).toEqual({ frontmatter: { title: "Occurrence title" } });
+});
+
+test("does not reuse frontmatter from a previous Collection occurrence", () => {
+  const collectionData = new Variable("Posts", ["first", "second"]);
+  const collectionItem = new Parameter("Collection Item");
+  const document = new Parameter(contentBlockDocumentProp);
+  const data = renderData(
+    <$.Body ws:id="body">
+      <ws.collection
+        ws:id="collection"
+        data={expression`${collectionData}`}
+        item={collectionItem}
+      >
+        <ws.block ws:id="block" document={document}>
+          <$.Box
+            ws:id="title"
+            ariaLabel={expression`${document}.frontmatter.title`}
+          />
+        </ws.block>
+      </ws.collection>
+    </$.Body>
+  );
+  $instances.set(data.instances);
+  $dataSources.set(data.dataSources);
+  $props.set(data.props);
+  selectPageRoot("body");
+  const firstBlockSelector = ["block", "collection[0]", "collection", "body"];
+  $externalContentRoots.set(
+    new Map([
+      [
+        "first",
+        {
+          sourceBlockInstanceId: "block",
+          sourceRenderScope: JSON.stringify(firstBlockSelector),
+          blockInstanceId: "runtime-first",
+          instanceIds: new Set<string>(),
+          mutationRevision: 0,
+          frontmatter: { title: "First title" },
+        },
+      ],
+    ])
+  );
+
+  const values = $propValuesByInstanceSelector.get();
+  expect(
+    values
+      .get(getInstanceKey(["title", ...firstBlockSelector]))
+      ?.get("ariaLabel")
+  ).toBe("First title");
+  expect(
+    values
+      .get(
+        getInstanceKey([
+          "title",
+          "block",
+          "collection[1]",
+          "collection",
+          "body",
+        ])
+      )
+      ?.has("ariaLabel")
+  ).toBe(false);
 });
 
 test("does not preload resources in statically hidden subtrees", () => {

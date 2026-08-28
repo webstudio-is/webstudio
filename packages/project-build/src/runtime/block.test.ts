@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   blockComponent,
+  blockBodyComponent,
   blockTemplateComponent,
   contentBlockSourceProp,
   type Instance,
@@ -11,6 +12,7 @@ import {
   canMoveInstanceInContentMode,
   findBlockTemplateNameCollision,
   findBlockChildSelector,
+  findBlockContentSelector,
   findBlockSelector,
   findBlockTemplates,
   getBlockTemplateInsertionIndex,
@@ -137,6 +139,63 @@ describe("block tree helpers", () => {
     ).toBe(3);
   });
 
+  test("uses an explicit Body as the editable content container", () => {
+    const instances = new Map<Instance["id"], Instance>([
+      ["page", createInstance("page", "Body")],
+      [
+        "block",
+        createInstance("block", blockComponent, [
+          { type: "id", value: "templates" },
+          { type: "id", value: "header" },
+          { type: "id", value: "content" },
+        ]),
+      ],
+      ["templates", createInstance("templates", blockTemplateComponent)],
+      ["header", createInstance("header", "Heading")],
+      [
+        "content",
+        createInstance("content", blockBodyComponent, [
+          { type: "id", value: "paragraph" },
+        ]),
+      ],
+      ["paragraph", createInstance("paragraph", "Paragraph")],
+    ]);
+
+    expect(
+      findBlockContentSelector({ anchor: ["block", "page"], instances })
+    ).toEqual(["content", "block", "page"]);
+    expect(
+      findBlockContentSelector({
+        anchor: ["paragraph", "content", "block", "page"],
+        instances,
+      })
+    ).toEqual(["content", "block", "page"]);
+    expect(
+      findBlockContentSelector({
+        anchor: ["header", "block", "page"],
+        instances,
+      })
+    ).toBeUndefined();
+    expect(
+      findBlockChildSelector({
+        instanceSelector: ["paragraph", "content", "block", "page"],
+        instances,
+      })
+    ).toEqual(["paragraph", "content", "block", "page"]);
+    expect(
+      getBlockTemplateInsertionIndex({
+        anchor: ["block", "page"],
+        instances,
+      })
+    ).toBe(0);
+    expect(
+      getBlockTemplateInsertionIndex({
+        anchor: ["paragraph", "content", "block", "page"],
+        instances,
+      })
+    ).toBe(1);
+  });
+
   test("allows deleting direct content block children", () => {
     const instances = new Map<Instance["id"], Instance>([
       [
@@ -219,6 +278,55 @@ describe("block tree helpers", () => {
       canMoveInstanceInContentMode({
         instanceSelector: ["authored", "block", "body"],
         parentSelector: ["templates", "block", "body"],
+        instances,
+      })
+    ).toBe(false);
+  });
+
+  test("only allows content-mode mutations inside an explicit Body", () => {
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "block",
+        createInstance("block", blockComponent, [
+          { type: "id", value: "header" },
+          { type: "id", value: "content" },
+        ]),
+      ],
+      ["header", createInstance("header", "Heading")],
+      [
+        "content",
+        createInstance("content", blockBodyComponent, [
+          { type: "id", value: "first" },
+          { type: "id", value: "second" },
+        ]),
+      ],
+      ["first", createInstance("first", "Paragraph")],
+      ["second", createInstance("second", "Paragraph")],
+    ]);
+
+    expect(
+      canDeleteInstanceInContentMode({
+        instanceSelector: ["first", "content", "block"],
+        instances,
+      })
+    ).toBe(true);
+    expect(
+      canDeleteInstanceInContentMode({
+        instanceSelector: ["header", "block"],
+        instances,
+      })
+    ).toBe(false);
+    expect(
+      canMoveInstanceInContentMode({
+        instanceSelector: ["first", "content", "block"],
+        parentSelector: ["content", "block"],
+        instances,
+      })
+    ).toBe(true);
+    expect(
+      canMoveInstanceInContentMode({
+        instanceSelector: ["header", "block"],
+        parentSelector: ["content", "block"],
         instances,
       })
     ).toBe(false);

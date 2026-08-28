@@ -34,7 +34,7 @@ export const discoverAssetValueReferences = ({
   structuredAssetIds,
   rootPath = ["properties"],
 }: {
-  properties: Readonly<Record<string, unknown>>;
+  properties: unknown;
   sourcePath: string;
   assetIdsByPath: ReadonlyMap<string, string>;
   structuredAssetIds?: ReadonlySet<string>;
@@ -104,7 +104,14 @@ export const mergeAssetUrlSuffix = (url: string, suffix?: string) => {
   if (url.startsWith("/")) {
     return `${canonical.pathname}${canonical.search}${canonical.hash}`;
   }
-  if (URL.canParse(url)) {
+  let isAbsoluteUrl = false;
+  try {
+    new URL(url);
+    isAbsoluteUrl = true;
+  } catch {
+    // Relative Asset paths are handled below.
+  }
+  if (isAbsoluteUrl) {
     return canonical.href;
   }
   const pathname = canonical.pathname.startsWith(base.pathname)
@@ -204,4 +211,30 @@ export const resolveAssetValueReferences = <Value>({
     });
   }
   return resolved as Value;
+};
+
+/** Rewrites authored Asset paths while preserving structured `$ref` markers. */
+export const rewriteAssetValueReferences = <Value>({
+  value,
+  references,
+  assetUrls,
+}: {
+  value: Value;
+  references: readonly AssetValueReference[] | undefined;
+  assetUrls: Readonly<Record<string, string>>;
+}): Value => {
+  let rewritten: unknown = value;
+  for (const reference of references ?? []) {
+    const assetUrl = assetUrls[reference.assetId];
+    if (assetUrl === undefined) {
+      continue;
+    }
+    const url = mergeAssetUrlSuffix(assetUrl, reference.suffix);
+    rewritten = replaceValueAtPath({
+      value: rewritten,
+      path: reference.path,
+      replacement: reference.structured === true ? { $ref: url } : url,
+    });
+  }
+  return rewritten as Value;
 };

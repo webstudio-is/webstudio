@@ -18,19 +18,18 @@ export const TextControl = ({
   computedValue,
   onChange,
 }: ControlProps<"text">) => {
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    fallbackExpression: JSON.stringify(computedValue),
+  });
   const localValue = useDraftValue(String(computedValue ?? ""), (value) => {
-    if (prop?.type === "expression") {
+    if (binding.bindingState.overwritable === false) {
       return;
     }
     onChange({ type: "string", value });
   });
   const id = useId();
   const label = humanizeAttribute(meta.label || propName);
-  const binding = useBindableControl({
-    boundExpression: prop?.type === "expression" ? prop.value : undefined,
-    fallbackExpression: JSON.stringify(computedValue),
-  });
-
   const input = (
     <BindableExpressionControl
       {...binding}

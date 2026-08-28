@@ -1,8 +1,14 @@
 import { describe, expect, test } from "vitest";
 import {
+  blockBodyComponent,
   blockComponent,
   blockTemplateComponent,
+  contentBlockDocumentProp,
+  contentBlockSourceProp,
+  encodeDataSourceVariable,
   elementComponent,
+  type Instance,
+  type Prop,
 } from "@webstudio-is/sdk";
 import { isTextEditableInContentMode } from "./content-mode";
 
@@ -29,6 +35,7 @@ describe("isTextEditableInContentMode", () => {
         isContentMode: true,
         instanceSelector: ["inside", "block", "body"],
         instances,
+        props: new Map(),
       })
     ).toBe(true);
     expect(
@@ -36,6 +43,7 @@ describe("isTextEditableInContentMode", () => {
         isContentMode: true,
         instanceSelector: ["outside", "body"],
         instances,
+        props: new Map(),
       })
     ).toBe(false);
     expect(
@@ -43,6 +51,7 @@ describe("isTextEditableInContentMode", () => {
         isContentMode: true,
         instanceSelector: ["source", "templates", "block", "body"],
         instances,
+        props: new Map(),
       })
     ).toBe(false);
   });
@@ -53,7 +62,69 @@ describe("isTextEditableInContentMode", () => {
         isContentMode: false,
         instanceSelector: ["outside", "body"],
         instances,
+        props: new Map(),
       })
     ).toBe(true);
+  });
+
+  test("permits a direct frontmatter text binding outside the Body", () => {
+    const document = encodeDataSourceVariable("document-source");
+    const explicitInstances = new Map<string, Instance>([
+      ["block", instance("block", blockComponent, ["title", "content"])],
+      [
+        "title",
+        {
+          ...instance("title", elementComponent),
+          children: [
+            {
+              type: "expression" as const,
+              value: `${document}.frontmatter.title`,
+            },
+          ],
+        },
+      ],
+      ["content", instance("content", blockBodyComponent)],
+    ]);
+    const props = new Map<string, Prop>([
+      [
+        "source",
+        {
+          id: "source",
+          instanceId: "block",
+          name: contentBlockSourceProp,
+          type: "asset",
+          value: "article",
+        },
+      ],
+      [
+        "document",
+        {
+          id: "document",
+          instanceId: "block",
+          name: contentBlockDocumentProp,
+          type: "parameter",
+          value: "document-source",
+        },
+      ],
+    ]);
+
+    expect(
+      isTextEditableInContentMode({
+        isContentMode: true,
+        instanceSelector: ["title", "block"],
+        instances: explicitInstances,
+        props,
+      })
+    ).toBe(true);
+
+    props.delete("source");
+    expect(
+      isTextEditableInContentMode({
+        isContentMode: true,
+        instanceSelector: ["title", "block"],
+        instances: explicitInstances,
+        props,
+      })
+    ).toBe(false);
   });
 });

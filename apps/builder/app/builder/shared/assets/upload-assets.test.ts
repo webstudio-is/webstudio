@@ -247,6 +247,44 @@ describe("upload-assets", () => {
     expect(waitForUpload).toHaveBeenCalledWith(importedAsset.id);
   });
 
+  test.each(["md", "mdx", "json"])(
+    "imports mutable %s documents without deduplicating them",
+    async (format) => {
+      $project.set({ id: "target-project" } as Project);
+      const sourceAsset = {
+        id: "article",
+        projectId: "source-project",
+        name: `article.${format}`,
+        type: "file",
+        format,
+        size: 1,
+        createdAt: "2026-01-01",
+        description: null,
+        meta: {},
+      } satisfies Asset;
+      const importedAsset = {
+        ...sourceAsset,
+        id: "article-copy",
+        projectId: "target-project",
+      } satisfies Asset;
+      const upload = vi.fn(async (_type, [url]: URL[]) => {
+        return new Map([[url, importedAsset.id]]);
+      });
+      const waitForUpload = vi.fn(async () => importedAsset);
+      const url = new URL(`https://source.example.com/article.${format}`);
+
+      await importAssets(
+        "target-project",
+        [{ asset: sourceAsset, url: url.href }],
+        { upload, waitForUpload }
+      );
+
+      expect(upload).toHaveBeenCalledWith("file", [url], {
+        deduplicate: false,
+      });
+    }
+  );
+
   test("reuses matching assets from the current deployment", async () => {
     $project.set({ id: "target-project" } as Project);
     const existingAsset = {

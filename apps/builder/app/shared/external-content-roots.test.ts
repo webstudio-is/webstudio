@@ -2,6 +2,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
+  blockBodyComponent,
   blockComponent,
   blockTemplateComponent,
   type Asset,
@@ -13,7 +14,6 @@ import {
 } from "./asset-content-bridge.client";
 import {
   acquireExternalContentRoot,
-  createBuilderMdxFragment,
   disposeExternalContentProject,
   flushExternalContentAsset,
   flushExternalContentProject,
@@ -24,12 +24,14 @@ import {
   retryExternalContentAsset,
   subscribeExternalContentAsset,
   updateExternalContentAssetSource,
+  updateExternalContentFrontmatter,
 } from "./external-content-roots";
 import { executeRuntimeMutation } from "./instance-utils/data";
 import { selectInstance } from "./nano-states";
 import {
   findExternalContentRoot,
   getExternalContentRoots,
+  resolveExternalContentOccurrence,
 } from "./external-content-mutations";
 import {
   $assets,
@@ -53,46 +55,83 @@ import {
 
 registerContainers();
 
-test("adds Builder-only selectable placeholders for unresolved templates", () => {
-  const { fragment, transientInstanceIds } = createBuilderMdxFragment({
-    identity: {
-      blockInstanceId: "block",
-      assetId: "asset",
-      revision: "revision",
-      contentRef: "article.mdx",
-      format: "mdx",
-      renderScope: '["block"]',
+test("places unresolved-template placeholders at their authored nesting point", async () => {
+  const source =
+    '<ws.element ws:tag="section">Before<ws.element ws:name="Missing" />After</ws.element>';
+  const sourceAsset = {
+    ...asset,
+    size: new TextEncoder().encode(source).byteLength,
+  };
+  const session = createAssetContentSession({
+    repository: {
+      readContent: async () => ({
+        asset: sourceAsset,
+        data: (async function* () {
+          yield new TextEncoder().encode(source);
+        })(),
+      }),
+      updateContent: async () => sourceAsset,
     },
-    fragment: {
-      children: [],
-      instances: [],
-      props: [],
-      assets: [],
-      dataSources: [],
-      resources: [],
-      breakpoints: [],
-      styleSources: [],
-      styleSourceSelections: [],
-      styles: [],
-    },
-    document: { frontmatter: { properties: {} }, children: [] },
-    provenance: {
-      nodes: [],
-      unresolvedTemplates: [
-        { path: [0], markerId: "missing", templateName: "Hero Card" },
-      ],
-    },
+    authorize: () => true,
   });
-
-  expect(fragment.children).toEqual([{ type: "id", value: "missing" }]);
-  expect(fragment.instances).toContainEqual(
-    expect.objectContaining({
-      id: "missing",
-      component: "ws:element",
-      label: "Missing template: Hero Card",
+  sessions.push(session);
+  initAssetContentBridge(
+    createAssetContentBridge({
+      origin: window.location.origin,
+      request: fetch,
+      authorize: () => true,
+      requireReload: vi.fn(),
+      getContentSession: () => session,
     })
   );
-  expect(transientInstanceIds).toEqual(new Set(["missing"]));
+  $project.set({ id: "project", title: "Project", domain: "" } as never);
+  $pages.set(createDefaultPages({ rootInstanceId: "block" }));
+  $instances.set(new Map([["block", instance("block", blockComponent, [])]]));
+  $props.set(new Map());
+  $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
+  $breakpoints.set(new Map());
+  $dataSources.set(new Map());
+  $resources.set(new Map());
+  $styleSources.set(new Map());
+  $styleSourceSelections.set(new Map());
+  $styles.set(new Map());
+  $projectSettings.set({ meta: {}, compiler: {} });
+
+  releases.push(
+    await acquireExternalContentRoot({
+      projectId: "project",
+      assetId: sourceAsset.id,
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })
+  );
+
+  const section = Array.from($instances.get().values()).find(
+    (candidate) => candidate.tag === "section"
+  );
+  const missing = Array.from($instances.get().values()).find(
+    (candidate) => candidate.label === "Missing template: Missing"
+  );
+  expect(missing).toMatchObject({
+    component: "ws:element",
+    tag: "div",
+    children: [{ type: "text", value: "Missing template: Missing" }],
+  });
+  if (section === undefined || missing === undefined) {
+    throw new Error("Expected the section and missing-template placeholder");
+  }
+  expect(section.children).toEqual([
+    { type: "text", value: "Before" },
+    { type: "id", value: missing.id },
+    { type: "text", value: "After" },
+  ]);
+  expect(
+    getExternalContentRootChildren({
+      projectId: "project",
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })
+  ).toEqual([{ type: "id", value: section.id }]);
 });
 
 const asset: Asset = {
@@ -177,6 +216,108 @@ test("rejects a stale raw editor replacement behind a newer queued edit", async 
   );
   expect(session.get(asset.id)?.source).toBe("# Canvas");
   expect(requireReload).toHaveBeenCalledOnce();
+});
+
+test("rebases frontmatter edits from Content Blocks sharing one Asset", async () => {
+  const initialSource = "---\ntitle: Before\n---\n\n# Article\n";
+  const initialAsset = {
+    ...asset,
+    size: new TextEncoder().encode(initialSource).byteLength,
+  };
+  const writes: string[] = [];
+  const session = createAssetContentSession({
+    repository: {
+      readContent: async () => ({
+        asset: initialAsset,
+        data: (async function* () {
+          yield new TextEncoder().encode(initialSource);
+        })(),
+      }),
+      updateContent: async ({ data }) => {
+        const source = await new Response(data).text();
+        writes.push(source);
+        return {
+          ...initialAsset,
+          size: new TextEncoder().encode(source).byteLength,
+        };
+      },
+    },
+    authorize: () => true,
+    debounceMilliseconds: 0,
+  });
+  sessions.push(session);
+  initAssetContentBridge(
+    createAssetContentBridge({
+      origin: window.location.origin,
+      request: fetch,
+      authorize: () => true,
+      requireReload: vi.fn(),
+      getContentSession: () => session,
+    })
+  );
+  $project.set({ id: "project", title: "Project", domain: "" } as never);
+  $pages.set(createDefaultPages({ rootInstanceId: "block" }));
+  $instances.set(
+    new Map([
+      ["block", instance("block", blockComponent, [])],
+      ["block-2", instance("block-2", blockComponent, [])],
+    ])
+  );
+  $props.set(new Map());
+  $assets.set(new Map([[initialAsset.id, initialAsset]]));
+  $breakpoints.set(new Map());
+  $dataSources.set(new Map());
+  $resources.set(new Map());
+  $styleSources.set(new Map());
+  $styleSourceSelections.set(new Map());
+  $styles.set(new Map());
+  $projectSettings.set({ meta: {}, compiler: {} });
+
+  releases.push(
+    await acquireExternalContentRoot({
+      projectId: "project",
+      assetId: initialAsset.id,
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    }),
+    await acquireExternalContentRoot({
+      projectId: "project",
+      assetId: initialAsset.id,
+      blockInstanceId: "block-2",
+      renderScope: '["block-2"]',
+    })
+  );
+  const entries = Array.from(getExternalContentRoots());
+  const firstKey = entries.find(
+    ([, root]) => root.sourceBlockInstanceId === "block"
+  )?.[0];
+  const secondKey = entries.find(
+    ([, root]) => root.sourceBlockInstanceId === "block-2"
+  )?.[0];
+  if (firstKey === undefined || secondKey === undefined) {
+    throw new Error("Expected both shared Content Block roots");
+  }
+
+  await Promise.all([
+    updateExternalContentFrontmatter({
+      rootKey: firstKey,
+      path: ["title"],
+      value: "After",
+    }),
+    updateExternalContentFrontmatter({
+      rootKey: secondKey,
+      path: ["excerpt"],
+      value: "Summary",
+    }),
+  ]);
+  await flushExternalContentAsset({
+    projectId: "project",
+    assetId: initialAsset.id,
+  });
+
+  expect(writes.at(-1)).toBe(
+    "---\nexcerpt: Summary\ntitle: After\n---\n\n# Article\n"
+  );
 });
 
 test("does not install an Asset load after its Content Block unmounts", async () => {
@@ -278,7 +419,7 @@ test("replaces a mounted root when its source Asset changes", async () => {
   $instances.set(new Map([["block", instance("block", blockComponent, [])]]));
   $props.set(new Map());
   $assets.set(
-    new Map([
+    new Map<Asset["id"], Asset>([
       [asset.id, asset],
       [secondAsset.id, secondAsset],
     ])
@@ -334,6 +475,195 @@ test("replaces a mounted root when its source Asset changes", async () => {
     { type: "id", value: "ordinary" },
   ]);
   expect($instances.get().has("ordinary")).toBe(true);
+});
+
+test("installs MDX into the Body and recovers an invalid dependency", async () => {
+  const source = `---
+author:
+  $ref: ./author.md#frontmatter
+---
+
+# Article body`;
+  const authorSource = `---
+name: Ada
+avatar:
+  $ref: ./avatar.jpg
+---
+`;
+  const invalidAuthorSource = `---
+name: [
+---
+`;
+  const authorAsset: Asset = {
+    ...asset,
+    id: "author",
+    name: "author_v1.md",
+    format: "md",
+    size: new TextEncoder().encode(invalidAuthorSource).byteLength,
+  };
+  const avatarAsset: Asset = {
+    id: "avatar",
+    projectId: "project",
+    name: "avatar_v1.jpg",
+    type: "image",
+    format: "jpg",
+    size: 100,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    description: null,
+    meta: { width: 100, height: 100 },
+  };
+  const session = createAssetContentSession({
+    repository: {
+      readContent: async ({ assetId }) => ({
+        asset:
+          assetId === authorAsset.id
+            ? authorAsset
+            : { ...asset, size: new TextEncoder().encode(source).byteLength },
+        data: (async function* () {
+          yield new TextEncoder().encode(
+            assetId === authorAsset.id ? invalidAuthorSource : source
+          );
+        })(),
+      }),
+      updateContent: async ({ assetId, data }) => {
+        const updatedSource = await new Response(data).text();
+        const currentAsset = assetId === authorAsset.id ? authorAsset : asset;
+        return {
+          ...currentAsset,
+          size: new TextEncoder().encode(updatedSource).byteLength,
+        };
+      },
+    },
+    authorize: () => true,
+  });
+  sessions.push(session);
+  initAssetContentBridge(
+    createAssetContentBridge({
+      origin: window.location.origin,
+      request: fetch,
+      authorize: () => true,
+      requireReload: vi.fn(),
+      getContentSession: () => session,
+    })
+  );
+  $project.set({ id: "project", title: "Project", domain: "" } as never);
+  $pages.set(createDefaultPages({ rootInstanceId: "block" }));
+  $instances.set(
+    new Map([
+      [
+        "block",
+        instance("block", blockComponent, [
+          { type: "id", value: "header" },
+          { type: "id", value: "body-outlet" },
+          { type: "id", value: "footer" },
+          { type: "id", value: "templates" },
+        ]),
+      ],
+      ["header", instance("header", "ws:element", [])],
+      ["body-outlet", instance("body-outlet", blockBodyComponent, [])],
+      ["footer", instance("footer", "ws:element", [])],
+      ["templates", instance("templates", blockTemplateComponent, [])],
+    ])
+  );
+  $props.set(new Map());
+  $assets.set(
+    new Map<Asset["id"], Asset>([
+      [asset.id, asset],
+      [authorAsset.id, authorAsset],
+      [avatarAsset.id, avatarAsset],
+    ])
+  );
+  $dataSources.set(new Map());
+  $resources.set(new Map());
+  $styleSources.set(new Map());
+  $styleSourceSelections.set(new Map());
+  $styles.set(new Map());
+  $breakpoints.set(new Map());
+  $projectSettings.set({ meta: {}, compiler: {} });
+  serverSyncStore.popAll();
+  externalContentSyncStore.popAll();
+
+  const renderScope = '["block"]';
+  const release = await acquireExternalContentRoot({
+    projectId: "project",
+    assetId: asset.id,
+    blockInstanceId: "block",
+    renderScope,
+  });
+
+  expect($instances.get().get("block")?.children).toEqual([
+    { type: "id", value: "header" },
+    { type: "id", value: "body-outlet" },
+    { type: "id", value: "footer" },
+    { type: "id", value: "templates" },
+  ]);
+  const [bodyChild] = $instances.get().get("body-outlet")?.children ?? [];
+  expect(bodyChild?.type).toBe("id");
+  expect(
+    bodyChild?.type === "id"
+      ? $instances.get().get(bodyChild.value)?.children
+      : undefined
+  ).toEqual([{ type: "text", value: "Article body" }]);
+  expect(
+    findExternalContentRoot(getExternalContentRoots(), "block", renderScope)
+      ?.diagnostics
+  ).toEqual([
+    expect.objectContaining({
+      severity: "error",
+      message: expect.stringContaining("Unable to resolve frontmatter"),
+    }),
+  ]);
+
+  session.save(authorAsset.id, authorSource);
+  await flushExternalContentAsset({
+    projectId: "project",
+    assetId: authorAsset.id,
+  });
+  await vi.waitFor(() =>
+    expect(
+      findExternalContentRoot(getExternalContentRoots(), "block", renderScope)
+        ?.frontmatter
+    ).toEqual({
+      author: {
+        name: "Ada",
+        avatar: expect.objectContaining({ id: avatarAsset.id }),
+      },
+    })
+  );
+  expect(
+    getExternalContentRootAssets({
+      projectId: "project",
+      blockInstanceIds: new Set(["block"]),
+    }).map(({ id }) => id)
+  ).toEqual([asset.id, authorAsset.id, avatarAsset.id]);
+
+  session.save(
+    authorAsset.id,
+    `---
+name: Ada Lovelace
+avatar:
+  $ref: ./avatar.jpg
+---
+`
+  );
+  await flushExternalContentAsset({
+    projectId: "project",
+    assetId: authorAsset.id,
+  });
+  expect(
+    findExternalContentRoot(getExternalContentRoots(), "block", renderScope)
+      ?.frontmatter
+  ).toEqual({
+    author: {
+      name: "Ada Lovelace",
+      avatar: expect.objectContaining({ id: avatarAsset.id }),
+    },
+  });
+
+  release();
+  expect($instances.get().get("body-outlet")?.children).toEqual([]);
+  expect($instances.get().has("header")).toBe(true);
+  expect($instances.get().has("footer")).toBe(true);
 });
 
 test("keeps dynamic Collection occurrences isolated by render scope", async () => {
@@ -395,8 +725,16 @@ test("keeps dynamic Collection occurrences isolated by render scope", async () =
       ],
       [
         "block",
-        instance("block", blockComponent, [{ type: "id", value: "templates" }]),
+        instance("block", blockComponent, [
+          { type: "id", value: "shell" },
+          { type: "id", value: "templates" },
+        ]),
       ],
+      [
+        "shell",
+        instance("shell", "ws:element", [{ type: "id", value: "body-outlet" }]),
+      ],
+      ["body-outlet", instance("body-outlet", blockBodyComponent, [])],
       ["templates", instance("templates", blockTemplateComponent, [])],
     ])
   );
@@ -449,6 +787,21 @@ test("keeps dynamic Collection occurrences isolated by render scope", async () =
     throw new Error("Expected both dynamic Content Block roots");
   }
   expect(
+    resolveExternalContentOccurrence({
+      sourceInstance: $instances.get().get("body-outlet")!,
+      sourceSelector: [
+        "body-outlet",
+        "shell",
+        firstRoot.blockInstanceId,
+        "collection[first]",
+        "collection",
+        "body",
+      ],
+      instances: $instances.get(),
+      roots: getExternalContentRoots(),
+    })?.instance.id
+  ).toBe(firstRoot.contentInstanceId);
+  expect(
     getExternalContentRootAssets({
       projectId: "project",
       blockInstanceIds: new Set(["block"]),
@@ -456,15 +809,22 @@ test("keeps dynamic Collection occurrences isolated by render scope", async () =
   ).toEqual([asset.id, secondAsset.id]);
   const firstHeading = $instances
     .get()
-    .get(firstRoot.blockInstanceId)
-    ?.children.at(-1);
+    .get(firstRoot.contentInstanceId ?? firstRoot.blockInstanceId)
+    ?.children.at(0);
   const secondHeading = $instances
     .get()
-    .get(secondRoot.blockInstanceId)
-    ?.children.at(-1);
+    .get(secondRoot.contentInstanceId ?? secondRoot.blockInstanceId)
+    ?.children.at(0);
   if (firstHeading?.type !== "id" || secondHeading?.type !== "id") {
     throw new Error("Expected both dynamic MDX headings");
   }
+  expect(
+    getExternalContentRootChildren({
+      projectId: "project",
+      blockInstanceId: "block",
+      renderScope: firstScope,
+    })
+  ).toEqual([firstHeading]);
   expect($instances.get().get(firstHeading.value)?.children).toEqual([
     { type: "text", value: "First" },
   ]);
@@ -474,6 +834,8 @@ test("keeps dynamic Collection occurrences isolated by render scope", async () =
 
   selectInstance([
     firstHeading.value,
+    firstRoot.contentInstanceId ?? "body-outlet",
+    "shell",
     firstRoot.blockInstanceId,
     "collection[first]",
     "collection",

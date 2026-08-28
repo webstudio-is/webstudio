@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
 import {
+  blockBodyComponent,
   blockComponent,
   blockTemplateComponent,
   elementComponent,
+  type Instance,
 } from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
 import { applyBuilderPatchTransactions } from "../state/patch";
@@ -15,7 +17,8 @@ import {
 
 const state = ({
   source = false,
-}: { source?: boolean } = {}): BuilderState => ({
+  explicitBody = false,
+}: { source?: boolean; explicitBody?: boolean } = {}): BuilderState => ({
   pages: createDefaultPages({ rootInstanceId: "block" }),
   instances: new Map([
     [
@@ -26,10 +29,49 @@ const state = ({
         component: blockComponent,
         children: [
           { type: "id", value: "templates" },
-          { type: "id", value: "body" },
+          ...(explicitBody
+            ? [
+                { type: "id" as const, value: "header" },
+                { type: "id" as const, value: "body-outlet" },
+                { type: "id" as const, value: "footer" },
+              ]
+            : [{ type: "id" as const, value: "body" }]),
         ],
       },
     ],
+    ...(explicitBody
+      ? [
+          [
+            "header",
+            {
+              type: "instance" as const,
+              id: "header",
+              component: elementComponent,
+              tag: "header",
+              children: [],
+            },
+          ] as [string, Instance],
+          [
+            "body-outlet",
+            {
+              type: "instance" as const,
+              id: "body-outlet",
+              component: blockBodyComponent,
+              children: [{ type: "id" as const, value: "body" }],
+            },
+          ] as [string, Instance],
+          [
+            "footer",
+            {
+              type: "instance" as const,
+              id: "footer",
+              component: elementComponent,
+              tag: "footer",
+              children: [],
+            },
+          ] as [string, Instance],
+        ]
+      : []),
     [
       "templates",
       {
@@ -92,20 +134,68 @@ describe("Content Block source lifecycle", () => {
     const connected = apply(current, prepared.projectPayload);
 
     expect(prepared.requiresConfirmation).toBe(true);
+    const connectedChildren = connected.instances?.get("block")?.children;
+    expect(connectedChildren?.at(0)).toEqual({
+      type: "id",
+      value: "templates",
+    });
+    const bodyChild = connectedChildren?.at(1);
+    expect(bodyChild?.type).toBe("id");
+    expect(
+      bodyChild?.type === "id"
+        ? connected.instances?.get(bodyChild.value)?.component
+        : undefined
+    ).toBe(blockBodyComponent);
+    expect(connected.instances?.has("body")).toBe(false);
+    const sourceProp = Array.from(connected.props?.values() ?? []).find(
+      ({ name }) => name === "src"
+    );
+    expect(sourceProp?.id).toMatch(/^[\w-]{21}$/);
+    expect(sourceProp).toMatchObject({
+      instanceId: "block",
+      name: "src",
+      type: "asset",
+      value: "asset",
+    });
+    const documentProp = Array.from(connected.props?.values() ?? []).find(
+      ({ name }) => name === "document"
+    );
+    expect(documentProp).toMatchObject({
+      instanceId: "block",
+      name: "document",
+      type: "parameter",
+    });
+    expect(
+      connected.dataSources?.get(
+        documentProp?.type === "parameter" ? documentProp.value : ""
+      )
+    ).toMatchObject({
+      scopeInstanceId: "block",
+      name: "document",
+      type: "parameter",
+    });
+  });
+
+  test("connect clears only the explicit Body outlet", () => {
+    const current = state({ explicitBody: true });
+    const prepared = prepareContentBlockConnect({
+      state: current,
+      blockInstanceId: "block",
+      source: { type: "asset", assetId: "asset" },
+    });
+    const connected = apply(current, prepared.projectPayload);
+
+    expect(prepared.requiresConfirmation).toBe(true);
     expect(connected.instances?.get("block")?.children).toEqual([
       { type: "id", value: "templates" },
+      { type: "id", value: "header" },
+      { type: "id", value: "body-outlet" },
+      { type: "id", value: "footer" },
     ]);
+    expect(connected.instances?.get("body-outlet")?.children).toEqual([]);
     expect(connected.instances?.has("body")).toBe(false);
-    const [sourceProp] = Array.from(connected.props?.values() ?? []);
-    expect(sourceProp?.id).toMatch(/^[\w-]{21}$/);
-    expect(Array.from(connected.props?.values() ?? [])).toEqual([
-      expect.objectContaining({
-        instanceId: "block",
-        name: "src",
-        type: "asset",
-        value: "asset",
-      }),
-    ]);
+    expect(connected.instances?.has("header")).toBe(true);
+    expect(connected.instances?.has("footer")).toBe(true);
   });
 
   test("switch changes only the source contract", () => {

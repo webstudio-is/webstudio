@@ -27,6 +27,7 @@ import { showAttribute, getCollectionEntries } from "@webstudio-is/react-sdk";
 import {
   ROOT_INSTANCE_ID,
   collectionComponent,
+  blockBodyComponent,
   blockComponent,
   rootComponent,
   blockTemplateComponent,
@@ -263,7 +264,11 @@ export const $flatTree = computed(
         console.error(`Unknown instance ${instanceId}`);
         return;
       }
-      if (isContentMode && instance.component === blockComponent) {
+      if (
+        isContentMode &&
+        (instance.component === blockComponent ||
+          instance.component === blockBodyComponent)
+      ) {
         const occurrence = resolveExternalContentOccurrence({
           sourceInstance: instance,
           sourceSelector: selector,

@@ -6,7 +6,6 @@ export * from "./compiler";
 export * from "./source-compiler";
 export * from "./json-document";
 export * from "./markdown-document";
-export * from "./mdx-document";
 export * from "./document-format";
 export * from "./document-adapter";
 export * from "./document-source";

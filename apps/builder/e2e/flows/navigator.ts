@@ -19,9 +19,10 @@ export const selectNavigatorItem = async ({
   name: string;
 }) => {
   await openNavigatorPanel({ page });
-  const item = page
-    .locator("[data-navigator-tree] [data-tree-button]")
-    .filter({ hasText: name })
+  const tree = page.locator("[data-navigator-tree]");
+  const item = tree
+    .locator("[data-tree-button]")
+    .filter({ has: page.getByText(name, { exact: true }) })
     .last();
   await item.waitFor({ state: "visible" });
   await item.click();

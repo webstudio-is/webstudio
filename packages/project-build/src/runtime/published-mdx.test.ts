@@ -126,6 +126,109 @@ describe("published MDX materialization", () => {
     expect(getFragmentText(result.roots[0].fragment)).toContain("Published");
   });
 
+  test("resolves referenced document frontmatter for the designed shell", async () => {
+    const artifact = createArtifact([
+      {
+        id: "article",
+        source: `---
+author:
+  $ref: ./author.mdx#frontmatter
+---
+
+# Article`,
+      },
+      {
+        id: "author",
+        source: `---
+name: Ada
+---
+`,
+      },
+    ]);
+    artifact.documentGraph = {
+      format: "webstudio-document-graph",
+      version: 1,
+      nodes: artifact.documents.map((document) => ({
+        id: document._id,
+        revision: document.revision!,
+        contentRef: document.contentRef!,
+        format: "mdx" as const,
+      })),
+      edges: [
+        {
+          sourceId: "article",
+          referenceId: "#frontmatter/author",
+          reference: {
+            documentId: "author",
+            revision: revision("c"),
+            representation: { type: "markdown-frontmatter" },
+          },
+        },
+      ],
+      integrity: { algorithm: "sha256", checksum: revision("d") },
+    };
+
+    const result = await materializePublishedMdx({
+      route: "/blog/article",
+      data: createData({}),
+      artifact,
+      metas: new Map(),
+      projectId: "project",
+    });
+
+    expect(result.roots[0].resolvedFrontmatter).toEqual({
+      author: { name: "Ada" },
+    });
+  });
+
+  test("uses deployment Asset URLs in resolved frontmatter", async () => {
+    const result = await materializePublishedMdx({
+      route: "/blog/article",
+      data: createData({}),
+      artifact: createArtifact(
+        [
+          {
+            id: "article",
+            source: `---
+featureImage:
+  $ref: ./hero.png
+---
+`,
+          },
+        ],
+        {
+          article: [
+            {
+              path: ["properties", "featureImage"],
+              assetId: "hero",
+              structured: true,
+            },
+          ],
+        }
+      ),
+      metas: new Map(),
+      projectId: "project",
+      runtimeAssets: {
+        hero: {
+          url: "/assets/hero_v1.png",
+          name: "hero.png",
+          width: 1600,
+          height: 900,
+        },
+      },
+    });
+
+    expect(result.roots[0].resolvedFrontmatter).toEqual({
+      featureImage: {
+        id: "hero",
+        src: "/assets/hero_v1.png",
+        name: "hero.png",
+        width: 1600,
+        height: 900,
+      },
+    });
+  });
+
   test("warns about authored elements that violate the HTML content model", async () => {
     const result = await materializePublishedMdx({
       route: "/blog/article",
@@ -579,6 +682,7 @@ describe("getUnsafeDynamicPublishedMdxDiagnostic", () => {
       renderScope: "route:/:block:block",
     },
     document: { frontmatter: { properties: {} }, children: [] },
+    resolvedFrontmatter: {},
     fragment: {
       children: [],
       instances: [],

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   compileDocumentSourceGraph,
+  createDocumentSourceUrl,
   DocumentSourceCompilationError,
 } from "./source-compiler";
 
@@ -34,6 +35,12 @@ const documents = [
 ];
 
 describe("document source graph compiler", () => {
+  test("encodes every Asset path segment as document URL data", () => {
+    expect(createDocumentSourceUrl("authors/Ada #1/プロフィール.md")).toBe(
+      "https://content.webstudio.local/authors/Ada%20%231/%E3%83%97%E3%83%AD%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB.md"
+    );
+  });
+
   test("discovers mixed-format references and compiles a deterministic graph", async () => {
     const graph = await compileDocumentSourceGraph({
       documents: [...documents].reverse(),

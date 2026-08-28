@@ -3,6 +3,7 @@ import {
   type MdxDocument,
 } from "@webstudio-is/content-engine/mdx";
 import type {
+  AssetRuntimeData,
   AssetValueReference,
   ContentArtifactV1,
 } from "@webstudio-is/content-engine";
@@ -10,6 +11,8 @@ import {
   contentEngineLimits,
   createDocumentGraph,
   getDocumentGraphClosure,
+  resolveAssetValueReferences,
+  resolveDocumentGraphProperties,
 } from "@webstudio-is/content-engine";
 import {
   blockComponent,
@@ -17,6 +20,7 @@ import {
   getAssetContentHash,
   getContentBlockSources,
   getStaticContentBlockSourceAssetId,
+  toAssetReferenceRuntimeData,
   type DataSource,
   type Prop,
   type ContentBlockDiagnostic,
@@ -47,6 +51,7 @@ export type PublishedMdxRoot = Readonly<{
   dynamic: boolean;
   identity: ContentBlockExternalContentIdentity;
   document: MdxDocument;
+  resolvedFrontmatter: Readonly<Record<string, unknown>>;
   fragment: ReturnType<typeof materializeMdxAuthoredContent>["fragment"];
   templateDependencies: readonly MdxTemplateDependency[];
   templateNames: readonly string[];
@@ -115,6 +120,7 @@ export const createPublishedMdxMaterializationCache = () => ({
     string,
     Promise<Awaited<ReturnType<typeof parseMdxDocumentRecovering>>>
   >(),
+  frontmatter: new Map<string, Promise<Readonly<Record<string, unknown>>>>(),
 });
 
 type PublishedMdxMaterializationCache = ReturnType<
@@ -198,6 +204,7 @@ export const materializePublishedMdx = async ({
   cache = createPublishedMdxMaterializationCache(),
   dynamicAssetIdsByBlock = new Map(),
   blockInstanceIds,
+  runtimeAssets: providedRuntimeAssets,
 }: {
   route: string;
   data: Omit<WebstudioData, "pages">;
@@ -207,6 +214,7 @@ export const materializePublishedMdx = async ({
   cache?: PublishedMdxMaterializationCache;
   dynamicAssetIdsByBlock?: ReadonlyMap<string, readonly string[]>;
   blockInstanceIds?: ReadonlySet<string>;
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
 }): Promise<{
   roots: readonly PublishedMdxRoot[];
   warnings: readonly PublishedMdxWarning[];
@@ -221,6 +229,56 @@ export const materializePublishedMdx = async ({
     artifact.documentGraph === undefined
       ? undefined
       : createDocumentGraph(artifact.documentGraph);
+  const runtimeAssets =
+    providedRuntimeAssets ??
+    Object.fromEntries(
+      Array.from(data.assets.values(), (asset) => [
+        asset.id,
+        toAssetReferenceRuntimeData(asset, "https://webstudio.local"),
+      ])
+    );
+  const resolveFrontmatter = (
+    assetId: string,
+    document: MdxDocument
+  ): Promise<Readonly<Record<string, unknown>>> => {
+    const cached = cache.frontmatter.get(assetId);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const resolving = (async () => {
+      if (
+        documentGraph !== undefined &&
+        documentGraph.nodes.some(({ id }) => id === assetId)
+      ) {
+        return (
+          (await resolveDocumentGraphProperties({
+            graph: documentGraph,
+            rootId: assetId,
+            assetValueReferences: artifact.assetValueReferences,
+            runtimeAssets,
+            load: async (node) => {
+              const source = artifact.contents?.[node.contentRef];
+              if (source === undefined || node.format === undefined) {
+                throw new Error(`Published document ${node.id} is unavailable`);
+              }
+              return {
+                format: node.format,
+                revision: node.revision,
+                source,
+              };
+            },
+          })) ?? document.frontmatter.properties
+        );
+      }
+      return resolveAssetValueReferences({
+        value: { properties: document.frontmatter.properties },
+        references: artifact.assetValueReferences?.[assetId],
+        runtimeAssets,
+      }).properties;
+    })();
+    cache.frontmatter.set(assetId, resolving);
+    return resolving;
+  };
   const sourcesByBlockId = getContentBlockSources({
     instances: data.instances.values(),
     props: data.props.values(),
@@ -402,6 +460,7 @@ export const materializePublishedMdx = async ({
         dynamic: isDynamicSource,
         identity,
         document,
+        resolvedFrontmatter: await resolveFrontmatter(candidate._id, document),
         fragment: materialized.fragment,
         templateDependencies: templates.dependencies.templates,
         templateNames: referencedTemplateNames,

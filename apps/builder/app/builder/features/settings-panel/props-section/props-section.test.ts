@@ -1,12 +1,31 @@
 import { describe, expect, test } from "vitest";
-import { blockComponent, rootComponent } from "@webstudio-is/sdk";
+import { blockComponent, rootComponent, type Prop } from "@webstudio-is/sdk";
 import { __testing__ } from "./props-section";
 
 const {
   shouldShowPropertiesSection,
   shouldRenderPropsSectionContainer,
   shouldSyncMediaAssetProps,
+  findExpressionPropByStandardName,
 } = __testing__;
+
+test("finds a legacy React-named expression by its standard attribute name", () => {
+  const className: Prop = {
+    id: "class-name",
+    instanceId: "heading",
+    name: "className",
+    type: "expression",
+    value: "$ws$dataSource$document.frontmatter.className",
+  };
+
+  expect(
+    findExpressionPropByStandardName({
+      props: [className],
+      instanceId: "heading",
+      propName: "class",
+    })
+  ).toBe(className);
+});
 
 describe("shouldShowPropertiesSection", () => {
   test("shows properties in design mode even when empty", () => {
@@ -155,6 +174,17 @@ describe("shouldSyncMediaAssetProps", () => {
         component: "Image",
         propName: "src",
         propValue: { type: "string" },
+      })
+    ).toBe(false);
+  });
+
+  test("does not copy an Asset into related frontmatter bindings", () => {
+    expect(
+      shouldSyncMediaAssetProps({
+        component: "Image",
+        propName: "src",
+        propValue: { type: "asset" },
+        propType: "expression",
       })
     ).toBe(false);
   });

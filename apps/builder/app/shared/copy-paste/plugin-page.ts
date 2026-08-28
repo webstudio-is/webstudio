@@ -39,7 +39,7 @@ import { getPageActionTarget } from "../page-action-target";
 import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
 import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime";
 import { transferFragmentAssets } from "./asset-transfer-utils";
-import { rewriteTransferredMdxAssets } from "./mdx-asset-transfer";
+import { rewriteTransferredDocumentAssetReferences } from "./mdx-asset-transfer";
 import {
   createClipboardAssetPaths,
   hasDynamicContentBlockSource,
@@ -514,22 +514,24 @@ export const handlePastePage = async (
         )
       );
       try {
-        const { skippedInvalidAssetIds } = await rewriteTransferredMdxAssets({
-          sourceOrigin,
-          projectId,
-          sourceAssets: Array.from(sourceAssets.values()),
-          sourceAssetPaths: assetPaths,
-          importedAssets: transferred.assets,
-        });
+        const { skippedInvalidAssetIds } =
+          await rewriteTransferredDocumentAssetReferences({
+            sourceOrigin,
+            projectId,
+            sourceAssets: Array.from(sourceAssets.values()),
+            sourceAssetPaths: assetPaths,
+            importedAssets: transferred.assets,
+          });
         if (skippedInvalidAssetIds.length > 0) {
           toast.warn(
-            "Some invalid MDX files were copied unchanged. Open them to review their diagnostics."
+            "Some invalid content files were copied unchanged. Open them to review their diagnostics."
           );
         }
       } catch {
         return {
           success: false,
-          error: "Could not update Asset references in the copied MDX files.",
+          error:
+            "Could not update Asset references in the copied content files.",
         } as const;
       }
     }

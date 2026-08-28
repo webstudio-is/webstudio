@@ -109,12 +109,14 @@ export const getExternalContentOwnershipFromState = ({
     ([key]) => rootKeys === undefined || rootKeys.has(key)
   );
   const rootIds = selectedRoots.flatMap(([, root]) =>
-    (state.instances.get(root.blockInstanceId)?.children ?? []).flatMap(
-      (child) =>
-        child.type === "id" &&
-        state.instances.get(child.value)?.component !== blockTemplateComponent
-          ? [child.value]
-          : []
+    (
+      state.instances.get(root.contentInstanceId ?? root.blockInstanceId)
+        ?.children ?? []
+    ).flatMap((child) =>
+      child.type === "id" &&
+      state.instances.get(child.value)?.component !== blockTemplateComponent
+        ? [child.value]
+        : []
     )
   );
   const fragment = mergeWebstudioFragments(

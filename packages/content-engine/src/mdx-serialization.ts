@@ -13,7 +13,7 @@ import {
   type MdxJsxTextElement,
 } from "mdast-util-mdx-jsx";
 import { toMarkdown } from "mdast-util-to-markdown";
-import { stringify as stringifyYaml } from "yaml";
+import { serializeMarkdownFrontmatter } from "./frontmatter";
 import type {
   MdxAuthoredNode,
   MdxAuthoredProp,
@@ -219,17 +219,6 @@ const mapListItem: Handle = (state, node) => {
   return result;
 };
 
-export const serializeMdxFrontmatter = (
-  properties: Readonly<Record<string, unknown>>
-) => {
-  const yaml = stringifyYaml(properties, {
-    aliasDuplicateObjects: false,
-    lineWidth: 0,
-    sortMapEntries: true,
-  }).trimEnd();
-  return `---\n${yaml}\n---\n\n`;
-};
-
 const serializeFrontmatter = (document: MdxDocument, hasBody: boolean) => {
   if (document.frontmatter.authoredSource !== undefined) {
     const source = document.frontmatter.authoredSource;
@@ -241,7 +230,7 @@ const serializeFrontmatter = (document: MdxDocument, hasBody: boolean) => {
   ) {
     return "";
   }
-  return serializeMdxFrontmatter(document.frontmatter.properties);
+  return serializeMarkdownFrontmatter(document.frontmatter.properties);
 };
 
 export const serializeMdxDocument = (document: MdxDocument) => {

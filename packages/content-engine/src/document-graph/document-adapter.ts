@@ -14,22 +14,22 @@ import {
   selectMarkdownDocumentRepresentation,
   type MarkdownDocument,
 } from "./markdown-document";
-import {
-  analyzeMdxDocument,
-  assembleMdxDocument,
-  parseMdxDocumentSource,
-  selectMdxDocumentRepresentation,
-  type MdxAdaptedDocument,
-} from "./mdx-document";
 import type { DocumentRepresentation } from "./reference";
 import type { SourceReferenceOccurrence } from "./reference-codec";
 import { isJsonObject } from "./document-utils";
 import type { DocumentFormat } from "./document-format";
+import {
+  resolveAssetValueReferences,
+  type AssetRuntimeData,
+  type AssetValueReference,
+} from "../asset-value-references";
 
 export type AdaptedDocument =
   | Readonly<{ format: "json"; value: JsonValue }>
-  | Readonly<{ format: "markdown"; value: MarkdownDocument }>
-  | Readonly<{ format: "mdx"; value: MdxAdaptedDocument }>;
+  | Readonly<{
+      format: "markdown" | "mdx";
+      value: MarkdownDocument;
+    }>;
 
 export type AnalyzedDocument =
   | Readonly<{
@@ -38,13 +38,8 @@ export type AnalyzedDocument =
       references: readonly SourceReferenceOccurrence[];
     }>
   | Readonly<{
-      format: "markdown";
+      format: "markdown" | "mdx";
       value: MarkdownDocument;
-      references: readonly SourceReferenceOccurrence[];
-    }>
-  | Readonly<{
-      format: "mdx";
-      value: MdxAdaptedDocument;
       references: readonly SourceReferenceOccurrence[];
     }>;
 
@@ -52,6 +47,34 @@ export const getAdaptedDocumentProperties = (document: AdaptedDocument) => {
   const value =
     document.format === "json" ? document.value : document.value.frontmatter;
   return isJsonObject(value) ? value : undefined;
+};
+
+/** Resolves local Asset references without changing the document format. */
+export const resolveAdaptedDocumentAssetReferences = ({
+  document,
+  references,
+  runtimeAssets,
+}: {
+  document: AdaptedDocument;
+  references?: readonly AssetValueReference[];
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+}): AdaptedDocument => {
+  const properties = getAdaptedDocumentProperties(document);
+  if (properties === undefined || references === undefined) {
+    return document;
+  }
+  const resolved = resolveAssetValueReferences({
+    value: { properties },
+    references,
+    runtimeAssets,
+  }).properties;
+  if (document.format === "json") {
+    return Object.freeze({ ...document, value: resolved });
+  }
+  return Object.freeze({
+    ...document,
+    value: Object.freeze({ ...document.value, frontmatter: resolved }),
+  });
 };
 
 const freezeDocument = <Document extends AdaptedDocument | AnalyzedDocument>(
@@ -74,15 +97,9 @@ export const parseDocumentSource = async ({
       value: await parseJsonDocumentSource({ source, maximumBytes }),
     });
   }
-  if (format === "markdown") {
-    return freezeDocument({
-      format,
-      value: await parseMarkdownDocumentSource({ source, maximumBytes }),
-    });
-  }
   return freezeDocument({
     format,
-    value: await parseMdxDocumentSource({ source, maximumBytes }),
+    value: await parseMarkdownDocumentSource({ source, maximumBytes }),
   });
 };
 
@@ -113,20 +130,7 @@ export const analyzeDocumentSource = async ({
       references: analyzed.references,
     });
   }
-  if (format === "markdown") {
-    const analyzed = await analyzeMarkdownDocument({
-      source,
-      sourceDocumentId,
-      documentUrl,
-      maximumBytes,
-    });
-    return freezeDocument({
-      format,
-      value: analyzed.document,
-      references: analyzed.references,
-    });
-  }
-  const analyzed = await analyzeMdxDocument({
+  const analyzed = await analyzeMarkdownDocument({
     source,
     sourceDocumentId,
     documentUrl,
@@ -158,19 +162,9 @@ export const assembleDocument = ({
       }),
     });
   }
-  if (document.format === "markdown") {
-    return freezeDocument({
-      format: document.format,
-      value: assembleMarkdownDocument({
-        document: document.value,
-        references,
-        allowUnresolvedReferences,
-      }),
-    });
-  }
   return freezeDocument({
     format: document.format,
-    value: assembleMdxDocument({
+    value: assembleMarkdownDocument({
       document: document.value,
       references,
       allowUnresolvedReferences,
@@ -191,13 +185,7 @@ export const selectDocumentRepresentation = ({
       representation,
     });
   }
-  if (document.format === "markdown") {
-    return selectMarkdownDocumentRepresentation({
-      document: document.value,
-      representation,
-    });
-  }
-  return selectMdxDocumentRepresentation({
+  return selectMarkdownDocumentRepresentation({
     document: document.value,
     representation,
   });

@@ -12,3 +12,5 @@ export * from "./query-source";
 export * from "./query-error";
 export * from "./document-graph";
 export * from "./asset-value-references";
+export * from "./json-assets";
+export { createUniqueAssetIdsByPath } from "./asset-path-resolution";

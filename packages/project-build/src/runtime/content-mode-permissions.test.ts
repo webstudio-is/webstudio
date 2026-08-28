@@ -1,7 +1,11 @@
 import { describe, expect, test } from "vitest";
 import {
   blockComponent,
+  blockBodyComponent,
   blockTemplateComponent,
+  contentBlockDocumentProp,
+  contentBlockSourceProp,
+  encodeDataSourceVariable,
   elementComponent,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
@@ -47,6 +51,19 @@ const metas = new Map<string, WsComponentMeta>([
           type: "string",
           control: "text",
           required: false,
+        },
+      },
+    },
+  ],
+  [
+    "Heading",
+    {
+      props: {
+        description: {
+          type: "string",
+          control: "text",
+          required: false,
+          contentMode: true,
         },
       },
     },
@@ -100,6 +117,256 @@ const styleSources = new Map([
   ["token", { type: "token" as const, id: "token", name: "Token" }],
   ["local", { type: "local" as const, id: "local" }],
 ]);
+
+test("limits an explicit Content Block to its Body and frontmatter bindings", () => {
+  const document = encodeDataSourceVariable("document-data-source");
+  const explicitInstances = new Map<string, Instance>([
+    [
+      "block",
+      {
+        type: "instance",
+        id: "block",
+        component: blockComponent,
+        children: [
+          { type: "id", value: "shell" },
+          { type: "id", value: "title" },
+          { type: "id", value: "content" },
+        ],
+      },
+    ],
+    [
+      "shell",
+      {
+        type: "instance",
+        id: "shell",
+        component: "Box",
+        children: [],
+      },
+    ],
+    [
+      "title",
+      {
+        type: "instance",
+        id: "title",
+        component: "Heading",
+        children: [
+          { type: "expression", value: `${document}.frontmatter.title` },
+        ],
+      },
+    ],
+    [
+      "content",
+      {
+        type: "instance",
+        id: "content",
+        component: blockBodyComponent,
+        children: [{ type: "id", value: "paragraph" }],
+      },
+    ],
+    [
+      "paragraph",
+      {
+        type: "instance",
+        id: "paragraph",
+        component: "Paragraph",
+        children: [],
+      },
+    ],
+  ]);
+  const explicitProps = new Map<string, Prop>([
+    [
+      "source-prop",
+      {
+        id: "source-prop",
+        instanceId: "block",
+        name: contentBlockSourceProp,
+        type: "asset",
+        value: "article",
+      },
+    ],
+    [
+      "document-prop",
+      {
+        id: "document-prop",
+        instanceId: "block",
+        name: contentBlockDocumentProp,
+        type: "parameter",
+        value: "document-data-source",
+      },
+    ],
+    [
+      "designed-description",
+      {
+        id: "designed-description",
+        instanceId: "title",
+        name: "description",
+        type: "string",
+        value: "Designed description",
+      },
+    ],
+  ]);
+
+  const capabilities = getContentModeCapabilities({
+    instances: explicitInstances,
+    metas,
+    props: explicitProps,
+    styleSources,
+  });
+
+  expect(capabilities.contentRootIds).toEqual(new Set(["content"]));
+  expect(capabilities.editableInstanceIds.has("paragraph")).toBe(true);
+  expect(capabilities.editableInstanceIds.has("title")).toBe(false);
+  expect(capabilities.editablePropIds.has("designed-description")).toBe(false);
+  expect(capabilities.editableInstanceIds.has("shell")).toBe(false);
+  expect(capabilities.editableInstanceIds.has("block")).toBe(false);
+
+  const result = applyContentModeTransaction({
+    capabilities,
+    transaction: {
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: ["paragraph", "children"],
+              value: [{ type: "text", value: "Updated" }],
+            },
+          ],
+        },
+      ],
+    },
+  });
+  expect(result.success).toBe(true);
+  if (result.success) {
+    expect(result.capabilities.editableInstanceIds.has("title")).toBe(false);
+  }
+  expect(
+    validateContentModeTransaction({
+      capabilities,
+      transaction: {
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                op: "replace",
+                path: ["title", "children"],
+                value: [{ type: "text", value: "Bypassed frontmatter" }],
+              },
+            ],
+          },
+        ],
+      },
+    }).success
+  ).toBe(false);
+  expect(
+    validateContentModeTransaction({
+      capabilities,
+      transaction: {
+        payload: [
+          {
+            namespace: "instances",
+            patches: [{ op: "remove", path: ["title"] }],
+          },
+        ],
+      },
+    }).success
+  ).toBe(false);
+
+  expect(
+    validateContentModeTransaction({
+      capabilities,
+      transaction: {
+        payload: [
+          {
+            namespace: "props",
+            patches: [
+              {
+                op: "add",
+                path: ["shell-content-prop"],
+                value: {
+                  id: "shell-content-prop",
+                  instanceId: "title",
+                  name: "description",
+                  type: "string",
+                  value: "Changed in content mode",
+                },
+              },
+            ],
+          },
+        ],
+      },
+    }).success
+  ).toBe(false);
+
+  explicitProps.delete("source-prop");
+  const disconnected = getContentModeCapabilities({
+    instances: explicitInstances,
+    metas,
+    props: explicitProps,
+    styleSources,
+  });
+  expect(disconnected.editableInstanceIds.has("title")).toBe(false);
+});
+
+test("does not loop while finding frontmatter bindings in recursive instances", () => {
+  const document = encodeDataSourceVariable("document-data-source");
+  const recursiveInstances = new Map<string, Instance>([
+    [
+      "block",
+      {
+        type: "instance",
+        id: "block",
+        component: blockComponent,
+        children: [{ type: "id", value: "recursive" }],
+      },
+    ],
+    [
+      "recursive",
+      {
+        type: "instance",
+        id: "recursive",
+        component: "Box",
+        children: [
+          { type: "expression", value: `${document}.frontmatter.title` },
+          { type: "id", value: "recursive" },
+        ],
+      },
+    ],
+  ]);
+  const recursiveProps = new Map<string, Prop>([
+    [
+      "source",
+      {
+        id: "source",
+        instanceId: "block",
+        name: contentBlockSourceProp,
+        type: "asset",
+        value: "article",
+      },
+    ],
+    [
+      "document",
+      {
+        id: "document",
+        instanceId: "block",
+        name: contentBlockDocumentProp,
+        type: "parameter",
+        value: "document-data-source",
+      },
+    ],
+  ]);
+
+  expect(() =>
+    getContentModeCapabilities({
+      instances: recursiveInstances,
+      metas,
+      props: recursiveProps,
+      styleSources,
+    })
+  ).not.toThrow();
+});
 
 const transaction = (
   namespace: string,

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   blockComponent,
+  blockBodyComponent,
   blockTemplateComponent,
   coreMetas,
 } from "./core-metas";
@@ -9,11 +10,14 @@ import type { Instance } from "./schema/instances";
 import type { Prop } from "./schema/props";
 import {
   allocateUniqueContentBlockTemplateName,
+  findContentBlockBodyContainerPaths,
   findContentBlockTemplateContainers,
+  getContentBlockDocumentBindingPath,
   getContentBlockSourceIntegrityIssues,
   isEqualContentBlockSource,
   parseContentBlockSourceProp,
 } from "./content-block";
+import { encodeDataSourceVariable } from "./expression";
 
 test("declares the Content Block source as a Design-mode MDX property", () => {
   expect(coreMetas[blockComponent]).toMatchObject({
@@ -98,6 +102,52 @@ describe("Content Block source", () => {
         instances,
       })
     ).toEqual([first, second]);
+  });
+
+  test("finds a Body outlet nested in the designed shell", () => {
+    const body: Instance = {
+      type: "instance",
+      id: "body",
+      component: blockBodyComponent,
+      children: [],
+    };
+    const shell: Instance = {
+      type: "instance",
+      id: "shell",
+      component: "ws:element",
+      tag: "article",
+      children: [{ type: "id", value: body.id }],
+    };
+    const contentBlock: Instance = {
+      ...block,
+      children: [{ type: "id", value: shell.id }],
+    };
+    const instances = new Map(
+      [contentBlock, shell, body].map((instance) => [instance.id, instance])
+    );
+
+    expect(
+      findContentBlockBodyContainerPaths({
+        blockInstance: contentBlock,
+        instances,
+      })
+    ).toEqual([[shell, body]]);
+  });
+
+  test("recognizes only direct document frontmatter bindings", () => {
+    const document = encodeDataSourceVariable("document-id");
+    expect(
+      getContentBlockDocumentBindingPath({
+        expression: `${document}.frontmatter.author.name`,
+        documentDataSourceId: "document-id",
+      })
+    ).toEqual(["author", "name"]);
+    expect(
+      getContentBlockDocumentBindingPath({
+        expression: `${document}.frontmatter.title ?? "Untitled"`,
+        documentDataSourceId: "document-id",
+      })
+    ).toBeUndefined();
   });
 
   test("keeps the source optional for existing Content Blocks", () => {

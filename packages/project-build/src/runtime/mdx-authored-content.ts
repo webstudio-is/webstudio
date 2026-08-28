@@ -183,6 +183,7 @@ export type MaterializedMdxAuthoredContentRoot = Readonly<{
   identity: ContentBlockExternalContentIdentity;
   fragment: WebstudioFragment;
   document: MdxDocument;
+  resolvedFrontmatter?: Readonly<Record<string, unknown>>;
   provenance: MdxAuthoredContentProvenance;
   assetReferenceValues?: ReadonlyMap<string, string>;
 }>;

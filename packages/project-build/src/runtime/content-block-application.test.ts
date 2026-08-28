@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  blockBodyComponent,
   blockComponent,
   blockTemplateComponent,
   type Asset,
@@ -197,7 +198,14 @@ describe("createContentBlockApplication", () => {
       { id: "disconnect", payload: [...disconnected.projectPayload] },
     ]).state;
     const block = disconnectedState.instances?.get("block");
-    expect(block?.children).toEqual([{ type: "id", value: "templates" }]);
+    expect(block?.children.at(0)).toEqual({ type: "id", value: "templates" });
+    const bodyChild = block?.children.at(1);
+    expect(bodyChild?.type).toBe("id");
+    expect(
+      bodyChild?.type === "id"
+        ? disconnectedState.instances?.get(bodyChild.value)
+        : undefined
+    ).toMatchObject({ component: blockBodyComponent, children: [] });
     expect(disconnectedState.props?.has("src")).toBe(false);
   });
 

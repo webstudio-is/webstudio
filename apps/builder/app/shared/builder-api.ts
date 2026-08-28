@@ -19,7 +19,7 @@ import { requireBuilderReload } from "./sync/reload-required";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import { createHttpAssetContentRepository } from "~/builder/shared/assets/mdx-content-repository";
 import { $authToken } from "./nano-states";
-import { isMdxFileAsset } from "@webstudio-is/sdk";
+import { isMdxFileAsset, type Asset } from "@webstudio-is/sdk";
 import { createTransactionFromBuilderPatchPayload } from "./sync/builder-patch";
 import { getWebstudioData } from "./instance-utils/data";
 import { invalidateAssets } from "./resources";
@@ -27,6 +27,23 @@ import { onNextTransactionComplete } from "./sync/project-queue";
 import { disposeExternalContentProject } from "./external-content-roots";
 
 const apiWindowNamespace = "__webstudio__$__builderApi";
+
+const isContentDocumentAsset = (asset: Pick<Asset, "type" | "format">) =>
+  asset.type === "file" &&
+  ["md", "mdx", "json"].includes(asset.format.toLowerCase());
+
+const canAccessAssetContent = ({
+  asset,
+  operation,
+  canWrite,
+}: {
+  asset: Pick<Asset, "type" | "format">;
+  operation: "read" | "write";
+  canWrite: boolean;
+}) =>
+  operation === "read"
+    ? isContentDocumentAsset(asset)
+    : canWrite && isMdxFileAsset(asset);
 
 type ToastHandler = (message: string) => void;
 
@@ -50,8 +67,12 @@ const authorizeAssetContent = ({
   return (
     $project.get()?.id === projectId &&
     asset?.projectId === projectId &&
-    isMdxFileAsset(asset) &&
-    (operation === "read" || $authPermit.get() !== "view")
+    asset !== undefined &&
+    canAccessAssetContent({
+      asset,
+      operation,
+      canWrite: $authPermit.get() !== "view",
+    })
   );
 };
 
@@ -229,11 +250,29 @@ export const initBuilderApi = () => {
           }
           let sessionAuthToken = $authToken.get();
           let canWrite = $authPermit.get() !== "view";
-          const authorizedAssetIds = new Set(
+          const authorizedReadAssetIds = new Set(
             Array.from($assets.get().values())
               .filter(
                 (asset) =>
-                  asset.projectId === projectId && isMdxFileAsset(asset)
+                  asset.projectId === projectId &&
+                  canAccessAssetContent({
+                    asset,
+                    operation: "read",
+                    canWrite: true,
+                  })
+              )
+              .map((asset) => asset.id)
+          );
+          const authorizedWriteAssetIds = new Set(
+            Array.from($assets.get().values())
+              .filter(
+                (asset) =>
+                  asset.projectId === projectId &&
+                  canAccessAssetContent({
+                    asset,
+                    operation: "write",
+                    canWrite: true,
+                  })
               )
               .map((asset) => asset.id)
           );
@@ -253,12 +292,32 @@ export const initBuilderApi = () => {
               if ($project.get()?.id === projectId) {
                 canWrite = $authPermit.get() !== "view";
                 const asset = $assets.get().get(assetId);
-                if (asset?.projectId === projectId && isMdxFileAsset(asset)) {
-                  authorizedAssetIds.add(assetId);
+                if (
+                  asset?.projectId === projectId &&
+                  canAccessAssetContent({
+                    asset,
+                    operation: "read",
+                    canWrite: true,
+                  })
+                ) {
+                  authorizedReadAssetIds.add(assetId);
+                }
+                if (
+                  asset?.projectId === projectId &&
+                  canAccessAssetContent({
+                    asset,
+                    operation: "write",
+                    canWrite: true,
+                  })
+                ) {
+                  authorizedWriteAssetIds.add(assetId);
                 }
               }
               return (
-                authorizedAssetIds.has(assetId) &&
+                (operation === "read"
+                  ? authorizedReadAssetIds
+                  : authorizedWriteAssetIds
+                ).has(assetId) &&
                 (operation === "read" || canWrite)
               );
             },
@@ -310,3 +369,5 @@ export const initBuilderApi = () => {
   }
   return () => {};
 };
+
+export const __testing__ = { canAccessAssetContent };

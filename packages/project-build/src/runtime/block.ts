@@ -2,6 +2,7 @@ import {
   allocateUniqueContentBlockTemplateName,
   blockComponent,
   blockTemplateComponent,
+  findContentBlockBodyContainerPaths,
   findParentInstanceReference,
   findContentBlockTemplateContainers,
   getContentBlockSource,
@@ -210,16 +211,18 @@ export const findBlockChildSelector = ({
   instanceSelector: InstanceSelector;
   instances: Instances;
 }) => {
-  for (let index = 1; index < instanceSelector.length; index += 1) {
-    const instance = instances.get(instanceSelector[index]);
-    if (instance?.component === blockComponent) {
-      return instanceSelector.slice(index - 1);
-    }
+  const contentSelector = findBlockContentSelector({
+    anchor: instanceSelector,
+    instances,
+  });
+  if (contentSelector === undefined) {
+    return;
   }
-
-  if (instances.get(instanceSelector[0])?.component === blockComponent) {
-    return instanceSelector;
+  const contentIndex = instanceSelector.length - contentSelector.length;
+  if (contentIndex === 0) {
+    return contentSelector;
   }
+  return instanceSelector.slice(contentIndex - 1);
 };
 
 export const findBlockSelector = ({
@@ -245,6 +248,43 @@ export const findBlockSelector = ({
   }
 };
 
+/** Finds the container whose children are editable Content Block content. */
+export const findBlockContentSelector = ({
+  anchor,
+  instances,
+}: {
+  anchor: InstanceSelector;
+  instances: Instances;
+}) => {
+  const blockSelector = findBlockSelector({ anchor, instances });
+  if (blockSelector === undefined) {
+    return;
+  }
+  const block = instances.get(blockSelector[0]);
+  if (block === undefined) {
+    return;
+  }
+  const bodyPaths = findContentBlockBodyContainerPaths({
+    blockInstance: block,
+    instances,
+  });
+  if (bodyPaths.length === 0) {
+    return blockSelector;
+  }
+  if (bodyPaths.length > 1) {
+    return;
+  }
+  const bodyPath = bodyPaths[0];
+  const body = bodyPath.at(-1)!;
+  const bodyIndex = anchor.indexOf(body.id);
+  if (bodyIndex !== -1) {
+    return anchor.slice(bodyIndex);
+  }
+  if (anchor[0] === block.id) {
+    return [...bodyPath.map(({ id }) => id).reverse(), ...blockSelector];
+  }
+};
+
 export const canMoveInstanceInContentMode = ({
   instanceSelector,
   parentSelector,
@@ -254,30 +294,27 @@ export const canMoveInstanceInContentMode = ({
   parentSelector: InstanceSelector;
   instances: Instances;
 }) => {
-  const sourceBlock = findBlockSelector({
+  const sourceContent = findBlockContentSelector({
     anchor: instanceSelector,
     instances,
   });
-  const targetBlock = findBlockSelector({ anchor: parentSelector, instances });
-  const sourcePrefixLength =
-    sourceBlock === undefined
-      ? 0
-      : instanceSelector.length - sourceBlock.length;
-  const targetPrefixLength =
-    targetBlock === undefined ? 0 : parentSelector.length - targetBlock.length;
+  const targetContent = findBlockContentSelector({
+    anchor: parentSelector,
+    instances,
+  });
   return (
-    sourceBlock !== undefined &&
-    targetBlock !== undefined &&
-    sourceBlock[0] === targetBlock[0] &&
-    sourcePrefixLength > 0 &&
+    sourceContent !== undefined &&
+    targetContent !== undefined &&
+    sourceContent[0] === targetContent[0] &&
+    instanceSelector.length > sourceContent.length &&
     instanceSelector
-      .slice(0, sourcePrefixLength)
+      .slice(0, instanceSelector.length - sourceContent.length)
       .every(
         (instanceId) =>
           instances.get(instanceId)?.component !== blockTemplateComponent
       ) &&
     parentSelector
-      .slice(0, targetPrefixLength)
+      .slice(0, parentSelector.length - targetContent.length)
       .every(
         (instanceId) =>
           instances.get(instanceId)?.component !== blockTemplateComponent
@@ -292,18 +329,17 @@ export const canDeleteInstanceInContentMode = ({
   instanceSelector: InstanceSelector;
   instances: Instances;
 }) => {
-  const blockSelector = findBlockSelector({
+  const contentSelector = findBlockContentSelector({
     anchor: instanceSelector,
     instances,
   });
-  if (blockSelector === undefined) {
+  if (contentSelector === undefined) {
     return false;
   }
 
-  if (instanceSelector.length - blockSelector.length !== 1) {
+  if (instanceSelector.length - contentSelector.length !== 1) {
     return false;
   }
-
   return (
     instances.get(instanceSelector[0])?.component !== blockTemplateComponent
   );
@@ -362,14 +398,22 @@ export const getBlockTemplateInsertionIndex = ({
     return;
   }
 
-  const insertAtInitialPosition =
-    blockSelector.length === anchor.length &&
-    blockSelector.every((instanceId, index) => instanceId === anchor[index]);
-
   const blockInstance = instances.get(blockSelector[0]);
   if (blockInstance === undefined) {
     return;
   }
+
+  const contentSelector = findBlockContentSelector({ anchor, instances });
+  if (contentSelector === undefined) {
+    return;
+  }
+  const contentInstance = instances.get(contentSelector[0]);
+  if (contentInstance === undefined) {
+    return;
+  }
+
+  const insertAtInitialPosition =
+    anchor[0] === blockInstance.id || anchor[0] === contentInstance.id;
 
   const childBlockSelector = findBlockChildSelector({
     instanceSelector: anchor,
@@ -379,11 +423,14 @@ export const getBlockTemplateInsertionIndex = ({
     return;
   }
 
-  const templateContainerId = findContentBlockTemplateContainers({
-    blockInstance,
-    instances,
-  })[0]?.id;
-  const index = blockInstance.children.findIndex((child) => {
+  const templateContainerId =
+    contentInstance === blockInstance
+      ? findContentBlockTemplateContainers({
+          blockInstance,
+          instances,
+        })[0]?.id
+      : undefined;
+  const index = contentInstance.children.findIndex((child) => {
     if (child.type !== "id") {
       return false;
     }
@@ -393,7 +440,9 @@ export const getBlockTemplateInsertionIndex = ({
     return child.value === childBlockSelector[0];
   });
   if (index === -1) {
-    return;
+    return insertAtInitialPosition && templateContainerId === undefined
+      ? 0
+      : undefined;
   }
 
   if (insertAtInitialPosition) {

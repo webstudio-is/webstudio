@@ -68,6 +68,52 @@ describe("isPropVisibleInContentMode", () => {
     ).toBe(true);
   });
 
+  test("shows only the exact frontmatter-bound shell property", () => {
+    const title: Prop = {
+      id: "title-prop",
+      instanceId: "editable-instance",
+      name: "title",
+      type: "expression",
+      value: "$ws$dataSource$document.frontmatter.title",
+    };
+    const description: Prop = {
+      id: "description-prop",
+      instanceId: "editable-instance",
+      name: "description",
+      type: "string",
+      value: "Designed description",
+    };
+    const capabilities = {
+      ...getInput().capabilities,
+      editableInstanceIds: new Set<string>(),
+      frontmatterBoundPropIds: new Set([title.id]),
+    };
+
+    expect(
+      isPropVisibleInContentMode(
+        getInput({ props: [title, description], capabilities })
+      )
+    ).toBe(true);
+    expect(
+      isPropVisibleInContentMode(
+        getInput({
+          propName: "description",
+          props: [title, description],
+          capabilities,
+        })
+      )
+    ).toBe(false);
+    expect(
+      isPropVisibleInContentMode(
+        getInput({
+          propName: textContentAttribute,
+          props: [title, description],
+          capabilities,
+        })
+      )
+    ).toBe(false);
+  });
+
   test("shows existing asset props as content", () => {
     const prop: Prop = {
       id: "image-prop",
@@ -148,6 +194,10 @@ describe("isPropVisibleInContentMode", () => {
           propName: contentBlockSourceProp,
           props: [source],
           propsMetas: new Map([[contentBlockSourceProp, sourceMeta]]),
+          capabilities: {
+            ...getInput().capabilities,
+            editableInstanceIds: new Set(),
+          },
         })
       )
     ).toBe(true);

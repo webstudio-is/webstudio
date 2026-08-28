@@ -14,7 +14,9 @@ import {
   parseComponentName,
   generateExpression,
   decodeDataSourceVariable,
+  contentBlockDocumentProp,
   blockComponent,
+  blockBodyComponent,
   blockTemplateComponent,
   collectionComponent,
   descendantComponent,
@@ -31,11 +33,13 @@ import { isAttributeNameSafe, showAttribute } from "./props";
 import { generateCollectionIterationCode } from "./collection-utils";
 
 export type PublishedContentBlock = Readonly<{
+  bodyInstanceId?: Instance["id"];
   sourceExpression?: string;
   candidates: readonly Readonly<{
     assetId: string;
     dependencyRevision: string;
     children: Instance["children"];
+    frontmatter: Readonly<Record<string, unknown>>;
     resourceIds?: readonly string[];
   }>[];
 }>;
@@ -350,7 +354,10 @@ export const generateJsxElement = ({
     generatedElement += `)\n`;
     generatedElement += `})\n`;
     generatedElement += `}\n`;
-  } else if (instance.component === blockComponent) {
+  } else if (
+    instance.component === blockComponent ||
+    instance.component === blockBodyComponent
+  ) {
     generatedElement += children;
   } else {
     let componentVariable;
@@ -420,6 +427,7 @@ export const generateJsxChildren = ({
   classesMap,
   excludePlaceholders,
   publishedContentBlocks,
+  contentBodyOverride,
 }: {
   scope: Scope;
   metas: Map<Instance["component"], WsComponentMeta>;
@@ -435,6 +443,10 @@ export const generateJsxChildren = ({
   classesMap?: Map<string, Array<string>>;
   excludePlaceholders?: boolean;
   publishedContentBlocks?: ReadonlyMap<Instance["id"], PublishedContentBlock>;
+  contentBodyOverride?: Readonly<{
+    instanceId: Instance["id"];
+    children: Instance["children"];
+  }>;
 }) => {
   let generatedChildren = "";
   for (const child of children) {
@@ -468,7 +480,23 @@ export const generateJsxChildren = ({
       }
       const publishedContent = publishedContentBlocks?.get(instance.id);
       let generatedInstanceChildren: string;
-      if (publishedContent === undefined) {
+      if (contentBodyOverride?.instanceId === instance.id) {
+        generatedInstanceChildren = generateJsxChildren({
+          classesMap,
+          scope,
+          metas,
+          tagsOverrides,
+          children: contentBodyOverride.children,
+          instances,
+          props,
+          resources,
+          dataSources,
+          usedDataSources,
+          indexesWithinAncestors,
+          excludePlaceholders,
+          publishedContentBlocks,
+        });
+      } else if (publishedContent === undefined) {
         generatedInstanceChildren = generateJsxChildren({
           classesMap,
           scope,
@@ -483,6 +511,7 @@ export const generateJsxChildren = ({
           indexesWithinAncestors,
           excludePlaceholders,
           publishedContentBlocks,
+          contentBodyOverride,
         });
       } else {
         const sourceExpression =
@@ -494,16 +523,39 @@ export const generateJsxChildren = ({
                 usedDataSources,
                 scope,
               });
+        const documentParameter = Array.from(props.values()).find(
+          (prop): prop is Extract<Prop, { type: "parameter" }> =>
+            prop.instanceId === instance.id &&
+            prop.name === contentBlockDocumentProp &&
+            prop.type === "parameter"
+        );
+        const documentDataSource =
+          documentParameter === undefined
+            ? undefined
+            : dataSources.get(documentParameter.value);
+        if (documentDataSource !== undefined) {
+          usedDataSources.set(documentDataSource.id, documentDataSource);
+        }
+        const documentName =
+          documentDataSource === undefined
+            ? undefined
+            : scope.getName(documentDataSource.id, documentDataSource.name);
         const generatedCandidates = publishedContent.candidates.map(
-          ({ assetId, dependencyRevision, children: candidateChildren }) => ({
+          ({
             assetId,
             dependencyRevision,
-            generated: generateJsxChildren({
+            children: candidateChildren,
+            frontmatter,
+          }) => {
+            const generated = generateJsxChildren({
               classesMap,
               scope,
               metas,
               tagsOverrides,
-              children: candidateChildren,
+              children:
+                publishedContent.bodyInstanceId === undefined
+                  ? candidateChildren
+                  : instance.children,
               instances,
               props,
               resources,
@@ -512,8 +564,24 @@ export const generateJsxChildren = ({
               indexesWithinAncestors,
               excludePlaceholders,
               publishedContentBlocks,
-            }),
-          })
+              contentBodyOverride:
+                publishedContent.bodyInstanceId === undefined
+                  ? undefined
+                  : {
+                      instanceId: publishedContent.bodyInstanceId,
+                      children: candidateChildren,
+                    },
+            });
+            const withDocument =
+              documentName === undefined
+                ? generated
+                : `{((${documentName}) => <Fragment>\n${generated}</Fragment>)(${JSON.stringify({ frontmatter })})}\n`;
+            return {
+              assetId,
+              dependencyRevision,
+              generated: withDocument,
+            };
+          }
         );
         if (sourceExpression === undefined) {
           generatedInstanceChildren = generatedCandidates

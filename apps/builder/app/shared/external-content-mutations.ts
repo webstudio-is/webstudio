@@ -7,8 +7,9 @@ import type {
   Instances,
   Prop,
 } from "@webstudio-is/sdk";
-import { blockComponent } from "@webstudio-is/sdk";
+import { blockBodyComponent, blockComponent } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
+import type { MdxDocument } from "@webstudio-is/content-engine/mdx";
 import { atom } from "nanostores";
 import type { ExternalContentOwnership } from "./external-content-persistence";
 
@@ -16,6 +17,9 @@ export type ExternalContentRoot = {
   sourceBlockInstanceId?: Instance["id"];
   sourceRenderScope?: string;
   blockInstanceId: Instance["id"];
+  sourceContentInstanceId?: Instance["id"];
+  /** Instance whose children are persisted as document.body. */
+  contentInstanceId?: Instance["id"];
   renderScope?: string;
   instanceIds: ReadonlySet<Instance["id"]>;
   propIds?: ReadonlySet<Prop["id"]>;
@@ -24,6 +28,8 @@ export type ExternalContentRoot = {
   projectId?: string;
   identity?: ContentBlockExternalContentIdentity;
   diagnostics?: readonly ContentBlockDiagnostic[];
+  document?: MdxDocument;
+  frontmatter?: Readonly<Record<string, unknown>>;
   transientInstanceIds?: ReadonlySet<Instance["id"]>;
 };
 
@@ -43,6 +49,30 @@ export const findExternalContentRoot = (
   }
 };
 
+export const findExternalContentRootEntryBySelector = (
+  roots: ReadonlyMap<string, ExternalContentRoot>,
+  selector: InstanceSelector
+) => {
+  let closest:
+    | readonly [key: string, root: ExternalContentRoot, blockIndex: number]
+    | undefined;
+  for (const [key, root] of roots) {
+    let blockIndex = selector.indexOf(root.blockInstanceId);
+    if (blockIndex === -1 && root.sourceBlockInstanceId !== undefined) {
+      blockIndex = selector.indexOf(root.sourceBlockInstanceId);
+    }
+    if (
+      blockIndex !== -1 &&
+      (closest === undefined || blockIndex < closest[2])
+    ) {
+      closest = [key, root, blockIndex];
+    }
+  }
+  return closest === undefined
+    ? undefined
+    : ([closest[0], closest[1]] as const);
+};
+
 export const resolveExternalContentOccurrence = ({
   sourceInstance,
   sourceSelector,
@@ -54,16 +84,32 @@ export const resolveExternalContentOccurrence = ({
   instances: Instances;
   roots: ReadonlyMap<string, ExternalContentRoot>;
 }) => {
-  if (sourceInstance.component !== blockComponent) {
+  if (
+    sourceInstance.component !== blockComponent &&
+    sourceInstance.component !== blockBodyComponent
+  ) {
     return;
   }
-  const root = findExternalContentRoot(
-    roots,
-    sourceInstance.id,
-    JSON.stringify(sourceSelector)
-  );
+  const root =
+    sourceInstance.component === blockComponent
+      ? findExternalContentRoot(
+          roots,
+          sourceInstance.id,
+          JSON.stringify(sourceSelector)
+        )
+      : Array.from(roots.values()).find(
+          (root) =>
+            root.sourceContentInstanceId === sourceInstance.id &&
+            sourceSelector.includes(root.blockInstanceId)
+        );
+  const occurrenceInstanceId =
+    sourceInstance.component === blockBodyComponent
+      ? root?.contentInstanceId
+      : root?.blockInstanceId;
   const instance =
-    root === undefined ? undefined : instances.get(root.blockInstanceId);
+    occurrenceInstanceId === undefined
+      ? undefined
+      : instances.get(occurrenceInstanceId);
   if (instance === undefined) {
     return;
   }
@@ -226,7 +272,10 @@ const affectsRootInstances = ({
     if (root.instanceIds.has(id)) {
       return true;
     }
-    if (id === root.blockInstanceId && patch.path[1] === "children") {
+    if (
+      id === (root.contentInstanceId ?? root.blockInstanceId) &&
+      patch.path[1] === "children"
+    ) {
       return true;
     }
     if (
