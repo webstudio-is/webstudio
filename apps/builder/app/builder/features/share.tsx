@@ -35,7 +35,9 @@ export const ShareButton = ({ projectId }: { projectId: string }) => {
         sideOffset={Number.parseFloat(rawTheme.spacing[5])}
       >
         <PopoverTrigger asChild>
-          <Button disabled={isShareDisabled}>Share</Button>
+          <Button color="ghost" disabled={isShareDisabled}>
+            Share
+          </Button>
         </PopoverTrigger>
       </Tooltip>
       <PopoverContent

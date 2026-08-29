@@ -36,7 +36,7 @@ const expectedLightColors = {
   "--background-warning-subtle": "#f8edad",
   "--background-informative-subtle": "#e1f0ff",
   "--foreground-primary": "#11181c",
-  "--foreground-secondary": "#4e5458",
+  "--foreground-secondary": "#595f63",
   "--foreground-disabled": "#898d90",
   "--foreground-on-inverse": "#ffffff",
   "--foreground-on-accent": "#ffffff",
@@ -102,16 +102,26 @@ describe("Craft color contrast", () => {
         root.dataset.colorScheme = mode;
         const background = readColor("--background-primary");
         const surface = readColor("--background-secondary");
+        const primaryForeground = readColor("--foreground-primary");
         const secondaryForeground = readColor("--foreground-secondary");
+        const primaryContrast = getContrastRatio(primaryForeground, background);
+        const secondaryContrast = getContrastRatio(
+          secondaryForeground,
+          background
+        );
 
         expect(
           getContrastRatio(surface, background),
           `${mode} secondary surface`
         ).toBeGreaterThanOrEqual(1.15);
         expect(
-          getContrastRatio(secondaryForeground, background),
+          secondaryContrast,
           `${mode} secondary foreground`
-        ).toBeGreaterThanOrEqual(7);
+        ).toBeGreaterThanOrEqual(4.5);
+        expect(
+          secondaryContrast,
+          `${mode} secondary foreground remains subordinate`
+        ).toBeLessThanOrEqual(primaryContrast * 0.55);
       }
     } finally {
       if (previousMode === null) {

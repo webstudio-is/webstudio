@@ -1400,11 +1400,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
         sideOffset={Number.parseFloat(rawTheme.spacing[5])}
       >
         <PopoverTrigger asChild>
-          <Button
-            type="button"
-            disabled={isPublishEnabled === false}
-            color="primary"
-          >
+          <Button type="button" disabled={isPublishEnabled === false}>
             Publish
           </Button>
         </PopoverTrigger>

@@ -477,7 +477,7 @@
   --foreground-primary: var(--color-foreground);
   --foreground-secondary: color-mix(
     in oklab,
-    var(--color-foreground) 70%,
+    var(--color-foreground) 65%,
     var(--color-background)
   );
   --foreground-disabled: color-mix(

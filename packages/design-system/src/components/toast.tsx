@@ -76,25 +76,21 @@ const AnimatedToast = styled(ToastPrimitive.Root, {
 
 const toastColors = {
   neutral: {
-    accent: cssVar("--foreground-primary"),
     background: cssVar("--background-secondary"),
     border: cssVar("--border-default"),
     icon: cssVar("--foreground-primary"),
   },
   warning: {
-    accent: cssVar("--border-warning"),
     background: cssVar("--background-warning-subtle"),
     border: cssVar("--border-warning"),
     icon: cssVar("--foreground-warning"),
   },
   error: {
-    accent: cssVar("--background-negative"),
     background: cssVar("--background-negative-subtle"),
     border: cssVar("--background-negative"),
     icon: cssVar("--foreground-negative"),
   },
   success: {
-    accent: cssVar("--background-positive"),
     background: cssVar("--background-positive-subtle"),
     border: cssVar("--background-positive"),
     icon: cssVar("--foreground-positive"),
@@ -117,66 +113,48 @@ const InternalToast = ({
   const colors = toastColors[variant ?? "neutral"];
 
   return (
-    <div>
-      <Grid
+    <Grid
+      gap={"3"}
+      align={"center"}
+      css={{
+        pointerEvents: "all",
+        backgroundColor: colors.background,
+        padding: theme.panel.padding,
+        gridTemplateColumns: icon ? "auto 1fr auto" : "1fr auto",
+        borderRadius: theme.borderRadius[5],
+        border: `1px solid ${colors.border}`,
+      }}
+    >
+      <Box
         css={{
-          display: "grid",
-          gridTemplateColumns: "8px 1fr",
-          pointerEvents: "all",
+          color: colors.icon,
+          display: icon ? "contents" : "none",
         }}
       >
-        <Box
-          css={{
-            backgroundColor: colors.accent,
-            borderTopLeftRadius: theme.borderRadius[5],
-            borderBottomLeftRadius: theme.borderRadius[5],
-          }}
-        ></Box>
-        <Grid
-          gap={"3"}
-          align={"center"}
-          css={{
-            backgroundColor: colors.background,
-            padding: theme.panel.padding,
-            gridTemplateColumns: icon ? "auto 1fr auto" : "1fr auto",
-            borderBottomRightRadius: theme.borderRadius[5],
-            borderTopRightRadius: theme.borderRadius[5],
-            border: `1px solid ${colors.border}`,
-            borderLeft: "none",
-          }}
-        >
-          <Box
+        {icon}
+      </Box>
+
+      <Grid gap={"1"}>
+        <ToastPrimitive.Description asChild>
+          <Text
             css={{
-              color: colors.icon,
-              display: icon ? "contents" : "none",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              display: "-webkit-box",
+              "-webkit-line-clamp": 20,
+              "-webkit-box-orient": "vertical",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
+            variant={"labels"}
           >
-            {icon}
-          </Box>
-
-          <Grid gap={"1"}>
-            <ToastPrimitive.Description asChild>
-              <Text
-                css={{
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                  display: "-webkit-box",
-                  "-webkit-line-clamp": 20,
-                  "-webkit-box-orient": "vertical",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-                variant={"labels"}
-              >
-                {children}
-              </Text>
-            </ToastPrimitive.Description>
-          </Grid>
-
-          {sideButtons}
-        </Grid>
+            {children}
+          </Text>
+        </ToastPrimitive.Description>
       </Grid>
-    </div>
+
+      {sideButtons}
+    </Grid>
   );
 };
 

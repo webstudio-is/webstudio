@@ -21,7 +21,7 @@ export const PanelTabsList = styled(Primitive.List, {
 
 export const PanelTabsTrigger = styled(Primitive.Trigger, {
   all: "unset", // reset <button>
-  ...textVariants.titles,
+  ...textVariants.labels,
   color: cssVar("--foreground-secondary"),
   padding: theme.spacing[3],
   borderRadius: theme.borderRadius[4],
@@ -36,7 +36,10 @@ export const PanelTabsTrigger = styled(Primitive.Trigger, {
     outlineOffset: "-1px",
   },
 
-  "&[data-state=active]": { color: cssVar("--foreground-primary") },
+  "&[data-state=active]": {
+    color: cssVar("--foreground-primary"),
+    fontWeight: 600,
+  },
   "&:disabled": { color: cssVar("--foreground-disabled") },
 });
 
