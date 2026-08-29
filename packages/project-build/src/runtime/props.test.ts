@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   blockComponent,
   contentBlockSourceProp,
+  encodeDataSourceVariable,
   type Instance,
   type Prop,
 } from "@webstudio-is/sdk";
@@ -334,6 +335,7 @@ describe("prop input creators", () => {
       name: "value",
       type: "expression",
       value: "value",
+      mode: "read",
     });
   });
 });
@@ -1003,7 +1005,107 @@ describe("getPropValueErrors", () => {
     expect(
       getPropValueErrors({ type: "expression", value: "invalid {" })
     ).not.toEqual([]);
+    expect(
+      getPropValueErrors({
+        type: "expression",
+        value: 'document.frontmatter.title + "!"',
+        mode: "readwrite",
+      })
+    ).toContain("Read-write expressions must be a direct static path");
   });
+});
+
+test("rejects readwrite prop bindings outside a connected Content Block document", () => {
+  expect(() =>
+    bindProps(
+      {
+        instances: new Map([[image.id, image]]),
+        props: new Map(),
+      },
+      {
+        bindings: [
+          {
+            instanceId: image.id,
+            name: "alt",
+            binding: {
+              type: "expression",
+              value: "document.frontmatter.alt",
+              mode: "readwrite",
+            },
+          },
+        ],
+      },
+      { createId: () => "alt-id" }
+    )
+  ).toThrow(
+    "Read-write expressions require a connected Content Block document frontmatter path"
+  );
+});
+
+test("accepts readwrite prop bindings into connected Content Block frontmatter", () => {
+  const block: Instance = {
+    type: "instance",
+    id: "block",
+    component: blockComponent,
+    children: [{ type: "id", value: image.id }],
+  };
+  const result = bindProps(
+    {
+      instances: new Map([
+        [block.id, block],
+        [image.id, image],
+      ]),
+      props: new Map<string, Prop>([
+        [
+          "source",
+          {
+            id: "source",
+            instanceId: block.id,
+            name: "src",
+            type: "asset",
+            value: "article",
+          },
+        ],
+        [
+          "document",
+          {
+            id: "document",
+            instanceId: block.id,
+            name: "document",
+            type: "parameter",
+            value: "document",
+          },
+        ],
+      ]),
+    },
+    {
+      bindings: [
+        {
+          instanceId: image.id,
+          name: "alt",
+          binding: {
+            type: "expression",
+            value: `${encodeDataSourceVariable("document")}.frontmatter.alt`,
+            mode: "readwrite",
+          },
+        },
+      ],
+    },
+    { createId: () => "alt-id" }
+  );
+
+  expect(result.payload).toEqual([
+    {
+      namespace: "props",
+      patches: [
+        {
+          op: "add",
+          path: ["alt-id"],
+          value: expect.objectContaining({ mode: "readwrite" }),
+        },
+      ],
+    },
+  ]);
 });
 
 describe("getPropIdsToDelete", () => {

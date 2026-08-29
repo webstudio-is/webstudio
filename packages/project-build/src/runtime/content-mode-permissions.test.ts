@@ -150,7 +150,11 @@ test("limits an explicit Content Block to its Body and frontmatter bindings", ()
         id: "title",
         component: "Heading",
         children: [
-          { type: "expression", value: `${document}.frontmatter.title` },
+          {
+            type: "expression",
+            value: `${document}.frontmatter.title`,
+            mode: "readwrite",
+          },
         ],
       },
     ],
@@ -219,6 +223,9 @@ test("limits an explicit Content Block to its Body and frontmatter bindings", ()
   expect(capabilities.editablePropIds.has("designed-description")).toBe(false);
   expect(capabilities.editableInstanceIds.has("shell")).toBe(false);
   expect(capabilities.editableInstanceIds.has("block")).toBe(false);
+  expect(capabilities.frontmatterBoundTextInstanceIds).toEqual(
+    new Set(["title"])
+  );
 
   const result = applyContentModeTransaction({
     capabilities,
@@ -308,6 +315,62 @@ test("limits an explicit Content Block to its Body and frontmatter bindings", ()
     styleSources,
   });
   expect(disconnected.editableInstanceIds.has("title")).toBe(false);
+});
+
+test("keeps direct frontmatter expressions read-only without readwrite mode", () => {
+  const document = encodeDataSourceVariable("document-data-source");
+  const directInstances = new Map<string, Instance>([
+    [
+      "block",
+      {
+        type: "instance",
+        id: "block",
+        component: blockComponent,
+        children: [{ type: "id", value: "title" }],
+      },
+    ],
+    [
+      "title",
+      {
+        type: "instance",
+        id: "title",
+        component: "Heading",
+        children: [
+          { type: "expression", value: `${document}.frontmatter.title` },
+        ],
+      },
+    ],
+  ]);
+  const directProps = new Map<string, Prop>([
+    [
+      "source",
+      {
+        id: "source",
+        instanceId: "block",
+        name: contentBlockSourceProp,
+        type: "asset",
+        value: "article",
+      },
+    ],
+    [
+      "document",
+      {
+        id: "document",
+        instanceId: "block",
+        name: contentBlockDocumentProp,
+        type: "parameter",
+        value: "document-data-source",
+      },
+    ],
+  ]);
+
+  const capabilities = getContentModeCapabilities({
+    instances: directInstances,
+    metas,
+    props: directProps,
+    styleSources,
+  });
+  expect(capabilities.frontmatterBoundTextInstanceIds).toEqual(new Set());
 });
 
 test("does not loop while finding frontmatter bindings in recursive instances", () => {

@@ -53,6 +53,14 @@ beforeEach(() => {
     name: "title",
     type: "expression",
     value: `${encodeDataSourceVariable("document-data-source")}.frontmatter.title`,
+    mode: "readwrite",
+  };
+  const sourceProp: Prop = {
+    id: "source",
+    instanceId: block.id,
+    name: "src",
+    type: "asset",
+    value: "article",
   };
   $instances.set(
     new Map([
@@ -63,6 +71,7 @@ beforeEach(() => {
   $props.set(
     new Map<string, Prop>([
       [documentProp.id, documentProp],
+      [sourceProp.id, sourceProp],
       [titleProp.id, titleProp],
     ])
   );

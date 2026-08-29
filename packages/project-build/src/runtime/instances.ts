@@ -3,12 +3,16 @@ import {
   elementComponent,
   findChildReferenceIndex,
   findParentInstanceReference,
+  findWritableContentBlockDocumentBindings,
   findTreeInstanceIds,
   getHtmlTagsFromProps,
+  getExpressionBindingError,
+  expressionBindingMode,
   getStyleDeclKey,
   instance as instanceInput,
   tags,
   type DataSource,
+  type ExpressionBindingMode,
   type Instance,
   type Instances,
   type Prop,
@@ -39,7 +43,10 @@ import {
   throwBuilderValidationError,
 } from "./errors";
 import { replaceTextValue } from "./text-replacement";
-import { getExpressionErrors } from "./expression-validation";
+import {
+  getExpressionErrors,
+  unsupportedReadwriteExpressionError,
+} from "./expression-validation";
 import { createRuntimeMutation } from "./mutation";
 import { findSerializedPageByInput, getSerializedPages } from "./pages";
 import { validatePageSelector } from "./page-selector";
@@ -263,67 +270,116 @@ export const setInstanceLabelInput = z.object({
   templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
-export const updateTextInstanceInput = z.object({
-  instanceId: z
-    .string()
-    .describe("Instance id containing the child to update."),
-  childIndex: z
-    .number()
-    .int()
-    .nonnegative()
-    .describe("Zero-based child index from list-texts or inspect-instance."),
-  text: z
-    .string()
-    .describe(
-      "Replacement visible text when mode is text, or one Webstudio JavaScript expression when mode is expression. Read webstudio://project/expressions for syntax and scope rules."
-    ),
-  mode: z
-    .enum(["text", "expression"])
-    .optional()
-    .describe(
-      'Optional expected child type. Use "text" for plain visible text and "expression" for JavaScript expression children. There is no "replace" mode.'
-    ),
-});
-
-export const setTextContentInput = z.discriminatedUnion("operation", [
-  z.object({
-    operation: z.literal("set"),
-    instanceId: z.string().describe("Instance id to receive text content."),
+export const updateTextInstanceInput = z
+  .object({
+    instanceId: z
+      .string()
+      .describe("Instance id containing the child to update."),
+    childIndex: z
+      .number()
+      .int()
+      .nonnegative()
+      .describe("Zero-based child index from list-texts or inspect-instance."),
     text: z
       .string()
       .describe(
-        "Visible text, or one Webstudio JavaScript expression when mode is expression. Read webstudio://project/expressions for syntax and scope rules."
+        "Replacement visible text when mode is text, or one Webstudio JavaScript expression when mode is expression. Read webstudio://project/expressions for syntax and scope rules."
       ),
     mode: z
       .enum(["text", "expression"])
-      .default("text")
+      .optional()
       .describe(
-        'Use "text" for plain visible text and "expression" for JavaScript expression children.'
+        'Optional expected child type. Use "text" for plain visible text and "expression" for JavaScript expression children. There is no "replace" mode.'
       ),
-  }),
-  z.object({
-    operation: z.literal("reset"),
-    instanceId: z.string().describe("Instance id to reset to no text content."),
-  }),
-  z.object({
-    operation: z.literal("inlineExpressions"),
-    instanceId: z
-      .string()
-      .describe("Instance id whose expression children will become text."),
-    replacements: z
-      .array(
-        z.object({
-          childIndex: z.number().int().nonnegative(),
-          expression: z.string(),
-          text: z.string(),
-        })
-      )
-      .min(1)
-      .describe(
-        "Evaluated text for every expression child. The index and original expression must match the current instance."
-      ),
-  }),
-]);
+    expressionBindingMode: expressionBindingMode.optional(),
+  })
+  .superRefine((input, context) => {
+    if (
+      input.mode !== "expression" &&
+      input.expressionBindingMode !== undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["expressionBindingMode"],
+        message: "Expression binding mode requires an expression child",
+      });
+      return;
+    }
+    if (input.mode === "expression") {
+      const error = getExpressionBindingError({
+        value: input.text,
+        mode: input.expressionBindingMode,
+      });
+      if (error !== undefined) {
+        context.addIssue({ code: "custom", path: ["text"], message: error });
+      }
+    }
+  });
+
+export const setTextContentInput = z
+  .discriminatedUnion("operation", [
+    z.object({
+      operation: z.literal("set"),
+      instanceId: z.string().describe("Instance id to receive text content."),
+      text: z
+        .string()
+        .describe(
+          "Visible text, or one Webstudio JavaScript expression when mode is expression. Read webstudio://project/expressions for syntax and scope rules."
+        ),
+      mode: z
+        .enum(["text", "expression"])
+        .default("text")
+        .describe(
+          'Use "text" for plain visible text and "expression" for JavaScript expression children.'
+        ),
+      expressionBindingMode: expressionBindingMode.optional(),
+    }),
+    z.object({
+      operation: z.literal("reset"),
+      instanceId: z
+        .string()
+        .describe("Instance id to reset to no text content."),
+    }),
+    z.object({
+      operation: z.literal("inlineExpressions"),
+      instanceId: z
+        .string()
+        .describe("Instance id whose expression children will become text."),
+      replacements: z
+        .array(
+          z.object({
+            childIndex: z.number().int().nonnegative(),
+            expression: z.string(),
+            text: z.string(),
+          })
+        )
+        .min(1)
+        .describe(
+          "Evaluated text for every expression child. The index and original expression must match the current instance."
+        ),
+    }),
+  ])
+  .superRefine((input, context) => {
+    if (input.operation !== "set") {
+      return;
+    }
+    const error = getExpressionBindingError({
+      value: input.text,
+      mode: input.expressionBindingMode,
+    });
+    if (
+      input.mode !== "expression" &&
+      input.expressionBindingMode !== undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["expressionBindingMode"],
+        message: "Expression binding mode requires an expression child",
+      });
+    } else if (error !== undefined) {
+      context.addIssue({ code: "custom", path: ["text"], message: error });
+    }
+  });
 
 export const updateTextTreeInput = z.object({
   rootInstanceId: z.string(),
@@ -3594,22 +3650,71 @@ export const findTextContentChild = (
 export const createTextContentChild = ({
   type,
   value,
+  expressionBindingMode,
 }: {
   type: TextContentChild["type"];
   value: string;
-}): TextContentChild => ({ type, value });
+  expressionBindingMode?: ExpressionBindingMode;
+}): TextContentChild =>
+  type === "expression"
+    ? { type, value, mode: expressionBindingMode ?? "read" }
+    : { type, value };
 
 export const getTextContentErrors = ({
   type,
   value,
+  expressionBindingMode,
 }: {
   type: TextContentChild["type"];
   value: string;
+  expressionBindingMode?: ExpressionBindingMode;
 }) => {
   if (type === "text") {
     return [];
   }
-  return getExpressionErrors(value);
+  const bindingError = getExpressionBindingError({
+    value,
+    mode: expressionBindingMode,
+  });
+  return [
+    ...(bindingError === undefined ? [] : [bindingError]),
+    ...getExpressionErrors(value),
+  ];
+};
+
+const assertReadwriteTextBindingSupported = ({
+  state,
+  instance,
+  childIndex,
+  child,
+}: {
+  state: Pick<BuilderState, "instances" | "props">;
+  instance: Instance;
+  childIndex: number;
+  child: Extract<Instance["children"][number], { type: "expression" }>;
+}) => {
+  if (child.mode !== "readwrite") {
+    return;
+  }
+  const instances = getRequiredInstances(state);
+  const nextInstances = new Map(instances);
+  const children = [...instance.children];
+  children[childIndex] = child;
+  nextInstances.set(instance.id, { ...instance, children });
+  const isWritable = findWritableContentBlockDocumentBindings({
+    instances: nextInstances,
+    props: state.props ?? new Map(),
+  }).children.some(
+    (candidate) =>
+      candidate.instanceId === instance.id &&
+      candidate.childIndex === childIndex
+  );
+  if (isWritable === false) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      unsupportedReadwriteExpressionError
+    );
+  }
 };
 
 const throwTextExpressionValidationError = (errors: readonly string[]): never =>
@@ -3974,7 +4079,7 @@ export const inspectInstance = (
 };
 
 export const updateTextInstance = (
-  state: Pick<BuilderState, "instances">,
+  state: Pick<BuilderState, "instances" | "props">,
   input: z.infer<typeof updateTextInstanceInput>
 ) => {
   const instances = getRequiredInstances(state);
@@ -3992,7 +4097,19 @@ export const updateTextInstance = (
     );
   }
   const mode = input.mode ?? "text";
-  const errors = getTextContentErrors({ type: mode, value: input.text });
+  const expressionBindingMode =
+    mode === "expression" ? (input.expressionBindingMode ?? "read") : undefined;
+  if (mode !== "expression" && input.expressionBindingMode !== undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Expression binding mode requires an expression child"
+    );
+  }
+  const errors = getTextContentErrors({
+    type: mode,
+    value: input.text,
+    expressionBindingMode,
+  });
   if (errors.length > 0) {
     return throwTextExpressionValidationError(errors);
   }
@@ -4005,6 +4122,19 @@ export const updateTextInstance = (
   if (instance === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }
+  const child = createTextContentChild({
+    type: mode,
+    value: input.text,
+    expressionBindingMode,
+  });
+  if (child.type === "expression") {
+    assertReadwriteTextBindingSupported({
+      state,
+      instance,
+      childIndex: input.childIndex,
+      child,
+    });
+  }
   const previousChild = instance.children[input.childIndex - 1];
   const nextChild = instance.children[input.childIndex + 1];
   const shouldMergePrevious = mode === "text" && previousChild?.type === "text";
@@ -4012,6 +4142,8 @@ export const updateTextInstance = (
   if (
     result.child.type === mode &&
     result.child.value === input.text &&
+    (result.child.type !== "expression" ||
+      result.child.mode === expressionBindingMode) &&
     shouldMergePrevious === false &&
     shouldMergeNext === false
   ) {
@@ -4055,7 +4187,7 @@ export const updateTextInstance = (
     payload: createTextContentUpdatePayload({
       instanceId: input.instanceId,
       childIndex: input.childIndex,
-      child: createTextContentChild({ type: mode, value: input.text }),
+      child,
     }),
     result: mutationResult,
     invalidatesNamespaces: ["instances"],
@@ -4144,7 +4276,7 @@ export const replaceText = (
 };
 
 export const setTextContent = (
-  state: Pick<BuilderState, "instances">,
+  state: Pick<BuilderState, "instances" | "props">,
   input: z.infer<typeof setTextContentInput>
 ) => {
   const instances = getRequiredInstances(state);
@@ -4221,9 +4353,23 @@ export const setTextContent = (
     });
   }
 
+  if (
+    input.mode !== "expression" &&
+    input.expressionBindingMode !== undefined
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Expression binding mode requires an expression child"
+    );
+  }
+  const expressionBindingMode =
+    input.mode === "expression"
+      ? (input.expressionBindingMode ?? "read")
+      : undefined;
   const errors = getTextContentErrors({
     type: input.mode,
     value: input.text,
+    expressionBindingMode,
   });
   if (errors.length > 0) {
     return throwTextExpressionValidationError(errors);
@@ -4232,12 +4378,24 @@ export const setTextContent = (
   const child = createTextContentChild({
     type: input.mode,
     value: input.text,
+    expressionBindingMode,
   });
+  if (child.type === "expression") {
+    assertReadwriteTextBindingSupported({
+      state,
+      instance,
+      childIndex: 0,
+      child,
+    });
+  }
   return createRuntimeMutation({
     payload:
       instance.children.length === 1 &&
       instance.children[0]?.type === child.type &&
-      instance.children[0].value === child.value
+      instance.children[0].value === child.value &&
+      (child.type !== "expression" ||
+        (instance.children[0].type === "expression" &&
+          instance.children[0].mode === child.mode))
         ? []
         : createTextContentSetPayload({
             instanceId: input.instanceId,

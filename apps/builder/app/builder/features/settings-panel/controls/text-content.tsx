@@ -9,11 +9,15 @@ import {
   Flex,
   rawTheme,
   Text,
+  toast,
 } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/sdk";
+import type { ExpressionBindingMode, Instance } from "@webstudio-is/sdk";
 import { AlertIcon } from "@webstudio-is/icons";
 import { $instances } from "~/shared/sync/data-stores";
-import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
+import {
+  getEditableTextTarget,
+  validatePrimitiveValue,
+} from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
@@ -22,7 +26,6 @@ import { type ControlProps, VerticalLayout } from "../shared";
 import { FieldLabel, useIsBindingResetForbidden } from "../property-label";
 import { useBindableControl } from "./use-bindable-control";
 import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
-import { getEditableTextTarget } from "@webstudio-is/project-build/runtime";
 import { getTextContentUpdateOperation } from "./text-content-utils";
 import { useCodeTextLanguageSupport } from "./code";
 
@@ -49,8 +52,17 @@ export const TextContent = ({
   const hasMixedContent = childrenCount > 1;
   const target = instance && getEditableTextTarget(instance);
   const child = target?.child ?? { type: "text" as const, value: "" };
-  const updateChild = (type: "text" | "expression", value: string) => {
-    const operation = getTextContentUpdateOperation({ instance, type, value });
+  const updateChild = (
+    type: "text" | "expression",
+    value: string,
+    expressionBindingMode?: ExpressionBindingMode
+  ) => {
+    const operation = getTextContentUpdateOperation({
+      instance,
+      type,
+      value,
+      expressionBindingMode,
+    });
     if (operation !== undefined) {
       executeRuntimeMutation(operation);
     }
@@ -89,7 +101,7 @@ export const TextContent = ({
     child.type === "text" ? JSON.stringify(child.value) : child.value;
 
   const binding = useBindableControl({
-    boundExpression: child.type === "expression" ? expression : undefined,
+    boundExpression: child.type === "expression" ? child : undefined,
     fallbackExpression: expression,
   });
   let displayedValue = computedValue;
@@ -105,6 +117,13 @@ export const TextContent = ({
   }
   const localValue = useDraftValue(String(displayedValue ?? ""), (value) => {
     if (child.type === "expression") {
+      void binding.writeBoundValue?.(value).catch((error) => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Unable to update MDX frontmatter"
+        );
+      });
       return;
     }
     updateChild("text", value);
@@ -157,7 +176,9 @@ export const TextContent = ({
         value={localValue.value}
         validate={(value) => validatePrimitiveValue(value, "Text Content")}
         onChangeValue={(value) => updateChild("text", value)}
-        onChangeExpression={(value) => updateChild("expression", value)}
+        onChangeExpression={(value) =>
+          updateChild("expression", value, binding.getExpressionMode(value))
+        }
         onRemove={resetBindings}
         renderControl={({ readOnly }) => (
           <CodeEditor

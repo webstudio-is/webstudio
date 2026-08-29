@@ -46,7 +46,7 @@ export const FileControl = ({
 }: ControlProps<"file">) => {
   const id = useId();
   const binding = useBindableControl({
-    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    boundExpression: prop?.type === "expression" ? prop : undefined,
     fallbackExpression: JSON.stringify(computedValue),
   });
 

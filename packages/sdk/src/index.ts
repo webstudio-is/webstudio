@@ -3,6 +3,7 @@ export * from "./schema/asset-resource";
 export * from "./schema/asset-folders";
 export * from "./schema/pages";
 export * from "./schema/instances";
+export * from "./schema/expression";
 export * from "./schema/data-sources";
 export * from "./schema/resources";
 export * from "./schema/props";

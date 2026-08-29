@@ -7018,6 +7018,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -7091,6 +7097,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -7953,6 +7965,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -10206,6 +10224,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -10279,6 +10303,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -11141,6 +11171,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -13405,6 +13441,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -13478,6 +13520,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -14340,6 +14388,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -16593,6 +16647,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -16666,6 +16726,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -17528,6 +17594,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -22482,6 +22554,12 @@ export const runtimeOperationContractData = [
                                     value: {
                                       type: "string",
                                     },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                                    },
                                   },
                                   required: ["type", "value"],
                                 },
@@ -22555,6 +22633,12 @@ export const runtimeOperationContractData = [
                                           },
                                           value: {
                                             type: "string",
+                                          },
+                                          mode: {
+                                            type: "string",
+                                            enum: ["read", "readwrite"],
+                                            description:
+                                              'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                           },
                                         },
                                         required: ["type", "value"],
@@ -23445,6 +23529,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: [
@@ -25878,6 +25968,12 @@ export const runtimeOperationContractData = [
                                     value: {
                                       type: "string",
                                     },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                                    },
                                   },
                                   required: ["type", "value"],
                                 },
@@ -25951,6 +26047,12 @@ export const runtimeOperationContractData = [
                                           },
                                           value: {
                                             type: "string",
+                                          },
+                                          mode: {
+                                            type: "string",
+                                            enum: ["read", "readwrite"],
+                                            description:
+                                              'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                           },
                                         },
                                         required: ["type", "value"],
@@ -26841,6 +26943,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: [
@@ -29515,6 +29623,12 @@ export const runtimeOperationContractData = [
                             value: {
                               type: "string",
                             },
+                            mode: {
+                              type: "string",
+                              enum: ["read", "readwrite"],
+                              description:
+                                'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                            },
                           },
                           required: ["type", "value"],
                         },
@@ -29948,6 +30062,12 @@ export const runtimeOperationContractData = [
                   },
                   value: {
                     type: "string",
+                  },
+                  mode: {
+                    type: "string",
+                    enum: ["read", "readwrite"],
+                    description:
+                      'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                   },
                 },
                 required: ["id", "instanceId", "name", "type", "value"],
@@ -32277,6 +32397,12 @@ export const runtimeOperationContractData = [
                   },
                   value: {
                     type: "string",
+                  },
+                  mode: {
+                    type: "string",
+                    enum: ["read", "readwrite"],
+                    description:
+                      'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                   },
                 },
                 required: ["id", "instanceId", "name", "type", "value"],
@@ -40519,6 +40645,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -40592,6 +40724,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -41454,6 +41592,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -43786,6 +43930,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -43859,6 +44009,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -44721,6 +44877,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -46999,6 +47161,12 @@ export const runtimeOperationContractData = [
                         type: "string",
                         description:
                           "One Webstudio JavaScript expression. Read webstudio://project/expressions before using unfamiliar scope or syntax.",
+                      },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                       },
                     },
                     required: ["type", "value"],
@@ -50708,6 +50876,12 @@ export const runtimeOperationContractData = [
                       value: {
                         type: "string",
                       },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                      },
                     },
                     required: ["type", "value"],
                   },
@@ -50781,6 +50955,12 @@ export const runtimeOperationContractData = [
                             },
                             value: {
                               type: "string",
+                            },
+                            mode: {
+                              type: "string",
+                              enum: ["read", "readwrite"],
+                              description:
+                                'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                             },
                           },
                           required: ["type", "value"],
@@ -51590,6 +51770,12 @@ export const runtimeOperationContractData = [
                       },
                       value: {
                         type: "string",
+                      },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                       },
                     },
                     required: ["id", "instanceId", "name", "type", "value"],
@@ -56585,6 +56771,12 @@ export const runtimeOperationContractData = [
                       value: {
                         type: "string",
                       },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                      },
                     },
                     required: ["type", "value"],
                   },
@@ -56658,6 +56850,12 @@ export const runtimeOperationContractData = [
                             },
                             value: {
                               type: "string",
+                            },
+                            mode: {
+                              type: "string",
+                              enum: ["read", "readwrite"],
+                              description:
+                                'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                             },
                           },
                           required: ["type", "value"],
@@ -57467,6 +57665,12 @@ export const runtimeOperationContractData = [
                       },
                       value: {
                         type: "string",
+                      },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                       },
                     },
                     required: ["id", "instanceId", "name", "type", "value"],
@@ -63499,6 +63703,12 @@ export const runtimeOperationContractData = [
                     description:
                       "One Webstudio JavaScript expression, not a statement or function. Read webstudio://project/expressions for syntax and scope rules.",
                   },
+                  mode: {
+                    type: "string",
+                    enum: ["read", "readwrite"],
+                    description:
+                      'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                  },
                 },
                 required: ["instanceId", "name", "type", "value"],
               },
@@ -65770,6 +65980,12 @@ export const runtimeOperationContractData = [
                         description:
                           "One Webstudio JavaScript expression. Read webstudio://project/expressions before using unfamiliar scope or syntax.",
                       },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                      },
                     },
                     required: ["type", "value"],
                   },
@@ -66085,6 +66301,12 @@ export const runtimeOperationContractData = [
           type: "string",
           enum: ["text", "expression"],
         },
+        expressionBindingMode: {
+          type: "string",
+          enum: ["read", "readwrite"],
+          description:
+            'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+        },
       },
       required: ["instanceId", "childIndex", "text"],
     },
@@ -66164,7 +66386,7 @@ export const runtimeOperationContractData = [
       required: ["instanceId", "childIndex", "mode"],
       additionalProperties: {},
     },
-    readNamespaces: ["instances", "dataSources"],
+    readNamespaces: ["instances", "props", "dataSources"],
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
     retryOnConflict: true,
@@ -66290,6 +66512,12 @@ export const runtimeOperationContractData = [
                 'Use "text" for plain visible text and "expression" for JavaScript expression children.',
               type: "string",
               enum: ["text", "expression"],
+            },
+            expressionBindingMode: {
+              type: "string",
+              enum: ["read", "readwrite"],
+              description:
+                'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
             },
           },
           required: ["operation", "instanceId", "text"],
@@ -66423,7 +66651,7 @@ export const runtimeOperationContractData = [
       required: ["instanceId", "operation"],
       additionalProperties: {},
     },
-    readNamespaces: ["instances", "dataSources"],
+    readNamespaces: ["instances", "props", "dataSources"],
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
     retryOnConflict: true,
@@ -66508,6 +66736,12 @@ export const runtimeOperationContractData = [
                         },
                         value: {
                           type: "string",
+                        },
+                        mode: {
+                          type: "string",
+                          enum: ["read", "readwrite"],
+                          description:
+                            'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                         },
                       },
                       required: ["type", "value"],

@@ -168,7 +168,7 @@ test("updates only the targeted expression child through the binding editor", as
 
   expect($instances.get().get("reading-time")?.children).toEqual([
     { type: "text", value: " · " },
-    { type: "expression", value: "2 + 2" },
+    { type: "expression", value: "2 + 2", mode: "read" },
   ]);
 });
 

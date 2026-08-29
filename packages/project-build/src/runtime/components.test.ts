@@ -446,6 +446,7 @@ test("binds object Collection keys to the generated itemKey parameter", async ()
   expect(itemRoot?.children).toContainEqual({
     type: "expression",
     value: encodeDataVariableId(mutation.result.itemKeyParameterId),
+    mode: "read",
   });
 });
 
@@ -853,6 +854,7 @@ test("remaps action data source references when inserting registered component t
       name: "state",
       type: "expression",
       value: "$ws$dataSource$generated__DASH__9",
+      mode: "read",
     },
     {
       id: "generated-11",

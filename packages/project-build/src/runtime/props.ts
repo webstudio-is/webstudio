@@ -4,6 +4,9 @@ import {
   blockComponent,
   contentBlockSourceProp,
   createAnimationActionInput,
+  findWritableContentBlockDocumentBindings,
+  getExpressionBindingError,
+  expressionBindingMode,
   prop as propSchema,
   type Instance,
   type Prop,
@@ -17,6 +20,7 @@ import {
   addExpressionValidationIssues,
   getExpressionErrorMessages,
   getExpressionErrors,
+  unsupportedReadwriteExpressionError,
 } from "./expression-validation";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { validateHtmlEmbedCode } from "./html-embed";
@@ -52,6 +56,7 @@ export const createPropValue = ({
   type,
   value,
   required,
+  mode,
 }: {
   id: Prop["id"];
   instanceId: Instance["id"];
@@ -59,15 +64,20 @@ export const createPropValue = ({
   type: Prop["type"];
   value: unknown;
   required?: boolean;
-}): Prop =>
-  propSchema.parse({
+  mode?: Extract<Prop, { type: "expression" }>["mode"];
+}): Prop => {
+  const expressionMode = type === "expression" ? (mode ?? "read") : undefined;
+  const input = {
     id,
     instanceId,
     name,
     type,
     value,
-    required,
-  });
+    ...(required === undefined ? {} : { required }),
+    ...(expressionMode === undefined ? {} : { mode: expressionMode }),
+  };
+  return propSchema.parse(input);
+};
 
 export const createPropBindingFromInput = ({
   id,
@@ -78,7 +88,12 @@ export const createPropBindingFromInput = ({
   id: Prop["id"];
   instanceId: Instance["id"];
   name: Prop["name"];
-  binding: Pick<Prop, "type" | "value">;
+  binding:
+    | Pick<Extract<Prop, { type: "expression" }>, "type" | "value" | "mode">
+    | Pick<
+        Extract<Prop, { type: "parameter" | "resource" | "action" }>,
+        "type" | "value"
+      >;
 }): Prop =>
   createPropValue({
     id,
@@ -86,6 +101,7 @@ export const createPropBindingFromInput = ({
     name,
     type: binding.type,
     value: binding.value,
+    mode: binding.type === "expression" ? binding.mode : undefined,
   });
 
 export const listPropExpressions = ({
@@ -120,9 +136,11 @@ export const listPropExpressions = ({
 export const getPropValueErrors = ({
   type,
   value,
+  mode,
 }: {
   type: Prop["type"];
   value?: unknown;
+  mode?: Extract<Prop, { type: "expression" }>["mode"];
 }) => {
   if (type !== "expression") {
     return listPropExpressions({ type, value }).flatMap(
@@ -134,7 +152,14 @@ export const getPropValueErrors = ({
         })
     );
   }
-  return getExpressionErrors(String(value));
+  const bindingError = getExpressionBindingError({
+    value: String(value),
+    mode,
+  });
+  return [
+    ...(bindingError === undefined ? [] : [bindingError]),
+    ...getExpressionErrors(String(value)),
+  ];
 };
 
 export const isPrimitiveValue = (value: unknown) => {
@@ -220,6 +245,7 @@ const propValueInputVariants = [
       .describe(
         "One Webstudio JavaScript expression, not a statement or function. Read webstudio://project/expressions for syntax and scope rules."
       ),
+    mode: expressionBindingMode.optional(),
   }),
   z.object({
     ...propValueBaseInput,
@@ -260,6 +286,7 @@ export const dataPropBindingInput = z.discriminatedUnion("type", [
       .describe(
         "One Webstudio JavaScript expression. Read webstudio://project/expressions before using unfamiliar scope or syntax."
       ),
+    mode: expressionBindingMode.optional(),
   }),
   z.object({ type: z.literal("parameter"), value: z.string() }),
   z.object({ type: z.literal("resource"), value: z.string() }),
@@ -292,6 +319,8 @@ export const propBindingInput = z
       getPropValueErrors({
         type: value.binding.type,
         value: value.binding.value,
+        mode:
+          value.binding.type === "expression" ? value.binding.mode : undefined,
       }),
       ["binding", "value"]
     );
@@ -343,7 +372,7 @@ export type PropValueUpdate =
   | Pick<Extract<Prop, { type: "boolean" }>, "type" | "value">
   | Pick<Extract<Prop, { type: "json" }>, "type" | "value">
   | Pick<Extract<Prop, { type: "string[]" }>, "type" | "value">
-  | Pick<Extract<Prop, { type: "expression" }>, "type" | "value">
+  | Pick<Extract<Prop, { type: "expression" }>, "type" | "value" | "mode">
   | Pick<Extract<Prop, { type: "asset" }>, "type" | "value">
   | Pick<Extract<Prop, { type: "page" }>, "type" | "value">
   | Pick<Extract<Prop, { type: "action" }>, "type" | "value">
@@ -449,7 +478,12 @@ export const createPropValueInputFromProp = (prop: Prop): PropValueInput => {
     case "resource":
       return { ...base, type: prop.type, value: prop.value };
     case "expression":
-      return { ...base, type: prop.type, value: prop.value };
+      return {
+        ...base,
+        type: prop.type,
+        value: prop.value,
+        mode: prop.mode,
+      };
     case "action":
       return { ...base, type: prop.type, value: prop.value };
     case "animationAction":
@@ -474,9 +508,11 @@ type ValidatedPropInputResult =
   | { success: true; prop: Prop }
   | { success: false; errors: string[] };
 
-type PropValueInputWithId = Omit<z.infer<typeof propValueInput>, "propId"> & {
-  propId?: Prop["id"];
-};
+type WithOptionalPropId<Input> = Input extends unknown
+  ? Omit<Input, "propId"> & { propId?: Prop["id"] }
+  : never;
+
+type PropValueInputWithId = WithOptionalPropId<z.infer<typeof propValueInput>>;
 
 type PropBindingInputWithId = Omit<
   z.infer<typeof propBindingInput>,
@@ -506,6 +542,7 @@ export const createValidatedPropValueFromInput = (
       type: value.type,
       value: value.value,
       required: value.required,
+      mode: value.type === "expression" ? value.mode : undefined,
     }),
   };
 };
@@ -517,6 +554,8 @@ export const createValidatedPropBindingFromInput = (
   const errors = getPropValueErrors({
     type: binding.binding.type,
     value: binding.binding.value,
+    mode:
+      binding.binding.type === "expression" ? binding.binding.mode : undefined,
   });
   if (errors.length > 0) {
     return { success: false, errors };
@@ -803,6 +842,43 @@ const assertRuntimeInstance = (
 const throwPropErrors = (errors: string[]) =>
   throwBuilderRuntimeError("BAD_REQUEST", errors.join("\n"));
 
+const assertReadwritePropBindingsSupported = ({
+  instances,
+  props,
+  nextProps,
+}: {
+  instances: Map<Instance["id"], Instance>;
+  props: Map<Prop["id"], Prop>;
+  nextProps: readonly Prop[];
+}) => {
+  const readwritePropIds = new Set(
+    nextProps.flatMap((prop) =>
+      prop.type === "expression" && prop.mode === "readwrite" ? [prop.id] : []
+    )
+  );
+  if (readwritePropIds.size === 0) {
+    return;
+  }
+  const nextPropsById = new Map(props);
+  for (const prop of nextProps) {
+    nextPropsById.set(prop.id, prop);
+  }
+  const writablePropIds = new Set(
+    findWritableContentBlockDocumentBindings({
+      instances,
+      props: nextPropsById,
+    }).props.map(({ propId }) => propId)
+  );
+  for (const propId of readwritePropIds) {
+    if (writablePropIds.has(propId) === false) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        unsupportedReadwriteExpressionError
+      );
+    }
+  }
+};
+
 const assertGenericPropMutationAllowed = (
   instance: Instance,
   name: Prop["name"]
@@ -874,6 +950,7 @@ export const updateProps = (
     }
     return nextProp.prop;
   });
+  assertReadwritePropBindingsSupported({ instances, props, nextProps });
   const { payload, propIds } = createPropUpsertPayload({
     props: props.values(),
     nextProps,
@@ -992,6 +1069,7 @@ export const bindProps = (
     }
     return nextProp.prop;
   });
+  assertReadwritePropBindingsSupported({ instances, props, nextProps });
   const { payload, propIds } = createPropUpsertPayload({
     props: props.values(),
     nextProps,

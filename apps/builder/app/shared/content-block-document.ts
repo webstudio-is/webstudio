@@ -1,7 +1,12 @@
 import {
   blockComponent,
+  blockTemplateComponent,
   contentBlockDocumentProp,
-  getContentBlockDocumentBindingPath,
+  getWritableContentBlockDocumentBinding,
+  getContentBlockSource,
+  isSafeContentBlockDocumentPath,
+  type ExpressionBinding,
+  type ExpressionBindingMode,
   type Instance,
   type Instances,
   type Props,
@@ -9,44 +14,94 @@ import {
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 
 export const getSelectedContentBlockDocumentBindingPath = ({
-  expression,
+  binding,
   instanceSelector,
   instances,
   props,
   sourceBlockInstanceId,
+  renderedBlockInstanceId,
 }: {
-  expression: string;
+  binding: ExpressionBinding;
   instanceSelector: InstanceSelector;
   instances: Pick<Instances, "get">;
   props: Props;
   sourceBlockInstanceId?: Instance["id"];
+  renderedBlockInstanceId?: Instance["id"];
 }) => {
-  const blockInstanceIds = [
-    ...(sourceBlockInstanceId === undefined ? [] : [sourceBlockInstanceId]),
-    ...instanceSelector.filter(
-      (instanceId) => instances.get(instanceId)?.component === blockComponent
-    ),
-  ];
-  const documentProp = blockInstanceIds
-    .filter(
-      (instanceId, index) => blockInstanceIds.indexOf(instanceId) === index
+  if (
+    instanceSelector.some(
+      (instanceId) =>
+        instances.get(instanceId)?.component === blockTemplateComponent
     )
-    .map((instanceId) =>
-      Array.from(props.values()).find(
-        (prop) =>
-          prop.instanceId === instanceId &&
-          prop.name === contentBlockDocumentProp &&
-          prop.type === "parameter"
-      )
-    )
-    .find((prop) => prop !== undefined);
-  return documentProp?.type === "parameter"
-    ? getContentBlockDocumentBindingPath({
-        expression,
-        documentDataSourceId: documentProp.value,
-      })
-    : undefined;
+  ) {
+    return;
+  }
+  const selectedBlockInstanceId = instanceSelector.find(
+    (instanceId) => instances.get(instanceId)?.component === blockComponent
+  );
+  const owningBlockInstanceIds = [
+    sourceBlockInstanceId,
+    renderedBlockInstanceId,
+  ].filter((instanceId) => instanceId !== undefined);
+  if (
+    selectedBlockInstanceId !== undefined &&
+    owningBlockInstanceIds.length > 0 &&
+    owningBlockInstanceIds.includes(selectedBlockInstanceId) === false
+  ) {
+    return;
+  }
+  const blockInstanceIds =
+    owningBlockInstanceIds.length > 0
+      ? owningBlockInstanceIds
+      : selectedBlockInstanceId === undefined
+        ? []
+        : [selectedBlockInstanceId];
+  const allProps = Array.from(props.values());
+  for (const [index, blockInstanceId] of blockInstanceIds.entries()) {
+    if (blockInstanceIds.indexOf(blockInstanceId) !== index) {
+      continue;
+    }
+    const blockProps = allProps.filter(
+      (prop) => prop.instanceId === blockInstanceId
+    );
+    if (
+      getContentBlockSource({
+        blockInstanceId,
+        props: blockProps,
+      }) === undefined
+    ) {
+      continue;
+    }
+    const documentProp = blockProps.find(
+      (prop) =>
+        prop.name === contentBlockDocumentProp && prop.type === "parameter"
+    );
+    if (documentProp?.type !== "parameter") {
+      continue;
+    }
+    const target = getWritableContentBlockDocumentBinding({
+      binding,
+      documentDataSourceId: documentProp.value,
+    });
+    if (target !== undefined) {
+      return target.frontmatterPath;
+    }
+  }
 };
+
+export const getSelectedContentBlockExpressionMode = ({
+  expression,
+  ...context
+}: Omit<
+  Parameters<typeof getSelectedContentBlockDocumentBindingPath>[0],
+  "binding"
+> & { expression: string }): ExpressionBindingMode =>
+  getSelectedContentBlockDocumentBindingPath({
+    ...context,
+    binding: { type: "expression", value: expression, mode: "readwrite" },
+  }) === undefined
+    ? "read"
+    : "readwrite";
 
 export const setObjectPathValue = ({
   value,
@@ -60,11 +115,11 @@ export const setObjectPathValue = ({
   if (path.length === 0) {
     return value;
   }
+  if (isSafeContentBlockDocumentPath(path) === false) {
+    throw new Error("Frontmatter object path is invalid");
+  }
   const update = (current: unknown, index: number): unknown => {
     const segment = path[index];
-    if (unsafePathSegments.has(segment)) {
-      throw new Error("Frontmatter object path is invalid");
-    }
     const isLast = index === path.length - 1;
     if (Array.isArray(current)) {
       const arrayIndex = getArrayIndex(segment);
@@ -94,8 +149,6 @@ export const setObjectPathValue = ({
   return update(value, 0) as Readonly<Record<string, unknown>>;
 };
 
-const unsafePathSegments = new Set(["__proto__", "constructor", "prototype"]);
-
 const getArrayIndex = (segment: string) => {
   const index = Number(segment);
   return Number.isSafeInteger(index) && index >= 0 && String(index) === segment
@@ -110,11 +163,11 @@ export const isObjectPathWritable = ({
   value: Readonly<Record<string, unknown>>;
   path: readonly string[];
 }) => {
+  if (isSafeContentBlockDocumentPath(path) === false) {
+    return false;
+  }
   let current: unknown = value;
   for (const [index, segment] of path.entries()) {
-    if (unsafePathSegments.has(segment)) {
-      return false;
-    }
     const isLast = index === path.length - 1;
     if (Array.isArray(current)) {
       const arrayIndex = getArrayIndex(segment);

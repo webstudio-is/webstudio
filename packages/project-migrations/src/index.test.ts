@@ -288,3 +288,104 @@ test("removes the legacy local styles from Content Block Image templates", () =>
     expect.objectContaining({ styleSourceId: "custom-local" }),
   ]);
 });
+
+test("marks legacy direct Content Block document bindings as readwrite", () => {
+  const data = structuredClone(emptyData);
+  data.instances.set("block", {
+    type: "instance",
+    id: "block",
+    component: "ws:block",
+    children: [{ type: "id", value: "title" }],
+  });
+  data.instances.set("title", {
+    type: "instance",
+    id: "title",
+    component: "Heading",
+    children: [
+      {
+        type: "expression",
+        value: "$ws$dataSource$document.frontmatter.title",
+      },
+    ],
+  });
+  data.props.set("source", {
+    id: "source",
+    instanceId: "block",
+    name: "src",
+    type: "asset",
+    value: "article",
+  });
+  data.props.set("document", {
+    id: "document",
+    instanceId: "block",
+    name: "document",
+    type: "parameter",
+    value: "document",
+  });
+  data.props.set("label", {
+    id: "label",
+    instanceId: "title",
+    name: "aria-label",
+    type: "expression",
+    value: "$ws$dataSource$document.frontmatter.title",
+  });
+  data.props.set("read-only-label", {
+    id: "read-only-label",
+    instanceId: "title",
+    name: "title",
+    type: "expression",
+    value: "$ws$dataSource$document.frontmatter.title",
+    mode: "read",
+  });
+
+  migrateWebstudioDataMutable(data);
+  migrateWebstudioDataMutable(data);
+
+  expect(data.instances.get("title")?.children).toEqual([
+    {
+      type: "expression",
+      value: "$ws$dataSource$document.frontmatter.title",
+      mode: "readwrite",
+    },
+  ]);
+  expect(data.props.get("label")).toMatchObject({ mode: "readwrite" });
+  expect(data.props.get("read-only-label")).toMatchObject({ mode: "read" });
+});
+
+test("marks legacy document bindings before a Content Block is connected", () => {
+  const data = structuredClone(emptyData);
+  data.instances.set("block", {
+    type: "instance",
+    id: "block",
+    component: "ws:block",
+    children: [{ type: "id", value: "title" }],
+  });
+  data.instances.set("title", {
+    type: "instance",
+    id: "title",
+    component: "Heading",
+    children: [
+      {
+        type: "expression",
+        value: "$ws$dataSource$document.frontmatter.title",
+      },
+    ],
+  });
+  data.props.set("document", {
+    id: "document",
+    instanceId: "block",
+    name: "document",
+    type: "parameter",
+    value: "document",
+  });
+
+  migrateWebstudioDataMutable(data);
+
+  expect(data.instances.get("title")?.children).toEqual([
+    {
+      type: "expression",
+      value: "$ws$dataSource$document.frontmatter.title",
+      mode: "readwrite",
+    },
+  ]);
+});

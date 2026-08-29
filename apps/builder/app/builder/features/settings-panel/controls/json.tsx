@@ -19,7 +19,7 @@ export const JsonControl = ({
   const [error, setError] = useState<boolean>(false);
   const valueString = formatValue(computedValue ?? "");
   const binding = useBindableControl({
-    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    boundExpression: prop?.type === "expression" ? prop : undefined,
     fallbackExpression: valueString,
   });
   const localValue = useDraftValue(valueString, (value) => {

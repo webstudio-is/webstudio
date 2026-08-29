@@ -3,6 +3,7 @@ import {
   blockComponent,
   blockTemplateComponent,
   contentBlockSourceProp,
+  encodeDataSourceVariable,
   encodeDataVariableId,
   type DataSource,
   elementComponent,
@@ -422,9 +423,10 @@ test("creates instance clone payload with child references and props", () => {
     {
       id: "prop",
       instanceId: "source",
-      name: "className",
-      type: "string",
-      value: "card",
+      name: "title",
+      type: "expression",
+      value: "document.frontmatter.title",
+      mode: "readwrite",
     },
   ];
   const ids = ["source-copy", "child-copy", "prop-copy"];
@@ -436,6 +438,11 @@ test("creates instance clone payload with child references and props", () => {
         createCloneInstance("source", [
           { type: "id", value: "child" },
           { type: "text", value: "Text" },
+          {
+            type: "expression",
+            value: "document.frontmatter.title",
+            mode: "readwrite",
+          },
         ]),
       ],
       ["child", createCloneInstance("child")],
@@ -464,6 +471,11 @@ test("creates instance clone payload with child references and props", () => {
             value: createCloneInstance("source-copy", [
               { type: "id", value: "child-copy" },
               { type: "text", value: "Text" },
+              {
+                type: "expression",
+                value: "document.frontmatter.title",
+                mode: "readwrite",
+              },
             ]),
           },
           {
@@ -557,6 +569,7 @@ describe("text content utils", () => {
     ).toEqual({
       type: "expression",
       value: "title",
+      mode: "read",
     });
   });
 
@@ -648,7 +661,9 @@ describe("text content utils", () => {
 
     setTextContentMutable(instance, "expression", "value");
 
-    expect(instance.children).toEqual([{ type: "expression", value: "value" }]);
+    expect(instance.children).toEqual([
+      { type: "expression", value: "value", mode: "read" },
+    ]);
   });
 
   test("creates text content update payload", () => {
@@ -925,6 +940,96 @@ describe("text content utils", () => {
         child: { type: "text", value: "Hello" },
       })
     );
+  });
+
+  test("preserves explicit readwrite mode when setting expression content", () => {
+    const instance = createInstance("instance", []);
+    const block = createInstance("block", [{ type: "id", value: instance.id }]);
+    block.component = blockComponent;
+    const result = setTextContent(
+      {
+        instances: new Map([
+          [block.id, block],
+          [instance.id, instance],
+        ]),
+        props: new Map<string, Prop>([
+          [
+            "source",
+            {
+              id: "source",
+              instanceId: block.id,
+              name: "src",
+              type: "asset",
+              value: "article",
+            },
+          ],
+          [
+            "document",
+            {
+              id: "document",
+              instanceId: block.id,
+              name: "document",
+              type: "parameter",
+              value: "document",
+            },
+          ],
+        ]),
+      },
+      {
+        operation: "set",
+        instanceId: "instance",
+        text: `${encodeDataSourceVariable("document")}.frontmatter.title`,
+        mode: "expression",
+        expressionBindingMode: "readwrite",
+      }
+    );
+
+    expect(result.payload).toEqual(
+      createTextContentSetPayload({
+        instanceId: "instance",
+        child: {
+          type: "expression",
+          value: `${encodeDataSourceVariable("document")}.frontmatter.title`,
+          mode: "readwrite",
+        },
+      })
+    );
+  });
+
+  test("rejects readwrite expression content outside a connected Content Block document", () => {
+    expect(() =>
+      setTextContent(
+        {
+          instances: new Map([["instance", createInstance("instance", [])]]),
+        },
+        {
+          operation: "set",
+          instanceId: "instance",
+          text: "document.frontmatter.title",
+          mode: "expression",
+          expressionBindingMode: "readwrite",
+        }
+      )
+    ).toThrow(
+      "Read-write expressions require a connected Content Block document frontmatter path"
+    );
+  });
+
+  test("rejects readwrite mode for derived expression content", () => {
+    expect(() =>
+      setTextContent(
+        {
+          instances: new Map([["instance", createInstance("instance", [])]]),
+        },
+        {
+          operation: "set",
+          instanceId: "instance",
+          text: 'document.frontmatter.title + "!"',
+          mode: "expression",
+          expressionBindingMode: "readwrite",
+        }
+      )
+    ).toThrow("Read-write expressions must be a direct static path");
   });
 
   test("resets text content", () => {

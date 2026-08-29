@@ -94,7 +94,7 @@ If the file changes after a canvas edit starts but before it is saved, Builder a
 
 Edit frontmatter as YAML in the MDX file editor. Canvas edits update only the document body and preserve the frontmatter source, including its comments and formatting. Content-mode users with Asset access can open the MDX file from Assets to edit its frontmatter.
 
-To use frontmatter in the designed part of a Content Block, bind a property or text value to the Content Block's **Document** parameter. For example, bind a heading to `Document.frontmatter.title` or an image source to `Document.frontmatter.featureImage`. These values remain part of the same MDX file and can be edited on the canvas in Content mode. Values supplied through another document's `$ref` remain read-only on the canvas; open the referenced file to edit them.
+To use frontmatter in the designed part of a Content Block, bind a property or text value to the Content Block's **Document** parameter. For example, bind a heading to `Document.frontmatter.title` or an image source to `Document.frontmatter.featureImage`. Direct frontmatter bindings remain part of the same MDX file and can be edited on the canvas in Content mode. Computed expressions and values supplied through another document's `$ref` remain read-only on the canvas; open the referenced file to edit referenced values.
 
 New Content Blocks include a **Body** outlet. Place it anywhere inside the designed article layout: the connected file's MDX body renders there, while the surrounding instances can use frontmatter bindings. Templates stay protected and continue to control which custom instances editors may insert into the body.
 

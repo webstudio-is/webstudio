@@ -1,7 +1,8 @@
 import { createAssetContentRevision, isMdxFileAsset } from "./assets";
 import {
   parseJsonExpression,
-  parseStaticMemberPath,
+  parseDirectPathExpression,
+  type DirectPathExpression,
 } from "@webstudio-is/expression";
 import {
   blockBodyComponent,
@@ -9,14 +10,16 @@ import {
   blockTemplateComponent,
 } from "./core-metas";
 import {
+  contentBlockDocumentProp,
   contentBlockSourceProp,
   contentBlockSourcePropSchema,
   type ContentBlockExternalContentIdentity,
   type ContentBlockSource,
 } from "./schema/content-block";
 import type { Asset } from "./schema/assets";
-import type { Instance, Instances } from "./schema/instances";
-import type { Prop } from "./schema/props";
+import type { ExpressionChild, Instance, Instances } from "./schema/instances";
+import type { ExpressionBinding } from "./schema/expression";
+import type { Prop, Props } from "./schema/props";
 import { decodeDataSourceVariable } from "./expression";
 
 export const createContentBlockExternalContentIdentity = ({
@@ -150,24 +153,169 @@ export const getStaticContentBlockSourceAssetId = (
   return typeof value === "string" ? value : undefined;
 };
 
-/** Returns the frontmatter path referenced by a direct document binding. */
-export const getContentBlockDocumentBindingPath = ({
-  expression,
+export type WritableContentBlockDocumentBinding = Readonly<{
+  type: "writable-content-block-document-binding";
+  expression: DirectPathExpression;
+  frontmatterPath: readonly [string, ...string[]];
+}>;
+
+const unsafeContentBlockDocumentPathSegments = new Set([
+  "__proto__",
+  "constructor",
+  "prototype",
+]);
+
+export const isSafeContentBlockDocumentPath = (path: readonly string[]) =>
+  path.every(
+    (segment) => unsafeContentBlockDocumentPathSegments.has(segment) === false
+  );
+
+/**
+ * Recognizes a direct path into a Content Block document's frontmatter.
+ * Arbitrary expressions remain read-only even when they reference frontmatter.
+ */
+export const getWritableContentBlockDocumentBinding = ({
+  binding,
   documentDataSourceId,
 }: {
-  expression: string;
+  binding: ExpressionBinding;
   documentDataSourceId: string;
-}) => {
-  const path = parseStaticMemberPath(expression);
+}): WritableContentBlockDocumentBinding | undefined => {
+  if (binding.mode !== "readwrite") {
+    return;
+  }
+  const directPathExpression = parseDirectPathExpression(binding.value);
+  if (directPathExpression === undefined) {
+    return;
+  }
+  const path = directPathExpression.path;
   if (
-    path === undefined ||
     decodeDataSourceVariable(path[0]) !== documentDataSourceId ||
     path[1] !== "frontmatter" ||
-    path.length < 3
+    path.length < 3 ||
+    isSafeContentBlockDocumentPath(path.slice(2)) === false
   ) {
     return;
   }
-  return path.slice(2);
+  return {
+    type: "writable-content-block-document-binding",
+    expression: directPathExpression,
+    frontmatterPath: path.slice(2) as [string, ...string[]],
+  };
+};
+
+export type WritableContentBlockDocumentBindings = Readonly<{
+  children: ReadonlyArray<{
+    instanceId: Instance["id"];
+    childIndex: number;
+    binding: ExpressionChild;
+    target: WritableContentBlockDocumentBinding;
+  }>;
+  props: ReadonlyArray<{
+    propId: Prop["id"];
+    binding: Extract<Prop, { type: "expression" }>;
+    target: WritableContentBlockDocumentBinding;
+  }>;
+}>;
+
+export const findWritableContentBlockDocumentBindings = ({
+  instances,
+  props,
+  compatibility,
+}: {
+  instances: Pick<Instances, "get" | "values">;
+  props: Pick<Props, "values">;
+  /** Migrates compatible bindings created before explicit modes and sources existed. */
+  compatibility?: "legacy";
+}): WritableContentBlockDocumentBindings => {
+  const isLegacyMigration = compatibility === "legacy";
+  const propsByInstanceId = new Map<Instance["id"], Prop[]>();
+  for (const prop of props.values()) {
+    const instanceProps = propsByInstanceId.get(prop.instanceId) ?? [];
+    instanceProps.push(prop);
+    propsByInstanceId.set(prop.instanceId, instanceProps);
+  }
+  const result: {
+    children: Array<WritableContentBlockDocumentBindings["children"][number]>;
+    props: Array<WritableContentBlockDocumentBindings["props"][number]>;
+  } = { children: [], props: [] };
+  for (const block of instances.values()) {
+    if (
+      block.component !== blockComponent ||
+      (isLegacyMigration === false &&
+        getContentBlockSource({
+          blockInstanceId: block.id,
+          props: propsByInstanceId.get(block.id) ?? [],
+        }) === undefined)
+    ) {
+      continue;
+    }
+    const documentProp = propsByInstanceId
+      .get(block.id)
+      ?.find(
+        (prop) =>
+          prop.name === contentBlockDocumentProp && prop.type === "parameter"
+      );
+    if (documentProp?.type !== "parameter") {
+      continue;
+    }
+    const documentDataSourceId = documentProp.value;
+    const visiting = new Set<Instance["id"]>();
+    const visit = (instanceId: Instance["id"]) => {
+      const instance = instances.get(instanceId);
+      if (
+        instance === undefined ||
+        visiting.has(instanceId) ||
+        instance.component === blockTemplateComponent ||
+        (instance.component === blockComponent && instance.id !== block.id)
+      ) {
+        return;
+      }
+      visiting.add(instanceId);
+      for (const [childIndex, child] of instance.children.entries()) {
+        if (child.type === "expression") {
+          const binding =
+            isLegacyMigration && child.mode === undefined
+              ? { ...child, mode: "readwrite" as const }
+              : child;
+          const target = getWritableContentBlockDocumentBinding({
+            binding,
+            documentDataSourceId,
+          });
+          if (target !== undefined) {
+            result.children.push({
+              instanceId: instance.id,
+              childIndex,
+              binding: child,
+              target,
+            });
+          }
+        }
+        if (child.type === "id") {
+          visit(child.value);
+        }
+      }
+      for (const prop of propsByInstanceId.get(instance.id) ?? []) {
+        if (prop.type !== "expression") {
+          continue;
+        }
+        const binding =
+          isLegacyMigration && prop.mode === undefined
+            ? { ...prop, mode: "readwrite" as const }
+            : prop;
+        const target = getWritableContentBlockDocumentBinding({
+          binding,
+          documentDataSourceId,
+        });
+        if (target !== undefined) {
+          result.props.push({ propId: prop.id, binding: prop, target });
+        }
+      }
+      visiting.delete(instanceId);
+    };
+    visit(block.id);
+  }
+  return result;
 };
 
 export const findContentBlockTemplateContainers = ({

@@ -1276,7 +1276,11 @@ describe("insert page copy", () => {
     ]);
     const newBox = Array.from(data.instances.values()).at(-1);
     expect(newBox?.children).toEqual([
-      { type: "expression", value: encodeDataVariableId(globalVariableId) },
+      {
+        type: "expression",
+        value: encodeDataVariableId(globalVariableId),
+        mode: "read",
+      },
     ]);
   });
 
@@ -1324,7 +1328,11 @@ describe("insert page copy", () => {
     ]);
     const newBox = Array.from(targetData.instances.values()).at(-1);
     expect(newBox?.children).toEqual([
-      { type: "expression", value: encodeDataVariableId(globalVariableId) },
+      {
+        type: "expression",
+        value: encodeDataVariableId(globalVariableId),
+        mode: "read",
+      },
     ]);
   });
 
@@ -1366,7 +1374,11 @@ describe("insert page copy", () => {
     ]);
     const newBox = Array.from(targetData.instances.values()).at(-1);
     expect(newBox?.children).toEqual([
-      { type: "expression", value: encodeDataVariableId(globalVariableId) },
+      {
+        type: "expression",
+        value: encodeDataVariableId(globalVariableId),
+        mode: "read",
+      },
     ]);
   });
 
@@ -1402,7 +1414,7 @@ describe("insert page copy", () => {
     ]);
     const newBox = Array.from(data.instances.values()).at(-1);
     expect(newBox?.children).toEqual([
-      { type: "expression", value: "$ws$system" },
+      { type: "expression", value: "$ws$system", mode: "read" },
     ]);
     const copiedPage = getCopiedPages(data)[0];
     expect(copiedPage.title).toEqual(`$ws$system`);

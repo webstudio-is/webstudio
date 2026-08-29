@@ -79,6 +79,7 @@ describe("isTextEditableInContentMode", () => {
             {
               type: "expression" as const,
               value: `${document}.frontmatter.title`,
+              mode: "readwrite" as const,
             },
           ],
         },

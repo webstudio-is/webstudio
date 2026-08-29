@@ -153,7 +153,7 @@ export const ContentBlockSourceControl = ({
   const isSourceMutationDisabled = readOnly || isDisabled;
   const connected = source !== undefined;
   const binding = useBindableControl({
-    boundExpression: source?.type === "expression" ? source.value : undefined,
+    boundExpression: source?.type === "expression" ? source : undefined,
     fallbackExpression: JSON.stringify(resolvedAsset?.id ?? ""),
   });
   const uniqueDiagnostics = deduplicateContentBlockDiagnostics(diagnostics);

@@ -19,7 +19,7 @@ export const TextControl = ({
   onChange,
 }: ControlProps<"text">) => {
   const binding = useBindableControl({
-    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    boundExpression: prop?.type === "expression" ? prop : undefined,
     fallbackExpression: JSON.stringify(computedValue),
   });
   const localValue = useDraftValue(String(computedValue ?? ""), (value) => {

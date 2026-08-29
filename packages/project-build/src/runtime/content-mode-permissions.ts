@@ -9,11 +9,9 @@ import {
   styleSourceSelection,
   pagePath,
   blockComponent,
-  contentBlockDocumentProp,
   blockTemplateComponent,
   findContentBlockBodyContainers,
-  getContentBlockSource,
-  getContentBlockDocumentBindingPath,
+  findWritableContentBlockDocumentBindings,
   getHtmlTagsFromProps,
   getHtmlTagFromInstance,
   isPathnamePattern,
@@ -205,75 +203,16 @@ export const getContentModeFrontmatterBoundTargets = ({
   instances: Map<Instance["id"], Instance>;
   props: Props;
 }) => {
-  const propsByInstanceId = new Map<Instance["id"], Prop[]>();
-  for (const prop of props.values()) {
-    const instanceProps = propsByInstanceId.get(prop.instanceId) ?? [];
-    instanceProps.push(prop);
-    propsByInstanceId.set(prop.instanceId, instanceProps);
-  }
-  const propIds = new Set<Prop["id"]>();
+  const bindings = findWritableContentBlockDocumentBindings({
+    instances,
+    props,
+  });
+  const propIds = new Set(bindings.props.map(({ propId }) => propId));
   const textInstanceIds = new Set<Instance["id"]>();
-  for (const block of instances.values()) {
-    if (
-      block.component !== blockComponent ||
-      getContentBlockSource({
-        blockInstanceId: block.id,
-        props: propsByInstanceId.get(block.id) ?? [],
-      }) === undefined
-    ) {
-      continue;
+  for (const { instanceId, childIndex } of bindings.children) {
+    if (childIndex === 0 && instances.get(instanceId)?.children.length === 1) {
+      textInstanceIds.add(instanceId);
     }
-    const documentDataSourceId = propsByInstanceId
-      .get(block.id)
-      ?.find(
-        (prop) =>
-          prop.name === contentBlockDocumentProp && prop.type === "parameter"
-      )?.value;
-    if (typeof documentDataSourceId !== "string") {
-      continue;
-    }
-    const visiting = new Set<Instance["id"]>();
-    const visit = (instanceId: Instance["id"]) => {
-      const instance = instances.get(instanceId);
-      if (
-        instance === undefined ||
-        visiting.has(instanceId) ||
-        instance.component === blockTemplateComponent ||
-        (instance.component === blockComponent && instance.id !== block.id)
-      ) {
-        return;
-      }
-      visiting.add(instanceId);
-      const [onlyChild] = instance.children ?? [];
-      if (
-        instance.children.length === 1 &&
-        onlyChild?.type === "expression" &&
-        getContentBlockDocumentBindingPath({
-          expression: onlyChild.value,
-          documentDataSourceId,
-        }) !== undefined
-      ) {
-        textInstanceIds.add(instance.id);
-      }
-      for (const prop of propsByInstanceId.get(instance.id) ?? []) {
-        if (
-          prop.type === "expression" &&
-          getContentBlockDocumentBindingPath({
-            expression: prop.value,
-            documentDataSourceId,
-          }) !== undefined
-        ) {
-          propIds.add(prop.id);
-        }
-      }
-      for (const child of instance.children ?? []) {
-        if (child.type === "id") {
-          visit(child.value);
-        }
-      }
-      visiting.delete(instanceId);
-    };
-    visit(block.id);
   }
   return { propIds, textInstanceIds };
 };

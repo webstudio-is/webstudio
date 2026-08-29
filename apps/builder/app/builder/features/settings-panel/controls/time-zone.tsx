@@ -193,7 +193,7 @@ export const TimeZoneControl = ({
     computedValue ?? meta.defaultValue ?? defaultTimeZone
   );
   const binding = useBindableControl({
-    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    boundExpression: prop?.type === "expression" ? prop : undefined,
     fallbackExpression: JSON.stringify(computedValue),
   });
   const localValue = useDraftValue(savedValue, (value) => {

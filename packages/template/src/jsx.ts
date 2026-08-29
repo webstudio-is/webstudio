@@ -615,6 +615,7 @@ export const renderTemplate = (
           ...base,
           type: "expression",
           value: compileExpression(instanceId, value),
+          mode: "read",
         });
         continue;
       }
@@ -702,7 +703,7 @@ export const renderTemplate = (
         }
         if (child instanceof Expression) {
           const expression = compileExpression(instanceId, child);
-          return { type: "expression", value: expression };
+          return { type: "expression", value: expression, mode: "read" };
         }
         return convertElementToInstance(child);
       }

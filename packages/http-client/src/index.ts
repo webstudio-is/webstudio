@@ -4,6 +4,7 @@ import {
   getAssetContentHash,
   type AssetQueryResourceConfigurationInput,
   type AssetFolder,
+  type ExpressionBindingMode,
 } from "@webstudio-is/sdk";
 import {
   assetContentDescriptor,
@@ -1794,28 +1795,39 @@ export const deleteInstance = projectMutationInput<
 type PropValueInput = {
   instanceId: string;
   name: string;
-  type:
-    | "number"
-    | "string"
-    | "boolean"
-    | "json"
-    | "asset"
-    | "page"
-    | "string[]"
-    | "parameter"
-    | "resource"
-    | "expression"
-    | "action"
-    | "animationAction";
-  value: unknown;
   required?: boolean;
-};
+} & (
+  | {
+      type: "expression";
+      value: string;
+      mode?: ExpressionBindingMode;
+    }
+  | {
+      type:
+        | "number"
+        | "string"
+        | "boolean"
+        | "json"
+        | "asset"
+        | "page"
+        | "string[]"
+        | "parameter"
+        | "resource"
+        | "action"
+        | "animationAction";
+      value: unknown;
+    }
+);
 
 type PropBindingInput = {
   instanceId: string;
   name: string;
   binding:
-    | { type: "expression"; value: string }
+    | {
+        type: "expression";
+        value: string;
+        mode?: ExpressionBindingMode;
+      }
     | { type: "parameter"; value: string }
     | { type: "resource"; value: string }
     | {
@@ -1857,8 +1869,13 @@ export const updateText = projectMutationInput<
     instanceId: string;
     childIndex: number;
     text: string;
-    mode?: "text" | "expression";
-  }
+  } & (
+      | {
+          mode: "expression";
+          expressionBindingMode?: ExpressionBindingMode;
+        }
+      | { mode?: "text"; expressionBindingMode?: never }
+    )
 >("update-text");
 
 export const getStyleDeclarations = projectQueryInput<

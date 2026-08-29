@@ -230,6 +230,7 @@ export const createCollectionFragment = ({
             instances: state.instances,
             dataSources: state.dataSources,
           }),
+          mode: "read",
         };
   const parameterDataSources = [item.dataSource, itemKey.dataSource];
   assertNoIdCollision(

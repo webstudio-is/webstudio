@@ -7,6 +7,7 @@ const {
   shouldRenderPropsSectionContainer,
   shouldSyncMediaAssetProps,
   findExpressionPropByStandardName,
+  shouldWriteBoundValue,
 } = __testing__;
 
 test("finds a legacy React-named expression by its standard attribute name", () => {
@@ -25,6 +26,22 @@ test("finds a legacy React-named expression by its standard attribute name", () 
       propName: "class",
     })
   ).toBe(className);
+});
+
+test("writes bound values only in Content mode", () => {
+  expect(
+    shouldWriteBoundValue(true, { type: "string", value: "New title" })
+  ).toBe(true);
+  expect(
+    shouldWriteBoundValue(false, { type: "string", value: "New title" })
+  ).toBe(false);
+  expect(
+    shouldWriteBoundValue(true, {
+      type: "expression",
+      value: "$ws$dataSource$document.frontmatter.subtitle",
+      mode: "readwrite",
+    })
+  ).toBe(false);
 });
 
 describe("shouldShowPropertiesSection", () => {

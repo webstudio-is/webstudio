@@ -67,6 +67,7 @@ import {
 import { updateExternalContentFrontmatter } from "~/shared/external-content-roots";
 import {
   getSelectedContentBlockDocumentBindingPath,
+  getSelectedContentBlockExpressionMode,
   isObjectPathWritable,
 } from "~/shared/content-block-document";
 import {
@@ -74,6 +75,7 @@ import {
   findProp,
 } from "@webstudio-is/project-build/runtime";
 import { resolveAssetValueReferences } from "@webstudio-is/content-engine";
+import type { PropValue } from "../shared";
 
 type Item = {
   name: string;
@@ -175,6 +177,12 @@ const findExpressionPropByStandardName = ({
     (reactPropName === undefined ? undefined : findExpression(reactPropName))
   );
 };
+
+const shouldWriteBoundValue = (
+  isContentMode: boolean,
+  update: PropValue
+): update is Exclude<PropValue, { type: "expression" }> =>
+  isContentMode && update.type !== "expression";
 
 const renderProperty = (
   {
@@ -448,6 +456,7 @@ export const __testing__ = {
   shouldRenderPropsSectionContainer,
   shouldSyncMediaAssetProps,
   findExpressionPropByStandardName,
+  shouldWriteBoundValue,
 };
 
 const $propValues = computed(
@@ -488,19 +497,39 @@ export const PropsSectionContainer = ({
               externalContentRoots,
               selectedInstanceSelector
             );
-      if (originalProp?.type === "expression") {
-        const candidateRoot = externalEntry?.[1];
+      const candidateRoot = externalEntry?.[1];
+      const persistedUpdate =
+        update.type === "expression"
+          ? {
+              ...update,
+              mode:
+                selectedInstanceSelector === undefined
+                  ? "read"
+                  : getSelectedContentBlockExpressionMode({
+                      expression: update.value,
+                      instanceSelector: selectedInstanceSelector,
+                      instances: $instances.get(),
+                      props: $props.get(),
+                      sourceBlockInstanceId:
+                        candidateRoot?.sourceBlockInstanceId,
+                      renderedBlockInstanceId: candidateRoot?.blockInstanceId,
+                    }),
+            }
+          : update;
+      if (
+        originalProp?.type === "expression" &&
+        shouldWriteBoundValue($isContentMode.get(), persistedUpdate)
+      ) {
         const path =
           selectedInstanceSelector === undefined
             ? undefined
             : getSelectedContentBlockDocumentBindingPath({
-                expression: originalProp.value,
+                binding: originalProp,
                 instanceSelector: selectedInstanceSelector,
                 instances: $instances.get(),
                 props: $props.get(),
-                sourceBlockInstanceId:
-                  candidateRoot?.sourceBlockInstanceId ??
-                  candidateRoot?.blockInstanceId,
+                sourceBlockInstanceId: candidateRoot?.sourceBlockInstanceId,
+                renderedBlockInstanceId: candidateRoot?.blockInstanceId,
               });
         if (path !== undefined && externalEntry === undefined) {
           toast.error("The MDX content source is not ready for editing.");
@@ -509,12 +538,12 @@ export const PropsSectionContainer = ({
         if (path === undefined || externalEntry === undefined) {
           executeRuntimeMutation({
             id: "instances.updateProps",
-            input: { updates: [update] },
+            input: { updates: [persistedUpdate] },
           });
           return;
         }
         const [rootKey, externalRoot] = externalEntry;
-        let targetPath = path;
+        let targetPath: readonly string[] = path;
         let nextValue: unknown = update.value;
         let nextResolvedValue: unknown = update.value;
         if (update.type === "asset" && externalRoot.identity !== undefined) {
@@ -588,7 +617,7 @@ export const PropsSectionContainer = ({
       executeRuntimeMutation({
         id: "instances.updateProps",
         input: {
-          updates: [update],
+          updates: [persistedUpdate],
         },
       });
     },

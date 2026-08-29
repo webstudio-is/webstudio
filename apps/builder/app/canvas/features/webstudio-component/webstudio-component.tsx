@@ -824,13 +824,12 @@ const WebstudioComponentCanvasInner = forwardRef<
     expressionChild === undefined
       ? undefined
       : getSelectedContentBlockDocumentBindingPath({
-          expression: expressionChild.value,
+          binding: expressionChild,
           instanceSelector,
           instances,
           props: allProps,
-          sourceBlockInstanceId:
-            candidateRoot?.sourceBlockInstanceId ??
-            candidateRoot?.blockInstanceId,
+          sourceBlockInstanceId: candidateRoot?.sourceBlockInstanceId,
+          renderedBlockInstanceId: candidateRoot?.blockInstanceId,
         });
   return (
     <TextEditor

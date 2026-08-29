@@ -775,6 +775,7 @@ test("render variable used in prop expression", () => {
       name: "data-count",
       type: "expression",
       value: "$ws$dataSource$0",
+      mode: "read",
     },
   ]);
   expect(dataSources).toEqual([
@@ -798,7 +799,9 @@ test("render variable used in child expression", () => {
       type: "instance",
       id: "body",
       component: "Body",
-      children: [{ type: "expression", value: "$ws$dataSource$0" }],
+      children: [
+        { type: "expression", value: "$ws$dataSource$0", mode: "read" },
+      ],
     },
   ]);
   expect(dataSources).toEqual([
@@ -828,6 +831,7 @@ test("compose expression from multiple variables", () => {
       name: "data-count",
       type: "expression",
       value: "Count is $ws$dataSource$0 + $ws$dataSource$1",
+      mode: "read",
     },
   ]);
   expect(dataSources).toEqual([
@@ -862,6 +866,7 @@ test("preserve same variable on multiple instances", () => {
       name: "data-count",
       type: "expression",
       value: "$ws$dataSource$0",
+      mode: "read",
     },
     {
       id: "box:data-count",
@@ -869,6 +874,7 @@ test("preserve same variable on multiple instances", () => {
       name: "data-count",
       type: "expression",
       value: "$ws$dataSource$0",
+      mode: "read",
     },
   ]);
   expect(dataSources).toEqual([
@@ -898,6 +904,7 @@ test("render variable inside of action", () => {
       name: "data-count",
       type: "expression",
       value: "$ws$dataSource$0",
+      mode: "read",
     },
     {
       id: "body:onInc",
@@ -947,6 +954,7 @@ test("render parameter bound to prop expression", () => {
       name: "data-value",
       type: "expression",
       value: "$ws$dataSource$0",
+      mode: "read",
     },
   ]);
   expect(dataSources).toEqual([

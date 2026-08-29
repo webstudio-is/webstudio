@@ -770,7 +770,13 @@ describe("variables", () => {
     expect(fragment.instances).toEqual([
       expect.objectContaining({
         id: "boxId",
-        children: [{ type: "expression", value: "Body$32$Variable" }],
+        children: [
+          {
+            type: "expression",
+            value: "Body$32$Variable",
+            mode: "read",
+          },
+        ],
       }),
     ]);
   });
@@ -902,7 +908,7 @@ describe("variables", () => {
     const newInstanceId = Array.from(data.instances.keys()).at(-1) ?? "";
     expect(newInstanceId).not.toEqual("boxId");
     expect(data.instances.get(newInstanceId)?.children).toEqual([
-      { type: "expression", value: "$ws$dataSource$0" },
+      { type: "expression", value: "$ws$dataSource$0", mode: "read" },
     ]);
     expect(
       Array.from(data.props.values()).filter(

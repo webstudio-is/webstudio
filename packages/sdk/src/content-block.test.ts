@@ -12,7 +12,8 @@ import {
   allocateUniqueContentBlockTemplateName,
   findContentBlockBodyContainerPaths,
   findContentBlockTemplateContainers,
-  getContentBlockDocumentBindingPath,
+  getWritableContentBlockDocumentBinding,
+  findWritableContentBlockDocumentBindings,
   getContentBlockSourceIntegrityIssues,
   isEqualContentBlockSource,
   parseContentBlockSourceProp,
@@ -137,17 +138,106 @@ describe("Content Block source", () => {
   test("recognizes only direct document frontmatter bindings", () => {
     const document = encodeDataSourceVariable("document-id");
     expect(
-      getContentBlockDocumentBindingPath({
-        expression: `${document}.frontmatter.author.name`,
+      getWritableContentBlockDocumentBinding({
+        binding: {
+          type: "expression",
+          value: `${document}.frontmatter.author.name`,
+          mode: "readwrite",
+        },
         documentDataSourceId: "document-id",
       })
-    ).toEqual(["author", "name"]);
+    ).toEqual({
+      type: "writable-content-block-document-binding",
+      expression: {
+        type: "direct-path",
+        expression: `${document}.frontmatter.author.name`,
+        path: [document, "frontmatter", "author", "name"],
+      },
+      frontmatterPath: ["author", "name"],
+    });
     expect(
-      getContentBlockDocumentBindingPath({
-        expression: `${document}.frontmatter.title ?? "Untitled"`,
+      getWritableContentBlockDocumentBinding({
+        binding: {
+          type: "expression",
+          value: `${document}.frontmatter.title ?? "Untitled"`,
+          mode: "readwrite",
+        },
         documentDataSourceId: "document-id",
       })
     ).toBeUndefined();
+    expect(
+      getWritableContentBlockDocumentBinding({
+        binding: {
+          type: "expression",
+          value: `${document}.frontmatter.title`,
+        },
+        documentDataSourceId: "document-id",
+      })
+    ).toBeUndefined();
+    expect(
+      getWritableContentBlockDocumentBinding({
+        binding: {
+          type: "expression",
+          value: `${document}.frontmatter["__proto__"].polluted`,
+          mode: "readwrite",
+        },
+        documentDataSourceId: "document-id",
+      })
+    ).toBeUndefined();
+  });
+
+  test("finds direct document bindings inside a connected Content Block", () => {
+    const document = encodeDataSourceVariable("document-id");
+    const title: Instance = {
+      type: "instance",
+      id: "title",
+      component: "Heading",
+      children: [
+        {
+          type: "expression",
+          value: `${document}.frontmatter.title`,
+          mode: "readwrite",
+        },
+      ],
+    };
+    const contentBlock: Instance = {
+      ...block,
+      children: [{ type: "id", value: title.id }],
+    };
+    const titleProp: Prop = {
+      id: "title-prop",
+      instanceId: title.id,
+      name: "aria-label",
+      type: "expression",
+      value: `${document}.frontmatter.title`,
+      mode: "readwrite",
+    };
+    const instances = new Map(
+      [contentBlock, title].map((instance) => [instance.id, instance])
+    );
+    const props = new Map<string, Prop>([
+      ["source", sourceProp()],
+      [
+        "document",
+        {
+          id: "document",
+          instanceId: block.id,
+          name: "document",
+          type: "parameter",
+          value: "document-id",
+        },
+      ],
+      [titleProp.id, titleProp],
+    ]);
+
+    expect(
+      findWritableContentBlockDocumentBindings({ instances, props })
+    ).toEqual({
+      children: [
+        expect.objectContaining({ instanceId: title.id, childIndex: 0 }),
+      ],
+      props: [expect.objectContaining({ propId: titleProp.id })],
+    });
   });
 
   test("keeps the source optional for existing Content Blocks", () => {

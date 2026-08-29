@@ -2,6 +2,7 @@ import {
   blockTemplateComponent,
   codeTextDefaultLanguage,
   codeTextDefaultTheme,
+  findWritableContentBlockDocumentBindings,
   type Instance,
   type Prop,
   type StyleDecl,
@@ -37,12 +38,31 @@ export const migrateCodeTextPropMutable = ({
     return false;
   }
   instance.children = [
-    {
-      type: prop.type === "string" ? "text" : "expression",
-      value: prop.value,
-    },
+    prop.type === "string"
+      ? { type: "text", value: prop.value }
+      : {
+          type: "expression",
+          value: prop.value,
+          ...(prop.mode === undefined ? {} : { mode: prop.mode }),
+        },
   ];
   return true;
+};
+
+export const migrateContentBlockDocumentBindingsMutable = (
+  data: Pick<WebstudioData, "instances" | "props">
+) => {
+  const bindings = findWritableContentBlockDocumentBindings({
+    instances: data.instances,
+    props: data.props,
+    compatibility: "legacy",
+  });
+  for (const { binding } of bindings.children) {
+    binding.mode = "readwrite";
+  }
+  for (const { binding } of bindings.props) {
+    binding.mode = "readwrite";
+  }
 };
 
 export const migrateCodeTextContentMutable = (
@@ -162,4 +182,5 @@ export const migrateWebstudioDataMutable = (data: WebstudioData) => {
   migrateStylesMutable(data.styles);
   migrateCodeTextContentMutable(data);
   migrateContentBlockImageStylesMutable(data);
+  migrateContentBlockDocumentBindingsMutable(data);
 };

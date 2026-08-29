@@ -96,6 +96,7 @@ const toSourceProp = ({
         name: contentBlockSourceProp,
         type: "expression",
         value: source.value,
+        mode: "read",
       };
 
 const createSourcePayload = ({

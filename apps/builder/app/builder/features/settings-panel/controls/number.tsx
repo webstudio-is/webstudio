@@ -22,7 +22,7 @@ export const NumberControl = ({
   const [isInvalid, setIsInvalid] = useState(false);
   const number = Number(computedValue);
   const binding = useBindableControl({
-    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    boundExpression: prop?.type === "expression" ? prop : undefined,
     fallbackExpression: JSON.stringify(computedValue),
   });
   const localValue = useDraftValue(

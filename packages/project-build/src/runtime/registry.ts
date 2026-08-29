@@ -1586,7 +1586,7 @@ export const builderRuntimeOperations = [
     "instances.updateText",
     api("update-text", "updateText", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "dataSources"],
+      readNamespaces: ["instances", "props", "dataSources"],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),
@@ -1630,7 +1630,7 @@ export const builderRuntimeOperations = [
     "instances.setTextContent",
     api("set-text-content", "setTextContent", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "dataSources"],
+      readNamespaces: ["instances", "props", "dataSources"],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),
