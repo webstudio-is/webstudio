@@ -32,6 +32,7 @@ import {
   textVariants,
   css,
   cssVar,
+  declareCssVar,
   SmallIconButton,
   Grid,
   Flex,
@@ -53,9 +54,11 @@ EditorView.EDIT_CONTEXT = false;
 
 const ExternalChange = Annotation.define<boolean>();
 
-const minHeightVar = "--ws-code-editor-min-height";
-const maxHeightVar = "--ws-code-editor-max-height";
-const maximizeIconVisibilityVar = "--ws-code-editor-maximize-icon-visibility";
+const minHeightVar = declareCssVar("--code-editor-min-height");
+const maxHeightVar = declareCssVar("--code-editor-max-height");
+const maximizeIconVisibilityVar = declareCssVar(
+  "--code-editor-maximize-icon-visibility"
+);
 
 export const clampEditorSelection = (
   selection: EditorSelection,
@@ -150,8 +153,8 @@ const editorContentStyle = css({
     width: "100%",
     // avoid modifying height in .cm-content
     // because it breaks scroll events and makes scrolling laggy
-    minHeight: `var(${minHeightVar}, auto)`,
-    maxHeight: `var(${maxHeightVar}, none)`,
+    minHeight: cssVar(minHeightVar, "auto"),
+    maxHeight: cssVar(maxHeightVar, "none"),
   },
   ".cm-lintRange-error": {
     textDecoration: `underline wavy ${cssVar("--foreground-negative")}`,
@@ -545,8 +548,10 @@ export const EditorDialogButton = forwardRef<
         position: "absolute",
         top: 4,
         right: 4,
-        visibility: `var(${maximizeIconVisibilityVar}, hidden)`,
-        background: `color-mix(in oklab, ${cssVar("--background-primary")} 50%, transparent)`,
+        visibility: cssVar(maximizeIconVisibilityVar, "hidden"),
+        background: `color-mix(in oklab, ${cssVar(
+          "--background-primary"
+        )} 50%, transparent)`,
       }}
     />
   );

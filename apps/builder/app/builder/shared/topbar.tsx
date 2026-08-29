@@ -128,7 +128,7 @@ const PagesButton = () => {
     >
       <ToolbarButton
         css={{ paddingInline: theme.panel.paddingInline }}
-        aria-label="Toggle Pages"
+        aria-label="Toggle pages"
         onClick={(event) => {
           $editingPageId.set(
             event.altKey && isPage(page) ? page.id : undefined

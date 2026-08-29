@@ -155,7 +155,7 @@ test("Builder animation UI creates supported animation props that persist and bu
   const { page, close } = await newIsolatedPage();
   const text = "Initial content";
   const wrapperName = "Animation Group";
-  const presetName = "Fade In";
+  const presetName = "Fade in";
 
   try {
     await measure("animation runtime open builder", async () => {

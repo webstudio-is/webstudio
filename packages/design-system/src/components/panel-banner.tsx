@@ -1,10 +1,10 @@
 import { styled, theme } from "../stitches.config";
 import { Box } from "./box";
-import { cssVar } from "../css-var";
+import { cssVar, declareCssVar } from "../css-var";
 
-const iconColor = "--panel-banner-icon-color";
+const iconColor = declareCssVar("--panel-banner-icon-color");
 
-export const panelBannerIconColor = `var(${iconColor})`;
+export const panelBannerIconColor = cssVar(iconColor);
 
 export const PanelBanner = styled(Box, {
   display: "flex",

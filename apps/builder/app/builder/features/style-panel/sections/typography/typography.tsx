@@ -280,7 +280,7 @@ AdvancedOptionsButton.displayName = "AdvancedOptionsButton";
 const TypographySectionAdvancedPopover = () => {
   return (
     <FloatingPanel
-      title="Advanced Typography"
+      title="Advanced typography"
       placement="bottom-within"
       content={
         <Grid
@@ -292,19 +292,19 @@ const TypographySectionAdvancedPopover = () => {
         >
           <Grid css={{ gridTemplateColumns: "5fr 5fr" }} gap={2}>
             <PropertyLabel
-              label="White Space Collapse"
+              label="White space collapse"
               description={propertyDescriptions.whiteSpaceCollapse}
               properties={["white-space-collapse"]}
             />
             <SelectControl property="white-space-collapse" />
             <PropertyLabel
-              label="Text Wrap Mode"
+              label="Text wrap mode"
               description={propertyDescriptions.textWrapMode}
               properties={["text-wrap-mode"]}
             />
             <SelectControl property="text-wrap-mode" />
             <PropertyLabel
-              label="Text Wrap Style"
+              label="Text wrap style"
               description={propertyDescriptions.textWrapStyle}
               properties={["text-wrap-style"]}
             />
@@ -358,7 +358,7 @@ const TypographySectionAdvancedPopover = () => {
               />
             </Box>
             <PropertyLabel
-              label="Text Overflow"
+              label="Text overflow"
               description={propertyDescriptions.textOverflow}
               properties={["text-overflow"]}
             />

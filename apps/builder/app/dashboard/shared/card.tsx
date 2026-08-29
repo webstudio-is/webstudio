@@ -8,10 +8,11 @@ import {
   Slot,
   type SlotProps,
   cssVar,
+  declareCssVar,
 } from "@webstudio-is/design-system";
 import { forwardRef, type ComponentProps } from "react";
 
-const borderColorVar = "--ws-dashboard-card-border-color";
+const borderColorVar = declareCssVar("--dashboard-card-border-color");
 
 const cardStyle = css({
   position: "relative",
@@ -50,7 +51,7 @@ export const CardContent = styled(Grid, {
     content: '""',
     position: "absolute",
     inset: 0,
-    border: `1px solid var(${borderColorVar}, transparent)`,
+    border: `1px solid ${cssVar(borderColorVar, "transparent")}`,
     borderRadius: theme.borderRadius[5],
     pointerEvents: "none",
   },

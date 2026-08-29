@@ -80,10 +80,7 @@ import {
 import { Block } from "../build-mode/block";
 import { BlockBody } from "../build-mode/block-body";
 import { BlockTemplate } from "../build-mode/block-template";
-import {
-  editablePlaceholderAttribute,
-  editingPlaceholderVariable,
-} from "~/canvas/shared/styles";
+import { editablePlaceholderAttribute } from "~/canvas/shared/styles";
 import { richTextPlaceholders } from "@webstudio-is/project-build/runtime";
 import {
   acquireExternalContentRoot,
@@ -238,7 +235,7 @@ const ContentEditable = ({
 
     if (placeholder !== undefined) {
       rootElement.style.setProperty(
-        editingPlaceholderVariable,
+        "--editing-placeholder",
         `'${placeholder.replaceAll("'", "\\'")}'`
       );
     }

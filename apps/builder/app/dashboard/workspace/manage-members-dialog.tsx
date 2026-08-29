@@ -397,12 +397,10 @@ const ExtraSeatsConfirmDialog = ({
         </Text>
       </Flex>
       <DialogActions>
-        <Button autoFocus onClick={onConfirm}>
+        <Button color="primary" autoFocus onClick={onConfirm}>
           Confirm
         </Button>
-        <Button color="neutral" onClick={onCancel}>
-          Cancel
-        </Button>
+        <Button onClick={onCancel}>Cancel</Button>
       </DialogActions>
     </DialogContent>
   </Dialog>
@@ -595,6 +593,7 @@ export const ManageMembersDialog = ({
                     onChange={setInviteRelation}
                   />
                   <Button
+                    color="primary"
                     type="submit"
                     state={inviting ? "pending" : undefined}
                   >
@@ -607,7 +606,9 @@ export const ManageMembersDialog = ({
               <PanelBanner variant="warning">
                 <Flex direction="column" gap="2">
                   <Text>
-                    {`Your workspace has ${overCapacity} more member${overCapacity === 1 ? "" : "s"} than your plan covers. Non-owner members won't be able to access the workspace until this is resolved.`}
+                    {`Your workspace has ${overCapacity} more member${
+                      overCapacity === 1 ? "" : "s"
+                    } than your plan covers. Non-owner members won't be able to access the workspace until this is resolved.`}
                   </Text>
                   <Flex gap="2">
                     <Button
@@ -619,10 +620,14 @@ export const ManageMembersDialog = ({
                           : undefined
                       }
                     >
-                      {`Buy ${overCapacity} extra seat${overCapacity === 1 ? "" : "s"}`}
+                      {`Buy ${overCapacity} extra seat${
+                        overCapacity === 1 ? "" : "s"
+                      }`}
                     </Button>
                     <Text color="subtle" css={{ alignSelf: "center" }}>
-                      {`or remove ${overCapacity} member${overCapacity === 1 ? "" : "s"}`}
+                      {`or remove ${overCapacity} member${
+                        overCapacity === 1 ? "" : "s"
+                      }`}
                     </Text>
                   </Flex>
                 </Flex>
@@ -657,7 +662,9 @@ export const ManageMembersDialog = ({
                 <Text color={availableSeats <= 0 ? "destructive" : "subtle"}>
                   {availableSeats >= 0
                     ? `${availableSeats} more seats included`
-                    : `${-availableSeats} extra seat${-availableSeats === 1 ? "" : "s"} will be charged`}
+                    : `${-availableSeats} extra seat${
+                        -availableSeats === 1 ? "" : "s"
+                      } will be charged`}
                 </Text>
               ) : (
                 <div />

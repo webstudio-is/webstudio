@@ -21,9 +21,12 @@ import {
   useState,
 } from "react";
 import { css, theme, type CSS } from "../stitches.config";
-import { cssVar } from "../css-var";
+import { cssVar, declareCssVar } from "../css-var";
 import { useDisableCanvasPointerEvents } from "../utilities";
 import { textStyle } from "./text";
+
+const colorInputContrastProperty = declareCssVar("--contrast");
+const colorInputValueProperty = declareCssVar("--value");
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -259,10 +262,13 @@ export const ColorPicker = ({
     if (!colorInputElement) {
       return;
     }
-    colorInputElement.style.setProperty("--contrast", "inherit");
+    colorInputElement.style.setProperty(colorInputContrastProperty, "inherit");
     colorInputElement.shadowRoot
       ?.querySelector<HTMLElement>(".preview")
-      ?.style.setProperty("--value", cssVar("--background-primary"));
+      ?.style.setProperty(
+        colorInputValueProperty,
+        cssVar("--background-primary")
+      );
   }, []);
 
   // Sync externally-controlled open state into the web component.

@@ -4798,14 +4798,13 @@ export const SettingsIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M13.987 6H9.32M13.932 6h-12M14 10.5H2"
+          d="M9.32 6H1.932M14 10.5H6.5"
         />
         <rect
           width="4"
           height="4"
           x="1.932"
           y="8.534"
-          fill="currentColor"
           stroke="currentColor"
           rx="2"
         />
@@ -4814,7 +4813,6 @@ export const SettingsIcon: IconComponent = forwardRef(
           height="4"
           x="10.068"
           y="4"
-          fill="currentColor"
           stroke="currentColor"
           rx="2"
         />

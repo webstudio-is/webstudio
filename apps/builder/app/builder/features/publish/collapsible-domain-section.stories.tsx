@@ -12,12 +12,12 @@ import {
   ScrollArea,
   PanelBanner,
   Link,
+  LinkButton,
   Select,
   TextArea,
   Checkbox,
   theme,
   cssVar,
-  buttonStyle,
   Popover,
   PopoverTitle,
   PopoverTitleActions,
@@ -205,7 +205,7 @@ export const CustomDomains = () => (
             </Grid>
           </Grid>
           <Grid flow="column" gap={2}>
-            <Button color="neutral">Verify DNS</Button>
+            <Button>Verify DNS</Button>
             <Button color="destructive">Remove</Button>
           </Grid>
         </Grid>
@@ -240,7 +240,7 @@ export const CustomDomains = () => (
             <Text variant="mono">webstudio-verify=xyz789</Text>
           </Grid>
           <Grid flow="column" gap={2}>
-            <Button color="neutral">Check status</Button>
+            <Button>Check status</Button>
             <Button color="destructive">Remove</Button>
           </Grid>
         </Grid>
@@ -258,7 +258,7 @@ export const CustomDomains = () => (
             <InfoCircleIcon color={cssVar("--foreground-secondary")} />
             <Text color="subtle">Setting up SSL certificate...</Text>
           </Flex>
-          <Button color="neutral">Check status</Button>
+          <Button>Check status</Button>
         </Grid>
       </CollapsibleDomainSection>
 
@@ -278,7 +278,7 @@ export const CustomDomains = () => (
             </Text>
           </Flex>
           <Grid flow="column" gap={2}>
-            <Button color="neutral">Verify DNS</Button>
+            <Button>Verify DNS</Button>
             <Button color="destructive">Remove</Button>
           </Grid>
         </Grid>
@@ -340,13 +340,9 @@ export const UpgradeBanners = () => (
         <Text variant="regularBold">
           Upgrade to publish more than 1 time per day:
         </Text>
-        <Link
-          className={buttonStyle({ color: "primary" })}
-          underline="none"
-          href="#"
-        >
+        <LinkButton color="primary" href="#">
           Upgrade
-        </Link>
+        </LinkButton>
       </PanelBanner>
 
       <Text variant="labels">Restricted pro features</Text>
@@ -557,7 +553,7 @@ export const ExportDialogLayout = () => (
                 readOnly
                 value="npx webstudio@latest"
               />
-              <Button type="button" color="neutral" prefix={<CopyIcon />}>
+              <Button type="button" prefix={<CopyIcon />}>
                 Copy
               </Button>
             </Flex>
@@ -578,7 +574,6 @@ export const ExportDialogLayout = () => (
               <Button
                 type="button"
                 css={{ flexShrink: 0 }}
-                color="neutral"
                 prefix={<CopyIcon />}
               >
                 Copy
@@ -630,3 +625,5 @@ export const ExportStaticLayout = () => (
     </Popover>
   </StorySection>
 );
+
+undefined;

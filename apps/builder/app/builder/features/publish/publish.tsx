@@ -27,8 +27,8 @@ import {
   theme,
   TextArea,
   Link,
+  LinkButton,
   PanelBanner,
-  buttonStyle,
   toast,
   RadioGroup,
   Popover,
@@ -971,14 +971,13 @@ const UpgradeBanner = ({ hasCustomDomains }: { hasCustomDomains: boolean }) => {
         <Text variant="regularBold">
           Upgrade to publish more than {maxDailyPublishesPerUser} times per day:
         </Text>
-        <Link
-          className={buttonStyle({ color: "primary" })}
-          underline="none"
+        <LinkButton
+          color="primary"
           href="https://webstudio.is/pricing"
           target="_blank"
         >
           Upgrade
-        </Link>
+        </LinkButton>
       </PanelBanner>
     );
   }
@@ -1300,7 +1299,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
                 value={npxCommand}
               />
               <CopyToClipboard text={npxCommand}>
-                <Button type="button" color="neutral" prefix={<CopyIcon />}>
+                <Button type="button" prefix={<CopyIcon />}>
                   Copy
                 </Button>
               </CopyToClipboard>
@@ -1338,7 +1337,6 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
                 <Button
                   type="button"
                   css={{ flexShrink: 0 }}
-                  color="neutral"
                   prefix={<CopyIcon />}
                 >
                   Copy
@@ -1453,3 +1451,5 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     </Popover>
   );
 };
+
+undefined;

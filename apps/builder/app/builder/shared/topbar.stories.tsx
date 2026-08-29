@@ -6,8 +6,7 @@ import {
   theme,
   ToolbarButton,
   Text,
-  buttonStyle,
-  Link,
+  LinkButton,
 } from "@webstudio-is/design-system";
 import {
   CloudIcon,
@@ -87,7 +86,7 @@ export const TopbarLayouts = () => {
           center={<BreakpointsPlaceholder />}
           right={
             <>
-              <Button color="neutral">Share</Button>
+              <Button>Share</Button>
               <Button color="primary">Publish</Button>
             </>
           }
@@ -102,16 +101,9 @@ export const TopbarLayouts = () => {
               <SafeModeIndicator />
               <ViewModeIndicator />
               <SyncErrorIndicator />
-              <Button color="neutral">Share</Button>
+              <Button>Share</Button>
               <Button color="primary">Publish</Button>
-              <Link
-                data-state="auto"
-                className={buttonStyle({ color: "neutral" })}
-                href="#"
-                underline="none"
-              >
-                Clone
-              </Link>
+              <LinkButton href="#">Clone</LinkButton>
             </>
           }
         />
@@ -125,7 +117,7 @@ export const TopbarLayouts = () => {
           right={
             <>
               <SyncStatus />
-              <Button color="neutral">Share</Button>
+              <Button>Share</Button>
               <Button color="primary">Publish</Button>
             </>
           }
@@ -138,7 +130,7 @@ export const TopbarLayouts = () => {
           right={
             <>
               <ViewMode />
-              <Button color="neutral">Share</Button>
+              <Button>Share</Button>
               <Button color="primary">Publish</Button>
             </>
           }

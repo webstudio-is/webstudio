@@ -4,8 +4,16 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test } from "vitest";
 import "../colors/colors.css";
-import { Button } from "./button";
+import { Button, LinkButton } from "./button";
 import { PanelTabs, PanelTabsList, PanelTabsTrigger } from "./panel-tabs";
+import { SmallToggleButton } from "./small-toggle-button";
+import { ToggleGroup, ToggleGroupButton } from "./toggle-group";
+import {
+  Toolbar,
+  ToolbarButton,
+  ToolbarToggleGroup,
+  ToolbarToggleItem,
+} from "./toolbar";
 
 let root: Root | undefined;
 
@@ -177,5 +185,220 @@ test("inactive panel tabs remain readable", () => {
       contrast(readColor(foreground), readColor(background)),
       mode
     ).toBeGreaterThanOrEqual(4.5);
+  }
+});
+
+test("link buttons use anchor semantics and button interaction states", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+
+  act(() => {
+    root?.render(
+      createElement(
+        LinkButton,
+        {
+          href: "https://example.com/path",
+          state: "hover",
+          target: "_blank",
+        },
+        "Open"
+      )
+    );
+  });
+
+  const link = container.querySelector("a");
+  if (link === null) {
+    throw new Error("Expected LinkButton to render an anchor");
+  }
+  expect(link.href).toBe("https://example.com/path");
+  expect(link.target).toBe("_blank");
+  expect(link.dataset.state).toBe("hover");
+  expect(getComputedStyle(link).backgroundImage).not.toBe("none");
+
+  act(() => {
+    root?.render(
+      createElement(LinkButton, { color: "primary", href: "/next" }, "Next")
+    );
+  });
+  const autoLink = container.querySelector("a");
+  if (autoLink === null) {
+    throw new Error("Expected an automatic LinkButton state");
+  }
+  expect(autoLink.dataset.state).toBe("auto");
+  expect(getComputedStyle(autoLink).backgroundImage).toBe("none");
+  await page.elementLocator(autoLink).hover();
+  expect(getComputedStyle(autoLink).backgroundImage).not.toBe("none");
+});
+
+test("toggle group states remain distinguishable", () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+
+  for (const mode of ["light", "dark"] as const) {
+    document.documentElement.dataset.colorScheme = mode;
+    act(() => {
+      root?.render(
+        createElement(
+          ToggleGroup,
+          { type: "single", defaultValue: "selected" },
+          createElement(ToggleGroupButton, { value: "selected" }, "Selected"),
+          createElement(ToggleGroupButton, { value: "inactive" }, "Inactive")
+        )
+      );
+    });
+
+    const selected = container.querySelector('[data-state="on"]');
+    const inactive = container.querySelector('[data-state="off"]');
+    const group = container.querySelector('[role="group"]');
+    if (selected === null || inactive === null || group === null) {
+      throw new Error(
+        "Expected a toggle group with selected and inactive items"
+      );
+    }
+
+    const selectedStyle = getComputedStyle(selected);
+    const inactiveStyle = getComputedStyle(inactive);
+    const groupStyle = getComputedStyle(group);
+
+    expect(
+      contrast(
+        readColor(selectedStyle.backgroundColor),
+        readColor(groupStyle.backgroundColor)
+      ),
+      `${mode} selected surface`
+    ).toBeGreaterThanOrEqual(1.2);
+    expect(
+      contrast(readColor(selectedStyle.color), readColor(inactiveStyle.color)),
+      `${mode} foreground states`
+    ).toBeGreaterThanOrEqual(1.5);
+  }
+});
+
+test("small toggle selections remain distinguishable", () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+
+  for (const mode of ["light", "dark"] as const) {
+    document.documentElement.dataset.colorScheme = mode;
+    act(() => {
+      root?.render(
+        createElement(
+          "div",
+          { style: { background: "var(--background-primary)" } },
+          createElement(SmallToggleButton, {
+            "aria-label": "Selected small toggle",
+            icon: "Selected",
+            pressed: true,
+          }),
+          createElement(SmallToggleButton, {
+            "aria-label": "Inactive small toggle",
+            icon: "Inactive",
+            pressed: false,
+          })
+        )
+      );
+    });
+
+    const background = container.firstElementChild;
+    const smallSelected = container.querySelector(
+      '[aria-label="Selected small toggle"]'
+    );
+    const smallInactive = container.querySelector(
+      '[aria-label="Inactive small toggle"]'
+    );
+    if (
+      background === null ||
+      smallSelected === null ||
+      smallInactive === null
+    ) {
+      throw new Error("Expected rendered small toggle states");
+    }
+
+    const backgroundColor = readColor(
+      getComputedStyle(background).backgroundColor
+    );
+    const selectedStyle = getComputedStyle(smallSelected);
+    const inactiveStyle = getComputedStyle(smallInactive);
+    expect(
+      contrast(readColor(selectedStyle.backgroundColor), backgroundColor),
+      `${mode} selected surface`
+    ).toBeGreaterThanOrEqual(1.2);
+    expect(
+      contrast(readColor(selectedStyle.color), readColor(inactiveStyle.color)),
+      `${mode} foreground states`
+    ).toBeGreaterThanOrEqual(1.5);
+  }
+});
+
+test("square toolbar actions and toggles share open and selected surfaces", () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+
+  for (const mode of ["light", "dark"] as const) {
+    document.documentElement.dataset.colorScheme = mode;
+    act(() => {
+      root?.render(
+        createElement(
+          Toolbar,
+          null,
+          createElement(
+            ToolbarButton,
+            {
+              "aria-label": "Open toolbar action",
+              "aria-expanded": true,
+            },
+            "Action"
+          ),
+          createElement(
+            ToolbarButton,
+            { "aria-label": "Idle toolbar action" },
+            "Idle"
+          ),
+          createElement(
+            ToolbarToggleGroup,
+            { type: "single", value: "selected" },
+            createElement(
+              ToolbarToggleItem,
+              {
+                "aria-label": "Selected chrome toggle",
+                value: "selected",
+              },
+              "Selected"
+            )
+          )
+        )
+      );
+    });
+
+    const openAction = container.querySelector(
+      '[aria-label="Open toolbar action"]'
+    );
+    const selectedToggle = container.querySelector(
+      '[aria-label="Selected chrome toggle"]'
+    );
+    const idleAction = container.querySelector(
+      '[aria-label="Idle toolbar action"]'
+    );
+    if (openAction === null || selectedToggle === null || idleAction === null) {
+      throw new Error("Expected rendered toolbar controls");
+    }
+
+    const actionStyle = getComputedStyle(openAction);
+    const toggleStyle = getComputedStyle(selectedToggle);
+    expect(
+      readColor(toggleStyle.backgroundColor),
+      `${mode} background`
+    ).toEqual(readColor(actionStyle.backgroundColor));
+    expect(readColor(toggleStyle.color), `${mode} foreground`).toEqual(
+      readColor(actionStyle.color)
+    );
+    expect(
+      readColor(getComputedStyle(idleAction).backgroundColor)[3],
+      `${mode} idle background`
+    ).toBe(0);
   }
 });

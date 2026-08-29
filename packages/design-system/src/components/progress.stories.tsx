@@ -25,10 +25,16 @@ export const Progress = () => {
           ))}
           <Flex gap="2" align="center">
             <ProgressComponent value={value} />
-            <Button onClick={() => setValue(Math.max(0, value - 10))}>
+            <Button
+              color="primary"
+              onClick={() => setValue(Math.max(0, value - 10))}
+            >
               -10
             </Button>
-            <Button onClick={() => setValue(Math.min(100, value + 10))}>
+            <Button
+              color="primary"
+              onClick={() => setValue(Math.min(100, value + 10))}
+            >
               +10
             </Button>
           </Flex>
@@ -42,9 +48,15 @@ export const Progress = () => {
             transitionDuration="1000ms"
           />
           <Flex gap="2">
-            <Button onClick={() => setTransitionValue(0)}>0%</Button>
-            <Button onClick={() => setTransitionValue(50)}>50%</Button>
-            <Button onClick={() => setTransitionValue(100)}>100%</Button>
+            <Button color="primary" onClick={() => setTransitionValue(0)}>
+              0%
+            </Button>
+            <Button color="primary" onClick={() => setTransitionValue(50)}>
+              50%
+            </Button>
+            <Button color="primary" onClick={() => setTransitionValue(100)}>
+              100%
+            </Button>
           </Flex>
         </StoryGrid>
       </StorySection>

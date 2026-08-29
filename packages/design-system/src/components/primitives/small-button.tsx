@@ -6,6 +6,10 @@ import {
 } from "react";
 import { css, theme, type CSS } from "../../stitches.config";
 import { cssVar } from "../../css-var";
+import {
+  selectedControlBackground,
+  withInteractionOverlay,
+} from "../control-state-color";
 
 export const smallButtonVariants = [
   "normal",
@@ -41,8 +45,44 @@ const focusColors = {
   contrast: contrastForeground,
 };
 
+const selectedBackgrounds = {
+  normal: selectedControlBackground,
+  destructive: selectedControlBackground,
+  contrast: "color-mix(in oklab, currentColor 22%, transparent)",
+};
+
+const hoverOverlays = {
+  normal: cssVar("--overlay-interaction-hover"),
+  destructive: cssVar("--overlay-interaction-hover"),
+  contrast: cssVar("--overlay-on-inverse-hover"),
+};
+
+const pressedOverlays = {
+  normal: cssVar("--overlay-interaction-pressed"),
+  destructive: cssVar("--overlay-interaction-pressed"),
+  contrast: cssVar("--overlay-on-inverse-pressed"),
+};
+
 const perVariantStyle = (variant: (typeof smallButtonVariants)[number]) => ({
   color: defaultColors[variant],
+
+  "&[data-state=on]": {
+    color: hoverColors[variant],
+    background: selectedBackgrounds[variant],
+    borderRadius: theme.borderRadius[3],
+  },
+  "&[data-state=on]:hover": {
+    background: withInteractionOverlay(
+      selectedBackgrounds[variant],
+      hoverOverlays[variant]
+    ),
+  },
+  "&[data-state=on]:active": {
+    background: withInteractionOverlay(
+      selectedBackgrounds[variant],
+      pressedOverlays[variant]
+    ),
+  },
 
   "&:hover, &[data-state=open]": {
     color: hoverColors[variant],

@@ -8,25 +8,26 @@ import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
 import { cssVar } from "../css-var";
 import { styleSourceColor } from "./style-source-color";
+import {
+  selectedControlBackground,
+  selectedControlHoverBackground,
+  selectedControlPressedBackground,
+  withInteractionOverlay,
+} from "./control-state-color";
 
 const openOrHoverStateStyle = {
   backgroundColor: cssVar("--overlay-interaction-hover"),
 };
 
-const withInteractionOverlay = (background: string) =>
-  `linear-gradient(${cssVar("--overlay-interaction-hover")}, ${cssVar(
-    "--overlay-interaction-hover"
-  )}), ${background}`;
-
-const presetBackground = `color-mix(in oklab, ${cssVar(
-  "--background-primary"
-)} 90.58%, ${cssVar("--foreground-primary")})`;
+const pressedStateStyle = {
+  backgroundColor: cssVar("--overlay-interaction-pressed"),
+};
 
 const disabledVariantStyles = {
   "&:disabled, &[aria-disabled=true]": {
     color: cssVar("--foreground-disabled"),
-    "&:hover": {
-      backgroundColor: "transparent",
+    "&:hover, &:active": {
+      background: "transparent",
     },
   },
 };
@@ -56,7 +57,7 @@ export const IconButton = styled("button", {
 
   "&:disabled, &[aria-disabled=true]": {
     borderColor: "transparent",
-    backgroundColor: "transparent",
+    background: "transparent",
   },
 
   // https://www.radix-ui.com/docs/primitives/components/popover#trigger
@@ -66,16 +67,23 @@ export const IconButton = styled("button", {
     variant: {
       default: {
         color: cssVar("--foreground-primary"),
+        "&[data-state=off]": {
+          color: cssVar("--foreground-secondary"),
+        },
         "&:hover, &[data-hovered=true]": openOrHoverStateStyle,
+        "&:active": pressedStateStyle,
         // According to the design https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3199&t=lpT9jFuaiUnz1Foa-0
         // only the default variant has different toggle state
         // https://www.radix-ui.com/docs/primitives/components/toggle#root
         "&[data-state=on]": {
-          backgroundColor: presetBackground,
+          backgroundColor: selectedControlBackground,
           borderColor: cssVar("--border-default"),
 
           "&:hover, &[data-hovered=true]": {
-            background: withInteractionOverlay(presetBackground),
+            background: selectedControlHoverBackground,
+          },
+          "&:active": {
+            background: selectedControlPressedBackground,
           },
         },
         "&[data-focused=true], &:focus-visible": {
@@ -85,11 +93,14 @@ export const IconButton = styled("button", {
       },
 
       preset: {
-        backgroundColor: presetBackground,
+        backgroundColor: selectedControlBackground,
         borderColor: cssVar("--border-default"),
         color: cssVar("--foreground-primary"),
         "&:hover, &[data-hovered=true]": {
-          background: withInteractionOverlay(presetBackground),
+          background: selectedControlHoverBackground,
+        },
+        "&:active": {
+          background: selectedControlPressedBackground,
         },
         ...disabledVariantStyles,
       },
@@ -100,6 +111,12 @@ export const IconButton = styled("button", {
         color: styleSourceColor.local.foreground,
         "&:hover, &[data-hovered=true]": {
           background: withInteractionOverlay(styleSourceColor.local.background),
+        },
+        "&:active": {
+          background: withInteractionOverlay(
+            styleSourceColor.local.background,
+            cssVar("--overlay-interaction-pressed")
+          ),
         },
         ...disabledVariantStyles,
       },
@@ -113,6 +130,12 @@ export const IconButton = styled("button", {
             styleSourceColor.overwritten.background
           ),
         },
+        "&:active": {
+          background: withInteractionOverlay(
+            styleSourceColor.overwritten.background,
+            cssVar("--overlay-interaction-pressed")
+          ),
+        },
         ...disabledVariantStyles,
       },
 
@@ -123,6 +146,12 @@ export const IconButton = styled("button", {
         "&:hover, &[data-hovered=true]": {
           background: withInteractionOverlay(
             styleSourceColor.remote.background
+          ),
+        },
+        "&:active": {
+          background: withInteractionOverlay(
+            styleSourceColor.remote.background,
+            cssVar("--overlay-interaction-pressed")
           ),
         },
         ...disabledVariantStyles,

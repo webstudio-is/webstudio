@@ -4,9 +4,8 @@ import {
 } from "./panel-banner";
 import { StoryGrid, StorySection } from "./storybook";
 import { Text } from "./text";
-import { Link } from "./link";
 import { Flex } from "./flex";
-import { buttonStyle } from "./button";
+import { LinkButton } from "./button";
 import {
   AlertIcon,
   InfoCircleIcon,
@@ -32,14 +31,13 @@ export const PanelBanner = () => {
               </Text>{" "}
               to add unlimited domains.
             </Text>
-            <Link
-              className={buttonStyle({ color: "primary" })}
-              underline="none"
+            <LinkButton
+              color="primary"
               href="https://webstudio.is/pricing"
               target="_blank"
             >
               Upgrade
-            </Link>
+            </LinkButton>
           </PanelBannerComponent>
         </StoryGrid>
       </StorySection>

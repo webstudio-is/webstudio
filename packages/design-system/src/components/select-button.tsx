@@ -15,10 +15,10 @@ import {
 import { textVariants } from "./text";
 import { theme, css, type CSS } from "../stitches.config";
 import { ChevronDownIcon } from "@webstudio-is/icons";
-import { cssVar } from "../css-var";
+import { cssVar, declareCssVar } from "../css-var";
 
-const chevronColor = `--select-button-chevron-color`;
-const chevronStyle = css({ color: `var(${chevronColor})` });
+const chevronColor = declareCssVar("--select-button-chevron-color");
+const chevronStyle = css({ color: cssVar(chevronColor) });
 
 const style = css({
   all: "unset", // reset <button>

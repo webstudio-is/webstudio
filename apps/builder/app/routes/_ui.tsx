@@ -4,6 +4,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
   type ClientLoaderFunctionArgs,
   type ShouldRevalidateFunction,
 } from "@remix-run/react";
@@ -29,7 +30,11 @@ import {
   privateNoStoreResponseHeaders,
 } from "~/services/cache-control.server";
 import { ColorSchemeController } from "~/shared/color-scheme-controller";
-import { colorSchemeBootstrapScript } from "~/shared/color-scheme";
+import {
+  createColorSchemeBootstrapScript,
+  parseColorSchemeCookie,
+  type ColorSchemePreference,
+} from "~/shared/color-scheme";
 
 export const links: LinksFunction = () => {
   // `links` returns an array of objects whose
@@ -43,14 +48,19 @@ export const links: LinksFunction = () => {
   ];
 };
 
-const Document = (props: { children: React.ReactNode }) => {
+const Document = (props: {
+  children: React.ReactNode;
+  colorScheme?: ColorSchemePreference;
+}) => {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script
-          dangerouslySetInnerHTML={{ __html: colorSchemeBootstrapScript }}
+          dangerouslySetInnerHTML={{
+            __html: createColorSchemeBootstrapScript(props.colorScheme),
+          }}
         />
         <Meta />
         <Links />
@@ -69,7 +79,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [csrfToken, setCookieValue] = await getCsrfTokenAndCookie(request);
 
   if (request.headers.get("sec-fetch-mode") !== "navigate") {
-    return json({ csrfToken: "" }, { headers: privateNoStoreResponseHeaders });
+    return json(
+      {
+        csrfToken: "",
+        colorScheme: parseColorSchemeCookie(request.headers.get("Cookie")),
+      },
+      { headers: privateNoStoreResponseHeaders }
+    );
   }
 
   const headers = createPrivateNoStoreHeaders();
@@ -79,7 +95,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   return json(
-    { csrfToken },
+    {
+      csrfToken,
+      colorScheme: parseColorSchemeCookie(request.headers.get("Cookie")),
+    },
     {
       headers,
     }
@@ -113,8 +132,9 @@ export const ErrorBoundary = () => {
 };
 
 export default function Layout() {
+  const { colorScheme } = useLoaderData<typeof loader>();
   return (
-    <Document>
+    <Document colorScheme={colorScheme}>
       <Outlet />
     </Document>
   );

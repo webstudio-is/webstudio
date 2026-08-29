@@ -12,11 +12,12 @@ import {
   theme,
   PanelBanner,
   Link,
-  buttonStyle,
+  LinkButton,
   Separator,
   Grid,
   IconButton,
   cssVar,
+  selectionBackground,
 } from "@webstudio-is/design-system";
 import { BodyIcon } from "@webstudio-is/icons";
 import {
@@ -109,9 +110,7 @@ const sidebarLinkStyle = css({
     background: cssVar("--overlay-interaction-hover"),
   },
   "&[aria-current=page]": {
-    background: `color-mix(in oklab, ${cssVar(
-      "--foreground-accent"
-    )} 12%, ${cssVar("--background-primary")})`,
+    background: selectionBackground,
     color: cssVar("--foreground-primary"),
   },
 });
@@ -313,25 +312,22 @@ export const Dashboard = () => {
               </CollapsibleSection>
             )}
           </nav>
-          <div>
+          <Box css={{ paddingTop: theme.spacing[5] }}>
             <PanelBanner variant="neutral">
               <Text variant="titles">Inception is live</Text>
               <Text color="subtle">
                 An AI-powered design tool to explore ideas and instantly
                 generate HTML/CSS for Webstudio Builder or any other platform.
               </Text>
-              <Link
-                className={buttonStyle({
-                  color: "primary",
-                })}
-                underline="none"
+              <LinkButton
+                color="primary"
                 href="https://wstd.us/inception"
                 target="_blank"
               >
                 Get started with Inception
-              </Link>
+              </LinkButton>
             </PanelBanner>
-          </div>
+          </Box>
           <CollapsibleSection label="Help & support" fullWidth>
             <NavigationItems
               items={help.map((item) => ({

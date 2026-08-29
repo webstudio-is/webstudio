@@ -443,12 +443,12 @@ const AlignmentControls = ({
           },
           {
             name: "space-between",
-            label: "Space Between",
+            label: "Space between",
             icon: AlignHorizontalSpaceBetweenIcon,
           },
           {
             name: "space-around",
-            label: "Space Around",
+            label: "Space around",
             icon: AlignHorizontalSpaceAroundIcon,
           },
         ]}
@@ -475,12 +475,12 @@ const AlignmentControls = ({
             },
             {
               name: "space-between",
-              label: "Space Between",
+              label: "Space between",
               icon: AlignContentSpaceBetweenIcon,
             },
             {
               name: "space-around",
-              label: "Space Around",
+              label: "Space around",
               icon: AlignContentSpaceAroundIcon,
             },
           ]}
@@ -516,13 +516,13 @@ const LayoutSectionFlex = () => {
               { name: "row", label: "Row", icon: ArrowRightIcon },
               {
                 name: "row-reverse",
-                label: "Row Reverse",
+                label: "Row reverse",
                 icon: ArrowLeftIcon,
               },
               { name: "column", label: "Column", icon: ArrowDownIcon },
               {
                 name: "column-reverse",
-                label: "Column Reverse",
+                label: "Column reverse",
                 icon: ArrowUpIcon,
               },
             ]}
@@ -530,7 +530,7 @@ const LayoutSectionFlex = () => {
           <ToggleControl
             property="flex-wrap"
             items={[
-              { name: "nowrap", label: "No Wrap", icon: NoWrapIcon },
+              { name: "nowrap", label: "No wrap", icon: NoWrapIcon },
               { name: "wrap", label: "Wrap", icon: WrapIcon },
             ]}
           />
@@ -621,10 +621,10 @@ const LayoutSectionGrid = () => {
               items={[
                 { name: "row", label: "Row", icon: ArrowRightIcon },
                 { name: "column", label: "Column", icon: ArrowDownIcon },
-                { name: "row dense", label: "Row Dense", icon: RepeatGridIcon },
+                { name: "row dense", label: "Row dense", icon: RepeatGridIcon },
                 {
                   name: "column dense",
-                  label: "Column Dense",
+                  label: "Column dense",
                   icon: RepeatGridIcon,
                 },
               ]}
@@ -650,12 +650,12 @@ const LayoutSectionGrid = () => {
                 },
                 {
                   name: "space-between",
-                  label: "Space Between",
+                  label: "Space between",
                   icon: AlignContentSpaceBetweenIcon,
                 },
                 {
                   name: "space-around",
-                  label: "Space Around",
+                  label: "Space around",
                   icon: AlignContentSpaceAroundIcon,
                 },
               ]}
@@ -734,12 +734,12 @@ const LayoutSectionGrid = () => {
                 },
                 {
                   name: "space-between",
-                  label: "Space Between",
+                  label: "Space between",
                   icon: AlignHorizontalSpaceBetweenIcon,
                 },
                 {
                   name: "space-around",
-                  label: "Space Around",
+                  label: "Space around",
                   icon: AlignHorizontalSpaceAroundIcon,
                 },
               ]}

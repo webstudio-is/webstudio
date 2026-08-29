@@ -529,7 +529,7 @@ const wrapperStyle = css({
     size: {
       default: {
         // 1 line is 16px; show at most 20 lines.
-        "--ws-code-editor-max-height": "320px",
+        ...getCodeEditorCssVars({ minHeight: "auto", maxHeight: "320px" }),
       },
       full: {
         ...getCodeEditorCssVars({ minHeight: "100%", maxHeight: "100%" }),

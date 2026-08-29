@@ -10,17 +10,12 @@ import { textVariants } from "./text";
 import { forwardRef, type Ref } from "react";
 import { focusRingStyle } from "./focus-ring";
 import { cssVar } from "../css-var";
-
-const toolbarBackground = cssVar("--background-primary");
-const toolbarForeground = cssVar("--foreground-primary");
-const toolbarForegroundSubtle = cssVar("--foreground-secondary");
-const toolbarBorder = cssVar("--border-default");
-const toolbarHover = cssVar("--overlay-interaction-hover");
+import { chromeControlStyle } from "./chrome-control-style";
 
 export const Toolbar = styled(ToolbarPrimitive.Root, {
   display: "flex",
-  background: toolbarBackground,
-  color: toolbarForeground,
+  background: cssVar("--background-primary"),
+  color: cssVar("--foreground-primary"),
   alignItems: "center",
   gap: theme.spacing[5],
 });
@@ -32,7 +27,7 @@ export const ToolbarToggleGroup = styled(ToolbarPrimitive.ToggleGroup, {
 
 const focusRing = focusRingStyle();
 
-const toggleItemStyle = css(textVariants.labels, {
+const controlBaseStyle = {
   // reset styles
   boxSizing: "border-box",
   position: "relative",
@@ -56,37 +51,41 @@ const toggleItemStyle = css(textVariants.labels, {
   transition: "200ms background",
 
   "&:focus-visible": focusRing,
-  "&:hover, &[data-state=on], &[data-state=open], &[aria-checked=true]": {
-    background: toolbarHover,
+} as const;
+
+const sharedControlVariants = {
+  // Just for story
+  focused: {
+    true: focusRing,
   },
-  variants: {
-    // Just for story
-    focused: {
-      true: focusRing,
-    },
-    variant: {
-      subtle: {
-        color: toolbarForegroundSubtle,
-        "&:hover, &[data-state=on], &[aria-checked=true]": {
-          color: "inherit",
-        },
-      },
-      preview: {
-        "&[data-state=on]": {
-          color: cssVar("--foreground-positive"),
-        },
-      },
-      chevron: {
-        minWidth: "auto",
-        paddingInline: 0,
-        color: toolbarForegroundSubtle,
-        "&:hover, &:focus-visible, &[aria-expanded=true]": {
-          color: toolbarForeground,
-        },
-        "&:focus-visible": focusRingStyle({ left: 0, right: 0 }),
+  variant: {
+    subtle: {
+      color: cssVar("--foreground-secondary"),
+      "&:hover, &[data-state=on], &[aria-checked=true]": {
+        color: "inherit",
       },
     },
+    preview: {
+      "&[data-state=on]": {
+        color: cssVar("--foreground-positive"),
+      },
+    },
+    chevron: {
+      minWidth: "auto",
+      paddingInline: 0,
+      color: cssVar("--foreground-secondary"),
+      "&:hover, &:focus-visible, &[aria-expanded=true]": {
+        color: cssVar("--foreground-primary"),
+      },
+      "&:focus-visible": focusRingStyle({ left: 0, right: 0 }),
+    },
   },
+} as const;
+
+const toggleItemStyle = css(textVariants.labels, {
+  ...controlBaseStyle,
+  ...chromeControlStyle,
+  variants: sharedControlVariants,
 });
 
 export const ToolbarToggleItem = styled(
@@ -106,10 +105,16 @@ const ToolbarButtonBase = forwardRef(
 );
 ToolbarButtonBase.displayName = "ToolbarButton";
 
-export const ToolbarButton = styled(ToolbarButtonBase, toggleItemStyle);
+const buttonStyle = css(textVariants.labels, {
+  ...controlBaseStyle,
+  ...chromeControlStyle,
+  variants: sharedControlVariants,
+});
+
+export const ToolbarButton = styled(ToolbarButtonBase, buttonStyle);
 
 export const ToolbarSeparator = styled(
   ToolbarPrimitive.Separator,
   separatorStyle,
-  { background: toolbarBorder }
+  { background: cssVar("--border-default") }
 );

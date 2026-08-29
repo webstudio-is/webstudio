@@ -171,7 +171,7 @@ test("Builder CSS variables persist across create, bind, rename, delete, and rel
         variable: variableName,
         action: "Rename",
       });
-      const dialog = page.getByRole("dialog", { name: "Rename CSS Variable" });
+      const dialog = page.getByRole("dialog", { name: "Rename CSS variable" });
       await dialog.getByRole("textbox").fill(renamedVariableName);
       const save = waitForChangeToBeSaved({ page });
       await dialog.getByRole("button", { name: "Rename" }).click();

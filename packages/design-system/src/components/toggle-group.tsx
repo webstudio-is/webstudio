@@ -18,6 +18,10 @@ import { cssVar } from "../css-var";
 
 type Color = "default" | "preset" | "local" | "remote" | "overwritten";
 
+const toggleGroupBackground = `color-mix(in oklab, ${cssVar(
+  "--background-primary"
+)} 96%, ${cssVar("--foreground-primary")})`;
+
 const ToggleGroupContext = createContext<{
   color?: Color;
 }>({});
@@ -57,7 +61,7 @@ export const ToggleGroup = styled(BaseToggleGroup, {
   flexDirection: "row",
   alignItems: "center",
   padding: 1,
-  background: cssVar("--background-secondary"),
+  background: toggleGroupBackground,
   border: `1px solid ${cssVar("--border-default")}`,
   borderRadius: theme.borderRadius[4],
 });

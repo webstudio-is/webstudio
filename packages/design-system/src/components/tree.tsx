@@ -29,15 +29,16 @@ import { styled, theme } from "../stitches.config";
 import { Box } from "./box";
 import { Text } from "./text";
 import { TreePositionIndicator } from "./list-position-indicator";
-import { cssVar } from "../css-var";
-import { selectionBackground } from "../color-utils";
+import { cssVar, declareCssVar } from "../css-var";
+import { selectionBackground } from "./selection-color";
 
-const treeNodeLevel = "--tree-node-level";
-const treeNodeOutline = "--tree-node-outline";
-const treeNodeSelectionBackgroundColor =
-  "--tree-node-selection-background-color";
-const treeNodeBackgroundColor = "--tree-node-background-color";
-const treeActionOpacity = "--tree-action-opacity";
+const treeNodeLevel = declareCssVar("--tree-node-level");
+const treeNodeOutline = declareCssVar("--tree-node-outline");
+const treeNodeSelectionBackgroundColor = declareCssVar(
+  "--tree-node-selection-background-color"
+);
+const treeNodeBackgroundColor = declareCssVar("--tree-node-background-color");
+const treeActionOpacity = declareCssVar("--tree-action-opacity");
 
 const TreeFocusRestoreContext = createContext<
   | undefined
@@ -135,12 +136,14 @@ const NodeContainer = styled("div", {
   position: "relative",
   height: theme.sizes.controlHeight,
   [treeNodeSelectionBackgroundColor]: "transparent",
-  [treeNodeBackgroundColor]: `var(${treeNodeSelectionBackgroundColor})`,
-  background: `var(${treeNodeBackgroundColor})`,
+  [treeNodeBackgroundColor]: cssVar(treeNodeSelectionBackgroundColor),
+  background: cssVar(treeNodeBackgroundColor),
   "&:hover, &:has(:focus-visible), &:has([aria-current=true])": {
     [treeNodeBackgroundColor]: `linear-gradient(${cssVar(
       "--overlay-interaction-hover"
-    )}, ${cssVar("--overlay-interaction-hover")}), var(${treeNodeSelectionBackgroundColor})`,
+    )}, ${cssVar("--overlay-interaction-hover")}), ${cssVar(
+      treeNodeSelectionBackgroundColor
+    )}`,
     [treeActionOpacity]: 1,
   },
   '&[data-selection-state="selected-descendant"]': {
@@ -162,7 +165,7 @@ const NodeButton = styled("button", {
   width: "100%",
   height: "inherit",
   minWidth: 0,
-  paddingLeft: `calc(${ITEM_PADDING_LEFT}px + var(${treeNodeLevel}) * 16px)`,
+  paddingLeft: `calc(${ITEM_PADDING_LEFT}px + ${cssVar(treeNodeLevel)} * 16px)`,
   paddingRight: ITEM_PADDING_RIGHT,
   flexBasis: 0,
   flexGrow: 1,
@@ -176,7 +179,9 @@ const ExpandButton = styled("button", {
   alignItems: "center",
   position: "absolute",
   top: 0,
-  left: `calc(var(${treeNodeLevel}) * ${BARS_GAP}px - ${EXPAND_WIDTH / 2}px)`,
+  left: `calc(${cssVar(treeNodeLevel)} * ${BARS_GAP}px - ${
+    EXPAND_WIDTH / 2
+  }px)`,
   width: EXPAND_WIDTH,
   height: "inherit",
 });
@@ -184,15 +189,17 @@ const ExpandButton = styled("button", {
 const ActionContainer = styled("div", {
   // use opacity to hide action instead of visibility
   // to prevent focus loss while navigating with keyboard
-  opacity: `var(${treeActionOpacity}, 0)`,
+  opacity: cssVar(treeActionOpacity, "0"),
   position: "sticky",
   translate: `-100% -100%`,
-  left: `calc(var(--sidebar-left-panel-width) - ${ITEM_PADDING_RIGHT}px)`,
+  left: `calc(${cssVar(
+    "--sidebar-left-panel-width"
+  )} - ${ITEM_PADDING_RIGHT}px)`,
   height: "inherit",
   display: "inline-flex",
   justifyContent: "center",
   alignItems: "center",
-  background: `var(${treeNodeBackgroundColor})`,
+  background: cssVar(treeNodeBackgroundColor),
 });
 
 const DropIndicator = ({

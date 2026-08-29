@@ -29,7 +29,7 @@ export const CanvasSettingsPopover = () => {
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger aria-label="Canvas Settings" asChild>
+      <PopoverTrigger aria-label="Canvas settings" asChild>
         <ToolbarButton>
           <Text
             css={{

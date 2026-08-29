@@ -7,11 +7,10 @@ import {
   InputErrorsTooltip,
   InputField,
   Label,
-  Link,
+  LinkButton,
   ProChip,
   Text,
   Tooltip,
-  buttonStyle,
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
@@ -85,15 +84,14 @@ export const AuthSection = ({
                       staging for free; upgrade to Pro to publish to custom
                       domains.
                     </Text>
-                    <Link
-                      className={buttonStyle({ color: "primary" })}
+                    <LinkButton
+                      color="primary"
                       css={{ marginTop: theme.spacing[5], width: "100%" }}
-                      underline="none"
                       target="_blank"
                       href="https://webstudio.is/pricing"
                     >
                       Upgrade
-                    </Link>
+                    </LinkButton>
                   </>
                 )}
               </>

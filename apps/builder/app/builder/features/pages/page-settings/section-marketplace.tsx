@@ -82,7 +82,7 @@ export const MarketplaceSection = ({
             })
           }
         >
-          <Button color="neutral" css={{ justifySelf: "start" }}>
+          <Button css={{ justifySelf: "start" }}>
             Choose thumbnail from assets
           </Button>
         </ImageControl>

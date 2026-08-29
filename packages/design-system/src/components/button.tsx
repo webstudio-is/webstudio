@@ -14,6 +14,7 @@ import { css, styled, theme, type CSS } from "../stitches.config";
 import { LoadingDotsIcon } from "@webstudio-is/icons";
 import { Flex } from "./flex";
 import { cssVar } from "../css-var";
+import { withInteractionOverlay } from "./control-state-color";
 
 const colors = [
   "primary",
@@ -23,14 +24,22 @@ const colors = [
   "neutral-destructive",
 ] as const;
 
-type ButtonColor = (typeof colors)[number];
+export type ButtonColor = (typeof colors)[number];
 
-type ButtonState = "auto" | "hover" | "focus" | "pressed" | "pending";
+export type ButtonState = "auto" | "hover" | "focus" | "pressed" | "pending";
 
-const neutralBackground = `color-mix(in oklab, ${cssVar("--background-primary")} 86%, ${cssVar("--foreground-primary")})`;
-const disabledBackground = `color-mix(in oklab, ${cssVar("--background-primary")} 92%, ${cssVar("--foreground-primary")})`;
-const chromaticHoverOverlay = `oklch(from ${cssVar("--foreground-on-accent")} 0 0 h / 6.2745%)`;
-const chromaticPressedOverlay = `oklch(from ${cssVar("--foreground-on-accent")} 0 0 h / 10.9804%)`;
+const neutralBackground = `color-mix(in oklab, ${cssVar(
+  "--background-primary"
+)} 86%, ${cssVar("--foreground-primary")})`;
+const disabledBackground = `color-mix(in oklab, ${cssVar(
+  "--background-primary"
+)} 92%, ${cssVar("--foreground-primary")})`;
+const chromaticHoverOverlay = `oklch(from ${cssVar(
+  "--foreground-on-accent"
+)} 0 0 h / 6.2745%)`;
+const chromaticPressedOverlay = `oklch(from ${cssVar(
+  "--foreground-on-accent"
+)} 0 0 h / 10.9804%)`;
 
 const backgrounds: Record<ButtonColor, string> = {
   primary: cssVar("--background-accent"),
@@ -47,9 +56,6 @@ const foregrounds: Record<ButtonColor, string> = {
   neutral: cssVar("--foreground-primary"),
   ghost: cssVar("--foreground-primary"),
 };
-
-const withOverlay = (overlay: string, background: string) =>
-  `linear-gradient(${overlay}, ${overlay}), ${background}`;
 
 const perColorStyle = (variant: ButtonColor) => {
   const isTransparent = variant === "ghost";
@@ -69,7 +75,7 @@ const perColorStyle = (variant: ButtonColor) => {
       color: foregrounds[variant],
       background: isTransparent
         ? hoverOverlay
-        : withOverlay(hoverOverlay, backgrounds[variant]),
+        : withInteractionOverlay(backgrounds[variant], hoverOverlay),
     },
 
     "&[data-state=auto]:focus-visible, &[data-state=focus]": {
@@ -82,10 +88,10 @@ const perColorStyle = (variant: ButtonColor) => {
       color: foregrounds[variant],
       background: isTransparent
         ? pressedOverlay
-        : withOverlay(pressedOverlay, backgrounds[variant]),
+        : withInteractionOverlay(backgrounds[variant], pressedOverlay),
     },
 
-    "&:disabled:not([data-state=pending]), &[data-state=disabled], &[aria-disabled=true], &[aria-disabled=true]:hover, &[aria-disabled=true]:visited":
+    "&:disabled:not([data-state=pending]), &[data-state=disabled], &[aria-disabled=true]:not([data-state=pending]), &[aria-disabled=true]:not([data-state=pending]):hover, &[aria-disabled=true]:not([data-state=pending]):visited":
       {
         background: disabledBackground,
         color: cssVar("--foreground-disabled"),
@@ -122,7 +128,7 @@ export const buttonStyle = css({
   },
 
   defaultVariants: {
-    color: "primary",
+    color: "neutral",
   },
 });
 
@@ -141,7 +147,7 @@ const TextContainer = styled("span", textVariants.labels, {
   },
 });
 
-type ButtonProps = {
+type ButtonVisualProps = {
   state?: ButtonState;
   color?: ButtonColor;
 
@@ -156,7 +162,44 @@ type ButtonProps = {
 
   // might be set when <Button> is asChild
   "data-state"?: string;
-} & Omit<ComponentProps<"button">, "prefix">;
+};
+
+export type ButtonProps = ButtonVisualProps &
+  Omit<ComponentProps<"button">, "prefix" | "color">;
+
+const ButtonContent = ({
+  prefix,
+  suffix,
+  children,
+  pending,
+}: Pick<ButtonVisualProps, "prefix" | "suffix"> & {
+  children?: ReactNode;
+  pending: boolean;
+}) => (
+  <>
+    {prefix}
+    {children && (
+      <TextContainer hidden={pending}>
+        {children}
+        {pending && (
+          <Flex
+            css={{
+              position: "absolute",
+              inset: 0,
+              visibility: "visible",
+              pointerEvents: "none",
+            }}
+            justify="center"
+            align="center"
+          >
+            <LoadingDotsIcon size={28} fill="currentColor" />
+          </Flex>
+        )}
+      </TextContainer>
+    )}
+    {suffix}
+  </>
+);
 
 export const Button = forwardRef(
   (
@@ -196,30 +239,73 @@ export const Button = forwardRef(
         ref={ref}
         className={buttonStyle({ color, className, css })}
       >
-        {prefix}
-        {children && (
-          <TextContainer hidden={state === "pending"}>
-            {children}
-            {state === "pending" && (
-              <Flex
-                css={{
-                  position: "absolute",
-                  inset: 0,
-                  visibility: "visible",
-                  pointerEvents: "none",
-                }}
-                justify={"center"}
-                align={"center"}
-              >
-                <LoadingDotsIcon size={28} fill="currentColor" />
-              </Flex>
-            )}
-          </TextContainer>
-        )}
-
-        {suffix}
+        <ButtonContent
+          prefix={prefix}
+          suffix={suffix}
+          pending={state === "pending"}
+        >
+          {children}
+        </ButtonContent>
       </button>
     );
   }
 );
 Button.displayName = "Button";
+
+export type LinkButtonProps = ButtonVisualProps &
+  Omit<ComponentProps<"a">, "prefix" | "color">;
+
+export const LinkButton = forwardRef(
+  (
+    {
+      state,
+      prefix,
+      suffix,
+      children,
+      "data-state": dataState,
+      className,
+      css,
+      color,
+      "aria-disabled": ariaDisabled,
+      onClick,
+      ...restProps
+    }: LinkButtonProps,
+    ref: Ref<HTMLAnchorElement>
+  ) => {
+    let finalState = dataState === "open" ? "pressed" : dataState;
+    if (state !== undefined) {
+      finalState = state;
+    }
+
+    const isDisabled = ariaDisabled === true || ariaDisabled === "true";
+    if (isDisabled && state !== "pending") {
+      finalState = "disabled";
+    }
+
+    return (
+      <a
+        {...restProps}
+        aria-disabled={state === "pending" ? true : ariaDisabled}
+        data-state={finalState ?? "auto"}
+        ref={ref}
+        className={buttonStyle({ color, className, css })}
+        onClick={(event) => {
+          if (isDisabled || state === "pending") {
+            event.preventDefault();
+            return;
+          }
+          onClick?.(event);
+        }}
+      >
+        <ButtonContent
+          prefix={prefix}
+          suffix={suffix}
+          pending={state === "pending"}
+        >
+          {children}
+        </ButtonContent>
+      </a>
+    );
+  }
+);
+LinkButton.displayName = "LinkButton";

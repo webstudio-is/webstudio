@@ -45,11 +45,10 @@ type IntermediateItem = {
   states: string[];
 };
 
-const menuTriggerVisibilityVar = "--ws-style-source-menu-trigger-visibility";
-const menuTriggerVisibilityOverrideVar =
-  "--ws-style-source-menu-trigger-visibility-override";
-const visibility = `var(${menuTriggerVisibilityOverrideVar}, var(${menuTriggerVisibilityVar}))`;
-const menuTriggerGradientVar = "--ws-style-source-menu-trigger-gradient";
+const visibility = cssVar(
+  "--style-source-menu-trigger-visibility-override",
+  cssVar("--style-source-menu-trigger-visibility")
+);
 
 const MenuTrigger = styled("button", {
   display: "inline-flex",
@@ -92,7 +91,7 @@ const MenuTriggerGradient = styled(Box, {
   width: theme.sizes.controlHeight,
   height: "100%",
   visibility,
-  background: `var(${menuTriggerGradientVar})`,
+  background: cssVar("--style-source-menu-trigger-gradient"),
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
   pointerEvents: "none",

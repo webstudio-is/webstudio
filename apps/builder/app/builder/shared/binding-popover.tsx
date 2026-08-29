@@ -17,6 +17,7 @@ import {
   Box,
   Button,
   cssVar,
+  declareCssVar,
   CssValueListArrowFocus,
   CssValueListItem,
   DialogTitleActions,
@@ -196,7 +197,9 @@ const BindingPanel = ({
   );
 };
 
-const bindingOpacityProperty = "--ws-binding-opacity";
+const bindingOpacityProperty = declareCssVar("--binding-opacity");
+const dotDisplay = declareCssVar("--dot-display");
+const plusDisplay = declareCssVar("--plus-display");
 
 export const BindingControl = ({ children }: { children: ReactNode }) => {
   return (
@@ -232,7 +235,7 @@ const BindingButton = forwardRef<
         bleed={false}
         css={{
           // hide by default
-          opacity: `var(${bindingOpacityProperty}, 0)`,
+          opacity: cssVar(bindingOpacityProperty, "0"),
           position: "absolute",
           top: 0,
           left: 0,
@@ -244,8 +247,8 @@ const BindingButton = forwardRef<
           transition: "transform 60ms, opacity 0ms 60ms",
           // https://easings.net/#easeInOutSine
           transitionTimingFunction: "cubic-bezier(0.37, 0, 0.63, 1)",
-          "--dot-display": "block",
-          "--plus-display": "none",
+          [dotDisplay]: "block",
+          [plusDisplay]: "none",
           "&[data-variant=bound]": {
             opacity: 1,
           },
@@ -253,8 +256,8 @@ const BindingButton = forwardRef<
             // always show when interacted with
             opacity: 1,
             transform: `translate(-50%, -50%) scale(1.5)`,
-            "--dot-display": "none",
-            "--plus-display": "block",
+            [dotDisplay]: "none",
+            [plusDisplay]: "block",
           },
           "&:disabled": {
             display: "none",
@@ -285,14 +288,14 @@ const BindingButton = forwardRef<
             <DotIcon
               size={7}
               style={{
-                display: `var(--dot-display)`,
+                display: cssVar(dotDisplay),
                 color: "currentColor",
               }}
             />
             <PlusIcon
               size={8}
               style={{
-                display: `var(--plus-display)`,
+                display: cssVar(plusDisplay),
                 color: "currentColor",
               }}
             />

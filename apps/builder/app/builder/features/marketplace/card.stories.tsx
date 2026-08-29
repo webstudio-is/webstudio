@@ -14,7 +14,7 @@ export default {
 
 const placeholderImage = `data:image/svg+xml,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="210">
-    <rect width="400" height="210" fill="#c0d0e0"/>
+    <rect width="400" height="210" fill="transparent"/>
     <text x="200" y="105" text-anchor="middle" dominant-baseline="central"
       font-family="sans-serif" font-size="24" fill="#4a6a8a">400 × 210</text>
   </svg>`

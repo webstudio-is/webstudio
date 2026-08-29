@@ -373,7 +373,6 @@ const DomainItem = ({
             // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
             formAction={handleVerify}
             state={isCheckStateInProgress ? "pending" : undefined}
-            color="neutral"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
           >
             Check status
@@ -390,7 +389,6 @@ const DomainItem = ({
             // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
             formAction={handleUpdateStatus}
             state={isCheckStateInProgress ? "pending" : undefined}
-            color="neutral"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
           >
             Check status
@@ -526,7 +524,7 @@ const DomainItem = ({
           }}
         >
           <Separator css={{ alignSelf: "unset" }} />
-          <Text color="main">OR</Text>
+          <Text color="main">or</Text>
           <Separator css={{ alignSelf: "unset" }} />
         </Grid>
 
@@ -583,3 +581,6 @@ export const Domains = ({
     </>
   );
 };
+
+undefined;
+undefined;

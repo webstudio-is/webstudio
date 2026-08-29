@@ -15,16 +15,22 @@ import {
   Text,
   theme,
   cssVar,
+  declareCssVar,
 } from "@webstudio-is/design-system";
 
-const thumbnailActionVisibility = "--ws-thumbnail-action-visibility";
+const thumbnailActionVisibility = declareCssVar(
+  "--thumbnail-action-visibility"
+);
 const showThumbnailAction = { [thumbnailActionVisibility]: "visible" };
 const focusOutline = {
   outline: `1px solid ${cssVar("--border-focus")}`,
   outlineOffset: -1,
 };
 
-const thumbnailActionVisibilityValue = `var(${thumbnailActionVisibility}, hidden)`;
+const thumbnailActionVisibilityValue = cssVar(
+  thumbnailActionVisibility,
+  "hidden"
+);
 
 const ThumbnailGroup = styled(Box, {
   position: "relative",

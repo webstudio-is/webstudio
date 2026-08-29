@@ -584,7 +584,9 @@ const AssetSettingsContent = ({
             Delete
           </Button>
         ) : (
-          <Button onClick={onDelete}>Review & delete</Button>
+          <Button color="primary" onClick={onDelete}>
+            Review & delete
+          </Button>
         )}
 
         <Flex gap="1">

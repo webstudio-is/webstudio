@@ -274,7 +274,7 @@ export const ShadowContent = ({
         <Flex direction="column" gap="1">
           <PropertyInlineLabel
             label="Blur"
-            title="Blur Radius"
+            title="Blur radius"
             description={shadowPropertySyntaxes[property].blur}
           />
           <CssValueInputContainer
@@ -299,7 +299,7 @@ export const ShadowContent = ({
           <Flex direction="column" gap="1">
             <PropertyInlineLabel
               label="Spread"
-              title="Spread Radius"
+              title="Spread radius"
               description={shadowPropertySyntaxes["box-shadow"].spread}
             />
             <CssValueInputContainer

@@ -1,6 +1,9 @@
 export * from "./stitches.config";
-export { cssVar, type ThemeVariableName } from "./css-var";
-export { rotateBoundedBackgroundHue, selectionBackground } from "./color-utils";
+export { cssVar, declareCssVar } from "./css-var";
+export type { ThemeVariableName } from "./colors/__generated__/css-variable-names";
+export { rotateBoundedBackgroundHue } from "./color-utils";
+export { selectionBackground } from "./components/selection-color";
+export { chromeControlStyle } from "./components/chrome-control-style";
 export * from "./components/storybook";
 export * from "./utilities";
 export { type SlotProps, Slot } from "@radix-ui/react-slot";

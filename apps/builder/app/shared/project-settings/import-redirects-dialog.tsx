@@ -214,7 +214,9 @@ export const ImportRedirectsDialog = ({
       const skippedMessage =
         skippedParts.length > 0 ? ` (${skippedParts.join(", ")} skipped)` : "";
       toast.success(
-        `Imported ${valid.length} redirect${valid.length !== 1 ? "s" : ""}${skippedMessage}`
+        `Imported ${valid.length} redirect${
+          valid.length !== 1 ? "s" : ""
+        }${skippedMessage}`
       );
     } else {
       // Replace all - detect loops within the new set
@@ -230,7 +232,9 @@ export const ImportRedirectsDialog = ({
       const skippedMessage =
         skippedParts.length > 0 ? ` (${skippedParts.join(", ")} skipped)` : "";
       toast.success(
-        `Replaced all redirects with ${valid.length} new redirect${valid.length !== 1 ? "s" : ""}${skippedMessage}`
+        `Replaced all redirects with ${valid.length} new redirect${
+          valid.length !== 1 ? "s" : ""
+        }${skippedMessage}`
       );
     }
 
@@ -286,7 +290,11 @@ export const ImportRedirectsDialog = ({
         <DialogActions>
           {step === "input" && (
             <>
-              <Button onClick={handleParse} disabled={!textContent.trim()}>
+              <Button
+                color="primary"
+                onClick={handleParse}
+                disabled={!textContent.trim()}
+              >
                 Parse
               </Button>
               <DialogClose>
@@ -298,6 +306,7 @@ export const ImportRedirectsDialog = ({
           {step === "preview" && (
             <>
               <Button
+                color="primary"
                 onClick={handleImport}
                 disabled={parsedRedirects.length === 0}
               >
@@ -359,7 +368,9 @@ const InputStep = ({
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         css={{
-          border: `2px dashed ${isDragOver ? cssVar("--border-focus") : cssVar("--border-default")}`,
+          border: `2px dashed ${
+            isDragOver ? cssVar("--border-focus") : cssVar("--border-default")
+          }`,
           borderRadius: theme.borderRadius[6],
           padding: theme.spacing[9],
           textAlign: "center",
@@ -386,7 +397,7 @@ const InputStep = ({
             backgroundColor: cssVar("--border-default"),
           }}
         />
-        <Text color="subtle">OR</Text>
+        <Text color="subtle">or</Text>
         <Box
           css={{
             flex: 1,
@@ -582,7 +593,9 @@ const PreviewStep = ({
                 <Label htmlFor="import-mode-add">
                   Add to existing ({uniqueCount} new
                   {duplicateCount > 0
-                    ? `, ${duplicateCount} duplicate${duplicateCount !== 1 ? "s" : ""} skipped`
+                    ? `, ${duplicateCount} duplicate${
+                        duplicateCount !== 1 ? "s" : ""
+                      } skipped`
                     : ""}
                   )
                 </Label>

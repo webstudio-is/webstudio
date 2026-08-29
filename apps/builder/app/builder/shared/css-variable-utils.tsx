@@ -255,7 +255,7 @@ export const RenameCssVariableDialog = ({
           }
         }}
       >
-        <DialogTitle>Rename CSS Variable</DialogTitle>
+        <DialogTitle>Rename CSS variable</DialogTitle>
         <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
           <Flex direction="column" gap="1">
             <InputField

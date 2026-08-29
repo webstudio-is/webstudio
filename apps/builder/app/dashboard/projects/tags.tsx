@@ -32,7 +32,9 @@ import { EllipsesIcon, SpinnerIcon } from "@webstudio-is/icons";
 
 const tagColorPalette = Array.from({ length: 50 }, (_, index) => {
   const hueOffset = (index * 137.5) % 360;
-  return `oklch(from ${cssVar("--background-accent")} l c calc(h + ${hueOffset}))`;
+  return `oklch(from ${cssVar(
+    "--background-accent"
+  )} l c calc(h + ${hueOffset}))`;
 });
 
 type DeleteConfirmationDialogProps = {
@@ -259,7 +261,7 @@ const TagEdit = ({
         />
       </Grid>
       <DialogActions>
-        <Button type="submit">
+        <Button color="primary" type="submit">
           {isExisting ? "Update tag" : "Create tag"}
         </Button>
         <Button
@@ -318,6 +320,7 @@ export const TagsDialog = ({
             />
             <DialogActions>
               <Button
+                color="primary"
                 onClick={() => setEditingTag({ id: nanoid(5), label: "" })}
               >
                 Create tag
@@ -349,7 +352,6 @@ export const Tag = ({
   const color = tagColorPalette[index] ?? cssVar("--background-inverse");
   return (
     <Button
-      color="neutral"
       css={{
         "&:hover[data-state='auto'], &[data-state='pressed']": {
           backgroundColor: color,
@@ -376,3 +378,5 @@ export const Tag = ({
     />
   );
 };
+
+undefined;

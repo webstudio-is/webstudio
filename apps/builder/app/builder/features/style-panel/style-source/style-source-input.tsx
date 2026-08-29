@@ -253,7 +253,7 @@ const TextFieldBase: ForwardRefRenderFunction<
         onClick={onClick}
         inputRef={mergeRefs(internalInputRef, inputRef)}
         spellCheck={false}
-        aria-label="New Style Source Input"
+        aria-label="New style source input"
       />
       {value.map((item) => (
         <StyleSourceControlWithMenu

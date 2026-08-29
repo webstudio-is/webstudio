@@ -65,5 +65,17 @@ export const ToolbarDemo = () => (
         </ToolbarButton>
       </Toolbar>
     </StorySection>
+    <StorySection title="Open and selected states">
+      <Toolbar>
+        <ToolbarButton aria-expanded>
+          <PlayIcon size={22} />
+        </ToolbarButton>
+        <ToolbarToggleGroup type="single" value="selected">
+          <ToolbarToggleItem value="selected">
+            <PlayIcon size={22} />
+          </ToolbarToggleItem>
+        </ToolbarToggleGroup>
+      </Toolbar>
+    </StorySection>
   </>
 );

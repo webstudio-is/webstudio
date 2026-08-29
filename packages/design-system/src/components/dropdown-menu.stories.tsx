@@ -31,7 +31,7 @@ export const DropdownMenu = () => {
       <Flex gap="9" css={{ padding: 100 }}>
         <DropdownMenuComponent open>
           <DropdownMenuTrigger asChild>
-            <Button>Items</Button>
+            <Button color="primary">Items</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem>New file</DropdownMenuItem>
@@ -44,7 +44,7 @@ export const DropdownMenu = () => {
 
         <DropdownMenuComponent open>
           <DropdownMenuTrigger asChild>
-            <Button>Checkboxes</Button>
+            <Button color="primary">Checkboxes</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuCheckboxItem checked={bold} onCheckedChange={setBold}>
@@ -67,7 +67,7 @@ export const WithIcons = () => (
   <StorySection title="With icons">
     <DropdownMenuComponent defaultOpen>
       <DropdownMenuTrigger asChild>
-        <Button>With icons</Button>
+        <Button color="primary">With icons</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem icon={<CopyIcon />}>Copy</DropdownMenuItem>
@@ -85,7 +85,7 @@ export const WithRadioGroup = () => {
     <StorySection title="With radio group">
       <DropdownMenuComponent defaultOpen>
         <DropdownMenuTrigger asChild>
-          <Button>Radio group</Button>
+          <Button color="primary">Radio group</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuLabel>Choose one</DropdownMenuLabel>
@@ -110,7 +110,7 @@ export const WithSubMenu = () => (
   <StorySection title="With sub menu">
     <DropdownMenuComponent defaultOpen>
       <DropdownMenuTrigger asChild>
-        <Button>Sub menu</Button>
+        <Button color="primary">Sub menu</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem>Item one</DropdownMenuItem>

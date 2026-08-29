@@ -10,8 +10,7 @@ import {
   ToggleGroupButton,
   PanelBanner,
   panelBannerIconColor,
-  Link,
-  buttonStyle,
+  LinkButton,
 } from "@webstudio-is/design-system";
 import { RepeatGridIcon, ListViewIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -147,14 +146,12 @@ export const Projects = (props: ProjectsProps) => {
             </ToggleGroupButton>
           </ToggleGroup>
           <SortSelect value={sortState} onValueChange={handleSortChange} />
-          <Link
-            className={buttonStyle({ color: "neutral" })}
-            underline="none"
+          <LinkButton
             href="https://webstudio.is/marketplace/templates/"
             target="_blank"
           >
             Use template
-          </Link>
+          </LinkButton>
           {permissions.canCreateProject && (
             <CreateProject workspaceId={props.currentWorkspaceId} />
           )}
@@ -232,3 +229,5 @@ export const Projects = (props: ProjectsProps) => {
     </Main>
   );
 };
+
+undefined;

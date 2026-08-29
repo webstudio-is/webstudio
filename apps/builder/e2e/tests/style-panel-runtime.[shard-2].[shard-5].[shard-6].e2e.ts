@@ -321,7 +321,7 @@ test("Builder design token styles persist after create and reload", async () => 
     await selectCanvasTextInstance({ page, text });
     await page.getByRole("tab", { name: "Style" }).click();
 
-    const styleSourceInput = page.getByLabel("New Style Source Input");
+    const styleSourceInput = page.getByLabel("New style source input");
     await styleSourceInput.fill(tokenName);
     const createSave = waitForChangeToBeSaved({ page });
     await page.getByText(`Create ${tokenName}`, { exact: false }).click();

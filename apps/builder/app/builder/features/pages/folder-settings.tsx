@@ -193,6 +193,7 @@ export const NewFolderSettings = ({
             )}
             <TitleSuffixSpacer />
             <Button
+              color="primary"
               state={isSubmitting ? "pending" : "auto"}
               onClick={handleSubmit}
               tabIndex={2}

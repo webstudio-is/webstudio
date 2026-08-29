@@ -1858,6 +1858,9 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
     devDependencies:
+      '@babel/parser':
+        specifier: ^7.29.7
+        version: 7.29.7
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79

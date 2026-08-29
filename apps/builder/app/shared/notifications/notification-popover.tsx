@@ -76,7 +76,7 @@ const NotificationRow = ({
           {notification.description}
         </Text>
         <Flex gap="1" shrink={false}>
-          <Button color="neutral" onClick={onAccept} disabled={isLoading}>
+          <Button onClick={onAccept} disabled={isLoading}>
             Accept
           </Button>
           <Tooltip content="Decline">

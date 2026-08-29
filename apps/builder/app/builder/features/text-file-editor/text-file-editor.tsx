@@ -338,6 +338,7 @@ const MarkdownLinkPicker = ({
             />
             <Flex justify="end">
               <Button
+                color="primary"
                 type="button"
                 onClick={() => {
                   const href = getMarkdownHref(valueRef.current);

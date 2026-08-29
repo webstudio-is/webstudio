@@ -69,7 +69,7 @@ export const SelectAsset = ({
           />
         }
       >
-        <Button color="neutral" css={{ flex: 1 }} disabled={disabled}>
+        <Button css={{ flex: 1 }} disabled={disabled}>
           {triggerLabel ?? (asset ? formatAssetName(asset) : "Choose source")}
         </Button>
       </FloatingPanel>

@@ -47,7 +47,7 @@ const ObjectPosition = () => {
   return (
     <Flex justify="end">
       <FloatingPanel
-        title="Object Position"
+        title="Object position"
         placement="bottom-within"
         content={
           <Flex css={{ padding: theme.panel.padding }}>
@@ -103,7 +103,7 @@ export const Section = () => {
         <SizeProperty property="max-width" />
         <SizeProperty property="max-height" />
         <PropertyLabel
-          label="Aspect Ratio"
+          label="Aspect ratio"
           description={propertyDescriptions.aspectRatio}
           properties={["aspect-ratio"]}
         />
@@ -143,13 +143,13 @@ export const Section = () => {
           ]}
         />
         <PropertyLabel
-          label="Object Fit"
+          label="Object fit"
           description={propertyDescriptions.objectFit}
           properties={["object-fit"]}
         />
         <SelectControl property="object-fit" />
         <PropertyLabel
-          label="Object Position"
+          label="Object position"
           description={propertyDescriptions.objectPosition}
           properties={["object-position"]}
         />

@@ -1,9 +1,12 @@
 import { describe, expect, test, vi } from "vitest";
 import {
   applyColorScheme,
-  colorSchemeBootstrapScript,
+  colorSchemeCookieName,
+  createColorSchemeBootstrapScript,
   clientSettingsStorageKey,
   initializeStoredColorScheme,
+  parseColorSchemeCookie,
+  serializeColorSchemeCookie,
 } from "./color-scheme";
 
 describe("applyColorScheme", () => {
@@ -27,6 +30,23 @@ describe("applyColorScheme", () => {
 });
 
 describe("initializeStoredColorScheme", () => {
+  test("prefers the shared cookie over origin-local settings", () => {
+    const root = document.createElement("html");
+    const storage = {
+      getItem: vi.fn(() => JSON.stringify({ colorScheme: "light" })),
+    };
+
+    initializeStoredColorScheme({
+      root,
+      storage,
+      storageKey: clientSettingsStorageKey,
+      storedPreference: "dark",
+      prefersDark: false,
+    });
+
+    expect(root.dataset.colorScheme).toBe("dark");
+  });
+
   test("applies the stored preference before the application renders", () => {
     const root = document.createElement("html");
     const storage = {
@@ -91,10 +111,10 @@ describe("initializeStoredColorScheme", () => {
     expect(root.dataset.colorScheme).toBe("dark");
   });
 
-  test("the document bootstrap applies the scheme synchronously", () => {
+  test("the document bootstrap applies the shared scheme synchronously", () => {
     localStorage.setItem(
       clientSettingsStorageKey,
-      JSON.stringify({ colorScheme: "system" })
+      JSON.stringify({ colorScheme: "light" })
     );
     const originalMatchMedia = window.matchMedia;
     const mediaQueryList = {
@@ -109,12 +129,35 @@ describe("initializeStoredColorScheme", () => {
     } satisfies MediaQueryList;
     window.matchMedia = vi.fn(() => mediaQueryList);
 
-    Function(colorSchemeBootstrapScript)();
+    Function(createColorSchemeBootstrapScript("dark"))();
 
     expect(document.documentElement.dataset.colorScheme).toBe("dark");
 
     window.matchMedia = originalMatchMedia;
     localStorage.clear();
     delete document.documentElement.dataset.colorScheme;
+  });
+});
+
+describe("shared color scheme cookie", () => {
+  test("round-trips a preference across subdomains", () => {
+    const serialized = serializeColorSchemeCookie({
+      preference: "dark",
+      domain: "apps.webstudio.is",
+      secure: true,
+    });
+
+    expect(serialized).toContain(`${colorSchemeCookieName}=dark`);
+    expect(serialized).toContain("Domain=apps.webstudio.is");
+    expect(serialized).toContain("Path=/");
+    expect(serialized).toContain("Secure");
+    expect(parseColorSchemeCookie(serialized)).toBe("dark");
+  });
+
+  test("ignores missing and invalid preferences", () => {
+    expect(parseColorSchemeCookie(undefined)).toBeUndefined();
+    expect(
+      parseColorSchemeCookie(`${colorSchemeCookieName}=sepia`)
+    ).toBeUndefined();
   });
 });

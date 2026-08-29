@@ -2,10 +2,9 @@ import {
   AccessibleIcon,
   css,
   Grid,
-  Link,
+  LinkButton,
   Text,
   theme,
-  buttonStyle,
 } from "@webstudio-is/design-system";
 import { WebstudioIcon } from "@webstudio-is/icons";
 import { brandColors } from "~/shared/brand-colors";
@@ -90,9 +89,9 @@ export const ErrorMessage = ({
             </Text>
           )}
         </Grid>
-        <Link href="/" className={buttonStyle()} underline="none">
-          Go Home
-        </Link>
+        <LinkButton color="primary" href="/">
+          Go home
+        </LinkButton>
       </Grid>
     </Grid>
   );

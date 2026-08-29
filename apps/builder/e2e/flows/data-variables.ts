@@ -14,7 +14,7 @@ const closeVariablePanelAndWaitForSave = async ({ page }: { page: Page }) => {
   await page.getByRole("button", { name: "Close" }).last().click();
   await save;
   await page
-    .getByText("New Variable", { exact: true })
+    .getByText("New variable", { exact: true })
     .waitFor({ state: "hidden" });
   await waitForSyncStatus({ page, status: "idle" });
 };
@@ -22,7 +22,7 @@ const closeVariablePanelAndWaitForSave = async ({ page }: { page: Page }) => {
 const openNewVariablePanel = async ({ page }: { page: Page }) => {
   await page.getByRole("tab", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Add data variable" }).click();
-  await page.getByText("New Variable", { exact: true }).waitFor();
+  await page.getByText("New variable", { exact: true }).waitFor();
 };
 
 const selectVariableType = async ({

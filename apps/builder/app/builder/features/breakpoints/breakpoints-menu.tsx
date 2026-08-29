@@ -51,7 +51,7 @@ export const BreakpointsMenu = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent sideOffset={4} css={{ width: theme.spacing[30] }}>
         {grouped.widthBased.map((breakpoint) => {
-          let description = "All Sizes";
+          let description = "All sizes";
           if (breakpoint.minWidth !== undefined) {
             description = `≥ ${breakpoint.minWidth} PX`;
           } else if (breakpoint.maxWidth !== undefined) {
@@ -109,7 +109,6 @@ export const BreakpointsMenu = ({
           css={{ padding: theme.panel.padding }}
         >
           <Button
-            color="neutral"
             onClick={() => {
               onEditClick();
             }}
@@ -122,3 +121,5 @@ export const BreakpointsMenu = ({
     </DropdownMenu>
   );
 };
+
+undefined;

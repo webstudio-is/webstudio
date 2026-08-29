@@ -8,6 +8,8 @@ import {
   Tooltip,
   Link,
   Box,
+  cssVar,
+  declareCssVar,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -26,6 +28,9 @@ import { formatDate } from "./utils";
 import { brandColors } from "~/shared/brand-colors";
 
 const infoIconStyle = css({ flexShrink: 0, opacity: 0.8 });
+const prefetchImageBackground = declareCssVar(
+  "--project-card-prefetch-image-background"
+);
 
 const PublishedLink = ({
   domain,
@@ -119,14 +124,14 @@ export const ProjectCard = ({
         css={{
           background: thumbnailSurface,
           [`&:hover`]: {
-            "--ws-project-card-prefetch-image-background": `url(${linkPath}cgi/empty.gif)`,
+            [prefetchImageBackground]: `url(${linkPath}cgi/empty.gif)`,
           },
         }}
       >
         {/* This div with backgorundImage on card hover is used to prefetch DNS of the project domain on hover. */}
         <Box
           css={{
-            backgroundImage: `var(--ws-project-card-prefetch-image-background, none)`,
+            backgroundImage: cssVar(prefetchImageBackground, "none"),
             visibility: "hidden",
             position: "absolute",
             width: 1,

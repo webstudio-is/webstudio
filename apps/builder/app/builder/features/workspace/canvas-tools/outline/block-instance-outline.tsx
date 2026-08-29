@@ -225,7 +225,7 @@ export const TemplatesMenu = ({
         ) : (
           <div className={menuItemCss({ hint: true })}>
             <Grid css={{ width: theme.spacing[25] }}>
-              <Text>No Results</Text>
+              <Text>No results</Text>
             </Grid>
           </div>
         )}

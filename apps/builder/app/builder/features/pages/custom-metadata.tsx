@@ -183,7 +183,6 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
 
         <Button
           type="button"
-          color="neutral"
           css={{
             justifySelf: "center",
           }}
@@ -203,3 +202,5 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
     </Grid>
   );
 };
+
+undefined;

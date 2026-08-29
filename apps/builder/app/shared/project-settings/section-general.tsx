@@ -125,7 +125,7 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
         </Flex>
         <InputField
           id={siteNameId}
-          placeholder="Current Site Name"
+          placeholder="Current site name"
           autoFocus={true}
           value={meta.siteName ?? ""}
           onChange={(event) => {
@@ -188,7 +188,9 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
               Upload a square image to display in browser tabs.
             </Text>
             <ImageControl onAssetIdChange={handleSave("faviconAssetId")}>
-              <Button css={{ justifySelf: "start" }}>Upload</Button>
+              <Button color="primary" css={{ justifySelf: "start" }}>
+                Upload
+              </Button>
             </ImageControl>
           </Grid>
         </Grid>

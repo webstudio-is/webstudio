@@ -4,8 +4,7 @@ import {
   Tooltip,
   Text,
   theme,
-  Link,
-  buttonStyle,
+  LinkButton,
   Checkbox,
 } from "@webstudio-is/design-system";
 
@@ -66,14 +65,13 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
             <br />
             Upgrade to Pro account to publish to each domain individually.
             <br /> <br />
-            <Link
-              className={buttonStyle({ color: "primary" })}
-              underline="none"
+            <LinkButton
+              color="primary"
               href="https://webstudio.is/pricing"
               target="_blank"
             >
               Upgrade
-            </Link>
+            </LinkButton>
           </>
         </Flex>
       </Text>

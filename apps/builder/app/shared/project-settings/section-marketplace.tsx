@@ -236,7 +236,9 @@ export const SectionMarketplace = () => {
                 with a 1.91:1 aspect ratio.
               </Text>
               <ImageControl onAssetIdChange={handleSave("thumbnailAssetId")}>
-                <Button css={{ justifySelf: "start" }}>Upload</Button>
+                <Button color="primary" css={{ justifySelf: "start" }}>
+                  Upload
+                </Button>
               </ImageControl>
             </Grid>
           </Grid>

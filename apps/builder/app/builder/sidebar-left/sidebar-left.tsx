@@ -1,5 +1,11 @@
 import { useRef, useState, type ReactNode } from "react";
-import { cssVar, Kbd, rawTheme, Text } from "@webstudio-is/design-system";
+import {
+  cssVar,
+  declareCssVar,
+  Kbd,
+  rawTheme,
+  Text,
+} from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import {
   $dragAndDropState,
@@ -48,6 +54,7 @@ import { MarketplacePanel } from "~/builder/features/marketplace";
 import type { SidebarPanelName } from "./types";
 
 const none = { Panel: () => null };
+const sidebarLeftPanelWidth = declareCssVar("--sidebar-left-panel-width");
 
 const HelpTabTrigger = () => {
   const [helpIsOpen, setHelpIsOpen] = useState(false);
@@ -302,8 +309,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         }}
         resizable
         css={{
-          "--sidebar-left-panel-width": `${getSidebarPanelWidth(activePanel)}`,
-          width: "var(--sidebar-left-panel-width)",
+          [sidebarLeftPanelWidth]: `${getSidebarPanelWidth(activePanel)}`,
+          width: cssVar(sidebarLeftPanelWidth),
           minWidth: theme.sizes.sidebarWidth,
           maxWidth: theme.spacing[35],
           // We need the node to be rendered but hidden

@@ -776,7 +776,6 @@ const VariablePreview = ({
         >
           <Button
             type="button"
-            color="neutral"
             disabled={hasPendingResources}
             onClick={onLoadData}
           >
@@ -1040,7 +1039,7 @@ const VariablePopoverContent = ({
           </DialogTitleActions>
         }
       >
-        {variable ? "Edit Variable" : "New Variable"}
+        {variable ? "Edit variable" : "New variable"}
       </DialogTitle>
     </>
   );
@@ -1116,3 +1115,5 @@ export const VariablePopoverTrigger = ({
 };
 
 VariablePopoverTrigger.displayName = "VariablePopoverTrigger";
+
+undefined;

@@ -15,9 +15,11 @@ import { Flex } from "./flex";
 import { Tooltip } from "./tooltip";
 import { Button } from "./button";
 import { CopyIcon, LargeXIcon } from "@webstudio-is/icons";
-import { cssVar } from "../css-var";
+import { cssVar, declareCssVar } from "../css-var";
 
 const ANIMATION_SLIDE_LENGTH = 30;
+const toastSwipeEndX = declareCssVar("--radix-toast-swipe-end-x");
+const toastSwipeMoveX = declareCssVar("--radix-toast-swipe-move-x");
 
 const hide = keyframes({
   "0%": { opacity: 1 },
@@ -30,7 +32,7 @@ const slideIn = keyframes({
 });
 
 const swipeOut = keyframes({
-  from: { transform: "translateX(var(--radix-toast-swipe-end-x))" },
+  from: { transform: `translateX(${cssVar(toastSwipeEndX)})` },
   to: { transform: `translateX(calc(100% + ${ANIMATION_SLIDE_LENGTH}px))` },
 });
 
@@ -60,7 +62,7 @@ const AnimatedToast = styled(ToastPrimitive.Root, {
       animation: `${hide} 105ms ease-in`,
     },
     '&[data-swipe="move"]': {
-      transform: "translateX(var(--radix-toast-swipe-move-x))",
+      transform: `translateX(${cssVar(toastSwipeMoveX)})`,
     },
     '&[data-swipe="cancel"]': {
       transform: "translateX(0)",
@@ -72,43 +74,34 @@ const AnimatedToast = styled(ToastPrimitive.Root, {
   },
 });
 
-const borderAccentBackgroundColor = "--toast-border-accent-background-color";
-const backgroundColor = "--toast-background-color";
-const borderColor = "--toast-border-color";
-const iconColor = "--toast-icon-color";
-
-const ToastVariants = styled("div", {
-  [borderAccentBackgroundColor]: cssVar("--foreground-primary"),
-  [backgroundColor]: cssVar("--background-secondary"),
-  [borderColor]: cssVar("--border-default"),
-  [iconColor]: cssVar("--foreground-primary"),
-
-  variants: {
-    variant: {
-      neutral: {},
-      warning: {
-        [backgroundColor]: cssVar("--background-warning-subtle"),
-        [borderAccentBackgroundColor]: cssVar("--border-warning"),
-        [borderColor]: cssVar("--border-warning"),
-        [iconColor]: cssVar("--foreground-warning"),
-      },
-      error: {
-        [backgroundColor]: cssVar("--background-negative-subtle"),
-        [borderAccentBackgroundColor]: cssVar("--background-negative"),
-        [borderColor]: cssVar("--background-negative"),
-        [iconColor]: cssVar("--foreground-negative"),
-      },
-      success: {
-        [backgroundColor]: cssVar("--background-positive-subtle"),
-        [borderAccentBackgroundColor]: cssVar("--background-positive"),
-        [borderColor]: cssVar("--background-positive"),
-        [iconColor]: cssVar("--foreground-positive"),
-      },
-    },
+const toastColors = {
+  neutral: {
+    accent: cssVar("--foreground-primary"),
+    background: cssVar("--background-secondary"),
+    border: cssVar("--border-default"),
+    icon: cssVar("--foreground-primary"),
   },
-});
+  warning: {
+    accent: cssVar("--border-warning"),
+    background: cssVar("--background-warning-subtle"),
+    border: cssVar("--border-warning"),
+    icon: cssVar("--foreground-warning"),
+  },
+  error: {
+    accent: cssVar("--background-negative"),
+    background: cssVar("--background-negative-subtle"),
+    border: cssVar("--background-negative"),
+    icon: cssVar("--foreground-negative"),
+  },
+  success: {
+    accent: cssVar("--background-positive"),
+    background: cssVar("--background-positive-subtle"),
+    border: cssVar("--background-positive"),
+    icon: cssVar("--foreground-positive"),
+  },
+} as const;
 
-type ToastVariant = React.ComponentProps<typeof ToastVariants>["variant"];
+type ToastVariant = keyof typeof toastColors;
 
 const InternalToast = ({
   children,
@@ -121,8 +114,10 @@ const InternalToast = ({
   icon?: React.ReactNode;
   sideButtons: React.ReactNode;
 }) => {
+  const colors = toastColors[variant ?? "neutral"];
+
   return (
-    <ToastVariants variant={variant}>
+    <div>
       <Grid
         css={{
           display: "grid",
@@ -132,7 +127,7 @@ const InternalToast = ({
       >
         <Box
           css={{
-            backgroundColor: `var(${borderAccentBackgroundColor})`,
+            backgroundColor: colors.accent,
             borderTopLeftRadius: theme.borderRadius[5],
             borderBottomLeftRadius: theme.borderRadius[5],
           }}
@@ -141,18 +136,18 @@ const InternalToast = ({
           gap={"3"}
           align={"center"}
           css={{
-            backgroundColor: `var(${backgroundColor})`,
+            backgroundColor: colors.background,
             padding: theme.panel.padding,
             gridTemplateColumns: icon ? "auto 1fr auto" : "1fr auto",
             borderBottomRightRadius: theme.borderRadius[5],
             borderTopRightRadius: theme.borderRadius[5],
-            border: `1px solid var(${borderColor})`,
+            border: `1px solid ${colors.border}`,
             borderLeft: "none",
           }}
         >
           <Box
             css={{
-              color: `var(${iconColor})`,
+              color: colors.icon,
               display: icon ? "contents" : "none",
             }}
           >
@@ -181,7 +176,7 @@ const InternalToast = ({
           {sideButtons}
         </Grid>
       </Grid>
-    </ToastVariants>
+    </div>
   );
 };
 

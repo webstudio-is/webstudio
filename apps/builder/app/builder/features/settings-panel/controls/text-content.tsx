@@ -174,7 +174,7 @@ export const TextContent = ({
       <BindableExpressionControl
         {...binding}
         value={localValue.value}
-        validate={(value) => validatePrimitiveValue(value, "Text Content")}
+        validate={(value) => validatePrimitiveValue(value, "Text content")}
         onChangeValue={(value) => updateChild("text", value)}
         onChangeExpression={(value) =>
           updateChild("expression", value, binding.getExpressionMode(value))

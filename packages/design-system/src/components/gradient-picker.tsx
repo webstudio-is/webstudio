@@ -25,7 +25,9 @@ import { styled, theme } from "../stitches.config";
 import { Flex } from "./flex";
 import { Box } from "./box";
 import { ColorPicker } from "./color-picker";
-import { cssVar } from "../css-var";
+import { cssVar, declareCssVar } from "../css-var";
+
+const thumbBorderColor = declareCssVar("--thumb-border-color");
 
 const transparencyChecker = `oklch(from ${cssVar(
   "--foreground-primary"
@@ -1057,14 +1059,14 @@ const SliderTrack = styled("div", {
 });
 
 const SliderThumb = styled(Box, {
-  "--thumb-border-color": cssVar("--border-default"),
+  [thumbBorderColor]: cssVar("--border-default"),
   position: "absolute",
   display: "grid",
   placeItems: "center",
   bottom: `calc(100% + ${theme.spacing[6]})`,
   transform: "translateX(-50%)",
   borderRadius: theme.borderRadius[2],
-  boxShadow: `0 0 0 1px var(--thumb-border-color)`,
+  boxShadow: `0 0 0 1px ${cssVar(thumbBorderColor)}`,
   outline: "none",
   zIndex: 1,
   cursor: "grab",
@@ -1072,7 +1074,7 @@ const SliderThumb = styled(Box, {
     cursor: "grabbing",
   },
   "&:focus-visible, &[aria-selected=true]": {
-    "--thumb-border-color": cssVar("--border-focus"),
+    [thumbBorderColor]: cssVar("--border-focus"),
     boxShadow: `0 0 0 1px ${cssVar("--border-focus")}`,
   },
 });
@@ -1085,7 +1087,7 @@ const SliderThumbPointer = styled("div", {
   bottom: 0,
   background: cssVar("--background-primary"),
   zIndex: -1,
-  border: `1px solid var(--thumb-border-color)`,
+  border: `1px solid ${cssVar(thumbBorderColor)}`,
   borderTopColor: "transparent",
   borderLeftColor: "transparent",
   borderRadius: theme.borderRadius[1],

@@ -34,21 +34,20 @@ import { useDebounceEffect } from "../utilities";
 import { Flex } from "./flex";
 import { InputField } from "./input-field";
 import { SmallIconButton } from "./small-icon-button";
-import { cssVar } from "../css-var";
-import { selectionBackground } from "../color-utils";
+import { cssVar, declareCssVar } from "../css-var";
+import { selectionBackground } from "./selection-color";
 
 const panelWidth = "500px";
 const itemHeight = "32px";
-const inputBorderBottomSize = "--command-input-border-bottom-width";
-const weakForeground = `color-mix(in oklab, ${cssVar(
-  "--foreground-secondary"
-)} 22%, ${cssVar("--background-primary")})`;
+const inputBorderBottomSize = declareCssVar(
+  "--command-input-border-bottom-width"
+);
 
 const StyledCommand = styled(CommandPrimitive, {
   boxSizing: "border-box",
   width: panelWidth,
   boxShadow: theme.shadows.menuDropShadow,
-  backgroundColor: cssVar("--background-secondary"),
+  backgroundColor: cssVar("--background-primary"),
   border: `1px solid ${cssVar("--border-default")}`,
   borderRadius: theme.borderRadius[7],
   // clip selected item background
@@ -167,7 +166,7 @@ export const CommandDialog = ({
 };
 
 const CommandInputContainer = styled("div", {
-  borderBottom: `var(${inputBorderBottomSize}) solid ${cssVar(
+  borderBottom: `${cssVar(inputBorderBottomSize)} solid ${cssVar(
     "--border-default"
   )}`,
 });
@@ -487,9 +486,9 @@ export const CommandItem = ({
 
 export const CommandGroupHeading = styled("div", {
   ...textVariants.labels,
-  color: weakForeground,
+  color: cssVar("--foreground-secondary"),
   display: "flex",
-  backgroundColor: cssVar("--background-secondary"),
+  backgroundColor: cssVar("--background-primary"),
   gap: theme.spacing[5],
   alignItems: "center",
   paddingInline: theme.spacing[5],
@@ -498,7 +497,7 @@ export const CommandGroupHeading = styled("div", {
 
 export const CommandGroupFooter = styled("div", {
   ...textVariants.labels,
-  color: weakForeground,
+  color: cssVar("--foreground-secondary"),
   display: "flex",
   gap: theme.spacing[5],
   alignItems: "center",

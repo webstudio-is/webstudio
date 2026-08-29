@@ -512,11 +512,7 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
           </Flex>
           <Separator />
           <Flex css={{ padding: theme.panel.padding }}>
-            <Button
-              color="neutral"
-              css={{ width: "100%" }}
-              onClick={handleFillGrid}
-            >
+            <Button css={{ width: "100%" }} onClick={handleFillGrid}>
               Fill grid
             </Button>
           </Flex>
@@ -562,3 +558,5 @@ export const __testing__ = {
   gridPresets,
   computeFillGridItemsCount,
 };
+
+undefined;

@@ -1,5 +1,6 @@
 import type { CssVariableName } from "./__generated__/css-variable-names";
 import type { ColorMode } from "./color-source-utils";
+import { cssVar } from "../css-var";
 
 export type ColorContrastResult = {
   foreground: CssVariableName;
@@ -63,7 +64,7 @@ const createColorReader = () => {
   }
 
   const read = (name: CssVariableName) => {
-    sample.style.color = `var(${name})`;
+    sample.style.color = cssVar(name);
     context.clearRect(0, 0, 1, 1);
     context.fillStyle = getComputedStyle(sample).color;
     context.fillRect(0, 0, 1, 1);

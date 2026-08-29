@@ -50,7 +50,7 @@ const validateTemplateValues = (
 
 const templateFieldDefaultValues: PageSettingsValues = {
   ...pageSettingsDefaultValues,
-  name: "Untitled Template",
+  name: "Untitled template",
   path: "",
   excludePageFromSearch: "false",
 };
@@ -148,6 +148,7 @@ const NewTemplateSettingsView = ({
         <DialogTitleActions>
           <TitleSuffixSpacer />
           <Button
+            color="primary"
             state={isSubmitting ? "pending" : "auto"}
             onClick={onSubmit}
             tabIndex={2}
@@ -443,7 +444,7 @@ export const CreatePageFromTemplateSettings = ({
       suffix={
         <DialogTitleActions>
           <TitleSuffixSpacer />
-          <Button onClick={handleSubmit} tabIndex={2}>
+          <Button color="primary" onClick={handleSubmit} tabIndex={2}>
             Create page
           </Button>
           <DialogClose />

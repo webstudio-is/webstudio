@@ -309,6 +309,7 @@ export const TransferProjectDialog = ({
         <DialogTitle>Transfer project</DialogTitle>
         <DialogActions>
           <Button
+            color="primary"
             disabled={canSubmit === false}
             state={isSubmitting ? "pending" : undefined}
             onClick={handleSubmit}

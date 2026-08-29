@@ -140,6 +140,21 @@ cssVar("--foreground-primary");
 cssVar("--foreground-primary", "currentColor");
 ```
 
+Component-owned and third-party variables stay with their component instead of
+entering the color manifest. Declare each name once in its owning source file:
+
+```ts
+declareCssVar("--panel-banner-icon-color");
+
+cssVar("--panel-banner-icon-color");
+cssVar("--panel-banner-icon-color", "currentColor");
+```
+
+The generator collects `declareCssVar()` calls into the global name type. It
+rejects duplicate declarations and conflicts with every variable in
+`colors.css`. An unregistered string is rejected by `cssVar()` without requiring
+component variable constants to be exported or imported.
+
 ## Validation and type generation
 
 Type generation parses CSS structurally and rejects:
@@ -151,6 +166,7 @@ Type generation parses CSS structurally and rejects:
 - Standalone semantic color literals.
 - Circular color references.
 - Semantic names outside the Craft grammar.
+- Duplicate component variable declarations or conflicts with color variables.
 
 TypeScript rejects unknown public variable names passed to `cssVar()`.
 
@@ -162,13 +178,13 @@ protect the dark neutral hierarchy, stable chromatic fills, light on-color
 content, and light interaction overlays.
 
 The generator emits `ThemeVariableName` for public theme inputs and
-`CssVariableName` for public semantic colors in
+`CssVariableName` for semantic colors and declared component variables in
 `__generated__/css-variable-names.d.ts`. It does not generate JavaScript or
 duplicate color values. CSS is imported directly and performs all runtime
 derivation and scheme switching.
 
-Run `pnpm generate:color-types` after changing public theme or semantic
-variables. The package `typecheck` verifies that generated declarations are
+Run `pnpm generate:color-types` after changing a color or `declareCssVar()`
+declaration. The package `typecheck` verifies that generated declarations are
 current, and the normal workspace CI runs that command. Run `pnpm test` to
 verify structural contracts and browser-computed contrast.
 

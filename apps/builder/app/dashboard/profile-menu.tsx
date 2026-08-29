@@ -39,7 +39,7 @@ const ProfileButton = forwardRef<
     <Flex gap="2" align="center">
       <Button
         color="ghost"
-        aria-label="Profile Menu"
+        aria-label="Profile menu"
         {...rest}
         ref={forwardedRef}
         prefix={
@@ -77,7 +77,7 @@ export const ProfileMenu = ({ user }: { user: User }) => {
           hasPurchases={purchases.length > 0}
         />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" width="regular">
+      <DropdownMenuContent align="start" sideOffset={4} width="regular">
         <DropdownMenuLabel>
           {user.username ?? defaultUserName}
           <Text>{user.email}</Text>
@@ -101,7 +101,7 @@ export const ProfileMenu = ({ user }: { user: User }) => {
               {purchase.planName}
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuLabel key={index}>
+            <DropdownMenuLabel key={index} css={{ fontWeight: "normal" }}>
               {purchase.planName}
             </DropdownMenuLabel>
           )
@@ -121,7 +121,7 @@ export const ProfileMenu = ({ user }: { user: User }) => {
         <ColorSchemeMenu />
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
-          Sign Out
+          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

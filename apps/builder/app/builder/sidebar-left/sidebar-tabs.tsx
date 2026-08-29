@@ -5,9 +5,9 @@ import {
   TabsList,
   TabsTrigger,
   Tooltip,
+  chromeControlStyle,
   css,
   cssVar,
-  focusRingStyle,
   styled,
   theme,
   useResize,
@@ -30,9 +30,8 @@ export const SidebarTabs = styled(Tabs, {
   flexGrow: 1,
 });
 
-const triggerFocusRing = focusRingStyle();
-
 const buttonStyle = css({
+  ...chromeControlStyle,
   position: "relative",
   boxSizing: "border-box",
   flexShrink: 0,
@@ -43,23 +42,7 @@ const buttonStyle = css({
   outline: "none",
   alignItems: "center",
   justifyContent: "center",
-  color: cssVar("--foreground-primary"),
-  backgroundColor: cssVar("--background-primary"),
   border: "none",
-  "&:disabled": {
-    opacity: 0.4,
-    cursor: "not-allowed",
-  },
-  "&:focus-visible": triggerFocusRing,
-  "@hover": {
-    "&:hover": {
-      backgroundColor: cssVar("--overlay-interaction-hover"),
-    },
-  },
-
-  '&[data-state="active"]': {
-    backgroundColor: cssVar("--overlay-interaction-hover"),
-  },
 });
 
 export const SidebarButton = forwardRef<

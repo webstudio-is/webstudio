@@ -191,7 +191,6 @@ export const BreakpointsSelector = () => {
               disableHoverableContent
             >
               <ToolbarToggleItem
-                variant="subtle"
                 ref={(node) => {
                   if (node) {
                     refs.current.set(breakpoint.id, node);
@@ -202,7 +201,7 @@ export const BreakpointsSelector = () => {
                 value={breakpoint.id}
               >
                 {breakpoint.minWidth ?? breakpoint.maxWidth ?? (
-                  <AsteriskIcon size={22} />
+                  <AsteriskIcon size={19} />
                 )}
               </ToolbarToggleItem>
             </Tooltip>

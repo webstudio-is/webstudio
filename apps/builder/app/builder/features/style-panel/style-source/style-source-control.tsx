@@ -3,6 +3,7 @@ import {
   styled,
   Box,
   cssVar,
+  declareCssVar,
   theme,
   Flex,
   Tooltip,
@@ -13,10 +14,15 @@ import { type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
 import { styleSourceColors } from "./color-recipes";
 
-const menuTriggerVisibilityVar = "--ws-style-source-menu-trigger-visibility";
-const menuTriggerVisibilityOverrideVar =
-  "--ws-style-source-menu-trigger-visibility-override";
-const menuTriggerGradientVar = "--ws-style-source-menu-trigger-gradient";
+const menuTriggerVisibilityVar = declareCssVar(
+  "--style-source-menu-trigger-visibility"
+);
+const menuTriggerVisibilityOverrideVar = declareCssVar(
+  "--style-source-menu-trigger-visibility-override"
+);
+const menuTriggerGradientVar = declareCssVar(
+  "--style-source-menu-trigger-gradient"
+);
 
 export const menuCssVars = ({
   show,

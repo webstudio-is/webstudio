@@ -46,6 +46,7 @@ import {
   validateRedirectSource,
   validateRedirectTarget,
 } from "@webstudio-is/project-build/runtime";
+import { ProjectSettingsDataRow } from "./data-row";
 
 const statusCodeOptions = ["301", "302"] as const;
 
@@ -348,6 +349,7 @@ export const SectionRedirects = () => {
           </InputErrorsTooltip>
 
           <Button
+            color="primary"
             disabled={isValidRedirects === false || fromPath === toPath}
             onClick={handleAddRedirect}
             css={{ flexShrink: 0 }}
@@ -373,27 +375,11 @@ export const SectionRedirects = () => {
                 {filteredRedirects.map((redirect) => {
                   return (
                     <ListItem asChild key={redirect.old}>
-                      <Grid
+                      <ProjectSettingsDataRow
                         align="center"
                         gap="2"
                         css={{
-                          p: theme.spacing[3],
-                          overflow: "hidden",
                           gridTemplateColumns: `1fr auto auto 1fr`,
-                          position: "relative",
-                          "& > button": {
-                            opacity: 0,
-                            position: "absolute",
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                            height: "auto",
-                            borderRadius: 0,
-                            background: cssVar("--background-primary"),
-                          },
-                          "&:hover > button, &:focus-within > button": {
-                            opacity: 1,
-                          },
                         }}
                       >
                         <Tooltip content={redirect.old}>
@@ -438,7 +424,7 @@ export const SectionRedirects = () => {
                           aria-label={`Delete redirect from ${redirect.old}`}
                           onClick={() => handleDeleteRedirect(redirect)}
                         />
-                      </Grid>
+                      </ProjectSettingsDataRow>
                     </ListItem>
                   );
                 })}

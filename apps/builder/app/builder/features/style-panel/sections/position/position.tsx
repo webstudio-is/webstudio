@@ -50,7 +50,7 @@ export const Section = () => {
           {showZindexControl && showInsetControl === false && (
             <>
               <PropertyLabel
-                label="Z Index"
+                label="Z index"
                 description={propertyDescriptions.zIndex}
                 properties={["z-index"]}
               />
@@ -63,7 +63,7 @@ export const Section = () => {
             <InsetControl />
             <Grid gap={1}>
               <PropertyLabel
-                label="Z Index"
+                label="Z index"
                 description={propertyDescriptions.zIndex}
                 properties={["z-index"]}
               />

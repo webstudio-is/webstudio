@@ -1,7 +1,9 @@
 import { forwardRef, type ComponentProps, type Ref } from "react";
 import { styled, theme, css, type CSS } from "../stitches.config";
 import { Root, Viewport, Scrollbar, Thumb } from "@radix-ui/react-scroll-area";
-import { cssVar } from "../css-var";
+import { cssVar, declareCssVar } from "../css-var";
+
+const scrollAreaThumbHeight = declareCssVar("--radix-scroll-area-thumb-height");
 
 const scrollbarColor = `oklch(from ${cssVar(
   "--foreground-secondary"
@@ -35,7 +37,7 @@ const ScrollAreaScrollbar = styled(Scrollbar, {
   '&[data-orientation="horizontal"]': {
     flexDirection: "column",
     height: theme.spacing[6],
-    "--radix-scroll-area-thumb-height": theme.spacing[4],
+    [scrollAreaThumbHeight]: theme.spacing[4],
   },
 
   variants: {

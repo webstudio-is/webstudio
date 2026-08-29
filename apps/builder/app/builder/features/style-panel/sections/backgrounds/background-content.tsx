@@ -273,7 +273,7 @@ const BackgroundRepeat = ({
               setActiveTooltip(isOpen ? item.value : undefined)
             }
             isSelected={false}
-            label="Background Repeat"
+            label="Background repeat"
             code={`background-repeat: ${item.value};`}
             description={item.description}
             properties={["background-repeat"]}

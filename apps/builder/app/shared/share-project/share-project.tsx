@@ -33,6 +33,7 @@ import {
   Grid,
   PanelBanner,
   cssVar,
+  declareCssVar,
 } from "@webstudio-is/design-system";
 import {
   CopyIcon,
@@ -323,7 +324,7 @@ const Menu = ({
         <Button
           prefix={<EllipsesIcon />}
           color="ghost"
-          aria-label="Menu Button for options"
+          aria-label="Options menu"
         ></Button>
       </PopoverTrigger>
       <PopoverContent
@@ -350,7 +351,7 @@ const Menu = ({
                 setIsOpen(false);
               }
             }}
-            placeholder="Share Project"
+            placeholder="Share project"
             name="Name"
             autoFocus
           />
@@ -569,6 +570,10 @@ type ShareProjectProps = {
   isFreePlan: boolean;
 };
 
+const collapsibleContentHeight = declareCssVar(
+  "--radix-collapsible-content-height"
+);
+
 const animateCollapsibleHeight = keyframes({
   "0%": {
     height: 0,
@@ -576,7 +581,7 @@ const animateCollapsibleHeight = keyframes({
     opacity: 0,
   },
   "100%": {
-    height: "var(--radix-collapsible-content-height)",
+    height: cssVar(collapsibleContentHeight),
     overflow: "hidden",
     opacity: 1,
   },
@@ -616,7 +621,6 @@ export const ShareProject = ({
   const create = (
     <Box className={itemStyle({ css: { py: theme.spacing["7"] } })}>
       <Button
-        color="neutral"
         state={isPending ? "pending" : undefined}
         prefix={
           isPending ? <Flex css={{ width: theme.spacing[7] }} /> : <PlusIcon />
@@ -655,3 +659,5 @@ export const ShareProject = ({
     </Flex>
   );
 };
+
+undefined;
