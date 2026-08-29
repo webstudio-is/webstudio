@@ -8,10 +8,6 @@ import { textVariants } from "./text";
 import { styled, theme } from "../stitches.config";
 import { cssVar } from "../css-var";
 
-const inactiveForeground = `color-mix(in oklab, ${cssVar(
-  "--foreground-secondary"
-)} 56%, ${cssVar("--foreground-disabled")})`;
-
 export const PanelTabs = styled(Primitive.Root, {
   display: "flex",
   flexDirection: "column",
@@ -26,7 +22,7 @@ export const PanelTabsList = styled(Primitive.List, {
 export const PanelTabsTrigger = styled(Primitive.Trigger, {
   all: "unset", // reset <button>
   ...textVariants.titles,
-  color: inactiveForeground,
+  color: cssVar("--foreground-secondary"),
   padding: theme.spacing[3],
   borderRadius: theme.borderRadius[4],
 
@@ -41,6 +37,7 @@ export const PanelTabsTrigger = styled(Primitive.Trigger, {
   },
 
   "&[data-state=active]": { color: cssVar("--foreground-primary") },
+  "&:disabled": { color: cssVar("--foreground-disabled") },
 });
 
 export const PanelTabsContent = styled(Primitive.Content, {

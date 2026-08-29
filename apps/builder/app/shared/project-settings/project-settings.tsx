@@ -13,6 +13,7 @@ import {
   Text,
   rawTheme,
   cssVar,
+  selectionBackground,
 } from "@webstudio-is/design-system";
 import { SpinnerIcon } from "@webstudio-is/icons";
 import {
@@ -111,9 +112,7 @@ export const ProjectSettingsDialog = ({
                             background: cssVar("--overlay-interaction-hover"),
                           },
                           "&[aria-current=true]": {
-                            background: `color-mix(in oklab, ${cssVar(
-                              "--foreground-accent"
-                            )} 12%, ${cssVar("--background-primary")})`,
+                            background: selectionBackground,
                             color: cssVar("--foreground-primary"),
                           },
                         }}

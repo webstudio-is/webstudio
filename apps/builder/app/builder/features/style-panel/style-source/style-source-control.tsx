@@ -114,7 +114,7 @@ const StyleSourceContainer = styled(Box, {
       true: {},
       false: {
         "&:not(:hover)": {
-          color: cssVar("--foreground-on-inverse"),
+          color: styleSourceColors.neutral.foreground,
           backgroundColor: styleSourceColors.neutral.background,
           [menuTriggerGradientVar]: styleSourceColors.neutral.gradient,
         },

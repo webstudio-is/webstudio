@@ -357,7 +357,7 @@
   );
   --color-surface-soft: color-mix(
     in oklab,
-    var(--color-background) 96.25%,
+    var(--color-background) 92%,
     var(--color-foreground)
   );
   --color-surface-strong: color-mix(
@@ -388,13 +388,13 @@
   --color-focus: light-dark(
     color-mix(
       in oklab,
-      var(--color-accent) calc(85% + var(--theme-contrast-surface) * 0.15),
+      var(--color-accent) calc(92% + var(--theme-contrast-surface) * 0.08),
       var(--color-background)
     ),
     color-mix(
       in oklab,
       oklch(from var(--color-accent) max(l, 0.6) c h)
-        calc(85% + var(--theme-contrast-surface) * 0.15),
+        calc(92% + var(--theme-contrast-surface) * 0.08),
       var(--color-background)
     )
   );
@@ -413,18 +413,16 @@
       var(--scheme-chromatic-foreground-mix),
     var(--color-foreground)
   );
-  --color-negative-foreground: color-mix(
-    in oklab,
-    oklch(from var(--color-negative) calc(l - 0.04) calc(c * 0.9) h)
-      var(--scheme-chromatic-foreground-mix),
-    var(--color-foreground)
+  --color-negative-foreground: light-dark(
+    oklch(from var(--color-negative) calc(l - 0.04) calc(c * 0.9) h),
+    oklch(from var(--color-negative) max(l, 0.7) c h)
   );
   --color-warning-foreground: color-mix(
     in oklab,
     oklch(
         from
           color-mix(in oklab, var(--color-warning) 88%, var(--color-foreground))
-          l calc(c * 1.12) h
+          calc(l - 0.03) calc(c * 1.12) h
       )
       var(--scheme-chromatic-foreground-mix),
     var(--color-foreground)
@@ -459,29 +457,32 @@
     var(--color-background)
   );
   --background-warning-subtle: light-dark(
-    oklch(from var(--color-warning-source) 0.98 calc(c * 0.35) h),
+    oklch(from var(--color-warning-source) 0.94 calc(c * 0.45) h),
     color-mix(
       in oklab,
       var(--color-warning-source) 13.02%,
       var(--color-background)
     )
   );
-  --background-informative-subtle: color-mix(
-    in oklab,
-    var(--color-informative) 12.24%,
-    var(--color-background)
+  --background-informative-subtle: light-dark(
+    color-mix(
+      in oklab,
+      var(--color-informative) 12.24%,
+      var(--color-background)
+    ),
+    color-mix(in oklab, var(--color-informative) 20%, var(--color-background))
   );
 
   /* Foreground */
   --foreground-primary: var(--color-foreground);
   --foreground-secondary: color-mix(
     in oklab,
-    var(--color-foreground) 60.91%,
+    var(--color-foreground) 70%,
     var(--color-background)
   );
   --foreground-disabled: color-mix(
     in oklab,
-    var(--color-foreground) 21.51%,
+    var(--color-foreground) 45%,
     var(--color-background)
   );
   --foreground-on-inverse: var(--color-background);

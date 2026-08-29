@@ -41,10 +41,12 @@ import { NotificationPopover } from "~/shared/notifications/notification-popover
 import { $notifications } from "~/shared/notifications/subscription";
 import { getPageDisplayName } from "~/builder/features/pages/page-utils";
 const topbarContainerStyle = css({
+  boxSizing: "border-box",
   position: "relative",
   display: "flex",
   justifyContent: "space-between",
   background: cssVar("--background-primary"),
+  borderBottom: `1px solid ${cssVar("--border-default")}`,
   height: theme.spacing[15],
   paddingRight: theme.panel.paddingInline,
   color: cssVar("--foreground-primary"),

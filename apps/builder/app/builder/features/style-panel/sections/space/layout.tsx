@@ -23,6 +23,16 @@ const INNER_HEIGHT = MOST_INNER_HEIGHT + (VALUE_HEIGHT + BORDER) * 2;
 const TOTAL_WIDTH = INNER_WIDTH + (INNER_MARGIN + VALUE_WIDTH + BORDER) * 2;
 const TOTAL_HEIGHT = INNER_HEIGHT + (INNER_MARGIN + VALUE_HEIGHT + BORDER) * 2;
 
+const verticalBackground = `color-mix(in oklab, ${cssVar(
+  "--background-primary"
+)} 96%, ${cssVar("--foreground-primary")})`;
+const horizontalBackground = `color-mix(in oklab, ${cssVar(
+  "--background-primary"
+)} 93%, ${cssVar("--foreground-primary")})`;
+const activeBackground = `color-mix(in oklab, ${cssVar(
+  "--background-primary"
+)} 88%, ${cssVar("--foreground-primary")})`;
+
 // in SVG stroke is always in the middle of the line
 const emulateInnerStroke = ({
   width,
@@ -44,25 +54,23 @@ const emulateInnerStroke = ({
 });
 
 const ValueArea = styled("path", {
-  fill: cssVar("--background-disabled"),
+  fill: verticalBackground,
   variants: {
     side: {
       top: { cursor: "n-resize" },
       bottom: { cursor: "s-resize" },
       right: {
         cursor: "e-resize",
-        fill: cssVar("--background-secondary"),
+        fill: horizontalBackground,
       },
       left: {
         cursor: "w-resize",
-        fill: cssVar("--background-secondary"),
+        fill: horizontalBackground,
       },
     },
     isActive: {
       true: {
-        fill: `color-mix(in oklab, ${cssVar(
-          "--background-primary"
-        )} 88%, ${cssVar("--foreground-primary")})`,
+        fill: activeBackground,
       },
     },
   },
@@ -103,7 +111,7 @@ const InnerOuterRect = styled(
   },
   {
     stroke: cssVar("--border-default"),
-    fill: cssVar("--background-secondary"),
+    fill: horizontalBackground,
   }
 );
 
@@ -140,7 +148,7 @@ const MostInnerRect = styled(
   },
   {
     stroke: cssVar("--border-default"),
-    fill: cssVar("--background-secondary"),
+    fill: horizontalBackground,
   }
 );
 

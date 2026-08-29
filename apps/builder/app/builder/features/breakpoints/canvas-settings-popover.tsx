@@ -37,7 +37,7 @@ export const CanvasSettingsPopover = () => {
               gap: "1ch",
               fontVariantNumeric: "tabular-nums",
             }}
-            color={isOpen ? "contrast" : "moreSubtle"}
+            color={isOpen ? "main" : "subtle"}
           >
             {Math.round(canvasWidth)}px
             {roundedScale !== 100 && <span>{`${roundedScale}%`}</span>}

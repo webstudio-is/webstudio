@@ -159,7 +159,7 @@ const StatusIcon = (props: { projectDomain: Domain; isLoading: boolean }) => {
           width: theme.sizes.controlHeight,
           height: theme.sizes.controlHeight,
           color: props.isLoading
-            ? cssVar("--foreground-disabled")
+            ? cssVar("--foreground-secondary")
             : isVerifiedActive
               ? cssVar("--foreground-positive")
               : cssVar("--foreground-negative"),

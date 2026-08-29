@@ -7,6 +7,7 @@ import { forwardRef, type ComponentProps, type Ref } from "react";
 import * as Primitive from "@radix-ui/react-switch";
 import { type CSS, css, theme } from "../stitches.config";
 import { cssVar } from "../css-var";
+import { restingControlBoundary } from "./form-control-style";
 
 const padding = theme.spacing[1];
 const thumbOffset = `calc(${padding} + ${theme.spacing[1]})`;
@@ -28,9 +29,7 @@ const switchStyle = css({
     position: "absolute",
     inset: padding,
     borderRadius: theme.borderRadius.pill,
-    backgroundColor: `color-mix(in oklab, ${cssVar(
-      "--background-primary"
-    )} 67%, ${cssVar("--foreground-primary")})`,
+    backgroundColor: restingControlBoundary,
   },
 
   "&[data-state=checked]:not([data-disabled]):before, &[aria-checked=true]:not([data-disabled]):before":

@@ -3,9 +3,9 @@ import { styled, theme, css, type CSS } from "../stitches.config";
 import { Root, Viewport, Scrollbar, Thumb } from "@radix-ui/react-scroll-area";
 import { cssVar } from "../css-var";
 
-const scrollbarColor = `oklch(from color-mix(in oklab, ${cssVar(
+const scrollbarColor = `oklch(from ${cssVar(
   "--foreground-secondary"
-)} 45%, ${cssVar("--foreground-disabled")}) l c h / 60%)`;
+)} l c h / 27%)`;
 
 const ScrollAreaRoot = styled(Root, {
   boxSizing: "border-box",

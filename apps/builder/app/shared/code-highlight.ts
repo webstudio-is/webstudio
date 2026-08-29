@@ -5,6 +5,21 @@ import { cssVar } from "@webstudio-is/design-system";
 
 // Syntax categories are a visualization layer. Compose them from the shared
 // semantic palette so they adapt to both schemes without adding theme knobs.
+const syntaxColor = (hueRotation: number) =>
+  `color-mix(
+    in oklab,
+    color(
+      from oklch(from ${cssVar("--foreground-accent")} l c calc(h + ${hueRotation}))
+      srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
+    ) 80%,
+    ${cssVar("--foreground-primary")}
+  )`;
+
+const syntaxGreen = syntaxColor(-120);
+const syntaxRed = syntaxColor(125);
+const syntaxYellow = syntaxColor(-155);
+const syntaxPurple = syntaxColor(55);
+
 export const codeHighlightStyle = HighlightStyle.define([
   {
     tag: tags.comment,
@@ -12,15 +27,15 @@ export const codeHighlightStyle = HighlightStyle.define([
   },
   {
     tag: tags.string,
-    color: cssVar("--foreground-positive"),
+    color: syntaxGreen,
   },
   {
     tag: tags.regexp,
-    color: cssVar("--foreground-negative"),
+    color: syntaxRed,
   },
   {
     tag: tags.number,
-    color: `oklch(from ${cssVar("--foreground-accent")} l c calc(h + 55))`,
+    color: syntaxPurple,
   },
   {
     tag: tags.variableName,
@@ -28,7 +43,7 @@ export const codeHighlightStyle = HighlightStyle.define([
   },
   {
     tag: [tags.keyword, tags.operator, tags.punctuation],
-    color: cssVar("--foreground-positive"),
+    color: syntaxGreen,
   },
   {
     tag: [tags.definitionKeyword, tags.modifier],
@@ -44,7 +59,7 @@ export const codeHighlightStyle = HighlightStyle.define([
   },
   {
     tag: [tags.bool, tags.null],
-    color: cssVar("--foreground-warning"),
+    color: syntaxYellow,
   },
   {
     tag: tags.tagName,
@@ -60,7 +75,7 @@ export const codeHighlightStyle = HighlightStyle.define([
   },
   {
     tag: tags.typeName,
-    color: cssVar("--foreground-positive"),
+    color: syntaxGreen,
   },
 ]);
 

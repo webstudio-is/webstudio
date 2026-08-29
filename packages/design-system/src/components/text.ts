@@ -12,7 +12,7 @@ type VariantStyle = typeof normalize & (typeof typography)[Variant];
 
 export const moreSubtleForeground = `color-mix(in oklab, ${cssVar(
   "--foreground-secondary"
-)} 56%, ${cssVar("--foreground-disabled")})`;
+)} 56%, ${cssVar("--background-primary")})`;
 
 export const textVariants = {} as { [Key in Variant]: VariantStyle };
 

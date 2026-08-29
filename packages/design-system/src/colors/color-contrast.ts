@@ -11,6 +11,8 @@ export type ColorContrastResult = {
 const contrastContracts = [
   ["--foreground-primary", "--background-primary", 4.5],
   ["--foreground-secondary", "--background-primary", 4.5],
+  ["--foreground-primary", "--background-secondary", 4.5],
+  ["--foreground-secondary", "--background-secondary", 4.5],
   ["--foreground-accent", "--background-primary", 4.5],
   ["--foreground-positive", "--background-primary", 4.5],
   ["--foreground-negative", "--background-primary", 4.5],
@@ -24,6 +26,9 @@ const contrastContracts = [
   ["--foreground-negative", "--background-negative-subtle", 4.5],
   ["--foreground-warning", "--background-warning-subtle", 4.5],
   ["--foreground-informative", "--background-informative-subtle", 4.5],
+  ["--foreground-primary", "--background-informative-subtle", 4.5],
+  ["--foreground-secondary", "--background-informative-subtle", 4.5],
+  ["--foreground-negative", "--background-informative-subtle", 4.5],
   ["--border-focus", "--background-secondary", 3],
 ] as const satisfies readonly (readonly [
   CssVariableName,
@@ -77,11 +82,21 @@ export const getColorContrast = (mode: ColorMode): ColorContrastResult[] => {
   const previousMode = root.getAttribute("data-color-scheme");
   root.setAttribute("data-color-scheme", mode);
   const reader = createColorReader();
+  const luminances = new Map<CssVariableName, number>();
+  const readLuminance = (name: CssVariableName) => {
+    const cached = luminances.get(name);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const value = getLuminance(reader.read(name));
+    luminances.set(name, value);
+    return value;
+  };
 
   try {
     return contrastContracts.map(([foreground, background, minimum]) => {
-      const foregroundLuminance = getLuminance(reader.read(foreground));
-      const backgroundLuminance = getLuminance(reader.read(background));
+      const foregroundLuminance = readLuminance(foreground);
+      const backgroundLuminance = readLuminance(background);
       const lighter = Math.max(foregroundLuminance, backgroundLuminance);
       const darker = Math.min(foregroundLuminance, backgroundLuminance);
       return {

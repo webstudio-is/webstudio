@@ -16,6 +16,7 @@ import { ProjectDialogs, type DialogType } from "./project-dialogs";
 import {
   ThumbnailLinkWithAbbr,
   ThumbnailLinkWithImage,
+  thumbnailSurface,
 } from "../shared/thumbnail";
 import { Spinner } from "../shared/spinner";
 import { Card, CardContent, CardFooter } from "../shared/card";
@@ -116,7 +117,7 @@ export const ProjectCard = ({
     <Card hidden={isHidden} {...props}>
       <CardContent
         css={{
-          background: brandColors.projectCardBack,
+          background: thumbnailSurface,
           [`&:hover`]: {
             "--ws-project-card-prefetch-image-background": `url(${linkPath}cgi/empty.gif)`,
           },

@@ -9,17 +9,10 @@ import { textVariants } from "./text";
 import { styled, theme } from "../stitches.config";
 import { Label as RadixLabel } from "@radix-ui/react-label";
 import { cssVar } from "../css-var";
+import { styleSourceColor } from "./style-source-color";
 
+// Label colors are composed locally from semantic theme inputs.
 const presetBackground = cssVar("--border-default");
-const overwrittenBackground = `color-mix(in oklab, ${cssVar(
-  "--background-negative"
-)} 16%, ${cssVar("--background-primary")})`;
-const remoteBackground = `oklch(from ${cssVar(
-  "--background-warning-subtle"
-)} l c calc(h - 50))`;
-const remoteForeground = `oklch(from ${cssVar(
-  "--foreground-warning"
-)} l c calc(h - 50))`;
 
 const withInteractionOverlay = (background: string) =>
   `linear-gradient(${cssVar("--overlay-interaction-hover")}, ${cssVar(
@@ -87,26 +80,28 @@ const StyledLabel = styled(RadixLabel, {
         },
       },
       local: {
-        backgroundColor: cssVar("--background-informative-subtle"),
-        color: cssVar("--foreground-informative"),
+        backgroundColor: styleSourceColor.local.background,
+        color: styleSourceColor.local.foreground,
         "&:hover": {
-          background: withInteractionOverlay(
-            cssVar("--background-informative-subtle")
-          ),
+          background: withInteractionOverlay(styleSourceColor.local.background),
         },
       },
       overwritten: {
-        backgroundColor: overwrittenBackground,
-        color: cssVar("--foreground-negative"),
+        backgroundColor: styleSourceColor.overwritten.background,
+        color: styleSourceColor.overwritten.foreground,
         "&:hover": {
-          background: withInteractionOverlay(overwrittenBackground),
+          background: withInteractionOverlay(
+            styleSourceColor.overwritten.background
+          ),
         },
       },
       remote: {
-        backgroundColor: remoteBackground,
-        color: remoteForeground,
+        backgroundColor: styleSourceColor.remote.background,
+        color: styleSourceColor.remote.foreground,
         "&:hover": {
-          background: withInteractionOverlay(remoteBackground),
+          background: withInteractionOverlay(
+            styleSourceColor.remote.background
+          ),
         },
       },
       // Example is collapsible section title label when section has no content.

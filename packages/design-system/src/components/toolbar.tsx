@@ -19,7 +19,6 @@ const toolbarHover = cssVar("--overlay-interaction-hover");
 
 export const Toolbar = styled(ToolbarPrimitive.Root, {
   display: "flex",
-  height: theme.spacing[15],
   background: toolbarBackground,
   color: toolbarForeground,
   alignItems: "center",

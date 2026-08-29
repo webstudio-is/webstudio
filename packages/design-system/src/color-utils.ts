@@ -1,3 +1,16 @@
+import { cssVar } from "./css-var";
+
+// Selection is a component state, composed from generic theme colors instead
+// of being exposed as another theme parameter.
+export const selectionBackground = `light-dark(
+  color-mix(in oklab, ${cssVar("--background-accent")} 12%, ${cssVar(
+    "--background-primary"
+  )}),
+  color-mix(in oklab, ${cssVar("--background-accent")} 20%, ${cssVar(
+    "--background-primary"
+  )})
+)`;
+
 export const rotateBoundedBackgroundHue = (color: string, degrees: number) => {
   const rotatedColor = `color(
     from oklch(from ${color} l c calc(h + ${degrees}))

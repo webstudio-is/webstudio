@@ -35,13 +35,14 @@ import { Flex } from "./flex";
 import { InputField } from "./input-field";
 import { SmallIconButton } from "./small-icon-button";
 import { cssVar } from "../css-var";
+import { selectionBackground } from "../color-utils";
 
 const panelWidth = "500px";
 const itemHeight = "32px";
 const inputBorderBottomSize = "--command-input-border-bottom-width";
 const weakForeground = `color-mix(in oklab, ${cssVar(
   "--foreground-secondary"
-)} 22%, ${cssVar("--foreground-disabled")})`;
+)} 22%, ${cssVar("--background-primary")})`;
 
 const StyledCommand = styled(CommandPrimitive, {
   boxSizing: "border-box",
@@ -529,7 +530,7 @@ const CommandItemStyled = styled(CommandPrimitive.Item, {
     backgroundColor: cssVar("--overlay-interaction-hover"),
   },
   "&[aria-selected=true]": {
-    backgroundColor: cssVar("--background-informative-subtle"),
+    backgroundColor: selectionBackground,
   },
 });
 

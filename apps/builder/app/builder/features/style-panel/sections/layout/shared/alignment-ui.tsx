@@ -159,7 +159,7 @@ export const AlignmentUi = ({
                 width: "90%",
                 height: "90%",
                 minWidth: "auto",
-                color: cssVar("--foreground-disabled"),
+                color: cssVar("--foreground-secondary"),
                 "&:hover": {
                   background: cssVar("--overlay-interaction-hover"),
                 },

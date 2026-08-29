@@ -22,7 +22,6 @@ const style = css({
   alignItems: "center",
   justifyContent: "center",
   whiteSpace: "pre", // to make nestedSelectButtonUnitless work as expected
-  height: theme.spacing[10],
   "&:not(:has(svg))": {
     paddingLeft: theme.spacing[2],
     paddingRight: theme.spacing[2],
@@ -40,6 +39,18 @@ const style = css({
     color: cssVar("--foreground-disabled"),
   },
   variants: {
+    size: {
+      1: {
+        height: theme.spacing[8],
+        "& > svg": {
+          width: theme.spacing[7],
+          height: theme.spacing[7],
+        },
+      },
+      2: {
+        height: theme.spacing[10],
+      },
+    },
     /**
      * ChevronDownIcon is the only case when we have svg inside the button and width is not equal to height
      */
@@ -51,6 +62,7 @@ const style = css({
       },
     },
   },
+  defaultVariants: { size: 2 },
 });
 
 export const NestedInputButton = forwardRef(
@@ -59,8 +71,9 @@ export const NestedInputButton = forwardRef(
       css,
       className,
       children,
+      size,
       ...props
-    }: ComponentProps<"button"> & { css?: CSS },
+    }: ComponentProps<"button"> & { css?: CSS; size?: "1" | "2" },
     ref: Ref<HTMLButtonElement>
   ) => {
     return (
@@ -69,6 +82,7 @@ export const NestedInputButton = forwardRef(
           css,
           className,
           hasChildren: children !== undefined,
+          size,
         })}
         {...props}
         ref={ref}

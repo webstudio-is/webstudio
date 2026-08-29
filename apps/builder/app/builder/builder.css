@@ -6,15 +6,7 @@ body {
   overflow: hidden;
   overscroll-behavior: contain;
   -webkit-font-smoothing: antialiased;
-  /* Match the Builder chrome before React renders without adding another token. */
-  background-color: light-dark(
-    color-mix(
-      in oklab,
-      var(--background-inverse) 88%,
-      var(--background-primary)
-    ),
-    var(--background-primary)
-  );
+  background-color: var(--background-primary);
 }
 
 [data-radix-scroll-area-viewport] {

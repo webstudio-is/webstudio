@@ -128,6 +128,12 @@ const editorContentStyle = css({
   "& .cm-focused": {
     outline: "none",
   },
+  "& .cm-cursor, & .cm-dropCursor": {
+    borderLeftColor: "currentColor",
+  },
+  "& .cm-activeLine": {
+    backgroundColor: cssVar("--overlay-interaction-hover"),
+  },
   // fix scrolls appear on mount
   "& .cm-scroller": {
     overflowX: "hidden",

@@ -7,6 +7,7 @@
 import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
 import { cssVar } from "../css-var";
+import { styleSourceColor } from "./style-source-color";
 
 const openOrHoverStateStyle = {
   backgroundColor: cssVar("--overlay-interaction-hover"),
@@ -20,25 +21,6 @@ const withInteractionOverlay = (background: string) =>
 const presetBackground = `color-mix(in oklab, ${cssVar(
   "--background-primary"
 )} 90.58%, ${cssVar("--foreground-primary")})`;
-
-const overwrittenBackground = `color-mix(in oklab, ${cssVar(
-  "--background-negative"
-)} 19.68%, ${cssVar("--background-primary")})`;
-const overwrittenBorder = `color-mix(in oklab, ${cssVar(
-  "--background-negative"
-)} 43.58%, ${cssVar("--background-primary")})`;
-const overwrittenForeground = `oklch(from color-mix(in oklab, ${cssVar(
-  "--background-negative"
-)} 80%, ${cssVar("--foreground-primary")}) l calc(c * 1.23) calc(h + 1.8))`;
-const remoteBackground = `oklch(from ${cssVar(
-  "--background-warning-subtle"
-)} l c calc(h - 50))`;
-const remoteBorder = `oklch(from ${cssVar(
-  "--border-warning"
-)} l c calc(h - 50))`;
-const remoteForeground = `oklch(from ${cssVar(
-  "--foreground-warning"
-)} l c calc(h - 50))`;
 
 const disabledVariantStyles = {
   "&:disabled, &[aria-disabled=true]": {
@@ -113,33 +95,35 @@ export const IconButton = styled("button", {
       },
 
       local: {
-        backgroundColor: cssVar("--background-informative-subtle"),
-        borderColor: cssVar("--border-informative"),
-        color: cssVar("--foreground-informative"),
+        backgroundColor: styleSourceColor.local.background,
+        borderColor: styleSourceColor.local.border,
+        color: styleSourceColor.local.foreground,
         "&:hover, &[data-hovered=true]": {
-          background: withInteractionOverlay(
-            cssVar("--background-informative-subtle")
-          ),
+          background: withInteractionOverlay(styleSourceColor.local.background),
         },
         ...disabledVariantStyles,
       },
 
       overwritten: {
-        backgroundColor: overwrittenBackground,
-        borderColor: overwrittenBorder,
-        color: overwrittenForeground,
+        backgroundColor: styleSourceColor.overwritten.background,
+        borderColor: styleSourceColor.overwritten.border,
+        color: styleSourceColor.overwritten.foreground,
         "&:hover, &[data-hovered=true]": {
-          background: withInteractionOverlay(overwrittenBackground),
+          background: withInteractionOverlay(
+            styleSourceColor.overwritten.background
+          ),
         },
         ...disabledVariantStyles,
       },
 
       remote: {
-        backgroundColor: remoteBackground,
-        borderColor: remoteBorder,
-        color: remoteForeground,
+        backgroundColor: styleSourceColor.remote.background,
+        borderColor: styleSourceColor.remote.border,
+        color: styleSourceColor.remote.foreground,
         "&:hover, &[data-hovered=true]": {
-          background: withInteractionOverlay(remoteBackground),
+          background: withInteractionOverlay(
+            styleSourceColor.remote.background
+          ),
         },
         ...disabledVariantStyles,
       },

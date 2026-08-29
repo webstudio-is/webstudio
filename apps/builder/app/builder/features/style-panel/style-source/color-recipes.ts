@@ -1,31 +1,38 @@
 import {
   cssVar,
+  styleSourceColor,
   rotateBoundedBackgroundHue,
 } from "@webstudio-is/design-system";
-
-const subtleBackground = (color: string) =>
-  `color-mix(in oklab, ${color} 12%, ${cssVar("--background-primary")})`;
 
 const gradient = (color: string) =>
   `linear-gradient(90deg, oklch(from ${color} l c h / 0) 0%, ${color} 31.87%)`;
 
 const accentBackground = cssVar("--background-accent");
-const accentForeground = cssVar("--foreground-accent");
 const instanceBackground = `color-mix(in oklab, ${cssVar(
   "--background-primary"
 )} 86%, ${cssVar("--foreground-primary")})`;
 const tagBackground = rotateBoundedBackgroundHue(accentBackground, 150);
 const tagForeground = tagBackground;
 const breakpointBackground = rotateBoundedBackgroundHue(accentBackground, 60);
-const overwrittenForeground = cssVar("--foreground-negative");
-const remoteForeground = tagForeground;
+const neutralBackground = `light-dark(
+  ${cssVar("--foreground-secondary")},
+  color-mix(
+    in oklab,
+    ${cssVar("--background-primary")} 67%,
+    ${cssVar("--foreground-primary")}
+  )
+)`;
+const neutralForeground = `light-dark(
+  ${cssVar("--foreground-on-inverse")},
+  ${cssVar("--foreground-primary")}
+)`;
 
 export const styleSourceColors = {
   local: {
-    background: accentBackground,
-    foreground: accentForeground,
-    subtleBackground: subtleBackground(accentForeground),
-    gradient: gradient(accentBackground),
+    background: styleSourceColor.local.solid,
+    foreground: styleSourceColor.local.foreground,
+    subtleBackground: styleSourceColor.local.background,
+    gradient: gradient(styleSourceColor.local.solid),
   },
   tag: {
     background: tagBackground,
@@ -36,16 +43,17 @@ export const styleSourceColors = {
     background: breakpointBackground,
   },
   overwritten: {
-    foreground: overwrittenForeground,
-    subtleBackground: subtleBackground(overwrittenForeground),
+    foreground: styleSourceColor.overwritten.foreground,
+    subtleBackground: styleSourceColor.overwritten.background,
   },
   remote: {
-    foreground: remoteForeground,
-    subtleBackground: subtleBackground(remoteForeground),
+    foreground: styleSourceColor.remote.foreground,
+    subtleBackground: styleSourceColor.remote.background,
   },
   neutral: {
-    background: cssVar("--foreground-secondary"),
-    gradient: gradient(cssVar("--foreground-secondary")),
+    background: neutralBackground,
+    foreground: neutralForeground,
+    gradient: gradient(neutralBackground),
   },
   instance: {
     background: instanceBackground,
@@ -62,5 +70,5 @@ export const getStyleSourceForeground = (source: string) => {
   if (source === "remote") {
     return styleSourceColors.remote.foreground;
   }
-  return cssVar("--foreground-disabled");
+  return cssVar("--foreground-secondary");
 };

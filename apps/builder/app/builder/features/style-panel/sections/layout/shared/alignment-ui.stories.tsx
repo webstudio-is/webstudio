@@ -72,7 +72,7 @@ const CombinationGrid = ({
               css={{
                 width: 64,
                 height: 62,
-                color: cssVar("--foreground-disabled"),
+                color: cssVar("--foreground-secondary"),
               }}
             >
               <AlignmentUi

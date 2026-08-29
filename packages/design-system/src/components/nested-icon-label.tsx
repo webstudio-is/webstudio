@@ -7,24 +7,9 @@ import { forwardRef, type ComponentProps, type Ref } from "react";
 import { type CSS, css, theme } from "../stitches.config";
 import type { labelColors } from "./label";
 import { cssVar } from "../css-var";
+import { styleSourceColor } from "./style-source-color";
 
 const presetBackground = cssVar("--border-default");
-const overwrittenBackground = `color-mix(in oklab, ${cssVar(
-  "--background-negative"
-)} 16%, ${cssVar("--background-primary")})`;
-const overwrittenBorder = `color-mix(in oklab, ${cssVar(
-  "--background-negative"
-)} 44%, ${cssVar("--background-primary")})`;
-const remoteBackground = `oklch(from ${cssVar(
-  "--background-warning-subtle"
-)} l c calc(h - 50))`;
-const remoteBorder = `oklch(from ${cssVar(
-  "--border-warning"
-)} l c calc(h - 50))`;
-const remoteForeground = `oklch(from ${cssVar(
-  "--foreground-warning"
-)} l c calc(h - 50))`;
-
 const withInteractionOverlay = (background: string) =>
   `linear-gradient(${cssVar("--overlay-interaction-hover")}, ${cssVar(
     "--overlay-interaction-hover"
@@ -44,24 +29,24 @@ const colors = {
     icon: cssVar("--foreground-primary"),
   },
   local: {
-    border: cssVar("--border-informative"),
-    background: cssVar("--background-informative-subtle"),
-    backgroundHover: withInteractionOverlay(
-      cssVar("--background-informative-subtle")
-    ),
-    icon: cssVar("--foreground-informative"),
+    border: styleSourceColor.local.border,
+    background: styleSourceColor.local.background,
+    backgroundHover: withInteractionOverlay(styleSourceColor.local.background),
+    icon: styleSourceColor.local.foreground,
   },
   overwritten: {
-    border: overwrittenBorder,
-    background: overwrittenBackground,
-    backgroundHover: withInteractionOverlay(overwrittenBackground),
-    icon: cssVar("--foreground-negative"),
+    border: styleSourceColor.overwritten.border,
+    background: styleSourceColor.overwritten.background,
+    backgroundHover: withInteractionOverlay(
+      styleSourceColor.overwritten.background
+    ),
+    icon: styleSourceColor.overwritten.foreground,
   },
   remote: {
-    border: remoteBorder,
-    background: remoteBackground,
-    backgroundHover: withInteractionOverlay(remoteBackground),
-    icon: remoteForeground,
+    border: styleSourceColor.remote.border,
+    background: styleSourceColor.remote.background,
+    backgroundHover: withInteractionOverlay(styleSourceColor.remote.background),
+    icon: styleSourceColor.remote.foreground,
   },
   inactive: {
     border: "transparent",
@@ -87,14 +72,26 @@ const perColorStyle = (color: (typeof labelColors)[number]) => ({
 
 const style = css({
   display: "flex",
-  width: theme.spacing[10],
-  height: theme.spacing[10],
   boxSizing: "border-box",
   alignItems: "center",
   justifyContent: "center",
   borderRadius: theme.borderRadius[2],
   border: "1px solid transparent",
   variants: {
+    size: {
+      1: {
+        width: theme.spacing[8],
+        height: theme.spacing[8],
+        "& > svg": {
+          width: theme.spacing[7],
+          height: theme.spacing[7],
+        },
+      },
+      2: {
+        width: theme.spacing[10],
+        height: theme.spacing[10],
+      },
+    },
     color: {
       default: perColorStyle("default"),
       preset: perColorStyle("preset"),
@@ -104,7 +101,7 @@ const style = css({
       inactive: perColorStyle("inactive"),
     },
   },
-  defaultVariants: { color: "default" },
+  defaultVariants: { color: "default", size: 2 },
 });
 
 type Props = ComponentProps<"label"> & {
@@ -112,16 +109,17 @@ type Props = ComponentProps<"label"> & {
   color?: (typeof labelColors)[number];
   disabled?: boolean;
   hover?: boolean;
+  size?: "1" | "2";
 };
 
 export const NestedIconLabel = forwardRef(
   (
-    { css, className, color, disabled, hover, ...props }: Props,
+    { css, className, color, disabled, hover, size, ...props }: Props,
     ref: Ref<HTMLLabelElement>
   ) => (
     <label
       {...props}
-      className={style({ css, className, color })}
+      className={style({ css, className, color, size })}
       data-state={disabled ? "disabled" : hover ? "hover" : undefined}
       ref={ref}
     />

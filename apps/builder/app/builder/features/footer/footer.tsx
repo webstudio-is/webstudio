@@ -11,6 +11,7 @@ export const Footer = () => {
         gridArea: "footer",
         height: theme.spacing[11],
         background: cssVar("--background-primary"),
+        borderTop: `1px solid ${cssVar("--border-default")}`,
         color: cssVar("--foreground-primary"),
       }}
     >

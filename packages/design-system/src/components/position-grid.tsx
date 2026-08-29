@@ -69,7 +69,9 @@ const dotStyle = css({
     display: "block",
     width: theme.spacing[3],
     height: theme.spacing[3],
-    background: cssVar("--foreground-disabled"),
+    background: `color-mix(in oklab, ${cssVar(
+      "--foreground-secondary"
+    )} 45%, ${cssVar("--background-primary")})`,
     borderRadius: "50%",
   },
   "&[data-selected=true], &:hover": {
@@ -77,7 +79,7 @@ const dotStyle = css({
     "&::before": {
       background: `color-mix(in oklab, ${cssVar(
         "--foreground-secondary"
-      )} 88%, ${cssVar("--foreground-disabled")})`,
+      )} 88%, ${cssVar("--background-primary")})`,
     },
   },
   "&[data-focused=true]": {

@@ -7,6 +7,7 @@ import {
   StorySection,
   Text,
   theme,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { Dashboard, DashboardSetup } from "./dashboard";
 import { Card as CardComponent, CardContent, CardFooter } from "./shared/card";
@@ -14,7 +15,6 @@ import { ThumbnailWithAbbr, ThumbnailLinkWithAbbr } from "./shared/thumbnail";
 import { defaultPlanFeatures, type PlanFeatures } from "@webstudio-is/plans";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { updateCsrfToken } from "~/shared/csrf.client";
-import { brandColors } from "~/shared/brand-colors";
 
 // Set a dummy CSRF token so the custom fetch wrapper does not show
 // "CSRF token is not set" toasts in Storybook.
@@ -157,7 +157,7 @@ export const Card = () => (
     <Flex gap="3" wrap="wrap" align="start">
       <Box css={{ width: theme.spacing[30] }}>
         <CardComponent>
-          <CardContent css={{ background: brandColors.projectCardFront }} />
+          <CardContent css={{ background: cssVar("--background-secondary") }} />
           <CardFooter>
             <Text truncate>My project</Text>
           </CardFooter>
@@ -165,7 +165,7 @@ export const Card = () => (
       </Box>
       <Box css={{ width: theme.spacing[30] }}>
         <CardComponent aria-selected={true}>
-          <CardContent css={{ background: brandColors.projectCardFront }} />
+          <CardContent css={{ background: cssVar("--background-secondary") }} />
           <CardFooter>
             <Text truncate>Selected project</Text>
           </CardFooter>
@@ -174,7 +174,9 @@ export const Card = () => (
       {["Project Alpha", "My Website", "Landing Page"].map((title) => (
         <Box key={title} css={{ width: theme.spacing[30] }}>
           <CardComponent>
-            <CardContent css={{ background: brandColors.projectCardFront }} />
+            <CardContent
+              css={{ background: cssVar("--background-secondary") }}
+            />
             <CardFooter>
               <Text truncate>{title}</Text>
             </CardFooter>

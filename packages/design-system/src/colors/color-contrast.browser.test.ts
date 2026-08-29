@@ -23,9 +23,9 @@ const readColor = (name: string) => {
   return color;
 };
 
-const legacyLightColors = {
+const expectedLightColors = {
   "--background-primary": "#ffffff",
-  "--background-secondary": "#f5f5f5",
+  "--background-secondary": "#e8eaeb",
   "--background-disabled": "#f8f8f8",
   "--background-inverse": "#11181c",
   "--background-accent": "#096cff",
@@ -33,11 +33,11 @@ const legacyLightColors = {
   "--background-positive-subtle": "#e9f9ee",
   "--background-negative": "#dc2929",
   "--background-negative-subtle": "#ffe9e9",
-  "--background-warning-subtle": "#fffbd1",
+  "--background-warning-subtle": "#f8edad",
   "--background-informative-subtle": "#e1f0ff",
   "--foreground-primary": "#11181c",
-  "--foreground-secondary": "#656869",
-  "--foreground-disabled": "#c1c8cd",
+  "--foreground-secondary": "#4e5458",
+  "--foreground-disabled": "#898d90",
   "--foreground-on-inverse": "#ffffff",
   "--foreground-on-accent": "#ffffff",
   "--foreground-on-positive": "#ffffff",
@@ -47,7 +47,7 @@ const legacyLightColors = {
   "--foreground-positive": "#0b7b45",
   "--foreground-negative": "#d13a3a",
   // Darkened from the legacy yellow so warning text meets 4.5:1 contrast.
-  "--foreground-warning": "#786a00",
+  "--foreground-warning": "#6f6100",
   "--foreground-informative": "#016ccc",
   "--border-default": "#e6e6e6",
   "--border-focus": "#3c86ff",
@@ -72,14 +72,114 @@ const parseHex = (hex: string) => {
   return channels.map((channel) => Number.parseInt(channel, 16));
 };
 
+const getRelativeLuminance = (color: Uint8ClampedArray) => {
+  const channels = Array.from(color.slice(0, 3), (channel) => {
+    const value = channel / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+};
+
+const getContrastRatio = (
+  first: Uint8ClampedArray,
+  second: Uint8ClampedArray
+) => {
+  const firstLuminance = getRelativeLuminance(first);
+  const secondLuminance = getRelativeLuminance(second);
+  return (
+    (Math.max(firstLuminance, secondLuminance) + 0.05) /
+    (Math.min(firstLuminance, secondLuminance) + 0.05)
+  );
+};
+
 describe("Craft color contrast", () => {
-  test("default light semantics preserve the established palette", () => {
+  test("default secondary colors preserve a clear visual hierarchy", () => {
+    const root = document.documentElement;
+    const previousMode = root.getAttribute("data-color-scheme");
+
+    try {
+      for (const mode of ["light", "dark"] as const) {
+        root.dataset.colorScheme = mode;
+        const background = readColor("--background-primary");
+        const surface = readColor("--background-secondary");
+        const secondaryForeground = readColor("--foreground-secondary");
+
+        expect(
+          getContrastRatio(surface, background),
+          `${mode} secondary surface`
+        ).toBeGreaterThanOrEqual(1.15);
+        expect(
+          getContrastRatio(secondaryForeground, background),
+          `${mode} secondary foreground`
+        ).toBeGreaterThanOrEqual(7);
+      }
+    } finally {
+      if (previousMode === null) {
+        root.removeAttribute("data-color-scheme");
+      } else {
+        root.setAttribute("data-color-scheme", previousMode);
+      }
+    }
+  });
+
+  test("light warning surfaces remain visibly distinct", () => {
     const root = document.documentElement;
     const previousMode = root.getAttribute("data-color-scheme");
     root.dataset.colorScheme = "light";
 
     try {
-      for (const [name, expectedHex] of Object.entries(legacyLightColors)) {
+      const background = readColor("--background-primary");
+      const warning = readColor("--background-warning-subtle");
+      const ratio = getContrastRatio(warning, background);
+      expect(ratio).toBeGreaterThanOrEqual(1.15);
+      expect(ratio).toBeLessThanOrEqual(1.3);
+    } finally {
+      if (previousMode === null) {
+        root.removeAttribute("data-color-scheme");
+      } else {
+        root.setAttribute("data-color-scheme", previousMode);
+      }
+    }
+  });
+
+  test("disabled content remains legible but subordinate", () => {
+    const root = document.documentElement;
+    const previousMode = root.getAttribute("data-color-scheme");
+
+    try {
+      for (const mode of ["light", "dark"] as const) {
+        root.dataset.colorScheme = mode;
+        const primary = readColor("--background-primary");
+        const disabledBackground = readColor("--background-disabled");
+        const disabled = readColor("--foreground-disabled");
+        const secondary = readColor("--foreground-secondary");
+
+        for (const background of [primary, disabledBackground]) {
+          expect(
+            getContrastRatio(disabled, background),
+            `${mode} disabled content`
+          ).toBeGreaterThanOrEqual(3);
+        }
+        expect(getContrastRatio(disabled, primary), mode).toBeLessThan(
+          getContrastRatio(secondary, primary)
+        );
+      }
+    } finally {
+      if (previousMode === null) {
+        root.removeAttribute("data-color-scheme");
+      } else {
+        root.setAttribute("data-color-scheme", previousMode);
+      }
+    }
+  });
+
+  test("default light semantics resolve to the expected palette", () => {
+    const root = document.documentElement;
+    const previousMode = root.getAttribute("data-color-scheme");
+    root.dataset.colorScheme = "light";
+
+    try {
+      for (const [name, expectedHex] of Object.entries(expectedLightColors)) {
         const actual = Array.from(readColor(name));
         const expected = parseHex(expectedHex);
         let tolerance = 9;
@@ -232,6 +332,46 @@ describe("Craft color contrast", () => {
     }
   });
 
+  test("default dark negative foreground remains distinctly red", () => {
+    const root = document.documentElement;
+    const previousMode = root.getAttribute("data-color-scheme");
+    root.dataset.colorScheme = "dark";
+
+    try {
+      const negative = readColor("--foreground-negative");
+      expect(negative[0] - Math.max(negative[1], negative[2])).toBeGreaterThan(
+        100
+      );
+    } finally {
+      if (previousMode === null) {
+        root.removeAttribute("data-color-scheme");
+      } else {
+        root.setAttribute("data-color-scheme", previousMode);
+      }
+    }
+  });
+
+  test("default dark informative surface remains distinct from the panel", () => {
+    const root = document.documentElement;
+    const previousMode = root.getAttribute("data-color-scheme");
+    root.dataset.colorScheme = "dark";
+
+    try {
+      const background = readColor("--background-primary");
+      const informative = readColor("--background-informative-subtle");
+      expect(getContrastRatio(informative, background)).toBeGreaterThanOrEqual(
+        1.2
+      );
+      expect(informative[2] - informative[0]).toBeGreaterThanOrEqual(25);
+    } finally {
+      if (previousMode === null) {
+        root.removeAttribute("data-color-scheme");
+      } else {
+        root.setAttribute("data-color-scheme", previousMode);
+      }
+    }
+  });
+
   test("scrim remains dark in both color schemes", () => {
     const root = document.documentElement;
     const previousMode = root.getAttribute("data-color-scheme");
@@ -375,5 +515,5 @@ describe("Craft color contrast", () => {
     expect(Array.from(violations.values(), ({ message }) => message)).toEqual(
       []
     );
-  });
+  }, 30_000);
 });

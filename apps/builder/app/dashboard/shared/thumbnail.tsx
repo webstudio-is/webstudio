@@ -1,14 +1,36 @@
 import { forwardRef } from "react";
 import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
-import { css, textVariants } from "@webstudio-is/design-system";
-import { brandColors } from "~/shared/brand-colors";
+import { css, cssVar, textVariants } from "@webstudio-is/design-system";
+
+const darkThumbnailSurface = `color-mix(
+  in oklab,
+  ${cssVar("--background-primary")} 96%,
+  ${cssVar("--foreground-primary")}
+)`;
+const darkThumbnailForeground = `color-mix(
+  in oklab,
+  ${cssVar("--background-primary")} 86%,
+  ${cssVar("--foreground-primary")}
+)`;
+
+export const thumbnailSurface = `linear-gradient(
+  0deg,
+  light-dark(#fbf8ff, ${darkThumbnailSurface}) 0%,
+  light-dark(#c7c7c7, ${darkThumbnailSurface}) 100%
+)`;
+
+const thumbnailForeground = `linear-gradient(
+  0deg,
+  light-dark(#fbf8ff, ${darkThumbnailForeground}) 0%,
+  light-dark(#e2e2e2, ${darkThumbnailForeground}) 100%
+)`;
 
 const abbrStyle = css(textVariants.brandThumbnailLargeDefault, {
   display: "flex",
   alignItems: "center",
   alignSelf: "center",
   minHeight: 0,
-  background: brandColors.projectCardFront,
+  background: thumbnailForeground,
   WebkitBackgroundClip: "text",
   backgroundClip: "text",
   color: "transparent",
@@ -52,7 +74,7 @@ ThumbnailWithAbbr.displayName = "ThumbnailWithAbbr";
 
 const imageContainerStyle = css({
   position: "relative",
-  background: brandColors.projectCardFront,
+  background: thumbnailSurface,
   outline: "none",
   overflow: "hidden",
   transition: "scale 100ms",

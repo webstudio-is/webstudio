@@ -1,6 +1,6 @@
 export * from "./stitches.config";
 export { cssVar, type ThemeVariableName } from "./css-var";
-export { rotateBoundedBackgroundHue } from "./color-utils";
+export { rotateBoundedBackgroundHue, selectionBackground } from "./color-utils";
 export * from "./components/storybook";
 export * from "./utilities";
 export { type SlotProps, Slot } from "@radix-ui/react-slot";
@@ -12,6 +12,7 @@ export * from "./components/section-title";
 export * from "./components/separator";
 export * from "./components/button";
 export * from "./components/label";
+export { styleSourceColor } from "./components/style-source-color";
 export * from "./components/select";
 export * from "./components/combobox";
 export * from "./components/dropdown-menu";

@@ -5,6 +5,7 @@ import { act } from "react-dom/test-utils";
 import { afterEach, expect, test } from "vitest";
 import "../colors/colors.css";
 import { Button } from "./button";
+import { PanelTabs, PanelTabsList, PanelTabsTrigger } from "./panel-tabs";
 
 let root: Root | undefined;
 
@@ -133,5 +134,48 @@ test("strong button interaction states preserve text contrast", async () => {
         }
       }
     }
+  }
+});
+
+test("inactive panel tabs remain readable", () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+
+  for (const mode of ["light", "dark"] as const) {
+    document.documentElement.dataset.colorScheme = mode;
+    act(() => {
+      root?.render(
+        createElement(
+          "div",
+          { style: { background: "var(--background-primary)" } },
+          createElement(
+            PanelTabs,
+            { defaultValue: "active" },
+            createElement(
+              PanelTabsList,
+              null,
+              createElement(PanelTabsTrigger, { value: "active" }, "Active"),
+              createElement(PanelTabsTrigger, { value: "inactive" }, "Inactive")
+            )
+          )
+        )
+      );
+    });
+
+    const inactiveTab = container.querySelector('[data-state="inactive"]');
+    if (inactiveTab === null) {
+      throw new Error("Expected an inactive tab");
+    }
+    const backgroundElement = container.firstElementChild;
+    if (backgroundElement === null) {
+      throw new Error("Expected a tab background");
+    }
+    const background = getComputedStyle(backgroundElement).backgroundColor;
+    const foreground = getComputedStyle(inactiveTab).color;
+    expect(
+      contrast(readColor(foreground), readColor(background)),
+      mode
+    ).toBeGreaterThanOrEqual(4.5);
   }
 });

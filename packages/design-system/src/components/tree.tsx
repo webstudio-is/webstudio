@@ -30,9 +30,12 @@ import { Box } from "./box";
 import { Text } from "./text";
 import { TreePositionIndicator } from "./list-position-indicator";
 import { cssVar } from "../css-var";
+import { selectionBackground } from "../color-utils";
 
 const treeNodeLevel = "--tree-node-level";
 const treeNodeOutline = "--tree-node-outline";
+const treeNodeSelectionBackgroundColor =
+  "--tree-node-selection-background-color";
 const treeNodeBackgroundColor = "--tree-node-background-color";
 const treeActionOpacity = "--tree-action-opacity";
 
@@ -131,20 +134,22 @@ export const TreeRoot = ({ children }: { children: ReactNode }) => {
 const NodeContainer = styled("div", {
   position: "relative",
   height: theme.sizes.controlHeight,
+  [treeNodeSelectionBackgroundColor]: "transparent",
+  [treeNodeBackgroundColor]: `var(${treeNodeSelectionBackgroundColor})`,
+  background: `var(${treeNodeBackgroundColor})`,
   "&:hover, &:has(:focus-visible), &:has([aria-current=true])": {
-    [treeNodeBackgroundColor]: cssVar("--overlay-interaction-hover"),
-    backgroundColor: `var(${treeNodeBackgroundColor})`,
+    [treeNodeBackgroundColor]: `linear-gradient(${cssVar(
+      "--overlay-interaction-hover"
+    )}, ${cssVar("--overlay-interaction-hover")}), var(${treeNodeSelectionBackgroundColor})`,
     [treeActionOpacity]: 1,
   },
   '&[data-selection-state="selected-descendant"]': {
-    [treeNodeBackgroundColor]: `color-mix(in oklab, ${cssVar(
-      "--background-informative-subtle"
-    )} 50%, ${cssVar("--background-primary")})`,
-    backgroundColor: `var(${treeNodeBackgroundColor})`,
+    [treeNodeSelectionBackgroundColor]: `color-mix(in oklab, ${selectionBackground} 50%, ${cssVar(
+      "--background-primary"
+    )})`,
   },
   '&[data-selection-state="selected"]': {
-    [treeNodeBackgroundColor]: cssVar("--background-informative-subtle"),
-    backgroundColor: `var(${treeNodeBackgroundColor})`,
+    [treeNodeSelectionBackgroundColor]: selectionBackground,
   },
 });
 
@@ -187,7 +192,7 @@ const ActionContainer = styled("div", {
   display: "inline-flex",
   justifyContent: "center",
   alignItems: "center",
-  backgroundColor: `var(${treeNodeBackgroundColor})`,
+  background: `var(${treeNodeBackgroundColor})`,
 });
 
 const DropIndicator = ({

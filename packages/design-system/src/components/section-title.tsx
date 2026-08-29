@@ -21,13 +21,11 @@ import { Label, isLabelButton } from "./label";
 import { focusRingStyle } from "./focus-ring";
 import { Flex } from "./flex";
 import { cssVar } from "../css-var";
+import { styleSourceColor } from "./style-source-color";
 
 const buttonContentColor = "--section-title-button-content-color";
 const labelTextColor = "--section-title-label-content-color";
 const chevronOpacity = "--section-title-chevron-display";
-const remoteForeground = `oklch(from ${cssVar(
-  "--foreground-warning"
-)} l c calc(h - 50))`;
 
 const StyledButton = styled(Button, {});
 
@@ -96,11 +94,11 @@ const dotStyle = css({
   marginRight: -2,
   variants: {
     color: {
-      local: { backgroundColor: cssVar("--foreground-informative") },
+      local: { backgroundColor: styleSourceColor.local.foreground },
       overwritten: {
-        backgroundColor: cssVar("--foreground-negative"),
+        backgroundColor: styleSourceColor.overwritten.foreground,
       },
-      remote: { backgroundColor: remoteForeground },
+      remote: { backgroundColor: styleSourceColor.remote.foreground },
     },
   },
 });

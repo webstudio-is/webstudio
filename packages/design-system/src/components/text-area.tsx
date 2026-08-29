@@ -74,7 +74,7 @@ const commonStyle = css({
   resize: "none",
   outline: "none",
   "&::placeholder": {
-    color: cssVar("--foreground-disabled"),
+    color: cssVar("--foreground-secondary"),
   },
   "&:disabled": {
     color: cssVar("--foreground-disabled"),

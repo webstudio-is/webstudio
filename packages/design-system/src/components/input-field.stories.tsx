@@ -119,8 +119,12 @@ export const InputField = () => (
         <InputFieldComponent
           defaultValue="Size 1 with prefix"
           size="1"
-          prefix={prefix}
-          suffix={suffix}
+          prefix={
+            <NestedIconLabel size="1" color="local" tabIndex={-1}>
+              <GapVerticalIcon />
+            </NestedIconLabel>
+          }
+          suffix={<NestedInputButton size="1" tabIndex={-1} />}
         />
       </StoryGrid>
     </StorySection>

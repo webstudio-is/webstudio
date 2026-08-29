@@ -1,25 +1,20 @@
 import { Root, Indicator } from "@radix-ui/react-progress";
-import { css } from "../stitches.config";
+import { css, type CSS } from "../stitches.config";
 import type { TransitionEventHandler } from "react";
 import { cssVar } from "../css-var";
-
-// Fixed Webstudio identity artwork, intentionally independent of the UI theme.
-const progressGradient =
-  "linear-gradient(90deg, #39fbbb00 0%, #39fbbb 20%, #4a4efa 40.03%, #e63cfe 60.02%, #ffae3c 80.04%, #ffae3c00 100%)";
 
 const rootStyle = css({
   width: 200,
   height: 2,
   overflow: "hidden",
   borderRadius: 9999,
-  background: cssVar("--background-primary"),
-  boxShadow: "0 0 32px #4a4efa80",
+  background: cssVar("--background-secondary"),
 });
 
 const indicatorStyle = css({
   width: "100%",
   height: "100%",
-  background: progressGradient,
+  background: cssVar("--background-accent"),
   transitionDuration: "200ms",
   transitionProperty: "transform",
 });
@@ -28,15 +23,19 @@ export const Progress = ({
   value,
   transitionDuration,
   onTransitionEnd,
+  css,
+  indicatorCss,
 }: {
   value: number;
   transitionDuration?: string;
   onTransitionEnd?: TransitionEventHandler;
+  css?: CSS;
+  indicatorCss?: CSS;
 }) => {
   return (
-    <Root value={value} className={rootStyle()}>
+    <Root value={value} className={rootStyle({ css })}>
       <Indicator
-        className={indicatorStyle()}
+        className={indicatorStyle({ css: indicatorCss })}
         style={{
           transform: `translateX(-${100 - value}%)`,
           transitionDuration,
