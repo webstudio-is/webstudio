@@ -23,6 +23,7 @@ import {
   createMcpStdioTransport,
   getDetailedProjectSessionMcpInputSchema,
   hiddenMcpOperationCommands,
+  isReadOnlyProjectSessionMcpTool,
   listProjectSessionMcpResources,
   listProjectSessionMcpTools,
   type PublicMcpOperation,
@@ -7176,6 +7177,99 @@ describe("project session mcp adapter", () => {
         }),
       })
     );
+  });
+
+  test("keeps explicit read-only custom-code audits read-only", async () => {
+    const readOnlyOperations = [
+      ...publicMcpOperations,
+      publicOperation({
+        command: "search-project",
+        id: "project.search",
+        description: "Search project data for known values",
+      }),
+      publicOperation({
+        command: "inspect-instance",
+        id: "instances.inspect",
+        description: "Inspect one instance and its props",
+      }),
+      publicOperation({
+        command: "get-project-settings",
+        id: "project.getSettings",
+        description: "Read project settings",
+      }),
+      publicOperation({
+        command: "snapshot",
+        id: "project.snapshot",
+        description: "Read a bounded project snapshot",
+      }),
+    ];
+    const adapter = createProjectSessionMcpCore({
+      operations: readOnlyOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      guidance: testMcpGuidance,
+    });
+
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: {
+        brief:
+          "Perform a read-only custom-code consolidation audit against the provided design for this existing page. Return an ordered inventory of HTML Embeds, CSS, scripts, selectors, and runtime dependencies. Do not mutate, create, insert, update, delete, rename, reorder, publish, or change project settings.",
+      },
+    });
+    const data = guide.structuredContent.data as {
+      taskScope: string;
+      routing: Record<string, unknown>;
+      constraints: Record<string, unknown>;
+      tools: Array<{ name: string }>;
+    };
+    const toolNames = data.tools.map(({ name }) => name);
+    const mutationToolNames = new Set(
+      readOnlyOperations
+        .filter(({ method }) => method === "mutation")
+        .map(({ command }) => command)
+    );
+
+    expect(data.taskScope).toBe("read-only-audit");
+    expect(data.routing).toEqual({
+      matchedBy: "explicit-read-only",
+      workflow: "read-only-discovery",
+      broadContextTools: [],
+      authoredFragment: false,
+    });
+    expect(data.constraints).toEqual({
+      readOnly: true,
+      mutationToolsExcluded: true,
+    });
+    expect(toolNames).toEqual(
+      expect.arrayContaining([
+        "search-project",
+        "list-instances",
+        "inspect-instance",
+        "get-project-settings",
+        "snapshot",
+      ])
+    );
+    expect(toolNames.filter((name) => mutationToolNames.has(name))).toEqual([]);
+    expect(
+      data.tools.every(({ name }) => {
+        const tool = adapter
+          .listTools()
+          .find((candidate) => candidate.name === name);
+        return tool !== undefined && isReadOnlyProjectSessionMcpTool(tool);
+      })
+    ).toBe(true);
+    expect(
+      toolNames.filter((name) =>
+        [
+          "inspect-design-context",
+          "insert-fragment-verified",
+          "attach-design-token",
+          "update-styles",
+          "verify-page-responsive",
+        ].includes(name)
+      )
+    ).toEqual([]);
   });
 
   test("routes an authored component insertion without broad discovery", async () => {

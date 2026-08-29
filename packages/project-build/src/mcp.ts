@@ -5961,6 +5961,7 @@ const designSystemGuideToolNames = new Set([
 ]);
 
 const taskScopes = [
+  "read-only-audit",
   "small-value-or-reference-correction",
   "focused-page-change",
   "visual-change",
@@ -5969,6 +5970,19 @@ const taskScopes = [
 ] as const;
 
 type TaskScope = (typeof taskScopes)[number];
+
+const hasExplicitReadOnlyIntent = (brief: string) =>
+  /\bread[- ]only\b|\b(?:no|without)\s+(?:making\s+)?(?:any\s+)?(?:project\s+)?(?:changes?|mutations?)\b|\b(?:do not|don't|must not|never)\s+(?:mutate|make\s+(?:any\s+)?changes?)\b/i.test(
+    brief
+  );
+
+const readOnlyDiscoveryToolNames = [
+  "search-project",
+  "list-instances",
+  "inspect-instance",
+  "get-project-settings",
+  "snapshot",
+] as const;
 
 const classifyTaskScope = (brief: string): TaskScope => {
   if (
@@ -6023,11 +6037,57 @@ const serializeMetaGuideTool = (
           : {}),
       };
 
+const getReadOnlyMetaGuide = (
+  brief: string,
+  tools: readonly ProjectSessionMcpTool[]
+) => {
+  const toolByName = new Map(tools.map((tool) => [tool.name, tool]));
+  const prioritizedTools = readOnlyDiscoveryToolNames.flatMap((name) => {
+    const tool = toolByName.get(name);
+    return tool === undefined ? [] : [tool];
+  });
+  const matches = [...prioritizedTools, ...getMatchingTools(brief, tools)]
+    .filter(isReadOnlyProjectSessionMcpTool)
+    .filter(
+      (tool, index, selectedTools) =>
+        selectedTools.findIndex(({ name }) => name === tool.name) === index
+    )
+    .slice(0, 12);
+  return {
+    taskScope: "read-only-audit",
+    routing: {
+      matchedBy: "explicit-read-only",
+      workflow: "read-only-discovery",
+      broadContextTools: [],
+      authoredFragment: false,
+    },
+    constraints: {
+      readOnly: true,
+      mutationToolsExcluded: true,
+    },
+    delegatedAgentRule:
+      "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
+    visionLoop: [],
+    workflow: [
+      "Keep every call read-only. Preserve the brief's prohibitions; do not create, update, delete, publish, preview, install, or otherwise change project or local state.",
+      "Use search-project for known values, identifiers, selectors, URLs, or code fragments across project data.",
+      "Use focused list, get, and inspect tools to identify the existing structure and read details only for relevant results.",
+      "Read project settings only when they are part of the requested inventory. Use a bounded snapshot only when focused reads cannot provide the required cross-namespace context.",
+      "Return the requested inventory, classifications, risks, and consolidation plan without applying the plan.",
+    ],
+    tools: matches.map((tool) => serializeMetaGuideTool(tool, true)),
+    more: "This guide excludes mutation and side-effecting session tools. Use focused read-only discovery only.",
+  };
+};
+
 const getMetaGuide = (
   brief: string,
   tools: readonly ProjectSessionMcpTool[],
   guidance: ProjectSessionMcpGuidance | undefined
 ) => {
+  if (hasExplicitReadOnlyIntent(brief)) {
+    return getReadOnlyMetaGuide(brief, tools);
+  }
   const taskScope = classifyTaskScope(brief);
   const isSmallCorrection = taskScope === "small-value-or-reference-correction";
   const goalGuide = metaGoalGuides.find(({ pattern }) => pattern.test(brief));

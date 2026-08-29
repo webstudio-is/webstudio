@@ -283,6 +283,8 @@ Use MCP itself after startup, or call the same tools with `webstudio mcp single-
 
 `meta.guide` returns structured `routing` with the matched workflow and any broad context bundle it recommends. Authentication and design context bundles appear only when their specialized workflow matches. A brief that explicitly requests `insert-fragment` or an authored fragment suppresses registry component and template discovery; mention design-system or token reuse explicitly when the fragment depends on it.
 
+When a brief explicitly requires read-only work, `meta.guide` returns the `read-only-discovery` workflow and excludes mutation and side-effecting session tools. Use focused search, list, get, inspect, and snapshot tools to return findings or a plan without applying it.
+
 `search-project` follows normal ProjectSession synchronization, then searches in the CLI process. Namespace filters limit values matched; related namespaces may still supply route and reference context, and synchronization is unchanged. Only paged matches enter model context. Recognized credential fields and asset binary or document bodies are excluded.
 
 Component and template registry items use a shadcn-compatible top-level shape plus Webstudio-specific superset metadata in `meta`. Use `meta.runtime` for component ids, props, states, content model, and source identity; `meta.authoring` for composition and accessibility guidance; and `meta.builder` for template insertion details and expected project-data namespaces. These items are for Builder/MCP discovery and are not a published shadcn install registry yet.

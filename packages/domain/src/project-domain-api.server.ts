@@ -16,6 +16,8 @@ import { validateDomain } from "./db/validate";
 
 type LoadedProject = Awaited<ReturnType<typeof projectApi.loadById>>;
 type ProjectDomain = LoadedProject["domainsVirtual"][number];
+type PublishTarget = "staging" | "production";
+type SaasDeployment = Exclude<Deployment, { destination: "static" }>;
 
 const assertMutation = (result: { success: boolean; error?: string }) => {
   if (result.success === false) {
@@ -49,7 +51,7 @@ const getProjectDomainOrThrow = (
 
 export const getDefaultPublishDomains = (
   project: LoadedProject,
-  target: "staging" | "production"
+  target: PublishTarget
 ) => {
   if (target === "staging") {
     return [project.domain];
@@ -60,6 +62,27 @@ export const getDefaultPublishDomains = (
       .filter((domain) => domain.status === "ACTIVE" && domain.verified)
       .map((domain) => domain.domain),
   ];
+};
+
+export const getPublishTargetForDomains = (
+  project: LoadedProject,
+  domains: string[]
+): PublishTarget =>
+  domains.some((domain) => domain !== project.domain)
+    ? "production"
+    : "staging";
+
+const getSaasDeploymentTarget = (deployment: SaasDeployment): PublishTarget => {
+  if (deployment.target !== undefined) {
+    return deployment.target;
+  }
+  const stagingDomain = deployment.assetsDomain ?? deployment.projectDomain;
+  if (stagingDomain !== undefined) {
+    return deployment.domains.some((domain) => domain !== stagingDomain)
+      ? "production"
+      : "staging";
+  }
+  return deployment.domains.length > 1 ? "production" : "staging";
 };
 
 export const getVerifiedPublishDomains = (
@@ -113,7 +136,7 @@ export const listProjectPublishes = async (
           id: build.id,
           jobId: build.id,
           version: build.version,
-          target: deployment.domains.length > 1 ? "production" : "staging",
+          target: getSaasDeploymentTarget(deployment),
           domains: deployment.domains,
           createdAt: build.createdAt,
         },
@@ -154,6 +177,10 @@ export const getProjectPublishJob = async (
     id: publishJob.id,
     version: publishJob.version,
     status,
+    target:
+      deployment !== undefined && deployment.destination !== "static"
+        ? getSaasDeploymentTarget(deployment)
+        : undefined,
     domains:
       deployment !== undefined && deployment.destination !== "static"
         ? deployment.domains
@@ -169,11 +196,14 @@ export const getProjectPublishJob = async (
 const createSaasDeployment = ({
   project,
   domains,
+  target,
 }: {
   project: LoadedProject;
   domains: string[];
+  target: PublishTarget;
 }): Deployment => ({
   destination: "saas",
+  target,
   domains,
   assetsDomain: project.domain,
   excludeWstdDomainFromSearch: project.domainsVirtual.some(
@@ -185,16 +215,18 @@ export const publishProject = async (
   {
     project,
     domains,
+    target,
   }: {
     project: LoadedProject;
     domains: string[];
+    target: PublishTarget;
   },
   context: AppContext
 ) => {
   const build = await createProductionBuild(
     {
       projectId: project.id,
-      deployment: createSaasDeployment({ project, domains }),
+      deployment: createSaasDeployment({ project, domains, target }),
     },
     context
   );
