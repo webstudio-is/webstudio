@@ -67,8 +67,7 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
             Upgrade to Pro account to publish to each domain individually.
             <br /> <br />
             <Link
-              className={buttonStyle({ color: "gradient" })}
-              color="contrast"
+              className={buttonStyle({ color: "primary" })}
               underline="none"
               href="https://webstudio.is/pricing"
               target="_blank"

@@ -11,17 +11,11 @@ import { forwardRef, type Ref } from "react";
 import { focusRingStyle } from "./focus-ring";
 import { cssVar } from "../css-var";
 
-const toolbarBackground = `light-dark(color-mix(in oklab, ${cssVar(
-  "--background-inverse"
-)} 88%, ${cssVar("--background-primary")}), ${cssVar("--background-primary")})`;
-const toolbarForeground = `light-dark(${cssVar(
-  "--foreground-on-inverse"
-)}, ${cssVar("--foreground-primary")})`;
-const toolbarForegroundSubtle = `color-mix(in oklab, ${toolbarForeground} 55%, ${toolbarBackground})`;
-const toolbarBorder = `color-mix(in oklab, ${toolbarForeground} 20%, ${toolbarBackground})`;
-const toolbarHover = `light-dark(${cssVar(
-  "--overlay-on-inverse-hover"
-)}, ${cssVar("--overlay-interaction-hover")})`;
+const toolbarBackground = cssVar("--background-primary");
+const toolbarForeground = cssVar("--foreground-primary");
+const toolbarForegroundSubtle = cssVar("--foreground-secondary");
+const toolbarBorder = cssVar("--border-default");
+const toolbarHover = cssVar("--overlay-interaction-hover");
 
 export const Toolbar = styled(ToolbarPrimitive.Root, {
   display: "flex",

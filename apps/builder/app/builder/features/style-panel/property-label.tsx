@@ -189,7 +189,7 @@ export const PropertyInfo = ({
       )}
       {resettable && readonly === false && (
         <Button
-          color="dark"
+          color="neutral-destructive"
           prefix={
             <Flex justify="end">
               <ResetIcon />

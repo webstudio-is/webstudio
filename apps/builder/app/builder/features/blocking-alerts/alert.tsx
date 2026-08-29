@@ -19,13 +19,18 @@ const containerStyle = css({
   left: 0,
   width: "100vw",
   height: "100vh",
-  background: cssVar("--background-inverse"),
+  background: `oklch(from ${cssVar("--overlay-scrim")} l c h / 90%)`,
 });
 
 const contentStyle = css({
   width: theme.spacing[33],
   color: cssVar("--foreground-negative"),
 });
+
+const scrimForeground = `light-dark(
+  ${cssVar("--foreground-on-inverse")},
+  ${cssVar("--foreground-primary")}
+)`;
 
 const $isAlertDismissed = atom(false);
 
@@ -51,7 +56,7 @@ export const Alert = ({
             className={contentStyle()}
           >
             <AlertIcon size={22} />
-            <Text color="contrast" align="center">
+            <Text align="center" css={{ color: scrimForeground }}>
               {message}
             </Text>
             {isDismissable && (

@@ -1,12 +1,8 @@
 import { forwardRef } from "react";
 import { styled } from "../stitches.config";
-import { moreSubtleForeground, textVariants } from "./text";
+import { textVariants } from "./text";
 import { ExternalLinkIcon } from "@webstudio-is/icons";
 import { cssVar } from "../css-var";
-
-const contrastForeground = `light-dark(${cssVar(
-  "--foreground-on-inverse"
-)}, ${cssVar("--foreground-primary")})`;
 
 export const IconLink = forwardRef<
   HTMLAnchorElement,
@@ -19,6 +15,8 @@ export const IconLink = forwardRef<
 
 export const Link = styled("a", {
   cursor: "pointer",
+  color: cssVar("--foreground-primary"),
+  "&:hover, &:visited": { color: cssVar("--foreground-primary") },
   "&[aria-disabled=true]": {
     cursor: "default",
     color: cssVar("--foreground-disabled"),
@@ -47,21 +45,9 @@ export const Link = styled("a", {
       monoBold: textVariants.monoBoldLink,
     },
     color: {
-      main: {
-        color: cssVar("--foreground-primary"),
-        "&:hover, &:visited": { color: cssVar("--foreground-primary") },
-      },
-      contrast: {
-        color: contrastForeground,
-        "&:hover, &:visited": { color: contrastForeground },
-      },
       subtle: {
         color: cssVar("--foreground-secondary"),
         "&:hover, &:visited": { color: cssVar("--foreground-secondary") },
-      },
-      moreSubtle: {
-        color: moreSubtleForeground,
-        "&:hover, &:visited": { color: moreSubtleForeground },
       },
       inherit: {
         color: "inherit",
@@ -94,7 +80,6 @@ export const Link = styled("a", {
   },
   defaultVariants: {
     variant: "regular",
-    color: "main",
     underline: "always",
   },
 });

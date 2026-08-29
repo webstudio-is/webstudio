@@ -1,13 +1,15 @@
 import { styled, theme } from "../stitches.config";
 import { textVariants } from "./text";
 import { cssVar } from "../css-var";
+import { rotateBoundedBackgroundHue } from "../color-utils";
 
 const neutralBackground = `color-mix(in oklab, ${cssVar(
   "--foreground-primary"
 )} 58%, ${cssVar("--background-primary")})`;
-const purpleBackground = `color-mix(in srgb-linear, ${cssVar(
-  "--background-accent"
-)} 60%, ${cssVar("--background-negative")})`;
+const purpleBackground = rotateBoundedBackgroundHue(
+  cssVar("--background-accent"),
+  72
+);
 
 export const Chip = styled("span", textVariants.labels, {
   boxSizing: "border-box",

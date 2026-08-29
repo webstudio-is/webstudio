@@ -43,7 +43,11 @@ export const Login = ({
       justify="center"
       css={{
         height: "100vh",
-        background: brandColors.dashboard,
+        color: cssVar("--foreground-primary"),
+        background: `linear-gradient(
+          light-dark(transparent, ${cssVar("--overlay-scrim")}),
+          light-dark(transparent, ${cssVar("--overlay-scrim")})
+        ), ${brandColors.dashboard}`,
       }}
     >
       <Flex
@@ -56,7 +60,10 @@ export const Login = ({
           padding: theme.spacing[17],
           borderRadius: theme.spacing[5],
           [`@media (min-width: ${rawTheme.spacing[35]})`]: {
-            backgroundColor: brandColors.panelTranslucent,
+            backgroundColor: `light-dark(
+              ${brandColors.panelTranslucent},
+              ${cssVar("--background-primary")}
+            )`,
           },
         }}
       >

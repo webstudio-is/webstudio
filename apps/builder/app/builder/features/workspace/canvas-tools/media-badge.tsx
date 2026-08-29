@@ -1,10 +1,6 @@
 import { useStore } from "@nanostores/react";
-import { Flex, Text, css, theme } from "@webstudio-is/design-system";
+import { cssVar, Flex, Text, css, theme } from "@webstudio-is/design-system";
 import { $selectedBreakpoint } from "~/shared/nano-states";
-import {
-  builderChromeBackground,
-  builderChromeForeground,
-} from "~/builder/shared/color-recipes";
 
 const labelStyle = css({
   position: "absolute",
@@ -14,8 +10,8 @@ const labelStyle = css({
 });
 
 const badgeStyle = css({
-  background: builderChromeBackground,
-  color: builderChromeForeground,
+  background: cssVar("--background-primary"),
+  color: cssVar("--foreground-primary"),
   px: theme.spacing[3],
   py: theme.spacing[2],
   borderRadius: theme.borderRadius[3],

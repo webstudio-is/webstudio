@@ -86,9 +86,8 @@ export const AuthSection = ({
                       domains.
                     </Text>
                     <Link
-                      className={buttonStyle({ color: "gradient" })}
+                      className={buttonStyle({ color: "primary" })}
                       css={{ marginTop: theme.spacing[5], width: "100%" }}
-                      color="contrast"
                       underline="none"
                       target="_blank"
                       href="https://webstudio.is/pricing"

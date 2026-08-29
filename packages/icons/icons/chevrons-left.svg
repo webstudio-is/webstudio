@@ -7,13 +7,13 @@
 >
   <path
     d="M7.06883 12.656L2.41284 8L7.06883 3.34401"
-    stroke="black"
+    stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
     d="M13.5871 12.656L8.93115 8L13.5871 3.34401"
-    stroke="black"
+    stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />

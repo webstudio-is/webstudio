@@ -133,7 +133,7 @@ const menuBorderWidth = "1px";
 export const menuCss = css({
   boxSizing: "border-box",
   borderRadius: theme.borderRadius[6],
-  backgroundColor: cssVar("--background-secondary"),
+  backgroundColor: cssVar("--background-primary"),
   border: `1px solid ${cssVar("--border-default")}`,
   boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${cssVar(
     "--background-primary"
@@ -163,7 +163,7 @@ export const subContentProps: Partial<ComponentProps<typeof SubContent>> = {
 // Arrow is hard to implement with just CSS,
 // so we implement it as a component
 const ArrowBackground = styled("path", {
-  fill: cssVar("--background-secondary"),
+  fill: cssVar("--background-primary"),
 });
 const ArrowInnerBorder = styled("path", {
   fill: cssVar("--background-primary"),

@@ -82,6 +82,7 @@
     "./colors": {
       "webstudio": "./src/colors.ts"
     },
+    "./colors.css": "./src/colors/colors.css",
     "./test-setup": "./src/test-setup.ts"
   },
   "license": "AGPL-3.0-or-later",

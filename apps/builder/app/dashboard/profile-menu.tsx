@@ -19,6 +19,7 @@ import { useStore } from "@nanostores/react";
 import { logoutPath, planSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
 import { $purchases } from "~/shared/nano-states";
+import { ColorSchemeMenu } from "~/shared/color-scheme-menu";
 
 const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
@@ -116,6 +117,8 @@ export const ProfileMenu = ({ user }: { user: User }) => {
             <div>Upgrade</div>
           </DropdownMenuItem>
         )}
+        <DropdownMenuSeparator />
+        <ColorSchemeMenu />
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
           Sign Out

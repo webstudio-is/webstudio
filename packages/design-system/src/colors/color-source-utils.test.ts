@@ -89,7 +89,8 @@ describe("Craft color CSS source", () => {
     expect(Object.keys(colors.scheme.light)).toEqual(
       Object.keys(colors.scheme.dark)
     );
-    expect(Object.keys(colors.derived)).toHaveLength(27);
+    expect(Object.keys(colors.derived)).toHaveLength(28);
+    expect(colors.derived).toHaveProperty("focus");
     expect(Object.keys(colors.semantic)).toEqual([
       "background",
       "foreground",

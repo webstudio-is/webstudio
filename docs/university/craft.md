@@ -47,6 +47,11 @@ Theme variables contain the values that make one theme different from another.
 They may contain literal values or reference palette variables such as those
 provided by Open Props.
 
+A theme implementation may use private derivation variables to normalize,
+bound, or transform its public theme inputs. These variables are implementation
+details of the theme layer: composite Tokens must not consume them directly,
+and reusable resources must not require them.
+
 Craft does not require every project to use the same number of theme variables.
 A project must document its theme variables when it publishes reusable
 resources or a theme for other projects.
@@ -57,8 +62,9 @@ Semantic variables describe why a value is used rather than what the value
 looks like. For example, use `--foreground-negative` for an error message
 instead of consuming a red palette value directly.
 
-Semantic variables must reference theme variables or other semantic variables.
-They should not contain standalone literal design values.
+Semantic variables must reference public theme variables, private derivation
+variables within the theme layer, or other semantic variables. They should not
+contain standalone literal design values.
 
 ### Composite tokens
 
@@ -394,7 +400,7 @@ projects.
 A project conforms to Craft when:
 
 - Shared composite Tokens use semantic variables where suitable.
-- Semantic variables derive from documented theme or semantic variables.
+- Semantic variables derive from the theme layer or other semantic variables.
 - Theme changes do not require editing composite Tokens.
 - Variable and Token names follow the Craft grammar.
 - Required foreground and background pairings meet the accessibility rules.

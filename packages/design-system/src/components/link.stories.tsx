@@ -55,19 +55,19 @@ const LinkStory = () => (
           alignItems: "flex-start",
         }}
       >
-        <Link color="main" href="">
-          Main
-        </Link>
-        <Box css={{ backgroundColor: cssVar("--background-inverse") }}>
-          <Link color="contrast" href="">
-            Contrast
+        <Link href="">Default</Link>
+        <Box
+          css={{
+            backgroundColor: cssVar("--background-inverse"),
+            color: cssVar("--foreground-on-inverse"),
+          }}
+        >
+          <Link color="inherit" href="">
+            Inherited inverse
           </Link>
         </Box>
         <Link color="subtle" href="">
           Subtle
-        </Link>
-        <Link color="moreSubtle" href="">
-          More Subtle
         </Link>
         <div style={{ color: "blue" }}>
           <Link color="inherit" href="">

@@ -713,7 +713,7 @@ const Publish = ({
               handlePublish(new FormData(form));
             }
           }}
-          color="positive"
+          color="primary"
           state={showPendingState ? "pending" : undefined}
           disabled={
             hasSelectedDomains === false ||
@@ -803,7 +803,7 @@ const PublishStatic = ({
       >
         <Button
           type="button"
-          color="positive"
+          color="primary"
           state={isPublishInProgress ? "pending" : undefined}
           onClick={() => {
             setPublishError(undefined);
@@ -972,8 +972,7 @@ const UpgradeBanner = ({ hasCustomDomains }: { hasCustomDomains: boolean }) => {
           Upgrade to publish more than {maxDailyPublishesPerUser} times per day:
         </Text>
         <Link
-          className={buttonStyle({ color: "gradient" })}
-          color="contrast"
+          className={buttonStyle({ color: "primary" })}
           underline="none"
           href="https://webstudio.is/pricing"
           target="_blank"
@@ -1406,7 +1405,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
           <Button
             type="button"
             disabled={isPublishEnabled === false}
-            color="positive"
+            color="primary"
           >
             Publish
           </Button>

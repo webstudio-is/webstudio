@@ -18,75 +18,58 @@ import { cssVar } from "../css-var";
 const colors = [
   "primary",
   "destructive",
-  "positive",
   "neutral",
   "ghost",
-  "dark",
-  "gradient",
   "neutral-destructive",
-  "dark-ghost",
 ] as const;
 
 type ButtonColor = (typeof colors)[number];
 
 type ButtonState = "auto" | "hover" | "focus" | "pressed" | "pending";
 
-const neutralBackground = `color-mix(in oklab, ${cssVar("--background-primary")} 83%, ${cssVar("--foreground-primary")})`;
-const darkBackground = `color-mix(in oklab, ${cssVar("--background-inverse")} 90%, ${cssVar("--background-primary")})`;
+const neutralBackground = `color-mix(in oklab, ${cssVar("--background-primary")} 86%, ${cssVar("--foreground-primary")})`;
 const disabledBackground = `color-mix(in oklab, ${cssVar("--background-primary")} 92%, ${cssVar("--foreground-primary")})`;
+const chromaticHoverOverlay = `oklch(from ${cssVar("--foreground-on-accent")} 0 0 h / 6.2745%)`;
+const chromaticPressedOverlay = `oklch(from ${cssVar("--foreground-on-accent")} 0 0 h / 10.9804%)`;
 
 const backgrounds: Record<ButtonColor, string> = {
   primary: cssVar("--background-accent"),
   neutral: neutralBackground,
   "neutral-destructive": neutralBackground,
   destructive: cssVar("--background-negative"),
-  positive: cssVar("--background-positive"),
   ghost: "transparent",
-  dark: darkBackground,
-  gradient: `linear-gradient(135deg, ${cssVar("--background-accent")}, oklch(from ${cssVar("--background-accent")} l c calc(h + 72)))`,
-  "dark-ghost": "transparent",
 };
 
 const foregrounds: Record<ButtonColor, string> = {
   primary: cssVar("--foreground-on-accent"),
   destructive: cssVar("--foreground-on-negative"),
   "neutral-destructive": cssVar("--foreground-negative"),
-  positive: cssVar("--foreground-on-positive"),
   neutral: cssVar("--foreground-primary"),
   ghost: cssVar("--foreground-primary"),
-  dark: cssVar("--foreground-on-inverse"),
-  gradient: cssVar("--foreground-on-accent"),
-  "dark-ghost": cssVar("--foreground-on-inverse"),
 };
 
 const withOverlay = (overlay: string, background: string) =>
   `linear-gradient(${overlay}, ${overlay}), ${background}`;
 
 const perColorStyle = (variant: ButtonColor) => {
-  const isInverse = variant === "dark" || variant === "dark-ghost";
-  const isTransparent = variant === "ghost" || variant === "dark-ghost";
-  const isGradient = variant === "gradient";
-  const hoverOverlay = isInverse
-    ? cssVar("--overlay-on-inverse-hover")
-    : cssVar("--overlay-interaction-hover");
-  const pressedOverlay = isInverse
-    ? cssVar("--overlay-on-inverse-pressed")
-    : cssVar("--overlay-interaction-pressed");
+  const isTransparent = variant === "ghost";
+  const isChromatic = variant === "primary" || variant === "destructive";
+  let hoverOverlay = cssVar("--overlay-interaction-hover");
+  let pressedOverlay = cssVar("--overlay-interaction-pressed");
+  if (isChromatic) {
+    hoverOverlay = chromaticHoverOverlay;
+    pressedOverlay = chromaticPressedOverlay;
+  }
 
   return {
     background: backgrounds[variant],
-    color:
-      variant === "dark-ghost"
-        ? cssVar("--foreground-secondary")
-        : foregrounds[variant],
+    color: foregrounds[variant],
 
     "&[data-state=auto]:hover, &[data-state=hover]": {
       color: foregrounds[variant],
       background: isTransparent
         ? hoverOverlay
-        : isGradient
-          ? withOverlay(hoverOverlay, backgrounds[variant])
-          : `oklch(from ${backgrounds[variant]} l c h / 0.8)`,
+        : withOverlay(hoverOverlay, backgrounds[variant]),
     },
 
     "&[data-state=auto]:focus-visible, &[data-state=focus]": {
@@ -99,9 +82,7 @@ const perColorStyle = (variant: ButtonColor) => {
       color: foregrounds[variant],
       background: isTransparent
         ? pressedOverlay
-        : isGradient
-          ? withOverlay(pressedOverlay, backgrounds[variant])
-          : `oklch(from ${backgrounds[variant]} l c h / 0.8)`,
+        : withOverlay(pressedOverlay, backgrounds[variant]),
     },
 
     "&:disabled:not([data-state=pending]), &[data-state=disabled], &[aria-disabled=true], &[aria-disabled=true]:hover, &[aria-disabled=true]:visited":
@@ -135,12 +116,8 @@ export const buttonStyle = css({
       primary: perColorStyle("primary"),
       destructive: perColorStyle("destructive"),
       "neutral-destructive": perColorStyle("neutral-destructive"),
-      positive: perColorStyle("positive"),
       neutral: perColorStyle("neutral"),
       ghost: perColorStyle("ghost"),
-      dark: perColorStyle("dark"),
-      gradient: perColorStyle("gradient"),
-      "dark-ghost": perColorStyle("dark-ghost"),
     },
   },
 

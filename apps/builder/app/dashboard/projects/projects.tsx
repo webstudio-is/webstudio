@@ -148,11 +148,10 @@ export const Projects = (props: ProjectsProps) => {
           </ToggleGroup>
           <SortSelect value={sortState} onValueChange={handleSortChange} />
           <Link
-            className={buttonStyle({ color: "dark" })}
+            className={buttonStyle({ color: "neutral" })}
             underline="none"
             href="https://webstudio.is/marketplace/templates/"
             target="_blank"
-            color="contrast"
           >
             Use template
           </Link>

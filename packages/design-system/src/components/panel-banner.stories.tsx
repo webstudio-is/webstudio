@@ -33,8 +33,7 @@ export const PanelBanner = () => {
               to add unlimited domains.
             </Text>
             <Link
-              className={buttonStyle({ color: "gradient" })}
-              color="contrast"
+              className={buttonStyle({ color: "primary" })}
               underline="none"
               href="https://webstudio.is/pricing"
               target="_blank"

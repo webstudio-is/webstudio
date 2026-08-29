@@ -23,7 +23,7 @@
     width="3"
     height="3"
     rx="1.5"
-    fill="white"
+    fill="currentColor"
     stroke="currentColor"
   />
 </svg>

@@ -11,6 +11,7 @@ import {
   type CSS,
   Tooltip,
   Kbd,
+  cssVar,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { isPage, isPageTemplate } from "@webstudio-is/sdk";
@@ -39,19 +40,14 @@ import { SafeModeButton } from "~/builder/features/safe-mode";
 import { NotificationPopover } from "~/shared/notifications/notification-popover";
 import { $notifications } from "~/shared/notifications/subscription";
 import { getPageDisplayName } from "~/builder/features/pages/page-utils";
-import {
-  builderChromeBackground,
-  builderChromeForeground,
-} from "./color-recipes";
-
 const topbarContainerStyle = css({
   position: "relative",
   display: "flex",
   justifyContent: "space-between",
-  background: builderChromeBackground,
+  background: cssVar("--background-primary"),
   height: theme.spacing[15],
   paddingRight: theme.panel.paddingInline,
-  color: builderChromeForeground,
+  color: cssVar("--foreground-primary"),
 });
 
 type TopbarLayoutProps = Omit<ComponentProps<"nav">, "className"> & {

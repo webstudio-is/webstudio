@@ -48,7 +48,7 @@ const Container = styled("button", {
       },
       preset: {
         color: cssVar("--foreground-primary"),
-        backgroundColor: cssVar("--background-secondary"),
+        backgroundColor: cssVar("--border-default"),
       },
       remote: {
         color: styleSourceColors.remote.foreground,

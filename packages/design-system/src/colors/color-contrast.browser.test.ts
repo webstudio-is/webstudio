@@ -50,7 +50,7 @@ const legacyLightColors = {
   "--foreground-warning": "#786a00",
   "--foreground-informative": "#016ccc",
   "--border-default": "#e6e6e6",
-  "--border-focus": "#096cff",
+  "--border-focus": "#3c86ff",
   "--border-negative": "#d13a3a",
   "--border-warning": "#f5d90a",
   "--border-informative": "#b7d9f8",
@@ -109,6 +109,33 @@ describe("Craft color contrast", () => {
       } else {
         root.setAttribute("data-color-scheme", previousMode);
       }
+    }
+  });
+
+  test("dark focus borders preserve accent color instead of using accent text", () => {
+    const root = document.documentElement;
+    const previousMode = root.getAttribute("data-color-scheme");
+    root.dataset.colorScheme = "dark";
+
+    try {
+      expect(Array.from(readColor("--border-focus"))).not.toEqual(
+        Array.from(readColor("--foreground-accent"))
+      );
+    } finally {
+      if (previousMode === null) {
+        root.removeAttribute("data-color-scheme");
+      } else {
+        root.setAttribute("data-color-scheme", previousMode);
+      }
+    }
+  });
+
+  test("default focus borders stay close to the required contrast", () => {
+    for (const mode of ["light", "dark"] as const) {
+      const focus = getColorContrast(mode).find(
+        ({ foreground }) => foreground === "--border-focus"
+      );
+      expect(focus?.ratio, mode).toBeLessThanOrEqual(3.5);
     }
   });
 

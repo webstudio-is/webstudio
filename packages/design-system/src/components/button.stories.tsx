@@ -5,7 +5,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Text } from "./text";
 import { StorySection, StoryGrid } from "./storybook";
 import { theme } from "../stitches.config";
-import { cssVar } from "../css-var";
 
 export default {
   title: "Button",
@@ -16,11 +15,7 @@ const colors: ReadonlyArray<ComponentProps<typeof ButtonComponent>["color"]> = [
   "neutral",
   "destructive",
   "neutral-destructive",
-  "positive",
   "ghost",
-  "dark",
-  "gradient",
-  "dark-ghost",
 ];
 
 const states: ReadonlyArray<ComponentProps<typeof ButtonComponent>["state"]> = [
@@ -36,18 +31,7 @@ export const Button = () => (
     <StorySection title="Colors & States">
       <StoryGrid>
         {colors.map((color) => (
-          <StoryGrid
-            horizontal
-            key={color}
-            css={
-              color === "dark-ghost"
-                ? {
-                    backgroundColor: cssVar("--background-inverse"),
-                    padding: 8,
-                  }
-                : undefined
-            }
-          >
+          <StoryGrid horizontal key={color}>
             {states.map((state) => (
               <ButtonComponent
                 prefix={<TrashIcon />}

@@ -49,7 +49,7 @@ const DialogDemo = () => (
               <Button color="ghost">Cancel</Button>
             </DialogClose>
             <DialogClose>
-              <Button color="positive">Save</Button>
+              <Button color="primary">Save</Button>
             </DialogClose>
           </div>
         </div>
@@ -130,7 +130,7 @@ export const WithActions = () => (
         </div>
         <DialogActions>
           <DialogClose>
-            <Button color="positive">Save</Button>
+            <Button color="primary">Save</Button>
           </DialogClose>
           <DialogClose>
             <Button color="ghost">Cancel</Button>

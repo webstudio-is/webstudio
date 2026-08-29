@@ -19,7 +19,45 @@ const getHashedPrefix = (path?: string) => {
   return hash;
 };
 
+const multicolorIconFiles = new Set([
+  "./icons/bell-dot.svg",
+  "./icons/spinner.svg",
+  "./icons/webstudio.svg",
+  "./icons/x-circled-filled.svg",
+]);
+
+const validatePaintsPlugin: NonNullable<Config["plugins"]>[number] = {
+  name: "validateCurrentColor",
+  fn: (_root, _params, info) => {
+    if (info.path !== undefined && multicolorIconFiles.has(info.path)) {
+      return null;
+    }
+
+    return {
+      element: {
+        enter: (node) => {
+          for (const attribute of ["fill", "stroke", "stop-color"]) {
+            const value = node.attributes[attribute];
+            if (
+              value === undefined ||
+              value === "none" ||
+              value === "currentColor" ||
+              value.startsWith("url(")
+            ) {
+              continue;
+            }
+            throw new Error(
+              `${info.path ?? "SVG"} uses ${attribute}="${value}"; monochrome icons must use currentColor`
+            );
+          }
+        },
+      },
+    };
+  },
+};
+
 const sharedPlugins: Config["plugins"] = [
+  validatePaintsPlugin,
   {
     name: "preset-default",
     params: {

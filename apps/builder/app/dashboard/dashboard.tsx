@@ -322,12 +322,11 @@ export const Dashboard = () => {
               </Text>
               <Link
                 className={buttonStyle({
-                  color: "gradient",
+                  color: "primary",
                 })}
                 underline="none"
                 href="https://wstd.us/inception"
                 target="_blank"
-                color="contrast"
               >
                 Get started with Inception
               </Link>

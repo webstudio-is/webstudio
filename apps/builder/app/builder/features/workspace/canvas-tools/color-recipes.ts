@@ -1,4 +1,7 @@
-import { cssVar } from "@webstudio-is/design-system";
+import {
+  cssVar,
+  rotateBoundedBackgroundHue,
+} from "@webstudio-is/design-system";
 
 const accent = cssVar("--background-accent");
 
@@ -8,6 +11,6 @@ export const canvasToolColors = {
   selection: accent,
   selectionTranslucent: `oklch(from ${accent} l c h / 0.7)`,
   selectionSubtle: `color-mix(in oklab, ${accent} 12%, transparent)`,
-  slot: `oklch(from ${accent} l c calc(h + 55))`,
+  slot: rotateBoundedBackgroundHue(accent, 55),
   onSelection: cssVar("--foreground-on-accent"),
 } as const;

@@ -8,7 +8,6 @@ import {
   Tooltip,
   Link,
   Box,
-  cssVar,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -25,7 +24,7 @@ import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
 import { brandColors } from "~/shared/brand-colors";
 
-const infoIconStyle = css({ flexShrink: 0 });
+const infoIconStyle = css({ flexShrink: 0, opacity: 0.8 });
 
 const PublishedLink = ({
   domain,
@@ -201,11 +200,7 @@ export const ProjectCard = ({
                 </Text>
               }
             >
-              <InfoCircleIcon
-                color={cssVar("--foreground-secondary")}
-                tabIndex={-1}
-                className={infoIconStyle()}
-              />
+              <InfoCircleIcon tabIndex={-1} className={infoIconStyle()} />
             </Tooltip>
           </Flex>
           {isPublished ? (

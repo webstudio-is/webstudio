@@ -4,6 +4,9 @@
 colors. Do not edit files in `__generated__/` directly; generated files contain
 types only.
 
+Each application must load `@webstudio-is/design-system/colors.css` once at its
+UI root. Design-system component imports do not inject global styles.
+
 The implementation follows the public
 [Craft specification](https://docs.webstudio.is/university/craft): bounded theme
 parameters flow through a relative color recipe into semantic colors and
@@ -11,22 +14,18 @@ finally composite component styles.
 
 ## Architecture
 
-The CSS source contains three layers:
+The CSS source implements Craft's three conceptual layers:
 
-1. Nine public `--theme-*` parameters describe the theme.
-2. Derived `--color-*` values normalize those parameters for the active color
-   scheme.
-3. Semantic foreground, background, border, and overlay colors describe the
+1. The theme layer contains nine public `--theme-*` parameters and private
+   `--color-*` derivations that normalize them for the active color scheme.
+2. Semantic foreground, background, border, and overlay colors describe the
    reusable decisions consumed by components.
+3. Components compose those semantic colors into reusable styles.
 
 Components consume only semantic colors with `cssVar()`. Colors are not copied
 into the Stitches theme, and components cannot access theme parameters or
-derivation values through the generated public type.
-
-The existing Stitches color scale remains unchanged only for the Builder's
-later atomic migration. It is a separate temporary boundary, not a mapping or
-fallback for Craft colors. Design-system components and story chrome do not
-consume it.
+derivation values through the generated public type. The legacy Stitches color
+scale has been removed rather than retained through compatibility aliases.
 
 Changing a theme parameter updates both color schemes. Dark mode changes
 scheme derivation bounds rather than maintaining a second theme or semantic

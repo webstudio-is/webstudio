@@ -611,7 +611,7 @@ export const ManageMembersDialog = ({
                   </Text>
                   <Flex gap="2">
                     <Button
-                      color="dark"
+                      color="primary"
                       onClick={handleSyncSeats}
                       state={
                         syncSeatsMutation.state !== "idle"

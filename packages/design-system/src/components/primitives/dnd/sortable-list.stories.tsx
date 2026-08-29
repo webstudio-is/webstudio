@@ -15,10 +15,14 @@ import type { Placement } from "./geometry-utils";
 
 type ItemData = { id: string; text: string };
 
+const listItemBackground = `color-mix(in oklab, ${cssVar(
+  "--foreground-secondary"
+)} 55%, ${cssVar("--background-primary")})`;
+
 const ListItem = styled("li", {
   display: "block",
   margin: 10,
-  background: cssVar("--background-secondary"),
+  background: listItemBackground,
   padding: 10,
   userSelect: "none",
 });

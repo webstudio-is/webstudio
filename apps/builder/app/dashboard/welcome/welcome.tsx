@@ -25,11 +25,10 @@ export const Welcome = ({
 
         <Flex align="center" gap="3">
           <Link
-            className={buttonStyle({ color: "dark" })}
+            className={buttonStyle({ color: "neutral" })}
             underline="none"
             href="https://webstudio.is/marketplace/templates/"
             target="_blank"
-            color="contrast"
           >
             Start from a template
           </Link>

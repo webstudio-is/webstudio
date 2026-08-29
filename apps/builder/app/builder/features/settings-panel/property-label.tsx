@@ -166,7 +166,7 @@ export const PropertyLabel = ({
               )}
               {canDelete && (
                 <Button
-                  color="dark"
+                  color="neutral-destructive"
                   // to align button text in the middle
                   prefix={<div></div>}
                   suffix={<Kbd value={["alt", "click"]} color="moreSubtle" />}
@@ -255,7 +255,7 @@ export const FieldLabel = ({
               {description}
               {canReset && (
                 <Button
-                  color="dark"
+                  color="neutral-destructive"
                   // to align button text in the middle
                   prefix={<div></div>}
                   suffix={<Kbd value={["alt", "click"]} color="moreSubtle" />}

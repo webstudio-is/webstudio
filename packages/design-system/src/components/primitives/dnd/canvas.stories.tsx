@@ -13,6 +13,9 @@ import { cssVar } from "../../../css-var";
 import type { Placement } from "./geometry-utils";
 
 const ROOT_ID = "root";
+const canvasItemBackground = `color-mix(in oklab, ${cssVar(
+  "--background-primary"
+)} 93%, ${cssVar("--foreground-primary")})`;
 
 type ItemData = {
   id: string;
@@ -36,7 +39,7 @@ const Item = ({
         minHeight: 100,
         margin: 10,
         padding: 10,
-        background: cssVar("--background-secondary"),
+        background: canvasItemBackground,
         border: `1px solid ${cssVar("--border-default")}`,
       }}
       style={data.style}

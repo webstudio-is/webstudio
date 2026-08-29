@@ -15,9 +15,8 @@ export const CloneButton = () => {
     <Link
       data-state="auto"
       className={buttonStyle({
-        color: "positive",
+        color: "neutral",
       })}
-      color="contrast"
       href={cloneProjectUrl({
         origin: window.origin,
         sourceAuthToken: authToken,

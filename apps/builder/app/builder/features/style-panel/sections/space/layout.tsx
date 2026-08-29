@@ -44,7 +44,7 @@ const emulateInnerStroke = ({
 });
 
 const ValueArea = styled("path", {
-  fill: cssVar("--background-secondary"),
+  fill: cssVar("--background-disabled"),
   variants: {
     side: {
       top: { cursor: "n-resize" },
@@ -60,7 +60,9 @@ const ValueArea = styled("path", {
     },
     isActive: {
       true: {
-        fill: cssVar("--overlay-interaction-hover"),
+        fill: `color-mix(in oklab, ${cssVar(
+          "--background-primary"
+        )} 88%, ${cssVar("--foreground-primary")})`,
       },
     },
   },

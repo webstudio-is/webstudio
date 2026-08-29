@@ -1,5 +1,4 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import "../colors/colors.css";
 import colorSourceCss from "../colors/colors.css?raw";
 import {
   colorContrastContractCount,

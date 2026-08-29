@@ -231,10 +231,10 @@ export const SplitView = ({
           renderedStartSize !== undefined
             ? `minmax(0, ${renderedStartSize}px) ${separatorWidth}px minmax(0, 1fr)`
             : sizeUnitRef.current === "px"
-            ? `minmax(0, ${size}px) ${separatorWidth}px minmax(0, 1fr)`
-            : `minmax(0, ${size / 100}fr) ${separatorWidth}px minmax(0, ${
-                1 - size / 100
-              }fr)`,
+              ? `minmax(0, ${size}px) ${separatorWidth}px minmax(0, 1fr)`
+              : `minmax(0, ${size / 100}fr) ${separatorWidth}px minmax(0, ${
+                  1 - size / 100
+                }fr)`,
       }}
     >
       <Box className={paneStyle()}>{start}</Box>
@@ -260,7 +260,7 @@ export const SplitView = ({
         }
         aria-valuenow={Math.round(
           sizeUnitRef.current === "px"
-            ? renderedStartSize ?? size
+            ? (renderedStartSize ?? size)
             : renderedPercentage
         )}
         tabIndex={0}

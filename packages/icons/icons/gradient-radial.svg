@@ -18,8 +18,8 @@
       gradientUnits="userSpaceOnUse"
       gradientTransform="translate(8 8) rotate(135) scale(8.48528)"
     >
-      <stop stop-color="#11181C" />
-      <stop offset="1" stop-color="#11181C" stop-opacity="0" />
+      <stop stop-color="currentColor" />
+      <stop offset="1" stop-color="currentColor" stop-opacity="0" />
     </radialGradient>
   </defs>
 </svg>

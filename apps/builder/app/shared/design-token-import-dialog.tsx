@@ -93,7 +93,7 @@ export const DesignTokenImportDialog = () => {
           />
         </Flex>
         <DialogActions>
-          <Button autoFocus color="positive" onClick={() => finish(target)}>
+          <Button autoFocus color="primary" onClick={() => finish(target)}>
             Import
           </Button>
           <Button color="ghost" onClick={() => finish("cancel")}>

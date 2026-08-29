@@ -17,6 +17,10 @@ const withInteractionOverlay = (background: string) =>
     "--overlay-interaction-hover"
   )}), ${background}`;
 
+const presetBackground = `color-mix(in oklab, ${cssVar(
+  "--background-primary"
+)} 90.58%, ${cssVar("--foreground-primary")})`;
+
 const overwrittenBackground = `color-mix(in oklab, ${cssVar(
   "--background-negative"
 )} 19.68%, ${cssVar("--background-primary")})`;
@@ -85,13 +89,11 @@ export const IconButton = styled("button", {
         // only the default variant has different toggle state
         // https://www.radix-ui.com/docs/primitives/components/toggle#root
         "&[data-state=on]": {
-          backgroundColor: cssVar("--background-secondary"),
+          backgroundColor: presetBackground,
           borderColor: cssVar("--border-default"),
 
           "&:hover, &[data-hovered=true]": {
-            background: withInteractionOverlay(
-              cssVar("--background-secondary")
-            ),
+            background: withInteractionOverlay(presetBackground),
           },
         },
         "&[data-focused=true], &:focus-visible": {
@@ -101,11 +103,11 @@ export const IconButton = styled("button", {
       },
 
       preset: {
-        backgroundColor: cssVar("--background-secondary"),
+        backgroundColor: presetBackground,
         borderColor: cssVar("--border-default"),
         color: cssVar("--foreground-primary"),
         "&:hover, &[data-hovered=true]": {
-          background: withInteractionOverlay(cssVar("--background-secondary")),
+          background: withInteractionOverlay(presetBackground),
         },
         ...disabledVariantStyles,
       },

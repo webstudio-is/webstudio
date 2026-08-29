@@ -1,7 +1,6 @@
 import { createStitches } from "@stitches/react";
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
-import "./colors/colors.css";
 import * as tokens from "./design-tokens";
 
 const spacing = {

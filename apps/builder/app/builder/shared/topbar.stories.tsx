@@ -87,8 +87,8 @@ export const TopbarLayouts = () => {
           center={<BreakpointsPlaceholder />}
           right={
             <>
-              <Button color="gradient">Share</Button>
-              <Button color="positive">Publish</Button>
+              <Button color="neutral">Share</Button>
+              <Button color="primary">Publish</Button>
             </>
           }
         />
@@ -102,12 +102,11 @@ export const TopbarLayouts = () => {
               <SafeModeIndicator />
               <ViewModeIndicator />
               <SyncErrorIndicator />
-              <Button color="gradient">Share</Button>
-              <Button color="positive">Publish</Button>
+              <Button color="neutral">Share</Button>
+              <Button color="primary">Publish</Button>
               <Link
                 data-state="auto"
-                className={buttonStyle({ color: "positive" })}
-                color="contrast"
+                className={buttonStyle({ color: "neutral" })}
                 href="#"
                 underline="none"
               >
@@ -126,8 +125,8 @@ export const TopbarLayouts = () => {
           right={
             <>
               <SyncStatus />
-              <Button color="gradient">Share</Button>
-              <Button color="positive">Publish</Button>
+              <Button color="neutral">Share</Button>
+              <Button color="primary">Publish</Button>
             </>
           }
         />
@@ -139,8 +138,8 @@ export const TopbarLayouts = () => {
           right={
             <>
               <ViewMode />
-              <Button color="gradient">Share</Button>
-              <Button color="positive">Publish</Button>
+              <Button color="neutral">Share</Button>
+              <Button color="primary">Publish</Button>
             </>
           }
         />

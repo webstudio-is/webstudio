@@ -14,6 +14,7 @@ import {
 import "@fontsource-variable/inter";
 import "@fontsource-variable/manrope";
 import "@fontsource/roboto-mono";
+import "../packages/design-system/src/colors/colors.css";
 
 const themeTestCases = {
   default: {},
@@ -79,7 +80,7 @@ const ThemeGlobals = ({
       document.body.style.getPropertyPriority("background-color");
     const previousBodyColor = document.body.style.color;
     const previousTheme = new Map(
-      themeVariableNames.map((name) => [
+      Array.from(themeVariableNames, (name) => [
         name,
         root.style.getPropertyValue(name),
       ])

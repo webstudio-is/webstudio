@@ -28,7 +28,7 @@ export const StyleSourceBadge = styled(Text, {
         backgroundColor: styleSourceColors.breakpoint.background,
       },
       instance: {
-        backgroundColor: cssVar("--background-secondary"),
+        backgroundColor: styleSourceColors.instance.background,
         color: cssVar("--foreground-primary"),
       },
     },

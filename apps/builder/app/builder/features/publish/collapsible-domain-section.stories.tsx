@@ -292,29 +292,29 @@ export const PublishButton = () => (
   <StorySection title="Publish Button">
     <Flex direction="column" gap="3" css={{ width: theme.spacing[33] }}>
       <Text variant="labels">Ready to publish</Text>
-      <Button color="positive" css={{ width: "100%" }}>
+      <Button color="primary" css={{ width: "100%" }}>
         Publish
       </Button>
 
       <Text variant="labels">Publishing with countdown</Text>
-      <Button color="positive" css={{ width: "100%" }}>
+      <Button color="primary" css={{ width: "100%" }}>
         Publishing (45s)
       </Button>
 
       <Text variant="labels">Publishing (pending)</Text>
-      <Button color="positive" state="pending" css={{ width: "100%" }}>
+      <Button color="primary" state="pending" css={{ width: "100%" }}>
         Publish
       </Button>
 
       <Text variant="labels">No domains selected</Text>
       <Tooltip content="Select at least one domain to publish">
-        <Button color="positive" disabled css={{ width: "100%" }}>
+        <Button color="primary" disabled css={{ width: "100%" }}>
           Publish
         </Button>
       </Tooltip>
 
       <Text variant="labels">Disabled (restricted features)</Text>
-      <Button color="positive" disabled css={{ width: "100%" }}>
+      <Button color="primary" disabled css={{ width: "100%" }}>
         Publish
       </Button>
 
@@ -323,7 +323,7 @@ export const PublishButton = () => (
         <Text color="destructive">
           Build timed out after 3 minutes. Please try again.
         </Text>
-        <Button color="positive" css={{ width: "100%" }}>
+        <Button color="primary" css={{ width: "100%" }}>
           Publish
         </Button>
       </Flex>
@@ -341,8 +341,7 @@ export const UpgradeBanners = () => (
           Upgrade to publish more than 1 time per day:
         </Text>
         <Link
-          className={buttonStyle({ color: "gradient" })}
-          color="contrast"
+          className={buttonStyle({ color: "primary" })}
           underline="none"
           href="#"
         >
@@ -490,7 +489,7 @@ export const PublishDialogLayout = () => (
       </Flex>
 
       <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
-        <Button color="positive">Publish</Button>
+        <Button color="primary">Publish</Button>
       </Flex>
     </Flex>
   </StorySection>
@@ -619,7 +618,7 @@ export const ExportStaticLayout = () => (
             />
           </Grid>
 
-          <Button color="positive">Build and download static site</Button>
+          <Button color="primary">Build and download static site</Button>
           <Text color="subtle">
             Learn about deploying static sites{" "}
             <Link variant="inherit" color="inherit" href="#">

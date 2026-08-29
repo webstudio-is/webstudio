@@ -90,12 +90,7 @@ export const ErrorMessage = ({
             </Text>
           )}
         </Grid>
-        <Link
-          href="/"
-          className={buttonStyle()}
-          color="contrast"
-          underline="none"
-        >
+        <Link href="/" className={buttonStyle()} underline="none">
           Go Home
         </Link>
       </Grid>
