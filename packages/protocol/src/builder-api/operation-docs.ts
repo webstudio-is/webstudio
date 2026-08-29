@@ -831,7 +831,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-asset-content",
     description:
-      "Replace a text asset's content or extension while preserving its stable asset id; provide exactly one of path or content and use the current asset name as expectedName. MDX writes preserve the submitted source and return source-located diagnostics without rejecting invalid syntax",
+      "Replace a text Asset's content or extension without changing its ID. Provide path or content and its current name as expectedName. Invalid MDX is saved with diagnostics",
     examples: [
       `MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.json","content":"{theme:'dark'}"}`,
       `MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.md","extension":"json","content":"{theme:'dark'}"}`,

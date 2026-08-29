@@ -1686,7 +1686,7 @@ const importInputSchema = {
 const downloadAssetInputSchema = {
   ...emptyInputSchema,
   description:
-    "Download one project asset to the local filesystem and return its absolute path. MDX Assets also return exact source and diagnostics.",
+    "Download one project Asset. MDX results also include source and diagnostics.",
   properties: {
     assetId: {
       type: "string",
@@ -3362,7 +3362,7 @@ const importTool = createProjectSessionMcpTool({
 const downloadAssetTool = createProjectSessionMcpTool({
   name: "download-asset",
   description:
-    "Download one project asset into .webstudio/assets or a specified directory and return its local path. MDX Assets also return exact source and source-located diagnostics.",
+    "Download one project Asset. MDX includes source and diagnostics.",
   inputSchema: downloadAssetInputSchema,
   outputSchema: getMcpOutputSchema({
     type: "object",
