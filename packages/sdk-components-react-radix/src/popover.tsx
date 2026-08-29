@@ -83,6 +83,7 @@ export const PopoverContent = forwardRef<
           {...props}
           onClickCapture={(event) => {
             onClickCapture?.(event);
+            // Preview mirrors the published site; Canvas stays open for editing.
             if (renderer !== "canvas" && getLinkActivation(event)) {
               close?.();
             }

@@ -82,6 +82,8 @@ export const NavigationMenuContent = forwardRef<
       onClickCapture={(event) => {
         onClickCapture?.(event);
         const anchor = getLinkActivation(event);
+        // Preview mirrors the published site; Canvas stays open for editing.
+        // Radix NavigationMenuLink dismisses itself; plain anchors do not.
         if (
           renderer !== "canvas" &&
           anchor !== undefined &&
@@ -109,6 +111,9 @@ export const NavigationMenuLink = forwardRef<
   ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Link>
 >(({ children, onClickCapture, onSelect, ...props }, ref) => {
   const firstChild = Children.toArray(children)[0];
+  // Radix only preserves the menu for Meta-clicks. Remember the browser-like
+  // activation decision so its custom select event can also preserve the menu
+  // for other modifiers, downloads, and links targeting another context.
   const shouldDismissRef = useRef(false);
 
   return (
@@ -124,6 +129,7 @@ export const NavigationMenuLink = forwardRef<
       onSelect={(event) => {
         onSelect?.(event);
         if (shouldDismissRef.current === false) {
+          // This cancels Radix's custom dismissal event, not native navigation.
           event.preventDefault();
         }
       }}

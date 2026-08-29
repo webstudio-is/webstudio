@@ -33,6 +33,8 @@ export const getLinkActivation = (event: LinkActivationEvent) => {
     return;
   }
 
+  // An anchor without target inherits the first document-level <base target>.
+  // HTMLAnchorElement.target only exposes the anchor's own attribute.
   const target =
     anchor.getAttribute("target") ??
     anchor.ownerDocument
@@ -41,6 +43,8 @@ export const getLinkActivation = (event: LinkActivationEvent) => {
     null;
   const targetKeyword = target?.toLowerCase();
   const currentWindow = anchor.ownerDocument.defaultView;
+  // _parent and _top reuse the current context only at the top level. A named
+  // target does so only when it names the current window.
   const targetsCurrentContext =
     target === null ||
     target === "" ||

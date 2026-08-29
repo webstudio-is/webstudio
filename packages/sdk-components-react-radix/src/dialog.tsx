@@ -85,6 +85,8 @@ export const DialogContent = forwardRef<
   HTMLDivElement,
   ComponentProps<typeof DialogPrimitive.Content>
 >(({ onClickCapture, onCloseAutoFocus, ...props }, ref) => {
+  // Hash navigation keeps the page alive, so restoring focus to the trigger
+  // would pull focus away from the newly selected section.
   const preventAutoFocusOnClose = useRef(false);
   const { renderer } = useContext(ReactSdkContext);
   const close = useNavigationOverlay();
@@ -95,6 +97,7 @@ export const DialogContent = forwardRef<
       {...props}
       onClickCapture={(event) => {
         onClickCapture?.(event);
+        // Preview mirrors the published site; Canvas stays open for editing.
         if (renderer !== "canvas" && getLinkActivation(event)) {
           preventAutoFocusOnClose.current = true;
           close?.();
