@@ -482,17 +482,26 @@ export const parseStringLiteralExpression = (expression: string) => {
   }
 };
 
-const getStaticMemberPath = (node: Expression): string[] | undefined => {
+const getStaticMemberPath = (
+  node: Expression,
+  allowOptional = true
+): string[] | undefined => {
   if (node.type === "Identifier") {
     return [node.name];
   }
   if (node.type === "ChainExpression") {
-    return getStaticMemberPath(node.expression);
+    return allowOptional
+      ? getStaticMemberPath(node.expression, allowOptional)
+      : undefined;
   }
-  if (node.type !== "MemberExpression" || node.object.type === "Super") {
+  if (
+    node.type !== "MemberExpression" ||
+    node.object.type === "Super" ||
+    (allowOptional === false && node.optional)
+  ) {
     return;
   }
-  const objectPath = getStaticMemberPath(node.object);
+  const objectPath = getStaticMemberPath(node.object, allowOptional);
   if (objectPath === undefined) {
     return;
   }
@@ -508,11 +517,42 @@ const getStaticMemberPath = (node: Expression): string[] | undefined => {
   return propertyName === undefined ? undefined : [...objectPath, propertyName];
 };
 
+/**
+ * An expression containing only an identifier and statically known member
+ * access. Unlike an arbitrary expression, it identifies one data location.
+ * The owner of that location must still explicitly support write-back before
+ * callers may treat it as writable.
+ */
+export type DirectPathExpression = Readonly<{
+  type: "direct-path";
+  expression: string;
+  path: readonly [root: string, ...segments: string[]];
+}>;
+
+export const parseDirectPathExpression = (
+  expression: string
+): DirectPathExpression | undefined => {
+  try {
+    const node = parseCompleteExpression(expression);
+    const path = getStaticMemberPath(node, false);
+    if (path === undefined || path.length === 0) {
+      return;
+    }
+    return {
+      type: "direct-path",
+      expression,
+      path: path as [string, ...string[]],
+    };
+  } catch {
+    return;
+  }
+};
+
 /** Parse an identifier/member expression whose complete property path is static. */
 export const parseStaticMemberPath = (expression: string) => {
   try {
-    const node = parseCompleteExpression(expression);
-    return getStaticMemberPath(node);
+    const path = getStaticMemberPath(parseCompleteExpression(expression));
+    return path === undefined || path.length === 0 ? undefined : path;
   } catch {
     return;
   }

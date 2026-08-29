@@ -1,7 +1,9 @@
 import {
   getContentArtifactRuntimeAssetIds,
   type ContentCompilationPlan,
+  type ContentArtifactV1,
 } from "@webstudio-is/content-engine";
+import { serializeJsonDeterministically } from "@webstudio-is/content-engine/compiler";
 import type { Asset } from "@webstudio-is/sdk";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { PostgresAssetRepository } from "./asset-repository";
@@ -23,6 +25,7 @@ export const preparePublishedAssetData = async (
     contentDatabaseMaxBytes,
     plan,
     retainedAssetIds,
+    resolvePlan,
   }: {
     projectId: string;
     context: AppContext;
@@ -30,6 +33,9 @@ export const preparePublishedAssetData = async (
     contentDatabaseMaxBytes: number;
     plan: ContentCompilationPlan;
     retainedAssetIds: Iterable<string>;
+    resolvePlan?: (
+      artifact: ContentArtifactV1
+    ) => ContentCompilationPlan | Promise<ContentCompilationPlan>;
   },
   dependencies = defaultDependencies
 ) => {
@@ -44,12 +50,34 @@ export const preparePublishedAssetData = async (
       projectId,
       context
     );
-    const artifact = await repository.prepareIndex(plan);
+    let artifact = await repository.prepareIndex(plan);
+    if (resolvePlan !== undefined) {
+      let resolvedPlan = await resolvePlan(artifact);
+      for (let dependencyPass = 0; dependencyPass < 20; dependencyPass += 1) {
+        artifact = await repository.prepareIndex(resolvedPlan);
+        const validatedPlan = await resolvePlan(artifact);
+        if (
+          serializeJsonDeterministically(resolvedPlan) ===
+          serializeJsonDeterministically(validatedPlan)
+        ) {
+          break;
+        }
+        if (dependencyPass === 19) {
+          throw new Error(
+            "Dynamic MDX dependency closure exceeds the safe publication depth"
+          );
+        }
+        resolvedPlan = validatedPlan;
+      }
+    }
     const assetDataAfter = await dependencies.loadAssetDataByProject(
       projectId,
       context
     );
-    if (JSON.stringify(assetDataBefore) !== JSON.stringify(assetDataAfter)) {
+    if (
+      serializeJsonDeterministically(assetDataBefore) !==
+      serializeJsonDeterministically(assetDataAfter)
+    ) {
       if (attempt === 0) {
         continue;
       }

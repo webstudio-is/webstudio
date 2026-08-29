@@ -3,7 +3,10 @@ import {
   deleteSelectedInstance,
   reparentInstance,
 } from "~/shared/instance-utils/mutation";
-import { sortInstancePathsForChildMutation } from "@webstudio-is/project-build/runtime";
+import {
+  canMoveInstanceInContentMode,
+  sortInstancePathsForChildMutation,
+} from "@webstudio-is/project-build/runtime";
 import { toggleInstanceShow } from "~/shared/instance-utils/mutation";
 import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import { toast } from "@webstudio-is/design-system";
@@ -30,6 +33,11 @@ import {
   toggleBuilderMode,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
+import {
+  externalContentInstanceNameMessage,
+  getExternalContentRoots,
+  isExternalContentInstance,
+} from "~/shared/external-content-mutations";
 
 // Declare command for type safety
 declare module "~/shared/pubsub" {
@@ -596,10 +604,12 @@ const getInstanceMoveTarget = (direction: InstanceMoveDirection) => {
 };
 
 const moveSelectedInstance = (direction: InstanceMoveDirection) => {
+  const isContentMode = $isContentMode.get();
   if (
-    guardDesignModeCommand({
+    guardDesignOrContentModeCommand({
+      isContentMode,
       isDesignMode: $isDesignMode.get(),
-      message: "Moving is only allowed in design mode.",
+      message: "Moving is only allowed in design or content mode.",
     }) === false
   ) {
     return;
@@ -612,6 +622,17 @@ const moveSelectedInstance = (direction: InstanceMoveDirection) => {
   const target = getInstanceMoveTarget(direction);
   if (target === undefined) {
     return;
+  }
+  if (isContentMode) {
+    if (
+      canMoveInstanceInContentMode({
+        instanceSelector: selectedItem.instanceSelector,
+        parentSelector: target.parentSelector,
+        instances: $instances.get(),
+      }) === false
+    ) {
+      return;
+    }
   }
   reparentInstance(selectedItem.instanceSelector, target);
 };
@@ -1019,6 +1040,15 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           return;
         }
         const [selectedItem] = instancePath;
+        if (
+          isExternalContentInstance(
+            getExternalContentRoots(),
+            selectedItem.instance.id
+          )
+        ) {
+          toast.info(externalContentInstanceNameMessage);
+          return;
+        }
         $editingItemSelector.set(selectedItem.instanceSelector);
       },
     },

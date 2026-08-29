@@ -96,9 +96,13 @@ const useIsResettable = (name: string) => {
 export const PropertyLabel = ({
   name,
   readOnly,
+  deletable = true,
+  onDelete,
 }: {
   name: string;
   readOnly?: boolean;
+  deletable?: boolean;
+  onDelete?: () => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const propMeta = usePropMeta(name);
@@ -109,7 +113,16 @@ export const PropertyLabel = ({
   const isResettable = useIsResettable(name);
   const isBindingResetForbidden = useIsBindingResetForbidden();
   const canDelete =
-    isDeletable && !(prop?.type === "expression" && isBindingResetForbidden);
+    deletable &&
+    isDeletable &&
+    !(prop?.type === "expression" && isBindingResetForbidden);
+  const handleDelete = () => {
+    if (onDelete === undefined) {
+      deleteProp(name);
+      return;
+    }
+    onDelete();
+  };
   return (
     <Flex align="center" css={{ gap: theme.spacing[3] }}>
       {/* prevent label growing */}
@@ -122,7 +135,7 @@ export const PropertyLabel = ({
               if (event.altKey) {
                 event.preventDefault();
                 if (canDelete) {
-                  deleteProp(name);
+                  handleDelete();
                 }
                 return;
               }
@@ -159,7 +172,7 @@ export const PropertyLabel = ({
                   suffix={<Kbd value={["alt", "click"]} color="moreSubtle" />}
                   css={{ gridTemplateColumns: "1fr max-content 1fr" }}
                   onClick={() => {
-                    deleteProp(name);
+                    handleDelete();
                     setIsOpen(false);
                   }}
                 >

@@ -3,7 +3,11 @@ import type { ByteSource } from "../byte-stream";
 import { contentEngineLimits } from "../limits";
 import { compareStrings } from "../canonical-json";
 import { compileDocumentGraph, type DocumentDescriptor } from "./compiler";
-import { analyzeDocumentSource, type DocumentFormat } from "./document-adapter";
+import {
+  analyzeDocumentSource,
+  getAdaptedDocumentProperties,
+} from "./document-adapter";
+import type { DocumentFormat } from "./document-format";
 import type { DocumentGraph } from "./graph";
 import type { SourceReferenceOccurrence } from "./reference-codec";
 
@@ -12,6 +16,12 @@ export type DocumentSourceDescriptor = DocumentDescriptor &
     format: DocumentFormat;
     source: ByteSource;
   }>;
+
+export const createDocumentSourceUrl = (path: string) =>
+  new URL(
+    path.split("/").map(encodeURIComponent).join("/"),
+    "https://content.webstudio.local/"
+  ).href;
 
 export type DocumentSourceCompilationErrorCode =
   | "REQUEST_CANCELLED"
@@ -57,6 +67,8 @@ export const compileDocumentSourceGraph = async ({
   concurrency = contentEngineLimits.concurrentContentReads,
   maximumBytes = contentEngineLimits.hydratedFileBytes,
   ignoredReferenceUrls,
+  ignoreReference,
+  onDocumentProperties,
   signal,
 }: {
   documents: readonly DocumentSourceDescriptor[];
@@ -64,6 +76,11 @@ export const compileDocumentSourceGraph = async ({
   concurrency?: number;
   maximumBytes?: number;
   ignoredReferenceUrls?: ReadonlySet<string>;
+  ignoreReference?: (occurrence: SourceReferenceOccurrence) => boolean;
+  onDocumentProperties?: (input: {
+    id: string;
+    properties: Readonly<Record<string, unknown>>;
+  }) => void;
   signal?: AbortSignal;
 }): Promise<DocumentGraph> => {
   assertActive(signal);
@@ -103,7 +120,10 @@ export const compileDocumentSourceGraph = async ({
             documentUrl: document.documentUrl,
             maximumBytes,
           });
-          return { document, references: result.references };
+          return {
+            document,
+            analyzedDocument: result,
+          };
         } catch (cause) {
           assertActive(signal);
           throw new DocumentSourceCompilationError({
@@ -115,12 +135,19 @@ export const compileDocumentSourceGraph = async ({
         }
       }
     );
-    for (const { document } of analyzed) {
+    for (const { document, analyzedDocument } of analyzed) {
       analyzedIds.add(document.id);
+      const properties = getAdaptedDocumentProperties(analyzedDocument);
+      if (properties !== undefined) {
+        onDocumentProperties?.({ id: document.id, properties });
+      }
     }
     for (const result of analyzed) {
-      for (const occurrence of result.references) {
-        if (ignoredReferenceUrls?.has(occurrence.reference.documentUrl)) {
+      for (const occurrence of result.analyzedDocument.references) {
+        if (
+          ignoredReferenceUrls?.has(occurrence.reference.documentUrl) ||
+          ignoreReference?.(occurrence) === true
+        ) {
           continue;
         }
         references.push(occurrence);

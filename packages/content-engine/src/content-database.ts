@@ -29,6 +29,7 @@ import {
   getAdaptedDocumentProperties,
   isDocumentGraphFieldAffected,
   getDocumentGraphQueryRootIds,
+  resolveAdaptedDocumentAssetReferences,
   selectDocumentGraphForQuery,
   type AdaptedDocument,
   type DocumentResolutionSession,
@@ -438,6 +439,12 @@ const createQueryableContentDatabase = ({
       rootIds,
       onEvent,
       allowUnresolvedReferences: true,
+      transformDocument: ({ node, document }) =>
+        resolveAdaptedDocumentAssetReferences({
+          document,
+          references: artifact.assetValueReferences?.[node.id],
+          runtimeAssets,
+        }),
     });
     const documents = replaceResolvedRootProperties({
       rootIds,

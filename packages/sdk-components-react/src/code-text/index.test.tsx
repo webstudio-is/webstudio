@@ -21,10 +21,11 @@ test("renders highlighted HAST inside the semantic code root", () => {
   const markup = renderToStaticMarkup(
     <HighlightedCodeText
       className="custom-code"
-      code="const answer = 42;"
       language="javascript"
       theme="github-light"
-    />
+    >
+      const answer = 42;
+    </HighlightedCodeText>
   );
 
   expect(markup).toMatch(/^<code/);
@@ -38,9 +39,22 @@ test("renders highlighted HAST inside the semantic code root", () => {
   expect(codeElement?.getAttribute("tabindex")).toBeNull();
 });
 
+test("uses the implicit theme for a language-only code fence", () => {
+  const markup = renderToStaticMarkup(
+    <HighlightedCodeText language="javascript">
+      const answer = 42;
+    </HighlightedCodeText>
+  );
+
+  expect(markup).toContain("<span");
+  expect(markup).not.toContain('theme="github-light"');
+});
+
 test("keeps theme colors without changing typography", () => {
   const markup = renderToStaticMarkup(
-    <HighlightedCodeText code="// answer" language="javascript" theme="nord" />
+    <HighlightedCodeText language="javascript" theme="nord">
+      // answer
+    </HighlightedCodeText>
   );
   const container = document.createElement("div");
   container.innerHTML = markup;
@@ -81,7 +95,7 @@ test("allows a failed asset load to retry after remount", async () => {
     },
   });
   const props = {
-    code: "const answer = 42;",
+    children: "const answer = 42;",
     language: "javascript",
     theme: "github-light",
   } as const;
@@ -100,11 +114,9 @@ test("allows a failed asset load to retry after remount", async () => {
 test("keeps source code escaped", () => {
   const source = '<img src=x onerror="unsafe()">';
   const markup = renderToStaticMarkup(
-    <HighlightedCodeText
-      code={source}
-      language="javascript"
-      theme="github-light"
-    />
+    <HighlightedCodeText language="javascript" theme="github-light">
+      {source}
+    </HighlightedCodeText>
   );
 
   expect(markup).toContain("&lt;");
@@ -117,10 +129,14 @@ test("keeps source code escaped", () => {
   expect(container.querySelector("img")).toBeNull();
 });
 
-test("renders legacy content without highlighting configuration", () => {
-  expect(
-    renderToStaticMarkup(<HighlightedCodeText>legacy code</HighlightedCodeText>)
-  ).toBe("<code>legacy code</code>");
+test("uses default highlighting without authored props", () => {
+  const markup = renderToStaticMarkup(
+    <HighlightedCodeText>const ready = true;</HighlightedCodeText>
+  );
+
+  expect(markup).toContain("<span");
+  expect(markup).not.toContain('language="javascript"');
+  expect(markup).not.toContain('theme="github-light"');
 });
 
 test("falls back to plain code for an unavailable selection", () => {
@@ -131,25 +147,35 @@ test("falls back to plain code for an unavailable selection", () => {
   ).toBe("<code>puts :hello</code>");
 });
 
-test("preserves the empty-code placeholder", () => {
+test("renders empty text content without inserting authored text", () => {
+  expect(
+    renderToStaticMarkup(
+      <HighlightedCodeText language="javascript" theme="github-light">
+        {" "}
+      </HighlightedCodeText>
+    )
+  ).toBe("<code> </code>");
+});
+
+test("prefers text content over the legacy code property", () => {
   expect(
     renderToStaticMarkup(
       <HighlightedCodeText
-        code=" "
+        code="legacy"
         language="javascript"
         theme="github-light"
-      />
+      >
+        current
+      </HighlightedCodeText>
     )
-  ).toContain("Open the &quot;Settings&quot; panel to edit the code.");
+  ).toContain("current");
 });
 
 test("hydrates the server markup without changing the DOM", async () => {
   const element = (
-    <HighlightedCodeText
-      code="const answer = 42;"
-      language="javascript"
-      theme="github-light"
-    />
+    <HighlightedCodeText language="javascript" theme="github-light">
+      const answer = 42;
+    </HighlightedCodeText>
   );
   const container = document.createElement("div");
   container.innerHTML = renderToString(element);
@@ -181,7 +207,7 @@ test("preserves server highlighting while client assets load", async () => {
     suspense: true,
   });
   const props = {
-    code: "const answer = 42;",
+    children: "const answer = 42;",
     language: "javascript",
     theme: "github-light",
   } as const;

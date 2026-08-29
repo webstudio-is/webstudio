@@ -101,6 +101,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
             isContentMode: $isContentMode.get(),
             instanceSelector: editableInstanceSelector,
             instances: $instances.get(),
+            props: $props.get(),
           }) === false
         ) {
           return;

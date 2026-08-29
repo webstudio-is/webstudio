@@ -168,7 +168,7 @@ test("prints compact mcp tool summaries as json by default", () => {
       inputSchema,
     })
   );
-  expect(JSON.stringify(handshakePayload).length).toBeLessThan(201_000);
+  expect(JSON.stringify(handshakePayload).length).toBeLessThan(215_000);
   expect(
     JSON.stringify(
       expectedTools.find(({ name }) => name === "insert-page-transfer-item")
@@ -249,6 +249,7 @@ test("prints full mcp tool input schemas when requested", () => {
     "contentMode",
     "mode",
     "insertIndex",
+    "templateNameConfirmation",
     "dryRun",
   ]);
   const fragmentSchema = insertFragmentTool.inputSchema.properties.fragment;

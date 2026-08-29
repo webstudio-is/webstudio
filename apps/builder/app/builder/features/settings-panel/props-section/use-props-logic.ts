@@ -6,7 +6,11 @@ import type {
   Props,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { descendantComponent } from "@webstudio-is/sdk";
+import {
+  blockComponent,
+  contentBlockSourceProp,
+  descendantComponent,
+} from "@webstudio-is/sdk";
 import {
   canHaveTextContent,
   createStartingPropValueFromMeta,
@@ -49,26 +53,49 @@ export type PropAndMeta = {
 };
 
 const isPropVisibleInContentMode = ({
+  component,
   propName,
   props,
   propsMetas,
   selectedInstanceSelector,
   capabilities,
 }: {
+  component: Instance["component"];
   propName: string;
   props: Prop[];
   propsMetas: Map<string, PropMeta>;
   selectedInstanceSelector: undefined | Instance["id"][];
   capabilities: ContentModeCapabilities;
 }) => {
-  if (
-    selectedInstanceSelector === undefined ||
-    capabilities.editableInstanceIds.has(selectedInstanceSelector[0]) === false
-  ) {
+  if (selectedInstanceSelector === undefined) {
     return false;
+  }
+  if (component === blockComponent && propName === contentBlockSourceProp) {
+    return props.some(
+      (prop) =>
+        prop.name === contentBlockSourceProp &&
+        (prop.type === "asset" || prop.type === "expression")
+    );
+  }
+  const instanceId = selectedInstanceSelector[0];
+  if (capabilities.editableInstanceIds.has(instanceId) === false) {
+    if (propName === textContentAttribute) {
+      return (
+        capabilities.frontmatterBoundTextInstanceIds?.has(instanceId) === true
+      );
+    }
+    return props.some(
+      (prop) =>
+        prop.name === propName &&
+        capabilities.frontmatterBoundPropIds?.has(prop.id) === true
+    );
   }
   if (propName === textContentAttribute) {
     return true;
+  }
+  const propMeta = propsMetas.get(propName);
+  if (propMeta?.contentMode === false) {
+    return false;
   }
   if (
     props.some(
@@ -78,7 +105,6 @@ const isPropVisibleInContentMode = ({
   ) {
     return true;
   }
-  const propMeta = propsMetas.get(propName);
   if (propMeta?.type === "string" && propMeta.control === "file") {
     return true;
   }
@@ -181,6 +207,7 @@ export const usePropsLogic = ({
       return false;
     }
     return isPropVisibleInContentMode({
+      component: instance.component,
       propName,
       props,
       propsMetas,
@@ -256,7 +283,7 @@ export const usePropsLogic = ({
       propName: textContentAttribute,
       instanceId: textContentTarget.instanceId,
       instanceSelector: textContentTarget.instanceSelector,
-      meta: {
+      meta: metas.get(instance.component)?.textContent ?? {
         required: false,
         control: "textContent",
         type: "string",

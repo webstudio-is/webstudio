@@ -208,8 +208,10 @@ const toFragment = (
       const component = "CodeText";
       const data = wfNode.data;
       addProp("lang", data.language);
-      addProp("code", data.code);
-      addInstance({ component });
+      addInstance({
+        component,
+        children: [{ type: "text", value: data.code }],
+      });
       return fragment;
     }
     case "HtmlEmbed": {

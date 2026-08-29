@@ -13,6 +13,7 @@ import {
   parseJsonExpression,
   parseExpressionObject,
   parseArrayExpression,
+  parseDirectPathExpression,
   parseStaticMemberPath,
   parseStringLiteralExpression,
   allowedArrayMethods,
@@ -38,6 +39,22 @@ describe("static member paths", () => {
     ["system.params.", undefined],
   ])("parses %s", (source, expected) => {
     expect(parseStaticMemberPath(source)).toEqual(expected);
+  });
+});
+
+describe("direct path expressions", () => {
+  test("distinguishes a writable location from a derived expression", () => {
+    expect(parseDirectPathExpression("document.frontmatter.title")).toEqual({
+      type: "direct-path",
+      expression: "document.frontmatter.title",
+      path: ["document", "frontmatter", "title"],
+    });
+    expect(
+      parseDirectPathExpression('document.frontmatter.title + "!"')
+    ).toBeUndefined();
+    expect(
+      parseDirectPathExpression("document.frontmatter[fieldName]")
+    ).toBeUndefined();
   });
 });
 

@@ -50,17 +50,55 @@ Every top-level instance within Templates will appear in Content mode like this:
 
 <div><figure><img src="../../.gitbook/assets/templates-design-mode.png" alt="Templates in Design mode"><figcaption><p>Templates in Design mode</p></figcaption></figure> <figure><img src="../../.gitbook/assets/templates-content-mode.png" alt="Template in Content mode"><figcaption><p>Template in Content mode</p></figcaption></figure></div>
 
-Each time they insert a template, its copy appears as a direct child of the Content Block, alongside any initial content. The Templates container remains protected source material.
+Each time they insert a template, its copy appears inside the Content Block's Body outlet, alongside any initial body content. The Templates container remains protected source material.
 
 ### Step 3: Add an initial setup (optional)
 
-Optionally, you can add instances as direct children of Content Block.
+Optionally, you can add instances inside the Content Block's Body outlet.
 
 <figure><img src="../../.gitbook/assets/startingpoint-content-block.png" alt="" width="357"><figcaption><p>The "Feature" instances are provided as a starting point</p></figcaption></figure>
 
 Doing so will provide an initial setup for editors.
 
-Editors can delete direct children of the Content Block. They cannot delete the Templates container, templates, or nested instances independently.
+Editors can delete children of the Body outlet. They cannot delete the designed shell, Templates container, templates, or nested instances independently.
+
+### Store content in an MDX file
+
+In Design mode, use the **Source** property under **Properties & attributes** to connect a `.mdx` file from Assets. Create the file in Assets first, then select it directly or bind the property to an Asset ID. The file becomes the source of the Body outlet's children; the designed shell and Templates container remain part of the project.
+
+Connecting a file replaces the Body outlet's existing children. In Design mode, select the connected filename to switch files, or select **Open** to edit it. To disconnect, select the **Source** property label and choose **Reset value**. Disconnecting leaves the MDX file unchanged, removes its derived body content from the canvas, and preserves the designed shell with an empty Body outlet.
+
+When you connect an older Content Block that has no Body outlet, Webstudio replaces its existing editable content and adds the outlet automatically.
+
+In Content mode, **Source** shows the connected filename and an **Open** button so editors can identify and edit the file. Changing, binding, resetting, and disconnecting the source remain available only in Design mode.
+
+Editors continue to use the normal Content mode controls. Their changes appear immediately on the canvas and then save to the connected file. Changes made in the file editor also update every Content Block connected to that file.
+
+Component properties in Content mode are limited to authored content, such as links, media sources and alternative text, form labels and placeholders, code, and date values. Layout, dimensions, visual themes, form wiring, and interaction settings remain available only in Design mode.
+
+Use Markdown for headings, paragraphs, links, lists, tables, code, and other standard document content. MDX uses Webstudio elements only for content that Markdown cannot represent:
+
+```mdx
+# Product update
+
+Regular document content stays Markdown.
+
+<ws.element ws:name="Promotion Card" />
+```
+
+The `ws:name` value must exactly match a unique top-level instance name in the Content Block's Templates list. Missing templates show a warning in Builder and are omitted from the published site. Invalid or unsupported MDX remains editable; Builder reports the source location and renders the valid content it can recover.
+
+You can connect multiple Content Blocks to the same MDX file. Editing any connected occurrence updates the shared file and the other connected occurrences.
+
+If the file changes after a canvas edit starts but before it is saved, Builder asks you to reload. It preserves the local canvas state until reload and does not merge or overwrite either version automatically.
+
+Edit frontmatter as YAML in the MDX file editor. Canvas edits update only the document body and preserve the frontmatter source, including its comments and formatting. Content-mode users with Asset access can open the MDX file from Assets to edit its frontmatter.
+
+To use frontmatter in the designed part of a Content Block, bind a property or text value to the Content Block's **Document** parameter. For example, bind a heading to `Document.frontmatter.title` or an image source to `Document.frontmatter.featureImage`. Direct frontmatter bindings remain part of the same MDX file and can be edited on the canvas in Content mode. Computed expressions and values supplied through another document's `$ref` remain read-only on the canvas; open the referenced file to edit referenced values.
+
+New Content Blocks include a **Body** outlet. Place it anywhere inside the designed article layout: the connected file's MDX body renders there, while the surrounding instances can use frontmatter bindings. Templates stay protected and continue to control which custom instances editors may insert into the body.
+
+To create another post with the same structure, duplicate the existing MDX Asset, edit the duplicate, and connect or bind the appropriate Content Block occurrence to it.
 
 ## Content Block in Content mode
 

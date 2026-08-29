@@ -40,7 +40,9 @@ import {
   loadBuilderAssetFieldCatalog,
   loadAssetDataByProject,
   loadAssetFoldersByProject,
+  PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/server";
+import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
   publicApiContractVersion,
@@ -54,10 +56,12 @@ import {
   loadApiToken,
 } from "./api-permits.server";
 import { componentMetas } from "~/shared/component-metas.server";
-import { type Asset, type AssetFolder } from "@webstudio-is/sdk";
+import type { Asset, AssetFolder } from "@webstudio-is/sdk";
 import {
   applyContentModeTransaction,
+  createContentBlockApplication,
   getContentModeCapabilities,
+  type BuilderRuntimeContext,
 } from "@webstudio-is/project-build/runtime";
 import type { CompactBuild } from "@webstudio-is/project-build";
 import {
@@ -340,6 +344,7 @@ const commitRuntimeMutation = async <
   assetFolders,
   input,
   commit,
+  context,
 }: {
   id: RuntimeOperationId;
   build: Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
@@ -347,6 +352,7 @@ const commitRuntimeMutation = async <
   assetFolders?: AssetFolder[];
   input: unknown;
   commit: BuildCommit;
+  context?: Partial<BuilderRuntimeContext>;
 }) => {
   const mutation = await executeApiRuntimeMutation<Result>({
     id,
@@ -354,6 +360,7 @@ const commitRuntimeMutation = async <
     assets,
     assetFolders,
     input,
+    context,
   });
   if (mutation.noop || mutation.payload.length === 0) {
     return {
@@ -464,18 +471,58 @@ const loadRuntimeAssetData = async (ctx: AppContext, projectId: string) => {
   });
 };
 
+const createServerContentBlockApplication = ({
+  ctx,
+  projectId,
+  build,
+  assets,
+  assetFolders,
+}: {
+  ctx: AppContext;
+  projectId: string;
+  build: CompactBuild;
+  assets: Asset[];
+  assetFolders: AssetFolder[];
+}) => {
+  const state = createBuilderRuntimeState(build, assets, assetFolders);
+  const repository = new PostgresAssetRepository({
+    projectId,
+    context: ctx,
+    assetStore: createAssetClient(),
+  });
+  const session = createAssetContentSession({
+    repository,
+    authorize: ({ assetId }) => state.assets?.has(assetId) === true,
+  });
+  return createContentBlockApplication({
+    projectId,
+    session,
+    metas: componentMetas,
+  });
+};
+
 const runtimeAssetsQuery = <Result = unknown>(id: RuntimeOperationId) =>
   projectQuery(runtimeProjectInput(id), "view", async ({ ctx, input }) => {
     const [{ assets, assetFolders }, build] = await Promise.all([
       loadRuntimeAssetData(ctx, input.projectId),
       loadDevBuildByProjectId(ctx, input.projectId),
     ]);
+    const contentBlockApplication = id.startsWith("contentBlocks.")
+      ? createServerContentBlockApplication({
+          ctx,
+          projectId: input.projectId,
+          build,
+          assets,
+          assetFolders,
+        })
+      : undefined;
     return executeApiRuntimeOperation<Result>({
       id,
       build,
       assets,
       assetFolders,
       input,
+      context: { contentBlockApplication },
     });
   });
 
@@ -496,6 +543,38 @@ const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
         assetFolders,
         input,
         commit,
+      });
+    }
+  );
+
+const runtimeContentBlockMutation = <
+  Result extends Record<string, unknown> = {},
+>(
+  id: RuntimeOperationId
+) =>
+  contentOrBuildMutation(
+    runtimeMutationInput(id, false),
+    async ({ ctx, input, build, commit }) => {
+      const { assets, assetFolders } = await loadRuntimeAssetData(
+        ctx,
+        input.projectId
+      );
+      return await commitRuntimeMutation<Result>({
+        id,
+        build,
+        assets,
+        assetFolders,
+        input,
+        commit,
+        context: {
+          contentBlockApplication: createServerContentBlockApplication({
+            ctx,
+            projectId: input.projectId,
+            build,
+            assets,
+            assetFolders,
+          }),
+        },
       });
     }
   );
@@ -532,7 +611,9 @@ const createRuntimeOperationProcedure = (operation: RuntimeOperation) => {
   if (operation.requiresAssets) {
     return operation.kind === "read"
       ? runtimeAssetsQuery(id)
-      : runtimeAssetsMutation(id);
+      : id.startsWith("contentBlocks.")
+        ? runtimeContentBlockMutation(id)
+        : runtimeAssetsMutation(id);
   }
   if (operation.kind === "read") {
     return runtimeBuildQuery(id);

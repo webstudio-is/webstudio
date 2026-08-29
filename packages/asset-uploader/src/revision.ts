@@ -16,8 +16,8 @@ import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
-
-export class AssetRevisionConflictError extends Error {}
+import { AssetRevisionConflictError } from "@webstudio-is/content-engine/asset-content-repository";
+export { AssetRevisionConflictError } from "@webstudio-is/content-engine/asset-content-repository";
 
 const getRevisionFilename = ({
   name,

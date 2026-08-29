@@ -64,7 +64,12 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
-import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
+import {
+  type Refs,
+  $convertToLexical,
+  $convertToPlainTextUpdate,
+  $convertToUpdates,
+} from "./interop";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { deleteInstanceBySelector } from "~/shared/instance-utils/mutation";
 import {
@@ -74,6 +79,7 @@ import {
   $registeredComponentMetas,
   $textEditingInstanceSelector,
   $textEditorContextMenu,
+  $textEditorContextMenuCommand,
   execTextEditorContextMenuCommand,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
@@ -790,6 +796,9 @@ const InitCursorPlugin = () => {
         // We are controlling scroll ourself in instance-selected.ts see updateScroll.
         // Without skipping we are getting side effects of composition in scrollBy, scrollIntoView calls
         tag: "skip-scroll-into-view",
+        onUpdate: () => {
+          editor.focus();
+        },
       }
     );
   }, [editor]);
@@ -1070,15 +1079,18 @@ const RichTextContentPluginInternal = ({
     let menuState: "closed" | "opening" | "opened" = "closed";
 
     let slashNodeKey: NodeKey | undefined = undefined;
+    let removeSlashWhenSelectionChanges = false;
 
     const closeMenu = () => {
-      if (menuState === "closed") {
+      if (menuState === "closed" && removeSlashWhenSelectionChanges === false) {
         return;
       }
 
-      menuState = "closed";
+      if (menuState !== "closed") {
+        menuState = "closed";
 
-      handleOpen(editor.getEditorState(), undefined);
+        handleOpen(editor.getEditorState(), undefined);
+      }
 
       if (slashNodeKey === undefined) {
         return;
@@ -1098,6 +1110,8 @@ const RichTextContentPluginInternal = ({
 
       if (!isSelectionInSameComponent) {
         node?.remove();
+        slashNodeKey = undefined;
+        removeSlashWhenSelectionChanges = false;
 
         // Delete current
         if ($getRoot().getTextContentSize() === 0) {
@@ -1122,6 +1136,17 @@ const RichTextContentPluginInternal = ({
 
       selection.setStyle("");
     };
+
+    const unsubscribeContextMenuCommand = $textEditorContextMenuCommand.listen(
+      (command) => {
+        if (command?.type === "templateInsertionStarted") {
+          removeSlashWhenSelectionChanges = true;
+        }
+        if (command?.type === "templateInsertionCancelled") {
+          removeSlashWhenSelectionChanges = false;
+        }
+      }
+    );
 
     const unsubscibeSelectionChange = editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
@@ -1335,7 +1360,7 @@ const RichTextContentPluginInternal = ({
     );
 
     const closeMenuWithUpdate = () => {
-      if (menuState === "closed") {
+      if (menuState === "closed" && removeSlashWhenSelectionChanges === false) {
         return;
       }
 
@@ -1407,6 +1432,7 @@ const RichTextContentPluginInternal = ({
       unsubscribeUpdateListener();
       unsubscibeSelectionChange();
       unsubscribeBlurListener();
+      unsubscribeContextMenuCommand();
       // Safari and FF support as no blur event is triggered in some cases
       closeMenuWithUpdate();
     };
@@ -1425,6 +1451,7 @@ type TextEditorProps = {
   props: Props;
   contentEditable: JSX.Element;
   editable?: boolean;
+  plainText?: boolean;
   onChange: (instancesList: Instance[]) => void | Record<string, string>;
   onSelectInstance: (instanceId: Instance["id"]) => void;
 };
@@ -1506,6 +1533,7 @@ export const TextEditor = ({
   props,
   contentEditable,
   editable,
+  plainText = false,
   onChange,
   onSelectInstance,
 }: TextEditorProps) => {
@@ -1527,14 +1555,15 @@ export const TextEditor = ({
             return;
           }
 
-          const idMap = onChange(
-            $convertToUpdates(
-              treeRootInstance,
-              refs,
-              newLinkKeyToInstanceId,
-              builderRuntimeContext.createId
-            )
-          );
+          const updates = plainText
+            ? $convertToPlainTextUpdate(treeRootInstance)
+            : $convertToUpdates(
+                treeRootInstance,
+                refs,
+                newLinkKeyToInstanceId,
+                builderRuntimeContext.createId
+              );
+          const idMap = onChange(updates);
           if (idMap !== undefined) {
             for (const [key, instanceId] of refs) {
               refs.set(key, idMap[instanceId] ?? instanceId);
@@ -1724,14 +1753,16 @@ export const TextEditor = ({
     <LexicalComposer initialConfig={initialConfig}>
       <RemoveParagaphsPlugin />
       <CaretColorPlugin />
-      <ToolbarConnectorPlugin
-        onSelectNode={(nodeKey) => {
-          const instanceId = refs.get(`${nodeKey}:span`);
-          if (instanceId !== undefined) {
-            onSelectInstance(instanceId);
-          }
-        }}
-      />
+      {plainText === false && (
+        <ToolbarConnectorPlugin
+          onSelectNode={(nodeKey) => {
+            const instanceId = refs.get(`${nodeKey}:span`);
+            if (instanceId !== undefined) {
+              onSelectInstance(instanceId);
+            }
+          }}
+        />
+      )}
       <BindInstanceToNodePlugin
         refs={refs}
         rootInstanceSelector={rootInstanceSelector}
@@ -1740,26 +1771,30 @@ export const TextEditor = ({
         ErrorBoundary={LexicalErrorBoundary}
         contentEditable={contentEditable}
       />
-      <LinkPlugin />
+      {plainText === false && <LinkPlugin />}
 
-      <LinkSanitizePlugin />
+      {plainText === false && <LinkSanitizePlugin />}
       <HistoryPlugin />
 
       {/* oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback */}
       <SwitchBlockPlugin onNext={handleNext} />
-      <RichTextContentPlugin
-        onOpen={handleContextMenuOpen}
-        rootInstanceSelector={rootInstanceSelector}
-        // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
-        onNext={handleNext}
-      />
+      {plainText === false && (
+        <RichTextContentPlugin
+          onOpen={handleContextMenuOpen}
+          rootInstanceSelector={rootInstanceSelector}
+          // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
+          onNext={handleNext}
+        />
+      )}
       {/* oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback */}
       <OnChangeOnBlurPlugin onChange={handleChange} />
       <InitCursorPlugin />
-      <LinkSelectionPlugin
-        rootInstanceSelector={rootInstanceSelector}
-        registerNewLink={registerNewLink}
-      />
+      {plainText === false && (
+        <LinkSelectionPlugin
+          rootInstanceSelector={rootInstanceSelector}
+          registerNewLink={registerNewLink}
+        />
+      )}
       <AnyKeyDownPlugin onKeyDown={handleAnyKeydown} />
       <InitialJSONStatePlugin
         onInitialState={(json) => {

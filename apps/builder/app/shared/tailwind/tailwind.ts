@@ -15,7 +15,10 @@ import {
   type Prop,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
-import { isBaseBreakpoint } from "@webstudio-is/project-build/runtime";
+import {
+  createWebstudioDataFromFragment,
+  isBaseBreakpoint,
+} from "@webstudio-is/project-build/runtime";
 import { preflight } from "./__generated__/preflight";
 
 // breakpoints used to map tailwind classes to webstudio breakpoints
@@ -738,15 +741,8 @@ export const generateFragmentFromTailwind = async (
     return breakpoint.id;
   };
 
-  const styleSourceSelections = new Map(
-    fragment.styleSourceSelections.map((item) => [item.instanceId, item])
-  );
-  const styleSources = new Map(
-    fragment.styleSources.map((item) => [item.id, item])
-  );
-  const styles = new Map(
-    fragment.styles.map((item) => [getStyleDeclKey(item), item])
-  );
+  const { styleSourceSelections, styleSources, styles } =
+    createWebstudioDataFromFragment(fragment);
   const preflightStyleDeclKeys = new Set<string>();
   const getLocalStyleSource = (instanceId: Instance["id"]) => {
     const styleSourceSelection = styleSourceSelections.get(instanceId);

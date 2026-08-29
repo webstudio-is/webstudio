@@ -10,6 +10,8 @@ import {
   pagePath,
   blockComponent,
   blockTemplateComponent,
+  findContentBlockBodyContainers,
+  findWritableContentBlockDocumentBindings,
   getHtmlTagsFromProps,
   getHtmlTagFromInstance,
   isPathnamePattern,
@@ -17,6 +19,7 @@ import {
   type Breakpoints,
   type Instance,
   type Prop,
+  type PropMeta,
   type Props,
   type StyleDecl,
   type StyleSource,
@@ -46,6 +49,8 @@ export type ContentModeCapabilities = {
   styles: Styles;
   breakpoints?: Breakpoints;
   contentRootIds: Set<Instance["id"]>;
+  frontmatterBoundPropIds?: ReadonlySet<Prop["id"]>;
+  frontmatterBoundTextInstanceIds?: ReadonlySet<Instance["id"]>;
 };
 
 type ContentModeTransactionContext = {
@@ -177,10 +182,39 @@ const getDefaultContentRootIds = (instances: Map<Instance["id"], Instance>) => {
   const contentRootIds = new Set<Instance["id"]>();
   for (const instance of instances.values()) {
     if (instance.component === blockComponent) {
-      contentRootIds.add(instance.id);
+      const bodies = findContentBlockBodyContainers({
+        blockInstance: instance,
+        instances,
+      });
+      if (bodies.length === 1) {
+        contentRootIds.add(bodies[0].id);
+      } else if (bodies.length === 0) {
+        contentRootIds.add(instance.id);
+      }
     }
   }
   return contentRootIds;
+};
+
+export const getContentModeFrontmatterBoundTargets = ({
+  instances,
+  props,
+}: {
+  instances: Map<Instance["id"], Instance>;
+  props: Props;
+}) => {
+  const bindings = findWritableContentBlockDocumentBindings({
+    instances,
+    props,
+  });
+  const propIds = new Set(bindings.props.map(({ propId }) => propId));
+  const textInstanceIds = new Set<Instance["id"]>();
+  for (const { instanceId, childIndex } of bindings.children) {
+    if (childIndex === 0 && instances.get(instanceId)?.children.length === 1) {
+      textInstanceIds.add(instanceId);
+    }
+  }
+  return { propIds, textInstanceIds };
 };
 
 export const getContentModeEditableInstanceIds = ({
@@ -254,7 +288,7 @@ const getBlockTemplateChildIdsByInstanceId = (
   return childIdsByInstanceId;
 };
 
-const getContentModePropMeta = ({
+const getInstancePropMetas = ({
   capabilities,
   instance,
   propName,
@@ -263,10 +297,12 @@ const getContentModePropMeta = ({
   instance: Instance;
   propName: Prop["name"];
 }) => {
-  const meta = capabilities.metas.get(instance.component);
-  const propMeta = meta?.props?.[propName];
-  if (propMeta?.contentMode === true) {
-    return propMeta;
+  const propMetas: PropMeta[] = [];
+  const propMeta = capabilities.metas.get(instance.component)?.props?.[
+    propName
+  ];
+  if (propMeta !== undefined) {
+    propMetas.push(propMeta);
   }
 
   const tag = getHtmlTagFromInstance({
@@ -276,17 +312,103 @@ const getContentModePropMeta = ({
     htmlTagsByInstanceId: capabilities.htmlTagsByInstanceId,
   });
   if (tag === undefined) {
-    return;
+    return propMetas;
   }
   for (const componentMeta of capabilities.metas.values()) {
     if (Object.keys(componentMeta.presetStyle ?? {}).includes(tag) === false) {
       continue;
     }
     const propMeta = componentMeta.props?.[propName];
-    if (propMeta?.contentMode === true) {
-      return propMeta;
+    if (propMeta !== undefined) {
+      propMetas.push(propMeta);
     }
   }
+  return propMetas;
+};
+
+export const getContentModeEditableStaticPropNames = ({
+  capabilities,
+  instance,
+}: {
+  capabilities: ContentModeCapabilities;
+  instance: Instance;
+}) => {
+  const names = new Set<string>();
+  for (const [name, propMeta] of Object.entries(
+    capabilities.metas.get(instance.component)?.props ?? {}
+  )) {
+    if (
+      propMeta.contentMode === true &&
+      (propMeta.type === "string" ||
+        propMeta.type === "number" ||
+        propMeta.type === "boolean")
+    ) {
+      names.add(name);
+    }
+  }
+  const tag = getHtmlTagFromInstance({
+    instance,
+    metas: capabilities.metas,
+    props: capabilities.props,
+    htmlTagsByInstanceId: capabilities.htmlTagsByInstanceId,
+  });
+  if (tag !== undefined) {
+    for (const name of getContentModePropNamesByTag(capabilities.metas).get(
+      tag
+    ) ?? []) {
+      if (
+        getInstancePropMetas({ capabilities, instance, propName: name }).some(
+          (propMeta) =>
+            propMeta.contentMode === true &&
+            (propMeta.type === "string" ||
+              propMeta.type === "number" ||
+              propMeta.type === "boolean")
+        )
+      ) {
+        names.add(name);
+      }
+    }
+  }
+  return names;
+};
+
+export type ContentModePropEligibility =
+  | { editable: true }
+  | {
+      editable: false;
+      reason: "unknown" | "incompatible" | "design-only";
+    };
+
+export const getContentModePropEligibility = ({
+  capabilities,
+  instance,
+  prop,
+}: {
+  capabilities: ContentModeCapabilities;
+  instance: Instance;
+  prop: Pick<Prop, "name" | "type">;
+}): ContentModePropEligibility => {
+  if (prop.type === "asset") {
+    return { editable: true };
+  }
+  const propMetas = getInstancePropMetas({
+    capabilities,
+    instance,
+    propName: prop.name,
+  });
+  const contentModePropMeta = propMetas.find(
+    (propMeta) => propMeta.contentMode === true
+  );
+  if (contentModePropMeta === undefined) {
+    return {
+      editable: false,
+      reason: propMetas.length === 0 ? "unknown" : "design-only",
+    };
+  }
+  if (contentModePropMeta.type !== prop.type) {
+    return { editable: false, reason: "incompatible" };
+  }
+  return { editable: true };
 };
 
 const isContentModePropForInstance = ({
@@ -297,13 +419,7 @@ const isContentModePropForInstance = ({
   capabilities: ContentModeCapabilities;
   instance: Instance;
   prop: Prop;
-}) =>
-  prop.type === "asset" ||
-  getContentModePropMeta({
-    capabilities,
-    instance,
-    propName: prop.name,
-  })?.type === prop.type;
+}) => getContentModePropEligibility({ capabilities, instance, prop }).editable;
 
 const contentModeNonCopyablePropTypes = new Set<Prop["type"]>([
   "resource",
@@ -354,6 +470,10 @@ export const getContentModeCapabilities = ({
     contentRootIds,
     instances,
   });
+  const frontmatterTargets = getContentModeFrontmatterBoundTargets({
+    instances,
+    props,
+  });
   const capabilities = {
     editablePropIds,
     editableInstanceIds,
@@ -366,6 +486,8 @@ export const getContentModeCapabilities = ({
     styles,
     breakpoints,
     contentRootIds,
+    frontmatterBoundPropIds: frontmatterTargets.propIds,
+    frontmatterBoundTextInstanceIds: frontmatterTargets.textInstanceIds,
   };
   for (const prop of props.values()) {
     const instance = instances.get(prop.instanceId);
@@ -390,7 +512,7 @@ const isContentModePropPatchValue = ({
   value,
 }: {
   capabilities: ContentModeCapabilities;
-  editableInstanceIds: Set<Instance["id"]>;
+  editableInstanceIds: ReadonlySet<Instance["id"]>;
   expectedPropId: Prop["id"];
   value: unknown;
 }) => {
@@ -1544,7 +1666,14 @@ export const applyContentModeTransaction = ({
     contentRootIds: transactionCapabilities.contentRootIds,
     instances: transactionCapabilities.instances,
   });
+  const frontmatterTargets = getContentModeFrontmatterBoundTargets({
+    instances: transactionCapabilities.instances,
+    props: transactionCapabilities.props,
+  });
   transactionCapabilities.editableInstanceIds = context.editableInstanceIds;
+  transactionCapabilities.frontmatterBoundPropIds = frontmatterTargets.propIds;
+  transactionCapabilities.frontmatterBoundTextInstanceIds =
+    frontmatterTargets.textInstanceIds;
 
   for (const change of transaction.payload) {
     if (change.namespace !== "styleSources") {

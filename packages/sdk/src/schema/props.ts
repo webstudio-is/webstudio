@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { animationAction } from "./animation-schema";
+import {
+  expressionBindingShape,
+  getExpressionBindingError,
+} from "./expression";
 
 const propId = z.string();
 
@@ -64,12 +68,17 @@ export const prop = z.union([
     // resource id
     value: z.string(),
   }),
-  z.object({
-    ...baseProp,
-    type: z.literal("expression"),
-    // expression code
-    value: z.string(),
-  }),
+  z
+    .object({
+      ...baseProp,
+      ...expressionBindingShape,
+    })
+    .superRefine((binding, context) => {
+      const error = getExpressionBindingError(binding);
+      if (error !== undefined) {
+        context.addIssue({ code: "custom", path: ["value"], message: error });
+      }
+    }),
   z.object({
     ...baseProp,
     type: z.literal("action"),

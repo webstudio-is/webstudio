@@ -2,6 +2,7 @@
 // Webstudio fragments. Put serialization-style instance subtree cloning and
 // fragment asset/style/data remapping here, not live tree placement decisions.
 import { nanoid } from "nanoid";
+import { migrateCodeTextContentMutable } from "@webstudio-is/project-migrations";
 import {
   type Asset,
   type Breakpoints,
@@ -19,6 +20,7 @@ import {
   findPageByIdOrPath,
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
+  getStyleDeclKey,
   getHomePage,
   portalComponent,
   webstudioFragment,
@@ -51,6 +53,7 @@ import {
   collectFontFamiliesFromStyleValue,
   traverseStyleValue,
 } from "./style-utils";
+import { countDataSourceAssetReferences } from "./assets";
 
 export type ContentModeCopyableProp = (input: {
   prop: Prop;
@@ -114,6 +117,22 @@ const mergeUniqueByJson = <Item>(items: Item[]) =>
   Array.from(
     new Map(items.map((item) => [JSON.stringify(item), item])).values()
   );
+
+export const createWebstudioDataFromFragment = (
+  fragment: WebstudioFragment
+): Omit<WebstudioData, "pages"> => ({
+  instances: new Map(fragment.instances.map((item) => [item.id, item])),
+  props: new Map(fragment.props.map((item) => [item.id, item])),
+  assets: new Map(fragment.assets.map((item) => [item.id, item])),
+  dataSources: new Map(fragment.dataSources.map((item) => [item.id, item])),
+  resources: new Map(fragment.resources.map((item) => [item.id, item])),
+  breakpoints: new Map(fragment.breakpoints.map((item) => [item.id, item])),
+  styleSourceSelections: new Map(
+    fragment.styleSourceSelections.map((item) => [item.instanceId, item])
+  ),
+  styleSources: new Map(fragment.styleSources.map((item) => [item.id, item])),
+  styles: new Map(fragment.styles.map((item) => [getStyleDeclKey(item), item])),
+});
 
 export const mergeWebstudioFragments = (
   rootInstanceIds: Instance["id"][],
@@ -358,6 +377,11 @@ export const extractWebstudioFragment = (
       fragmentDataSources.set(dataSource.id, dataSource);
       if (dataSource.type === "resource") {
         fragmentResourceIds.add(dataSource.resourceId);
+      }
+      for (const assetId of assets.keys()) {
+        if (countDataSourceAssetReferences(dataSource, assetId) > 0) {
+          fragmentAssetIds.add(assetId);
+        }
       }
     } else {
       unsetNameById.set(dataSource.id, dataSource.name);
@@ -952,6 +976,7 @@ export const insertWebstudioFragmentCopy = ({
     });
   }
 
+  migrateCodeTextContentMutable({ instances, props });
   return { ...newDataIds, didMergeBreakpointsDueToLimit };
 };
 

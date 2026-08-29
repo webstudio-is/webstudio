@@ -236,6 +236,28 @@ export const foldGutterExtension = foldGutter({
   },
 });
 
+export const linterTooltipTheme = EditorView.theme({
+  ".cm-tooltip:has(.cm-tooltip-lint)": {
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    paddingTop: rawTheme.spacing[5],
+    paddingBottom: rawTheme.spacing[5],
+    pointerEvents: "none",
+  },
+  ".cm-tooltip-lint": {
+    backgroundColor: rawTheme.colors.backgroundTooltipMain,
+    color: rawTheme.colors.foregroundContrastMain,
+    borderRadius: rawTheme.borderRadius[7],
+    padding: rawTheme.spacing[5],
+  },
+  ".cm-tooltip-lint .cm-diagnostic": {
+    borderWidth: 0,
+    padding: 0,
+    margin: 0,
+    ...textVariants.regular,
+  },
+});
+
 export type EditorApi = {
   replaceSelection: (string: string) => void;
   insertTemplate: (template: {

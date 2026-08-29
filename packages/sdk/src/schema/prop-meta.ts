@@ -197,11 +197,17 @@ const action = z.object({
   defaultValue: z.undefined().optional(),
 });
 
-const textContent = z.object({
+export const textContentPropMeta = z.object({
   ...common,
   control: z.literal("textContent"),
   type: z.literal("string"),
   defaultValue: z.string().optional(),
+  editor: z
+    .object({
+      control: z.literal("code"),
+      languageProp: z.string().optional(),
+    })
+    .optional(),
 });
 
 const animationAction = z.object({
@@ -234,7 +240,7 @@ export const propMeta = z.union([
   json,
   date,
   action,
-  textContent,
+  textContentPropMeta,
   animationAction,
 ]);
 

@@ -94,7 +94,7 @@ describe("canWrapInstance for components", () => {
     expect(result).toBe(true);
   });
 
-  test("should allow wrapping text in a legacy CodeText", () => {
+  test("should prevent wrapping an instance in CodeText", () => {
     $instances.set(
       renderData(
         <$.Body ws:id="body">
@@ -114,7 +114,7 @@ describe("canWrapInstance for components", () => {
       $props.get(),
       $registeredComponentMetas.get()
     );
-    expect(result).toBe(true);
+    expect(result).toBe(false);
   });
 });
 

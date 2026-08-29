@@ -5,6 +5,7 @@ import type {
   PropMeta,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
+import { blockComponent, contentBlockSourceProp } from "@webstudio-is/sdk";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
 import { __testing__ } from "./use-props-logic";
 import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime";
@@ -15,6 +16,7 @@ const { isPropVisibleInContentMode, getAndDelete, canShowTextContent } =
 const getInput = (
   input: Partial<Parameters<typeof isPropVisibleInContentMode>[0]> = {}
 ): Parameters<typeof isPropVisibleInContentMode>[0] => ({
+  component: "Box",
   propName: "title",
   props: [],
   propsMetas: new Map(),
@@ -66,6 +68,52 @@ describe("isPropVisibleInContentMode", () => {
     ).toBe(true);
   });
 
+  test("shows only the exact frontmatter-bound shell property", () => {
+    const title: Prop = {
+      id: "title-prop",
+      instanceId: "editable-instance",
+      name: "title",
+      type: "expression",
+      value: "$ws$dataSource$document.frontmatter.title",
+    };
+    const description: Prop = {
+      id: "description-prop",
+      instanceId: "editable-instance",
+      name: "description",
+      type: "string",
+      value: "Designed description",
+    };
+    const capabilities = {
+      ...getInput().capabilities,
+      editableInstanceIds: new Set<string>(),
+      frontmatterBoundPropIds: new Set([title.id]),
+    };
+
+    expect(
+      isPropVisibleInContentMode(
+        getInput({ props: [title, description], capabilities })
+      )
+    ).toBe(true);
+    expect(
+      isPropVisibleInContentMode(
+        getInput({
+          propName: "description",
+          props: [title, description],
+          capabilities,
+        })
+      )
+    ).toBe(false);
+    expect(
+      isPropVisibleInContentMode(
+        getInput({
+          propName: textContentAttribute,
+          props: [title, description],
+          capabilities,
+        })
+      )
+    ).toBe(false);
+  });
+
   test("shows existing asset props as content", () => {
     const prop: Prop = {
       id: "image-prop",
@@ -104,6 +152,64 @@ describe("isPropVisibleInContentMode", () => {
         })
       )
     ).toBe(true);
+  });
+
+  test("keeps explicitly Design-mode file controls out of Content mode", () => {
+    const fileMeta: PropMeta = {
+      type: "string",
+      control: "file",
+      required: false,
+      contentMode: false,
+    };
+
+    expect(
+      isPropVisibleInContentMode(
+        getInput({
+          propName: "src",
+          propsMetas: new Map([["src", fileMeta]]),
+        })
+      )
+    ).toBe(false);
+  });
+
+  test("shows an existing Content Block source without making it editable", () => {
+    const source: Prop = {
+      id: "source-prop",
+      instanceId: "editable-instance",
+      name: contentBlockSourceProp,
+      type: "asset",
+      value: "post",
+    };
+    const sourceMeta: PropMeta = {
+      type: "string",
+      control: "file",
+      required: false,
+      contentMode: false,
+    };
+
+    expect(
+      isPropVisibleInContentMode(
+        getInput({
+          component: blockComponent,
+          propName: contentBlockSourceProp,
+          props: [source],
+          propsMetas: new Map([[contentBlockSourceProp, sourceMeta]]),
+          capabilities: {
+            ...getInput().capabilities,
+            editableInstanceIds: new Set(),
+          },
+        })
+      )
+    ).toBe(true);
+    expect(
+      isPropVisibleInContentMode(
+        getInput({
+          component: blockComponent,
+          propName: contentBlockSourceProp,
+          propsMetas: new Map([[contentBlockSourceProp, sourceMeta]]),
+        })
+      )
+    ).toBe(false);
   });
 
   test("shows only props marked as content mode in metadata", () => {

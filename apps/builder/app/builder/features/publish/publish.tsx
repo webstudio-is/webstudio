@@ -55,7 +55,7 @@ import {
   $stagingUsername,
   $stagingPassword,
 } from "~/shared/nano-states";
-import { $publisherHost } from "~/shared/sync/data-stores";
+import { $assets, $publisherHost } from "~/shared/sync/data-stores";
 import {
   $publishDialog,
   setActiveSidebarPanel,
@@ -104,6 +104,7 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { showContentDatabasePublishWarning } from "./content-database-publish-warning";
 import { showPublishWarning } from "./publish-warning";
+import { flushExternalContentProject } from "~/shared/external-content-roots";
 
 const PrePublishAuditMessage = ({
   finding,
@@ -173,6 +174,7 @@ const getPrePublishAuditMessages = () => {
     props: $props.get(),
     dataSources: $dataSources.get(),
     resources: $resources.get(),
+    assets: $assets.get(),
     metas: $registeredComponentMetas.get(),
   });
   const getMessage = (severity: PrePublishAuditFinding["severity"]) => {
@@ -629,20 +631,6 @@ const Publish = ({
     setPublishError(undefined);
     setPublishWarning(undefined);
 
-    const { error: auditError, warning: auditWarning } =
-      getPrePublishAuditMessages();
-    if (auditError !== undefined) {
-      toast.error(auditError);
-      setPublishError(auditError);
-      return;
-    }
-    if (auditWarning !== undefined) {
-      showPublishWarning({
-        message: auditWarning,
-        setWarning: setPublishWarning,
-      });
-    }
-
     // Custom domain checkboxes are disabled on free plan so they are never
     // submitted — only the staging (wstd.io) domain can appear in formData.
     const domains = formData
@@ -658,6 +646,20 @@ const Publish = ({
       setIsPublishing(true);
 
       try {
+        await flushExternalContentProject({ projectId: project.id });
+        const { error: auditError, warning: auditWarning } =
+          getPrePublishAuditMessages();
+        if (auditError !== undefined) {
+          toast.error(auditError);
+          setPublishError(auditError);
+          return;
+        }
+        if (auditWarning !== undefined) {
+          showPublishWarning({
+            message: auditWarning,
+            setWarning: setPublishWarning,
+          });
+        }
         await showContentDatabasePublishWarning({
           projectId: project.id,
           setWarning: setPublishWarning,

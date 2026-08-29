@@ -135,6 +135,7 @@ export const builderRuntimeCutoverManifests = [
       "instances.insertComponent",
       "instances.insertCollection",
       "instances.insertFragment",
+      "instances.insertMdxText",
       "slots.attach",
       "slots.extract",
     ] as const,
@@ -144,6 +145,23 @@ export const builderRuntimeCutoverManifests = [
       "MCP insert-fragment",
       "MCP shared Slot authoring",
       "Builder components panel",
+    ] as const,
+  },
+  {
+    family: "content-block-source-operations",
+    operationIds: [
+      "contentBlocks.inspectSource",
+      "contentBlocks.connectSource",
+      "contentBlocks.switchSource",
+      "contentBlocks.disconnectSource",
+      "contentBlocks.editSource",
+      "contentBlocks.updateFrontmatter",
+      "contentBlocks.reloadSource",
+      "contentBlocks.migrateTemplateReferences",
+    ] as const,
+    callers: [
+      "Builder Content Block settings",
+      "MCP/CLI Content Block authoring",
     ] as const,
   },
   {

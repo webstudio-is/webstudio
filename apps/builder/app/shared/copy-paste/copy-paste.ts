@@ -80,7 +80,7 @@ const validateCopyPermission = () => {
 export type Plugin = {
   name: string;
   mimeType: string;
-  onCopy?: () => undefined | string;
+  onCopy?: () => undefined | string | Promise<undefined | string>;
   onCut?: () => undefined | string;
   onPaste?: (data: string) => PasteResult | Promise<PasteResult>;
 };
@@ -124,6 +124,17 @@ const initPlugins = ({
     for (const { mimeType, onCopy } of plugins) {
       const data = onCopy?.();
 
+      if (data instanceof Promise) {
+        event.preventDefault();
+        void data
+          .then((value) => writeClipboardText(value))
+          .catch(() =>
+            builderApi.toast.error(
+              "Could not prepare the selected content for copying."
+            )
+          );
+        break;
+      }
       if (data) {
         // must prevent default, otherwise setData() will not work
         event.preventDefault();
@@ -269,11 +280,13 @@ export const initCopyPasteForContentEditMode = ({
   });
 };
 
-const writeClipboardText = (data: string | undefined) => {
+const writeClipboardText = async (
+  data: string | undefined | Promise<string | undefined>
+) => {
+  data = await data;
   if (data && validateCopyPermission()) {
-    return navigator.clipboard.writeText(data);
+    await navigator.clipboard.writeText(data);
   }
-  return Promise.resolve();
 };
 
 // Public API for programmatic copy/paste/cut operations

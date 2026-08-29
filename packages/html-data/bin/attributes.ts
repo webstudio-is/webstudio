@@ -496,8 +496,8 @@ let standardAttributesContent = "";
 standardAttributesContent += `export const standardAttributesToReactProps: Record<string, string> = ${JSON.stringify(standardAttributesToReactProps, null, 2)};\n\n`;
 standardAttributesContent += `export const reactPropsToStandardAttributes: Record<string, string> = ${JSON.stringify(reactPropsToStandardAttributes, null, 2)};\n`;
 
-await mkdir("../react-sdk/src/__generated__", { recursive: true });
+await mkdir("../content-engine/src/__generated__", { recursive: true });
 await writeFile(
-  "../react-sdk/src/__generated__/standard-attributes.ts",
+  "../content-engine/src/__generated__/standard-attributes.ts",
   standardAttributesContent
 );

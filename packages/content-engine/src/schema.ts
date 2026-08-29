@@ -271,6 +271,9 @@ export const contentArtifactV1 = strictObject({
       contentRef === undefined ? [] : [contentRef]
     )
   );
+  for (const node of index.documentGraph?.nodes ?? []) {
+    contentRefs.add(node.contentRef);
+  }
   for (const contentRef of Object.keys(index.contents ?? {})) {
     if (contentRefs.has(contentRef) === false) {
       context.addIssue({

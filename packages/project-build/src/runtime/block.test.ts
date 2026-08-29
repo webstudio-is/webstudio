@@ -1,15 +1,23 @@
 import { describe, expect, test } from "vitest";
 import {
   blockComponent,
+  blockBodyComponent,
   blockTemplateComponent,
+  contentBlockSourceProp,
   type Instance,
 } from "@webstudio-is/sdk";
 import {
+  assignUniqueBlockTemplateNamesMutable,
   canDeleteInstanceInContentMode,
+  canMoveInstanceInContentMode,
+  findBlockTemplateNameCollision,
   findBlockChildSelector,
+  findBlockContentSelector,
   findBlockSelector,
   findBlockTemplates,
   getBlockTemplateInsertionIndex,
+  getBlockTemplateNameConfirmation,
+  resolveContentBlockSourceAssetId,
 } from "./block";
 
 const createInstance = (
@@ -24,6 +32,25 @@ const createInstance = (
 });
 
 describe("block tree helpers", () => {
+  test("resolves direct sources without expression values", () => {
+    expect(
+      resolveContentBlockSourceAssetId({
+        source: { type: "asset", assetId: "post" },
+      })
+    ).toBe("post");
+    expect(
+      resolveContentBlockSourceAssetId({
+        source: { type: "expression", value: "post" },
+      })
+    ).toBeUndefined();
+    expect(
+      resolveContentBlockSourceAssetId({
+        source: { type: "expression", value: "post" },
+        values: new Map([["post", "post-asset"]]),
+      })
+    ).toBe("post-asset");
+  });
+
   test("finds block and block child selectors from nested anchors", () => {
     const instances = new Map<Instance["id"], Instance>([
       ["body", createInstance("body", "Body")],
@@ -112,6 +139,63 @@ describe("block tree helpers", () => {
     ).toBe(3);
   });
 
+  test("uses an explicit Body as the editable content container", () => {
+    const instances = new Map<Instance["id"], Instance>([
+      ["page", createInstance("page", "Body")],
+      [
+        "block",
+        createInstance("block", blockComponent, [
+          { type: "id", value: "templates" },
+          { type: "id", value: "header" },
+          { type: "id", value: "content" },
+        ]),
+      ],
+      ["templates", createInstance("templates", blockTemplateComponent)],
+      ["header", createInstance("header", "Heading")],
+      [
+        "content",
+        createInstance("content", blockBodyComponent, [
+          { type: "id", value: "paragraph" },
+        ]),
+      ],
+      ["paragraph", createInstance("paragraph", "Paragraph")],
+    ]);
+
+    expect(
+      findBlockContentSelector({ anchor: ["block", "page"], instances })
+    ).toEqual(["content", "block", "page"]);
+    expect(
+      findBlockContentSelector({
+        anchor: ["paragraph", "content", "block", "page"],
+        instances,
+      })
+    ).toEqual(["content", "block", "page"]);
+    expect(
+      findBlockContentSelector({
+        anchor: ["header", "block", "page"],
+        instances,
+      })
+    ).toBeUndefined();
+    expect(
+      findBlockChildSelector({
+        instanceSelector: ["paragraph", "content", "block", "page"],
+        instances,
+      })
+    ).toEqual(["paragraph", "content", "block", "page"]);
+    expect(
+      getBlockTemplateInsertionIndex({
+        anchor: ["block", "page"],
+        instances,
+      })
+    ).toBe(0);
+    expect(
+      getBlockTemplateInsertionIndex({
+        anchor: ["paragraph", "content", "block", "page"],
+        instances,
+      })
+    ).toBe(1);
+  });
+
   test("allows deleting direct content block children", () => {
     const instances = new Map<Instance["id"], Instance>([
       [
@@ -157,5 +241,252 @@ describe("block tree helpers", () => {
         instances,
       })
     ).toBe(false);
+  });
+
+  test("allows moving authored content but not templates in content mode", () => {
+    const instances = new Map<Instance["id"], Instance>([
+      ["body", createInstance("body", "Body")],
+      ["block", createInstance("block", blockComponent)],
+      ["authored", createInstance("authored", "Box")],
+      ["nested", createInstance("nested", "Box")],
+      ["templates", createInstance("templates", blockTemplateComponent)],
+      ["template-child", createInstance("template-child", "Box")],
+    ]);
+
+    expect(
+      canMoveInstanceInContentMode({
+        instanceSelector: ["nested", "authored", "block", "body"],
+        parentSelector: ["block", "body"],
+        instances,
+      })
+    ).toBe(true);
+    expect(
+      canMoveInstanceInContentMode({
+        instanceSelector: ["templates", "block", "body"],
+        parentSelector: ["block", "body"],
+        instances,
+      })
+    ).toBe(false);
+    expect(
+      canMoveInstanceInContentMode({
+        instanceSelector: ["template-child", "templates", "block", "body"],
+        parentSelector: ["block", "body"],
+        instances,
+      })
+    ).toBe(false);
+    expect(
+      canMoveInstanceInContentMode({
+        instanceSelector: ["authored", "block", "body"],
+        parentSelector: ["templates", "block", "body"],
+        instances,
+      })
+    ).toBe(false);
+  });
+
+  test("only allows content-mode mutations inside an explicit Body", () => {
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "block",
+        createInstance("block", blockComponent, [
+          { type: "id", value: "header" },
+          { type: "id", value: "content" },
+        ]),
+      ],
+      ["header", createInstance("header", "Heading")],
+      [
+        "content",
+        createInstance("content", blockBodyComponent, [
+          { type: "id", value: "first" },
+          { type: "id", value: "second" },
+        ]),
+      ],
+      ["first", createInstance("first", "Paragraph")],
+      ["second", createInstance("second", "Paragraph")],
+    ]);
+
+    expect(
+      canDeleteInstanceInContentMode({
+        instanceSelector: ["first", "content", "block"],
+        instances,
+      })
+    ).toBe(true);
+    expect(
+      canDeleteInstanceInContentMode({
+        instanceSelector: ["header", "block"],
+        instances,
+      })
+    ).toBe(false);
+    expect(
+      canMoveInstanceInContentMode({
+        instanceSelector: ["first", "content", "block"],
+        parentSelector: ["content", "block"],
+        instances,
+      })
+    ).toBe(true);
+    expect(
+      canMoveInstanceInContentMode({
+        instanceSelector: ["header", "block"],
+        parentSelector: ["content", "block"],
+        instances,
+      })
+    ).toBe(false);
+  });
+});
+
+describe("block template names", () => {
+  const createBlockInstances = () =>
+    new Map<Instance["id"], Instance>([
+      [
+        "block",
+        createInstance("block", blockComponent, [
+          { type: "id", value: "templates" },
+        ]),
+      ],
+      [
+        "templates",
+        createInstance("templates", blockTemplateComponent, [
+          { type: "id", value: "hero" },
+          { type: "id", value: "card" },
+        ]),
+      ],
+      ["hero", { ...createInstance("hero", "Box"), label: "Hero Card" }],
+      ["card", createInstance("card", "Box")],
+    ]);
+  test("assigns unique names to newly inserted template entries", () => {
+    const instances = createBlockInstances();
+    instances.set("card-copy", createInstance("card-copy", "Box"));
+    instances.set("card-copy-2", createInstance("card-copy-2", "Box"));
+    instances.get("card-copy-2")!.label = "Box 2";
+
+    assignUniqueBlockTemplateNamesMutable({
+      instanceIds: ["card-copy", "card-copy-2"],
+      parent: instances.get("templates")!,
+      instances,
+    });
+
+    expect(instances.get("card-copy")?.label).toBe("Box 2");
+    expect(instances.get("card-copy-2")?.label).toBe("Box 3");
+  });
+
+  test("finds exact name collisions in the same flat list", () => {
+    const instances = createBlockInstances();
+
+    expect(
+      findBlockTemplateNameCollision({
+        instance: instances.get("card")!,
+        nextInstance: { ...instances.get("card")!, label: "Hero Card" },
+        instances,
+      })?.instance.id
+    ).toBe("hero");
+    expect(
+      findBlockTemplateNameCollision({
+        instance: instances.get("card")!,
+        nextInstance: { ...instances.get("card")!, label: "hero card" },
+        instances,
+      })
+    ).toBeUndefined();
+  });
+
+  test.each([
+    {
+      source: {
+        id: "src",
+        instanceId: "block",
+        name: contentBlockSourceProp,
+        type: "asset" as const,
+        value: "article.mdx",
+      },
+      label: "direct",
+    },
+    {
+      source: {
+        id: "src",
+        instanceId: "block",
+        name: contentBlockSourceProp,
+        type: "expression" as const,
+        value: "articleAssetId",
+      },
+      label: "dynamic",
+    },
+  ])("requires confirmation for a $label source", ({ source }) => {
+    const instances = createBlockInstances();
+    const instance = instances.get("card")!;
+    const hero = instances.get("hero")!;
+
+    expect(
+      getBlockTemplateNameConfirmation({
+        changes: [
+          { instance, nextInstance: { ...instance, label: "Article Card" } },
+          { instance: hero, nextInstance: { ...hero, label: "Article Hero" } },
+        ],
+        instances,
+        props: new Map([[source.id, source]]).values(),
+      })
+    ).toEqual({
+      action: "rename",
+      templates: [
+        { instanceId: "card", oldName: "Box", newName: "Article Card" },
+        {
+          instanceId: "hero",
+          oldName: "Hero Card",
+          newName: "Article Hero",
+        },
+      ],
+    });
+    expect(
+      getBlockTemplateNameConfirmation({
+        changes: [{ instance }],
+        instances,
+        props: [source],
+      })
+    ).toEqual({
+      action: "delete",
+      templates: [{ instanceId: "card", oldName: "Box" }],
+    });
+  });
+
+  test("does not warn for nested, unchanged, or non-source templates", () => {
+    const instances = createBlockInstances();
+    const instance = instances.get("card")!;
+    instances.set(
+      "nested",
+      createInstance("nested", "Box", [{ type: "id", value: "card" }])
+    );
+    instances.get("templates")!.children = [
+      { type: "id", value: "hero" },
+      { type: "id", value: "nested" },
+    ];
+    const source = {
+      id: "src",
+      instanceId: "block",
+      name: contentBlockSourceProp,
+      type: "asset" as const,
+      value: "article.mdx",
+    };
+
+    expect(
+      getBlockTemplateNameConfirmation({
+        changes: [{ instance, nextInstance: { ...instance, label: "Card" } }],
+        instances,
+        props: [source],
+      })
+    ).toBeUndefined();
+    instances.get("templates")!.children.push({ type: "id", value: "card" });
+    expect(
+      getBlockTemplateNameConfirmation({
+        changes: [{ instance, nextInstance: { ...instance } }],
+        instances,
+        props: [source],
+      })
+    ).toBeUndefined();
+    expect(
+      getBlockTemplateNameConfirmation({
+        changes: [
+          { instance, nextInstance: { ...instance, label: "Article Card" } },
+        ],
+        instances,
+        props: [],
+      })
+    ).toBeUndefined();
   });
 });

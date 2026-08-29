@@ -103,9 +103,9 @@ const addHttpsIfMissing = (url: string) => {
   return url;
 };
 
-const BaseUrl = ({ readOnly, prop, value, onChange, id }: BaseControlProps) => {
+const BaseUrl = ({ readOnly, value, onChange, id }: BaseControlProps) => {
   const localValue = useDraftValue(value, (value) => {
-    if (prop?.type === "expression") {
+    if (readOnly) {
       return;
     }
     onChange({ type: "string", value });
@@ -140,17 +140,11 @@ const BaseUrl = ({ readOnly, prop, value, onChange, id }: BaseControlProps) => {
   );
 };
 
-const BasePhone = ({
-  readOnly,
-  prop,
-  value,
-  onChange,
-  id,
-}: BaseControlProps) => {
+const BasePhone = ({ readOnly, value, onChange, id }: BaseControlProps) => {
   const localValue = useDraftValue(
     value.startsWith("tel:") ? value.slice(4) : "",
     (value) => {
-      if (prop?.type === "expression") {
+      if (readOnly) {
         return;
       }
       const nextValue = `tel:${value}`;
@@ -219,15 +213,9 @@ export const __testing__ = {
   propToEmail,
 };
 
-const BaseEmail = ({
-  readOnly,
-  prop,
-  value,
-  onChange,
-  id,
-}: BaseControlProps) => {
+const BaseEmail = ({ readOnly, value, onChange, id }: BaseControlProps) => {
   const localValue = useDraftValue(propToEmail(value), ({ email, subject }) => {
-    if (prop?.type === "expression") {
+    if (readOnly) {
       return;
     }
     const value = emailToProp({ email, subject });
@@ -426,8 +414,8 @@ const BasePage = ({ prop, onChange }: BaseControlProps) => {
 const BaseAttachment = ({ prop, onChange }: BaseControlProps) => (
   <Row>
     <SelectAsset
-      prop={prop?.type === "asset" ? prop : undefined}
-      onChange={onChange}
+      assetId={prop?.type === "asset" ? prop.value : undefined}
+      onChange={(assetId) => onChange({ type: "asset", value: assetId })}
     />
   </Row>
 );
@@ -546,7 +534,7 @@ export const UrlControl = ({
   const value = String(computedValue ?? "");
   const label = humanizeAttribute(meta.label || propName);
   const binding = useBindableControl({
-    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    boundExpression: prop?.type === "expression" ? prop : undefined,
     fallbackExpression: JSON.stringify(computedValue),
   });
 

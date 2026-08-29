@@ -1,9 +1,12 @@
 import type { CompactBuild } from "@webstudio-is/project-build";
 import type { RuntimeOperationId } from "@webstudio-is/project-build/contracts";
-import { executeBuilderRuntimeOperation } from "@webstudio-is/project-build/runtime";
-import { BuilderRuntimeError } from "@webstudio-is/project-build/runtime";
-import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
-import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime";
+import {
+  BuilderRuntimeError,
+  builderRuntimeContext,
+  executeBuilderRuntimeOperation,
+  type BuilderRuntimeContext,
+  type BuilderRuntimeMutation,
+} from "@webstudio-is/project-build/runtime";
 import type { BuilderState } from "@webstudio-is/project-build/state";
 import { createBuilderStateFromCompactBuild } from "@webstudio-is/project-build/state";
 import { type Asset, type AssetFolder } from "@webstudio-is/sdk";
@@ -26,12 +29,14 @@ export const executeApiRuntimeOperation = async <Result>({
   assets,
   assetFolders,
   input,
+  context,
 }: {
   id: RuntimeOperationId;
   build: CompactBuild;
   assets?: Asset[];
   assetFolders?: AssetFolder[];
   input: unknown;
+  context?: Partial<BuilderRuntimeContext>;
 }): Promise<Result> => {
   try {
     return await executeBuilderRuntimeOperation<Result>({
@@ -42,6 +47,7 @@ export const executeApiRuntimeOperation = async <Result>({
         createId: builderRuntimeContext.createId,
         projectId: build.projectId,
         projectVersion: build.version,
+        ...context,
       },
     });
   } catch (error) {
@@ -67,4 +73,5 @@ export const executeApiRuntimeMutation = <
   assets?: Asset[];
   assetFolders?: AssetFolder[];
   input: unknown;
+  context?: Partial<BuilderRuntimeContext>;
 }) => executeApiRuntimeOperation<BuilderRuntimeMutation<Result>>(args);

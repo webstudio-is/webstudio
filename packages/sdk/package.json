@@ -79,6 +79,7 @@
     "@webstudio-is/wsauth": "workspace:*",
     "change-case": "^5.4.4",
     "json-schema-typed": "^8.0.2",
+    "nanoid": "^5.1.5",
     "reserved-identifiers": "^1.0.0",
     "type-fest": "^4.37.0",
     "warn-once": "^0.1.1",

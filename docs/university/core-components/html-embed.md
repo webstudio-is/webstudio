@@ -20,6 +20,8 @@ The "HTML Embed" component can be found in Components > General, and you can pla
 
 You can add your custom HTML, CSS, or JavaScript code to the HTML Embed instance by selecting it and accessing its “Settings”.
 
+The **Code** property is also available in Content mode when the HTML Embed is inside an editable Content Block.
+
 #### Code
 
 <figure><img src="../../.gitbook/assets/gsap.png" alt=""><figcaption></figcaption></figure>

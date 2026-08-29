@@ -12,6 +12,9 @@ export const getExpressionErrorMessages = (
 export const getExpressionErrors = (expression: string) =>
   getExpressionErrorMessages({ expression });
 
+export const unsupportedReadwriteExpressionError =
+  "Read-write expressions require a connected Content Block document frontmatter path";
+
 export const addExpressionValidationIssues = (
   context: z.RefinementCtx,
   errors: readonly string[],

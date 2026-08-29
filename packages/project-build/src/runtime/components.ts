@@ -1,5 +1,6 @@
 import equal from "fast-deep-equal";
 import {
+  blockTemplateComponent,
   elementComponent,
   instanceComponent,
   ROOT_INSTANCE_ID,
@@ -51,10 +52,12 @@ import {
   webstudioFragmentMutationInput,
 } from "./fragment";
 import {
+  blockTemplateNameConfirmationInput,
   createInstanceAppendPayload,
   createInstanceChild,
   insertIndexInput,
   instanceInsertModeInput,
+  requireBlockTemplateNameConfirmation,
 } from "./instances";
 import { createRuntimeMutation, type BuilderRuntimeMutation } from "./mutation";
 import { getSlotFragmentDropTargetMutable } from "./slot";
@@ -66,6 +69,10 @@ import {
   getNewFragmentContentModelWarnings,
 } from "./matcher";
 import { z } from "zod";
+import {
+  assignUniqueBlockTemplateNamesMutable,
+  getBlockTemplateNameConfirmation,
+} from "./block";
 
 const conflictResolutionInput = z
   .enum(["ours", "theirs", "merge"])
@@ -85,6 +92,7 @@ export const insertComponentInput = z.object({
     .describe('Required when component is "ws:element"; omit otherwise.'),
   mode: instanceInsertModeInput.optional(),
   insertIndex: insertIndexInput.optional(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const insertFragmentInput = z
@@ -102,6 +110,7 @@ export const insertFragmentInput = z
       ),
     mode: instanceInsertModeInput.optional(),
     insertIndex: insertIndexInput.optional(),
+    templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
   })
   .superRefine((input, context) => {
     if (
@@ -245,19 +254,39 @@ const getRequiredComponentInsertState = (state: ComponentInsertState) => {
   };
 };
 
+export const getRequiredComponentInsertData = (
+  state: ComponentInsertState
+): Omit<WebstudioData, "pages"> => {
+  const required = getRequiredComponentInsertState(state);
+  return {
+    instances: required.instances,
+    props: required.props,
+    dataSources: required.dataSources,
+    resources: required.resources,
+    styleSources: required.styleSources,
+    styleSourceSelections: required.styleSourceSelections,
+    styles: required.styles,
+    breakpoints: required.breakpoints,
+    assets: required.assets,
+  };
+};
+
 const cloneFragmentData = (
   state: ReturnType<typeof getRequiredComponentInsertState>
-): Omit<WebstudioData, "pages"> => ({
-  instances: cloneMap(state.instances),
-  props: cloneMap(state.props),
-  dataSources: cloneMap(state.dataSources),
-  resources: cloneMap(state.resources),
-  styleSources: cloneMap(state.styleSources),
-  styleSourceSelections: cloneMap(state.styleSourceSelections),
-  styles: cloneMap(state.styles),
-  breakpoints: cloneMap(state.breakpoints),
-  assets: cloneMap(state.assets),
-});
+): Omit<WebstudioData, "pages"> => {
+  const data = getRequiredComponentInsertData(state);
+  return {
+    instances: cloneMap(data.instances),
+    props: cloneMap(data.props),
+    dataSources: cloneMap(data.dataSources),
+    resources: cloneMap(data.resources),
+    styleSources: cloneMap(data.styleSources),
+    styleSourceSelections: cloneMap(data.styleSourceSelections),
+    styles: cloneMap(data.styles),
+    breakpoints: cloneMap(data.breakpoints),
+    assets: cloneMap(data.assets),
+  };
+};
 
 const cloneMap = <Key, Value>(map: Map<Key, Value>) =>
   new Map(
@@ -687,6 +716,7 @@ const createInsertFragmentMutation = <
   additionalAvailableVariables = [],
   getResultDetails,
   validateContentModel = true,
+  confirm,
   context,
 }: {
   state: ComponentInsertState;
@@ -703,6 +733,7 @@ const createInsertFragmentMutation = <
     newDataSourceIds: Map<string, string>;
   }) => Details;
   validateContentModel?: boolean;
+  confirm?: z.infer<typeof blockTemplateNameConfirmationInput>;
   context: BuilderRuntimeContext;
 }) => {
   const mutationState = getRequiredComponentInsertState(state);
@@ -787,6 +818,44 @@ const createInsertFragmentMutation = <
       return child;
     }
   );
+  assignUniqueBlockTemplateNamesMutable({
+    instanceIds: insertedChildren.flatMap((child) =>
+      child.type === "id" ? [child.value] : []
+    ),
+    parent,
+    replacedInstanceIds:
+      mode === "replace"
+        ? parentChildren.flatMap((child) =>
+            child.type === "id" ? [child.value] : []
+          )
+        : [],
+    instances: nextData.instances,
+  });
+  const requiredTemplateNameConfirmation =
+    mode === "replace" && parent.component === blockTemplateComponent
+      ? getBlockTemplateNameConfirmation({
+          changes: parentChildren.flatMap((child, index) => {
+            if (child.type !== "id") {
+              return [];
+            }
+            const instance = mutationState.instances.get(child.value);
+            const inserted = insertedChildren[index];
+            return instance === undefined
+              ? []
+              : [
+                  {
+                    instance,
+                    nextInstance:
+                      inserted?.type === "id"
+                        ? nextData.instances.get(inserted.value)
+                        : undefined,
+                  },
+                ];
+          }),
+          instances: mutationState.instances,
+          props: mutationState.props.values(),
+        })
+      : undefined;
 
   if (validateContentModel) {
     const validationInstances = new Map(nextData.instances);
@@ -831,6 +900,11 @@ const createInsertFragmentMutation = <
       return throwBuilderRuntimeError("BAD_REQUEST", contentModelError.message);
     }
   }
+  requireBlockTemplateNameConfirmation({
+    required: requiredTemplateNameConfirmation,
+    confirm,
+    path: "mode",
+  });
 
   const createResult = (
     parentInstanceId: string,
@@ -1000,6 +1074,7 @@ export const insertComponent = (
     mode: input.mode,
     insertIndex: input.insertIndex,
     validateContentModel: false,
+    confirm: input.templateNameConfirmation,
     context,
   });
 };
@@ -1146,6 +1221,7 @@ export const insertFragment = (
     insertIndex: input.insertIndex,
     conflictResolution: input.conflictResolution,
     contentMode: input.contentMode,
+    confirm: input.templateNameConfirmation,
     context,
   });
 };

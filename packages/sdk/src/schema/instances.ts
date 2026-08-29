@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { expressionBinding } from "./expression";
 
 export const textChildValue = z.string();
 
@@ -21,6 +22,8 @@ export const instanceTag = z
 export const instanceAttributes = z.object({
   component: instanceComponent,
   tag: instanceTag.optional(),
+  // The component or tag provides the default instance name. Renaming stores
+  // the user-defined name in label without changing the component identity.
   label: z.string().optional(),
 });
 
@@ -41,10 +44,7 @@ export const idChild = z.object({
 });
 export type IdChild = z.infer<typeof idChild>;
 
-export const expressionChild = z.object({
-  type: z.literal("expression"),
-  value: z.string(),
-});
+export const expressionChild = expressionBinding;
 export type ExpressionChild = z.infer<typeof expressionChild>;
 
 export const instanceChild = z.union([idChild, textChild, expressionChild]);

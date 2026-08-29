@@ -20,6 +20,7 @@ import type {
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
+import { mapAttributeNames } from "@webstudio-is/content-engine/jsx-attributes";
 import { parseTemplateCss, type TemplateStyleDecl } from "./css";
 import { camelCaseProperty, parseMediaQuery } from "@webstudio-is/css-data";
 
@@ -545,19 +546,27 @@ export const renderTemplate = (
       );
     }
     const instanceId = element.props?.["ws:id"] ?? getIdByKey(element);
+    const componentMeta = options.componentMetas?.get(component);
+    const componentPropNames = new Set(Object.keys(componentMeta?.props ?? {}));
+    const acceptsHtmlAttributes =
+      component === "ws:element" ||
+      typeof element.props?.["ws:tag"] === "string" ||
+      Object.keys(componentMeta?.presetStyle ?? {}).length > 0;
     let tag: string | undefined;
-    for (const entry of Object.entries({ ...element.props })) {
-      const [_name, value] = entry;
-      let [name] = entry;
-      if (name === "ws:id" || name === "ws:label" || name === "children") {
-        continue;
-      }
-      if (name === "className") {
-        name = "class";
-      }
-      if (name === "htmlFor") {
-        name = "for";
-      }
+    const mappedProps = mapAttributeNames({
+      attributes: Object.entries({ ...element.props }).flatMap(
+        ([name, value]) =>
+          name === "ws:id" || name === "ws:label" || name === "children"
+            ? []
+            : [{ name, value }]
+      ),
+      direction: "jsx-to-instance",
+      componentPropNames,
+      acceptsHtmlAttributes,
+    });
+    for (const mappedProp of mappedProps) {
+      let { name } = mappedProp;
+      const { value } = mappedProp;
       if (name === "ws:tag") {
         tag = value as string;
         continue;
@@ -606,6 +615,7 @@ export const renderTemplate = (
           ...base,
           type: "expression",
           value: compileExpression(instanceId, value),
+          mode: "read",
         });
         continue;
       }
@@ -636,7 +646,7 @@ export const renderTemplate = (
         props.push({ ...base, type: "page", value: value.value });
         continue;
       }
-      const propMeta = options.componentMetas?.get(component)?.props?.[name];
+      const propMeta = componentMeta?.props?.[name];
       if (propMeta?.type === "animationAction") {
         const result = animationAction.safeParse(value);
         if (result.success === false) {
@@ -693,7 +703,7 @@ export const renderTemplate = (
         }
         if (child instanceof Expression) {
           const expression = compileExpression(instanceId, child);
-          return { type: "expression", value: expression };
+          return { type: "expression", value: expression, mode: "read" };
         }
         return convertElementToInstance(child);
       }

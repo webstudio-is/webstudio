@@ -18,12 +18,20 @@ import {
   type AssetValueReferences,
 } from "./asset-value-references";
 import { compareStrings } from "./canonical-json";
-import { encodeUtf8, type ByteSource } from "./byte-stream";
+import {
+  decodeUtf8,
+  encodeUtf8,
+  readBoundedBytes,
+  type ByteSource,
+} from "./byte-stream";
 import { extractMarkdownBody } from "./markdown-body";
 import { contentEngineLimits } from "./limits";
+import { discoverMdxBodyAssetReferences, parseMdxDocument } from "./mdx";
 import {
   compileDocumentSourceGraph,
+  createDocumentSourceUrl,
   getDocumentFormatByContentType,
+  type SourceReferenceOccurrence,
   type DocumentGraph,
 } from "./document-graph";
 
@@ -218,13 +226,15 @@ const discoverSnapshotAssetReferences = async ({
   return references;
 };
 
-const discoverSnapshotAssetValueReferences = ({
+const discoverSnapshotAssetValueReferences = async ({
   snapshot,
   entries,
+  analyzedProperties,
 }: {
   snapshot: ContentSourceSnapshot;
   entries: readonly ContentCompilerInput[];
-}): AssetValueReferences => {
+  analyzedProperties: ReadonlyMap<string, Readonly<Record<string, unknown>>>;
+}): Promise<AssetValueReferences> => {
   const assetIdsByPath = createUniqueAssetIdsByPath(snapshot.files);
   const structuredAssetIds = new Set(
     snapshot.files
@@ -232,27 +242,63 @@ const discoverSnapshotAssetValueReferences = ({
       .map(({ id }) => id)
   );
   const references: AssetValueReferences = {};
-  for (const entry of [...entries].sort((left, right) =>
-    compareStrings(left.assetId, right.assetId)
-  )) {
-    const discovered = discoverAssetValueReferences({
-      properties: entry.document.properties ?? {},
-      sourcePath: entry.document.path,
+  const discoverProperties = ({
+    path,
+    properties,
+  }: {
+    path: string;
+    properties: Readonly<Record<string, unknown>>;
+  }) => {
+    return discoverAssetValueReferences({
+      properties,
+      sourcePath: path,
       assetIdsByPath,
       structuredAssetIds,
     });
+  };
+  for (const entry of [...entries].sort((left, right) =>
+    compareStrings(left.assetId, right.assetId)
+  )) {
+    const discovered = discoverProperties({
+      path: entry.document.path,
+      properties: entry.document.properties ?? {},
+    });
+    if (
+      entry.content !== undefined &&
+      getDocumentFormatByContentType(entry.document.mimeType) === "mdx"
+    ) {
+      const document = await parseMdxDocument({ source: entry.content });
+      discovered.push(
+        ...discoverMdxBodyAssetReferences({
+          document,
+          sourcePath: entry.document.path,
+          assetIdsByPath,
+        })
+      );
+    }
     if (discovered.length > 0) {
       references[entry.assetId] = discovered;
     }
   }
+  const entryIds = new Set(entries.map(({ assetId }) => assetId));
+  const filesById = new Map(snapshot.files.map((file) => [file.id, file]));
+  for (const [id, properties] of analyzedProperties) {
+    if (entryIds.has(id)) {
+      continue;
+    }
+    const file = filesById.get(id);
+    if (file !== undefined) {
+      const discovered = discoverProperties({
+        path: file.path,
+        properties,
+      });
+      if (discovered.length > 0) {
+        references[id] = discovered;
+      }
+    }
+  }
   return references;
 };
-
-const documentUrlBase = "https://content.webstudio.local/";
-
-const getDocumentUrl = (path: string) =>
-  new URL(path.split("/").map(encodeURIComponent).join("/"), documentUrlBase)
-    .href;
 
 const queryNeedsDocumentGraph = (
   query: ContentCompilationPlan["queries"][number]
@@ -275,11 +321,49 @@ const planReferencesMarkdownBodies = (plan?: ContentCompilationPlan) =>
   plan?.queries.some(({ content }) => content.mode === "markdown-body-ref") ===
   true;
 
+type AssetReferenceIssue = NonNullable<
+  ContentCompilerDiagnostics["assetReferenceIssues"]
+>[number];
+
+const documentPathExtensions = new Set(["json", "md", "markdown", "mdx"]);
+
+const isMissingLocalAssetReference = ({
+  occurrence,
+  documentUrls,
+}: {
+  occurrence: SourceReferenceOccurrence;
+  documentUrls: ReadonlySet<string>;
+}) => {
+  const url = new URL(occurrence.reference.documentUrl);
+  if (
+    url.origin !== new URL(createDocumentSourceUrl("")).origin ||
+    documentUrls.has(url.href)
+  ) {
+    return false;
+  }
+  const filename = url.pathname.slice(url.pathname.lastIndexOf("/") + 1);
+  const dotIndex = filename.lastIndexOf(".");
+  if (dotIndex === -1 || dotIndex === filename.length - 1) {
+    return false;
+  }
+  return documentPathExtensions.has(filename.slice(dotIndex + 1).toLowerCase())
+    ? false
+    : true;
+};
+
 const discoverSnapshotDocumentGraph = async (
   snapshot: ContentSourceSnapshot,
   entries: readonly ContentCompilerInput[],
+  analyzedProperties: Map<string, Readonly<Record<string, unknown>>>,
   plan?: ContentCompilationPlan
-): Promise<DocumentGraph | undefined> => {
+): Promise<
+  | Readonly<{
+      graph?: DocumentGraph;
+      contents?: Readonly<Record<string, string>>;
+      assetReferenceIssues: readonly AssetReferenceIssue[];
+    }>
+  | undefined
+> => {
   if (
     snapshot.loadDocumentSources === undefined ||
     (plan !== undefined && plan.queries.some(queryNeedsDocumentGraph) === false)
@@ -302,11 +386,28 @@ const discoverSnapshotDocumentGraph = async (
     }
     sourcesById.set(document.id, document.source);
   }
+  const bytesById = new Map<string, Promise<Uint8Array>>();
+  const getBytes = (id: string) => {
+    let bytes = bytesById.get(id);
+    if (bytes === undefined) {
+      const source = sourcesById.get(id);
+      if (source === undefined) {
+        throw new Error("Content source document catalog is incomplete");
+      }
+      bytes = readBoundedBytes(source, contentEngineLimits.hydratedFileBytes);
+      bytesById.set(id, bytes);
+    }
+    return bytes;
+  };
   const supportedFiles = snapshot.files.filter(isDocumentFile);
+  const documentUrls = new Set(
+    supportedFiles.map((file) => createDocumentSourceUrl(file.path))
+  );
+  const assetReferenceIssues: AssetReferenceIssue[] = [];
   const ignoredReferenceUrls = new Set(
     snapshot.files
       .filter((file) => isDocumentFile(file) === false)
-      .map((file) => getDocumentUrl(file.path))
+      .map((file) => createDocumentSourceUrl(file.path))
   );
   if (supportedFiles.some((file) => sourcesById.has(file.id) === false)) {
     throw new Error("Content source omitted a supported document source");
@@ -320,14 +421,35 @@ const discoverSnapshotDocumentGraph = async (
       }
       return {
         id: file.id,
-        documentUrl: getDocumentUrl(file.path),
+        documentUrl: createDocumentSourceUrl(file.path),
         revision: file.revision,
         contentRef: file.contentRef,
         format,
-        source,
+        source: {
+          async *[Symbol.asyncIterator]() {
+            yield await getBytes(file.id);
+          },
+        },
       };
     }),
     ignoredReferenceUrls,
+    ignoreReference: (occurrence) => {
+      if (
+        isMissingLocalAssetReference({ occurrence, documentUrls }) === false
+      ) {
+        return false;
+      }
+      assetReferenceIssues.push({
+        code: "ASSET_NOT_FOUND",
+        sourceDocumentId: occurrence.sourceDocumentId,
+        referenceId: occurrence.referenceId,
+        assetUrl: occurrence.reference.documentUrl,
+      });
+      return true;
+    },
+    onDocumentProperties: ({ id, properties }) => {
+      analyzedProperties.set(id, properties);
+    },
     ...(plan === undefined
       ? {}
       : {
@@ -336,10 +458,23 @@ const discoverSnapshotDocumentGraph = async (
           ),
         }),
   });
-  return graph.edges.length === 0 &&
+  if (
+    graph.edges.length === 0 &&
     planReferencesMarkdownBodies(plan) === false
-    ? undefined
-    : graph;
+  ) {
+    return assetReferenceIssues.length === 0
+      ? undefined
+      : { assetReferenceIssues };
+  }
+  const contents = Object.fromEntries(
+    await Promise.all(
+      graph.nodes.map(async (node) => [
+        node.contentRef,
+        decodeUtf8(await getBytes(node.id)),
+      ])
+    )
+  );
+  return { graph, contents, assetReferenceIssues };
 };
 
 export const materializeContentSnapshot = async ({
@@ -359,12 +494,23 @@ export const materializeContentSnapshot = async ({
   try {
     const entries = await snapshot.loadEntries(plan, { maximumContentBytes });
     validateEntries({ snapshot, entries });
-    const documentGraph = await measureContentSourcePerformance({
+    const analyzedProperties = new Map<
+      string,
+      Readonly<Record<string, unknown>>
+    >();
+    const documentGraphResult = await measureContentSourcePerformance({
       phase: "document-graph",
       observer: onPerformanceEvent,
       now: performanceNow,
-      operation: () => discoverSnapshotDocumentGraph(snapshot, entries, plan),
+      operation: () =>
+        discoverSnapshotDocumentGraph(
+          snapshot,
+          entries,
+          analyzedProperties,
+          plan
+        ),
     });
+    const documentGraph = documentGraphResult?.graph;
     const assetReferences = await measureContentSourcePerformance({
       phase: "asset-references",
       observer: onPerformanceEvent,
@@ -372,9 +518,10 @@ export const materializeContentSnapshot = async ({
       operation: () =>
         discoverSnapshotAssetReferences({ snapshot, entries, plan }),
     });
-    const assetValueReferences = discoverSnapshotAssetValueReferences({
+    const assetValueReferences = await discoverSnapshotAssetValueReferences({
       snapshot,
       entries,
+      analyzedProperties,
     });
     if (
       await measureContentSourcePerformance({
@@ -390,6 +537,8 @@ export const materializeContentSnapshot = async ({
         assetReferences,
         assetValueReferences,
         documentGraph,
+        documentContents: documentGraphResult?.contents,
+        assetReferenceIssues: documentGraphResult?.assetReferenceIssues ?? [],
       };
     }
   } catch (error) {
@@ -433,6 +582,8 @@ export const compileContentSource = async ({
     assetReferences,
     assetValueReferences,
     documentGraph,
+    documentContents,
+    assetReferenceIssues,
   } = await materializeContentSource({
     source,
     plan,
@@ -446,10 +597,19 @@ export const compileContentSource = async ({
     assetReferences,
     assetValueReferences,
     documentGraph,
+    documentContents,
     ...(plan === undefined ? {} : { plan }),
     ...(maxBytes === undefined ? {} : { maxBytes }),
   });
-  return { sourceRevision, documentGraph, ...compiled };
+  return {
+    sourceRevision,
+    documentGraph,
+    ...compiled,
+    diagnostics: {
+      ...compiled.diagnostics,
+      ...(assetReferenceIssues.length === 0 ? {} : { assetReferenceIssues }),
+    },
+  };
 };
 
 export const materializeContentSource = async ({
@@ -470,6 +630,8 @@ export const materializeContentSource = async ({
   assetReferences: MarkdownAssetReferences;
   assetValueReferences: AssetValueReferences;
   documentGraph?: DocumentGraph;
+  documentContents?: Readonly<Record<string, string>>;
+  assetReferenceIssues: readonly AssetReferenceIssue[];
 }> => {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const snapshot = await source.openSnapshot();

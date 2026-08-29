@@ -54,7 +54,7 @@ export type PropValue =
   | { type: "boolean"; value: boolean }
   | { type: "json"; value: unknown }
   | { type: "string[]"; value: string[] }
-  | { type: "expression"; value: string }
+  | Pick<Extract<Prop, { type: "expression" }>, "type" | "value" | "mode">
   | { type: "asset"; value: Asset["id"] }
   | { type: "page"; value: Extract<Prop, { type: "page" }>["value"] }
   | { type: "action"; value: Extract<Prop, { type: "action" }>["value"] }

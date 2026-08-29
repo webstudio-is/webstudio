@@ -2,7 +2,7 @@ import {
   reparentInstance,
   toggleInstanceShow,
 } from "~/shared/instance-utils/mutation";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { atom, computed } from "nanostores";
 import { mergeRefs } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
@@ -27,6 +27,7 @@ import { showAttribute, getCollectionEntries } from "@webstudio-is/react-sdk";
 import {
   ROOT_INSTANCE_ID,
   collectionComponent,
+  blockBodyComponent,
   blockComponent,
   rootComponent,
   blockTemplateComponent,
@@ -74,8 +75,17 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import {
+  executeRuntimeMutation,
+  getDuplicateTemplateNameMessage,
+} from "~/shared/instance-utils/data";
 import { isRichTextContent } from "@webstudio-is/project-build/runtime";
+import {
+  $externalContentRoots,
+  externalContentInstanceNameMessage,
+  isExternalContentInstance,
+  resolveExternalContentOccurrence,
+} from "~/shared/external-content-mutations";
 import {
   getInstanceLabel,
   InstanceIcon,
@@ -224,6 +234,7 @@ export const $flatTree = computed(
     $propValuesByInstanceSelector,
     $dropTarget,
     $isContentMode,
+    $externalContentRoots,
   ],
   (
     page,
@@ -231,7 +242,8 @@ export const $flatTree = computed(
     expandedItems,
     propValuesByInstanceSelector,
     dropTarget,
-    isContentMode
+    isContentMode,
+    externalContentRoots
   ) => {
     const flatTree: TreeItem[] = [];
     if (page === undefined) {
@@ -246,11 +258,27 @@ export const $flatTree = computed(
       isLastChild = false,
       indexWithinChildren = 0
     ) => {
-      const instance = instances.get(instanceId);
+      let instance = instances.get(instanceId);
       if (instance === undefined) {
         // log instead of failing navigator tree
         console.error(`Unknown instance ${instanceId}`);
         return;
+      }
+      if (
+        isContentMode &&
+        (instance.component === blockComponent ||
+          instance.component === blockBodyComponent)
+      ) {
+        const occurrence = resolveExternalContentOccurrence({
+          sourceInstance: instance,
+          sourceSelector: selector,
+          instances,
+          roots: externalContentRoots,
+        });
+        if (occurrence !== undefined) {
+          instance = occurrence.instance;
+          selector = occurrence.selector;
+        }
       }
       const propValues = propValuesByInstanceSelector.get(
         getInstanceKey(selector)
@@ -502,44 +530,73 @@ const EditableTreeNodeLabel = styled("div", {
         userSelect: "text",
       },
     },
+    hasError: {
+      true: {
+        outline: `1px solid ${theme.colors.borderDestructiveMain}`,
+      },
+    },
   },
 });
 
 const TreeNodeContent = ({
   instance,
   isEditing,
+  isNameEditable,
   onIsEditingChange,
 }: {
   instance: Instance;
   isEditing: boolean;
+  isNameEditable: boolean;
   onIsEditingChange: (isEditing: boolean) => void;
 }) => {
   const editableRef = useRef<HTMLDivElement | null>(null);
+  const [error, setError] = useState<string>();
 
   const label = getInstanceLabel(instance);
   const { ref, handlers } = useContentEditable({
     value: label,
-    isEditable: true,
-    isEditing,
+    isEditable: isNameEditable,
+    isEditing: isNameEditable && isEditing,
     onChangeValue: (value: string) => {
-      executeRuntimeMutation({
-        id: "instances.setLabel",
-        input: { instanceId: instance.id, label: value },
-      });
-      editableRef.current?.closest("button")?.focus();
+      if (isExternalContentInstance($externalContentRoots.get(), instance.id)) {
+        return;
+      }
+      try {
+        executeRuntimeMutation({
+          id: "instances.setLabel",
+          input: { instanceId: instance.id, label: value },
+        });
+        setError(undefined);
+        editableRef.current?.closest("button")?.focus();
+      } catch (error) {
+        const message = getDuplicateTemplateNameMessage(error);
+        if (message === undefined) {
+          throw error;
+        }
+        setError(message);
+        onIsEditingChange(true);
+      }
     },
     onChangeEditing: onIsEditingChange,
   });
 
   return (
     <TreeNodeLabel prefix={<InstanceIcon instance={instance} />}>
-      <EditableTreeNodeLabel
-        ref={mergeRefs(editableRef, ref)}
-        {...handlers}
-        isEditing={isEditing}
+      <Tooltip
+        content={isNameEditable ? error : externalContentInstanceNameMessage}
+        delayDuration={0}
       >
-        {label}
-      </EditableTreeNodeLabel>
+        <EditableTreeNodeLabel
+          ref={mergeRefs(editableRef, ref)}
+          {...handlers}
+          isEditing={isEditing}
+          hasError={error !== undefined}
+          aria-invalid={error === undefined ? undefined : true}
+          onInput={() => setError(undefined)}
+        >
+          {label}
+        </EditableTreeNodeLabel>
+      </Tooltip>
     </TreeNodeLabel>
   );
 };
@@ -704,6 +761,7 @@ const commitNavigatorDrop = ({
 export const NavigatorTree = () => {
   const isContentMode = useStore($isContentMode);
   const flatTree = useStore($flatTree);
+  const externalContentRoots = useStore($externalContentRoots);
   const selectedInstanceSelectors = useStore($allSelectedInstanceSelectors);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const selectedKeys = useMemo(
@@ -1111,6 +1169,12 @@ export const NavigatorTree = () => {
                   >
                     <TreeNodeContent
                       instance={item.instance}
+                      isNameEditable={
+                        isExternalContentInstance(
+                          externalContentRoots,
+                          item.instance.id
+                        ) === false
+                      }
                       isEditing={areInstanceSelectorsEqual(
                         item.selector,
                         editingItemSelector

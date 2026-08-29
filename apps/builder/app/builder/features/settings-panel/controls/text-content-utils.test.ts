@@ -19,6 +19,7 @@ test("updates the targeted expression without replacing its siblings", () => {
       ]),
       type: "expression",
       value: "2 + 2",
+      expressionBindingMode: "readwrite",
     })
   ).toEqual({
     id: "instances.updateText",
@@ -27,6 +28,7 @@ test("updates the targeted expression without replacing its siblings", () => {
       childIndex: 1,
       mode: "expression",
       text: "2 + 2",
+      expressionBindingMode: "readwrite",
     },
   });
 });

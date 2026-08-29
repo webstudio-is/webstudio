@@ -3,6 +3,3447 @@
 
 export const runtimeOperationContractData = [
   {
+    id: "contentBlocks.inspectSource",
+    command: "inspect-content-block-source",
+    client: "inspectContentBlockSource",
+    permit: "view",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+        },
+        variables: {
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+      },
+      required: ["blockInstanceId", "renderScope"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        source: {
+          type: "string",
+        },
+        sessionStatus: {
+          type: "string",
+          enum: ["saved", "pending", "saving", "failed", "conflicting"],
+        },
+        identity: {
+          type: "object",
+          properties: {
+            blockInstanceId: {
+              type: "string",
+            },
+            assetId: {
+              type: "string",
+            },
+            revision: {
+              type: "string",
+            },
+            contentRef: {
+              type: "string",
+            },
+            format: {
+              type: "string",
+              const: "mdx",
+            },
+            renderScope: {
+              type: "string",
+            },
+          },
+          required: [
+            "blockInstanceId",
+            "assetId",
+            "revision",
+            "contentRef",
+            "format",
+            "renderScope",
+          ],
+          additionalProperties: {},
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["source", "sessionStatus", "identity", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.connectSource",
+    command: "connect-content-block-source",
+    client: "connectContentBlockSource",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+        },
+        variables: {
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+        source: {
+          oneOf: [
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "asset",
+                },
+                assetId: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["type", "assetId"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "expression",
+                },
+                value: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["type", "value"],
+              additionalProperties: false,
+            },
+          ],
+        },
+      },
+      required: ["blockInstanceId", "renderScope", "source"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          const: "connect",
+        },
+        requiresConfirmation: {
+          type: "boolean",
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["action", "requiresConfirmation", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    invalidatesNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.switchSource",
+    command: "switch-content-block-source",
+    client: "switchContentBlockSource",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+        },
+        variables: {
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+        source: {
+          oneOf: [
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "asset",
+                },
+                assetId: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["type", "assetId"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "expression",
+                },
+                value: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["type", "value"],
+              additionalProperties: false,
+            },
+          ],
+        },
+      },
+      required: ["blockInstanceId", "renderScope", "source"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          const: "switch",
+        },
+        requiresConfirmation: {
+          type: "boolean",
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["action", "requiresConfirmation", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    invalidatesNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.disconnectSource",
+    command: "disconnect-content-block-source",
+    client: "disconnectContentBlockSource",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+        },
+        variables: {
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+      },
+      required: ["blockInstanceId", "renderScope"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          const: "disconnect",
+        },
+        requiresConfirmation: {
+          type: "boolean",
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["action", "requiresConfirmation", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    invalidatesNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.editSource",
+    command: "edit-content-block-source",
+    client: "editContentBlockSource",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+        },
+        variables: {
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+        source: {
+          type: "string",
+        },
+      },
+      required: ["blockInstanceId", "renderScope", "source"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        assetId: {
+          type: "string",
+        },
+        source: {
+          type: "string",
+        },
+        status: {
+          type: "string",
+          enum: ["saved", "pending", "saving", "failed", "conflicting"],
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["assetId", "source", "status", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: ["assets"],
+    invalidatesNamespaces: ["assets"],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.updateFrontmatter",
+    command: "update-content-block-frontmatter",
+    client: "updateContentBlockFrontmatter",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+        },
+        variables: {
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+        properties: {
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+      },
+      required: ["blockInstanceId", "renderScope", "properties"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        assetId: {
+          type: "string",
+        },
+        source: {
+          type: "string",
+        },
+        status: {
+          type: "string",
+          enum: ["saved", "pending", "saving", "failed", "conflicting"],
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["assetId", "source", "status", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: ["assets"],
+    invalidatesNamespaces: ["assets"],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.reloadSource",
+    command: "reload-content-block-source",
+    client: "reloadContentBlockSource",
+    permit: "view",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+        },
+        variables: {
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+      },
+      required: ["blockInstanceId", "renderScope"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        assetId: {
+          type: "string",
+        },
+        source: {
+          type: "string",
+        },
+        status: {
+          type: "string",
+          enum: ["saved", "pending", "saving", "failed", "conflicting"],
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["assetId", "source", "status", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.migrateTemplateReferences",
+    command: "migrate-content-block-template-references",
+    client: "migrateContentBlockTemplateReferences",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        assetIds: {
+          minItems: 1,
+          maxItems: 100,
+          type: "array",
+          items: {
+            type: "string",
+            minLength: 1,
+          },
+        },
+        migration: {
+          anyOf: [
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "rename",
+                },
+                from: {
+                  type: "string",
+                  minLength: 1,
+                },
+                to: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["type", "from", "to"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "remove",
+                },
+                name: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["type", "name"],
+            },
+          ],
+        },
+        confirmationToken: {
+          type: "string",
+        },
+      },
+      required: ["assetIds", "migration"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        status: {
+          type: "string",
+          enum: ["confirmation-required", "complete", "partial"],
+        },
+        updateCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        omissionCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        changedFileCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        files: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              assetId: {
+                type: "string",
+              },
+              revision: {
+                type: "string",
+              },
+              contentRef: {
+                type: "string",
+              },
+              changed: {
+                type: "boolean",
+              },
+              status: {
+                type: "string",
+                enum: ["updated", "unchanged", "failed"],
+              },
+              updateCount: {
+                type: "integer",
+                minimum: 0,
+                maximum: 9007199254740991,
+              },
+              omissionCount: {
+                type: "integer",
+                minimum: 0,
+                maximum: 9007199254740991,
+              },
+              diagnostics: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    code: {
+                      type: "string",
+                    },
+                    message: {
+                      type: "string",
+                    },
+                  },
+                  required: ["code", "message"],
+                  additionalProperties: {},
+                },
+              },
+            },
+            required: [
+              "assetId",
+              "revision",
+              "contentRef",
+              "changed",
+              "updateCount",
+              "omissionCount",
+              "diagnostics",
+            ],
+            additionalProperties: {},
+          },
+        },
+        confirmation: {
+          type: "object",
+          properties: {
+            token: {
+              type: "string",
+            },
+            expiresAt: {
+              type: "string",
+            },
+          },
+          required: ["token", "expiresAt"],
+          additionalProperties: {},
+        },
+      },
+      required: [
+        "status",
+        "updateCount",
+        "omissionCount",
+        "changedFileCount",
+        "files",
+      ],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: ["assets"],
+    invalidatesNamespaces: ["assets"],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
     id: "pages.list",
     command: "list-pages",
     client: "listPages",
@@ -3577,6 +7018,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -3650,6 +7097,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -4512,6 +7965,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -6765,6 +10224,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -6838,6 +10303,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -7700,6 +11171,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -9964,6 +13441,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -10037,6 +13520,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -10899,6 +14388,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -13152,6 +16647,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -13225,6 +16726,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -14087,6 +17594,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -19041,6 +22554,12 @@ export const runtimeOperationContractData = [
                                     value: {
                                       type: "string",
                                     },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                                    },
                                   },
                                   required: ["type", "value"],
                                 },
@@ -19114,6 +22633,12 @@ export const runtimeOperationContractData = [
                                           },
                                           value: {
                                             type: "string",
+                                          },
+                                          mode: {
+                                            type: "string",
+                                            enum: ["read", "readwrite"],
+                                            description:
+                                              'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                           },
                                         },
                                         required: ["type", "value"],
@@ -20004,6 +23529,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: [
@@ -22437,6 +25968,12 @@ export const runtimeOperationContractData = [
                                     value: {
                                       type: "string",
                                     },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                                    },
                                   },
                                   required: ["type", "value"],
                                 },
@@ -22510,6 +26047,12 @@ export const runtimeOperationContractData = [
                                           },
                                           value: {
                                             type: "string",
+                                          },
+                                          mode: {
+                                            type: "string",
+                                            enum: ["read", "readwrite"],
+                                            description:
+                                              'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                           },
                                         },
                                         required: ["type", "value"],
@@ -23400,6 +26943,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: [
@@ -26074,6 +29623,12 @@ export const runtimeOperationContractData = [
                             value: {
                               type: "string",
                             },
+                            mode: {
+                              type: "string",
+                              enum: ["read", "readwrite"],
+                              description:
+                                'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                            },
                           },
                           required: ["type", "value"],
                         },
@@ -26507,6 +30062,12 @@ export const runtimeOperationContractData = [
                   },
                   value: {
                     type: "string",
+                  },
+                  mode: {
+                    type: "string",
+                    enum: ["read", "readwrite"],
+                    description:
+                      'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                   },
                 },
                 required: ["id", "instanceId", "name", "type", "value"],
@@ -28836,6 +32397,12 @@ export const runtimeOperationContractData = [
                   },
                   value: {
                     type: "string",
+                  },
+                  mode: {
+                    type: "string",
+                    enum: ["read", "readwrite"],
+                    description:
+                      'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                   },
                 },
                 required: ["id", "instanceId", "name", "type", "value"],
@@ -37078,6 +40645,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -37151,6 +40724,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -38013,6 +41592,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -40345,6 +43930,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -40418,6 +44009,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -41280,6 +44877,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -43558,6 +47161,12 @@ export const runtimeOperationContractData = [
                         type: "string",
                         description:
                           "One Webstudio JavaScript expression. Read webstudio://project/expressions before using unfamiliar scope or syntax.",
+                      },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                       },
                     },
                     required: ["type", "value"],
@@ -46544,6 +50153,36 @@ export const runtimeOperationContractData = [
           minimum: 0,
           maximum: 9007199254740991,
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["parentInstanceId", "component"],
     },
@@ -46581,6 +50220,519 @@ export const runtimeOperationContractData = [
         "rootInstanceIds",
         "removedInstanceIds",
         "parentInstanceId",
+      ],
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: [
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    invalidatesNamespaces: [
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "instances.insertMdxText",
+    command: "insert-mdx-text",
+    client: "insertMdxText",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        parentInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        source: {
+          type: "string",
+          minLength: 1,
+        },
+        mode: {
+          type: "string",
+          enum: ["append", "prepend", "replace"],
+        },
+        insertIndex: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
+      },
+      required: ["parentInstanceId", "source"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        instanceIds: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        rootInstanceIds: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        removedInstanceIds: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        parentInstanceId: {
+          type: "string",
+        },
+        didMergeBreakpointsDueToLimit: {
+          type: "boolean",
+          const: true,
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: [
+        "instanceIds",
+        "rootInstanceIds",
+        "removedInstanceIds",
+        "parentInstanceId",
+        "diagnostics",
       ],
     },
     readNamespaces: [
@@ -46724,6 +50876,12 @@ export const runtimeOperationContractData = [
                       value: {
                         type: "string",
                       },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                      },
                     },
                     required: ["type", "value"],
                   },
@@ -46797,6 +50955,12 @@ export const runtimeOperationContractData = [
                             },
                             value: {
                               type: "string",
+                            },
+                            mode: {
+                              type: "string",
+                              enum: ["read", "readwrite"],
+                              description:
+                                'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                             },
                           },
                           required: ["type", "value"],
@@ -47606,6 +51770,12 @@ export const runtimeOperationContractData = [
                       },
                       value: {
                         type: "string",
+                      },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                       },
                     },
                     required: ["id", "instanceId", "name", "type", "value"],
@@ -52601,6 +56771,12 @@ export const runtimeOperationContractData = [
                       value: {
                         type: "string",
                       },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                      },
                     },
                     required: ["type", "value"],
                   },
@@ -52674,6 +56850,12 @@ export const runtimeOperationContractData = [
                             },
                             value: {
                               type: "string",
+                            },
+                            mode: {
+                              type: "string",
+                              enum: ["read", "readwrite"],
+                              description:
+                                'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                             },
                           },
                           required: ["type", "value"],
@@ -53483,6 +57665,12 @@ export const runtimeOperationContractData = [
                       },
                       value: {
                         type: "string",
+                      },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                       },
                     },
                     required: ["id", "instanceId", "name", "type", "value"],
@@ -55620,6 +59808,36 @@ export const runtimeOperationContractData = [
           type: "integer",
           minimum: 0,
           maximum: 9007199254740991,
+        },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
         },
       },
       required: ["fragment"],
@@ -58753,6 +62971,36 @@ export const runtimeOperationContractData = [
           type: "string",
           minLength: 1,
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["instanceSelector", "component"],
     },
@@ -58995,6 +63243,36 @@ export const runtimeOperationContractData = [
             type: "string",
           },
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["instanceIds"],
     },
@@ -59058,6 +63336,36 @@ export const runtimeOperationContractData = [
           items: {
             type: "string",
           },
+        },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
         },
       },
       required: ["instanceSelector"],
@@ -59394,6 +63702,12 @@ export const runtimeOperationContractData = [
                     type: "string",
                     description:
                       "One Webstudio JavaScript expression, not a statement or function. Read webstudio://project/expressions for syntax and scope rules.",
+                  },
+                  mode: {
+                    type: "string",
+                    enum: ["read", "readwrite"],
+                    description:
+                      'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                   },
                 },
                 required: ["instanceId", "name", "type", "value"],
@@ -61666,6 +65980,12 @@ export const runtimeOperationContractData = [
                         description:
                           "One Webstudio JavaScript expression. Read webstudio://project/expressions before using unfamiliar scope or syntax.",
                       },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                      },
                     },
                     required: ["type", "value"],
                   },
@@ -61981,6 +66301,12 @@ export const runtimeOperationContractData = [
           type: "string",
           enum: ["text", "expression"],
         },
+        expressionBindingMode: {
+          type: "string",
+          enum: ["read", "readwrite"],
+          description:
+            'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+        },
       },
       required: ["instanceId", "childIndex", "text"],
     },
@@ -62060,7 +66386,7 @@ export const runtimeOperationContractData = [
       required: ["instanceId", "childIndex", "mode"],
       additionalProperties: {},
     },
-    readNamespaces: ["instances", "dataSources"],
+    readNamespaces: ["instances", "props", "dataSources"],
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
     retryOnConflict: true,
@@ -62186,6 +66512,12 @@ export const runtimeOperationContractData = [
                 'Use "text" for plain visible text and "expression" for JavaScript expression children.',
               type: "string",
               enum: ["text", "expression"],
+            },
+            expressionBindingMode: {
+              type: "string",
+              enum: ["read", "readwrite"],
+              description:
+                'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
             },
           },
           required: ["operation", "instanceId", "text"],
@@ -62319,7 +66651,7 @@ export const runtimeOperationContractData = [
       required: ["instanceId", "operation"],
       additionalProperties: {},
     },
-    readNamespaces: ["instances", "dataSources"],
+    readNamespaces: ["instances", "props", "dataSources"],
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
     retryOnConflict: true,
@@ -62404,6 +66736,12 @@ export const runtimeOperationContractData = [
                         },
                         value: {
                           type: "string",
+                        },
+                        mode: {
+                          type: "string",
+                          enum: ["read", "readwrite"],
+                          description:
+                            'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                         },
                       },
                       required: ["type", "value"],
@@ -62491,6 +66829,36 @@ export const runtimeOperationContractData = [
         legacyPropName: {
           type: "string",
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["instanceId", "tag"],
     },
@@ -62526,6 +66894,36 @@ export const runtimeOperationContractData = [
         },
         label: {
           type: "string",
+        },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
         },
       },
       required: ["instanceId", "label"],
