@@ -2,7 +2,10 @@ import {
   Children,
   forwardRef,
   type ComponentPropsWithoutRef,
+  useCallback,
   useContext,
+  useRef,
+  useState,
 } from "react";
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
 import { getIndexWithinAncestorFromProps } from "@webstudio-is/sdk/runtime";
@@ -11,6 +14,11 @@ import {
   ReactSdkContext,
   type Hook,
 } from "@webstudio-is/react-sdk/runtime";
+import {
+  getLinkActivation,
+  NavigationOverlayContext,
+  useNavigationOverlay,
+} from "./navigation-overlay";
 
 export const NavigationMenu = forwardRef<
   HTMLLIElement,
@@ -18,7 +26,7 @@ export const NavigationMenu = forwardRef<
     ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root>,
     "orientation" | "aria-orientation"
   >
->(({ value: propsValue, ...props }, ref) => {
+>(({ value: propsValue, defaultValue, onValueChange, ...props }, ref) => {
   /**
    * If the value is an empty string, "NavigationMenuViewport" isn't in the tree.
    * This is Radix's way to differentiate animations. However, in the builder, we can't style non-existing elements.
@@ -26,18 +34,67 @@ export const NavigationMenu = forwardRef<
    * This ensures "NavigationMenuViewport" always appears in the HTML tree.
    **/
   const { renderer } = useContext(ReactSdkContext);
-  let value = propsValue;
+  const [uncontrolledValue, setUncontrolledValue] = useState(
+    () => defaultValue ?? ""
+  );
+  const handleValueChange = useCallback(
+    (value: string) => {
+      if (propsValue === undefined) {
+        setUncontrolledValue(value);
+      }
+      onValueChange?.(value);
+    },
+    [onValueChange, propsValue]
+  );
+  const close = useCallback(() => handleValueChange(""), [handleValueChange]);
+
+  let value = propsValue ?? uncontrolledValue;
   if (renderer === "canvas") {
     value = value === "" ? "-1" : value;
   }
 
-  return <NavigationMenuPrimitive.Root ref={ref} value={value} {...props} />;
+  return (
+    <NavigationOverlayContext.Provider value={close}>
+      <NavigationMenuPrimitive.Root
+        {...props}
+        ref={ref}
+        value={value}
+        onValueChange={handleValueChange}
+      />
+    </NavigationOverlayContext.Provider>
+  );
 });
 
 export const NavigationMenuList = NavigationMenuPrimitive.List;
 
 export const NavigationMenuViewport = NavigationMenuPrimitive.Viewport;
-export const NavigationMenuContent = NavigationMenuPrimitive.Content;
+export const NavigationMenuContent = forwardRef<
+  HTMLDivElement,
+  ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Content>
+>(({ onClickCapture, ...props }, ref) => {
+  const close = useNavigationOverlay();
+  const { renderer } = useContext(ReactSdkContext);
+
+  return (
+    <NavigationMenuPrimitive.Content
+      ref={ref}
+      {...props}
+      onClickCapture={(event) => {
+        onClickCapture?.(event);
+        const anchor = getLinkActivation(event);
+        // Preview mirrors the published site; Canvas stays open for editing.
+        // Radix NavigationMenuLink dismisses itself; plain anchors do not.
+        if (
+          renderer !== "canvas" &&
+          anchor !== undefined &&
+          anchor.hasAttribute("data-ws-navigation-menu-link") === false
+        ) {
+          close?.();
+        }
+      }}
+    />
+  );
+});
 
 export const NavigationMenuItem = forwardRef<
   HTMLLIElement,
@@ -52,11 +109,31 @@ export const NavigationMenuItem = forwardRef<
 export const NavigationMenuLink = forwardRef<
   HTMLAnchorElement,
   ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Link>
->(({ children, ...props }, ref) => {
+>(({ children, onClickCapture, onSelect, ...props }, ref) => {
   const firstChild = Children.toArray(children)[0];
+  // Radix only preserves the menu for Meta-clicks. Remember the browser-like
+  // activation decision so its custom select event can also preserve the menu
+  // for other modifiers, downloads, and links targeting another context.
+  const shouldDismissRef = useRef(false);
 
   return (
-    <NavigationMenuPrimitive.Link asChild={true} ref={ref} {...props}>
+    <NavigationMenuPrimitive.Link
+      asChild={true}
+      ref={ref}
+      {...props}
+      data-ws-navigation-menu-link=""
+      onClickCapture={(event) => {
+        onClickCapture?.(event);
+        shouldDismissRef.current = getLinkActivation(event) !== undefined;
+      }}
+      onSelect={(event) => {
+        onSelect?.(event);
+        if (shouldDismissRef.current === false) {
+          // This cancels Radix's custom dismissal event, not native navigation.
+          event.preventDefault();
+        }
+      }}
+    >
       {firstChild ?? <a>Add link component</a>}
     </NavigationMenuPrimitive.Link>
   );

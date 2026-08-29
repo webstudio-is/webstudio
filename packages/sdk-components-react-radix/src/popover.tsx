@@ -5,9 +5,20 @@ import {
   Children,
   useState,
   useEffect,
+  useCallback,
+  useContext,
 } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk/runtime";
+import {
+  getClosestInstance,
+  ReactSdkContext,
+  type Hook,
+} from "@webstudio-is/react-sdk/runtime";
+import {
+  getLinkActivation,
+  NavigationOverlayContext,
+  useNavigationOverlay,
+} from "./navigation-overlay";
 
 // wrap in forwardRef because Root is functional component without ref
 export const Popover = forwardRef<
@@ -18,8 +29,11 @@ export const Popover = forwardRef<
   const [open, setOpen] = useState(currentOpen);
   // synchronize external value with local one when changed
   useEffect(() => setOpen(currentOpen), [currentOpen]);
+  const close = useCallback(() => setOpen(false), []);
   return (
-    <PopoverPrimitive.Root {...props} open={open} onOpenChange={setOpen} />
+    <NavigationOverlayContext.Provider value={close}>
+      <PopoverPrimitive.Root {...props} open={open} onOpenChange={setOpen} />
+    </NavigationOverlayContext.Provider>
   );
 });
 
@@ -47,19 +61,37 @@ export const PopoverContent = forwardRef<
   ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
 >(
   (
-    { sideOffset = 4, align = "center", hideWhenDetached = true, ...props },
+    {
+      sideOffset = 4,
+      align = "center",
+      hideWhenDetached = true,
+      onClickCapture,
+      ...props
+    },
     ref
-  ) => (
-    <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Content
-        ref={ref}
-        align="center"
-        sideOffset={sideOffset}
-        hideWhenDetached={hideWhenDetached}
-        {...props}
-      />
-    </PopoverPrimitive.Portal>
-  )
+  ) => {
+    const close = useNavigationOverlay();
+    const { renderer } = useContext(ReactSdkContext);
+
+    return (
+      <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Content
+          ref={ref}
+          align="center"
+          sideOffset={sideOffset}
+          hideWhenDetached={hideWhenDetached}
+          {...props}
+          onClickCapture={(event) => {
+            onClickCapture?.(event);
+            // Preview mirrors the published site; Canvas stays open for editing.
+            if (renderer !== "canvas" && getLinkActivation(event)) {
+              close?.();
+            }
+          }}
+        />
+      </PopoverPrimitive.Portal>
+    );
+  }
 );
 
 export const PopoverClose = PopoverPrimitive.Close;
