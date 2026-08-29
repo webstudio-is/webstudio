@@ -1501,6 +1501,15 @@ describe("project session mcp adapter", () => {
               "focused-page-change",
             ]),
           }),
+          workflow: expect.objectContaining({
+            enum: expect.arrayContaining([
+              "general",
+              "markdown-blog",
+              "design-input",
+            ]),
+          }),
+          authoredFragment: expect.objectContaining({ type: "boolean" }),
+          reuseDesignSystem: expect.objectContaining({ type: "boolean" }),
         }),
       }),
       annotations: expect.objectContaining({ requiredInputFields: ["brief"] }),
@@ -4739,38 +4748,60 @@ describe("project session mcp adapter", () => {
     });
     const jsonLdGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Add JSON-LD structured data to the home page" },
+      input: {
+        brief: "Add JSON-LD structured data to the home page",
+        workflow: "json-ld",
+      },
     });
     const collectionGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Render an array of blog posts as repeated cards" },
+      input: {
+        brief: "Render an array of blog posts as repeated cards",
+        workflow: "collection",
+      },
     });
     const markdownBlogGuide = await adapter.callTool({
       name: "meta.guide",
       input: {
         brief:
           "Create a Markdown-based blog with overview and post pages from Assets",
+        workflow: "markdown-blog",
       },
     });
     const expressionGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Bind a dynamic expression to a prop" },
+      input: {
+        brief: "Bind a dynamic expression to a prop",
+        workflow: "expression",
+      },
     });
     const authenticatedPageGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Build a Supabase authenticated account page" },
+      input: {
+        brief: "Build a Supabase authenticated account page",
+        workflow: "authenticated-page",
+      },
     });
     const fontAssetGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Upload and correct two font assets" },
+      input: {
+        brief: "Upload and correct two font assets",
+        workflow: "font-assets",
+      },
     });
     const designInputGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Recreate this Figma design as a responsive page" },
+      input: {
+        brief: "Recreate this Figma design as a responsive page",
+        workflow: "design-input",
+      },
     });
     const craftGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Add a section that preserves this Craft project" },
+      input: {
+        brief: "Add a section that preserves this Craft project",
+        workflow: "craft",
+      },
     });
     const expectConsentBeforeVisualVerification = (
       guide: typeof markdownBlogGuide
@@ -5159,6 +5190,22 @@ describe("project session mcp adapter", () => {
       })
     ).rejects.toThrow(
       "meta.guide input.taskScope must be one of read-only-audit, small-value-or-reference-correction, focused-page-change, visual-change, structural-project-change, project-wide-migration."
+    );
+    await expect(
+      adapter.callTool({
+        name: "meta.guide",
+        input: { brief: "Build a blog", workflow: "blog" },
+      })
+    ).rejects.toThrow(
+      "meta.guide input.workflow must be one of general, markdown-blog, json-ld, collection, expression, authenticated-page, font-assets, design-input, craft."
+    );
+    await expect(
+      adapter.callTool({
+        name: "meta.guide",
+        input: { brief: "Insert a fragment", authoredFragment: "yes" },
+      })
+    ).rejects.toThrow(
+      "meta.guide input.authoredFragment must be a boolean when provided. Received string."
     );
     await expect(
       adapter.callTool({
@@ -7317,6 +7364,7 @@ describe("project session mcp adapter", () => {
 
     expect(guide.structuredContent.data).toMatchObject({
       taskScope: "focused-page-change",
+      routing: { workflow: "general" },
     });
     expect(guide.structuredContent.data).not.toHaveProperty("constraints");
   });
@@ -7348,6 +7396,7 @@ describe("project session mcp adapter", () => {
         brief:
           "Insert an authored timer component with insert-fragment into the known container. Create variables and bind its interactions while keeping the existing design.",
         taskScope: "structural-project-change",
+        authoredFragment: true,
       },
     });
     const data = guide.structuredContent.data as {
@@ -7373,6 +7422,28 @@ describe("project session mcp adapter", () => {
     );
     expect(toolNames).not.toContain("inspect-design-context");
     expect(toolNames).not.toContain("components.search");
+  });
+
+  test("does not infer authored fragment routing from brief prose", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: {
+        brief: "Insert an authored fragment and reuse design system tokens",
+      },
+    });
+
+    expect(guide.structuredContent.data).toMatchObject({
+      routing: {
+        workflow: "general",
+        authoredFragment: false,
+      },
+    });
   });
 
   test("preflights production preview before starting slow work", async () => {
@@ -7544,7 +7615,10 @@ describe("project session mcp adapter", () => {
     );
     const guide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Create an authenticated page" },
+      input: {
+        brief: "Create an authenticated page",
+        workflow: "authenticated-page",
+      },
     });
     const guideToolNames = (
       guide.structuredContent.data as { tools: Array<{ name: string }> }
@@ -7601,7 +7675,10 @@ describe("project session mcp adapter", () => {
     );
     const guide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Recreate this design as a responsive page" },
+      input: {
+        brief: "Recreate this design as a responsive page",
+        workflow: "design-input",
+      },
     });
     const guideToolNames = (
       guide.structuredContent.data as { tools: Array<{ name: string }> }
@@ -7649,7 +7726,10 @@ describe("project session mcp adapter", () => {
     );
     const guide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Upload and manage font assets" },
+      input: {
+        brief: "Upload and manage font assets",
+        workflow: "font-assets",
+      },
     });
     const guideToolNames = (
       guide.structuredContent.data as { tools: Array<{ name: string }> }
