@@ -13,12 +13,13 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   Flex,
-  IconButton,
   Kbd,
   MenuCheckedIcon,
   menuItemCss,
   theme,
   IconToggleButton,
+  SplitButton,
+  SplitButtonMenuButton,
   Tooltip,
   Text,
   DropdownMenu,
@@ -69,7 +70,7 @@ export const BuilderModeDropDown = () => {
   };
 
   return (
-    <Flex align="center">
+    <SplitButton>
       <Tooltip
         content={
           <Flex gap="1">
@@ -91,9 +92,9 @@ export const BuilderModeDropDown = () => {
       <DropdownMenu>
         <Tooltip content={"Choose mode"}>
           <DropdownMenuTrigger asChild>
-            <IconButton type="button" aria-label="Choose mode">
+            <SplitButtonMenuButton type="button" aria-label="Choose mode">
               <ChevronDownIcon />
-            </IconButton>
+            </SplitButtonMenuButton>
           </DropdownMenuTrigger>
         </Tooltip>
         <DropdownMenuContent collisionPadding={16} side="bottom" loop>
@@ -137,6 +138,6 @@ export const BuilderModeDropDown = () => {
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
-    </Flex>
+    </SplitButton>
   );
 };

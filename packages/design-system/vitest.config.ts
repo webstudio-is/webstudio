@@ -15,7 +15,7 @@ export default defineConfig({
       {
         extends: "./vitest.config.ts",
         test: {
-          include: ["**/*.browser.{test,spec}.ts"],
+          include: ["**/*.browser.{test,spec}.{ts,tsx}"],
           name: "browser",
           browser: {
             provider: "playwright",
@@ -30,7 +30,7 @@ export default defineConfig({
         extends: "./vitest.config.ts",
         test: {
           include: [
-            "!**/*.browser.{test,spec}.ts",
+            "!**/*.browser.{test,spec}.{ts,tsx}",
             "**/*.{test,spec}.{ts,tsx}",
           ],
           name: "unit",
