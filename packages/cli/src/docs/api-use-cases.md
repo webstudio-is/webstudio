@@ -1213,7 +1213,7 @@ Notes:
 
 Commands:
 
-- MCP tool: meta.guide {"brief":"Build a Supabase-authenticated account page"}
+- MCP tool: meta.guide {"brief":"Build a Supabase-authenticated account page","taskScope":"structural-project-change","workflow":"authenticated-page"}
 - MCP tool: create-page {"name":"Account","path":"/account"}
 - MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"method":"basic","login":"<login>","password":"<password>"}}}}
 - MCP tool: create-resource {"resource":{"name":"Session","method":"get","url":"https://api.example.com/session","headers":[]}}
@@ -1238,7 +1238,7 @@ Notes:
 
 Commands:
 
-- MCP tool: meta.guide {"brief":"Recreate this Figma design as a responsive page"}
+- MCP tool: meta.guide {"brief":"Recreate this Figma design as a responsive page","taskScope":"visual-change","workflow":"design-input"}
 - MCP tool: create-page {"name":"Landing","path":"/landing"}
 - MCP tool: create-design-token {"tokens":"tokens.json contents"}
 - MCP tool: define-css-variable {"vars":"vars.json contents"}
@@ -1284,7 +1284,7 @@ Missing:
 CLI supports page basic auth and generic resources/props/embeds, but not guided Supabase/Firebase auth setup.
 
 Current fallback:
-Call `meta.guide` with the provider-authenticated page goal, then create the
+Call `meta.guide` with `workflow:"authenticated-page"`, then create the
 page, resources, variables, props, bindings, and embeds with existing semantic
 tools.
 
@@ -1298,7 +1298,7 @@ Missing:
 No command imports Figma, screenshots, Inception output, or design.md and turns it into pages/tokens/layout.
 
 Current fallback:
-Call `meta.guide` with the design-input goal, let the agent inspect the supplied
+Call `meta.guide` with `workflow:"design-input"`, let the agent inspect the supplied
 design, then use semantic page, token, asset, fragment, style, preview,
 screenshot, and audit tools. Use `apply-patch` only when no semantic operation
 fits.

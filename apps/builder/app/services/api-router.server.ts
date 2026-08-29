@@ -879,7 +879,7 @@ export const apiRouter = router({
           input.domains ?? getDefaultPublishDomains(project, input.target);
         assertApiPublishDomains({ auth, domains, project });
         const { build, deploymentNotImplemented } = await publishProject(
-          { project, domains },
+          { project, domains, target: input.target },
           ctx
         );
         return {

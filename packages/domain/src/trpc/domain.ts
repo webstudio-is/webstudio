@@ -13,6 +13,7 @@ import { db } from "../db";
 import { isDomainUsingCloudflareNameservers } from "../rdap";
 import {
   getVerifiedPublishDomains,
+  getPublishTargetForDomains,
   createProjectDomainResult,
   deleteProjectDomainResult,
   publishProject,
@@ -82,7 +83,14 @@ export const domainRouter = router({
         if (input.destination === "saas") {
           const project = await projectApi.loadById(input.projectId, ctx);
           const domains = getVerifiedPublishDomains(project, input.domains);
-          await publishProject({ project, domains }, ctx);
+          await publishProject(
+            {
+              project,
+              domains,
+              target: getPublishTargetForDomains(project, domains),
+            },
+            ctx
+          );
           return { success: true as const };
         }
 
