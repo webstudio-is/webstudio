@@ -65,7 +65,7 @@ const ViewMenuItem = () => {
           Undock navigator
         </DropdownMenuCheckboxItem>
         <DropdownMenuSeparator />
-        <ColorSchemeMenu />
+        <ColorSchemeMenu withIndicator />
       </DropdownMenuSubContent>
     </DropdownMenuSub>
   );
@@ -96,7 +96,7 @@ export const Menu = ({ defaultOpen }: { defaultOpen?: boolean } = {}) => {
   return (
     <DropdownMenu modal={false} defaultOpen={defaultOpen}>
       <MenuButton />
-      <DropdownMenuContent sideOffset={4} collisionPadding={4} width="regular">
+      <DropdownMenuContent collisionPadding={4} width="regular">
         <DropdownMenuItem
           onSelect={() => {
             window.location.href = dashboardUrl({ origin: window.origin });

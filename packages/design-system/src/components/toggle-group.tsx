@@ -11,12 +11,13 @@ import {
   forwardRef,
 } from "react";
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
-import { styled, theme } from "../stitches.config";
+import { styled, theme, type CSS } from "../stitches.config";
 import { IconButton } from "./icon-button";
 import { textVariants } from "./text";
 import { cssVar } from "../css-var";
 
 type Color = "default" | "preset" | "local" | "remote" | "overwritten";
+type ToggleGroupVariant = "framed" | "frameless";
 
 const toggleGroupBackground = `color-mix(in oklab, ${cssVar(
   "--background-primary"
@@ -24,38 +25,10 @@ const toggleGroupBackground = `color-mix(in oklab, ${cssVar(
 
 const ToggleGroupContext = createContext<{
   color?: Color;
+  variant?: ToggleGroupVariant;
 }>({});
 
-type ToggleGroupProps = ComponentProps<
-  typeof ToggleGroupPrimitive.ToggleGroup
-> & {
-  color?: Color;
-};
-
-const BaseToggleGroup = forwardRef<ElementRef<"div">, ToggleGroupProps>(
-  ({ color = "default", children, onValueChange, ...props }, ref) => {
-    return (
-      <ToggleGroupContext.Provider value={{ color }}>
-        <ToggleGroupPrimitive.ToggleGroup
-          ref={ref}
-          {...props}
-          onValueChange={(newValue: string | string[]) => {
-            // prevent unselecting buttons when only single can be selected
-            if (newValue !== "") {
-              onValueChange?.(newValue as string & string[]);
-            }
-          }}
-        >
-          {children}
-        </ToggleGroupPrimitive.ToggleGroup>
-      </ToggleGroupContext.Provider>
-    );
-  }
-);
-
-BaseToggleGroup.displayName = "BaseToggleGroup";
-
-export const ToggleGroup = styled(BaseToggleGroup, {
+const ToggleGroupRoot = styled(ToggleGroupPrimitive.ToggleGroup, {
   boxSizing: "border-box",
   display: "flex",
   flexDirection: "row",
@@ -64,7 +37,64 @@ export const ToggleGroup = styled(BaseToggleGroup, {
   background: toggleGroupBackground,
   border: `1px solid ${cssVar("--border-default")}`,
   borderRadius: theme.borderRadius[4],
+  variants: {
+    variant: {
+      framed: {},
+      frameless: {
+        padding: 0,
+        background: "transparent",
+        borderColor: "transparent",
+        gap: theme.spacing[5],
+        "& > button": {
+          height: theme.sizes.controlHeight,
+          minWidth: theme.sizes.controlHeight,
+          paddingInline: theme.spacing[3],
+        },
+      },
+    },
+  },
+  defaultVariants: {
+    variant: "framed",
+  },
 });
+
+type ToggleGroupProps = ComponentProps<typeof ToggleGroupRoot> & {
+  color?: Color;
+  variant?: ToggleGroupVariant;
+};
+
+export const ToggleGroup = forwardRef<ElementRef<"div">, ToggleGroupProps>(
+  (
+    {
+      color = "default",
+      variant = "framed",
+      children,
+      onValueChange,
+      ...props
+    },
+    ref
+  ) => {
+    return (
+      <ToggleGroupContext.Provider value={{ color, variant }}>
+        <ToggleGroupRoot
+          ref={ref}
+          {...props}
+          variant={variant}
+          onValueChange={(newValue: string | string[]) => {
+            // prevent unselecting buttons when only single can be selected
+            if (newValue !== "") {
+              onValueChange?.(newValue as string & string[]);
+            }
+          }}
+        >
+          {children}
+        </ToggleGroupRoot>
+      </ToggleGroupContext.Provider>
+    );
+  }
+);
+
+ToggleGroup.displayName = "ToggleGroup";
 
 const IconButtonStyled = styled(IconButton, {
   "&[data-focused=true], &:focus-visible": {
@@ -80,8 +110,8 @@ const IconButtonStyled = styled(IconButton, {
 const BaseToggleGroupButton = forwardRef<
   ElementRef<"button">,
   ComponentProps<typeof IconButton>
->((props, ref) => {
-  const { color } = useContext(ToggleGroupContext);
+>(({ css, ...props }, ref) => {
+  const { color, variant } = useContext(ToggleGroupContext);
   return (
     <IconButtonStyled
       ref={ref}
@@ -90,14 +120,17 @@ const BaseToggleGroupButton = forwardRef<
         // default is unselected state
         // when button is selected fallback to preset
         props["aria-checked"] === true
-          ? color === "default"
-            ? "preset"
-            : color
+          ? variant === "frameless"
+            ? "default"
+            : color === "default"
+              ? "preset"
+              : color
           : "default"
       }
       css={{
         height: theme.spacing[10],
         ...textVariants.labels,
+        ...css,
       }}
     />
   );
@@ -105,7 +138,9 @@ const BaseToggleGroupButton = forwardRef<
 
 BaseToggleGroupButton.displayName = "BaseToggleGroupButton";
 
-type ToggleGroupButtonProps = ComponentProps<typeof ToggleGroupPrimitive.Item>;
+type ToggleGroupButtonProps = ComponentProps<
+  typeof ToggleGroupPrimitive.Item
+> & { css?: CSS };
 
 export const ToggleGroupButton = forwardRef<
   ElementRef<"button">,

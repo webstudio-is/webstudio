@@ -7,7 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   InputField,
-  ToolbarButton,
+  Button,
   Text,
 } from "@webstudio-is/design-system";
 import { WidthInput } from "./width-input";
@@ -30,7 +30,7 @@ export const CanvasSettingsPopover = () => {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger aria-label="Canvas settings" asChild>
-        <ToolbarButton>
+        <Button type="button" color="ghost">
           <Text
             css={{
               display: "flex",
@@ -43,7 +43,7 @@ export const CanvasSettingsPopover = () => {
             {roundedScale !== 100 && <span>{`${roundedScale}%`}</span>}
             <ChevronDownIcon />
           </Text>
-        </ToolbarButton>
+        </Button>
       </PopoverTrigger>
       <PopoverContent
         collisionPadding={4}

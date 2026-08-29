@@ -3,9 +3,8 @@ import type { Breakpoint } from "@webstudio-is/sdk";
 import {
   Flex,
   Text,
-  Toolbar,
-  ToolbarToggleGroup,
-  ToolbarToggleItem,
+  ToggleGroup,
+  ToggleGroupButton,
   Tooltip,
   cssVar,
   theme,
@@ -164,20 +163,24 @@ export const BreakpointsSelector = () => {
   }
 
   return (
-    <Toolbar>
-      <ToolbarToggleGroup
+    <Flex align="center" css={{ height: theme.spacing[15] }}>
+      <ToggleGroup
+        variant="frameless"
         type="single"
         value={selectedBreakpoint.id}
         onValueChange={(breakpointId: string) => {
-          // onValueChange gives empty string when unselected
-          // which is not part of breakpoints so do nothing in this case
           if (breakpoints.has(breakpointId) === false) {
             return;
           }
           $selectedBreakpointId.set(breakpointId);
           setCanvasWidth(breakpointId);
         }}
-        css={{ position: "relative" }}
+        aria-label="Breakpoints"
+        css={{
+          position: "relative",
+          alignSelf: "stretch",
+          alignItems: "center",
+        }}
       >
         {(() => {
           const grouped = groupBreakpoints(Array.from(breakpoints.values()));
@@ -190,7 +193,24 @@ export const BreakpointsSelector = () => {
               variant="wrapped"
               disableHoverableContent
             >
-              <ToolbarToggleItem
+              <ToggleGroupButton
+                value={breakpoint.id}
+                css={{
+                  color: cssVar("--foreground-secondary"),
+                  fontWeight: 500,
+                  "&:hover": {
+                    color: cssVar("--foreground-primary"),
+                    backgroundColor: cssVar("--overlay-interaction-hover"),
+                  },
+                  "&[aria-checked=true]": {
+                    color: cssVar("--foreground-primary"),
+                    fontWeight: 600,
+                    backgroundColor: "transparent",
+                    "&:hover": {
+                      backgroundColor: cssVar("--overlay-interaction-hover"),
+                    },
+                  },
+                }}
                 ref={(node) => {
                   if (node) {
                     refs.current.set(breakpoint.id, node);
@@ -198,12 +218,11 @@ export const BreakpointsSelector = () => {
                   }
                   refs.current.delete(breakpoint.id);
                 }}
-                value={breakpoint.id}
               >
                 {breakpoint.minWidth ?? breakpoint.maxWidth ?? (
                   <AsteriskIcon size={19} />
                 )}
-              </ToolbarToggleItem>
+              </ToggleGroupButton>
             </Tooltip>
           ));
         })()}
@@ -214,8 +233,8 @@ export const BreakpointsSelector = () => {
             breakpoints={breakpoints}
           />
         )}
-      </ToolbarToggleGroup>
+      </ToggleGroup>
       <ZoomWarning />
-    </Toolbar>
+    </Flex>
   );
 };

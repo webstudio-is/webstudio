@@ -39,6 +39,7 @@ const treeNodeSelectionBackgroundColor = declareCssVar(
 );
 const treeNodeBackgroundColor = declareCssVar("--tree-node-background-color");
 const treeActionOpacity = declareCssVar("--tree-action-opacity");
+const treeActionWidth = declareCssVar("--tree-action-width");
 
 const TreeFocusRestoreContext = createContext<
   | undefined
@@ -166,7 +167,10 @@ const NodeButton = styled("button", {
   height: "inherit",
   minWidth: 0,
   paddingLeft: `calc(${ITEM_PADDING_LEFT}px + ${cssVar(treeNodeLevel)} * 16px)`,
-  paddingRight: ITEM_PADDING_RIGHT,
+  paddingRight: `calc(${ITEM_PADDING_RIGHT}px + ${cssVar(
+    treeActionWidth,
+    "0px"
+  )})`,
   flexBasis: 0,
   flexGrow: 1,
   position: "relative",
@@ -199,7 +203,7 @@ const ActionContainer = styled("div", {
   display: "inline-flex",
   justifyContent: "center",
   alignItems: "center",
-  background: cssVar(treeNodeBackgroundColor),
+  background: "transparent",
 });
 
 const DropIndicator = ({
@@ -522,6 +526,12 @@ export const TreeNode = ({
       data-selection-state={selectionState}
       css={{
         [treeNodeLevel]: level,
+        [treeActionWidth]:
+          action === null || action === undefined || actionCount === 0
+            ? "0px"
+            : actionCount > 1
+              ? theme.spacing[14]
+              : theme.spacing[9],
         ...(isActionVisible && { [treeActionOpacity]: 1 }),
       }}
       onKeyDown={handleKeydown}

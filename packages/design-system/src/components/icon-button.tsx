@@ -64,6 +64,14 @@ export const IconButton = styled("button", {
   "&[data-state=open]": openOrHoverStateStyle,
 
   variants: {
+    size: {
+      regular: {},
+      large: {
+        minWidth: theme.spacing[13],
+        width: theme.spacing[13],
+        height: theme.spacing[13],
+      },
+    },
     variant: {
       default: {
         color: cssVar("--foreground-primary"),
@@ -75,17 +83,18 @@ export const IconButton = styled("button", {
         // According to the design https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3199&t=lpT9jFuaiUnz1Foa-0
         // only the default variant has different toggle state
         // https://www.radix-ui.com/docs/primitives/components/toggle#root
-        "&[data-state=on]": {
-          backgroundColor: selectedControlBackground,
-          borderColor: cssVar("--border-default"),
+        "&[data-state=on], &[aria-pressed=true], &[aria-selected=true], &[aria-checked=true]":
+          {
+            backgroundColor: cssVar("--overlay-interaction-hover"),
+            borderColor: "transparent",
 
-          "&:hover, &[data-hovered=true]": {
-            background: selectedControlHoverBackground,
+            "&:hover, &[data-hovered=true]": {
+              background: cssVar("--overlay-interaction-pressed"),
+            },
+            "&:active": {
+              background: cssVar("--overlay-interaction-pressed"),
+            },
           },
-          "&:active": {
-            background: selectedControlPressedBackground,
-          },
-        },
         "&[data-focused=true], &:focus-visible": {
           borderColor: cssVar("--border-focus"),
         },
@@ -163,6 +172,7 @@ export const IconButton = styled("button", {
   },
 
   defaultVariants: {
+    size: "regular",
     variant: "default",
   },
 });

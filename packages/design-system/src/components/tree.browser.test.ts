@@ -63,3 +63,31 @@ test("selected Navigator rows preserve selection and show hover feedback", async
     }
   }
 });
+
+test("tree actions stay transparent over selected and hovered rows", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+
+  act(() => {
+    root?.render(
+      createElement(TreeNode, {
+        level: 1,
+        isSelected: true,
+        buttonProps: {},
+        action: createElement("button", null, "Action"),
+        children: "A long tree node label",
+      })
+    );
+  });
+
+  const node = container.querySelector("[data-selection-state]");
+  const action = container.querySelector("[data-tree-action]");
+  if (node === null || action === null) {
+    throw new Error("Expected a rendered Tree node action");
+  }
+
+  await page.elementLocator(node).hover();
+
+  expect(getComputedStyle(action).backgroundColor).toBe("rgba(0, 0, 0, 0)");
+});

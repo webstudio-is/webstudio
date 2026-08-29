@@ -1,15 +1,14 @@
 import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 import {
   Flex,
+  Button,
   Text,
-  ToolbarButton,
   theme,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
-  Button,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
 import { groupBreakpoints } from "@webstudio-is/project-build/runtime";
@@ -41,15 +40,19 @@ export const BreakpointsMenu = ({
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton
-          variant="subtle"
+        <Button
+          type="button"
+          color="ghost"
           aria-label="Breakpoints with custom conditions"
-          data-state={triggerOpen ? "open" : selectedCustom ? "on" : "off"}
+          state={
+            triggerOpen || selectedCustom !== undefined ? "pressed" : "auto"
+          }
+          prefix={selectedCustom ? undefined : <EllipsesIcon />}
         >
-          {selectedCustom ? selectedCustom.label : <EllipsesIcon />}
-        </ToolbarButton>
+          {selectedCustom?.label}
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent sideOffset={4} css={{ width: theme.spacing[30] }}>
+      <DropdownMenuContent css={{ width: theme.spacing[30] }}>
         {grouped.widthBased.map((breakpoint) => {
           let description = "All sizes";
           if (breakpoint.minWidth !== undefined) {

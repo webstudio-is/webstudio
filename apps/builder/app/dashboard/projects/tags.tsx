@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   Button,
+  ToggleButton,
   DialogActions,
   DialogClose,
   Checkbox,
@@ -345,13 +346,13 @@ export const Tag = ({
   tag,
   ...props
 }: { index: number; tag: User["projectsTags"][number] } & ComponentProps<
-  typeof Button
+  typeof ToggleButton
 >) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTagsIds = searchParams.getAll("tag");
   const color = tagColorPalette[index] ?? cssVar("--background-inverse");
   return (
-    <Button
+    <ToggleButton
       css={{
         "&:hover[data-state='auto'], &[data-state='pressed']": {
           backgroundColor: color,

@@ -2,10 +2,9 @@ import { useStore } from "@nanostores/react";
 import {
   Box,
   Flex,
+  IconButton,
+  ToggleButton,
   theme,
-  ToolbarButton,
-  Toolbar,
-  ToolbarToggleGroup,
   Text,
   css,
   type CSS,
@@ -25,7 +24,10 @@ import { Menu } from "~/builder/features/menu";
 import { BreakpointsContainer } from "~/builder/features/breakpoints";
 import { ViewMode } from "~/builder/features/view-mode";
 import { AddressBarPopover } from "~/builder/features/address-bar";
-import { toggleActiveSidebarPanel } from "~/builder/shared/nano-states";
+import {
+  $activeSidebarPanel,
+  toggleActiveSidebarPanel,
+} from "~/builder/shared/nano-states";
 import {
   useEffect,
   useState,
@@ -72,25 +74,32 @@ export const TopbarLayout = ({
 }: TopbarLayoutProps) => (
   <nav {...navProps} className={topbarContainerStyle({ css })}>
     <Flex css={{ flexBasis: "20%" }}>
-      <Flex grow={false} shrink={false}>
+      <Flex
+        grow={false}
+        shrink={false}
+        align="center"
+        css={{ paddingInline: theme.spacing[3] }}
+      >
         {menu}
       </Flex>
-      {left && <Flex align="center">{left}</Flex>}
+      {left && (
+        <Flex align="center" css={{ gap: theme.spacing[5] }}>
+          {left}
+        </Flex>
+      )}
     </Flex>
     <Flex justify="center">{center}</Flex>
-    <Toolbar>
-      <ToolbarToggleGroup
-        type="single"
-        css={{
-          isolation: "isolate",
-          justifyContent: "flex-end",
-          gap: theme.spacing[5],
-          flexShrink: 0,
-        }}
-      >
-        {right}
-      </ToolbarToggleGroup>
-    </Toolbar>
+    <Flex
+      align="center"
+      css={{
+        isolation: "isolate",
+        justifyContent: "flex-end",
+        gap: theme.spacing[5],
+        flexShrink: 0,
+      }}
+    >
+      {right}
+    </Flex>
     {loading}
   </nav>
 );
@@ -113,6 +122,7 @@ const TopbarRevealTrigger = ({ onReveal }: { onReveal: () => void }) => (
 
 const PagesButton = () => {
   const page = useStore($selectedPage);
+  const activeSidebarPanel = useStore($activeSidebarPanel);
   if (page === undefined) {
     return;
   }
@@ -126,8 +136,14 @@ const PagesButton = () => {
         </Text>
       }
     >
-      <ToolbarButton
-        css={{ paddingInline: theme.panel.paddingInline }}
+      <ToggleButton
+        type="button"
+        color="ghost"
+        pressed={activeSidebarPanel === "pages"}
+        css={{
+          paddingInline: theme.panel.paddingInline,
+          "& > span": { maxWidth: theme.spacing[24] },
+        }}
         aria-label="Toggle pages"
         onClick={(event) => {
           $editingPageId.set(
@@ -138,12 +154,9 @@ const PagesButton = () => {
           );
           toggleActiveSidebarPanel("pages");
         }}
-        tabIndex={0}
       >
-        <Text truncate css={{ maxWidth: theme.spacing[24] }}>
-          {isPage(page) ? getPageDisplayName(page) : page.name}
-        </Text>
-      </ToolbarButton>
+        {isPage(page) ? getPageDisplayName(page) : page.name}
+      </ToggleButton>
     </Tooltip>
   );
 };
@@ -236,7 +249,7 @@ export const Topbar = ({ project, css, loading, isUiHidden }: TopbarProps) => {
           <>
             {notifications.length > 0 && (
               <NotificationPopover
-                renderTrigger={(props) => <ToolbarButton {...props} />}
+                renderTrigger={(props) => <IconButton {...props} />}
               />
             )}
             <SafeModeButton />

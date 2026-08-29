@@ -5,15 +5,12 @@ import { act } from "react-dom/test-utils";
 import { afterEach, expect, test } from "vitest";
 import "../colors/colors.css";
 import { Button, LinkButton } from "./button";
+import { IconButton } from "./icon-button";
 import { PanelTabs, PanelTabsList, PanelTabsTrigger } from "./panel-tabs";
 import { SmallToggleButton } from "./small-toggle-button";
+import { ToggleButton } from "./toggle-button";
 import { ToggleGroup, ToggleGroupButton } from "./toggle-group";
-import {
-  Toolbar,
-  ToolbarButton,
-  ToolbarToggleGroup,
-  ToolbarToggleItem,
-} from "./toolbar";
+import { Tooltip, TooltipProvider } from "./tooltip";
 
 let root: Root | undefined;
 
@@ -188,6 +185,74 @@ test("inactive panel tabs remain readable", () => {
   }
 });
 
+test("icon buttons share selected styling across control semantics", () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+
+  act(() => {
+    root?.render(
+      createElement(
+        "div",
+        null,
+        createElement(IconButton, {
+          "aria-label": "Toggle selection",
+          "aria-pressed": true,
+        }),
+        createElement(IconButton, {
+          "aria-label": "Tab selection",
+          "aria-selected": true,
+        }),
+        createElement(IconButton, {
+          "aria-label": "Checked selection",
+          "aria-checked": true,
+        })
+      )
+    );
+  });
+
+  const backgrounds = Array.from(
+    container.querySelectorAll("button"),
+    (item) => getComputedStyle(item).backgroundColor
+  );
+  expect(new Set(backgrounds).size).toBe(1);
+  expect(backgrounds[0]).not.toBe("rgba(0, 0, 0, 0)");
+});
+
+test("text toggle buttons preserve button layout and toggle semantics", () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+
+  act(() => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        null,
+        createElement(Tooltip, {
+          content: "Selected filter",
+          children: createElement(
+            ToggleButton,
+            { pressed: true },
+            "Selected filter"
+          ),
+        })
+      )
+    );
+  });
+
+  const button = container.querySelector("button");
+  if (button === null) {
+    throw new Error("Expected a rendered text toggle button");
+  }
+
+  const style = getComputedStyle(button);
+  expect(button.getAttribute("aria-pressed")).toBe("true");
+  expect(button.dataset.state).toBe("pressed");
+  expect(style.display).toBe("inline-grid");
+  expect(Number.parseFloat(style.paddingLeft)).toBeGreaterThan(0);
+});
+
 test("link buttons use anchor semantics and button interaction states", async () => {
   const container = document.createElement("div");
   document.body.append(container);
@@ -243,7 +308,11 @@ test("toggle group states remain distinguishable", () => {
         createElement(
           ToggleGroup,
           { type: "single", defaultValue: "selected" },
-          createElement(ToggleGroupButton, { value: "selected" }, "Selected"),
+          createElement(
+            ToggleGroupButton,
+            { value: "selected", css: { height: 31 } },
+            "Selected"
+          ),
           createElement(ToggleGroupButton, { value: "inactive" }, "Inactive")
         )
       );
@@ -262,6 +331,7 @@ test("toggle group states remain distinguishable", () => {
     const inactiveStyle = getComputedStyle(inactive);
     const groupStyle = getComputedStyle(group);
 
+    expect(selectedStyle.height).toBe("31px");
     expect(
       contrast(
         readColor(selectedStyle.backgroundColor),
@@ -333,7 +403,7 @@ test("small toggle selections remain distinguishable", () => {
   }
 });
 
-test("square toolbar actions and toggles share open and selected surfaces", () => {
+test("chrome actions and toggles share open and selected surfaces", () => {
   const container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -343,26 +413,26 @@ test("square toolbar actions and toggles share open and selected surfaces", () =
     act(() => {
       root?.render(
         createElement(
-          Toolbar,
+          "div",
           null,
           createElement(
-            ToolbarButton,
+            IconButton,
             {
               "aria-label": "Open toolbar action",
-              "aria-expanded": true,
+              state: "open",
             },
             "Action"
           ),
           createElement(
-            ToolbarButton,
+            IconButton,
             { "aria-label": "Idle toolbar action" },
             "Idle"
           ),
           createElement(
-            ToolbarToggleGroup,
-            { type: "single", value: "selected" },
+            ToggleGroup,
+            { type: "single", value: "selected", variant: "frameless" },
             createElement(
-              ToolbarToggleItem,
+              ToggleGroupButton,
               {
                 "aria-label": "Selected chrome toggle",
                 value: "selected",

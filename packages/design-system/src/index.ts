@@ -43,7 +43,6 @@ export {
   menuItemCss,
 } from "./components/menu";
 export * from "./components/switch";
-export * from "./components/toolbar";
 export * from "./components/two-rows-icon-button-container";
 export * from "./components/small-icon-button";
 export * from "./components/list-position-indicator";

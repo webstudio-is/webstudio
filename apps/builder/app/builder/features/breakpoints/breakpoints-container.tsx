@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
-import { Flex } from "@webstudio-is/design-system";
+import { Flex, rawTheme, theme } from "@webstudio-is/design-system";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import {
   $selectedBreakpoint,
@@ -57,31 +57,33 @@ export const BreakpointsContainer = () => {
   };
 
   return (
-    <Flex>
-      <Flex justify="end" css={hideOnMobile}>
-        <CanvasSettingsPopover />
+    <Flex align="center">
+      <Flex align="center" css={{ gap: theme.spacing[5] }}>
+        <Flex justify="end" css={hideOnMobile}>
+          <CanvasSettingsPopover />
+        </Flex>
+        <Flex align="center" justify="center" css={hideOnMobile}>
+          <BreakpointsSelector />
+        </Flex>
+        {selectedBreakpoint && (
+          <BreakpointsMenu
+            breakpoints={breakpoints}
+            selectedBreakpoint={selectedBreakpoint}
+            open={breakpointsMenuView === "initial"}
+            triggerOpen={breakpointsMenuView !== undefined}
+            onOpenChange={(open) => {
+              if (open) {
+                $breakpointsMenuView.set("initial");
+                return;
+              }
+              if ($breakpointsMenuView.get() === "initial") {
+                $breakpointsMenuView.set(undefined);
+              }
+            }}
+            onEditClick={() => $breakpointsMenuView.set("editor")}
+          />
+        )}
       </Flex>
-      <Flex align="center" justify="center" css={hideOnMobile}>
-        <BreakpointsSelector />
-      </Flex>
-      {selectedBreakpoint && (
-        <BreakpointsMenu
-          breakpoints={breakpoints}
-          selectedBreakpoint={selectedBreakpoint}
-          open={breakpointsMenuView === "initial"}
-          triggerOpen={breakpointsMenuView !== undefined}
-          onOpenChange={(open) => {
-            if (open) {
-              $breakpointsMenuView.set("initial");
-              return;
-            }
-            if ($breakpointsMenuView.get() === "initial") {
-              $breakpointsMenuView.set(undefined);
-            }
-          }}
-          onEditClick={() => $breakpointsMenuView.set("editor")}
-        />
-      )}
       <BreakpointsEditor
         open={breakpointsMenuView === "editor"}
         onOpenChange={(open) => {
@@ -92,7 +94,7 @@ export const BreakpointsContainer = () => {
           $breakpointsMenuView.set("confirmation");
         }}
       >
-        <div style={{ height: "100%", width: 0 }} />
+        <div style={{ height: rawTheme.sizes.controlHeight, width: 0 }} />
       </BreakpointsEditor>
       {breakpointToDelete && (
         <ConfirmationDialog

@@ -4,15 +4,15 @@ import {
   cssVar,
   StorySection,
   theme,
-  ToolbarButton,
   Text,
   LinkButton,
+  IconButton,
 } from "@webstudio-is/design-system";
 import {
   CloudIcon,
   OfflineIcon,
   ShieldIcon,
-  WebstudioIcon,
+  MenuIcon,
 } from "@webstudio-is/icons";
 import { $syncStatus } from "@webstudio-is/sync-client";
 import { $authPermit } from "~/shared/nano-states";
@@ -26,22 +26,22 @@ export default {
 };
 
 const MenuPlaceholder = () => (
-  <ToolbarButton aria-label="Menu">
-    <WebstudioIcon size={22} />
-  </ToolbarButton>
+  <IconButton type="button" size="large" aria-label="Menu">
+    <MenuIcon size={22} />
+  </IconButton>
 );
 
 const PagePlaceholder = () => (
-  <ToolbarButton css={{ paddingInline: theme.panel.paddingInline }}>
+  <Button color="ghost" css={{ paddingInline: theme.panel.paddingInline }}>
     <Text truncate css={{ maxWidth: theme.spacing[24] }}>
       Home
     </Text>
-  </ToolbarButton>
+  </Button>
 );
 
 const BreakpointsPlaceholder = () => (
   <Flex align="center" gap="1">
-    <ToolbarButton>Base</ToolbarButton>
+    <Button color="ghost">Base</Button>
   </Flex>
 );
 
@@ -68,9 +68,9 @@ const ViewModeIndicator = () => (
 );
 
 const SafeModeIndicator = () => (
-  <ToolbarButton variant="subtle">
+  <IconButton type="button" aria-label="Safe mode active">
     <ShieldIcon stroke={cssVar("--foreground-negative")} />
-  </ToolbarButton>
+  </IconButton>
 );
 
 export const TopbarLayouts = () => {

@@ -5,7 +5,7 @@ import {
   forwardRef,
 } from "react";
 import * as Primitive from "@radix-ui/react-popover";
-import { css, theme, styled, type CSS } from "../stitches.config";
+import { css, rawTheme, theme, styled, type CSS } from "../stitches.config";
 import { Separator } from "./separator";
 import { PanelTitle } from "./panel-title";
 import { Flex } from "./flex";
@@ -77,7 +77,7 @@ export const PopoverContent = forwardRef(
   ) => (
     <Primitive.Portal>
       <Primitive.Content
-        sideOffset={sideOffset ?? 4}
+        sideOffset={sideOffset ?? Number.parseFloat(rawTheme.spacing[5])}
         collisionPadding={4}
         className={contentStyle({ className, css })}
         {...props}

@@ -14,7 +14,7 @@ import { Text } from "./text";
 import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
 import { cssVar } from "../css-var";
-import { menuCss } from "./menu";
+import { menuCss, PanelArrowGraphic } from "./menu";
 
 export const TooltipProvider = TooltipPrimitive.TooltipProvider;
 
@@ -42,11 +42,6 @@ const Content = styled(TooltipPrimitive.Content, menuCss, {
       },
     },
   },
-});
-
-const Arrow = styled(TooltipPrimitive.Arrow, {
-  fill: cssVar("--background-primary"),
-  marginTop: -0.5,
 });
 
 export const Tooltip = forwardRef(
@@ -169,7 +164,14 @@ export const Tooltip = forwardRef(
             >
               {typeof content === "string" ? <Text>{content}</Text> : content}
               <Box css={{ color: "transparent" }}>
-                <Arrow offset={5} width={11} height={5} />
+                <TooltipPrimitive.Arrow
+                  offset={5}
+                  width={11}
+                  height={5}
+                  asChild
+                >
+                  <PanelArrowGraphic css={{ transform: "none" }} />
+                </TooltipPrimitive.Arrow>
               </Box>
             </Content>
           </TooltipPrimitive.Portal>

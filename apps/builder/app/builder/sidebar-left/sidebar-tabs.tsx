@@ -1,11 +1,11 @@
 import {
   Box,
+  IconButton,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
   Tooltip,
-  chromeControlStyle,
   css,
   cssVar,
   styled,
@@ -30,33 +30,21 @@ export const SidebarTabs = styled(Tabs, {
   flexGrow: 1,
 });
 
-const buttonStyle = css({
-  ...chromeControlStyle,
-  position: "relative",
-  boxSizing: "border-box",
-  flexShrink: 0,
-  display: "flex",
-  size: theme.spacing[15],
-  m: 0,
-  userSelect: "none",
-  outline: "none",
-  alignItems: "center",
-  justifyContent: "center",
-  border: "none",
-});
-
 export const SidebarButton = forwardRef<
   HTMLButtonElement,
-  ComponentProps<"button"> & { label: string }
+  ComponentProps<typeof IconButton> & { label: string }
 >(({ label, ...props }, ref) => {
   return (
     <Tooltip side="right" content={label}>
-      <button
-        {...props}
-        ref={ref}
-        aria-label={label}
-        className={buttonStyle()}
-      ></button>
+      <Box>
+        <IconButton
+          {...props}
+          ref={ref}
+          aria-label={label}
+          size="large"
+          css={{ m: theme.spacing[3] }}
+        />
+      </Box>
     </Tooltip>
   );
 });
@@ -71,13 +59,10 @@ export const SidebarTabsTrigger = forwardRef<
   return (
     <Tooltip side="right" content={label}>
       <Box>
-        <TabsTrigger
-          {...props}
-          ref={ref}
-          aria-label={ariaLabel}
-          className={buttonStyle()}
-        >
-          {children}
+        <TabsTrigger {...props} ref={ref} aria-label={ariaLabel} asChild>
+          <IconButton size="large" css={{ m: theme.spacing[3] }}>
+            {children}
+          </IconButton>
         </TabsTrigger>
       </Box>
     </Tooltip>

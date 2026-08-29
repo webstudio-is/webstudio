@@ -15,12 +15,18 @@ const colorSchemeOptions = [
   { value: "dark", label: "Dark" },
 ] as const;
 
-export const ColorSchemeMenu = () => {
+export const ColorSchemeMenu = ({
+  withIndicator = false,
+}: {
+  withIndicator?: boolean;
+}) => {
   const { colorScheme } = useStore($settings);
 
   return (
     <DropdownMenuSub>
-      <DropdownMenuSubTrigger>Theme</DropdownMenuSubTrigger>
+      <DropdownMenuSubTrigger withIndicator={withIndicator}>
+        Theme
+      </DropdownMenuSubTrigger>
       <DropdownMenuSubContent width="regular">
         <DropdownMenuRadioGroup
           value={colorScheme}

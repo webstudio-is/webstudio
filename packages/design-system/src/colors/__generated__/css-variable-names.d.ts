@@ -79,6 +79,7 @@ export type CssVariableName =
   | "--thumb-border-color"
   | "--thumbnail-action-visibility"
   | "--tree-action-opacity"
+  | "--tree-action-width"
   | "--tree-node-background-color"
   | "--tree-node-level"
   | "--tree-node-outline"

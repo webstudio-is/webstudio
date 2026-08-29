@@ -1407,7 +1407,6 @@ export const PublishButton = ({ projectId }: PublishProps) => {
       </Tooltip>
 
       <PopoverContent
-        sideOffset={Number.parseFloat(rawTheme.spacing[8])}
         css={{
           width: theme.spacing[33],
           maxWidth: theme.spacing[33],

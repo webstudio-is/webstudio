@@ -23,7 +23,7 @@ import {
   SubContent,
 } from "@radix-ui/react-dropdown-menu";
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
-import type { ComponentProps } from "react";
+import { forwardRef, type ComponentProps } from "react";
 import { truncate } from "../utilities";
 import { cssVar } from "../css-var";
 
@@ -169,14 +169,26 @@ const ArrowInnerBorder = styled("path", {
   fill: cssVar("--background-primary"),
 });
 const ArrowOuterBorder = styled("path", { fill: cssVar("--border-default") });
-const ArrowSgv = styled("svg", { transform: "translateY(-3px)" });
+const ArrowSvg = styled("svg", { transform: "translateY(-3px)" });
+export const PanelArrowGraphic = forwardRef<
+  SVGSVGElement,
+  ComponentProps<typeof ArrowSvg>
+>((props, ref) => (
+  <ArrowSvg
+    {...props}
+    ref={ref}
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 16 11"
+  >
+    <ArrowOuterBorder d="M8.73 9.76a1 1 0 0 1-1.46 0L.5 2.54h15L8.73 9.76Z" />
+    <ArrowInnerBorder d="M8.146 8.909a.2.2 0 0 1-.292 0L.5 1.065h15L8.146 8.909Z" />
+    <ArrowBackground d="M8.073 7.52a.1.1 0 0 1-.146 0L.877 0h14.246l-7.05 7.52Z" />
+  </ArrowSvg>
+));
+PanelArrowGraphic.displayName = "PanelArrowGraphic";
 export const DropdownMenuArrow = () => (
   <BaseDropdownMenuArrow width={16} height={11} asChild>
-    <ArrowSgv xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 11">
-      <ArrowOuterBorder d="M8.73 9.76a1 1 0 0 1-1.46 0L.5 2.54h15L8.73 9.76Z" />
-      <ArrowInnerBorder d="M8.146 8.909a.2.2 0 0 1-.292 0L.5 1.065h15L8.146 8.909Z" />
-      <ArrowBackground d="M8.073 7.52a.1.1 0 0 1-.146 0L.877 0h14.246l-7.05 7.52Z" />
-    </ArrowSgv>
+    <PanelArrowGraphic />
   </BaseDropdownMenuArrow>
 );
 

@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Box, cssVar, Flex, Progress } from "@webstudio-is/design-system";
+import {
+  Box,
+  cssVar,
+  Flex,
+  Progress,
+  theme,
+} from "@webstudio-is/design-system";
 import { WebstudioIcon } from "@webstudio-is/icons";
 import { useInterval } from "~/shared/hook-utils/use-interval";
 import { brandColors } from "~/shared/brand-colors";
@@ -86,23 +92,37 @@ export const Loading = ({ state }: { state: LoadingState }) => {
         }}
       />
       {state.state !== "ready" && (
-        <Flex
-          direction="column"
-          align="center"
-          justify="center"
-          gap="3"
-          css={{ isolation: "isolate" }}
+        <Box
+          css={{
+            isolation: "isolate",
+            position: "absolute",
+            inset: 0,
+          }}
         >
-          <WebstudioIcon size={60} />
+          <Box
+            css={{
+              position: "absolute",
+              bottom: `calc(50% + ${theme.spacing[10]})`,
+              left: "50%",
+              display: "flex",
+              transform: "translateX(-50%)",
+            }}
+          >
+            <WebstudioIcon size={60} />
+          </Box>
           <Progress
             value={fakeProgress}
             css={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
               background: cssVar("--background-primary"),
               boxShadow: brandColors.progressGlow,
             }}
             indicatorCss={{ background: brandColors.progress }}
           />
-        </Flex>
+        </Box>
       )}
     </Flex>
   );

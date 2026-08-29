@@ -174,7 +174,7 @@ export const Projects = (props: ProjectsProps) => {
                 tag={tag}
                 key={tag.id}
                 index={index}
-                state={selectedTags.includes(tag.id) ? "pressed" : "auto"}
+                pressed={selectedTags.includes(tag.id)}
               >
                 {tag.label}
               </Tag>

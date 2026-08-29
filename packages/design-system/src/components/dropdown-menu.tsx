@@ -9,7 +9,7 @@ import {
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { ChevronRightIcon } from "@webstudio-is/icons";
-import { styled } from "../stitches.config";
+import { rawTheme, styled } from "../stitches.config";
 import { focusFirstCollectionItem } from "../utilities";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import {
@@ -37,7 +37,7 @@ const DropdownMenuContentStyled = styled(
 export const DropdownMenuContent = forwardRef<
   ElementRef<typeof DropdownMenuContentStyled>,
   ComponentProps<typeof DropdownMenuContentStyled> & { autoFocus?: boolean }
->(({ autoFocus, ...props }, forwardedRef) => {
+>(({ autoFocus, sideOffset, ...props }, forwardedRef) => {
   const [node, setNode] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -50,6 +50,7 @@ export const DropdownMenuContent = forwardRef<
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuContentStyled
         {...props}
+        sideOffset={sideOffset ?? Number.parseFloat(rawTheme.spacing[5])}
         ref={mergeRefs(forwardedRef, setNode)}
       />
     </DropdownMenuPrimitive.Portal>

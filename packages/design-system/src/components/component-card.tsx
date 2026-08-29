@@ -24,7 +24,7 @@ const cardStyle = css({
   aspectRatio: "1",
   border: `1px solid`,
   borderColor: cssVar("--border-default"),
-  borderRadius: theme.borderRadius[2],
+  borderRadius: theme.borderRadius[4],
   outline: "none",
   userSelect: "none",
   color: cssVar("--foreground-primary"),

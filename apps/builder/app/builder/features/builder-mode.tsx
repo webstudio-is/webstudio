@@ -13,13 +13,12 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   Flex,
+  IconButton,
   Kbd,
   MenuCheckedIcon,
   menuItemCss,
   theme,
-  ToolbarButton,
-  ToolbarToggleGroup,
-  ToolbarToggleItem,
+  IconToggleButton,
   Tooltip,
   Text,
   DropdownMenu,
@@ -79,36 +78,25 @@ export const BuilderModeDropDown = () => {
           </Flex>
         }
       >
-        <ToolbarToggleGroup
-          type="single"
-          value={builderMode}
-          onValueChange={() => {
+        <IconToggleButton
+          aria-label="Toggle preview"
+          pressed={builderMode === "preview"}
+          onPressedChange={() => {
             emitCommand("togglePreviewMode");
           }}
         >
-          <ToolbarToggleItem variant="preview" value="preview">
-            <PlayIcon />
-          </ToolbarToggleItem>
-        </ToolbarToggleGroup>
+          <PlayIcon />
+        </IconToggleButton>
       </Tooltip>
       <DropdownMenu>
         <Tooltip content={"Choose mode"}>
           <DropdownMenuTrigger asChild>
-            <ToolbarButton
-              tabIndex={0}
-              aria-label="Choose mode"
-              variant="chevron"
-            >
+            <IconButton type="button" aria-label="Choose mode">
               <ChevronDownIcon />
-            </ToolbarButton>
+            </IconButton>
           </DropdownMenuTrigger>
         </Tooltip>
-        <DropdownMenuContent
-          sideOffset={4}
-          collisionPadding={16}
-          side="bottom"
-          loop
-        >
+        <DropdownMenuContent collisionPadding={16} side="bottom" loop>
           <DropdownMenuRadioGroup
             value={builderMode}
             onValueChange={(value) => {

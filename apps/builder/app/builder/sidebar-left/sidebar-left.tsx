@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import {
   cssVar,
   declareCssVar,
@@ -57,14 +57,10 @@ const none = { Panel: () => null };
 const sidebarLeftPanelWidth = declareCssVar("--sidebar-left-panel-width");
 
 const HelpTabTrigger = () => {
-  const [helpIsOpen, setHelpIsOpen] = useState(false);
   return (
-    <HelpCenter onOpenChange={setHelpIsOpen}>
+    <HelpCenter>
       <HelpCenter.Trigger asChild>
-        <SidebarButton
-          label="Learn Webstudio or ask for help"
-          data-state={helpIsOpen ? "active" : undefined}
-        >
+        <SidebarButton label="Learn Webstudio or ask for help">
           <HelpIcon size={rawTheme.spacing[10]} />
         </SidebarButton>
       </HelpCenter.Trigger>

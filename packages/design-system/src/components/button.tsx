@@ -210,6 +210,7 @@ export const Button = forwardRef(
       suffix,
       children,
       "data-state": dataState,
+      "aria-pressed": ariaPressed,
       className,
       css,
       color,
@@ -219,7 +220,12 @@ export const Button = forwardRef(
   ) => {
     // when button is used as a trigger for something that opens
     // <SomeTrigger asChild><Button /></SomeTrigger>
-    let finalState = dataState === "open" ? "pressed" : undefined;
+    let finalState =
+      dataState === "open" || dataState === "on" ? "pressed" : undefined;
+
+    if (ariaPressed === true || ariaPressed === "true") {
+      finalState = "pressed";
+    }
 
     // "state" wins over "data-state"
     if (state !== undefined) {
@@ -234,6 +240,7 @@ export const Button = forwardRef(
     return (
       <button
         {...restProps}
+        aria-pressed={ariaPressed}
         disabled={disabled || state === "pending"}
         data-state={finalState ?? "auto"}
         ref={ref}
