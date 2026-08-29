@@ -162,15 +162,16 @@ default light semantic color with the established design-system palette and
 protect the dark neutral hierarchy, stable chromatic fills, light on-color
 content, and light interaction overlays.
 
-The generator emits only `CssVariableName` in
+The generator emits `ThemeVariableName` for public theme inputs and
+`CssVariableName` for public semantic colors in
 `__generated__/css-variable-names.d.ts`. It does not generate JavaScript or
 duplicate color values. CSS is imported directly and performs all runtime
 derivation and scheme switching.
 
-Run `pnpm generate:color-types` after changing public semantic variables. The
-package `typecheck` verifies that generated declarations are current, and the
-normal workspace CI runs that command. Run `pnpm test` to verify structural
-contracts and browser-computed contrast.
+Run `pnpm generate:color-types` after changing public theme or semantic
+variables. The package `typecheck` verifies that generated declarations are
+current, and the normal workspace CI runs that command. Run `pnpm test` to
+verify structural contracts and browser-computed contrast.
 
 The Storybook **Foundations/Colors** story loads the runtime stylesheet directly
 and parses the same file only for names and source declarations. It renders

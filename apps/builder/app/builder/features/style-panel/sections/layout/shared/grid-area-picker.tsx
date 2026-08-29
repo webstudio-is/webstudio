@@ -1,5 +1,5 @@
 import { useRef, useMemo } from "react";
-import { theme, Grid, Tooltip, css } from "@webstudio-is/design-system";
+import { cssVar, theme, Grid, Tooltip, css } from "@webstudio-is/design-system";
 import type { AreaInfo } from "@webstudio-is/css-data";
 
 /**
@@ -137,11 +137,11 @@ const freeCellStyle = css({
   minHeight: 20,
   border: "none",
   padding: 0,
-  backgroundColor: theme.colors.backgroundControls,
+  backgroundColor: cssVar("--background-secondary"),
   transition: "background-color 0.1s ease",
   cursor: "pointer",
   "&:hover": {
-    backgroundColor: theme.colors.backgroundPrimary,
+    backgroundColor: cssVar("--background-accent"),
   },
 });
 
@@ -152,7 +152,9 @@ const selectedCellStyle = css({
   backgroundColor: "transparent",
   cursor: "pointer",
   "&:hover": {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    backgroundColor: `oklch(from ${cssVar(
+      "--foreground-on-accent"
+    )} l c h / 15%)`,
   },
 });
 
@@ -161,7 +163,7 @@ const occupiedAreaStyle = css({
   border: "none",
   padding: 0,
   borderRadius: theme.borderRadius[3],
-  backgroundColor: theme.colors.backgroundDestructiveMain,
+  backgroundColor: cssVar("--background-negative"),
   cursor: "not-allowed",
   opacity: 0.6,
 });
@@ -169,7 +171,7 @@ const occupiedAreaStyle = css({
 const selectedAreaBgStyle = css({
   border: "none",
   borderRadius: theme.borderRadius[3],
-  backgroundColor: theme.colors.backgroundPrimary,
+  backgroundColor: cssVar("--background-accent"),
   pointerEvents: "none",
 });
 
@@ -296,7 +298,7 @@ export const GridAreaPicker = ({
         gridTemplateColumns: `repeat(${gridColumns}, minmax(20px, 1fr))`,
         gridTemplateRows: `repeat(${gridRows}, 20px)`,
         gap: 1,
-        backgroundColor: theme.colors.borderMain,
+        backgroundColor: cssVar("--border-default"),
         borderRadius: theme.borderRadius[4],
         overflow: "hidden",
       }}

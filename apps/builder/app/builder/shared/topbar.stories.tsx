@@ -1,7 +1,7 @@
 import {
   Button,
   Flex,
-  rawTheme,
+  cssVar,
   StorySection,
   theme,
   ToolbarButton,
@@ -53,7 +53,7 @@ const SyncErrorIndicator = () => (
     css={{ height: theme.spacing["15"] }}
     shrink={false}
   >
-    <OfflineIcon color={rawTheme.colors.foregroundDestructive} />
+    <OfflineIcon color={cssVar("--foreground-negative")} />
   </Flex>
 );
 
@@ -64,13 +64,13 @@ const ViewModeIndicator = () => (
     css={{ height: theme.spacing["15"] }}
     shrink={false}
   >
-    <CloudIcon color={rawTheme.colors.backgroundAlertMain} />
+    <CloudIcon color={cssVar("--foreground-warning")} />
   </Flex>
 );
 
 const SafeModeIndicator = () => (
   <ToolbarButton variant="subtle">
-    <ShieldIcon stroke={rawTheme.colors.foregroundDestructive} />
+    <ShieldIcon stroke={cssVar("--foreground-negative")} />
   </ToolbarButton>
 );
 

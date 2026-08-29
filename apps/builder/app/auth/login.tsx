@@ -12,6 +12,7 @@ import { GithubIcon, GoogleIcon, WebstudioIcon } from "@webstudio-is/icons";
 import { Form } from "@remix-run/react";
 import { authPath } from "~/shared/router-utils";
 import { SecretLogin } from "./secret-login";
+import { brandColors } from "~/shared/brand-colors";
 
 const globalStyles = globalCss({
   body: {
@@ -42,7 +43,7 @@ export const Login = ({
       justify="center"
       css={{
         height: "100vh",
-        background: theme.colors.brandBackgroundDashboard,
+        background: brandColors.dashboard,
       }}
     >
       <Flex
@@ -55,7 +56,7 @@ export const Login = ({
           padding: theme.spacing[17],
           borderRadius: theme.spacing[5],
           [`@media (min-width: ${rawTheme.spacing[35]})`]: {
-            backgroundColor: `rgba(255, 255, 255, 0.5)`,
+            backgroundColor: brandColors.panelTranslucent,
           },
         }}
       >

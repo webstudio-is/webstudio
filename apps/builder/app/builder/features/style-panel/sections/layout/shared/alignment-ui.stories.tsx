@@ -3,7 +3,7 @@ import {
   Flex,
   StorySection,
   Text,
-  theme,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { AlignmentUi } from "./alignment-ui";
 
@@ -72,7 +72,7 @@ const CombinationGrid = ({
               css={{
                 width: 64,
                 height: 62,
-                color: theme.colors.foregroundFlexUiMain,
+                color: cssVar("--foreground-disabled"),
               }}
             >
               <AlignmentUi

@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { css, keyframes, type Rect } from "@webstudio-is/design-system";
-import { theme } from "@webstudio-is/design-system";
+import { canvasToolColors } from "../color-recipes";
 
 const angleVar = `--ws-outline-angle`;
 
@@ -27,7 +27,7 @@ const baseOutlineStyle = css({
     variant: {
       default: {
         borderStyle: "solid",
-        borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
+        borderColor: canvasToolColors.selectionTranslucent,
       },
       collaboration: {
         [angleVar]: `0deg`,
@@ -37,7 +37,7 @@ const baseOutlineStyle = css({
       },
       slot: {
         borderStyle: "solid",
-        borderColor: theme.colors.foregroundReusable,
+        borderColor: canvasToolColors.slot,
       },
     },
 

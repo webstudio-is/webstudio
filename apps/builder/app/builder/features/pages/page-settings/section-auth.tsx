@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import {
   Checkbox,
   CheckboxAndLabel,
+  cssVar,
   Grid,
   InputErrorsTooltip,
   InputField,
@@ -11,7 +12,6 @@ import {
   Text,
   Tooltip,
   buttonStyle,
-  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
@@ -102,7 +102,7 @@ export const AuthSection = ({
             variant="wrapped"
           >
             <InfoCircleIcon
-              color={rawTheme.colors.foregroundSubtle}
+              color={cssVar("--foreground-secondary")}
               tabIndex={-1}
             />
           </Tooltip>

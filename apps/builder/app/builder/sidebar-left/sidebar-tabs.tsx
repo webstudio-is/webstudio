@@ -6,6 +6,7 @@ import {
   TabsTrigger,
   Tooltip,
   css,
+  cssVar,
   focusRingStyle,
   styled,
   theme,
@@ -42,8 +43,8 @@ const buttonStyle = css({
   outline: "none",
   alignItems: "center",
   justifyContent: "center",
-  color: theme.colors.foregroundIconMain,
-  backgroundColor: theme.colors.backgroundPanel,
+  color: cssVar("--foreground-primary"),
+  backgroundColor: cssVar("--background-primary"),
   border: "none",
   "&:disabled": {
     opacity: 0.4,
@@ -52,12 +53,12 @@ const buttonStyle = css({
   "&:focus-visible": triggerFocusRing,
   "@hover": {
     "&:hover": {
-      backgroundColor: theme.colors.backgroundHover,
+      backgroundColor: cssVar("--overlay-interaction-hover"),
     },
   },
 
   '&[data-state="active"]': {
-    backgroundColor: theme.colors.backgroundHover,
+    backgroundColor: cssVar("--overlay-interaction-hover"),
   },
 });
 
@@ -108,7 +109,7 @@ export const SidebarTabsList = styled(TabsList, {
   alignItems: "center",
   outline: "none",
   flexGrow: 1,
-  backgroundColor: theme.colors.backgroundPanel,
+  backgroundColor: cssVar("--background-primary"),
 });
 
 const sidebarTabsContentStyle = css({
@@ -117,7 +118,7 @@ const sidebarTabsContentStyle = css({
   top: 0,
   left: "100%",
   height: "100%",
-  backgroundColor: theme.colors.backgroundPanel,
+  backgroundColor: cssVar("--background-primary"),
   outline: "none",
   // Drawing border this way to ensure content still has full width, avoid subpixels and give layout round numbers
   "&::after": {
@@ -127,7 +128,7 @@ const sidebarTabsContentStyle = css({
     right: 0,
     bottom: 0,
     width: 1,
-    background: theme.colors.borderMain,
+    background: cssVar("--border-default"),
   },
   variants: {
     resizable: {

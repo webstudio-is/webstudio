@@ -1,9 +1,9 @@
-import { styled, Text } from "@webstudio-is/design-system";
+import { cssVar, styled, Text, theme } from "@webstudio-is/design-system";
 import type { StyleValue } from "@webstudio-is/css-engine";
 import { useEffect, useMemo, type ComponentProps } from "react";
-import { theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { scrollByPointer } from "../../shared/scroll-by-pointer";
+import { styleSourceColors } from "../../style-source/color-recipes";
 
 const Container = styled("button", {
   // fit-content is not needed for the "button" element,
@@ -35,30 +35,27 @@ const Container = styled("button", {
   variants: {
     source: {
       default: {
-        color: theme.colors.foregroundMain,
+        color: cssVar("--foreground-secondary"),
         backgroundColor: "transparent",
       },
       local: {
-        color: theme.colors.foregroundLocalMain,
-        backgroundColor: theme.colors.backgroundLocalMain,
+        color: styleSourceColors.local.foreground,
+        backgroundColor: styleSourceColors.local.subtleBackground,
       },
       overwritten: {
-        color: theme.colors.foregroundOverwrittenMain,
-        backgroundColor: theme.colors.backgroundOverwrittenMain,
+        color: styleSourceColors.overwritten.foreground,
+        backgroundColor: styleSourceColors.overwritten.subtleBackground,
       },
       preset: {
-        color: theme.colors.foregroundMain,
-        backgroundColor: theme.colors.backgroundPresetMain,
+        color: cssVar("--foreground-primary"),
+        backgroundColor: cssVar("--background-secondary"),
       },
       remote: {
-        color: theme.colors.foregroundRemoteMain,
-        backgroundColor: theme.colors.backgroundRemoteMain,
+        color: styleSourceColors.remote.foreground,
+        backgroundColor: styleSourceColors.remote.subtleBackground,
       },
     },
   },
-  compoundVariants: [
-    { source: "default", css: { color: theme.colors.foregroundTextSubtle } },
-  ],
 });
 
 export const ValueText = ({

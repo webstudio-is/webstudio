@@ -3,27 +3,17 @@ import * as React from "react";
 import { useEffect, useLayoutEffect, type ReactNode } from "react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { setEnv } from "../packages/feature-flags/src/index";
-import { theme, globalCss } from "../packages/design-system/src/index";
-import { color } from "../packages/design-system/src/design-tokens";
+import {
+  cssVar,
+  globalCss,
+  theme,
+  type ThemeVariableName,
+} from "../packages/design-system/src/index";
 
 // this adds <style> tags to the <head> of the document
 import "@fontsource-variable/inter";
 import "@fontsource-variable/manrope";
 import "@fontsource/roboto-mono";
-
-const themeVariableNames = [
-  "--theme-color-neutral",
-  "--theme-color-accent",
-  "--theme-color-positive",
-  "--theme-color-negative",
-  "--theme-color-warning",
-  "--theme-color-informative",
-  "--theme-contrast-content",
-  "--theme-contrast-surface",
-  "--theme-contrast-border",
-] as const;
-
-type ThemeVariableName = (typeof themeVariableNames)[number];
 
 const themeTestCases = {
   default: {},
@@ -61,6 +51,10 @@ const themeTestCases = {
     "--theme-contrast-border": "100%",
   },
 } satisfies Record<string, Partial<Record<ThemeVariableName, string>>>;
+
+const themeVariableNames = new Set(
+  Object.values(themeTestCases).flatMap((testCase) => Object.keys(testCase))
+);
 
 type ThemeTestCase = keyof typeof themeTestCases;
 type ColorScheme = "light" | "dark";
@@ -162,7 +156,7 @@ const WaitForFonts = ({ children }) => {
 
 const globalStyles = globalCss({
   body: {
-    color: theme.colors.foregroundMain,
+    color: cssVar("--foreground-primary"),
     fontFamily: theme.fonts.sans,
   },
 });
@@ -235,12 +229,11 @@ const parameters: Preview["parameters"] = {
   backgrounds: {
     default: "White",
     values: [
+      { name: "Primary", value: cssVar("--background-primary") },
+      { name: "Secondary", value: cssVar("--background-secondary") },
+      { name: "Inverse", value: cssVar("--background-inverse") },
       { name: "White", value: "#ffffff" },
       { name: "Black", value: "#000000" },
-      { name: "Panel", value: color.backgroundPanel },
-      { name: "Maintenance Dark", value: color.maintenanceDark },
-      { name: "Maintenance Medium", value: color.maintenanceMedium },
-      { name: "Maintenance Light", value: color.maintenanceLight },
     ],
   },
 };

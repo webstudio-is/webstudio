@@ -6,10 +6,10 @@ import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { propertiesData } from "@webstudio-is/css-data";
 import {
   Button,
+  cssVar,
   Flex,
   Kbd,
   Label,
-  rawTheme,
   SectionTitleLabel,
   Text,
   theme,
@@ -479,7 +479,7 @@ export const PropertyValueTooltip = ({
               {description}
               {isAdvanced && (
                 <Flex gap="1">
-                  <AlertIcon color={rawTheme.colors.backgroundAlertMain} /> This
+                  <AlertIcon color={cssVar("--foreground-warning")} /> This
                   value was defined in the Advanced section.
                 </Flex>
               )}

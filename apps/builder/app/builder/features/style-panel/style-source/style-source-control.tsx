@@ -2,6 +2,7 @@ import {
   Text,
   styled,
   Box,
+  cssVar,
   theme,
   Flex,
   Tooltip,
@@ -10,6 +11,7 @@ import { LockIcon } from "@webstudio-is/icons";
 import type { StyleSource } from "@webstudio-is/sdk";
 import { type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
+import { styleSourceColors } from "./color-recipes";
 
 const menuTriggerVisibilityVar = "--ws-style-source-menu-trigger-visibility";
 const menuTriggerVisibilityOverrideVar =
@@ -89,48 +91,47 @@ const StyleSourceContainer = styled(Box, {
   position: "relative",
   overflow: "hidden",
   alignItems: "center",
-  color: theme.colors.foregroundContrastMain,
+  color: cssVar("--foreground-on-accent"),
   ...menuCssVars({ show: false }),
   "&:hover": menuCssVars({ show: true }),
   variants: {
     source: {
       local: {
         order: 1,
-        backgroundColor: theme.colors.backgroundStyleSourceSelected,
-        [menuTriggerGradientVar]:
-          theme.colors.backgroundStyleSourceGradientSelected,
+        backgroundColor: styleSourceColors.local.background,
+        [menuTriggerGradientVar]: styleSourceColors.local.gradient,
       },
       token: {
-        backgroundColor: theme.colors.backgroundStyleSourceSelected,
-        [menuTriggerGradientVar]:
-          theme.colors.backgroundStyleSourceGradientSelected,
+        backgroundColor: styleSourceColors.local.background,
+        [menuTriggerGradientVar]: styleSourceColors.local.gradient,
       },
       tag: {
-        backgroundColor: theme.colors.backgroundStyleSourceTag,
-        [menuTriggerGradientVar]: theme.colors.backgroundStyleSourceGradientTag,
+        backgroundColor: styleSourceColors.tag.background,
+        [menuTriggerGradientVar]: styleSourceColors.tag.gradient,
       },
     },
     selected: {
       true: {},
       false: {
         "&:not(:hover)": {
-          backgroundColor: theme.colors.backgroundStyleSourceNeutral,
-          [menuTriggerGradientVar]:
-            theme.colors.backgroundStyleSourceGradientUnselected,
+          color: cssVar("--foreground-on-inverse"),
+          backgroundColor: styleSourceColors.neutral.background,
+          [menuTriggerGradientVar]: styleSourceColors.neutral.gradient,
         },
       },
     },
     disabled: {
       true: {
         "&:not(:hover)": {
-          backgroundColor: theme.colors.backgroundStyleSourceDisabled,
+          opacity: 0.55,
         },
       },
       false: {},
     },
     hasError: {
       true: {
-        backgroundColor: theme.colors.backgroundDestructiveMain,
+        color: cssVar("--foreground-on-negative"),
+        backgroundColor: cssVar("--background-negative"),
       },
     },
   },
@@ -145,8 +146,8 @@ const StyleSourceButton = styled("button", {
   variants: {
     isEditing: {
       true: {
-        color: theme.colors.foregroundMain,
-        backgroundColor: theme.colors.backgroundControls,
+        color: cssVar("--foreground-primary"),
+        backgroundColor: cssVar("--background-secondary"),
       },
       false: {},
     },
@@ -161,13 +162,13 @@ const StyleSourceState = styled(Text, {
   variants: {
     source: {
       local: {
-        backgroundColor: theme.colors.backgroundStyleSourceSelected,
+        backgroundColor: styleSourceColors.local.background,
       },
       token: {
-        backgroundColor: theme.colors.backgroundStyleSourceSelected,
+        backgroundColor: styleSourceColors.local.background,
       },
       tag: {
-        backgroundColor: theme.colors.backgroundStyleSourceTag,
+        backgroundColor: styleSourceColors.tag.background,
       },
     },
   },

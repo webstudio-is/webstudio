@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from "react";
-import { css, SplitView, theme } from "@webstudio-is/design-system";
+import { css, cssVar, SplitView, theme } from "@webstudio-is/design-system";
 import { renderMarkdownHtml } from "@webstudio-is/sdk-components-react/markdown";
 import { discoverNamedMarkdownAssetReferenceRanges } from "@webstudio-is/content-engine/markdown-assets";
 import { rewriteMarkdownAssetReferenceRanges } from "@webstudio-is/content-engine/markdown-references";
@@ -18,8 +18,8 @@ const previewStyle = css({
   overflow: "auto",
   boxSizing: "border-box",
   padding: theme.spacing[9],
-  color: theme.colors.foregroundMain,
-  background: theme.colors.backgroundPanel,
+  color: cssVar("--foreground-primary"),
+  background: cssVar("--background-primary"),
   fontFamily: theme.fonts.sans,
   fontSize: 14,
   lineHeight: 1.5,
@@ -43,30 +43,30 @@ const previewStyle = css({
   "& blockquote": {
     marginInline: 0,
     paddingLeft: theme.spacing[5],
-    color: theme.colors.foregroundSubtle,
-    borderLeft: `3px solid ${theme.colors.borderMain}`,
+    color: cssVar("--foreground-secondary"),
+    borderLeft: `3px solid ${cssVar("--border-default")}`,
   },
   "& code": {
     padding: "0.125em 0.25em",
     borderRadius: theme.borderRadius[3],
-    background: theme.colors.backgroundControls,
+    background: cssVar("--background-secondary"),
     fontFamily: theme.fonts.mono,
   },
   "& pre": {
     overflowX: "auto",
     padding: theme.spacing[5],
     borderRadius: theme.borderRadius[4],
-    background: theme.colors.backgroundControls,
+    background: cssVar("--background-secondary"),
   },
   "& pre code": { padding: 0, background: "transparent" },
   "& table": { width: "100%", borderCollapse: "collapse" },
   "& th, & td": {
     padding: theme.spacing[3],
-    border: `1px solid ${theme.colors.borderMain}`,
+    border: `1px solid ${cssVar("--border-default")}`,
     textAlign: "left",
   },
   "& img": { maxWidth: "100%" },
-  "& a": { color: theme.colors.foregroundPrimary },
+  "& a": { color: cssVar("--foreground-accent") },
 });
 
 const renderMarkdownPreview = ({

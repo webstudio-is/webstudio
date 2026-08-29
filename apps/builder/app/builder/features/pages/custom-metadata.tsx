@@ -8,6 +8,7 @@ import {
   Label,
   SmallIconButton,
   Text,
+  cssVar,
   theme,
 } from "@webstudio-is/design-system";
 import { TrashIcon, PlusIcon } from "@webstudio-is/icons";
@@ -105,7 +106,7 @@ const MetadataItem = (props: {
           gridArea: "button",
           justifyItems: "center",
           gap: "2px",
-          color: theme.colors.foregroundIconSecondary,
+          color: cssVar("--foreground-secondary"),
         }}
       >
         <svg

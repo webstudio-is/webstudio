@@ -1,6 +1,6 @@
 import { forwardRef, useId } from "react";
 import type { ComponentProps, Ref } from "react";
-import { styled, theme } from "@webstudio-is/design-system";
+import { cssVar, styled, theme } from "@webstudio-is/design-system";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import {
   spaceProperties,
@@ -44,23 +44,23 @@ const emulateInnerStroke = ({
 });
 
 const ValueArea = styled("path", {
-  fill: theme.colors.backgroundSpacingTopBottom,
+  fill: cssVar("--background-secondary"),
   variants: {
     side: {
       top: { cursor: "n-resize" },
       bottom: { cursor: "s-resize" },
       right: {
         cursor: "e-resize",
-        fill: theme.colors.backgroundSpacingLeftRight,
+        fill: cssVar("--background-secondary"),
       },
       left: {
         cursor: "w-resize",
-        fill: theme.colors.backgroundSpacingLeftRight,
+        fill: cssVar("--background-secondary"),
       },
     },
     isActive: {
       true: {
-        fill: theme.colors.backgroundSpacingHover,
+        fill: cssVar("--overlay-interaction-hover"),
       },
     },
   },
@@ -79,7 +79,7 @@ const OuterRect = styled(
       {...props}
     />
   ),
-  { stroke: theme.colors.borderMain }
+  { stroke: cssVar("--border-default") }
 );
 
 const InnerOuterRect = styled(
@@ -99,7 +99,10 @@ const InnerOuterRect = styled(
       />
     );
   },
-  { stroke: theme.colors.borderMain, fill: theme.colors.backgroundControls }
+  {
+    stroke: cssVar("--border-default"),
+    fill: cssVar("--background-secondary"),
+  }
 );
 
 const InnerRect = styled(
@@ -115,7 +118,7 @@ const InnerRect = styled(
       {...props}
     />
   ),
-  { stroke: theme.colors.borderMain }
+  { stroke: cssVar("--border-default") }
 );
 
 const MostInnerRect = styled(
@@ -133,7 +136,10 @@ const MostInnerRect = styled(
       />
     );
   },
-  { stroke: theme.colors.borderMain, fill: theme.colors.backgroundControls }
+  {
+    stroke: cssVar("--border-default"),
+    fill: cssVar("--background-secondary"),
+  }
 );
 
 const gap = `${INNER_MARGIN + BORDER}px`;
@@ -163,7 +169,7 @@ const Container = styled("div", {
   // (both in z-order and in top/left)
   [`&:focus-visible > ${Grid}`]: {
     borderRadius: theme.borderRadius[3],
-    outline: `1px solid ${theme.colors.borderFocus}`,
+    outline: `1px solid ${cssVar("--border-focus")}`,
   },
 });
 
@@ -188,7 +194,7 @@ const Cell = styled("div", {
 });
 
 const Label = styled("div", {
-  color: theme.colors.foregroundTextSubtle,
+  color: cssVar("--foreground-secondary"),
   textTransform: "uppercase",
   fontSize: theme.deprecatedFontSize[1],
   lineHeight: 1,

@@ -1,11 +1,11 @@
-import { styled, type Rect } from "@webstudio-is/design-system";
+import { styled, theme, type Rect } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
-import { theme } from "@webstudio-is/design-system";
 import {
   InstanceIcon,
   getInstanceLabel,
 } from "~/builder/shared/instance-label";
 import { useOutlineControlPosition } from "./use-outline-control-position";
+import { canvasToolColors } from "../color-recipes";
 
 const LabelContainer = styled(
   "div",
@@ -14,7 +14,7 @@ const LabelContainer = styled(
     display: "flex",
     padding: `0 ${theme.spacing[3]}`,
     height: theme.spacing[10],
-    color: "white",
+    color: canvasToolColors.onSelection,
     alignItems: "center",
     justifyContent: "center",
     gap: theme.spacing[3],
@@ -47,10 +47,10 @@ const LabelContainer = styled(
       },
       variant: {
         default: {
-          backgroundColor: theme.colors.backgroundPrimary,
+          backgroundColor: canvasToolColors.selection,
         },
         slot: {
-          backgroundColor: theme.colors.foregroundReusable,
+          backgroundColor: canvasToolColors.slot,
         },
       },
     },

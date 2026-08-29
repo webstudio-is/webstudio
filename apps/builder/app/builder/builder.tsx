@@ -476,7 +476,7 @@ export const Builder = (props: BuilderProps) => {
                 left: 0,
                 bottom: 0,
                 width: 1,
-                background: theme.colors.borderMain,
+                background: cssVar("--border-default"),
               },
             }}
           >

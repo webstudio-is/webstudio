@@ -23,6 +23,7 @@ import { Card, CardContent, CardFooter } from "../shared/card";
 import type { User } from "~/shared/db/user.server";
 import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
+import { brandColors } from "~/shared/brand-colors";
 
 const infoIconStyle = css({ flexShrink: 0 });
 
@@ -116,7 +117,7 @@ export const ProjectCard = ({
     <Card hidden={isHidden} {...props}>
       <CardContent
         css={{
-          background: theme.colors.brandBackgroundProjectCardBack,
+          background: brandColors.projectCardBack,
           [`&:hover`]: {
             "--ws-project-card-prefetch-image-background": `url(${linkPath}cgi/empty.gif)`,
           },
@@ -153,7 +154,7 @@ export const ProjectCard = ({
                   color="contrast"
                   key={tag.id}
                   css={{
-                    background: "oklch(0 0 0 / 0.3)",
+                    background: brandColors.scrim,
                     borderRadius: theme.borderRadius[3],
                     paddingInline: theme.spacing[3],
                   }}

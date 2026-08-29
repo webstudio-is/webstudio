@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from "react";
-import { Kbd, rawTheme, Text } from "@webstudio-is/design-system";
+import { cssVar, Kbd, rawTheme, Text } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import {
   $dragAndDropState,
@@ -257,7 +257,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         <Flex
           grow
           direction="column"
-          css={{ borderRight: `1px solid ${theme.colors.borderMain}` }}
+          css={{ borderRight: `1px solid ${cssVar("--border-default")}` }}
         >
           <ExternalDragDropMonitor />
           <div ref={tabsWrapperRef} style={{ display: "contents" }}>
@@ -321,7 +321,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             position: "relative",
             height: "100%",
             flexGrow: 1,
-            background: theme.colors.backgroundPanel,
+            background: cssVar("--background-primary"),
           }}
           direction="column"
         >

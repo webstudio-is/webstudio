@@ -2,6 +2,7 @@ import { type FocusEventHandler, useId } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Checkbox,
+  cssVar,
   Flex,
   Grid,
   InputErrorsTooltip,
@@ -13,7 +14,6 @@ import {
   Text,
   Tooltip,
   buttonStyle,
-  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { isLiteralExpression } from "@webstudio-is/expression";
@@ -83,7 +83,7 @@ const PathField = ({
           variant="wrapped"
         >
           <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
+            color={cssVar("--foreground-secondary")}
             tabIndex={-1}
           />
         </Tooltip>
@@ -146,7 +146,7 @@ const StatusField = ({
           variant="wrapped"
         >
           <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
+            color={cssVar("--foreground-secondary")}
             tabIndex={-1}
           />
         </Tooltip>
@@ -239,7 +239,7 @@ const RedirectField = ({
           variant="wrapped"
         >
           <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
+            color={cssVar("--foreground-secondary")}
             tabIndex={-1}
           />
         </Tooltip>
@@ -347,14 +347,14 @@ export const GeneralSection = ({
               </>
             ) : canSetHomePage === false ? (
               <>
-                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <HomeIcon color={cssVar("--foreground-secondary")} />
                 <Text color="subtle">
                   Stage this page for publish before setting it as the home page
                 </Text>
               </>
             ) : values.parentFolderId !== pages.rootFolderId ? (
               <>
-                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <HomeIcon color={cssVar("--foreground-secondary")} />
                 <Text
                   css={{
                     overflowWrap: "anywhere",
@@ -369,7 +369,7 @@ export const GeneralSection = ({
               </>
             ) : values.documentType !== "html" ? (
               <>
-                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <HomeIcon color={cssVar("--foreground-secondary")} />
                 <Text
                   css={{
                     overflowWrap: "anywhere",

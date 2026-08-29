@@ -12,6 +12,7 @@ import {
 import { useStore } from "@nanostores/react";
 import {
   Button,
+  cssVar,
   Tooltip,
   IconButton,
   Grid,
@@ -292,8 +293,8 @@ const ChangeProjectDomain = ({
                 height: theme.sizes.controlHeight,
                 color:
                   error !== undefined || status === "FAILED"
-                    ? theme.colors.foregroundDestructive
-                    : theme.colors.foregroundSuccessText,
+                    ? cssVar("--foreground-negative")
+                    : cssVar("--foreground-positive"),
               }}
             >
               {error !== undefined || status === "FAILED" ? (
@@ -326,7 +327,7 @@ const ChangeProjectDomain = ({
               <InfoCircleIcon
                 tabIndex={0}
                 style={{ flexShrink: 0 }}
-                color={rawTheme.colors.foregroundSubtle}
+                color={cssVar("--foreground-secondary")}
               />
             </Tooltip>
           </Flex>
@@ -385,7 +386,7 @@ const ChangeProjectDomain = ({
                 <InfoCircleIcon
                   tabIndex={0}
                   style={{ flexShrink: 0 }}
-                  color={rawTheme.colors.foregroundSubtle}
+                  color={cssVar("--foreground-secondary")}
                 />
               </Tooltip>
             </Flex>
@@ -1132,7 +1133,7 @@ const Content = (props: {
         {hasUnpublishedDomains && (
           <PanelBanner>
             <Flex align="center" gap="1">
-              <InfoCircleIcon color={rawTheme.colors.foregroundMain} />
+              <InfoCircleIcon color={cssVar("--foreground-primary")} />
               <Text variant="regularBold">Don't forget to publish</Text>
             </Flex>
             <Text>

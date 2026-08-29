@@ -2,12 +2,12 @@ import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import {
+  cssVar,
   DialogClose,
   DialogMaximize,
   DialogTitle,
   DialogTitleActions,
   Flex,
-  rawTheme,
   Text,
   toast,
 } from "@webstudio-is/design-system";
@@ -144,7 +144,7 @@ export const TextContent = ({
               {binding.bindingState.overwritable === false && (
                 <Flex gap="1">
                   <AlertIcon
-                    color={rawTheme.colors.backgroundAlertMain}
+                    color={cssVar("--foreground-warning")}
                     style={{ flexShrink: 0 }}
                   />
                   <Text>

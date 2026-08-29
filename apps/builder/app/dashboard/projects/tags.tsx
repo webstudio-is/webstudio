@@ -31,10 +31,8 @@ import { nanoid } from "nanoid";
 import { EllipsesIcon, SpinnerIcon } from "@webstudio-is/icons";
 
 const tagColorPalette = Array.from({ length: 50 }, (_, index) => {
-  const lightness = 55 + (index % 3) * 3;
-  const chroma = 0.14 + (index % 2) * 0.02;
-  const hue = (index * 137.5) % 360;
-  return `oklch(${lightness}% ${chroma.toFixed(2)} ${hue.toFixed(1)})`;
+  const hueOffset = (index * 137.5) % 360;
+  return `oklch(from ${cssVar("--background-accent")} l c calc(h + ${hueOffset}))`;
 });
 
 type DeleteConfirmationDialogProps = {
@@ -348,14 +346,14 @@ export const Tag = ({
 >) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTagsIds = searchParams.getAll("tag");
-  const color = tagColorPalette[index] ?? theme.colors.backgroundNeutralDark;
+  const color = tagColorPalette[index] ?? cssVar("--background-inverse");
   return (
     <Button
       color="neutral"
       css={{
         "&:hover[data-state='auto'], &[data-state='pressed']": {
           backgroundColor: color,
-          color: theme.colors.white,
+          color: cssVar("--foreground-on-accent"),
         },
         "&[data-state='pressed']:hover": {
           backgroundColor: `oklch(from ${color} l c h / 0.8)`,

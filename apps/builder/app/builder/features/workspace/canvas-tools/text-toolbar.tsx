@@ -2,7 +2,13 @@ import { useRef, useEffect } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
-import { theme, Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
+import {
+  cssVar,
+  theme,
+  Flex,
+  IconButton,
+  Tooltip,
+} from "@webstudio-is/design-system";
 import {
   SuperscriptIcon,
   SubscriptIcon,
@@ -105,10 +111,10 @@ const Toolbar = ({ state, scale }: ToolbarProps) => {
         top: 0,
         left: 0,
         pointerEvents: "auto",
-        background: theme.colors.backgroundPanel,
+        background: cssVar("--background-primary"),
         padding: theme.spacing[3],
         borderRadius: theme.borderRadius[6],
-        border: `1px solid ${theme.colors.borderMain}`,
+        border: `1px solid ${cssVar("--border-default")}`,
         filter:
           "drop-shadow(0px 2px 7px rgba(0, 0, 0, 0.1)) drop-shadow(0px 5px 17px rgba(0, 0, 0, 0.15))",
       }}

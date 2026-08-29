@@ -7,6 +7,7 @@ import {
   ToolbarToggleGroup,
   ToolbarToggleItem,
   Tooltip,
+  cssVar,
   theme,
 } from "@webstudio-is/design-system";
 import { AlertIcon, AsteriskIcon } from "@webstudio-is/icons";
@@ -143,7 +144,7 @@ const ZoomWarning = () => {
         css={{
           px: theme.spacing[5],
           height: "100%",
-          color: theme.colors.backgroundAlertMain,
+          color: cssVar("--foreground-warning"),
         }}
       >
         <AlertIcon />

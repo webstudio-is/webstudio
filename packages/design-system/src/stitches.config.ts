@@ -3,7 +3,6 @@ import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 import "./colors/colors.css";
 import * as tokens from "./design-tokens";
-import { toCssColorTokenRecord, toKebabCase } from "./colors/color-name-utils";
 
 const spacing = {
   0: "0px",
@@ -47,7 +46,6 @@ const spacing = {
 const { styled, css, getCssText, globalCss, keyframes, config, reset } =
   createStitches({
     theme: {
-      colors: toCssColorTokenRecord(tokens.color),
       fonts: {
         ...tokens.fontFamilies,
         sans: tokens.fontFamilies.inter,
@@ -199,17 +197,10 @@ const toVariblesNames = (values: VariblesValues): VariblesNames => {
 const variableNames = toVariblesNames(config.theme);
 export const theme = {
   ...variableNames,
-  colors: Object.fromEntries(
-    Object.keys(tokens.color).map((name) => [
-      name,
-      `$colors$${toKebabCase(name)}`,
-    ])
-  ) as Record<keyof typeof tokens.color, string>,
 };
 
 export const rawTheme = {
   ...config.theme,
-  colors: tokens.color,
 };
 
 export type CSS = Stitches.CSS<typeof config>;

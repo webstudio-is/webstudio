@@ -16,6 +16,7 @@ import {
 import {
   Box,
   Button,
+  cssVar,
   CssValueListArrowFocus,
   CssValueListItem,
   DialogTitleActions,
@@ -266,26 +267,34 @@ const BindingButton = forwardRef<
               width: 12,
               height: 12,
               borderRadius: "50%",
-              backgroundColor: theme.colors.backgroundStyleSourceSelected,
+              backgroundColor: cssVar("--background-accent"),
+              color: cssVar("--foreground-on-accent"),
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               "&[data-variant=bound]": {
-                backgroundColor: theme.colors.backgroundStyleSourceSelected,
+                backgroundColor: cssVar("--background-accent"),
               },
               "&[data-variant=error]": {
-                backgroundColor: theme.colors.backgroundDestructiveMain,
+                backgroundColor: cssVar("--background-negative"),
+                color: cssVar("--foreground-on-negative"),
               },
             }}
             data-variant={error ? "error" : variant}
           >
             <DotIcon
               size={7}
-              style={{ display: `var(--dot-display)`, color: "white" }}
+              style={{
+                display: `var(--dot-display)`,
+                color: "currentColor",
+              }}
             />
             <PlusIcon
               size={8}
-              style={{ display: `var(--plus-display)`, color: "white" }}
+              style={{
+                display: `var(--plus-display)`,
+                color: "currentColor",
+              }}
             />
           </Box>
         }

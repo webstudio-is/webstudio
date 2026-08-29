@@ -2,6 +2,7 @@ import { Fragment, useState } from "react";
 import {
   Box,
   Combobox,
+  cssVar,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -10,7 +11,6 @@ import {
   DropdownMenuTrigger,
   Flex,
   InputErrorsTooltip,
-  rawTheme,
   styled,
   Text,
   theme,
@@ -64,7 +64,7 @@ const MenuTrigger = styled("button", {
   padding: 0,
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
-  color: theme.colors.foregroundContrastMain,
+  color: "inherit",
   visibility,
   "&:hover, &[data-state=open]": {
     ...menuCssVars({ show: true }),
@@ -77,7 +77,7 @@ const MenuTrigger = styled("button", {
       width: "100%",
       height: "100%",
       visibility,
-      backgroundColor: theme.colors.backgroundButtonHover,
+      backgroundColor: cssVar("--overlay-interaction-hover"),
       borderTopRightRadius: theme.borderRadius[4],
       borderBottomRightRadius: theme.borderRadius[4],
       pointerEvents: "none",
@@ -312,7 +312,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
               {props.item.label}
             </Text>
             {props.hasStyles && (
-              <DotIcon size="12" color={rawTheme.colors.foregroundPrimary} />
+              <DotIcon size="12" color={cssVar("--foreground-accent")} />
             )}
           </Flex>
         </DropdownMenuLabel>
@@ -441,8 +441,8 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
                               <CheckMarkIcon
                                 color={
                                   props.item.states.includes(selector)
-                                    ? rawTheme.colors.foregroundPrimary
-                                    : rawTheme.colors.foregroundIconMain
+                                    ? cssVar("--foreground-accent")
+                                    : cssVar("--foreground-primary")
                                 }
                                 size={12}
                               />
@@ -465,7 +465,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
                             {props.item.states.includes(selector) && (
                               <DotIcon
                                 size="12"
-                                color={rawTheme.colors.foregroundPrimary}
+                                color={cssVar("--foreground-accent")}
                               />
                             )}
                           </Flex>

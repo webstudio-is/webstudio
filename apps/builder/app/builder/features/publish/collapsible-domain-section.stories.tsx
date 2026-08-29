@@ -16,7 +16,7 @@ import {
   TextArea,
   Checkbox,
   theme,
-  rawTheme,
+  cssVar,
   buttonStyle,
   Popover,
   PopoverTitle,
@@ -47,10 +47,10 @@ const StatusIcon = ({ status }: { status: "ok" | "error" | "pending" }) => (
       height: theme.sizes.controlHeight,
       color:
         status === "error"
-          ? theme.colors.foregroundDestructive
+          ? cssVar("--foreground-negative")
           : status === "pending"
-            ? theme.colors.foregroundSubtle
-            : theme.colors.foregroundSuccessText,
+            ? cssVar("--foreground-secondary")
+            : cssVar("--foreground-positive"),
     }}
   >
     {status === "error" ? <AlertIcon /> : <CheckCircleIcon />}
@@ -94,7 +94,7 @@ export const StagingDomain = () => (
                 <InfoCircleIcon
                   tabIndex={0}
                   style={{ flexShrink: 0 }}
-                  color={rawTheme.colors.foregroundSubtle}
+                  color={cssVar("--foreground-secondary")}
                 />
               </Tooltip>
             </Flex>
@@ -114,7 +114,7 @@ export const StagingDomain = () => (
                 <InfoCircleIcon
                   tabIndex={0}
                   style={{ flexShrink: 0 }}
-                  color={rawTheme.colors.foregroundSubtle}
+                  color={cssVar("--foreground-secondary")}
                 />
               </Tooltip>
             </Flex>
@@ -181,7 +181,7 @@ export const CustomDomains = () => (
       >
         <Grid gap={2}>
           <Flex align="center" gap={1}>
-            <CheckCircleIcon color={rawTheme.colors.foregroundSuccessText} />
+            <CheckCircleIcon color={cssVar("--foreground-positive")} />
             <Text>Published 2 hours ago</Text>
           </Flex>
           <Grid gap={1}>
@@ -220,7 +220,7 @@ export const CustomDomains = () => (
       >
         <Grid gap={2}>
           <Flex align="center" gap={1}>
-            <AlertIcon color={rawTheme.colors.foregroundDestructive} />
+            <AlertIcon color={cssVar("--foreground-negative")} />
             <Text color="destructive">
               DNS records not found. Add these records at your registrar:
             </Text>
@@ -255,7 +255,7 @@ export const CustomDomains = () => (
       >
         <Grid gap={2}>
           <Flex align="center" gap={1}>
-            <InfoCircleIcon color={rawTheme.colors.foregroundSubtle} />
+            <InfoCircleIcon color={cssVar("--foreground-secondary")} />
             <Text color="subtle">Setting up SSL certificate...</Text>
           </Flex>
           <Button color="neutral">Check status</Button>
@@ -271,7 +271,7 @@ export const CustomDomains = () => (
       >
         <Grid gap={2}>
           <Flex align="center" gap={1}>
-            <AlertIcon color={rawTheme.colors.foregroundDestructive} />
+            <AlertIcon color={cssVar("--foreground-negative")} />
             <Text color="destructive">
               SSL provisioning failed. Please verify your DNS records and try
               again.
@@ -412,7 +412,7 @@ export const UpgradeBanners = () => (
       <Text variant="labels">Unpublished domain reminder</Text>
       <PanelBanner>
         <Flex align="center" gap="1">
-          <InfoCircleIcon color={rawTheme.colors.foregroundMain} />
+          <InfoCircleIcon color={cssVar("--foreground-primary")} />
           <Text variant="regularBold">Don&apos;t forget to publish</Text>
         </Flex>
         <Text>
@@ -431,7 +431,7 @@ export const PublishDialogLayout = () => (
       direction="column"
       css={{
         width: theme.spacing[33],
-        border: `1px solid ${rawTheme.colors.borderMain}`,
+        border: `1px solid ${cssVar("--border-default")}`,
         borderRadius: theme.borderRadius[4],
       }}
     >
@@ -504,7 +504,7 @@ export const ExportDialogLayout = () => (
         direction="column"
         css={{
           width: theme.spacing[33],
-          border: `1px solid ${rawTheme.colors.borderMain}`,
+          border: `1px solid ${cssVar("--border-default")}`,
           borderRadius: theme.borderRadius[4],
         }}
       >
@@ -600,7 +600,7 @@ export const ExportStaticLayout = () => (
         direction="column"
         css={{
           width: theme.spacing[33],
-          border: `1px solid ${rawTheme.colors.borderMain}`,
+          border: `1px solid ${cssVar("--border-default")}`,
           borderRadius: theme.borderRadius[4],
         }}
       >

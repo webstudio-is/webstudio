@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { css, theme } from "@webstudio-is/design-system";
+import { css, cssVar } from "@webstudio-is/design-system";
 import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { isBaseBreakpoint } from "@webstudio-is/project-build/runtime";
@@ -12,10 +12,10 @@ const cascadeIndicatorStyle = css({
   borderRadius: 2,
   transition: "150ms width, 150ms left, 150ms right",
   '&[data-direction="left"]': {
-    background: theme.colors.backgroundGradientHorizontal,
+    background: `linear-gradient(90deg, transparent, ${cssVar("--background-accent")})`,
   },
   '&[data-direction="right"]': {
-    background: theme.colors.backgroundGradientHorizontalReverse,
+    background: `linear-gradient(90deg, ${cssVar("--background-accent")}, transparent)`,
   },
 });
 

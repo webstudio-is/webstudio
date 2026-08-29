@@ -8,8 +8,8 @@ import { mergeRefs } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
 import {
   Box,
+  cssVar,
   keyframes,
-  rawTheme,
   ScrollArea,
   SmallIconButton,
   styled,
@@ -485,7 +485,7 @@ const ShowToggle = ({
           {isAnimating && value && (
             <>
               <br />
-              <Text css={{ color: theme.colors.foregroundPrimary }}>
+              <Text css={{ color: cssVar("--foreground-accent") }}>
                 Animation is running on canvas.
               </Text>
             </>
@@ -499,9 +499,9 @@ const ShowToggle = ({
         css={
           value && isAnimating
             ? {
-                color: theme.colors.foregroundPrimary,
+                color: cssVar("--foreground-accent"),
                 "&:hover": {
-                  color: theme.colors.foregroundPrimary,
+                  color: cssVar("--foreground-accent"),
                   filter: "brightness(80%)",
                 },
               }
@@ -520,10 +520,10 @@ const EditableTreeNodeLabel = styled("div", {
   variants: {
     isEditing: {
       true: {
-        background: theme.colors.backgroundControls,
+        background: cssVar("--background-secondary"),
         padding: theme.spacing[3],
         borderRadius: theme.spacing[3],
-        color: theme.colors.foregroundMain,
+        color: cssVar("--foreground-primary"),
         outline: "none",
         cursor: "auto",
         textOverflow: "clip",
@@ -1132,7 +1132,7 @@ export const NavigatorTree = () => {
                       style: {
                         opacity: item.isHidden ? 0.4 : undefined,
                         color: item.isReusable
-                          ? rawTheme.colors.foregroundReusable
+                          ? cssVar("--foreground-accent")
                           : undefined,
                       },
                     }}

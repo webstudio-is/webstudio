@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ShieldIcon } from "@webstudio-is/icons";
 import {
   Popover,
+  cssVar,
   PopoverTrigger,
   PopoverContent,
   theme,
@@ -9,7 +10,6 @@ import {
   Button,
   Text,
   Flex,
-  rawTheme,
 } from "@webstudio-is/design-system";
 import { builderApi } from "~/shared/builder-api";
 
@@ -30,7 +30,7 @@ export const SafeModeButton = () => {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <ToolbarButton variant="subtle" tabIndex={0}>
-          <ShieldIcon stroke={rawTheme.colors.foregroundDestructive} />
+          <ShieldIcon stroke={cssVar("--foreground-negative")} />
         </ToolbarButton>
       </PopoverTrigger>
       <PopoverContent>

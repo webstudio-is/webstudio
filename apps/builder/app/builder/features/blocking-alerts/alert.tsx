@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import {
   Button,
   css,
+  cssVar,
   Flex,
   Popover,
   PopoverContent,
@@ -18,12 +19,12 @@ const containerStyle = css({
   left: 0,
   width: "100vw",
   height: "100vh",
-  background: "rgba(0, 0, 0, 0.9)",
+  background: cssVar("--background-inverse"),
 });
 
 const contentStyle = css({
   width: theme.spacing[33],
-  color: theme.colors.foregroundDestructive,
+  color: cssVar("--foreground-negative"),
 });
 
 const $isAlertDismissed = atom(false);

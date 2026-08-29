@@ -82,6 +82,7 @@ import {
   $textEditorContextMenuCommand,
   execTextEditorContextMenuCommand,
 } from "~/shared/nano-states";
+
 import { $instances } from "~/shared/sync/data-stores";
 import {
   findBlockChildSelector,
@@ -105,6 +106,14 @@ import {
   insertTemplateAt,
 } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
 import { richTextPlaceholders } from "@webstudio-is/project-build/runtime";
+
+// These overlays render inside arbitrary authored pages where Builder theme
+// variables are unavailable. Neutral values remain visible across page colors.
+const textEditorOverlayColors = {
+  caretDark: "#666",
+  caretLight: "#999",
+  pendingCommand: "rgb(127 127 127 / 20%)",
+} as const;
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -168,8 +177,8 @@ const CaretColorPlugin = () => {
       sheet.addPlaintextRule(`
 
         @keyframes ${caretClassName}-keyframes {
-          from {caret-color: #666;}
-          to {caret-color: #999;}
+          from {caret-color: ${textEditorOverlayColors.caretDark};}
+          to {caret-color: ${textEditorOverlayColors.caretLight};}
         }
 
         .${caretClassName} {
@@ -1346,8 +1355,12 @@ const RichTextContentPluginInternal = ({
           slashNodeKey = slashNode.getKey();
           menuState = "opening";
 
-          slashNode.setStyle("background-color: rgba(127, 127, 127, 0.2);");
-          selection.setStyle("background-color: rgba(127, 127, 127, 0.2);");
+          slashNode.setStyle(
+            `background-color: ${textEditorOverlayColors.pendingCommand};`
+          );
+          selection.setStyle(
+            `background-color: ${textEditorOverlayColors.pendingCommand};`
+          );
           selection.insertNodes([slashNode]);
 
           event.preventDefault();

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import {
+  cssVar,
   NestedInputButton,
   rawTheme,
-  theme,
 } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
 import type {
@@ -108,7 +108,7 @@ export const ValueEditorDialog = ({
         tabIndex={-1}
         css={{
           display: `var(${cssButtonDisplay}, none)`,
-          background: theme.colors.backgroundControls,
+          background: cssVar("--background-secondary"),
           '&[data-state="open"]': {
             display: "block",
           },

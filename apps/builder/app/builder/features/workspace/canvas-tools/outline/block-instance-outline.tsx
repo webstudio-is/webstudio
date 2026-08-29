@@ -42,6 +42,7 @@ import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { insertTemplateAt } from "./block-utils";
 import { Outline } from "./outline";
 import { applyScale } from "../apply-scale";
+import { canvasToolColors } from "../color-recipes";
 import {
   getInstanceLabel,
   InstanceIcon,
@@ -411,7 +412,7 @@ export const BlockChildHoveredInstanceOutline = () => {
               },
               borderStyle: "solid",
               borderColor: isAddMode
-                ? `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`
+                ? canvasToolColors.selectionTranslucent
                 : undefined,
               borderRadius: theme.borderRadius[4],
               ...(controlPosition === "top"

@@ -1,5 +1,6 @@
 import {
   Button,
+  cssVar,
   theme,
   Text,
   Tooltip,
@@ -158,10 +159,10 @@ const StatusIcon = (props: { projectDomain: Domain; isLoading: boolean }) => {
           width: theme.sizes.controlHeight,
           height: theme.sizes.controlHeight,
           color: props.isLoading
-            ? theme.colors.foregroundDisabled
+            ? cssVar("--foreground-disabled")
             : isVerifiedActive
-              ? theme.colors.foregroundSuccessText
-              : theme.colors.foregroundDestructive,
+              ? cssVar("--foreground-positive")
+              : cssVar("--foreground-negative"),
         }}
       >
         <Icon />

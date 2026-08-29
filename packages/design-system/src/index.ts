@@ -1,5 +1,5 @@
 export * from "./stitches.config";
-export { cssVar } from "./css-var";
+export { cssVar, type ThemeVariableName } from "./css-var";
 export * from "./components/storybook";
 export * from "./utilities";
 export { type SlotProps, Slot } from "@radix-ui/react-slot";

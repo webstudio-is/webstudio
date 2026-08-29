@@ -6,6 +6,7 @@ import {
 import { languages } from "@codemirror/language-data";
 import {
   Button,
+  cssVar,
   DialogClose,
   DialogMaximize,
   DialogTitle,
@@ -14,7 +15,6 @@ import {
   SmallIconButton,
   Text,
   Tooltip,
-  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
@@ -129,8 +129,8 @@ const ErrorInfo = ({
           <InfoCircleIcon
             color={
               error.severity === "warning"
-                ? rawTheme.colors.foregroundSubtle
-                : rawTheme.colors.foregroundDestructive
+                ? cssVar("--foreground-warning")
+                : cssVar("--foreground-negative")
             }
           />
         }

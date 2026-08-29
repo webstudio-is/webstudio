@@ -1,6 +1,7 @@
 import { useStore } from "@nanostores/react";
 import {
   Button,
+  cssVar,
   DialogClose,
   DialogTitle,
   Flex,
@@ -12,7 +13,6 @@ import {
   ScrollArea,
   TitleSuffixSpacer,
   Tooltip,
-  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
@@ -109,7 +109,7 @@ const FormFields = ({
                 variant="wrapped"
               >
                 <InfoCircleIcon
-                  color={rawTheme.colors.foregroundSubtle}
+                  color={cssVar("--foreground-secondary")}
                   tabIndex={0}
                 />
               </Tooltip>

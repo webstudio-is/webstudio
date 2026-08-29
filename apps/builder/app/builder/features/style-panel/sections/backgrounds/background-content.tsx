@@ -17,6 +17,7 @@ import {
 } from "@webstudio-is/icons";
 import { type StyleValue, toValue } from "@webstudio-is/css-engine";
 import {
+  cssVar,
   theme,
   Flex,
   Grid,
@@ -58,8 +59,8 @@ const ColorSwatchIcon = styled("div", {
   width: theme.spacing[7],
   height: theme.spacing[7],
   borderRadius: theme.borderRadius[3],
-  backgroundColor: theme.colors.foregroundMain,
-  boxShadow: `inset 0 0 0 1px ${theme.colors.borderMain}`,
+  backgroundColor: cssVar("--foreground-primary"),
+  boxShadow: `inset 0 0 0 1px ${cssVar("--border-default")}`,
 });
 
 type BackgroundTypeOption = {

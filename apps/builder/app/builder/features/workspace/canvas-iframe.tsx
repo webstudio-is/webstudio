@@ -19,6 +19,8 @@ const iframeStyle = css({
   pointerEvents: `var(${canvasPointerEventsPropertyName})`,
   height: "100%",
   width: "100%",
+  // The canvas displays the authored page, whose initial canvas is white and
+  // independent of the Builder chrome color scheme.
   backgroundColor: "#fff",
 });
 

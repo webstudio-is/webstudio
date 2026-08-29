@@ -1,13 +1,14 @@
 import { forwardRef } from "react";
 import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
-import { css, theme, textVariants } from "@webstudio-is/design-system";
+import { css, textVariants } from "@webstudio-is/design-system";
+import { brandColors } from "~/shared/brand-colors";
 
 const abbrStyle = css(textVariants.brandThumbnailLargeDefault, {
   display: "flex",
   alignItems: "center",
   alignSelf: "center",
   minHeight: 0,
-  background: theme.colors.brandBackgroundProjectCardFront,
+  background: brandColors.projectCardFront,
   WebkitBackgroundClip: "text",
   backgroundClip: "text",
   color: "transparent",
@@ -51,7 +52,7 @@ ThumbnailWithAbbr.displayName = "ThumbnailWithAbbr";
 
 const imageContainerStyle = css({
   position: "relative",
-  background: theme.colors.brandBackgroundProjectCardFront,
+  background: brandColors.projectCardFront,
   outline: "none",
   overflow: "hidden",
   transition: "scale 100ms",
