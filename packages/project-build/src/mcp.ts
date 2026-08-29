@@ -338,17 +338,34 @@ const emptyInputSchema = {
   additionalProperties: false,
 } as const satisfies ProjectSessionMcpInputSchema;
 
-const textInputSchema = (description: string) =>
-  ({
-    ...emptyInputSchema,
-    properties: {
-      brief: {
-        type: "string",
-        description,
-      },
+const taskScopes = [
+  "read-only-audit",
+  "small-value-or-reference-correction",
+  "focused-page-change",
+  "visual-change",
+  "structural-project-change",
+  "project-wide-migration",
+] as const;
+
+type TaskScope = (typeof taskScopes)[number];
+
+const metaGuideInputSchema = {
+  ...emptyInputSchema,
+  properties: {
+    brief: {
+      type: "string",
+      description: "Short user goal, for example: publish a site.",
     },
-    required: ["brief"],
-  }) as const satisfies ProjectSessionMcpInputSchema;
+    taskScope: {
+      type: "string",
+      enum: taskScopes,
+      description:
+        "Explicit workflow scope. Use read-only-audit when no project or local state may change. Defaults to focused-page-change; scope is never inferred from brief prose.",
+      default: "focused-page-change",
+    },
+  },
+  required: ["brief"],
+} as const satisfies ProjectSessionMcpInputSchema;
 
 const metaIndexInputSchema = {
   type: "object",
@@ -1687,7 +1704,16 @@ export const mcpArgumentExamples: Record<
   string,
   readonly Readonly<Record<string, unknown>>[]
 > = {
-  "meta.guide": [{ brief: "Create a pricing page and style the hero" }],
+  "meta.guide": [
+    {
+      brief: "Create a pricing page and style the hero",
+      taskScope: "visual-change",
+    },
+    {
+      brief: "Inventory custom code without changing the project",
+      taskScope: "read-only-audit",
+    },
+  ],
   "inspect-auth-context": [{}],
   "inspect-design-context": [{}],
   "verify-font-assets": [{ assetIds: ["asset-regular", "asset-bold"] }],
@@ -2635,10 +2661,8 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "meta.guide",
     description:
-      'Return a recommended workflow and relevant tools for a user goal. Pass a string brief, for example {"brief":"Create a design system page using every component"}.',
-    inputSchema: textInputSchema(
-      "Short user goal, for example: publish a site."
-    ),
+      'Return a recommended workflow and relevant tools for a user goal. Pass brief and an explicit taskScope; use taskScope:"read-only-audit" when no state may change.',
+    inputSchema: metaGuideInputSchema,
     annotations: {
       command: "meta.guide",
       operationId: "meta.guide",
@@ -3809,6 +3833,21 @@ const getRequiredStringInput = (
 
 const getBrief = (input: unknown, toolName: string) =>
   getOptionalStringInput(input, "brief", toolName);
+
+const getMetaGuideInput = (input: unknown) => {
+  const taskScope =
+    getOptionalStringInput(input, "taskScope", "meta.guide") ||
+    "focused-page-change";
+  if (taskScopes.includes(taskScope as TaskScope) === false) {
+    throw new Error(
+      `meta.guide input.taskScope must be one of ${taskScopes.join(", ")}.`
+    );
+  }
+  return {
+    brief: getBrief(input, "meta.guide"),
+    taskScope: taskScope as TaskScope,
+  };
+};
 
 const getToolNamesInput = (input: unknown) => {
   if (isRecord(input) === false || "tools" in input === false) {
@@ -5960,22 +5999,6 @@ const designSystemGuideToolNames = new Set([
   "update-design-token-styles",
 ]);
 
-const taskScopes = [
-  "read-only-audit",
-  "small-value-or-reference-correction",
-  "focused-page-change",
-  "visual-change",
-  "structural-project-change",
-  "project-wide-migration",
-] as const;
-
-type TaskScope = (typeof taskScopes)[number];
-
-const hasExplicitReadOnlyIntent = (brief: string) =>
-  /\bread[- ]only\b|\b(?:no|without)\s+(?:making\s+)?(?:any\s+)?(?:project\s+)?(?:changes?|mutations?)\b|\b(?:do not|don't|must not|never)\s+(?:mutate|make\s+(?:any\s+)?changes?)\b/i.test(
-    brief
-  );
-
 const readOnlyDiscoveryToolNames = [
   "search-project",
   "list-instances",
@@ -5983,38 +6006,6 @@ const readOnlyDiscoveryToolNames = [
   "get-project-settings",
   "snapshot",
 ] as const;
-
-const classifyTaskScope = (brief: string): TaskScope => {
-  if (
-    /\b(project[- ]wide|site[- ]wide|all pages|every page|migration|migrate)\b/i.test(
-      brief
-    )
-  ) {
-    return "project-wide-migration";
-  }
-  if (
-    /\b(visual|layout|responsive|screenshot|typography|spacing|color|design\s+(?:file|guide|input|reference|system))\b|\b(?:this|supplied|provided)\s+design\b/i.test(
-      brief
-    )
-  ) {
-    return "visual-change";
-  }
-  if (
-    /\b(create|insert|delete|remove|move|wrap|unwrap|duplicate|reparent)\b.*\b(page|section|component|instance|element|tree|folder)\b/i.test(
-      brief
-    )
-  ) {
-    return "structural-project-change";
-  }
-  if (
-    /\b(correct|correction|fix|replace|update|change|typo)\b.*\b(value|text|copy|reference|asset|url|link|title|description|metadata|prop|binding)\b/i.test(
-      brief
-    )
-  ) {
-    return "small-value-or-reference-correction";
-  }
-  return "focused-page-change";
-};
 
 const serializeMetaGuideTool = (
   tool: ProjectSessionMcpTool,
@@ -6047,7 +6038,7 @@ const getReadOnlyMetaGuide = (
     return tool === undefined ? [] : [tool];
   });
   const matches = [...prioritizedTools, ...getMatchingTools(brief, tools)]
-    .filter(isReadOnlyProjectSessionMcpTool)
+    .filter((tool) => tool.annotations.method === "query")
     .filter(
       (tool, index, selectedTools) =>
         selectedTools.findIndex(({ name }) => name === tool.name) === index
@@ -6082,13 +6073,13 @@ const getReadOnlyMetaGuide = (
 
 const getMetaGuide = (
   brief: string,
+  taskScope: TaskScope,
   tools: readonly ProjectSessionMcpTool[],
   guidance: ProjectSessionMcpGuidance | undefined
 ) => {
-  if (hasExplicitReadOnlyIntent(brief)) {
+  if (taskScope === "read-only-audit") {
     return getReadOnlyMetaGuide(brief, tools);
   }
-  const taskScope = classifyTaskScope(brief);
   const isSmallCorrection = taskScope === "small-value-or-reference-correction";
   const goalGuide = metaGoalGuides.find(({ pattern }) => pattern.test(brief));
   const isAuthoredFragment =
@@ -6151,7 +6142,6 @@ const getMetaGuide = (
   const generalGuide =
     goalGuide === undefined
       ? {
-          taskScope,
           routing: {
             matchedBy: "general-tool-ranking",
             workflow: "general",
@@ -6183,6 +6173,7 @@ const getMetaGuide = (
         }
       : {};
   return {
+    taskScope,
     ...generalGuide,
     ...(isSmallCorrection && goalGuide === undefined
       ? {
@@ -7788,8 +7779,9 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         return toMetaResult(getMetaIndex(listTools(), guidance));
       }
       if (name === "meta.guide") {
+        const { brief, taskScope } = getMetaGuideInput(input);
         return toMetaResult(
-          getMetaGuide(getBrief(input, "meta.guide"), listTools(), guidance)
+          getMetaGuide(brief, taskScope, listTools(), guidance)
         );
       }
       if (name === "inspect-auth-context") {

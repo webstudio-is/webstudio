@@ -1492,7 +1492,17 @@ describe("project session mcp adapter", () => {
     }
 
     expect(tools.find((tool) => tool.name === "meta.guide")).toMatchObject({
-      inputSchema: expect.objectContaining({ required: ["brief"] }),
+      inputSchema: expect.objectContaining({
+        required: ["brief"],
+        properties: expect.objectContaining({
+          taskScope: expect.objectContaining({
+            enum: expect.arrayContaining([
+              "read-only-audit",
+              "focused-page-change",
+            ]),
+          }),
+        }),
+      }),
       annotations: expect.objectContaining({ requiredInputFields: ["brief"] }),
     });
     expect(
@@ -5144,6 +5154,14 @@ describe("project session mcp adapter", () => {
     );
     await expect(
       adapter.callTool({
+        name: "meta.guide",
+        input: { brief: "Audit this page", taskScope: "audit" },
+      })
+    ).rejects.toThrow(
+      "meta.guide input.taskScope must be one of read-only-audit, small-value-or-reference-correction, focused-page-change, visual-change, structural-project-change, project-wide-migration."
+    );
+    await expect(
+      adapter.callTool({
         name: "meta.get-more-tools",
         input: { tools: "insert-component" },
       })
@@ -6563,7 +6581,7 @@ describe("project session mcp adapter", () => {
     const index = await adapter.callTool({ name: "meta.index" });
     const guide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "visual verification" },
+      input: { brief: "visual verification", taskScope: "visual-change" },
     });
 
     expect(index.structuredContent.data).toEqual(
@@ -7029,7 +7047,7 @@ describe("project session mcp adapter", () => {
     const index = await adapter.callTool({ name: "meta.index" });
     const guide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "visual verification" },
+      input: { brief: "visual verification", taskScope: "visual-change" },
     });
 
     expect(startPreview).toHaveBeenCalledWith(
@@ -7148,7 +7166,10 @@ describe("project session mcp adapter", () => {
 
     const guide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Correct one asset reference on the pricing page" },
+      input: {
+        brief: "Correct one asset reference on the pricing page",
+        taskScope: "small-value-or-reference-correction",
+      },
     });
 
     expect(guide.structuredContent.data).toEqual(
@@ -7215,6 +7236,7 @@ describe("project session mcp adapter", () => {
       input: {
         brief:
           "Perform a read-only custom-code consolidation audit against the provided design for this existing page. Return an ordered inventory of HTML Embeds, CSS, scripts, selectors, and runtime dependencies. Do not mutate, create, insert, update, delete, rename, reorder, publish, or change project settings.",
+        taskScope: "read-only-audit",
       },
     });
     const data = guide.structuredContent.data as {
@@ -7256,7 +7278,11 @@ describe("project session mcp adapter", () => {
         const tool = adapter
           .listTools()
           .find((candidate) => candidate.name === name);
-        return tool !== undefined && isReadOnlyProjectSessionMcpTool(tool);
+        return (
+          tool !== undefined &&
+          tool.annotations.method === "query" &&
+          isReadOnlyProjectSessionMcpTool(tool)
+        );
       })
     ).toBe(true);
     expect(
@@ -7267,9 +7293,32 @@ describe("project session mcp adapter", () => {
           "attach-design-token",
           "update-styles",
           "verify-page-responsive",
+          "preview.status",
+          "screenshot.diff",
         ].includes(name)
       )
     ).toEqual([]);
+  });
+
+  test("does not infer task scope from brief prose", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: {
+        brief:
+          "Perform a read-only custom-code consolidation audit against the provided design for this existing page. Return an ordered inventory of HTML Embeds, CSS, scripts, selectors, and runtime dependencies. Do not mutate, create, insert, update, delete, rename, reorder, publish, or change project settings.",
+      },
+    });
+
+    expect(guide.structuredContent.data).toMatchObject({
+      taskScope: "focused-page-change",
+    });
+    expect(guide.structuredContent.data).not.toHaveProperty("constraints");
   });
 
   test("routes an authored component insertion without broad discovery", async () => {
@@ -7298,6 +7347,7 @@ describe("project session mcp adapter", () => {
       input: {
         brief:
           "Insert an authored timer component with insert-fragment into the known container. Create variables and bind its interactions while keeping the existing design.",
+        taskScope: "structural-project-change",
       },
     });
     const data = guide.structuredContent.data as {
