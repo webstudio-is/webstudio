@@ -532,7 +532,7 @@ const EditableTreeNodeLabel = styled("div", {
     },
     hasError: {
       true: {
-        outline: `1px solid ${theme.colors.borderDestructiveMain}`,
+        outline: `1px solid ${cssVar("--border-negative")}`,
       },
     },
   },

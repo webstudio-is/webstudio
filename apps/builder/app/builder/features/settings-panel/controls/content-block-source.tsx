@@ -12,7 +12,7 @@ import {
   Grid,
   Text,
   Tooltip,
-  rawTheme,
+  cssVar,
   theme,
 } from "@webstudio-is/design-system";
 import { AlertIcon } from "@webstudio-is/icons";
@@ -277,7 +277,7 @@ export const ContentBlockSourceControl = ({
                         tabIndex={0}
                         aria-label={`MDX source warning: ${formatContentBlockDiagnostic(uniqueDiagnostics[0])}${uniqueDiagnostics.length > 1 ? ` ${uniqueDiagnostics.length - 1} more diagnostic${uniqueDiagnostics.length === 2 ? "" : "s"}.` : ""}`}
                         css={{
-                          color: rawTheme.colors.backgroundAlertMain,
+                          color: cssVar("--foreground-warning"),
                           flexShrink: 0,
                         }}
                       >

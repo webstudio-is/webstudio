@@ -257,8 +257,8 @@ export const linterTooltipTheme = EditorView.theme({
     pointerEvents: "none",
   },
   ".cm-tooltip-lint": {
-    backgroundColor: rawTheme.colors.backgroundTooltipMain,
-    color: rawTheme.colors.foregroundContrastMain,
+    backgroundColor: cssVar("--background-inverse"),
+    color: cssVar("--foreground-on-inverse"),
     borderRadius: rawTheme.borderRadius[7],
     padding: rawTheme.spacing[5],
   },
