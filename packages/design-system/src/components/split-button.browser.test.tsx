@@ -93,7 +93,9 @@ test("split button segments share hover in the real menu composition", async () 
       await page.elementLocator(button).hover();
 
       const backgrounds = buttons.map(
-        (segment) => getComputedStyle(segment).backgroundColor
+        (segment, index) =>
+          getComputedStyle(segment, index === 0 ? undefined : "::before")
+            .backgroundColor
       );
       expect(backgrounds[0]).toBe(backgrounds[1]);
       expect(backgrounds[0]).not.toBe("rgba(0, 0, 0, 0)");
@@ -106,20 +108,38 @@ test("split button segments share hover in the real menu composition", async () 
       },
     });
     const gapHoverBackgrounds = buttons.map(
-      (segment) => getComputedStyle(segment).backgroundColor
+      (segment, index) =>
+        getComputedStyle(segment, index === 0 ? undefined : "::before")
+          .backgroundColor
     );
     expect(gapHoverBackgrounds[0]).toBe(gapHoverBackgrounds[1]);
     expect(gapHoverBackgrounds[0]).not.toBe("rgba(0, 0, 0, 0)");
 
-    expect(buttons[1].getBoundingClientRect().width).toBeLessThan(
-      buttons[0].getBoundingClientRect().width
-    );
     const chevron = buttons[1].querySelector("svg");
     expect(chevron).not.toBeNull();
+    const menuRect = buttons[1].getBoundingClientRect();
+    const menuVisualStyle = getComputedStyle(buttons[1], "::before");
+    expect(Number.parseFloat(menuVisualStyle.width)).toBe(
+      chevron?.getBoundingClientRect().width
+    );
+    expect(Number.parseFloat(menuVisualStyle.width)).toBeLessThan(
+      buttons[0].getBoundingClientRect().width
+    );
+    expect(menuRect.width).toBe(24);
+
+    const firstStyle = getComputedStyle(buttons[0]);
+    const secondStyle = getComputedStyle(buttons[1]);
+    expect(firstStyle.borderTopRightRadius).toBe("0px");
+    expect(firstStyle.borderBottomRightRadius).toBe("0px");
+    expect(secondStyle.borderTopLeftRadius).toBe("0px");
+    expect(secondStyle.borderBottomLeftRadius).toBe("0px");
+
+    expect(document.elementFromPoint(menuRect.left + 1, menuRect.top + 2)).toBe(
+      buttons[1]
+    );
     expect(
-      buttons[1].getBoundingClientRect().width -
-        (chevron?.getBoundingClientRect().width ?? 0)
-    ).toBe(2);
+      document.elementFromPoint(menuRect.right - 1, menuRect.top + 2)
+    ).toBe(buttons[1]);
 
     act(() => root?.unmount());
     root = undefined;
