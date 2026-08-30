@@ -4,11 +4,11 @@ import { cssVar } from "../css-var";
 // This is a component-state composition, not a theme parameter.
 export const selectedControlBackground = `light-dark(
   color-mix(in oklab, ${cssVar("--background-primary")} 86%, ${cssVar(
-  "--foreground-primary"
-)}),
+    "--foreground-primary"
+  )}),
   color-mix(in oklab, ${cssVar("--background-primary")} 78%, ${cssVar(
-  "--foreground-primary"
-)})
+    "--foreground-primary"
+  )})
 )`;
 
 export const withInteractionOverlay = (
