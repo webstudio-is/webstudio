@@ -58,7 +58,7 @@ const selectAppMenuItem = async ({
   name: string;
 }) => {
   await page.bringToFront();
-  await page.getByRole("button", { name: "Menu Button" }).click();
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
   const menuItem = page.getByRole("menuitem", { name });
   await menuItem.waitFor();
   await menuItem.click();

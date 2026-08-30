@@ -81,7 +81,7 @@ const runCssVariableCommandAction = async ({
   variable: string;
   action: "Rename" | "Delete";
 }) => {
-  await page.getByRole("button", { name: "Menu Button" }).click();
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
   await page.getByRole("menuitem", { name: "Search & commands" }).click();
   const input = page
     .getByPlaceholder("Type a command or search...", { exact: true })
@@ -104,7 +104,6 @@ test("Builder CSS variables persist across create, bind, rename, delete, and rel
   browser,
   context,
 }) => {
-  test.setTimeout(180_000);
   const fixture = await createStylePanelRuntimeProject(
     context,
     "css-variables"

@@ -65,7 +65,7 @@ const getPersistedPageByName = async ({
 };
 
 const openProjectSettings = async ({ page }: { page: PlaywrightPage }) => {
-  await page.getByRole("button", { name: "Menu Button" }).click();
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
   await page.getByRole("menuitem", { name: "Project settings" }).click();
   await page.getByRole("dialog", { name: "Project settings" }).waitFor();
 };
