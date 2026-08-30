@@ -9,8 +9,8 @@ import {
   type Instance,
 } from "@webstudio-is/sdk";
 import {
+  __testing__ as assetContentBridgeTesting,
   createAssetContentBridge,
-  initAssetContentBridge,
 } from "./asset-content-bridge.client";
 import {
   acquireExternalContentRoot,
@@ -75,7 +75,7 @@ test("places unresolved-template placeholders at their authored nesting point", 
     authorize: () => true,
   });
   sessions.push(session);
-  initAssetContentBridge(
+  assetContentBridgeTesting.initBridge(
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
@@ -183,7 +183,7 @@ test("rejects a stale raw editor replacement behind a newer queued edit", async 
   });
   sessions.push(session);
   const requireReload = vi.fn();
-  initAssetContentBridge(
+  assetContentBridgeTesting.initBridge(
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
@@ -246,7 +246,7 @@ test("rebases frontmatter edits from Content Blocks sharing one Asset", async ()
     debounceMilliseconds: 0,
   });
   sessions.push(session);
-  initAssetContentBridge(
+  assetContentBridgeTesting.initBridge(
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
@@ -341,7 +341,7 @@ test("does not install an Asset load after its Content Block unmounts", async ()
     authorize: () => true,
   });
   sessions.push(session);
-  initAssetContentBridge(
+  assetContentBridgeTesting.initBridge(
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
@@ -405,7 +405,7 @@ test("replaces a mounted root when its source Asset changes", async () => {
     authorize: () => true,
   });
   sessions.push(session);
-  initAssetContentBridge(
+  assetContentBridgeTesting.initBridge(
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
@@ -537,7 +537,7 @@ name: [
     authorize: () => true,
   });
   sessions.push(session);
-  initAssetContentBridge(
+  assetContentBridgeTesting.initBridge(
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
@@ -705,7 +705,7 @@ test("keeps dynamic Collection occurrences isolated by render scope", async () =
     debounceMilliseconds: 0,
   });
   sessions.push(session);
-  initAssetContentBridge(
+  assetContentBridgeTesting.initBridge(
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
@@ -882,7 +882,7 @@ test("finishes a queued canvas save after its external root is released", async 
     debounceMilliseconds: 0,
   });
   sessions.push(session);
-  initAssetContentBridge(
+  assetContentBridgeTesting.initBridge(
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
@@ -988,7 +988,7 @@ test("retains a failed queued update when project teardown cannot drain it", asy
     debounceMilliseconds: 0,
   });
   sessions.push(session);
-  initAssetContentBridge(
+  assetContentBridgeTesting.initBridge(
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
@@ -1070,7 +1070,7 @@ test("retains pending content when the repository write fails during teardown", 
     debounceMilliseconds: 60_000,
   });
   sessions.push(session);
-  initAssetContentBridge(
+  assetContentBridgeTesting.initBridge(
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
@@ -1125,7 +1125,7 @@ test("keeps drained queues when the project becomes active during teardown", asy
     authorize: () => true,
   });
   sessions.push(session);
-  initAssetContentBridge(
+  assetContentBridgeTesting.initBridge(
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
@@ -1180,7 +1180,7 @@ test("materializes into normal instances and saves their synchronous mutations o
     debounceMilliseconds: 0,
   });
   sessions.push(session);
-  initAssetContentBridge(
+  assetContentBridgeTesting.initBridge(
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,

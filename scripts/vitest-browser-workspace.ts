@@ -1,16 +1,11 @@
 export const browserTestPorts = {
-  builderSettings: 63401,
+  builder: 63401,
   designSystem: 63402,
   queryBuilderReact: 63403,
   sdkComponentsAnimation: 63404,
   sdkComponentsReact: 63405,
   sdkComponentsReactRadix: 63406,
   sdkComponentsReactRouter: 63407,
-  builderFeatures: 63408,
-  builderShared: 63409,
-  builderSharedHeavy: 63410,
-  builderSharedGeneral: 63411,
-  builderCanvasDashboard: 63412,
 } as const;
 
 const createBrowserWorkspace = (port: number) => [

@@ -124,10 +124,20 @@ export const initAssetContentBridge = (bridge: AssetContentBridge) => {
 };
 
 export const getAssetContentBridge = () => {
-  const owner = window[namespace] === undefined ? window.top : window;
+  const owner = window.self === window.top ? window : window.top;
   const bridge = owner?.[namespace];
   if (bridge === undefined) {
     throw new Error("Builder Asset content bridge is not available");
   }
   return bridge;
+};
+
+export const __testing__ = {
+  initBridge: (bridge: AssetContentBridge) => {
+    const owner = window.self === window.top ? window : window.top;
+    if (owner === null) {
+      throw new Error("Test window has no top-level owner");
+    }
+    owner[namespace] = bridge;
+  },
 };

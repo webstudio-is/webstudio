@@ -4,17 +4,11 @@ import { browserTestPorts } from "../../scripts/vitest-browser-workspace";
 
 const nodeTestGlob = "**/*.{server,node}.{test,spec}.{ts,tsx}";
 
-const browserProject = ({
-  name,
-  include,
-  exclude = [],
-  port,
-}: {
-  name: string;
-  include: string[];
-  exclude?: string[];
-  port: number;
-}) => ({
+const browserProject = (
+  name: string,
+  include: string[],
+  exclude: string[] = []
+) => ({
   extends: "./vitest.config.ts",
   test: {
     name: `browser-${name}`,
@@ -26,7 +20,7 @@ const browserProject = ({
       headless: true,
       screenshotFailures: false,
       fileParallelism: false,
-      api: { port },
+      api: { port: browserTestPorts.builder },
       instances: [{ browser: "chromium" as const }],
     },
   },
@@ -62,49 +56,33 @@ export default defineConfig({
   },
   test: {
     workspace: [
-      browserProject({
-        name: "builder-settings",
-        include: [
+      browserProject("builder-settings", [
+        "app/builder/features/{settings-panel,style-panel}/**/*.{test,spec}.{ts,tsx}",
+      ]),
+      browserProject(
+        "builder-features",
+        ["app/builder/features/**/*.{test,spec}.{ts,tsx}"],
+        [
           "app/builder/features/{settings-panel,style-panel}/**/*.{test,spec}.{ts,tsx}",
-        ],
-        port: browserTestPorts.builderSettings,
-      }),
-      browserProject({
-        name: "builder-features",
-        include: ["app/builder/features/**/*.{test,spec}.{ts,tsx}"],
-        exclude: [
-          "app/builder/features/{settings-panel,style-panel}/**/*.{test,spec}.{ts,tsx}",
-        ],
-        port: browserTestPorts.builderFeatures,
-      }),
-      browserProject({
-        name: "builder-shared",
-        include: [
-          "app/builder/shared/**/*.{test,spec}.{ts,tsx}",
-          "app/builder/*.{test,spec}.{ts,tsx}",
-        ],
-        port: browserTestPorts.builderShared,
-      }),
-      browserProject({
-        name: "shared-heavy",
-        include: [
+        ]
+      ),
+      browserProject("builder-shared", [
+        "app/builder/shared/**/*.{test,spec}.{ts,tsx}",
+        "app/builder/*.{test,spec}.{ts,tsx}",
+      ]),
+      browserProject("shared-heavy", [
+        "app/shared/{copy-paste,instance-utils,sync}/**/*.{test,spec}.{ts,tsx}",
+      ]),
+      browserProject(
+        "shared",
+        ["app/shared/**/*.{test,spec}.{ts,tsx}"],
+        [
           "app/shared/{copy-paste,instance-utils,sync}/**/*.{test,spec}.{ts,tsx}",
-        ],
-        port: browserTestPorts.builderSharedHeavy,
-      }),
-      browserProject({
-        name: "shared",
-        include: ["app/shared/**/*.{test,spec}.{ts,tsx}"],
-        exclude: [
-          "app/shared/{copy-paste,instance-utils,sync}/**/*.{test,spec}.{ts,tsx}",
-        ],
-        port: browserTestPorts.builderSharedGeneral,
-      }),
-      browserProject({
-        name: "canvas-dashboard",
-        include: ["app/{canvas,dashboard}/**/*.{test,spec}.{ts,tsx}"],
-        port: browserTestPorts.builderCanvasDashboard,
-      }),
+        ]
+      ),
+      browserProject("canvas-dashboard", [
+        "app/{canvas,dashboard}/**/*.{test,spec}.{ts,tsx}",
+      ]),
       {
         extends: "./vitest.config.ts",
         test: {

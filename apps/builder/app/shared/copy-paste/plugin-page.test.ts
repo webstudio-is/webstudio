@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from "vitest";
+import { afterAll, afterEach, expect, test, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { PageTransferItem } from "@webstudio-is/project-build/transfer";
@@ -42,11 +42,11 @@ import {
   __testing__,
 } from "./plugin-page";
 import { pasteHandled, pasteIgnored } from "./copy-paste";
-import { initBuilderApiWindow } from "../builder-api";
+import { __testing__ as builderApiTesting } from "../builder-api";
 
 enableMapSet();
 registerContainers();
-initBuilderApiWindow();
+afterAll(builderApiTesting.useLocalApi());
 const { preparePageTransferItem } = __testing__;
 
 afterEach(() => {
@@ -433,7 +433,7 @@ test("transfers assets copied from another deployment before inserting the page"
     ])
   );
   const importAssets = vi
-    .spyOn(window.__webstudio__$__builderApi, "importAssets")
+    .spyOn(builderApiTesting.api, "importAssets")
     .mockImplementation(async (projectId, sources) => {
       expect(projectId).toBe("target-project");
       expect(sources).toEqual([
@@ -544,10 +544,7 @@ test("preserves legacy page metadata assets that exist in the destination", asyn
   $assets.set(
     new Map([[sourceAsset.id, { ...sourceAsset, projectId: "target-project" }]])
   );
-  const importAssets = vi.spyOn(
-    window.__webstudio__$__builderApi,
-    "importAssets"
-  );
+  const importAssets = vi.spyOn(builderApiTesting.api, "importAssets");
 
   expect(await handlePastePage(clipboardData, ROOT_FOLDER_ID)).toEqual(
     pasteHandled
@@ -589,7 +586,7 @@ test.each([
       color: "blue",
     });
     const conflictDialog = vi
-      .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+      .spyOn(builderApiTesting.api, "showRootStyleConflictDialog")
       .mockResolvedValue(resolution);
 
     await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
@@ -649,13 +646,10 @@ test("cancels page paste when global root style resolution is cancelled", async 
   });
   const initialPageCount = targetPages.pages.size;
   vi.spyOn(
-    window.__webstudio__$__builderApi,
+    builderApiTesting.api,
     "showRootStyleConflictDialog"
   ).mockResolvedValue("cancel");
-  const importAssets = vi.spyOn(
-    window.__webstudio__$__builderApi,
-    "importAssets"
-  );
+  const importAssets = vi.spyOn(builderApiTesting.api, "importAssets");
 
   await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
 
@@ -686,15 +680,14 @@ test("checks current root styles after resolving token conflicts", async () => {
     color: "red",
   });
   addRootTokenStyle({ styleSourceId: "target-token", value: "blue" });
-  vi.spyOn(
-    window.__webstudio__$__builderApi,
-    "showTokenConflictDialog"
-  ).mockImplementation(async () => {
-    updateRootLocalStyle("blue");
-    return "ours";
-  });
+  vi.spyOn(builderApiTesting.api, "showTokenConflictDialog").mockImplementation(
+    async () => {
+      updateRootLocalStyle("blue");
+      return "ours";
+    }
+  );
   const rootConflictDialog = vi
-    .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+    .spyOn(builderApiTesting.api, "showRootStyleConflictDialog")
     .mockResolvedValue("ours");
 
   await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
@@ -853,7 +846,7 @@ test("copies folder data with nested pages across projects", async () => {
   );
   setRootLocalStyle({ styleSourceId: "target-local", value: "blue" });
   const conflictDialog = vi
-    .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+    .spyOn(builderApiTesting.api, "showRootStyleConflictDialog")
     .mockResolvedValue("ours");
 
   await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
@@ -1019,7 +1012,7 @@ test("copies template data as a template", async () => {
   );
   setRootLocalStyle({ styleSourceId: "target-local", value: "blue" });
   const conflictDialog = vi
-    .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+    .spyOn(builderApiTesting.api, "showRootStyleConflictDialog")
     .mockResolvedValue("theirs");
 
   await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);

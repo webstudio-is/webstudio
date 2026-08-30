@@ -114,10 +114,6 @@ const isInTop = () => {
 };
 
 const getTopApi = () => {
-  const localApi = window[apiWindowNamespace];
-  if (localApi !== undefined) {
-    return localApi;
-  }
   if (isInTop()) {
     // Inside the iframe, use the local window.api
     return _builderApi;
@@ -126,10 +122,6 @@ const getTopApi = () => {
     invariant(window.top);
     return window.top[apiWindowNamespace];
   }
-};
-
-export const initBuilderApiWindow = () => {
-  window[apiWindowNamespace] = _builderApi;
 };
 
 const isKeyOf = <T>(key: unknown, obj: T): key is keyof T => {
@@ -184,7 +176,7 @@ export const builderApi = createRecursiveProxy((options) => {
  */
 export const initBuilderApi = () => {
   if (isInTop()) {
-    initBuilderApiWindow();
+    window[apiWindowNamespace] = _builderApi;
     type ContentSessionEntry = {
       projectId: string;
       session: ReturnType<typeof createAssetContentSession>;
@@ -378,4 +370,16 @@ export const initBuilderApi = () => {
   return () => {};
 };
 
-export const __testing__ = { canAccessAssetContent };
+export const __testing__ = {
+  api: _builderApi,
+  canAccessAssetContent,
+  useLocalApi: () => {
+    const owner = isInTop() ? window : window.top;
+    invariant(owner);
+    const previousApi = owner[apiWindowNamespace];
+    owner[apiWindowNamespace] = _builderApi;
+    return () => {
+      owner[apiWindowNamespace] = previousApi;
+    };
+  },
+};
