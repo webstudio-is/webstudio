@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { BrowserContext, Page } from "@playwright/test";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { waitForCanvasTextStyle } from "../flows/canvas-style";
@@ -9,12 +9,16 @@ import {
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
-const createStylePanelRuntimeProject = async (name: string) => {
+const createStylePanelRuntimeProject = async (
+  context: BrowserContext,
+  name: string
+) => {
   return await createContentModeProject({
+    context,
     email: `style-panel-runtime-${name}@webstudio.test`,
     title: `Style Panel Runtime ${name}`,
     assetNamePrefix: `style-panel-runtime-${name}-`,
@@ -109,9 +113,15 @@ const expectBuildStylesToContain = async ({
   }
 };
 
-test("Builder grid generator fills selected grid and persists after reload", async () => {
-  const fixture = await createStylePanelRuntimeProject("grid-generator");
-  const { page, close } = await newIsolatedPage();
+test("Builder grid generator fills selected grid and persists after reload", async ({
+  browser,
+  context,
+}) => {
+  const fixture = await createStylePanelRuntimeProject(
+    context,
+    "grid-generator"
+  );
+  const { page, close } = await newIsolatedPage(browser);
   const bodyInstanceId = "body";
 
   try {
@@ -192,9 +202,12 @@ test("Builder grid generator fills selected grid and persists after reload", asy
   }
 });
 
-test("Builder breakpoint styles persist after create, update, reload, and delete", async () => {
-  const fixture = await createStylePanelRuntimeProject("breakpoints");
-  const { page, close } = await newIsolatedPage();
+test("Builder breakpoint styles persist after create, update, reload, and delete", async ({
+  browser,
+  context,
+}) => {
+  const fixture = await createStylePanelRuntimeProject(context, "breakpoints");
+  const { page, close } = await newIsolatedPage(browser);
   const text = "Initial content";
   const breakpointName = "E2E Tablet";
   const updatedBreakpointName = "E2E Tablet Updated";
@@ -299,9 +312,12 @@ test("Builder breakpoint styles persist after create, update, reload, and delete
   }
 });
 
-test("Builder design token styles persist after create and reload", async () => {
-  const fixture = await createStylePanelRuntimeProject("tokens");
-  const { page, close } = await newIsolatedPage();
+test("Builder design token styles persist after create and reload", async ({
+  browser,
+  context,
+}) => {
+  const fixture = await createStylePanelRuntimeProject(context, "tokens");
+  const { page, close } = await newIsolatedPage(browser);
   const text = "Initial content";
   const tokenName = "E2E Brand Token";
 

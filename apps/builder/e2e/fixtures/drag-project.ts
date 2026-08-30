@@ -108,8 +108,12 @@ const seedBuild = (serializedPages: string) => {
   };
 };
 
-export const createDragProject = async (name: string) => {
+export const createDragProject = async (
+  context: BrowserContext,
+  name: string
+) => {
   return await createSeededBuilderProject({
+    context,
     email: `drag-${name}@webstudio.test`,
     title: `Drag ${name}`,
     builderToken: `drag-${name}-builder-token`,
@@ -141,3 +145,4 @@ export const loadPages = async (projectId: string) => {
   const build = await loadDevBuild({ projectId });
   return JSON.parse(build.pages) as SerializedPages;
 };
+import type { BrowserContext } from "@playwright/test";

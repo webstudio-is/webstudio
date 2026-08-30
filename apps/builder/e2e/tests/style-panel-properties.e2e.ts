@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { BrowserContext, Page } from "@playwright/test";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import {
@@ -11,12 +11,16 @@ import {
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
-const createStylePanelRuntimeProject = async (name: string) => {
+const createStylePanelRuntimeProject = async (
+  context: BrowserContext,
+  name: string
+) => {
   return await createContentModeProject({
+    context,
     email: `style-panel-runtime-${name}@webstudio.test`,
     title: `Style Panel Runtime ${name}`,
     assetNamePrefix: `style-panel-runtime-${name}-`,
@@ -105,9 +109,12 @@ const expectBuildStylesNotToContain = async ({
   }
 };
 
-test("Builder style panel edits representative styles and persists after reload", async () => {
-  const fixture = await createStylePanelRuntimeProject("styles");
-  const { page, close } = await newIsolatedPage();
+test("Builder style panel edits representative styles and persists after reload", async ({
+  browser,
+  context,
+}) => {
+  const fixture = await createStylePanelRuntimeProject(context, "styles");
+  const { page, close } = await newIsolatedPage(browser);
   const text = "Initial content";
 
   try {

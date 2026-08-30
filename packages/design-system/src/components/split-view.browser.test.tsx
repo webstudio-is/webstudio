@@ -47,6 +47,7 @@ const renderSplitView = ({
   defaultSize?: { value: number; unit: "%" | "px" };
 } = {}) => {
   const container = document.createElement("div");
+  container.style.width = "1000px";
   document.body.appendChild(container);
   root = createRoot(container);
   act(() => {
@@ -67,20 +68,8 @@ const renderSplitView = ({
   if (splitView === null) {
     throw new Error("Expected split view container");
   }
-  let width = 1000;
-  splitView.getBoundingClientRect = () => ({
-    x: 0,
-    y: 0,
-    width,
-    height: 500,
-    top: 0,
-    right: width,
-    bottom: 500,
-    left: 0,
-    toJSON: () => ({}),
-  });
   const resize = (nextWidth: number) => {
-    width = nextWidth;
+    container.style.width = `${nextWidth}px`;
     act(() => {
       for (const observer of resizeObservers) {
         observer.notify();
@@ -105,13 +94,13 @@ test("resizes panels with the keyboard", () => {
 test("keeps keyboard resizing within the configured ratios", () => {
   const { separator } = renderSplitView();
 
-  act(() => {
-    for (let index = 0; index < 10; index += 1) {
+  for (let index = 0; index < 10; index += 1) {
+    act(() => {
       separator.dispatchEvent(
         new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })
       );
-    }
-  });
+    });
+  }
 
   expect(separator.getAttribute("aria-valuenow")).toBe("80");
 });
@@ -122,7 +111,7 @@ test("preserves a proportional split when the container resizes", () => {
   });
 
   expect(splitView.style.gridTemplateColumns).toBe(
-    "minmax(0, 0.4fr) 1px minmax(0, 0.6fr)"
+    "minmax(0px, 399.6px) 1px minmax(0px, 1fr)"
   );
 });
 
@@ -132,7 +121,7 @@ test("preserves a fixed start pane when the container resizes", () => {
   });
 
   expect(splitView.style.gridTemplateColumns).toBe(
-    "minmax(0, 320px) 1px minmax(0, 1fr)"
+    "minmax(0px, 320px) 1px minmax(0px, 1fr)"
   );
 
   act(() => {
@@ -152,14 +141,14 @@ test("clamps a fixed split on container resize and restores its desired size", (
 
   resize(400);
   expect(splitView.style.gridTemplateColumns).toBe(
-    "minmax(0, 239px) 1px minmax(0, 1fr)"
+    "minmax(0px, 239px) 1px minmax(0px, 1fr)"
   );
   expect(separator.getAttribute("aria-valuemin")).toBe("160");
   expect(separator.getAttribute("aria-valuemax")).toBe("239");
 
   resize(1000);
   expect(splitView.style.gridTemplateColumns).toBe(
-    "minmax(0, 320px) 1px minmax(0, 1fr)"
+    "minmax(0px, 320px) 1px minmax(0px, 1fr)"
   );
 });
 
@@ -170,11 +159,11 @@ test("clamps a percentage split on container resize and restores its ratio", () 
 
   resize(400);
   expect(splitView.style.gridTemplateColumns).toBe(
-    "minmax(0, 160px) 1px minmax(0, 1fr)"
+    "minmax(0px, 160px) 1px minmax(0px, 1fr)"
   );
 
   resize(1000);
   expect(splitView.style.gridTemplateColumns).toBe(
-    "minmax(0, 399.6px) 1px minmax(0, 1fr)"
+    "minmax(0px, 399.6px) 1px minmax(0px, 1fr)"
   );
 });

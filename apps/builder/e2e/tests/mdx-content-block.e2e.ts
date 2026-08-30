@@ -1,4 +1,4 @@
-import type { Page, Response } from "playwright";
+import type { Page, Response } from "@playwright/test";
 import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
 import {
   configureDynamicDetailContentBlock,
@@ -31,7 +31,7 @@ import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { openNavigatorPanel } from "../flows/navigator";
 import { selectCanvasTextInstanceForProps } from "../flows/canvas-selection";
 import { fillSelectedStringProperty } from "../flows/props-panel";
-import { getProjectBuilderUrl, newIsolatedPage, test } from "../harness";
+import { getProjectBuilderUrl, newIsolatedPage, test } from "../test";
 
 const sourceFilename = "content-source.mdx";
 const alternateFilename = "alternate-source.mdx";
@@ -145,13 +145,17 @@ const openFixture = async ({
   await waitForSyncStatus({ page, status: "idle" });
 };
 
-test("Content Block MDX source lifecycle persists edits and resets to empty", async () => {
+test("Content Block MDX source lifecycle persists edits and resets to empty", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "mdx-content-source-e2e@webstudio.test",
     title: "MDX Content Source E2E",
   });
   await configureRepresentableContentBlockBody(fixture.projectId);
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await openFixture({
@@ -409,13 +413,17 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
   }
 });
 
-test("Empty MDX content supports insertion and keeps the next paragraph focused", async () => {
+test("Empty MDX content supports insertion and keeps the next paragraph focused", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "empty-mdx-content-source-e2e@webstudio.test",
     title: "Empty MDX Content Source E2E",
   });
   await configureEmptyHeadingTemplate(fixture.projectId);
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await openFixture({
@@ -510,12 +518,16 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
   }
 });
 
-test("Content Block requires a Builder reload after a stale file revision", async () => {
+test("Content Block requires a Builder reload after a stale file revision", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "mdx-content-conflict-e2e@webstudio.test",
     title: "MDX Content Conflict E2E",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await openFixture({
@@ -591,12 +603,16 @@ test("Content Block requires a Builder reload after a stale file revision", asyn
   }
 });
 
-test("Unresolved MDX templates are selectable only in the Builder canvas", async () => {
+test("Unresolved MDX templates are selectable only in the Builder canvas", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "mdx-content-warning-e2e@webstudio.test",
     title: "MDX Content Warning E2E",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await openFixture({
@@ -646,12 +662,16 @@ test("Unresolved MDX templates are selectable only in the Builder canvas", async
   }
 });
 
-test("Dynamic detail source follows the selected route parameter", async () => {
+test("Dynamic detail source follows the selected route parameter", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "mdx-content-detail-e2e@webstudio.test",
     title: "MDX Content Detail E2E",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await openFixture({
@@ -704,12 +724,16 @@ test("Dynamic detail source follows the selected route parameter", async () => {
   }
 });
 
-test("Repeated Content Block scopes edit distinct MDX files without leakage", async () => {
+test("Repeated Content Block scopes edit distinct MDX files without leakage", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "mdx-content-repeated-e2e@webstudio.test",
     title: "MDX Content Repeated E2E",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await openFixture({

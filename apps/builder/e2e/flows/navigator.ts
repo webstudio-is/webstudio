@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 
 export const openNavigatorPanel = async ({ page }: { page: Page }) => {
   const tab = page.getByRole("tab", { name: "Navigator" });

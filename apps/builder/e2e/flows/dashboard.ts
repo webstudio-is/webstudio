@@ -1,5 +1,5 @@
-import { dashboardUrl, getProjectIdFromBuilderUrl } from "../harness";
-import type { Page } from "playwright";
+import { dashboardUrl, getProjectIdFromBuilderUrl } from "../test";
+import type { Page } from "@playwright/test";
 import env from "../../app/env/env.server";
 
 const loginReadyTimeout = 30_000;

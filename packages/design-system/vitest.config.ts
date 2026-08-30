@@ -1,6 +1,9 @@
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  optimizeDeps: {
+    include: ["react/jsx-dev-runtime"],
+  },
   resolve: {
     conditions: ["webstudio", "browser", "development|production"],
   },
@@ -10,13 +13,12 @@ export default defineConfig({
     },
   },
   test: {
-    setupFiles: ["./src/test-setup.ts"],
     workspace: [
       {
         extends: "./vitest.config.ts",
         test: {
-          include: ["**/*.browser.{test,spec}.{ts,tsx}"],
           name: "browser",
+          include: ["**/*.browser.{test,spec}.{ts,tsx}"],
           browser: {
             provider: "playwright",
             enabled: true,
@@ -29,12 +31,12 @@ export default defineConfig({
       {
         extends: "./vitest.config.ts",
         test: {
+          name: "unit",
           include: [
             "!**/*.browser.{test,spec}.{ts,tsx}",
             "**/*.{test,spec}.{ts,tsx}",
           ],
-          name: "unit",
-          environment: "jsdom",
+          environment: "node",
         },
       },
     ],

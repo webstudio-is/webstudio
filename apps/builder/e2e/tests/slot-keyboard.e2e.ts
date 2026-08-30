@@ -1,4 +1,4 @@
-import type { Frame, Page } from "playwright";
+import type { Frame, Page } from "@playwright/test";
 import {
   getCanvasInstance,
   getCanvasInstanceSelector,
@@ -10,7 +10,7 @@ import {
   createSlotKeyboardProject,
   type SeededSlotKeyboardProject,
 } from "../fixtures/slot-keyboard-project";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test, withBrowserContext } from "../test";
 import { measure } from "../perf";
 
 let fixture: SeededSlotKeyboardProject;
@@ -42,47 +42,57 @@ const expectCanvasInstanceVisible = async ({
   });
 };
 
-test.beforeAll(async () => {
-  fixture = await createSlotKeyboardProject();
-  detachFixture = await createSlotKeyboardProject({
-    email: "slot-keyboard-detach-e2e@webstudio.test",
-    title: "Slot Keyboard Detach E2E",
-    builderToken: "slot-keyboard-detach-e2e-builder-token",
-  });
-  navigatorFixture = await createSlotKeyboardProject({
-    email: "slot-keyboard-navigator-e2e@webstudio.test",
-    title: "Slot Keyboard Navigator E2E",
-    builderToken: "slot-keyboard-navigator-e2e-builder-token",
-  });
-  navigatorOutdentFixture = await createSlotKeyboardProject({
-    email: "slot-keyboard-navigator-outdent-e2e@webstudio.test",
-    title: "Slot Keyboard Navigator Outdent E2E",
-    builderToken: "slot-keyboard-navigator-outdent-e2e-builder-token",
-  });
-  topChildFixture = await createSlotKeyboardProject({
-    email: "slot-keyboard-top-child-e2e@webstudio.test",
-    title: "Slot Keyboard Top Child E2E",
-    builderToken: "slot-keyboard-top-child-e2e-builder-token",
-  });
-  bottomChildFixture = await createSlotKeyboardProject({
-    email: "slot-keyboard-bottom-child-e2e@webstudio.test",
-    title: "Slot Keyboard Bottom Child E2E",
-    builderToken: "slot-keyboard-bottom-child-e2e-builder-token",
-  });
-  navigatorTopChildFixture = await createSlotKeyboardProject({
-    email: "slot-keyboard-navigator-top-child-e2e@webstudio.test",
-    title: "Slot Keyboard Navigator Top Child E2E",
-    builderToken: "slot-keyboard-navigator-top-child-e2e-builder-token",
-  });
-  navigatorBottomChildFixture = await createSlotKeyboardProject({
-    email: "slot-keyboard-navigator-bottom-child-e2e@webstudio.test",
-    title: "Slot Keyboard Navigator Bottom Child E2E",
-    builderToken: "slot-keyboard-navigator-bottom-child-e2e-builder-token",
-  });
-  multiSelectFixture = await createSlotKeyboardProject({
-    email: "slot-keyboard-navigator-multi-select-e2e@webstudio.test",
-    title: "Slot Keyboard Multi Select E2E",
-    builderToken: "slot-keyboard-navigator-multi-select-e2e-builder-token",
+test.beforeAll(async ({ browser }) => {
+  await withBrowserContext(browser, async (context) => {
+    fixture = await createSlotKeyboardProject({ context });
+    detachFixture = await createSlotKeyboardProject({
+      context,
+      email: "slot-keyboard-detach-e2e@webstudio.test",
+      title: "Slot Keyboard Detach E2E",
+      builderToken: "slot-keyboard-detach-e2e-builder-token",
+    });
+    navigatorFixture = await createSlotKeyboardProject({
+      context,
+      email: "slot-keyboard-navigator-e2e@webstudio.test",
+      title: "Slot Keyboard Navigator E2E",
+      builderToken: "slot-keyboard-navigator-e2e-builder-token",
+    });
+    navigatorOutdentFixture = await createSlotKeyboardProject({
+      context,
+      email: "slot-keyboard-navigator-outdent-e2e@webstudio.test",
+      title: "Slot Keyboard Navigator Outdent E2E",
+      builderToken: "slot-keyboard-navigator-outdent-e2e-builder-token",
+    });
+    topChildFixture = await createSlotKeyboardProject({
+      context,
+      email: "slot-keyboard-top-child-e2e@webstudio.test",
+      title: "Slot Keyboard Top Child E2E",
+      builderToken: "slot-keyboard-top-child-e2e-builder-token",
+    });
+    bottomChildFixture = await createSlotKeyboardProject({
+      context,
+      email: "slot-keyboard-bottom-child-e2e@webstudio.test",
+      title: "Slot Keyboard Bottom Child E2E",
+      builderToken: "slot-keyboard-bottom-child-e2e-builder-token",
+    });
+    navigatorTopChildFixture = await createSlotKeyboardProject({
+      context,
+      email: "slot-keyboard-navigator-top-child-e2e@webstudio.test",
+      title: "Slot Keyboard Navigator Top Child E2E",
+      builderToken: "slot-keyboard-navigator-top-child-e2e-builder-token",
+    });
+    navigatorBottomChildFixture = await createSlotKeyboardProject({
+      context,
+      email: "slot-keyboard-navigator-bottom-child-e2e@webstudio.test",
+      title: "Slot Keyboard Navigator Bottom Child E2E",
+      builderToken: "slot-keyboard-navigator-bottom-child-e2e-builder-token",
+    });
+    multiSelectFixture = await createSlotKeyboardProject({
+      context,
+      email: "slot-keyboard-navigator-multi-select-e2e@webstudio.test",
+      title: "Slot Keyboard Multi Select E2E",
+      builderToken: "slot-keyboard-navigator-multi-select-e2e-builder-token",
+    });
   });
 });
 
@@ -166,8 +176,10 @@ const expectSelectedTreeButtonTexts = async ({
   );
 };
 
-test("Keyboard shortcut moves a shared slot child into the previous sibling", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Keyboard shortcut moves a shared slot child into the previous sibling", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     const canvas = await measure("slot keyboard open builder", async () => {
@@ -224,8 +236,10 @@ test("Keyboard shortcut moves a shared slot child into the previous sibling", as
   }
 });
 
-test("Keyboard shortcut keeps Navigator arrows working after outdenting a row", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Keyboard shortcut keeps Navigator arrows working after outdenting a row", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     const canvas = await measure(
@@ -278,8 +292,10 @@ test("Keyboard shortcut keeps Navigator arrows working after outdenting a row", 
   }
 });
 
-test("Shift+ArrowDown in Navigator selects exactly one additional row", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Shift+ArrowDown in Navigator selects exactly one additional row", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     const canvas = await measure(
@@ -328,8 +344,10 @@ test("Shift+ArrowDown in Navigator selects exactly one additional row", async ()
   }
 });
 
-test("Control/Command+A after canvas selection selects sibling rows", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Control/Command+A after canvas selection selects sibling rows", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     const canvas = await measure(
@@ -374,8 +392,10 @@ test("Control/Command+A after canvas selection selects sibling rows", async () =
   }
 });
 
-test("Keyboard shortcut moves a direct shared slot child out of all slot occurrences", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Keyboard shortcut moves a direct shared slot child out of all slot occurrences", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     const canvas = await measure(
@@ -436,8 +456,10 @@ test("Keyboard shortcut moves a direct shared slot child out of all slot occurre
   }
 });
 
-test("Keyboard shortcut moves the first shared slot child above all slot occurrences", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Keyboard shortcut moves the first shared slot child above all slot occurrences", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     const canvas = await measure(
@@ -515,8 +537,10 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
   }
 });
 
-test("Keyboard shortcut moves the last shared slot child below all slot occurrences", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Keyboard shortcut moves the last shared slot child below all slot occurrences", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     const canvas = await measure(
@@ -594,8 +618,10 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
   }
 });
 
-test("Keyboard shortcut reorders a shared slot child from navigator focus", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Keyboard shortcut reorders a shared slot child from navigator focus", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     const canvas = await measure(
@@ -662,8 +688,10 @@ test("Keyboard shortcut reorders a shared slot child from navigator focus", asyn
   }
 });
 
-test("Keyboard shortcut moves the first shared slot child above all slot occurrences from navigator focus", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Keyboard shortcut moves the first shared slot child above all slot occurrences from navigator focus", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     const canvas = await measure(
@@ -739,8 +767,10 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
   }
 });
 
-test("Keyboard shortcut moves the last shared slot child below all slot occurrences from navigator focus", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Keyboard shortcut moves the last shared slot child below all slot occurrences from navigator focus", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     const canvas = await measure(

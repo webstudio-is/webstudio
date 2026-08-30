@@ -7,11 +7,14 @@ import {
 import { openAssetsPanel, uploadAsset } from "../flows/assets-panel";
 import { getCanvasInstance, openProjectBuilder } from "../flows/builder";
 import { dragToCanvas, ensureInteractiveCanvas } from "../flows/drag";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test } from "../test";
 
-test("Dragging an image asset onto canvas inserts a bound Image", async () => {
-  const fixture = await createDragProject("asset-canvas");
-  const { page, close } = await newIsolatedPage();
+test("Dragging an image asset onto canvas inserts a bound Image", async ({
+  browser,
+  context,
+}) => {
+  const fixture = await createDragProject(context, "asset-canvas");
+  const { page, close } = await newIsolatedPage(browser);
   try {
     const canvas = await openProjectBuilder({
       page,

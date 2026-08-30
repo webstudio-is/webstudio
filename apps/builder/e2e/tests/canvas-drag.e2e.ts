@@ -7,16 +7,20 @@ import {
 } from "../fixtures/drag-project";
 import { getCanvasInstance, openProjectBuilder } from "../flows/builder";
 import { dragToCanvas, ensureInteractiveCanvas } from "../flows/drag";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test, withBrowserContext } from "../test";
 
 let fixture: Awaited<ReturnType<typeof createDragProject>>;
 
-test.beforeAll(async () => {
-  fixture = await createDragProject("canvas");
+test.beforeAll(async ({ browser }) => {
+  fixture = await withBrowserContext(browser, (context) =>
+    createDragProject(context, "canvas")
+  );
 });
 
-test("Canvas pointer drag reparents a heading and inserts a component", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Canvas pointer drag reparents a heading and inserts a component", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   try {
     const canvas = await openProjectBuilder({
       page,

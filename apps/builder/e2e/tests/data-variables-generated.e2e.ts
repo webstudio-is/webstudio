@@ -1,3 +1,4 @@
+import type { BrowserContext } from "@playwright/test";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import {
   bindSelectedTextContentToExpression,
@@ -11,21 +12,24 @@ import {
 import { loginWithSecret } from "../flows/dashboard";
 import { expectGeneratedAppToRender } from "../flows/generated-app";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test } from "../test";
 import { measure } from "../perf";
 
 const openGeneratedResourceProject = async ({
+  context,
   page,
   email,
   title,
   assetNamePrefix,
 }: {
+  context: BrowserContext;
   page: Awaited<ReturnType<typeof newIsolatedPage>>["page"];
   email: string;
   title: string;
   assetNamePrefix: string;
 }) => {
   const fixture = await createContentModeProject({
+    context,
     email,
     title,
     assetNamePrefix,
@@ -65,8 +69,11 @@ const reloadAndSelectContent = async ({
   });
 };
 
-test("Generated app fetches and renders a Builder-created HTTP resource", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Generated app fetches and renders a Builder-created HTTP resource", async ({
+  browser,
+  context,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const resource = await startJsonResourceServer({
     title: "Rendered from local HTTP resource",
   });
@@ -74,6 +81,7 @@ test("Generated app fetches and renders a Builder-created HTTP resource", async 
 
   try {
     const fixture = await openGeneratedResourceProject({
+      context: context,
       page,
       email: "generated-resource@webstudio.test",
       title: "Generated HTTP Resource",
@@ -109,8 +117,11 @@ test("Generated app fetches and renders a Builder-created HTTP resource", async 
   }
 });
 
-test("Generated app fetches and renders a Builder-created GraphQL resource", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Generated app fetches and renders a Builder-created GraphQL resource", async ({
+  browser,
+  context,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const resource = await startGraphqlResourceServer({
     title: "Rendered from local GraphQL resource",
   });
@@ -118,6 +129,7 @@ test("Generated app fetches and renders a Builder-created GraphQL resource", asy
 
   try {
     const fixture = await openGeneratedResourceProject({
+      context: context,
       page,
       email: "generated-graphql-resource@webstudio.test",
       title: "Generated GraphQL Resource",
@@ -152,13 +164,17 @@ test("Generated app fetches and renders a Builder-created GraphQL resource", asy
   }
 });
 
-test("Generated app renders a Builder-created current-date system resource", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Generated app renders a Builder-created current-date system resource", async ({
+  browser,
+  context,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const resourceName = "e2eGeneratedCurrentDate";
   const expectedYear = String(new Date().getUTCFullYear());
 
   try {
     const fixture = await openGeneratedResourceProject({
+      context: context,
       page,
       email: "generated-system-resource@webstudio.test",
       title: "Generated System Resource",

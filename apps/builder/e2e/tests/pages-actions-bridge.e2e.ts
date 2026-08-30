@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 import {
   openProjectBuilder,
   waitForCanvasText,
@@ -13,7 +13,7 @@ import {
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test, withBrowserContext } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
@@ -193,18 +193,23 @@ const selectNavigatorContextAction = async ({
   await waitForChangeToBeSaved({ page });
 };
 
-test.beforeAll(async () => {
-  fixture = await createContentModeProject({
-    email: "pages-actions-e2e@webstudio.test",
-    title: "Pages Actions E2E",
-    assetNamePrefix: "pages-actions-",
-    editorToken: "pages-actions-e2e-editor-token",
-    builderToken: "pages-actions-e2e-builder-token",
-  });
+test.beforeAll(async ({ browser }) => {
+  fixture = await withBrowserContext(browser, (context) =>
+    createContentModeProject({
+      context,
+      email: "pages-actions-e2e@webstudio.test",
+      title: "Pages Actions E2E",
+      assetNamePrefix: "pages-actions-",
+      editorToken: "pages-actions-e2e-editor-token",
+      builderToken: "pages-actions-e2e-builder-token",
+    })
+  );
 });
 
-test("Builder can insert through the engine bridge, undo, redo, and reload", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder can insert through the engine bridge, undo, redo, and reload", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await measure("pages actions open builder for engine bridge", async () => {
@@ -263,8 +268,10 @@ test("Builder can insert through the engine bridge, undo, redo, and reload", asy
   }
 });
 
-test("Builder Components panel filters catalog-only entries and inserts a persisted component", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder Components panel filters catalog-only entries and inserts a persisted component", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const insertedButtonText = "Button";
 
   try {
@@ -312,8 +319,10 @@ test("Builder Components panel filters catalog-only entries and inserts a persis
   }
 });
 
-test("Builder can duplicate a component through the engine bridge, undo, redo, and reload", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder can duplicate a component through the engine bridge, undo, redo, and reload", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const componentName = "Image";
 
   try {
@@ -410,8 +419,10 @@ test("Builder can duplicate a component through the engine bridge, undo, redo, a
   }
 });
 
-test("Builder can duplicate and delete a component from Navigator context menu", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder can duplicate and delete a component from Navigator context menu", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const componentName = "Image";
 
   try {

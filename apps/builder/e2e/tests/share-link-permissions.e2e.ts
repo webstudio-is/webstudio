@@ -19,12 +19,13 @@ import {
 } from "../flows/share-dialog";
 import { waitForSyncStatus } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { newIsolatedPage, newPage, test } from "../harness";
+import { newBrowserContext, newIsolatedPage, test } from "../test";
 import { measure } from "../perf";
 import { e2ePaidPlanName } from "../plans";
 
 const ownerEmail = "share-link-e2e@webstudio.test";
 const baselineText = "Initial content";
+let ownerContext: BrowserContext;
 
 type ShareLinkFixtures = {
   projectId: string;
@@ -76,8 +77,10 @@ const expectCurrentMode = ({
   }
 };
 
-test.beforeAll(async () => {
+test.beforeAll(async ({ browser }) => {
+  ownerContext = await newBrowserContext(browser);
   const fixture = await createContentModeProject({
+    context: ownerContext,
     email: ownerEmail,
     title: "Share Link E2E",
     devPlan: e2ePaidPlanName,
@@ -85,7 +88,7 @@ test.beforeAll(async () => {
     editorToken: "share-link-e2e-editor-token",
     builderToken: "share-link-e2e-builder-token",
   });
-  const ownerPage = await newPage();
+  const ownerPage = await ownerContext.newPage();
 
   try {
     await measure("share link open owner project", async () => {
@@ -151,7 +154,12 @@ test.beforeAll(async () => {
     await ownerPage.close();
   }
 });
-test("Share links enforce viewer, editor, builder, admin, and owner permissions", async () => {
+test.afterAll(async () => {
+  await ownerContext.close();
+});
+test("Share links enforce viewer, editor, builder, admin, and owner permissions", async ({
+  browser,
+}) => {
   const {
     projectId,
     viewerUrl,
@@ -160,12 +168,12 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
     adminUrl,
     shareLinkEditableText,
   } = getShareLinkFixtures();
-  const viewer = await newIsolatedPage();
-  const editor = await newIsolatedPage();
-  const builderPage = await newIsolatedPage();
-  const admin = await newIsolatedPage();
-  const ownerPage = await newPage();
-  const visitor = await newIsolatedPage();
+  const viewer = await newIsolatedPage(browser);
+  const editor = await newIsolatedPage(browser);
+  const builderPage = await newIsolatedPage(browser);
+  const admin = await newIsolatedPage(browser);
+  const ownerPage = await ownerContext.newPage();
+  const visitor = await newIsolatedPage(browser);
   const editedText = "Share-link editor text";
 
   try {
@@ -300,3 +308,4 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
     await visitor.close();
   }
 });
+import type { BrowserContext } from "@playwright/test";

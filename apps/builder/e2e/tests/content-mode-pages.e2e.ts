@@ -17,19 +17,22 @@ import {
 } from "../flows/pages-panel";
 import { waitForSyncStatus } from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
-import {
-  getSharedContentModeProject,
-  setupSharedContentModeProject,
-} from "../fixtures/content-mode-suite";
-import { newIsolatedPage, test } from "../harness";
+import { createContentModeProject } from "../fixtures/content-mode-suite";
+import type { SeededContentModeProject } from "../fixtures/content-mode-project";
+import { newIsolatedPage, test, withBrowserContext } from "../test";
 import { measure } from "../perf";
 
-test.beforeAll(async () => {
-  await setupSharedContentModeProject();
+let fixture: SeededContentModeProject;
+
+test.beforeAll(async ({ browser }) => {
+  fixture = await withBrowserContext(browser, (context) =>
+    createContentModeProject({ context })
+  );
 });
-test("Editor can create styled page from template in content mode", async () => {
-  const fixture = getSharedContentModeProject();
-  const { page, close } = await newIsolatedPage();
+test("Editor can create styled page from template in content mode", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const pageName = "Created content page";
 
   try {
@@ -116,9 +119,8 @@ test("Editor can create styled page from template in content mode", async () => 
   }
 });
 
-test("Editor can edit allowed page settings", async () => {
-  const fixture = getSharedContentModeProject();
-  const { page, close } = await newIsolatedPage();
+test("Editor can edit allowed page settings", async ({ browser }) => {
+  const { page, close } = await newIsolatedPage(browser);
   const pageName = "Settings content page";
   const editedName = "Edited settings content page";
   const editedPath = "/edited-settings-content-page";
@@ -238,9 +240,10 @@ test("Editor can edit allowed page settings", async () => {
   }
 });
 
-test("Editor is blocked from invalid paths and restricted page settings", async () => {
-  const fixture = getSharedContentModeProject();
-  const { page, close } = await newIsolatedPage();
+test("Editor is blocked from invalid paths and restricted page settings", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const pageName = "Blocked settings content page";
   const invalidPaths = ["/posts/:slug", "/docs/*", "https://x.com"];
 
@@ -281,10 +284,11 @@ test("Editor is blocked from invalid paths and restricted page settings", async 
   }
 });
 
-test("Edit-only and build-capable users can collaborate in content mode", async () => {
-  const fixture = getSharedContentModeProject();
-  const editor = await newIsolatedPage();
-  const builder = await newIsolatedPage();
+test("Edit-only and build-capable users can collaborate in content mode", async ({
+  browser,
+}) => {
+  const editor = await newIsolatedPage(browser);
+  const builder = await newIsolatedPage(browser);
 
   try {
     await measure("open editor and builder sessions", async () => {

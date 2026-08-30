@@ -9,6 +9,8 @@ overrides:
   '@types/react-dom': ^18.2.25
   react: 18.3.0-canary-14898b6a9-20240318
   react-dom: 18.3.0-canary-14898b6a9-20240318
+  playwright: 1.50.1
+  '@playwright/test': 1.50.1
   vite@<7: 6.3.4
 
 patchedDependencies:
@@ -483,6 +485,9 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(zod@4.4.3)
     devDependencies:
+      '@playwright/test':
+        specifier: 1.50.1
+        version: 1.50.1
       '@remix-run/dev':
         specifier: ^2.16.5
         version: 2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(typescript@7.0.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(wrangler@3.63.2(@cloudflare/workers-types@4.20240718.0))(yaml@2.9.0)
@@ -522,9 +527,6 @@ importers:
       msw:
         specifier: ^2.13.2
         version: 2.13.2(@types/node@22.13.10)(typescript@7.0.2)
-      playwright:
-        specifier: ^1.50.1
-        version: 1.50.1
       react-router-dom:
         specifier: ^6.30.0
         version: 6.30.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -1880,7 +1882,7 @@ importers:
         specifier: ^3.2.1
         version: 3.2.1
       playwright:
-        specifier: ^1.50.1
+        specifier: 1.50.1
         version: 1.50.1
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
@@ -2703,7 +2705,7 @@ importers:
         specifier: ^3.3.2
         version: 3.3.2
       playwright:
-        specifier: ^1.50.1
+        specifier: 1.50.1
         version: 1.50.1
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
@@ -5367,6 +5369,11 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
+  '@playwright/test@1.50.1':
+    resolution: {integrity: sha512-Jii3aBg+CEDpgnuDxEp/h7BimHcUTDlpEtce89xEumlJ5ef2hqepZ+PWp1DDpYC/VO9fmWVI1IlEaoI5fK9FXQ==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   '@polka/url@1.0.0-next.28':
     resolution: {integrity: sha512-8LduaNlMZGwdZ6qWrKlfa+2M4gahzFkprZiAt2TF8uS0qQgBizKXpXURqvTJ4WtmupWxaLqjRb2UCTe72mu+Aw==}
 
@@ -7084,7 +7091,7 @@ packages:
   '@vitest/browser@3.1.2':
     resolution: {integrity: sha512-dwL6hQg3NSDP3Z4xzIZL0xHq/AkQAPQ4StFpWVlY2zbRJtK3Y2YqdFZ7YmZjszTETN1BDQZRn/QOrcP+c8ATgg==}
     peerDependencies:
-      playwright: '*'
+      playwright: 1.50.1
       safaridriver: '*'
       vitest: 3.1.2
       webdriverio: ^7.0.0 || ^8.0.0 || ^9.0.0
@@ -14427,6 +14434,10 @@ snapshots:
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
+
+  '@playwright/test@1.50.1':
+    dependencies:
+      playwright: 1.50.1
 
   '@polka/url@1.0.0-next.28': {}
 
