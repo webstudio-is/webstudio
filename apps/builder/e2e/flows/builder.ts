@@ -1,5 +1,5 @@
-import type { Frame, Page } from "playwright";
-import { getProjectBuilderUrl } from "../harness";
+import type { Frame, Page } from "@playwright/test";
+import { getProjectBuilderUrl } from "../test";
 
 const delay = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));

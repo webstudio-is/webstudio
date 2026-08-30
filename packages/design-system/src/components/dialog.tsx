@@ -24,6 +24,7 @@ import { Button } from "./button";
 import { XIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { Separator } from "./separator";
 import { Text } from "./text";
+import { cssVar } from "../css-var";
 
 const DIALOG_TITLE_HEIGHT = 40;
 const DIALOG_MAXIMIZED_MARGIN = 20;
@@ -43,8 +44,10 @@ if (placeholderImage) {
 }
 
 const panelStyle = css({
+  boxSizing: "border-box",
   boxShadow: theme.shadows.panelSectionDropShadow,
-  background: theme.colors.backgroundPanel,
+  background: cssVar("--background-primary"),
+  border: `1px solid ${cssVar("--border-default")}`,
   borderRadius: theme.borderRadius[7],
   display: "flex",
   flexDirection: "column",
@@ -726,7 +729,7 @@ export const DialogActions = ({ children }: { children: ReactNode }) => {
 // Styles specific to dialog
 // (as opposed to be common for all floating panels)
 const overlayStyle = css({
-  backgroundColor: "rgba(17, 24, 28, 0.66)",
+  backgroundColor: cssVar("--overlay-scrim"),
   position: "fixed",
   inset: 0,
 });

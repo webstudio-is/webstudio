@@ -25,6 +25,7 @@ import {
   findNextListItemIndex,
   theme,
   useSearchFieldKeys,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { TrashIcon } from "@webstudio-is/icons";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
@@ -929,8 +930,10 @@ export const AssetManager = ({
                 width: marqueeRect.width,
                 height: marqueeRect.height,
                 pointerEvents: "none",
-                backgroundColor: `color-mix(in srgb, ${theme.colors.backgroundPrimary} 12%, transparent)`,
-                border: `1px solid ${theme.colors.borderFocus}`,
+                backgroundColor: `color-mix(in srgb, ${cssVar(
+                  "--foreground-accent"
+                )} 12%, transparent)`,
+                border: `1px solid ${cssVar("--border-focus")}`,
                 zIndex: 1,
               }}
             />

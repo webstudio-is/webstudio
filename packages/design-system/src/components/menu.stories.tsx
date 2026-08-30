@@ -61,7 +61,7 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
   return (
     <DropdownMenu defaultOpen>
       <DropdownMenuTrigger asChild>
-        <Button prefix={<EllipsesIcon />} />
+        <Button color="primary" prefix={<EllipsesIcon />} />
       </DropdownMenuTrigger>
       <DropdownMenuContent width="regular">
         <DropdownMenuLabel>Not choosable</DropdownMenuLabel>

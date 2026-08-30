@@ -196,6 +196,7 @@ export const CreateTextFileDialog = ({
           </Grid>
           <Flex justify="end">
             <Button
+              color="primary"
               disabled={creating || disabled}
               onClick={() => void submit()}
             >

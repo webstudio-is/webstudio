@@ -9,6 +9,7 @@ import {
   Flex,
   Grid,
   rawTheme,
+  cssVar,
 } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { Role } from "@webstudio-is/project";
@@ -121,7 +122,7 @@ const SidePanel = ({
         fg: 0,
         // Left sidebar tabs won't be able to pop out to the right if we set overflowX to auto.
         //overflowY: "auto",
-        backgroundColor: theme.colors.backgroundPanel,
+        backgroundColor: cssVar("--background-primary"),
         height: "100%",
         ...css,
       }}
@@ -475,7 +476,7 @@ export const Builder = (props: BuilderProps) => {
                 left: 0,
                 bottom: 0,
                 width: 1,
-                background: theme.colors.borderMain,
+                background: cssVar("--border-default"),
               },
             }}
           >

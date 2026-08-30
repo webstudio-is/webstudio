@@ -1,4 +1,4 @@
-import { Flex, theme } from "@webstudio-is/design-system";
+import { cssVar, Flex, theme } from "@webstudio-is/design-system";
 import { Breadcrumbs } from "./breadcrumbs";
 
 export const Footer = () => {
@@ -10,8 +10,9 @@ export const Footer = () => {
         isolation: "isolate",
         gridArea: "footer",
         height: theme.spacing[11],
-        background: theme.colors.backgroundTopbar,
-        color: theme.colors.foregroundContrastMain,
+        background: cssVar("--background-primary"),
+        borderTop: `1px solid ${cssVar("--border-default")}`,
+        color: cssVar("--foreground-primary"),
       }}
     >
       <Breadcrumbs />

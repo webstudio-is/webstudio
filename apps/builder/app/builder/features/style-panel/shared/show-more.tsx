@@ -16,6 +16,7 @@ export const ShowMore = ({
       <Flex direction="column" gap="3">
         <Collapsible.Trigger asChild>
           <Button
+            color="primary"
             css={{ width: "100%" }}
             prefix={isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
           >

@@ -23,6 +23,10 @@ import { $pageRootScope } from "../page-utils";
 import { SearchPreview } from "../search-preview";
 import { computePageSettingsText, usePageUrl, type OnChange } from "./shared";
 
+// Search-engine previews represent an external light surface, not Builder UI.
+const searchPreviewBackground = "#ffffff";
+const searchPreviewBorder = "#e6e6e6";
+
 const LanguageField = ({
   errors,
   value,
@@ -115,9 +119,9 @@ export const SearchSection = ({
           <Box
             css={{
               padding: theme.spacing[5],
-              background: theme.colors.white,
+              background: searchPreviewBackground,
               borderRadius: theme.borderRadius[4],
-              border: `1px solid ${theme.colors.borderMain}`,
+              border: `1px solid ${searchPreviewBorder}`,
             }}
           >
             <Box

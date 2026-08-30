@@ -1,4 +1,5 @@
 import {
+  cssVar,
   IconButton,
   Text,
   Grid,
@@ -35,8 +36,8 @@ export const ImageInfo = ({
         justify={"start"}
         css={{
           borderRadius: theme.borderRadius[4],
-          border: `1px solid ${theme.colors.borderMain}`,
-          backgroundColor: theme.colors.white,
+          border: `1px solid ${cssVar("--border-default")}`,
+          backgroundColor: cssVar("--background-primary"),
           padding: theme.spacing[4],
           justifySelf: "start",
           pr: theme.spacing[5],

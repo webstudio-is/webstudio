@@ -202,7 +202,6 @@ export const Templates = ({
           onClick={() => {
             onOpenChange(false);
           }}
-          color="neutral"
         >
           {name}
         </Button>
@@ -287,3 +286,5 @@ export const Templates = ({
     </Flex>
   );
 };
+
+undefined;

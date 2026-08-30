@@ -22,18 +22,21 @@ Why Use CSS variables?
 
 The concept of “reusability” is present in both CSS variables and [Tokens](design-tokens.md), but they are different and complement each other exceptionally well.
 
-
 Let’s think of these two concepts as layers or building blocks.
 
 ### Layer 1: CSS variables
 
-**CSS variables are the bottom layer. They comprise individual variable names and values** often used for sizes, colors, and other styles with many input options.
+**CSS variables are the bottom layer. They comprise individual variable names and values** often used for sizes, colors, and other styles with many input options. Craft distinguishes theme variables, which contain theme-specific inputs, from semantic variables, which describe how a value is used.
 
-For example, you can create one variable per color in your design system. Those colors are going to be used throughout your site and in Tokens.
+For colors, define a small set of theme variables and derive semantic variables
+from them. For example, `--theme-accent` can control
+`--background-accent`, `--border-focus`, and their interaction states. Tokens
+consume the semantic variables, so changing a theme input updates the complete
+system without editing each color independently.
 
 ### Layer 2: Tokens
 
-[**Tokens**](design-tokens.md) **are the next layer. They package up&#x20;**_**multiple**_**&#x20;styles.** A `Card` Token may include padding, color, and gap styles, for example.
+[**Tokens**](design-tokens.md) **are the next layer. They package up&#x20;**_**multiple**_**&#x20;styles.** Craft calls these composite Tokens. A `Card` Token may include padding, color, and gap styles, for example.
 
 The values you enter for each style should be defined as variables. This approach ensures consistent designs and allows you to update a value in one place, with the change automatically reflected wherever the variable is used.
 
@@ -46,7 +49,9 @@ With CSS variables, Tokens now often take a more semantic approach, such as call
 ## Creating variables
 
 {% hint style="warning" %}
-Before you create custom variables, be sure to check out [Craft](../craft.md) — the standard guideline for building with Webstudio. It contains a library of expertly crafted CSS variables.
+Before you create custom variables, review [Craft](../craft.md), Webstudio's
+public specification for theme variables, semantic variables, composite
+Tokens, and reusable project architecture.
 {% endhint %}
 
 A CSS variable is defined in the Advanced section by using two dashes followed by the variable name, like this:

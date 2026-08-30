@@ -16,11 +16,12 @@ import { InputField } from "./input-field";
 import { SmallIconButton } from "./small-icon-button";
 import { Flex } from "./flex";
 import { mergeRefs } from "@react-aria/utils";
+import { cssVar } from "../css-var";
 
 const SearchIconStyled = styled(SearchIcon, {
   // need to center icon vertically
   display: "block",
-  color: theme.colors.foregroundSubtle,
+  color: cssVar("--foreground-secondary"),
   padding: theme.spacing[3],
 });
 

@@ -10,6 +10,7 @@ import { useStore } from "@nanostores/react";
 import {
   Box,
   Button,
+  cssVar,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -337,6 +338,7 @@ const MarkdownLinkPicker = ({
             />
             <Flex justify="end">
               <Button
+                color="primary"
                 type="button"
                 onClick={() => {
                   const href = getMarkdownHref(valueRef.current);
@@ -389,10 +391,10 @@ const MarkdownToolbar = ({
     gap={2}
     css={{
       padding: theme.spacing[3],
-      borderBottom: `1px solid ${theme.colors.borderMain}`,
+      borderBottom: `1px solid ${cssVar("--border-default")}`,
       overflow: "hidden",
       flexShrink: 0,
-      background: theme.colors.backgroundPanel,
+      background: cssVar("--background-primary"),
     }}
   >
     <Flex

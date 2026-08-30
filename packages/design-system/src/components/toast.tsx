@@ -15,8 +15,11 @@ import { Flex } from "./flex";
 import { Tooltip } from "./tooltip";
 import { Button } from "./button";
 import { CopyIcon, LargeXIcon } from "@webstudio-is/icons";
+import { cssVar, declareCssVar } from "../css-var";
 
 const ANIMATION_SLIDE_LENGTH = 30;
+const toastSwipeEndX = declareCssVar("--radix-toast-swipe-end-x");
+const toastSwipeMoveX = declareCssVar("--radix-toast-swipe-move-x");
 
 const hide = keyframes({
   "0%": { opacity: 1 },
@@ -29,7 +32,7 @@ const slideIn = keyframes({
 });
 
 const swipeOut = keyframes({
-  from: { transform: "translateX(var(--radix-toast-swipe-end-x))" },
+  from: { transform: `translateX(${cssVar(toastSwipeEndX)})` },
   to: { transform: `translateX(calc(100% + ${ANIMATION_SLIDE_LENGTH}px))` },
 });
 
@@ -59,7 +62,7 @@ const AnimatedToast = styled(ToastPrimitive.Root, {
       animation: `${hide} 105ms ease-in`,
     },
     '&[data-swipe="move"]': {
-      transform: "translateX(var(--radix-toast-swipe-move-x))",
+      transform: `translateX(${cssVar(toastSwipeMoveX)})`,
     },
     '&[data-swipe="cancel"]': {
       transform: "translateX(0)",
@@ -71,45 +74,30 @@ const AnimatedToast = styled(ToastPrimitive.Root, {
   },
 });
 
-const borderAccentBackgroundColor = "--ws-toast-border-accent-background-color";
-const backgroundColor = "--ws-toast-background-color";
-const borderColor = "--ws-toast-border-color";
-const iconColor = "--ws-toast-icon-color";
-
-const ToastVariants = styled("div", {
-  [borderAccentBackgroundColor]: theme.colors.foregroundMain,
-  [backgroundColor]: theme.colors.backgroundNeutralNotification,
-  [borderColor]: theme.colors.borderNeutral,
-  [iconColor]: theme.colors.foregroundMain,
-
-  variants: {
-    variant: {
-      neutral: {},
-      warning: {
-        [backgroundColor]: theme.colors.backgroundAlertNotification,
-        [borderAccentBackgroundColor]: theme.colors.backgroundAlertMain,
-        [borderColor]: theme.colors.backgroundAlertMain,
-        [iconColor]: theme.colors.backgroundAlertMain,
-      },
-      error: {
-        [backgroundColor]: theme.colors.backgroundDestructiveNotification,
-        [borderAccentBackgroundColor]: theme.colors.backgroundDestructiveMain,
-        [borderColor]: theme.colors.backgroundDestructiveMain,
-        [iconColor]: theme.colors.foregroundDestructive,
-      },
-      success: {
-        [backgroundColor]: theme.colors.backgroundSuccessNotification,
-        [borderAccentBackgroundColor]: theme.colors.backgroundSuccessMain,
-        [borderColor]: theme.colors.backgroundSuccessMain,
-        [iconColor]: theme.colors.foregroundSuccess,
-      },
-    },
+const toastColors = {
+  neutral: {
+    background: cssVar("--background-secondary"),
+    border: cssVar("--border-default"),
+    icon: cssVar("--foreground-primary"),
   },
-});
+  warning: {
+    background: cssVar("--background-warning-subtle"),
+    border: cssVar("--border-warning"),
+    icon: cssVar("--foreground-warning"),
+  },
+  error: {
+    background: cssVar("--background-negative-subtle"),
+    border: cssVar("--background-negative"),
+    icon: cssVar("--foreground-negative"),
+  },
+  success: {
+    background: cssVar("--background-positive-subtle"),
+    border: cssVar("--background-positive"),
+    icon: cssVar("--foreground-positive"),
+  },
+} as const;
 
-type ToastVariant = React.ComponentProps<typeof ToastVariants>["variant"];
-
-const cssVar = (name: string) => `var(${name})`;
+type ToastVariant = keyof typeof toastColors;
 
 const InternalToast = ({
   children,
@@ -122,67 +110,51 @@ const InternalToast = ({
   icon?: React.ReactNode;
   sideButtons: React.ReactNode;
 }) => {
+  const colors = toastColors[variant ?? "neutral"];
+
   return (
-    <ToastVariants variant={variant}>
-      <Grid
+    <Grid
+      gap={"3"}
+      align={"center"}
+      css={{
+        pointerEvents: "all",
+        backgroundColor: colors.background,
+        padding: theme.panel.padding,
+        gridTemplateColumns: icon ? "auto 1fr auto" : "1fr auto",
+        borderRadius: theme.borderRadius[5],
+        border: `1px solid ${colors.border}`,
+      }}
+    >
+      <Box
         css={{
-          display: "grid",
-          gridTemplateColumns: "8px 1fr",
-          pointerEvents: "all",
+          color: colors.icon,
+          display: icon ? "contents" : "none",
         }}
       >
-        <Box
-          css={{
-            backgroundColor: cssVar(borderAccentBackgroundColor),
-            borderTopLeftRadius: theme.borderRadius[5],
-            borderBottomLeftRadius: theme.borderRadius[5],
-          }}
-        ></Box>
-        <Grid
-          gap={"3"}
-          align={"center"}
-          css={{
-            backgroundColor: cssVar(backgroundColor),
-            padding: theme.panel.padding,
-            gridTemplateColumns: icon ? "auto 1fr auto" : "1fr auto",
-            borderBottomRightRadius: theme.borderRadius[5],
-            borderTopRightRadius: theme.borderRadius[5],
-            border: `1px solid ${cssVar(borderColor)}`,
-            borderLeft: "none",
-          }}
-        >
-          <Box
+        {icon}
+      </Box>
+
+      <Grid gap={"1"}>
+        <ToastPrimitive.Description asChild>
+          <Text
             css={{
-              color: cssVar(iconColor),
-              display: icon ? "contents" : "none",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              display: "-webkit-box",
+              "-webkit-line-clamp": 20,
+              "-webkit-box-orient": "vertical",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
+            variant={"labels"}
           >
-            {icon}
-          </Box>
-
-          <Grid gap={"1"}>
-            <ToastPrimitive.Description asChild>
-              <Text
-                css={{
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                  display: "-webkit-box",
-                  "-webkit-line-clamp": 20,
-                  "-webkit-box-orient": "vertical",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-                variant={"labels"}
-              >
-                {children}
-              </Text>
-            </ToastPrimitive.Description>
-          </Grid>
-
-          {sideButtons}
-        </Grid>
+            {children}
+          </Text>
+        </ToastPrimitive.Description>
       </Grid>
-    </ToastVariants>
+
+      {sideButtons}
+    </Grid>
   );
 };
 
@@ -205,10 +177,10 @@ export const Toast = ({
         <Button
           css={{
             "&[data-state=auto]:hover": {
-              background: "rgba(0, 0, 0, 0.07)",
+              background: cssVar("--overlay-interaction-hover"),
             },
             "&[data-state=auto]:active": {
-              background: "rgba(0, 0, 0, 0.04)",
+              background: cssVar("--overlay-interaction-pressed"),
             },
           }}
           color="ghost"
@@ -222,10 +194,10 @@ export const Toast = ({
         <Button
           css={{
             "&[data-state=auto]:hover": {
-              background: "rgba(0, 0, 0, 0.07)",
+              background: cssVar("--overlay-interaction-hover"),
             },
             "&[data-state=auto]:active": {
-              background: "rgba(0, 0, 0, 0.04)",
+              background: cssVar("--overlay-interaction-pressed"),
             },
           }}
           color="ghost"

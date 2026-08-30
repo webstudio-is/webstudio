@@ -2,16 +2,15 @@ import { useId, useState } from "react";
 import {
   Checkbox,
   CheckboxAndLabel,
+  cssVar,
   Grid,
   InputErrorsTooltip,
   InputField,
   Label,
-  Link,
+  LinkButton,
   ProChip,
   Text,
   Tooltip,
-  buttonStyle,
-  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
@@ -85,16 +84,14 @@ export const AuthSection = ({
                       staging for free; upgrade to Pro to publish to custom
                       domains.
                     </Text>
-                    <Link
-                      className={buttonStyle({ color: "gradient" })}
+                    <LinkButton
+                      color="primary"
                       css={{ marginTop: theme.spacing[5], width: "100%" }}
-                      color="contrast"
-                      underline="none"
                       target="_blank"
                       href="https://webstudio.is/pricing"
                     >
                       Upgrade
-                    </Link>
+                    </LinkButton>
                   </>
                 )}
               </>
@@ -102,7 +99,7 @@ export const AuthSection = ({
             variant="wrapped"
           >
             <InfoCircleIcon
-              color={rawTheme.colors.foregroundSubtle}
+              color={cssVar("--foreground-secondary")}
               tabIndex={-1}
             />
           </Tooltip>

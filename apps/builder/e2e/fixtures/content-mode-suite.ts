@@ -1,12 +1,10 @@
+import type { BrowserContext } from "@playwright/test";
 import { loginAndCreateBlankProject } from "../flows/dashboard";
-import { getBrowserScopeKey, newPage } from "../harness";
 import { measure } from "../perf";
-import {
-  prepareExistingContentModeProject,
-  type SeededContentModeProject,
-} from "./content-mode-project";
+import { prepareExistingContentModeProject } from "./content-mode-project";
 
 type ContentModeProjectOptions = {
+  context: BrowserContext;
   email?: string;
   title?: string;
   devPlan?: string;
@@ -15,17 +13,16 @@ type ContentModeProjectOptions = {
   builderToken?: string;
 };
 
-const sharedProjects = new WeakMap<object, SeededContentModeProject>();
-
 export const createContentModeProject = async ({
+  context,
   email = "content-mode-e2e@webstudio.test",
   title = "Content Mode E2E",
   devPlan,
   assetNamePrefix,
   editorToken,
   builderToken,
-}: ContentModeProjectOptions = {}) => {
-  const ownerPage = await newPage();
+}: ContentModeProjectOptions) => {
+  const ownerPage = await context.newPage();
 
   try {
     const projectId = await measure(
@@ -50,21 +47,4 @@ export const createContentModeProject = async ({
   } finally {
     await ownerPage.close();
   }
-};
-
-export const setupSharedContentModeProject = async (
-  options?: ContentModeProjectOptions
-) => {
-  const project = await createContentModeProject(options);
-  sharedProjects.set(getBrowserScopeKey(), project);
-  return project;
-};
-
-export const getSharedContentModeProject = () => {
-  const sharedProject = sharedProjects.get(getBrowserScopeKey());
-  if (sharedProject === undefined) {
-    throw new Error("Expected shared content-mode project to be initialized");
-  }
-
-  return sharedProject;
 };

@@ -57,6 +57,7 @@
     "@storybook/addon-actions": "^8.6.4",
     "@storybook/addon-backgrounds": "^8.6.4",
     "@storybook/addon-controls": "^8.6.4",
+    "@storybook/addon-toolbars": "^8.6.4",
     "@storybook/react": "^8.6.4",
     "@storybook/react-vite": "^8.6.4",
     "@types/node": "^22.13.10",
@@ -92,6 +93,8 @@
       "@types/react-dom": "^18.2.25",
       "react": "18.3.0-canary-14898b6a9-20240318",
       "react-dom": "18.3.0-canary-14898b6a9-20240318",
+      "playwright": "1.50.1",
+      "@playwright/test": "1.50.1",
       "vite@<7": "6.3.4"
     },
     "patchedDependencies": {

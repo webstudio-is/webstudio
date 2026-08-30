@@ -91,6 +91,7 @@ export const SectionBackups = ({
       <Dialog>
         <DialogTrigger asChild>
           <Button
+            color="primary"
             css={{ justifySelf: "start" }}
             disabled={canRestoreBackups === false || options.length === 0}
           >

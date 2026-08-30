@@ -144,6 +144,8 @@
   * [How to integrate Webhook Form with N8N](university/integrations/n8n.md)
   * [How to integrate Flotiq with Webstudio](university/integrations/flotiq.md)
 * [Craft](university/craft.md)
+  * [Use Craft](university/craft-guide.md)
+  * [Craft changelog](university/craft-changelog.md)
 
 ## Contributing
 

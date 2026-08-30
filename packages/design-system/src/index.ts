@@ -1,4 +1,9 @@
 export * from "./stitches.config";
+export { cssVar, declareCssVar } from "./css-var";
+export type { ThemeVariableName } from "./colors/__generated__/css-variable-names";
+export { rotateBoundedBackgroundHue } from "./color-utils";
+export { selectionBackground } from "./components/selection-color";
+export { chromeControlStyle } from "./components/chrome-control-style";
 export * from "./components/storybook";
 export * from "./utilities";
 export { type SlotProps, Slot } from "@radix-ui/react-slot";
@@ -10,6 +15,7 @@ export * from "./components/section-title";
 export * from "./components/separator";
 export * from "./components/button";
 export * from "./components/label";
+export { styleSourceColor } from "./components/style-source-color";
 export * from "./components/select";
 export * from "./components/combobox";
 export * from "./components/dropdown-menu";
@@ -37,7 +43,6 @@ export {
   menuItemCss,
 } from "./components/menu";
 export * from "./components/switch";
-export * from "./components/toolbar";
 export * from "./components/two-rows-icon-button-container";
 export * from "./components/small-icon-button";
 export * from "./components/list-position-indicator";
@@ -55,6 +60,7 @@ export * from "./components/input-field";
 export * from "./components/nested-input-button";
 export * from "./components/panel-tabs";
 export * from "./components/split-view";
+export * from "./components/split-button";
 export * from "./components/link";
 export * from "./components/panel-banner";
 export * from "./components/focus-ring";

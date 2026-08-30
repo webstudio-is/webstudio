@@ -29,11 +29,17 @@ import { styled, theme } from "../stitches.config";
 import { Box } from "./box";
 import { Text } from "./text";
 import { TreePositionIndicator } from "./list-position-indicator";
+import { cssVar, declareCssVar } from "../css-var";
+import { selectionBackground } from "./selection-color";
 
-const treeNodeLevel = "--tree-node-level";
-const treeNodeOutline = "--tree-node-outline";
-const treeNodeBackgroundColor = "--tree-node-background-color";
-const treeActionOpacity = "--tree-action-opacity";
+const treeNodeLevel = declareCssVar("--tree-node-level");
+const treeNodeOutline = declareCssVar("--tree-node-outline");
+const treeNodeSelectionBackgroundColor = declareCssVar(
+  "--tree-node-selection-background-color"
+);
+const treeNodeBackgroundColor = declareCssVar("--tree-node-background-color");
+const treeActionOpacity = declareCssVar("--tree-action-opacity");
+const treeActionWidth = declareCssVar("--tree-action-width");
 
 const TreeFocusRestoreContext = createContext<
   | undefined
@@ -130,18 +136,24 @@ export const TreeRoot = ({ children }: { children: ReactNode }) => {
 const NodeContainer = styled("div", {
   position: "relative",
   height: theme.sizes.controlHeight,
+  [treeNodeSelectionBackgroundColor]: "transparent",
+  [treeNodeBackgroundColor]: cssVar(treeNodeSelectionBackgroundColor),
+  background: cssVar(treeNodeBackgroundColor),
   "&:hover, &:has(:focus-visible), &:has([aria-current=true])": {
-    [treeNodeBackgroundColor]: theme.colors.backgroundHover,
-    backgroundColor: `var(${treeNodeBackgroundColor})`,
+    [treeNodeBackgroundColor]: `linear-gradient(${cssVar(
+      "--overlay-interaction-hover"
+    )}, ${cssVar("--overlay-interaction-hover")}), ${cssVar(
+      treeNodeSelectionBackgroundColor
+    )}`,
     [treeActionOpacity]: 1,
   },
   '&[data-selection-state="selected-descendant"]': {
-    [treeNodeBackgroundColor]: theme.colors.backgroundItemCurrentChild,
-    backgroundColor: `var(${treeNodeBackgroundColor})`,
+    [treeNodeSelectionBackgroundColor]: `color-mix(in oklab, ${selectionBackground} 50%, ${cssVar(
+      "--background-primary"
+    )})`,
   },
   '&[data-selection-state="selected"]': {
-    [treeNodeBackgroundColor]: theme.colors.backgroundItemCurrent,
-    backgroundColor: `var(${treeNodeBackgroundColor})`,
+    [treeNodeSelectionBackgroundColor]: selectionBackground,
   },
 });
 
@@ -154,8 +166,11 @@ const NodeButton = styled("button", {
   width: "100%",
   height: "inherit",
   minWidth: 0,
-  paddingLeft: `calc(${ITEM_PADDING_LEFT}px + var(${treeNodeLevel}) * 16px)`,
-  paddingRight: ITEM_PADDING_RIGHT,
+  paddingLeft: `calc(${ITEM_PADDING_LEFT}px + ${cssVar(treeNodeLevel)} * 16px)`,
+  paddingRight: `calc(${ITEM_PADDING_RIGHT}px + ${cssVar(
+    treeActionWidth,
+    "0px"
+  )})`,
   flexBasis: 0,
   flexGrow: 1,
   position: "relative",
@@ -168,7 +183,9 @@ const ExpandButton = styled("button", {
   alignItems: "center",
   position: "absolute",
   top: 0,
-  left: `calc(var(${treeNodeLevel}) * ${BARS_GAP}px - ${EXPAND_WIDTH / 2}px)`,
+  left: `calc(${cssVar(treeNodeLevel)} * ${BARS_GAP}px - ${
+    EXPAND_WIDTH / 2
+  }px)`,
   width: EXPAND_WIDTH,
   height: "inherit",
 });
@@ -176,15 +193,17 @@ const ExpandButton = styled("button", {
 const ActionContainer = styled("div", {
   // use opacity to hide action instead of visibility
   // to prevent focus loss while navigating with keyboard
-  opacity: `var(${treeActionOpacity}, 0)`,
+  opacity: cssVar(treeActionOpacity, "0"),
   position: "sticky",
   translate: `-100% -100%`,
-  left: `calc(var(--sidebar-left-panel-width) - ${ITEM_PADDING_RIGHT}px)`,
+  left: `calc(${cssVar(
+    "--sidebar-left-panel-width"
+  )} - ${ITEM_PADDING_RIGHT}px)`,
   height: "inherit",
   display: "inline-flex",
   justifyContent: "center",
   alignItems: "center",
-  backgroundColor: `var(${treeNodeBackgroundColor})`,
+  background: "transparent",
 });
 
 const DropIndicator = ({
@@ -507,6 +526,12 @@ export const TreeNode = ({
       data-selection-state={selectionState}
       css={{
         [treeNodeLevel]: level,
+        [treeActionWidth]:
+          action === null || action === undefined || actionCount === 0
+            ? "0px"
+            : actionCount > 1
+              ? theme.spacing[14]
+              : theme.spacing[9],
         ...(isActionVisible && { [treeActionOpacity]: 1 }),
       }}
       onKeyDown={handleKeydown}

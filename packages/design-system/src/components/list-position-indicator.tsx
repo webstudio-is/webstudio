@@ -4,7 +4,8 @@
  */
 
 import { Box } from "./box";
-import { styled, theme } from "../stitches.config";
+import { styled } from "../stitches.config";
+import { cssVar } from "../css-var";
 
 const CIRCLE_SIZE = 8;
 const LINE_THICKNESS = 2;
@@ -27,7 +28,7 @@ const CircleOutline = styled(Box, {
   left: -CIRCLE_SIZE / 2 - OUTLINE_WIDTH,
   borderRadius: "50%",
   pointerEvents: "none",
-  backgroundColor: theme.colors.borderContrast,
+  backgroundColor: cssVar("--foreground-on-accent"),
 });
 
 const Circle = styled(Box, {
@@ -36,7 +37,7 @@ const Circle = styled(Box, {
   position: "absolute",
   top: -CIRCLE_SIZE / 2,
   left: -CIRCLE_SIZE / 2,
-  border: `2px solid ${theme.colors.backgroundPrimary}`,
+  border: `2px solid ${cssVar("--background-accent")}`,
   borderRadius: "50%",
   pointerEvents: "none",
 });
@@ -48,9 +49,9 @@ const Line = styled(Box, {
   left: 0,
   width: "100%",
   height: LINE_THICKNESS,
-  backgroundColor: theme.colors.backgroundPrimary,
+  backgroundColor: cssVar("--background-accent"),
   pointerEvents: "none",
-  outline: `solid ${theme.colors.borderContrast}`,
+  outline: `solid ${cssVar("--foreground-on-accent")}`,
   outlineWidth: OUTLINE_WIDTH,
 });
 

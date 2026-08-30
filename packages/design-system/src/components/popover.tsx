@@ -5,12 +5,13 @@ import {
   forwardRef,
 } from "react";
 import * as Primitive from "@radix-ui/react-popover";
-import { css, theme, styled, type CSS } from "../stitches.config";
+import { css, rawTheme, theme, styled, type CSS } from "../stitches.config";
 import { Separator } from "./separator";
 import { PanelTitle } from "./panel-title";
 import { Flex } from "./flex";
 import { Button } from "./button";
 import { XIcon } from "@webstudio-is/icons";
+import { cssVar } from "../css-var";
 
 export const Popover = Primitive.Root;
 
@@ -19,9 +20,11 @@ export const PopoverPortal = Primitive.Portal;
 export const PopoverAnchor = Primitive.Anchor;
 
 const contentStyle = css({
-  border: `1px solid ${theme.colors.borderMain}`,
-  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
-  background: theme.colors.backgroundMenu,
+  border: `1px solid ${cssVar("--border-default")}`,
+  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${cssVar(
+    "--background-primary"
+  )}`,
+  background: cssVar("--background-primary"),
   borderRadius: theme.borderRadius[6],
   display: "flex",
   flexDirection: "column",
@@ -74,7 +77,7 @@ export const PopoverContent = forwardRef(
   ) => (
     <Primitive.Portal>
       <Primitive.Content
-        sideOffset={sideOffset ?? 4}
+        sideOffset={sideOffset ?? Number.parseFloat(rawTheme.spacing[5])}
         collisionPadding={4}
         className={contentStyle({ className, css })}
         {...props}

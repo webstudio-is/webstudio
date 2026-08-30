@@ -55,6 +55,7 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
 import { createComputedStyleDeclStore } from "~/builder/features/style-panel/shared/model";
+import { cssVar, declareCssVar } from "@webstudio-is/design-system";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
 const stateSheet = createRegularStyleSheet({ name: "state-styles" });
@@ -80,7 +81,7 @@ export const editablePlaceholderAttribute = "data-ws-editable-placeholder";
 // @todo replace with modern typed attr() when supported in all browsers
 // see the second edge case
 // https://developer.mozilla.org/en-US/docs/Web/CSS/attr#backwards_compatibility
-export const editingPlaceholderVariable = "--ws-editing-placeholder";
+const editingPlaceholderVariable = declareCssVar("--editing-placeholder");
 
 const helperStylesShared = [
   // Display a placeholder text for elements that are editable but currently empty
@@ -95,7 +96,7 @@ const helperStylesShared = [
     position: relative;
     display: block;
     &:after {
-      content: var(${editingPlaceholderVariable});
+      content: ${cssVar(editingPlaceholderVariable)};
       position: absolute;
       left: 0;
       right: 0;

@@ -15,6 +15,7 @@ import {
   css,
   theme,
   toast,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { useStore } from "@nanostores/react";
 import { $workspaces, $user } from "~/shared/nano-states";
@@ -35,7 +36,7 @@ const orSeparatorStyle = css({
     content: "''",
     flexGrow: 1,
     height: theme.spacing[1],
-    backgroundColor: theme.colors.borderMain,
+    backgroundColor: cssVar("--border-default"),
   },
 });
 
@@ -308,6 +309,7 @@ export const TransferProjectDialog = ({
         <DialogTitle>Transfer project</DialogTitle>
         <DialogActions>
           <Button
+            color="primary"
             disabled={canSubmit === false}
             state={isSubmitting ? "pending" : undefined}
             onClick={handleSubmit}

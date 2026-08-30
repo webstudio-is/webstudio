@@ -1,4 +1,4 @@
-import type { Locator, Page } from "playwright";
+import type { Locator, Page } from "@playwright/test";
 import { expectLocatorHidden, expectTextHidden } from "./assertions";
 import { waitForCanvasText } from "./builder";
 import { waitForChangeToBeSaved, waitForSyncStatus } from "./sync-status";

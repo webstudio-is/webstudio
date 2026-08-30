@@ -1,8 +1,14 @@
 import { useMemo, type ReactNode } from "react";
-import { css, keyframes, type Rect } from "@webstudio-is/design-system";
-import { theme } from "@webstudio-is/design-system";
+import {
+  css,
+  cssVar,
+  declareCssVar,
+  keyframes,
+  type Rect,
+} from "@webstudio-is/design-system";
+import { canvasToolColors } from "../color-recipes";
 
-const angleVar = `--ws-outline-angle`;
+const angleVar = declareCssVar("--outline-angle");
 
 // Won't work in current FF/Safari, but outline will still work, just no animation.
 const propertyStyle = (
@@ -27,17 +33,19 @@ const baseOutlineStyle = css({
     variant: {
       default: {
         borderStyle: "solid",
-        borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
+        borderColor: canvasToolColors.selectionTranslucent,
       },
       collaboration: {
         [angleVar]: `0deg`,
         borderStyle: "solid",
-        borderImage: `conic-gradient(from var(${angleVar}), #39FBBB 0%, #4A4EFA 12.5%, #E63CFE 25%, #FFAE3C 37.5%, #39FBBB 50%, #4A4EFA 62.5%, #E63CFE 75%, #FFAE3C 87.5%) 1`,
+        borderImage: `conic-gradient(from ${cssVar(
+          angleVar
+        )}, #39FBBB 0%, #4A4EFA 12.5%, #E63CFE 25%, #FFAE3C 37.5%, #39FBBB 50%, #4A4EFA 62.5%, #E63CFE 75%, #FFAE3C 87.5%) 1`,
         animation: `2s ${angleKeyframes} linear infinite`,
       },
       slot: {
         borderStyle: "solid",
-        borderColor: theme.colors.foregroundReusable,
+        borderColor: canvasToolColors.slot,
       },
     },
 
@@ -136,7 +144,13 @@ export const Outline = ({
       {propertyStyle}
       <div
         data-ws-outline={variant ?? "default"}
-        className={`${baseStyle()} ${baseOutlineStyle({ variant, isLeftClamped, isRightClamped, isBottomClamped, isTopClamped })}`}
+        className={`${baseStyle()} ${baseOutlineStyle({
+          variant,
+          isLeftClamped,
+          isRightClamped,
+          isBottomClamped,
+          isTopClamped,
+        })}`}
         style={style}
       >
         {children}

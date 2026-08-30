@@ -27,7 +27,7 @@ import {
   pickedCompletion,
 } from "@codemirror/autocomplete";
 import { javascript } from "@codemirror/lang-javascript";
-import { css } from "@webstudio-is/design-system";
+import { css, cssVar } from "@webstudio-is/design-system";
 import {
   lintExpression,
   allowedStringMethods,
@@ -467,7 +467,9 @@ class VariableWidget extends WidgetType {
   }
   toDOM(): HTMLElement {
     const span = document.createElement("span");
-    span.style.backgroundColor = "rgba(24, 119, 232, 0.2)";
+    span.style.backgroundColor = `color-mix(in oklab, ${cssVar(
+      "--foreground-accent"
+    )} 20%, transparent)`;
     span.textContent = this.text;
     return span;
   }
@@ -527,7 +529,7 @@ const wrapperStyle = css({
     size: {
       default: {
         // 1 line is 16px; show at most 20 lines.
-        "--ws-code-editor-max-height": "320px",
+        ...getCodeEditorCssVars({ minHeight: "auto", maxHeight: "320px" }),
       },
       full: {
         ...getCodeEditorCssVars({ minHeight: "100%", maxHeight: "100%" }),

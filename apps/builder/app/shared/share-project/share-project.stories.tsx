@@ -14,7 +14,7 @@ import {
 } from "./share-project";
 
 export default {
-  title: "Share Project",
+  title: "Share project",
   component: ShareProjectComponent,
 };
 
@@ -111,7 +111,7 @@ const ShareProjectPopover = ({
   return (
     <Popover modal open>
       <PopoverTrigger asChild>
-        <Button>{label}</Button>
+        <Button color="primary">{label}</Button>
       </PopoverTrigger>
       <PopoverContent>
         <ShareProjectComponent
@@ -127,7 +127,7 @@ const ShareProjectPopover = ({
 };
 
 export const ShareProject = () => (
-  <StorySection title="Share Project">
+  <StorySection title="Share project">
     <Flex gap="9" css={{ padding: 100 }}>
       <ShareProjectPopover label="Empty" />
       <ShareProjectPopover label="With Links" linkOptions={initialLinks} />

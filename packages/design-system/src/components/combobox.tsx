@@ -41,6 +41,9 @@ import { Flex } from "./flex";
 import { NestedInputButton } from "./nested-input-button";
 import { InputField } from "./input-field";
 import { Grid } from "./grid";
+import { cssVar, declareCssVar } from "../css-var";
+
+const popperAnchorWidth = declareCssVar("--radix-popper-anchor-width");
 
 export const ComboboxListbox = styled(
   "ul",
@@ -128,19 +131,15 @@ export const ComboboxItemDescription = ({
   return (
     <>
       <ComboboxSeparator
-        style={{
-          display: `var(--ws-combobox-description-display-bottom, none)`,
-          order: "var(--ws-combobox-description-order)",
-        }}
+        data-combobox-description="bottom-separator"
+        css={{ order: 2 }}
       />
       <ListboxItem
+        data-combobox-description="content"
         css={{
           display: "grid",
         }}
         hint
-        style={{
-          order: "var(--ws-combobox-description-order)",
-        }}
       >
         {descriptions.map((description, index) => (
           <Box
@@ -164,10 +163,8 @@ export const ComboboxItemDescription = ({
         </Box>
       </ListboxItem>
       <ComboboxSeparator
-        style={{
-          display: `var(--ws-combobox-description-display-top, none)`,
-          order: "var(--ws-combobox-description-order)",
-        }}
+        data-combobox-description="top-separator"
+        css={{ order: 0 }}
       />
     </>
   );
@@ -178,14 +175,25 @@ export const ComboboxRoot = (props: ComponentProps<typeof Popover>) => {
 };
 
 const StyledPopoverContent = styled(PopoverContent, {
-  minWidth: "var(--radix-popper-anchor-width)",
+  minWidth: cssVar(popperAnchorWidth),
+  '& [data-combobox-description$="separator"]': {
+    display: "none",
+  },
   "&[data-side=top]": {
-    "--ws-combobox-description-display-top": "block",
-    "--ws-combobox-description-order": 0,
+    '& [data-combobox-description="top-separator"]': {
+      display: "block",
+    },
+    '& [data-combobox-description="content"]': {
+      order: 0,
+    },
   },
   "&[data-side=bottom]": {
-    "--ws-combobox-description-display-bottom": "block",
-    "--ws-combobox-description-order": 2,
+    '& [data-combobox-description="bottom-separator"]': {
+      display: "block",
+    },
+    '& [data-combobox-description="content"]': {
+      order: 2,
+    },
   },
 });
 

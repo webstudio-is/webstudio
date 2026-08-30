@@ -1,6 +1,10 @@
-# Builder e2e
+# Builder E2E tests
 
-## Fast local reruns
+Builder E2E workflows run with Playwright Test. The Playwright setup project
+waits for PostgREST, resets the disposable database, and warms the login route
+before Chromium runs the selected tests.
+
+## Run the suite
 
 Use the full command for CI-like validation:
 
@@ -8,18 +12,28 @@ Use the full command for CI-like validation:
 pnpm e2e:builder
 ```
 
-The first run after the migrations change applies the regular migration
-pipeline and writes an ignored schema cache under `.cache/builder-e2e`.
-Subsequent runs in the same checkout restore that cache. CI does not preserve
-it between runs. Refresh it explicitly with:
+The first run after migrations change applies the regular migration pipeline
+and writes an ignored schema cache under `.cache/builder-e2e`. Refresh it
+explicitly with:
 
 ```sh
 pnpm e2e:builder:refresh-schema-cache
 ```
 
-For local test authoring, keep the e2e backend and Builder dev server running
-and rerun only the matching test. This avoids rebuilding Builder and avoids
-restarting Docker for every edit.
+Pass normal Playwright Test arguments after `--`. For example:
+
+```sh
+pnpm e2e:builder -- --grep "Builder can copy, duplicate, and delete a page"
+pnpm e2e:builder -- apps/builder/e2e/tests/pages-actions.e2e.ts
+pnpm e2e:builder -- --debug --grep "Builder can copy"
+```
+
+A filter that matches no tests fails before the test environment runs.
+
+## Fast local reruns
+
+Keep the E2E backend and Builder development server running to avoid rebuilding
+Builder and restarting Docker for each edit.
 
 Terminal 1:
 
@@ -36,69 +50,47 @@ pnpm dev
 Terminal 3:
 
 ```sh
-E2E_TEST_FILTER="Builder can copy, duplicate, and delete a page" pnpm e2e:builder:dev
+pnpm e2e:builder:dev -- --grep "Builder can copy, duplicate, and delete a page"
 ```
 
-`E2E_TEST_FILTER` is a substring match against the test name. It is not a
-regular expression. If the filter matches no tests, the runner fails and prints
-the available test names before starting Docker or building Builder.
+`pnpm e2e:builder:dev` defaults to
+`E2E_BUILDER_URL=https://127.0.0.1:3000`. Override it when the development
+server uses another port. Chromium maps `wstd.dev` and its project subdomains
+to loopback for local Builder URLs, so host-file changes are unnecessary.
 
-Use `E2E_TEST_FILTERS` for a newline-separated list of exact or substring
-matches. Each entry is matched against both the test name and
-`<suite> › <test>`.
+The development backend uses `E2E_DB_BOOTSTRAP=if-empty` and keeps Docker
+containers running. The Playwright setup project still resets test data before
+each invocation.
+
+## Test organization
+
+- Put workflows in `e2e/tests/*.e2e.ts` and import `test` from `e2e/test.ts`.
+- Use Playwright's built-in `browser`, `page`, and hook APIs.
+- Use the built-in `context` fixture for test-local authenticated state.
+- Use `withBrowserContext(browser, callback)` for setup that must run in
+  `beforeAll`. If cookies must survive from `beforeAll` into the tests, create
+  an explicit context with `newBrowserContext(browser)` and close it in
+  `afterAll`.
+- Use `newIsolatedPage(browser)` for identities that must not share cookies.
+- Keep tests in a file independent even though Playwright runs them in
+  declaration order by default.
+
+CI uses Playwright's standard six-way file sharding:
 
 ```sh
-E2E_TEST_FILTERS='Builder can insert through the engine bridge
-Builder-created data variables and resources persist' pnpm e2e:builder
+pnpm e2e:builder -- --shard=1/6
 ```
 
-CI shards the full e2e suite by file name tags such as
-`pages-actions.[shard-3].e2e.ts`. Use `E2E_TEST_SHARD=shard-3` to run one shard.
-The goal is to keep all coverage while preventing one long serial e2e command
-from hitting the command timeout.
+Test filenames do not encode shard ownership. Playwright balances files across
+the configured shards.
 
-When adding a new e2e file, include one shard tag in the filename:
+## Failures
 
-```txt
-my-workflow.[shard-1].e2e.ts
-my-workflow.[shard-2].e2e.ts
-my-workflow.[shard-3].e2e.ts
-```
+CI retries a failed shard once against a clean disposable database. Failed
+shard jobs upload the Playwright HTML report, traces, screenshots, and videos,
+along with the backend service logs.
 
-If one workflow file grows too slow, split it by scenario into files with the
-same base name and different shard tags:
-
-```txt
-large-workflow.[shard-1].e2e.ts
-large-workflow.[shard-2].e2e.ts
-large-workflow.[shard-3].e2e.ts
-```
-
-Choose the shard by current CI timing, not by feature ownership. Put new or
-expensive files into the fastest shard, and rebalance later by renaming files.
-CI retries a failed shard once because a single shard rerun is cheap enough to
-absorb occasional browser/backend flakes.
-
-CI discovers its shard matrix directly from these filename tags. When one test
-file contains enough serial work to dominate a shard, add more shard tags to
-that filename. Its tests are distributed deterministically across those shards
-without duplicating the file or its helpers:
-
-```txt
-large-workflow.[shard-2].[shard-5].[shard-6].e2e.ts
-```
-
-`pnpm e2e:builder:dev` defaults to `E2E_BUILDER_URL=https://127.0.0.1:3000`,
-so it runs against the already-running Vite dev server instead of building and
-serving the production bundle. Override `E2E_BUILDER_URL` when the dev server is
-running on another port. The E2E harness maps `wstd.dev` and project subdomains
-to loopback for Chromium when this URL is loopback, so focused local runs do not
-require machine-level host-file edits.
-
-The dev backend uses `E2E_DB_BOOTSTRAP=if-empty` and keeps Docker containers
-running. The e2e runner still resets test data before each run.
-
-When you need a clean backend:
+When you need a completely clean backend locally:
 
 ```sh
 E2E_SKIP_CLEANUP=false pnpm e2e:builder

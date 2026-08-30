@@ -1764,12 +1764,10 @@ describe("keyword-only properties via parseCssValue", () => {
   });
 
   test("white-space-collapse: var() is accepted and returned as VarValue", () => {
-    expect(parseCssValue("white-space-collapse", "var(--ws-collapse)")).toEqual(
-      {
-        type: "var",
-        value: "ws-collapse",
-      }
-    );
+    expect(parseCssValue("white-space-collapse", "var(--collapse)")).toEqual({
+      type: "var",
+      value: "collapse",
+    });
   });
 
   test("text-wrap-mode: valid keyword", () => {

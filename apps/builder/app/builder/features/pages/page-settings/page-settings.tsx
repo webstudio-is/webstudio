@@ -372,6 +372,7 @@ const NewPageSettingsView = ({
         <DialogTitleActions>
           <TitleSuffixSpacer />
           <Button
+            color="primary"
             state={isSubmitting ? "pending" : "auto"}
             onClick={onSubmit}
             tabIndex={2}

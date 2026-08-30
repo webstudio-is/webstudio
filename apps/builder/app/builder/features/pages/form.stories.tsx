@@ -19,7 +19,9 @@ export const Form = () => (
         <Flex direction="column" gap="3" css={{ padding: 16 }}>
           <Text variant="labels">Page name</Text>
           <InputField defaultValue="Home" />
-          <Button type="submit">Save</Button>
+          <Button color="primary" type="submit">
+            Save
+          </Button>
         </Flex>
       </FormComponent>
     </Flex>

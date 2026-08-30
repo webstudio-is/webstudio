@@ -37,7 +37,7 @@ export const LeftDefault = () => (
         title="Left (default)"
         content={<Text>Content</Text>}
       >
-        <Button>Open on the left</Button>
+        <Button color="primary">Open on the left</Button>
       </FloatingPanelComponent>
     </Container>
   </StorySection>
@@ -52,7 +52,7 @@ export const RightStart = () => (
         title="Right"
         content={<Text>Content</Text>}
       >
-        <Button>Open on the right</Button>
+        <Button color="primary">Open on the right</Button>
       </FloatingPanelComponent>
     </Container>
   </StorySection>
@@ -67,7 +67,7 @@ export const BottomWithin = () => (
         title="Bottom"
         content={<Text>Content</Text>}
       >
-        <Button>Open below</Button>
+        <Button color="primary">Open below</Button>
       </FloatingPanelComponent>
     </Container>
   </StorySection>
@@ -84,7 +84,7 @@ export const Center = () => (
         title="Center"
         content={<Text>Content</Text>}
       >
-        <Button>Open screen-centered</Button>
+        <Button color="primary">Open screen-centered</Button>
       </FloatingPanelComponent>
     </Container>
   </StorySection>
@@ -101,7 +101,7 @@ export const CustomOffsetAndSize = () => (
         title="Custom Offset & Size"
         content={<Text>Content</Text>}
       >
-        <Button>Open with custom offsets</Button>
+        <Button color="primary">Open with custom offsets</Button>
       </FloatingPanelComponent>
     </Container>
   </StorySection>
@@ -116,7 +116,7 @@ export const WithTitleSuffix = () => (
         titleSuffix={<Button color="ghost" prefix={<CopyIcon />} />}
         content={<Text>Panel with a custom title suffix button</Text>}
       >
-        <Button>Open with title suffix</Button>
+        <Button color="primary">Open with title suffix</Button>
       </FloatingPanelComponent>
     </Container>
   </StorySection>
@@ -131,7 +131,7 @@ export const PersistentPanel = () => (
         closeOnInteractOutside={false}
         content={<Text>This panel stays open when clicking outside</Text>}
       >
-        <Button>Open persistent</Button>
+        <Button color="primary">Open persistent</Button>
       </FloatingPanelComponent>
     </Container>
   </StorySection>

@@ -47,7 +47,11 @@ const GalleryOverviewItem = ({
       state={isOpen ? "selected" : isLoading ? "loading" : undefined}
       suffix={
         <Flex shrink={false} align="center">
-          <IconButton {...pressProps} state={isOpen ? "open" : undefined}>
+          <IconButton
+            {...pressProps}
+            state={isOpen ? "open" : undefined}
+            aria-label={`More actions for ${item.name}`}
+          >
             <EllipsesIcon />
           </IconButton>
         </Flex>

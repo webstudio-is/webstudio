@@ -359,8 +359,6 @@ const applyInflation = () => {
     el.removeAttribute(inflatedAttribute);
     el.removeAttribute(gridInflatedAttribute);
     if (el instanceof HTMLElement) {
-      el.style.removeProperty("--ws-inflate-h");
-      el.style.removeProperty("--ws-inflate-w");
       if (wasInflated || wasGridInflated) {
         el.style.removeProperty("grid-template-columns");
         el.style.removeProperty("grid-template-rows");

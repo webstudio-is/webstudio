@@ -37,7 +37,7 @@ const DialogDemo = () => (
   <StorySection title="Dialog">
     <Dialog defaultOpen>
       <DialogTrigger asChild>
-        <Button>Open</Button>
+        <Button color="primary">Open</Button>
       </DialogTrigger>
       <DialogContent>
         <div className={bodyStyle()}>
@@ -49,7 +49,7 @@ const DialogDemo = () => (
               <Button color="ghost">Cancel</Button>
             </DialogClose>
             <DialogClose>
-              <Button color="positive">Save</Button>
+              <Button color="primary">Save</Button>
             </DialogClose>
           </div>
         </div>
@@ -68,7 +68,7 @@ export const ResizableDialog = () => (
   <StorySection title="Resizable dialog">
     <Dialog defaultOpen resize="both">
       <DialogTrigger asChild>
-        <Button>Open resizable</Button>
+        <Button color="primary">Open resizable</Button>
       </DialogTrigger>
       <DialogContent>
         <div className={bodyStyle()}>
@@ -88,7 +88,7 @@ export const WithMaximize = () => (
   <StorySection title="With maximize">
     <Dialog defaultOpen resize="both">
       <DialogTrigger asChild>
-        <Button>Open maximizable</Button>
+        <Button color="primary">Open maximizable</Button>
       </DialogTrigger>
       <DialogContent>
         <div className={bodyStyle()}>
@@ -118,7 +118,7 @@ export const WithActions = () => (
   <StorySection title="With actions">
     <Dialog defaultOpen>
       <DialogTrigger asChild>
-        <Button>Open with actions</Button>
+        <Button color="primary">Open with actions</Button>
       </DialogTrigger>
       <DialogContent>
         <div className={bodyStyle()}>
@@ -130,7 +130,7 @@ export const WithActions = () => (
         </div>
         <DialogActions>
           <DialogClose>
-            <Button color="positive">Save</Button>
+            <Button color="primary">Save</Button>
           </DialogClose>
           <DialogClose>
             <Button color="ghost">Cancel</Button>
@@ -146,7 +146,7 @@ export const NonDraggable = () => (
   <StorySection title="Non-draggable">
     <Dialog defaultOpen draggable={false}>
       <DialogTrigger asChild>
-        <Button>Open non-draggable</Button>
+        <Button color="primary">Open non-draggable</Button>
       </DialogTrigger>
       <DialogContent>
         <div className={bodyStyle()}>

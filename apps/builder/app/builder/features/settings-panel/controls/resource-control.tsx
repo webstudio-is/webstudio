@@ -74,8 +74,8 @@ const ResourceButton = forwardRef<
   ComponentProps<typeof NestedInputButton>
 >((props, ref) => {
   return (
-    <EnhancedTooltip content="Edit Resource">
-      <NestedInputButton {...props} ref={ref} aria-label="Edit Resource">
+    <EnhancedTooltip content="Edit resource">
+      <NestedInputButton {...props} ref={ref} aria-label="Edit resource">
         <GearIcon />
       </NestedInputButton>
     </EnhancedTooltip>
@@ -156,7 +156,7 @@ const ResourceControlPanel = ({
   const form = useRef<HTMLFormElement>(null);
   return (
     <FloatingPanel
-      title="Edit Resource"
+      title="Edit resource"
       open={isResourceOpen}
       onOpenChange={(isOpen) => {
         if (isOpen) {

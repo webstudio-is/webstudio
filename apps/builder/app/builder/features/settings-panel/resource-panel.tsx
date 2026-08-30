@@ -1115,7 +1115,7 @@ export const GraphqlResourceForm = forwardRef<
               onChange={setQuery}
             />
             <EditorDialog
-              title="GraphQL Query"
+              title="GraphQL query"
               content={
                 <TextArea grow={true} value={query} onChange={setQuery} />
               }

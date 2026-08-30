@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import type { Page as PlaywrightPage } from "playwright";
+import type { Page as PlaywrightPage } from "@playwright/test";
 import { bundleVersion } from "@webstudio-is/protocol";
 import { getStyleDeclKey, type Page } from "@webstudio-is/sdk";
 import { loadDevBuild } from "../db";

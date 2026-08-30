@@ -1,8 +1,7 @@
 import { useStore } from "@nanostores/react";
 import type { Meta, StoryFn } from "@storybook/react";
-import { StorySection, Text } from "@webstudio-is/design-system";
-import { ToolbarButton } from "@webstudio-is/design-system";
-import { WebstudioIcon } from "@webstudio-is/icons";
+import { IconButton, StorySection, Text } from "@webstudio-is/design-system";
+import { MenuIcon } from "@webstudio-is/icons";
 import { TopbarLayout } from "~/builder/shared/topbar";
 import { AddressBarPopover } from "./address-bar";
 import { $dataSources, $pages } from "~/shared/sync/data-stores";
@@ -88,9 +87,9 @@ export const AddressBar: StoryFn = () => {
     <StorySection title="Address Bar">
       <TopbarLayout
         menu={
-          <ToolbarButton aria-label="Menu">
-            <WebstudioIcon size={22} />
-          </ToolbarButton>
+          <IconButton type="button" size="large" aria-label="Menu">
+            <MenuIcon size={22} />
+          </IconButton>
         }
         left={<AddressBarPopover />}
       />

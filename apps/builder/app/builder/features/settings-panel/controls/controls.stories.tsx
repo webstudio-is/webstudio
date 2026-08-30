@@ -1,4 +1,10 @@
-import { Flex, StorySection, Text, theme } from "@webstudio-is/design-system";
+import {
+  Flex,
+  StorySection,
+  Text,
+  cssVar,
+  theme,
+} from "@webstudio-is/design-system";
 import { BooleanControl } from "./boolean";
 import { NumberControl } from "./number";
 import { TextControl } from "./text";
@@ -22,7 +28,7 @@ const Section = ({
       variant="labels"
       css={{
         paddingBottom: theme.spacing[3],
-        borderBottom: `1px solid ${theme.colors.borderMain}`,
+        borderBottom: `1px solid ${cssVar("--border-default")}`,
       }}
     >
       {label}

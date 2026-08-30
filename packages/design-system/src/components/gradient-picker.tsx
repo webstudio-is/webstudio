@@ -25,6 +25,13 @@ import { styled, theme } from "../stitches.config";
 import { Flex } from "./flex";
 import { Box } from "./box";
 import { ColorPicker } from "./color-picker";
+import { cssVar, declareCssVar } from "../css-var";
+
+const thumbBorderColor = declareCssVar("--thumb-border-color");
+
+const transparencyChecker = `oklch(from ${cssVar(
+  "--foreground-primary"
+)} l c h / 22%)`;
 
 // Helper to mix two RGB colors
 const mixColors = (
@@ -1014,7 +1021,7 @@ const SliderRoot = styled("div", {
   position: "relative",
   width: "100%",
   height: SLIDER_HEIGHT,
-  border: `1px solid ${theme.colors.borderMain}`,
+  border: `1px solid ${cssVar("--border-default")}`,
   borderRadius: theme.borderRadius[3],
   touchAction: "none",
   userSelect: "none",
@@ -1023,7 +1030,7 @@ const SliderRoot = styled("div", {
     content: '""',
     position: "absolute",
     inset: 0,
-    background: `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%`,
+    background: `repeating-conic-gradient(${transparencyChecker} 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%`,
     pointerEvents: "none",
     backgroundSize: "10px 10px",
     zIndex: -1,
@@ -1039,7 +1046,7 @@ const SliderRoot = styled("div", {
     },
   },
   "&:focus-visible": {
-    boxShadow: `0 0 0 1px ${theme.colors.borderFocus}`,
+    boxShadow: `0 0 0 1px ${cssVar("--border-focus")}`,
   },
 });
 
@@ -1052,14 +1059,14 @@ const SliderTrack = styled("div", {
 });
 
 const SliderThumb = styled(Box, {
-  "--thumb-border-color": theme.colors.borderMain,
+  [thumbBorderColor]: cssVar("--border-default"),
   position: "absolute",
   display: "grid",
   placeItems: "center",
   bottom: `calc(100% + ${theme.spacing[6]})`,
   transform: "translateX(-50%)",
   borderRadius: theme.borderRadius[2],
-  boxShadow: `0 0 0 1px var(--thumb-border-color)`,
+  boxShadow: `0 0 0 1px ${cssVar(thumbBorderColor)}`,
   outline: "none",
   zIndex: 1,
   cursor: "grab",
@@ -1067,8 +1074,8 @@ const SliderThumb = styled(Box, {
     cursor: "grabbing",
   },
   "&:focus-visible, &[aria-selected=true]": {
-    "--thumb-border-color": theme.colors.borderFocus,
-    boxShadow: `0 0 0 1px ${theme.colors.borderFocus}`,
+    [thumbBorderColor]: cssVar("--border-focus"),
+    boxShadow: `0 0 0 1px ${cssVar("--border-focus")}`,
   },
 });
 
@@ -1078,9 +1085,9 @@ const SliderThumbPointer = styled("div", {
   height: theme.spacing[3],
   left: "50%",
   bottom: 0,
-  background: "white",
+  background: cssVar("--background-primary"),
   zIndex: -1,
-  border: `1px solid var(--thumb-border-color)`,
+  border: `1px solid ${cssVar(thumbBorderColor)}`,
   borderTopColor: "transparent",
   borderLeftColor: "transparent",
   borderRadius: theme.borderRadius[1],
@@ -1100,7 +1107,7 @@ const SliderHint = styled(Flex, {
   cursor: "grab",
   touchAction: "none",
   userSelect: "none",
-  color: "black",
+  color: cssVar("--foreground-primary"),
   "&:active": {
     cursor: "grabbing",
   },

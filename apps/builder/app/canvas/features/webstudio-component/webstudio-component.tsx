@@ -41,7 +41,7 @@ import {
   standardAttributesToReactProps,
   getCollectionEntries,
 } from "@webstudio-is/react-sdk";
-import { rawTheme, toast } from "@webstudio-is/design-system";
+import { cssVar, rawTheme, toast } from "@webstudio-is/design-system";
 import {
   Input,
   Link,
@@ -80,10 +80,7 @@ import {
 import { Block } from "../build-mode/block";
 import { BlockBody } from "../build-mode/block-body";
 import { BlockTemplate } from "../build-mode/block-template";
-import {
-  editablePlaceholderAttribute,
-  editingPlaceholderVariable,
-} from "~/canvas/shared/styles";
+import { editablePlaceholderAttribute } from "~/canvas/shared/styles";
 import { richTextPlaceholders } from "@webstudio-is/project-build/runtime";
 import {
   acquireExternalContentRoot,
@@ -238,7 +235,7 @@ const ContentEditable = ({
 
     if (placeholder !== undefined) {
       rootElement.style.setProperty(
-        editingPlaceholderVariable,
+        "--editing-placeholder",
         `'${placeholder.replaceAll("'", "\\'")}'`
       );
     }
@@ -263,8 +260,8 @@ const ErrorStub = forwardRef<
       ref={ref}
       style={{
         padding: rawTheme.spacing[5],
-        border: `1px solid ${rawTheme.colors.borderDestructiveMain}`,
-        color: rawTheme.colors.foregroundDestructive,
+        border: `1px solid ${cssVar("--border-negative")}`,
+        color: cssVar("--foreground-negative"),
       }}
     />
   );

@@ -2,7 +2,7 @@ import { parseCssValue } from "@webstudio-is/css-data";
 import type { ViewAnimation } from "@webstudio-is/sdk";
 
 const newViewAnimation: ViewAnimation = {
-  name: "New Animation",
+  name: "New animation",
   description: "Create a new animation.",
 
   timing: {
@@ -21,7 +21,7 @@ const newViewAnimation: ViewAnimation = {
 
 // @todo: visit https://github.com/argyleink/open-props/blob/main/src/props.animations.css
 const newFadeInViewAnimation: ViewAnimation = {
-  name: "Fade In",
+  name: "Fade in",
   description: "Fade in the element as it scrolls into view.",
 
   timing: {
@@ -41,7 +41,7 @@ const newFadeInViewAnimation: ViewAnimation = {
 };
 
 const newFadeOutViewAnimation: ViewAnimation = {
-  name: "Fade Out",
+  name: "Fade out",
   description: "Fade out the element as it scrolls out of view.",
 
   timing: {
@@ -61,7 +61,7 @@ const newFadeOutViewAnimation: ViewAnimation = {
 };
 
 const newFlyInViewAnimation: ViewAnimation = {
-  name: "Fly In",
+  name: "Fly in",
   description: "A fly in animation moves an element as it scrolls into view.",
 
   timing: {
@@ -81,7 +81,7 @@ const newFlyInViewAnimation: ViewAnimation = {
 };
 
 const newFlyOutViewAnimation: ViewAnimation = {
-  name: "Fly Out",
+  name: "Fly out",
   description:
     "A fly out animation moves an element as it scrolls out of view.",
 
@@ -102,7 +102,7 @@ const newFlyOutViewAnimation: ViewAnimation = {
 };
 
 const newWipeInViewAnimation: ViewAnimation = {
-  name: "Wipe In",
+  name: "Wipe in",
   description:
     "A wipe in is an animation where one scene gradually replaces another as it scrolls into the view.",
 
@@ -129,7 +129,7 @@ const newWipeInViewAnimation: ViewAnimation = {
 };
 
 const newWipeOutViewAnimation: ViewAnimation = {
-  name: "Wipe Out",
+  name: "Wipe out",
   description:
     "A wipe out is an animation where one scene gradually replaces another as it scrolls out of view.",
 
@@ -157,7 +157,7 @@ const newWipeOutViewAnimation: ViewAnimation = {
 };
 
 const newParallaxInAnimation: ViewAnimation = {
-  name: "Parallax In",
+  name: "Parallax in",
   description: "Parallax the element as it scrolls into the view.",
 
   timing: {
@@ -177,7 +177,7 @@ const newParallaxInAnimation: ViewAnimation = {
 };
 
 const newParallaxOutAnimation: ViewAnimation = {
-  name: "Parallax Out",
+  name: "Parallax out",
   description: "Parallax the element as it scrolls out of view.",
 
   timing: {

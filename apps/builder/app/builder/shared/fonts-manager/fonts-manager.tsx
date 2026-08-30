@@ -7,9 +7,9 @@ import {
   findNextListItemIndex,
   Tooltip,
   Text,
-  rawTheme,
   Link,
   Flex,
+  cssVar,
 } from "@webstudio-is/design-system";
 import {
   AssetsShell,
@@ -165,7 +165,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
             >
               <InfoCircleIcon
                 tabIndex={0}
-                color={rawTheme.colors.foregroundSubtle}
+                color={cssVar("--foreground-secondary")}
               />
             </Tooltip>
           ) : undefined
@@ -221,7 +221,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                 >
                   <InfoCircleIcon
                     tabIndex={0}
-                    color={rawTheme.colors.foregroundSubtle}
+                    color={cssVar("--foreground-secondary")}
                     style={{ pointerEvents: "auto" }}
                   />
                 </Tooltip>

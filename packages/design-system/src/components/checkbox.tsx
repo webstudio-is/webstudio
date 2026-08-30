@@ -7,6 +7,8 @@ import { forwardRef, type ComponentProps, type Ref } from "react";
 import * as Primitive from "@radix-ui/react-checkbox";
 import { CheckMarkIcon, MinusIcon } from "@webstudio-is/icons";
 import { type CSS, css, theme, styled } from "../stitches.config";
+import { cssVar } from "../css-var";
+import { restingControlBoundary } from "./form-control-style";
 
 const checkboxStyle = css({
   all: "unset", // reset <button>
@@ -18,17 +20,18 @@ const checkboxStyle = css({
   justifyContent: "center",
   position: "relative",
   borderRadius: theme.borderRadius[3],
-  color: theme.colors.foregroundMain,
-  background: theme.colors.backgroundControls,
-  border: `1px solid ${theme.colors.borderMain}`,
+  color: cssVar("--foreground-primary"),
+  background: cssVar("--background-secondary"),
+  border: `1px solid ${restingControlBoundary}`,
 
   "&:focus-visible": {
-    borderColor: theme.colors.borderFocus,
+    borderColor: cssVar("--border-focus"),
   },
 
   // [data-state] is needed to make selector specificity higher
   "&[data-state]:disabled": {
-    color: theme.colors.foregroundDisabled,
+    color: cssVar("--foreground-disabled"),
+    borderColor: cssVar("--border-default"),
   },
 });
 

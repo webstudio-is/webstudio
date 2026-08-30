@@ -15,6 +15,7 @@ import {
   ProChip,
   TextArea,
   IconButton,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { CopyIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
@@ -36,7 +37,7 @@ const imgStyle = css({
   borderRadius: theme.borderRadius[4],
   borderWidth: 1,
   borderStyle: "solid",
-  borderColor: theme.colors.borderMain,
+  borderColor: cssVar("--border-default"),
 });
 
 const defaultMetaSettings: ProjectMeta = {
@@ -124,7 +125,7 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
         </Flex>
         <InputField
           id={siteNameId}
-          placeholder="Current Site Name"
+          placeholder="Current site name"
           autoFocus={true}
           value={meta.siteName ?? ""}
           onChange={(event) => {
@@ -187,7 +188,9 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
               Upload a square image to display in browser tabs.
             </Text>
             <ImageControl onAssetIdChange={handleSave("faviconAssetId")}>
-              <Button css={{ justifySelf: "start" }}>Upload</Button>
+              <Button color="primary" css={{ justifySelf: "start" }}>
+                Upload
+              </Button>
             </ImageControl>
           </Grid>
         </Grid>

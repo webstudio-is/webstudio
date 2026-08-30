@@ -36,6 +36,7 @@ import {
   theme,
   toast,
   Tooltip,
+  cssVar,
 } from "@webstudio-is/design-system";
 import {
   AspectRatioIcon,
@@ -258,7 +259,7 @@ const AssetUsagesList = ({ usages }: { usages: AssetUsage[] }) => {
 const AssetUsageIndicator = styled(Box, {
   width: 4,
   height: 4,
-  backgroundColor: theme.colors.backgroundStatusAttention,
+  backgroundColor: cssVar("--foreground-warning"),
   borderRadius: "50%",
   pointerEvents: "none",
 });
@@ -583,7 +584,9 @@ const AssetSettingsContent = ({
             Delete
           </Button>
         ) : (
-          <Button onClick={onDelete}>Review & delete</Button>
+          <Button color="primary" onClick={onDelete}>
+            Review & delete
+          </Button>
         )}
 
         <Flex gap="1">

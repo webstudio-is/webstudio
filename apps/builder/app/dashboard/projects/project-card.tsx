@@ -6,9 +6,10 @@ import {
   truncate,
   theme,
   Tooltip,
-  rawTheme,
   Link,
   Box,
+  cssVar,
+  declareCssVar,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -17,14 +18,19 @@ import { ProjectDialogs, type DialogType } from "./project-dialogs";
 import {
   ThumbnailLinkWithAbbr,
   ThumbnailLinkWithImage,
+  thumbnailSurface,
 } from "../shared/thumbnail";
 import { Spinner } from "../shared/spinner";
 import { Card, CardContent, CardFooter } from "../shared/card";
 import type { User } from "~/shared/db/user.server";
 import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
+import { brandColors } from "~/shared/brand-colors";
 
-const infoIconStyle = css({ flexShrink: 0 });
+const infoIconStyle = css({ flexShrink: 0, opacity: 0.8 });
+const prefetchImageBackground = declareCssVar(
+  "--project-card-prefetch-image-background"
+);
 
 const PublishedLink = ({
   domain,
@@ -116,16 +122,16 @@ export const ProjectCard = ({
     <Card hidden={isHidden} {...props}>
       <CardContent
         css={{
-          background: theme.colors.brandBackgroundProjectCardBack,
+          background: thumbnailSurface,
           [`&:hover`]: {
-            "--ws-project-card-prefetch-image-background": `url(${linkPath}cgi/empty.gif)`,
+            [prefetchImageBackground]: `url(${linkPath}cgi/empty.gif)`,
           },
         }}
       >
         {/* This div with backgorundImage on card hover is used to prefetch DNS of the project domain on hover. */}
         <Box
           css={{
-            backgroundImage: `var(--ws-project-card-prefetch-image-background, none)`,
+            backgroundImage: cssVar(prefetchImageBackground, "none"),
             visibility: "hidden",
             position: "absolute",
             width: 1,
@@ -153,7 +159,7 @@ export const ProjectCard = ({
                   color="contrast"
                   key={tag.id}
                   css={{
-                    background: "oklch(0 0 0 / 0.3)",
+                    background: brandColors.scrim,
                     borderRadius: theme.borderRadius[3],
                     paddingInline: theme.spacing[3],
                   }}
@@ -200,11 +206,7 @@ export const ProjectCard = ({
                 </Text>
               }
             >
-              <InfoCircleIcon
-                color={rawTheme.colors.foregroundSubtle}
-                tabIndex={-1}
-                className={infoIconStyle()}
-              />
+              <InfoCircleIcon tabIndex={-1} className={infoIconStyle()} />
             </Tooltip>
           </Flex>
           {isPublished ? (

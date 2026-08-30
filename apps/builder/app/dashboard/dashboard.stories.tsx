@@ -7,6 +7,7 @@ import {
   StorySection,
   Text,
   theme,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { Dashboard, DashboardSetup } from "./dashboard";
 import { Card as CardComponent, CardContent, CardFooter } from "./shared/card";
@@ -156,9 +157,7 @@ export const Card = () => (
     <Flex gap="3" wrap="wrap" align="start">
       <Box css={{ width: theme.spacing[30] }}>
         <CardComponent>
-          <CardContent
-            css={{ background: theme.colors.brandBackgroundProjectCardFront }}
-          />
+          <CardContent css={{ background: cssVar("--background-secondary") }} />
           <CardFooter>
             <Text truncate>My project</Text>
           </CardFooter>
@@ -166,9 +165,7 @@ export const Card = () => (
       </Box>
       <Box css={{ width: theme.spacing[30] }}>
         <CardComponent aria-selected={true}>
-          <CardContent
-            css={{ background: theme.colors.brandBackgroundProjectCardFront }}
-          />
+          <CardContent css={{ background: cssVar("--background-secondary") }} />
           <CardFooter>
             <Text truncate>Selected project</Text>
           </CardFooter>
@@ -178,7 +175,7 @@ export const Card = () => (
         <Box key={title} css={{ width: theme.spacing[30] }}>
           <CardComponent>
             <CardContent
-              css={{ background: theme.colors.brandBackgroundProjectCardFront }}
+              css={{ background: cssVar("--background-secondary") }}
             />
             <CardFooter>
               <Text truncate>{title}</Text>

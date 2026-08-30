@@ -1,5 +1,6 @@
 import {
   Button,
+  cssVar,
   theme,
   Text,
   Tooltip,
@@ -158,10 +159,10 @@ const StatusIcon = (props: { projectDomain: Domain; isLoading: boolean }) => {
           width: theme.sizes.controlHeight,
           height: theme.sizes.controlHeight,
           color: props.isLoading
-            ? theme.colors.foregroundDisabled
+            ? cssVar("--foreground-secondary")
             : isVerifiedActive
-              ? theme.colors.foregroundSuccessText
-              : theme.colors.foregroundDestructive,
+              ? cssVar("--foreground-positive")
+              : cssVar("--foreground-negative"),
         }}
       >
         <Icon />
@@ -372,7 +373,6 @@ const DomainItem = ({
             // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
             formAction={handleVerify}
             state={isCheckStateInProgress ? "pending" : undefined}
-            color="neutral"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
           >
             Check status
@@ -389,7 +389,6 @@ const DomainItem = ({
             // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
             formAction={handleUpdateStatus}
             state={isCheckStateInProgress ? "pending" : undefined}
-            color="neutral"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
           >
             Check status
@@ -525,7 +524,7 @@ const DomainItem = ({
           }}
         >
           <Separator css={{ alignSelf: "unset" }} />
-          <Text color="main">OR</Text>
+          <Text color="main">or</Text>
           <Separator css={{ alignSelf: "unset" }} />
         </Grid>
 
@@ -582,3 +581,6 @@ export const Domains = ({
     </>
   );
 };
+
+undefined;
+undefined;

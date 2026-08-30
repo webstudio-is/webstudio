@@ -6,11 +6,13 @@ import {
   rawTheme,
   Text,
   theme,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { GithubIcon, GoogleIcon, WebstudioIcon } from "@webstudio-is/icons";
 import { Form } from "@remix-run/react";
 import { authPath } from "~/shared/router-utils";
 import { SecretLogin } from "./secret-login";
+import { brandColors } from "~/shared/brand-colors";
 
 const globalStyles = globalCss({
   body: {
@@ -41,7 +43,11 @@ export const Login = ({
       justify="center"
       css={{
         height: "100vh",
-        background: theme.colors.brandBackgroundDashboard,
+        color: cssVar("--foreground-primary"),
+        background: `linear-gradient(
+          light-dark(transparent, ${cssVar("--overlay-scrim")}),
+          light-dark(transparent, ${cssVar("--overlay-scrim")})
+        ), ${brandColors.dashboard}`,
       }}
     >
       <Flex
@@ -54,7 +60,10 @@ export const Login = ({
           padding: theme.spacing[17],
           borderRadius: theme.spacing[5],
           [`@media (min-width: ${rawTheme.spacing[35]})`]: {
-            backgroundColor: `rgba(255, 255, 255, 0.5)`,
+            backgroundColor: `light-dark(
+              ${brandColors.panelTranslucent},
+              ${cssVar("--background-primary")}
+            )`,
           },
         }}
       >
@@ -80,7 +89,7 @@ export const Login = ({
                 prefix={<GithubIcon size={22} fill="currentColor" />}
                 color="ghost"
                 css={{
-                  border: `1px solid ${theme.colors.borderDark}`,
+                  border: `1px solid ${cssVar("--border-default")}`,
                   height: theme.spacing[15],
                 }}
                 formAction={authPath({ provider: "github" })}

@@ -2,22 +2,22 @@ import {
   AccessibleIcon,
   css,
   Grid,
-  Link,
+  LinkButton,
   Text,
   theme,
-  buttonStyle,
 } from "@webstudio-is/design-system";
 import { WebstudioIcon } from "@webstudio-is/icons";
+import { brandColors } from "~/shared/brand-colors";
 
 const pageStyle = css({
   position: "fixed",
   justifyItems: "center",
   alignContent: "start",
   inset: 0,
-  background: theme.colors.brandBackgroundDashboard,
+  background: brandColors.dashboard,
   paddingTop: "10vh",
   // prevent global root styles override error color
-  color: theme.colors.black,
+  color: brandColors.foreground,
 });
 
 export const ErrorMessage = ({
@@ -57,7 +57,7 @@ export const ErrorMessage = ({
       >
         <Grid
           css={{
-            background: theme.colors.backgroundPanel,
+            background: brandColors.panel,
             padding: theme.spacing[7],
             borderRadius: theme.spacing[5],
             minWidth: theme.spacing[34],
@@ -89,14 +89,9 @@ export const ErrorMessage = ({
             </Text>
           )}
         </Grid>
-        <Link
-          href="/"
-          className={buttonStyle()}
-          color="contrast"
-          underline="none"
-        >
-          Go Home
-        </Link>
+        <LinkButton color="primary" href="/">
+          Go home
+        </LinkButton>
       </Grid>
     </Grid>
   );

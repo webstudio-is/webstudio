@@ -6,16 +6,28 @@
  */
 import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
+import { cssVar } from "../css-var";
+import { styleSourceColor } from "./style-source-color";
+import {
+  selectedControlBackground,
+  selectedControlHoverBackground,
+  selectedControlPressedBackground,
+  withInteractionOverlay,
+} from "./control-state-color";
 
 const openOrHoverStateStyle = {
-  backgroundColor: theme.colors.backgroundHover,
+  backgroundColor: cssVar("--overlay-interaction-hover"),
+};
+
+const pressedStateStyle = {
+  backgroundColor: cssVar("--overlay-interaction-pressed"),
 };
 
 const disabledVariantStyles = {
   "&:disabled, &[aria-disabled=true]": {
-    color: theme.colors.foregroundDisabled,
-    "&:hover": {
-      backgroundColor: theme.colors.backgroundHover,
+    color: cssVar("--foreground-disabled"),
+    "&:hover, &:active": {
+      background: "transparent",
     },
   },
 };
@@ -40,73 +52,116 @@ export const IconButton = styled("button", {
   outline: "none",
 
   "&[data-focused=true], &:focus-visible": {
-    borderColor: theme.colors.borderFocus,
+    borderColor: cssVar("--border-focus"),
   },
 
   "&:disabled, &[aria-disabled=true]": {
     borderColor: "transparent",
-    backgroundColor: "transparent",
+    background: "transparent",
   },
 
   // https://www.radix-ui.com/docs/primitives/components/popover#trigger
   "&[data-state=open]": openOrHoverStateStyle,
 
   variants: {
+    size: {
+      regular: {},
+      large: {
+        minWidth: theme.spacing[13],
+        width: theme.spacing[13],
+        height: theme.spacing[13],
+      },
+    },
     variant: {
       default: {
-        color: theme.colors.foregroundMain,
+        color: cssVar("--foreground-primary"),
+        "&[data-state=off]": {
+          color: cssVar("--foreground-secondary"),
+        },
         "&:hover, &[data-hovered=true]": openOrHoverStateStyle,
+        "&:active": pressedStateStyle,
         // According to the design https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3199&t=lpT9jFuaiUnz1Foa-0
         // only the default variant has different toggle state
         // https://www.radix-ui.com/docs/primitives/components/toggle#root
-        "&[data-state=on]": {
-          backgroundColor: theme.colors.backgroundPresetMain,
-          borderColor: theme.colors.borderMain,
+        "&[data-state=on], &[aria-pressed=true], &[aria-selected=true], &[aria-checked=true]":
+          {
+            backgroundColor: cssVar("--overlay-interaction-hover"),
+            borderColor: "transparent",
 
-          "&:hover, &[data-hovered=true]": openOrHoverStateStyle,
-        },
+            "&:hover, &[data-hovered=true]": {
+              background: cssVar("--overlay-interaction-pressed"),
+            },
+            "&:active": {
+              background: cssVar("--overlay-interaction-pressed"),
+            },
+          },
         "&[data-focused=true], &:focus-visible": {
-          borderColor: theme.colors.borderFocus,
+          borderColor: cssVar("--border-focus"),
         },
         ...disabledVariantStyles,
       },
 
       preset: {
-        backgroundColor: theme.colors.backgroundPresetMain,
-        borderColor: theme.colors.borderMain,
-        color: theme.colors.foregroundMain,
+        backgroundColor: selectedControlBackground,
+        borderColor: cssVar("--border-default"),
+        color: cssVar("--foreground-primary"),
         "&:hover, &[data-hovered=true]": {
-          backgroundColor: theme.colors.backgroundPresetHover,
+          background: selectedControlHoverBackground,
+        },
+        "&:active": {
+          background: selectedControlPressedBackground,
         },
         ...disabledVariantStyles,
       },
 
       local: {
-        backgroundColor: theme.colors.backgroundLocalMain,
-        borderColor: theme.colors.borderLocalMain,
-        color: theme.colors.foregroundLocalMain,
+        backgroundColor: styleSourceColor.local.background,
+        borderColor: styleSourceColor.local.border,
+        color: styleSourceColor.local.foreground,
         "&:hover, &[data-hovered=true]": {
-          backgroundColor: theme.colors.backgroundLocalHover,
+          background: withInteractionOverlay(styleSourceColor.local.background),
+        },
+        "&:active": {
+          background: withInteractionOverlay(
+            styleSourceColor.local.background,
+            cssVar("--overlay-interaction-pressed")
+          ),
         },
         ...disabledVariantStyles,
       },
 
       overwritten: {
-        backgroundColor: theme.colors.backgroundOverwrittenMain,
-        borderColor: theme.colors.borderOverwrittenMain,
-        color: theme.colors.foregroundOverwrittenMain,
+        backgroundColor: styleSourceColor.overwritten.background,
+        borderColor: styleSourceColor.overwritten.border,
+        color: styleSourceColor.overwritten.foreground,
         "&:hover, &[data-hovered=true]": {
-          backgroundColor: theme.colors.backgroundOverwrittenHover,
+          background: withInteractionOverlay(
+            styleSourceColor.overwritten.background
+          ),
+        },
+        "&:active": {
+          background: withInteractionOverlay(
+            styleSourceColor.overwritten.background,
+            cssVar("--overlay-interaction-pressed")
+          ),
         },
         ...disabledVariantStyles,
       },
 
       remote: {
-        backgroundColor: theme.colors.backgroundRemoteMain,
-        borderColor: theme.colors.borderRemoteMain,
-        color: theme.colors.foregroundRemoteMain,
+        backgroundColor: styleSourceColor.remote.background,
+        borderColor: styleSourceColor.remote.border,
+        color: styleSourceColor.remote.foreground,
         "&:hover, &[data-hovered=true]": {
-          backgroundColor: theme.colors.backgroundRemoteHover,
+          background: withInteractionOverlay(
+            styleSourceColor.remote.background
+          ),
+        },
+        "&:active": {
+          background: withInteractionOverlay(
+            styleSourceColor.remote.background,
+            cssVar("--overlay-interaction-pressed")
+          ),
         },
         ...disabledVariantStyles,
       },
@@ -117,6 +172,7 @@ export const IconButton = styled("button", {
   },
 
   defaultVariants: {
+    size: "regular",
     variant: "default",
   },
 });

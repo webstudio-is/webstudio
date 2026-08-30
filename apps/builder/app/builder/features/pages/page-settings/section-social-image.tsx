@@ -100,7 +100,6 @@ export const SocialImageSection = ({
           <Button
             id={socialImageAssetButtonId}
             css={{ justifySelf: "start" }}
-            color="neutral"
             disabled={disabled}
           >
             Choose image from assets
@@ -134,3 +133,5 @@ export const SocialImageSection = ({
     </Grid>
   );
 };
+
+undefined;

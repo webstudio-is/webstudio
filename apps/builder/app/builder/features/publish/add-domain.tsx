@@ -140,7 +140,6 @@ export const AddDomain = ({
           </Button>
 
           <Button
-            color={"dark"}
             prefix={<TerminalIcon />}
             type="button"
             onClick={onExportClick}
@@ -153,3 +152,5 @@ export const AddDomain = ({
     </>
   );
 };
+
+undefined;

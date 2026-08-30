@@ -4,12 +4,12 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   Button,
+  cssVar,
   Flex,
   Kbd,
   Label,
   Text,
   Tooltip,
-  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { AlertIcon } from "@webstudio-is/icons";
@@ -155,7 +155,7 @@ export const PropertyLabel = ({
               {readOnly && (
                 <Flex gap="1">
                   <AlertIcon
-                    color={rawTheme.colors.backgroundAlertMain}
+                    color={cssVar("--foreground-warning")}
                     style={{ flexShrink: 0 }}
                   />
                   <Text>
@@ -166,7 +166,7 @@ export const PropertyLabel = ({
               )}
               {canDelete && (
                 <Button
-                  color="dark"
+                  color="neutral-destructive"
                   // to align button text in the middle
                   prefix={<div></div>}
                   suffix={<Kbd value={["alt", "click"]} color="moreSubtle" />}
@@ -255,7 +255,7 @@ export const FieldLabel = ({
               {description}
               {canReset && (
                 <Button
-                  color="dark"
+                  color="neutral-destructive"
                   // to align button text in the middle
                   prefix={<div></div>}
                   suffix={<Kbd value={["alt", "click"]} color="moreSubtle" />}

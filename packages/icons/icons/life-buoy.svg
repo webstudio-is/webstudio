@@ -8,10 +8,10 @@
   stroke-linecap="round"
   stroke-linejoin="round"
 >
-  <circle cx="7.99483" cy="7.995" r="6.665" stroke="black" />
+  <circle cx="7.99483" cy="7.995" r="6.665" />
   <path d="M3.2865 3.28667L6.11317 6.11333" />
   <path d="M9.88647 6.11333L12.7131 3.28667" />
   <path d="M9.88647 9.88667L12.7131 12.7133" />
   <path d="M6.11317 9.88667L3.2865 12.7133" />
-  <circle cx="7.99483" cy="7.995" r="2.665" stroke="black" />
+  <circle cx="7.99483" cy="7.995" r="2.665" />
 </svg>

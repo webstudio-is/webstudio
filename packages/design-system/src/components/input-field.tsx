@@ -17,6 +17,7 @@ import { css, theme, type CSS } from "../stitches.config";
 import { ArrowFocus } from "./primitives/arrow-focus";
 import { mergeRefs } from "@react-aria/utils";
 import { useFocusWithin } from "@react-aria/interactions";
+import { cssVar } from "../css-var";
 
 // we only support types that behave more or less like a regular text input
 export const inputFieldTypes = [
@@ -33,7 +34,7 @@ export const inputFieldColors = ["placeholder", "set", "error"] as const;
 
 const inputStyle = css({
   all: "unset",
-  color: theme.colors.foregroundMain,
+  color: cssVar("--foreground-primary"),
   flexGrow: 1,
   flexShrink: 1,
   minWidth: 0,
@@ -42,12 +43,12 @@ const inputStyle = css({
   paddingLeft: theme.spacing[3],
   "&[data-color=placeholder]:not(:hover, :disabled, [aria-disabled=true], :focus), &::placeholder":
     {
-      color: theme.colors.foregroundSubtle,
+      color: cssVar("--foreground-secondary"),
     },
-  "&[data-color=error]": { color: theme.colors.foregroundDestructive },
+  "&[data-color=error]": { color: cssVar("--foreground-negative") },
   "&:disabled, &[aria-disabled=true]": {
     "&, &::placeholder": {
-      color: theme.colors.foregroundDisabled,
+      color: cssVar("--foreground-disabled"),
     },
   },
   '&[type="number"]': {
@@ -82,23 +83,23 @@ const containerStyle = css({
   minWidth: 0,
   alignItems: "center",
   borderRadius: theme.borderRadius[4],
-  border: `solid 1px transparent`,
-  backgroundColor: theme.colors.backgroundControls,
+  border: "solid 1px transparent",
+  backgroundColor: cssVar("--background-secondary"),
   "&:hover": {
-    borderColor: theme.colors.borderMain,
+    borderColor: cssVar("--border-default"),
   },
   "&:focus-within": {
-    borderColor: theme.colors.borderFocus,
+    borderColor: cssVar("--border-focus"),
     outline: "none",
   },
   "&:has([data-input-field-input][data-color=error])": {
-    borderColor: theme.colors.borderDestructiveMain,
+    borderColor: cssVar("--border-negative"),
   },
   "&:focus-within:has([data-color=error])": {
-    borderColor: theme.colors.borderDestructiveMain,
+    borderColor: cssVar("--border-negative"),
   },
   "&:has([data-input-field-input]:is(:disabled, [aria-disabled=true]))": {
-    backgroundColor: theme.colors.backgroundInputDisabled,
+    backgroundColor: cssVar("--background-disabled"),
   },
 
   variants: {

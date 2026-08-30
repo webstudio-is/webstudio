@@ -7,8 +7,8 @@ import { StorySection, StoryGrid } from "./storybook";
 export default {
   title: "List Position Indicator",
   parameters: {
-    // to make white outline visible
-    backgrounds: { default: "Maintenance Medium" },
+    // Make the on-inverse outline visible.
+    backgrounds: { default: "Inverse" },
   },
 };
 

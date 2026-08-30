@@ -18,7 +18,6 @@ import {
   theme,
   textVariants,
   InputErrorsTooltip,
-  ToolbarButton,
   Popover,
   PopoverTrigger,
   PopoverContent,
@@ -369,11 +368,7 @@ export const AddressBarPopover = () => {
   if (isPathnamePattern(path) === false) {
     return (
       <Tooltip {...tooltipProps}>
-        <ToolbarButton
-          {...buttonProps}
-          aria-label="Copy page URL"
-          tabIndex={0}
-        />
+        <IconButton {...buttonProps} type="button" aria-label="Copy page URL" />
       </Tooltip>
     );
   }
@@ -387,11 +382,11 @@ export const AddressBarPopover = () => {
       }}
     >
       <PopoverTrigger asChild>
-        <ToolbarButton aria-label="Toggle dynamic page address" tabIndex={0}>
+        <IconButton type="button" aria-label="Toggle dynamic page address">
           <DynamicPageIcon />
-        </ToolbarButton>
+        </IconButton>
       </PopoverTrigger>
-      <PopoverContent sideOffset={0} collisionPadding={4} align="start">
+      <PopoverContent collisionPadding={4} align="start">
         <AddressBar ref={formRef} onSubmit={() => setIsOpen(false)} />
       </PopoverContent>
     </Popover>

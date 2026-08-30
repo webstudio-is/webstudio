@@ -8,6 +8,8 @@ yarn.lock
 
 # testing
 coverage
+playwright-report
+test-results
 
 # remix
 build

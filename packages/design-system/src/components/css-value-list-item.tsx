@@ -12,6 +12,7 @@ import { Box } from "./box";
 import { theme } from "../stitches.config";
 import { DragHandleIcon } from "@webstudio-is/icons";
 import { ArrowFocus } from "./primitives/arrow-focus";
+import { cssVar } from "../css-var";
 
 const listItemAttribute = "data-list-item";
 const listItemAttributes = { [listItemAttribute]: true };
@@ -20,7 +21,7 @@ const DragHandleIconStyled = styled(DragHandleIcon, {
   width: theme.spacing[7],
   visibility: "hidden",
   cursor: "grab",
-  color: theme.colors.foregroundSubtle,
+  color: cssVar("--foreground-secondary"),
   flexShrink: 0,
 });
 
@@ -94,7 +95,7 @@ const ItemButton = styled("button", {
       display: "flex",
     },
     outline: "none",
-    backgroundColor: theme.colors.backgroundHover,
+    backgroundColor: cssVar("--overlay-interaction-hover"),
   },
   variants: {
     hidden: {
@@ -130,7 +131,7 @@ const ItemWrapper = styled("div", {
   width: "100%",
   "&:hover, &:focus-within, &[data-active=true]": {
     [`& ${ItemButton}`]: {
-      backgroundColor: theme.colors.backgroundHover,
+      backgroundColor: cssVar("--overlay-interaction-hover"),
       [`&[data-draggable=true] ${DragHandleIconStyled}`]: {
         visibility: "visible",
       },

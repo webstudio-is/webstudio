@@ -1,5 +1,5 @@
 import type { MouseEvent } from "react";
-import { Grid, Box, theme, styled } from "@webstudio-is/design-system";
+import { Grid, Box, cssVar, theme, styled } from "@webstudio-is/design-system";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import type { Modifiers } from "../../shared/modifier-keys";
 
@@ -15,12 +15,12 @@ const Trapezoid = styled("div", {
   justifyContent: "center",
 
   "&:hover": {
-    backgroundColor: theme.colors.backgroundSpacingHover,
+    backgroundColor: cssVar("--overlay-interaction-hover"),
   },
   variants: {
     isActive: {
       true: {
-        backgroundColor: theme.colors.backgroundSpacingHover,
+        backgroundColor: cssVar("--overlay-interaction-hover"),
       },
     },
   },
@@ -28,12 +28,12 @@ const Trapezoid = styled("div", {
 
 const TopBottom = styled(Trapezoid, {
   zIndex: 0,
-  backgroundColor: theme.colors.backgroundSpacingTopBottom,
+  backgroundColor: cssVar("--background-secondary"),
 });
 
 const LeftRight = styled(Trapezoid, {
   zIndex: 1,
-  backgroundColor: theme.colors.backgroundSpacingLeftRight,
+  backgroundColor: cssVar("--background-secondary"),
 });
 
 export type InsetProperty = "top" | "right" | "bottom" | "left";
@@ -81,7 +81,7 @@ export const InsetLayout = ({
       css={{
         borderRadius: OUTER_BORDER_RADIUS,
 
-        borderColor: theme.colors.borderMain,
+        borderColor: cssVar("--border-default"),
         borderWidth: 1,
         borderStyle: "solid",
 
@@ -98,10 +98,10 @@ export const InsetLayout = ({
         css={{
           borderRadius: RECT_BORDER_RADIUS,
           gridArea: "2/2/3/5",
-          backgroundColor: theme.colors.backgroundControls,
+          backgroundColor: cssVar("--background-secondary"),
           borderWidth: 1,
           borderStyle: "solid",
-          borderColor: theme.colors.borderMain,
+          borderColor: cssVar("--border-default"),
           zIndex: 2,
         }}
       />

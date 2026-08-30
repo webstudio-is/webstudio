@@ -140,7 +140,7 @@ const BreakpointEditorItem = ({
             css={{ width: theme.spacing[28] }}
             options={["maxWidth", "minWidth"]}
             getLabel={(option) =>
-              option === "maxWidth" ? "Max Width" : "Min Width"
+              option === "maxWidth" ? "Max width" : "Min width"
             }
             value={type}
             onChange={(value) => {
