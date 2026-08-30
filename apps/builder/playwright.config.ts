@@ -1,5 +1,9 @@
 import { defineConfig } from "@playwright/test";
-import { builderUrl, getBrowserLaunchOptions } from "./e2e/test";
+import {
+  browserContextOptions,
+  builderUrl,
+  getBrowserLaunchOptions,
+} from "./e2e/test";
 
 const testTimeout =
   Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 120_000;
@@ -14,8 +18,7 @@ export default defineConfig({
   retries: 0,
   reporter: process.env.CI ? [["line"], ["html", { open: "never" }]] : "line",
   use: {
-    ignoreHTTPSErrors: true,
-    permissions: ["clipboard-read", "clipboard-write"],
+    ...browserContextOptions,
     launchOptions: getBrowserLaunchOptions(),
     trace: "retain-on-failure",
     screenshot: "only-on-failure",

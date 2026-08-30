@@ -17,7 +17,7 @@ export const dashboardUrl = `${builderUrlObject.protocol}//wstd.dev:${builderUrl
 
 export const postgrestUrl = env.POSTGREST_URL;
 
-const browserContextOptions: BrowserContextOptions = {
+export const browserContextOptions: BrowserContextOptions = {
   ignoreHTTPSErrors: true,
   permissions: ["clipboard-read", "clipboard-write"],
 };
@@ -60,7 +60,7 @@ export const newIsolatedPage = async (browser: Browser) => {
   const context = await newBrowserContext(browser);
   return {
     page: await context.newPage(),
-    close: async () => await context.close(),
+    close: () => context.close(),
   };
 };
 
@@ -91,13 +91,4 @@ export const getProjectBuilderUrl = ({
 
 export const getProjectIdFromBuilderUrl = (url: string) => {
   return parseBuilderUrl(url).projectId;
-};
-
-export const assert = (
-  condition: unknown,
-  message: string
-): asserts condition => {
-  if (condition === false || condition === undefined || condition === null) {
-    throw new Error(message);
-  }
 };
