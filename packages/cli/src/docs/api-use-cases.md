@@ -451,6 +451,32 @@ Notes:
 - Put reusable insertable options inside the Content Block's `ws:block-template` child. A template is source material, not editor content: editors cannot edit or delete it directly. When an editor inserts a template, its copy becomes a direct child of the Content Block and is editable.
 - Before handing off a page, verify with `inspect-instance` that the intended text, images, and links are inside a Content Block, and that templates include all required styling because Content-mode editors cannot use the Style panel.
 
+## Store Content Block content in MDX
+
+Commands:
+
+- MCP tool: list-assets {"type":"file"}
+- MCP tool: upload-asset {"asset":{"name":"article.mdx","type":"file","format":"mdx","meta":{}},"assetsDir":".webstudio/assets"}
+- MCP tool: connect-content-block-source {"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example","source":{"type":"asset","assetId":"<mdxAssetId>"}}
+- MCP tool: inspect-content-block-source {"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example"}
+- MCP tool: edit-content-block-source {"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example","source":"# Article title\n\nArticle body."}
+- MCP tool: update-content-block-frontmatter {"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example","properties":{"title":"Article title","draft":false}}
+- MCP tool: disconnect-content-block-source {"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example"}
+
+Notes:
+
+- Create the local `.mdx` file under `.webstudio/assets` before calling `upload-asset`. Use the returned Asset ID when connecting it.
+- Use the Content Block source operations for connecting, switching, inspecting, editing, reloading, and disconnecting. Do not create or delete the `src` prop with generic prop tools; the source operations preserve the Body outlet and Content Block lifecycle.
+- `renderScope` is a stable key for the rendered occurrence. Use a page-based key for a direct Content Block. For a repeated Collection occurrence, use a distinct key and pass the scoped values required to resolve an expression source. For example, use `source:{"type":"expression","value":"post.assetId"}` with `variables:{"post":{"assetId":"<mdxAssetId>"}}`.
+- Connecting replaces existing Body content. If the result returns `requiresConfirmation:true`, report that replacement to the user and repeat the same call with `confirmReplacement:true` only after approval.
+- Prefer Markdown for headings, paragraphs, links, lists, tables, images, code, and every property Markdown can represent. Use `<ws.element ws:name="Template name">` only for a Content Block template or authored property that Markdown cannot express.
+- Read the Content Block's Templates children before writing `ws:name`. The value must exactly match a unique top-level template instance name. Preserve unresolved names and report their diagnostics instead of deleting them.
+- `edit-content-block-source` replaces the complete MDX source. Preserve frontmatter and unrelated source when making a bounded edit.
+- `update-content-block-frontmatter` replaces the complete frontmatter mapping. Inspect the current source first and include every property that must remain.
+- Use `update-content-block-frontmatter` for MCP frontmatter edits. MDX-rendered elements are not persistent instance targets for generic `bind-props` or `update-text` calls. Preserve existing `mode:"readwrite"` bindings when encountered; they are valid only for exact direct paths into the connected document's frontmatter. Keep computed expressions and `$ref` values read-only.
+- Inspect every returned diagnostic. Invalid MDX is saved rather than silently repaired; preserve the source, report the source range, and fix only the requested or invalid part.
+- If an edit in a long-lived MCP session reports a conflict after another client saved the Asset, call `reload-content-block-source`, inspect the latest source, reapply the requested change, and retry. One-shot CLI calls refresh before each operation and normally cannot reproduce a stale session. Never overwrite the newer revision blindly.
+
 ## Move elements
 
 Commands:

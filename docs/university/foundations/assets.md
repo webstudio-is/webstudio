@@ -70,7 +70,9 @@ Converting an empty text file to `.json` initializes it with an empty object.
 Markdown, MDX, and JSON files in Assets can be the source of truth for a site. The
 Content Engine reads their structured fields, queries the files, and resolves
 links between them. See [Content Engine](content-engine.md) for the supported
-file structure and a complete article workflow.
+file structure and a complete article workflow. Connect an MDX file to a
+[Content Block](../core-components/content-block.md#store-content-in-an-mdx-file)
+when editors should update its body visually in Content mode.
 
 ## Organizing assets with folders
 
@@ -168,6 +170,7 @@ Builder.
 ## Related
 
 - [Content Engine](content-engine.md) – Build sites from Markdown and JSON files in Assets
+- [Content Block](../core-components/content-block.md) – Edit an MDX document visually in Content mode
 - [Anatomy of the builder](anatomy-of-the-webstudio-builder.md) – Overview of all builder panels
 - [Image](../core-components/image.md) – Display images from assets or external URLs
 - [Commands & search](commands-and-search.md) – Quickly find and delete unused assets

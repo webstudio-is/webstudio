@@ -532,6 +532,9 @@ export const runtimeOperationContractData = [
             },
           ],
         },
+        confirmReplacement: {
+          type: "boolean",
+        },
       },
       required: ["blockInstanceId", "renderScope", "source"],
     },

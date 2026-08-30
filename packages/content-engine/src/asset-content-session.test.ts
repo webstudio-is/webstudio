@@ -187,6 +187,37 @@ describe("Asset content session", () => {
     });
   });
 
+  test("reload discards the conflicted local source", async () => {
+    let source = "Initial";
+    const session = createAssetContentSession({
+      repository: {
+        readContent: async () => ({
+          asset: {
+            ...descriptor(),
+            size: new TextEncoder().encode(source).length,
+          },
+          data: (async function* () {
+            yield new TextEncoder().encode(source);
+          })(),
+        }),
+        updateContent: async () => {
+          source = "Remote";
+          throw new AssetRevisionConflictError("Conflict");
+        },
+      },
+      authorize: async () => true,
+      debounceMilliseconds: 0,
+    });
+    await session.open("asset");
+    session.save("asset", "Local");
+    await expect(session.flush("asset")).rejects.toThrow("Conflict");
+
+    await expect(session.reload("asset")).resolves.toMatchObject({
+      status: "saved",
+      source: "Remote",
+    });
+  });
+
   test("reload revalidates the exact revision before a confirmed operation", async () => {
     let current = descriptor();
     const session = createAssetContentSession({

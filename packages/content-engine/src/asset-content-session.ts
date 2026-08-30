@@ -201,12 +201,14 @@ export const createAssetContentSession = ({
     const entry = requireEntry(assetId);
     if (
       entry.flushPromise !== undefined ||
-      entry.source !== entry.committedSource
+      (entry.source !== entry.committedSource && entry.status !== "conflicting")
     ) {
       throw new Error("Asset content session has unsaved changes");
     }
     const assetBeforeReload = entry.asset;
     const sourceBeforeReload = entry.source;
+    const committedSourceBeforeReload = entry.committedSource;
+    const statusBeforeReload = entry.status;
     await requireAuthorization(assetId, "read");
     const { asset, bytes } = await readAssetContentBytes({
       repository,
@@ -216,7 +218,8 @@ export const createAssetContentSession = ({
     if (
       entry.flushPromise !== undefined ||
       entry.source !== sourceBeforeReload ||
-      entry.committedSource !== sourceBeforeReload
+      entry.committedSource !== committedSourceBeforeReload ||
+      entry.status !== statusBeforeReload
     ) {
       throw new Error("Asset content session has unsaved changes");
     }

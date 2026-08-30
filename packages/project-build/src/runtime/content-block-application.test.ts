@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   blockBodyComponent,
   blockComponent,
@@ -36,9 +36,14 @@ const createFixture = () => {
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
   };
+  const reload = vi.fn(async () => ({
+    asset,
+    source,
+    status: "saved" as const,
+  }));
   const session = {
     open: async () => ({ asset, source, status: "saved" as const }),
-    reload: async () => ({ asset, source, status: "saved" as const }),
+    reload,
     save: (_assetId: string, nextSource: string) => {
       source = nextSource;
     },
@@ -98,6 +103,7 @@ const createFixture = () => {
   };
   return {
     session,
+    reload,
     state,
     getSource: () => source,
     application: createContentBlockApplication({
@@ -235,6 +241,13 @@ describe("createContentBlockApplication", () => {
       source: { type: "asset", assetId: "asset" },
     });
     expect(inspected.source).toBe("## Updated");
+
+    await fixture.application.reload({
+      state: connectedState,
+      blockInstanceId: "block",
+      renderScope: "page",
+    });
+    expect(fixture.reload).toHaveBeenCalledWith("asset");
 
     const invalidSource = "# Kept\n\n<ws.element";
     const invalid = await fixture.application.editSource({

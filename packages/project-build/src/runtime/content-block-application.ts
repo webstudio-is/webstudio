@@ -392,9 +392,7 @@ export const createContentBlockApplication = ({
       renderScope,
       variables,
     });
-    return session.reload(opened.identity.assetId, {
-      expectedName: opened.state.asset.name,
-    });
+    return session.reload(opened.identity.assetId);
   };
 
   const migrateTemplateReferences = async ({
