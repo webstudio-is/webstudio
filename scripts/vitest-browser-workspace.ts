@@ -40,6 +40,7 @@ const createBrowserWorkspace = (port: number) => [
 export const createBrowserTestConfig = (port: number) => ({
   optimizeDeps: {
     include: ["react/jsx-dev-runtime"],
+    noDiscovery: true,
   },
   resolve: {
     conditions: ["webstudio", "browser", "development|production"],

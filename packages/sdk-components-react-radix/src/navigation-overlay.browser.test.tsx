@@ -222,23 +222,17 @@ test.each(["_parent", "_top"])(
 test.each(["_parent", "_top"])(
   "keeps an overlay open for target=%s in a child context",
   (target) => {
-    const anchor = document.createElement("a");
-    const child = document.createElement("span");
+    const iframe = document.createElement("iframe");
+    document.body.append(iframe);
+    const iframeDocument = iframe.contentDocument;
+    if (iframeDocument === null) {
+      throw new Error("Expected iframe document");
+    }
+    const anchor = iframeDocument.createElement("a");
+    const child = iframeDocument.createElement("span");
     anchor.setAttribute("href", "#destination");
     anchor.setAttribute("target", target);
     anchor.append(child);
-    const childWindow = {} as Window;
-    Object.defineProperties(childWindow, {
-      name: { value: "" },
-      parent: { value: {} },
-      top: { value: {} },
-    });
-    const ownerDocument = vi
-      .spyOn(anchor, "ownerDocument", "get")
-      .mockReturnValue({
-        defaultView: childWindow,
-        querySelector: () => null,
-      } as unknown as Document);
 
     expect(
       getLinkActivation({
@@ -250,7 +244,8 @@ test.each(["_parent", "_top"])(
         shiftKey: false,
       })
     ).toBeUndefined();
-    ownerDocument.mockRestore();
+
+    iframe.remove();
   }
 );
 
