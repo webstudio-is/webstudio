@@ -1,4 +1,4 @@
-import { mapBounded } from "../async-utils";
+import { awaitWithSignal, mapBounded } from "../async-utils";
 import {
   getDocumentGraphClosure,
   type DocumentGraph,
@@ -113,7 +113,7 @@ export const resolveDocumentGraph = async <Source, Value>({
     assertActive(signal);
     const node = group.representative;
     try {
-      const source = await load(node, { signal });
+      const source = await awaitWithSignal(load(node, { signal }), signal);
       for (const groupedNode of group.nodes) {
         sources.set(groupedNode.id, source);
       }
