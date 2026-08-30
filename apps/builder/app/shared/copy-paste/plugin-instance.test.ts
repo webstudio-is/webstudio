@@ -1,6 +1,6 @@
 import { describe, test, expect, vi } from "vitest";
 import { enableMapSet } from "immer";
-import { toast } from "@webstudio-is/design-system";
+import { toast } from "@webstudio-is/design-system/toast";
 import type {
   Asset,
   Instance,
@@ -46,7 +46,7 @@ import {
   expectSlotsShareFragment,
 } from "../slot-test-utils";
 import { pasteHandled } from "./copy-paste";
-import { initBuilderApi } from "../builder-api";
+import { initBuilderApiWindow } from "../builder-api";
 import { $externalContentRoots } from "../external-content-mutations";
 
 const expectString = expect.any(String) as unknown as string;
@@ -292,7 +292,7 @@ describe("copy and cut guards", () => {
     expect(fragment.instances).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ id: "mdx-heading" })])
     );
-    initBuilderApi();
+    initBuilderApiWindow();
     const importAssets = vi
       .spyOn(window.__webstudio__$__builderApi, "importAssets")
       .mockResolvedValue(new Map([["post", $assets.get().get("post")!]]));
@@ -389,7 +389,7 @@ describe("copy and cut guards", () => {
       id: "imported-asset",
       projectId: "my-project",
     } satisfies Asset;
-    initBuilderApi();
+    initBuilderApiWindow();
     const importAssets = vi
       .spyOn(window.__webstudio__$__builderApi, "importAssets")
       .mockRejectedValueOnce(new Error("Source is unavailable"))
@@ -464,7 +464,7 @@ describe("copy and cut guards", () => {
     selectInstance(["legacy-button", "body0"]);
     const clipboardData = instanceText.onCopy?.() ?? "";
     selectInstance(["body0"]);
-    initBuilderApi();
+    initBuilderApiWindow();
     const previousWarn = window.__webstudio__$__builderApi.toast.warn;
     const warn = vi.fn();
     window.__webstudio__$__builderApi.toast.warn = warn;

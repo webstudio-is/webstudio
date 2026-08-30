@@ -30,97 +30,88 @@ test.beforeAll(async ({ browser }) => {
   );
 });
 test("Editor can create styled page from template in content mode", async ({
-  browser,
+  page,
 }) => {
-  const { page, close } = await newIsolatedPage(browser);
   const pageName = "Created content page";
 
-  try {
-    await measure(
-      "content mode open editor for page template creation",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.editorToken,
-          mode: "content",
-        });
-      }
-    );
-    await waitForCanvasText({ page, text: "Initial link" });
-    await waitForSyncStatus({ page, status: "idle" });
-
-    await measure("content mode create page from template", async () => {
-      await createPageFromTemplate({
+  await measure(
+    "content mode open editor for page template creation",
+    async () => {
+      await openProjectBuilder({
         page,
-        templateName: fixture.pageTemplateName,
-        pageName,
-        canvasText: fixture.pageTemplateText,
+        projectId: fixture.projectId,
+        authToken: fixture.editorToken,
+        mode: "content",
       });
-    });
-    await waitForCanvasTextStyle({
-      page,
-      text: fixture.pageTemplateText,
-      property: "font-size",
-      value: fixture.pageTemplateFontSize,
-    });
-    await waitForCanvasText({
-      page,
-      text: fixture.dataResourceStaticVariableVisibleValue,
-    });
-    await waitForCanvasText({
-      page,
-      text: "HTTP resource variable configured",
-    });
-    await waitForCanvasText({
-      page,
-      text: "GraphQL resource variable configured",
-    });
-    await waitForCanvasText({
-      page,
-      text: "2026",
-    });
+    }
+  );
+  await waitForCanvasText({ page, text: "Initial link" });
+  await waitForSyncStatus({ page, status: "idle" });
 
-    await measure(
-      "content mode reload created page from template",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.editorToken,
-          mode: "content",
-        });
-        await openPage({
-          page,
-          pageName,
-          canvasText: fixture.pageTemplateText,
-        });
-      }
-    );
-    await waitForCanvasText({
+  await measure("content mode create page from template", async () => {
+    await createPageFromTemplate({
       page,
-      text: fixture.dataResourceStaticVariableVisibleValue,
+      templateName: fixture.pageTemplateName,
+      pageName,
+      canvasText: fixture.pageTemplateText,
     });
-    await waitForCanvasText({
+  });
+  await waitForCanvasTextStyle({
+    page,
+    text: fixture.pageTemplateText,
+    property: "font-size",
+    value: fixture.pageTemplateFontSize,
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.dataResourceStaticVariableVisibleValue,
+  });
+  await waitForCanvasText({
+    page,
+    text: "HTTP resource variable configured",
+  });
+  await waitForCanvasText({
+    page,
+    text: "GraphQL resource variable configured",
+  });
+  await waitForCanvasText({
+    page,
+    text: "2026",
+  });
+
+  await measure("content mode reload created page from template", async () => {
+    await openProjectBuilder({
       page,
-      text: "HTTP resource variable configured",
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
     });
-    await waitForCanvasText({
+    await openPage({
       page,
-      text: "GraphQL resource variable configured",
+      pageName,
+      canvasText: fixture.pageTemplateText,
     });
-    await waitForCanvasText({
-      page,
-      text: "2026",
-    });
-    await waitForSyncStatus({ page, status: "idle" });
-  } finally {
-    await close();
-  }
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.dataResourceStaticVariableVisibleValue,
+  });
+  await waitForCanvasText({
+    page,
+    text: "HTTP resource variable configured",
+  });
+  await waitForCanvasText({
+    page,
+    text: "GraphQL resource variable configured",
+  });
+  await waitForCanvasText({
+    page,
+    text: "2026",
+  });
+  await waitForSyncStatus({ page, status: "idle" });
 });
 
-test("Editor can edit allowed page settings", async ({ browser }) => {
-  const { page, close } = await newIsolatedPage(browser);
+test("Editor can edit allowed page settings", async ({ page }) => {
   const pageName = "Settings content page";
   const editedName = "Edited settings content page";
   const editedPath = "/edited-settings-content-page";
@@ -129,159 +120,145 @@ test("Editor can edit allowed page settings", async ({ browser }) => {
   const editedLanguage = "en-US";
   const editedSocialImage = "https://example.com/content-mode-social.png";
 
-  try {
-    await measure(
-      "content mode open editor for allowed page settings",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.editorToken,
-          mode: "content",
-        });
-      }
-    );
-    await waitForCanvasText({ page, text: "Initial link" });
-    await waitForSyncStatus({ page, status: "idle" });
+  await measure(
+    "content mode open editor for allowed page settings",
+    async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.editorToken,
+        mode: "content",
+      });
+    }
+  );
+  await waitForCanvasText({ page, text: "Initial link" });
+  await waitForSyncStatus({ page, status: "idle" });
 
-    await createPageFromTemplate({
-      page,
-      templateName: fixture.pageTemplateName,
-      pageName,
-      canvasText: fixture.pageTemplateText,
-    });
-    await openPageSettings({ page, pageName });
+  await createPageFromTemplate({
+    page,
+    templateName: fixture.pageTemplateName,
+    pageName,
+    canvasText: fixture.pageTemplateText,
+  });
+  await openPageSettings({ page, pageName });
 
-    await fillAllowedPageSettings({
-      page,
-      name: editedName,
-      path: editedPath,
-      title: editedTitle,
-      description: editedDescription,
-      language: editedLanguage,
-      socialImage: editedSocialImage,
-      metadata: {
-        property: "content-mode",
-        content: "edited metadata",
-      },
-    });
-    await choosePageSettingsSocialImageAsset({
-      page,
-      filename: fixture.assetTemplateImageName,
-      label: fixture.assetTemplateImageAlt,
-    });
-    await fillCustomMetadata({
-      page,
-      metadata: {
-        property: "content-mode",
-        content: "edited metadata",
-      },
-    });
-
-    await measure(
-      "content mode reload editor for allowed page settings",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.editorToken,
-          mode: "content",
-        });
-      }
-    );
-    await openPageSettings({ page, pageName: editedName });
-    await page.getByLabel("Page name").waitFor();
-    if ((await page.getByLabel("Page name").inputValue()) !== editedName) {
-      throw new Error("Expected edited page name to persist");
-    }
-    if (
-      (await getPageSettingsPathInput({ page }).inputValue()) !== editedPath
-    ) {
-      throw new Error("Expected edited page path to persist");
-    }
-    if ((await page.getByLabel("Title").inputValue()) !== editedTitle) {
-      throw new Error("Expected edited page title to persist");
-    }
-    if (
-      (await page.getByLabel("Description").inputValue()) !== editedDescription
-    ) {
-      throw new Error("Expected edited page description to persist");
-    }
-    if (
-      (await page
-        .getByLabel("Exclude this page from search results")
-        .isChecked()) === false
-    ) {
-      throw new Error("Expected edited search visibility to persist");
-    }
-    if ((await page.getByLabel("Language").inputValue()) !== editedLanguage) {
-      throw new Error("Expected edited page language to persist");
-    }
-    const socialPreviewImage = page.getByRole("img", {
-      name: "Social sharing preview image",
-    });
-    await socialPreviewImage.waitFor();
-    const socialPreviewImageSrc = await socialPreviewImage.getAttribute("src");
-    if (
-      socialPreviewImageSrc?.includes(fixture.assetTemplateImageName) !== true
-    ) {
-      throw new Error(
-        `Expected social image preview to render ${fixture.assetTemplateImageName}, received ${socialPreviewImageSrc}`
-      );
-    }
-    await expectCustomMetadataValue({
-      page,
+  await fillAllowedPageSettings({
+    page,
+    name: editedName,
+    path: editedPath,
+    title: editedTitle,
+    description: editedDescription,
+    language: editedLanguage,
+    socialImage: editedSocialImage,
+    metadata: {
       property: "content-mode",
       content: "edited metadata",
-    });
-    await waitForSyncStatus({ page, status: "idle" });
-  } finally {
-    await close();
+    },
+  });
+  await choosePageSettingsSocialImageAsset({
+    page,
+    filename: fixture.assetTemplateImageName,
+    label: fixture.assetTemplateImageAlt,
+  });
+  await fillCustomMetadata({
+    page,
+    metadata: {
+      property: "content-mode",
+      content: "edited metadata",
+    },
+  });
+
+  await measure(
+    "content mode reload editor for allowed page settings",
+    async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.editorToken,
+        mode: "content",
+      });
+    }
+  );
+  await openPageSettings({ page, pageName: editedName });
+  await page.getByLabel("Page name").waitFor();
+  if ((await page.getByLabel("Page name").inputValue()) !== editedName) {
+    throw new Error("Expected edited page name to persist");
   }
+  if ((await getPageSettingsPathInput({ page }).inputValue()) !== editedPath) {
+    throw new Error("Expected edited page path to persist");
+  }
+  if ((await page.getByLabel("Title").inputValue()) !== editedTitle) {
+    throw new Error("Expected edited page title to persist");
+  }
+  if (
+    (await page.getByLabel("Description").inputValue()) !== editedDescription
+  ) {
+    throw new Error("Expected edited page description to persist");
+  }
+  if (
+    (await page
+      .getByLabel("Exclude this page from search results")
+      .isChecked()) === false
+  ) {
+    throw new Error("Expected edited search visibility to persist");
+  }
+  if ((await page.getByLabel("Language").inputValue()) !== editedLanguage) {
+    throw new Error("Expected edited page language to persist");
+  }
+  const socialPreviewImage = page.getByRole("img", {
+    name: "Social sharing preview image",
+  });
+  await socialPreviewImage.waitFor();
+  const socialPreviewImageSrc = await socialPreviewImage.getAttribute("src");
+  if (
+    socialPreviewImageSrc?.includes(fixture.assetTemplateImageName) !== true
+  ) {
+    throw new Error(
+      `Expected social image preview to render ${fixture.assetTemplateImageName}, received ${socialPreviewImageSrc}`
+    );
+  }
+  await expectCustomMetadataValue({
+    page,
+    property: "content-mode",
+    content: "edited metadata",
+  });
+  await waitForSyncStatus({ page, status: "idle" });
 });
 
 test("Editor is blocked from invalid paths and restricted page settings", async ({
-  browser,
+  page,
 }) => {
-  const { page, close } = await newIsolatedPage(browser);
   const pageName = "Blocked settings content page";
   const invalidPaths = ["/posts/:slug", "/docs/*", "https://x.com"];
 
-  try {
-    await measure(
-      "content mode open editor for blocked page paths",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.editorToken,
-          mode: "content",
-        });
-      }
-    );
-    await waitForCanvasText({ page, text: "Initial link" });
-    await waitForSyncStatus({ page, status: "idle" });
-
-    await createPageFromTemplate({
+  await measure("content mode open editor for blocked page paths", async () => {
+    await openProjectBuilder({
       page,
-      templateName: fixture.pageTemplateName,
-      pageName,
-      canvasText: fixture.pageTemplateText,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
     });
-    await openPageSettings({ page, pageName });
+  });
+  await waitForCanvasText({ page, text: "Initial link" });
+  await waitForSyncStatus({ page, status: "idle" });
 
-    for (const path of invalidPaths) {
-      const pathInput = getPageSettingsPathInput({ page });
-      await pathInput.fill(path);
-      await pathInput.blur();
-      await expectContentModePagePathError({ page });
-      await waitForSyncStatus({ page, status: "idle" });
-    }
-    await expectContentModePageSettingsRestrictions({ page });
+  await createPageFromTemplate({
+    page,
+    templateName: fixture.pageTemplateName,
+    pageName,
+    canvasText: fixture.pageTemplateText,
+  });
+  await openPageSettings({ page, pageName });
+
+  for (const path of invalidPaths) {
+    const pathInput = getPageSettingsPathInput({ page });
+    await pathInput.fill(path);
+    await pathInput.blur();
+    await expectContentModePagePathError({ page });
     await waitForSyncStatus({ page, status: "idle" });
-  } finally {
-    await close();
   }
+  await expectContentModePageSettingsRestrictions({ page });
+  await waitForSyncStatus({ page, status: "idle" });
 });
 
 test("Edit-only and build-capable users can collaborate in content mode", async ({

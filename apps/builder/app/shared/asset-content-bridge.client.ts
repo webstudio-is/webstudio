@@ -124,7 +124,7 @@ export const initAssetContentBridge = (bridge: AssetContentBridge) => {
 };
 
 export const getAssetContentBridge = () => {
-  const owner = window.self === window.top ? window : window.top;
+  const owner = window[namespace] === undefined ? window.top : window;
   const bridge = owner?.[namespace];
   if (bridge === undefined) {
     throw new Error("Builder Asset content bridge is not available");

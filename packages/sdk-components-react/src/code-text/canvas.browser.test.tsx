@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 import { render, waitFor } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { canvasComponents } from "../canvas-components";

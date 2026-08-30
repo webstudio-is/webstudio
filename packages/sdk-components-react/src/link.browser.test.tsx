@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test, vi } from "vitest";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";

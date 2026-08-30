@@ -1,7 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
-
 import { test, expect, beforeEach } from "vitest";
 import {
   getAllElementsByInstanceSelector,

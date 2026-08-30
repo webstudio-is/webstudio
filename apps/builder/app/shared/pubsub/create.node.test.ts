@@ -1,4 +1,12 @@
-import { describe, test, expect, beforeEach, afterEach, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 import { createPubsub } from "./create";
 
 type TestPublishMap = {
@@ -14,6 +22,45 @@ type TestPublishMap = {
 
 // Helper to cast to Window type for test mocking
 const asWindow = (obj: unknown) => obj as Window & typeof globalThis;
+
+const testWindow = asWindow({
+  addEventListener: vi.fn(),
+  crypto: globalThis.crypto,
+  parent: { postMessage: vi.fn() },
+  postMessage: vi.fn(),
+});
+testWindow.self = testWindow;
+testWindow.top = testWindow;
+const originalDescriptors = new Map(
+  ["window", "requestAnimationFrame", "cancelAnimationFrame"].map((name) => [
+    name,
+    Object.getOwnPropertyDescriptor(globalThis, name),
+  ])
+);
+Object.defineProperties(globalThis, {
+  window: { configurable: true, value: testWindow, writable: true },
+  requestAnimationFrame: {
+    configurable: true,
+    writable: true,
+    value: (callback: FrameRequestCallback) =>
+      setTimeout(() => callback(performance.now()), 0),
+  },
+  cancelAnimationFrame: {
+    configurable: true,
+    writable: true,
+    value: (handle: number) => clearTimeout(handle),
+  },
+});
+
+afterAll(() => {
+  for (const [name, descriptor] of originalDescriptors) {
+    if (descriptor === undefined) {
+      Reflect.deleteProperty(globalThis, name);
+    } else {
+      Object.defineProperty(globalThis, name, descriptor);
+    }
+  }
+});
 
 describe("createPubsub", () => {
   let postMessageSpy: ReturnType<typeof vi.fn>;

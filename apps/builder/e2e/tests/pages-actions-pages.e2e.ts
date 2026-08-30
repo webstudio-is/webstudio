@@ -17,7 +17,7 @@ import {
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { newIsolatedPage, test, withBrowserContext } from "../test";
+import { test, withBrowserContext } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
@@ -220,318 +220,296 @@ test.beforeAll(async ({ browser }) => {
 });
 
 test("Builder can draft, stage, copy, duplicate, and delete a page from the header menu", async ({
-  browser,
+  page,
 }) => {
-  const { page, close } = await newIsolatedPage(browser);
   const pageName = "Actions Menu Page";
   const renamedPageName = "Renamed Actions Menu Page";
   const copiedPageName = `${renamedPageName} (1)`;
   const duplicatedPageName = `${renamedPageName} (2)`;
 
-  try {
-    await measure("pages actions open builder for page actions", async () => {
+  await measure("pages actions open builder for page actions", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
+    });
+  });
+  const dataResourceCountsBefore = await getDataResourceCounts(fixture);
+
+  await createPageFromTemplate({
+    page,
+    templateName: fixture.pageTemplateName,
+    pageName,
+    canvasText: fixture.pageTemplateText,
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.dataResourceStaticVariableVisibleValue,
+  });
+  await waitForCanvasText({
+    page,
+    text: "HTTP resource variable configured",
+  });
+  await waitForCanvasText({
+    page,
+    text: "GraphQL resource variable configured",
+  });
+  await waitForCanvasText({ page, text: "2026" });
+  await expectDataResourceCopies(fixture, dataResourceCountsBefore);
+  await measure(
+    "pages actions generated app build for copied resources",
+    async () => {
+      await expectGeneratedAppBuild({ projectId: fixture.projectId });
+    }
+  );
+
+  await openPageSettings({ page, pageName });
+  const renameSave = waitForChangeToBeSaved({ page });
+  await page.getByLabel("Page name", { exact: true }).fill(renamedPageName);
+  await page.getByLabel("Page name", { exact: true }).blur();
+  await renameSave;
+  await waitForPageRow({ page, pageName: renamedPageName });
+  await expectPageRowHidden({ page, pageName });
+
+  const draftSave = waitForChangeToBeSaved({ page });
+  await selectHeaderAction({
+    page,
+    menuLabel: "Page actions",
+    action: "Mark as draft",
+  });
+  await draftSave;
+  await waitForPageRow({ page, pageName: `[Draft] ${renamedPageName}` });
+
+  await openPageSettings({
+    page,
+    pageName: `[Draft] ${renamedPageName}`,
+  });
+  await page
+    .getByText("Stage this page for publish before setting it as the home page")
+    .waitFor();
+  const stageSave = waitForChangeToBeSaved({ page });
+  await selectHeaderAction({
+    page,
+    menuLabel: "Page actions",
+    action: "Stage for publish",
+  });
+  await stageSave;
+  await waitForPageRow({ page, pageName: renamedPageName });
+
+  await openPageSettings({ page, pageName: renamedPageName });
+  await selectHeaderAction({
+    page,
+    menuLabel: "Page actions",
+    action: "Copy",
+  });
+  await waitForCopiedPageTransferData({ page });
+  await pasteFromClipboardShortcut({ page });
+  await waitForPageRow({ page, pageName: copiedPageName });
+
+  await openPage({
+    page,
+    pageName: copiedPageName,
+    canvasText: fixture.pageTemplateText,
+  });
+
+  await openPageSettings({ page, pageName: renamedPageName });
+  await selectHeaderAction({
+    page,
+    menuLabel: "Page actions",
+    action: "Duplicate",
+  });
+  await waitForPageRow({ page, pageName: duplicatedPageName });
+
+  await openPageSettings({ page, pageName: duplicatedPageName });
+  await selectHeaderAction({
+    page,
+    menuLabel: "Page actions",
+    action: "Delete",
+  });
+  const deleteSave = waitForChangeToBeSaved({ page });
+  await confirmDialogAction({ page, action: "Delete Page" });
+  await deleteSave;
+  await waitForSyncStatus({ page, status: "idle" });
+  await expectPageRowHidden({ page, pageName: duplicatedPageName });
+
+  await measure(
+    "pages actions reload for page action persistence",
+    async () => {
       await openProjectBuilder({
         page,
         projectId: fixture.projectId,
         authToken: fixture.builderToken,
       });
-    });
-    const dataResourceCountsBefore = await getDataResourceCounts(fixture);
-
-    await createPageFromTemplate({
-      page,
-      templateName: fixture.pageTemplateName,
-      pageName,
-      canvasText: fixture.pageTemplateText,
-    });
-    await waitForCanvasText({
-      page,
-      text: fixture.dataResourceStaticVariableVisibleValue,
-    });
-    await waitForCanvasText({
-      page,
-      text: "HTTP resource variable configured",
-    });
-    await waitForCanvasText({
-      page,
-      text: "GraphQL resource variable configured",
-    });
-    await waitForCanvasText({ page, text: "2026" });
-    await expectDataResourceCopies(fixture, dataResourceCountsBefore);
-    await measure(
-      "pages actions generated app build for copied resources",
-      async () => {
-        await expectGeneratedAppBuild({ projectId: fixture.projectId });
-      }
-    );
-
-    await openPageSettings({ page, pageName });
-    const renameSave = waitForChangeToBeSaved({ page });
-    await page.getByLabel("Page name", { exact: true }).fill(renamedPageName);
-    await page.getByLabel("Page name", { exact: true }).blur();
-    await renameSave;
-    await waitForPageRow({ page, pageName: renamedPageName });
-    await expectPageRowHidden({ page, pageName });
-
-    const draftSave = waitForChangeToBeSaved({ page });
-    await selectHeaderAction({
-      page,
-      menuLabel: "Page actions",
-      action: "Mark as draft",
-    });
-    await draftSave;
-    await waitForPageRow({ page, pageName: `[Draft] ${renamedPageName}` });
-
-    await openPageSettings({
-      page,
-      pageName: `[Draft] ${renamedPageName}`,
-    });
-    await page
-      .getByText(
-        "Stage this page for publish before setting it as the home page"
-      )
-      .waitFor();
-    const stageSave = waitForChangeToBeSaved({ page });
-    await selectHeaderAction({
-      page,
-      menuLabel: "Page actions",
-      action: "Stage for publish",
-    });
-    await stageSave;
-    await waitForPageRow({ page, pageName: renamedPageName });
-
-    await openPageSettings({ page, pageName: renamedPageName });
-    await selectHeaderAction({
-      page,
-      menuLabel: "Page actions",
-      action: "Copy",
-    });
-    await waitForCopiedPageTransferData({ page });
-    await pasteFromClipboardShortcut({ page });
-    await waitForPageRow({ page, pageName: copiedPageName });
-
-    await openPage({
-      page,
-      pageName: copiedPageName,
-      canvasText: fixture.pageTemplateText,
-    });
-
-    await openPageSettings({ page, pageName: renamedPageName });
-    await selectHeaderAction({
-      page,
-      menuLabel: "Page actions",
-      action: "Duplicate",
-    });
-    await waitForPageRow({ page, pageName: duplicatedPageName });
-
-    await openPageSettings({ page, pageName: duplicatedPageName });
-    await selectHeaderAction({
-      page,
-      menuLabel: "Page actions",
-      action: "Delete",
-    });
-    const deleteSave = waitForChangeToBeSaved({ page });
-    await confirmDialogAction({ page, action: "Delete Page" });
-    await deleteSave;
-    await waitForSyncStatus({ page, status: "idle" });
-    await expectPageRowHidden({ page, pageName: duplicatedPageName });
-
-    await measure(
-      "pages actions reload for page action persistence",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.builderToken,
-        });
-      }
-    );
-    await openPagesPanel({ page });
-    await waitForPageRow({ page, pageName: renamedPageName });
-    await expectPageRowHidden({ page, pageName });
-    await waitForPageRow({ page, pageName: copiedPageName });
-    await expectPageRowHidden({ page, pageName: duplicatedPageName });
-    await openPage({
-      page,
-      pageName: renamedPageName,
-      canvasText: fixture.pageTemplateText,
-    });
-    await waitForCanvasText({
-      page,
-      text: fixture.dataResourceStaticVariableVisibleValue,
-    });
-    await waitForCanvasText({
-      page,
-      text: "HTTP resource variable configured",
-    });
-    await waitForCanvasText({
-      page,
-      text: "GraphQL resource variable configured",
-    });
-    await waitForCanvasText({ page, text: "2026" });
-    await expectDataResourceCopies(fixture, dataResourceCountsBefore);
-  } finally {
-    await close();
-  }
+    }
+  );
+  await openPagesPanel({ page });
+  await waitForPageRow({ page, pageName: renamedPageName });
+  await expectPageRowHidden({ page, pageName });
+  await waitForPageRow({ page, pageName: copiedPageName });
+  await expectPageRowHidden({ page, pageName: duplicatedPageName });
+  await openPage({
+    page,
+    pageName: renamedPageName,
+    canvasText: fixture.pageTemplateText,
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.dataResourceStaticVariableVisibleValue,
+  });
+  await waitForCanvasText({
+    page,
+    text: "HTTP resource variable configured",
+  });
+  await waitForCanvasText({
+    page,
+    text: "GraphQL resource variable configured",
+  });
+  await waitForCanvasText({ page, text: "2026" });
+  await expectDataResourceCopies(fixture, dataResourceCountsBefore);
 });
 
 test("Builder can copy, duplicate, and delete a folder from the context menu", async ({
-  browser,
+  page,
 }) => {
-  const { page, close } = await newIsolatedPage(browser);
   const folderName = "Actions Menu Folder";
   const renamedFolderName = "Renamed Actions Menu Folder";
   const copiedFolderName = `${renamedFolderName} (1)`;
   const duplicatedFolderName = `${renamedFolderName} (2)`;
 
-  try {
-    await measure("pages actions open builder for folder actions", async () => {
+  await measure("pages actions open builder for folder actions", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
+    });
+  });
+
+  await createFolder({ page, folderName });
+
+  await openFolderSettings({ page, folderName });
+  const renameSave = waitForChangeToBeSaved({ page });
+  await page.getByLabel("Folder name", { exact: true }).fill(renamedFolderName);
+  await page.getByLabel("Folder name", { exact: true }).blur();
+  await renameSave;
+  await waitForFolderRow({ page, folderName: renamedFolderName });
+  await expectTextHidden({ page, text: folderName });
+
+  await selectContextAction({
+    page,
+    itemName: renamedFolderName,
+    action: "Copy",
+  });
+  await waitForCopiedPageTransferData({ page });
+  const pasteSave = waitForChangeToBeSaved({ page });
+  await selectContextAction({ page, itemName: "Home", action: "Paste" });
+  await pasteSave;
+  await waitForFolderRow({ page, folderName: copiedFolderName });
+
+  const duplicateSave = waitForChangeToBeSaved({ page });
+  await selectContextAction({
+    page,
+    itemName: renamedFolderName,
+    action: "Duplicate",
+  });
+  await duplicateSave;
+  await waitForFolderRow({ page, folderName: duplicatedFolderName });
+
+  await selectContextAction({
+    page,
+    itemName: duplicatedFolderName,
+    action: "Delete",
+  });
+  const deleteSave = waitForChangeToBeSaved({ page });
+  await confirmDialogAction({ page, action: "Delete" });
+  await deleteSave;
+  await expectTextHidden({ page, text: duplicatedFolderName });
+
+  await measure(
+    "pages actions reload for folder action persistence",
+    async () => {
       await openProjectBuilder({
         page,
         projectId: fixture.projectId,
         authToken: fixture.builderToken,
       });
-    });
-
-    await createFolder({ page, folderName });
-
-    await openFolderSettings({ page, folderName });
-    const renameSave = waitForChangeToBeSaved({ page });
-    await page
-      .getByLabel("Folder name", { exact: true })
-      .fill(renamedFolderName);
-    await page.getByLabel("Folder name", { exact: true }).blur();
-    await renameSave;
-    await waitForFolderRow({ page, folderName: renamedFolderName });
-    await expectTextHidden({ page, text: folderName });
-
-    await selectContextAction({
-      page,
-      itemName: renamedFolderName,
-      action: "Copy",
-    });
-    await waitForCopiedPageTransferData({ page });
-    const pasteSave = waitForChangeToBeSaved({ page });
-    await selectContextAction({ page, itemName: "Home", action: "Paste" });
-    await pasteSave;
-    await waitForFolderRow({ page, folderName: copiedFolderName });
-
-    const duplicateSave = waitForChangeToBeSaved({ page });
-    await selectContextAction({
-      page,
-      itemName: renamedFolderName,
-      action: "Duplicate",
-    });
-    await duplicateSave;
-    await waitForFolderRow({ page, folderName: duplicatedFolderName });
-
-    await selectContextAction({
-      page,
-      itemName: duplicatedFolderName,
-      action: "Delete",
-    });
-    const deleteSave = waitForChangeToBeSaved({ page });
-    await confirmDialogAction({ page, action: "Delete" });
-    await deleteSave;
-    await expectTextHidden({ page, text: duplicatedFolderName });
-
-    await measure(
-      "pages actions reload for folder action persistence",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.builderToken,
-        });
-      }
-    );
-    await openPagesPanel({ page });
-    await waitForFolderRow({ page, folderName: renamedFolderName });
-    await expectTextHidden({ page, text: folderName });
-    await waitForFolderRow({ page, folderName: copiedFolderName });
-    await openFolderSettings({ page, folderName: copiedFolderName });
-    await expectTextHidden({ page, text: duplicatedFolderName });
-  } finally {
-    await close();
-  }
+    }
+  );
+  await openPagesPanel({ page });
+  await waitForFolderRow({ page, folderName: renamedFolderName });
+  await expectTextHidden({ page, text: folderName });
+  await waitForFolderRow({ page, folderName: copiedFolderName });
+  await openFolderSettings({ page, folderName: copiedFolderName });
+  await expectTextHidden({ page, text: duplicatedFolderName });
 });
 
 test("Builder can copy, duplicate, and delete a page template from actions menus", async ({
-  browser,
+  page,
 }) => {
-  const { page, close } = await newIsolatedPage(browser);
   const templateName = fixture.pageTemplateName;
   const renamedTemplateName = "Renamed Content Page Template";
   const copiedTemplateName = `${renamedTemplateName} (1)`;
   const duplicatedTemplateName = `${renamedTemplateName} (2)`;
 
-  try {
-    await measure(
-      "pages actions open builder for template actions",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.builderToken,
-        });
-      }
-    );
-    await openPagesPanel({ page });
-
-    await openTemplateSettings({ page, templateName });
-    const renameSave = waitForChangeToBeSaved({ page });
-    await page
-      .getByLabel("Template name", { exact: true })
-      .fill(renamedTemplateName);
-    await page.getByLabel("Template name", { exact: true }).blur();
-    await renameSave;
-    await waitForTemplate({ page, templateName: renamedTemplateName });
-
-    await openTemplateSettings({ page, templateName: renamedTemplateName });
-    await selectHeaderAction({
+  await measure("pages actions open builder for template actions", async () => {
+    await openProjectBuilder({
       page,
-      menuLabel: "Template actions",
-      action: "Copy",
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
     });
-    await waitForCopiedPageTransferData({ page });
-    await pasteFromClipboardShortcut({ page });
-    await waitForTemplate({ page, templateName: copiedTemplateName });
+  });
+  await openPagesPanel({ page });
 
-    await openTemplateSettings({ page, templateName: renamedTemplateName });
-    await selectHeaderAction({
-      page,
-      menuLabel: "Template actions",
-      action: "Duplicate",
-    });
-    await waitForTemplate({ page, templateName: duplicatedTemplateName });
+  await openTemplateSettings({ page, templateName });
+  const renameSave = waitForChangeToBeSaved({ page });
+  await page
+    .getByLabel("Template name", { exact: true })
+    .fill(renamedTemplateName);
+  await page.getByLabel("Template name", { exact: true }).blur();
+  await renameSave;
+  await waitForTemplate({ page, templateName: renamedTemplateName });
 
-    await selectContextAction({
-      page,
-      itemName: duplicatedTemplateName,
-      action: "Delete",
-    });
-    const deleteSave = waitForChangeToBeSaved({ page });
-    await confirmDialogAction({ page, action: "Delete Template" });
-    await deleteSave;
-    await expectTextHidden({ page, text: duplicatedTemplateName });
+  await openTemplateSettings({ page, templateName: renamedTemplateName });
+  await selectHeaderAction({
+    page,
+    menuLabel: "Template actions",
+    action: "Copy",
+  });
+  await waitForCopiedPageTransferData({ page });
+  await pasteFromClipboardShortcut({ page });
+  await waitForTemplate({ page, templateName: copiedTemplateName });
 
-    await measure(
-      "pages actions reload for template action persistence",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.builderToken,
-        });
-      }
-    );
-    await openPagesPanel({ page });
-    await waitForTemplate({ page, templateName: renamedTemplateName });
-    await waitForTemplate({ page, templateName: copiedTemplateName });
-    await expectTextHidden({ page, text: duplicatedTemplateName });
-  } finally {
-    await close();
-  }
+  await openTemplateSettings({ page, templateName: renamedTemplateName });
+  await selectHeaderAction({
+    page,
+    menuLabel: "Template actions",
+    action: "Duplicate",
+  });
+  await waitForTemplate({ page, templateName: duplicatedTemplateName });
+
+  await selectContextAction({
+    page,
+    itemName: duplicatedTemplateName,
+    action: "Delete",
+  });
+  const deleteSave = waitForChangeToBeSaved({ page });
+  await confirmDialogAction({ page, action: "Delete Template" });
+  await deleteSave;
+  await expectTextHidden({ page, text: duplicatedTemplateName });
+
+  await measure(
+    "pages actions reload for template action persistence",
+    async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    }
+  );
+  await openPagesPanel({ page });
+  await waitForTemplate({ page, templateName: renamedTemplateName });
+  await waitForTemplate({ page, templateName: copiedTemplateName });
+  await expectTextHidden({ page, text: duplicatedTemplateName });
 });
 
 const createInstanceTransfer = ({ id, text }: { id: string; text: string }) =>
@@ -644,9 +622,8 @@ const countBuildInstancesWithText = async (text: string) => {
 };
 
 test("Builder runs paste plugins through generic browser paste events", async ({
-  browser,
+  page,
 }) => {
-  const { page, close } = await newIsolatedPage(browser);
   const entries = [
     [
       "application/json",
@@ -707,35 +684,31 @@ test("Builder runs paste plugins through generic browser paste events", async ({
     ],
   ] as const;
 
-  try {
-    await openProjectBuilder({
-      page,
-      projectId: pasteFixture.projectId,
-      authToken: pasteFixture.builderToken,
-    });
-    await waitForCanvasText({ page, text: "Initial content" });
+  await openProjectBuilder({
+    page,
+    projectId: pasteFixture.projectId,
+    authToken: pasteFixture.builderToken,
+  });
+  await waitForCanvasText({ page, text: "Initial content" });
 
-    for (const [mimeType, value, text, tag] of entries) {
-      await selectPasteBody({ page });
-      await pasteClipboardData({ page, data: { [mimeType]: value } });
-      await waitForCanvasText({ page, text });
-      if (tag === undefined) {
-        const count = await countBuildInstancesWithText(text);
-        if (count === 0) {
-          throw new Error(
-            `Expected generic Webflow paste to persist ${JSON.stringify(text)}`
-          );
-        }
-        continue;
-      }
-      const count = await countPastedElements({ tag, text });
-      if (count !== 1) {
+  for (const [mimeType, value, text, tag] of entries) {
+    await selectPasteBody({ page });
+    await pasteClipboardData({ page, data: { [mimeType]: value } });
+    await waitForCanvasText({ page, text });
+    if (tag === undefined) {
+      const count = await countBuildInstancesWithText(text);
+      if (count === 0) {
         throw new Error(
-          `Expected one ${tag} containing ${JSON.stringify(text)}, found ${count}`
+          `Expected generic Webflow paste to persist ${JSON.stringify(text)}`
         );
       }
+      continue;
     }
-  } finally {
-    await close();
+    const count = await countPastedElements({ tag, text });
+    if (count !== 1) {
+      throw new Error(
+        `Expected one ${tag} containing ${JSON.stringify(text)}, found ${count}`
+      );
+    }
   }
 });

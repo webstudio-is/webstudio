@@ -5,7 +5,7 @@ import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtim
 import { coreMetas, ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import type { Project } from "@webstudio-is/project";
-import { initBuilderApi } from "../builder-api";
+import { initBuilderApiWindow } from "../builder-api";
 import { registerContainers } from "../sync/sync-stores";
 import {
   $assets,
@@ -154,21 +154,21 @@ class TestClipboardEvent extends Event {
 }
 
 const setupToastInfo = () => {
-  initBuilderApi();
+  initBuilderApiWindow();
   const toastInfo = vi.fn();
   window.__webstudio__$__builderApi.toast.info = toastInfo;
   return toastInfo;
 };
 
 const setupToastError = () => {
-  initBuilderApi();
+  initBuilderApiWindow();
   const toastError = vi.fn();
   window.__webstudio__$__builderApi.toast.error = toastError;
   return toastError;
 };
 
 const setupToastSuccess = () => {
-  initBuilderApi();
+  initBuilderApiWindow();
   const toastSuccess = vi.fn();
   window.__webstudio__$__builderApi.toast.success = toastSuccess;
   return toastSuccess;
@@ -181,7 +181,7 @@ const pastePlainText = async (
   value: unknown,
   target: "design-token" | "css-variable" | "cancel" = "css-variable"
 ) => {
-  initBuilderApi();
+  initBuilderApiWindow();
   vi.spyOn(
     window.__webstudio__$__builderApi,
     "showDesignTokenImportDialog"

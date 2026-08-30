@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test } from "vitest";
@@ -258,6 +255,7 @@ test("renders the query source inside a constrained full-size editor", () => {
   const scrollerStyle = getComputedStyle(
     sourceContainer.querySelector(".cm-scroller") as Element
   );
-  expect(scrollerStyle.minHeight).toBe("0");
-  expect(scrollerStyle.overflow).toBe("auto");
+  expect(scrollerStyle.minHeight).toBe("0px");
+  expect(scrollerStyle.overflowX).toBe("hidden");
+  expect(scrollerStyle.overflowY).toBe("auto");
 });

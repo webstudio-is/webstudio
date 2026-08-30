@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { hydrateRoot, type Root } from "react-dom/client";
@@ -10,13 +7,11 @@ import { Time, __testing__ } from "./time";
 
 const { parseDate, formatDate, timeZoneOrDefault } = __testing__;
 
-const originalTimeZone = process.env.TZ;
 let root: Root | undefined;
 
 afterEach(() => {
   root?.unmount();
   root = undefined;
-  process.env.TZ = originalTimeZone;
   vi.restoreAllMocks();
   document.body.innerHTML = "";
 });
@@ -61,13 +56,11 @@ test("hydrates ISO date string without timezone mismatch warnings", async () => 
   const container = document.createElement("div");
   document.body.appendChild(container);
 
-  process.env.TZ = "UTC";
   container.innerHTML = renderToStaticMarkup(ui);
   expect(container.textContent).toBe("6 May 2026");
 
   const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-  process.env.TZ = "Europe/Berlin";
   await act(async () => {
     root = hydrateRoot(container, ui);
     await Promise.resolve();
@@ -150,13 +143,17 @@ test("hydrates visitor timezone without mismatch and updates after hydration", a
   const container = document.createElement("div");
   document.body.appendChild(container);
 
-  process.env.TZ = "UTC";
   container.innerHTML = renderToStaticMarkup(ui);
   expect(container.textContent).toBe("17:45");
 
   const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-  process.env.TZ = "Europe/Berlin";
+  vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+    locale: "de-DE",
+    calendar: "gregory",
+    numberingSystem: "latn",
+    timeZone: "Europe/Berlin",
+  });
   await act(async () => {
     root = hydrateRoot(container, ui);
     await Promise.resolve();
@@ -188,13 +185,17 @@ test("trims visitor timezone mode before hydration update", async () => {
   const container = document.createElement("div");
   document.body.appendChild(container);
 
-  process.env.TZ = "UTC";
   container.innerHTML = renderToStaticMarkup(ui);
   expect(container.textContent).toBe("17:45");
 
   const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-  process.env.TZ = "Europe/Berlin";
+  vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+    locale: "de-DE",
+    calendar: "gregory",
+    numberingSystem: "latn",
+    timeZone: "Europe/Berlin",
+  });
   await act(async () => {
     root = hydrateRoot(container, ui);
     await Promise.resolve();

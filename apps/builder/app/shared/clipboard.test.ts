@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { initBuilderApi } from "./builder-api";
+import { initBuilderApiWindow } from "./builder-api";
 import { readClipboardText } from "./clipboard";
 
 afterEach(() => {
@@ -15,7 +15,7 @@ test("reads clipboard text", async () => {
 });
 
 test("reports denied clipboard access without rejecting", async () => {
-  initBuilderApi();
+  initBuilderApiWindow();
   const toastError = vi.fn();
   window.__webstudio__$__builderApi.toast.error = toastError;
   vi.stubGlobal("navigator", {

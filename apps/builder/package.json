@@ -19,7 +19,8 @@
     "e2e:dev:backend": "E2E_SKIP_CLEANUP=true E2E_RUN_TESTS=false E2E_START_POSTGREST=true E2E_DB_BOOTSTRAP=if-empty E2E_INSTALL_PLAYWRIGHT=false bash ./e2e/run-local.sh",
     "e2e:dev": "E2E_SKIP_CLEANUP=true E2E_DB_BOOTSTRAP=if-empty E2E_INSTALL_PLAYWRIGHT=false E2E_BUILDER_URL=${E2E_BUILDER_URL:-https://127.0.0.1:3000} bash ./e2e/run-local.sh",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "test": "vitest run"
+    "test": "vitest run --project server && pnpm test:browser",
+    "test:browser": "for project in builder-settings builder-features builder-shared shared-heavy shared canvas-dashboard; do vitest run --project browser-$project || exit; done"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.7.4",
@@ -148,6 +149,7 @@
   "devDependencies": {
     "@remix-run/dev": "^2.16.5",
     "@playwright/test": "1.50.1",
+    "@vitest/browser": "^3.1.2",
     "@types/debug": "^4.1.12",
     "@types/dom-navigation": "^1.0.5",
     "@types/express": "^4.17.21",
@@ -160,6 +162,7 @@
     "css.escape": "^1.5.1",
     "fast-glob": "^3.3.2",
     "msw": "^2.13.2",
+    "playwright": "1.50.1",
     "react-router-dom": "^6.30.0",
     "react-test-renderer": "18.3.0-canary-14898b6a9-20240318",
     "type-fest": "^4.37.0",

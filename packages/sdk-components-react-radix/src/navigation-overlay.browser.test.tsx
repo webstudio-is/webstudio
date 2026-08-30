@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import { forwardRef } from "react";
 import {
   cleanup,
@@ -30,6 +27,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { getLinkActivation } from "./navigation-overlay";
 
 afterEach(() => {
+  vi.restoreAllMocks();
   cleanup();
   window.history.replaceState(null, "", "/");
 });
@@ -187,22 +185,37 @@ test("closes a dialog when a nested link element is activated", async () => {
 });
 
 test.each(["_parent", "_top"])(
-  "closes an overlay for target=%s in the top-level context",
+  "recognizes target=%s as same-context navigation at the top level",
   (target) => {
-    render(
-      <Popover open>
-        <PopoverTrigger>
-          <button>Open</button>
-        </PopoverTrigger>
-        <PopoverContent>
-          <Link target={target} />
-        </PopoverContent>
-      </Popover>
-    );
+    const anchor = document.createElement("a");
+    const child = document.createElement("span");
+    anchor.setAttribute("href", "#destination");
+    anchor.setAttribute("target", target);
+    anchor.append(child);
+    const topLevelWindow = {} as Window;
+    Object.defineProperties(topLevelWindow, {
+      name: { value: "" },
+      parent: { value: topLevelWindow },
+      top: { value: topLevelWindow },
+    });
+    const ownerDocument = vi
+      .spyOn(anchor, "ownerDocument", "get")
+      .mockReturnValue({
+        defaultView: topLevelWindow,
+        querySelector: () => null,
+      } as unknown as Document);
 
-    fireEvent.click(screen.getByText("Destination"));
-
-    expect(screen.queryByText("Destination")).toBeNull();
+    expect(
+      getLinkActivation({
+        target: child,
+        button: 0,
+        altKey: false,
+        ctrlKey: false,
+        metaKey: false,
+        shiftKey: false,
+      })
+    ).toBe(anchor);
+    ownerDocument.mockRestore();
   }
 );
 

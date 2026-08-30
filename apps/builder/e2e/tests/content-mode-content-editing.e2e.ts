@@ -32,7 +32,7 @@ import { waitForSyncStatus } from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { newIsolatedPage, test, withBrowserContext } from "../test";
+import { test, withBrowserContext } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
@@ -157,113 +157,107 @@ test.beforeAll(async ({ browser }) => {
   );
 });
 test("Editor can delete direct children but not protected containers", async ({
-  browser,
+  page,
 }) => {
-  const { page, close } = await newIsolatedPage(browser);
-
-  try {
-    await measure(
-      "content mode open editor for direct child delete",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.editorToken,
-          mode: "content",
-        });
-      }
-    );
-    await waitForCanvasText({ page, text: "Initial content" });
-    await waitForSyncStatus({ page, status: "idle" });
-
-    await measure("content mode insert deletable template", async () => {
-      await insertTemplateAfterCanvasText({
+  await measure(
+    "content mode open editor for direct child delete",
+    async () => {
+      await openProjectBuilder({
         page,
-        anchorText: "Initial content",
-        templateName: fixture.deletableTemplateName,
+        projectId: fixture.projectId,
+        authToken: fixture.editorToken,
+        mode: "content",
       });
+    }
+  );
+  await waitForCanvasText({ page, text: "Initial content" });
+  await waitForSyncStatus({ page, status: "idle" });
+
+  await measure("content mode insert deletable template", async () => {
+    await insertTemplateAfterCanvasText({
+      page,
+      anchorText: "Initial content",
+      templateName: fixture.deletableTemplateName,
     });
-    await waitForCanvasText({
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.deletableTemplateText,
+  });
+
+  await measure("content mode delete direct child", async () => {
+    await deleteContentBlockChildAfterCanvasText({
       page,
       text: fixture.deletableTemplateText,
     });
+  });
+  await waitForCanvasTextHidden({
+    page,
+    text: fixture.deletableTemplateText,
+  });
 
-    await measure("content mode delete direct child", async () => {
-      await deleteContentBlockChildAfterCanvasText({
+  await measure(
+    "content mode reload editor for direct child delete",
+    async () => {
+      await openProjectBuilder({
         page,
-        text: fixture.deletableTemplateText,
+        projectId: fixture.projectId,
+        authToken: fixture.editorToken,
+        mode: "content",
       });
-    });
-    await waitForCanvasTextHidden({
-      page,
-      text: fixture.deletableTemplateText,
-    });
+    }
+  );
+  await waitForCanvasTextHidden({
+    page,
+    text: fixture.deletableTemplateText,
+  });
+  await waitForSyncStatus({ page, status: "idle" });
 
-    await measure(
-      "content mode reload editor for direct child delete",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.editorToken,
-          mode: "content",
-        });
-      }
-    );
-    await waitForCanvasTextHidden({
+  await measure("content mode insert nested template", async () => {
+    await insertTemplateAfterCanvasText({
       page,
-      text: fixture.deletableTemplateText,
+      anchorText: "Initial content",
+      templateName: fixture.nestedTemplateName,
     });
-    await waitForSyncStatus({ page, status: "idle" });
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.nestedTemplateText,
+  });
+  await waitForSyncStatus({ page, status: "idle" });
 
-    await measure("content mode insert nested template", async () => {
-      await insertTemplateAfterCanvasText({
-        page,
-        anchorText: "Initial content",
-        templateName: fixture.nestedTemplateName,
-      });
-    });
-    await waitForCanvasText({
-      page,
-      text: fixture.nestedTemplateText,
-    });
-    await waitForSyncStatus({ page, status: "idle" });
+  await measure("content mode try nested delete", async () => {
+    const canvas = await waitForCanvasFrame({ page });
+    await page.keyboard.down("Alt");
+    try {
+      await canvas.getByText(fixture.nestedTemplateText).hover();
+      await page
+        .getByRole("button", { name: "Delete block" })
+        .waitFor({ state: "hidden", timeout: 1_000 });
+    } finally {
+      await page.keyboard.up("Alt");
+    }
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.nestedTemplateText,
+  });
+  await waitForSyncStatus({ page, status: "idle" });
 
-    await measure("content mode try nested delete", async () => {
-      const canvas = await waitForCanvasFrame({ page });
-      await page.keyboard.down("Alt");
-      try {
-        await canvas.getByText(fixture.nestedTemplateText).hover();
-        await page
-          .getByRole("button", { name: "Delete block" })
-          .waitFor({ state: "hidden", timeout: 1_000 });
-      } finally {
-        await page.keyboard.up("Alt");
-      }
-    });
-    await waitForCanvasText({
-      page,
-      text: fixture.nestedTemplateText,
-    });
-    await waitForSyncStatus({ page, status: "idle" });
+  await openPagesPanel({ page });
+  await expectContentModeTemplateActionsUnavailable({
+    page,
+    templateName: fixture.pageTemplateName,
+  });
 
-    await openPagesPanel({ page });
-    await expectContentModeTemplateActionsUnavailable({
-      page,
-      templateName: fixture.pageTemplateName,
-    });
-
-    await page.getByRole("tab", { name: "Navigator" }).click();
-    await expectTextHidden({ page, text: "Global Root" });
-    await expectTextHidden({ page, text: fixture.pageTemplateName });
-    await waitForSyncStatus({ page, status: "idle" });
-  } finally {
-    await close();
-  }
+  await page.getByRole("tab", { name: "Navigator" }).click();
+  await expectTextHidden({ page, text: "Global Root" });
+  await expectTextHidden({ page, text: fixture.pageTemplateName });
+  await waitForSyncStatus({ page, status: "idle" });
 });
 
 test("Editor can edit text and content props but not design props", async ({
-  browser,
+  page,
 }) => {
   const editedHref = "/edited-link";
   const editedImageSrc =
@@ -271,378 +265,359 @@ test("Editor can edit text and content props but not design props", async ({
   const editedImageAlt = "Edited image alt";
   const editedVideoSrc = "https://example.com/edited-video.mp4";
   const editedContent = "Edited isolated content";
-  const { page, close } = await newIsolatedPage(browser);
 
-  try {
-    await measure("content mode open editor for props", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
-      });
+  await measure("content mode open editor for props", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
     });
-    await waitForCanvasText({ page, text: "Initial link" });
-    await waitForSyncStatus({ page, status: "idle" });
+  });
+  await waitForCanvasText({ page, text: "Initial link" });
+  await waitForSyncStatus({ page, status: "idle" });
 
-    await insertTemplateAfterCanvasText({
-      page,
-      anchorText: "Initial content",
-      templateName: fixture.editableTextTemplateName,
-    });
-    await waitForCanvasText({
-      page,
-      text: fixture.editableTextTemplateText,
-    });
+  await insertTemplateAfterCanvasText({
+    page,
+    anchorText: "Initial content",
+    templateName: fixture.editableTextTemplateName,
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.editableTextTemplateText,
+  });
 
-    await insertTemplateAfterCanvasText({
-      page,
-      anchorText: fixture.editableTextTemplateText,
-      templateName: fixture.contentPropsTemplateName,
-    });
-    await waitForCanvasText({
-      page,
-      text: fixture.contentPropsTemplateLinkText,
-    });
-    await waitForCanvasImage({
-      page,
-      alt: fixture.contentPropsTemplateImageAlt,
-    });
-    await waitForCanvasVideoSource({
-      page,
-      sourceName: fixture.contentPropsTemplateVideoName,
-    });
+  await insertTemplateAfterCanvasText({
+    page,
+    anchorText: fixture.editableTextTemplateText,
+    templateName: fixture.contentPropsTemplateName,
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.contentPropsTemplateLinkText,
+  });
+  await waitForCanvasImage({
+    page,
+    alt: fixture.contentPropsTemplateImageAlt,
+  });
+  await waitForCanvasVideoSource({
+    page,
+    sourceName: fixture.contentPropsTemplateVideoName,
+  });
 
-    await measure("content mode edit text and save", async () => {
-      await replaceCanvasText({
-        page,
-        currentText: fixture.editableTextTemplateText,
-        text: editedContent,
-      });
+  await measure("content mode edit text and save", async () => {
+    await replaceCanvasText({
+      page,
+      currentText: fixture.editableTextTemplateText,
+      text: editedContent,
     });
+  });
 
-    await selectCanvasTextInstanceForProps({
-      page,
-      text: "Initial link",
-      propertyLabel: "Href",
-    });
-    await expectLocatorHidden({
-      locator: page.getByRole("tab", { name: "Style" }),
-      message: "Expected Style tab to be unavailable in content mode",
-    });
-    await expectTextHidden({ page, text: "Style sources" });
-    await page
-      .getByText("Target", { exact: true })
-      .first()
-      .waitFor({ state: "visible" });
-    await page
-      .getByText("Download", { exact: true })
-      .first()
-      .waitFor({ state: "visible" });
+  await selectCanvasTextInstanceForProps({
+    page,
+    text: "Initial link",
+    propertyLabel: "Href",
+  });
+  await expectLocatorHidden({
+    locator: page.getByRole("tab", { name: "Style" }),
+    message: "Expected Style tab to be unavailable in content mode",
+  });
+  await expectTextHidden({ page, text: "Style sources" });
+  await page
+    .getByText("Target", { exact: true })
+    .first()
+    .waitFor({ state: "visible" });
+  await page
+    .getByText("Download", { exact: true })
+    .first()
+    .waitFor({ state: "visible" });
 
-    await selectCanvasTextInstanceForProps({
-      page,
-      text: fixture.contentPropsTemplateLinkText,
-      propertyLabel: "Href",
-    });
-    await fillSelectedStringProperty({
-      page,
-      label: "Href",
-      control: "url",
-      value: editedHref,
-    });
+  await selectCanvasTextInstanceForProps({
+    page,
+    text: fixture.contentPropsTemplateLinkText,
+    propertyLabel: "Href",
+  });
+  await fillSelectedStringProperty({
+    page,
+    label: "Href",
+    control: "url",
+    value: editedHref,
+  });
 
-    await selectCanvasImage({
-      page,
-      alt: fixture.contentPropsTemplateImageAlt,
-    });
-    await fillSelectedStringProperty({
-      page,
-      label: "Source",
-      control: "url",
-      value: editedImageSrc,
-    });
-    await fillSelectedStringProperty({
-      page,
-      label: "Alt",
-      control: "text",
-      value: editedImageAlt,
-    });
-    await expectTextHidden({ page, text: "Width" });
+  await selectCanvasImage({
+    page,
+    alt: fixture.contentPropsTemplateImageAlt,
+  });
+  await fillSelectedStringProperty({
+    page,
+    label: "Source",
+    control: "url",
+    value: editedImageSrc,
+  });
+  await fillSelectedStringProperty({
+    page,
+    label: "Alt",
+    control: "text",
+    value: editedImageAlt,
+  });
+  await expectTextHidden({ page, text: "Width" });
 
-    await selectCanvasVideoSource({
-      page,
-      sourceName: fixture.contentPropsTemplateVideoName,
-    });
-    await fillSelectedStringProperty({
-      page,
-      label: "Source",
-      control: "url",
-      value: editedVideoSrc,
-    });
+  await selectCanvasVideoSource({
+    page,
+    sourceName: fixture.contentPropsTemplateVideoName,
+  });
+  await fillSelectedStringProperty({
+    page,
+    label: "Source",
+    control: "url",
+    value: editedVideoSrc,
+  });
 
-    await measure("content mode reload editor for props", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
-      });
-    });
-    await waitForCanvasText({
+  await measure("content mode reload editor for props", async () => {
+    await openProjectBuilder({
       page,
-      text: fixture.contentPropsTemplateLinkText,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
     });
-    await waitForCanvasText({ page, text: editedContent });
-    await waitForSyncStatus({ page, status: "idle" });
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.contentPropsTemplateLinkText,
+  });
+  await waitForCanvasText({ page, text: editedContent });
+  await waitForSyncStatus({ page, status: "idle" });
 
-    await selectCanvasTextInstanceForProps({
-      page,
-      text: fixture.contentPropsTemplateLinkText,
-      propertyLabel: "Href",
-    });
-    await waitForSelectedStringPropertyValue({
-      page,
-      label: "Href",
-      control: "url",
-      value: editedHref,
-    });
+  await selectCanvasTextInstanceForProps({
+    page,
+    text: fixture.contentPropsTemplateLinkText,
+    propertyLabel: "Href",
+  });
+  await waitForSelectedStringPropertyValue({
+    page,
+    label: "Href",
+    control: "url",
+    value: editedHref,
+  });
 
-    await selectCanvasImage({
-      page,
-      alt: editedImageAlt,
-    });
-    await waitForSelectedStringPropertyValue({
-      page,
-      label: "Source",
-      control: "url",
-      value: editedImageSrc,
-    });
-    await waitForSelectedStringPropertyValue({
-      page,
-      label: "Alt",
-      control: "text",
-      value: editedImageAlt,
-    });
-    await expectTextHidden({ page, text: "Width" });
+  await selectCanvasImage({
+    page,
+    alt: editedImageAlt,
+  });
+  await waitForSelectedStringPropertyValue({
+    page,
+    label: "Source",
+    control: "url",
+    value: editedImageSrc,
+  });
+  await waitForSelectedStringPropertyValue({
+    page,
+    label: "Alt",
+    control: "text",
+    value: editedImageAlt,
+  });
+  await expectTextHidden({ page, text: "Width" });
 
-    await selectCanvasVideoSource({
-      page,
-      sourceName: "edited-video.mp4",
-    });
-    await waitForSelectedStringPropertyValue({
-      page,
-      label: "Source",
-      control: "url",
-      value: editedVideoSrc,
-    });
-    await waitForCanvasText({ page, text: editedContent });
-  } finally {
-    await close();
-  }
+  await selectCanvasVideoSource({
+    page,
+    sourceName: "edited-video.mp4",
+  });
+  await waitForSelectedStringPropertyValue({
+    page,
+    label: "Source",
+    control: "url",
+    value: editedVideoSrc,
+  });
+  await waitForCanvasText({ page, text: editedContent });
 });
 
-test("Editor can paste text while editing canvas content", async ({
-  browser,
-}) => {
+test("Editor can paste text while editing canvas content", async ({ page }) => {
   const pastedContent = "Pasted editable content";
-  const { page, close } = await newIsolatedPage(browser);
 
-  try {
-    await measure("content mode open editor for text paste", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
-      });
-    });
-    await waitForCanvasText({ page, text: "Initial content" });
-    await waitForSyncStatus({ page, status: "idle" });
-
-    await insertTemplateAfterCanvasText({
+  await measure("content mode open editor for text paste", async () => {
+    await openProjectBuilder({
       page,
-      anchorText: "Initial content",
-      templateName: fixture.editableTextTemplateName,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
     });
-    await waitForCanvasText({
-      page,
-      text: fixture.editableTextTemplateText,
-    });
+  });
+  await waitForCanvasText({ page, text: "Initial content" });
+  await waitForSyncStatus({ page, status: "idle" });
 
-    await measure("content mode native paste text", async () => {
-      await pasteCanvasText({
-        page,
-        currentText: fixture.editableTextTemplateText,
-        text: pastedContent,
-      });
+  await insertTemplateAfterCanvasText({
+    page,
+    anchorText: "Initial content",
+    templateName: fixture.editableTextTemplateName,
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.editableTextTemplateText,
+  });
+
+  await measure("content mode native paste text", async () => {
+    await pasteCanvasText({
+      page,
+      currentText: fixture.editableTextTemplateText,
+      text: pastedContent,
     });
-    await waitForCanvasText({ page, text: pastedContent });
-  } finally {
-    await close();
-  }
+  });
+  await waitForCanvasText({ page, text: pastedContent });
 });
 
-test("Editor rich text formatting persists after reload", async ({
-  browser,
-}) => {
+test("Editor rich text formatting persists after reload", async ({ page }) => {
   const formattedText = "Rich editor formatted copy";
   const editedHref = "/rich-text-editor-link";
-  const { page, close } = await newIsolatedPage(browser);
 
-  try {
-    await measure(
-      "content mode open editor for rich text formatting",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.editorToken,
-          mode: "content",
-        });
-      }
+  await measure(
+    "content mode open editor for rich text formatting",
+    async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.editorToken,
+        mode: "content",
+      });
+    }
+  );
+  await waitForCanvasText({ page, text: fixture.shareLinkEditableText });
+  await waitForSyncStatus({ page, status: "idle" });
+
+  await measure("content mode apply rich text formatting", async () => {
+    await replaceCanvasTextAndApplyInlineFormats({
+      page,
+      currentText: fixture.shareLinkEditableText,
+      text: formattedText,
+      formats: ["Bold", "Italic", "Inline link"],
+    });
+  });
+  await waitForCanvasText({ page, text: formattedText });
+
+  const boldCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "b",
+    text: formattedText,
+  });
+  const italicCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "i",
+    text: formattedText,
+  });
+  const linkCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "a",
+    text: formattedText,
+  });
+  if (boldCount !== 1 || italicCount !== 1 || linkCount !== 1) {
+    throw new Error(
+      `Expected rich text editor to persist one bold, italic, and inline link subtree. bold=${boldCount}, italic=${italicCount}, link=${linkCount}`
     );
-    await waitForCanvasText({ page, text: fixture.shareLinkEditableText });
-    await waitForSyncStatus({ page, status: "idle" });
+  }
 
-    await measure("content mode apply rich text formatting", async () => {
-      await replaceCanvasTextAndApplyInlineFormats({
-        page,
-        currentText: fixture.shareLinkEditableText,
-        text: formattedText,
-        formats: ["Bold", "Italic", "Inline link"],
-      });
-    });
-    await waitForCanvasText({ page, text: formattedText });
+  await measure("content mode undo rich text formatting", async () => {
+    await undoShortcut({ page });
+  });
+  await waitForCanvasTextHidden({ page, text: formattedText });
 
-    const boldCount = await getElementTagWithTextCount({
-      projectId: fixture.projectId,
-      tag: "b",
-      text: formattedText,
-    });
-    const italicCount = await getElementTagWithTextCount({
-      projectId: fixture.projectId,
-      tag: "i",
-      text: formattedText,
-    });
-    const linkCount = await getElementTagWithTextCount({
-      projectId: fixture.projectId,
-      tag: "a",
-      text: formattedText,
-    });
-    if (boldCount !== 1 || italicCount !== 1 || linkCount !== 1) {
-      throw new Error(
-        `Expected rich text editor to persist one bold, italic, and inline link subtree. bold=${boldCount}, italic=${italicCount}, link=${linkCount}`
-      );
-    }
+  await measure("content mode redo rich text formatting", async () => {
+    await redoShortcut({ page });
+  });
+  await waitForCanvasText({ page, text: formattedText });
 
-    await measure("content mode undo rich text formatting", async () => {
-      await undoShortcut({ page });
-    });
-    await waitForCanvasTextHidden({ page, text: formattedText });
+  await selectCanvasTextInstanceForProps({
+    page,
+    text: formattedText,
+    propertyLabel: "Href",
+  });
+  await fillSelectedStringProperty({
+    page,
+    label: "Href",
+    control: "url",
+    value: editedHref,
+  });
+  const savedHref = await getElementHrefWithText({
+    projectId: fixture.projectId,
+    text: formattedText,
+  });
+  if (savedHref !== editedHref) {
+    throw new Error(
+      `Expected rich-text link href to be saved as "${editedHref}", received "${savedHref}"`
+    );
+  }
 
-    await measure("content mode redo rich text formatting", async () => {
-      await redoShortcut({ page });
-    });
-    await waitForCanvasText({ page, text: formattedText });
-
-    await selectCanvasTextInstanceForProps({
+  await measure("content mode reload rich text formatting", async () => {
+    await openProjectBuilder({
       page,
-      text: formattedText,
-      propertyLabel: "Href",
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
     });
-    await fillSelectedStringProperty({
+  });
+  await waitForCanvasText({ page, text: formattedText });
+  const reloadedHref = await getElementHrefWithText({
+    projectId: fixture.projectId,
+    text: formattedText,
+  });
+  if (reloadedHref !== editedHref) {
+    throw new Error(
+      `Expected reloaded rich-text link href to be "${editedHref}", received "${reloadedHref}"`
+    );
+  }
+
+  const reloadedBoldCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "b",
+    text: formattedText,
+  });
+  const reloadedItalicCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "i",
+    text: formattedText,
+  });
+  const reloadedLinkCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "a",
+    text: formattedText,
+  });
+  if (
+    reloadedBoldCount !== 1 ||
+    reloadedItalicCount !== 1 ||
+    reloadedLinkCount !== 1
+  ) {
+    throw new Error(
+      `Expected reloaded rich text formatting to persist. bold=${reloadedBoldCount}, italic=${reloadedItalicCount}, link=${reloadedLinkCount}`
+    );
+  }
+
+  await removeCanvasInlineLink({ page, text: formattedText });
+  const removedLinkCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "a",
+    text: formattedText,
+  });
+  if (removedLinkCount !== 0) {
+    throw new Error(
+      `Expected rich-text link removal to delete the inline link subtree, received ${removedLinkCount} link instances`
+    );
+  }
+
+  await measure("content mode reload rich text link removal", async () => {
+    await openProjectBuilder({
       page,
-      label: "Href",
-      control: "url",
-      value: editedHref,
-    });
-    const savedHref = await getElementHrefWithText({
       projectId: fixture.projectId,
-      text: formattedText,
+      authToken: fixture.editorToken,
+      mode: "content",
     });
-    if (savedHref !== editedHref) {
-      throw new Error(
-        `Expected rich-text link href to be saved as "${editedHref}", received "${savedHref}"`
-      );
-    }
-
-    await measure("content mode reload rich text formatting", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
-      });
-    });
-    await waitForCanvasText({ page, text: formattedText });
-    const reloadedHref = await getElementHrefWithText({
-      projectId: fixture.projectId,
-      text: formattedText,
-    });
-    if (reloadedHref !== editedHref) {
-      throw new Error(
-        `Expected reloaded rich-text link href to be "${editedHref}", received "${reloadedHref}"`
-      );
-    }
-
-    const reloadedBoldCount = await getElementTagWithTextCount({
-      projectId: fixture.projectId,
-      tag: "b",
-      text: formattedText,
-    });
-    const reloadedItalicCount = await getElementTagWithTextCount({
-      projectId: fixture.projectId,
-      tag: "i",
-      text: formattedText,
-    });
-    const reloadedLinkCount = await getElementTagWithTextCount({
-      projectId: fixture.projectId,
-      tag: "a",
-      text: formattedText,
-    });
-    if (
-      reloadedBoldCount !== 1 ||
-      reloadedItalicCount !== 1 ||
-      reloadedLinkCount !== 1
-    ) {
-      throw new Error(
-        `Expected reloaded rich text formatting to persist. bold=${reloadedBoldCount}, italic=${reloadedItalicCount}, link=${reloadedLinkCount}`
-      );
-    }
-
-    await removeCanvasInlineLink({ page, text: formattedText });
-    const removedLinkCount = await getElementTagWithTextCount({
-      projectId: fixture.projectId,
-      tag: "a",
-      text: formattedText,
-    });
-    if (removedLinkCount !== 0) {
-      throw new Error(
-        `Expected rich-text link removal to delete the inline link subtree, received ${removedLinkCount} link instances`
-      );
-    }
-
-    await measure("content mode reload rich text link removal", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
-      });
-    });
-    await waitForCanvasText({ page, text: formattedText });
-    const reloadedRemovedLinkCount = await getElementTagWithTextCount({
-      projectId: fixture.projectId,
-      tag: "a",
-      text: formattedText,
-    });
-    if (reloadedRemovedLinkCount !== 0) {
-      throw new Error(
-        `Expected rich-text link removal to persist after reload, received ${reloadedRemovedLinkCount} link instances`
-      );
-    }
-  } finally {
-    await close();
+  });
+  await waitForCanvasText({ page, text: formattedText });
+  const reloadedRemovedLinkCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "a",
+    text: formattedText,
+  });
+  if (reloadedRemovedLinkCount !== 0) {
+    throw new Error(
+      `Expected rich-text link removal to persist after reload, received ${reloadedRemovedLinkCount} link instances`
+    );
   }
 });

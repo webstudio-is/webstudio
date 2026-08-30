@@ -11,7 +11,8 @@ const mocks = vi.hoisted(() => ({
   toastError: vi.fn(),
 }));
 
-vi.mock("../trpc/trpc-client", () => ({
+vi.mock("../trpc/trpc-client", async (importOriginal) => ({
+  ...(await importOriginal()),
   nativeClient: {
     build: {
       createJsxFragment: {
@@ -21,11 +22,13 @@ vi.mock("../trpc/trpc-client", () => ({
   },
 }));
 
-vi.mock("../instance-utils/insert", () => ({
+vi.mock("../instance-utils/insert", async (importOriginal) => ({
+  ...(await importOriginal()),
   insertWebstudioFragmentAt: mocks.insertWebstudioFragmentAt,
 }));
 
-vi.mock("../builder-api", () => ({
+vi.mock("../builder-api", async (importOriginal) => ({
+  ...(await importOriginal()),
   builderApi: {
     toast: {
       error: mocks.toastError,

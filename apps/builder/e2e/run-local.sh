@@ -39,6 +39,7 @@ export E2E_RUN_TESTS="${E2E_RUN_TESTS:-true}"
 export E2E_START_POSTGREST="${E2E_START_POSTGREST:-$E2E_RUN_TESTS}"
 export E2E_BUILDER_BUILD_TIMEOUT_SECONDS="${E2E_BUILDER_BUILD_TIMEOUT_SECONDS:-600}"
 export E2E_TEST_COMMAND_TIMEOUT_SECONDS="${E2E_TEST_COMMAND_TIMEOUT_SECONDS:-900}"
+export E2E_TEST_SELECTION_TIMEOUT_SECONDS="${E2E_TEST_SELECTION_TIMEOUT_SECONDS:-60}"
 export E2E_WRITE_SCHEMA_SNAPSHOT="${E2E_WRITE_SCHEMA_SNAPSHOT:-false}"
 
 cleanup() {
@@ -117,6 +118,19 @@ run_builder_e2e_tests() {
     fi
   )
 }
+
+validate_builder_e2e_selection() {
+  (
+    cd "$ROOT_DIR/apps/builder"
+    E2E_BUILDER_URL="${E2E_BUILDER_URL:-https://127.0.0.1:3000}" \
+      pnpm e2e:ci --list "${PLAYWRIGHT_ARGS[@]}"
+  )
+}
+
+if [ "$E2E_RUN_TESTS" = "true" ]; then
+  run_step "validate builder e2e test selection" \
+    "$E2E_TEST_SELECTION_TIMEOUT_SECONDS" validate_builder_e2e_selection
+fi
 
 run_step "pull e2e database image" "$E2E_DOCKER_PULL_TIMEOUT_SECONDS" \
   builder_backend_pull_db

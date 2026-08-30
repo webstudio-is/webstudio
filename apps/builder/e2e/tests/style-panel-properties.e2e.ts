@@ -11,7 +11,7 @@ import {
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { newIsolatedPage, test } from "../test";
+import { test } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
@@ -110,133 +110,128 @@ const expectBuildStylesNotToContain = async ({
 };
 
 test("Builder style panel edits representative styles and persists after reload", async ({
-  browser,
+  page,
   context,
 }) => {
   const fixture = await createStylePanelRuntimeProject(context, "styles");
-  const { page, close } = await newIsolatedPage(browser);
   const text = "Initial content";
 
-  try {
-    await measure("style panel runtime open builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
+  await measure("style panel runtime open builder", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
     });
-    await waitForCanvasText({ page, text });
+  });
+  await waitForCanvasText({ page, text });
 
-    await selectCanvasTextInstance({ page, text });
-    await page.getByRole("tab", { name: "Style" }).click();
+  await selectCanvasTextInstance({ page, text });
+  await page.getByRole("tab", { name: "Style" }).click();
 
-    await measure("style panel runtime edit css values", async () => {
-      await setCssValue({ page, property: "font-size", value: "44px" });
-      await setCssValue({ page, property: "line-height", value: "1.25" });
-      await setCssValue({ page, property: "letter-spacing", value: "2px" });
-      await setCssValue({ page, property: "color", value: "#2255ff" });
-      await setCssValue({ page, property: "width", value: "420px" });
-      await selectStyleSourceState({ page, state: ":hover" });
-      await setCssValue({ page, property: "color", value: "#ca126b" });
-      await selectStyleSourceState({ page, state: ":hover" });
-    });
+  await measure("style panel runtime edit css values", async () => {
+    await setCssValue({ page, property: "font-size", value: "44px" });
+    await setCssValue({ page, property: "line-height", value: "1.25" });
+    await setCssValue({ page, property: "letter-spacing", value: "2px" });
+    await setCssValue({ page, property: "color", value: "#2255ff" });
+    await setCssValue({ page, property: "width", value: "420px" });
+    await selectStyleSourceState({ page, state: ":hover" });
+    await setCssValue({ page, property: "color", value: "#ca126b" });
+    await selectStyleSourceState({ page, state: ":hover" });
+  });
 
-    await waitForCanvasTextStyle({
-      page,
-      text,
-      property: "font-size",
-      value: "44px",
-    });
-    await waitForCanvasTextStyle({
-      page,
-      text,
-      property: "line-height",
-      value: "55px",
-    });
-    await waitForCanvasTextStyle({
-      page,
-      text,
-      property: "letter-spacing",
-      value: "2px",
-    });
-    await waitForCanvasTextStyle({
-      page,
-      text,
-      property: "color",
-      value: "rgb(34, 85, 255)",
-    });
-    await waitForCanvasTextStyle({
-      page,
-      text,
-      property: "width",
-      value: "420px",
-    });
-    await waitForHoveredCanvasTextStyle({
-      page,
-      text,
-      property: "color",
-      value: "rgb(202, 18, 107)",
-    });
-    await expectBuildStylesToContain({
-      fixture,
-      text: `"state":":hover"`,
-    });
+  await waitForCanvasTextStyle({
+    page,
+    text,
+    property: "font-size",
+    value: "44px",
+  });
+  await waitForCanvasTextStyle({
+    page,
+    text,
+    property: "line-height",
+    value: "55px",
+  });
+  await waitForCanvasTextStyle({
+    page,
+    text,
+    property: "letter-spacing",
+    value: "2px",
+  });
+  await waitForCanvasTextStyle({
+    page,
+    text,
+    property: "color",
+    value: "rgb(34, 85, 255)",
+  });
+  await waitForCanvasTextStyle({
+    page,
+    text,
+    property: "width",
+    value: "420px",
+  });
+  await waitForHoveredCanvasTextStyle({
+    page,
+    text,
+    property: "color",
+    value: "rgb(202, 18, 107)",
+  });
+  await expectBuildStylesToContain({
+    fixture,
+    text: `"state":":hover"`,
+  });
 
-    await page.getByRole("tab", { name: "Style" }).click();
-    await measure("style panel runtime reset css value", async () => {
-      await resetCssValue({ page, property: "width" });
-    });
-    await expectBuildStylesNotToContain({
-      fixture,
-      text: `"property":"width"`,
-    });
+  await page.getByRole("tab", { name: "Style" }).click();
+  await measure("style panel runtime reset css value", async () => {
+    await resetCssValue({ page, property: "width" });
+  });
+  await expectBuildStylesNotToContain({
+    fixture,
+    text: `"property":"width"`,
+  });
 
-    await measure("style panel runtime reload builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    });
-    await waitForCanvasTextStyle({
+  await measure("style panel runtime reload builder", async () => {
+    await openProjectBuilder({
       page,
-      text,
-      property: "font-size",
-      value: "44px",
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
     });
-    await waitForCanvasTextStyle({
-      page,
-      text,
-      property: "line-height",
-      value: "55px",
-    });
-    await waitForCanvasTextStyle({
-      page,
-      text,
-      property: "letter-spacing",
-      value: "2px",
-    });
-    await waitForCanvasTextStyle({
-      page,
-      text,
-      property: "color",
-      value: "rgb(34, 85, 255)",
-    });
-    await waitForHoveredCanvasTextStyle({
-      page,
-      text,
-      property: "color",
-      value: "rgb(202, 18, 107)",
-    });
-    await expectBuildStylesNotToContain({
-      fixture,
-      text: `"property":"width"`,
-    });
-    await expectBuildStylesToContain({
-      fixture,
-      text: `"state":":hover"`,
-    });
-  } finally {
-    await close();
-  }
+  });
+  await waitForCanvasTextStyle({
+    page,
+    text,
+    property: "font-size",
+    value: "44px",
+  });
+  await waitForCanvasTextStyle({
+    page,
+    text,
+    property: "line-height",
+    value: "55px",
+  });
+  await waitForCanvasTextStyle({
+    page,
+    text,
+    property: "letter-spacing",
+    value: "2px",
+  });
+  await waitForCanvasTextStyle({
+    page,
+    text,
+    property: "color",
+    value: "rgb(34, 85, 255)",
+  });
+  await waitForHoveredCanvasTextStyle({
+    page,
+    text,
+    property: "color",
+    value: "rgb(202, 18, 107)",
+  });
+  await expectBuildStylesNotToContain({
+    fixture,
+    text: `"property":"width"`,
+  });
+  await expectBuildStylesToContain({
+    fixture,
+    text: `"state":":hover"`,
+  });
 });

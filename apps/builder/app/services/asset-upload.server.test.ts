@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import { afterEach, expect, test, vi } from "vitest";
 import { RESIZABLE_IMAGE_MIME_TYPES } from "@webstudio-is/sdk";
 import { getBrowserUploadBody } from "./asset-upload.server";

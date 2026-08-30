@@ -512,6 +512,9 @@ importers:
       '@unocss/preset-wind4':
         specifier: ^66.6.8
         version: 66.6.8
+      '@vitest/browser':
+        specifier: ^3.1.2
+        version: 3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(playwright@1.50.1)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(vitest@3.1.2)
       '@vitest/coverage-v8':
         specifier: 3.1.2
         version: 3.1.2(@vitest/browser@3.1.2)(vitest@3.1.2)
@@ -527,6 +530,9 @@ importers:
       msw:
         specifier: ^2.13.2
         version: 2.13.2(@types/node@22.13.10)(typescript@7.0.2)
+      playwright:
+        specifier: 1.50.1
+        version: 1.50.1
       react-router-dom:
         specifier: ^6.30.0
         version: 6.30.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -2475,9 +2481,15 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@vitest/browser':
+        specifier: ^3.1.2
+        version: 3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(playwright@1.50.1)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(vitest@3.1.2)
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      playwright:
+        specifier: 1.50.1
+        version: 1.50.1
       react-dom:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
@@ -2798,6 +2810,9 @@ importers:
       '@types/sanitize-html':
         specifier: 2.16.1
         version: 2.16.1
+      '@vitest/browser':
+        specifier: ^3.1.2
+        version: 3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(playwright@1.50.1)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(vitest@3.1.2)
       '@webstudio-is/design-system':
         specifier: workspace:*
         version: link:../design-system
@@ -2819,6 +2834,9 @@ importers:
       nanostores:
         specifier: ^0.11.3
         version: 0.11.3
+      playwright:
+        specifier: 1.50.1
+        version: 1.50.1
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -2892,6 +2910,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@vitest/browser':
+        specifier: ^3.1.2
+        version: 3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(playwright@1.50.1)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(vitest@3.1.2)
       '@webstudio-is/css-data':
         specifier: workspace:*
         version: link:../css-data
@@ -2910,6 +2931,9 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      playwright:
+        specifier: 1.50.1
+        version: 1.50.1
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -2975,9 +2999,15 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@vitest/browser':
+        specifier: ^3.1.2
+        version: 3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(playwright@1.50.1)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(vitest@3.1.2)
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      playwright:
+        specifier: 1.50.1
+        version: 1.50.1
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -16382,7 +16412,7 @@ snapshots:
   '@unocss/rule-utils@66.6.8':
     dependencies:
       '@unocss/core': 66.6.8
-      magic-string: 0.30.17
+      magic-string: 0.30.21
 
   '@vanilla-extract/babel-plugin-debug-ids@1.0.6':
     dependencies:
@@ -16496,7 +16526,7 @@ snapshots:
       sirv: 3.0.1
       tinyrainbow: 2.0.0
       vitest: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(lightningcss@1.31.1)(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(tsx@4.19.3)(yaml@2.9.0)
-      ws: 8.18.0
+      ws: 8.21.0
     optionalDependencies:
       playwright: 1.50.1
     transitivePeerDependencies:

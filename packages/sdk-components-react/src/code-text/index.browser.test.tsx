@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 import { createRef } from "react";
 import { renderToStaticMarkup, renderToString } from "react-dom/server";
 import { hydrateRoot } from "react-dom/client";

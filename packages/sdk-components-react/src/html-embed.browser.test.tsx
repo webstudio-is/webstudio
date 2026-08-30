@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import * as React from "react";
 import ReactDOMServer from "react-dom/server";
 import { test, expect, describe, beforeEach } from "vitest";

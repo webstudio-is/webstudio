@@ -309,8 +309,25 @@ jobs:
 
           run_builder_e2e || {
             echo "::warning::Builder e2e shard ${{ matrix.shard }} failed; retrying once with a clean backend"
+            if [ -d apps/builder/playwright-report ]; then
+              mv apps/builder/playwright-report apps/builder/playwright-report-attempt-1
+            fi
+            if [ -d apps/builder/test-results/e2e ]; then
+              mv apps/builder/test-results/e2e apps/builder/test-results/e2e-attempt-1
+            fi
             run_builder_e2e_keep_logs
           }
+
+      - name: Upload initial Builder e2e failure
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: builder-e2e-report-${{ matrix.shard }}-attempt-1
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            apps/builder/playwright-report-attempt-1
+            apps/builder/test-results/e2e-attempt-1
 
       - name: Upload Builder e2e report
         if: failure()

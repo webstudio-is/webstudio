@@ -42,11 +42,11 @@ import {
   __testing__,
 } from "./plugin-page";
 import { pasteHandled, pasteIgnored } from "./copy-paste";
-import { initBuilderApi } from "../builder-api";
+import { initBuilderApiWindow } from "../builder-api";
 
 enableMapSet();
 registerContainers();
-initBuilderApi();
+initBuilderApiWindow();
 const { preparePageTransferItem } = __testing__;
 
 afterEach(() => {

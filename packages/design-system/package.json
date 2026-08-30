@@ -83,8 +83,10 @@
     "./colors": {
       "webstudio": "./src/colors.ts"
     },
-    "./colors.css": "./src/colors/colors.css",
-    "./test-setup": "./src/test-setup.ts"
+    "./toast": {
+      "webstudio": "./src/components/toast.tsx"
+    },
+    "./colors.css": "./src/colors/colors.css"
   },
   "license": "AGPL-3.0-or-later",
   "private": true,

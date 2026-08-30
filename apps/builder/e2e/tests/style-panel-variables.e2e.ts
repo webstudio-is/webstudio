@@ -8,7 +8,7 @@ import {
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { newIsolatedPage, test } from "../test";
+import { test } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
@@ -101,165 +101,160 @@ const runCssVariableCommandAction = async ({
 };
 
 test("Builder CSS variables persist across create, bind, rename, delete, and reload", async ({
-  browser,
+  page,
   context,
 }) => {
   const fixture = await createStylePanelRuntimeProject(
     context,
     "css-variables"
   );
-  const { page, close } = await newIsolatedPage(browser);
   const text = "Initial content";
   const variableName = "--e2e-brand-color";
   const renamedVariableName = "--e2e-brand-color-renamed";
 
-  try {
-    await measure(
-      "style panel runtime open builder for css variables",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.builderToken,
-        });
-      }
-    );
-    await waitForCanvasText({ page, text });
-
-    await selectCanvasTextInstance({ page, text });
-    await page.getByRole("tab", { name: "Style" }).click();
-
-    await measure(
-      "style panel runtime create and bind css variable",
-      async () => {
-        await addCssDeclaration({
-          page,
-          css: `${variableName}: #126bca`,
-        });
-        await addCssDeclaration({
-          page,
-          css: `color: var(${variableName})`,
-        });
-      }
-    );
-
-    await waitForCanvasTextStyle({
-      page,
-      text,
-      property: "color",
-      value: "rgb(18, 107, 202)",
-    });
-    await expectBuildStylesToContain({
-      fixture,
-      text: `"property":"${variableName}"`,
-    });
-    await expectBuildStylesToContain({
-      fixture,
-      text: `var","value":"${variableName.slice(2)}`,
-    });
-
-    await measure(
-      "style panel runtime reload builder for css variable",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.builderToken,
-        });
-      }
-    );
-    await waitForCanvasTextStyle({
-      page,
-      text,
-      property: "color",
-      value: "rgb(18, 107, 202)",
-    });
-
-    await measure("style panel runtime rename css variable", async () => {
-      await runCssVariableCommandAction({
+  await measure(
+    "style panel runtime open builder for css variables",
+    async () => {
+      await openProjectBuilder({
         page,
-        variable: variableName,
-        action: "Rename",
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
       });
-      const dialog = page.getByRole("dialog", { name: "Rename CSS variable" });
-      await dialog.getByRole("textbox").fill(renamedVariableName);
-      const save = waitForChangeToBeSaved({ page });
-      await dialog.getByRole("button", { name: "Rename" }).click();
-      await save;
-      await waitForSyncStatus({ page, status: "idle" });
-    });
+    }
+  );
+  await waitForCanvasText({ page, text });
 
-    await waitForCanvasTextStyle({
-      page,
-      text,
-      property: "color",
-      value: "rgb(18, 107, 202)",
-    });
-    await expectBuildStylesNotToContain({
-      fixture,
-      text: `"property":"${variableName}"`,
-    });
-    await expectBuildStylesToContain({
-      fixture,
-      text: `"property":"${renamedVariableName}"`,
-    });
-    await expectBuildStylesToContain({
-      fixture,
-      text: `var","value":"${renamedVariableName.slice(2)}`,
-    });
+  await selectCanvasTextInstance({ page, text });
+  await page.getByRole("tab", { name: "Style" }).click();
 
-    await measure(
-      "style panel runtime reload builder after css variable rename",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.builderToken,
-        });
-      }
-    );
-    await waitForCanvasTextStyle({
-      page,
-      text,
-      property: "color",
-      value: "rgb(18, 107, 202)",
-    });
-
-    await measure("style panel runtime delete css variable", async () => {
-      await runCssVariableCommandAction({
+  await measure(
+    "style panel runtime create and bind css variable",
+    async () => {
+      await addCssDeclaration({
         page,
-        variable: renamedVariableName,
-        action: "Delete",
+        css: `${variableName}: #126bca`,
       });
-      const save = waitForChangeToBeSaved({ page });
-      await page
-        .getByRole("dialog", { name: "Delete confirmation" })
-        .getByRole("button", { name: "Delete" })
-        .click();
-      await save;
-      await waitForSyncStatus({ page, status: "idle" });
-    });
+      await addCssDeclaration({
+        page,
+        css: `color: var(${variableName})`,
+      });
+    }
+  );
 
-    await expectBuildStylesNotToContain({
-      fixture,
-      text: renamedVariableName,
-    });
+  await waitForCanvasTextStyle({
+    page,
+    text,
+    property: "color",
+    value: "rgb(18, 107, 202)",
+  });
+  await expectBuildStylesToContain({
+    fixture,
+    text: `"property":"${variableName}"`,
+  });
+  await expectBuildStylesToContain({
+    fixture,
+    text: `var","value":"${variableName.slice(2)}`,
+  });
 
-    await measure(
-      "style panel runtime reload builder after css variable delete",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.builderToken,
-        });
-      }
-    );
-    await expectBuildStylesNotToContain({
-      fixture,
-      text: renamedVariableName,
+  await measure(
+    "style panel runtime reload builder for css variable",
+    async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    }
+  );
+  await waitForCanvasTextStyle({
+    page,
+    text,
+    property: "color",
+    value: "rgb(18, 107, 202)",
+  });
+
+  await measure("style panel runtime rename css variable", async () => {
+    await runCssVariableCommandAction({
+      page,
+      variable: variableName,
+      action: "Rename",
     });
-  } finally {
-    await close();
-  }
+    const dialog = page.getByRole("dialog", { name: "Rename CSS variable" });
+    await dialog.getByRole("textbox").fill(renamedVariableName);
+    const save = waitForChangeToBeSaved({ page });
+    await dialog.getByRole("button", { name: "Rename" }).click();
+    await save;
+    await waitForSyncStatus({ page, status: "idle" });
+  });
+
+  await waitForCanvasTextStyle({
+    page,
+    text,
+    property: "color",
+    value: "rgb(18, 107, 202)",
+  });
+  await expectBuildStylesNotToContain({
+    fixture,
+    text: `"property":"${variableName}"`,
+  });
+  await expectBuildStylesToContain({
+    fixture,
+    text: `"property":"${renamedVariableName}"`,
+  });
+  await expectBuildStylesToContain({
+    fixture,
+    text: `var","value":"${renamedVariableName.slice(2)}`,
+  });
+
+  await measure(
+    "style panel runtime reload builder after css variable rename",
+    async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    }
+  );
+  await waitForCanvasTextStyle({
+    page,
+    text,
+    property: "color",
+    value: "rgb(18, 107, 202)",
+  });
+
+  await measure("style panel runtime delete css variable", async () => {
+    await runCssVariableCommandAction({
+      page,
+      variable: renamedVariableName,
+      action: "Delete",
+    });
+    const save = waitForChangeToBeSaved({ page });
+    await page
+      .getByRole("dialog", { name: "Delete confirmation" })
+      .getByRole("button", { name: "Delete" })
+      .click();
+    await save;
+    await waitForSyncStatus({ page, status: "idle" });
+  });
+
+  await expectBuildStylesNotToContain({
+    fixture,
+    text: renamedVariableName,
+  });
+
+  await measure(
+    "style panel runtime reload builder after css variable delete",
+    async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    }
+  );
+  await expectBuildStylesNotToContain({
+    fixture,
+    text: renamedVariableName,
+  });
 });

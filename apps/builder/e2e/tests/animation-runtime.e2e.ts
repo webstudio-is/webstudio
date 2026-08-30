@@ -9,7 +9,7 @@ import {
   waitForSyncStatus,
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { newIsolatedPage, test } from "../test";
+import { test } from "../test";
 import { measure } from "../perf";
 
 const openCommandPanel = async ({ page }: { page: Page }) => {
@@ -144,7 +144,7 @@ const waitForPersistedAnimation = async ({
 };
 
 test("Builder animation UI creates supported animation props that persist and build", async ({
-  browser,
+  page,
   context,
 }) => {
   const email = "animation-runtime@webstudio.test";
@@ -156,55 +156,50 @@ test("Builder animation UI creates supported animation props that persist and bu
     editorToken: "animation-runtime-editor-token",
     builderToken: "animation-runtime-builder-token",
   });
-  const { page, close } = await newIsolatedPage(browser);
   const text = "Initial content";
   const wrapperName = "Animation Group";
   const presetName = "Fade in";
 
-  try {
-    await measure("animation runtime open builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    });
-    await waitForCanvasText({ page, text });
-    await selectCanvasTextInstance({ page, text });
-
-    await measure("animation runtime wrap selected text", async () => {
-      await wrapSelectedInstance({ page, option: wrapperName });
-    });
-    await selectNavigatorItem({ page, itemName: wrapperName });
-
-    await measure("animation runtime add preset", async () => {
-      await addAnimationPreset({ page, presetName });
-    });
-    await waitForPersistedAnimation({
+  await measure("animation runtime open builder", async () => {
+    await openProjectBuilder({
+      page,
       projectId: fixture.projectId,
-      presetName,
+      authToken: fixture.builderToken,
     });
+  });
+  await waitForCanvasText({ page, text });
+  await selectCanvasTextInstance({ page, text });
 
-    await measure("animation runtime reload builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    });
-    await waitForCanvasText({ page, text });
-    await expectPersistedAnimation({
+  await measure("animation runtime wrap selected text", async () => {
+    await wrapSelectedInstance({ page, option: wrapperName });
+  });
+  await selectNavigatorItem({ page, itemName: wrapperName });
+
+  await measure("animation runtime add preset", async () => {
+    await addAnimationPreset({ page, presetName });
+  });
+  await waitForPersistedAnimation({
+    projectId: fixture.projectId,
+    presetName,
+  });
+
+  await measure("animation runtime reload builder", async () => {
+    await openProjectBuilder({
+      page,
       projectId: fixture.projectId,
-      presetName,
+      authToken: fixture.builderToken,
     });
+  });
+  await waitForCanvasText({ page, text });
+  await expectPersistedAnimation({
+    projectId: fixture.projectId,
+    presetName,
+  });
 
-    await measure("animation runtime generated app build", async () => {
-      await expectGeneratedAppBuild({
-        projectId: fixture.projectId,
-        expectedText: text,
-      });
+  await measure("animation runtime generated app build", async () => {
+    await expectGeneratedAppBuild({
+      projectId: fixture.projectId,
+      expectedText: text,
     });
-  } finally {
-    await close();
-  }
+  });
 });

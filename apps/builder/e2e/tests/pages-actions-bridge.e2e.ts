@@ -13,7 +13,7 @@ import {
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { newIsolatedPage, test, withBrowserContext } from "../test";
+import { test, withBrowserContext } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
@@ -207,358 +207,334 @@ test.beforeAll(async ({ browser }) => {
 });
 
 test("Builder can insert through the engine bridge, undo, redo, and reload", async ({
-  browser,
+  page,
 }) => {
-  const { page, close } = await newIsolatedPage(browser);
-
-  try {
-    await measure("pages actions open builder for engine bridge", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
-      });
-    });
-
-    await waitForCanvasText({ page, text: "Initial content" });
-
-    await measure("pages actions insert template through bridge", async () => {
-      await insertTemplateAfterCanvasText({
-        page,
-        anchorText: "Initial content",
-        templateName: fixture.styledHeadingTemplateName,
-      });
-    });
-    await waitForCanvasText({
+  await measure("pages actions open builder for engine bridge", async () => {
+    await openProjectBuilder({
       page,
-      text: fixture.styledHeadingTemplateText,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
     });
+  });
 
-    await measure("pages actions undo bridge insert", async () => {
-      await undoShortcut({ page, waitForSave: false });
-    });
-    await waitForCanvasTextHidden({
-      page,
-      text: fixture.styledHeadingTemplateText,
-    });
+  await waitForCanvasText({ page, text: "Initial content" });
 
-    await measure("pages actions redo bridge insert", async () => {
-      await redoShortcut({ page });
-    });
-    await waitForCanvasText({
+  await measure("pages actions insert template through bridge", async () => {
+    await insertTemplateAfterCanvasText({
       page,
-      text: fixture.styledHeadingTemplateText,
+      anchorText: "Initial content",
+      templateName: fixture.styledHeadingTemplateName,
     });
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.styledHeadingTemplateText,
+  });
 
-    await measure("pages actions reload bridge insert", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
-      });
-    });
-    await waitForCanvasText({
+  await measure("pages actions undo bridge insert", async () => {
+    await undoShortcut({ page, waitForSave: false });
+  });
+  await waitForCanvasTextHidden({
+    page,
+    text: fixture.styledHeadingTemplateText,
+  });
+
+  await measure("pages actions redo bridge insert", async () => {
+    await redoShortcut({ page });
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.styledHeadingTemplateText,
+  });
+
+  await measure("pages actions reload bridge insert", async () => {
+    await openProjectBuilder({
       page,
-      text: fixture.styledHeadingTemplateText,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
     });
-  } finally {
-    await close();
-  }
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.styledHeadingTemplateText,
+  });
 });
 
 test("Builder Components panel filters catalog-only entries and inserts a persisted component", async ({
-  browser,
+  page,
 }) => {
-  const { page, close } = await newIsolatedPage(browser);
   const insertedButtonText = "Button";
 
-  try {
-    await measure(
-      "pages actions open builder for components panel",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.builderToken,
-        });
-      }
-    );
-    await waitForCanvasText({ page, text: "Initial content" });
-
-    await measure(
-      "pages actions verify components panel catalog filters",
-      async () => {
-        await openComponentsPanel({ page });
-        await expectComponentPanelOptionHidden({ page, name: "Box" });
-        await expectComponentPanelOptionHidden({ page, name: "Body" });
-      }
-    );
-
-    await selectCanvasTextInstance({ page, text: "Initial content" });
-    await measure(
-      "pages actions insert component from components panel",
-      async () => {
-        await openComponentsPanel({ page });
-        await insertComponentPanelOption({ page, name: "Button" });
-      }
-    );
-    await waitForCanvasText({ page, text: insertedButtonText });
-
-    await measure("pages actions reload components panel insert", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
+  await measure("pages actions open builder for components panel", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
     });
-    await waitForCanvasText({ page, text: insertedButtonText });
-  } finally {
-    await close();
-  }
+  });
+  await waitForCanvasText({ page, text: "Initial content" });
+
+  await measure(
+    "pages actions verify components panel catalog filters",
+    async () => {
+      await openComponentsPanel({ page });
+      await expectComponentPanelOptionHidden({ page, name: "Box" });
+      await expectComponentPanelOptionHidden({ page, name: "Body" });
+    }
+  );
+
+  await selectCanvasTextInstance({ page, text: "Initial content" });
+  await measure(
+    "pages actions insert component from components panel",
+    async () => {
+      await openComponentsPanel({ page });
+      await insertComponentPanelOption({ page, name: "Button" });
+    }
+  );
+  await waitForCanvasText({ page, text: insertedButtonText });
+
+  await measure("pages actions reload components panel insert", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
+    });
+  });
+  await waitForCanvasText({ page, text: insertedButtonText });
 });
 
 test("Builder can duplicate a component through the engine bridge, undo, redo, and reload", async ({
-  browser,
+  page,
 }) => {
-  const { page, close } = await newIsolatedPage(browser);
   const componentName = "Image";
 
-  try {
-    await measure("pages actions open builder for command panel", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
+  await measure("pages actions open builder for command panel", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
     });
-    await waitForCanvasText({ page, text: "Initial content" });
-    await selectCanvasTextInstance({ page, text: "Initial content" });
+  });
+  await waitForCanvasText({ page, text: "Initial content" });
+  await selectCanvasTextInstance({ page, text: "Initial content" });
 
-    const initialCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
-    });
+  const initialCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
 
-    await measure(
-      "pages actions insert component before command duplicate",
-      async () => {
-        await openComponentsPanel({ page });
-        await insertComponentPanelOption({ page, name: componentName });
-      }
+  await measure(
+    "pages actions insert component before command duplicate",
+    async () => {
+      await openComponentsPanel({ page });
+      await insertComponentPanelOption({ page, name: componentName });
+    }
+  );
+  const insertedCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
+  if (insertedCount !== initialCount + 1) {
+    throw new Error(
+      `Expected components panel to insert one ${componentName}. Before ${initialCount}, after ${insertedCount}`
     );
-    const insertedCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
-    });
-    if (insertedCount !== initialCount + 1) {
-      throw new Error(
-        `Expected components panel to insert one ${componentName}. Before ${initialCount}, after ${insertedCount}`
-      );
-    }
+  }
 
-    await measure("pages actions duplicate inserted component", async () => {
-      await page.keyboard.press("ControlOrMeta+D");
-      await waitForSyncStatus({ page, status: "idle" });
-    });
-    const duplicatedCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
-    });
-    if (duplicatedCount !== initialCount + 2) {
-      throw new Error(
-        `Expected duplicate command to add one ${componentName}. Before ${initialCount}, after ${duplicatedCount}`
-      );
-    }
+  await measure("pages actions duplicate inserted component", async () => {
+    await page.keyboard.press("ControlOrMeta+D");
+    await waitForSyncStatus({ page, status: "idle" });
+  });
+  const duplicatedCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
+  if (duplicatedCount !== initialCount + 2) {
+    throw new Error(
+      `Expected duplicate command to add one ${componentName}. Before ${initialCount}, after ${duplicatedCount}`
+    );
+  }
 
-    await measure("pages actions undo duplicate command", async () => {
-      await undoShortcut({ page });
-    });
-    const undoCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
-    });
-    if (undoCount !== initialCount + 1) {
-      throw new Error(
-        `Expected undo to remove duplicated ${componentName}. Before ${initialCount}, after ${undoCount}`
-      );
-    }
+  await measure("pages actions undo duplicate command", async () => {
+    await undoShortcut({ page });
+  });
+  const undoCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
+  if (undoCount !== initialCount + 1) {
+    throw new Error(
+      `Expected undo to remove duplicated ${componentName}. Before ${initialCount}, after ${undoCount}`
+    );
+  }
 
-    await measure("pages actions redo duplicate command", async () => {
-      await redoShortcut({ page });
-    });
-    const redoCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
-    });
-    if (redoCount !== initialCount + 2) {
-      throw new Error(
-        `Expected redo to restore duplicated ${componentName}. Before ${initialCount}, after ${redoCount}`
-      );
-    }
+  await measure("pages actions redo duplicate command", async () => {
+    await redoShortcut({ page });
+  });
+  const redoCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
+  if (redoCount !== initialCount + 2) {
+    throw new Error(
+      `Expected redo to restore duplicated ${componentName}. Before ${initialCount}, after ${redoCount}`
+    );
+  }
 
-    await measure("pages actions reload duplicate command", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
+  await measure("pages actions reload duplicate command", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
     });
-    const reloadedCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
-    });
-    if (reloadedCount !== initialCount + 2) {
-      throw new Error(
-        `Expected reloaded project to keep duplicated ${componentName}. Before ${initialCount}, after ${reloadedCount}`
-      );
-    }
-  } finally {
-    await close();
+  });
+  const reloadedCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
+  if (reloadedCount !== initialCount + 2) {
+    throw new Error(
+      `Expected reloaded project to keep duplicated ${componentName}. Before ${initialCount}, after ${reloadedCount}`
+    );
   }
 });
 
 test("Builder can duplicate and delete a component from Navigator context menu", async ({
-  browser,
+  page,
 }) => {
-  const { page, close } = await newIsolatedPage(browser);
   const componentName = "Image";
 
-  try {
-    await measure(
-      "pages actions open builder for navigator context menu",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.builderToken,
-        });
-      }
+  await measure(
+    "pages actions open builder for navigator context menu",
+    async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    }
+  );
+  await waitForCanvasText({ page, text: "Initial content" });
+  await selectCanvasTextInstance({ page, text: "Initial content" });
+
+  const initialCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
+
+  await measure(
+    "pages actions insert component before navigator actions",
+    async () => {
+      await openComponentsPanel({ page });
+      await insertComponentPanelOption({ page, name: componentName });
+    }
+  );
+  const insertedCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
+  if (insertedCount !== initialCount + 1) {
+    throw new Error(
+      `Expected components panel to insert one ${componentName}. Before ${initialCount}, after ${insertedCount}. Components: ${await getInstanceComponentCountSummary(fixture)}`
     );
-    await waitForCanvasText({ page, text: "Initial content" });
-    await selectCanvasTextInstance({ page, text: "Initial content" });
+  }
 
-    const initialCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
-    });
-
-    await measure(
-      "pages actions insert component before navigator actions",
-      async () => {
-        await openComponentsPanel({ page });
-        await insertComponentPanelOption({ page, name: componentName });
-      }
-    );
-    const insertedCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
-    });
-    if (insertedCount !== initialCount + 1) {
-      throw new Error(
-        `Expected components panel to insert one ${componentName}. Before ${initialCount}, after ${insertedCount}. Components: ${await getInstanceComponentCountSummary(fixture)}`
-      );
-    }
-
-    await measure(
-      "pages actions duplicate component from navigator",
-      async () => {
-        await openNavigatorPanel({ page });
-        await selectNavigatorContextAction({
-          page,
-          itemName: componentName,
-          action: "Duplicate",
-        });
-      }
-    );
-    const duplicatedCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
-    });
-    if (duplicatedCount !== initialCount + 2) {
-      throw new Error(
-        `Expected Navigator duplicate to add one ${componentName}. Before ${initialCount}, after ${duplicatedCount}. Components: ${await getInstanceComponentCountSummary(fixture)}. Navigator: ${JSON.stringify(await getNavigatorButtonSummary({ page, text: componentName }))}`
-      );
-    }
-
-    await measure("pages actions undo navigator duplicate", async () => {
-      await undoShortcut({ page });
-    });
-    const undoDuplicateCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
-    });
-    if (undoDuplicateCount !== initialCount + 1) {
-      throw new Error(
-        `Expected undo to remove Navigator duplicate ${componentName}. Before ${initialCount}, after ${undoDuplicateCount}`
-      );
-    }
-
-    await measure("pages actions redo navigator duplicate", async () => {
-      await redoShortcut({ page });
-    });
-    const redoDuplicateCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
-    });
-    if (redoDuplicateCount !== initialCount + 2) {
-      throw new Error(
-        `Expected redo to restore Navigator duplicate ${componentName}. Before ${initialCount}, after ${redoDuplicateCount}`
-      );
-    }
-
-    await measure("pages actions delete component from navigator", async () => {
+  await measure(
+    "pages actions duplicate component from navigator",
+    async () => {
       await openNavigatorPanel({ page });
       await selectNavigatorContextAction({
         page,
         itemName: componentName,
-        action: "Delete",
+        action: "Duplicate",
       });
-    });
-    const deletedCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
-    });
-    if (deletedCount !== initialCount + 1) {
-      throw new Error(
-        `Expected Navigator delete to remove one ${componentName}. Before ${initialCount}, after ${deletedCount}`
-      );
     }
-
-    await measure("pages actions undo navigator delete", async () => {
-      await undoShortcut({ page });
-    });
-    const undoDeleteCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
-    });
-    if (undoDeleteCount !== initialCount + 2) {
-      throw new Error(
-        `Expected undo to restore Navigator-deleted ${componentName}. Before ${initialCount}, after ${undoDeleteCount}`
-      );
-    }
-
-    await measure(
-      "pages actions reload navigator context menu mutations",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.builderToken,
-        });
-      }
+  );
+  const duplicatedCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
+  if (duplicatedCount !== initialCount + 2) {
+    throw new Error(
+      `Expected Navigator duplicate to add one ${componentName}. Before ${initialCount}, after ${duplicatedCount}. Components: ${await getInstanceComponentCountSummary(fixture)}. Navigator: ${JSON.stringify(await getNavigatorButtonSummary({ page, text: componentName }))}`
     );
-    const reloadedCount = await getInstanceComponentCount({
-      fixture,
-      component: componentName,
+  }
+
+  await measure("pages actions undo navigator duplicate", async () => {
+    await undoShortcut({ page });
+  });
+  const undoDuplicateCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
+  if (undoDuplicateCount !== initialCount + 1) {
+    throw new Error(
+      `Expected undo to remove Navigator duplicate ${componentName}. Before ${initialCount}, after ${undoDuplicateCount}`
+    );
+  }
+
+  await measure("pages actions redo navigator duplicate", async () => {
+    await redoShortcut({ page });
+  });
+  const redoDuplicateCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
+  if (redoDuplicateCount !== initialCount + 2) {
+    throw new Error(
+      `Expected redo to restore Navigator duplicate ${componentName}. Before ${initialCount}, after ${redoDuplicateCount}`
+    );
+  }
+
+  await measure("pages actions delete component from navigator", async () => {
+    await openNavigatorPanel({ page });
+    await selectNavigatorContextAction({
+      page,
+      itemName: componentName,
+      action: "Delete",
     });
-    if (reloadedCount !== initialCount + 2) {
-      throw new Error(
-        `Expected reload to preserve Navigator mutations for ${componentName}. Before ${initialCount}, after ${reloadedCount}`
-      );
+  });
+  const deletedCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
+  if (deletedCount !== initialCount + 1) {
+    throw new Error(
+      `Expected Navigator delete to remove one ${componentName}. Before ${initialCount}, after ${deletedCount}`
+    );
+  }
+
+  await measure("pages actions undo navigator delete", async () => {
+    await undoShortcut({ page });
+  });
+  const undoDeleteCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
+  if (undoDeleteCount !== initialCount + 2) {
+    throw new Error(
+      `Expected undo to restore Navigator-deleted ${componentName}. Before ${initialCount}, after ${undoDeleteCount}`
+    );
+  }
+
+  await measure(
+    "pages actions reload navigator context menu mutations",
+    async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
     }
-  } finally {
-    await close();
+  );
+  const reloadedCount = await getInstanceComponentCount({
+    fixture,
+    component: componentName,
+  });
+  if (reloadedCount !== initialCount + 2) {
+    throw new Error(
+      `Expected reload to preserve Navigator mutations for ${componentName}. Before ${initialCount}, after ${reloadedCount}`
+    );
   }
 });

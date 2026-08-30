@@ -28,7 +28,10 @@ pnpm e2e:builder -- apps/builder/e2e/tests/pages-actions.e2e.ts
 pnpm e2e:builder -- --debug --grep "Builder can copy"
 ```
 
-A filter that matches no tests fails before the test environment runs.
+A lightweight Playwright discovery pass validates the selection before Docker,
+database migrations, browser installation, or the Builder build starts. A
+filter that matches no tests therefore fails without starting the test
+environment.
 
 ## Fast local reruns
 
@@ -65,8 +68,10 @@ each invocation.
 ## Test organization
 
 - Put workflows in `e2e/tests/*.e2e.ts` and import `test` from `e2e/test.ts`.
-- Use Playwright's built-in `browser`, `page`, and hook APIs.
-- Use the built-in `context` fixture for test-local authenticated state.
+- Use the `page` fixture for the workflow under test. `e2e/test.ts` gives it an
+  isolated context and closes that context automatically.
+- Use Playwright's `context` fixture for setup state that must not leak into the
+  workflow page, such as creating a project as its owner.
 - Use `withBrowserContext(browser, callback)` for setup that must run in
   `beforeAll`. If cookies must survive from `beforeAll` into the tests, create
   an explicit context with `newBrowserContext(browser)` and close it in
@@ -86,9 +91,10 @@ the configured shards.
 
 ## Failures
 
-CI retries a failed shard once against a clean disposable database. Failed
-shard jobs upload the Playwright HTML report, traces, screenshots, and videos,
-along with the backend service logs.
+CI retries a failed shard once against a clean disposable database. It preserves
+the first attempt's Playwright HTML report, traces, screenshots, and videos in a
+separate artifact even when the retry passes. If the retry also fails, CI
+uploads its artifacts and the backend service logs as well.
 
 When you need a completely clean backend locally:
 

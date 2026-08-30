@@ -19,6 +19,8 @@ export default defineConfig({
   reporter: process.env.CI ? [["line"], ["html", { open: "never" }]] : "line",
   use: {
     ...browserContextOptions,
+    actionTimeout: 20_000,
+    navigationTimeout: 45_000,
     launchOptions: getBrowserLaunchOptions(),
     trace: "retain-on-failure",
     screenshot: "only-on-failure",

@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { createCrossTabPollingManager } from "./cross-tab-manager";
 import type { SubscriptionResponse, TopicName } from "./types";

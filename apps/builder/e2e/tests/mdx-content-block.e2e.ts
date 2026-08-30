@@ -31,7 +31,7 @@ import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { openNavigatorPanel } from "../flows/navigator";
 import { selectCanvasTextInstanceForProps } from "../flows/canvas-selection";
 import { fillSelectedStringProperty } from "../flows/props-panel";
-import { getProjectBuilderUrl, newIsolatedPage, test } from "../test";
+import { getProjectBuilderUrl, test } from "../test";
 
 const sourceFilename = "content-source.mdx";
 const alternateFilename = "alternate-source.mdx";
@@ -146,7 +146,7 @@ const openFixture = async ({
 };
 
 test("Content Block MDX source lifecycle persists edits and resets to empty", async ({
-  browser,
+  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -155,266 +155,258 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
     title: "MDX Content Source E2E",
   });
   await configureRepresentableContentBlockBody(fixture.projectId);
-  const { page, close } = await newIsolatedPage(browser);
 
-  try {
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await openAssetsPanel({ page });
-    await uploadAsset({ page, filename: sourceFilename });
-    await uploadAsset({ page, filename: alternateFilename });
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await openAssetsPanel({ page });
+  await uploadAsset({ page, filename: sourceFilename });
+  await uploadAsset({ page, filename: alternateFilename });
 
-    await selectContentBlock({ page });
-    await chooseContentBlockSource({ page, filename: sourceFilename });
-    await confirmContentBlockConnection({ page });
-    await waitForCanvasText({ page, text: sourceHeading });
-    await waitForSyncStatus({ page, status: "idle" });
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-    const templateWrite = waitForAssetWrite(page).catch((error: unknown) =>
-      error instanceof Error ? error : new Error("Asset write failed")
+  await selectContentBlock({ page });
+  await chooseContentBlockSource({ page, filename: sourceFilename });
+  await confirmContentBlockConnection({ page });
+  await waitForCanvasText({ page, text: sourceHeading });
+  await waitForSyncStatus({ page, status: "idle" });
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
+  const templateWrite = waitForAssetWrite(page).catch((error: unknown) =>
+    error instanceof Error ? error : new Error("Asset write failed")
+  );
+  await insertTemplateAfterCanvasText({
+    page,
+    anchorText: sourceHeading,
+    templateName: fixture.editableTextTemplateName,
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.editableTextTemplateText,
+  });
+  const templateResponse = await templateWrite;
+  if (templateResponse instanceof Error) {
+    throw templateResponse;
+  }
+  const templateDocument = await parseMdxDocument({
+    source: templateResponse.request().postData() ?? "",
+  });
+  if (
+    templateDocument.children.some(
+      (node) =>
+        node.type === "element" &&
+        node.syntax === "markdown" &&
+        node.tag === "p" &&
+        node.children.some(
+          (child) =>
+            child.type === "text" &&
+            child.value === fixture.editableTextTemplateText
+        )
+    ) === false
+  ) {
+    throw new Error(
+      "Inserting a plain Content Block template must persist as Markdown"
     );
-    await insertTemplateAfterCanvasText({
-      page,
-      anchorText: sourceHeading,
-      templateName: fixture.editableTextTemplateName,
-    });
-    await waitForCanvasText({
-      page,
-      text: fixture.editableTextTemplateText,
-    });
-    const templateResponse = await templateWrite;
-    if (templateResponse instanceof Error) {
-      throw templateResponse;
-    }
-    const templateDocument = await parseMdxDocument({
-      source: templateResponse.request().postData() ?? "",
-    });
-    if (
-      templateDocument.children.some(
-        (node) =>
-          node.type === "element" &&
-          node.syntax === "markdown" &&
-          node.tag === "p" &&
-          node.children.some(
-            (child) =>
-              child.type === "text" &&
-              child.value === fixture.editableTextTemplateText
-          )
-      ) === false
-    ) {
-      throw new Error(
-        "Inserting a plain Content Block template must persist as Markdown"
-      );
-    }
-    const templateTextWrite = waitForAssetWrite(page).catch((error: unknown) =>
-      error instanceof Error ? error : new Error("Asset write failed")
+  }
+  const templateTextWrite = waitForAssetWrite(page).catch((error: unknown) =>
+    error instanceof Error ? error : new Error("Asset write failed")
+  );
+  await replaceCanvasText({
+    page,
+    currentText: fixture.editableTextTemplateText,
+    text: editedTemplateText,
+    waitForProjectSync: false,
+  });
+  const templateTextResponse = await templateTextWrite;
+  if (templateTextResponse instanceof Error) {
+    throw templateTextResponse;
+  }
+  const templateTextRequestBody = templateTextResponse.request().postData();
+  const templateTextDocument = await parseMdxDocument({
+    source: templateTextRequestBody ?? "",
+  });
+  if (
+    templateTextDocument.children.some(
+      (node) =>
+        node.type === "element" &&
+        node.syntax === "markdown" &&
+        node.tag === "p" &&
+        node.children.some(
+          (child) => child.type === "text" && child.value === editedTemplateText
+        )
+    ) === false
+  ) {
+    throw new Error(
+      "Editing a plain Content Block template must persist as Markdown"
     );
-    await replaceCanvasText({
+  }
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await selectContentBlock({ page });
+  await page.getByRole("button", { name: "Open", exact: true }).click();
+  const fileEditor = page.getByRole("dialog").locator(".cm-content");
+  await fileEditor.waitFor({ state: "visible" });
+  if ((await fileEditor.textContent())?.includes(editedTemplateText) !== true) {
+    throw new Error(
+      "Opening an MDX Asset after a canvas save must show the latest content"
+    );
+  }
+  await page.keyboard.press("Escape");
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
+  await Promise.all([
+    waitForAssetWrite(page),
+    replaceCanvasText({
       page,
-      currentText: fixture.editableTextTemplateText,
-      text: editedTemplateText,
+      currentText: sourceHeading,
+      text: editedHeading,
       waitForProjectSync: false,
-    });
-    const templateTextResponse = await templateTextWrite;
-    if (templateTextResponse instanceof Error) {
-      throw templateTextResponse;
-    }
-    const templateTextRequestBody = templateTextResponse.request().postData();
-    const templateTextDocument = await parseMdxDocument({
-      source: templateTextRequestBody ?? "",
-    });
-    if (
-      templateTextDocument.children.some(
-        (node) =>
-          node.type === "element" &&
-          node.syntax === "markdown" &&
-          node.tag === "p" &&
-          node.children.some(
-            (child) =>
-              child.type === "text" && child.value === editedTemplateText
-          )
-      ) === false
-    ) {
-      throw new Error(
-        "Editing a plain Content Block template must persist as Markdown"
-      );
-    }
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await selectContentBlock({ page });
-    await page.getByRole("button", { name: "Open", exact: true }).click();
-    const fileEditor = page.getByRole("dialog").locator(".cm-content");
-    await fileEditor.waitFor({ state: "visible" });
-    if (
-      (await fileEditor.textContent())?.includes(editedTemplateText) !== true
-    ) {
-      throw new Error(
-        "Opening an MDX Asset after a canvas save must show the latest content"
-      );
-    }
-    await page.keyboard.press("Escape");
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-    await Promise.all([
-      waitForAssetWrite(page),
-      replaceCanvasText({
-        page,
-        currentText: sourceHeading,
-        text: editedHeading,
-        waitForProjectSync: false,
-      }),
-    ]);
-    await openNavigatorPanel({ page });
-    const contentBlockItem = page
-      .locator("[data-navigator-tree] [data-tree-button]")
-      .filter({ hasText: "Content Block" })
-      .last();
-    await contentBlockItem.press("ArrowRight");
-    const editingCanvas = await waitForCanvasFrame({ page });
-    await editingCanvas
-      .getByText("Editable MDX source text.", { exact: true })
-      .click();
-    await page.keyboard.press("Escape");
-    await Promise.all([
-      waitForReorderedAssetWrite({
-        page,
-        before: "Editable MDX source text.",
-        after: editedTemplateText,
-      }),
-      page.keyboard.press("Control+ArrowUp"),
-    ]);
-    await expectCanvasTextOrder({
+    }),
+  ]);
+  await openNavigatorPanel({ page });
+  const contentBlockItem = page
+    .locator("[data-navigator-tree] [data-tree-button]")
+    .filter({ hasText: "Content Block" })
+    .last();
+  await contentBlockItem.press("ArrowRight");
+  const editingCanvas = await waitForCanvasFrame({ page });
+  await editingCanvas
+    .getByText("Editable MDX source text.", { exact: true })
+    .click();
+  await page.keyboard.press("Escape");
+  await Promise.all([
+    waitForReorderedAssetWrite({
       page,
       before: "Editable MDX source text.",
       after: editedTemplateText,
-    });
-    const deleteWrite = waitForAssetWrite(page);
-    const canvas = await waitForCanvasFrame({ page });
-    await page.keyboard.down("Alt");
-    try {
-      await canvas.getByText(editedTemplateText, { exact: true }).hover();
-      await page.getByRole("button", { name: "Delete block" }).last().click();
-    } finally {
-      await page.keyboard.up("Alt");
-    }
-    const deleteSource = (await deleteWrite).request().postData() ?? "";
-    if (
-      deleteSource.includes(editedTemplateText) ||
-      deleteSource.includes("Editable MDX source text.") === false
-    ) {
-      throw new Error(
-        `Deleting one instance removed the wrong content: ${deleteSource}`
-      );
-    }
-    await waitForCanvasTextHidden({ page, text: editedTemplateText });
-    await waitForCanvasText({ page, text: "Editable MDX source text." });
-    await selectCanvasTextInstanceForProps({
-      page,
-      text: "Editable MDX link",
-      propertyLabel: "Href",
-    });
-    const linkWrite = waitForAssetWrite(page);
-    await fillSelectedStringProperty({
-      page,
-      label: "Href",
-      control: "url",
-      value: "https://webstudio.is",
-      waitForProjectSync: false,
-    });
-    const linkSource = (await linkWrite).request().postData() ?? "";
-    const linkDocument = await parseMdxDocument({ source: linkSource });
-    if (
-      linkDocument.children.some(
-        (node) =>
-          node.type === "element" &&
-          node.syntax === "markdown" &&
-          node.tag === "p" &&
-          node.children.some(
-            (child) =>
-              child.type === "element" &&
-              child.syntax === "markdown" &&
-              child.tag === "a" &&
-              child.props.some(
-                (prop) =>
-                  prop.name === "href" && prop.value === "https://webstudio.is/"
-              ) &&
-              child.children.some(
-                (linkChild) =>
-                  linkChild.type === "text" &&
-                  linkChild.value === "Editable MDX link"
-              )
-          )
-      ) === false
-    ) {
-      throw new Error(`Expected Markdown link persistence: ${linkSource}`);
-    }
-
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await waitForCanvasText({ page, text: editedHeading });
-    await waitForCanvasTextHidden({ page, text: editedTemplateText });
-    await selectContentBlock({ page });
-
-    await chooseContentBlockSource({
-      page,
-      filename: alternateFilename,
-      action: "Switch file",
-    });
-    await page.getByText(alternateFilename, { exact: true }).waitFor();
-    await waitForCanvasText({ page, text: alternateHeading });
-    await waitForCanvasTextHidden({ page, text: editedHeading });
-
-    await selectContentBlock({ page });
-    await page.getByRole("button", { name: "Open", exact: true }).click();
-    const alternateEditor = page.getByRole("dialog").locator(".cm-content");
-    await alternateEditor.waitFor({ state: "visible" });
-    if (
-      (await alternateEditor.textContent())?.includes(alternateHeading) !== true
-    ) {
-      throw new Error(
-        "The selected alternate MDX Asset did not contain its expected source"
-      );
-    }
-    await page.keyboard.press("Escape");
-    await disconnectContentBlockSource({ page });
-    await waitForSyncStatus({ page, status: "idle" });
-    await waitForCanvasTextHidden({ page, text: alternateHeading });
-
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await waitForCanvasTextHidden({ page, text: alternateHeading });
-    await selectContentBlock({ page });
-    await page
-      .getByRole("button", { name: "Connect .mdx file", exact: true })
-      .waitFor();
+    }),
+    page.keyboard.press("Control+ArrowUp"),
+  ]);
+  await expectCanvasTextOrder({
+    page,
+    before: "Editable MDX source text.",
+    after: editedTemplateText,
+  });
+  const deleteWrite = waitForAssetWrite(page);
+  const canvas = await waitForCanvasFrame({ page });
+  await page.keyboard.down("Alt");
+  try {
+    await canvas.getByText(editedTemplateText, { exact: true }).hover();
+    await page.getByRole("button", { name: "Delete block" }).last().click();
   } finally {
-    await close();
+    await page.keyboard.up("Alt");
   }
+  const deleteSource = (await deleteWrite).request().postData() ?? "";
+  if (
+    deleteSource.includes(editedTemplateText) ||
+    deleteSource.includes("Editable MDX source text.") === false
+  ) {
+    throw new Error(
+      `Deleting one instance removed the wrong content: ${deleteSource}`
+    );
+  }
+  await waitForCanvasTextHidden({ page, text: editedTemplateText });
+  await waitForCanvasText({ page, text: "Editable MDX source text." });
+  await selectCanvasTextInstanceForProps({
+    page,
+    text: "Editable MDX link",
+    propertyLabel: "Href",
+  });
+  const linkWrite = waitForAssetWrite(page);
+  await fillSelectedStringProperty({
+    page,
+    label: "Href",
+    control: "url",
+    value: "https://webstudio.is",
+    waitForProjectSync: false,
+  });
+  const linkSource = (await linkWrite).request().postData() ?? "";
+  const linkDocument = await parseMdxDocument({ source: linkSource });
+  if (
+    linkDocument.children.some(
+      (node) =>
+        node.type === "element" &&
+        node.syntax === "markdown" &&
+        node.tag === "p" &&
+        node.children.some(
+          (child) =>
+            child.type === "element" &&
+            child.syntax === "markdown" &&
+            child.tag === "a" &&
+            child.props.some(
+              (prop) =>
+                prop.name === "href" && prop.value === "https://webstudio.is/"
+            ) &&
+            child.children.some(
+              (linkChild) =>
+                linkChild.type === "text" &&
+                linkChild.value === "Editable MDX link"
+            )
+        )
+    ) === false
+  ) {
+    throw new Error(`Expected Markdown link persistence: ${linkSource}`);
+  }
+
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await waitForCanvasText({ page, text: editedHeading });
+  await waitForCanvasTextHidden({ page, text: editedTemplateText });
+  await selectContentBlock({ page });
+
+  await chooseContentBlockSource({
+    page,
+    filename: alternateFilename,
+    action: "Switch file",
+  });
+  await page.getByText(alternateFilename, { exact: true }).waitFor();
+  await waitForCanvasText({ page, text: alternateHeading });
+  await waitForCanvasTextHidden({ page, text: editedHeading });
+
+  await selectContentBlock({ page });
+  await page.getByRole("button", { name: "Open", exact: true }).click();
+  const alternateEditor = page.getByRole("dialog").locator(".cm-content");
+  await alternateEditor.waitFor({ state: "visible" });
+  if (
+    (await alternateEditor.textContent())?.includes(alternateHeading) !== true
+  ) {
+    throw new Error(
+      "The selected alternate MDX Asset did not contain its expected source"
+    );
+  }
+  await page.keyboard.press("Escape");
+  await disconnectContentBlockSource({ page });
+  await waitForSyncStatus({ page, status: "idle" });
+  await waitForCanvasTextHidden({ page, text: alternateHeading });
+
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await waitForCanvasTextHidden({ page, text: alternateHeading });
+  await selectContentBlock({ page });
+  await page
+    .getByRole("button", { name: "Connect .mdx file", exact: true })
+    .waitFor();
 });
 
 test("Empty MDX content supports insertion and keeps the next paragraph focused", async ({
-  browser,
+  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -423,103 +415,98 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
     title: "Empty MDX Content Source E2E",
   });
   await configureEmptyHeadingTemplate(fixture.projectId);
-  const { page, close } = await newIsolatedPage(browser);
 
-  try {
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await openAssetsPanel({ page });
-    await uploadAsset({ page, filename: emptyFilename });
-    await selectContentBlock({ page });
-    await chooseContentBlockSource({ page, filename: emptyFilename });
-    await confirmContentBlockConnection({ page });
-    await waitForSyncStatus({ page, status: "idle" });
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await openAssetsPanel({ page });
+  await uploadAsset({ page, filename: emptyFilename });
+  await selectContentBlock({ page });
+  await chooseContentBlockSource({ page, filename: emptyFilename });
+  await confirmContentBlockConnection({ page });
+  await waitForSyncStatus({ page, status: "idle" });
 
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-    await insertTemplateIntoEmptyContentBlock({
-      page,
-      templateName: "Empty Heading Template",
-    });
-    const canvas = await waitForCanvasFrame({ page });
-    await canvas.locator("h1").waitFor({ state: "visible" });
-    const headingEditor = canvas.locator("h1[contenteditable]");
-    await headingEditor.waitFor({ state: "visible" });
-    await page.keyboard.type("First heading");
-    await headingEditor.getByText("First heading", { exact: true }).waitFor();
-    await page.keyboard.press("Enter");
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
+  await insertTemplateIntoEmptyContentBlock({
+    page,
+    templateName: "Empty Heading Template",
+  });
+  const canvas = await waitForCanvasFrame({ page });
+  await canvas.locator("h1").waitFor({ state: "visible" });
+  const headingEditor = canvas.locator("h1[contenteditable]");
+  await headingEditor.waitFor({ state: "visible" });
+  await page.keyboard.type("First heading");
+  await headingEditor.getByText("First heading", { exact: true }).waitFor();
+  await page.keyboard.press("Enter");
 
-    const paragraphEditor = canvas.locator("p[contenteditable]");
-    await paragraphEditor.waitFor({ state: "visible" });
-    await page.keyboard.press("/");
-    await page
-      .getByRole("menuitemradio", { name: "Empty Heading Template" })
-      .last()
-      .waitFor({ state: "visible" });
-    await page.keyboard.press("Escape");
-    await page.keyboard.type("Focused paragraph");
-    const paragraphId = await paragraphEditor.getAttribute("data-ws-id");
-    if (paragraphId === null) {
-      throw new Error("Expected the focused paragraph instance id");
-    }
-    await page.keyboard.press("Enter");
-    const emptyParagraphEditor = canvas.locator(
-      `p[contenteditable]:not([data-ws-id="${paragraphId}"])`
-    );
-    await emptyParagraphEditor.waitFor({ state: "visible" });
-    const emptyParagraphId =
-      await emptyParagraphEditor.getAttribute("data-ws-id");
-    if (emptyParagraphId === null) {
-      throw new Error("Expected the new paragraph instance id");
-    }
-    await page.keyboard.press("ControlOrMeta+A");
-    await page.keyboard.press("Backspace");
-    await page.keyboard.press("Backspace");
-    await canvas
-      .locator(`p[data-ws-id="${emptyParagraphId}"]`)
-      .waitFor({ state: "detached" });
-    if (
-      (await paragraphEditor.evaluate(
-        (element) =>
-          element === document.activeElement ||
-          element.contains(document.activeElement)
-      )) === false
-    ) {
-      throw new Error("Expected the previous paragraph to regain focus");
-    }
-    const finalWrite = waitForAssetWrite(page);
-    await page.mouse.click(5, 5);
-    const finalSource = (await finalWrite).request().postData() ?? "";
-    if (
-      finalSource.includes("# First heading") === false ||
-      finalSource.includes("Focused paragraph") === false ||
-      finalSource.includes('ws:tag="p"')
-    ) {
-      throw new Error(`Unexpected final MDX source: ${finalSource}`);
-    }
-
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-    await waitForCanvasText({ page, text: "First heading" });
-    await waitForCanvasText({ page, text: "Focused paragraph" });
-  } finally {
-    await close();
+  const paragraphEditor = canvas.locator("p[contenteditable]");
+  await paragraphEditor.waitFor({ state: "visible" });
+  await page.keyboard.press("/");
+  await page
+    .getByRole("menuitemradio", { name: "Empty Heading Template" })
+    .last()
+    .waitFor({ state: "visible" });
+  await page.keyboard.press("Escape");
+  await page.keyboard.type("Focused paragraph");
+  const paragraphId = await paragraphEditor.getAttribute("data-ws-id");
+  if (paragraphId === null) {
+    throw new Error("Expected the focused paragraph instance id");
   }
+  await page.keyboard.press("Enter");
+  const emptyParagraphEditor = canvas.locator(
+    `p[contenteditable]:not([data-ws-id="${paragraphId}"])`
+  );
+  await emptyParagraphEditor.waitFor({ state: "visible" });
+  const emptyParagraphId =
+    await emptyParagraphEditor.getAttribute("data-ws-id");
+  if (emptyParagraphId === null) {
+    throw new Error("Expected the new paragraph instance id");
+  }
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.press("Backspace");
+  await page.keyboard.press("Backspace");
+  await canvas
+    .locator(`p[data-ws-id="${emptyParagraphId}"]`)
+    .waitFor({ state: "detached" });
+  if (
+    (await paragraphEditor.evaluate(
+      (element) =>
+        element === document.activeElement ||
+        element.contains(document.activeElement)
+    )) === false
+  ) {
+    throw new Error("Expected the previous paragraph to regain focus");
+  }
+  const finalWrite = waitForAssetWrite(page);
+  await page.mouse.click(5, 5);
+  const finalSource = (await finalWrite).request().postData() ?? "";
+  if (
+    finalSource.includes("# First heading") === false ||
+    finalSource.includes("Focused paragraph") === false ||
+    finalSource.includes('ws:tag="p"')
+  ) {
+    throw new Error(`Unexpected final MDX source: ${finalSource}`);
+  }
+
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
+  await waitForCanvasText({ page, text: "First heading" });
+  await waitForCanvasText({ page, text: "Focused paragraph" });
 });
 
 test("Content Block requires a Builder reload after a stale file revision", async ({
-  browser,
+  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -527,84 +514,79 @@ test("Content Block requires a Builder reload after a stale file revision", asyn
     email: "mdx-content-conflict-e2e@webstudio.test",
     title: "MDX Content Conflict E2E",
   });
-  const { page, close } = await newIsolatedPage(browser);
 
-  try {
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await openAssetsPanel({ page });
-    await uploadAsset({ page, filename: sourceFilename });
-    await selectContentBlock({ page });
-    await chooseContentBlockSource({ page, filename: sourceFilename });
-    await confirmContentBlockConnection({ page });
-    await waitForCanvasText({ page, text: sourceHeading });
-    await waitForSyncStatus({ page, status: "idle" });
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await openAssetsPanel({ page });
+  await uploadAsset({ page, filename: sourceFilename });
+  await selectContentBlock({ page });
+  await chooseContentBlockSource({ page, filename: sourceFilename });
+  await confirmContentBlockConnection({ page });
+  await waitForCanvasText({ page, text: sourceHeading });
+  await waitForSyncStatus({ page, status: "idle" });
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
 
-    await page.route("**/rest/assets/*/content?*", async (route) => {
-      if (route.request().method() === "PUT") {
-        await route.fulfill({
-          status: 409,
-          contentType: "application/json",
-          body: JSON.stringify({ message: "Asset revision conflict" }),
-        });
-        return;
-      }
-      await route.continue();
-    });
-
-    let reloadPromptMessage: string | undefined;
-    const reloadPromptHandled = new Promise<void>((resolve) => {
-      page.once("dialog", (dialog) => {
-        reloadPromptMessage = dialog.message();
-        void dialog.dismiss().then(resolve);
+  await page.route("**/rest/assets/*/content?*", async (route) => {
+    if (route.request().method() === "PUT") {
+      await route.fulfill({
+        status: 409,
+        contentType: "application/json",
+        body: JSON.stringify({ message: "Asset revision conflict" }),
       });
-    });
-    await replaceCanvasText({
-      page,
-      currentText: sourceHeading,
-      text: "Unsaved conflict heading",
-      waitForProjectSync: false,
-    });
-    await reloadPromptHandled;
-    if (
-      reloadPromptMessage !==
-      "This file changed since it was opened. Reload it before saving again."
-    ) {
-      throw new Error(
-        `Expected stale revision reload prompt: ${reloadPromptMessage}`
-      );
+      return;
     }
-    await page
-      .getByRole("status")
-      .filter({
-        hasText: "Synchronization has been paused. Please reload to continue.",
-      })
-      .first()
-      .waitFor();
+    await route.continue();
+  });
 
-    await page.unroute("**/rest/assets/*/content?*");
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
+  let reloadPromptMessage: string | undefined;
+  const reloadPromptHandled = new Promise<void>((resolve) => {
+    page.once("dialog", (dialog) => {
+      reloadPromptMessage = dialog.message();
+      void dialog.dismiss().then(resolve);
     });
-    await waitForCanvasText({ page, text: sourceHeading });
-  } finally {
-    await close();
+  });
+  await replaceCanvasText({
+    page,
+    currentText: sourceHeading,
+    text: "Unsaved conflict heading",
+    waitForProjectSync: false,
+  });
+  await reloadPromptHandled;
+  if (
+    reloadPromptMessage !==
+    "This file changed since it was opened. Reload it before saving again."
+  ) {
+    throw new Error(
+      `Expected stale revision reload prompt: ${reloadPromptMessage}`
+    );
   }
+  await page
+    .getByRole("status")
+    .filter({
+      hasText: "Synchronization has been paused. Please reload to continue.",
+    })
+    .first()
+    .waitFor();
+
+  await page.unroute("**/rest/assets/*/content?*");
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await waitForCanvasText({ page, text: sourceHeading });
 });
 
 test("Unresolved MDX templates are selectable only in the Builder canvas", async ({
-  browser,
+  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -612,58 +594,53 @@ test("Unresolved MDX templates are selectable only in the Builder canvas", async
     email: "mdx-content-warning-e2e@webstudio.test",
     title: "MDX Content Warning E2E",
   });
-  const { page, close } = await newIsolatedPage(browser);
 
-  try {
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await openAssetsPanel({ page });
-    await uploadAsset({ page, filename: unresolvedFilename });
-    await selectContentBlock({ page });
-    await chooseContentBlockSource({ page, filename: unresolvedFilename });
-    await confirmContentBlockConnection({ page });
-    await waitForSyncStatus({ page, status: "idle" });
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await openAssetsPanel({ page });
+  await uploadAsset({ page, filename: unresolvedFilename });
+  await selectContentBlock({ page });
+  await chooseContentBlockSource({ page, filename: unresolvedFilename });
+  await confirmContentBlockConnection({ page });
+  await waitForSyncStatus({ page, status: "idle" });
 
-    await waitForCanvasText({ page, text: "Valid MDX sibling" });
-    await waitForCanvasText({
-      page,
-      text: "Valid content after the missing template.",
-    });
-    const canvas = await waitForCanvasFrame({ page });
-    const warning = canvas.getByText("Missing template: Missing E2E Template", {
-      exact: true,
-    });
-    await warning.waitFor();
-    await warning.click();
-    await selectContentBlock({ page });
-    await page.getByRole("img", { name: /^MDX source warning:/ }).waitFor();
-    await page.getByRole("button", { name: "Open", exact: true }).waitFor();
+  await waitForCanvasText({ page, text: "Valid MDX sibling" });
+  await waitForCanvasText({
+    page,
+    text: "Valid content after the missing template.",
+  });
+  const canvas = await waitForCanvasFrame({ page });
+  const warning = canvas.getByText("Missing template: Missing E2E Template", {
+    exact: true,
+  });
+  await warning.waitFor();
+  await warning.click();
+  await selectContentBlock({ page });
+  await page.getByRole("img", { name: /^MDX source warning:/ }).waitFor();
+  await page.getByRole("button", { name: "Open", exact: true }).waitFor();
 
-    const previewUrl = getProjectBuilderUrl({
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "preview",
-    });
-    await page.goto(previewUrl);
-    await waitForCanvasText({ page, text: "Valid MDX sibling" });
-    await waitForCanvasText({
-      page,
-      text: "Valid content after the missing template.",
-    });
-    const previewCanvas = await waitForCanvasFrame({ page });
-    await previewCanvas
-      .getByText("Missing template: Missing E2E Template", { exact: true })
-      .waitFor({ state: "hidden" });
-  } finally {
-    await close();
-  }
+  const previewUrl = getProjectBuilderUrl({
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "preview",
+  });
+  await page.goto(previewUrl);
+  await waitForCanvasText({ page, text: "Valid MDX sibling" });
+  await waitForCanvasText({
+    page,
+    text: "Valid content after the missing template.",
+  });
+  const previewCanvas = await waitForCanvasFrame({ page });
+  await previewCanvas
+    .getByText("Missing template: Missing E2E Template", { exact: true })
+    .waitFor({ state: "hidden" });
 });
 
 test("Dynamic detail source follows the selected route parameter", async ({
-  browser,
+  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -671,61 +648,56 @@ test("Dynamic detail source follows the selected route parameter", async ({
     email: "mdx-content-detail-e2e@webstudio.test",
     title: "MDX Content Detail E2E",
   });
-  const { page, close } = await newIsolatedPage(browser);
 
-  try {
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-    });
-    await openAssetsPanel({ page });
-    await uploadAsset({ page, filename: sourceFilename });
-    await uploadAsset({ page, filename: alternateFilename });
-    const sourceAssetId = await getAssetIdByFilename({
-      page,
-      filename: sourceFilename,
-    });
-    const alternateAssetId = await getAssetIdByFilename({
-      page,
-      filename: alternateFilename,
-    });
-    const detailPageId = await configureDynamicDetailContentBlock({
-      projectId: fixture.projectId,
-      initialAssetId: sourceAssetId,
-    });
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+  });
+  await openAssetsPanel({ page });
+  await uploadAsset({ page, filename: sourceFilename });
+  await uploadAsset({ page, filename: alternateFilename });
+  const sourceAssetId = await getAssetIdByFilename({
+    page,
+    filename: sourceFilename,
+  });
+  const alternateAssetId = await getAssetIdByFilename({
+    page,
+    filename: alternateFilename,
+  });
+  const detailPageId = await configureDynamicDetailContentBlock({
+    projectId: fixture.projectId,
+    initialAssetId: sourceAssetId,
+  });
 
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      pageId: detailPageId,
-    });
-    await waitForCanvasText({ page, text: sourceHeading });
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    pageId: detailPageId,
+  });
+  await waitForCanvasText({ page, text: sourceHeading });
 
-    await page
-      .getByRole("button", { name: "Toggle dynamic page address" })
-      .click();
-    const parameter = page.getByPlaceholder("assetid");
-    await parameter.fill(alternateAssetId);
-    await parameter.press("Enter");
-    await waitForCanvasText({ page, text: alternateHeading });
-    await waitForCanvasTextHidden({ page, text: sourceHeading });
+  await page
+    .getByRole("button", { name: "Toggle dynamic page address" })
+    .click();
+  const parameter = page.getByPlaceholder("assetid");
+  await parameter.fill(alternateAssetId);
+  await parameter.press("Enter");
+  await waitForCanvasText({ page, text: alternateHeading });
+  await waitForCanvasTextHidden({ page, text: sourceHeading });
 
-    await page
-      .getByRole("button", { name: "Toggle dynamic page address" })
-      .click();
-    await page.getByPlaceholder("assetid").fill(sourceAssetId);
-    await page.getByPlaceholder("assetid").press("Enter");
-    await waitForCanvasText({ page, text: sourceHeading });
-    await waitForCanvasTextHidden({ page, text: alternateHeading });
-  } finally {
-    await close();
-  }
+  await page
+    .getByRole("button", { name: "Toggle dynamic page address" })
+    .click();
+  await page.getByPlaceholder("assetid").fill(sourceAssetId);
+  await page.getByPlaceholder("assetid").press("Enter");
+  await waitForCanvasText({ page, text: sourceHeading });
+  await waitForCanvasTextHidden({ page, text: alternateHeading });
 });
 
 test("Repeated Content Block scopes edit distinct MDX files without leakage", async ({
-  browser,
+  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -733,57 +705,52 @@ test("Repeated Content Block scopes edit distinct MDX files without leakage", as
     email: "mdx-content-repeated-e2e@webstudio.test",
     title: "MDX Content Repeated E2E",
   });
-  const { page, close } = await newIsolatedPage(browser);
 
-  try {
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-    });
-    await openAssetsPanel({ page });
-    await uploadAsset({ page, filename: sourceFilename });
-    await uploadAsset({ page, filename: alternateFilename });
-    const sourceAssetId = await getAssetIdByFilename({
-      page,
-      filename: sourceFilename,
-    });
-    const alternateAssetId = await getAssetIdByFilename({
-      page,
-      filename: alternateFilename,
-    });
-    await configureRepeatedContentBlock({
-      projectId: fixture.projectId,
-      assetIds: [sourceAssetId, alternateAssetId],
-    });
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+  });
+  await openAssetsPanel({ page });
+  await uploadAsset({ page, filename: sourceFilename });
+  await uploadAsset({ page, filename: alternateFilename });
+  const sourceAssetId = await getAssetIdByFilename({
+    page,
+    filename: sourceFilename,
+  });
+  const alternateAssetId = await getAssetIdByFilename({
+    page,
+    filename: alternateFilename,
+  });
+  await configureRepeatedContentBlock({
+    projectId: fixture.projectId,
+    assetIds: [sourceAssetId, alternateAssetId],
+  });
 
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-    });
-    await waitForCanvasText({ page, text: sourceHeading });
-    await waitForCanvasText({ page, text: alternateHeading });
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+  });
+  await waitForCanvasText({ page, text: sourceHeading });
+  await waitForCanvasText({ page, text: alternateHeading });
 
-    const write = waitForAssetWrite(page);
-    await replaceCanvasText({
-      page,
-      currentText: sourceHeading,
-      text: editedHeading,
-      waitForProjectSync: false,
-    });
-    await write;
-    await waitForCanvasText({ page, text: editedHeading });
-    await waitForCanvasText({ page, text: alternateHeading });
+  const write = waitForAssetWrite(page);
+  await replaceCanvasText({
+    page,
+    currentText: sourceHeading,
+    text: editedHeading,
+    waitForProjectSync: false,
+  });
+  await write;
+  await waitForCanvasText({ page, text: editedHeading });
+  await waitForCanvasText({ page, text: alternateHeading });
 
-    await openFixture({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-    });
-    await waitForCanvasText({ page, text: editedHeading });
-    await waitForCanvasText({ page, text: alternateHeading });
-  } finally {
-    await close();
-  }
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+  });
+  await waitForCanvasText({ page, text: editedHeading });
+  await waitForCanvasText({ page, text: alternateHeading });
 });

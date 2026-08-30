@@ -37,8 +37,6 @@ export const getBrowserLaunchOptions = (url = builderUrl) => {
   };
 };
 
-export const test = base;
-
 export const newBrowserContext = (browser: Browser) =>
   browser.newContext(browserContextOptions);
 
@@ -55,6 +53,14 @@ export const withBrowserContext = async <Result>(
     await context.close();
   }
 };
+
+export const test = base.extend({
+  page: async ({ browser }, use) => {
+    await withBrowserContext(browser, async (context) => {
+      await use(await context.newPage());
+    });
+  },
+});
 
 export const newIsolatedPage = async (browser: Browser) => {
   const context = await newBrowserContext(browser);

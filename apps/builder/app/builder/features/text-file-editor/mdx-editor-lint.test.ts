@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { forceLinting, forEachDiagnostic } from "@codemirror/lint";

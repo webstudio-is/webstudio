@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import {
   describe,
   test,
@@ -52,7 +49,7 @@ import {
   $syncStatus,
   type Transaction,
 } from "@webstudio-is/sync-client";
-import { toast } from "@webstudio-is/design-system";
+import { toast } from "@webstudio-is/design-system/toast";
 import type { ServerSyncState } from "./sync-stores";
 import {
   $lastTransactionId,
