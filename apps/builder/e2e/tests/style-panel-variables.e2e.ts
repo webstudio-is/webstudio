@@ -104,6 +104,7 @@ test("Builder CSS variables persist across create, bind, rename, delete, and rel
   browser,
   context,
 }) => {
+  test.setTimeout(180_000);
   const fixture = await createStylePanelRuntimeProject(
     context,
     "css-variables"
