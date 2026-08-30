@@ -43,7 +43,10 @@ Each breakpoint can override styles inherited from the previous one in the casca
 3. Set a **min-width** or **max-width** value, or choose a **media condition** (see below).
 4. Give it a label.
 
-<figure><img src="../../.gitbook/assets/breakpoints-edit.png" alt="Breakpoint edit dialog showing min-width and max-width fields"><figcaption><p>Editing a breakpoint</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/breakpoints-edit-dark.png">
+  <img src="../../.gitbook/assets/breakpoints-edit-light.png" alt="Breakpoints dialog showing names, minimum or maximum widths, and custom conditions">
+</picture>
 
 ## Editing and deleting breakpoints
 

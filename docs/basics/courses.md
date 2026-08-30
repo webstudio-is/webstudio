@@ -4,9 +4,9 @@ description: Community-made courses
 
 # 🤓 Courses
 
-### [Webstudio Essentials: 0 to Complete Website With SEO](https://shop.createtoday.io/l/webstudio-essentials)
+## [Webstudio Essentials: 0 to Complete Website With SEO](https://shop.createtoday.io/l/webstudio-essentials)
 
-<figure><img src="../.gitbook/assets/webstudio-essentials-course.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/webstudio-essentials-course.png" alt="Webstudio Essentials course page"><figcaption></figcaption></figure>
 
 ## Related
 

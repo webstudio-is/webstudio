@@ -15,8 +15,8 @@ Designers can create a library of templates, from little cards to fully built se
 
 Next is a breakdown of Content Block by mode:
 
-1. [Design mode](content-block.md#design-mode) ⬇️
-2. [Content mode](content-block.md#content-mode) ⬇️
+1. [Design mode](content-block.md#content-block-in-design-mode) ⬇️
+2. [Content mode](content-block.md#content-block-in-content-mode) ⬇️
 
 ## Content Block in Design mode
 
@@ -50,13 +50,15 @@ Every top-level instance within Templates will appear in Content mode like this:
 
 <div><figure><img src="../../.gitbook/assets/templates-design-mode.png" alt="Templates in Design mode"><figcaption><p>Templates in Design mode</p></figcaption></figure> <figure><img src="../../.gitbook/assets/templates-content-mode.png" alt="Template in Content mode"><figcaption><p>Template in Content mode</p></figcaption></figure></div>
 
+
 Each time they insert a template, its copy appears inside the Content Block's Body outlet, alongside any initial body content. The Templates container remains protected source material.
 
 ### Step 3: Add an initial setup (optional)
 
 Optionally, you can add instances inside the Content Block's Body outlet.
 
-<figure><img src="../../.gitbook/assets/startingpoint-content-block.png" alt="" width="357"><figcaption><p>The "Feature" instances are provided as a starting point</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/startingpoint-content-block.png" alt="Initial Feature instances inside a Content Block Body outlet" width="357"><figcaption><p>The Feature instances are provided as a starting point</p></figcaption></figure>
+
 
 Doing so will provide an initial setup for editors.
 
@@ -64,7 +66,7 @@ Editors can delete children of the Body outlet. They cannot delete the designed 
 
 ### Store content in an MDX file
 
-Connect a `.mdx` file when the Content Block's body should live in Assets instead of the project's regular instance data. The designed shell and Templates list remain in the project.
+Connect a `.mdx` file when the Content Block's body should live in Assets instead of the project's regular instance data. The designed shell and Templates list remain in the project. Markdown `.md` files cannot be connected to a Content Block.
 
 #### Prepare the Content Block
 
@@ -111,7 +113,7 @@ If the file changes after a canvas edit starts but before it is saved, reload th
 
 #### Write Markdown and MDX
 
-Write headings, paragraphs, links, lists, tables, code, images, and other standard document content as Markdown. Use a Webstudio element only when Markdown cannot represent a template or one of its authored properties:
+Write headings, paragraphs, links, lists, tables, code, images, and other standard document content as Markdown. Webstudio writes a standard element as `<ws.element ws:tag="tag">` only when its authored properties cannot be represented by Markdown. It uses `ws:name` only to insert a uniquely named top-level template:
 
 ```mdx
 # Product update
@@ -123,17 +125,21 @@ Regular document content stays Markdown.
 
 The `ws:name` value must exactly match a unique top-level instance name in the Content Block's Templates list. Missing templates show a warning in Builder and are omitted from the published site. Invalid or unsupported MDX remains editable; Builder reports the source location and renders the valid content it can recover.
 
+Keep template names stable after connecting MDX files. Webstudio prevents duplicate top-level template names. Renaming or deleting a referenced template warns that connected files will not be rewritten. If you continue, update the affected `ws:name` references in the MDX files. An MCP-connected agent can preview and confirm that update across a selected group of files.
+
 #### Use frontmatter in the designed shell
 
 Edit frontmatter as YAML in the MDX file editor. Visual body edits preserve the frontmatter source, including comments and formatting.
 
-To use frontmatter in the designed part of a Content Block, bind a property or text value to the Content Block's **document** variable. For example, bind a heading to `document.frontmatter.title` or an image source to `document.frontmatter.featureImage`. Direct frontmatter bindings remain part of the same MDX file and can be edited on the canvas in Content mode. Computed expressions and values supplied through another document's `$ref` remain read-only on the canvas; open the referenced file to edit referenced values.
+To use frontmatter in the designed part of a Content Block, [bind](../foundations/variables.md) a property or text value to the Content Block's **document** variable. For example, bind a heading to `document.frontmatter.title` or an image source to `document.frontmatter.featureImage.src`. Direct frontmatter bindings remain part of the same MDX file and can be edited on the canvas in Content mode. Computed expressions and values supplied through another document's `$ref` remain read-only on the canvas; open the referenced file to edit referenced values.
 
 #### Use one file in repeated or shared content
 
 For a Content Block inside a Collection, bind **Source** to the current item's MDX Asset ID. Each Collection item then opens and edits its own file.
 
 You can also connect multiple Content Blocks to the same MDX file. Editing the file or any connected occurrence updates every other occurrence.
+
+When you copy a connected Content Block, page, template, or folder to another project, Webstudio copies the MDX file and the local files it references. The pasted Content Block points to those imported copies. If Webstudio cannot parse the MDX, it preserves the source file and reports that its dependencies could not be collected.
 
 To create another post with the same structure, duplicate the existing MDX Asset, edit the duplicate, and connect or bind the appropriate Content Block occurrence to it.
 
@@ -155,7 +161,11 @@ Next is how to use it.
 
 On the left-hand side, there is the navigator showing you the various Content Blocks on the page.
 
-<figure><img src="../../.gitbook/assets/content-blocks-navigator.png" alt="Content Blocks in the navigator"><figcaption></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/content-blocks-navigator-dark.png">
+  <img src="../../.gitbook/assets/content-blocks-navigator-light.png" alt="Navigator with an expanded Content Block showing Templates and Content Block Body with paragraph and list children">
+</picture>
+
 
 You can click on them to navigate to that part of the page.
 
@@ -165,7 +175,8 @@ Each Content Block can have a unique set of templates you can choose from.
 
 On the canvas, hover where you want to insert, and the blue + button will appear. Click that, and you’ll see a list of templates provided by the designer.
 
-<figure><img src="../../.gitbook/assets/templates-content-mode.png" alt=""><figcaption><p>Templates the designer provided</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/templates-content-mode.png" alt="Template picker in Content mode"><figcaption><p>Templates the designer provided</p></figcaption></figure>
+
 
 Select the one you want, and it’ll insert an instance/copy of that template.
 
@@ -178,7 +189,8 @@ You can delete a direct child of the Content Block in one of two ways:
 1. The blue + button will turn into a red delete button if you hold the option/alt key on your keyboard.
 2. Select the instance in the navigator, and press delete/backspace on your keyboard.
 
-   <figure><img src="../../.gitbook/assets/delete-instance-content-mode.gif" alt="plus button changing to delete when holding option/alt"><figcaption><p>Hold option/alt</p></figcaption></figure>
+   <figure><img src="../../.gitbook/assets/delete-instance-content-mode.gif" alt="Content mode add button changing to delete while Option or Alt is held"><figcaption><p>Hold Option or Alt</p></figcaption></figure>
+
 
 {% hint style="success" %}
 You can’t delete the template itself, so you can always add it back.

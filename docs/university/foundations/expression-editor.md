@@ -6,7 +6,7 @@ description: >-
 
 # ➕ Expression editor
 
-<figure><img src="../../.gitbook/assets/webstudio-expression-editor.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/webstudio-expression-editor.png" alt="Binding popover with variables and an expression that reads a CMS title"><figcaption></figcaption></figure>
 
 Expression editor is available on every field when clicking the “+” button.
 

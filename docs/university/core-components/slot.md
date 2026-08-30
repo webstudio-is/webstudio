@@ -24,19 +24,20 @@ Data variables defined on the Global Root are accessible within Slots, while tho
 
 ---
 
-### How to use Slot Component
+## How to use Slot component
 
 Here is the process for creating and reusing Slot instances:
 
-#### Creating a Slot instance
+### Creating a Slot instance
 
-&#x20;![create a slot in Webstudio](../../.gitbook/assets/slot-component-overview.png)
+![Slot component and its source content on the canvas](../../.gitbook/assets/slot-component-overview.png)
+
 
 1. You can find the Slots component in the “Components Panel.”
 2. Drag “Slot” from the Components Panel onto your canvas to create a Slot instance. Alternatively, you can add it to the currently selected instance with a click.
 3. Add other instances from the Components Panel into the Slot instance to populate it.
 
-#### Reusing a Slot instance
+### Reusing a Slot instance
 
 Once you have a Slot on the canvas you can re-use it by simply copying and pasting it anywhere in your project.
 
@@ -61,7 +62,7 @@ occurrence to change.
 
 ---
 
-### Conclusion
+## Conclusion
 
 With Slots you can re-use content across your site and sync the changes you make to them.
 

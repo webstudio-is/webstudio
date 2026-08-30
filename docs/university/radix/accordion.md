@@ -18,17 +18,17 @@ description: >-
 
 The Accordion Component is in the "Components Panel" under the "Radix" section. Click on it or drag it onto the canvas. The Accordion will populate a template that's easy to adjust for your needs.
 
-<figure><img src="../../.gitbook/assets/radix-components.png" alt="" width="308"><figcaption><p>Radix UI components within Webstudio</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/radix-components.png" alt="Components panel with the Radix component group expanded" width="308"><figcaption><p>Radix UI components within Webstudio</p></figcaption></figure>
 
 You can edit, delete or add more Accordions with ease by copying/pasting any of the "item" components within the Accordion.
 
-<figure><img src="../../.gitbook/assets/radix-accordion.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/radix-accordion.png" alt="Navigator showing the nested parts of a Radix Accordion"><figcaption></figcaption></figure>
 
 ## Changing an Accordion's content
 
 To change the content of an Accordion that isn't currently displayed in the canvas, click on the "item content" instance that you want to change and it will be displayed.
 
-<figure><img src="../../.gitbook/assets/radix-accordion-content.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/radix-accordion-content.png" alt="Accordion Content selected on the canvas and in the Navigator"><figcaption></figcaption></figure>
 
 ## Using Collections within Accordions
 

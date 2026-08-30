@@ -10,7 +10,7 @@ coverY: 0
 # How to integrate a Notion database with Webstudio
 
 {% hint style="warning" %}
-Disclaimer: Using Notion Page content in Webstudio is impossible (for now), so it is only for Database properties.
+This guide uses properties from a Notion data source. A page's block content requires additional Notion API requests, so fetch it through an API endpoint or automation that returns the complete document to one Webstudio Resource.
 {% endhint %}
 
 By the end of this tutorial, you will have the following using your [Notion](https://notion.so/) database and [Webstudio](https://webstudio.is/):
@@ -40,17 +40,15 @@ Webstudio is open source, has all CSS properties, and is dynamic at the speed of
 
 Notion is where many teams and individuals already manage content, typically in preparation for adding it to their website. By integrating the website builder directly with Notion, people can avoid the unnecessary step of manually transferring the data to the website.
 
-## Use Notion Databases (not Notion Pages)
+## Use Notion data source properties
 
-You can use Webstudio as a Notion website builder for any properties in your database. **Notion Pages cannot be fetched in Webstudio.**
+You can bind properties returned by a Notion data source query directly to Webstudio. A Notion page response includes its properties, but the page's block content is a separate, paginated API response. A complete page-body integration therefore needs to:
 
-Notion Pages cannot be used because the Notion API requires three calls to fetch the necessary data.
+1. Query the data source for the page and its properties, such as title, description, and slug.
+2. Read the page's child blocks with the page ID returned by that query.
+3. Follow pagination and recursively read child blocks when the document contains nested content.
 
-1. **Fetch the database item** – Notion Pages don't contain any properties. You need properties to manage SEO settings such as meta title, meta description, and slug, among other data for managing a blog.
-2. **Fetch page content** – The first call provides an ID to fetch Notion Page content, a wrapper for the actual content.
-3. **Fetch block content** – The Notion Page call provides an ID to use in the third call, which fetches the various blocks within a page (e.g., title, paragraph, link, etc.).
-
-Synchronously calling three APIs would lead to slow performance for your visitors.
+For page bodies, put those requests behind your own API endpoint or automation and return the combined result to Webstudio in one response. Cache the result when appropriate.
 
 ## **Steps to building a website using Notion data**
 
@@ -79,7 +77,7 @@ In this step, you will configure a [Resource](../foundations/variables.md#resour
 
 Go to the Navigator on the left > select Body > Settings on the right > and create a new variable with any name (this example uses "Notion Data"), and in type, use Resource.
 
-While the URL and remaining fields can be manually entered, there is also a shortcut – you can paste in a curl command, and Webstudio will automatically parse it and populate the respective fields. To get the curl command, go to [Notion's filter database entries doc](https://developers.notion.com/reference/post-database-query-filter).
+While the URL and remaining fields can be entered manually, you can also paste a curl command and let Webstudio populate the Resource fields. Start with Notion's [Query a data source](https://developers.notion.com/reference/query-a-data-source) reference.
 
 <figure><img src="https://images.surferseo.art/7928e894-7215-48c9-a975-a563c146223d.png" alt="Notion filter database curl command"><figcaption></figcaption></figure>
 
@@ -91,11 +89,9 @@ First, replace `$NOTION_API_KEY` with your API key, which you can get by [creati
 
 <figure><img src="https://images.surferseo.art/ea114c6f-5edb-4f55-beee-6735cbdd260b.png" alt="Notion authorization Bearer"><figcaption></figcaption></figure>
 
-Second, you must modify the URL to include your database ID. If you are in a web browser, go to your database, and it'll be in the URL. If you are in the app, go to your data, click the three dots, copy a link to the database, and paste it somewhere temporarily.
+Second, set the URL to `https://api.notion.com/v1/data_sources/<data-source-id>/query`. Find the data source ID using Notion's API or by copying the linked database information from Notion. It is not necessarily the page ID shown in a browser URL.
 
-As bolded below, the database ID is after the path and before the `?v`.
-
-https://www.notion.so/**94582558d50a4cb98234f16973f69c8a**?v=1f9c545770334b2091e52c906492143c
+Add `Notion-Version: 2026-03-11`, the version required by the current [data source query API](https://developers.notion.com/reference/query-a-data-source), and keep the `Authorization: Bearer <token>` header from the curl example.
 
 Third, you must modify the filter in the body to use the currently viewed URL. So, for example, if somebody is viewing `/events/birthday`, the URL needs to filter Notion records using birthday.
 

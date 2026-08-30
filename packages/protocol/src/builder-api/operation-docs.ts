@@ -629,7 +629,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "create-assets-resource",
     description:
-      'Create a scoped Assets resource. Omit query to use the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false, and using content mode none. Use markdown-body-ref when querying a Markdown body directly; it requires storage-backed document resolution and never embeds the body in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }. Preview concrete queries and inspect size diagnostics before saving.',
+      'Create a scoped Assets resource. Omit query to use the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false, and using content mode none. Use markdown-body-ref when querying a Markdown or MDX body directly; it requires storage-backed document resolution and never embeds the body in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }. Preview concrete queries and inspect size diagnostics before saving.',
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio create-assets-resource --input assets-resource.json --json",
@@ -638,7 +638,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-assets-resource",
     description:
-      'Update an Assets resource. Set query to null to restore the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false, and using content mode none. Use markdown-body-ref for a directly queried Markdown body; it requires storage-backed document resolution and never embeds the body in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }.',
+      'Update an Assets resource. Set query to null to restore the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false, and using content mode none. Use markdown-body-ref for a directly queried Markdown or MDX body; it requires storage-backed document resolution and never embeds the body in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }.',
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio update-assets-resource --input assets-resource-update.json --json",
@@ -663,7 +663,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "get-asset-field-catalog",
     description:
-      "Get standard fields plus dynamic Markdown frontmatter and JSON fields with observed types, occurrence counts, optionality, and mixed-type state.",
+      "Get standard fields plus dynamic Markdown or MDX frontmatter and JSON fields with observed types, occurrence counts, optionality, and mixed-type state.",
     examples: ["webstudio get-asset-field-catalog --json"],
   },
   {

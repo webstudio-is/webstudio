@@ -153,9 +153,13 @@ webstudio upload-asset '{"asset":{"name":"article.mdx","type":"file","format":"m
 webstudio connect-content-block-source '{"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example","source":{"type":"asset","assetId":"<mdxAssetId>"}}'
 webstudio inspect-content-block-source '{"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example"}'
 webstudio edit-content-block-source --input-file .temp/edit-content-block-source.json
+webstudio reload-content-block-source '{"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example"}'
+webstudio migrate-content-block-template-references '{"assetIds":["<mdxAssetId>"],"migration":{"type":"rename","from":"Old template name","to":"New template name"}}'
 ```
 
-Write headings, paragraphs, links, lists, tables, images, code, and every authored property Markdown can represent as Markdown. Use `<ws.element ws:name="Template name">` only for a Content Block template or authored property that Markdown cannot represent. Preserve unresolved template names and report their diagnostics.
+Prefer Markdown whenever it can represent the component and all authored properties. Use `<ws.element ws:tag="tag">` for a standard HTML element with authored properties Markdown cannot express. Use `<ws.element ws:name="Template name">` only for a uniquely named top-level Content Block template. Preserve unresolved template names and report their diagnostics.
+
+When a template is renamed or deleted, use `migrate-content-block-template-references` to update the affected MDX files. Its first call returns a plan with changed-file, update, omission, and diagnostic counts. Report the plan and repeat the exact request with its `confirmationToken` only after approval. A rename changes matching `ws:name` values. A removal deletes matching MDX elements. Invalid files remain unchanged and are reported in diagnostics.
 
 Use the dedicated connect, switch, inspect, edit, update-frontmatter, reload, and disconnect operations instead of creating or deleting the Content Block's `src` with generic prop tools. An expression-bound source inside a Collection also needs the occurrence's scoped values and a distinct stable `renderScope`. For example, use `source:{"type":"expression","value":"post.assetId"}` with `variables:{"post":{"assetId":"<mdxAssetId>"}}`.
 

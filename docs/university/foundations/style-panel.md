@@ -6,7 +6,10 @@ description: Use the Style Panel to apply CSS styles to any instance on your pag
 
 The Style Panel is on the right side of the builder. It exposes every CSS property visually and applies styles to the currently selected instance. All style changes are scoped by the active [breakpoint](breakpoints.md) and style source.
 
-<figure><img src="../../.gitbook/assets/style-panel.png" alt="Style Panel on the right side of the builder"><figcaption><p>The Style Panel</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/style-panel-dark.png">
+  <img src="../../.gitbook/assets/style-panel-light.png" alt="Style panel showing style sources, layout, grid child, spacing, and size controls">
+</picture>
 
 ## Style sources
 

@@ -71,7 +71,29 @@ First, it's recommended to create [CSS variables](css-variables.md) to use withi
 
 You can style your site using Local or Tokens like this:
 
-<table data-header-hidden><thead><tr><th></th><th></th><th data-hidden></th></tr></thead><tbody><tr><td><img src="../../.gitbook/assets/style-sources.png" alt="Style sources" data-size="original"></td><td>The top of the Style Panel contains Style Sources. Here is where you can add new Tokens, select existing ones, and switch to Local styling.</td><td>The top section of the Style Panel is our <a href="https://www.reddit.com/r/diablo4/comments/148kfyt/psa_consolescontrollerbeginners_users/">Style Sources Input</a>. This is where you’ll create, style, and arrange your tokens.<br><br>When you select a component's instance on the canvas, the tokens you see inside this input are <em>sources</em> of the <em>styles</em> on that instance.</td></tr><tr><td><img src="../../.gitbook/assets/convert-to-token.png" alt="Convert local to token" data-size="original"></td><td>Want to style something immediately without making a Token? Use the Local Style Source. Styles applied on Local only impact that instance, but you can easily convert styles from Local to a new Token.</td><td>Want to style something immediately without making a token? Go for it. All component instances in Webstudio have this Local style source by default. Styles applied on Local are unique to an instance and can’t be re-used, but you can easily convert styles from Local to a new token through the token menu.</td></tr><tr><td><img src="../../.gitbook/assets/new-token.png" alt="Adding a new token" data-size="original"></td><td>To make a new Token, click inside the Style Sources input, type a name, and hit enter.</td><td>To make a new token, click inside the Style Sources Input, type a name, and hit ENTER/RETURN.</td></tr><tr><td><img src="../../.gitbook/assets/tokens-added.png" alt="Switching tokens" data-size="original"></td><td>The Token you’re currently styling will be blue in the Style Sources input, while others are gray. Simply click on another style source to select it. Any styling you do will be applied to the current Token and reflected across all instances of that Token.</td><td><p>The token you’re currently styling will be blue in the Style Sources Input, while others are gray. Simply click on another style source to select it.</p><p>Any styling you do will be applied to the current token and reflected across all instances of that token.</p><p>When you add a style, the label for that property will turn blue to show that it is applied on the current token.</p></td></tr><tr><td><img src="../../.gitbook/assets/property-label-tooltip.png" alt="" data-size="original"></td><td><p>Hover the label for a helpful description of where the styles on this property come from.</p><p>In this case, we see that the width value that we just applied is coming from the Base breakpoint, the “new token” token on the Body instance. See <a href="anatomy-of-the-webstudio-builder.md#label-colors">Label Colors</a> to understand what the different colors mean.</p></td><td><p>Hover the label for a helpful description of where the styles on this property come from.</p><p>In this case we see that the width value that we just applied is coming from the Base breakpoint, the “new token” token, on the Body instance.</p></td></tr><tr><td><img src="../../.gitbook/assets/empty-circle.png" alt="" data-size="original"></td><td>A circle in the Token indicates that there are no styles applied to the Token. This will go away as soon as you apply a style. For Local, a dot is added to the center of the circle when styles are added.</td><td></td></tr></tbody></table>
+1. Select an instance. The **Style sources** field at the top of the Style panel shows its Local styles and Tokens.
+
+   <img src="../../.gitbook/assets/style-sources.png" alt="Style sources field showing the Local source and applied Tokens" data-size="original">
+
+2. To create a Token, select the Style sources field, enter a name, and press Enter.
+
+   <img src="../../.gitbook/assets/new-token.png" alt="Style sources field with a new Token name ready to be added" data-size="original">
+
+3. Select the source you want to edit. The active source is highlighted, and new styles are written to that source.
+
+   <img src="../../.gitbook/assets/tokens-added.png" alt="Style sources field with several Tokens and one active Token" data-size="original">
+
+Use the Local source for styles that apply only to the selected instance. You can convert Local styles into a reusable Token later.
+
+<img src="../../.gitbook/assets/convert-to-token.png" alt="Local style source menu with the action to convert its styles to a Token" data-size="original">
+
+Hover a property label to see which breakpoint and style source provides its current value. See [Label colors](anatomy-of-the-webstudio-builder.md#label-colors) for the full reference.
+
+<img src="../../.gitbook/assets/property-label-tooltip.png" alt="Style property tooltip identifying the breakpoint, Token, and instance that provide the value" data-size="original">
+
+An empty circle means the source has no styles. A dot appears in the Local source after you add a style.
+
+<img src="../../.gitbook/assets/empty-circle.png" alt="Empty circle indicator beside a style source with no styles" data-size="original">
 
 ## Exporting human-readable classes
 

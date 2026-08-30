@@ -143,7 +143,10 @@ CSS variables, by nature, are available in the current instance and any of the c
 
 #### Global Variables
 
-<figure><img src="../../.gitbook/assets/global-root.png" alt="Global Root in Webstudio" width="375"><figcaption><p>Global Root</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/navigator-panel-dark.png">
+  <img src="../../.gitbook/assets/navigator-panel-light.png" alt="Navigator with Global root above Body and the page instance tree">
+</picture>
 
 Most variables should be defined on the Global Root, which is the highest level of the page and the same for every page. That way, you can define `--my-color`, and it's available on every instance on every page.
 
@@ -163,7 +166,7 @@ With CSS variables, you can interact with the parent and modify the styles of an
 
 Prefer CSS variables over a [descendant custom state](states-and-selectors.md#custom-states) such as `:hover .button` for parent-child interactions. They keep each property on the child that uses it and are especially useful when one parent state coordinates several properties or children. Define a variable on the parent, use it for the relevant property on each child, and change the variable's value in the parent's `:hover` state.
 
-<figure><img src="../../.gitbook/assets/parent-child-demo.gif" alt=""><figcaption><p>Hovering the link and the children change (icon color, icon bg, and arrow appears)</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/parent-child-demo.gif" alt="Hovering a link changes its child icon color, background, and arrow visibility"><figcaption><p>Hovering the link and the children change (icon color, icon bg, and arrow appears)</p></figcaption></figure>
 
 {% embed url="https://youtu.be/rg49mmDvdlE" %}
 Video tutorial

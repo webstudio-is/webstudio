@@ -12,23 +12,28 @@ description: >-
 
 ---
 
-### How to use the Image component
+## How to use the Image component
 
-The "Image Component" can be found in Components > Media, and you can place it on your canvas by dragging and dropping it or clicking it in the Components panel. ![Webstudio image component](../../.gitbook/assets/image-component-overview.webp)
+The Image component is available under **Components > Media**. Drag it onto the canvas or click it to insert it at the selected location.
 
-#### Responsive Images
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/components-panel-dark.png">
+  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with Image in the expanded Media group">
+</picture>
+
+### Responsive images
 
 Webstudio automatically generates responsive images for your website, so you don't have to worry about manually resizing and optimizing images for different devices.
 
 These responsive images automatically adjust their size based on the user's screen size, ensuring optimal resolution and quick loading whether the user is on a desktop monitor or a smartphone.
 
-#### Supported Image Formats
+### Supported image formats
 
 All images in Webstudio are automatically optimized and served in WebP or AVIF format, depending on the responsive image resolution and browser support. This eliminates the need for pre-optimization and extra tools to compress or convert images.
 
 WebP is supported by all modern browsers, including Chrome, Edge, and Firefox, while AVIF offers better compression quality and smaller file sizes but lacks support in browsers like Edge and Internet Explorer.
 
-#### Ensure a Stable Layout for Improved Performance
+### Ensure a stable layout for improved performance
 
 It is essential to ensure that your browser can calculate an image's width and height without waiting for it to load. You can do this by setting the image's width/height in the Style panel or directly in the Image instance's properties.
 
@@ -38,17 +43,17 @@ If a browser can't calculate an image's size, it continues rendering the page, b
 
 > Note: You can assess page speed using tools like [Page Speed](https://pagespeed.web.dev/). For reference, an unhinted hero image can easily decrease the page speed score from 100 to 70!
 
-#### Provide Aspect Ratio Upfront
+### Provide aspect ratio upfront
 
 In Webstudio, every image has its aspect ratio set automatically. To prevent any layout shifts on your site, it's best to set the "width" property for each image you add. This ensures that the images fit smoothly into the overall design without causing any unexpected changes in layout.
 
 ---
 
-### How to customize an Image instance's properties
+## How to customize an Image instance's properties
 
 You can customize the properties of an Image instance by selecting it and going to "Settings." Here is an overview of each property:
 
-#### Source
+### Source
 
 The Source property lets you link an image file from the Assets Panel to your image instance. To add an image to your instance, click "Choose source" and select an image from the Assets Panel.
 
@@ -58,7 +63,7 @@ You can also drag a single image from the Assets panel directly onto the canvas.
 Webstudio inserts a new Image component and selects the dragged asset as its
 source.
 
-#### Width/Height
+### Width and height
 
 The "width" and "height" properties define your image's initial display size in pixels and its aspect ratio. However, the final rendered image size is subject to CSS rules and layout constraints.
 
@@ -66,17 +71,17 @@ This means that if you set the width or height of an image in the Style panel or
 
 The Width/Height properties are prioritized in some cases. For instance, if you only set the image's height in the Style panel, the width will be automatically determined from the Image Instance's "Width" property, and vice versa. This maintains the aspect ratio while adjusting the image's size with your specified values.
 
-#### Alternative Text (alt)
+### Alternative text (alt)
 
 The "alt" property provides alternative text for the image. This text is vital for accessibility purposes, as it describes the image's content in case the image cannot be seen.
 
-#### Loading
+### Loading
 
 The "Loading" property specifies how the browser handles image loading. You can set it to "Lazy" to load the image only when it comes into the viewport or "Eager" to load it immediately.
 
 Here's a helpful tip: If you have an image in the initial viewport, always set it to "Eager." This way, the image gets priority, and it loads quickly, improving your site's overall performance.
 
-#### Optimize
+### Optimize
 
 The "optimize" property lets you control if the image will go through the image transformation process including resizing, converting, and compressing it. This setting works on first and third-party images (e.g., images that come from a headless CMS). In rare scenarios, the user may want to turn this off.
 

@@ -4,13 +4,13 @@
 
 Webstudio is an open-source visual development platform that empowers designers and developers to create responsive web designs with ease. Bridging the gap between design and code, it allows users to visually build while maintaining control over the underlying HTML, CSS, and JavaScript.
 
-### 🧑‍🎨 For Designers
+## 🧑‍🎨 For Designers
 
 Webstudio offers a powerful platform for designers to bring their creative visions to life, without needing extensive coding knowledge. Its intuitive visual interface enables the construction of layouts, styling of components, and animation of elements in real-time on a live canvas. This direct manipulation of design elements facilitates immediate feedback and accelerates iteration cycles.
 
-### 🧑‍💻 For Developers
+## 🧑‍💻 For Developers
 
-Developers will appreciate Webstudio's flexibility and extensibility. It simplifies web development with its visual interface, yet provides full access to the underlying code. Developers can create custom components with complex logic or specific integrations, harnessing the power of coding while benefiting from Webstudio's streamlined visual workflows. As an open-source tool, Webstudio offers the freedom to extend functionality as needed and contribute to the enhancement of its features.
+Developers can combine the visual editor with Resources, expressions, HTML Embed, and Webstudio MCP. Projects can be exported, self-hosted, or extended by contributing to the open-source Builder. Webstudio does not currently provide a visual workflow for defining new reusable component types; use Slots for reusable project content and HTML Embed for custom code.
 
 ## Related
 

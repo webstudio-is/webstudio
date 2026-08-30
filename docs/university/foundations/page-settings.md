@@ -6,7 +6,10 @@ description: Configure per-page settings such as path, SEO, authentication, redi
 
 Page settings control how an individual page behaves — its URL, SEO metadata, authentication, status code, redirect, and more. Open Page Settings by clicking the gear icon next to any page in the Pages panel.
 
-<figure><img src="../../.gitbook/assets/page-settings-general.png" alt="Page settings panel showing Page name, Path, Status code, Redirect, and Language fields"><figcaption><p>General page settings</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-dialog-dark.png">
+  <img src="../../.gitbook/assets/page-settings-dialog-light.png" alt="Page settings for the Home page showing general, authentication, and search fields">
+</picture>
 
 ## Page name
 
@@ -140,7 +143,7 @@ Page authentication is useful for private previews, client-only pages, internal 
 <figure><img src="../../.gitbook/assets/page-settings-authentication-enabled.png" alt="Page Settings Authentication section enabled with Login and Password fields"><figcaption><p>Page authentication</p></figcaption></figure>
 
 {% hint style="info" %}
-Authentication applies to protected pages on custom domains. Staging domains have their own built-in password protection, described in [Publishing & custom domains](publishing-and-custom-domains.md#staging-domain-password-protection).
+Authentication applies to protected pages on custom domains. Staging domains have their own built-in password protection, described in [Publishing & custom domains](publishing-and-custom-domains.md#staging-password-protection).
 {% endhint %}
 
 {% hint style="warning" %}
@@ -161,7 +164,10 @@ To protect multiple routes, dynamic paths, or wildcard sections of the site, use
 
 SEO settings that control how the page appears in search engine results.
 
-<figure><img src="../../.gitbook/assets/page-settings-seo.png" alt="SEO section showing Title, Description, Exclude from search, and search result preview"><figcaption><p>SEO settings with search result preview</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-seo-dark.png">
+  <img src="../../.gitbook/assets/page-settings-seo-light.png" alt="Page settings Search section with a result preview, title, description, search visibility, and language fields">
+</picture>
 
 ### Title
 
@@ -179,13 +185,19 @@ Adds a `noindex` directive to the page, preventing search engines from indexing 
 
 The Open Graph image displayed when the page is shared on social media (Facebook, X, LinkedIn, etc.). You can either upload an image or bind a URL expression to a dynamic image from your CMS.
 
-<figure><img src="../../.gitbook/assets/page-settings-social.png" alt="Social image section with social preview card"><figcaption><p>Social image with preview</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-social-dark.png">
+  <img src="../../.gitbook/assets/page-settings-social-light.png" alt="Page settings Social image section with URL, asset picker, selected image details, and sharing preview">
+</picture>
 
 ## Custom metadata
 
 Add arbitrary `<meta>` tags to the page's `<head>`. Each entry has a **property** (the meta tag's `name` or `property` attribute) and a **content** value, both of which support expressions.
 
-<figure><img src="../../.gitbook/assets/page-settings-custom-metadata.png" alt="Custom metadata section with a property and content row filled in"><figcaption><p>Adding a custom meta tag</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-custom-metadata-dark.png">
+  <img src="../../.gitbook/assets/page-settings-custom-metadata-light.png" alt="Page settings Custom metadata section with empty Property and Content fields">
+</picture>
 
 Use this for meta tags not covered by the fields above, such as `og:type`, `twitter:card`, or any custom meta needed by third-party integrations.
 

@@ -58,7 +58,7 @@ Our getting started guide will help you navigate through building your first Web
 [FAQ.md](basics/FAQ.md)
 {% endcontent-ref %}
 
-### Looking to contribute to Webstudio?
+## Looking to contribute to Webstudio?
 
 {% content-ref url="contributing/contributing-for-designers.md" %}
 [contributing-for-designers.md](contributing/contributing-for-designers.md)

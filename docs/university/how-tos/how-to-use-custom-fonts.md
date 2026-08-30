@@ -55,8 +55,6 @@ Each font stack contains fonts for:
 
 The browser reads the list and uses the first font it finds installed. Webstudio automatically outputs all the font variations for cross-platform compatibility.
 
-📝 Learn more in the [Webstudio December Update](https://docs.webstudio.is/news/december-update#id-6.-modern-font-stacks).
-
 ---
 
 ## Supported Font Formats

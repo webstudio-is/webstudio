@@ -12,11 +12,14 @@ Commands & search speeds up the building process and introduces new shortcuts.
 
 **Open Commands & search with ⌘ + K (Control + K for Windows).**
 
-<figure><img src="../../.gitbook/assets/commands-search.png" alt="Commands and search dialog open with results listed"><figcaption><p>Commands &amp; search</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/commands-search-dark.png">
+  <img src="../../.gitbook/assets/commands-search-light.png" alt="Commands and search dialog listing Builder commands and their keyboard shortcuts">
+</picture>
 
 {% embed url="https://youtu.be/ofUP0Uc_ttY" %}
 
-### Actions
+## Actions
 
 - Add components
 - Search instances by name – find any instance in your project
@@ -40,15 +43,15 @@ Commands & search speeds up the building process and introduces new shortcuts.
   - Delete Unused CSS variables – Remove CSS custom properties that are no longer used.
   - All other [keyboard shortcuts](shortcuts.md)
 
-### Secondary Actions with Tab
+## Secondary actions with Tab
 
 Some items in the Commands Panel have secondary actions. Press **Tab** to access them. For example, when searching pages, you can press Tab and arrow to "Settings" to go directly to that page's settings.
 
-### Find Forgotten Shortcuts
+## Find forgotten shortcuts
 
 If you forget a shortcut like renaming an instance, search for the action (e.g., "edit instance label") and the Commands Panel will show the shortcut so you can learn it.
 
-### Group Counters
+## Group counters
 
 Each category in the Commands Panel shows a counter indicating how many items it contains, helping you quickly understand the scope of your project.
 
