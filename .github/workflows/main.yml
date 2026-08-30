@@ -8,9 +8,10 @@ on:
   pull_request_target:
     types: [labeled]
 
-# cancel in-progress runs on new commits to same PR (gitub.event.number)
+# Cancel in-progress runs for the same event and PR. Keep pull_request_target
+# label events from canceling the regular pull_request checks.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.sha }}
   cancel-in-progress: true
 
 permissions:
@@ -23,7 +24,7 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'pull_request' ||
       (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
-    timeout-minutes: 20
+    timeout-minutes: 5
     runs-on: ubuntu-24.04-arm
     environment:
       name: development
@@ -323,7 +324,7 @@ jobs:
       github.event_name == 'pull_request' ||
       (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
 
-    timeout-minutes: 20
+    timeout-minutes: 5
 
     runs-on: ubuntu-24.04
 
@@ -371,7 +372,7 @@ jobs:
       github.event_name == 'pull_request' ||
       (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
 
-    timeout-minutes: 40
+    timeout-minutes: 5
 
     needs: builder-e2e-build
 
@@ -379,7 +380,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
     environment:
       name: development
@@ -419,11 +420,11 @@ jobs:
           E2E_TEST_COMMAND_TIMEOUT_SECONDS: 900
         run: |
           run_builder_e2e() {
-            pnpm e2e:builder -- --shard=${{ matrix.shard }}/6
+            pnpm e2e:builder -- --shard=${{ matrix.shard }}/10
           }
 
           run_builder_e2e_keep_logs() {
-            E2E_SKIP_CLEANUP=true pnpm e2e:builder -- --shard=${{ matrix.shard }}/6
+            E2E_SKIP_CLEANUP=true pnpm e2e:builder -- --shard=${{ matrix.shard }}/10
           }
 
           run_builder_e2e || {
