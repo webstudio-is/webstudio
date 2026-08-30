@@ -83,9 +83,21 @@ New Content Blocks already include a Body outlet. When you connect an older Cont
 4. Select the file, or bind **Source** to an expression that returns an MDX Asset ID.
 5. If the Content Block already has body content, review the warning and confirm the connection. The file replaces the existing Body children.
 
-<figure><img src="../../.gitbook/assets/create-mdx-file.png" alt="New text file dialog in the Assets panel with the filename field selected"><figcaption><p>Change the default filename so that it ends in <code>.mdx</code>.</p></figcaption></figure>
+<figure>
+  <picture>
+    <source srcset="../../.gitbook/assets/create-mdx-file-dark.png" media="(prefers-color-scheme: dark)">
+    <img src="../../.gitbook/assets/create-mdx-file-light.png" alt="New text file dialog with article.mdx entered in the filename field">
+  </picture>
+  <figcaption><p>Change the default filename so that it ends in <code>.mdx</code>.</p></figcaption>
+</figure>
 
-<figure><img src="../../.gitbook/assets/connect-content-block-mdx.png" alt="Content Block selected in Design mode with Connect .mdx file under the Source property"><figcaption><p>Connect the file from the Content Block's Source property.</p></figcaption></figure>
+<figure>
+  <picture>
+    <source srcset="../../.gitbook/assets/connect-content-block-mdx-dark.png" media="(prefers-color-scheme: dark)">
+    <img src="../../.gitbook/assets/connect-content-block-mdx-light.png" alt="Content Block settings with Connect .mdx file under the Source property">
+  </picture>
+  <figcaption><p>Connect the file from the Content Block's Source property.</p></figcaption>
+</figure>
 
 Select the connected filename to choose another file. Select **Open** to edit the current file. In Content mode, editors can see the filename and open it, but only a designer can connect, switch, bind, or disconnect the source.
 
