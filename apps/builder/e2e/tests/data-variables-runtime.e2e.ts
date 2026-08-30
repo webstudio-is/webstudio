@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import {
   bindSelectedTextContentToExpression,
@@ -14,7 +14,7 @@ import {
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { loginWithSecret } from "../flows/dashboard";
 import { expectGeneratedAppToRender } from "../flows/generated-app";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
@@ -334,16 +334,20 @@ const expectPersistedDataVariables = async ({
   }
 };
 
-test("Builder-created data variables and resources persist after reload", async () => {
+test("Builder-created data variables and resources persist after reload", async ({
+  browser,
+  context,
+}) => {
   const email = "data-variables-runtime@webstudio.test";
   const fixture = await createContentModeProject({
+    context: context,
     email,
     title: "Data Variables Runtime",
     assetNamePrefix: "data-variables-runtime-",
     editorToken: "data-variables-runtime-editor-token",
     builderToken: "data-variables-runtime-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
   const staticName = "e2eStaticLabel";
   const staticValue = "Created from Builder UI";
   const editedStaticValue = "Edited from Builder UI";
@@ -540,16 +544,20 @@ test("Builder-created data variables and resources persist after reload", async 
   }
 });
 
-test("Text Content can bind to a Builder-created variable and persist after reload", async () => {
+test("Text Content can bind to a Builder-created variable and persist after reload", async ({
+  browser,
+  context,
+}) => {
   const email = "text-content-binding@webstudio.test";
   const fixture = await createContentModeProject({
+    context: context,
     email,
     title: "Text Content Binding",
     assetNamePrefix: "text-content-binding-",
     editorToken: "text-content-binding-editor-token",
     builderToken: "text-content-binding-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
   const staticName = "e2eTextBindingLabel";
   const staticValue = "Bound Text Content";
 

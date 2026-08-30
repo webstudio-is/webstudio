@@ -23,21 +23,23 @@ import {
   waitForSyncStatus,
 } from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
-import {
-  getSharedContentModeProject,
-  setupSharedContentModeProject,
-  createContentModeProject,
-} from "../fixtures/content-mode-suite";
-import { newIsolatedPage, test } from "../harness";
+import { createContentModeProject } from "../fixtures/content-mode-suite";
+import type { SeededContentModeProject } from "../fixtures/content-mode-project";
+import { newIsolatedPage, test, withBrowserContext } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
-test.beforeAll(async () => {
-  await setupSharedContentModeProject();
+let fixture: SeededContentModeProject;
+
+test.beforeAll(async ({ browser }) => {
+  fixture = await withBrowserContext(browser, (context) =>
+    createContentModeProject({ context })
+  );
 });
-test("Editor can insert content templates with assets and styles", async () => {
-  const fixture = getSharedContentModeProject();
-  const { page, close } = await newIsolatedPage();
+test("Editor can insert content templates with assets and styles", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await measure("content mode open editor for asset template", async () => {
@@ -164,9 +166,10 @@ test("Editor can insert content templates with assets and styles", async () => {
   }
 });
 
-test("Editor can upload, replace, and delete asset in content mode", async () => {
-  const fixture = getSharedContentModeProject();
-  const { page, close } = await newIsolatedPage();
+test("Editor can upload, replace, and delete asset in content mode", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const uploadFilename = "upload-image.svg";
   const replacementFilename = "replacement-image.svg";
 
@@ -235,9 +238,10 @@ test("Editor can upload, replace, and delete asset in content mode", async () =>
   }
 });
 
-test("Editor can replace image source with asset in content mode", async () => {
-  const fixture = getSharedContentModeProject();
-  const { page, close } = await newIsolatedPage();
+test("Editor can replace image source with asset in content mode", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const uploadFilename = "upload-image.svg";
   const replacementFilename = "replacement-image.svg";
 
@@ -329,15 +333,19 @@ test("Editor can replace image source with asset in content mode", async () => {
   }
 });
 
-test("Builder copy/paste preserves image asset references after reload", async () => {
+test("Builder copy/paste preserves image asset references after reload", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "asset-copy-e2e@webstudio.test",
     title: "Asset Copy E2E",
     assetNamePrefix: "asset-copy-",
     editorToken: "asset-copy-e2e-editor-token",
     builderToken: "asset-copy-e2e-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   const getImageAssetReferenceCount = async () => {
     const build = await loadDevBuild({ projectId: fixture.projectId });

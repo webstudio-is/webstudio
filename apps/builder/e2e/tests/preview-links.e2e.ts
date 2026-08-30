@@ -1,4 +1,4 @@
-import type { Locator } from "playwright";
+import type { Locator } from "@playwright/test";
 import { openBuilderUrl, waitForCanvasFrame } from "../flows/builder";
 import {
   expectGeneratedAppNavigation,
@@ -6,7 +6,12 @@ import {
 } from "../flows/generated-app";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { insertAuthorizationToken, loadDevBuild, updateBuild } from "../db";
-import { getProjectBuilderUrl, newIsolatedPage, test } from "../harness";
+import {
+  getProjectBuilderUrl,
+  newIsolatedPage,
+  test,
+  withBrowserContext,
+} from "../test";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
 
 type PageData = {
@@ -298,19 +303,24 @@ const preparePreviewLinksProject = async () => {
   });
 };
 
-test.beforeAll(async () => {
-  fixture = await createContentModeProject({
-    email: "preview-links-e2e@webstudio.test",
-    title: "Preview Links E2E",
-    assetNamePrefix: "preview-links-",
-    editorToken: "preview-links-e2e-editor-token",
-    builderToken: "preview-links-e2e-builder-token",
+test.beforeAll(async ({ browser }) => {
+  await withBrowserContext(browser, async (context) => {
+    fixture = await createContentModeProject({
+      context,
+      email: "preview-links-e2e@webstudio.test",
+      title: "Preview Links E2E",
+      assetNamePrefix: "preview-links-",
+      editorToken: "preview-links-e2e-editor-token",
+      builderToken: "preview-links-e2e-builder-token",
+    });
+    await preparePreviewLinksProject();
   });
-  await preparePreviewLinksProject();
 });
 
-test("Preview links expose current page state for components and element anchors", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Preview links expose current page state for components and element anchors", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await openBuilderUrl({ page, url: getPreviewUrl({}) });
@@ -409,8 +419,10 @@ test("Preview links expose current page state for components and element anchors
   }
 });
 
-test("Generated preview renders and navigates linked routes", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Generated preview renders and navigates linked routes", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   try {
     await expectGeneratedAppToRender({
       projectId: fixture.projectId,

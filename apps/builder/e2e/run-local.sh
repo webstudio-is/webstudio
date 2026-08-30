@@ -3,6 +3,10 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 COMPOSE_OVERRIDE_FILE="$ROOT_DIR/apps/builder/docker-compose.e2e.yaml"
+PLAYWRIGHT_ARGS=("$@")
+if [ "${PLAYWRIGHT_ARGS[0]:-}" = "--" ]; then
+  PLAYWRIGHT_ARGS=("${PLAYWRIGHT_ARGS[@]:1}")
+fi
 
 # Keep the disposable E2E backend independent from the persistent local
 # development backend. In particular, E2E cleanup must never remove the local
@@ -62,7 +66,7 @@ bootstrap_database() {
 install_playwright_chromium() {
   chromium_executable_exists() {
     pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder exec node -e '
-      const { chromium } = require("playwright");
+      const { chromium } = require("@playwright/test");
       const { existsSync } = require("node:fs");
       process.exit(existsSync(chromium.executablePath()) ? 0 : 1);
     ' >/dev/null 2>&1
@@ -106,24 +110,13 @@ verify_e2e_apps_built() {
 run_builder_e2e_tests() {
   (
     cd "$ROOT_DIR/apps/builder"
-    pnpm exec tsx --env-file .env --env-file-if-exists .env.development --conditions=webstudio ./e2e/run.ts
+    if [ "${#PLAYWRIGHT_ARGS[@]}" -eq 0 ]; then
+      pnpm e2e:ci
+    else
+      pnpm e2e:ci "${PLAYWRIGHT_ARGS[@]}"
+    fi
   )
 }
-
-validate_test_filter() {
-  if [ "${E2E_TEST_FILTER:-}" = "" ] && [ "${E2E_TEST_FILTERS:-}" = "" ] && [ "${E2E_TEST_SHARD:-}" = "" ]; then
-    return
-  fi
-  (
-    cd "$ROOT_DIR/apps/builder"
-    E2E_VALIDATE_TEST_FILTER_ONLY=true pnpm exec tsx --env-file .env --env-file-if-exists .env.development --conditions=webstudio ./e2e/run.ts
-  )
-}
-
-if [ "$E2E_RUN_TESTS" = "true" ]; then
-  run_step "validate e2e test filter" "$E2E_TEST_COMMAND_TIMEOUT_SECONDS" \
-    validate_test_filter
-fi
 
 run_step "pull e2e database image" "$E2E_DOCKER_PULL_TIMEOUT_SECONDS" \
   builder_backend_pull_db

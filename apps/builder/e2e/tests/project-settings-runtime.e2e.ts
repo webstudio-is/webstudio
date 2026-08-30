@@ -1,4 +1,4 @@
-import type { Page as PlaywrightPage } from "playwright";
+import type { Page as PlaywrightPage } from "@playwright/test";
 import type { Page as WebstudioPage } from "@webstudio-is/sdk";
 import { parseProjectAuthRoutes } from "@webstudio-is/project-build/contracts";
 import { loadDevBuild, updateProject } from "../db";
@@ -18,7 +18,7 @@ import {
   expectGeneratedRedirects,
 } from "../flows/generated-app";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test } from "../test";
 import { measure } from "../perf";
 
 type PersistedPages = {
@@ -249,16 +249,20 @@ const expectPersistedProjectSettings = async ({
   }
 };
 
-test("Project settings site name and redirects persist after reload", async () => {
+test("Project settings site name and redirects persist after reload", async ({
+  browser,
+  context,
+}) => {
   const email = "project-settings-runtime@webstudio.test";
   const fixture = await createContentModeProject({
+    context: context,
     email,
     title: "Project Settings Runtime",
     assetNamePrefix: "project-settings-runtime-",
     editorToken: "project-settings-runtime-editor-token",
     builderToken: "project-settings-runtime-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
   const siteName = "Runtime Settings Site";
   const redirect = {
     from: "/e2e-old-route",
@@ -381,16 +385,20 @@ test("Project settings site name and redirects persist after reload", async () =
   }
 });
 
-test("Marketplace page settings persist after reload", async () => {
+test("Marketplace page settings persist after reload", async ({
+  browser,
+  context,
+}) => {
   const email = "marketplace-page-settings-runtime@webstudio.test";
   const fixture = await createContentModeProject({
+    context: context,
     email,
     title: "Marketplace Page Settings Runtime",
     assetNamePrefix: "marketplace-page-settings-runtime-",
     editorToken: "marketplace-page-settings-runtime-editor-token",
     builderToken: "marketplace-page-settings-runtime-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
   const pageName = "Marketplace Runtime Page";
   const category = "Runtime Examples";
 
@@ -495,16 +503,20 @@ test("Marketplace page settings persist after reload", async () => {
   }
 });
 
-test("Project authentication routes persist after reload and deletion", async () => {
+test("Project authentication routes persist after reload and deletion", async ({
+  browser,
+  context,
+}) => {
   const email = "project-auth-runtime@webstudio.test";
   const fixture = await createContentModeProject({
+    context: context,
     email,
     title: "Project Auth Runtime",
     assetNamePrefix: "project-auth-runtime-",
     editorToken: "project-auth-runtime-editor-token",
     builderToken: "project-auth-runtime-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
   const route = "/private";
   const login = "editor";
   const password = "e2e-secret";

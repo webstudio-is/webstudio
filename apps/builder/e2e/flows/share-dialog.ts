@@ -1,4 +1,4 @@
-import type { Locator, Page } from "playwright";
+import type { Locator, Page } from "@playwright/test";
 
 type ShareRole = "Viewer" | "Editor" | "Builder" | "Admin";
 

@@ -11,16 +11,20 @@ import {
   getTreeRowByButton,
 } from "../flows/drag";
 import { openNavigatorPanel } from "../flows/navigator";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test, withBrowserContext } from "../test";
 
 let fixture: Awaited<ReturnType<typeof createDragProject>>;
 
-test.beforeAll(async () => {
-  fixture = await createDragProject("navigator");
+test.beforeAll(async ({ browser }) => {
+  fixture = await withBrowserContext(browser, (context) =>
+    createDragProject(context, "navigator")
+  );
 });
 
-test("Navigator pointer drag reorders and reparents instances", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Navigator pointer drag reorders and reparents instances", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   try {
     const canvas = await openProjectBuilder({
       page,

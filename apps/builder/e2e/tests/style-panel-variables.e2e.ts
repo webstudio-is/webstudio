@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { BrowserContext, Page } from "@playwright/test";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { waitForCanvasTextStyle } from "../flows/canvas-style";
@@ -8,12 +8,16 @@ import {
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
-const createStylePanelRuntimeProject = async (name: string) => {
+const createStylePanelRuntimeProject = async (
+  context: BrowserContext,
+  name: string
+) => {
   return await createContentModeProject({
+    context,
     email: `style-panel-runtime-${name}@webstudio.test`,
     title: `Style Panel Runtime ${name}`,
     assetNamePrefix: `style-panel-runtime-${name}-`,
@@ -96,9 +100,15 @@ const runCssVariableCommandAction = async ({
     .click();
 };
 
-test("Builder CSS variables persist across create, bind, rename, delete, and reload", async () => {
-  const fixture = await createStylePanelRuntimeProject("css-variables");
-  const { page, close } = await newIsolatedPage();
+test("Builder CSS variables persist across create, bind, rename, delete, and reload", async ({
+  browser,
+  context,
+}) => {
+  const fixture = await createStylePanelRuntimeProject(
+    context,
+    "css-variables"
+  );
+  const { page, close } = await newIsolatedPage(browser);
   const text = "Initial content";
   const variableName = "--e2e-brand-color";
   const renamedVariableName = "--e2e-brand-color-renamed";

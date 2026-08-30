@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 import { selectCanvasTextInstance } from "./canvas-selection";
 import { waitForChangeToBeSaved, waitForSyncStatus } from "./sync-status";
 

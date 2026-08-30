@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 import { expectTextHidden } from "../flows/assertions";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { expectGeneratedAppBuild } from "../flows/generated-app";
@@ -17,7 +17,7 @@ import {
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test, withBrowserContext } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
@@ -198,25 +198,31 @@ const confirmDialogAction = async ({
   await button.waitFor({ state: "hidden" });
 };
 
-test.beforeAll(async () => {
-  fixture = await createContentModeProject({
-    email: "pages-actions-e2e@webstudio.test",
-    title: "Pages Actions E2E",
-    assetNamePrefix: "pages-actions-",
-    editorToken: "pages-actions-e2e-editor-token",
-    builderToken: "pages-actions-e2e-builder-token",
-  });
-  pasteFixture = await createContentModeProject({
-    email: "pages-actions-paste-e2e@webstudio.test",
-    title: "Pages Actions Paste E2E",
-    assetNamePrefix: "pages-actions-paste-",
-    editorToken: "pages-actions-paste-e2e-editor-token",
-    builderToken: "pages-actions-paste-e2e-builder-token",
+test.beforeAll(async ({ browser }) => {
+  await withBrowserContext(browser, async (context) => {
+    fixture = await createContentModeProject({
+      context,
+      email: "pages-actions-e2e@webstudio.test",
+      title: "Pages Actions E2E",
+      assetNamePrefix: "pages-actions-",
+      editorToken: "pages-actions-e2e-editor-token",
+      builderToken: "pages-actions-e2e-builder-token",
+    });
+    pasteFixture = await createContentModeProject({
+      context,
+      email: "pages-actions-paste-e2e@webstudio.test",
+      title: "Pages Actions Paste E2E",
+      assetNamePrefix: "pages-actions-paste-",
+      editorToken: "pages-actions-paste-e2e-editor-token",
+      builderToken: "pages-actions-paste-e2e-builder-token",
+    });
   });
 });
 
-test("Builder can draft, stage, copy, duplicate, and delete a page from the header menu", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder can draft, stage, copy, duplicate, and delete a page from the header menu", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const pageName = "Actions Menu Page";
   const renamedPageName = "Renamed Actions Menu Page";
   const copiedPageName = `${renamedPageName} (1)`;
@@ -369,8 +375,10 @@ test("Builder can draft, stage, copy, duplicate, and delete a page from the head
   }
 });
 
-test("Builder can copy, duplicate, and delete a folder from the context menu", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder can copy, duplicate, and delete a folder from the context menu", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const folderName = "Actions Menu Folder";
   const renamedFolderName = "Renamed Actions Menu Folder";
   const copiedFolderName = `${renamedFolderName} (1)`;
@@ -448,8 +456,10 @@ test("Builder can copy, duplicate, and delete a folder from the context menu", a
   }
 });
 
-test("Builder can copy, duplicate, and delete a page template from actions menus", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder can copy, duplicate, and delete a page template from actions menus", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const templateName = fixture.pageTemplateName;
   const renamedTemplateName = "Renamed Content Page Template";
   const copiedTemplateName = `${renamedTemplateName} (1)`;
@@ -633,8 +643,10 @@ const countBuildInstancesWithText = async (text: string) => {
   return instances.filter((instance) => containsText(instance.id)).length;
 };
 
-test("Builder runs paste plugins through generic browser paste events", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder runs paste plugins through generic browser paste events", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const entries = [
     [
       "application/json",

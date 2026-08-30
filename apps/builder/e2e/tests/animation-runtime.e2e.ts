@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 import { loadDevBuild } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
@@ -9,7 +9,7 @@ import {
   waitForSyncStatus,
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test } from "../test";
 import { measure } from "../perf";
 
 const openCommandPanel = async ({ page }: { page: Page }) => {
@@ -143,16 +143,20 @@ const waitForPersistedAnimation = async ({
   throw lastError;
 };
 
-test("Builder animation UI creates supported animation props that persist and build", async () => {
+test("Builder animation UI creates supported animation props that persist and build", async ({
+  browser,
+  context,
+}) => {
   const email = "animation-runtime@webstudio.test";
   const fixture = await createContentModeProject({
+    context: context,
     email,
     title: "Animation Runtime",
     assetNamePrefix: "animation-runtime-",
     editorToken: "animation-runtime-editor-token",
     builderToken: "animation-runtime-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
   const text = "Initial content";
   const wrapperName = "Animation Group";
   const presetName = "Fade In";

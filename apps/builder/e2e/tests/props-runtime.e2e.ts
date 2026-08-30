@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 import { loadDevBuild } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
@@ -15,7 +15,7 @@ import {
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { withGeneratedPreview } from "../flows/generated-app";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test } from "../test";
 import { measure } from "../perf";
 
 const openComponentsPanel = async ({ page }: { page: Page }) => {
@@ -387,15 +387,19 @@ const expectBooleanPropDeleted = async ({
   }
 };
 
-test("Webhook Form action submits once and persists after reload", async () => {
+test("Webhook Form action submits once and persists after reload", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "props-runtime@webstudio.test",
     title: "Props Runtime",
     assetNamePrefix: "props-runtime-",
     editorToken: "props-runtime-editor-token",
     builderToken: "props-runtime-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
   const webhook = await startWebhookServer();
   const text = "Initial content";
   const actionUrl = webhook.url;
@@ -478,15 +482,19 @@ test("Webhook Form action submits once and persists after reload", async () => {
   }
 });
 
-test("Props panel expression binding persists after reload", async () => {
+test("Props panel expression binding persists after reload", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "props-expression-runtime@webstudio.test",
     title: "Props Expression Runtime",
     assetNamePrefix: "props-expression-runtime-",
     editorToken: "props-expression-runtime-editor-token",
     builderToken: "props-expression-runtime-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
   const anchorText = "Expression-bound link";
   const expression = '"/props-expression-link"';
 
@@ -546,15 +554,19 @@ test("Props panel expression binding persists after reload", async () => {
   }
 });
 
-test("Props panel boolean prop persists after reload", async () => {
+test("Props panel boolean prop persists after reload", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "props-boolean-runtime@webstudio.test",
     title: "Props Boolean Runtime",
     assetNamePrefix: "props-boolean-runtime-",
     editorToken: "props-boolean-runtime-editor-token",
     builderToken: "props-boolean-runtime-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await measure("props boolean runtime open builder", async () => {

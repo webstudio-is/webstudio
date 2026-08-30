@@ -12,18 +12,21 @@ import {
   waitForSyncStatus,
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { dashboardUrl, newIsolatedPage, newPage, test } from "../harness";
+import { dashboardUrl, newIsolatedPage, test } from "../test";
 
-test("Cloning a project preserves nested asset folders", async () => {
+test("Cloning a project preserves nested asset folders", async ({
+  context,
+}) => {
   const email = "asset-folder-clone-e2e@webstudio.test";
   const sourceTitle = "Asset Folder Clone Source";
   const cloneTitle = "Asset Folder Clone Result";
   const fixture = await createContentModeProject({
+    context: context,
     email,
     title: sourceTitle,
     builderToken: "asset-folder-clone-e2e-builder-token",
   });
-  const page = await newPage();
+  const page = await context.newPage();
 
   try {
     await openProjectBuilder({
@@ -72,13 +75,14 @@ test("Cloning a project preserves nested asset folders", async () => {
   }
 });
 
-test("Asset can be dragged into a folder", async () => {
+test("Asset can be dragged into a folder", async ({ browser, context }) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "asset-folder-drag-e2e@webstudio.test",
     title: "Asset Folder Drag E2E",
     builderToken: "asset-folder-drag-e2e-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
   const filename = "upload-image.svg";
   const folderName = "Images";
 
@@ -113,13 +117,17 @@ test("Asset can be dragged into a folder", async () => {
   }
 });
 
-test("Dragging over Back navigates to parent folders before dropping", async () => {
+test("Dragging over Back navigates to parent folders before dropping", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "asset-folder-back-drag-e2e@webstudio.test",
     title: "Asset Folder Back Drag E2E",
     builderToken: "asset-folder-back-drag-e2e-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await openProjectBuilder({
@@ -205,13 +213,17 @@ test("Dragging over Back navigates to parent folders before dropping", async () 
   }
 });
 
-test("Asset folder changes wait until the nested selector loses focus", async () => {
+test("Asset folder changes wait until the nested selector loses focus", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "asset-folder-selector-e2e@webstudio.test",
     title: "Asset Folder Selector E2E",
     builderToken: "asset-folder-selector-e2e-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await openProjectBuilder({
@@ -266,13 +278,17 @@ test("Asset folder changes wait until the nested selector loses focus", async ()
   }
 });
 
-test("Multiselected assets can be dragged into a folder", async () => {
+test("Multiselected assets can be dragged into a folder", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "asset-folder-multidrag-e2e@webstudio.test",
     title: "Asset Folder Multidrag E2E",
     builderToken: "asset-folder-multidrag-e2e-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
   const folderName = "Selected assets";
 
   try {

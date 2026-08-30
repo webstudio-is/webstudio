@@ -10,15 +10,19 @@ import {
   waitForSyncStatus,
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test } from "../test";
 
-test("Assets can be selected by dragging across the panel", async () => {
+test("Assets can be selected by dragging across the panel", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "asset-folder-lasso-select-e2e@webstudio.test",
     title: "Asset Folder Lasso Select E2E",
     builderToken: "asset-folder-lasso-select-e2e-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await openProjectBuilder({
@@ -82,13 +86,17 @@ test("Assets can be selected by dragging across the panel", async () => {
   }
 });
 
-test("Multiselected folders can be dragged into a folder", async () => {
+test("Multiselected folders can be dragged into a folder", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "asset-folder-multifolder-drag-e2e@webstudio.test",
     title: "Asset Folder Multifolder Drag E2E",
     builderToken: "asset-folder-multifolder-drag-e2e-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await openProjectBuilder({
@@ -140,13 +148,17 @@ test("Multiselected folders can be dragged into a folder", async () => {
   }
 });
 
-test("Dragging an asset auto-scrolls a long folder list", async () => {
+test("Dragging an asset auto-scrolls a long folder list", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "asset-folder-autoscroll-e2e@webstudio.test",
     title: "Asset Folder Autoscroll E2E",
     builderToken: "asset-folder-autoscroll-e2e-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await openProjectBuilder({
@@ -259,13 +271,17 @@ test("Dragging an asset auto-scrolls a long folder list", async () => {
   }
 });
 
-test("Multiselected assets can be moved from the context menu", async () => {
+test("Multiselected assets can be moved from the context menu", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "asset-folder-menu-move-e2e@webstudio.test",
     title: "Asset Folder Menu Move E2E",
     builderToken: "asset-folder-menu-move-e2e-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await openProjectBuilder({
@@ -316,13 +332,17 @@ test("Multiselected assets can be moved from the context menu", async () => {
   }
 });
 
-test("Folders can be multiselected and deleted as one operation", async () => {
+test("Folders can be multiselected and deleted as one operation", async ({
+  browser,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "asset-folder-multiselect-e2e@webstudio.test",
     title: "Asset Folder Multiselect E2E",
     builderToken: "asset-folder-multiselect-e2e-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
   const folderNames = ["Alpha", "Bravo", "Charlie"];
 
   try {

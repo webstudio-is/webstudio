@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 import { deleteContentBlockChildAfterCanvasText } from "../flows/block-outline";
 import {
   openProjectBuilder,
@@ -30,11 +30,9 @@ import {
 } from "../flows/pages-panel";
 import { waitForSyncStatus } from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
-import {
-  getSharedContentModeProject,
-  setupSharedContentModeProject,
-} from "../fixtures/content-mode-suite";
-import { newIsolatedPage, test } from "../harness";
+import { createContentModeProject } from "../fixtures/content-mode-suite";
+import type { SeededContentModeProject } from "../fixtures/content-mode-project";
+import { newIsolatedPage, test, withBrowserContext } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
@@ -151,12 +149,17 @@ const redoShortcut = async ({ page }: { page: Page }) => {
   await waitForSyncStatus({ page, status: "idle" });
 };
 
-test.beforeAll(async () => {
-  await setupSharedContentModeProject();
+let fixture: SeededContentModeProject;
+
+test.beforeAll(async ({ browser }) => {
+  fixture = await withBrowserContext(browser, (context) =>
+    createContentModeProject({ context })
+  );
 });
-test("Editor can delete direct children but not protected containers", async () => {
-  const fixture = getSharedContentModeProject();
-  const { page, close } = await newIsolatedPage();
+test("Editor can delete direct children but not protected containers", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await measure(
@@ -259,15 +262,16 @@ test("Editor can delete direct children but not protected containers", async () 
   }
 });
 
-test("Editor can edit text and content props but not design props", async () => {
-  const fixture = getSharedContentModeProject();
+test("Editor can edit text and content props but not design props", async ({
+  browser,
+}) => {
   const editedHref = "/edited-link";
   const editedImageSrc =
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80'%3E%3Crect width='120' height='80' fill='%23dff7e8'/%3E%3C/svg%3E";
   const editedImageAlt = "Edited image alt";
   const editedVideoSrc = "https://example.com/edited-video.mp4";
   const editedContent = "Edited isolated content";
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await measure("content mode open editor for props", async () => {
@@ -438,10 +442,11 @@ test("Editor can edit text and content props but not design props", async () => 
   }
 });
 
-test("Editor can paste text while editing canvas content", async () => {
-  const fixture = getSharedContentModeProject();
+test("Editor can paste text while editing canvas content", async ({
+  browser,
+}) => {
   const pastedContent = "Pasted editable content";
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await measure("content mode open editor for text paste", async () => {
@@ -478,11 +483,12 @@ test("Editor can paste text while editing canvas content", async () => {
   }
 });
 
-test("Editor rich text formatting persists after reload", async () => {
-  const fixture = getSharedContentModeProject();
+test("Editor rich text formatting persists after reload", async ({
+  browser,
+}) => {
   const formattedText = "Rich editor formatted copy";
   const editedHref = "/rich-text-editor-link";
-  const { page, close } = await newIsolatedPage();
+  const { page, close } = await newIsolatedPage(browser);
 
   try {
     await measure(

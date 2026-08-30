@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 import {
   openProjectBuilder,
   waitForCanvasText,
@@ -13,7 +13,7 @@ import {
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { newIsolatedPage, test } from "../harness";
+import { newIsolatedPage, test, withBrowserContext } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
@@ -528,25 +528,31 @@ const editSelectedNavigatorLabel = async ({
   await waitForChangeToBeSaved({ page });
 };
 
-test.beforeAll(async () => {
-  fixture = await createContentModeProject({
-    email: "pages-actions-e2e@webstudio.test",
-    title: "Pages Actions E2E",
-    assetNamePrefix: "pages-actions-",
-    editorToken: "pages-actions-e2e-editor-token",
-    builderToken: "pages-actions-e2e-builder-token",
-  });
-  navigatorStructuralFixture = await createContentModeProject({
-    email: "pages-actions-navigator-structural-e2e@webstudio.test",
-    title: "Pages Actions Navigator Structural E2E",
-    assetNamePrefix: "pages-actions-navigator-structural-",
-    editorToken: "pages-actions-navigator-structural-e2e-editor-token",
-    builderToken: "pages-actions-navigator-structural-e2e-builder-token",
+test.beforeAll(async ({ browser }) => {
+  await withBrowserContext(browser, async (context) => {
+    fixture = await createContentModeProject({
+      context,
+      email: "pages-actions-e2e@webstudio.test",
+      title: "Pages Actions E2E",
+      assetNamePrefix: "pages-actions-",
+      editorToken: "pages-actions-e2e-editor-token",
+      builderToken: "pages-actions-e2e-builder-token",
+    });
+    navigatorStructuralFixture = await createContentModeProject({
+      context,
+      email: "pages-actions-navigator-structural-e2e@webstudio.test",
+      title: "Pages Actions Navigator Structural E2E",
+      assetNamePrefix: "pages-actions-navigator-structural-",
+      editorToken: "pages-actions-navigator-structural-e2e-editor-token",
+      builderToken: "pages-actions-navigator-structural-e2e-builder-token",
+    });
   });
 });
 
-test("Builder Navigator keyboard move, reparent, and reorder persist after reload", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder Navigator keyboard move, reparent, and reorder persist after reload", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const sectionText = "Navigator move section";
   const asideText = "Navigator move aside";
   const html = `
@@ -676,8 +682,10 @@ test("Builder Navigator keyboard move, reparent, and reorder persist after reloa
   }
 });
 
-test("Builder command panel structural mutations persist after reload", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder command panel structural mutations persist after reload", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const anchorText = "Initial content";
   const componentName = "Image";
 
@@ -800,8 +808,10 @@ test("Builder command panel structural mutations persist after reload", async ()
   }
 });
 
-test("Builder Navigator label and command unwrap persist after reload", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder Navigator label and command unwrap persist after reload", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const anchorText = "Initial content";
   const componentName = "Image";
   const renamedLabel = "Hero media";
@@ -939,8 +949,10 @@ test("Builder Navigator label and command unwrap persist after reload", async ()
   }
 });
 
-test("Builder command panel tag insertion persists after reload", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder command panel tag insertion persists after reload", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const anchorText = "Initial content";
   const tag = "aside";
 
@@ -1004,8 +1016,10 @@ test("Builder command panel tag insertion persists after reload", async () => {
   }
 });
 
-test("Builder pastes external HTML fragments through clipboard and reloads them", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder pastes external HTML fragments through clipboard and reloads them", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const pastedHeading = "External paste heading";
   const pastedLink = "External paste link";
   const html = `
@@ -1102,8 +1116,10 @@ test("Builder pastes external HTML fragments through clipboard and reloads them"
   }
 });
 
-test("Builder copies, pastes, and cuts instances through browser shortcuts", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder copies, pastes, and cuts instances through browser shortcuts", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const text = "Initial content";
 
   try {
@@ -1151,8 +1167,10 @@ test("Builder copies, pastes, and cuts instances through browser shortcuts", asy
   }
 });
 
-test("Builder pastes instance data into page templates", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder pastes instance data into page templates", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const templatePasteText = "Template instance paste heading";
 
   try {
@@ -1196,8 +1214,10 @@ test("Builder pastes instance data into page templates", async () => {
   }
 });
 
-test("Builder does not insert malformed Webstudio paste data as text", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder does not insert malformed Webstudio paste data as text", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const malformedData =
     '{"@webstudio/instance/v0.1":{"instanceSelector":["missing","body"]';
 
@@ -1234,8 +1254,10 @@ test("Builder does not insert malformed Webstudio paste data as text", async () 
   }
 });
 
-test("Builder allows native paste inside focused builder inputs", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Builder allows native paste inside focused builder inputs", async ({
+  browser,
+}) => {
+  const { page, close } = await newIsolatedPage(browser);
   const pastedText = "<section>Native input paste</section>";
 
   try {
