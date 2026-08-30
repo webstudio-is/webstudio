@@ -39,7 +39,6 @@ const createBrowserWorkspace = (port: number) => [
 
 export const createBrowserTestConfig = (port: number) => ({
   optimizeDeps: {
-    entries: ["**/*.browser.{test,spec}.{ts,tsx}"],
     include: ["react/jsx-dev-runtime"],
   },
   resolve: {
