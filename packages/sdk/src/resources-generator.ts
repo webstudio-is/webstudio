@@ -6,7 +6,11 @@ import type { Instance, Instances } from "./schema/instances";
 import type { Scope } from "./scope";
 import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
 import { findTreeInstanceIds } from "./instances-utils";
-import { getPageResourceRootIds } from "./resource-dependencies";
+import {
+  getExpressionDataSourceIds,
+  getPageResourceRootIds,
+  getResourceDataSourceIds,
+} from "./resource-dependencies";
 
 const generateResourceRequestFields = ({
   resource,
@@ -75,6 +79,7 @@ export const generateResources = ({
   props,
   resources,
   instances = new Map(),
+  contentBlockResourceSelections = [],
 }: {
   scope: Scope;
   page: Page;
@@ -82,8 +87,21 @@ export const generateResources = ({
   props: Props;
   resources: Resources;
   instances?: Instances;
+  contentBlockResourceSelections?: readonly {
+    sourceExpression: string;
+    candidates: readonly {
+      assetId: string;
+      resourceIds: readonly string[];
+    }[];
+  }[];
 }) => {
   const usedDataSources: DataSources = new Map();
+  const contentInputDataSourceIds = new Set<string>();
+  const selectedResourceIds = new Set(
+    contentBlockResourceSelections.flatMap(({ candidates }) =>
+      candidates.flatMap(({ resourceIds }) => resourceIds)
+    )
+  );
   const pageInstanceIds = findTreeInstanceIds(instances, page.rootInstanceId);
   const actionResourceProps = Array.from(props.values()).filter(
     (prop): prop is Extract<Prop, { type: "resource" }> =>
@@ -94,12 +112,19 @@ export const generateResources = ({
   const actionResourceIds = new Set(
     actionResourceProps.map((prop) => prop.value)
   );
-  const dataResourceDataSourceByResourceId = new Map(
+  const resourceDataSourceByResourceId = new Map(
     Array.from(dataSources.values())
       .filter(
         (dataSource): dataSource is Extract<DataSource, { type: "resource" }> =>
-          dataSource.type === "resource" &&
-          resources.has(dataSource.resourceId) &&
+          dataSource.type === "resource" && resources.has(dataSource.resourceId)
+      )
+      .map((dataSource) => [dataSource.resourceId, dataSource] as const)
+  );
+  const dataResourceDataSourceByResourceId = new Map(
+    Array.from(resourceDataSourceByResourceId.values())
+      .filter(
+        (dataSource) =>
+          selectedResourceIds.has(dataSource.resourceId) === false &&
           actionResourceIds.has(dataSource.resourceId) === false
       )
       .map((dataSource) => [dataSource.resourceId, dataSource] as const)
@@ -110,6 +135,34 @@ export const generateResources = ({
     props,
     dataSources,
   });
+  for (const { sourceExpression } of contentBlockResourceSelections) {
+    for (const dataSourceId of getExpressionDataSourceIds([sourceExpression])) {
+      const dataSource = dataSources.get(dataSourceId);
+      if (dataSource?.type === "resource") {
+        rootResourceIds.add(dataSource.resourceId);
+        contentInputDataSourceIds.add(dataSource.id);
+      }
+    }
+  }
+  for (const resourceId of selectedResourceIds) {
+    const resource = resources.get(resourceId);
+    if (resource === undefined) {
+      continue;
+    }
+    for (const dataSourceId of getResourceDataSourceIds(resource)) {
+      const dataSource = dataSources.get(dataSourceId);
+      if (dataSource?.type !== "resource") {
+        continue;
+      }
+      if (selectedResourceIds.has(dataSource.resourceId)) {
+        throw new Error(
+          "Dynamic Content Block Resources cannot depend on another selected Resource"
+        );
+      }
+      rootResourceIds.add(dataSource.resourceId);
+      contentInputDataSourceIds.add(dataSource.id);
+    }
+  }
   const resourceDependencies = new Map<string, string[]>();
 
   let generatedRequests = "";
@@ -156,6 +209,38 @@ export const generateResources = ({
     generatedRequests += `  }\n`;
   }
 
+  const generatedContentSelections = contentBlockResourceSelections.map(
+    ({ sourceExpression, candidates }) => {
+      const selectionDataSources: DataSources = new Map();
+      const source = generateExpression({
+        expression: sourceExpression,
+        dataSources,
+        usedDataSources: selectionDataSources,
+        scope,
+      });
+      if (candidates.some(({ resourceIds }) => resourceIds.length > 0)) {
+        for (const dataSource of selectionDataSources.values()) {
+          if (
+            (dataSource.type === "parameter" &&
+              dataSource.id !== page.systemDataSourceId &&
+              dataSource.id !== SYSTEM_VARIABLE_ID) ||
+            (dataSource.type === "resource" &&
+              selectedResourceIds.has(dataSource.resourceId))
+          ) {
+            throw new Error(
+              "Dynamic Content Block Resources require a source available after base Resources load"
+            );
+          }
+        }
+      }
+      for (const dataSource of selectionDataSources.values()) {
+        contentInputDataSourceIds.add(dataSource.id);
+        usedDataSources.set(dataSource.id, dataSource);
+      }
+      return { source, candidates };
+    }
+  );
+
   let generatedVariables = "";
   for (const dataSource of usedDataSources.values()) {
     if (dataSource.type === "variable") {
@@ -174,12 +259,25 @@ export const generateResources = ({
         generatedVariables += `  const ${name} = _props.system\n`;
       }
     }
+    if (
+      dataSource.type === "resource" &&
+      contentInputDataSourceIds.has(dataSource.id)
+    ) {
+      const name = scope.getName(dataSource.id, dataSource.name);
+      const resourceName = scope.getName(
+        dataSource.resourceId,
+        dataSource.name
+      );
+      generatedVariables += `  const ${name} = _props.resources?.[${JSON.stringify(
+        resourceName
+      )}]\n`;
+    }
   }
 
   let generated = "";
   generated += `import type { System, ResourceRequest } from "@webstudio-is/sdk";\n`;
   generated += `import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";\n`;
-  generated += `export const getResources = (_props: { system: System }) => {\n`;
+  generated += `export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {\n`;
   generated += generatedVariables;
   generated += generatedRequests;
 
@@ -204,6 +302,22 @@ export const generateResources = ({
   generated += `    ],\n`;
   generated += `  }\n`;
 
+  generated += `  const _contentData = new Map<string, ResourceRequest>()\n`;
+  for (const { source, candidates } of generatedContentSelections) {
+    for (const { assetId, resourceIds } of candidates) {
+      generated += `  if (${source} === ${JSON.stringify(assetId)}) {\n`;
+      for (const resourceId of resourceIds) {
+        const dataSource = resourceDataSourceByResourceId.get(resourceId);
+        if (dataSource === undefined || actionResourceIds.has(resourceId)) {
+          continue;
+        }
+        const name = scope.getName(resourceId, dataSource.name);
+        generated += `    _contentData.set(${JSON.stringify(name)}, ${name})\n`;
+      }
+      generated += `  }\n`;
+    }
+  }
+
   generated += `  const _action = new Map<string, ResourceRequest>([\n`;
   for (const prop of actionResourceProps) {
     const name = scope.getName(prop.value, prop.name);
@@ -211,7 +325,7 @@ export const generateResources = ({
   }
   generated += `  ])\n`;
 
-  generated += `  return { data: _data, action: _action }\n`;
+  generated += `  return { data: _data, action: _action, contentData: _contentData }\n`;
   generated += `}\n`;
 
   return generated;
@@ -296,4 +410,3 @@ export const replaceFormActionsWithResources = ({
     }
   }
 };
-
