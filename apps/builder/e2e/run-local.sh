@@ -122,8 +122,13 @@ run_builder_e2e_tests() {
 validate_builder_e2e_selection() {
   (
     cd "$ROOT_DIR/apps/builder"
-    E2E_BUILDER_URL="${E2E_BUILDER_URL:-https://127.0.0.1:3000}" \
-      pnpm e2e:ci --list "${PLAYWRIGHT_ARGS[@]}"
+    if [ "${#PLAYWRIGHT_ARGS[@]}" -eq 0 ]; then
+      E2E_BUILDER_URL="${E2E_BUILDER_URL:-https://127.0.0.1:3000}" \
+        pnpm e2e:ci --list
+    else
+      E2E_BUILDER_URL="${E2E_BUILDER_URL:-https://127.0.0.1:3000}" \
+        pnpm e2e:ci --list "${PLAYWRIGHT_ARGS[@]}"
+    fi
   )
 }
 
