@@ -161,6 +161,8 @@ Notes:
 - Preview installs generated app dependencies under `.webstudio/preview` and reuses them across regenerations.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
 - When launcher metadata is available, Preview reuses a supported npm or pnpm launcher. Without launcher metadata, it defaults to npm.
+- Unless `npm_config_cache` is already configured, npm uses the writable `.webstudio/preview/.npm-cache` directory.
+- For npm cache permission errors, unset `npm_config_cache` to use the preview-local cache, then retry. No cache deletion is required.
 - If dependency installation fails, check the reported package-manager path and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
 - When a baseline exists, use screenshot.diff once per baseline/current page or viewport pair to get changed regions, OCR textAnalysis, and diff artifact paths before deciding whether the result matches. Pass expectedText for explicit pass/fail current-screen text assertions with found and missing text. Pass expectedVisual for pass/fail limits on pixel mismatch percentage, changed-region count, or the overall dominant color/brightness direction.
 - If screenshot.diff reports OCR unavailable and the user agrees to install it, call vision.install-ocr {"confirm":true}; otherwise continue with pixel diff and visual inspection.

@@ -495,6 +495,7 @@ test("installs isolated generated dependencies when the cli does not ship them",
       cwd: "/tmp/project/.webstudio/preview",
       env: expect.objectContaining({
         PATH: "/opt/webstudio-node/bin:/usr/bin",
+        npm_config_cache: "/tmp/project/.webstudio/preview/.npm-cache",
       }),
       timeout: 120_000,
     })

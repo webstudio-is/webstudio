@@ -107,6 +107,8 @@ export const previewOptions = (yargs: CommonYargsArgv) =>
         "Preview dependencies are isolated under .webstudio/preview and reused across regenerations.",
         "Do not add generated-preview dependencies to the repository root package.json or pnpm-lock.yaml.",
         "When launcher metadata is available, Preview reuses a supported npm or pnpm launcher. Without launcher metadata, it defaults to npm.",
+        "Unless npm_config_cache is already configured, npm uses a writable cache inside .webstudio/preview.",
+        "For npm cache permission errors, unset npm_config_cache to use the preview-local cache, then retry.",
         "If dependency installation fails, check the reported package-manager path and network configuration, then reinstall or update the Webstudio CLI if the problem persists.",
       ].join("\n")
     );
@@ -380,20 +382,31 @@ export const ensurePreviewDependencies = async (
     invocation.command === operations.nodeExecPath
       ? invocation.args[0]
       : invocation.command;
+  const runtimeEnv = getNodeRuntimeEnv(
+    operations.nodeExecPath,
+    operations.env,
+    operations.platform
+  );
+  const installEnv =
+    packageManager.name === "npm" &&
+    Object.keys(runtimeEnv).every(
+      (name) => name.toLowerCase() !== "npm_config_cache"
+    )
+      ? {
+          ...runtimeEnv,
+          npm_config_cache: join(previewProjectDir, ".npm-cache"),
+        }
+      : runtimeEnv;
 
   try {
     await operations.execFile(invocation.command, invocation.args, {
       cwd: previewProjectDir,
-      env: getNodeRuntimeEnv(
-        operations.nodeExecPath,
-        operations.env,
-        operations.platform
-      ),
+      env: installEnv,
       timeout: previewDependencyInstallTimeout,
     });
   } catch (error) {
     throw new Error(
-      `PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies with ${packageManager.name} at ${packageManagerPath}. Check the package-manager/network configuration, then reinstall or update webstudio if the problem persists.\n\nPackage-manager diagnostics:\n${getPreviewInstallFailureDiagnostics(error)}`,
+      `PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies with ${packageManager.name} at ${packageManagerPath}. For npm cache permission errors, unset npm_config_cache to use the preview-local cache, then retry. Check the package-manager/network configuration, then reinstall or update webstudio if the problem persists.\n\nPackage-manager diagnostics:\n${getPreviewInstallFailureDiagnostics(error)}`,
       { cause: error }
     );
   }
