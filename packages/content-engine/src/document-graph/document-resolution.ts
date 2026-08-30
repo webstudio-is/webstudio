@@ -1,5 +1,5 @@
 import { LRUCache } from "lru-cache";
-import { createConcurrencyLimiter } from "../async-utils";
+import { awaitWithSignal, createConcurrencyLimiter } from "../async-utils";
 import { ByteLimitExceededError, readBytePrefix } from "../byte-stream";
 import { contentEngineLimits } from "../limits";
 import {
@@ -272,34 +272,7 @@ export const createDocumentResolutionSession = ({
 
   const waitForSessionTask = async <Result>(task: Promise<Result>) => {
     assertSessionSignal();
-    if (signal === undefined) {
-      return await task;
-    }
-    return await new Promise<Result>((resolve, reject) => {
-      const cleanup = () => signal.removeEventListener("abort", onAbort);
-      const onAbort = () => {
-        cleanup();
-        try {
-          signal.throwIfAborted();
-        } catch (error) {
-          reject(error);
-        }
-      };
-      signal.addEventListener("abort", onAbort, { once: true });
-      task.then(
-        (value) => {
-          cleanup();
-          resolve(value);
-        },
-        (error) => {
-          cleanup();
-          reject(error);
-        }
-      );
-      if (signal.aborted) {
-        onAbort();
-      }
-    });
+    return await awaitWithSignal(task, signal);
   };
 
   const loadSessionDocument = async (

@@ -435,7 +435,7 @@ test("keeps a replacement pending when an obsolete same-key batch settles", asyn
   expect($resourcesCache.get().get(key)).toEqual({ data: "fresh" });
 });
 
-test("fills capacity freed by obsolete resources in a mixed batch", async () => {
+test("loads fresh resources within remaining mixed-batch capacity", async () => {
   const shared = Array.from({ length: 2 }, (_, index) => ({
     name: `Shared ${index}`,
     method: "get" as const,
@@ -483,6 +483,56 @@ test("fills capacity freed by obsolete resources in a mixed batch", async () => 
 
   resolveFirst(Response.json([]));
   await firstLoad;
+});
+
+test("counts obsolete requests until their mixed batch settles", async () => {
+  const shared: ResourceRequest = {
+    name: "Shared",
+    method: "get",
+    url: "https://example.com/shared",
+    searchParams: [],
+    headers: [],
+  };
+  const obsolete = Array.from({ length: 19 }, (_, index) => ({
+    name: `Obsolete ${index}`,
+    method: "get" as const,
+    url: `https://example.com/obsolete-${index}`,
+    searchParams: [],
+    headers: [],
+  }));
+  const fresh = Array.from({ length: 19 }, (_, index) => ({
+    name: `Fresh ${index}`,
+    method: "get" as const,
+    url: `https://example.com/fresh-${index}`,
+    searchParams: [],
+    headers: [],
+  }));
+  let resolveFirst = (_response: Response) => {};
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFirst = resolve;
+        })
+    )
+    .mockResolvedValueOnce(Response.json([]));
+
+  queueResources([shared, ...obsolete]);
+  const firstLoad = loadResources(requestFetch as typeof globalThis.fetch);
+  queueResources([shared, ...fresh]);
+  startLoading(requestFetch as typeof globalThis.fetch);
+
+  expect(requestFetch).toHaveBeenCalledOnce();
+
+  resolveFirst(Response.json([]));
+  await firstLoad;
+  await vi.waitFor(() => {
+    expect(requestFetch).toHaveBeenCalledTimes(2);
+  });
+  expect(JSON.parse(String(requestFetch.mock.calls[1][1]?.body))).toEqual(
+    fresh
+  );
 });
 
 test("drains bounded batches without an additional delay", async () => {

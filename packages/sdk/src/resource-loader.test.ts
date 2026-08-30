@@ -720,6 +720,34 @@ describe("loadResource", () => {
     });
   });
 
+  test("times out when fetch ignores its abort signal", async () => {
+    vi.useFakeTimers();
+    mockFetch.mockImplementation(() => new Promise(() => {}));
+    const pending = loadResource(
+      mockFetch,
+      {
+        name: "resource",
+        url: "https://example.com/resource",
+        searchParams: [],
+        method: "get",
+        headers: [],
+      },
+      undefined,
+      { timeoutMs: 100 }
+    );
+    let result: Awaited<typeof pending> | undefined;
+    void pending.then((value) => {
+      result = value;
+    });
+
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(result).toMatchObject({
+      data: { error: { code: "REQUEST_TIMEOUT" } },
+      status: 504,
+    });
+  });
+
   test("returns a safe structured network failure", async () => {
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
     mockFetch.mockRejectedValue(new Error("secret upstream detail"));

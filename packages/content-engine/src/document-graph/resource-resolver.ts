@@ -1,4 +1,4 @@
-import { createConcurrencyLimiter } from "../async-utils";
+import { awaitWithSignal, createConcurrencyLimiter } from "../async-utils";
 
 export type Resource<Document> = Readonly<{
   id: string;
@@ -183,10 +183,13 @@ export const resolveResources = async <Document>({
       try {
         return await limit(async () => {
           assertActive(signal);
-          const document = await resource.resolve({
-            documents: dependencyDocuments,
-            signal,
-          });
+          const document = await awaitWithSignal(
+            resource.resolve({
+              documents: dependencyDocuments,
+              signal,
+            }),
+            signal
+          );
           assertActive(signal);
           return document;
         });

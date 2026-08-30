@@ -186,4 +186,49 @@ describe("resource resolver", () => {
       code: "REQUEST_CANCELLED",
     } satisfies Partial<ResourceResolutionError>);
   });
+
+  test("cancels without waiting for a resource implementation to settle", async () => {
+    const controller = new AbortController();
+    let finish = () => {};
+    let markStarted = () => {};
+    const started = new Promise<void>((resolve) => {
+      markStarted = resolve;
+    });
+    const resolution = resolveResources({
+      resources: [
+        resource(
+          "root",
+          [],
+          () =>
+            new Promise<string>((resolve) => {
+              finish = () => resolve("document");
+              markStarted();
+            })
+        ),
+      ],
+      rootIds: ["root"],
+      concurrency: 1,
+      signal: controller.signal,
+    });
+    const outcome = resolution.then(
+      () => "resolved",
+      (error) => error
+    );
+
+    await started;
+    controller.abort(new Error("cancelled"));
+
+    await expect(
+      Promise.race([
+        outcome,
+        new Promise((resolve) =>
+          setTimeout(() => resolve("still pending"), 20)
+        ),
+      ])
+    ).resolves.toMatchObject({
+      code: "REQUEST_CANCELLED",
+    } satisfies Partial<ResourceResolutionError>);
+    finish();
+    await outcome;
+  });
 });

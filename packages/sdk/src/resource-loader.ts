@@ -1,5 +1,6 @@
 import hash from "@emotion/hash";
 import {
+  awaitWithSignal,
   resolveResources as resolveResourceGraph,
   type Resource,
 } from "@webstudio-is/content-engine";
@@ -296,15 +297,20 @@ export const loadResource = async (
       method,
       headers: requestHeaders,
     };
+    let signal: AbortSignal | undefined;
     if (options.signal !== undefined || options.timeoutMs !== undefined) {
-      requestInit.signal = controller.signal;
+      signal = controller.signal;
+      requestInit.signal = signal;
     }
     if (method !== "get" && body !== undefined) {
       requestInit.body = serializeValue(body);
     }
-    const response = await customFetch(href, requestInit);
+    const response = await awaitWithSignal(
+      customFetch(href, requestInit),
+      signal
+    );
 
-    let data = await response.text();
+    let data = await awaitWithSignal(response.text(), signal);
 
     try {
       // If it looks like JSON and quacks like JSON, then it probably is JSON.

@@ -90,8 +90,16 @@ export const $hasPendingResources = computed(
   () => queue.size > 0 || pending.size > 0
 );
 
+const getInFlightResourceCount = () => {
+  let count = 0;
+  for (const batch of inFlightBatches) {
+    count += batch.versions.size;
+  }
+  return count;
+};
+
 const loadResources = async (requestFetch: typeof fetch = fetch) => {
-  const availableSlots = resourceLoadConcurrency - pending.size;
+  const availableSlots = resourceLoadConcurrency - getInFlightResourceCount();
   if (availableSlots <= 0) {
     return;
   }
@@ -166,7 +174,10 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
 };
 
 const startLoading = (requestFetch: typeof fetch = fetch) => {
-  if (pending.size >= resourceLoadConcurrency || queue.size === 0) {
+  if (
+    getInFlightResourceCount() >= resourceLoadConcurrency ||
+    queue.size === 0
+  ) {
     return;
   }
   void loadResources(requestFetch);
