@@ -1,4 +1,14 @@
-const createBrowserWorkspace = () => [
+export const browserTestPorts = {
+  builder: 63401,
+  designSystem: 63402,
+  queryBuilderReact: 63403,
+  sdkComponentsAnimation: 63404,
+  sdkComponentsReact: 63405,
+  sdkComponentsReactRadix: 63406,
+  sdkComponentsReactRouter: 63407,
+} as const;
+
+const createBrowserWorkspace = (port: number) => [
   {
     extends: "./vitest.config.ts",
     test: {
@@ -9,6 +19,7 @@ const createBrowserWorkspace = () => [
         enabled: true,
         headless: true,
         screenshotFailures: false,
+        api: { port },
         instances: [{ browser: "chromium" as const }],
       },
     },
@@ -26,7 +37,7 @@ const createBrowserWorkspace = () => [
   },
 ];
 
-export const createBrowserTestConfig = () => ({
+export const createBrowserTestConfig = (port: number) => ({
   optimizeDeps: {
     include: ["react/jsx-dev-runtime"],
   },
@@ -39,6 +50,6 @@ export const createBrowserTestConfig = () => ({
     },
   },
   test: {
-    workspace: createBrowserWorkspace(),
+    workspace: createBrowserWorkspace(port),
   },
 });

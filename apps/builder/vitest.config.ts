@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
+import { browserTestPorts } from "../../scripts/vitest-browser-workspace";
 
 const nodeTestGlob = "**/*.{server,node}.{test,spec}.{ts,tsx}";
 
@@ -19,6 +20,7 @@ const browserProject = (
       headless: true,
       screenshotFailures: false,
       fileParallelism: false,
+      api: { port: browserTestPorts.builder },
       instances: [{ browser: "chromium" as const }],
     },
   },

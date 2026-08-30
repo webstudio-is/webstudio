@@ -1,4 +1,9 @@
 import { defineConfig } from "vitest/config";
-import { createBrowserTestConfig } from "../../scripts/vitest-browser-workspace";
+import {
+  browserTestPorts,
+  createBrowserTestConfig,
+} from "../../scripts/vitest-browser-workspace";
 
-export default defineConfig(createBrowserTestConfig());
+export default defineConfig(
+  createBrowserTestConfig(browserTestPorts.sdkComponentsReactRadix)
+);

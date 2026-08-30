@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import { browserTestPorts } from "../../scripts/vitest-browser-workspace";
 
 export default defineConfig({
   optimizeDeps: {
@@ -24,6 +25,7 @@ export default defineConfig({
             enabled: true,
             headless: true,
             screenshotFailures: false,
+            api: { port: browserTestPorts.designSystem },
             instances: [{ browser: "chromium" }],
           },
         },
