@@ -9,13 +9,13 @@ import {
   portalComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
-  getPageResourceRootIds,
 } from "@webstudio-is/sdk";
 import { transpileExpression } from "@webstudio-is/expression";
 import {
   normalizeProps,
   textContentAttribute,
   getCollectionEntries,
+  findTreeInstanceIdsExcludingStaticHidden,
 } from "@webstudio-is/react-sdk";
 import { mapGroupBy } from "~/shared/shim";
 import { $instances } from "../sync/data-stores";
@@ -217,13 +217,23 @@ const $resourceRequestPlan = computed(
         resourceCache,
       });
     }
+    const instanceIds = findTreeInstanceIdsExcludingStaticHidden({
+      instances,
+      props,
+      rootInstanceId: page.rootInstanceId,
+    });
+    instanceIds.add(ROOT_INSTANCE_ID);
+    const rootResourceIds: string[] = [];
+    for (const dataSource of dataSources.values()) {
+      if (
+        dataSource.type === "resource" &&
+        instanceIds.has(dataSource.scopeInstanceId ?? "")
+      ) {
+        rootResourceIds.push(dataSource.resourceId);
+      }
+    }
     return computeResourceRequestPlan({
-      rootResourceIds: getPageResourceRootIds({
-        page,
-        instances,
-        props,
-        dataSources,
-      }),
+      rootResourceIds,
       resources,
       dataSources,
       values,
