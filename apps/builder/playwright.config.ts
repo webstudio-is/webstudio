@@ -13,9 +13,7 @@ export default defineConfig({
   outputDir: "./test-results/e2e",
   timeout: testTimeout,
   expect: { timeout: 10_000 },
-  // CI shards run against isolated backends, so distribute individual tests
-  // instead of letting a few expensive files dominate a shard.
-  fullyParallel: process.env.CI !== undefined,
+  fullyParallel: false,
   forbidOnly: process.env.CI !== undefined,
   retries: 0,
   reporter: process.env.CI ? [["line"], ["html", { open: "never" }]] : "line",

@@ -33,6 +33,8 @@ import { selectCanvasTextInstanceForProps } from "../flows/canvas-selection";
 import { fillSelectedStringProperty } from "../flows/props-panel";
 import { getProjectBuilderUrl, test } from "../test";
 
+test.describe.configure({ mode: "parallel" });
+
 const sourceFilename = "content-source.mdx";
 const alternateFilename = "alternate-source.mdx";
 const unresolvedFilename = "unresolved-source.mdx";
@@ -125,7 +127,9 @@ const insertTemplateIntoEmptyContentBlock = async ({
   await insert.waitFor({ state: "visible" });
   await insert.focus();
   await insert.press("Enter");
-  await page.getByRole("menuitemradio", { name: templateName }).click();
+  await page
+    .getByRole("menuitemradio", { name: templateName })
+    .click({ force: true });
 };
 
 const openFixture = async ({
