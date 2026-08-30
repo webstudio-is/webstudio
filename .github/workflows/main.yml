@@ -380,7 +380,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
     environment:
       name: development
@@ -420,11 +420,11 @@ jobs:
           E2E_TEST_COMMAND_TIMEOUT_SECONDS: 900
         run: |
           run_builder_e2e() {
-            pnpm e2e:builder -- --shard=${{ matrix.shard }}/10
+            pnpm e2e:builder -- --shard=${{ matrix.shard }}/12
           }
 
           run_builder_e2e_keep_logs() {
-            E2E_SKIP_CLEANUP=true pnpm e2e:builder -- --shard=${{ matrix.shard }}/10
+            E2E_SKIP_CLEANUP=true pnpm e2e:builder -- --shard=${{ matrix.shard }}/12
           }
 
           run_builder_e2e || {

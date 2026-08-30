@@ -80,15 +80,15 @@ each invocation.
 - Keep tests in a file independent even though Playwright runs them in
   declaration order by default.
 
-CI uses Playwright's standard ten-way file sharding to keep every shard below
-the five-minute job limit:
+CI distributes individual tests across twelve isolated Playwright shards to
+keep every shard below the five-minute job limit:
 
 ```sh
-pnpm e2e:builder -- --shard=1/10
+CI=1 pnpm e2e:builder -- --shard=1/12
 ```
 
-Test filenames do not encode shard ownership. Playwright balances files across
-the configured shards.
+Tests do not encode shard ownership. Playwright balances them across the
+configured CI shards.
 
 ## Failures
 
