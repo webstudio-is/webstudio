@@ -5,16 +5,17 @@
       import type { PageMeta } from "@webstudio-is/sdk";
       import type { System, ResourceRequest } from "@webstudio-is/sdk";
 import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";
-export const getResources = (_props: { system: System }) => {
+export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
   const _data: ResourceRequestGraph = {
     resources: [
     ],
     rootIds: [
     ],
   }
+  const _contentData = new Map<string, ResourceRequest>()
   const _action = new Map<string, ResourceRequest>([
   ])
-  return { data: _data, action: _action }
+  return { data: _data, action: _action, contentData: _contentData }
 }
 
 

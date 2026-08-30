@@ -5,7 +5,7 @@
       import type { PageMeta } from "@webstudio-is/sdk";
       import type { System, ResourceRequest } from "@webstudio-is/sdk";
 import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";
-export const getResources = (_props: { system: System }) => {
+export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
   const jsonResourceVariable_1 = (documents: ReadonlyMap<string, unknown>): ResourceRequest => {
     return {
       name: "jsonResourceVariable",
@@ -25,9 +25,10 @@ export const getResources = (_props: { system: System }) => {
       "fjMzCru8O2U31xY2P1Ovr",
     ],
   }
+  const _contentData = new Map<string, ResourceRequest>()
   const _action = new Map<string, ResourceRequest>([
   ])
-  return { data: _data, action: _action }
+  return { data: _data, action: _action, contentData: _contentData }
 }
 
 

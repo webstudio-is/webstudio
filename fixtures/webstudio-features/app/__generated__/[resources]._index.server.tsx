@@ -5,7 +5,7 @@
       import type { PageMeta } from "@webstudio-is/sdk";
       import type { System, ResourceRequest } from "@webstudio-is/sdk";
 import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";
-export const getResources = (_props: { system: System }) => {
+export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
   const list_1 = (documents: ReadonlyMap<string, unknown>): ResourceRequest => {
     return {
       name: "list",
@@ -25,9 +25,10 @@ export const getResources = (_props: { system: System }) => {
       "1vX6SQdaCjJN6MvJlG_cQ",
     ],
   }
+  const _contentData = new Map<string, ResourceRequest>()
   const _action = new Map<string, ResourceRequest>([
   ])
-  return { data: _data, action: _action }
+  return { data: _data, action: _action, contentData: _contentData }
 }
 
 
