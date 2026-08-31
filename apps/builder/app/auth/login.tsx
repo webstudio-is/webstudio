@@ -7,12 +7,12 @@ import {
   Text,
   theme,
   cssVar,
+  webstudioBrand,
 } from "@webstudio-is/design-system";
 import { GithubIcon, GoogleIcon, WebstudioIcon } from "@webstudio-is/icons";
 import { Form } from "@remix-run/react";
 import { authPath } from "~/shared/router-utils";
 import { SecretLogin } from "./secret-login";
-import { brandColors } from "~/shared/brand-colors";
 
 const globalStyles = globalCss({
   body: {
@@ -44,7 +44,7 @@ export const Login = ({
       css={{
         height: "100vh",
         color: cssVar("--foreground-primary"),
-        background: brandColors.dashboard,
+        background: webstudioBrand.backgroundGradient,
       }}
     >
       <Flex
@@ -58,7 +58,7 @@ export const Login = ({
           borderRadius: theme.spacing[5],
           [`@media (min-width: ${rawTheme.spacing[35]})`]: {
             backgroundColor: `light-dark(
-              ${brandColors.panelTranslucent},
+              oklch(from ${cssVar("--background-primary")} l c h / 50%),
               ${cssVar("--background-primary")}
             )`,
           },
