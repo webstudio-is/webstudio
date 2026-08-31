@@ -18,6 +18,5 @@ export * from "./content-collection";
 export { extractMarkdownFrontmatter } from "./frontmatter";
 export { MarkdownMetadataError } from "./markdown-errors";
 export { createUniqueAssetIdsByPath } from "./asset-path-resolution";
-<<<<<<< HEAD
 export { awaitWithSignal } from "./async-utils";
 export { appendAssetFieldPath } from "./canonical";
