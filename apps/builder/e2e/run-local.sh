@@ -29,6 +29,7 @@ source "$ROOT_DIR/apps/builder/e2e/run-step.sh"
 builder_backend_init
 
 export E2E_DB_BOOTSTRAP="${E2E_DB_BOOTSTRAP:-auto}"
+export E2E_BUILD_DATABASE_IMAGE="${E2E_BUILD_DATABASE_IMAGE:-true}"
 export E2E_GENERATE_PRISMA="${E2E_GENERATE_PRISMA:-auto}"
 export E2E_DOCKER_PULL_TIMEOUT_SECONDS="${E2E_DOCKER_PULL_TIMEOUT_SECONDS:-300}"
 export E2E_DOCKER_TIMEOUT_SECONDS="${E2E_DOCKER_TIMEOUT_SECONDS:-60}"
@@ -127,13 +128,22 @@ validate_builder_e2e_selection() {
   )
 }
 
+prepare_e2e_database_image() {
+  if [ "$E2E_BUILD_DATABASE_IMAGE" = "true" ]; then
+    builder_compose build --pull db
+    return
+  fi
+
+  builder_backend_pull_db
+}
+
 if [ "$E2E_RUN_TESTS" = "true" ]; then
   run_step "validate builder e2e test selection" \
     "$E2E_TEST_SELECTION_TIMEOUT_SECONDS" validate_builder_e2e_selection
 fi
 
-run_step "pull e2e database image" "$E2E_DOCKER_PULL_TIMEOUT_SECONDS" \
-  builder_backend_pull_db
+run_step "prepare e2e database image" "$E2E_DOCKER_PULL_TIMEOUT_SECONDS" \
+  prepare_e2e_database_image
 
 run_step "start e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
   builder_backend_start_db
