@@ -30,11 +30,11 @@ runs:
 
     - name: Build Builder
       shell: bash
-      run: pnpm e2e:builder:build
+      run: pnpm --filter @webstudio-is/builder build
 
     - name: Generate schema snapshot
       shell: bash
-      run: pnpm e2e:builder:refresh-schema-cache
+      run: pnpm --filter @webstudio-is/builder e2e:schema-cache
 
     - name: Upload prerequisites
       uses: actions/upload-artifact@v6

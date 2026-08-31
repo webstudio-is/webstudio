@@ -2,7 +2,6 @@ import { defineConfig } from "vitest/config";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import fg from "fast-glob";
-import { browserTestPorts } from "../../scripts/vitest-browser-workspace";
 
 const rootDir = ["..", "../..", "../../.."]
   .map((dir) => path.join(__dirname, dir))
@@ -42,7 +41,6 @@ export default defineConfig({
             enabled: true,
             headless: true,
             screenshotFailures: false,
-            api: { port: browserTestPorts.sdkComponentsAnimation },
             instances: [{ browser: "chromium" }, { browser: "firefox" }],
             fileParallelism: false,
           },

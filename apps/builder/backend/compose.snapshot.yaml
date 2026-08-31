@@ -8,4 +8,4 @@ services:
     tmpfs:
       - /var/lib/postgresql/data
     volumes:
-      - ./e2e/postgres-init.sql:/docker-entrypoint-initdb.d/postgres-init.sql:ro
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/postgres-init.sql:ro

@@ -43,7 +43,7 @@ jobs:
         run: pnpm --filter webstudio test:ssg-package
 
   tests:
-    name: tests (${{ matrix.environment }}, ${{ matrix.suite.scope }})
+    name: tests (${{ matrix.environment }}, ${{ matrix.suite.name }})
     if: |
       github.event_name == 'push' ||
       github.event_name == 'pull_request' ||
@@ -57,12 +57,18 @@ jobs:
           - empty
           - development
         suite:
-          - scope: packages
-          - scope: cli
-          - scope: builder-core
-            project: core-*
-          - scope: builder-app
-            project: app-*
+          - name: packages
+            script: test:packages
+            browsers: chromium-firefox
+          - name: cli
+            script: test:cli
+            browsers: none
+          - name: builder-core
+            script: test:builder:core
+            browsers: chromium
+          - name: builder-app
+            script: test:builder:app
+            browsers: chromium
     environment:
       name: ${{ matrix.environment }}
     env:
@@ -77,8 +83,8 @@ jobs:
       - uses: ./.github/actions/test-suite
         with:
           submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
-          scope: ${{ matrix.suite.scope }}
-          project: ${{ matrix.suite.project }}
+          script: ${{ matrix.suite.script }}
+          browsers: ${{ matrix.suite.browsers }}
 
   checks:
     # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
@@ -164,44 +170,7 @@ jobs:
 
       - run: pnpm --filter "{./fixtures/*}..." build
 
-      - uses: actions/github-script@v8
-        with:
-          script: |
-            const assertSize = async (directory, maxSize) => {
-              let result = ''
-              await exec.exec('du', ['-sk', directory], {
-                silent: true,
-                listeners: {
-                  stdout: (data) => {
-                    result += data.toString()
-                  }
-                }
-              })
-              const size = Number.parseInt(result, 10)
-              return {
-                passed: size <= maxSize,
-                size,
-                diff: size - maxSize,
-                directory,
-              }
-            }
-            const results = [
-              await assertSize('./fixtures/ssg-cloudflare-pages/dist/client', 356),
-              await assertSize('./fixtures/react-router-netlify/build/client', 376),
-              await assertSize('./fixtures/webstudio-features/build/client', 3684),
-            ]
-            for (const result of results) {
-              if (result.passed) {
-                console.info(`${result.directory}: ${result.size}kB (${result.diff}kB)`)
-              } else {
-                console.info('')
-                console.error(`${result.directory}: ${result.size}kB (+${result.diff}kB)`)
-              }
-            }
-            if (results.some(result => result.passed === false)) {
-              console.error('Some fixtures exceeded limits')
-              process.exit(1)
-            }
+      - run: pnpm check:fixture-sizes
 
   builder-e2e-build:
     name: builder-e2e build
@@ -252,7 +221,7 @@ jobs:
           run-scripts: "true"
 
       - name: Apply migrations to Supabase PostgreSQL
-        run: pnpm e2e:builder:check-supabase-migrations
+        run: pnpm --filter @webstudio-is/builder e2e:supabase-migrations
 
   builder-e2e:
     name: builder-e2e (${{ matrix.shard }})
@@ -274,12 +243,6 @@ jobs:
 
     environment:
       name: development
-
-    env:
-      BUILDER_E2E_COMPOSE_ARGS: "--env-file apps/builder/.env -f apps/builder/docker-compose.yaml -f apps/builder/docker-compose.e2e-shard.yaml"
-      COMPOSE_PROJECT_NAME: builder-e2e
-      E2E_BUILD_DATABASE_IMAGE: "false"
-      E2E_COMPOSE_OVERRIDE_FILE: ${{ github.workspace }}/apps/builder/docker-compose.e2e-shard.yaml
 
     steps:
       - uses: actions/checkout@v5
