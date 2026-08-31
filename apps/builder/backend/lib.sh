@@ -1,8 +1,22 @@
 #!/usr/bin/env bash
 
 builder_backend_init() {
+  local mode="${1:?Builder backend mode is required}"
   ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
-  SCHEMA_SNAPSHOT="${SCHEMA_SNAPSHOT:-$ROOT_DIR/.cache/builder-e2e/schema-$(builder_backend_migrations_fingerprint).sql}"
+  local backend_dir="$ROOT_DIR/apps/builder/backend"
+  local compose_override="$backend_dir/compose.${mode}.yaml"
+  if [ ! -f "$compose_override" ]; then
+    echo "Unknown Builder backend mode: $mode" >&2
+    return 1
+  fi
+
+  if [ "$mode" = "development" ]; then
+    export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-builder}"
+  else
+    # Disposable modes must never share the persistent development volume.
+    export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-builder-e2e}"
+  fi
+
   COMPOSE_ENV=(
     --env-file "$ROOT_DIR/apps/builder/.env"
   )
@@ -10,12 +24,12 @@ builder_backend_init() {
     COMPOSE_ENV+=(--env-file "$ROOT_DIR/apps/builder/.env.development")
   fi
   COMPOSE_FILES=(
-    -f "$ROOT_DIR/apps/builder/docker-compose.yaml"
-    -f "$COMPOSE_OVERRIDE_FILE"
+    -f "$backend_dir/compose.yaml"
+    -f "$compose_override"
   )
 }
 
-builder_backend_migrations_fingerprint() {
+builder_backend_schema_fingerprint() {
   (
     cd "$ROOT_DIR"
     {
@@ -23,22 +37,20 @@ builder_backend_migrations_fingerprint() {
         -mindepth 1 -maxdepth 1 -type d -print
       find packages/prisma-client/prisma/migrations \
         -type f \( -name migration.sql -o -name migration.ts \) -print
-      printf '%s\n' \
-        apps/builder/dev/backend.sh \
-        apps/builder/docker-compose.yaml \
-        apps/builder/docker-compose.e2e.yaml \
-        apps/builder/docker-compose.e2e-shard.yaml \
-        apps/builder/e2e/postgres.Dockerfile \
-        apps/builder/e2e/postgres-init.sql
-    } | LC_ALL=C sort | while IFS= read -r path; do
-      if [ -f "$path" ]; then
-        printf '%s ' "$path"
-        git hash-object "$path"
+      find apps/builder/backend -type f ! -name '*.test.*' -print
+    } | LC_ALL=C sort | while IFS= read -r file; do
+      if [ -f "$file" ]; then
+        printf '%s ' "$file"
+        git hash-object "$file"
       else
-        printf '%s directory\n' "$path"
+        printf '%s directory\n' "$file"
       fi
     done
   ) | git hash-object --stdin
+}
+
+builder_backend_init_schema_snapshot() {
+  SCHEMA_SNAPSHOT="${SCHEMA_SNAPSHOT:-$ROOT_DIR/.cache/builder-e2e/schema-$(builder_backend_schema_fingerprint).sql}"
 }
 
 builder_compose() {
@@ -120,7 +132,11 @@ builder_backend_bootstrap_schema_snapshot() {
 }
 
 builder_backend_migrate() {
-  pnpm --dir "$ROOT_DIR" --filter=./packages/prisma-client migrations migrate --dev --cwd ../../apps/builder
+  pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/prisma-client migrations migrate --dev --cwd ../../apps/builder
+  if ! builder_backend_schema_exists; then
+    echo "Migrations completed without creating the Builder schema" >&2
+    return 1
+  fi
 }
 
 builder_backend_bootstrap() {
