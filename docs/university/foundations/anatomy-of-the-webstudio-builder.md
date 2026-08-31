@@ -193,6 +193,17 @@ The Settings Panel is on the right side of your canvas. You can use this panel t
   <img src="../../.gitbook/assets/builder-modes-light.png" alt="Mode menu with Design and Content options and their keyboard shortcuts">
 </picture>
 
+## Interface theme
+
+Choose **Menu > View > Theme**, then select **System**, **Light**, or **Dark**.
+**System** follows your operating system setting. The same preference is
+available from the [Dashboard](dashboard.md#interface-theme) profile menu and
+applies to both interfaces.
+
+The interface theme does not change the site on the canvas. To design and
+preview a site color scheme, use a
+[color-scheme breakpoint](breakpoints.md#example-dark-mode).
+
 ## Hide UI
 
 Hide UI gives the canvas the full builder workspace by hiding the sidebars, footer, and top bar. It works in any mode, so you can keep using Design, Content, or Preview while the Builder chrome is hidden.

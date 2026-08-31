@@ -197,6 +197,12 @@ Move, rotate, scale, or skew the instance without affecting layout.
 
 A free-form CSS property editor for anything not covered by the sections above. Type any valid CSS property name — autocomplete shows the full list — and enter its value.
 
+Autocomplete includes standard, experimental, nonstandard, and obsolete CSS
+properties. A yellow warning marks any property that is not standard. Open the
+warning to review its status and browser-support risk, then select **Learn more
+on MDN** for compatibility details. Test these properties in the browsers your
+site supports before relying on them.
+
 **Common uses:**
 - Properties not exposed elsewhere: `cursor`, `pointer-events`, `will-change`, `content`, `list-style`, `appearance`, `resize`, `clip-path`, etc.
 - Defining [CSS variables](css-variables.md): add a property like `--my-color` with a value, and it becomes available to all child instances
