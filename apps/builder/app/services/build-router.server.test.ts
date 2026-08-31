@@ -35,6 +35,7 @@ describe("build router project bundle compatibility", () => {
 
   test("reports expected and received bundle contract versions", () => {
     const ctx = { apiClient: { type: "cli" } } as never;
+    const message = `This version of the Webstudio CLI is incompatible with the current API. Expected bundle version ${bundleVersion}, received bundle-client.`;
     let error: unknown;
     try {
       assertCliBundleVersion(ctx, "bundle-client");
@@ -42,9 +43,8 @@ describe("build router project bundle compatibility", () => {
       error = caught;
     }
 
-    expect(getApiCompatibilityPayload(error)?.message).toBe(
-      `This version of the Webstudio CLI is incompatible with the current API. Expected bundle version ${bundleVersion}, received bundle-client.`
-    );
+    expect(error).toMatchObject({ message });
+    expect(getApiCompatibilityPayload(error)?.message).toBe(message);
   });
 
   test("removes agent instructions from non-CLI bundles", async () => {

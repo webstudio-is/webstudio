@@ -17,12 +17,13 @@ export const throwApiClientUpdateRequired = ({
     reason: "clientVersionUnsupported",
     target,
   });
+  const message = `${compatibility.message} Expected bundle version ${expectedVersion}, received ${receivedVersion ?? "missing"}.`;
   throw new TRPCError({
     code: "PRECONDITION_FAILED",
-    message: "The API client must be updated before continuing.",
+    message,
     cause: {
       ...compatibility,
-      message: `${compatibility.message} Expected bundle version ${expectedVersion}, received ${receivedVersion ?? "missing"}.`,
+      message,
     },
   });
 };
