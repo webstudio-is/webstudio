@@ -140,7 +140,9 @@ const insertTemplateIntoEmptyContentBlock = async ({
   await insert.waitFor({ state: "visible" });
   await insert.focus();
   await insert.press("Enter");
-  await page.getByRole("menuitemradio", { name: templateName }).click();
+  const menuItem = page.getByRole("menuitemradio", { name: templateName });
+  await menuItem.focus();
+  await page.keyboard.press("Enter");
 };
 
 const openFixture = async ({
