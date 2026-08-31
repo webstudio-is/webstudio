@@ -2237,6 +2237,20 @@ describe("builder runtime registry", () => {
     ).toContain("Local style sources cannot be duplicated");
   });
 
+  test("publishes Content Block replacement confirmation", () => {
+    const operation = getBuilderRuntimeOperation("contentBlocks.connectSource");
+    const schema = toInputJsonSchemaObject(operation.inputJsonSchema);
+    const switchOperation = getBuilderRuntimeOperation(
+      "contentBlocks.switchSource"
+    );
+    const switchSchema = toInputJsonSchemaObject(
+      switchOperation.inputJsonSchema
+    );
+
+    expect(schema?.properties).toHaveProperty("confirmReplacement");
+    expect(switchSchema?.properties).not.toHaveProperty("confirmReplacement");
+  });
+
   test("keeps router adapter policy in runtime metadata", () => {
     for (const operation of builderRuntimeOperations) {
       expect(operation.requiresAssets).toBe(

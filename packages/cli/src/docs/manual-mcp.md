@@ -137,6 +137,36 @@ Rules:
 - To work with another previously linked project without changing the directory's default link, start MCP or a shell call with `--project <projectId>`, for example `webstudio mcp --project <projectId>` or `webstudio mcp single-op-call list-pages --project <projectId>`. Selected projects use isolated local session and checkpoint files.
 - If you are a delegated agent and your parent cannot see live stderr/stdout, do not run a long sequence of shortcut or `mcp single-op-call` commands silently and do not wrap many calls in a shell loop. Treat each parent-visible checkpoint as the unit of work. If the parent asks for status within 30 seconds, run exactly one `webstudio <tool>` or `webstudio mcp single-op-call` command, report that command/result, then wait before the next MCP command. For all-component design-system pages, checkpoint after discovery, checkpoint after page creation, call `components.coverage-insert-next` once before checkpointing again, then finish with the `presentation-pass` workflow phase. Coverage alone is not completion; organize examples into styled sections/cards.
 
+## MDX-backed Content Blocks
+
+Use a connected `.mdx` Asset when editors should change a Content Block body visually while the document remains stored as a file.
+
+1. Create the `.mdx` file under `.webstudio/assets`, then upload it and keep the returned Asset ID.
+2. Inspect the Content Block and its Templates children. Every template referenced from MDX needs a unique top-level instance name.
+3. Connect the Asset with `connect-content-block-source`. Use a stable page-based `renderScope` for a direct occurrence.
+4. If the result returns `requiresConfirmation:true`, tell the user that connecting will replace the existing Body content. Repeat the same call with `confirmReplacement:true` only after approval.
+5. Edit the complete source with `edit-content-block-source`, or replace the complete frontmatter map with `update-content-block-frontmatter`.
+6. Inspect every returned diagnostic. Invalid MDX is preserved, not silently repaired.
+
+```sh
+webstudio upload-asset '{"asset":{"name":"article.mdx","type":"file","format":"mdx","meta":{}},"assetsDir":".webstudio/assets"}'
+webstudio connect-content-block-source '{"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example","source":{"type":"asset","assetId":"<mdxAssetId>"}}'
+webstudio inspect-content-block-source '{"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example"}'
+webstudio edit-content-block-source --input-file .temp/edit-content-block-source.json
+webstudio reload-content-block-source '{"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example"}'
+webstudio migrate-content-block-template-references '{"assetIds":["<mdxAssetId>"],"migration":{"type":"rename","from":"Old template name","to":"New template name"}}'
+```
+
+Prefer Markdown whenever it can represent the component and all authored properties. Use `<ws.element ws:tag="tag">` for a standard HTML element with authored properties Markdown cannot express. Use `<ws.element ws:name="Template name">` only for a uniquely named top-level Content Block template. Preserve unresolved template names and report their diagnostics.
+
+When a template is renamed or deleted, use `migrate-content-block-template-references` to update the affected MDX files. Its first call returns a plan with changed-file, update, omission, and diagnostic counts. Report the plan and repeat the exact request with its `confirmationToken` only after approval. A rename changes matching `ws:name` values. A removal deletes matching MDX elements. Invalid files remain unchanged and are reported in diagnostics.
+
+Use the dedicated connect, switch, inspect, edit, update-frontmatter, reload, and disconnect operations instead of creating or deleting the Content Block's `src` with generic prop tools. An expression-bound source inside a Collection also needs the occurrence's scoped values and a distinct stable `renderScope`. For example, use `source:{"type":"expression","value":"post.assetId"}` with `variables:{"post":{"assetId":"<mdxAssetId>"}}`.
+
+A source edit replaces the complete MDX document. A frontmatter update replaces the complete frontmatter property map. Inspect the current source first and preserve everything the user did not ask to change. Use `update-content-block-frontmatter` for MCP frontmatter edits. MDX-rendered elements are not persistent instance targets for generic `bind-props` or `update-text` calls. Preserve existing `mode:"readwrite"` bindings when encountered; they are valid only for exact direct paths into the connected document's frontmatter. Computed expressions and `$ref` values remain read-only.
+
+If an edit in a long-lived MCP session reports a revision conflict after another client saved the Asset, call `reload-content-block-source`, inspect the latest source, reapply the requested change, and retry. One-shot CLI calls refresh before each operation and normally cannot reproduce a stale session. Never overwrite the newer revision blindly. Use `disconnect-content-block-source` to remove the connection while leaving the Asset unchanged.
+
 ## Reporting CLI/MCP Issues
 
 If a CLI/MCP tool gives a confusing error, crashes, hangs, produces invalid output, requires an undocumented workaround, or makes you inspect source code to understand normal usage, ask the user to report it in the Webstudio Discord `#help` channel: https://wstd.us/community.

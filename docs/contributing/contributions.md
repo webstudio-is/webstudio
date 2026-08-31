@@ -1,18 +1,29 @@
-# 🧑‍💻 Contributing for Developers
+# Contributions
+
+Contribute fixes and improvements to Webstudio as a designer or developer.
 
 ## Process
 
 If you want to contribute and don't know where to start, here is a step-by-step for a complete lifecycle, from idea to deployment.
 
 1. If you have an idea that is not already in [issues](https://github.com/webstudio-is/webstudio/issues), open an issue or reach out on [Discord](https://wstd.us/community).
-2. If you are a DEVELOPER, and you want to contribute to the Builder UI, your first step is to become familiar with our design system in figma. Start with the first page of our [Design Docs](https://www.figma.com/file/xCBegXEWxROLqA1Y31z2Xo/%F0%9F%93%96-Webstudio-Design-Docs?type=design&node-id=234%3A36754&t=w3VxT162RQF0gTrI-1). And for our design system & components see the [Webstudio Library](https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?type=design&node-id=2647%3A10046&t=f4xr8mcumXfXkHVh-1). Please read the docs carefully and thoroughly so you can use our design system properly to create a UI that looks like it's a natural part of Webstudio. If any part of the design is confusing or intimidating you can reach out to us on Discord with questions or feedback.
-3. After submitting an enhancement or a bug, we need to agree on a solution. You can jump into implementation right away, but be aware that we have to agree on the solution in the end. Communicating the problem you are solving and why you think the approach you are taking is the best is key for a quick process.
+2. After submitting an enhancement or a bug, we need to agree on a solution. You can jump into implementation right away, but be aware that we have to agree on the solution in the end. Communicating the problem you are solving and why you think the approach you are taking is the best is key for a quick process.
 
    In fact, we are happy to help you communicate your ideas, so if you are not sure - talk to us on discord.
 
-4. When the implementation is in a mergeable state, a core team member will deploy it to production.
+3. When the implementation is in a mergeable state, a core team member will deploy it to production.
 
-## Running the Webstudio Project Using VS Code
+## Contributions for designers
+
+Open the Webstudio repository in a local coding agent such as Codex and ask it to start the Builder locally. Open the URL it provides, then describe the changes you want and review them in the running interface.
+
+The agent can handle setup, make the code changes, run the relevant checks, and help prepare the contribution. Follow the process above so the problem and solution are agreed before the change is merged.
+
+## Contributions for developers
+
+Before contributing to the Builder UI, become familiar with the [Design Docs](https://www.figma.com/file/xCBegXEWxROLqA1Y31z2Xo/%F0%9F%93%96-Webstudio-Design-Docs?type=design&node-id=234%3A36754&t=w3VxT162RQF0gTrI-1) and [Webstudio Library](https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?type=design&node-id=2647%3A10046&t=f4xr8mcumXfXkHVh-1). Use the established design system so new UI feels like a natural part of Webstudio. Ask questions or share feedback on [Discord](https://wstd.us/community).
+
+## Running the Webstudio project using VS Code
 
 ### Prerequisites
 
@@ -99,7 +110,6 @@ You are done! 🎉
 
 ## Related
 
-- [Contributing for Designers](contributing-for-designers.md) – Ways designers can contribute to Webstudio
 - [Contributing to the Marketplace](marketplace.md) – Submit templates and sections
 - [FAQs](../basics/FAQ.md) – Common questions including licensing information
 - [Roadmap & Links](../basics/roadmap-and-links.md) – See what the team is working on

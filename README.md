@@ -10,8 +10,7 @@
 
 - [Blog](https://webstudio.is/blog)
 - [Documentation](https://docs.webstudio.is/)
-- [Brand and Product Design](https://docs.webstudio.is/contributing/contributing-for-designers)
-- [Contributing Guide for Devs](https://docs.webstudio.is/contributing/contributing-for-developers)
+- [Contributing](https://docs.webstudio.is/contributing/contributions)
 - [Builder Issues Tracker](https://github.com/webstudio-is/webstudio/issues)
 - [Roadmap](https://github.com/orgs/webstudio-is/projects/11)
 

@@ -86,11 +86,11 @@ Webstudio automatically converts images to WebP and resizes them to fit webpage 
 
 <details>
 
-<summary>🚀 How can I use Webstudio today, and how will it evolve?</summary>
+<summary>🚀 What can I build with Webstudio today?</summary>
 
-Currently, Webstudio excels in building super fast, responsive, dynamic websites. Future enhancements include linked CSS editors, animations engine, and real-time collaboration. Its open-source nature and API integration capabilities allow for extensive customization and connectivity with various services.
+Webstudio builds responsive static and dynamic websites with visual CSS controls, animations, data Resources, Content mode, the Content Engine, and accessible components. You can work in the visual Builder or let an AI agent edit the same project through Webstudio MCP. Projects can be published to Webstudio Cloud or exported for self-hosting.
 
-[Webstudio Vision Document](https://webstudiois.notion.site/Vision-f52ed097ccaa410eb05076981d446c2f)
+[Webstudio features](https://webstudio.is/features), [Webstudio roadmap](https://wstd.us/roadmap)
 
 </details>
 

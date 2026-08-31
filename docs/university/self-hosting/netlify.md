@@ -91,7 +91,7 @@ Netlify uses a trailing slash for generated directory index pages. Review the
 
 ### Prerequisites
 
-- Export your project using one of the [export methods](./#exporting).
+- Export your project using one of the [export methods](./#export-methods).
 
 **How to upload your project to Netlify:**
 

@@ -17,11 +17,14 @@ You can change modes in the Top Bar or via [keyboard shortcuts](shortcuts.md) if
 
 Additionally, you can open any project in [Safe Mode](modes.md#safe-mode), which disables script execution for security and troubleshooting purposes.
 
-<figure><img src="../../.gitbook/assets/builder-modes.png" alt=""><figcaption></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/builder-modes-dark.png">
+  <img src="../../.gitbook/assets/builder-modes-light.png" alt="Mode menu with Design and Content options and their keyboard shortcuts">
+</picture>
 
 ## Design
 
-Designer mode provides the full power of the builder. For example, you can add and style components.
+Design mode provides the full power of the Builder. For example, you can add and style components.
 
 ## Content
 
@@ -93,7 +96,7 @@ Here’s what you need to know:
 
 - If the designer provided [Page templates](page-templates.md), you can create new pages from them and edit page details like name, path, SEO title, description, language, social image, and custom metadata.
 
-- Changes save in real-time, but you must publish your changes when you are ready for them to go live. To do so, open the publish dialog by clicking “Publish” in the top right, then click “Publish”. It takes around 45 seconds for the site to publish. Note, “Publish” may be disabled if the designer didn’t enable the publishing permission for you.
+- Changes save in real time, but you must publish them before they go live. Select **Publish** in the top bar, choose the destinations, and publish. **Publish** may be unavailable if the designer did not grant publishing permission.
 
 ## Preview
 

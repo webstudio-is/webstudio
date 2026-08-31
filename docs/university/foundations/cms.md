@@ -54,7 +54,8 @@ The Address Bar enables previewing Dynamic Pages in the editor by entering param
 
 For the Dynamic Path `/post/:slug`, you would enter a slug value that exists in the CMS, such as `hello-world`.
 
-<figure><img src="../../.gitbook/assets/address-bar.png" alt="Address Bar with hello-world"><figcaption><p>Entering "hello-world" as a test value</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/address-bar.png" alt="Address bar with hello-world entered as the dynamic slug preview value"><figcaption><p>Entering hello-world as a test value</p></figcaption></figure>
+
 
 {% hint style="danger" %}
 The static part of the URL (in this case, `/post/`) is already in the Address Bar and should not be included when adding the test value.
@@ -120,9 +121,7 @@ While we do our best to verify the supported features, we may make mistakes in o
 
 While most CMS field types seamlessly map to Webstudio components (e.g., Plain Text → Heading), rich text may not, depending on how the CMS stores/delivers it.
 
-**Currently, Webstudio supports rich text if it's delivered in HTML or Markdown format.** In the future, we will support rich text regardless of the format delivered by adding conversion libraries for each CMS's flavor of rich text. For example, we'll automatically convert AST to HTML. Refer to [this issue](https://github.com/webstudio-is/webstudio/issues/3398) for more information.
-
-In the meantime, advanced users can set up a proxy on Cloudflare Workers to convert rich text to HTML. However, this is outside the scope of Webstudio's support.
+Webstudio renders rich text delivered as HTML or Markdown. If a CMS returns a proprietary AST or another structured rich-text format, convert it to HTML or Markdown before binding it in Webstudio. This conversion can happen in the CMS, its API layer, or a proxy.
 
 Rich text in the form of HTML can be bound to the [Content Embed Component](../core-components/content-embed.md), and Markdown can be bound to the [Markdown Embed Component](../core-components/markdown-embed.md).
 
@@ -142,7 +141,8 @@ cmsData.data[0].id ? 200 : 404;
 
 This example looks for the ID of a record. If it's there, output `200` (found!) otherwise `404` (not found).
 
-<figure><img src="../../.gitbook/assets/cms-dynamic-404-status-code.png" alt="Status Code field in Page Settings with expression bound"><figcaption><p>Binding an expression to the Status Code field in Page Settings</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/cms-dynamic-404-status-code.png" alt="Status code field in Page settings with an expression bound"><figcaption><p>Binding an expression to the status code</p></figcaption></figure>
+
 
 {% hint style="info" %}
 The exact key to look for will depend on your CMS, but think of something that will always be there if the post/record is found (slug, ID, title).
@@ -158,7 +158,8 @@ Add a component (e.g. a Box) to the page that contains your 404 message. Set its
 
 When this evaluates to `true`, the 404 content is shown.
 
-<figure><img src="../../.gitbook/assets/cms-dynamic-404-show-404-content.png" alt="Box component with Show condition set to !cmsData.data[0].id"><figcaption><p>Setting the Show condition on the 404 content Box</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/cms-dynamic-404-show-404-content.png" alt="Box component with a Show condition for missing CMS data"><figcaption><p>Setting the Show condition on the 404 content</p></figcaption></figure>
+
 
 {% hint style="info" %}
 To reuse an existing custom 404 page design without rebuilding it, [add a Slot](../core-components/slot.md) and select your 404 page's content as the slot source. This keeps the 404 UI in one place and lets you reuse it across any dynamic page.
@@ -174,7 +175,8 @@ cmsData.data[0].id;
 
 This hides the regular content when there is no data, avoiding an empty-looking page.
 
-<figure><img src="../../.gitbook/assets/cms-dynamic-404-show-regular-content.png" alt="Box component with Show condition set to cmsData.data[0].id"><figcaption><p>Setting the Show condition on the regular content Box</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/cms-dynamic-404-show-regular-content.png" alt="Box component with a Show condition for available CMS data"><figcaption><p>Setting the Show condition on regular content</p></figcaption></figure>
+
 
 ## Alternative: redirect instead of showing 404 content
 

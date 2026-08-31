@@ -16,7 +16,7 @@ Learn how to upload your static site to GitHub Pages.
 
 ### Prerequisites
 
-Export your project using one of the [export methods](./#exporting).
+Export your project using one of the [export methods](./#export-methods).
 
 **How to deploy your project to GitHub Pages:**
 

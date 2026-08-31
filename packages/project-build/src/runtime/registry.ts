@@ -347,7 +347,9 @@ const contentBlockOperationInput = z.object({
 });
 const contentBlockSourceInput = contentBlockOperationInput.extend({
   source: contentBlockSourceSchema,
-  confirm: z.boolean().optional(),
+});
+const contentBlockConnectSourceInput = contentBlockSourceInput.extend({
+  confirmReplacement: z.boolean().optional(),
 });
 const contentBlockEditSourceInput = contentBlockOperationInput.extend({
   source: z.string(),
@@ -503,7 +505,7 @@ export const builderRuntimeOperations = [
       requiresAssets: true,
       requiresConfirm: false,
     }),
-    contentBlockSourceInput,
+    contentBlockConnectSourceInput,
     async ({ state, input, context }) => {
       const prepared = await requireContentBlockApplication(context).connect({
         state,
@@ -511,13 +513,13 @@ export const builderRuntimeOperations = [
       });
       return createRuntimeMutation({
         payload:
-          prepared.requiresConfirmation && input.confirm !== true
+          prepared.requiresConfirmation && input.confirmReplacement !== true
             ? []
             : [...prepared.projectPayload],
         result: {
           action: "connect" as const,
           requiresConfirmation:
-            prepared.requiresConfirmation && input.confirm !== true,
+            prepared.requiresConfirmation && input.confirmReplacement !== true,
           diagnostics: [...prepared.inspection.diagnostics],
         },
         invalidatesNamespaces: contentBlockNamespaces,

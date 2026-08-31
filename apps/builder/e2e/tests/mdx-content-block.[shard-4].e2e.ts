@@ -53,13 +53,19 @@ const isAssetContentResponse = (response: Response, method = "PUT") =>
   response.url().includes("/rest/assets/") &&
   response.url().includes("/content");
 
-const waitForAssetWrite = (page: Page, sourceIncludes?: string) =>
+const waitForAssetWrite = (
+  page: Page,
+  sourceMatches?: (source: string) => boolean
+) =>
   page.waitForResponse(
-    (response) =>
-      isAssetContentResponse(response) &&
-      response.status() === 200 &&
-      (sourceIncludes === undefined ||
-        response.request().postData()?.includes(sourceIncludes) === true),
+    (response) => {
+      const source = response.request().postData() ?? "";
+      return (
+        isAssetContentResponse(response) &&
+        response.status() === 200 &&
+        (sourceMatches === undefined || sourceMatches(source))
+      );
+    },
     { timeout: 30_000 }
   );
 
@@ -465,7 +471,9 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
     .last()
     .waitFor({ state: "visible" });
   await page.keyboard.press("Escape");
-  const paragraphWrite = waitForAssetWrite(page, "Focused paragraph");
+  const paragraphWrite = waitForAssetWrite(page, (source) =>
+    source.includes("Focused paragraph")
+  );
   const paragraphMetadataWrite = waitForChangeToBeSaved({ page });
   await page.keyboard.type("Focused paragraph");
   const paragraphId = await paragraphEditor.getAttribute("data-ws-id");
@@ -484,6 +492,13 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
   if (emptyParagraphId === null) {
     throw new Error("Expected the new paragraph instance id");
   }
+  const finalWrite = waitForAssetWrite(
+    page,
+    (source) =>
+      source.includes("# First heading") &&
+      source.includes("Focused paragraph") &&
+      source.includes('ws:tag="p"') === false
+  );
   await page.keyboard.press("ControlOrMeta+A");
   await page.keyboard.press("Backspace");
   await page.keyboard.press("Backspace");
@@ -499,7 +514,6 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
   ) {
     throw new Error("Expected the previous paragraph to regain focus");
   }
-  const finalWrite = waitForAssetWrite(page);
   await page.mouse.click(5, 5);
   const finalSource = (await finalWrite).request().postData() ?? "";
   if (

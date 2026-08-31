@@ -6,7 +6,10 @@ description: Set project-wide configuration, including redirects, authentication
 
 Project settings are located in the top left by clicking the Webstudio logo > Project settings.
 
-<figure><img src="../../.gitbook/assets/project-settings.png" alt="Project settings located in top left" width="261"><figcaption></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/project-settings-menu-dark.png">
+  <img src="../../.gitbook/assets/project-settings-menu-light.png" alt="Builder menu with Project settings near the top">
+</picture>
 
 ## General
 
@@ -19,7 +22,10 @@ Project settings are located in the top left by clicking the Webstudio logo > Pr
 
 ### Atomic CSS
 
-<figure><img src="../../.gitbook/assets/atomic-css-setting.png" alt="Atomic css setting"><figcaption></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/atomic-css-setting-dark.png">
+  <img src="../../.gitbook/assets/atomic-css-setting-light.png" alt="Project settings Publishing section with Generate atomic CSS when publishing enabled">
+</picture>
 
 When enabled, the class and CSS structure under the hood contains one style per class. This algorithm allows classes to be reused, significantly reducing the amount of CSS, ultimately leading to a faster-loading website.
 
@@ -113,7 +119,10 @@ To add a protected route:
 
 Routes use the same syntax as page paths. See [Path syntax](page-settings.md#path-syntax) for supported static routes, dynamic segments, optional segments, and wildcards.
 
-<figure><img src="../../.gitbook/assets/project-settings-authentication.png" alt="Project Settings Authentication section with route, login, password fields, and protected route list"><figcaption><p>Project route authentication</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/project-settings-authentication-dark.png">
+  <img src="../../.gitbook/assets/project-settings-authentication-light.png" alt="Project settings Authentication section with route, login, password, and Add controls">
+</picture>
 
 Login and password rules:
 
@@ -126,7 +135,7 @@ Login and password rules:
 If a page has authentication in Page Settings and the same route is also protected in Project Settings, the page setting takes priority for that route.
 
 {% hint style="info" %}
-Authentication applies to protected routes on custom domains. Staging domains have their own built-in password protection, described in [Publishing & custom domains](publishing-and-custom-domains.md#staging-domain-password-protection).
+Authentication applies to protected routes on custom domains. Staging domains have their own built-in password protection, described in [Publishing & custom domains](publishing-and-custom-domains.md#staging-password-protection).
 {% endhint %}
 
 {% hint style="warning" %}

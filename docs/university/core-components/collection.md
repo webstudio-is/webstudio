@@ -72,7 +72,7 @@ It's unclear why each item is correct or incorrect by just looking at the image,
 
 Add the Collection component to the canvas and either manually enter data (less common) or [bind data](../foundations/expression-editor.md#binding) to it (more common).
 
-**The Collection iterates over the array, so you must bind just the array portion of your variable to it. See** [**What's an Array**](collection.md#whats-an-array) **for more info.**
+**The Collection iterates over the array, so you must bind just the array portion of your variable to it. See** [**What's an array or object?**](collection.md#whats-an-array-or-object) **for more info.**
 
 Optionally, rename the default Collection Item variable to something more semantic. If you are iterating over blog posts, name it "Blog Post."
 
@@ -88,7 +88,7 @@ When working with [Radix Components](../radix/), you might want to dynamically g
 
 ### Accordions
 
-<figure><img src="../../.gitbook/assets/accordion-collection.png" alt=""><figcaption><p>The Item has a unique value from the dynamic data bound to the Value field</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/accordion-collection.png" alt="Accordion Item settings with a unique collection value bound to the Value property"><figcaption><p>The Item has a unique value from the dynamic data bound to the Value field</p></figcaption></figure>
 
 ### Tabs
 
@@ -98,9 +98,9 @@ Tab Triggers and Tab Contents maintain their relationship by having the same val
 
 <div>
 
-<figure><img src="../../.gitbook/assets/tab-trigger.png" alt=""><figcaption><p>Tab Trigger with custom value</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/tab-trigger.png" alt="Tab Trigger settings with a custom Value property"><figcaption><p>Tab Trigger with custom value</p></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/tab-content.png" alt=""><figcaption><p>Tab Content with custom value</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/tab-content.png" alt="Tab Content settings with the corresponding custom Value property"><figcaption><p>Tab Content with custom value</p></figcaption></figure>
 
 </div>
 

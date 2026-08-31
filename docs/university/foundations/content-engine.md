@@ -1,10 +1,10 @@
 ---
-description: Create a file-based blog with Markdown, Assets queries, and dynamic pages.
+description: Create a file-based blog with Markdown or MDX, Assets queries, and dynamic pages.
 ---
 
 # 📚 Content Engine
 
-Webstudio's Content Engine turns Markdown and JSON files in Assets into content
+Webstudio's Content Engine turns Markdown, MDX, and JSON files in Assets into content
 you can query and bind in the visual editor. The files remain the source of
 truth, including their filenames, folders, metadata, and relative links. You
 can move the same files between projects or use them outside Webstudio without
@@ -16,15 +16,12 @@ This guide creates a blog overview at `/blog` and one dynamic article page at
 To see the finished setup first, start with the
 [Markdown Blog marketplace template](https://webstudio.is/marketplace/templates/markdown-blog).
 
-The screenshots use the Webstudio Updates project as a working example. Its
-filenames, fields, and category filter differ from the tutorial values below.
-
 <figure><img src="../../.gitbook/assets/content-engine-assets-structure.png" alt="Assets panel showing Markdown articles and their assets folder"><figcaption><p>Markdown articles stored alongside their assets</p></figcaption></figure>
 
 ## Decide if the Content Engine fits
 
 Use the Content Engine for bounded, file-based content that should live with
-the site and remain portable as Markdown or JSON.
+the site and remain portable as Markdown, MDX, or JSON.
 
 Good fits include:
 
@@ -113,6 +110,7 @@ Write the article here.
 
 <figure><img src="../../.gitbook/assets/content-engine-markdown-editor.png" alt="Markdown editor showing article frontmatter and body"><figcaption><p>An article's metadata and body in the Markdown editor</p></figcaption></figure>
 
+
 ### Frontmatter
 
 The opening YAML block is called **frontmatter**. It must be the first block in
@@ -173,7 +171,7 @@ asset ID or generated filename. This is what makes the content portable.
 
 ### JSON files
 
-The Content Engine can query JSON files as well as Markdown. JSON files can
+The Content Engine can query JSON files as well as Markdown and MDX. JSON files can
 contain objects, arrays, or scalar values. A root object exposes its fields for
 structured queries:
 
@@ -221,6 +219,7 @@ page-level **Dynamic data**:
 
 <figure><img src="../../.gitbook/assets/content-engine-overview-query.png" alt="Assets overview query filtering Markdown files and drafts, then sorting by publication date and ID"><figcaption><p>An overview query for the Webstudio Updates project</p></figcaption></figure>
 
+
 Choosing only the fields the page renders keeps the published content data
 small. Leaving article bodies out of the overview also avoids loading every
 article just to display a list.
@@ -265,7 +264,8 @@ Add another Assets resource to the page-level **Dynamic data**:
    - `properties.slug` **equals** `system.params.slug`
    - `properties.draft` **does not equal** `true`
 
-<figure><img src="../../.gitbook/assets/content-engine-article-query.png" alt="Assets resource filtering one Markdown article by folder and the dynamic page slug"><figcaption><p>The article resource uses the dynamic slug from the page URL</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/content-engine-article-query.png" alt="Assets resource filtering one Markdown article by folder and the dynamic page slug"><figcaption><p>The article Resource uses the dynamic slug from the page URL</p></figcaption></figure>
+
 
 **Exactly one** returns the matching article directly at `post.data`. It also
 reports an error if two articles use the same slug. You do not need a
@@ -299,6 +299,30 @@ In Page Settings, bind the fields needed for search and sharing:
 
 The status expression returns a real 404 when no article matches the URL.
 
+### Edit the complete article in Content mode
+
+The setup above uses a `.md` file and Markdown Embed when the article body is
+edited in the file editor. Use an `.mdx` file connected to a
+[Content Block](../core-components/content-block.md#store-content-in-an-mdx-file)
+when an editor should change the article visually in Content mode.
+
+1. Name the article files with the `.mdx` extension and change the resource's
+   `extension` filter from `md` to `mdx`.
+2. Change the article resource's **Content** setting to **Metadata only**. The
+   Content Block loads the selected file directly, so the resource does not
+   need to return its body.
+3. Replace the Markdown Embed with a Content Block and place its **Body** outlet
+   where the article body should render.
+4. Bind the Content Block's **Source** to `post.data.id`. Every Assets query
+   result includes its Asset ID, even when file metadata is disabled.
+5. Move the article title, image, excerpt, and other designed fields inside the
+   Content Block shell. Bind them directly to values such as
+   `document.frontmatter.title` and `document.frontmatter.featureImage.src`.
+
+Editors can now change the MDX body and directly bound frontmatter values on
+the canvas. Computed frontmatter expressions and values reached through a
+document `$ref` remain read-only; edit their source file instead.
+
 ## 7. Publish the article
 
 Start new articles with `draft: true`. The overview and article queries above
@@ -320,21 +344,22 @@ will render it without another page design.
 
 ## Connect content with document references
 
-The Content Engine calls links between Markdown and JSON files **document
+The Content Engine calls links between Markdown, MDX, and JSON files **document
 references**. A document reference replaces an exact `$ref` object with data
 from another content file. This is Webstudio's syntax. It uses URI references
 for file paths and [JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901)
 for values inside JSON files, but it does not implement JSON Schema resolution.
 
-Both supported source formats can reference either target format:
+All supported source formats can reference the other content formats:
 
-| Source | Where references can appear | JSON target | Markdown target |
+| Source | Where references can appear | JSON target | Markdown or MDX target |
 | --- | --- | --- | --- |
-| Markdown | YAML frontmatter | Yes | Yes |
+| Markdown or MDX | YAML frontmatter | Yes | Yes |
 | JSON | Anywhere in the document | Yes | Yes |
 
-References do not work inside a Markdown body. A `$ref` object can be nested in
-an object or array, including inside a file reached through another reference.
+References do not work inside a Markdown or MDX body. A `$ref` object can be
+nested in an object or array, including inside a file reached through another
+reference.
 
 ### Reference syntax
 
@@ -409,12 +434,12 @@ the resolved `properties.author` value is:
 }
 ```
 
-The same rules cover JSON to Markdown and Markdown frontmatter to JSON. A
-referenced file can contain its own references, so shared records can be
-composed across several files.
+The same rules cover JSON to Markdown or MDX and Markdown or MDX frontmatter to
+JSON. A referenced file can contain its own references, so shared records can
+be composed across several files.
 
 The Content Engine loads referenced data when a query filters, sorts, or
-returns a field that depends on it. The target must be another Markdown or JSON
+returns a field that depends on it. The target must be another Markdown, MDX, or JSON
 file in the project's compiled Assets. Missing files, invalid fragments, and
 reference cycles fail instead of returning partial data.
 

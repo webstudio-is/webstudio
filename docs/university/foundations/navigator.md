@@ -6,7 +6,10 @@ description: Use the Navigator to view, select, and organize instances on your p
 
 The Navigator is a hierarchical panel on the left side of the builder that shows every instance on the current page as a tree. It reflects the exact nesting structure of your page and is the primary way to select, reorder, and organize instances — especially when they are stacked or overlapping on the canvas.
 
-<figure><img src="../../.gitbook/assets/navigator.png" alt="Navigator panel showing a tree of instances"><figcaption><p>The Navigator showing the page structure</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/navigator-panel-dark.png">
+  <img src="../../.gitbook/assets/navigator-panel-light.png" alt="Navigator panel showing Global root, Body, and a nested Content Block instance">
+</picture>
 
 ## Selecting instances
 

@@ -451,6 +451,36 @@ Notes:
 - Put reusable insertable options inside the Content Block's `ws:block-template` child. A template is source material, not editor content: editors cannot edit or delete it directly. When an editor inserts a template, its copy becomes a direct child of the Content Block and is editable.
 - Before handing off a page, verify with `inspect-instance` that the intended text, images, and links are inside a Content Block, and that templates include all required styling because Content-mode editors cannot use the Style panel.
 
+## Store Content Block content in MDX
+
+Commands:
+
+- MCP tool: list-assets {"type":"file"}
+- MCP tool: upload-asset {"asset":{"name":"article.mdx","type":"file","format":"mdx","meta":{}},"assetsDir":".webstudio/assets"}
+- MCP tool: connect-content-block-source {"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example","source":{"type":"asset","assetId":"<mdxAssetId>"}}
+- MCP tool: switch-content-block-source {"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example","source":{"type":"asset","assetId":"<otherMdxAssetId>"}}
+- MCP tool: inspect-content-block-source {"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example"}
+- MCP tool: edit-content-block-source {"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example","source":"# Article title\n\nArticle body."}
+- MCP tool: update-content-block-frontmatter {"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example","properties":{"title":"Article title","draft":false}}
+- MCP tool: reload-content-block-source {"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example"}
+- MCP tool: migrate-content-block-template-references {"assetIds":["<mdxAssetId>"],"migration":{"type":"rename","from":"Old template name","to":"New template name"}}
+- MCP tool: disconnect-content-block-source {"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example"}
+
+Notes:
+
+- Create the local `.mdx` file under `.webstudio/assets` before calling `upload-asset`. Use the returned Asset ID when connecting it.
+- Use the Content Block source operations for connecting, switching, inspecting, editing, reloading, and disconnecting. Do not create or delete the `src` prop with generic prop tools; the source operations preserve the Body outlet and Content Block lifecycle.
+- `renderScope` is a stable key for the rendered occurrence. Use a page-based key for a direct Content Block. For a repeated Collection occurrence, use a distinct key and pass the scoped values required to resolve an expression source. For example, use `source:{"type":"expression","value":"post.assetId"}` with `variables:{"post":{"assetId":"<mdxAssetId>"}}`.
+- Connecting replaces existing Body content. If the result returns `requiresConfirmation:true`, report that replacement to the user and repeat the same call with `confirmReplacement:true` only after approval.
+- Prefer Markdown whenever it can represent the component and all authored properties. Use `<ws.element ws:tag="tag">` for a standard HTML element with authored properties that Markdown cannot express. Use `<ws.element ws:name="Template name">` only for a uniquely named top-level Content Block template.
+- Read the Content Block's Templates children before writing `ws:name`. The value must exactly match a unique top-level template instance name. Preserve unresolved names and report their diagnostics instead of deleting them.
+- When a template is renamed or deleted, use `migrate-content-block-template-references` to update a selected set of affected MDX files. The first call returns a plan. Report its changed-file, update, omission, and diagnostic counts, then repeat the exact request with its `confirmationToken` only after approval. A rename changes matching `ws:name` values; a removal deletes matching MDX elements. Invalid files remain unchanged and are reported in diagnostics.
+- `edit-content-block-source` replaces the complete MDX source. Preserve frontmatter and unrelated source when making a bounded edit.
+- `update-content-block-frontmatter` replaces the complete frontmatter mapping. Inspect the current source first and include every property that must remain.
+- Use `update-content-block-frontmatter` for MCP frontmatter edits. MDX-rendered elements are not persistent instance targets for generic `bind-props` or `update-text` calls. Preserve existing `mode:"readwrite"` bindings when encountered; they are valid only for exact direct paths into the connected document's frontmatter. Keep computed expressions and `$ref` values read-only.
+- Inspect every returned diagnostic. Invalid MDX is saved rather than silently repaired; preserve the source, report the source range, and fix only the requested or invalid part.
+- If an edit in a long-lived MCP session reports a conflict after another client saved the Asset, call `reload-content-block-source`, inspect the latest source, reapply the requested change, and retry. One-shot CLI calls refresh before each operation and normally cannot reproduce a stale session. Never overwrite the newer revision blindly.
+
 ## Move elements
 
 Commands:
@@ -762,15 +792,15 @@ Commands:
 
 Notes:
 
-- Read the field catalog before authoring unfamiliar queries. It includes dynamic schema-less frontmatter paths such as `properties.author.name`, observed types, optionality, and mixed-type state without downloading Markdown files.
+- Read the field catalog before authoring unfamiliar queries. It includes dynamic schema-less frontmatter paths such as `properties.author.name`, observed types, optionality, and mixed-type state without downloading the source files.
 - Minimize the deployed content database by using `output.mode:"fields"` and selecting only fields the rendered page needs. Keep `includeMetadata:false` unless the rendered value needs file metadata such as name, path, MIME type, or creation date, and avoid `output.mode:"all"` as a convenience default. Query diagnostics are returned separately and do not require metadata output. Filters and sorting may still require their referenced fields in the database.
 - Every reachable Assets data source contributes to the shared published database. Keep one final resource per rendered query. Update an existing scoped resource rather than creating a placeholder, preview copy, or repair replacement, and remove obsolete duplicates.
 - Keep bounded overview filters, limits, and offsets literal and add a deterministic ID tie-breaker to the sort. With `content.mode:"none"`, compilation can materialize the small overview result instead of retaining its output fields across every candidate document. Use runtime expressions only for genuinely dynamic values such as the detail slug.
 - Combine filters with `where.all` (AND) and `where.any` (OR), including nested groups. Filter values, limit, and offset on a saved resource may be Webstudio expressions evaluated at render time. Preview queries use concrete JSON values.
-- Query Markdown files directly and use `content.mode:"markdown-body-ref"` when rendering their bodies. The published database retains metadata and a document reference, then fetches only the selected Markdown files from Asset storage at runtime; it does not embed their bodies. Filter and paginate before content is loaded.
+- Query Markdown or MDX files directly and use `content.mode:"markdown-body-ref"` when rendering their bodies. The published database retains metadata and a document reference, then fetches only the selected files from Asset storage at runtime; it does not embed their bodies. Filter and paginate before content is loaded.
 - `full` and bounded `range` continue to request embedded file bytes. Use them only when the caller requires the complete source or a byte range.
-- In Markdown, reference sibling Assets with conventional relative URLs such as `../images/hero.png`. Deferred `markdown-body-ref` content resolves matching files against the Markdown file's folder and emits the correct Builder or published Asset URL. Keep external URLs absolute.
-- Markdown Embed renders sanitized authored HTML for figures, captions, audio, video, and iframes. Scripts, inline event handlers, `srcdoc`, and unsafe URL protocols are removed. Executable component composition remains separate future MDX work.
+- In Markdown or MDX, reference sibling Assets with conventional relative URLs such as `../images/hero.png`. Deferred `markdown-body-ref` content resolves matching files against the document's folder and emits the correct Builder or published Asset URL. Keep external URLs absolute.
+- Markdown Embed renders sanitized authored HTML for figures, captions, audio, video, and iframes. Scripts, inline event handlers, `srcdoc`, and unsafe URL protocols are removed. It does not render Webstudio MDX elements; connect the `.mdx` file to a Content Block for that workflow.
 - Preview each query with concrete values before saving it. Inspect `__diagnostics__.query` for the temporary query-only footprint and `__diagnostics__.database` for the merged database built from all reachable Assets queries. Only `database.usedBytes` counts toward `database.maxBytes`; query sizes must not be summed and are not separate allowances. Compare `usedBytes`, `unboundedBytes`, and `truncated` within both scopes. A completed Markdown blog should include every source document without truncation, contain no embedded Markdown bodies, and retain only its intended materialized overview query. When merged usage approaches the limit, remove duplicate reachable resources first, then unused output fields, then narrow candidate files.
 - Use `result:"many"` for listings. It returns the ID-keyed map at `<dataSourceName>.data`, with `totalCount` and `hasMore` at `<dataSourceName>.meta`, and remains the default for existing queries. Bind a listing Collection to `posts.data`.
 - Use `result:"one"` for a unique detail route. It returns the selected item or `null` directly at `post.data`, always includes its `id`, and omits pagination. Bind components and page settings directly with expressions such as `post.data.properties.title`, `post.data.content.text`, and `post.data ? 200 : 404`. `result:"first"` and `result:"last"` also return a direct item or `null` but require explicit sorting.
