@@ -24,6 +24,8 @@ import { loadDevBuild } from "../db";
 let fixture: SeededContentModeProject;
 let pasteFixture: SeededContentModeProject;
 
+test.describe.configure({ mode: "parallel" });
+
 const copiedPageTransferMarker = "@webstudio/page/v0.1";
 
 const getPageRow = ({ page, pageName }: { page: Page; pageName: string }) =>
@@ -198,23 +200,24 @@ const confirmDialogAction = async ({
   await button.waitFor({ state: "hidden" });
 };
 
-test.beforeAll(async ({ browser }) => {
+test.beforeAll(async ({ browser }, workerInfo) => {
+  const workerSuffix = `worker-${workerInfo.parallelIndex}`;
   await withBrowserContext(browser, async (context) => {
     fixture = await createContentModeProject({
       context,
-      email: "pages-actions-e2e@webstudio.test",
+      email: `pages-actions-pages-${workerSuffix}@webstudio.test`,
       title: "Pages Actions E2E",
-      assetNamePrefix: "pages-actions-",
-      editorToken: "pages-actions-e2e-editor-token",
-      builderToken: "pages-actions-e2e-builder-token",
+      assetNamePrefix: `pages-actions-pages-${workerSuffix}-`,
+      editorToken: `pages-actions-pages-${workerSuffix}-editor-token`,
+      builderToken: `pages-actions-pages-${workerSuffix}-builder-token`,
     });
     pasteFixture = await createContentModeProject({
       context,
-      email: "pages-actions-paste-e2e@webstudio.test",
+      email: `pages-actions-pages-paste-${workerSuffix}@webstudio.test`,
       title: "Pages Actions Paste E2E",
-      assetNamePrefix: "pages-actions-paste-",
-      editorToken: "pages-actions-paste-e2e-editor-token",
-      builderToken: "pages-actions-paste-e2e-builder-token",
+      assetNamePrefix: `pages-actions-pages-paste-${workerSuffix}-`,
+      editorToken: `pages-actions-pages-paste-${workerSuffix}-editor-token`,
+      builderToken: `pages-actions-pages-paste-${workerSuffix}-builder-token`,
     });
   });
 });

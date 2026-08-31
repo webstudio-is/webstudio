@@ -20,6 +20,8 @@ import { loadDevBuild } from "../db";
 let fixture: SeededContentModeProject;
 let navigatorStructuralFixture: SeededContentModeProject;
 
+test.describe.configure({ mode: "parallel" });
+
 type BuildInstanceChild = {
   type: string;
   value?: string;
@@ -528,23 +530,24 @@ const editSelectedNavigatorLabel = async ({
   await waitForChangeToBeSaved({ page });
 };
 
-test.beforeAll(async ({ browser }) => {
+test.beforeAll(async ({ browser }, workerInfo) => {
+  const workerSuffix = `worker-${workerInfo.parallelIndex}`;
   await withBrowserContext(browser, async (context) => {
     fixture = await createContentModeProject({
       context,
-      email: "pages-actions-e2e@webstudio.test",
+      email: `pages-actions-${workerSuffix}@webstudio.test`,
       title: "Pages Actions E2E",
-      assetNamePrefix: "pages-actions-",
-      editorToken: "pages-actions-e2e-editor-token",
-      builderToken: "pages-actions-e2e-builder-token",
+      assetNamePrefix: `pages-actions-${workerSuffix}-`,
+      editorToken: `pages-actions-${workerSuffix}-editor-token`,
+      builderToken: `pages-actions-${workerSuffix}-builder-token`,
     });
     navigatorStructuralFixture = await createContentModeProject({
       context,
-      email: "pages-actions-navigator-structural-e2e@webstudio.test",
+      email: `pages-actions-navigator-structural-${workerSuffix}@webstudio.test`,
       title: "Pages Actions Navigator Structural E2E",
-      assetNamePrefix: "pages-actions-navigator-structural-",
-      editorToken: "pages-actions-navigator-structural-e2e-editor-token",
-      builderToken: "pages-actions-navigator-structural-e2e-builder-token",
+      assetNamePrefix: `pages-actions-navigator-structural-${workerSuffix}-`,
+      editorToken: `pages-actions-navigator-structural-${workerSuffix}-editor-token`,
+      builderToken: `pages-actions-navigator-structural-${workerSuffix}-builder-token`,
     });
   });
 });

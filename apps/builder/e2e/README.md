@@ -80,16 +80,17 @@ each invocation.
 - Keep tests in a file independent even though Playwright runs them in
   declaration order by default.
 
-CI distributes test files across ten isolated Playwright shards. Each shard
-uses two workers to keep expensive file groups below the five-minute job limit
-without splitting a file's shared setup across environments:
+CI distributes tests across ten isolated Playwright shards. Each shard uses two
+workers to keep expensive groups below the five-minute job limit:
 
 ```sh
 pnpm e2e:builder -- --workers=2 --shard=1/10
 ```
 
 Test filenames do not encode shard ownership. Playwright balances files across
-the configured CI shards.
+the configured CI shards. Suites may opt into parallel mode only when every
+worker creates uniquely named setup data and the tests do not depend on each
+other's mutations.
 
 ## Failures
 
