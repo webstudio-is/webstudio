@@ -156,6 +156,7 @@ const releases: Array<() => void> = [];
 const sessions: Array<ReturnType<typeof createAssetContentSession>> = [];
 
 afterEach(() => {
+  assetContentBridgeTesting.clearBridge();
   for (const release of releases.splice(0)) {
     release();
   }

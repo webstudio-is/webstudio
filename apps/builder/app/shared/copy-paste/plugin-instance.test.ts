@@ -1,4 +1,4 @@
-import { afterAll, describe, test, expect, vi } from "vitest";
+import { afterAll, afterEach, describe, test, expect, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { toast } from "@webstudio-is/design-system";
 import type {
@@ -50,6 +50,7 @@ import { __testing__ as builderApiTesting } from "../builder-api";
 import { $externalContentRoots } from "../external-content-mutations";
 
 afterAll(builderApiTesting.useLocalApi());
+afterEach(() => vi.restoreAllMocks());
 const expectString = expect.any(String) as unknown as string;
 
 enableMapSet();
@@ -463,16 +464,15 @@ describe("copy and cut guards", () => {
     selectInstance(["legacy-button", "body0"]);
     const clipboardData = instanceText.onCopy?.() ?? "";
     selectInstance(["body0"]);
-    const previousWarn = builderApiTesting.api.toast.warn;
-    const warn = vi.fn();
-    builderApiTesting.api.toast.warn = warn;
+    const warn = vi
+      .spyOn(builderApiTesting.api.toast, "warn")
+      .mockImplementation(() => {});
 
     expect(await instanceText.onPaste?.(clipboardData)).toEqual(pasteHandled);
     expect($instances.get().get("body0")?.children).toHaveLength(2);
     expect(warn).toHaveBeenCalledWith(
       "Pasted with warning: Placing <h3> element inside a <button> violates HTML spec."
     );
-    builderApiTesting.api.toast.warn = previousWarn;
   });
 
   test("sanitizes multi-root clipboard root ids before paste", async () => {

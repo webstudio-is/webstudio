@@ -155,21 +155,21 @@ class TestClipboardEvent extends Event {
 }
 
 const setupToastInfo = () => {
-  const toastInfo = vi.fn();
-  builderApiTesting.api.toast.info = toastInfo;
-  return toastInfo;
+  return vi
+    .spyOn(builderApiTesting.api.toast, "info")
+    .mockImplementation(() => {});
 };
 
 const setupToastError = () => {
-  const toastError = vi.fn();
-  builderApiTesting.api.toast.error = toastError;
-  return toastError;
+  return vi
+    .spyOn(builderApiTesting.api.toast, "error")
+    .mockImplementation(() => {});
 };
 
 const setupToastSuccess = () => {
-  const toastSuccess = vi.fn();
-  builderApiTesting.api.toast.success = toastSuccess;
-  return toastSuccess;
+  return vi
+    .spyOn(builderApiTesting.api.toast, "success")
+    .mockImplementation(() => {});
 };
 
 const waitForClipboardEvent = () =>

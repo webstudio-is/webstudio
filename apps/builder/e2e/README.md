@@ -96,13 +96,13 @@ to four minutes:
 pages-actions.[shard-2].[shard-5].[shard-6].e2e.ts
 ```
 
-Every E2E filename must contain at least one shard tag. CI derives its matrix
-from those tags, so adding or removing a shard does not require editing the
-workflow. Files with multiple tags are partitioned across those shards. All
-files selected by a shard must use the same set of tags. Rebalance by changing
-filename tags when measured job durations drift. Suites may opt into parallel
-mode only when every worker creates uniquely named setup data and the tests do
-not depend on each other's mutations.
+Every E2E filename must contain at least one unique shard tag. CI derives its
+matrix from those tags, so adding or removing a shard does not require editing
+the workflow. Files with multiple tags are partitioned across those shards. All
+files selected by a shard must use the same set of tags. Each shard uses four
+workers. Rebalance by changing filename tags when measured job durations drift.
+Suites may opt into parallel mode only when every worker creates uniquely named
+setup data and the tests do not depend on each other's mutations.
 
 ## Failures
 

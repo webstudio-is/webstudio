@@ -25,6 +25,9 @@ test("requires shard tags and consistent multi-shard groups", () => {
     "Every e2e file must have a shard tag"
   );
   expect(() =>
+    getE2eFileShards("duplicated.[shard-2].[shard-2].e2e.ts")
+  ).toThrow("Every shard tag in an e2e filename must be unique");
+  expect(() =>
     getE2eShardMatrix([
       "first.[shard-2].[shard-5].e2e.ts",
       "second.[shard-2].[shard-6].e2e.ts",

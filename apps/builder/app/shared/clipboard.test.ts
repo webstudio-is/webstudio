@@ -5,6 +5,7 @@ import { readClipboardText } from "./clipboard";
 afterAll(builderApiTesting.useLocalApi());
 
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -17,8 +18,9 @@ test("reads clipboard text", async () => {
 });
 
 test("reports denied clipboard access without rejecting", async () => {
-  const toastError = vi.fn();
-  builderApiTesting.api.toast.error = toastError;
+  const toastError = vi
+    .spyOn(builderApiTesting.api.toast, "error")
+    .mockImplementation(() => {});
   vi.stubGlobal("navigator", {
     clipboard: {
       readText: vi

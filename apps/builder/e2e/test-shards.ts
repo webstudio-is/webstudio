@@ -9,6 +9,11 @@ export const getE2eFileShards = (fileName: string) => {
   if (shards.length === 0) {
     throw new Error(`Every e2e file must have a shard tag: ${fileName}`);
   }
+  if (new Set(shards).size !== shards.length) {
+    throw new Error(
+      `Every shard tag in an e2e filename must be unique: ${fileName}`
+    );
+  }
   return shards;
 };
 

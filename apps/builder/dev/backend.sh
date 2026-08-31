@@ -27,6 +27,7 @@ builder_backend_migrations_fingerprint() {
         apps/builder/dev/backend.sh \
         apps/builder/docker-compose.yaml \
         apps/builder/docker-compose.e2e.yaml \
+        apps/builder/docker-compose.e2e-shard.yaml \
         apps/builder/e2e/postgres.Dockerfile \
         apps/builder/e2e/postgres-init.sql
     } | LC_ALL=C sort | while IFS= read -r path; do

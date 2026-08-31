@@ -140,4 +140,11 @@ export const __testing__ = {
     }
     owner[namespace] = bridge;
   },
+  clearBridge: () => {
+    const owner = window.self === window.top ? window : window.top;
+    if (owner === null) {
+      throw new Error("Test window has no top-level owner");
+    }
+    delete owner[namespace];
+  },
 };
