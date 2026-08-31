@@ -67,7 +67,11 @@ const assertCliBundleVersion = (
   clientBundleVersion: string | number | undefined
 ) => {
   if (ctx.apiClient?.type === "cli" && clientBundleVersion !== bundleVersion) {
-    throwApiClientUpdateRequired("cli");
+    throwApiClientUpdateRequired({
+      expectedVersion: bundleVersion,
+      receivedVersion: clientBundleVersion,
+      target: "cli",
+    });
   }
 };
 
