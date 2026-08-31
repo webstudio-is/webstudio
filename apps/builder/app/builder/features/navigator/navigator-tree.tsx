@@ -1132,7 +1132,7 @@ export const NavigatorTree = () => {
                       style: {
                         opacity: item.isHidden ? 0.4 : undefined,
                         color: item.isReusable
-                          ? cssVar("--foreground-reusable")
+                          ? cssVar("--foreground-accent-secondary")
                           : undefined,
                       },
                     }}

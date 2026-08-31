@@ -136,12 +136,12 @@
           )
       )
   );
-  --color-reusable-source: color(
+  --color-accent-secondary-source: color(
     from oklch(from var(--color-accent) l c calc(h + 55)) srgb clamp(0, r, 1)
       clamp(0, g, 1) clamp(0, b, 1)
   );
-  --color-reusable: color(
-    from var(--color-reusable-source) xyz-d65
+  --color-accent-secondary: color(
+    from var(--color-accent-secondary-source) xyz-d65
       calc(x * min(1, var(--scheme-chromatic-luminance-max) / max(y, 0.000001)))
       min(y, var(--scheme-chromatic-luminance-max))
       calc(z * min(1, var(--scheme-chromatic-luminance-max) / max(y, 0.000001)))
@@ -417,9 +417,9 @@
     var(--color-accent) var(--scheme-chromatic-foreground-mix),
     var(--color-foreground)
   );
-  --color-reusable-foreground: color-mix(
+  --color-accent-secondary-foreground: color-mix(
     in oklab,
-    var(--color-reusable) var(--scheme-chromatic-foreground-mix),
+    var(--color-accent-secondary) var(--scheme-chromatic-foreground-mix),
     var(--color-foreground)
   );
   --color-positive-foreground: color-mix(
@@ -459,7 +459,7 @@
   );
   --background-inverse: var(--color-foreground);
   --background-accent: var(--color-accent);
-  --background-reusable: var(--color-reusable);
+  --background-accent-secondary: var(--color-accent-secondary);
   --background-positive: var(--color-positive);
   --background-positive-subtle: color-mix(
     in oklab,
@@ -503,11 +503,11 @@
   );
   --foreground-on-inverse: var(--color-background);
   --foreground-on-accent: var(--color-on-chromatic);
-  --foreground-on-reusable: var(--color-on-chromatic);
+  --foreground-on-accent-secondary: var(--color-on-chromatic);
   --foreground-on-positive: var(--color-on-chromatic);
   --foreground-on-negative: var(--color-on-chromatic);
   --foreground-accent: var(--color-accent-foreground);
-  --foreground-reusable: var(--color-reusable-foreground);
+  --foreground-accent-secondary: var(--color-accent-secondary-foreground);
   --foreground-positive: var(--color-positive-foreground);
   --foreground-negative: var(--color-negative-foreground);
   --foreground-warning: var(--color-warning-foreground);

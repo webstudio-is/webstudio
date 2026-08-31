@@ -104,9 +104,9 @@ describe("Craft color CSS source", () => {
       )
     ).toBe(36);
     expect(colors.semantic.background).toHaveProperty("positive-subtle");
-    expect(colors.semantic.background).toHaveProperty("reusable");
-    expect(colors.semantic.foreground).toHaveProperty("reusable");
-    expect(colors.semantic.foreground).toHaveProperty("on-reusable");
+    expect(colors.semantic.background).toHaveProperty("accent-secondary");
+    expect(colors.semantic.foreground).toHaveProperty("accent-secondary");
+    expect(colors.semantic.foreground).toHaveProperty("on-accent-secondary");
     expect(colors.semantic.background).not.toHaveProperty("accent-hover");
     expect(colors.semantic.overlay).toHaveProperty("interaction-hover");
   });
