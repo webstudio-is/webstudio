@@ -14,6 +14,10 @@ export const SplitButton = styled("div", {
     borderTopLeftRadius: 0,
     borderBottomLeftRadius: 0,
   },
+  "> button[aria-pressed=true] + button:not(:disabled):not([aria-disabled=true])::before":
+    {
+      background: cssVar("--overlay-interaction-hover"),
+    },
   "&:hover:not(:has(> button:disabled:hover, > button[aria-disabled=true]:hover))":
     {
       "> button:first-of-type:not(:disabled):not([aria-disabled=true])": {

@@ -16,7 +16,10 @@ const externalDependencies = new Set(
   })
 );
 
-const bundledDependencies = new Set(["acorn"]);
+// The project bundle contract is derived from Zod's schema definitions and
+// hashed at runtime. Keep both implementations in the published artifact so a
+// transitive dependency update cannot change bundleVersion after publication.
+const bundledDependencies = new Set(["@emotion/hash", "acorn", "zod"]);
 
 const getPackageName = (id: string) => {
   if (id.startsWith("@")) {
