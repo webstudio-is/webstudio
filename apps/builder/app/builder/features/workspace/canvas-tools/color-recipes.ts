@@ -1,5 +1,4 @@
 import { cssVar } from "@webstudio-is/design-system";
-import { reusableInstanceColor } from "~/builder/shared/instance-colors";
 
 const accent = cssVar("--background-accent");
 
@@ -9,6 +8,7 @@ export const canvasToolColors = {
   selection: accent,
   selectionTranslucent: `oklch(from ${accent} l c h / 0.7)`,
   selectionSubtle: `color-mix(in oklab, ${accent} 12%, transparent)`,
-  slot: reusableInstanceColor,
+  slot: cssVar("--background-reusable"),
+  onSlot: cssVar("--foreground-on-reusable"),
   onSelection: cssVar("--foreground-on-accent"),
 } as const;
