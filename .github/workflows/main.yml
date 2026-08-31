@@ -269,6 +269,9 @@ jobs:
     environment:
       name: development
 
+    outputs:
+      shards: ${{ steps.shards.outputs.value }}
+
     steps:
       - uses: actions/checkout@v5
         with:
@@ -282,6 +285,10 @@ jobs:
       - uses: ./.github/actions/ci-setup
         with:
           run-scripts: "true"
+
+      - name: Discover builder e2e shards
+        id: shards
+        run: echo "value=$(pnpm --dir apps/builder exec tsx ./e2e/print-shards.ts)" >> "$GITHUB_OUTPUT"
 
       - name: Build builder and generated preview dependencies
         run: pnpm e2e:builder:build
@@ -318,7 +325,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        shard: ${{ fromJSON(needs.builder-e2e-build.outputs.shards) }}
 
     environment:
       name: development
@@ -357,7 +364,8 @@ jobs:
       - name: Run builder e2e
         env:
           E2E_SKIP_BUILDER_BUILD: true
-        run: pnpm e2e:builder -- --workers=2 --shard=${{ matrix.shard }}/12
+          E2E_TEST_SHARD: ${{ matrix.shard }}
+        run: pnpm e2e:builder -- --workers=2
 
       - name: Upload Builder e2e report
         if: failure()
