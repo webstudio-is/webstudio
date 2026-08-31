@@ -4,15 +4,25 @@ import {
   type ApiCompatibilityTarget,
 } from "@webstudio-is/trpc-interface/api-compatibility";
 
-export const throwApiClientUpdateRequired = (
-  target: ApiCompatibilityTarget
-): never => {
+export const throwApiClientUpdateRequired = ({
+  expectedVersion,
+  receivedVersion,
+  target,
+}: {
+  expectedVersion: string | number;
+  receivedVersion: string | number | undefined;
+  target: ApiCompatibilityTarget;
+}): never => {
+  const compatibility = createApiCompatibilityPayload({
+    reason: "clientVersionUnsupported",
+    target,
+  });
   throw new TRPCError({
     code: "PRECONDITION_FAILED",
     message: "The API client must be updated before continuing.",
-    cause: createApiCompatibilityPayload({
-      reason: "clientVersionUnsupported",
-      target,
-    }),
+    cause: {
+      ...compatibility,
+      message: `${compatibility.message} Expected bundle version ${expectedVersion}, received ${receivedVersion ?? "missing"}.`,
+    },
   });
 };

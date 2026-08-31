@@ -30,6 +30,7 @@
     "evaluations": "tsx --import ../../scripts/register-react-global.ts --conditions=webstudio evaluations/high-impact/run-local-agent.ts",
     "test": "vitest run",
     "test:ssg-package": "tsx --conditions=webstudio scripts/test-ssg-package.ts",
+    "check:published-cli-contract": "tsx --conditions=webstudio scripts/builder-contract-gate.ts",
     "test:release-smoke": "pnpm build && tsx --conditions=webstudio scripts/release-smoke.ts",
     "test:release-smoke:model": "WEBSTUDIO_RELEASE_SMOKE_MODEL_EVAL_REQUIRED=1 pnpm test:release-smoke",
     "test:release-smoke:registry": "tsx --conditions=webstudio scripts/release-smoke.ts"

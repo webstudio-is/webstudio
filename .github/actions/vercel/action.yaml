@@ -134,6 +134,13 @@ runs:
 
       shell: bash
 
+    - name: Verify published CLI contract against staged Builder
+      if: ${{ inputs.production-staged == 'true' }}
+      run: pnpm --filter webstudio check:published-cli-contract
+      shell: bash
+      env:
+        WEBSTUDIO_CLI_CONTRACT_BUILDER_ORIGIN: ${{ steps.deploy.outputs.domain }}
+
     - name: Set Alias
       id: alias
       run: |
