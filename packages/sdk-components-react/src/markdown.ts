@@ -273,6 +273,7 @@ const transformMarkdownAlerts = (html: string) => {
               .join(" ")
           );
           setAttribute(node, "role", "note");
+          setAttribute(node, "data-variant", type);
 
           const titleParagraph = defaultTreeAdapter.createElement(
             "p",

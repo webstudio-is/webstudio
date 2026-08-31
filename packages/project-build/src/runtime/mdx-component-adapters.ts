@@ -18,6 +18,11 @@ import {
   type Prop,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
+import {
+  markdownAlertVariants,
+  type MarkdownAlertType,
+  type MarkdownAlertVariant,
+} from "@webstudio-is/content-engine/markdown-alerts";
 
 type MaterializedComponentProp = Readonly<{
   prop: MdxAuthoredProp;
@@ -29,7 +34,7 @@ type MaterializedComponentProp = Readonly<{
 }>;
 
 type MaterializedComponent = Readonly<{
-  children: Instance["children"];
+  children: Instance["children"] | "authored";
   props: readonly MaterializedComponentProp[];
 }>;
 
@@ -40,6 +45,7 @@ type MdxComponentAdapter = Readonly<{
     props: readonly MdxAuthoredProp[];
     instanceProps: readonly Prop[];
     original?: MdxAuthoredNode;
+    authoredChildren?: readonly MdxAuthoredNode[];
   }) => MdxAuthoredNode | undefined;
   fromMdx: (node: MdxAuthoredNode) => MaterializedComponent | undefined;
   fromNamedMdx?: (
@@ -49,6 +55,7 @@ type MdxComponentAdapter = Readonly<{
 
 const codeTextComponent = "CodeText";
 const imageComponent = "Image";
+const alertComponent = "Alert";
 const derivedImageAssetPropNames = new Set(["width", "height", "alt"]);
 
 const getStringProps = (props: readonly MdxAuthoredProp[]) => {
@@ -344,9 +351,60 @@ const imageAdapter: MdxComponentAdapter = {
   },
 };
 
+const alertAdapter: MdxComponentAdapter = {
+  component: alertComponent,
+  toMdx: ({ props, original, authoredChildren }) => {
+    if (
+      original?.type !== "element" ||
+      original.syntax !== "markdown" ||
+      original.markdownAlert === undefined ||
+      authoredChildren === undefined
+    ) {
+      return;
+    }
+    const values = getStringProps(props);
+    if (
+      values === undefined ||
+      Array.from(values.keys()).some((name) => name !== "variant")
+    ) {
+      return;
+    }
+    const variant = values.get("variant") ?? "note";
+    if (Object.hasOwn(markdownAlertVariants, variant) === false) {
+      return;
+    }
+    return {
+      ...original,
+      markdownAlert: variant.toUpperCase() as MarkdownAlertType,
+      children: authoredChildren,
+    };
+  },
+  fromMdx: (node) => {
+    if (
+      node.type !== "element" ||
+      node.syntax !== "markdown" ||
+      node.markdownAlert === undefined
+    ) {
+      return;
+    }
+    return {
+      children: "authored",
+      props: [
+        {
+          prop: {
+            name: "variant",
+            value: node.markdownAlert.toLowerCase() as MarkdownAlertVariant,
+          },
+        },
+      ],
+    };
+  },
+};
+
 const componentAdapters = new Map<Instance["component"], MdxComponentAdapter>([
   [codeTextAdapter.component, codeTextAdapter],
   [imageAdapter.component, imageAdapter],
+  [alertAdapter.component, alertAdapter],
 ]);
 
 export const hasMdxComponentAdapter = (component: Instance["component"]) =>
@@ -380,7 +438,8 @@ export const getMdxStandardTemplateBinding = (node: MdxAuthoredNode) => {
         source,
         requiresAssetReference,
       })),
-      componentChildren: adapted.children,
+      componentChildren:
+        adapted.children === "authored" ? undefined : adapted.children,
     };
   }
   if (node.type === "element") {
@@ -425,20 +484,26 @@ export const getMdxStandardTemplateKeyForInstance = ({
   }
 };
 
+export const usesMdxComponentAuthoredChildren = (
+  component: Instance["component"]
+) => component === alertComponent;
+
 export const serializeMdxComponent = ({
   instance,
   props,
   instanceProps,
   original,
+  authoredChildren,
 }: {
   instance: Instance;
   props: readonly MdxAuthoredProp[];
   instanceProps: readonly Prop[];
   original?: MdxAuthoredNode;
+  authoredChildren?: readonly MdxAuthoredNode[];
 }) =>
   componentAdapters
     .get(instance.component)
-    ?.toMdx({ instance, props, instanceProps, original });
+    ?.toMdx({ instance, props, instanceProps, original, authoredChildren });
 
 export const serializeMdxComponentFallback = ({
   instance,

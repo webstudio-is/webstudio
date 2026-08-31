@@ -349,5 +349,6 @@ Beyond adding new content, you can edit the existing content inside the Content 
 
 - [Content Engine](../foundations/content-engine.md) – Build file-based sites with visually editable MDX articles
 - [Slot](slot.md) – Reusable component slots
+- [Alert](alert.md) – Highlight notes, warnings, and other callouts
 - [Modes](../foundations/modes.md) – Builder modes including Content mode
 - [Collection](collection.md) – Iterate over dynamic data

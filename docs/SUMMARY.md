@@ -61,6 +61,7 @@
   * [📄 Paragraph](university/core-components/paragraph.md)
   * [✏️ Inline Text](university/core-components/inline-text.md)
   * [💬 Blockquote](university/core-components/blockquote.md)
+  * [Alert](university/core-components/alert.md)
   * [📄 Code Text](university/core-components/code-text.md)
   * [✍️ Form](university/core-components/form.md)
   * [✍️ Webhook Form](university/core-components/webhook-form.md)

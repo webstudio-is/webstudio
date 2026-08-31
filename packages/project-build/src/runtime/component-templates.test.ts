@@ -6,6 +6,14 @@ describe("getComponentTemplates", () => {
     const templates = getComponentTemplates();
 
     expect(getComponentTemplates()).toBe(templates);
+    expect(templates.get("Alert")).toEqual(
+      expect.objectContaining({
+        template: expect.objectContaining({
+          children: expect.any(Array),
+          instances: expect.any(Array),
+        }),
+      })
+    );
     expect(templates.get("Form")).toEqual(
       expect.objectContaining({
         template: expect.objectContaining({

@@ -119,7 +119,7 @@ Hello, world!
       );
 
       expect(html).toContain(
-        `<div class="markdown-alert markdown-alert-${type}" role="note">`
+        `<div class="markdown-alert markdown-alert-${type}" role="note" data-variant="${type}">`
       );
       expect(html).toContain(`<p class="markdown-alert-title">${title}</p>`);
       expect(html).toContain(

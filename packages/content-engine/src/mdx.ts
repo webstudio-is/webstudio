@@ -99,7 +99,6 @@ export type MdxAuthoredNode =
       children: readonly MdxAuthoredNode[];
       markdownAlert?: MarkdownAlertType;
       markdownListItem?: MdxMarkdownListItem;
-      markdownAlert?: MarkdownAlertType;
       preserveTextWhitespace?: true;
       sourceRange?: MdxSourceRange;
     }>

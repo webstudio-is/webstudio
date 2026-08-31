@@ -12,6 +12,7 @@ test("exposes only authored component content in Content mode", () => {
 
   expect(contentModeProps.sort()).toEqual(
     [
+      "Alert.variant",
       "Button.aria-label",
       "CodeText.language",
       "HtmlEmbed.code",

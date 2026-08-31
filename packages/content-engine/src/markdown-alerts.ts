@@ -1,10 +1,19 @@
-export const markdownAlertTypes = {
-  NOTE: "Note",
-  TIP: "Tip",
-  IMPORTANT: "Important",
-  WARNING: "Warning",
-  CAUTION: "Caution",
+export const markdownAlertVariants = {
+  note: "Note",
+  tip: "Tip",
+  important: "Important",
+  warning: "Warning",
+  caution: "Caution",
 } as const;
+
+export type MarkdownAlertVariant = keyof typeof markdownAlertVariants;
+
+export const markdownAlertTypes = Object.fromEntries(
+  Object.entries(markdownAlertVariants).map(([variant, title]) => [
+    variant.toUpperCase(),
+    title,
+  ])
+) as Record<Uppercase<MarkdownAlertVariant>, string>;
 
 export type MarkdownAlertType = keyof typeof markdownAlertTypes;
 
