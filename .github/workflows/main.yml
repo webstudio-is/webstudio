@@ -325,7 +325,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJSON(needs.builder-e2e-build.outputs.shards) }}
+        include: ${{ fromJSON(needs.builder-e2e-build.outputs.shards) }}
 
     environment:
       name: development
@@ -365,7 +365,12 @@ jobs:
         env:
           E2E_SKIP_BUILDER_BUILD: true
           E2E_TEST_SHARD: ${{ matrix.shard }}
-        run: pnpm e2e:builder -- --workers=2
+        run: |
+          args=(--workers=2)
+          if [ -n "${{ matrix.partition }}" ]; then
+            args+=(--shard="${{ matrix.partition }}")
+          fi
+          pnpm e2e:builder -- "${args[@]}"
 
       - name: Upload Builder e2e report
         if: failure()

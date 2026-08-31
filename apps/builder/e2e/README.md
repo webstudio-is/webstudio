@@ -80,19 +80,21 @@ each invocation.
 - Keep tests in a file independent even though Playwright runs them in
   declaration order by default.
 
-CI discovers eight isolated Playwright shards from filename tags. Each shard uses
-two workers, and files are assigned by measured CI duration to keep jobs near
-three to four minutes:
+CI discovers isolated Playwright shards from filename tags. Each shard uses two
+workers, and files are assigned by measured CI duration to keep jobs near three
+to four minutes:
 
 ```txt
-pages-actions.[shard-5].e2e.ts
+pages-actions.[shard-2].[shard-5].[shard-6].e2e.ts
 ```
 
-Every E2E filename must contain exactly one shard tag. CI derives its matrix
+Every E2E filename must contain at least one shard tag. CI derives its matrix
 from those tags, so adding or removing a shard does not require editing the
-workflow. Rebalance by changing filename tags when measured job durations
-drift. Suites may opt into parallel mode only when every worker creates uniquely
-named setup data and the tests do not depend on each other's mutations.
+workflow. Files with multiple tags are partitioned across those shards. All
+files selected by a shard must use the same set of tags. Rebalance by changing
+filename tags when measured job durations drift. Suites may opt into parallel
+mode only when every worker creates uniquely named setup data and the tests do
+not depend on each other's mutations.
 
 ## Failures
 
