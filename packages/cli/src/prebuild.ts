@@ -289,8 +289,8 @@ const getRouteCandidates = ({
       filter.operator === "eq" && typeof value === "string"
         ? [value]
         : filter.operator === "contains" && Array.isArray(value)
-        ? value.filter((item): item is string => typeof item === "string")
-        : [];
+          ? value.filter((item): item is string => typeof item === "string")
+          : [];
     if (values.length === 0) {
       continue;
     }
