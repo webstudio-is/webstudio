@@ -259,7 +259,12 @@ export const Dashboard = () => {
 
   return (
     <TooltipProvider>
-      <Flex css={{ height: "100vh" }}>
+      <Flex
+        css={{
+          height: "100vh",
+          background: cssVar("--background-primary"),
+        }}
+      >
         <Grid
           as="aside"
           css={{
