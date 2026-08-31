@@ -8,7 +8,7 @@ Page settings control how an individual page behaves — its URL, SEO metadata, 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-dialog-dark.png">
-  <img src="../../.gitbook/assets/page-settings-dialog-light.png" alt="Page settings for the Home page showing general, authentication, and search fields">
+  <img src="../../.gitbook/assets/page-settings-dialog-light.png" alt="Page settings for the Home page with general and authentication fields above a search preview showing the Webstudio W favicon">
 </picture>
 
 ## Page name
@@ -166,7 +166,7 @@ SEO settings that control how the page appears in search engine results.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-seo-dark.png">
-  <img src="../../.gitbook/assets/page-settings-seo-light.png" alt="Page settings Search section with a result preview, title, description, search visibility, and language fields">
+  <img src="../../.gitbook/assets/page-settings-seo-light.png" alt="Page settings Search section with the Webstudio W favicon in the result preview, the Blog title and description, search visibility, and en-US language fields">
 </picture>
 
 ### Title
@@ -187,7 +187,7 @@ The Open Graph image displayed when the page is shared on social media (Facebook
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-social-dark.png">
-  <img src="../../.gitbook/assets/page-settings-social-light.png" alt="Page settings Social image section with URL, asset picker, selected image details, and sharing preview">
+  <img src="../../.gitbook/assets/page-settings-social-light.png" alt="Page settings Social image section with a selected blue and purple glass wave image and its social sharing preview">
 </picture>
 
 ## Custom metadata
@@ -196,7 +196,7 @@ Add arbitrary `<meta>` tags to the page's `<head>`. Each entry has a **property*
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-custom-metadata-dark.png">
-  <img src="../../.gitbook/assets/page-settings-custom-metadata-light.png" alt="Page settings Custom metadata section with empty Property and Content fields">
+  <img src="../../.gitbook/assets/page-settings-custom-metadata-light.png" alt="Page settings with a blue and purple wave image in the Social sharing preview above empty Custom metadata fields">
 </picture>
 
 Use this for meta tags not covered by the fields above, such as `og:type`, `twitter:card`, or any custom meta needed by third-party integrations.

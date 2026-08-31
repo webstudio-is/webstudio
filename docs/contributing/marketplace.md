@@ -43,5 +43,5 @@ Learn more about the [Marketplace](../university/marketplace.md).
 
 - [Marketplace](../university/marketplace.md) – Browse and use marketplace templates
 - [Craft](../university/craft.md) – The recommended standard for building templates
-- [Contributing for Designers](contributing-for-designers.md) – Other ways designers can contribute
+- [Contributions](contributions.md) – Contribute to Webstudio as a designer or developer
 - [Design tokens](../university/foundations/design-tokens.md) – Create consistent, reusable styles

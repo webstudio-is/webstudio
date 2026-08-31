@@ -32,5 +32,4 @@ Here you will find real-time updates and can see exactly what our team is workin
 - [Webstudio Blog](https://webstudio.is/blog) – Read the latest news and tutorials
 - [Intro](intro.md) – Learn what Webstudio is and who it's for
 - [FAQs](FAQ.md) – Common questions and answers about Webstudio
-- [Contributing for Designers](../contributing/contributing-for-designers.md) – Ways designers can contribute to Webstudio
-- [Contributing for Developers](../contributing/contributing-for-developers.md) – How to contribute code to Webstudio
+- [Contributions](../contributing/contributions.md) – Contribute to Webstudio as a designer or developer

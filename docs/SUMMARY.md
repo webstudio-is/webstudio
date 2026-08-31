@@ -149,8 +149,7 @@
 
 ## Contributing
 
-* [🧑‍🎨 Contributing for Designers](contributing/contributing-for-designers.md)
-* [🧑‍💻 Contributing for Developers](contributing/contributing-for-developers.md)
+* [Contributions](contributing/contributions.md)
 * [Contributing to the Marketplace](contributing/marketplace.md)
 
 ***

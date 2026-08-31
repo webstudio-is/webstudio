@@ -60,12 +60,8 @@ Our getting started guide will help you navigate through building your first Web
 
 ## Looking to contribute to Webstudio?
 
-{% content-ref url="contributing/contributing-for-designers.md" %}
-[contributing-for-designers.md](contributing/contributing-for-designers.md)
-{% endcontent-ref %}
-
-{% content-ref url="contributing/contributing-for-developers.md" %}
-[contributing-for-developers.md](contributing/contributing-for-developers.md)
+{% content-ref url="contributing/contributions.md" %}
+[contributions.md](contributing/contributions.md)
 {% endcontent-ref %}
 
 {% content-ref url="contributing/marketplace.md" %}
