@@ -31,6 +31,11 @@ import {
 } from "./markdown-ast";
 import { findMarkdownFrontmatter } from "./markdown-scanner";
 import { serializeMdxDocument } from "./mdx-serialization";
+import {
+  getMarkdownAlertMarker,
+  markdownAlertTypes,
+  type MarkdownAlertType,
+} from "./markdown-alerts";
 
 export type MdxSourcePoint = Readonly<{
   line: number;
@@ -81,6 +86,7 @@ export type MdxAuthoredNode =
       props: readonly MdxAuthoredProp[];
       children: readonly MdxAuthoredNode[];
       markdownListItem?: MdxMarkdownListItem;
+      markdownAlert?: MarkdownAlertType;
       preserveTextWhitespace?: true;
       sourceRange?: MdxSourceRange;
     }>
@@ -1122,10 +1128,86 @@ const mapAuthoredChildren = (
   if (isSyntaxTreeNode(hast) === false || hast.type !== "root") {
     return throwUnsafeNode(root, "MDX did not produce an HTML document");
   }
-  return mapHastChildren(hast, {
-    shouldOmitUnsafePart: options.shouldOmitUnsafePart,
-  });
+  return transformMarkdownAlerts(
+    mapHastChildren(hast, {
+      shouldOmitUnsafePart: options.shouldOmitUnsafePart,
+    })
+  );
 };
+
+const transformMarkdownAlerts = (
+  nodes: readonly MdxAuthoredNode[]
+): MdxAuthoredNode[] =>
+  nodes.map((node) => {
+    if (
+      node.type === "text" ||
+      node.type === "comment" ||
+      node.type === "opaque"
+    ) {
+      return node;
+    }
+    const children = transformMarkdownAlerts(node.children);
+    if (
+      node.type !== "element" ||
+      node.syntax !== "markdown" ||
+      node.tag !== "blockquote"
+    ) {
+      return { ...node, children };
+    }
+    const paragraph = children[0];
+    if (
+      paragraph?.type !== "element" ||
+      paragraph.syntax !== "markdown" ||
+      paragraph.tag !== "p"
+    ) {
+      return { ...node, children };
+    }
+    const markerNode = paragraph.children[0];
+    if (markerNode?.type !== "text") {
+      return { ...node, children };
+    }
+    const marker = getMarkdownAlertMarker(markerNode.value);
+    if (marker === undefined) {
+      return { ...node, children };
+    }
+
+    const remainingMarkerText = markerNode.value.slice(marker.length);
+    const remainingParagraphChildren = [
+      ...(remainingMarkerText === ""
+        ? []
+        : [{ ...markerNode, value: remainingMarkerText }]),
+      ...paragraph.children.slice(1),
+    ];
+    const bodyChildren = [
+      ...(remainingParagraphChildren.length === 0
+        ? []
+        : [{ ...paragraph, children: remainingParagraphChildren }]),
+      ...children.slice(1),
+    ];
+    const title = markdownAlertTypes[marker.type];
+    return {
+      ...node,
+      tag: "div",
+      props: [
+        {
+          name: "class",
+          value: `markdown-alert markdown-alert-${marker.type.toLowerCase()}`,
+        },
+        { name: "role", value: "note" },
+      ],
+      markdownAlert: marker.type,
+      children: [
+        {
+          type: "element",
+          syntax: "markdown",
+          tag: "p",
+          props: [{ name: "class", value: "markdown-alert-title" }],
+          children: [{ type: "text", value: title }],
+        },
+        ...bodyChildren,
+      ],
+    };
+  });
 
 const validateMdxSourceBytes = ({
   source,

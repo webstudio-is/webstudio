@@ -76,6 +76,47 @@ const createCodeTextFragment = (theme = "github-light"): WebstudioFragment => ({
 });
 
 describe("MDX authored content", () => {
+  test("materializes and edits GitHub alerts without replacing their syntax", async () => {
+    const source = "> [!NOTE]\n> Helpful **context**.\n";
+    const document = await parseMdxDocument({ source });
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization: emptyTemplates,
+    });
+    const alert = root.fragment.instances.find(({ tag }) => tag === "div");
+    if (alert === undefined) {
+      throw new Error("Expected alert element");
+    }
+    const alertProps = root.fragment.props
+      .filter(({ instanceId }) => instanceId === alert.id)
+      .map(({ name, value }) => [name, value]);
+    const title = root.fragment.instances.find(
+      ({ id }) =>
+        alert.children[0]?.type === "id" && id === alert.children[0].value
+    );
+
+    expect(Object.fromEntries(alertProps)).toEqual({
+      class: "markdown-alert markdown-alert-note",
+      role: "note",
+    });
+    expect(title).toMatchObject({
+      tag: "p",
+      children: [{ type: "text", value: "Note" }],
+    });
+
+    const edited = structuredClone(root.fragment);
+    const context = edited.instances.find(({ tag }) => tag === "strong");
+    if (context === undefined) {
+      throw new Error("Expected alert strong text");
+    }
+    context.children = [{ type: "text", value: "details" }];
+
+    expect(await serializeMdxAuthoredContent({ root, fragment: edited })).toBe(
+      "> [!NOTE]\n> Helpful **details**.\n"
+    );
+  });
+
   test("rejects a canvas edit prepared from a stale Asset document", async () => {
     const document = await parseMdxDocument({ source: "Original\n" });
     const root = materializeMdxAuthoredContent({

@@ -2746,6 +2746,9 @@ importers:
       '@shikijs/themes':
         specifier: 4.4.1
         version: 4.4.1
+      '@webstudio-is/content-engine':
+        specifier: workspace:*
+        version: link:../content-engine
       '@webstudio-is/icons':
         specifier: workspace:*
         version: link:../icons
