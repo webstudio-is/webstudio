@@ -2788,6 +2788,9 @@ importers:
       micromark-extension-gfm:
         specifier: ^3.0.0
         version: 3.0.0
+      parse5:
+        specifier: 7.3.0
+        version: 7.3.0
       sanitize-html:
         specifier: 2.17.5
         version: 2.17.5
