@@ -32,7 +32,6 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       - uses: ./.github/actions/submodules-checkout
         with:
@@ -74,50 +73,12 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
-      - uses: ./.github/actions/submodules-checkout
+      - uses: ./.github/actions/test-suite
         with:
           submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
-
-      - uses: ./.github/actions/ci-setup
-
-      - name: Cache Playwright Chromium
-        if: matrix.suite.scope != 'cli'
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cache/ms-playwright/chromium-*
-            ~/.cache/ms-playwright/chromium_headless_shell-*
-            ~/.cache/ms-playwright/ffmpeg-*
-          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Cache Playwright Firefox
-        if: matrix.suite.scope == 'packages'
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright/firefox-*
-          key: playwright-firefox-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Playwright init
-        if: matrix.suite.scope == 'packages'
-        run: pnpm --filter @webstudio-is/sdk-components-animation exec playwright install chromium firefox
-
-      - name: Chromium init
-        if: startsWith(matrix.suite.scope, 'builder-')
-        run: pnpm --filter @webstudio-is/builder exec playwright install chromium
-
-      - name: Test packages
-        if: matrix.suite.scope == 'packages'
-        run: pnpm -r --filter "!@webstudio-is/builder" --filter "!webstudio" test
-
-      - name: Test CLI
-        if: matrix.suite.scope == 'cli'
-        run: pnpm --filter webstudio test
-
-      - name: Test Builder
-        if: startsWith(matrix.suite.scope, 'builder-')
-        run: pnpm --filter @webstudio-is/builder exec vitest run --project "${{ matrix.suite.project }}"
+          scope: ${{ matrix.suite.scope }}
+          project: ${{ matrix.suite.project }}
 
   checks:
     # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
@@ -141,7 +102,6 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       - uses: pnpm/action-setup@v6
 
@@ -153,8 +113,6 @@ jobs:
       - name: Pnpm install
         run: |
           pnpm install
-
-      - run: echo ===SHA USED=== ${{ github.event.pull_request.head.sha || github.sha }} # todo: remove after check whats happening on main
 
       - run: |
           pnpm oxfmt --check
@@ -197,7 +155,6 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       - uses: ./.github/actions/submodules-checkout
         with:
@@ -262,44 +219,17 @@ jobs:
       name: development
 
     outputs:
-      shards: ${{ steps.shards.outputs.value }}
+      shards: ${{ steps.build.outputs.shards }}
 
     steps:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
-      - uses: ./.github/actions/submodules-checkout
+      - id: build
+        uses: ./.github/actions/builder-e2e-build
         with:
           submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
-
-      - uses: ./.github/actions/ci-setup
-        with:
-          run-scripts: "true"
-
-      - name: Discover builder e2e shards
-        id: shards
-        run: echo "value=$(pnpm --dir apps/builder exec tsx ./e2e/print-shards.ts)" >> "$GITHUB_OUTPUT"
-
-      - name: Build builder and generated preview dependencies
-        run: pnpm e2e:builder:build
-
-      # Generate this from the current migrations for this workflow run only.
-      # Shards consume the snapshot as a fast, disposable schema cache.
-      - name: Generate builder e2e schema snapshot
-        run: pnpm e2e:builder:refresh-schema-cache
-
-      - name: Upload builder e2e prerequisites
-        uses: actions/upload-artifact@v6
-        with:
-          name: builder-e2e-build
-          retention-days: 7
-          path: |
-            apps/builder/build/server
-            apps/builder/build/client/assets
-            packages/*/lib
-            .cache/builder-e2e/schema-*.sql
 
   supabase-migrations:
     name: Supabase migrations
@@ -316,7 +246,6 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
       - uses: ./.github/actions/ci-setup
         with:
@@ -356,57 +285,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
-      - uses: ./.github/actions/submodules-checkout
+      - uses: ./.github/actions/builder-e2e-shard
         with:
           submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
-
-      - uses: ./.github/actions/ci-setup
-        with:
-          run-scripts: "true"
-
-      - name: Cache Playwright Chromium
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cache/ms-playwright/chromium-*
-            ~/.cache/ms-playwright/chromium_headless_shell-*
-            ~/.cache/ms-playwright/ffmpeg-*
-          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Download builder e2e build
-        uses: actions/download-artifact@v7
-        with:
-          name: builder-e2e-build
-          path: .
-
-      - name: Run builder e2e
-        env:
-          E2E_SKIP_CLEANUP: true
-          E2E_SKIP_BUILDER_BUILD: true
-          E2E_TEST_SHARD: ${{ matrix.shard }}
-        run: |
-          args=(--workers=4)
-          if [ -n "${{ matrix.partition }}" ]; then
-            args+=(--shard="${{ matrix.partition }}")
-          fi
-          pnpm e2e:builder -- "${args[@]}"
-
-      - name: Upload Builder e2e report
-        if: failure()
-        uses: actions/upload-artifact@v6
-        with:
-          name: builder-e2e-report-${{ matrix.shard }}
-          retention-days: 7
-          path: |
-            apps/builder/playwright-report
-            apps/builder/test-results/e2e
-
-      - name: Print e2e service logs
-        if: failure()
-        run: docker compose $BUILDER_E2E_COMPOSE_ARGS logs
-
-      - name: Stop e2e services
-        if: always()
-        run: docker compose $BUILDER_E2E_COMPOSE_ARGS down --volumes --remove-orphans
+          shard: ${{ matrix.shard }}
+          partition: ${{ matrix.partition }}
