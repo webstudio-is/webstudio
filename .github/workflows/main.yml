@@ -366,7 +366,7 @@ jobs:
           E2E_SKIP_BUILDER_BUILD: true
           E2E_TEST_SHARD: ${{ matrix.shard }}
         run: |
-          args=(--workers=2)
+          args=(--workers=4)
           if [ -n "${{ matrix.partition }}" ]; then
             args+=(--shard="${{ matrix.partition }}")
           fi
