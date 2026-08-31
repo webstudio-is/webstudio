@@ -91,6 +91,7 @@ import {
   InstanceIcon,
 } from "~/builder/shared/instance-label";
 import { InstanceContextMenu } from "~/builder/shared/instance-context-menu";
+import { reusableInstanceColor } from "~/builder/shared/instance-colors";
 
 type TreeItemAncestor =
   | undefined
@@ -1132,7 +1133,7 @@ export const NavigatorTree = () => {
                       style: {
                         opacity: item.isHidden ? 0.4 : undefined,
                         color: item.isReusable
-                          ? cssVar("--foreground-accent")
+                          ? reusableInstanceColor
                           : undefined,
                       },
                     }}
