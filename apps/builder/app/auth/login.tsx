@@ -56,6 +56,10 @@ export const Login = ({
           minWidth: theme.spacing[20],
           padding: theme.spacing[17],
           borderRadius: theme.spacing[5],
+          backgroundColor: `light-dark(
+            transparent,
+            ${cssVar("--background-primary")}
+          )`,
           [`@media (min-width: ${rawTheme.spacing[35]})`]: {
             backgroundColor: `light-dark(
               oklch(from ${cssVar("--background-primary")} l c h / 50%),
