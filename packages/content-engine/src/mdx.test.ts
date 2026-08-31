@@ -175,6 +175,53 @@ const forceGenericMdx = (node: MdxAuthoredNode): MdxAuthoredNode => {
 };
 
 describe("parseMdxDocument", () => {
+  test.each(["NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"] as const)(
+    "maps GitHub %s alerts to authored alert metadata",
+    async (type) => {
+      const document = await parseMdxDocument({
+        source: `> [!${type}]\n> Alert with **strong** text.\n`,
+      });
+
+      expect(omitSourceRanges(document.children)).toEqual([
+        {
+          type: "element",
+          syntax: "markdown",
+          tag: "blockquote",
+          props: [],
+          markdownAlert: type,
+          children: [
+            {
+              type: "element",
+              syntax: "markdown",
+              tag: "p",
+              props: [],
+              children: [
+                { type: "text", value: "Alert with " },
+                {
+                  type: "element",
+                  syntax: "markdown",
+                  tag: "strong",
+                  props: [],
+                  children: [{ type: "text", value: "strong" }],
+                },
+                { type: "text", value: " text." },
+              ],
+            },
+          ],
+        },
+      ]);
+    }
+  );
+
+  test("preserves GitHub alert syntax through MDX serialization", async () => {
+    const source = `> [!WARNING]\n> First paragraph.\n>\n> - One\n> - Two\n`;
+    const document = await parseMdxDocument({ source });
+
+    expect(serializeMdxDocument(document)).toBe(
+      "> [!WARNING]\n> First paragraph.\n>\n> -   One\n> -   Two\n"
+    );
+  });
+
   test("parses and preserves safe named JSX template references", async () => {
     const source = `<Card tone="quiet">\n  ## Nested heading\n</Card>\n`;
     const document = await parseMdxDocument({ source });

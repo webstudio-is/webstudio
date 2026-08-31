@@ -15,6 +15,11 @@ import {
 } from "parse5";
 import sanitizeHtml from "sanitize-html";
 import type { ImageLoader } from "@webstudio-is/image";
+import {
+  getMarkdownAlertMarker,
+  markdownAlertTypes,
+  type MarkdownAlertType,
+} from "@webstudio-is/content-engine/markdown-alerts";
 import { getSdkImageProps, type SdkImageProps } from "./image-utils";
 
 const getHeadingIds = (markdown: string) => {
@@ -211,31 +216,6 @@ const createGfmHtmlExtension = () => {
   return extension;
 };
 
-const markdownAlertTypes = {
-  NOTE: "Note",
-  TIP: "Tip",
-  IMPORTANT: "Important",
-  WARNING: "Warning",
-  CAUTION: "Caution",
-} as const;
-
-type MarkdownAlertType = keyof typeof markdownAlertTypes;
-
-const getAlertMarker = (value: string) => {
-  for (const type of Object.keys(markdownAlertTypes) as MarkdownAlertType[]) {
-    const marker = `[!${type}]`;
-    if (value === marker) {
-      return { type, length: marker.length };
-    }
-    if (value.startsWith(`${marker}\n`)) {
-      return { type, length: marker.length + 1 };
-    }
-    if (value.startsWith(`${marker}\r\n`)) {
-      return { type, length: marker.length + 2 };
-    }
-  }
-};
-
 const setAttribute = (
   element: DefaultTreeAdapterMap["element"],
   name: string,
@@ -276,7 +256,7 @@ const transformMarkdownAlerts = (html: string) => {
         markerNode !== undefined &&
         defaultTreeAdapter.isTextNode(markerNode)
       ) {
-        const marker = getAlertMarker(markerNode.value);
+        const marker = getMarkdownAlertMarker(markerNode.value);
         if (marker !== undefined) {
           const title = markdownAlertTypes[marker.type];
           const type = marker.type.toLowerCase();

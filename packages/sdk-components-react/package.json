@@ -80,6 +80,7 @@
     "@react-aria/utils": "^3.27.0",
     "@shikijs/langs": "4.4.1",
     "@shikijs/themes": "4.4.1",
+    "@webstudio-is/content-engine": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
