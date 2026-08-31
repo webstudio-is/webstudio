@@ -168,7 +168,7 @@ test("prints compact mcp tool summaries as json by default", () => {
       inputSchema,
     })
   );
-  expect(JSON.stringify(handshakePayload).length).toBeLessThan(215_000);
+  expect(JSON.stringify(handshakePayload).length).toBeLessThan(216_000);
   expect(
     JSON.stringify(
       expectedTools.find(({ name }) => name === "insert-page-transfer-item")

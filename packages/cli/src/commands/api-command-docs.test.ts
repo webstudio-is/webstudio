@@ -269,7 +269,7 @@ test("directs agents to deferred Markdown bodies", () => {
     const contents = readCliDoc(document);
     expect(contents).toContain('content.mode:"markdown-body-ref"');
     expect(contents).toContain("document reference");
-    expect(contents).toContain("selected Markdown");
+    expect(contents).toContain("selected files");
   }
 
   const tools = createMetadataOnlyMcpAdapter().listTools();
