@@ -62,7 +62,9 @@ type ContextMenuCommand =
     }
   | { type: "selectNext" }
   | { type: "selectPrevious" }
-  | { type: "enter" };
+  | { type: "enter" }
+  | { type: "templateInsertionStarted" }
+  | { type: "templateInsertionCancelled" };
 
 export const $textEditorContextMenuCommand = atom<
   undefined | ContextMenuCommand

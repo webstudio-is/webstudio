@@ -6,43 +6,53 @@
 import { forwardRef, type ComponentProps, type Ref } from "react";
 import { type CSS, css, theme } from "../stitches.config";
 import type { labelColors } from "./label";
+import { cssVar } from "../css-var";
+import { styleSourceColor } from "./style-source-color";
+
+const presetBackground = cssVar("--border-default");
+const withInteractionOverlay = (background: string) =>
+  `linear-gradient(${cssVar("--overlay-interaction-hover")}, ${cssVar(
+    "--overlay-interaction-hover"
+  )}), ${background}`;
 
 const colors = {
   default: {
     border: "transparent",
     background: "transparent",
-    backgroundHover: theme.colors.backgroundHover,
-    icon: theme.colors.foregroundIconMain,
+    backgroundHover: cssVar("--overlay-interaction-hover"),
+    icon: cssVar("--foreground-primary"),
   },
   preset: {
-    border: theme.colors.borderMain,
-    background: theme.colors.backgroundPresetMain,
-    backgroundHover: theme.colors.backgroundPresetHover,
-    icon: theme.colors.foregroundIconMain,
+    border: cssVar("--border-default"),
+    background: presetBackground,
+    backgroundHover: withInteractionOverlay(presetBackground),
+    icon: cssVar("--foreground-primary"),
   },
   local: {
-    border: theme.colors.borderLocalMain,
-    background: theme.colors.backgroundLocalMain,
-    backgroundHover: theme.colors.backgroundLocalHover,
-    icon: theme.colors.foregroundLocalMain,
+    border: styleSourceColor.local.border,
+    background: styleSourceColor.local.background,
+    backgroundHover: withInteractionOverlay(styleSourceColor.local.background),
+    icon: styleSourceColor.local.foreground,
   },
   overwritten: {
-    border: theme.colors.borderOverwrittenMain,
-    background: theme.colors.backgroundOverwrittenMain,
-    backgroundHover: theme.colors.backgroundOverwrittenHover,
-    icon: theme.colors.foregroundOverwrittenMain,
+    border: styleSourceColor.overwritten.border,
+    background: styleSourceColor.overwritten.background,
+    backgroundHover: withInteractionOverlay(
+      styleSourceColor.overwritten.background
+    ),
+    icon: styleSourceColor.overwritten.foreground,
   },
   remote: {
-    border: theme.colors.borderRemoteMain,
-    background: theme.colors.backgroundRemoteMain,
-    backgroundHover: theme.colors.backgroundRemoteHover,
-    icon: theme.colors.foregroundRemoteMain,
+    border: styleSourceColor.remote.border,
+    background: styleSourceColor.remote.background,
+    backgroundHover: withInteractionOverlay(styleSourceColor.remote.background),
+    icon: styleSourceColor.remote.foreground,
   },
   inactive: {
     border: "transparent",
     background: "transparent",
     backgroundHover: "transparent",
-    icon: theme.colors.foregroundSubtle,
+    icon: cssVar("--foreground-secondary"),
   },
 } as const;
 
@@ -56,20 +66,32 @@ const perColorStyle = (color: (typeof labelColors)[number]) => ({
     background: colors[color].backgroundHover,
   },
   "&[data-state=disabled]": {
-    color: theme.colors.foregroundDisabled,
+    color: cssVar("--foreground-disabled"),
   },
 });
 
 const style = css({
   display: "flex",
-  width: theme.spacing[10],
-  height: theme.spacing[10],
   boxSizing: "border-box",
   alignItems: "center",
   justifyContent: "center",
   borderRadius: theme.borderRadius[2],
   border: "1px solid transparent",
   variants: {
+    size: {
+      1: {
+        width: theme.spacing[8],
+        height: theme.spacing[8],
+        "& > svg": {
+          width: theme.spacing[7],
+          height: theme.spacing[7],
+        },
+      },
+      2: {
+        width: theme.spacing[10],
+        height: theme.spacing[10],
+      },
+    },
     color: {
       default: perColorStyle("default"),
       preset: perColorStyle("preset"),
@@ -79,7 +101,7 @@ const style = css({
       inactive: perColorStyle("inactive"),
     },
   },
-  defaultVariants: { color: "default" },
+  defaultVariants: { color: "default", size: 2 },
 });
 
 type Props = ComponentProps<"label"> & {
@@ -87,16 +109,17 @@ type Props = ComponentProps<"label"> & {
   color?: (typeof labelColors)[number];
   disabled?: boolean;
   hover?: boolean;
+  size?: "1" | "2";
 };
 
 export const NestedIconLabel = forwardRef(
   (
-    { css, className, color, disabled, hover, ...props }: Props,
+    { css, className, color, disabled, hover, size, ...props }: Props,
     ref: Ref<HTMLLabelElement>
   ) => (
     <label
       {...props}
-      className={style({ css, className, color })}
+      className={style({ css, className, color, size })}
       data-state={disabled ? "disabled" : hover ? "hover" : undefined}
       ref={ref}
     />

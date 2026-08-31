@@ -1,5 +1,5 @@
 import { contentEngineLimits } from "./limits";
-import { parseDocument } from "yaml";
+import { parseDocument, stringify as stringifyYaml } from "yaml";
 import {
   decodeUtf8 as decodeUtf8Bytes,
   toByteChunks,
@@ -12,6 +12,7 @@ import {
 import { MarkdownMetadataError } from "./markdown-errors";
 import {
   findMarkdownFrontmatter,
+  markdownByteOrderMark,
   markdownFrontmatterEnvelopeBytes,
 } from "./markdown-scanner";
 
@@ -203,4 +204,53 @@ export const extractMarkdownFrontmatter = async (
     "FRONTMATTER_BYTES_EXCEEDED",
     "Markdown frontmatter is not closed within the byte limit"
   );
+};
+
+export const serializeMarkdownFrontmatter = (
+  properties: Readonly<Record<string, unknown>>
+) => {
+  const yaml = stringifyYaml(properties, {
+    aliasDuplicateObjects: false,
+    lineWidth: 0,
+    sortMapEntries: true,
+  }).trimEnd();
+  return `---\n${yaml}\n---\n\n`;
+};
+
+/** Updates frontmatter without parsing or otherwise rewriting the body. */
+export const replaceMarkdownFrontmatter = async ({
+  source,
+  properties,
+}: {
+  source: string;
+  properties: Readonly<Record<string, unknown>>;
+}) => {
+  const replacement = serializeMarkdownFrontmatter(properties);
+  await extractMarkdownFrontmatter(replacement);
+
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(source);
+  const range = findMarkdownFrontmatter(bytes, true);
+  const hasByteOrderMark = markdownByteOrderMark.every(
+    (value, index) => bytes[index] === value
+  );
+  const prefix = hasByteOrderMark ? "\uFEFF" : "";
+  if (range === null || range === undefined) {
+    return prefix + replacement + source.slice(prefix.length);
+  }
+
+  const bodyStart = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+    bytes.subarray(0, range.blockEnd)
+  ).length;
+  const suffix = source.slice(bodyStart);
+  const separatorLength = suffix.startsWith("\r\n\r\n")
+    ? 4
+    : suffix.startsWith("\n\n")
+      ? 2
+      : suffix.startsWith("\r\n")
+        ? 2
+        : suffix.startsWith("\n")
+          ? 1
+          : 0;
+  return prefix + replacement + suffix.slice(separatorLength);
 };

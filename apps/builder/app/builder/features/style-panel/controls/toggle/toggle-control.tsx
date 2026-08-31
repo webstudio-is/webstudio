@@ -1,4 +1,4 @@
-import { ToggleButton } from "@webstudio-is/design-system";
+import { IconToggleButton } from "@webstudio-is/design-system";
 import {
   camelCaseProperty,
   declarationDescriptions,
@@ -45,7 +45,8 @@ export const ToggleControl = ({
       properties={[property]}
       isAdvanced={isAdvanced}
     >
-      <ToggleButton
+      <IconToggleButton
+        aria-label={currentItem?.label ?? humanizeString(property)}
         disabled={readonly}
         aria-disabled={isAdvanced}
         variant={computedStyleDecl.source.name}
@@ -64,7 +65,7 @@ export const ToggleControl = ({
         }}
       >
         <Icon />
-      </ToggleButton>
+      </IconToggleButton>
     </PropertyValueTooltip>
   );
 };

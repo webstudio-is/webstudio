@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
-import { Box, Grid, ToggleButton } from "@webstudio-is/design-system";
+import { Box, Grid, IconToggleButton } from "@webstudio-is/design-system";
 import { keywordValues } from "@webstudio-is/css-data";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { rowCss } from "./utils";
@@ -107,13 +107,14 @@ export const BorderProperty = ({
         </Box>
 
         {individualModeIcon && (
-          <ToggleButton
+          <IconToggleButton
+            aria-label={`Toggle individual ${label.toLowerCase()} values`}
             disabled={readonly}
             pressed={showIndividualMode}
             onPressedChange={setShowIndividualMode}
           >
             {individualModeIcon}
-          </ToggleButton>
+          </IconToggleButton>
         )}
       </Grid>
       {showIndividualMode && (

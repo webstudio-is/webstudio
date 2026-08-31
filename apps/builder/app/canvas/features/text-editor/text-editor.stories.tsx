@@ -207,6 +207,7 @@ export const CursorPositioning: StoryFn<typeof TextEditor> = () => {
       </div>
       {textEditingInstanceSelector && (
         <Button
+          color="primary"
           onClick={() => {
             $textEditingInstanceSelector.set(undefined);
           }}

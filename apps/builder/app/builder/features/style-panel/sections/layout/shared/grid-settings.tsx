@@ -490,7 +490,7 @@ export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
   const isRowsEditable = isEditableGridMode(rowsMode);
 
   const editGridButton = (
-    <Button disabled={readonly} color="neutral" css={{ width: "100%" }}>
+    <Button disabled={readonly} css={{ width: "100%" }}>
       Configure grid
     </Button>
   );

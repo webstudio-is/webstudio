@@ -1,5 +1,4 @@
 import {
-  blockComponent,
   collectionComponent,
   elementComponent,
   type Instance,
@@ -16,6 +15,7 @@ import {
 import { findClosestInstanceMatchingFragment } from "./matcher";
 import { getSlotFragmentDropTargetMutable } from "./slot";
 import type { InstancePath, InstanceSelector } from "./instance-path";
+import { canMoveInstanceInContentMode } from "./block";
 
 export type { InstanceSelector } from "./instance-path";
 
@@ -211,14 +211,15 @@ export const canDropInstanceSelector = ({
   htmlTagsByInstanceId?: Map<Instance["id"], string>;
   contentMode?: boolean;
 }) => {
-  if (contentMode) {
-    const parentInstance = instances.get(dropSelector[0]);
-    if (parentInstance?.component !== blockComponent) {
-      return false;
-    }
-    if (dropSelector[0] !== dragSelector[1]) {
-      return false;
-    }
+  if (
+    contentMode &&
+    canMoveInstanceInContentMode({
+      instanceSelector: dragSelector,
+      parentSelector: dropSelector,
+      instances,
+    }) === false
+  ) {
+    return false;
   }
   const containerSelector = findClosestContainer({
     metas,

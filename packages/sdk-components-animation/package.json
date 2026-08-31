@@ -61,7 +61,7 @@
   "devDependencies": {
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
-    "@vitest/browser": "^3.0.8",
+    "@vitest/browser": "3.1.1",
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/design-system": "workspace:*",
     "@webstudio-is/generate-arg-types": "workspace:*",
@@ -70,11 +70,11 @@
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "fast-glob": "^3.3.2",
-    "playwright": "^1.50.1",
+    "playwright": "1.50.1",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "type-fest": "^4.37.0",
-    "vitest": "^3.1.2",
+    "vitest": "3.1.1",
     "zod": "^4.4.3"
   }
 }

@@ -1,4 +1,4 @@
-import { css } from "@webstudio-is/design-system";
+import { css, cssVar } from "@webstudio-is/design-system";
 import { useDebounce } from "use-debounce";
 import { SpinnerIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
@@ -6,8 +6,11 @@ import { useEffect } from "react";
 const containerStyle = css({
   position: "absolute",
   inset: 0,
-  background:
-    "radial-gradient(34.37% 50% at 50% 50%, rgba(255, 255, 255, 0.5) 0%, rgba(248, 248, 248, 0.5) 100%);",
+  background: `radial-gradient(
+    34.37% 50% at 50% 50%,
+    oklch(from ${cssVar("--background-primary")} l c h / 50%) 0%,
+    oklch(from ${cssVar("--background-disabled")} l c h / 50%) 100%
+  )`,
   backdropFilter: "blur(8px)",
   display: "flex",
   alignItems: "center",

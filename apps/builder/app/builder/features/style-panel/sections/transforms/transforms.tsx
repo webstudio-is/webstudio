@@ -153,7 +153,7 @@ const TransformAdvancedPopover = ({
   const readonly = useReadonly();
   return (
     <FloatingPanel
-      title="Advanced Transform"
+      title="Advanced transform"
       placement="bottom-within"
       content={
         <Grid
@@ -164,7 +164,7 @@ const TransformAdvancedPopover = ({
         >
           <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
             <PropertyLabel
-              label="Backface Visibility"
+              label="Backface visibility"
               description={propertyDescriptions.backfaceVisibility}
               properties={["backface-visibility"]}
             />

@@ -155,6 +155,36 @@ Rules:
 - To work with another previously linked project without changing the directory's default link, start MCP or a shell call with `--project <projectId>`, for example `webstudio mcp --project <projectId>` or `webstudio mcp single-op-call list-pages --project <projectId>`. Selected projects use isolated local session and checkpoint files.
 - If you are a delegated agent and your parent cannot see live stderr/stdout, do not run a long sequence of shortcut or `mcp single-op-call` commands silently and do not wrap many calls in a shell loop. Treat each parent-visible checkpoint as the unit of work. If the parent asks for status within 30 seconds, run exactly one `webstudio <tool>` or `webstudio mcp single-op-call` command, report that command/result, then wait before the next MCP command. For all-component design-system pages, checkpoint after discovery, checkpoint after page creation, call `components.coverage-insert-next` once before checkpointing again, then finish with the `presentation-pass` workflow phase. Coverage alone is not completion; organize examples into styled sections/cards.
 
+## MDX-backed Content Blocks
+
+Use a connected `.mdx` Asset when editors should change a Content Block body visually while the document remains stored as a file.
+
+1. Create the `.mdx` file under `.webstudio/assets`, then upload it and keep the returned Asset ID.
+2. Inspect the Content Block and its Templates children. Every template referenced from MDX needs a unique top-level instance name.
+3. Connect the Asset with `connect-content-block-source`. Use a stable page-based `renderScope` for a direct occurrence.
+4. If the result returns `requiresConfirmation:true`, tell the user that connecting will replace the existing Body content. Repeat the same call with `confirmReplacement:true` only after approval.
+5. Edit the complete source with `edit-content-block-source`, or replace the complete frontmatter map with `update-content-block-frontmatter`.
+6. Inspect every returned diagnostic. Invalid MDX is preserved, not silently repaired.
+
+```sh
+webstudio upload-asset '{"asset":{"name":"article.mdx","type":"file","format":"mdx","meta":{}},"assetsDir":".webstudio/assets"}'
+webstudio connect-content-block-source '{"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example","source":{"type":"asset","assetId":"<mdxAssetId>"}}'
+webstudio inspect-content-block-source '{"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example"}'
+webstudio edit-content-block-source --input-file .temp/edit-content-block-source.json
+webstudio reload-content-block-source '{"blockInstanceId":"<contentBlockInstanceId>","renderScope":"page:/articles/example"}'
+webstudio migrate-content-block-template-references '{"assetIds":["<mdxAssetId>"],"migration":{"type":"rename","from":"Old template name","to":"New template name"}}'
+```
+
+Prefer Markdown whenever it can represent the component and all authored properties. Use `<ws.element ws:tag="tag">` for a standard HTML element with authored properties Markdown cannot express. Use `<ws.element ws:name="Template name">` only for a uniquely named top-level Content Block template. Preserve unresolved template names and report their diagnostics.
+
+When a template is renamed or deleted, use `migrate-content-block-template-references` to update the affected MDX files. Its first call returns a plan with changed-file, update, omission, and diagnostic counts. Report the plan and repeat the exact request with its `confirmationToken` only after approval. A rename changes matching `ws:name` values. A removal deletes matching MDX elements. Invalid files remain unchanged and are reported in diagnostics.
+
+Use the dedicated connect, switch, inspect, edit, update-frontmatter, reload, and disconnect operations instead of creating or deleting the Content Block's `src` with generic prop tools. An expression-bound source inside a Collection also needs the occurrence's scoped values and a distinct stable `renderScope`. For example, use `source:{"type":"expression","value":"post.assetId"}` with `variables:{"post":{"assetId":"<mdxAssetId>"}}`.
+
+A source edit replaces the complete MDX document. A frontmatter update replaces the complete frontmatter property map. Inspect the current source first and preserve everything the user did not ask to change. Use `update-content-block-frontmatter` for MCP frontmatter edits. MDX-rendered elements are not persistent instance targets for generic `bind-props` or `update-text` calls. Preserve existing `mode:"readwrite"` bindings when encountered; they are valid only for exact direct paths into the connected document's frontmatter. Computed expressions and `$ref` values remain read-only.
+
+If an edit in a long-lived MCP session reports a revision conflict after another client saved the Asset, call `reload-content-block-source`, inspect the latest source, reapply the requested change, and retry. One-shot CLI calls refresh before each operation and normally cannot reproduce a stale session. Never overwrite the newer revision blindly. Use `disconnect-content-block-source` to remove the connection while leaving the Asset unchanged.
+
 ## Reporting CLI/MCP Issues
 
 If a CLI/MCP tool gives a confusing error, crashes, hangs, produces invalid output, requires an undocumented workaround, or makes you inspect source code to understand normal usage, ask the user to report it in the Webstudio Discord `#help` channel: https://wstd.us/community.
@@ -281,7 +311,9 @@ Use MCP itself after startup, or call the same tools with `webstudio mcp single-
 - `templates.get`: full registry item and payload metadata for one template
 - `search-project`: find a known value or id with `webstudio search-project '{"query":"pricing"}'` or MCP `search-project {"query":"pricing"}`; use focused list/get tools when the target structure is unknown
 
-`meta.guide` returns structured `routing` with the matched workflow and any broad context bundle it recommends. Authentication and design context bundles appear only when their specialized workflow matches. A brief that explicitly requests `insert-fragment` or an authored fragment suppresses registry component and template discovery; mention design-system or token reuse explicitly when the fragment depends on it.
+`meta.guide` returns structured `routing` with the selected workflow and any broad context bundle it recommends. Authentication and design context bundles appear only when their specialized workflow is selected. Set `authoredFragment` when using an authored fragment and `reuseDesignSystem` when its recommendations should retain design-system discovery tools.
+
+Set `taskScope` and `workflow` explicitly; `meta.guide` does not infer them or the authored-fragment flags from the brief. Specialized workflows are `markdown-blog`, `json-ld`, `collection`, `expression`, `authenticated-page`, `font-assets`, `design-input`, and `craft`; otherwise use `general`. For work that must not change project or local state, pass `{"brief":"Inventory custom code","taskScope":"read-only-audit","workflow":"general"}`. The resulting `read-only-discovery` workflow excludes mutation and side-effecting session tools and uses focused search, list, get, inspect, and snapshot tools.
 
 `search-project` follows normal ProjectSession synchronization, then searches in the CLI process. Namespace filters limit values matched; related namespaces may still supply route and reference context, and synchronization is unchanged. Only paged matches enter model context. Recognized credential fields and asset binary or document bodies are excluded.
 
@@ -422,28 +454,32 @@ Vision-capable AI can use MCP to see what it is building:
 4. Read `preview.status.stale` before relying on generated output. When present, `renderedProjectVersion` identifies the last project version materialized into the preview; a stale preview refreshes automatically on the next managed screenshot or `preview.start` call.
 5. `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
 6. Session previews download missing project assets into `.webstudio/assets`. If `PREVIEW_ASSET_DOWNLOAD_FAILED` occurs, restore network and project asset access, then retry `preview.start`.
-7. Dependency installation honors `npm_config_cache`, including a caller-provided writable cache on Windows.
-8. Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
-9. If dependency installation fails, the error includes sanitized npm diagnostics. Check the reported npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
-10. After MCP mutations, path-based screenshots regenerate the current session in place, wait for its exact project version, and normally reload the route. The server and browser remain alive. From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running generated site without starting it. Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview; a separate one-shot `single-op-call` process does not own another process's preview controller.
-11. For multi-page work, capture each changed page by path through the same preview server, for example screenshot({ path: "/" }), screenshot({ path: "/pricing" }), and screenshot({ path: "/about" }). The screenshot tool navigates directly to the requested route; no browser click navigation is required.
-12. For responsive work, call list-breakpoints first, then capture screenshots at viewport widths based on the Builder breakpoints plus a narrow mobile and desktop width.
-13. Call screenshot with { path: "/" } or the changed page path and viewport such as { width: 375, height: 812 } and { width: 1440, height: 900 }. For an existing preview in another process, call screenshot with { baseUrl: "http://127.0.0.1:5177", path: "/" }. Use waitForSelector when the page has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
-14. An explicit occupied `port` fails immediately with `PREVIEW_PORT_IN_USE`. To capture a generated site already running in another process, pass its `baseUrl` with `path`; otherwise choose another port.
-15. Automatic browser discovery checks system installations, configured browser paths, and Chromium installations in the Playwright browser cache.
-16. The screenshot timeout bounds browser capture after the preview is ready. A timeout returns `SCREENSHOT_TIMEOUT`, resets the reusable browser session, and releases the shared preview lifecycle for cleanup.
-17. When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir for each page/viewport pair. Add expectedText when a specific visible phrase must be present; its assertions report pass/fail plus found and missing text. Add expectedVisual to set pass/fail limits for mismatch percentage, the number of changed regions, or an overall dominant color/brightness direction.
-18. Read screenshot.diff textAnalysis: it reports OCR status plus text that appeared, disappeared, moved, changed content, or changed font/style geometry. If OCR is unavailable, expectedText assertions fail and textAnalysis reports why; ask the user for permission to install Tesseract, then call vision.install-ocr with { "confirm": true }, or rely on visual inspection.
-19. Inspect every viewport PNG and any diff artifacts with vision, then compare layout, OCR text evidence, color, spacing, imagery, and responsive framing against the user intent.
-20. If the screenshot does not match, apply another focused mutation and repeat screenshot verification.
+7. When launcher metadata is available, dependency installation reuses a supported npm or pnpm launcher. Without launcher metadata, it defaults to npm.
+8. When npm is selected, dependency installation honors `npm_config_cache`. If it is unset, preview uses the writable `.webstudio/preview/.npm-cache` directory instead of the user's default npm cache.
+9. For npm cache permission errors, unset `npm_config_cache` to use the preview-local cache, then retry. No cache deletion is required.
+10. Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
+11. If dependency installation fails, the error includes the selected package-manager path and sanitized diagnostics. Check that path and the network configuration, then reinstall or update the Webstudio CLI if the problem persists.
+12. After MCP mutations, path-based screenshots regenerate the current session in place, wait for its exact project version, and normally reload the route. The server and browser remain alive. From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running generated site without starting it. Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview; a separate one-shot `single-op-call` process does not own another process's preview controller.
+13. For multi-page work, capture each changed page by path through the same preview server, for example screenshot({ path: "/" }), screenshot({ path: "/pricing" }), and screenshot({ path: "/about" }). The screenshot tool navigates directly to the requested route; no browser click navigation is required.
+14. For responsive work, call list-breakpoints first, then capture screenshots at viewport widths based on the Builder breakpoints plus a narrow mobile and desktop width.
+15. Call screenshot with { path: "/" } or the changed page path and viewport such as { width: 375, height: 812 } and { width: 1440, height: 900 }. For an existing preview in another process, call screenshot with { baseUrl: "http://127.0.0.1:5177", path: "/" }. Use waitForSelector when the page has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
+16. An explicit occupied `port` fails immediately with `PREVIEW_PORT_IN_USE`. To capture a generated site already running in another process, pass its `baseUrl` with `path`; otherwise choose another port.
+17. Automatic browser discovery checks system installations, configured browser paths, and Chromium installations in the Playwright browser cache.
+18. The screenshot timeout bounds browser capture after the preview is ready. A timeout returns `SCREENSHOT_TIMEOUT`, resets the reusable browser session, and releases the shared preview lifecycle for cleanup.
+19. When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir for each page/viewport pair. Add expectedText when a specific visible phrase must be present; its assertions report pass/fail plus found and missing text. Add expectedVisual to set pass/fail limits for mismatch percentage, the number of changed regions, or an overall dominant color/brightness direction.
+20. Read screenshot.diff textAnalysis: it reports OCR status plus text that appeared, disappeared, moved, changed content, or changed font/style geometry. If OCR is unavailable, expectedText assertions fail and textAnalysis reports why; ask the user for permission to install Tesseract, then call vision.install-ocr with { "confirm": true }, or rely on visual inspection.
+21. Inspect every viewport PNG and any diff artifacts with vision, then compare layout, OCR text evidence, color, spacing, imagery, and responsive framing against the user intent.
+22. If the screenshot does not match, apply another focused mutation and repeat screenshot verification.
 
 Generated app setup:
 
 - `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
 - Session previews download missing project assets into `.webstudio/assets`. If `PREVIEW_ASSET_DOWNLOAD_FAILED` occurs, restore network and project asset access, then retry `preview.start`.
-- Dependency installation honors `npm_config_cache`, including a caller-provided writable cache on Windows.
+- When launcher metadata is available, dependency installation reuses a supported npm or pnpm launcher. Without launcher metadata, it defaults to npm.
+- When npm is selected, dependency installation honors `npm_config_cache`. If it is unset, preview uses the writable `.webstudio/preview/.npm-cache` directory instead of the user's default npm cache.
+- For npm cache permission errors, unset `npm_config_cache` to use the preview-local cache, then retry. No cache deletion is required.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
-- If dependency installation fails, the error includes sanitized npm diagnostics. Check the reported npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
+- If dependency installation fails, the error includes the selected package-manager path and sanitized diagnostics. Check that path and the network configuration, then reinstall or update the Webstudio CLI if the problem persists.
 
 ## MCP argument examples
 
@@ -454,7 +490,25 @@ source of truth. For tools with no required arguments, pass `{}`.
 
 ```json
 {
-  "brief": "Create a pricing page and style the hero"
+  "brief": "Create a pricing page and style the hero",
+  "taskScope": "visual-change",
+  "workflow": "general"
+}
+```
+
+```json
+{
+  "brief": "Inventory custom code without changing the project",
+  "taskScope": "read-only-audit",
+  "workflow": "general"
+}
+```
+
+```json
+{
+  "brief": "Recreate a supplied design as a responsive page",
+  "taskScope": "visual-change",
+  "workflow": "design-input"
 }
 ```
 
@@ -1922,13 +1976,13 @@ source of truth. For tools with no required arguments, pass `{}`.
 
 ## Content Engine reference
 
-Assets resources query Markdown and JSON files stored in the Assets panel. The Builder and Webstudio MCP use the same structured query contract.
+Assets resources query Markdown, MDX, and JSON files stored in the Assets panel. The Builder and Webstudio MCP use the same structured query contract.
 
 ### MCP workflow
 
 Use these tools in order when creating or changing an Assets resource:
 
-1. Call `get-asset-field-catalog` to inspect standard fields and the fields currently observed in Markdown frontmatter and JSON files.
+1. Call `get-asset-field-catalog` to inspect standard fields and the fields currently observed in Markdown or MDX frontmatter and JSON files.
 2. Call `validate-asset-query` to check the query structure, field paths, operators, and bounded operation counts.
 3. Call `preview-asset-query` with concrete values and inspect its results and diagnostics.
 4. Save the query with `create-assets-resource` or `update-assets-resource`.
@@ -1938,7 +1992,7 @@ Omit `query` when creating a resource to use the default many-result query for a
 
 ### Fields
 
-Every asset has the standard fields below. Markdown frontmatter and JSON root fields appear under `properties`, for example `properties.slug` or `properties.author.name`. The field catalog reports their observed types, occurrence counts, optionality, and mixed-type state. A JSON content file must contain an object at its root.
+Every asset has the standard fields below. Markdown or MDX frontmatter and JSON root fields appear under `properties`, for example `properties.slug` or `properties.author.name`. The field catalog reports their observed types, occurrence counts, optionality, and mixed-type state. A JSON content file must contain an object at its root.
 
 | Field | Observed type |
 | --- | --- |
@@ -2025,7 +2079,7 @@ Choose `fields` and disable `includeMetadata` when the page needs only selected 
 
 ### Asset reference metadata
 
-A plain local asset path in Markdown frontmatter or JSON properties keeps the backward-compatible URL string result. Wrap the path in an exact `$ref` object only when consumers need structured Asset Manager metadata:
+A plain local asset path in Markdown or MDX frontmatter, or in JSON properties, keeps the backward-compatible URL string result. Wrap the path in an exact `$ref` object only when consumers need structured Asset Manager metadata:
 
 ```yaml
 featureImage:
@@ -2059,9 +2113,9 @@ External URLs remain ordinary strings. Existing local path strings also keep the
 | `none` | Returns no file content. Use this for listings and any query that only needs fields or metadata. |
 | `full` | Embeds the complete UTF-8 file content in the content database. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected file is larger. |
 | `range` | Embeds a byte range selected by `offset` and `length` in the content database. `length` cannot exceed 256 KiB. |
-| `markdown-body-ref` | Stores a reference to a Markdown body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected source file is larger. |
+| `markdown-body-ref` | Stores a reference to a Markdown or MDX body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected source file is larger. |
 
-Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for article pages. It keeps article bodies out of the published content database and resolves relative Markdown links when the selected body is loaded.
+Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for Markdown or MDX article pages. It keeps article bodies out of the published content database and resolves relative links when the selected body is loaded.
 
 ### Preview diagnostics
 
@@ -2084,7 +2138,7 @@ Only `database.usedBytes` counts toward `database.maxBytes`. Do not add the quer
 | `artifacts` | Optional query and merged compiled artifacts used by detailed Builder diagnostics. |
 | `unresolved` | Optional query result before document references are resolved. It helps inspect the authored `$ref` values behind resolved output. |
 
-If the merged database approaches its limit, remove duplicate reachable resources first. Then remove unused output fields or narrow the candidate documents. Prefer `markdown-body-ref` over embedded `full` content for Markdown articles.
+If the merged database approaches its limit, remove duplicate reachable resources first. Then remove unused output fields or narrow the candidate documents. Prefer `markdown-body-ref` over embedded `full` content for Markdown or MDX articles.
 
 ### Document references
 
@@ -2094,7 +2148,7 @@ A document reference is an exact object with one string field:
 { "$ref": "<relative-path>[#<fragment>]" }
 ```
 
-Markdown references can appear in YAML frontmatter. JSON references can appear anywhere in the document. Either format can reference Markdown or JSON. References do not run inside a Markdown body.
+Markdown and MDX references can appear in YAML frontmatter. JSON references can appear anywhere in the document. Any format can reference Markdown, MDX, or JSON. References do not run inside a Markdown or MDX body.
 
 | Reference | Inserted value |
 | --- | --- |
@@ -2126,7 +2180,7 @@ Resolve paths relative to the file containing the reference. JSON Pointer uses `
 
 | Limit | Value |
 | --- | --- |
-| Markdown frontmatter | 64 KiB |
+| Markdown/MDX frontmatter | 64 KiB |
 | Frontmatter nesting depth | 8 |
 | Frontmatter fields | 256 |
 | Frontmatter string | 16 KiB |
@@ -2136,6 +2190,9 @@ Resolve paths relative to the file containing the reference. JSON Pointer uses `
 | JSON string | 16 KiB |
 | Indexed properties per document | 64 KiB |
 | Generated excerpt | 2 KiB |
+| MDX nesting depth | 100 |
+| MDX nodes | 20000 |
+| MDX properties | 4000 |
 | Loaded file | 1 MiB |
 | Loaded content per query | 2 MiB |
 | Loaded files per query | 20 |

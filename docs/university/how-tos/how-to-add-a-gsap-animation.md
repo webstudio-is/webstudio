@@ -4,7 +4,7 @@ description: Add GSAP animations to your Webstudio site with custom code.
 
 # 🍀 How to add a GSAP animation
 
-<figure><img src="../../.gitbook/assets/gsap.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/gsap.png" alt="HTML Embed settings with GSAP script code in the Code editor"><figcaption></figcaption></figure>
 
 ## Embed GSAP library on the page
 
@@ -46,8 +46,7 @@ Learn more about script scope [here](../core-components/html-embed.md#avoid-crea
 
 ## Demo
 
-[Preview Link](https://simple-gsap-demo.wstd.io/)\
-[Builder Link](https://apps.webstudio.is/builder/623cdb40-24bb-4809-a610-145b6eefcf21?authToken=d0544921-f4bb-4697-a0d8-2efd2a0c4a11\&mode=preview)
+[Preview the GSAP demo](https://simple-gsap-demo.wstd.io/).
 
 ## Related
 

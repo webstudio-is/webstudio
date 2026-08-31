@@ -140,7 +140,7 @@ export const CssFragmentEditor = ({
         {content}
         <EditorDialog
           onOpenChange={onOpenChange}
-          title="CSS Value"
+          title="CSS value"
           content={content}
         >
           <EditorDialogButton />

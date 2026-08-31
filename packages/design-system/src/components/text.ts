@@ -1,6 +1,7 @@
-import { css, theme, styled } from "../stitches.config";
+import { css, styled } from "../stitches.config";
 import { truncate } from "../utilities";
 import { typography } from "../design-tokens";
+import { cssVar } from "../css-var";
 
 const normalize = {
   userSelect: "none",
@@ -8,6 +9,10 @@ const normalize = {
 
 type Variant = keyof typeof typography;
 type VariantStyle = typeof normalize & (typeof typography)[Variant];
+
+export const moreSubtleForeground = `color-mix(in oklab, ${cssVar(
+  "--foreground-secondary"
+)} 56%, ${cssVar("--background-primary")})`;
 
 export const textVariants = {} as { [Key in Variant]: VariantStyle };
 
@@ -25,14 +30,14 @@ export const textStyle = css({
   variants: {
     variant: textVariants,
     color: {
-      main: { color: theme.colors.foregroundMain },
-      contrast: { color: theme.colors.foregroundContrastMain },
-      subtle: { color: theme.colors.foregroundSubtle },
-      moreSubtle: { color: theme.colors.foregroundTextMoreSubtle },
-      disabled: { color: theme.colors.foregroundDisabled },
-      success: { color: theme.colors.foregroundSuccessText },
+      main: { color: cssVar("--foreground-primary") },
+      contrast: { color: cssVar("--foreground-on-inverse") },
+      subtle: { color: cssVar("--foreground-secondary") },
+      moreSubtle: { color: moreSubtleForeground },
+      disabled: { color: cssVar("--foreground-disabled") },
+      success: { color: cssVar("--foreground-positive") },
       destructive: {
-        color: theme.colors.foregroundDestructive,
+        color: cssVar("--foreground-negative"),
         // destructive in most cases used to show 3rd party errors
         // we don't want it to break layout
         overflowWrap: "anywhere",

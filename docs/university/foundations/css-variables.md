@@ -22,18 +22,21 @@ Why Use CSS variables?
 
 The concept of “reusability” is present in both CSS variables and [Tokens](design-tokens.md), but they are different and complement each other exceptionally well.
 
-
 Let’s think of these two concepts as layers or building blocks.
 
 ### Layer 1: CSS variables
 
-**CSS variables are the bottom layer. They comprise individual variable names and values** often used for sizes, colors, and other styles with many input options.
+**CSS variables are the bottom layer. They comprise individual variable names and values** often used for sizes, colors, and other styles with many input options. Craft distinguishes theme variables, which contain theme-specific inputs, from semantic variables, which describe how a value is used.
 
-For example, you can create one variable per color in your design system. Those colors are going to be used throughout your site and in Tokens.
+For colors, define a small set of theme variables and derive semantic variables
+from them. For example, `--theme-accent` can control
+`--background-accent`, `--border-focus`, and their interaction states. Tokens
+consume the semantic variables, so changing a theme input updates the complete
+system without editing each color independently.
 
 ### Layer 2: Tokens
 
-[**Tokens**](design-tokens.md) **are the next layer. They package up&#x20;**_**multiple**_**&#x20;styles.** A `Card` Token may include padding, color, and gap styles, for example.
+[**Tokens**](design-tokens.md) **are the next layer. They package up&#x20;**_**multiple**_**&#x20;styles.** Craft calls these composite Tokens. A `Card` Token may include padding, color, and gap styles, for example.
 
 The values you enter for each style should be defined as variables. This approach ensures consistent designs and allows you to update a value in one place, with the change automatically reflected wherever the variable is used.
 
@@ -46,7 +49,9 @@ With CSS variables, Tokens now often take a more semantic approach, such as call
 ## Creating variables
 
 {% hint style="warning" %}
-Before you create custom variables, be sure to check out [Craft](../craft.md) — the standard guideline for building with Webstudio. It contains a library of expertly crafted CSS variables.
+Before you create custom variables, review [Craft](../craft.md), Webstudio's
+public specification for theme variables, semantic variables, composite
+Tokens, and reusable project architecture.
 {% endhint %}
 
 A CSS variable is defined in the Advanced section by using two dashes followed by the variable name, like this:
@@ -138,7 +143,10 @@ CSS variables, by nature, are available in the current instance and any of the c
 
 #### Global Variables
 
-<figure><img src="../../.gitbook/assets/global-root.png" alt="Global Root in Webstudio" width="375"><figcaption><p>Global Root</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/navigator-panel-dark.png">
+  <img src="../../.gitbook/assets/navigator-panel-light.png" alt="Navigator with Global root above Body and the page instance tree">
+</picture>
 
 Most variables should be defined on the Global Root, which is the highest level of the page and the same for every page. That way, you can define `--my-color`, and it's available on every instance on every page.
 
@@ -158,7 +166,7 @@ With CSS variables, you can interact with the parent and modify the styles of an
 
 Prefer CSS variables over a [descendant custom state](states-and-selectors.md#custom-states) such as `:hover .button` for parent-child interactions. They keep each property on the child that uses it and are especially useful when one parent state coordinates several properties or children. Define a variable on the parent, use it for the relevant property on each child, and change the variable's value in the parent's `:hover` state.
 
-<figure><img src="../../.gitbook/assets/parent-child-demo.gif" alt=""><figcaption><p>Hovering the link and the children change (icon color, icon bg, and arrow appears)</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/parent-child-demo.gif" alt="Hovering a link changes its child icon color, background, and arrow visibility"><figcaption><p>Hovering the link and the children change (icon color, icon bg, and arrow appears)</p></figcaption></figure>
 
 {% embed url="https://youtu.be/rg49mmDvdlE" %}
 Video tutorial

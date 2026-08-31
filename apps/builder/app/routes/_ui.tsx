@@ -4,12 +4,14 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
   type ClientLoaderFunctionArgs,
   type ShouldRevalidateFunction,
 } from "@remix-run/react";
 import interFont from "@fontsource-variable/inter/index.css?url";
 import manropeVariableFont from "@fontsource-variable/manrope/index.css?url";
 import robotoMonoFont from "@fontsource/roboto-mono/index.css?url";
+import designSystemColors from "@webstudio-is/design-system/colors.css?url";
 import appCss from "../shared/app.css?url";
 import {
   json,
@@ -27,6 +29,12 @@ import {
   createPrivateNoStoreHeaders,
   privateNoStoreResponseHeaders,
 } from "~/services/cache-control.server";
+import { ColorSchemeController } from "~/shared/color-scheme-controller";
+import {
+  createColorSchemeBootstrapScript,
+  parseColorSchemeCookie,
+  type ColorSchemePreference,
+} from "~/shared/color-scheme";
 
 export const links: LinksFunction = () => {
   // `links` returns an array of objects whose
@@ -35,20 +43,30 @@ export const links: LinksFunction = () => {
     { rel: "stylesheet", href: interFont },
     { rel: "stylesheet", href: manropeVariableFont },
     { rel: "stylesheet", href: robotoMonoFont },
+    { rel: "stylesheet", href: designSystemColors },
     { rel: "stylesheet", href: appCss },
   ];
 };
 
-const Document = (props: { children: React.ReactNode }) => {
+const Document = (props: {
+  children: React.ReactNode;
+  colorScheme?: ColorSchemePreference;
+}) => {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: createColorSchemeBootstrapScript(props.colorScheme),
+          }}
+        />
         <Meta />
         <Links />
       </head>
       <body>
+        <ColorSchemeController />
         {props.children}
         <ScrollRestoration />
         <Scripts />
@@ -61,7 +79,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [csrfToken, setCookieValue] = await getCsrfTokenAndCookie(request);
 
   if (request.headers.get("sec-fetch-mode") !== "navigate") {
-    return json({ csrfToken: "" }, { headers: privateNoStoreResponseHeaders });
+    return json(
+      {
+        csrfToken: "",
+        colorScheme: parseColorSchemeCookie(request.headers.get("Cookie")),
+      },
+      { headers: privateNoStoreResponseHeaders }
+    );
   }
 
   const headers = createPrivateNoStoreHeaders();
@@ -71,7 +95,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   return json(
-    { csrfToken },
+    {
+      csrfToken,
+      colorScheme: parseColorSchemeCookie(request.headers.get("Cookie")),
+    },
     {
       headers,
     }
@@ -105,8 +132,9 @@ export const ErrorBoundary = () => {
 };
 
 export default function Layout() {
+  const { colorScheme } = useLoaderData<typeof loader>();
   return (
-    <Document>
+    <Document colorScheme={colorScheme}>
       <Outlet />
     </Document>
   );

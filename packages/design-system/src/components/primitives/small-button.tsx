@@ -5,6 +5,11 @@ import {
   type ReactNode,
 } from "react";
 import { css, theme, type CSS } from "../../stitches.config";
+import { cssVar } from "../../css-var";
+import {
+  selectedControlBackground,
+  withInteractionOverlay,
+} from "../control-state-color";
 
 export const smallButtonVariants = [
   "normal",
@@ -18,32 +23,72 @@ export const smallButtonVariants = [
  **/
 const smallButtonStates = ["open"] as const;
 
+const contrastForeground = `light-dark(${cssVar(
+  "--foreground-on-inverse"
+)}, ${cssVar("--foreground-primary")})`;
+
 const defaultColors = {
-  normal: theme.colors.foregroundSubtle,
-  destructive: theme.colors.foregroundSubtle,
-  contrast: theme.colors.foregroundContrastMain,
+  normal: cssVar("--foreground-secondary"),
+  destructive: cssVar("--foreground-secondary"),
+  contrast: contrastForeground,
 };
 
 const hoverColors = {
-  normal: theme.colors.foregroundMain,
-  destructive: theme.colors.foregroundDestructive,
-  contrast: theme.colors.foregroundContrastMain,
+  normal: cssVar("--foreground-primary"),
+  destructive: cssVar("--foreground-negative"),
+  contrast: contrastForeground,
 };
 
 const focusColors = {
-  normal: theme.colors.borderFocus,
-  destructive: theme.colors.borderFocus,
-  contrast: theme.colors.borderContrast,
+  normal: cssVar("--border-focus"),
+  destructive: cssVar("--border-focus"),
+  contrast: contrastForeground,
+};
+
+const selectedBackgrounds = {
+  normal: selectedControlBackground,
+  destructive: selectedControlBackground,
+  contrast: "color-mix(in oklab, currentColor 22%, transparent)",
+};
+
+const hoverOverlays = {
+  normal: cssVar("--overlay-interaction-hover"),
+  destructive: cssVar("--overlay-interaction-hover"),
+  contrast: cssVar("--overlay-on-inverse-hover"),
+};
+
+const pressedOverlays = {
+  normal: cssVar("--overlay-interaction-pressed"),
+  destructive: cssVar("--overlay-interaction-pressed"),
+  contrast: cssVar("--overlay-on-inverse-pressed"),
 };
 
 const perVariantStyle = (variant: (typeof smallButtonVariants)[number]) => ({
   color: defaultColors[variant],
 
+  "&[data-state=on]": {
+    color: hoverColors[variant],
+    background: selectedBackgrounds[variant],
+    borderRadius: theme.borderRadius[3],
+  },
+  "&[data-state=on]:hover": {
+    background: withInteractionOverlay(
+      selectedBackgrounds[variant],
+      hoverOverlays[variant]
+    ),
+  },
+  "&[data-state=on]:active": {
+    background: withInteractionOverlay(
+      selectedBackgrounds[variant],
+      pressedOverlays[variant]
+    ),
+  },
+
   "&:hover, &[data-state=open]": {
     color: hoverColors[variant],
 
     "&:disabled, &[data-disabled]": {
-      color: theme.colors.foregroundDisabled,
+      color: cssVar("--foreground-disabled"),
     },
   },
   "&[data-focused=true], &:focus-visible": {
@@ -61,7 +106,7 @@ const style = css({
   height: theme.spacing[9],
   position: "relative",
   "&:disabled, &[data-disabled]": {
-    color: theme.colors.foregroundDisabled,
+    color: cssVar("--foreground-disabled"),
   },
   variants: {
     variant: {

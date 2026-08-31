@@ -20,7 +20,7 @@ const debug = createDebug(import.meta.url);
 export const meta: MetaFunction<typeof loader> = () => {
   const metas: ReturnType<MetaFunction> = [];
 
-  metas.push({ title: "Webstudio Logout" });
+  metas.push({ title: "Webstudio logout" });
 
   return metas;
 };

@@ -179,6 +179,11 @@ test("awareness updates are coalesced into one microtask", async () => {
 test("pointer tracking is throttled to 8fps and keeps latest position", () => {
   vi.useFakeTimers();
   $selectedPageId.set("homePageId");
+  const originalFrameElement = window.frameElement;
+  Object.defineProperty(window, "frameElement", {
+    configurable: true,
+    value: null,
+  });
 
   const stop = startPointerTracking();
 
@@ -199,6 +204,10 @@ test("pointer tracking is throttled to 8fps and keeps latest position", () => {
   expect($pointerPosition.get()).toMatchObject({ x: 12, y: 22 });
 
   stop();
+  Object.defineProperty(window, "frameElement", {
+    configurable: true,
+    value: originalFrameElement,
+  });
 });
 
 test("pointer tracking maps iframe coordinates to parent viewport", () => {

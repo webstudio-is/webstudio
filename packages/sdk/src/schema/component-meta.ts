@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { HtmlTags } from "html-tags";
 import type { Simplify } from "type-fest";
 import { styleValue, type CssProperty } from "@webstudio-is/css-engine";
-import { propMeta } from "./prop-meta";
+import { propMeta, textContentPropMeta } from "./prop-meta";
 
 export const presetStyleDecl = z.object({
   // State selector, e.g. :hover
@@ -109,6 +109,8 @@ export const wsComponentMeta = z.object({
   // properties and html attributes that will be always visible in properties panel
   initialProps: z.array(z.string()).optional(),
   props: z.record(z.string(), propMeta).optional(),
+  // Editing metadata for authored text children; this is not a persisted prop.
+  textContent: textContentPropMeta.optional(),
 });
 
 export type WsComponentMeta = Omit<

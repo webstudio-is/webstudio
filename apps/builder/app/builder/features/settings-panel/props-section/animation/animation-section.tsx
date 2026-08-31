@@ -296,13 +296,13 @@ const AnimationConfig = ({
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
           <FieldLabel description={insetDescription}>
             {value.axis === "inline" || value.axis === "x"
-              ? "Left Inset"
-              : "Top Inset"}
+              ? "Left inset"
+              : "Top inset"}
           </FieldLabel>
           <FieldLabel description={insetDescription}>
             {value.axis === "inline" || value.axis === "x"
-              ? "Right Inset"
-              : "Bottom Inset"}
+              ? "Right inset"
+              : "Bottom inset"}
           </FieldLabel>
           <InsetValueInput
             value={value.insetStart ?? { type: "keyword", value: "auto" }}
@@ -431,7 +431,7 @@ export const AnimationSection = ({
         <AnimationsSelect
           action={
             <FloatingPanel
-              title="Advanced Animation"
+              title="Advanced animation"
               placement="bottom-within"
               content={
                 <AnimationConfig value={value} onChange={handleChange} />

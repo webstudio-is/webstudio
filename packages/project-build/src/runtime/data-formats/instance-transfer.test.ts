@@ -47,6 +47,7 @@ test("accepts optional source origin metadata", () => {
     JSON.stringify({
       "@webstudio/instance/v0.1": {
         sourceOrigin: "https://source.example.com",
+        assetPaths: { image: "media/hero.png" },
         instanceSelector: ["box", "body"],
         ...fragment,
       },
@@ -57,6 +58,9 @@ test("accepts optional source origin metadata", () => {
     owned: true,
     valid: true,
     type: "single-root",
-    data: { sourceOrigin: "https://source.example.com" },
+    data: {
+      sourceOrigin: "https://source.example.com",
+      assetPaths: { image: "media/hero.png" },
+    },
   });
 });

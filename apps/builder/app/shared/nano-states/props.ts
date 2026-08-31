@@ -10,6 +10,8 @@ import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   collectionComponent,
+  blockComponent,
+  contentBlockDocumentProp,
   portalComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
@@ -39,6 +41,10 @@ import {
   getResourceKey,
   preloadResources,
 } from "../resources";
+import {
+  $externalContentRoots,
+  findExternalContentRoot,
+} from "../external-content-mutations";
 
 export const assetBaseUrl = "/cgi/asset/";
 
@@ -46,6 +52,54 @@ export const getIndexedInstanceId = (
   instanceId: Instance["id"],
   index: number | string
 ) => `${instanceId}[${index}]`;
+
+const setContentBlockDocumentValue = ({
+  instance,
+  instanceSelector,
+  parameters,
+  propsByInstanceId,
+  variableValues,
+  externalContentRoots,
+}: {
+  instance: Instance;
+  instanceSelector: InstanceSelector;
+  parameters: ReadonlyMap<Prop["name"], DataSource["id"]>;
+  propsByInstanceId: ReadonlyMap<Instance["id"], readonly Prop[]>;
+  variableValues: Map<string, unknown>;
+  externalContentRoots: ReturnType<typeof $externalContentRoots.get>;
+}) => {
+  if (instance.component !== blockComponent) {
+    return;
+  }
+  const root =
+    findExternalContentRoot(
+      externalContentRoots,
+      instance.id,
+      JSON.stringify(instanceSelector)
+    ) ??
+    Array.from(externalContentRoots.values()).find(
+      (candidate) => candidate.blockInstanceId === instance.id
+    );
+  const sourceBlockInstanceId = root?.sourceBlockInstanceId ?? instance.id;
+  const documentProp = propsByInstanceId
+    .get(sourceBlockInstanceId)
+    ?.find(
+      (prop) =>
+        prop.name === contentBlockDocumentProp && prop.type === "parameter"
+    );
+  const documentParameterId =
+    parameters.get(contentBlockDocumentProp) ??
+    (documentProp?.type === "parameter" ? documentProp.value : undefined);
+  if (documentParameterId === undefined) {
+    return;
+  }
+  variableValues.delete(documentParameterId);
+  if (root?.frontmatter !== undefined) {
+    variableValues.set(documentParameterId, {
+      frontmatter: root.frontmatter,
+    });
+  }
+};
 
 /**
  * (arg1) => {
@@ -224,6 +278,7 @@ export const $propValuesByInstanceSelector = computed(
     $pages,
     $assets,
     $uploadingFilesDataStore,
+    $externalContentRoots,
   ],
   (
     instances,
@@ -232,7 +287,8 @@ export const $propValuesByInstanceSelector = computed(
     unscopedVariableValues,
     pages,
     assets,
-    uploadingFilesDataStore
+    uploadingFilesDataStore,
+    externalContentRoots
   ) => {
     // already includes global variables
     const variableValues = new Map<string, unknown>(unscopedVariableValues);
@@ -306,6 +362,15 @@ export const $propValuesByInstanceSelector = computed(
           propValues.set(prop.name, prop.value);
         }
       }
+
+      setContentBlockDocumentValue({
+        instance,
+        instanceSelector,
+        parameters,
+        propsByInstanceId,
+        variableValues,
+        externalContentRoots,
+      });
 
       propValuesByInstanceSelector.set(
         getInstanceKey(instanceSelector),
@@ -389,6 +454,7 @@ export const $variableValuesByInstanceSelector = computed(
     $resourceVariableValues,
     $resourcesCache,
     $currentSystem,
+    $externalContentRoots,
   ],
   (
     instances,
@@ -399,7 +465,8 @@ export const $variableValuesByInstanceSelector = computed(
     resources,
     resourceVariableValues,
     resourcesCache,
-    system
+    system,
+    externalContentRoots
   ) => {
     const propsByInstanceId = mapGroupBy(
       props.values(),
@@ -517,6 +584,15 @@ export const $variableValuesByInstanceSelector = computed(
       if (instance === undefined) {
         return;
       }
+
+      setContentBlockDocumentValue({
+        instance,
+        instanceSelector,
+        parameters,
+        propsByInstanceId,
+        variableValues,
+        externalContentRoots,
+      });
 
       if (instance.component === collectionComponent) {
         const originalData = propValues.get("data");

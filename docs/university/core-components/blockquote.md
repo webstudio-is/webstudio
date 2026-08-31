@@ -12,7 +12,7 @@ The Blockquote Component is used to highlight quoted content on a webpage, enhan
 
 ---
 
-### How to use the Blockquote Component
+## How to use the Blockquote component
 
 The "Blockquote" component can be found in Components > Text, and you can place it on your canvas by dragging and dropping it or clicking it in the Components panel. To edit the content of your Blockquote instance, simply double-click it.
 
@@ -20,7 +20,7 @@ Once the component is placed on your canvas, you can customize its appearance us
 
 For more on Design tokens in Webstudio, refer to [this guide](../foundations/design-tokens.md).
 
-### Styling a Blockquote
+## Styling a Blockquote
 
 By default, Blockquote components include padding on the left and right, along with a left border. You can customize these in the Style panel:
 
@@ -31,15 +31,16 @@ When using a Cite tag inside your blockquote, you may want to change its display
 
 ---
 
-### How to attribute a Blockquote
+## How to attribute a Blockquote
 
 It is a good practice to attribute the quoted text you use in a blockquote with the source's title, author, publication, URL, or any relevant information that identifies where the quote came from. This maintains transparency and credibility in your content. It also allows readers to verify the accuracy of the information and fosters ethical use of others' words.
 
 You can add an attribution or citation by using the “Cite” property in your Blockquote instance settings or with the “Cite” Tag from a Text component.
 
-#### Using the "Cite" Property
+### Using the Cite property
 
-<figure><img src="../../.gitbook/assets/blockquote-cite-property.avif" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/blockquote-cite-property.avif" alt="Blockquote Cite property in the Settings panel"><figcaption></figcaption></figure>
+
 
 If you want to include a URL link as a citation:
 
@@ -49,9 +50,10 @@ If you want to include a URL link as a citation:
 
 Please note that this value will not be visible to the end-user.
 
-#### Using the “Cite” Tag
+### Using the Cite tag
 
-<figure><img src="../../.gitbook/assets/blockquote-cite-tag.avif" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/blockquote-cite-tag.avif" alt="Cite tag selected for text inside a Blockquote"><figcaption></figcaption></figure>
+
 
 If you want to include a Name/Title as a citation alongside your Blockquote:
 

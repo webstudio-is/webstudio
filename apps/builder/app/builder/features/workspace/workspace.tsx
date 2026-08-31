@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
-import { theme, css } from "@webstudio-is/design-system";
+import { css, cssVar } from "@webstudio-is/design-system";
 import {
   $canvasWidth,
   $scale,
@@ -15,7 +15,14 @@ import { useSetCanvasWidth } from "~/builder/shared/calc-canvas-width";
 
 const workspaceStyle = css({
   flexGrow: 1,
-  background: theme.colors.backgroundCanvas,
+  background: `light-dark(
+    color-mix(in oklab, ${cssVar("--background-secondary")} 94%, ${cssVar(
+      "--foreground-primary"
+    )}),
+    color-mix(in oklab, ${cssVar("--background-primary")} 96%, ${cssVar(
+      "--foreground-primary"
+    )})
+  )`,
   position: "relative",
   // Prevent scrollIntoView from scrolling the whole page
   // Commented to see what it will break

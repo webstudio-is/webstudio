@@ -3,11 +3,13 @@ import { ByteLimitExceededError, readBytePrefix } from "../byte-stream";
 import { contentEngineLimits } from "../limits";
 import {
   assembleDocument,
+  getAdaptedDocumentProperties,
   parseDocumentSource,
+  resolveAdaptedDocumentAssetReferences,
   selectDocumentRepresentation,
   type AdaptedDocument,
-  type DocumentFormat,
 } from "./document-adapter";
+import type { DocumentFormat } from "./document-format";
 import {
   getDocumentGraphClosure,
   type DocumentGraph,
@@ -25,6 +27,10 @@ import {
   getDocumentGraphErrorCode,
   type DocumentGraphRuntimeObserver,
 } from "./observability";
+import type {
+  AssetRuntimeData,
+  AssetValueReferences,
+} from "../asset-value-references";
 
 export type DocumentResolutionLimitErrorCode =
   | "DOCUMENT_COUNT_EXCEEDED"
@@ -88,6 +94,10 @@ type ResolveDocumentGraphInput = {
   maximumDocuments?: number;
   onEvent?: DocumentGraphRuntimeObserver;
   allowUnresolvedReferences?: boolean;
+  transformDocument?: (input: {
+    node: DocumentGraphNode;
+    document: AdaptedDocument;
+  }) => AdaptedDocument;
 };
 
 export type DocumentResolutionSession = Readonly<{
@@ -163,6 +173,7 @@ const resolveWithSessionDocumentLoader = async ({
   signal,
   onEvent,
   allowUnresolvedReferences = false,
+  transformDocument,
   load,
 }: ResolveDocumentGraphInput & {
   concurrency: number;
@@ -246,12 +257,14 @@ const resolveWithSessionDocumentLoader = async ({
           document: value,
           representation: reference.representation,
         }),
-      assemble: ({ source, references }) =>
-        assembleDocument({
+      assemble: ({ node, source, references }) => {
+        const document = assembleDocument({
           document: source,
           references,
           allowUnresolvedReferences,
-        }),
+        });
+        return transformDocument?.({ node, document }) ?? document;
+      },
     });
     emitDocumentGraphRuntimeEvent(onEvent, {
       type: "resolution-completed",
@@ -423,6 +436,39 @@ export const createDocumentResolutionSession = ({
       });
     },
   });
+};
+
+/** Resolves one document's graph-backed properties and local Asset references. */
+export const resolveDocumentGraphProperties = async ({
+  graph,
+  rootId,
+  load,
+  assetValueReferences,
+  runtimeAssets,
+  concurrency = contentEngineLimits.concurrentContentReads,
+}: {
+  graph: DocumentGraph;
+  rootId: string;
+  load: DocumentSourceLoader;
+  assetValueReferences?: AssetValueReferences;
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+  concurrency?: number;
+}) => {
+  const resolution = await createDocumentResolutionSession({
+    load,
+    concurrency,
+  }).resolve({
+    graph,
+    rootIds: [rootId],
+    allowUnresolvedReferences: true,
+    transformDocument: ({ node, document }) =>
+      resolveAdaptedDocumentAssetReferences({
+        document,
+        references: assetValueReferences?.[node.id],
+        runtimeAssets,
+      }),
+  });
+  return getAdaptedDocumentProperties(resolution.roots[0]);
 };
 
 /** Resolves parsed JSON and Markdown values without depending on storage. */

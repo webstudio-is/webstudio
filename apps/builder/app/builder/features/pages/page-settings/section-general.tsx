@@ -2,18 +2,18 @@ import { type FocusEventHandler, useId } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Checkbox,
+  cssVar,
   Flex,
   Grid,
   InputErrorsTooltip,
   InputField,
   Label,
   Link,
+  LinkButton,
   ProChip,
   Select,
   Text,
   Tooltip,
-  buttonStyle,
-  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { isLiteralExpression } from "@webstudio-is/expression";
@@ -66,16 +66,14 @@ const PathField = ({
                     parameters and other features. You can publish to staging
                     for free; upgrade to Pro to publish to custom domains.
                   </Text>
-                  <Link
-                    className={buttonStyle({ color: "gradient" })}
+                  <LinkButton
+                    color="primary"
                     css={{ marginTop: theme.spacing[5], width: "100%" }}
-                    color="contrast"
-                    underline="none"
                     target="_blank"
                     href="https://webstudio.is/pricing"
                   >
                     Upgrade
-                  </Link>
+                  </LinkButton>
                 </>
               )}
             </>
@@ -83,7 +81,7 @@ const PathField = ({
           variant="wrapped"
         >
           <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
+            color={cssVar("--foreground-secondary")}
             tabIndex={-1}
           />
         </Tooltip>
@@ -146,7 +144,7 @@ const StatusField = ({
           variant="wrapped"
         >
           <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
+            color={cssVar("--foreground-secondary")}
             tabIndex={-1}
           />
         </Tooltip>
@@ -222,16 +220,14 @@ const RedirectField = ({
                     staging for free; upgrade to Pro to publish to custom
                     domains.
                   </Text>
-                  <Link
-                    className={buttonStyle({ color: "gradient" })}
+                  <LinkButton
+                    color="primary"
                     css={{ marginTop: theme.spacing[5], width: "100%" }}
-                    color="contrast"
-                    underline="none"
                     target="_blank"
                     href="https://webstudio.is/pricing"
                   >
                     Upgrade
-                  </Link>
+                  </LinkButton>
                 </>
               )}
             </>
@@ -239,7 +235,7 @@ const RedirectField = ({
           variant="wrapped"
         >
           <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
+            color={cssVar("--foreground-secondary")}
             tabIndex={-1}
           />
         </Tooltip>
@@ -347,14 +343,14 @@ export const GeneralSection = ({
               </>
             ) : canSetHomePage === false ? (
               <>
-                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <HomeIcon color={cssVar("--foreground-secondary")} />
                 <Text color="subtle">
                   Stage this page for publish before setting it as the home page
                 </Text>
               </>
             ) : values.parentFolderId !== pages.rootFolderId ? (
               <>
-                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <HomeIcon color={cssVar("--foreground-secondary")} />
                 <Text
                   css={{
                     overflowWrap: "anywhere",
@@ -369,7 +365,7 @@ export const GeneralSection = ({
               </>
             ) : values.documentType !== "html" ? (
               <>
-                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <HomeIcon color={cssVar("--foreground-secondary")} />
                 <Text
                   css={{
                     overflowWrap: "anywhere",

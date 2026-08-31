@@ -6,18 +6,17 @@ import {
   Grid,
   InputErrorsTooltip,
   InputField,
-  Link,
+  LinkButton,
   List,
   ListItem,
   ProChip,
-  rawTheme,
   ScrollArea,
   SearchField,
   SmallIconButton,
   Text,
   theme,
   Tooltip,
-  buttonStyle,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
@@ -35,6 +34,7 @@ import {
   parseProjectAuthRoutes,
   validateProjectAuthRoute,
 } from "@webstudio-is/project-build/contracts";
+import { ProjectSettingsDataRow } from "./data-row";
 
 const saveAuthRoutes = (authRoutes: WsAuthRoute[]) => {
   executeRuntimeMutation({
@@ -168,16 +168,14 @@ export const SectionAuth = () => {
                     Authentication is a Pro feature. You can publish to staging
                     for free; upgrade to Pro to publish to custom domains.
                   </Text>
-                  <Link
-                    className={buttonStyle({ color: "gradient" })}
+                  <LinkButton
+                    color="primary"
                     css={{ marginTop: theme.spacing[5], width: "100%" }}
-                    color="contrast"
-                    underline="none"
                     target="_blank"
                     href="https://webstudio.is/pricing"
                   >
                     Upgrade
-                  </Link>
+                  </LinkButton>
                 </>
               )}
             </>
@@ -185,7 +183,7 @@ export const SectionAuth = () => {
           variant="wrapped"
         >
           <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
+            color={cssVar("--foreground-secondary")}
             tabIndex={-1}
           />
         </Tooltip>
@@ -280,6 +278,7 @@ export const SectionAuth = () => {
         </InputErrorsTooltip>
 
         <Button
+          color="primary"
           disabled={
             routeErrors.length > 0 ||
             loginErrors.length > 0 ||
@@ -301,27 +300,11 @@ export const SectionAuth = () => {
                   const index = authRoutes.indexOf(authRoute);
                   return (
                     <ListItem asChild key={authRoute.route}>
-                      <Grid
+                      <ProjectSettingsDataRow
                         align="center"
                         gap="2"
                         css={{
-                          p: theme.spacing[3],
-                          overflow: "hidden",
                           gridTemplateColumns: "1fr 1fr",
-                          position: "relative",
-                          "& > button": {
-                            opacity: 0,
-                            position: "absolute",
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                            height: "auto",
-                            borderRadius: 0,
-                            background: theme.colors.backgroundPanel,
-                          },
-                          "&:hover > button, &:focus-within > button": {
-                            opacity: 1,
-                          },
                         }}
                       >
                         <Tooltip content={authRoute.route}>
@@ -343,7 +326,7 @@ export const SectionAuth = () => {
                           aria-label={`Delete authentication for ${authRoute.route}`}
                           onClick={() => handleDeleteAuthRoute(index)}
                         />
-                      </Grid>
+                      </ProjectSettingsDataRow>
                     </ListItem>
                   );
                 })}

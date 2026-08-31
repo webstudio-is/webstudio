@@ -1,12 +1,6 @@
 import { AlertIcon } from "@webstudio-is/icons";
 import { propertiesData, propertyStatuses } from "@webstudio-is/css-data";
-import {
-  Flex,
-  Link,
-  rawTheme,
-  Text,
-  Tooltip,
-} from "@webstudio-is/design-system";
+import { cssVar, Flex, Link, Text, Tooltip } from "@webstudio-is/design-system";
 
 type PropertyStatus = (typeof propertyStatuses)[keyof typeof propertyStatuses];
 
@@ -70,7 +64,7 @@ export const PropertyStatusIcon = ({ property }: { property: string }) => {
       as="span"
       align="center"
       aria-label={`${property} is ${details.status}`}
-      css={{ color: rawTheme.colors.backgroundAlertMain }}
+      css={{ color: cssVar("--foreground-warning") }}
     >
       <AlertIcon size={12} />
     </Flex>

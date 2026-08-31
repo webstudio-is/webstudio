@@ -12,10 +12,12 @@ import {
   theme,
   PanelBanner,
   Link,
-  buttonStyle,
+  LinkButton,
   Separator,
   Grid,
   IconButton,
+  cssVar,
+  selectionBackground,
 } from "@webstudio-is/design-system";
 import { BodyIcon } from "@webstudio-is/icons";
 import {
@@ -105,11 +107,11 @@ const sidebarLinkStyle = css({
   paddingInline: theme.panel.paddingInline,
   outline: "none",
   "&:focus-visible, &:hover": {
-    background: theme.colors.backgroundHover,
+    background: cssVar("--overlay-interaction-hover"),
   },
   "&[aria-current=page]": {
-    background: theme.colors.backgroundItemCurrent,
-    color: theme.colors.foregroundMain,
+    background: selectionBackground,
+    color: cssVar("--foreground-primary"),
   },
 });
 
@@ -257,12 +259,17 @@ export const Dashboard = () => {
 
   return (
     <TooltipProvider>
-      <Flex css={{ height: "100vh" }}>
+      <Flex
+        css={{
+          height: "100vh",
+          background: cssVar("--background-primary"),
+        }}
+      >
         <Grid
           as="aside"
           css={{
             width: theme.sizes.sidebarWidth,
-            borderRight: `1px solid ${theme.colors.borderMain}`,
+            borderRight: `1px solid ${cssVar("--border-default")}`,
             position: "sticky",
             top: 0,
             gridTemplateRows: `auto auto auto 1fr`,
@@ -310,26 +317,22 @@ export const Dashboard = () => {
               </CollapsibleSection>
             )}
           </nav>
-          <div>
+          <Box css={{ paddingTop: theme.spacing[5] }}>
             <PanelBanner variant="neutral">
               <Text variant="titles">Inception is live</Text>
               <Text color="subtle">
                 An AI-powered design tool to explore ideas and instantly
                 generate HTML/CSS for Webstudio Builder or any other platform.
               </Text>
-              <Link
-                className={buttonStyle({
-                  color: "gradient",
-                })}
-                underline="none"
+              <LinkButton
+                color="primary"
                 href="https://wstd.us/inception"
                 target="_blank"
-                color="contrast"
               >
                 Get started with Inception
-              </Link>
+              </LinkButton>
             </PanelBanner>
-          </div>
+          </Box>
           <CollapsibleSection label="Help & support" fullWidth>
             <NavigationItems
               items={help.map((item) => ({

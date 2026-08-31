@@ -12,6 +12,7 @@ import {
 import { useStore } from "@nanostores/react";
 import {
   Button,
+  cssVar,
   Tooltip,
   IconButton,
   Grid,
@@ -26,8 +27,8 @@ import {
   theme,
   TextArea,
   Link,
+  LinkButton,
   PanelBanner,
-  buttonStyle,
   toast,
   RadioGroup,
   Popover,
@@ -55,7 +56,7 @@ import {
   $stagingUsername,
   $stagingPassword,
 } from "~/shared/nano-states";
-import { $publisherHost } from "~/shared/sync/data-stores";
+import { $assets, $publisherHost } from "~/shared/sync/data-stores";
 import {
   $publishDialog,
   setActiveSidebarPanel,
@@ -104,6 +105,7 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { showContentDatabasePublishWarning } from "./content-database-publish-warning";
 import { showPublishWarning } from "./publish-warning";
+import { flushExternalContentProject } from "~/shared/external-content-roots";
 
 const PrePublishAuditMessage = ({
   finding,
@@ -173,6 +175,7 @@ const getPrePublishAuditMessages = () => {
     props: $props.get(),
     dataSources: $dataSources.get(),
     resources: $resources.get(),
+    assets: $assets.get(),
     metas: $registeredComponentMetas.get(),
   });
   const getMessage = (severity: PrePublishAuditFinding["severity"]) => {
@@ -290,8 +293,8 @@ const ChangeProjectDomain = ({
                 height: theme.sizes.controlHeight,
                 color:
                   error !== undefined || status === "FAILED"
-                    ? theme.colors.foregroundDestructive
-                    : theme.colors.foregroundSuccessText,
+                    ? cssVar("--foreground-negative")
+                    : cssVar("--foreground-positive"),
               }}
             >
               {error !== undefined || status === "FAILED" ? (
@@ -324,7 +327,7 @@ const ChangeProjectDomain = ({
               <InfoCircleIcon
                 tabIndex={0}
                 style={{ flexShrink: 0 }}
-                color={rawTheme.colors.foregroundSubtle}
+                color={cssVar("--foreground-secondary")}
               />
             </Tooltip>
           </Flex>
@@ -383,7 +386,7 @@ const ChangeProjectDomain = ({
                 <InfoCircleIcon
                   tabIndex={0}
                   style={{ flexShrink: 0 }}
-                  color={rawTheme.colors.foregroundSubtle}
+                  color={cssVar("--foreground-secondary")}
                 />
               </Tooltip>
             </Flex>
@@ -629,20 +632,6 @@ const Publish = ({
     setPublishError(undefined);
     setPublishWarning(undefined);
 
-    const { error: auditError, warning: auditWarning } =
-      getPrePublishAuditMessages();
-    if (auditError !== undefined) {
-      toast.error(auditError);
-      setPublishError(auditError);
-      return;
-    }
-    if (auditWarning !== undefined) {
-      showPublishWarning({
-        message: auditWarning,
-        setWarning: setPublishWarning,
-      });
-    }
-
     // Custom domain checkboxes are disabled on free plan so they are never
     // submitted — only the staging (wstd.io) domain can appear in formData.
     const domains = formData
@@ -658,6 +647,20 @@ const Publish = ({
       setIsPublishing(true);
 
       try {
+        await flushExternalContentProject({ projectId: project.id });
+        const { error: auditError, warning: auditWarning } =
+          getPrePublishAuditMessages();
+        if (auditError !== undefined) {
+          toast.error(auditError);
+          setPublishError(auditError);
+          return;
+        }
+        if (auditWarning !== undefined) {
+          showPublishWarning({
+            message: auditWarning,
+            setWarning: setPublishWarning,
+          });
+        }
         await showContentDatabasePublishWarning({
           projectId: project.id,
           setWarning: setPublishWarning,
@@ -710,7 +713,7 @@ const Publish = ({
               handlePublish(new FormData(form));
             }
           }}
-          color="positive"
+          color="primary"
           state={showPendingState ? "pending" : undefined}
           disabled={
             hasSelectedDomains === false ||
@@ -800,7 +803,7 @@ const PublishStatic = ({
       >
         <Button
           type="button"
-          color="positive"
+          color="primary"
           state={isPublishInProgress ? "pending" : undefined}
           onClick={() => {
             setPublishError(undefined);
@@ -968,15 +971,13 @@ const UpgradeBanner = ({ hasCustomDomains }: { hasCustomDomains: boolean }) => {
         <Text variant="regularBold">
           Upgrade to publish more than {maxDailyPublishesPerUser} times per day:
         </Text>
-        <Link
-          className={buttonStyle({ color: "gradient" })}
-          color="contrast"
-          underline="none"
+        <LinkButton
+          color="primary"
           href="https://webstudio.is/pricing"
           target="_blank"
         >
           Upgrade
-        </Link>
+        </LinkButton>
       </PanelBanner>
     );
   }
@@ -1130,7 +1131,7 @@ const Content = (props: {
         {hasUnpublishedDomains && (
           <PanelBanner>
             <Flex align="center" gap="1">
-              <InfoCircleIcon color={rawTheme.colors.foregroundMain} />
+              <InfoCircleIcon color={cssVar("--foreground-primary")} />
               <Text variant="regularBold">Don't forget to publish</Text>
             </Flex>
             <Text>
@@ -1298,7 +1299,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
                 value={npxCommand}
               />
               <CopyToClipboard text={npxCommand}>
-                <Button type="button" color="neutral" prefix={<CopyIcon />}>
+                <Button type="button" prefix={<CopyIcon />}>
                   Copy
                 </Button>
               </CopyToClipboard>
@@ -1336,7 +1337,6 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
                 <Button
                   type="button"
                   css={{ flexShrink: 0 }}
-                  color="neutral"
                   prefix={<CopyIcon />}
                 >
                   Copy
@@ -1400,18 +1400,13 @@ export const PublishButton = ({ projectId }: PublishProps) => {
         sideOffset={Number.parseFloat(rawTheme.spacing[5])}
       >
         <PopoverTrigger asChild>
-          <Button
-            type="button"
-            disabled={isPublishEnabled === false}
-            color="positive"
-          >
+          <Button type="button" disabled={isPublishEnabled === false}>
             Publish
           </Button>
         </PopoverTrigger>
       </Tooltip>
 
       <PopoverContent
-        sideOffset={Number.parseFloat(rawTheme.spacing[8])}
         css={{
           width: theme.spacing[33],
           maxWidth: theme.spacing[33],
@@ -1451,3 +1446,5 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     </Popover>
   );
 };
+
+undefined;

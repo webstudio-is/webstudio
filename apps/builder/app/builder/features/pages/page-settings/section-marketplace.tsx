@@ -3,6 +3,7 @@ import { useStore } from "@nanostores/react";
 import {
   Box,
   Button,
+  cssVar,
   Grid,
   InputField,
   Label,
@@ -81,7 +82,7 @@ export const MarketplaceSection = ({
             })
           }
         >
-          <Button color="neutral" css={{ justifySelf: "start" }}>
+          <Button css={{ justifySelf: "start" }}>
             Choose thumbnail from assets
           </Button>
         </ImageControl>
@@ -103,7 +104,7 @@ export const MarketplaceSection = ({
           css={{
             padding: theme.spacing[5],
             borderRadius: theme.borderRadius[4],
-            border: `1px solid ${theme.colors.borderMain}`,
+            border: `1px solid ${cssVar("--border-default")}`,
             justifySelf: "start",
           }}
         >

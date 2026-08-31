@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Box, Flex, Progress, theme } from "@webstudio-is/design-system";
+import {
+  Box,
+  cssVar,
+  Flex,
+  Progress,
+  theme,
+  webstudioBrand,
+} from "@webstudio-is/design-system";
 import { WebstudioIcon } from "@webstudio-is/icons";
 import { useInterval } from "~/shared/hook-utils/use-interval";
 
@@ -24,7 +31,7 @@ export const LoadingBackground = ({
         transitionDuration: "300ms",
         pointerEvents: "none",
         transitionProperty: "opacity",
-        backgroundColor: theme.colors.backgroundTopbar,
+        backgroundColor: cssVar("--background-primary"),
         opacity: show ? 1 : 0,
         isolation: "isolate",
       }}
@@ -74,7 +81,6 @@ export const Loading = ({ state }: { state: LoadingState }) => {
       css={{
         position: "absolute",
         inset: 0,
-        top: theme.spacing[15],
         pointerEvents: "none",
         zIndex: 0,
       }}
@@ -86,16 +92,37 @@ export const Loading = ({ state }: { state: LoadingState }) => {
         }}
       />
       {state.state !== "ready" && (
-        <Flex
-          direction="column"
-          align="center"
-          justify="center"
-          gap="3"
-          css={{ isolation: "isolate" }}
+        <Box
+          css={{
+            isolation: "isolate",
+            position: "absolute",
+            inset: 0,
+          }}
         >
-          <WebstudioIcon size={60} />
-          <Progress value={fakeProgress} />
-        </Flex>
+          <Box
+            css={{
+              position: "absolute",
+              bottom: `calc(50% + ${theme.spacing[10]})`,
+              left: "50%",
+              display: "flex",
+              transform: "translateX(-50%)",
+            }}
+          >
+            <WebstudioIcon size={60} />
+          </Box>
+          <Progress
+            value={fakeProgress}
+            css={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              background: cssVar("--background-primary"),
+              boxShadow: webstudioBrand.progressShadow,
+            }}
+            indicatorCss={{ background: webstudioBrand.progressGradient }}
+          />
+        </Box>
       )}
     </Flex>
   );

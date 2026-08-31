@@ -19,6 +19,7 @@ import { useStore } from "@nanostores/react";
 import { logoutPath, planSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
 import { $purchases } from "~/shared/nano-states";
+import { ColorSchemeMenu } from "~/shared/color-scheme-menu";
 
 const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
@@ -38,7 +39,7 @@ const ProfileButton = forwardRef<
     <Flex gap="2" align="center">
       <Button
         color="ghost"
-        aria-label="Profile Menu"
+        aria-label="Profile menu"
         {...rest}
         ref={forwardedRef}
         prefix={
@@ -76,7 +77,7 @@ export const ProfileMenu = ({ user }: { user: User }) => {
           hasPurchases={purchases.length > 0}
         />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" width="regular">
+      <DropdownMenuContent align="start" sideOffset={4} width="regular">
         <DropdownMenuLabel>
           {user.username ?? defaultUserName}
           <Text>{user.email}</Text>
@@ -100,7 +101,7 @@ export const ProfileMenu = ({ user }: { user: User }) => {
               {purchase.planName}
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuLabel key={index}>
+            <DropdownMenuLabel key={index} css={{ fontWeight: "normal" }}>
               {purchase.planName}
             </DropdownMenuLabel>
           )
@@ -117,8 +118,10 @@ export const ProfileMenu = ({ user }: { user: User }) => {
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
+        <ColorSchemeMenu />
+        <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
-          Sign Out
+          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

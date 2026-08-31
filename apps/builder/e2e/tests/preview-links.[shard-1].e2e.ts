@@ -1,4 +1,4 @@
-import type { Locator } from "playwright";
+import type { Locator } from "@playwright/test";
 import { openBuilderUrl, waitForCanvasFrame } from "../flows/builder";
 import {
   expectGeneratedAppNavigation,
@@ -6,7 +6,7 @@ import {
 } from "../flows/generated-app";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { insertAuthorizationToken, loadDevBuild, updateBuild } from "../db";
-import { getProjectBuilderUrl, newIsolatedPage, test } from "../harness";
+import { getProjectBuilderUrl, test, withBrowserContext } from "../test";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
 
 type PageData = {
@@ -298,132 +298,128 @@ const preparePreviewLinksProject = async () => {
   });
 };
 
-test.beforeAll(async () => {
-  fixture = await createContentModeProject({
-    email: "preview-links-e2e@webstudio.test",
-    title: "Preview Links E2E",
-    assetNamePrefix: "preview-links-",
-    editorToken: "preview-links-e2e-editor-token",
-    builderToken: "preview-links-e2e-builder-token",
+test.beforeAll(async ({ browser }) => {
+  await withBrowserContext(browser, async (context) => {
+    fixture = await createContentModeProject({
+      context,
+      email: "preview-links-e2e@webstudio.test",
+      title: "Preview Links E2E",
+      assetNamePrefix: "preview-links-",
+      editorToken: "preview-links-e2e-editor-token",
+      builderToken: "preview-links-e2e-builder-token",
+    });
+    await preparePreviewLinksProject();
   });
-  await preparePreviewLinksProject();
 });
 
-test("Preview links expose current page state for components and element anchors", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Preview links expose current page state for components and element anchors", async ({
+  page,
+}) => {
+  await openBuilderUrl({ page, url: getPreviewUrl({}) });
+  let canvas = await waitForCanvasFrame({ page });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.homeLink,
+    active: true,
+  });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.pageLink,
+    active: false,
+  });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.richTextLink,
+    active: false,
+  });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.pageAnchor,
+    active: false,
+  });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.pageQueryLink,
+    active: false,
+  });
 
-  try {
-    await openBuilderUrl({ page, url: getPreviewUrl({}) });
-    let canvas = await waitForCanvasFrame({ page });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.homeLink,
-      active: true,
-    });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.pageLink,
-      active: false,
-    });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.richTextLink,
-      active: false,
-    });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.pageAnchor,
-      active: false,
-    });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.pageQueryLink,
-      active: false,
-    });
+  await canvas.getByRole("link", { name: previewLinkText.pageLink }).click();
+  canvas = await waitForCanvasFrame({ page });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.homeLink,
+    active: false,
+  });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.pageLink,
+    active: true,
+  });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.richTextLink,
+    active: true,
+  });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.pageAnchor,
+    active: true,
+  });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.pageQueryLink,
+    active: false,
+  });
 
-    await canvas.getByRole("link", { name: previewLinkText.pageLink }).click();
-    canvas = await waitForCanvasFrame({ page });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.homeLink,
-      active: false,
-    });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.pageLink,
-      active: true,
-    });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.richTextLink,
-      active: true,
-    });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.pageAnchor,
-      active: true,
-    });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.pageQueryLink,
-      active: false,
-    });
+  await canvas
+    .getByRole("link", { name: previewLinkText.pageQueryLink })
+    .click();
+  canvas = await waitForCanvasFrame({ page });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.pageLink,
+    active: false,
+  });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.richTextLink,
+    active: false,
+  });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.pageAnchor,
+    active: false,
+  });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.pageQueryLink,
+    active: true,
+  });
 
-    await canvas
-      .getByRole("link", { name: previewLinkText.pageQueryLink })
-      .click();
-    canvas = await waitForCanvasFrame({ page });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.pageLink,
-      active: false,
-    });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.richTextLink,
-      active: false,
-    });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.pageAnchor,
-      active: false,
-    });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.pageQueryLink,
-      active: true,
-    });
-
-    await openBuilderUrl({
-      page,
-      url: getPreviewUrl({ pageId: previewPageId, hash: "#section" }),
-    });
-    canvas = await waitForCanvasFrame({ page });
-    await expectActiveLink({
-      canvas,
-      text: previewLinkText.hashLink,
-      active: true,
-    });
-  } finally {
-    await close();
-  }
+  await openBuilderUrl({
+    page,
+    url: getPreviewUrl({ pageId: previewPageId, hash: "#section" }),
+  });
+  canvas = await waitForCanvasFrame({ page });
+  await expectActiveLink({
+    canvas,
+    text: previewLinkText.hashLink,
+    active: true,
+  });
 });
 
-test("Generated preview renders and navigates linked routes", async () => {
-  const { page, close } = await newIsolatedPage();
-  try {
-    await expectGeneratedAppToRender({
-      projectId: fixture.projectId,
-      path: "/my-page",
-      expectedText: previewLinkText.pageLink,
-    });
-    await expectGeneratedAppNavigation({
-      projectId: fixture.projectId,
-      page,
-      linkText: previewLinkText.pageLink,
-      targetPath: "/my-page",
-    });
-  } finally {
-    await close();
-  }
+test("Generated preview renders and navigates linked routes", async ({
+  page,
+}) => {
+  await expectGeneratedAppToRender({
+    projectId: fixture.projectId,
+    path: "/my-page",
+    expectedText: previewLinkText.pageLink,
+  });
+  await expectGeneratedAppNavigation({
+    projectId: fixture.projectId,
+    page,
+    linkText: previewLinkText.pageLink,
+    targetPath: "/my-page",
+  });
 });

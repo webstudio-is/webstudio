@@ -8,15 +8,15 @@ import {
   styled,
   Tooltip,
   SmallIconButton,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
 import { type FocusEventHandler, useState, useRef, useEffect } from "react";
-import { theme } from "@webstudio-is/design-system";
 import { $authPermit } from "~/shared/nano-states";
 
 const MenuButton = styled(SmallIconButton, {
   "&:hover, &:focus-visible": {
-    color: theme.colors.foregroundMain,
+    color: cssVar("--foreground-primary"),
   },
 });
 

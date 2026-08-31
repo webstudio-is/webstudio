@@ -70,6 +70,14 @@ export const data = async (pageContext: PageContextServer) => {
     getResources({ system }).data,
     url
   );
+  Object.assign(
+    resources,
+    await loadResources(
+      customFetch,
+      getResources({ system, resources }).contentData ?? new Map(),
+      url
+    )
+  );
   const pageMeta = getPageMeta({ system, resources });
 
   return {

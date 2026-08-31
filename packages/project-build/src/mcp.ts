@@ -9,6 +9,7 @@ import {
   inputJsonSchemaAcceptsType,
   parseComponentName,
   toInputJsonSchemaObject,
+  type ContentBlockDiagnostic,
   type InputJsonSchema,
   type InputJsonSchemaValue,
 } from "@webstudio-is/sdk";
@@ -299,6 +300,21 @@ export type ProjectSessionDownloadAssetInput = {
 export type ProjectSessionDownloadAssetResult = {
   assetId: string;
   path: string;
+  source?: string;
+  diagnostics?: readonly (
+    | ContentBlockDiagnostic
+    | Readonly<{
+        code: "invalid-mdx" | "unsafe-mdx";
+        severity: "error" | "warning";
+        message: string;
+        nodeType?: string;
+        reason?: string;
+        sourceRange?: Readonly<{
+          start: Readonly<{ line: number; column: number; offset?: number }>;
+          end: Readonly<{ line: number; column: number; offset?: number }>;
+        }>;
+      }>
+  )[];
 };
 
 type DownloadAsset = (
@@ -338,17 +354,66 @@ const emptyInputSchema = {
   additionalProperties: false,
 } as const satisfies ProjectSessionMcpInputSchema;
 
-const textInputSchema = (description: string) =>
-  ({
-    ...emptyInputSchema,
-    properties: {
-      brief: {
-        type: "string",
-        description,
-      },
+const taskScopes = [
+  "read-only-audit",
+  "small-value-or-reference-correction",
+  "focused-page-change",
+  "visual-change",
+  "structural-project-change",
+  "project-wide-migration",
+] as const;
+
+type TaskScope = (typeof taskScopes)[number];
+
+const metaGuideWorkflows = [
+  "general",
+  "markdown-blog",
+  "json-ld",
+  "collection",
+  "expression",
+  "authenticated-page",
+  "font-assets",
+  "design-input",
+  "craft",
+] as const;
+
+type MetaGuideWorkflow = (typeof metaGuideWorkflows)[number];
+type SpecializedMetaGuideWorkflow = Exclude<MetaGuideWorkflow, "general">;
+
+const metaGuideInputSchema = {
+  ...emptyInputSchema,
+  properties: {
+    brief: {
+      type: "string",
+      description: "Short user goal, for example: publish a site.",
     },
-    required: ["brief"],
-  }) as const satisfies ProjectSessionMcpInputSchema;
+    taskScope: {
+      type: "string",
+      enum: taskScopes,
+      description:
+        "Explicit scope; use read-only-audit when no project or local state may change. Never inferred from brief.",
+      default: "focused-page-change",
+    },
+    workflow: {
+      type: "string",
+      enum: metaGuideWorkflows,
+      description: "Explicit specialized workflow. Never inferred from brief.",
+      default: "general",
+    },
+    authoredFragment: {
+      type: "boolean",
+      description: "Whether the change uses an authored fragment.",
+      default: false,
+    },
+    reuseDesignSystem: {
+      type: "boolean",
+      description:
+        "With authoredFragment, retain design-system discovery tools.",
+      default: false,
+    },
+  },
+  required: ["brief"],
+} as const satisfies ProjectSessionMcpInputSchema;
 
 const metaIndexInputSchema = {
   type: "object",
@@ -1621,7 +1686,7 @@ const importInputSchema = {
 const downloadAssetInputSchema = {
   ...emptyInputSchema,
   description:
-    "Download one project asset to the local filesystem and return its absolute path.",
+    "Download one project Asset. MDX results also include source and diagnostics.",
   properties: {
     assetId: {
       type: "string",
@@ -1687,7 +1752,23 @@ export const mcpArgumentExamples: Record<
   string,
   readonly Readonly<Record<string, unknown>>[]
 > = {
-  "meta.guide": [{ brief: "Create a pricing page and style the hero" }],
+  "meta.guide": [
+    {
+      brief: "Create a pricing page and style the hero",
+      taskScope: "visual-change",
+      workflow: "general",
+    },
+    {
+      brief: "Inventory custom code without changing the project",
+      taskScope: "read-only-audit",
+      workflow: "general",
+    },
+    {
+      brief: "Recreate a supplied design as a responsive page",
+      taskScope: "visual-change",
+      workflow: "design-input",
+    },
+  ],
   "inspect-auth-context": [{}],
   "inspect-design-context": [{}],
   "verify-font-assets": [{ assetIds: ["asset-regular", "asset-bold"] }],
@@ -2635,10 +2716,8 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "meta.guide",
     description:
-      'Return a recommended workflow and relevant tools for a user goal. Pass a string brief, for example {"brief":"Create a design system page using every component"}.',
-    inputSchema: textInputSchema(
-      "Short user goal, for example: publish a site."
-    ),
+      'Return a workflow and tools for a user goal. Pass taskScope and workflow explicitly; use taskScope:"read-only-audit" when no state may change. Brief text only ranks general tool discovery.',
+    inputSchema: metaGuideInputSchema,
     annotations: {
       command: "meta.guide",
       operationId: "meta.guide",
@@ -3283,13 +3362,52 @@ const importTool = createProjectSessionMcpTool({
 const downloadAssetTool = createProjectSessionMcpTool({
   name: "download-asset",
   description:
-    "Download one project asset into .webstudio/assets or a specified directory and return its local path.",
+    "Download one project Asset. MDX includes source and diagnostics.",
   inputSchema: downloadAssetInputSchema,
   outputSchema: getMcpOutputSchema({
     type: "object",
     properties: {
       assetId: { type: "string" },
       path: { type: "string" },
+      source: { type: "string" },
+      diagnostics: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            code: { type: "string", enum: ["invalid-mdx", "unsafe-mdx"] },
+            severity: { type: "string", enum: ["error", "warning"] },
+            message: { type: "string" },
+            nodeType: { type: "string" },
+            reason: { type: "string" },
+            sourceRange: {
+              type: "object",
+              properties: {
+                start: {
+                  type: "object",
+                  properties: {
+                    line: { type: "number" },
+                    column: { type: "number" },
+                    offset: { type: "number" },
+                  },
+                  required: ["line", "column"],
+                },
+                end: {
+                  type: "object",
+                  properties: {
+                    line: { type: "number" },
+                    column: { type: "number" },
+                    offset: { type: "number" },
+                  },
+                  required: ["line", "column"],
+                },
+              },
+              required: ["start", "end"],
+            },
+          },
+          required: ["code", "severity", "message"],
+        },
+      },
     },
     required: ["assetId", "path"],
     additionalProperties: false,
@@ -3810,6 +3928,56 @@ const getRequiredStringInput = (
 const getBrief = (input: unknown, toolName: string) =>
   getOptionalStringInput(input, "brief", toolName);
 
+const getOptionalBooleanInput = (
+  input: unknown,
+  field: string,
+  toolName: string
+) => {
+  if (isRecord(input) === false || field in input === false) {
+    return false;
+  }
+  const value = input[field];
+  if (typeof value !== "boolean") {
+    throw new Error(
+      `${toolName} input.${field} must be a boolean when provided. Received ${Array.isArray(value) ? "array" : typeof value}.`
+    );
+  }
+  return value;
+};
+
+const getMetaGuideInput = (input: unknown) => {
+  const taskScope =
+    getOptionalStringInput(input, "taskScope", "meta.guide") ||
+    "focused-page-change";
+  if (taskScopes.includes(taskScope as TaskScope) === false) {
+    throw new Error(
+      `meta.guide input.taskScope must be one of ${taskScopes.join(", ")}.`
+    );
+  }
+  const workflow =
+    getOptionalStringInput(input, "workflow", "meta.guide") || "general";
+  if (metaGuideWorkflows.includes(workflow as MetaGuideWorkflow) === false) {
+    throw new Error(
+      `meta.guide input.workflow must be one of ${metaGuideWorkflows.join(", ")}.`
+    );
+  }
+  return {
+    brief: getBrief(input, "meta.guide"),
+    taskScope: taskScope as TaskScope,
+    workflow: workflow as MetaGuideWorkflow,
+    authoredFragment: getOptionalBooleanInput(
+      input,
+      "authoredFragment",
+      "meta.guide"
+    ),
+    reuseDesignSystem: getOptionalBooleanInput(
+      input,
+      "reuseDesignSystem",
+      "meta.guide"
+    ),
+  };
+};
+
 const getToolNamesInput = (input: unknown) => {
   if (isRecord(input) === false || "tools" in input === false) {
     return [];
@@ -4156,7 +4324,7 @@ const updateDiscoveryTokens = ["change", "edit", "update"] as const;
 const isDestructiveDiscoveryTool = (toolName: string) =>
   toolName.startsWith("delete-") || toolName.startsWith("detach-");
 
-const mutationDiscoveryIntentRules = [
+const mutationToolSearchRules = [
   { tokens: updateDiscoveryTokens, toolNamePrefixes: ["update-"] },
   { tokens: replaceDiscoveryTokens, toolNamePrefixes: ["replace-"] },
   { tokens: moveDiscoveryTokens, toolNamePrefixes: ["move-"] },
@@ -4229,6 +4397,8 @@ const hasDiscoverySubject = (
   );
 
 const scoreTool = (tool: ProjectSessionMcpTool, brief: string) => {
+  // Free text is used only to rank discovery results. It must never determine
+  // task scope, workflow, permissions, safety, execution, or verification.
   const normalizedBrief = normalize(brief);
   if (normalizedBrief.trim().length === 0) {
     return 0;
@@ -4236,13 +4406,16 @@ const scoreTool = (tool: ProjectSessionMcpTool, brief: string) => {
   const tokens = new Set(
     normalizedBrief.split(/\s+/).filter((token) => token.length > 0)
   );
-  const hasDestructiveIntent = hasAnyToken(tokens, destructiveDiscoveryTokens);
-  const hasCreateIntent = hasAnyToken(tokens, createDiscoveryTokens);
-  const hasFindIntent = hasAnyToken(tokens, findDiscoveryTokens);
-  const hasGetIntent = hasAnyToken(tokens, getDiscoveryTokens);
-  const hasStatusIntent = hasAnyToken(tokens, statusDiscoveryTokens);
-  const matchingMutationIntentRules = mutationDiscoveryIntentRules.filter(
-    (rule) => hasAnyToken(tokens, rule.tokens)
+  const hasDestructiveSearchTerm = hasAnyToken(
+    tokens,
+    destructiveDiscoveryTokens
+  );
+  const hasCreateSearchTerm = hasAnyToken(tokens, createDiscoveryTokens);
+  const hasFindSearchTerm = hasAnyToken(tokens, findDiscoveryTokens);
+  const hasGetSearchTerm = hasAnyToken(tokens, getDiscoveryTokens);
+  const hasStatusSearchTerm = hasAnyToken(tokens, statusDiscoveryTokens);
+  const matchingMutationSearchRules = mutationToolSearchRules.filter((rule) =>
+    hasAnyToken(tokens, rule.tokens)
   );
   const hasComponentSubject = hasDiscoverySubject(tokens, ["component"]);
   const hasCoverageSubject = hasDiscoverySubject(tokens, ["coverage"]);
@@ -4255,11 +4428,14 @@ const scoreTool = (tool: ProjectSessionMcpTool, brief: string) => {
     "instance",
     "section",
   ]);
-  if (isDestructiveDiscoveryTool(tool.name) && hasDestructiveIntent === false) {
+  if (
+    isDestructiveDiscoveryTool(tool.name) &&
+    hasDestructiveSearchTerm === false
+  ) {
     return 0;
   }
   if (
-    hasDestructiveIntent &&
+    hasDestructiveSearchTerm &&
     tool.annotations.method === "mutation" &&
     isDestructiveDiscoveryTool(tool.name) === false
   ) {
@@ -4267,7 +4443,7 @@ const scoreTool = (tool: ProjectSessionMcpTool, brief: string) => {
   }
   if (
     tool.annotations.method === "mutation" &&
-    matchingMutationIntentRules.some(
+    matchingMutationSearchRules.some(
       (rule) => hasToolNamePrefix(tool.name, rule.toolNamePrefixes) === false
     )
   ) {
@@ -4275,14 +4451,14 @@ const scoreTool = (tool: ProjectSessionMcpTool, brief: string) => {
   }
   if (
     hasComponentSubject &&
-    (hasFindIntent || hasGetIntent || hasCoverageSubject) &&
+    (hasFindSearchTerm || hasGetSearchTerm || hasCoverageSubject) &&
     tool.annotations.method === "mutation"
   ) {
     return 0;
   }
   const toolName = normalize(tool.name);
   if (
-    hasDestructiveIntent &&
+    hasDestructiveSearchTerm &&
     hasDesignTokenSubject &&
     hasStyleSubject === false &&
     hasInstanceSubject === false &&
@@ -4292,7 +4468,7 @@ const scoreTool = (tool: ProjectSessionMcpTool, brief: string) => {
   ) {
     return 0;
   }
-  if (hasDestructiveIntent && isDestructiveDiscoveryTool(tool.name)) {
+  if (hasDestructiveSearchTerm && isDestructiveDiscoveryTool(tool.name)) {
     for (const contextToken of destructiveContextTokens) {
       if (
         hasDiscoveryTokenVariant(normalizedBrief, contextToken) &&
@@ -4322,8 +4498,8 @@ const scoreTool = (tool: ProjectSessionMcpTool, brief: string) => {
   }
   if (
     tool.name === "insert-fragment" &&
-    hasFindIntent === false &&
-    hasGetIntent === false &&
+    hasFindSearchTerm === false &&
+    hasGetSearchTerm === false &&
     hasCoverageSubject === false &&
     hasAnyToken(tokens, [
       "insert",
@@ -4336,24 +4512,24 @@ const scoreTool = (tool: ProjectSessionMcpTool, brief: string) => {
   ) {
     score += 80;
   }
-  if (hasFindIntent && tool.name === "components.search") {
+  if (hasFindSearchTerm && tool.name === "components.search") {
     score += 120;
   }
-  if (hasFindIntent && tool.name === "components.find") {
+  if (hasFindSearchTerm && tool.name === "components.find") {
     score += 100;
   }
-  if (hasGetIntent && tool.name === "components.get") {
+  if (hasGetSearchTerm && tool.name === "components.get") {
     score += 100;
   }
   if (
     hasCoverageSubject &&
-    hasStatusIntent &&
+    hasStatusSearchTerm &&
     tool.name === "components.coverage-status"
   ) {
     score += 150;
   } else if (
     hasCoverageSubject &&
-    hasStatusIntent === false &&
+    hasStatusSearchTerm === false &&
     tool.name === "components.coverage-plan"
   ) {
     score += 150;
@@ -4364,7 +4540,7 @@ const scoreTool = (tool: ProjectSessionMcpTool, brief: string) => {
     score += 100;
   }
   if (
-    hasCreateIntent &&
+    hasCreateSearchTerm &&
     tool.name.startsWith("define-") &&
     (tool.name.startsWith("define-css-") === false || tokens.has("css"))
   ) {
@@ -4388,7 +4564,7 @@ const scoreTool = (tool: ProjectSessionMcpTool, brief: string) => {
     }
   }
   if (
-    hasDestructiveIntent &&
+    hasDestructiveSearchTerm &&
     isDestructiveDiscoveryTool(tool.name) &&
     matchedToolNameToken === false
   ) {
@@ -4396,12 +4572,12 @@ const scoreTool = (tool: ProjectSessionMcpTool, brief: string) => {
   }
   if (
     score > 0 &&
-    hasDestructiveIntent &&
+    hasDestructiveSearchTerm &&
     isDestructiveDiscoveryTool(tool.name)
   ) {
     score += 50;
   }
-  for (const rule of matchingMutationIntentRules) {
+  for (const rule of matchingMutationSearchRules) {
     if (score > 0 && hasToolNamePrefix(tool.name, rule.toolNamePrefixes)) {
       score += 50;
     }
@@ -5614,8 +5790,6 @@ const getMetaIndex = (
 const metaGoalGuides = [
   {
     id: "markdown-blog",
-    pattern:
-      /markdown(?:-|\s)*(?:based|backed)?\s*blog|blog.*markdown|assets?(?:-|\s)*backed\s*blog/i,
     tools: [
       "create-asset-folder",
       "upload-assets",
@@ -5756,7 +5930,6 @@ const metaGoalGuides = [
   },
   {
     id: "json-ld",
-    pattern: /json\s*-?\s*ld|structured\s+data/i,
     tools: [
       "components.get",
       "list-instances",
@@ -5801,8 +5974,6 @@ const metaGoalGuides = [
   },
   {
     id: "collection",
-    pattern:
-      /collection|repeat(?:ed|ing)?\s+(?:list|item|card|row|content)|render\s+(?:an?\s+)?array|array\s+(?:as|into)\s+(?:a\s+)?(?:list|grid|table|cards?)/i,
     tools: [
       "components.get",
       "list-variables",
@@ -5820,8 +5991,6 @@ const metaGoalGuides = [
   },
   {
     id: "expression",
-    pattern:
-      /\bexpressions?\b|computed\s+(?:text|value|prop|metadata|url)|dynamic\s+(?:text|prop|binding)/i,
     tools: [
       "list-variables",
       "list-resources",
@@ -5840,8 +6009,6 @@ const metaGoalGuides = [
   },
   {
     id: "authenticated-page",
-    pattern:
-      /authenticated?\s+(?:page|route|screen)|(?:supabase|firebase)\s+auth|sign(?:ed)?[- ]?(?:in|out)|login\s+(?:page|flow)|user\s+session/i,
     tools: [
       "inspect-auth-context",
       "list-instances",
@@ -5882,8 +6049,6 @@ const metaGoalGuides = [
   },
   {
     id: "font-assets",
-    pattern:
-      /(?:upload|import|add|update|manage).*\bfonts?\b|\bfonts?\b.*(?:upload|import|add|update|manage)|font\s+assets?/i,
     tools: [
       "list-fonts",
       "list-assets",
@@ -5902,8 +6067,6 @@ const metaGoalGuides = [
   },
   {
     id: "design-input",
-    pattern:
-      /(?:figma|wireframe|screenshot|(?:this|supplied|provided)\s+design|design\s*(?:guide|input|file)|design\.md|inception).*(?:page|site|build|implement|recreate)|(?:build|implement|recreate).*(?:figma|wireframe|screenshot|(?:this|supplied|provided)\s+design|design\s*(?:guide|input|file)|design\.md|inception)/i,
     tools: [
       "inspect-design-context",
       "list-style-sources",
@@ -5931,7 +6094,6 @@ const metaGoalGuides = [
   },
   {
     id: "craft",
-    pattern: /\bcraft\b/i,
     tools: [
       "audit",
       "list-variables",
@@ -5947,7 +6109,12 @@ const metaGoalGuides = [
       "Use a Craft-dependent template only when templateCompatibility is compatible; requires-review means repair or explicitly resolve the mismatch first.",
     ],
   },
-] as const;
+] as const satisfies readonly {
+  id: SpecializedMetaGuideWorkflow;
+  tools: readonly string[];
+  workflow: readonly string[];
+  recipe?: unknown;
+}[];
 
 const metaGuideExampleTools = new Set(["upload-assets"]);
 const workflowOnlyGuideToolNames = new Set([
@@ -5960,47 +6127,13 @@ const designSystemGuideToolNames = new Set([
   "update-design-token-styles",
 ]);
 
-const taskScopes = [
-  "small-value-or-reference-correction",
-  "focused-page-change",
-  "visual-change",
-  "structural-project-change",
-  "project-wide-migration",
+const readOnlyDiscoveryToolNames = [
+  "search-project",
+  "list-instances",
+  "inspect-instance",
+  "get-project-settings",
+  "snapshot",
 ] as const;
-
-type TaskScope = (typeof taskScopes)[number];
-
-const classifyTaskScope = (brief: string): TaskScope => {
-  if (
-    /\b(project[- ]wide|site[- ]wide|all pages|every page|migration|migrate)\b/i.test(
-      brief
-    )
-  ) {
-    return "project-wide-migration";
-  }
-  if (
-    /\b(visual|layout|responsive|screenshot|typography|spacing|color|design\s+(?:file|guide|input|reference|system))\b|\b(?:this|supplied|provided)\s+design\b/i.test(
-      brief
-    )
-  ) {
-    return "visual-change";
-  }
-  if (
-    /\b(create|insert|delete|remove|move|wrap|unwrap|duplicate|reparent)\b.*\b(page|section|component|instance|element|tree|folder)\b/i.test(
-      brief
-    )
-  ) {
-    return "structural-project-change";
-  }
-  if (
-    /\b(correct|correction|fix|replace|update|change|typo)\b.*\b(value|text|copy|reference|asset|url|link|title|description|metadata|prop|binding)\b/i.test(
-      brief
-    )
-  ) {
-    return "small-value-or-reference-correction";
-  }
-  return "focused-page-change";
-};
 
 const serializeMetaGuideTool = (
   tool: ProjectSessionMcpTool,
@@ -6023,30 +6156,85 @@ const serializeMetaGuideTool = (
           : {}),
       };
 
-const getMetaGuide = (
+const getReadOnlyMetaGuide = (
   brief: string,
-  tools: readonly ProjectSessionMcpTool[],
-  guidance: ProjectSessionMcpGuidance | undefined
+  tools: readonly ProjectSessionMcpTool[]
 ) => {
-  const taskScope = classifyTaskScope(brief);
+  const toolByName = new Map(tools.map((tool) => [tool.name, tool]));
+  const prioritizedTools = readOnlyDiscoveryToolNames.flatMap((name) => {
+    const tool = toolByName.get(name);
+    return tool === undefined ? [] : [tool];
+  });
+  const matches = [...prioritizedTools, ...getMatchingTools(brief, tools)]
+    .filter((tool) => tool.annotations.method === "query")
+    .filter(
+      (tool, index, selectedTools) =>
+        selectedTools.findIndex(({ name }) => name === tool.name) === index
+    )
+    .slice(0, 12);
+  return {
+    taskScope: "read-only-audit",
+    routing: {
+      matchedBy: "explicit-read-only",
+      workflow: "read-only-discovery",
+      broadContextTools: [],
+      authoredFragment: false,
+    },
+    constraints: {
+      readOnly: true,
+      mutationToolsExcluded: true,
+    },
+    delegatedAgentRule:
+      "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
+    visionLoop: [],
+    workflow: [
+      "Keep every call read-only. Preserve the brief's prohibitions; do not create, update, delete, publish, preview, install, or otherwise change project or local state.",
+      "Use search-project for known values, identifiers, selectors, URLs, or code fragments across project data.",
+      "Use focused list, get, and inspect tools to identify the existing structure and read details only for relevant results.",
+      "Read project settings only when they are part of the requested inventory. Use a bounded snapshot only when focused reads cannot provide the required cross-namespace context.",
+      "Return the requested inventory, classifications, risks, and consolidation plan without applying the plan.",
+    ],
+    tools: matches.map((tool) => serializeMetaGuideTool(tool, true)),
+    more: "This guide excludes mutation and side-effecting session tools. Use focused read-only discovery only.",
+  };
+};
+
+const getMetaGuide = ({
+  brief,
+  taskScope,
+  workflow,
+  authoredFragment,
+  reuseDesignSystem,
+  tools,
+  guidance,
+}: {
+  brief: string;
+  taskScope: TaskScope;
+  workflow: MetaGuideWorkflow;
+  authoredFragment: boolean;
+  reuseDesignSystem: boolean;
+  tools: readonly ProjectSessionMcpTool[];
+  guidance: ProjectSessionMcpGuidance | undefined;
+}) => {
+  if (taskScope === "read-only-audit") {
+    return getReadOnlyMetaGuide(brief, tools);
+  }
   const isSmallCorrection = taskScope === "small-value-or-reference-correction";
-  const goalGuide = metaGoalGuides.find(({ pattern }) => pattern.test(brief));
-  const isAuthoredFragment =
-    /\binsert-fragment\b|\bauthored\s+(?:component|element|fragment|section)\b/i.test(
-      brief
-    );
-  const requestsDesignSystem = /\bdesign\s+(?:system|tokens?)\b/i.test(brief);
+  const goalGuide =
+    workflow === "general"
+      ? undefined
+      : metaGoalGuides.find(({ id }) => id === workflow);
   const matchedTools =
     goalGuide === undefined
       ? getMatchingTools(brief, tools)
           .filter(
             (tool) =>
               workflowOnlyGuideToolNames.has(tool.name) === false &&
-              (isAuthoredFragment === false ||
+              (authoredFragment === false ||
                 (tool.name.startsWith("components.") === false &&
                   tool.name.startsWith("templates.") === false)) &&
-              (isAuthoredFragment === false ||
-                requestsDesignSystem ||
+              (authoredFragment === false ||
+                reuseDesignSystem ||
                 designSystemGuideToolNames.has(tool.name) === false)
           )
           .slice(0, 12)
@@ -6091,13 +6279,6 @@ const getMetaGuide = (
   const generalGuide =
     goalGuide === undefined
       ? {
-          taskScope,
-          routing: {
-            matchedBy: "general-tool-ranking",
-            workflow: "general",
-            broadContextTools: [],
-            authoredFragment: isAuthoredFragment,
-          },
           delegatedAgentRule:
             "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
           visionLoop:
@@ -6123,6 +6304,17 @@ const getMetaGuide = (
         }
       : {};
   return {
+    taskScope,
+    routing: {
+      matchedBy:
+        goalGuide === undefined ? "general-tool-ranking" : "explicit-workflow",
+      workflow,
+      broadContextTools:
+        goalGuide?.tools.filter((tool) =>
+          workflowOnlyGuideToolNames.has(tool)
+        ) ?? [],
+      authoredFragment,
+    },
     ...generalGuide,
     ...(isSmallCorrection && goalGuide === undefined
       ? {
@@ -7729,7 +7921,11 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       }
       if (name === "meta.guide") {
         return toMetaResult(
-          getMetaGuide(getBrief(input, "meta.guide"), listTools(), guidance)
+          getMetaGuide({
+            ...getMetaGuideInput(input),
+            tools: listTools(),
+            guidance,
+          })
         );
       }
       if (name === "inspect-auth-context") {

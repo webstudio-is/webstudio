@@ -192,7 +192,7 @@ Build a static site with:
 npx webstudio build --template ssg
 ```
 
-Please review [the limitations](self-hosting/#ssg-limitations) of using the static site export instead of dynamic templates.
+Please review [the limitations](self-hosting/#static-site-limitations) of using the static site export instead of dynamic templates.
 
 ## Other workflows
 

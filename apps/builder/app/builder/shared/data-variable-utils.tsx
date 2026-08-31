@@ -13,6 +13,7 @@ import {
   Button,
   theme,
   InputField,
+  cssVar,
 } from "@webstudio-is/design-system";
 import type { DataSource, Instance } from "@webstudio-is/sdk";
 import { $pages } from "~/shared/sync/data-stores";
@@ -284,7 +285,7 @@ export const DeleteUnusedDataVariablesDialog = () => {
                 css={{
                   maxHeight: 200,
                   overflowY: "auto",
-                  backgroundColor: theme.colors.backgroundPanel,
+                  backgroundColor: cssVar("--background-primary"),
                   borderRadius: theme.borderRadius[4],
                   wordBreak: "break-word",
                 }}

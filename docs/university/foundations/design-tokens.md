@@ -1,8 +1,7 @@
 ---
 description: >-
-  Design tokens enable the creation of consistent designs by packaging up
-  multiple styles so that on any instance you add that Token, those styles will
-  show up and stay in sync.
+  Tokens package reusable style declarations that stay synchronized across
+  every instance where they are applied.
 ---
 
 # 🖌️ Design tokens
@@ -20,12 +19,20 @@ Scenario: You’re building a website with Webflow. You have two separate elemen
 
 There’s a better way. It’s Design tokens.
 
-## What are Design tokens? <a href="#what-are-design-tokens" id="what-are-design-tokens"></a>
+## What are Tokens? <a href="#what-are-design-tokens" id="what-are-design-tokens"></a>
 
-Design tokens are everything that you wish classes would be - a way to reuse styles without limitations.
+A Webstudio **Token** is a reusable style source that can contain multiple
+declarations and states. [Craft](../craft.md) calls it a **composite Token** to
+distinguish it from individual values stored in CSS variables.
+
+The Design Tokens Community Group also uses _design token_ for values in its
+portable data format. Webstudio imports that format and represents its values
+as CSS variables or Webstudio Tokens according to their type and intended use.
 
 - **Mix-and-match Tokens freely**: You can apply as many Tokens as you want to an instance in any order. There is no combo class silliness and no limitations with breakpoints.
-- **Universal format:** We didn’t invent Design tokens. There is an independent spec (by the [Design Tokens Community Group](https://design-tokens.github.io/community-group/format/)) that defines a data format for Tokens, meaning you can potentially import and export tokens between multiple apps. Soon you’ll be able to sync tokens between Webstudio and Figma through the [Tokens Studio for Figma](https://tokens.studio/) plugin!
+- **Portable input:** The [Design Tokens Community Group format](https://design-tokens.github.io/community-group/format/)
+  provides a format that tools can exchange. Webstudio can import DTCG data and
+  Figma Variables API exports.
 
 ## Import design tokens
 
@@ -64,7 +71,29 @@ First, it's recommended to create [CSS variables](css-variables.md) to use withi
 
 You can style your site using Local or Tokens like this:
 
-<table data-header-hidden><thead><tr><th></th><th></th><th data-hidden></th></tr></thead><tbody><tr><td><img src="../../.gitbook/assets/style-sources.png" alt="Style sources" data-size="original"></td><td>The top of the Style Panel contains Style Sources. Here is where you can add new Tokens, select existing ones, and switch to Local styling.</td><td>The top section of the Style Panel is our <a href="https://www.reddit.com/r/diablo4/comments/148kfyt/psa_consolescontrollerbeginners_users/">Style Sources Input</a>. This is where you’ll create, style, and arrange your tokens.<br><br>When you select a component's instance on the canvas, the tokens you see inside this input are <em>sources</em> of the <em>styles</em> on that instance.</td></tr><tr><td><img src="../../.gitbook/assets/convert-to-token.png" alt="Convert local to token" data-size="original"></td><td>Want to style something immediately without making a Token? Use the Local Style Source. Styles applied on Local only impact that instance, but you can easily convert styles from Local to a new Token.</td><td>Want to style something immediately without making a token? Go for it. All component instances in Webstudio have this Local style source by default. Styles applied on Local are unique to an instance and can’t be re-used, but you can easily convert styles from Local to a new token through the token menu.</td></tr><tr><td><img src="../../.gitbook/assets/new-token.png" alt="Adding a new token" data-size="original"></td><td>To make a new Token, click inside the Style Sources input, type a name, and hit enter.</td><td>To make a new token, click inside the Style Sources Input, type a name, and hit ENTER/RETURN.</td></tr><tr><td><img src="../../.gitbook/assets/tokens-added.png" alt="Switching tokens" data-size="original"></td><td>The Token you’re currently styling will be blue in the Style Sources input, while others are gray. Simply click on another style source to select it. Any styling you do will be applied to the current Token and reflected across all instances of that Token.</td><td><p>The token you’re currently styling will be blue in the Style Sources Input, while others are gray. Simply click on another style source to select it.</p><p>Any styling you do will be applied to the current token and reflected across all instances of that token.</p><p>When you add a style, the label for that property will turn blue to show that it is applied on the current token.</p></td></tr><tr><td><img src="../../.gitbook/assets/property-label-tooltip.png" alt="" data-size="original"></td><td><p>Hover the label for a helpful description of where the styles on this property come from.</p><p>In this case, we see that the width value that we just applied is coming from the Base breakpoint, the “new token” token on the Body instance. See <a href="anatomy-of-the-webstudio-builder.md#label-colors">Label Colors</a> to understand what the different colors mean.</p></td><td><p>Hover the label for a helpful description of where the styles on this property come from.</p><p>In this case we see that the width value that we just applied is coming from the Base breakpoint, the “new token” token, on the Body instance.</p></td></tr><tr><td><img src="../../.gitbook/assets/empty-circle.png" alt="" data-size="original"></td><td>A circle in the Token indicates that there are no styles applied to the Token. This will go away as soon as you apply a style. For Local, a dot is added to the center of the circle when styles are added.</td><td></td></tr></tbody></table>
+1. Select an instance. The **Style sources** field at the top of the Style panel shows its Local styles and Tokens.
+
+   <img src="../../.gitbook/assets/style-sources.png" alt="Style sources field showing the Local source and applied Tokens" data-size="original">
+
+2. To create a Token, select the Style sources field, enter a name, and press Enter.
+
+   <img src="../../.gitbook/assets/new-token.png" alt="Style sources field with a new Token name ready to be added" data-size="original">
+
+3. Select the source you want to edit. The active source is highlighted, and new styles are written to that source.
+
+   <img src="../../.gitbook/assets/tokens-added.png" alt="Style sources field with several Tokens and one active Token" data-size="original">
+
+Use the Local source for styles that apply only to the selected instance. You can convert Local styles into a reusable Token later.
+
+<img src="../../.gitbook/assets/convert-to-token.png" alt="Local style source menu with the action to convert its styles to a Token" data-size="original">
+
+Hover a property label to see which breakpoint and style source provides its current value. See [Label colors](anatomy-of-the-webstudio-builder.md#label-colors) for the full reference.
+
+<img src="../../.gitbook/assets/property-label-tooltip.png" alt="Style property tooltip identifying the breakpoint, Token, and instance that provide the value" data-size="original">
+
+An empty circle means the source has no styles. A dot appears in the Local source after you add a style.
+
+<img src="../../.gitbook/assets/empty-circle.png" alt="Empty circle indicator beside a style source with no styles" data-size="original">
 
 ## Exporting human-readable classes
 
@@ -76,22 +105,24 @@ See [Atomic CSS](project-settings.md#atomic-css) for more info.
 
 ## Advanced Token Techniques
 
-### Token Composition
+### Token composition
 
 Combine multiple tokens to create flexible, modular designs:
 
-1. **Base token**: Contains core styles (e.g., "card" with padding, background, border-radius)
-2. **Modifier tokens**: Contains variations (e.g., "small" for smaller padding, "featured" for highlight border)
+1. **Base Token**: Contains core styles, such as `card` with padding,
+   background, and border radius.
+2. **Variant or size Tokens**: Contain only the declarations needed for a
+   variation, such as `is-card-featured` or `card-small`.
 
 Apply both to an instance: The styles merge, with later tokens overriding earlier ones for conflicting properties.
 
 **Example:** A card system
 
-- "card" token: padding, background, border-radius
-- "card-small" token: smaller padding
-- "card-featured" token: accent border color
+- `card` Token: padding, background, and border radius
+- `card-small` Token: smaller padding
+- `is-card-featured` Token: accent border color
 
-Apply "card" + "card-featured" for a featured card variant.
+Apply `card` and `is-card-featured` for a featured card variant.
 
 ### Token Priority (Cascading)
 

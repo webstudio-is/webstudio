@@ -14,7 +14,6 @@ import {
   Link,
   List,
   ListItem,
-  rawTheme,
   ScrollArea,
   SearchField,
   Select,
@@ -22,6 +21,7 @@ import {
   Text,
   theme,
   Tooltip,
+  cssVar,
 } from "@webstudio-is/design-system";
 import {
   AlertIcon,
@@ -46,6 +46,7 @@ import {
   validateRedirectSource,
   validateRedirectTarget,
 } from "@webstudio-is/project-build/runtime";
+import { ProjectSettingsDataRow } from "./data-row";
 
 const statusCodeOptions = ["301", "302"] as const;
 
@@ -231,7 +232,7 @@ export const SectionRedirects = () => {
             }
           >
             <InfoCircleIcon
-              color={rawTheme.colors.foregroundSubtle}
+              color={cssVar("--foreground-secondary")}
               tabIndex={0}
             />
           </Tooltip>
@@ -348,6 +349,7 @@ export const SectionRedirects = () => {
           </InputErrorsTooltip>
 
           <Button
+            color="primary"
             disabled={isValidRedirects === false || fromPath === toPath}
             onClick={handleAddRedirect}
             css={{ flexShrink: 0 }}
@@ -358,7 +360,7 @@ export const SectionRedirects = () => {
         {fromPathWarnings.length > 0 && (
           <Flex gap="1" align="center">
             <AlertIcon
-              color={rawTheme.colors.backgroundAlertMain}
+              color={cssVar("--foreground-warning")}
               style={{ flexShrink: 0 }}
             />
             <Text color="subtle">{fromPathWarnings.join(". ")}</Text>
@@ -373,27 +375,11 @@ export const SectionRedirects = () => {
                 {filteredRedirects.map((redirect) => {
                   return (
                     <ListItem asChild key={redirect.old}>
-                      <Grid
+                      <ProjectSettingsDataRow
                         align="center"
                         gap="2"
                         css={{
-                          p: theme.spacing[3],
-                          overflow: "hidden",
                           gridTemplateColumns: `1fr auto auto 1fr`,
-                          position: "relative",
-                          "& > button": {
-                            opacity: 0,
-                            position: "absolute",
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                            height: "auto",
-                            borderRadius: 0,
-                            background: theme.colors.backgroundPanel,
-                          },
-                          "&:hover > button, &:focus-within > button": {
-                            opacity: 1,
-                          },
                         }}
                       >
                         <Tooltip content={redirect.old}>
@@ -438,7 +424,7 @@ export const SectionRedirects = () => {
                           aria-label={`Delete redirect from ${redirect.old}`}
                           onClick={() => handleDeleteRedirect(redirect)}
                         />
-                      </Grid>
+                      </ProjectSettingsDataRow>
                     </ListItem>
                   );
                 })}

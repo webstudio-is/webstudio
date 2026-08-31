@@ -5,13 +5,8 @@ import {
   toColorSpace,
   toColorComponent,
   parseColor,
-  colorDistance,
-  lerpColor,
   serializeColor,
-  transparentColor,
-  whiteColor,
   toValue,
-  type PlainColorObject,
   type StyleValue,
   type ColorValue,
 } from "@webstudio-is/css-engine";
@@ -23,11 +18,15 @@ import {
   useEffect,
   useId,
   useRef,
+  useState,
 } from "react";
-import { clamp } from "@react-aria/utils";
-import { css, rawTheme, theme, type CSS } from "../stitches.config";
+import { css, theme, type CSS } from "../stitches.config";
+import { cssVar, declareCssVar } from "../css-var";
 import { useDisableCanvasPointerEvents } from "../utilities";
 import { textStyle } from "./text";
+
+const colorInputContrastProperty = declareCssVar("--contrast");
+const colorInputValueProperty = declareCssVar("--value");
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -105,30 +104,23 @@ const styleValueToColorInputValue = (value: StyleValue) => {
 
 // ─── ColorThumb ──────────────────────────────────────────────────────────────
 
-const borderColorSwatch = parseColor(rawTheme.colors.borderColorSwatch);
-
-const calcBorderColor = (color: PlainColorObject) => {
-  const distanceToStartDrawBorder = 0.15;
-  const alpha = clamp(
-    (distanceToStartDrawBorder - colorDistance(whiteColor, color)) /
-      distanceToStartDrawBorder,
-    0,
-    1
-  );
-  return lerpColor(transparentColor, borderColorSwatch, alpha);
-};
+const transparencyChecker = `oklch(from ${cssVar(
+  "--foreground-primary"
+)} l c h / 22%)`;
 
 const thumbStyle = css({
   display: "block",
+  boxSizing: "border-box",
   position: "relative",
   width: theme.spacing[9],
   height: theme.spacing[9],
   backgroundBlendMode: "difference",
   borderRadius: theme.borderRadius[2],
-  borderWidth: 0,
+  borderWidth: 1,
   borderStyle: "solid",
+  borderColor: cssVar("--border-default"),
   "&:focus-visible": {
-    outline: `1px solid ${theme.colors.borderFocus}`,
+    outline: `1px solid ${cssVar("--border-focus")}`,
     outlineOffset: 1,
   },
 });
@@ -143,21 +135,15 @@ export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
   ({ interactive, color = "transparent", css, ...rest }, ref) => {
     const parsed = parseColor(color);
     const alpha = parsed.alpha ?? 1;
-    const background =
-      alpha < 1
-        ? `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%)
- 0% 33.33% / 40% 40%, ${color}`
-        : color;
-    const borderColor = calcBorderColor(parsed);
-
     const Component = interactive ? "button" : "span";
 
     return (
       <Component
         style={{
-          background,
-          borderColor: serializeColor(borderColor),
-          borderWidth: (borderColor.alpha ?? 1) === 0 ? 0 : 1,
+          background:
+            alpha < 1
+              ? `repeating-conic-gradient(${transparencyChecker} 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${color}`
+              : color,
         }}
         className={thumbStyle({ css })}
         tabIndex={-1}
@@ -197,6 +183,30 @@ const shouldHandleColorInputChange = ({
   return disabled === false && isOpen;
 };
 
+const useColorInputTheme = () => {
+  const [colorInputTheme, setColorInputTheme] = useState<"light" | "dark">(
+    "light"
+  );
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const updateTheme = () => {
+      setColorInputTheme(
+        root.getAttribute("data-color-scheme") === "dark" ? "dark" : "light"
+      );
+    };
+    updateTheme();
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ["data-color-scheme"],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  return colorInputTheme;
+};
+
 // Renders <color-input> with its built-in trigger chip, hiding the text input.
 // The chip opens the panel natively via the Popover API.
 // Our own ColorThumb is rendered on top (pointer-events: none) so that clicks
@@ -219,6 +229,7 @@ export const ColorPicker = ({
   disabled = false,
 }: ColorPickerProps) => {
   const colorInputRef = useRef<ColorInput>(null);
+  const colorInputTheme = useColorInputTheme();
   const scopeClass = useId().replace(/:/g, "");
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
@@ -251,10 +262,13 @@ export const ColorPicker = ({
     if (!colorInputElement) {
       return;
     }
-    colorInputElement.style.setProperty("--contrast", "inherit");
+    colorInputElement.style.setProperty(colorInputContrastProperty, "inherit");
     colorInputElement.shadowRoot
       ?.querySelector<HTMLElement>(".preview")
-      ?.style.setProperty("--value", rawTheme.colors.backgroundPanel);
+      ?.style.setProperty(
+        colorInputValueProperty,
+        cssVar("--background-primary")
+      );
   }, []);
 
   // Sync externally-controlled open state into the web component.
@@ -434,7 +448,7 @@ export const ColorPicker = ({
             ref={colorInputRef}
             value={colorInputValue}
             colorspace={colorSpace}
-            theme="light"
+            theme={colorInputTheme}
             class={`${textClass} ${scopeClass}`}
           />
         )}

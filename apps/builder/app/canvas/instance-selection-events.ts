@@ -142,6 +142,7 @@ const handleEdit = (
         isContentMode: true,
         instanceSelector: editableInstanceSelector,
         instances,
+        props: $props.get(),
       }) === false
     ) {
       editableInstanceSelector = undefined;

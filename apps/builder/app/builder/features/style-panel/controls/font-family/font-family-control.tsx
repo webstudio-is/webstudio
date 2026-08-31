@@ -125,7 +125,7 @@ const FontsManagerButton = forwardRef<
   ComponentProps<typeof NestedInputButton>
 >((props, ref) => {
   return (
-    <EnhancedTooltip content="Open Font Manager">
+    <EnhancedTooltip content="Open font manager">
       <NestedInputButton {...props} ref={ref} tabIndex={-1}>
         <UploadIcon />
       </NestedInputButton>

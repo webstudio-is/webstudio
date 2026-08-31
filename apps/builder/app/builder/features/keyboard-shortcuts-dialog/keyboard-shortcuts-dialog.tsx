@@ -10,6 +10,7 @@ import {
   ScrollArea,
   theme,
   Box,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { atom } from "nanostores";
 import { Fragment } from "react";
@@ -286,7 +287,7 @@ export const KeyboardShortcutsDialog = () => {
                     as="span"
                     css={{
                       paddingInline: 4,
-                      border: `1px solid ${theme.colors.borderNeutral}`,
+                      border: `1px solid ${cssVar("--border-default")}`,
                       borderRadius: theme.borderRadius[2],
                     }}
                   >

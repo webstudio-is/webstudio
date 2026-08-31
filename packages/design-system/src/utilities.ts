@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import warnOnce from "warn-once";
 import type { CSS } from "./stitches.config";
+import { declareCssVar } from "./css-var";
 
-export const canvasPointerEventsPropertyName = "--canvas-pointer-events";
+const canvasPointerEventsPropertyName = declareCssVar(
+  "--canvas-pointer-events"
+);
 
 let disableCount = 0;
 
@@ -29,7 +32,7 @@ const updateCanvasPointerEvents = () => {
 };
 
 /**
- * Temporarily disables pointer events on the canvas using canvasPointerEventsPropertyName.
+ * Temporarily disables pointer events on the canvas.
  * Use the returned disposable to re-enable them.
  *
  * Implemented as disposable to

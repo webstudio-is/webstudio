@@ -37,7 +37,7 @@ export const meta: MetaFunction<typeof loader> = () => {
   const metas: ReturnType<MetaFunction> = [
     {
       name: "title",
-      content: "Webstudio Login",
+      content: "Webstudio login",
     },
     {
       name: "description",
@@ -46,7 +46,7 @@ export const meta: MetaFunction<typeof loader> = () => {
     { name: "robots", content: "index, follow" },
   ];
 
-  metas.push({ title: "Webstudio Login" });
+  metas.push({ title: "Webstudio login" });
 
   return metas;
 };

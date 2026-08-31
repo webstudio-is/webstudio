@@ -1,11 +1,12 @@
 import {
   AccessibleIcon,
   css,
+  cssVar,
   Grid,
-  Link,
+  LinkButton,
   Text,
   theme,
-  buttonStyle,
+  webstudioBrand,
 } from "@webstudio-is/design-system";
 import { WebstudioIcon } from "@webstudio-is/icons";
 
@@ -14,10 +15,13 @@ const pageStyle = css({
   justifyItems: "center",
   alignContent: "start",
   inset: 0,
-  background: theme.colors.brandBackgroundDashboard,
+  background: webstudioBrand.backgroundGradient,
   paddingTop: "10vh",
   // prevent global root styles override error color
-  color: theme.colors.black,
+  color: `light-dark(
+    ${cssVar("--foreground-primary")},
+    ${cssVar("--foreground-on-inverse")}
+  )`,
 });
 
 export const ErrorMessage = ({
@@ -57,7 +61,10 @@ export const ErrorMessage = ({
       >
         <Grid
           css={{
-            background: theme.colors.backgroundPanel,
+            background: `light-dark(
+              ${cssVar("--background-primary")},
+              ${cssVar("--background-inverse")}
+            )`,
             padding: theme.spacing[7],
             borderRadius: theme.spacing[5],
             minWidth: theme.spacing[34],
@@ -89,14 +96,9 @@ export const ErrorMessage = ({
             </Text>
           )}
         </Grid>
-        <Link
-          href="/"
-          className={buttonStyle()}
-          color="contrast"
-          underline="none"
-        >
-          Go Home
-        </Link>
+        <LinkButton color="primary" href="/">
+          Go home
+        </LinkButton>
       </Grid>
     </Grid>
   );

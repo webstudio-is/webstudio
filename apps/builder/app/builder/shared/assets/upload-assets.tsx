@@ -36,6 +36,7 @@ type AssetActionResponse = AssetUploadResult | { errors: string };
 type UploadAssetsOptions = {
   folderId?: string;
   dimensions?: { width: number; height: number };
+  deduplicate?: boolean;
 };
 
 const safeDeleteAssets = (assetIds: Asset["id"][], projectId: string) => {
@@ -301,6 +302,7 @@ const createUploadTicket = async ({
   projectId,
   fileOrUrl,
   contentHash,
+  deduplicate = true,
   assetType,
   request = fetch,
 }: {
@@ -308,6 +310,7 @@ const createUploadTicket = async ({
   projectId: string;
   fileOrUrl: File | URL;
   contentHash?: string;
+  deduplicate?: boolean;
   assetType: AssetType;
   request?: typeof fetch;
 }): Promise<UploadTicket> => {
@@ -315,7 +318,7 @@ const createUploadTicket = async ({
   const metaFormData = new FormData();
   metaFormData.append("projectId", projectId);
   metaFormData.append("type", assetType);
-  if (contentHash !== undefined) {
+  if (contentHash !== undefined && deduplicate) {
     metaFormData.append("contentHash", contentHash);
   }
   const existingNames = new Set<string>();
@@ -525,6 +528,7 @@ export const uploadAssets = async <T extends File | URL>(
           fileData.source === "file" ? fileData.file : new URL(fileData.url),
         contentHash:
           fileData.source === "file" ? fileData.contentHash : undefined,
+        deduplicate: options.deduplicate,
         assetType: fileData.type,
       });
       fileData.assetId = ticket.assetId;
@@ -615,15 +619,23 @@ export const importAssets = async (
     if (url === undefined) {
       throw new Error("Asset source URL is missing");
     }
-    const options =
-      source.asset.type === "video"
-        ? {
-            dimensions: {
-              width: source.asset.meta.width,
-              height: source.asset.meta.height,
-            },
-          }
-        : {};
+    let options: UploadAssetsOptions = {};
+    if (source.asset.type === "video") {
+      options = {
+        dimensions: {
+          width: source.asset.meta.width,
+          height: source.asset.meta.height,
+        },
+      };
+    }
+    if (
+      source.asset.type === "file" &&
+      ["md", "mdx", "json"].includes(source.asset.format.toLowerCase())
+    ) {
+      // Copy mutable documents independently because reference rewriting must
+      // never modify an existing target Asset that upload deduplication reused.
+      options = { deduplicate: false };
+    }
     const assetId = (await upload(source.asset.type, [url], options)).get(url);
     if (assetId === undefined) {
       throw new Error("Failed to import asset");
@@ -641,7 +653,7 @@ export const importAssets = async (
 export const uploadSingleAsset = async (
   type: AssetType,
   file: File,
-  options: { folderId?: string } = {}
+  options: { folderId?: string; deduplicate?: boolean } = {}
 ): Promise<Asset | undefined> => {
   const assetId = (await uploadAssets(type, [file], options)).get(file);
   return assetId === undefined ? undefined : waitForAssetUpload(assetId);

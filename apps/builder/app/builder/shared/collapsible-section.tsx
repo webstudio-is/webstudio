@@ -117,6 +117,7 @@ type CollapsibleSectionBaseProps = {
   trigger?: ReactNode;
   children: ReactNode;
   fullWidth?: boolean;
+  showSeparator?: boolean;
   label?: string;
   isOpen?: boolean;
   onOpenChange?: (value: boolean) => void;
@@ -127,6 +128,7 @@ export const CollapsibleSectionRoot = ({
   trigger,
   children,
   fullWidth = false,
+  showSeparator = true,
   isOpen,
   onOpenChange,
 }: CollapsibleSectionBaseProps) => {
@@ -154,7 +156,7 @@ export const CollapsibleSectionRoot = ({
           {children}
         </Flex>
       </Collapsible.Content>
-      <Separator />
+      {showSeparator && <Separator />}
     </Collapsible.Root>
   );
 };
@@ -166,13 +168,14 @@ type CollapsibleSectionProps = Simplify<
 >;
 
 export const CollapsibleSection = (props: CollapsibleSectionProps) => {
-  const { label, trigger, children, fullWidth } = props;
+  const { label, trigger, children, fullWidth, showSeparator } = props;
   const [isOpen, setIsOpen] = useOpenState(label, props.isOpen);
   return (
     <CollapsibleSectionRoot
       label={label}
       trigger={trigger}
       fullWidth={fullWidth}
+      showSeparator={showSeparator}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
     >
@@ -207,6 +210,7 @@ export const CollapsibleSectionWithAddButton = ({
     <CollapsibleSectionRoot
       label={label}
       fullWidth={false}
+      showSeparator={props.showSeparator}
       isOpen={isOpenFinal}
       onOpenChange={(nextIsOpen) => {
         setIsOpen(nextIsOpen);

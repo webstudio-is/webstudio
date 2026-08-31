@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
@@ -168,7 +165,7 @@ test("updates only the targeted expression child through the binding editor", as
 
   expect($instances.get().get("reading-time")?.children).toEqual([
     { type: "text", value: " · " },
-    { type: "expression", value: "2 + 2" },
+    { type: "expression", value: "2 + 2", mode: "read" },
   ]);
 });
 

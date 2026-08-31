@@ -31,6 +31,7 @@ import {
 } from "./materialized-query";
 import {
   createDocumentGraphArtifact,
+  getDocumentGraphClosure,
   getDocumentGraphQueryRootIds,
   type DocumentGraph,
   type DocumentGraphArtifactV1,
@@ -54,6 +55,12 @@ export type ContentCompilerDiagnostics = {
   }>;
   largestDocuments: Array<{ id: string; path: string; bytes: number }>;
   affectedQueryIds: string[];
+  assetReferenceIssues?: readonly {
+    code: "ASSET_NOT_FOUND";
+    sourceDocumentId: string;
+    referenceId: string;
+    assetUrl: string;
+  }[];
 };
 
 const getDocumentBytes = (
@@ -268,6 +275,7 @@ const buildAssetIndex = async ({
   assetReferences,
   assetValueReferences,
   documentGraph,
+  documentContents,
   plan,
   finalize = true,
 }: {
@@ -278,6 +286,7 @@ const buildAssetIndex = async ({
   assetReferences?: MarkdownAssetReferences;
   assetValueReferences?: AssetValueReferences;
   documentGraph?: DocumentGraphArtifactV1;
+  documentContents?: Readonly<Record<string, string>>;
   plan?: ContentCompilationPlan;
   finalize?: boolean;
 }) => {
@@ -346,8 +355,43 @@ const buildAssetIndex = async ({
       projectContentDatabaseDocument({ document, plan: runtimePlan })
     )
     .sort((left, right) => compareStrings(left._id, right._id));
-  const contents = Object.fromEntries(
-    runtimeEntries
+  const includedDocumentIds = new Set(entries.map(({ assetId }) => assetId));
+  const graphNodeIds = new Set(documentGraph?.nodes.map(({ id }) => id) ?? []);
+  const runtimeGraphRootIds = runtimeEntries
+    .map(({ assetId }) => assetId)
+    .filter((assetId) => graphNodeIds.has(assetId));
+  const runtimeGraphNodes =
+    documentGraph === undefined
+      ? []
+      : getDocumentGraphClosure({
+          graph: documentGraph,
+          rootIds: runtimeGraphRootIds,
+        });
+  for (const node of runtimeGraphNodes) {
+    includedDocumentIds.add(node.id);
+  }
+  const embeddedGraphNodeIds = new Set(
+    documentGraph === undefined
+      ? []
+      : getDocumentGraphClosure({
+          graph: documentGraph,
+          rootIds: runtimeEntries
+            .filter(({ content }) => content !== undefined)
+            .map(({ assetId }) => assetId)
+            .filter((assetId) => graphNodeIds.has(assetId)),
+        }).map(({ id }) => id)
+  );
+  const contents = Object.fromEntries([
+    ...runtimeGraphNodes.flatMap((node) => {
+      if (embeddedGraphNodeIds.has(node.id) === false) {
+        return [];
+      }
+      const content = documentContents?.[node.contentRef];
+      return content === undefined
+        ? []
+        : ([[node.contentRef, content]] as const);
+    }),
+    ...runtimeEntries
       .filter(
         (entry): entry is ContentCompilerInput & { content: string } =>
           entry.content !== undefined
@@ -355,17 +399,17 @@ const buildAssetIndex = async ({
       .sort((left, right) =>
         compareStrings(left.document.contentRef, right.document.contentRef)
       )
-      .map((entry) => [entry.document.contentRef, entry.content])
-  );
-  const includedContentRefs = new Set(
-    runtimeEntries.map(({ document }) => document.contentRef)
-  );
+      .map((entry) => [entry.document.contentRef, entry.content] as const),
+  ]);
+  const includedContentRefs = new Set([
+    ...runtimeEntries.map(({ document }) => document.contentRef),
+    ...Object.keys(contents),
+  ]);
   const includedAssetReferences = Object.fromEntries(
     Object.entries(assetReferences ?? {}).filter(([contentRef]) =>
       includedContentRefs.has(contentRef)
     )
   );
-  const includedDocumentIds = new Set(entries.map(({ assetId }) => assetId));
   const includedAssetValueReferences = Object.fromEntries(
     Object.entries(assetValueReferences ?? {}).filter(([documentId]) =>
       includedDocumentIds.has(documentId)
@@ -443,6 +487,7 @@ export const compileContentArtifact = async ({
   assetReferences,
   assetValueReferences,
   documentGraph,
+  documentContents,
   plan,
 }: {
   projectId: string;
@@ -451,6 +496,7 @@ export const compileContentArtifact = async ({
   assetReferences?: MarkdownAssetReferences;
   assetValueReferences?: AssetValueReferences;
   documentGraph?: DocumentGraph;
+  documentContents?: Readonly<Record<string, string>>;
   plan?: ContentCompilationPlan;
 }): Promise<{
   artifact: ContentArtifactV1;
@@ -509,6 +555,7 @@ export const compileContentArtifact = async ({
       assetReferences,
       assetValueReferences,
       documentGraph: documentGraphArtifact,
+      documentContents,
       plan,
       finalize: false,
     });
@@ -537,6 +584,7 @@ export const compileContentArtifact = async ({
       assetReferences,
       assetValueReferences,
       documentGraph: documentGraphArtifact,
+      documentContents,
       plan,
       finalize: false,
     });
@@ -570,6 +618,7 @@ export const compileContentArtifact = async ({
           assetReferences,
           assetValueReferences,
           documentGraph: documentGraphArtifact,
+          documentContents,
           plan,
           finalize: false,
         });
@@ -604,6 +653,7 @@ export const compileContentArtifact = async ({
     assetReferences,
     assetValueReferences,
     documentGraph: documentGraphArtifact,
+    documentContents,
     plan,
   });
   const boundedBytes = getUtf8ByteLength(serializeContentArtifact(artifact));
@@ -656,6 +706,7 @@ export const createAssetIndex = async (input: {
   assetReferences?: MarkdownAssetReferences;
   assetValueReferences?: AssetValueReferences;
   documentGraph?: DocumentGraph;
+  documentContents?: Readonly<Record<string, string>>;
   plan?: ContentCompilationPlan;
 }): Promise<ContentArtifactV1> =>
   (await compileContentArtifact(input)).artifact;

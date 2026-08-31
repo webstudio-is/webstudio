@@ -3,6 +3,7 @@ import {
   discoverAssetValueReferences,
   mergeAssetUrlSuffix,
   resolveAssetValueReferences,
+  rewriteAssetValueReferences,
 } from "./asset-value-references";
 
 describe("structured asset value references", () => {
@@ -147,6 +148,9 @@ describe("structured asset value references", () => {
         "?download=1#section"
       )
     ).toBe("https://cdn.example.com/guide.pdf?format=raw&download=1#section");
+    expect(mergeAssetUrlSuffix("assets/hero.png", "?width=1200#cover")).toBe(
+      "assets/hero.png?width=1200#cover"
+    );
   });
 
   test("resolves an explicit asset marker to structured metadata", () => {
@@ -202,5 +206,22 @@ describe("structured asset value references", () => {
         external: "https://example.com/image.png",
       },
     });
+  });
+
+  test("rewrites an authored asset marker without materializing it", () => {
+    expect(
+      rewriteAssetValueReferences({
+        value: { author: { $ref: "../authors/oleg.md#frontmatter" } },
+        references: [
+          {
+            path: ["author"],
+            assetId: "author",
+            suffix: "#frontmatter",
+            structured: true,
+          },
+        ],
+        assetUrls: { author: "oleg_1.md" },
+      })
+    ).toEqual({ author: { $ref: "oleg_1.md#frontmatter" } });
   });
 });

@@ -64,7 +64,7 @@ export const ConflictResolutionDialog = <Resolution extends string>({
         </Flex>
       </Flex>
       <DialogActions>
-        <Button autoFocus color="positive" onClick={onResolve}>
+        <Button autoFocus color="primary" onClick={onResolve}>
           Continue
         </Button>
         <Button color="ghost" onClick={onCancel}>

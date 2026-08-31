@@ -26,6 +26,7 @@ import { getContentModePropNamesByTag } from "@webstudio-is/project-build/runtim
 import type { PropMeta, Prop, Asset } from "@webstudio-is/sdk";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
+  cssVar,
   Label as BaseLabel,
   useIsTruncated,
   Tooltip,
@@ -34,7 +35,6 @@ import {
   Grid,
   Text,
   theme,
-  rawTheme,
 } from "@webstudio-is/design-system";
 import {
   $registeredComponentMetas,
@@ -54,7 +54,7 @@ export type PropValue =
   | { type: "boolean"; value: boolean }
   | { type: "json"; value: unknown }
   | { type: "string[]"; value: string[] }
-  | { type: "expression"; value: string }
+  | Pick<Extract<Prop, { type: "expression" }>, "type" | "value" | "mode">
   | { type: "asset"; value: Asset["id"] }
   | { type: "page"; value: Extract<Prop, { type: "page" }>["value"] }
   | { type: "action"; value: Extract<Prop, { type: "action" }>["value"] }
@@ -152,7 +152,7 @@ export const Label = ({
           variant="wrapped"
         >
           <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
+            color={cssVar("--foreground-secondary")}
             tabIndex={0}
           />
         </Tooltip>

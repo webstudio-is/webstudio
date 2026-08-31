@@ -1,8 +1,19 @@
-import { dashboardUrl, getProjectIdFromBuilderUrl } from "../harness";
-import type { Page } from "playwright";
+import { dashboardUrl, getProjectIdFromBuilderUrl } from "../test";
+import type { Page } from "@playwright/test";
 import env from "../../app/env/env.server";
 
 const loginReadyTimeout = 30_000;
+
+export const getWorkerEmail = (
+  email: string,
+  parallelIndex = process.env.TEST_PARALLEL_INDEX
+) => {
+  if (parallelIndex === undefined) {
+    return email;
+  }
+  const separatorIndex = email.lastIndexOf("@");
+  return `${email.slice(0, separatorIndex)}+worker-${parallelIndex}${email.slice(separatorIndex)}`;
+};
 
 export const loginWithSecret = async ({
   page,
@@ -53,7 +64,7 @@ export const loginWithSecret = async ({
     throw new Error("AUTH_SECRET must be set for e2e dev login");
   }
   await page.getByPlaceholder("Auth secret").fill(env.AUTH_SECRET);
-  await page.getByPlaceholder("Email (optional)").fill(email);
+  await page.getByPlaceholder("Email (optional)").fill(getWorkerEmail(email));
   if (devPlan !== undefined) {
     await page.locator('select[name="devPlan"]').selectOption(devPlan);
   }

@@ -10,27 +10,28 @@ The HTML Embed component enables the direct integration of custom HTML, CSS, and
 
 ---
 
-### How to use the HTML Embed component
+## How to use the HTML Embed component
 
 The "HTML Embed" component can be found in Components > General, and you can place it on your canvas by dragging and dropping it or clicking it in the Components panel.
 
 ---
 
-### How to add custom code to an HTML Embed instance
+## How to add custom code to an HTML Embed instance
 
 You can add your custom HTML, CSS, or JavaScript code to the HTML Embed instance by selecting it and accessing its “Settings”.
 
-#### Code
+The **Code** property is also available in Content mode when the HTML Embed is inside an editable Content Block.
 
-<figure><img src="../../.gitbook/assets/gsap.png" alt=""><figcaption></figcaption></figure>
+### Code
+
 
 The "Code" section has a text area for adding your custom code. After you paste your code here, it will be rendered on the canvas. You can add anything to your site including custom widgets, third-party services, API integrations, animations, and interactive content.
 
-### Run Script on Canvas
+## Run script on canvas
 
 The "Run Script on Canvas" toggle allows you to not only render the HTML embed directly on the canvas, but also execute scripts. It will look exactly the same way as when you publish the site.
 
-### Client Only
+## Client only
 
 If your HTML embed is script-free and only includes items like SVG icons, CSS, or static HTML, you don't need this option.
 
@@ -38,9 +39,11 @@ For embeds with scripts that change HTML, like GSAP animations or sliders, activ
 
 Check out how to embed [GSAP animations](../how-tos/how-to-add-a-gsap-animation.md).
 
+<figure><img src="../../.gitbook/assets/gsap.png" alt="GSAP script configured in an HTML Embed"><figcaption></figcaption></figure>
+
 ---
 
-### How to reuse your custom code across multiple web pages
+## How to reuse your custom code across multiple web pages
 
 You can reuse your custom code across your project by putting it inside a Slot instance.
 
@@ -50,7 +53,7 @@ You can reuse your custom code across your project by putting it inside a Slot i
 
 Please note that any updates you make inside your slot will update all other instances of that slot.
 
-### Avoid creating global variables
+## Avoid creating global variables
 
 When using the tag, every variable you create is global by default, which can lead to unpredictable effects.\
 \
@@ -69,7 +72,7 @@ What could go wrong? 😅
 1. If you navigate away and come back to the page, the script gets executed again and you will get a syntax error: "Identifier 'a' has already been declared". This is due to the fact that const can be declared only once. You could workaround this by using `var` or `let` instead.
 2. If your logic relies on an existing variable and you don't redefine it, it will use any random value that happens to be there at a given time.
 
-#### Solution 1 - module
+### Solution 1 – module
 
 When using the module type, the script has its own scope, and the variables don't become global.
 
@@ -79,7 +82,7 @@ When using the module type, the script has its own scope, and the variables don'
 </script>
 ```
 
-#### Solution 2 - function scope
+### Solution 2 – function scope
 
 Use an Immediately Invoked Function Expression (IIFE) to create a function scope.
 
@@ -91,7 +94,7 @@ Use an Immediately Invoked Function Expression (IIFE) to create a function scope
 </script>
 ```
 
-### Don't use DOMContentLoaded
+## Don't use DOMContentLoaded
 
 The **DOMContentLoaded** event won't fire during client-side navigation between pages because, technically, the page isn't reloaded. Use the same logic you intended to write inside that event handler, and if you need to wait for an element to be rendered first, place the embed after it.
 

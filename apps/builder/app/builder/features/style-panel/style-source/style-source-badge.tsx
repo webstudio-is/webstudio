@@ -1,12 +1,12 @@
-import { styled, Text } from "@webstudio-is/design-system";
-import { theme } from "@webstudio-is/design-system";
+import { cssVar, styled, Text, theme } from "@webstudio-is/design-system";
+import { styleSourceColors } from "./color-recipes";
 
 export const StyleSourceBadge = styled(Text, {
   display: "inline-flex",
   borderRadius: theme.borderRadius[2],
   px: theme.spacing[3],
   height: theme.spacing[9],
-  color: theme.colors.foregroundContrastMain,
+  color: cssVar("--foreground-on-accent"),
   alignItems: "center",
   maxWidth: "100%",
   whiteSpace: "nowrap",
@@ -16,20 +16,20 @@ export const StyleSourceBadge = styled(Text, {
   variants: {
     source: {
       local: {
-        backgroundColor: theme.colors.backgroundStyleSourceSelected,
+        backgroundColor: styleSourceColors.local.background,
       },
       token: {
-        backgroundColor: theme.colors.backgroundStyleSourceSelected,
+        backgroundColor: styleSourceColors.local.background,
       },
       tag: {
-        backgroundColor: theme.colors.backgroundStyleSourceTag,
+        backgroundColor: styleSourceColors.tag.background,
       },
       breakpoint: {
-        backgroundColor: theme.colors.backgroundStyleSourceBreakpoint,
+        backgroundColor: styleSourceColors.breakpoint.background,
       },
       instance: {
-        backgroundColor: theme.colors.backgroundNeutralMain,
-        color: theme.colors.foregroundMain,
+        backgroundColor: styleSourceColors.instance.background,
+        color: cssVar("--foreground-primary"),
       },
     },
   },

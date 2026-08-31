@@ -27,7 +27,7 @@ import {
   pickedCompletion,
 } from "@codemirror/autocomplete";
 import { javascript } from "@codemirror/lang-javascript";
-import { textVariants, css, rawTheme } from "@webstudio-is/design-system";
+import { css, cssVar } from "@webstudio-is/design-system";
 import {
   lintExpression,
   allowedStringMethods,
@@ -43,6 +43,7 @@ import {
   type EditorApi,
   foldGutterExtension,
   getCodeEditorCssVars,
+  linterTooltipTheme,
   normalizeEditorValue,
 } from "~/shared/code-editor-base";
 import {
@@ -466,7 +467,9 @@ class VariableWidget extends WidgetType {
   }
   toDOM(): HTMLElement {
     const span = document.createElement("span");
-    span.style.backgroundColor = "rgba(24, 119, 232, 0.2)";
+    span.style.backgroundColor = `color-mix(in oklab, ${cssVar(
+      "--foreground-accent"
+    )} 20%, transparent)`;
     span.textContent = this.text;
     return span;
   }
@@ -526,7 +529,7 @@ const wrapperStyle = css({
     size: {
       default: {
         // 1 line is 16px; show at most 20 lines.
-        "--ws-code-editor-max-height": "320px",
+        ...getCodeEditorCssVars({ minHeight: "auto", maxHeight: "320px" }),
       },
       full: {
         ...getCodeEditorCssVars({ minHeight: "100%", maxHeight: "100%" }),
@@ -538,28 +541,6 @@ const wrapperStyle = css({
     },
   },
   defaultVariants: { size: "default" },
-});
-
-const linterTooltipTheme = EditorView.theme({
-  ".cm-tooltip:has(.cm-tooltip-lint)": {
-    backgroundColor: "transparent",
-    borderWidth: 0,
-    paddingTop: rawTheme.spacing[5],
-    paddingBottom: rawTheme.spacing[5],
-    pointerEvents: "none",
-  },
-  ".cm-tooltip-lint": {
-    backgroundColor: rawTheme.colors.backgroundTooltipMain,
-    color: rawTheme.colors.foregroundContrastMain,
-    borderRadius: rawTheme.borderRadius[7],
-    padding: rawTheme.spacing[5],
-  },
-  ".cm-tooltip-lint .cm-diagnostic": {
-    borderWidth: 0,
-    padding: 0,
-    margin: 0,
-    ...textVariants.regular,
-  },
 });
 
 const fullSizeEditorTheme = EditorView.theme({

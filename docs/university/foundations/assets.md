@@ -6,7 +6,11 @@ description: Upload and manage images, fonts, and other files used in your proje
 
 The Assets panel is located on the left side of the builder. It stores all static files used in your project — images, fonts, documents, and more. Upload files here and then reference them in instances and styles throughout your site.
 
-<figure><img src="../../.gitbook/assets/assets-panel.png" alt="Assets panel showing uploaded images with search and filter controls"><figcaption><p>The Assets panel</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/assets-panel-dark.png">
+  <img src="../../.gitbook/assets/assets-panel-light.png" alt="Assets panel with search, filter and sort controls above folders and files">
+</picture>
+
 
 ## Supported file types
 
@@ -17,7 +21,7 @@ The Assets panel is located on the left side of the builder. It stores all stati
 | **Video** | MP4, MOV, AVI, WebM |
 | **Audio** | MP3, WAV, OGG, M4A |
 | **Documents** | PDF, DOC, DOCX, XLS, XLSX, CSV, PPT, PPTX |
-| **Code & text** | TXT, MD, JS, CSS, JSON, HTML, XML |
+| **Code & text** | TXT, MD, MDX, JS, CSS, JSON, HTML, XML |
 | **Archives** | ZIP, RAR |
 
 {% hint style="info" %}
@@ -40,15 +44,28 @@ multiple selected assets does not insert multiple Image components.
 ### Create and edit text files
 
 Open the add menu in the Assets panel and choose **Create text file**. Enter a
-supported filename, such as `notes.md` or `data.json`.
+supported filename, such as `notes.md`, `article.mdx`, or `data.json`.
 Webstudio creates the file in the current folder and opens it in the code
 editor. New JSON files start with an empty object so the Content Engine can
 index them immediately.
 
-You can open uploaded `txt`, `csv`, `md`, `js`, `css`, `json`, `html`, `xml`,
+You can open uploaded `txt`, `csv`, `md`, `mdx`, `js`, `css`, `json`, `html`, `xml`,
 and `svg` assets in the same editor. Syntax highlighting follows the file type;
-unsupported text types use plain text. Markdown files also provide formatting
-controls and a preview.
+unsupported text types use plain text. Markdown and MDX files also provide
+formatting controls and a preview.
+
+MDX files use the same Markdown document features and additionally support
+Webstudio elements for content that Markdown cannot represent. Rename a `.md`
+file to `.mdx` to enable MDX parsing. Webstudio does not rewrite the file while
+renaming it; invalid MDX remains editable and reports source-located errors.
+
+<figure>
+  <picture>
+    <source srcset="../../.gitbook/assets/mdx-editor-preview-dark.png" media="(prefers-color-scheme: dark)">
+    <img src="../../.gitbook/assets/mdx-editor-preview-light.png" alt="MDX editor showing frontmatter and Markdown source beside the rendered preview">
+  </picture>
+  <figcaption><p>Edit MDX source and review its rendered preview side by side.</p></figcaption>
+</figure>
 
 Edits save when the editor loses focus or when you press `Command + S` on
 macOS, `Ctrl + S` on Windows, or `Command/Ctrl + Enter`. Edit the complete
@@ -62,10 +79,12 @@ Converting an empty text file to `.json` initializes it with an empty object.
 
 ### Use assets as content
 
-Markdown and JSON files in Assets can be the source of truth for a site. The
+Markdown, MDX, and JSON files in Assets can be the source of truth for a site. The
 Content Engine reads their structured fields, queries the files, and resolves
 links between them. See [Content Engine](content-engine.md) for the supported
-file structure and a complete article workflow.
+file structure and a complete article workflow. Connect an MDX file to a
+[Content Block](../core-components/content-block.md#store-content-in-an-mdx-file)
+when editors should update its body visually in Content mode.
 
 ## Organizing assets with folders
 
@@ -120,7 +139,11 @@ Folders are included in the current search and sort order.
 
 Hover any asset and click the gear icon to open its detail panel:
 
-<figure><img src="../../.gitbook/assets/assets-detail.png" alt="Asset detail panel showing name, description, dimensions, MIME type, uses, and ID"><figcaption><p>Asset detail panel</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/assets-detail-dark.png">
+  <img src="../../.gitbook/assets/assets-detail-light.png" alt="Asset settings showing file size, type, dimensions, usage count, dates, name, folder, description, and ID">
+</picture>
+
 
 - **File size** and **MIME type**
 - **Dimensions** and **Aspect ratio** (images only)
@@ -162,7 +185,8 @@ Builder.
 
 ## Related
 
-- [Content Engine](content-engine.md) – Build sites from Markdown and JSON files in Assets
+- [Content Engine](content-engine.md) – Build sites from Markdown, MDX, and JSON files in Assets
+- [Content Block](../core-components/content-block.md) – Edit an MDX document visually in Content mode
 - [Anatomy of the builder](anatomy-of-the-webstudio-builder.md) – Overview of all builder panels
 - [Image](../core-components/image.md) – Display images from assets or external URLs
 - [Commands & search](commands-and-search.md) – Quickly find and delete unused assets

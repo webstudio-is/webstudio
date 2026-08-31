@@ -1,19 +1,18 @@
 import {
   Button,
   Flex,
-  rawTheme,
+  cssVar,
   StorySection,
   theme,
-  ToolbarButton,
   Text,
-  buttonStyle,
-  Link,
+  LinkButton,
+  IconButton,
 } from "@webstudio-is/design-system";
 import {
   CloudIcon,
   OfflineIcon,
   ShieldIcon,
-  WebstudioIcon,
+  MenuIcon,
 } from "@webstudio-is/icons";
 import { $syncStatus } from "@webstudio-is/sync-client";
 import { $authPermit } from "~/shared/nano-states";
@@ -27,22 +26,22 @@ export default {
 };
 
 const MenuPlaceholder = () => (
-  <ToolbarButton aria-label="Menu">
-    <WebstudioIcon size={22} />
-  </ToolbarButton>
+  <IconButton type="button" size="large" aria-label="Menu">
+    <MenuIcon size={22} />
+  </IconButton>
 );
 
 const PagePlaceholder = () => (
-  <ToolbarButton css={{ paddingInline: theme.panel.paddingInline }}>
+  <Button color="ghost" css={{ paddingInline: theme.panel.paddingInline }}>
     <Text truncate css={{ maxWidth: theme.spacing[24] }}>
       Home
     </Text>
-  </ToolbarButton>
+  </Button>
 );
 
 const BreakpointsPlaceholder = () => (
   <Flex align="center" gap="1">
-    <ToolbarButton>Base</ToolbarButton>
+    <Button color="ghost">Base</Button>
   </Flex>
 );
 
@@ -53,7 +52,7 @@ const SyncErrorIndicator = () => (
     css={{ height: theme.spacing["15"] }}
     shrink={false}
   >
-    <OfflineIcon color={rawTheme.colors.foregroundDestructive} />
+    <OfflineIcon color={cssVar("--foreground-negative")} />
   </Flex>
 );
 
@@ -64,14 +63,14 @@ const ViewModeIndicator = () => (
     css={{ height: theme.spacing["15"] }}
     shrink={false}
   >
-    <CloudIcon color={rawTheme.colors.backgroundAlertMain} />
+    <CloudIcon color={cssVar("--foreground-warning")} />
   </Flex>
 );
 
 const SafeModeIndicator = () => (
-  <ToolbarButton variant="subtle">
-    <ShieldIcon stroke={rawTheme.colors.foregroundDestructive} />
-  </ToolbarButton>
+  <IconButton type="button" aria-label="Safe mode active">
+    <ShieldIcon stroke={cssVar("--foreground-negative")} />
+  </IconButton>
 );
 
 export const TopbarLayouts = () => {
@@ -87,8 +86,8 @@ export const TopbarLayouts = () => {
           center={<BreakpointsPlaceholder />}
           right={
             <>
-              <Button color="gradient">Share</Button>
-              <Button color="positive">Publish</Button>
+              <Button>Share</Button>
+              <Button color="primary">Publish</Button>
             </>
           }
         />
@@ -102,17 +101,9 @@ export const TopbarLayouts = () => {
               <SafeModeIndicator />
               <ViewModeIndicator />
               <SyncErrorIndicator />
-              <Button color="gradient">Share</Button>
-              <Button color="positive">Publish</Button>
-              <Link
-                data-state="auto"
-                className={buttonStyle({ color: "positive" })}
-                color="contrast"
-                href="#"
-                underline="none"
-              >
-                Clone
-              </Link>
+              <Button>Share</Button>
+              <Button color="primary">Publish</Button>
+              <LinkButton href="#">Clone</LinkButton>
             </>
           }
         />
@@ -126,8 +117,8 @@ export const TopbarLayouts = () => {
           right={
             <>
               <SyncStatus />
-              <Button color="gradient">Share</Button>
-              <Button color="positive">Publish</Button>
+              <Button>Share</Button>
+              <Button color="primary">Publish</Button>
             </>
           }
         />
@@ -139,8 +130,8 @@ export const TopbarLayouts = () => {
           right={
             <>
               <ViewMode />
-              <Button color="gradient">Share</Button>
-              <Button color="positive">Publish</Button>
+              <Button>Share</Button>
+              <Button color="primary">Publish</Button>
             </>
           }
         />

@@ -81,7 +81,10 @@ export const pageTransferItemInput = z.union([
 ]);
 
 const pageClipboardTransferItemInput = pageTransferItemInput.and(
-  z.object({ sourceOrigin: z.string().url().optional() })
+  z.object({
+    sourceOrigin: z.string().url().optional(),
+    assetPaths: z.record(z.string(), z.string()).optional(),
+  })
 );
 export const pageTransferDataVersion = "@webstudio/page/v0.1";
 

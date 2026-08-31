@@ -9,6 +9,7 @@ import {
   Flex,
   Grid,
   rawTheme,
+  cssVar,
 } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { Role } from "@webstudio-is/project";
@@ -70,6 +71,7 @@ import { KeyboardShortcutsDialog } from "./features/keyboard-shortcuts-dialog";
 import { TokenConflictDialog } from "~/shared/token-conflict-dialog";
 import { RootStyleConflictDialog } from "~/shared/root-style-conflict-dialog";
 import { DesignTokenImportDialog } from "~/shared/design-token-import-dialog";
+import { TemplateNameConfirmationDialog } from "./features/template-name-confirmation-dialog";
 import type { User } from "~/shared/db/user.server";
 
 import {
@@ -120,7 +122,7 @@ const SidePanel = ({
         fg: 0,
         // Left sidebar tabs won't be able to pop out to the right if we set overflowX to auto.
         //overflowY: "auto",
-        backgroundColor: theme.colors.backgroundPanel,
+        backgroundColor: cssVar("--background-primary"),
         height: "100%",
         ...css,
       }}
@@ -474,7 +476,7 @@ export const Builder = (props: BuilderProps) => {
                 left: 0,
                 bottom: 0,
                 width: 1,
-                background: theme.colors.borderMain,
+                background: cssVar("--border-default"),
               },
             }}
           >
@@ -529,6 +531,7 @@ export const Builder = (props: BuilderProps) => {
         <DesignTokenImportDialog />
         <TokenConflictDialog />
         <RootStyleConflictDialog />
+        <TemplateNameConfirmationDialog />
         <RemoteDialog />
         <Toaster />
       </div>

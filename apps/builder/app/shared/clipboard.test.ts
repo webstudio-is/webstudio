@@ -1,8 +1,11 @@
-import { afterEach, expect, test, vi } from "vitest";
-import { initBuilderApi } from "./builder-api";
+import { afterAll, afterEach, expect, test, vi } from "vitest";
+import { __testing__ as builderApiTesting } from "./builder-api";
 import { readClipboardText } from "./clipboard";
 
+afterAll(builderApiTesting.useLocalApi());
+
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -15,9 +18,9 @@ test("reads clipboard text", async () => {
 });
 
 test("reports denied clipboard access without rejecting", async () => {
-  initBuilderApi();
-  const toastError = vi.fn();
-  window.__webstudio__$__builderApi.toast.error = toastError;
+  const toastError = vi
+    .spyOn(builderApiTesting.api.toast, "error")
+    .mockImplementation(() => {});
   vi.stubGlobal("navigator", {
     clipboard: {
       readText: vi

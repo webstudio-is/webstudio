@@ -1,14 +1,16 @@
-import type { Instance } from "@webstudio-is/sdk";
+import type { ExpressionBindingMode, Instance } from "@webstudio-is/sdk";
 import { getEditableTextTarget } from "@webstudio-is/project-build/runtime";
 
 export const getTextContentUpdateOperation = ({
   instance,
   type,
   value,
+  expressionBindingMode,
 }: {
   instance: Instance | undefined;
   type: "text" | "expression";
   value: string;
+  expressionBindingMode?: ExpressionBindingMode;
 }) => {
   if (instance === undefined) {
     return;
@@ -22,6 +24,9 @@ export const getTextContentUpdateOperation = ({
         childIndex,
         mode: type,
         text: value,
+        ...(expressionBindingMode === undefined
+          ? {}
+          : { expressionBindingMode }),
       },
     };
   }
@@ -35,6 +40,7 @@ export const getTextContentUpdateOperation = ({
       instanceId: instance.id,
       mode: type,
       text: value,
+      ...(expressionBindingMode === undefined ? {} : { expressionBindingMode }),
     },
   };
 };

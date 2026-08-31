@@ -186,7 +186,7 @@ export const FilterSectionContent = ({
           <Select
             disabled={readonly}
             name="filterFunction"
-            placeholder="Select Filter"
+            placeholder="Select filter"
             options={Object.keys(filterFunctions) as FilterFunction[]}
             value={filterFunction ?? "blur"}
             onChange={handleFilterFunctionChange}

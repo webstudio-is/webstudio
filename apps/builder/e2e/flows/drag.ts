@@ -1,4 +1,4 @@
-import type { Frame, Locator, Page } from "playwright";
+import type { Frame, Locator, Page } from "@playwright/test";
 import { waitForChangeToBeSaved } from "./sync-status";
 
 type Bounds = { x: number; y: number; width: number; height: number };

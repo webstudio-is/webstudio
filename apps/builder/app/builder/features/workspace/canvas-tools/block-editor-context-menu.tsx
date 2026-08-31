@@ -6,6 +6,7 @@ import {
   $textEditingInstanceSelector,
   $textEditorContextMenu,
   $textEditorContextMenuCommand,
+  execTextEditorContextMenuCommand,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { applyScale } from "./outline";
@@ -82,7 +83,21 @@ const Menu = ({
   const handleValueChangeComplete = useCallback(
     (templateSelector: InstanceSelector) => {
       const insertBefore = modifierKeys.altKey;
-      insertTemplateAt(templateSelector, anchor, insertBefore);
+      execTextEditorContextMenuCommand({ type: "templateInsertionStarted" });
+      void insertTemplateAt(templateSelector, anchor, insertBefore).then(
+        (didInsert) => {
+          if (didInsert === false) {
+            execTextEditorContextMenuCommand({
+              type: "templateInsertionCancelled",
+            });
+          }
+        },
+        () => {
+          execTextEditorContextMenuCommand({
+            type: "templateInsertionCancelled",
+          });
+        }
+      );
     },
     [anchor, modifierKeys.altKey]
   );
@@ -139,6 +154,11 @@ const Menu = ({
           if (currentValue !== undefined) {
             handleValueChangeComplete(currentValue);
           }
+          break;
+        }
+
+        case "templateInsertionStarted":
+        case "templateInsertionCancelled": {
           break;
         }
 

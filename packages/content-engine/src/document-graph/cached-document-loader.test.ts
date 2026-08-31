@@ -87,6 +87,38 @@ describe("cached document source loader", () => {
     });
   });
 
+  test("reuses cached MDX sources", async () => {
+    const cached: CachedDocumentSource = {
+      format: "mdx",
+      revision: "post-r1",
+      bytes: new TextEncoder().encode("# Cached"),
+    };
+    const load = vi.fn(async () => {
+      throw new Error("source loader must not run");
+    });
+    const result = await createCachedDocumentSourceLoader({
+      cache: {
+        get: async () => cached,
+        set: async () => undefined,
+      },
+      load,
+    })(
+      {
+        id: "post",
+        revision: "post-r1",
+        contentRef: "content:post",
+        format: "mdx",
+      },
+      {}
+    );
+
+    expect(result.format).toBe("mdx");
+    expect(load).not.toHaveBeenCalled();
+    await expect(parseDocumentSource(result)).resolves.toMatchObject({
+      format: "mdx",
+    });
+  });
+
   test("does not reuse a cached source with a different format", async () => {
     const load = vi.fn(async () => ({
       format: "json" as const,

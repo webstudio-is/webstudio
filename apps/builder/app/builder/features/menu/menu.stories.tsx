@@ -1,4 +1,4 @@
-import { Flex, StorySection, Text, Toolbar } from "@webstudio-is/design-system";
+import { Flex, StorySection, Text } from "@webstudio-is/design-system";
 import { Menu } from "./menu";
 import {
   $authPermit,
@@ -28,9 +28,9 @@ const OwnerDesignModeVariant = () => {
   });
   $purchases.set([{ planName: "Pro" }]);
   return (
-    <Toolbar>
+    <Flex align="center">
       <Menu defaultOpen />
-    </Toolbar>
+    </Flex>
   );
 };
 
@@ -44,9 +44,9 @@ const ViewerFreePlanVariant = () => {
     canPublish: false,
   });
   return (
-    <Toolbar>
+    <Flex align="center">
       <Menu defaultOpen />
-    </Toolbar>
+    </Flex>
   );
 };
 
@@ -65,9 +65,9 @@ const AdminContentModeVariant = () => {
   });
   $purchases.set([{ planName: "Pro" }]);
   return (
-    <Toolbar>
+    <Flex align="center">
       <Menu defaultOpen />
-    </Toolbar>
+    </Flex>
   );
 };
 

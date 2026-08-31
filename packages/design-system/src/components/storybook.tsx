@@ -3,6 +3,7 @@
  */
 
 import type { ReactNode } from "react";
+import { cssVar } from "../css-var";
 import { theme, css, type CSS } from "../stitches.config";
 import { textVariants } from "./text";
 
@@ -11,7 +12,7 @@ const sectionStyle = css({
   variants: {
     withBorder: {
       true: {
-        border: `1px dashed ${theme.colors.borderMain}`,
+        border: `1px dashed ${cssVar("--border-default")}`,
         padding: theme.spacing[5],
         marginBottom: theme.spacing[7],
       },
@@ -21,7 +22,7 @@ const sectionStyle = css({
 const titleStyle = css(textVariants.titles, {
   marginTop: 0,
   marginBottom: theme.spacing[5],
-  color: theme.colors.foregroundMain,
+  color: cssVar("--foreground-primary"),
 });
 export const StorySection = ({
   title,

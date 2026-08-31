@@ -1,0 +1,55 @@
+name: Test suite
+
+description: Prepare browsers and run one repository test script.
+
+inputs:
+  submodules-ssh-key:
+    description: SSH key for private test dependencies.
+    required: false
+  script:
+    description: Root package script to run.
+    required: true
+  browsers:
+    description: Browsers required by the test script.
+    default: none
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/submodules-checkout
+      with:
+        submodules-ssh-key: ${{ inputs.submodules-ssh-key }}
+
+    - uses: ./.github/actions/ci-setup
+
+    - name: Cache Playwright Chromium
+      if: inputs.browsers != 'none'
+      uses: actions/cache@v5
+      with:
+        path: |
+          ~/.cache/ms-playwright/chromium-*
+          ~/.cache/ms-playwright/chromium_headless_shell-*
+          ~/.cache/ms-playwright/ffmpeg-*
+        key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+    - name: Cache Playwright Firefox
+      if: inputs.browsers == 'chromium-firefox'
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/ms-playwright/firefox-*
+        key: playwright-firefox-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+    - name: Install package test browsers
+      if: inputs.browsers == 'chromium-firefox'
+      shell: bash
+      run: pnpm --filter @webstudio-is/sdk-components-animation exec playwright install chromium firefox
+
+    - name: Install Builder test browser
+      if: inputs.browsers == 'chromium'
+      shell: bash
+      run: pnpm --filter @webstudio-is/builder exec playwright install chromium
+
+    - name: Run test suite
+      shell: bash
+      run: pnpm run "${{ inputs.script }}"

@@ -4,12 +4,12 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   Button,
+  cssVar,
   Flex,
   Kbd,
   Label,
   Text,
   Tooltip,
-  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { AlertIcon } from "@webstudio-is/icons";
@@ -96,9 +96,13 @@ const useIsResettable = (name: string) => {
 export const PropertyLabel = ({
   name,
   readOnly,
+  deletable = true,
+  onDelete,
 }: {
   name: string;
   readOnly?: boolean;
+  deletable?: boolean;
+  onDelete?: () => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const propMeta = usePropMeta(name);
@@ -109,7 +113,16 @@ export const PropertyLabel = ({
   const isResettable = useIsResettable(name);
   const isBindingResetForbidden = useIsBindingResetForbidden();
   const canDelete =
-    isDeletable && !(prop?.type === "expression" && isBindingResetForbidden);
+    deletable &&
+    isDeletable &&
+    !(prop?.type === "expression" && isBindingResetForbidden);
+  const handleDelete = () => {
+    if (onDelete === undefined) {
+      deleteProp(name);
+      return;
+    }
+    onDelete();
+  };
   return (
     <Flex align="center" css={{ gap: theme.spacing[3] }}>
       {/* prevent label growing */}
@@ -122,7 +135,7 @@ export const PropertyLabel = ({
               if (event.altKey) {
                 event.preventDefault();
                 if (canDelete) {
-                  deleteProp(name);
+                  handleDelete();
                 }
                 return;
               }
@@ -142,7 +155,7 @@ export const PropertyLabel = ({
               {readOnly && (
                 <Flex gap="1">
                   <AlertIcon
-                    color={rawTheme.colors.backgroundAlertMain}
+                    color={cssVar("--foreground-warning")}
                     style={{ flexShrink: 0 }}
                   />
                   <Text>
@@ -153,13 +166,13 @@ export const PropertyLabel = ({
               )}
               {canDelete && (
                 <Button
-                  color="dark"
+                  color="neutral-destructive"
                   // to align button text in the middle
                   prefix={<div></div>}
                   suffix={<Kbd value={["alt", "click"]} color="moreSubtle" />}
                   css={{ gridTemplateColumns: "1fr max-content 1fr" }}
                   onClick={() => {
-                    deleteProp(name);
+                    handleDelete();
                     setIsOpen(false);
                   }}
                 >
@@ -242,7 +255,7 @@ export const FieldLabel = ({
               {description}
               {canReset && (
                 <Button
-                  color="dark"
+                  color="neutral-destructive"
                   // to align button text in the middle
                   prefix={<div></div>}
                   suffix={<Kbd value={["alt", "click"]} color="moreSubtle" />}

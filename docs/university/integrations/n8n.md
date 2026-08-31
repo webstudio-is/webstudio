@@ -8,7 +8,7 @@ This guide shows you how to link Webstudio Forms with [n8n](https://n8n.io/) for
 
 {% embed url="https://www.youtube.com/watch?v=zeJVpfemwj0" %}
 
-### What is n8n?
+## What is n8n?
 
 n8n is a platform designed to automate workflows. It helps you set up a series of tasks that run automatically, connecting different apps and services in the process.
 
@@ -16,11 +16,12 @@ One of the key features of n8n is its visual editor, which allows you to build t
 
 ---
 
-### How to create a Webstudio > n8n integration?
+## Create a Webstudio and n8n integration
 
 For our Webstudio integration, we will create a workflow that sends form submissions to Supabase and notifies a Slack channel if certain requirements are met.
 
-<figure><img src="../../.gitbook/assets/n8n-workflow-overview.avif" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/n8n-workflow-overview.avif" alt="n8n workflow connecting a webhook, Supabase, conditional branch, and Slack"><figcaption></figcaption></figure>
+
 
 - Get started with n8n
 - Create the workflow trigger
@@ -30,14 +31,14 @@ For our Webstudio integration, we will create a workflow that sends form submiss
 - Add a Slack Node
 - Finalize your workflow
 
-#### Get started with n8n
+### Get started with n8n
 
 Start by logging in to your n8n account.
 
 - Inside your dashboard, go to Credentials > Add credential. For this demo, we will be using Supabase and Slack. You can find detailed instructions for all [supported credential setups](https://docs.n8n.io/integrations/builtin/credentials).
 - After setting up the relevant credentials, go to “Workflows” and create a new workflow to start building your automation.
 
-#### Create the workflow trigger
+### Create the workflow trigger
 
 To initiate our n8n workflow with a webhook, we need to configure a webhook trigger.
 
@@ -47,9 +48,10 @@ To initiate our n8n workflow with a webhook, we need to configure a webhook trig
 
 You can learn more about the [Webhook node and its parameters](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/).
 
-#### Connect the webhook to your Webstudio Form
+### Connect the webhook to your Webstudio Form
 
-<figure><img src="../../.gitbook/assets/n8n-webhook-form-settings.avif" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/n8n-webhook-form-settings.avif" alt="Webhook URL and POST method configured on a Webstudio Form"><figcaption></figcaption></figure>
+
 
 1. Open the Webstudio builder, select your form instance, go to Settings and add two properties— _Action_ and _Method_.
 2. Paste your copied Test Webhook into the Action property.
@@ -59,7 +61,7 @@ You can learn more about the [Webhook node and its parameters](https://docs.n8n.
 6. Open the published version of your website and submit the updated form.
 7. Back in n8n, you will now see the submitted form data in the Output Section.
 
-#### Integrate with External Applications
+### Integrate with external applications
 
 Next, let’s add an external application to our workflow. To demonstrate this step, we will be adding form records to Supabase.
 
@@ -69,7 +71,7 @@ Next, let’s add an external application to our workflow. To demonstrate this s
 
 You can learn more about the [Supabase node and its parameters](https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.supabase).
 
-#### Add an IF Node
+### Add an IF node
 
 IF and other flow nodes are used to trigger automations when specified conditions are met.
 
@@ -85,7 +87,7 @@ For this example, we will create a condition to send a Slack channel message onl
 
 You can [learn more about the IF node and its parameters](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.if/).
 
-#### Add a Slack Node
+### Add a Slack node
 
 Finally, let’s add a Slack node to our workflow. We will configure this node to send a message to the Sales channel in Slack.
 
@@ -97,7 +99,7 @@ Finally, let’s add a Slack node to our workflow. We will configure this node t
 
 You can [learn more about the Slack node and its parameters](https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.slack/).
 
-#### Finalize your workflow
+### Finalize your workflow
 
 After setting up your workflow, you should test it to ensure it runs properly.
 
@@ -109,7 +111,8 @@ After the checks are concluded, activate your workflow.
 
 1. Replace the “Test Webhook URL” with the “Production Webhook URL” in your Form’s Action property.
 2. Go to the upper left of your n8n canvas and activate your workflow by toggling it from “Inactive” to “Active”.\
-   ![](../../.gitbook/assets/n8n-workflow-overview.avif)
+
+   ![Active n8n workflow](../../.gitbook/assets/n8n-workflow-overview.avif)
 
 ## Related
 

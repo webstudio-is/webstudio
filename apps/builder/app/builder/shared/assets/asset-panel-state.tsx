@@ -1,4 +1,4 @@
-import { Flex, Text, theme } from "@webstudio-is/design-system";
+import { Flex, Text, cssVar, theme } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
 
 export const AssetPanelState = ({
@@ -25,9 +25,9 @@ export const AssetPanelState = ({
         : {}),
       margin: theme.spacing[4],
       color: active
-        ? theme.colors.foregroundMain
-        : theme.colors.foregroundSubtle,
-      border: `1px dashed ${active ? theme.colors.foregroundMain : "transparent"}`,
+        ? cssVar("--foreground-primary")
+        : cssVar("--foreground-secondary"),
+      border: `1px dashed ${active ? cssVar("--foreground-primary") : "transparent"}`,
     }}
   >
     <Flex align="center" gap={1} shrink={false}>

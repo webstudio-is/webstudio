@@ -11,6 +11,7 @@ import {
 } from "../contracts/input-schema";
 import {
   assetType,
+  contentBlockSource as contentBlockSourceSchema,
   instanceFilterInput,
   type InputJsonSchema,
 } from "@webstudio-is/sdk";
@@ -28,6 +29,8 @@ import * as fonts from "./fonts";
 import * as instanceDuplicate from "./instance-duplicate";
 import * as instances from "./instances";
 import * as migrations from "./migrations";
+import * as mdxPaste from "./mdx-paste";
+import { mdxTemplateMigrationFileLimit } from "./mdx-template-migration";
 import * as pageCopy from "./page-copy";
 import * as pages from "./pages";
 import * as projectSettings from "./project-settings";
@@ -38,14 +41,18 @@ import * as slot from "./slot";
 import * as designTokenImport from "./design-token-import";
 import * as audit from "./audit";
 import * as styles from "./styles";
-import { getZodValidationIssues, throwBuilderValidationError } from "./errors";
+import {
+  getZodValidationIssues,
+  throwBuilderRuntimeError,
+  throwBuilderValidationError,
+} from "./errors";
 import {
   createRuntimeMutationExecutionSchema,
   getRuntimeOutputSchema,
   type RuntimeOperationOutput,
   type RuntimeOutputSchemaId,
 } from "./output-schemas";
-import type { BuilderRuntimeMutation } from "./mutation";
+import { createRuntimeMutation, type BuilderRuntimeMutation } from "./mutation";
 import { listFragmentExpressions } from "./fragment";
 import {
   bindExpressionInput,
@@ -333,6 +340,61 @@ const assetUsageNamespaces = [
   "dataSources",
 ] as const;
 const emptyInput = z.object({});
+const contentBlockOperationInput = z.object({
+  blockInstanceId: z.string().min(1),
+  renderScope: z.string().min(1),
+  variables: z.record(z.string(), z.unknown()).optional(),
+});
+const contentBlockSourceInput = contentBlockOperationInput.extend({
+  source: contentBlockSourceSchema,
+});
+const contentBlockConnectSourceInput = contentBlockSourceInput.extend({
+  confirmReplacement: z.boolean().optional(),
+});
+const contentBlockEditSourceInput = contentBlockOperationInput.extend({
+  source: z.string(),
+});
+const contentBlockFrontmatterInput = contentBlockOperationInput.extend({
+  properties: z.record(z.string(), z.unknown()),
+});
+const contentBlockTemplateMigrationInput = z.object({
+  assetIds: z
+    .array(z.string().min(1))
+    .min(1)
+    .max(mdxTemplateMigrationFileLimit),
+  migration: z.union([
+    z.object({
+      type: z.literal("rename"),
+      from: z.string().min(1),
+      to: z.string().min(1),
+    }),
+    z.object({ type: z.literal("remove"), name: z.string().min(1) }),
+  ]),
+  confirmationToken: z.string().optional(),
+});
+
+const requireContentBlockApplication = (context: BuilderRuntimeContext) => {
+  if (context.contentBlockApplication === undefined) {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      "Content Block source operations require an Asset content session"
+    );
+  }
+  return context.contentBlockApplication;
+};
+
+const contentBlockNamespaces = [
+  "pages",
+  "instances",
+  "props",
+  "dataSources",
+  "resources",
+  "styleSources",
+  "styleSourceSelections",
+  "styles",
+  "breakpoints",
+  "assets",
+] as const;
 const pageListInput = z.object({
   ...paginatedOutputInputSchema.shape,
 });
@@ -416,6 +478,273 @@ const assetUsageInput = z.object({
 });
 
 export const builderRuntimeOperations = [
+  runtimeOperation(
+    "contentBlocks.inspectSource",
+    api("inspect-content-block-source", "inspectContentBlockSource", "view"),
+    readContract(contentBlockNamespaces, { requiresAssets: true }),
+    contentBlockOperationInput,
+    async ({ state, input, context }) => {
+      const inspected = await requireContentBlockApplication(context).inspect({
+        state,
+        ...input,
+      });
+      return {
+        source: inspected.source,
+        sessionStatus: inspected.sessionStatus,
+        identity: inspected.identity,
+        diagnostics: [...inspected.diagnostics],
+      };
+    }
+  ),
+  runtimeOperation(
+    "contentBlocks.connectSource",
+    api("connect-content-block-source", "connectContentBlockSource", "edit"),
+    mutationContract({
+      readNamespaces: contentBlockNamespaces,
+      writeNamespaces: contentBlockNamespaces,
+      requiresAssets: true,
+      requiresConfirm: false,
+    }),
+    contentBlockConnectSourceInput,
+    async ({ state, input, context }) => {
+      const prepared = await requireContentBlockApplication(context).connect({
+        state,
+        ...input,
+      });
+      return createRuntimeMutation({
+        payload:
+          prepared.requiresConfirmation && input.confirmReplacement !== true
+            ? []
+            : [...prepared.projectPayload],
+        result: {
+          action: "connect" as const,
+          requiresConfirmation:
+            prepared.requiresConfirmation && input.confirmReplacement !== true,
+          diagnostics: [...prepared.inspection.diagnostics],
+        },
+        invalidatesNamespaces: contentBlockNamespaces,
+      });
+    }
+  ),
+  runtimeOperation(
+    "contentBlocks.switchSource",
+    api("switch-content-block-source", "switchContentBlockSource", "edit"),
+    mutationContract({
+      readNamespaces: contentBlockNamespaces,
+      writeNamespaces: contentBlockNamespaces,
+      requiresAssets: true,
+      requiresConfirm: false,
+    }),
+    contentBlockSourceInput,
+    async ({ state, input, context }) => {
+      const prepared = await requireContentBlockApplication(
+        context
+      ).switchSource({
+        state,
+        ...input,
+      });
+      return createRuntimeMutation({
+        payload: [...prepared.projectPayload],
+        result: {
+          action: "switch" as const,
+          requiresConfirmation: false,
+          diagnostics: [...prepared.inspection.diagnostics],
+        },
+        invalidatesNamespaces: contentBlockNamespaces,
+      });
+    }
+  ),
+  runtimeOperation(
+    "contentBlocks.disconnectSource",
+    api(
+      "disconnect-content-block-source",
+      "disconnectContentBlockSource",
+      "edit"
+    ),
+    mutationContract({
+      readNamespaces: contentBlockNamespaces,
+      writeNamespaces: contentBlockNamespaces,
+      requiresAssets: true,
+      requiresConfirm: false,
+    }),
+    contentBlockOperationInput.extend({ confirm: z.boolean().optional() }),
+    async ({ state, input, context }) => {
+      const prepared = await requireContentBlockApplication(context).disconnect(
+        {
+          state,
+          ...input,
+        }
+      );
+      return createRuntimeMutation({
+        payload: [...prepared.projectPayload],
+        result: {
+          action: "disconnect" as const,
+          requiresConfirmation: false,
+          diagnostics: [],
+        },
+        invalidatesNamespaces: contentBlockNamespaces,
+      });
+    }
+  ),
+  runtimeOperation(
+    "contentBlocks.editSource",
+    api("edit-content-block-source", "editContentBlockSource", "edit"),
+    mutationContract({
+      readNamespaces: contentBlockNamespaces,
+      writeNamespaces: ["assets"],
+      requiresAssets: true,
+      requiresConfirm: false,
+    }),
+    contentBlockEditSourceInput,
+    async ({ state, input, context }) => {
+      const application = requireContentBlockApplication(context);
+      if (context.dryRun === true) {
+        const inspected = await application.previewSource({ state, ...input });
+        return createRuntimeMutation({
+          payload: [],
+          result: {
+            assetId: inspected.identity.assetId,
+            source: input.source,
+            status: inspected.state.status,
+            diagnostics: [...inspected.diagnostics],
+          },
+          invalidatesNamespaces: [],
+        });
+      }
+      const saved = await application.editSource({ state, ...input });
+      return createRuntimeMutation({
+        payload: [],
+        result: {
+          assetId: saved.state.asset.id,
+          source: saved.source,
+          status: saved.state.status,
+          diagnostics: [...saved.diagnostics],
+        },
+        invalidatesNamespaces: [],
+      });
+    }
+  ),
+  runtimeOperation(
+    "contentBlocks.updateFrontmatter",
+    api(
+      "update-content-block-frontmatter",
+      "updateContentBlockFrontmatter",
+      "edit"
+    ),
+    mutationContract({
+      readNamespaces: contentBlockNamespaces,
+      writeNamespaces: ["assets"],
+      requiresAssets: true,
+      requiresConfirm: false,
+    }),
+    contentBlockFrontmatterInput,
+    async ({ state, input, context }) => {
+      const application = requireContentBlockApplication(context);
+      if (context.dryRun === true) {
+        const preview = await application.previewFrontmatter({
+          state,
+          ...input,
+        });
+        return createRuntimeMutation({
+          payload: [],
+          result: {
+            assetId: preview.identity.assetId,
+            source: preview.source,
+            status: preview.state.status,
+            diagnostics: [...preview.diagnostics],
+          },
+          invalidatesNamespaces: [],
+        });
+      }
+      const saved = await application.updateFrontmatter({ state, ...input });
+      return createRuntimeMutation({
+        payload: [],
+        result: {
+          assetId: saved.state.asset.id,
+          source: saved.source,
+          status: saved.state.status,
+          diagnostics: [...saved.diagnostics],
+        },
+        invalidatesNamespaces: [],
+      });
+    }
+  ),
+  runtimeOperation(
+    "contentBlocks.reloadSource",
+    api("reload-content-block-source", "reloadContentBlockSource", "view"),
+    readContract(contentBlockNamespaces, { requiresAssets: true }),
+    contentBlockOperationInput,
+    async ({ state, input, context }) => {
+      const reloaded = await requireContentBlockApplication(context).reload({
+        state,
+        ...input,
+      });
+      const inspected = await requireContentBlockApplication(context).inspect({
+        state,
+        ...input,
+      });
+      return {
+        assetId: reloaded.asset.id,
+        source: reloaded.source,
+        status: reloaded.status,
+        diagnostics: [...inspected.diagnostics],
+      };
+    }
+  ),
+  runtimeOperation(
+    "contentBlocks.migrateTemplateReferences",
+    api(
+      "migrate-content-block-template-references",
+      "migrateContentBlockTemplateReferences",
+      "edit"
+    ),
+    mutationContract({
+      readNamespaces: contentBlockNamespaces,
+      writeNamespaces: ["assets"],
+      requiresAssets: true,
+      requiresConfirm: false,
+    }),
+    contentBlockTemplateMigrationInput,
+    async ({ input, context }) => {
+      const result = await requireContentBlockApplication(
+        context
+      ).migrateTemplateReferences({
+        ...input,
+        dryRun: context.dryRun,
+      });
+      return createRuntimeMutation({
+        payload: [],
+        result: {
+          status: result.status,
+          updateCount: result.updateCount,
+          omissionCount: result.omissionCount,
+          changedFileCount: result.changedFileCount,
+          files: result.files.map((file) => ({
+            assetId: file.assetId,
+            revision: file.revision,
+            contentRef: file.contentRef,
+            changed: file.changed,
+            ...("status" in file ? { status: file.status } : {}),
+            updateCount: file.updateCount,
+            omissionCount: file.omissionCount,
+            diagnostics: file.diagnostics.map(({ code, message }) => ({
+              code,
+              message,
+            })),
+          })),
+          ...(result.status === "confirmation-required"
+            ? {
+                confirmation: {
+                  token: result.confirmationToken,
+                  expiresAt: result.confirmationExpiresAt,
+                },
+              }
+            : {}),
+        },
+        invalidatesNamespaces: [],
+      });
+    }
+  ),
   runtimeOperation(
     "pages.list",
     api("list-pages", "listPages"),
@@ -904,6 +1233,17 @@ export const builderRuntimeOperations = [
       components.insertComponent(state, input, context)
   ),
   runtimeOperation(
+    "instances.insertMdxText",
+    api("insert-mdx-text", "insertMdxText"),
+    mutationContract({
+      readNamespaces: components.componentInsertReadNamespaces,
+      writeNamespaces: components.componentInsertNamespaces,
+    }),
+    mdxPaste.insertMdxTextInput,
+    ({ state, input, context }) =>
+      mdxPaste.insertMdxText({ state, input, context })
+  ),
+  runtimeOperation(
     "instances.insertCollection",
     api("insert-collection", "insertCollection"),
     mutationContract({
@@ -1248,7 +1588,7 @@ export const builderRuntimeOperations = [
     "instances.updateText",
     api("update-text", "updateText", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "dataSources"],
+      readNamespaces: ["instances", "props", "dataSources"],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),
@@ -1292,7 +1632,7 @@ export const builderRuntimeOperations = [
     "instances.setTextContent",
     api("set-text-content", "setTextContent", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "dataSources"],
+      readNamespaces: ["instances", "props", "dataSources"],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),
@@ -1394,6 +1734,7 @@ export const builderRuntimeOperations = [
     mutationContract({
       readNamespaces: ["instances", ...styleNamespaces, "breakpoints"],
       writeNamespaces: ["styles"],
+      retryOnConflict: true,
     }),
     styles.styleDeleteDeclarationsInput,
     ({ state, input }) => styles.deleteStyleDeclarations(state, input)

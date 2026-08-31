@@ -76,7 +76,7 @@ jobs:
           )
         )
       )
-    timeout-minutes: 30
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     environment:
       name: development
@@ -93,11 +93,14 @@ jobs:
 
       - uses: ./.github/actions/ci-setup
 
-      - name: Cache pinned visual browser
+      - name: Cache Playwright Chromium
         uses: actions/cache@v5
         with:
-          path: ~/.cache/ms-playwright
-          key: visual-playwright-${{ runner.os }}-${{ hashFiles('packages/sdk-components-animation/package.json', 'pnpm-lock.yaml') }}
+          path: |
+            ~/.cache/ms-playwright/chromium-*
+            ~/.cache/ms-playwright/chromium_headless_shell-*
+            ~/.cache/ms-playwright/ffmpeg-*
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install pinned visual browser
         run: |

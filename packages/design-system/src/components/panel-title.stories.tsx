@@ -41,7 +41,7 @@ export const PanelTitle = () => (
               <Button prefix={<XIcon />} color="ghost" />
               <Button prefix={<CopyIcon />} color="ghost" />
               <TitleSuffixSpacer />
-              <Button>Button</Button>
+              <Button color="primary">Button</Button>
             </>
           }
         >

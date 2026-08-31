@@ -27,11 +27,11 @@ import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "../config";
 import { HandledCliError } from "../errors";
 import {
   getPreviewUrl,
-  getNpmInvocation,
   getNodeRuntimeEnv,
   previewBuildCacheMarker,
   previewProcessOwnerFile,
   runPreviewBuild,
+  resolvePreviewPackageManager,
   startPreviewServer,
   waitForPreviewExit,
 } from "../preview-server";
@@ -106,7 +106,10 @@ export const previewOptions = (yargs: CommonYargsArgv) =>
         "Preview builds the generated app and starts its production server.",
         "Preview dependencies are isolated under .webstudio/preview and reused across regenerations.",
         "Do not add generated-preview dependencies to the repository root package.json or pnpm-lock.yaml.",
-        "If dependency installation fails, check npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.",
+        "When launcher metadata is available, Preview reuses a supported npm or pnpm launcher. Without launcher metadata, it defaults to npm.",
+        "Unless npm_config_cache is already configured, npm uses a writable cache inside .webstudio/preview.",
+        "For npm cache permission errors, unset npm_config_cache to use the preview-local cache, then retry.",
+        "If dependency installation fails, check the reported package-manager path and network configuration, then reinstall or update the Webstudio CLI if the problem persists.",
       ].join("\n")
     );
 
@@ -174,6 +177,8 @@ type PreviewDependencyOperations = {
   ) => Promise<unknown>;
   lstat: (path: string) => Promise<{ isSymbolicLink: () => boolean }>;
   readFile: (path: string, encoding: "utf8") => Promise<string>;
+  readPackageFile?: (path: string) => string;
+  resolveLauncherPath?: (path: string) => string;
   rm: (
     path: string,
     options: { recursive: true; force: true }
@@ -203,11 +208,13 @@ const getPreviewInstallFailureDiagnostics = (error: unknown) => {
   )
     .trim()
     .slice(-2000);
-  const code =
-    typeof record.code === "string" || typeof record.code === "number"
-      ? String(record.code)
-      : undefined;
-  return `${code === undefined ? "" : `npm exit code ${code}. `}${diagnostics}`;
+  const codeDiagnostics =
+    typeof record.code === "number"
+      ? `package-manager exit code ${record.code}. `
+      : typeof record.code === "string"
+        ? `package-manager process error ${record.code}. `
+        : "";
+  return `${codeDiagnostics}${diagnostics}`;
 };
 
 export const getPreviewProjectDir = (projectDir = cwd()) =>
@@ -354,36 +361,58 @@ export const ensurePreviewDependencies = async (
     }
   }
 
-  const installArgs = [
-    "install",
-    "--legacy-peer-deps",
-    "--no-audit",
-    "--no-fund",
-    "--package-lock=false",
-    "--loglevel=error",
-    "--workspaces=false",
-  ];
-  const invocation = getNpmInvocation(installArgs, operations);
+  const packageManager = resolvePreviewPackageManager(operations);
+  const installArgs =
+    packageManager.name === "pnpm"
+      ? ["install", "--no-lockfile", "--loglevel=error", "--ignore-workspace"]
+      : [
+          "install",
+          "--legacy-peer-deps",
+          "--no-audit",
+          "--no-fund",
+          "--package-lock=false",
+          "--loglevel=error",
+          "--workspaces=false",
+        ];
+  const invocation = {
+    command: packageManager.command,
+    args: [...packageManager.argsPrefix, ...installArgs],
+  };
+  const packageManagerPath =
+    invocation.command === operations.nodeExecPath
+      ? invocation.args[0]
+      : invocation.command;
+  const runtimeEnv = getNodeRuntimeEnv(
+    operations.nodeExecPath,
+    operations.env,
+    operations.platform
+  );
+  const installEnv =
+    packageManager.name === "npm" &&
+    Object.keys(runtimeEnv).every(
+      (name) => name.toLowerCase() !== "npm_config_cache"
+    )
+      ? {
+          ...runtimeEnv,
+          npm_config_cache: join(previewProjectDir, ".npm-cache"),
+        }
+      : runtimeEnv;
 
   try {
     await operations.execFile(invocation.command, invocation.args, {
       cwd: previewProjectDir,
-      env: getNodeRuntimeEnv(
-        operations.nodeExecPath,
-        operations.env,
-        operations.platform
-      ),
+      env: installEnv,
       timeout: previewDependencyInstallTimeout,
     });
   } catch (error) {
     throw new Error(
-      `PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies. Check the npm/network configuration, then reinstall or update webstudio if the problem persists.\n\nPackage-manager diagnostics:\n${getPreviewInstallFailureDiagnostics(error)}`,
+      `PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies with ${packageManager.name} at ${packageManagerPath}. For npm cache permission errors, unset npm_config_cache to use the preview-local cache, then retry. Check the package-manager/network configuration, then reinstall or update webstudio if the problem persists.\n\nPackage-manager diagnostics:\n${getPreviewInstallFailureDiagnostics(error)}`,
       { cause: error }
     );
   }
   if ((await hasRequiredDependencies(previewNodeModules)) === false) {
     throw new Error(
-      "PREVIEW_DEPENDENCIES_MISSING: npm completed without installing every dependency declared by the generated preview. Reinstall or update webstudio, then retry."
+      `PREVIEW_DEPENDENCIES_MISSING: ${packageManager.name} completed without installing every dependency declared by the generated preview. Reinstall or update webstudio, then retry.`
     );
   }
   await operations.writeFile(

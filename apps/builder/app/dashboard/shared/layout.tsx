@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { Flex, theme } from "@webstudio-is/design-system";
+import { Flex, cssVar, theme } from "@webstudio-is/design-system";
 
 export const Header = ({
   variant,
@@ -17,7 +17,7 @@ export const Header = ({
         height: theme.spacing[19],
         position: "sticky",
         top: 0,
-        background: theme.colors.backgroundPanel,
+        background: cssVar("--background-primary"),
         zIndex: 1,
       }}
       {...props}

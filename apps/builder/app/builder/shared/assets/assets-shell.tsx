@@ -14,6 +14,7 @@ import {
   SearchField,
   theme,
   toast,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import {
@@ -358,11 +359,11 @@ export const AssetsShell = ({
           position: "absolute",
           inset: 0,
           display: dragState !== IDLE && isEmpty === false ? "flex" : "none",
-          backgroundColor: theme.colors.backgroundPanel,
+          backgroundColor: cssVar("--background-primary"),
           color:
             dragState === OVER
-              ? theme.colors.foregroundMain
-              : theme.colors.foregroundSubtle,
+              ? cssVar("--foreground-primary")
+              : cssVar("--foreground-secondary"),
         }}
       >
         <AssetPanelState

@@ -1,0 +1,72 @@
+name: Run Builder E2E shard
+
+description: Run one Builder E2E shard and preserve diagnostics on failure.
+
+inputs:
+  submodules-ssh-key:
+    description: SSH key for private E2E dependencies.
+    required: false
+  shard:
+    description: Filename-derived shard name.
+    required: true
+  partition:
+    description: Optional Playwright partition within the selected files.
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/submodules-checkout
+      with:
+        submodules-ssh-key: ${{ inputs.submodules-ssh-key }}
+
+    - uses: ./.github/actions/ci-setup
+      with:
+        run-scripts: "true"
+
+    - name: Cache Playwright Chromium
+      uses: actions/cache@v5
+      with:
+        path: |
+          ~/.cache/ms-playwright/chromium-*
+          ~/.cache/ms-playwright/chromium_headless_shell-*
+          ~/.cache/ms-playwright/ffmpeg-*
+        key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+    - name: Download Builder E2E build
+      uses: actions/download-artifact@v7
+      with:
+        name: builder-e2e-build
+        path: .
+
+    - name: Run Builder E2E
+      shell: bash
+      env:
+        E2E_TEST_SHARD: ${{ inputs.shard }}
+        E2E_TEST_PARTITION: ${{ inputs.partition }}
+      run: |
+        args=(--workers=4)
+        if [ -n "$E2E_TEST_PARTITION" ]; then
+          args+=(--shard="$E2E_TEST_PARTITION")
+        fi
+        pnpm --filter @webstudio-is/builder e2e:ci:shard -- "${args[@]}"
+
+    - name: Upload report
+      if: failure()
+      uses: actions/upload-artifact@v6
+      with:
+        name: builder-e2e-report-${{ inputs.shard }}
+        retention-days: 7
+        path: |
+          apps/builder/playwright-report
+          apps/builder/test-results/e2e
+
+    - name: Print service logs
+      if: failure()
+      shell: bash
+      run: pnpm --filter @webstudio-is/builder backend snapshot logs
+
+    - name: Stop services
+      if: always()
+      shell: bash
+      run: pnpm --filter @webstudio-is/builder backend snapshot down --volumes --remove-orphans

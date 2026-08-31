@@ -154,6 +154,13 @@ export const $convertToUpdates = (
   return instancesList;
 };
 
+export const $convertToPlainTextUpdate = (treeRootInstance: Instance) => [
+  {
+    ...treeRootInstance,
+    children: [{ type: "text" as const, value: $getRoot().getTextContent() }],
+  },
+];
+
 const $writeLexical = (
   parent: ElementNode | TextNode,
   children: Instance["children"],

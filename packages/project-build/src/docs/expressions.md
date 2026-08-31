@@ -25,6 +25,28 @@ normalize them for storage. Expression-only resource headers, search parameters,
 and bodies accept `{ "type": "literal", "value": "fixed text" }` when the
 value is not dynamic.
 
+## Read and read-write bindings
+
+Expression bindings use `mode:"read"` by default. Use `mode:"readwrite"` only
+for an exact direct path into the frontmatter of an MDX source connected to the
+containing Content Block, for example:
+
+```json
+{
+  "binding": {
+    "type": "expression",
+    "value": "document.frontmatter.title",
+    "mode": "readwrite"
+  }
+}
+```
+
+This lets Content mode save a direct edit back to that frontmatter field.
+Computed expressions, including fallbacks and concatenation, are always
+read-only. The mutation is rejected when the expression is not a direct path or
+does not belong to a connected Content Block document. Use the variable name
+returned by `inspect-instance`; do not assume it is `document`.
+
 ## Scope
 
 - Data variables are available on their scope instance and descendants.

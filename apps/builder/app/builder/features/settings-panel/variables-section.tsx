@@ -107,7 +107,7 @@ const EmptyVariables = () => (
     </Flex>
     <Flex justify="center" align="center">
       <VariablePopoverTrigger>
-        <Button type="button" prefix={<PlusIcon />}>
+        <Button color="primary" type="button" prefix={<PlusIcon />}>
           Create data variable
         </Button>
       </VariablePopoverTrigger>

@@ -11,7 +11,7 @@ The Builder and Projects are hosted separately. The Builder is used to create Pr
 ## Builder
 
 {% hint style="warning" %}
-While both the Builder and the generated site are open-source, self-hosting the Builder in production is more difficult and currently not recommended. You can still [self-host the Builder for development](../../contributing/contributing-for-developers.md#running-the-webstudio-project-using-github-codespaces), and of course, you can self-host the sites for production.
+While both the Builder and the generated site are open-source, self-hosting the Builder in production is more difficult and currently not recommended. You can still [self-host the Builder for development](../../contributing/contributions.md#running-the-webstudio-project-using-vs-code), and of course, you can self-host the sites for production.
 {% endhint %}
 
 ## Projects

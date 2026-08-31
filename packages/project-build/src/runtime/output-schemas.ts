@@ -11,6 +11,7 @@ import {
   projectMeta,
   prop,
   instance,
+  contentBlockDiagnostic,
 } from "@webstudio-is/sdk";
 import {
   assetQueryResultMode,
@@ -32,6 +33,7 @@ import {
 } from "./component-insert-contract";
 import { expressionWarningSchema } from "./expression-validation";
 import { designTokenImportPlanEntrySchema } from "./design-token-import";
+import { mdxPasteResult } from "./mdx-paste";
 
 const looseObject = <Shape extends z.ZodRawShape>(shape: Shape) =>
   z.looseObject(shape);
@@ -323,7 +325,73 @@ const unsupportedRuntimeConversion = looseObject({
   reason: z.string(),
 });
 
+const assetContentSessionStatus = z.enum([
+  "saved",
+  "pending",
+  "saving",
+  "failed",
+  "conflicting",
+]);
+const assetContentSourceResult = looseObject({
+  assetId: id,
+  source: z.string(),
+  status: assetContentSessionStatus,
+  diagnostics: z.array(contentBlockDiagnostic),
+});
+const contentBlockSourceLifecycleResult = (
+  action: "connect" | "switch" | "disconnect"
+) =>
+  looseObject({
+    action: z.literal(action),
+    requiresConfirmation: z.boolean(),
+    diagnostics: z.array(contentBlockDiagnostic),
+  });
+
 export const runtimeOutputSchemas = {
+  "contentBlocks.inspectSource": looseObject({
+    source: z.string(),
+    sessionStatus: assetContentSessionStatus,
+    identity: looseObject({
+      blockInstanceId: id,
+      assetId: id,
+      revision: z.string(),
+      contentRef: z.string(),
+      format: z.literal("mdx"),
+      renderScope: z.string(),
+    }),
+    diagnostics: z.array(contentBlockDiagnostic),
+  }),
+  "contentBlocks.connectSource": contentBlockSourceLifecycleResult("connect"),
+  "contentBlocks.switchSource": contentBlockSourceLifecycleResult("switch"),
+  "contentBlocks.disconnectSource":
+    contentBlockSourceLifecycleResult("disconnect"),
+  "contentBlocks.editSource": assetContentSourceResult,
+  "contentBlocks.updateFrontmatter": assetContentSourceResult,
+  "contentBlocks.reloadSource": assetContentSourceResult,
+  "contentBlocks.migrateTemplateReferences": looseObject({
+    status: z.enum(["confirmation-required", "complete", "partial"]),
+    updateCount: z.number().int().nonnegative(),
+    omissionCount: z.number().int().nonnegative(),
+    changedFileCount: z.number().int().nonnegative(),
+    files: z.array(
+      looseObject({
+        assetId: id,
+        revision: z.string(),
+        contentRef: z.string(),
+        changed: z.boolean(),
+        status: z.enum(["updated", "unchanged", "failed"]).optional(),
+        updateCount: z.number().int().nonnegative(),
+        omissionCount: z.number().int().nonnegative(),
+        diagnostics: z.array(
+          looseObject({ code: z.string(), message: z.string() })
+        ),
+      })
+    ),
+    confirmation: looseObject({
+      token: z.string(),
+      expiresAt: z.string(),
+    }).optional(),
+  }),
   "assetFolders.list": looseObject({ folders: z.array(assetFolder) }),
   "assetFolders.create": folderIdResult,
   "assetFolders.update": folderIdResult,
@@ -500,6 +568,7 @@ export const runtimeOutputSchemas = {
     warnings: expressionWarnings.optional(),
   }),
   "instances.insertFragment": fragmentInsertResult,
+  "instances.insertMdxText": mdxPasteResult,
   "slots.attach": looseObject({ slotId: id, fragmentId: id }),
   "slots.extract": looseObject({ slotId: id, fragmentId: id, instanceId: id }),
   "instances.move": instanceIdsResult,

@@ -10,6 +10,9 @@ import {
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
 import * as httpClient from "@webstudio-is/http-client";
+import { createHttpAssetContentRepository } from "@webstudio-is/content-engine/asset-content-repository";
+import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
   bundleVersion,
   getPublicBuildIncludes,
@@ -54,7 +57,10 @@ import {
   type SerializedBuilderStateSnapshot,
 } from "@webstudio-is/project-build/state";
 import { removeLegacyProjectSettingsFromPages } from "@webstudio-is/project-build";
-import { getValidationIssues } from "@webstudio-is/project-build/runtime";
+import {
+  createContentBlockApplication,
+  getValidationIssues,
+} from "@webstudio-is/project-build/runtime";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
 import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "./config";
 import type { ApiConnection } from "./api-connection";
@@ -558,6 +564,19 @@ export const createCliProjectSessionTransport = ({
       )) as Result),
 });
 
+export const createCliAssetContentRepository = ({
+  connection,
+}: {
+  connection: ApiConnection;
+}) =>
+  createHttpAssetContentRepository({
+    projectId: connection.projectId,
+    ...httpClient.createProjectAssetContentTransport({
+      ...connection,
+      authToken: () => connection.authToken,
+    }),
+  });
+
 export const createCliProjectSession = ({
   connection,
   storage,
@@ -566,6 +585,7 @@ export const createCliProjectSession = ({
   executeServerOperation,
   getPermissions,
   issueReportRuntime,
+  assetContentRepository = createCliAssetContentRepository({ connection }),
 }: {
   connection: ApiConnection;
   storage?: ProjectSessionStorage;
@@ -574,8 +594,21 @@ export const createCliProjectSession = ({
   executeServerOperation?: ProjectSessionTransport["executeServerOperation"];
   getPermissions?: ProjectSessionTransport["getPermissions"];
   issueReportRuntime?: () => IssueReportRuntime;
-}) =>
-  createProjectSession({
+  assetContentRepository?: ReturnType<typeof createCliAssetContentRepository>;
+}) => {
+  let projectSession: ReturnType<typeof createProjectSession>;
+  const contentSession = createAssetContentSession({
+    repository: assetContentRepository,
+    authorize: async ({ operation }) => {
+      const permissions = await projectSession.getPermissions();
+      return (
+        permissions.canUseApi &&
+        permissions.canView &&
+        (operation === "read" || permissions.canEdit)
+      );
+    },
+  });
+  projectSession = createProjectSession({
     projectId: connection.projectId,
     transport: createCliProjectSessionTransport({
       connection,
@@ -589,7 +622,18 @@ export const createCliProjectSession = ({
         getCliProjectSessionFile(projectRoot, sessionProjectId)
       ),
     compatibilityVersion,
+    runtimeContext: {
+      createId: randomUUID,
+      projectId: connection.projectId,
+      contentBlockApplication: createContentBlockApplication({
+        projectId: connection.projectId,
+        session: contentSession,
+        metas: componentMetas,
+      }),
+    },
   });
+  return projectSession;
+};
 
 export type CliProjectSession = ReturnType<typeof createCliProjectSession>;
 

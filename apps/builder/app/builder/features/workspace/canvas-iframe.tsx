@@ -1,8 +1,5 @@
 import { forwardRef, useMemo, useRef, type JSX, type RefObject } from "react";
-import {
-  css,
-  canvasPointerEventsPropertyName,
-} from "@webstudio-is/design-system";
+import { css, cssVar } from "@webstudio-is/design-system";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
 import { $canvasIframeState } from "~/shared/nano-states";
 import { useCallback, useEffect, useState } from "react";
@@ -16,9 +13,11 @@ import { mergeRefs } from "@react-aria/utils";
 
 const iframeStyle = css({
   border: "none",
-  pointerEvents: `var(${canvasPointerEventsPropertyName})`,
+  pointerEvents: cssVar("--canvas-pointer-events"),
   height: "100%",
   width: "100%",
+  // The canvas displays the authored page, whose initial canvas is white and
+  // independent of the Builder chrome color scheme.
   backgroundColor: "#fff",
 });
 

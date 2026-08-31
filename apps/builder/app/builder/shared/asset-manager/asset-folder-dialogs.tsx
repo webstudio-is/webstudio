@@ -158,6 +158,7 @@ const AssetFolderForm = ({
       <Flex justify="end" gap={2}>
         {secondaryAction}
         <Button
+          color="primary"
           autoFocus={autoFocusSubmit}
           disabled={canSubmit === false}
           onClick={submit}
@@ -343,6 +344,7 @@ export const MoveAssetManagerItemsDialog = ({
           />
           <Flex justify="end">
             <Button
+              color="primary"
               autoFocus
               disabled={canMove(folderId) === false}
               onClick={() => {

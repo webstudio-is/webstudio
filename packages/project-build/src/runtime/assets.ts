@@ -819,7 +819,7 @@ const countResourceAssetReferences = (resource: Resource, assetId: string) =>
     assetId
   );
 
-const countDataSourceAssetReferences = (
+export const countDataSourceAssetReferences = (
   dataSource: DataSource,
   assetId: string
 ) =>

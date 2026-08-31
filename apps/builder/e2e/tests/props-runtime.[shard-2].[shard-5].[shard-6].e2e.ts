@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 import { loadDevBuild } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
@@ -15,7 +15,7 @@ import {
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { withGeneratedPreview } from "../flows/generated-app";
-import { newIsolatedPage, test } from "../harness";
+import { test } from "../test";
 import { measure } from "../perf";
 
 const openComponentsPanel = async ({ page }: { page: Page }) => {
@@ -387,15 +387,18 @@ const expectBooleanPropDeleted = async ({
   }
 };
 
-test("Webhook Form action submits once and persists after reload", async () => {
+test("Webhook Form action submits once and persists after reload", async ({
+  page,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "props-runtime@webstudio.test",
     title: "Props Runtime",
     assetNamePrefix: "props-runtime-",
     editorToken: "props-runtime-editor-token",
     builderToken: "props-runtime-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
   const webhook = await startWebhookServer();
   const text = "Initial content";
   const actionUrl = webhook.url;
@@ -474,182 +477,179 @@ test("Webhook Form action submits once and persists after reload", async () => {
     }
   } finally {
     await webhook.close();
-    await close();
   }
 });
 
-test("Props panel expression binding persists after reload", async () => {
+test("Props panel expression binding persists after reload", async ({
+  page,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "props-expression-runtime@webstudio.test",
     title: "Props Expression Runtime",
     assetNamePrefix: "props-expression-runtime-",
     editorToken: "props-expression-runtime-editor-token",
     builderToken: "props-expression-runtime-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
   const anchorText = "Expression-bound link";
   const expression = '"/props-expression-link"';
 
-  try {
-    await measure("props expression runtime open builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    });
-    await waitForCanvasText({ page, text: "Initial content" });
-
-    await measure("props expression runtime paste anchor", async () => {
-      await openNavigatorPanel({ page });
-      await selectNavigatorItem({ page, itemName: "Body" });
-      await pastePlainTextFromClipboardShortcut({
-        page,
-        text: `<a href="/initial-props-link">${anchorText}</a>`,
-      });
-    });
-    await waitForCanvasText({ page, text: anchorText });
-
-    await measure("props expression runtime bind href", async () => {
-      await selectNavigatorItem({ page, itemName: "a" });
-      await bindSelectedPropertyToExpression({
-        page,
-        label: "Href",
-        expression,
-      });
-    });
-    await expectPersistedExpressionProp({
+  await measure("props expression runtime open builder", async () => {
+    await openProjectBuilder({
+      page,
       projectId: fixture.projectId,
-      tag: "a",
-      text: anchorText,
-      name: "href",
+      authToken: fixture.builderToken,
+    });
+  });
+  await waitForCanvasText({ page, text: "Initial content" });
+
+  await measure("props expression runtime paste anchor", async () => {
+    await openNavigatorPanel({ page });
+    await selectNavigatorItem({ page, itemName: "Body" });
+    await pastePlainTextFromClipboardShortcut({
+      page,
+      text: `<a href="/initial-props-link">${anchorText}</a>`,
+    });
+  });
+  await waitForCanvasText({ page, text: anchorText });
+
+  await measure("props expression runtime bind href", async () => {
+    await selectNavigatorItem({ page, itemName: "a" });
+    await bindSelectedPropertyToExpression({
+      page,
+      label: "Href",
       expression,
     });
+  });
+  await expectPersistedExpressionProp({
+    projectId: fixture.projectId,
+    tag: "a",
+    text: anchorText,
+    name: "href",
+    expression,
+  });
 
-    await measure("props expression runtime reload builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    });
-    await waitForCanvasText({ page, text: anchorText });
-    await expectPersistedExpressionProp({
+  await measure("props expression runtime reload builder", async () => {
+    await openProjectBuilder({
+      page,
       projectId: fixture.projectId,
-      tag: "a",
-      text: anchorText,
-      name: "href",
-      expression,
+      authToken: fixture.builderToken,
     });
-  } finally {
-    await close();
-  }
+  });
+  await waitForCanvasText({ page, text: anchorText });
+  await expectPersistedExpressionProp({
+    projectId: fixture.projectId,
+    tag: "a",
+    text: anchorText,
+    name: "href",
+    expression,
+  });
 });
 
-test("Props panel boolean prop persists after reload", async () => {
+test("Props panel boolean prop persists after reload", async ({
+  page,
+  context,
+}) => {
   const fixture = await createContentModeProject({
+    context: context,
     email: "props-boolean-runtime@webstudio.test",
     title: "Props Boolean Runtime",
     assetNamePrefix: "props-boolean-runtime-",
     editorToken: "props-boolean-runtime-editor-token",
     builderToken: "props-boolean-runtime-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
 
-  try {
-    await measure("props boolean runtime open builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    });
-    await waitForCanvasText({ page, text: "Initial content" });
-
-    await measure("props boolean runtime insert checkbox", async () => {
-      await openComponentsPanel({ page });
-      await insertComponentPanelOption({
-        page,
-        name: "Checkbox",
-        component: "@webstudio-is/sdk-components-react-radix:Checkbox",
-      });
-    });
-    await selectFirstNavigatorChild({
+  await measure("props boolean runtime open builder", async () => {
+    await openProjectBuilder({
       page,
-      parentLabel: "Checkbox Field",
-    });
-    await page.getByRole("tab", { name: "Settings" }).click();
-
-    await measure("props boolean runtime set checked", async () => {
-      await setSelectedBooleanProperty({
-        page,
-        label: "Checked",
-        checked: true,
-      });
-    });
-    await expectPersistedBooleanProp({
       projectId: fixture.projectId,
-      component: "@webstudio-is/sdk-components-react-radix:Checkbox",
-      name: "checked",
-      value: true,
+      authToken: fixture.builderToken,
     });
+  });
+  await waitForCanvasText({ page, text: "Initial content" });
 
-    await measure("props boolean runtime reload builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    });
-    await selectFirstNavigatorChild({
+  await measure("props boolean runtime insert checkbox", async () => {
+    await openComponentsPanel({ page });
+    await insertComponentPanelOption({
       page,
-      parentLabel: "Checkbox Field",
+      name: "Checkbox",
+      component: "@webstudio-is/sdk-components-react-radix:Checkbox",
     });
-    await page.getByRole("tab", { name: "Settings" }).click();
-    await waitForSelectedBooleanPropertyValue({
+  });
+  await selectFirstNavigatorChild({
+    page,
+    parentLabel: "Checkbox Field",
+  });
+  await page.getByRole("tab", { name: "Settings" }).click();
+
+  await measure("props boolean runtime set checked", async () => {
+    await setSelectedBooleanProperty({
       page,
       label: "Checked",
       checked: true,
     });
-    await expectPersistedBooleanProp({
-      projectId: fixture.projectId,
-      component: "@webstudio-is/sdk-components-react-radix:Checkbox",
-      name: "checked",
-      value: true,
-    });
+  });
+  await expectPersistedBooleanProp({
+    projectId: fixture.projectId,
+    component: "@webstudio-is/sdk-components-react-radix:Checkbox",
+    name: "checked",
+    value: true,
+  });
 
-    await measure("props boolean runtime reset checked", async () => {
-      await resetSelectedProperty({ page, label: "Checked" });
-    });
-    await expectBooleanPropDeleted({
+  await measure("props boolean runtime reload builder", async () => {
+    await openProjectBuilder({
+      page,
       projectId: fixture.projectId,
-      component: "@webstudio-is/sdk-components-react-radix:Checkbox",
-      name: "checked",
+      authToken: fixture.builderToken,
     });
+  });
+  await selectFirstNavigatorChild({
+    page,
+    parentLabel: "Checkbox Field",
+  });
+  await page.getByRole("tab", { name: "Settings" }).click();
+  await waitForSelectedBooleanPropertyValue({
+    page,
+    label: "Checked",
+    checked: true,
+  });
+  await expectPersistedBooleanProp({
+    projectId: fixture.projectId,
+    component: "@webstudio-is/sdk-components-react-radix:Checkbox",
+    name: "checked",
+    value: true,
+  });
 
-    await measure("props boolean runtime reload after reset", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    });
-    await selectFirstNavigatorChild({
+  await measure("props boolean runtime reset checked", async () => {
+    await resetSelectedProperty({ page, label: "Checked" });
+  });
+  await expectBooleanPropDeleted({
+    projectId: fixture.projectId,
+    component: "@webstudio-is/sdk-components-react-radix:Checkbox",
+    name: "checked",
+  });
+
+  await measure("props boolean runtime reload after reset", async () => {
+    await openProjectBuilder({
       page,
-      parentLabel: "Checkbox Field",
-    });
-    await page.getByRole("tab", { name: "Settings" }).click();
-    await waitForSelectedBooleanPropertyValue({
-      page,
-      label: "Checked",
-      checked: false,
-    });
-    await expectBooleanPropDeleted({
       projectId: fixture.projectId,
-      component: "@webstudio-is/sdk-components-react-radix:Checkbox",
-      name: "checked",
+      authToken: fixture.builderToken,
     });
-  } finally {
-    await close();
-  }
+  });
+  await selectFirstNavigatorChild({
+    page,
+    parentLabel: "Checkbox Field",
+  });
+  await page.getByRole("tab", { name: "Settings" }).click();
+  await waitForSelectedBooleanPropertyValue({
+    page,
+    label: "Checked",
+    checked: false,
+  });
+  await expectBooleanPropDeleted({
+    projectId: fixture.projectId,
+    component: "@webstudio-is/sdk-components-react-radix:Checkbox",
+    name: "checked",
+  });
 });

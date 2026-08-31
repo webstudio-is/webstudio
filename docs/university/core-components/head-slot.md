@@ -10,7 +10,10 @@ description: >-
 
 {% embed url="https://www.youtube.com/watch?v=LeE52a_EWFw" %}
 
-<figure><img src="../../.gitbook/assets/headslot.png" alt="Head Slot" width="375"><figcaption></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/components-panel-dark.png">
+  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with Head Slot in the expanded General group">
+</picture>
 
 The Head Slot provides a visual interface for controlling your website's `<head>` section. Instead of writing code, you can manage meta tags, canonical URLs, and other head elements directly in the builder.
 

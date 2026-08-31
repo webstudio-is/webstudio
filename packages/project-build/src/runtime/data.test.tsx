@@ -1138,7 +1138,7 @@ test("restore tree variables in children", () => {
   const [_bodyVariableId, boxVariableId] = data.dataSources.keys();
   const boxIdentifier = encodeDataVariableId(boxVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: boxIdentifier },
+    { type: "expression", value: boxIdentifier, mode: "read" },
   ]);
 });
 
@@ -1230,7 +1230,7 @@ test("rebind tree variables in props and children", () => {
     }),
   ]);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: boxIdentifier },
+    { type: "expression", value: boxIdentifier, mode: "read" },
   ]);
 });
 
@@ -1256,7 +1256,7 @@ test("preserve nested variables with the same name when rebind", () => {
   const [_bodyVariableId, textVariableId] = data.dataSources.keys();
   const textIdentifier = encodeDataVariableId(textVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: textIdentifier },
+    { type: "expression", value: textIdentifier, mode: "read" },
   ]);
 });
 
@@ -1397,7 +1397,7 @@ test("rebind global variables in resources", () => {
   const [globalVariableId] = data.dataSources.keys();
   const globalIdentifier = encodeDataVariableId(globalVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: globalIdentifier },
+    { type: "expression", value: globalIdentifier, mode: "read" },
   ]);
 });
 
@@ -1421,7 +1421,7 @@ test("preserve other variables when rebind", () => {
   const [_globalVariableId, textVariableId] = data.dataSources.keys();
   const textIdentifier = encodeDataVariableId(textVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: textIdentifier },
+    { type: "expression", value: textIdentifier, mode: "read" },
   ]);
 });
 
@@ -1442,7 +1442,7 @@ test("prevent rebinding tree variables from slots", () => {
     ...data,
   });
   expect(data.instances.get("boxId")?.children).toEqual([
-    { type: "expression", value: "myVariable" },
+    { type: "expression", value: "myVariable", mode: "read" },
   ]);
 });
 
@@ -1496,7 +1496,11 @@ test("prevent rebinding with nested collection item", () => {
     }),
   ]);
   expect(data.instances.get("divId")?.children).toEqual([
-    { type: "expression", value: encodeDataVariableId(nestedCollectionItemId) },
+    {
+      type: "expression",
+      value: encodeDataVariableId(nestedCollectionItemId),
+      mode: "read",
+    },
   ]);
 });
 
@@ -1525,7 +1529,7 @@ test("delete variable and unset it in expressions", () => {
     }),
   ]);
   expect(data.instances.get("boxId")?.children).toEqual([
-    { type: "expression", value: "bodyVariable" },
+    { type: "expression", value: "bodyVariable", mode: "read" },
   ]);
 });
 
@@ -1627,7 +1631,11 @@ test("delete data variable payload reuses mutable cleanup semantics", () => {
     },
   ]);
   expect(data.instances.get("boxId")?.children).toEqual([
-    { type: "expression", value: encodeDataVariableId(bodyVariableId) },
+    {
+      type: "expression",
+      value: encodeDataVariableId(bodyVariableId),
+      mode: "read",
+    },
   ]);
 });
 
@@ -1698,7 +1706,7 @@ test("rebind expressions with parent variable when delete variable on child", ()
   deleteVariableMutable(data, boxVariableId);
   const bodyIdentifier = encodeDataVariableId(bodyVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: bodyIdentifier },
+    { type: "expression", value: bodyIdentifier, mode: "read" },
   ]);
 });
 
@@ -1723,7 +1731,7 @@ test("prevent rebinding with variables outside of slot content scope", () => {
   const [_bodyVariableId, boxVariableId] = data.dataSources.keys();
   deleteVariableMutable(data, boxVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: "myVariable" },
+    { type: "expression", value: "myVariable", mode: "read" },
   ]);
 });
 
@@ -1756,10 +1764,10 @@ test("unset global variables on all pages when delete", () => {
   const [globalVariableId] = data.dataSources.keys();
   deleteVariableMutable(data, globalVariableId);
   expect(data.instances.get("homeTextId")?.children).toEqual([
-    { type: "expression", value: "globalVariable" },
+    { type: "expression", value: "globalVariable", mode: "read" },
   ]);
   expect(data.instances.get("aboutTextId")?.children).toEqual([
-    { type: "expression", value: "globalVariable" },
+    { type: "expression", value: "globalVariable", mode: "read" },
   ]);
 });
 
@@ -1837,7 +1845,7 @@ test("unset global variables in slots when delete", () => {
   const [globalVariableId] = data.dataSources.keys();
   deleteVariableMutable(data, globalVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: "globalVariable" },
+    { type: "expression", value: "globalVariable", mode: "read" },
   ]);
 });
 

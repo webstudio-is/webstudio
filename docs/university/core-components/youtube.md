@@ -7,7 +7,10 @@ icon: youtube
 
 # YouTube
 
-<figure><img src="../../.gitbook/assets/youtube-component.png" alt="YouTube Component in Webstudio Add Panel"><figcaption></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/components-panel-dark.png">
+  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with YouTube in the expanded Media group">
+</picture>
 
 While YouTube offers embed codes, the YouTube component enables a much better experience, which is why it’s the recommended way to add YouTube videos to your site.
 

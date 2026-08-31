@@ -15,6 +15,7 @@ import { useFocusWithin } from "@react-aria/interactions";
 import { useStore } from "@nanostores/react";
 import {
   Box,
+  cssVar,
   ComboboxListbox,
   ComboboxListboxItem,
   ComboboxRoot,
@@ -71,17 +72,17 @@ const TextFieldContainer = styled("div", {
   display: "flex",
   flexWrap: "wrap",
   alignItems: "center",
-  backgroundColor: theme.colors.backgroundControls,
+  backgroundColor: cssVar("--background-secondary"),
   gap: theme.spacing[2],
   padding: theme.spacing[2],
   borderRadius: theme.borderRadius[4],
   minWidth: 0,
   border: `1px solid transparent`,
   "&:hover": {
-    borderColor: theme.colors.borderMain,
+    borderColor: cssVar("--border-default"),
   },
   "&:focus-within": {
-    borderColor: theme.colors.borderFocus,
+    borderColor: cssVar("--border-focus"),
   },
 });
 
@@ -252,7 +253,7 @@ const TextFieldBase: ForwardRefRenderFunction<
         onClick={onClick}
         inputRef={mergeRefs(internalInputRef, inputRef)}
         spellCheck={false}
-        aria-label="New Style Source Input"
+        aria-label="New style source input"
       />
       {value.map((item) => (
         <StyleSourceControlWithMenu

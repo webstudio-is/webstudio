@@ -10,7 +10,11 @@ description: Data variables enable the definition and use of a value throughout 
 
 Data variables are defined on any instance in the navigator such as Global Root, Body, or Heading. Variables can be found on the right panel in the settings tab.
 
-<figure><img src="../../.gitbook/assets/variables-settings-panel.png" alt="Variables in the builder"><figcaption></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/variables-settings-panel-dark.png">
+  <img src="../../.gitbook/assets/variables-settings-panel-light.png" alt="Settings panel with instance properties and a Data variables section listing static and dynamic variables">
+</picture>
+
 
 ## Variable scope
 
@@ -111,8 +115,6 @@ By default, several factors determine what gets cached and for how long, but one
 \
 If you set a custom **Cache Max Age** value, it will define your cache lifetime instead of relying on API response headers.
 
-Webstudio sees approximately 45% of sub-requests (i.e., fetches from Cloudflare Workers) served from the cache. This means that, on average, roughly half of the time someone visits a page that uses Resources, such as a blog post, the request will go through to the origin/CMS.
-
 ### GraphQL
 
 A GraphQL Resource variable gets its value from a GraphQL API, allowing data from a remote system to be used within Webstudio. While similar to [Resource](variables.md#resource), it’s unique in that the available fields are specifically designed for interacting with GraphQL APIs.
@@ -131,9 +133,9 @@ A System Resource variable gets its value from internal data.
 
 Available system resources:
 
-- **Sitemap** – Contains data about the static pages on the website, commonly used to build a custom sitemap that combines dynamic data with static data. Refer to the [XML Node component](../core-components/xml-node.md#including-the-static-sitemap) for more info.
+- **Sitemap** – Contains data about the static pages on the website, commonly used to build a custom sitemap that combines dynamic data with static data. Refer to the [XML Node component](../core-components/xml-node.md#include-the-static-sitemap) for more info.
 - **Current Date** – Returns the current date/time, useful for displaying "today's date" or calculating relative times. Can be formatted using the [Time component](../core-components/time.md).
-- **Assets** – Queries project assets, including structured fields and file content from Markdown and JSON files. See [Content Engine](content-engine.md) for a complete article workflow.
+- **Assets** – Queries project assets, including structured fields and file content from Markdown, MDX, and JSON files. See [Content Engine](content-engine.md) for a complete article workflow.
 
 ## Related
 

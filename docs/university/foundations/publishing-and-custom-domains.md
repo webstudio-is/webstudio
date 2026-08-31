@@ -34,7 +34,8 @@ Enter the domain or subdomain you want the site to be available at, for example,
 
 After entering your domain, you will be provided with DNS records, which can be manually added to your DNS or automatically through Entri.
 
-<figure><img src="../../.gitbook/assets/add-new-domain.png" alt="CNAME and TXT records from new domain" width="362"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/add-new-domain.png" alt="CNAME and TXT records for a new custom domain" width="362"><figcaption></figcaption></figure>
+
 
 ### 2. Add the DNS records
 
@@ -77,9 +78,7 @@ Verification may take up to 24 hours but usually takes only a few minutes.
 You must publish your site _after_ the domain is verified, or else "[Worker not found](publishing-and-custom-domains.md#domain-issues)" will show on the site.
 {% endhint %}
 
-{% hint style="info" %}
-Publishing currently takes around 45 seconds. During publishing, your Project is built into a JavaScript app and deployed to 300+ servers around the world.
-{% endhint %}
+Keep the Publish dialog open to follow the build and deployment status. Resolve any reported error before trying again.
 
 Once your site is live, you can visit it by clicking the open icon next to the green checkmark.
 
@@ -87,7 +86,11 @@ Once your site is live, you can visit it by clicking the open icon next to the g
 
 ## Publish to Staging
 
-<figure><img src="../../.gitbook/assets/staging-domain.png" alt="Publish to staging with production unchecked"><figcaption></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/staging-domain-dark.png">
+  <img src="../../.gitbook/assets/staging-domain-light.png" alt="Publish dialog with a verified staging domain and Add a new domain, Export, and Publish actions">
+</picture>
+
 
 You can publish your Project to a separate domain for testing before going live by only checking your staging domain, which can be the default Project subdomain or a custom domain.
 
@@ -237,7 +240,7 @@ DNS propagation typically takes 10-15 minutes, but can take up to 72 hours in ra
 
 #### Option 2: Publish your website on a `www` subdomain
 
-Go back to [Step 1](publishing-and-custom-domains.md#id-1.-add-a-new-domain-to-your-project), but this time, prefix your domain with `www`.
+Go back to [Step 1](publishing-and-custom-domains.md#1-add-a-new-domain-to-your-project), but this time, prefix your domain with `www`.
 
 #### Video Tutorial
 
@@ -263,7 +266,8 @@ To publish to a subdomain:
 
 You may see "Worker not Found" message when opening the site, like this:
 
-<figure><img src="../../.gitbook/assets/worker-not-found.png" alt="Worker not found"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/worker-not-found.png" alt="Published site showing a Worker not found error"><figcaption></figcaption></figure>
+
 
 Worker not found is due to one of the following reasons:
 

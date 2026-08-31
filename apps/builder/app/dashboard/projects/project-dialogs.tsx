@@ -183,17 +183,22 @@ export const CreateProject = ({
 
   return (
     <Dialog
-      title="New Project"
-      trigger={<Button prefix={<PlusIcon size={12} />}>{buttonText}</Button>}
+      title="New project"
+      trigger={
+        <Button color="primary" prefix={<PlusIcon size={12} />}>
+          {buttonText}
+        </Button>
+      }
       onOpenChange={handleOpenChange}
     >
       <DialogContent
         onSubmit={handleSubmit}
-        placeholder="My Project"
-        label="Project Title"
+        placeholder="My project"
+        label="Project title"
         errors={errors}
         primaryButton={
           <Button
+            color="primary"
             state={state === "idle" ? undefined : "pending"}
             type="submit"
           >
@@ -259,9 +264,10 @@ export const RenameProjectDialog = ({
         onSubmit={handleSubmit}
         errors={errors}
         title={title}
-        label="Project Title"
+        label="Project title"
         primaryButton={
           <Button
+            color="primary"
             type="submit"
             state={state === "idle" ? undefined : "pending"}
           >
@@ -343,7 +349,7 @@ export const DeleteProjectDialog = ({
     });
   return (
     <Dialog
-      title="Delete Confirmation"
+      title="Delete confirmation"
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     >
@@ -403,7 +409,7 @@ export const ShareProjectDialog = ({
   projectId: string;
 }) => {
   return (
-    <Dialog title="Share Project" isOpen={isOpen} onOpenChange={onOpenChange}>
+    <Dialog title="Share project" isOpen={isOpen} onOpenChange={onOpenChange}>
       <ShareProjectContainer projectId={projectId} />
     </Dialog>
   );

@@ -144,11 +144,12 @@
   * [How to integrate Webhook Form with N8N](university/integrations/n8n.md)
   * [How to integrate Flotiq with Webstudio](university/integrations/flotiq.md)
 * [Craft](university/craft.md)
+  * [Use Craft](university/craft-guide.md)
+  * [Craft changelog](university/craft-changelog.md)
 
 ## Contributing
 
-* [🧑‍🎨 Contributing for Designers](contributing/contributing-for-designers.md)
-* [🧑‍💻 Contributing for Developers](contributing/contributing-for-developers.md)
+* [Contributions](contributing/contributions.md)
 * [Contributing to the Marketplace](contributing/marketplace.md)
 
 ***

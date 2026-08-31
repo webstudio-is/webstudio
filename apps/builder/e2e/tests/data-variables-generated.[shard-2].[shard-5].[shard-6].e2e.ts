@@ -1,3 +1,4 @@
+import type { BrowserContext, Page } from "@playwright/test";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import {
   bindSelectedTextContentToExpression,
@@ -11,21 +12,24 @@ import {
 import { loginWithSecret } from "../flows/dashboard";
 import { expectGeneratedAppToRender } from "../flows/generated-app";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { newIsolatedPage, test } from "../harness";
+import { test } from "../test";
 import { measure } from "../perf";
 
 const openGeneratedResourceProject = async ({
+  context,
   page,
   email,
   title,
   assetNamePrefix,
 }: {
-  page: Awaited<ReturnType<typeof newIsolatedPage>>["page"];
+  context: BrowserContext;
+  page: Page;
   email: string;
   title: string;
   assetNamePrefix: string;
 }) => {
   const fixture = await createContentModeProject({
+    context,
     email,
     title,
     assetNamePrefix,
@@ -50,7 +54,7 @@ const reloadAndSelectContent = async ({
   fixture,
   phase,
 }: {
-  page: Awaited<ReturnType<typeof newIsolatedPage>>["page"];
+  page: Page;
   fixture: { projectId: string; builderToken: string };
   phase: string;
 }) => {
@@ -65,8 +69,10 @@ const reloadAndSelectContent = async ({
   });
 };
 
-test("Generated app fetches and renders a Builder-created HTTP resource", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Generated app fetches and renders a Builder-created HTTP resource", async ({
+  page,
+  context,
+}) => {
   const resource = await startJsonResourceServer({
     title: "Rendered from local HTTP resource",
   });
@@ -74,6 +80,7 @@ test("Generated app fetches and renders a Builder-created HTTP resource", async 
 
   try {
     const fixture = await openGeneratedResourceProject({
+      context: context,
       page,
       email: "generated-resource@webstudio.test",
       title: "Generated HTTP Resource",
@@ -105,12 +112,13 @@ test("Generated app fetches and renders a Builder-created HTTP resource", async 
     });
   } finally {
     await resource.close();
-    await close();
   }
 });
 
-test("Generated app fetches and renders a Builder-created GraphQL resource", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Generated app fetches and renders a Builder-created GraphQL resource", async ({
+  page,
+  context,
+}) => {
   const resource = await startGraphqlResourceServer({
     title: "Rendered from local GraphQL resource",
   });
@@ -118,6 +126,7 @@ test("Generated app fetches and renders a Builder-created GraphQL resource", asy
 
   try {
     const fixture = await openGeneratedResourceProject({
+      context: context,
       page,
       email: "generated-graphql-resource@webstudio.test",
       title: "Generated GraphQL Resource",
@@ -148,42 +157,40 @@ test("Generated app fetches and renders a Builder-created GraphQL resource", asy
     });
   } finally {
     await resource.close();
-    await close();
   }
 });
 
-test("Generated app renders a Builder-created current-date system resource", async () => {
-  const { page, close } = await newIsolatedPage();
+test("Generated app renders a Builder-created current-date system resource", async ({
+  page,
+  context,
+}) => {
   const resourceName = "e2eGeneratedCurrentDate";
   const expectedYear = String(new Date().getUTCFullYear());
 
-  try {
-    const fixture = await openGeneratedResourceProject({
-      page,
-      email: "generated-system-resource@webstudio.test",
-      title: "Generated System Resource",
-      assetNamePrefix: "generated-system-resource-",
-    });
-    await createSystemResourceVariable({
-      page,
-      name: resourceName,
-      resource: "Current date",
-    });
-    await reloadAndSelectContent({
-      page,
-      fixture,
-      phase: "generated system resource reload Builder",
-    });
-    await bindSelectedTextContentToExpression({
-      page,
-      expression: `${resourceName}.data.year`,
-    });
-    await waitForCanvasText({ page, text: expectedYear });
-    await expectGeneratedAppToRender({
-      projectId: fixture.projectId,
-      expectedText: expectedYear,
-    });
-  } finally {
-    await close();
-  }
+  const fixture = await openGeneratedResourceProject({
+    context: context,
+    page,
+    email: "generated-system-resource@webstudio.test",
+    title: "Generated System Resource",
+    assetNamePrefix: "generated-system-resource-",
+  });
+  await createSystemResourceVariable({
+    page,
+    name: resourceName,
+    resource: "Current date",
+  });
+  await reloadAndSelectContent({
+    page,
+    fixture,
+    phase: "generated system resource reload Builder",
+  });
+  await bindSelectedTextContentToExpression({
+    page,
+    expression: `${resourceName}.data.year`,
+  });
+  await waitForCanvasText({ page, text: expectedYear });
+  await expectGeneratedAppToRender({
+    projectId: fixture.projectId,
+    expectedText: expectedYear,
+  });
 });

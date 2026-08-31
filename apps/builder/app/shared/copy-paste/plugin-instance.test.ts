@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from "vitest";
+import { afterAll, afterEach, describe, test, expect, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { toast } from "@webstudio-is/design-system";
 import type {
@@ -18,6 +18,7 @@ import {
   coreMetas,
   elementComponent,
   blockTemplateComponent,
+  blockComponent,
   portalComponent,
 } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
@@ -25,9 +26,10 @@ import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { registerContainers } from "../sync/sync-stores";
 import { $registeredComponentMetas } from "../nano-states";
-import { $assets, $instances } from "~/shared/sync/data-stores";
 import {
   $dataSources,
+  $assets,
+  $instances,
   $pages,
   $project,
   $props,
@@ -44,8 +46,11 @@ import {
   expectSlotsShareFragment,
 } from "../slot-test-utils";
 import { pasteHandled } from "./copy-paste";
-import { initBuilderApi } from "../builder-api";
+import { __testing__ as builderApiTesting } from "../builder-api";
+import { $externalContentRoots } from "../external-content-mutations";
 
+afterAll(builderApiTesting.useLocalApi());
+afterEach(() => vi.restoreAllMocks());
 const expectString = expect.any(String) as unknown as string;
 
 enableMapSet();
@@ -169,6 +174,162 @@ describe("copy and cut guards", () => {
     });
   });
 
+  test("copies and pastes one rendered Collection Content Block with its resolved direct MDX source", async () => {
+    setPageRoot("body");
+    $instances.set(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "collection" }]),
+        createInstance("collection", collectionComponent, [
+          { type: "id", value: "item" },
+        ]),
+        createInstance("item", "Box", [{ type: "id", value: "block" }]),
+        createInstance("block", blockComponent, [
+          { type: "id", value: "templates" },
+          { type: "id", value: "mdx-heading" },
+        ]),
+        createInstance("templates", blockTemplateComponent, []),
+        createInstance("mdx-heading", elementComponent, [
+          { type: "text", value: "Loaded from MDX" },
+        ]),
+      ])
+    );
+    $dataSources.set(
+      toMap([
+        {
+          id: "item-source",
+          scopeInstanceId: "collection",
+          type: "parameter",
+          name: "item",
+        },
+      ])
+    );
+    $props.set(
+      toMap([
+        {
+          id: "collection-data",
+          instanceId: "collection",
+          name: "data",
+          type: "json",
+          value: [{ mdx: "post" }],
+        },
+        {
+          id: "collection-item",
+          instanceId: "collection",
+          name: "item",
+          type: "parameter",
+          value: "item-source",
+        },
+        {
+          id: "block-source",
+          instanceId: "block",
+          name: "src",
+          type: "expression",
+          value: `${encodeDataSourceVariable("item-source")}.mdx`,
+        },
+      ] satisfies Prop[])
+    );
+    $assets.set(
+      toMap([
+        {
+          id: "post",
+          projectId: "my-project",
+          type: "file",
+          format: "mdx",
+          name: "post.mdx",
+          size: 0,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          meta: {},
+        },
+      ])
+    );
+    const renderScope = '["block","item","collection[0]","collection","body"]';
+    $externalContentRoots.set(
+      new Map([
+        [
+          "post-root",
+          {
+            sourceBlockInstanceId: "block",
+            sourceRenderScope: renderScope,
+            blockInstanceId: "runtime-block",
+            renderScope,
+            instanceIds: new Set<string>(),
+            mutationRevision: 0,
+            identity: {
+              blockInstanceId: "block",
+              assetId: "post",
+              revision: "revision",
+              contentRef: "post.mdx",
+              format: "mdx",
+              renderScope,
+            },
+          },
+        ],
+      ])
+    );
+    selectInstance(["item", "collection[0]", "collection", "body"]);
+
+    const clipboardData = instanceText.onCopy?.();
+    const fragment = JSON.parse(clipboardData ?? "")[
+      "@webstudio/instance/v0.1"
+    ];
+
+    expect(fragment.props).toContainEqual({
+      id: "block-source",
+      instanceId: "block",
+      name: "src",
+      type: "asset",
+      value: "post",
+    });
+    expect(fragment.assets).toContainEqual(
+      expect.objectContaining({ id: "post", format: "mdx" })
+    );
+    expect(fragment.assetPaths).toEqual({ post: "post.mdx" });
+    expect(fragment.instances).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "block" }),
+        expect.objectContaining({ id: "item" }),
+        expect.objectContaining({ id: "templates" }),
+      ])
+    );
+    expect(fragment.instances).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "mdx-heading" })])
+    );
+    const importAssets = vi
+      .spyOn(builderApiTesting.api, "importAssets")
+      .mockResolvedValue(new Map([["post", $assets.get().get("post")!]]));
+    $instances.set(
+      toMap([createInstance("target-body", "Body", [])] satisfies Instance[])
+    );
+    $props.set(new Map());
+    $dataSources.set(new Map());
+    setPageRoot("target-body");
+    selectInstance(["target-body"]);
+
+    expect(await instanceText.onPaste?.(clipboardData ?? "")).toEqual(
+      pasteHandled
+    );
+    const pastedBlock = Array.from($instances.get().values()).find(
+      (instance) => instance.component === blockComponent
+    );
+    expect(pastedBlock).toBeDefined();
+    expect(
+      Array.from($props.get().values()).find(
+        (prop) => prop.instanceId === pastedBlock?.id && prop.name === "src"
+      )
+    ).toEqual(expect.objectContaining({ type: "asset", value: "post" }));
+    expect(
+      Array.from($instances.get().values()).some(
+        (instance) => instance.id === "mdx-heading"
+      )
+    ).toBe(false);
+
+    importAssets.mockRestore();
+    $externalContentRoots.set(new Map());
+    $props.set(new Map());
+    $assets.set(new Map());
+    setPageRoot("body0");
+  });
+
   test("pastes multiple copied roots in order and selects pasted roots", async () => {
     $instances.set(
       toMap([
@@ -229,9 +390,8 @@ describe("copy and cut guards", () => {
       id: "imported-asset",
       projectId: "my-project",
     } satisfies Asset;
-    initBuilderApi();
     const importAssets = vi
-      .spyOn(window.__webstudio__$__builderApi, "importAssets")
+      .spyOn(builderApiTesting.api, "importAssets")
       .mockRejectedValueOnce(new Error("Source is unavailable"))
       .mockImplementation(
         async () => new Map([[sourceAsset.id, importedAsset]])
@@ -304,17 +464,15 @@ describe("copy and cut guards", () => {
     selectInstance(["legacy-button", "body0"]);
     const clipboardData = instanceText.onCopy?.() ?? "";
     selectInstance(["body0"]);
-    initBuilderApi();
-    const previousWarn = window.__webstudio__$__builderApi.toast.warn;
-    const warn = vi.fn();
-    window.__webstudio__$__builderApi.toast.warn = warn;
+    const warn = vi
+      .spyOn(builderApiTesting.api.toast, "warn")
+      .mockImplementation(() => {});
 
     expect(await instanceText.onPaste?.(clipboardData)).toEqual(pasteHandled);
     expect($instances.get().get("body0")?.children).toHaveLength(2);
     expect(warn).toHaveBeenCalledWith(
       "Pasted with warning: Placing <h3> element inside a <button> violates HTML spec."
     );
-    window.__webstudio__$__builderApi.toast.warn = previousWarn;
   });
 
   test("sanitizes multi-root clipboard root ids before paste", async () => {

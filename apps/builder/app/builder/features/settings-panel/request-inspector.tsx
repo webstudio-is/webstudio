@@ -1,5 +1,6 @@
 import type { ComponentProps, ReactNode, Ref } from "react";
 import {
+  cssVar,
   Flex,
   Grid,
   PanelTabs,
@@ -44,7 +45,7 @@ export const RequestDiagnosticsTable = ({
 }) => (
   <Grid
     css={{
-      border: `1px solid ${theme.colors.borderMain}`,
+      border: `1px solid ${cssVar("--border-default")}`,
       borderRadius: theme.borderRadius[4],
       overflow: "hidden",
     }}
@@ -78,7 +79,7 @@ export const RequestDiagnosticsRow = ({
     gap={2}
     css={{
       padding: theme.spacing[5],
-      borderBottom: `1px solid ${theme.colors.borderMain}`,
+      borderBottom: `1px solid ${cssVar("--border-default")}`,
       "&:last-child": { borderBottom: 0 },
     }}
   >
@@ -122,7 +123,7 @@ export const RequestInspector = ({
       aria-label="Request details"
       css={{
         flexShrink: 0,
-        borderBottom: `1px solid ${theme.colors.borderMain}`,
+        borderBottom: `1px solid ${cssVar("--border-default")}`,
       }}
     >
       {queryContainerRef !== undefined && (

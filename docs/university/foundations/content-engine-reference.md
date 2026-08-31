@@ -1,18 +1,18 @@
 ---
-description: Query Markdown and JSON Assets with the Content Engine.
+description: Query Markdown, MDX, and JSON Assets with the Content Engine.
 ---
 
 <!-- Generated from the Content Engine schemas and shared CLI documentation. Do not edit directly. -->
 
 # Content Engine reference
 
-Assets resources query Markdown and JSON files stored in the Assets panel. The Builder and Webstudio MCP use the same structured query contract.
+Assets resources query Markdown, MDX, and JSON files stored in the Assets panel. The Builder and Webstudio MCP use the same structured query contract.
 
 ## MCP workflow
 
 Use these tools in order when creating or changing an Assets resource:
 
-1. Call `get-asset-field-catalog` to inspect standard fields and the fields currently observed in Markdown frontmatter and JSON files.
+1. Call `get-asset-field-catalog` to inspect standard fields and the fields currently observed in Markdown or MDX frontmatter and JSON files.
 2. Call `validate-asset-query` to check the query structure, field paths, operators, and bounded operation counts.
 3. Call `preview-asset-query` with concrete values and inspect its results and diagnostics.
 4. Save the query with `create-assets-resource` or `update-assets-resource`.
@@ -22,7 +22,7 @@ Omit `query` when creating a resource to use the default many-result query for a
 
 ## Fields
 
-Every asset has the standard fields below. Markdown frontmatter and JSON root fields appear under `properties`, for example `properties.slug` or `properties.author.name`. The field catalog reports their observed types, occurrence counts, optionality, and mixed-type state. A JSON content file must contain an object at its root.
+Every asset has the standard fields below. Markdown or MDX frontmatter and JSON root fields appear under `properties`, for example `properties.slug` or `properties.author.name`. The field catalog reports their observed types, occurrence counts, optionality, and mixed-type state. A JSON content file must contain an object at its root.
 
 | Field | Observed type |
 | --- | --- |
@@ -109,7 +109,7 @@ Choose `fields` and disable `includeMetadata` when the page needs only selected 
 
 ## Asset reference metadata
 
-A plain local asset path in Markdown frontmatter or JSON properties keeps the backward-compatible URL string result. Wrap the path in an exact `$ref` object only when consumers need structured Asset Manager metadata:
+A plain local asset path in Markdown or MDX frontmatter, or in JSON properties, keeps the backward-compatible URL string result. Wrap the path in an exact `$ref` object only when consumers need structured Asset Manager metadata:
 
 ```yaml
 featureImage:
@@ -143,9 +143,9 @@ External URLs remain ordinary strings. Existing local path strings also keep the
 | `none` | Returns no file content. Use this for listings and any query that only needs fields or metadata. |
 | `full` | Embeds the complete UTF-8 file content in the content database. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected file is larger. |
 | `range` | Embeds a byte range selected by `offset` and `length` in the content database. `length` cannot exceed 256 KiB. |
-| `markdown-body-ref` | Stores a reference to a Markdown body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected source file is larger. |
+| `markdown-body-ref` | Stores a reference to a Markdown or MDX body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected source file is larger. |
 
-Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for article pages. It keeps article bodies out of the published content database and resolves relative Markdown links when the selected body is loaded.
+Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for Markdown or MDX article pages. It keeps article bodies out of the published content database and resolves relative links when the selected body is loaded.
 
 ## Preview diagnostics
 
@@ -168,7 +168,7 @@ Only `database.usedBytes` counts toward `database.maxBytes`. Do not add the quer
 | `artifacts` | Optional query and merged compiled artifacts used by detailed Builder diagnostics. |
 | `unresolved` | Optional query result before document references are resolved. It helps inspect the authored `$ref` values behind resolved output. |
 
-If the merged database approaches its limit, remove duplicate reachable resources first. Then remove unused output fields or narrow the candidate documents. Prefer `markdown-body-ref` over embedded `full` content for Markdown articles.
+If the merged database approaches its limit, remove duplicate reachable resources first. Then remove unused output fields or narrow the candidate documents. Prefer `markdown-body-ref` over embedded `full` content for Markdown or MDX articles.
 
 ## Document references
 
@@ -178,7 +178,7 @@ A document reference is an exact object with one string field:
 { "$ref": "<relative-path>[#<fragment>]" }
 ```
 
-Markdown references can appear in YAML frontmatter. JSON references can appear anywhere in the document. Either format can reference Markdown or JSON. References do not run inside a Markdown body.
+Markdown and MDX references can appear in YAML frontmatter. JSON references can appear anywhere in the document. Any format can reference Markdown, MDX, or JSON. References do not run inside a Markdown or MDX body.
 
 | Reference | Inserted value |
 | --- | --- |
@@ -210,7 +210,7 @@ Resolve paths relative to the file containing the reference. JSON Pointer uses `
 
 | Limit | Value |
 | --- | --- |
-| Markdown frontmatter | 64 KiB |
+| Markdown/MDX frontmatter | 64 KiB |
 | Frontmatter nesting depth | 8 |
 | Frontmatter fields | 256 |
 | Frontmatter string | 16 KiB |
@@ -220,6 +220,9 @@ Resolve paths relative to the file containing the reference. JSON Pointer uses `
 | JSON string | 16 KiB |
 | Indexed properties per document | 64 KiB |
 | Generated excerpt | 2 KiB |
+| MDX nesting depth | 100 |
+| MDX nodes | 20000 |
+| MDX properties | 4000 |
 | Loaded file | 1 MiB |
 | Loaded content per query | 2 MiB |
 | Loaded files per query | 20 |

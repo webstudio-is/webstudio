@@ -1,0 +1,544 @@
+/*
+ * Craft color source of truth.
+ *
+ * Theme authors set only --theme-* parameters. Components consume only
+ * foreground, background, border, and overlay semantic variables.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Sets the color family shared by surfaces, content, borders, and shadows. */
+  --theme-color-neutral: #11181c;
+  /* Sets the color family used for interactive emphasis and keyboard focus. */
+  --theme-color-accent: #096cff;
+  /* Sets the color family used to communicate successful outcomes. */
+  --theme-color-positive: #00894a;
+  /* Sets the color family used for errors, danger, and destructive actions. */
+  --theme-color-negative: #dc2929;
+  /* Sets the color family used to communicate caution and warnings. */
+  --theme-color-warning: #f5d90a;
+  /* Sets the color family used to communicate neutral information. */
+  --theme-color-informative: #0175dc;
+
+  /* Sets content contrast: 0% is softest accessible; 100% is strongest. */
+  --theme-contrast-content: 0%;
+  /* Sets surface separation: 0% is subtle; 100% is strongest. */
+  --theme-contrast-surface: 0%;
+  /* Sets border contrast: 0% is subtle; 100% is strongest. */
+  --theme-contrast-border: 0%;
+
+  /* Light-scheme derivation bounds. */
+  --scheme-background-lightness: 1;
+  --scheme-background-chroma-scale: 0.1;
+  --scheme-foreground-soft-lightness: 0.203788;
+  --scheme-foreground-strong-lightness: 0.1;
+  --scheme-foreground-chroma-scale: 1;
+  --scheme-chromatic-luminance-min: 0;
+  --scheme-chromatic-luminance-max: 0.18;
+  --scheme-chromatic-foreground-mix: 100%;
+
+  /* Colors derived from the bounded theme parameters. */
+  --color-background: oklch(
+    from var(--theme-color-neutral) var(--scheme-background-lightness)
+      calc(min(c, 0.02) * var(--scheme-background-chroma-scale)) h
+  );
+  --color-foreground-soft: oklch(
+    from var(--theme-color-neutral) var(--scheme-foreground-soft-lightness)
+      calc(min(c, 0.02) * var(--scheme-foreground-chroma-scale)) h
+  );
+  --color-foreground-strong: oklch(
+    from var(--theme-color-neutral) var(--scheme-foreground-strong-lightness)
+      calc(min(c, 0.02) * var(--scheme-foreground-chroma-scale)) h
+  );
+  --color-foreground: color-mix(
+    in oklab,
+    var(--color-foreground-soft) calc(100% - var(--theme-contrast-content)),
+    var(--color-foreground-strong)
+  );
+  --color-accent-source: color(
+    from oklch(from var(--theme-color-accent) clamp(0.2, l, 0.8) min(c, 0.3) h)
+      srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
+  );
+  --color-positive-source: color(
+    from
+      oklch(from var(--theme-color-positive) clamp(0.2, l, 0.8) min(c, 0.3) h)
+      srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
+  );
+  --color-negative-source: color(
+    from
+      oklch(from var(--theme-color-negative) clamp(0.2, l, 0.8) min(c, 0.3) h)
+      srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
+  );
+  --color-warning-source: color(
+    from
+      oklch(from var(--theme-color-warning) clamp(0.2, l, 0.95) min(c, 0.3) h)
+      srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
+  );
+  --color-informative-source: color(
+    from
+      oklch(
+        from var(--theme-color-informative) clamp(0.2, l, 0.8) min(c, 0.3) h
+      )
+      srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
+  );
+  --color-accent: color(
+    from var(--color-accent-source) xyz-d65
+      calc(
+        x *
+          min(
+            1,
+            clamp(
+                var(--scheme-chromatic-luminance-min),
+                y,
+                var(--scheme-chromatic-luminance-max)
+              ) /
+              max(y, 0.000001)
+          ) +
+          (0.95047 - x) *
+          max(
+            0,
+            (clamp(
+                  var(--scheme-chromatic-luminance-min),
+                  y,
+                  var(--scheme-chromatic-luminance-max)
+                ) -
+                y) /
+              max(1 - y, 0.000001)
+          )
+      )
+      clamp(
+        var(--scheme-chromatic-luminance-min),
+        y,
+        var(--scheme-chromatic-luminance-max)
+      )
+      calc(
+        z *
+          min(
+            1,
+            clamp(
+                var(--scheme-chromatic-luminance-min),
+                y,
+                var(--scheme-chromatic-luminance-max)
+              ) /
+              max(y, 0.000001)
+          ) +
+          (1.08883 - z) *
+          max(
+            0,
+            (clamp(
+                  var(--scheme-chromatic-luminance-min),
+                  y,
+                  var(--scheme-chromatic-luminance-max)
+                ) -
+                y) /
+              max(1 - y, 0.000001)
+          )
+      )
+  );
+  --color-positive: color(
+    from var(--color-positive-source) xyz-d65
+      calc(
+        x *
+          min(
+            1,
+            clamp(
+                var(--scheme-chromatic-luminance-min),
+                y,
+                var(--scheme-chromatic-luminance-max)
+              ) /
+              max(y, 0.000001)
+          ) +
+          (0.95047 - x) *
+          max(
+            0,
+            (clamp(
+                  var(--scheme-chromatic-luminance-min),
+                  y,
+                  var(--scheme-chromatic-luminance-max)
+                ) -
+                y) /
+              max(1 - y, 0.000001)
+          )
+      )
+      clamp(
+        var(--scheme-chromatic-luminance-min),
+        y,
+        var(--scheme-chromatic-luminance-max)
+      )
+      calc(
+        z *
+          min(
+            1,
+            clamp(
+                var(--scheme-chromatic-luminance-min),
+                y,
+                var(--scheme-chromatic-luminance-max)
+              ) /
+              max(y, 0.000001)
+          ) +
+          (1.08883 - z) *
+          max(
+            0,
+            (clamp(
+                  var(--scheme-chromatic-luminance-min),
+                  y,
+                  var(--scheme-chromatic-luminance-max)
+                ) -
+                y) /
+              max(1 - y, 0.000001)
+          )
+      )
+  );
+  --color-negative: color(
+    from var(--color-negative-source) xyz-d65
+      calc(
+        x *
+          min(
+            1,
+            clamp(
+                var(--scheme-chromatic-luminance-min),
+                y,
+                var(--scheme-chromatic-luminance-max)
+              ) /
+              max(y, 0.000001)
+          ) +
+          (0.95047 - x) *
+          max(
+            0,
+            (clamp(
+                  var(--scheme-chromatic-luminance-min),
+                  y,
+                  var(--scheme-chromatic-luminance-max)
+                ) -
+                y) /
+              max(1 - y, 0.000001)
+          )
+      )
+      clamp(
+        var(--scheme-chromatic-luminance-min),
+        y,
+        var(--scheme-chromatic-luminance-max)
+      )
+      calc(
+        z *
+          min(
+            1,
+            clamp(
+                var(--scheme-chromatic-luminance-min),
+                y,
+                var(--scheme-chromatic-luminance-max)
+              ) /
+              max(y, 0.000001)
+          ) +
+          (1.08883 - z) *
+          max(
+            0,
+            (clamp(
+                  var(--scheme-chromatic-luminance-min),
+                  y,
+                  var(--scheme-chromatic-luminance-max)
+                ) -
+                y) /
+              max(1 - y, 0.000001)
+          )
+      )
+  );
+  --color-warning: color(
+    from var(--color-warning-source) xyz-d65
+      calc(
+        x *
+          min(
+            1,
+            clamp(
+                var(--scheme-chromatic-luminance-min),
+                y,
+                var(--scheme-chromatic-luminance-max)
+              ) /
+              max(y, 0.000001)
+          ) +
+          (0.95047 - x) *
+          max(
+            0,
+            (clamp(
+                  var(--scheme-chromatic-luminance-min),
+                  y,
+                  var(--scheme-chromatic-luminance-max)
+                ) -
+                y) /
+              max(1 - y, 0.000001)
+          )
+      )
+      clamp(
+        var(--scheme-chromatic-luminance-min),
+        y,
+        var(--scheme-chromatic-luminance-max)
+      )
+      calc(
+        z *
+          min(
+            1,
+            clamp(
+                var(--scheme-chromatic-luminance-min),
+                y,
+                var(--scheme-chromatic-luminance-max)
+              ) /
+              max(y, 0.000001)
+          ) +
+          (1.08883 - z) *
+          max(
+            0,
+            (clamp(
+                  var(--scheme-chromatic-luminance-min),
+                  y,
+                  var(--scheme-chromatic-luminance-max)
+                ) -
+                y) /
+              max(1 - y, 0.000001)
+          )
+      )
+  );
+  --color-informative: color(
+    from var(--color-informative-source) xyz-d65
+      calc(
+        x *
+          min(
+            1,
+            clamp(
+                var(--scheme-chromatic-luminance-min),
+                y,
+                var(--scheme-chromatic-luminance-max)
+              ) /
+              max(y, 0.000001)
+          ) +
+          (0.95047 - x) *
+          max(
+            0,
+            (clamp(
+                  var(--scheme-chromatic-luminance-min),
+                  y,
+                  var(--scheme-chromatic-luminance-max)
+                ) -
+                y) /
+              max(1 - y, 0.000001)
+          )
+      )
+      clamp(
+        var(--scheme-chromatic-luminance-min),
+        y,
+        var(--scheme-chromatic-luminance-max)
+      )
+      calc(
+        z *
+          min(
+            1,
+            clamp(
+                var(--scheme-chromatic-luminance-min),
+                y,
+                var(--scheme-chromatic-luminance-max)
+              ) /
+              max(y, 0.000001)
+          ) +
+          (1.08883 - z) *
+          max(
+            0,
+            (clamp(
+                  var(--scheme-chromatic-luminance-min),
+                  y,
+                  var(--scheme-chromatic-luminance-max)
+                ) -
+                y) /
+              max(1 - y, 0.000001)
+          )
+      )
+  );
+  --color-shadow: oklch(
+    from var(--theme-color-neutral) 0.203788 min(c, 0.02) h
+  );
+  --color-surface-soft: color-mix(
+    in oklab,
+    var(--color-background) 92%,
+    var(--color-foreground)
+  );
+  --color-surface-strong: color-mix(
+    in oklab,
+    var(--color-background) 88%,
+    var(--color-foreground)
+  );
+  --color-surface-secondary: color-mix(
+    in oklab,
+    var(--color-surface-soft) calc(100% - var(--theme-contrast-surface)),
+    var(--color-surface-strong)
+  );
+  --color-border-soft: color-mix(
+    in oklab,
+    var(--color-background) 90.58%,
+    var(--color-foreground)
+  );
+  --color-border-strong: color-mix(
+    in oklab,
+    var(--color-background) 40%,
+    var(--color-foreground)
+  );
+  --color-border: color-mix(
+    in oklab,
+    var(--color-border-soft) calc(100% - var(--theme-contrast-border)),
+    var(--color-border-strong)
+  );
+  --color-focus: light-dark(
+    color-mix(
+      in oklab,
+      var(--color-accent) calc(92% + var(--theme-contrast-surface) * 0.08),
+      var(--color-background)
+    ),
+    color-mix(
+      in oklab,
+      oklch(from var(--color-accent) max(l, 0.6) c h)
+        calc(92% + var(--theme-contrast-surface) * 0.08),
+      var(--color-background)
+    )
+  );
+  --color-on-chromatic: light-dark(
+    var(--color-background),
+    var(--color-foreground-strong)
+  );
+  --color-accent-foreground: color-mix(
+    in oklab,
+    var(--color-accent) var(--scheme-chromatic-foreground-mix),
+    var(--color-foreground)
+  );
+  --color-positive-foreground: color-mix(
+    in oklab,
+    color-mix(in oklab, var(--color-positive) 90%, var(--color-foreground))
+      var(--scheme-chromatic-foreground-mix),
+    var(--color-foreground)
+  );
+  --color-negative-foreground: light-dark(
+    oklch(from var(--color-negative) calc(l - 0.04) calc(c * 0.9) h),
+    oklch(from var(--color-negative) max(l, 0.7) c h)
+  );
+  --color-warning-foreground: color-mix(
+    in oklab,
+    oklch(
+        from
+          color-mix(in oklab, var(--color-warning) 88%, var(--color-foreground))
+          calc(l - 0.03) calc(c * 1.12) h
+      )
+      var(--scheme-chromatic-foreground-mix),
+    var(--color-foreground)
+  );
+  --color-informative-foreground: color-mix(
+    in oklab,
+    color-mix(in oklab, var(--color-informative) 90%, var(--color-foreground))
+      var(--scheme-chromatic-foreground-mix),
+    var(--color-foreground)
+  );
+
+  /* Background */
+  --background-primary: var(--color-background);
+  --background-secondary: var(--color-surface-secondary);
+  --background-disabled: color-mix(
+    in oklab,
+    var(--color-background) 97.38%,
+    var(--color-foreground)
+  );
+  --background-inverse: var(--color-foreground);
+  --background-accent: var(--color-accent);
+  --background-positive: var(--color-positive);
+  --background-positive-subtle: color-mix(
+    in oklab,
+    var(--color-positive) 12%,
+    var(--color-background)
+  );
+  --background-negative: var(--color-negative);
+  --background-negative-subtle: color-mix(
+    in oklab,
+    var(--color-negative) 12%,
+    var(--color-background)
+  );
+  --background-warning-subtle: light-dark(
+    oklch(from var(--color-warning-source) 0.94 calc(c * 0.45) h),
+    color-mix(
+      in oklab,
+      var(--color-warning-source) 13.02%,
+      var(--color-background)
+    )
+  );
+  --background-informative-subtle: light-dark(
+    color-mix(
+      in oklab,
+      var(--color-informative) 12.24%,
+      var(--color-background)
+    ),
+    color-mix(in oklab, var(--color-informative) 20%, var(--color-background))
+  );
+
+  /* Foreground */
+  --foreground-primary: var(--color-foreground);
+  --foreground-secondary: color-mix(
+    in oklab,
+    var(--color-foreground) 65%,
+    var(--color-background)
+  );
+  --foreground-disabled: color-mix(
+    in oklab,
+    var(--color-foreground) 45%,
+    var(--color-background)
+  );
+  --foreground-on-inverse: var(--color-background);
+  --foreground-on-accent: var(--color-on-chromatic);
+  --foreground-on-positive: var(--color-on-chromatic);
+  --foreground-on-negative: var(--color-on-chromatic);
+  --foreground-accent: var(--color-accent-foreground);
+  --foreground-positive: var(--color-positive-foreground);
+  --foreground-negative: var(--color-negative-foreground);
+  --foreground-warning: var(--color-warning-foreground);
+  --foreground-informative: var(--color-informative-foreground);
+
+  /* Border */
+  --border-default: var(--color-border);
+  --border-focus: var(--color-focus);
+  --border-negative: var(--foreground-negative);
+  --border-warning: var(--color-warning-source);
+  --border-informative: color-mix(
+    in oklab,
+    var(--color-informative) 29.97%,
+    var(--color-background)
+  );
+
+  /* Overlay */
+  --overlay-interaction-hover: light-dark(
+    oklch(from var(--color-foreground) 0 0 h / 6.2745%),
+    oklch(from var(--color-foreground) 1 0 h / 6.2745%)
+  );
+  --overlay-interaction-pressed: light-dark(
+    oklch(from var(--color-foreground) 0 0 h / 10.9804%),
+    oklch(from var(--color-foreground) 1 0 h / 10.9804%)
+  );
+  --overlay-on-inverse-hover: light-dark(
+    oklch(from var(--color-background) 1 0 h / 6.2745%),
+    oklch(from var(--color-background) 0 0 h / 6.2745%)
+  );
+  --overlay-on-inverse-pressed: light-dark(
+    oklch(from var(--color-background) 1 0 h / 10.9804%),
+    oklch(from var(--color-background) 0 0 h / 10.9804%)
+  );
+  --overlay-scrim: oklch(from var(--color-shadow) l c h / 66%);
+}
+
+/* Dark mode changes derivation bounds, not theme parameters or semantic colors. */
+:root[data-color-scheme="dark"] {
+  color-scheme: dark;
+  --scheme-background-lightness: 0.2;
+  --scheme-background-chroma-scale: 0.2;
+  --scheme-foreground-soft-lightness: 0.93;
+  --scheme-foreground-strong-lightness: 1;
+  --scheme-foreground-chroma-scale: 0.2;
+  --scheme-chromatic-luminance-min: 0;
+  --scheme-chromatic-luminance-max: 0.18;
+  --scheme-chromatic-foreground-mix: 35%;
+}
+
+:root[data-color-scheme="light"] {
+  color-scheme: light;
+}

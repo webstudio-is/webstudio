@@ -1,0 +1,12 @@
+services:
+  db:
+    build:
+      context: .
+      dockerfile: postgres/Dockerfile
+    image: webstudio-builder-e2e-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?}
+    tmpfs:
+      - /var/lib/postgresql/data
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/postgres-init.sql:ro

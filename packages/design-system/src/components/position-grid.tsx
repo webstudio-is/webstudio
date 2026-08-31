@@ -2,12 +2,19 @@ import { type KeyboardEventHandler, useState } from "react";
 import { css, theme } from "../stitches.config";
 import { Box } from "./box";
 import { Grid } from "./grid";
+import { cssVar } from "../css-var";
 
 // oxfmt-ignore
 const positions = [
-  [0, 0],   [50, 0],   [100, 0],
-  [0, 50],  [50, 50], [100, 50],
-  [0, 100], [50, 100], [100, 100],
+  [0, 0],
+  [50, 0],
+  [100, 0],
+  [0, 50],
+  [50, 50],
+  [100, 50],
+  [0, 100],
+  [50, 100],
+  [100, 100],
 ];
 
 type Position = { y: number; x: number };
@@ -32,7 +39,7 @@ const toNumericPosition = (position?: MixedPosition) => {
 };
 
 const containerStyle = css({
-  background: theme.colors.backgroundControls,
+  background: cssVar("--background-secondary"),
   padding: theme.spacing[3],
   width: "fit-content",
   borderRadius: theme.borderRadius[4],
@@ -45,14 +52,14 @@ const containerStyle = css({
     "x x x"
   `,
   "&[data-focused=true], &:focus-visible": {
-    borderColor: theme.colors.borderFocus,
+    borderColor: cssVar("--border-focus"),
   },
 });
 
 const dotStyle = css({
   padding: theme.spacing[4],
   margin: 1,
-  background: theme.colors.backgroundControls,
+  background: cssVar("--background-secondary"),
   border: `1px solid transparent`,
   borderRadius: theme.borderRadius[4],
   outline: "none",
@@ -62,17 +69,21 @@ const dotStyle = css({
     display: "block",
     width: theme.spacing[3],
     height: theme.spacing[3],
-    background: theme.colors.foregroundGridControlsDot,
+    background: `color-mix(in oklab, ${cssVar(
+      "--foreground-secondary"
+    )} 45%, ${cssVar("--background-primary")})`,
     borderRadius: "50%",
   },
   "&[data-selected=true], &:hover": {
-    background: theme.colors.foregroundGridControlsFlexHover,
+    background: cssVar("--overlay-interaction-hover"),
     "&::before": {
-      background: theme.colors.foregroundGridControlsDotHover,
+      background: `color-mix(in oklab, ${cssVar(
+        "--foreground-secondary"
+      )} 88%, ${cssVar("--background-primary")})`,
     },
   },
   "&[data-focused=true]": {
-    borderColor: theme.colors.borderFocus,
+    borderColor: cssVar("--border-focus"),
   },
 });
 

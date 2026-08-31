@@ -1,75 +1,92 @@
 import { HighlightStyle } from "@codemirror/language";
 import { highlightCode, tags } from "@lezer/highlight";
 import { parser } from "@lezer/css";
+import { cssVar } from "@webstudio-is/design-system";
 
-// inspired by https://thememirror.net/solarized-light
-export const solarizedLight = HighlightStyle.define([
+// Syntax categories are a visualization layer. Compose them from the shared
+// semantic palette so they adapt to both schemes without adding theme knobs.
+const syntaxColor = (hueRotation: number) =>
+  `color-mix(
+    in oklab,
+    color(
+      from oklch(from ${cssVar("--foreground-accent")} l c calc(h + ${hueRotation}))
+      srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
+    ) 80%,
+    ${cssVar("--foreground-primary")}
+  )`;
+
+const syntaxGreen = syntaxColor(-120);
+const syntaxRed = syntaxColor(125);
+const syntaxYellow = syntaxColor(-155);
+const syntaxPurple = syntaxColor(55);
+
+export const codeHighlightStyle = HighlightStyle.define([
   {
     tag: tags.comment,
-    color: "#93A1A1",
+    color: cssVar("--foreground-secondary"),
   },
   {
     tag: tags.string,
-    color: "#2AA198",
+    color: syntaxGreen,
   },
   {
     tag: tags.regexp,
-    color: "#D30102",
+    color: syntaxRed,
   },
   {
     tag: tags.number,
-    color: "#D33682",
+    color: syntaxPurple,
   },
   {
     tag: tags.variableName,
-    color: "#268BD2",
+    color: cssVar("--foreground-accent"),
   },
   {
     tag: [tags.keyword, tags.operator, tags.punctuation],
-    color: "#859900",
+    color: syntaxGreen,
   },
   {
     tag: [tags.definitionKeyword, tags.modifier],
-    color: "#073642",
+    color: cssVar("--foreground-primary"),
   },
   {
     tag: [tags.self, tags.definition(tags.propertyName)],
-    color: "#268BD2",
+    color: cssVar("--foreground-accent"),
   },
   {
     tag: tags.function(tags.variableName),
-    color: "#268BD2",
+    color: cssVar("--foreground-accent"),
   },
   {
     tag: [tags.bool, tags.null],
-    color: "#B58900",
+    color: syntaxYellow,
   },
   {
     tag: tags.tagName,
-    color: "#268BD2",
+    color: cssVar("--foreground-accent"),
   },
   {
     tag: tags.angleBracket,
-    color: "#93A1A1",
+    color: cssVar("--foreground-secondary"),
   },
   {
     tag: tags.attributeName,
-    color: "#93A1A1",
+    color: cssVar("--foreground-secondary"),
   },
   {
     tag: tags.typeName,
-    color: "#859900",
+    color: syntaxGreen,
   },
 ]);
 
 export const highlightCss = (code: string) => {
-  const styles = solarizedLight.module?.getRules();
+  const styles = codeHighlightStyle.module?.getRules();
   // generated classes are scoped to parent
   let highlightedCode = `<style>@scope {${styles}}</style>`;
   highlightCode(
     code,
     parser.parse(code),
-    solarizedLight,
+    codeHighlightStyle,
     (text, classes) => {
       if (classes) {
         highlightedCode += `<span class="${classes}">${text}</span>`;

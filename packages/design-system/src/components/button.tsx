@@ -13,89 +13,95 @@ import { textVariants } from "./text";
 import { css, styled, theme, type CSS } from "../stitches.config";
 import { LoadingDotsIcon } from "@webstudio-is/icons";
 import { Flex } from "./flex";
+import { cssVar } from "../css-var";
+import { withInteractionOverlay } from "./control-state-color";
 
 const colors = [
   "primary",
   "destructive",
-  "positive",
   "neutral",
   "ghost",
-  "dark",
-  "gradient",
   "neutral-destructive",
-  "dark-ghost",
 ] as const;
 
-type ButtonColor = (typeof colors)[number];
+export type ButtonColor = (typeof colors)[number];
 
-type ButtonState = "auto" | "hover" | "focus" | "pressed" | "pending";
+export type ButtonState = "auto" | "hover" | "focus" | "pressed" | "pending";
+
+const neutralBackground = `color-mix(in oklab, ${cssVar(
+  "--background-primary"
+)} 86%, ${cssVar("--foreground-primary")})`;
+const disabledBackground = `color-mix(in oklab, ${cssVar(
+  "--background-primary"
+)} 92%, ${cssVar("--foreground-primary")})`;
+const chromaticHoverOverlay = `oklch(from ${cssVar(
+  "--foreground-on-accent"
+)} 0 0 h / 6.2745%)`;
+const chromaticPressedOverlay = `oklch(from ${cssVar(
+  "--foreground-on-accent"
+)} 0 0 h / 10.9804%)`;
 
 const backgrounds: Record<ButtonColor, string> = {
-  primary: theme.colors.backgroundPrimary,
-  neutral: theme.colors.backgroundNeutralMain,
-  "neutral-destructive": theme.colors.backgroundNeutralMain,
-  destructive: theme.colors.backgroundDestructiveMain,
-  positive: theme.colors.backgroundSuccessMain,
-  ghost: theme.colors.backgroundHover,
-  dark: theme.colors.backgroundTopbar,
-  gradient: theme.colors.backgroundGradientPrimary,
-  "dark-ghost": theme.colors.backgroundTopbar,
+  primary: cssVar("--background-accent"),
+  neutral: neutralBackground,
+  "neutral-destructive": neutralBackground,
+  destructive: cssVar("--background-negative"),
+  ghost: "transparent",
 };
 
 const foregrounds: Record<ButtonColor, string> = {
-  primary: theme.colors.foregroundContrastMain,
-  destructive: theme.colors.foregroundContrastMain,
-  "neutral-destructive": theme.colors.foregroundDestructive,
-  positive: theme.colors.foregroundContrastMain,
-  neutral: theme.colors.foregroundMain,
-  ghost: theme.colors.foregroundMain,
-  dark: theme.colors.foregroundContrastMain,
-  gradient: theme.colors.foregroundContrastMain,
-  "dark-ghost": theme.colors.foregroundContrastMain,
+  primary: cssVar("--foreground-on-accent"),
+  destructive: cssVar("--foreground-on-negative"),
+  "neutral-destructive": cssVar("--foreground-negative"),
+  neutral: cssVar("--foreground-primary"),
+  ghost: cssVar("--foreground-primary"),
 };
 
-const perColorStyle = (variant: ButtonColor) => ({
-  background:
-    variant === "ghost" || variant === "dark-ghost"
-      ? "transparent"
-      : backgrounds[variant],
-  color:
-    variant === "dark-ghost"
-      ? theme.colors.foregroundSubtle
-      : foregrounds[variant],
+const perColorStyle = (variant: ButtonColor) => {
+  const isTransparent = variant === "ghost";
+  const isChromatic = variant === "primary" || variant === "destructive";
+  let hoverOverlay = cssVar("--overlay-interaction-hover");
+  let pressedOverlay = cssVar("--overlay-interaction-pressed");
+  if (isChromatic) {
+    hoverOverlay = chromaticHoverOverlay;
+    pressedOverlay = chromaticPressedOverlay;
+  }
 
-  "&[data-state=auto]:hover, &[data-state=hover]": {
+  return {
+    background: backgrounds[variant],
     color: foregrounds[variant],
-    background:
-      variant === "gradient"
-        ? `linear-gradient(${theme.colors.backgroundButtonHover}, ${theme.colors.backgroundButtonHover}), ${backgrounds[variant]}`
-        : `oklch(from ${backgrounds[variant]} l c h / 0.8)`,
-  },
 
-  "&[data-state=auto]:focus-visible, &[data-state=focus]": {
-    color: foregrounds[variant],
-    outline: `1px solid ${theme.colors.borderFocus}`,
-    outlineOffset: "1px",
-  },
-
-  "&[data-state=auto]:active, &[data-state=pressed]": {
-    color: foregrounds[variant],
-    background:
-      variant === "gradient"
-        ? `linear-gradient(${theme.colors.backgroundButtonPressed}, ${theme.colors.backgroundButtonPressed}), ${backgrounds[variant]}`
-        : `oklch(from ${backgrounds[variant]} l c h / 0.8)`,
-  },
-
-  "&:disabled:not([data-state=pending]), &[data-state=disabled], &[aria-disabled=true], &[aria-disabled=true]:hover, &[aria-disabled=true]:visited":
-    {
-      background: theme.colors.backgroundButtonDisabled,
-      color: theme.colors.foregroundDisabled,
+    "&[data-state=auto]:hover, &[data-state=hover]": {
+      color: foregrounds[variant],
+      background: isTransparent
+        ? hoverOverlay
+        : withInteractionOverlay(backgrounds[variant], hoverOverlay),
     },
 
-  "&[data-state=pending]": {
-    cursor: "wait",
-  },
-});
+    "&[data-state=auto]:focus-visible, &[data-state=focus]": {
+      color: foregrounds[variant],
+      outline: `1px solid ${cssVar("--border-focus")}`,
+      outlineOffset: "1px",
+    },
+
+    "&[data-state=auto]:active, &[data-state=pressed]": {
+      color: foregrounds[variant],
+      background: isTransparent
+        ? pressedOverlay
+        : withInteractionOverlay(backgrounds[variant], pressedOverlay),
+    },
+
+    "&:disabled:not([data-state=pending]), &[data-state=disabled], &[aria-disabled=true]:not([data-state=pending]), &[aria-disabled=true]:not([data-state=pending]):hover, &[aria-disabled=true]:not([data-state=pending]):visited":
+      {
+        background: disabledBackground,
+        color: cssVar("--foreground-disabled"),
+      },
+
+    "&[data-state=pending]": {
+      cursor: "wait",
+    },
+  };
+};
 
 export const buttonStyle = css({
   all: "unset",
@@ -116,17 +122,13 @@ export const buttonStyle = css({
       primary: perColorStyle("primary"),
       destructive: perColorStyle("destructive"),
       "neutral-destructive": perColorStyle("neutral-destructive"),
-      positive: perColorStyle("positive"),
       neutral: perColorStyle("neutral"),
       ghost: perColorStyle("ghost"),
-      dark: perColorStyle("dark"),
-      gradient: perColorStyle("gradient"),
-      "dark-ghost": perColorStyle("dark-ghost"),
     },
   },
 
   defaultVariants: {
-    color: "primary",
+    color: "neutral",
   },
 });
 
@@ -145,7 +147,7 @@ const TextContainer = styled("span", textVariants.labels, {
   },
 });
 
-type ButtonProps = {
+type ButtonVisualProps = {
   state?: ButtonState;
   color?: ButtonColor;
 
@@ -160,7 +162,44 @@ type ButtonProps = {
 
   // might be set when <Button> is asChild
   "data-state"?: string;
-} & Omit<ComponentProps<"button">, "prefix">;
+};
+
+export type ButtonProps = ButtonVisualProps &
+  Omit<ComponentProps<"button">, "prefix" | "color">;
+
+const ButtonContent = ({
+  prefix,
+  suffix,
+  children,
+  pending,
+}: Pick<ButtonVisualProps, "prefix" | "suffix"> & {
+  children?: ReactNode;
+  pending: boolean;
+}) => (
+  <>
+    {prefix}
+    {children && (
+      <TextContainer hidden={pending}>
+        {children}
+        {pending && (
+          <Flex
+            css={{
+              position: "absolute",
+              inset: 0,
+              visibility: "visible",
+              pointerEvents: "none",
+            }}
+            justify="center"
+            align="center"
+          >
+            <LoadingDotsIcon size={28} fill="currentColor" />
+          </Flex>
+        )}
+      </TextContainer>
+    )}
+    {suffix}
+  </>
+);
 
 export const Button = forwardRef(
   (
@@ -171,6 +210,7 @@ export const Button = forwardRef(
       suffix,
       children,
       "data-state": dataState,
+      "aria-pressed": ariaPressed,
       className,
       css,
       color,
@@ -180,7 +220,12 @@ export const Button = forwardRef(
   ) => {
     // when button is used as a trigger for something that opens
     // <SomeTrigger asChild><Button /></SomeTrigger>
-    let finalState = dataState === "open" ? "pressed" : undefined;
+    let finalState =
+      dataState === "open" || dataState === "on" ? "pressed" : undefined;
+
+    if (ariaPressed === true || ariaPressed === "true") {
+      finalState = "pressed";
+    }
 
     // "state" wins over "data-state"
     if (state !== undefined) {
@@ -195,35 +240,79 @@ export const Button = forwardRef(
     return (
       <button
         {...restProps}
+        aria-pressed={ariaPressed}
         disabled={disabled || state === "pending"}
         data-state={finalState ?? "auto"}
         ref={ref}
         className={buttonStyle({ color, className, css })}
       >
-        {prefix}
-        {children && (
-          <TextContainer hidden={state === "pending"}>
-            {children}
-            {state === "pending" && (
-              <Flex
-                css={{
-                  position: "absolute",
-                  inset: 0,
-                  visibility: "visible",
-                  pointerEvents: "none",
-                }}
-                justify={"center"}
-                align={"center"}
-              >
-                <LoadingDotsIcon size={28} fill="currentColor" />
-              </Flex>
-            )}
-          </TextContainer>
-        )}
-
-        {suffix}
+        <ButtonContent
+          prefix={prefix}
+          suffix={suffix}
+          pending={state === "pending"}
+        >
+          {children}
+        </ButtonContent>
       </button>
     );
   }
 );
 Button.displayName = "Button";
+
+export type LinkButtonProps = ButtonVisualProps &
+  Omit<ComponentProps<"a">, "prefix" | "color">;
+
+export const LinkButton = forwardRef(
+  (
+    {
+      state,
+      prefix,
+      suffix,
+      children,
+      "data-state": dataState,
+      className,
+      css,
+      color,
+      "aria-disabled": ariaDisabled,
+      onClick,
+      ...restProps
+    }: LinkButtonProps,
+    ref: Ref<HTMLAnchorElement>
+  ) => {
+    let finalState = dataState === "open" ? "pressed" : dataState;
+    if (state !== undefined) {
+      finalState = state;
+    }
+
+    const isDisabled = ariaDisabled === true || ariaDisabled === "true";
+    if (isDisabled && state !== "pending") {
+      finalState = "disabled";
+    }
+
+    return (
+      <a
+        {...restProps}
+        aria-disabled={state === "pending" ? true : ariaDisabled}
+        data-state={finalState ?? "auto"}
+        ref={ref}
+        className={buttonStyle({ color, className, css })}
+        onClick={(event) => {
+          if (isDisabled || state === "pending") {
+            event.preventDefault();
+            return;
+          }
+          onClick?.(event);
+        }}
+      >
+        <ButtonContent
+          prefix={prefix}
+          suffix={suffix}
+          pending={state === "pending"}
+        >
+          {children}
+        </ButtonContent>
+      </a>
+    );
+  }
+);
+LinkButton.displayName = "LinkButton";

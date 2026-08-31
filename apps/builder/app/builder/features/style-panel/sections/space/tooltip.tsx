@@ -24,14 +24,14 @@ const propertyContents: {
   // Padding
   {
     properties: ["padding-top", "padding-bottom"],
-    label: "Vertical Padding",
+    label: "Vertical padding",
     description:
       "Defines the space between the content of an element and its top and bottom border. Can affect layout height.",
   },
 
   {
     properties: ["padding-left", "padding-right"],
-    label: "Horizontal Padding",
+    label: "Horizontal padding",
     description:
       "Defines the space between the content of an element and its left and right border. Can affect layout width.",
   },
@@ -50,13 +50,13 @@ const propertyContents: {
   // Margin
   {
     properties: ["margin-top", "margin-bottom"],
-    label: "Vertical Margin",
+    label: "Vertical margin",
     description: "Sets the margin at the top and bottom of an element.",
   },
 
   {
     properties: ["margin-left", "margin-right"],
-    label: "Horizontal Margin",
+    label: "Horizontal margin",
     description: "Sets the margin at the left and right of an element.",
   },
 

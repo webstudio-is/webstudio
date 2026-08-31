@@ -1,4 +1,0 @@
-services:
-  db:
-    tmpfs:
-      - /var/lib/postgresql/data

@@ -178,7 +178,12 @@ export const AssetUpload = forwardRef<AssetUploadHandle, AssetUploadProps>(
     return (
       <Flex>
         <Tooltip side="bottom" content="View mode. You can't upload assets.">
-          <Button css={{ flexGrow: 1 }} prefix={<UploadIcon />} disabled={true}>
+          <Button
+            color="primary"
+            css={{ flexGrow: 1 }}
+            prefix={<UploadIcon />}
+            disabled={true}
+          >
             Upload
           </Button>
         </Tooltip>

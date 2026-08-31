@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import {
   bindSelectedTextContentToExpression,
@@ -14,7 +14,7 @@ import {
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { loginWithSecret } from "../flows/dashboard";
 import { expectGeneratedAppToRender } from "../flows/generated-app";
-import { newIsolatedPage, test } from "../harness";
+import { test } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
@@ -87,7 +87,7 @@ const closeVariablePanelAndWaitForSave = async ({ page }: { page: Page }) => {
   await page.getByRole("button", { name: "Close" }).last().click();
   await save;
   await page
-    .getByText("New Variable", { exact: true })
+    .getByText("New variable", { exact: true })
     .waitFor({ state: "hidden" });
   await waitForSyncStatus({ page, status: "idle" });
 };
@@ -95,7 +95,7 @@ const closeVariablePanelAndWaitForSave = async ({ page }: { page: Page }) => {
 const openNewVariablePanel = async ({ page }: { page: Page }) => {
   await page.getByRole("tab", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Add data variable" }).click();
-  await page.getByText("New Variable", { exact: true }).waitFor();
+  await page.getByText("New variable", { exact: true }).waitFor();
 };
 
 const createStringVariable = async ({
@@ -334,16 +334,19 @@ const expectPersistedDataVariables = async ({
   }
 };
 
-test("Builder-created data variables and resources persist after reload", async () => {
+test("Builder-created data variables and resources persist after reload", async ({
+  page,
+  context,
+}) => {
   const email = "data-variables-runtime@webstudio.test";
   const fixture = await createContentModeProject({
+    context: context,
     email,
     title: "Data Variables Runtime",
     assetNamePrefix: "data-variables-runtime-",
     editorToken: "data-variables-runtime-editor-token",
     builderToken: "data-variables-runtime-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
   const staticName = "e2eStaticLabel";
   const staticValue = "Created from Builder UI";
   const editedStaticValue = "Edited from Builder UI";
@@ -360,244 +363,236 @@ test("Builder-created data variables and resources persist after reload", async 
   const graphqlQuery = "query Posts { posts { id title } }";
   const systemName = "e2eSitemap";
 
-  try {
-    await loginWithSecret({ page, email });
+  await loginWithSecret({ page, email });
 
-    await measure("data variables runtime open builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-      await waitForCanvasText({ page, text: "Initial content" });
-    });
-    await selectContentInstance({ page });
-
-    await measure(
-      "data variables runtime create variables through UI",
-      async () => {
-        await createStringVariable({
-          page,
-          name: staticName,
-          value: staticValue,
-        });
-        await createHttpResourceVariable({
-          page,
-          name: httpName,
-          url: httpUrl,
-        });
-        await createGraphqlResourceVariable({
-          page,
-          name: graphqlName,
-          url: graphqlUrl,
-          query: graphqlQuery,
-        });
-        await createSystemResourceVariable({ page, name: systemName });
-      }
-    );
-
-    await measure(
-      "data variables runtime edit resources and variables",
-      async () => {
-        await editStringVariable({
-          page,
-          fixture,
-          name: staticName,
-          value: editedStaticValue,
-        });
-        await editHttpResourceVariableWithCurl({
-          page,
-          fixture,
-          name: httpName,
-          curl: `curl '${httpCurlUrl}?${httpSearchParamName}=${httpSearchParamValue}' --request POST --header '${httpHeaderName}: ${httpHeaderValue}' --header 'Content-Type: application/json' --data '{"${httpBodyValue}":true}'`,
-        });
-      }
-    );
-
-    await expectPersistedDataVariables({
-      fixture,
-      staticName,
-      staticValue: editedStaticValue,
-      httpName,
-      httpUrl,
-      httpCurlUrl,
-      httpSearchParamName,
-      httpSearchParamValue,
-      httpHeaderName,
-      httpHeaderValue,
-      httpBodyValue,
-      graphqlName,
-      graphqlUrl,
-      graphqlQuery,
-      systemName,
-      deletedName: undefined,
-    });
-
-    await expectVariableListItem({
+  await measure("data variables runtime open builder", async () => {
+    await openProjectBuilder({
       page,
-      name: staticName,
-      badge: "Static variable",
-    });
-    await expectVariableListItem({
-      page,
-      name: httpName,
-      badge: "Dynamic data variable",
-    });
-    await expectVariableListItem({
-      page,
-      name: graphqlName,
-      badge: "Dynamic data variable",
-    });
-    await expectVariableListItem({
-      page,
-      name: systemName,
-      badge: "Dynamic data variable",
-    });
-
-    await measure("data variables runtime reload builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
     });
     await waitForCanvasText({ page, text: "Initial content" });
-    await selectContentInstance({ page });
+  });
+  await selectContentInstance({ page });
 
-    await expectVariableListItem({
+  await measure(
+    "data variables runtime create variables through UI",
+    async () => {
+      await createStringVariable({
+        page,
+        name: staticName,
+        value: staticValue,
+      });
+      await createHttpResourceVariable({
+        page,
+        name: httpName,
+        url: httpUrl,
+      });
+      await createGraphqlResourceVariable({
+        page,
+        name: graphqlName,
+        url: graphqlUrl,
+        query: graphqlQuery,
+      });
+      await createSystemResourceVariable({ page, name: systemName });
+    }
+  );
+
+  await measure(
+    "data variables runtime edit resources and variables",
+    async () => {
+      await editStringVariable({
+        page,
+        fixture,
+        name: staticName,
+        value: editedStaticValue,
+      });
+      await editHttpResourceVariableWithCurl({
+        page,
+        fixture,
+        name: httpName,
+        curl: `curl '${httpCurlUrl}?${httpSearchParamName}=${httpSearchParamValue}' --request POST --header '${httpHeaderName}: ${httpHeaderValue}' --header 'Content-Type: application/json' --data '{"${httpBodyValue}":true}'`,
+      });
+    }
+  );
+
+  await expectPersistedDataVariables({
+    fixture,
+    staticName,
+    staticValue: editedStaticValue,
+    httpName,
+    httpUrl,
+    httpCurlUrl,
+    httpSearchParamName,
+    httpSearchParamValue,
+    httpHeaderName,
+    httpHeaderValue,
+    httpBodyValue,
+    graphqlName,
+    graphqlUrl,
+    graphqlQuery,
+    systemName,
+    deletedName: undefined,
+  });
+
+  await expectVariableListItem({
+    page,
+    name: staticName,
+    badge: "Static variable",
+  });
+  await expectVariableListItem({
+    page,
+    name: httpName,
+    badge: "Dynamic data variable",
+  });
+  await expectVariableListItem({
+    page,
+    name: graphqlName,
+    badge: "Dynamic data variable",
+  });
+  await expectVariableListItem({
+    page,
+    name: systemName,
+    badge: "Dynamic data variable",
+  });
+
+  await measure("data variables runtime reload builder", async () => {
+    await openProjectBuilder({
       page,
-      name: staticName,
-      badge: "Static variable",
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
     });
-    await expectVariableListItem({
+  });
+  await waitForCanvasText({ page, text: "Initial content" });
+  await selectContentInstance({ page });
+
+  await expectVariableListItem({
+    page,
+    name: staticName,
+    badge: "Static variable",
+  });
+  await expectVariableListItem({
+    page,
+    name: httpName,
+    badge: "Dynamic data variable",
+  });
+  await expectVariableListItem({
+    page,
+    name: graphqlName,
+    badge: "Dynamic data variable",
+  });
+  await expectVariableListItem({
+    page,
+    name: systemName,
+    badge: "Dynamic data variable",
+  });
+
+  await expectPersistedDataVariables({
+    fixture,
+    staticName,
+    staticValue: editedStaticValue,
+    httpName,
+    httpUrl,
+    httpCurlUrl,
+    httpSearchParamName,
+    httpSearchParamValue,
+    httpHeaderName,
+    httpHeaderValue,
+    httpBodyValue,
+    graphqlName,
+    graphqlUrl,
+    graphqlQuery,
+    systemName,
+    deletedName: undefined,
+  });
+
+  await measure("data variables runtime delete graphql variable", async () => {
+    await deleteVariable({
       page,
-      name: httpName,
-      badge: "Dynamic data variable",
-    });
-    await expectVariableListItem({
-      page,
+      fixture,
       name: graphqlName,
-      badge: "Dynamic data variable",
     });
-    await expectVariableListItem({
-      page,
-      name: systemName,
-      badge: "Dynamic data variable",
-    });
-
-    await expectPersistedDataVariables({
-      fixture,
-      staticName,
-      staticValue: editedStaticValue,
-      httpName,
-      httpUrl,
-      httpCurlUrl,
-      httpSearchParamName,
-      httpSearchParamValue,
-      httpHeaderName,
-      httpHeaderValue,
-      httpBodyValue,
-      graphqlName,
-      graphqlUrl,
-      graphqlQuery,
-      systemName,
-      deletedName: undefined,
-    });
-
-    await measure(
-      "data variables runtime delete graphql variable",
-      async () => {
-        await deleteVariable({
-          page,
-          fixture,
-          name: graphqlName,
-        });
-      }
-    );
-    await page.getByText(graphqlName, { exact: true }).waitFor({
-      state: "hidden",
-    });
-    await expectPersistedDataVariables({
-      fixture,
-      staticName,
-      staticValue: editedStaticValue,
-      httpName,
-      httpUrl,
-      httpCurlUrl,
-      httpSearchParamName,
-      httpSearchParamValue,
-      httpHeaderName,
-      httpHeaderValue,
-      httpBodyValue,
-      graphqlName,
-      graphqlUrl,
-      graphqlQuery,
-      systemName,
-      deletedName: graphqlName,
-    });
-  } finally {
-    await close();
-  }
+  });
+  await page.getByText(graphqlName, { exact: true }).waitFor({
+    state: "hidden",
+  });
+  await expectPersistedDataVariables({
+    fixture,
+    staticName,
+    staticValue: editedStaticValue,
+    httpName,
+    httpUrl,
+    httpCurlUrl,
+    httpSearchParamName,
+    httpSearchParamValue,
+    httpHeaderName,
+    httpHeaderValue,
+    httpBodyValue,
+    graphqlName,
+    graphqlUrl,
+    graphqlQuery,
+    systemName,
+    deletedName: graphqlName,
+  });
 });
 
-test("Text Content can bind to a Builder-created variable and persist after reload", async () => {
+test("Text Content can bind to a Builder-created variable and persist after reload", async ({
+  page,
+  context,
+}) => {
   const email = "text-content-binding@webstudio.test";
   const fixture = await createContentModeProject({
+    context: context,
     email,
     title: "Text Content Binding",
     assetNamePrefix: "text-content-binding-",
     editorToken: "text-content-binding-editor-token",
     builderToken: "text-content-binding-builder-token",
   });
-  const { page, close } = await newIsolatedPage();
   const staticName = "e2eTextBindingLabel";
   const staticValue = "Bound Text Content";
 
-  try {
-    await loginWithSecret({ page, email });
+  await loginWithSecret({ page, email });
 
-    await measure("text content binding open builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-      await waitForCanvasText({ page, text: "Initial content" });
+  await measure("text content binding open builder", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
     });
-    await selectContentInstance({ page });
+    await waitForCanvasText({ page, text: "Initial content" });
+  });
+  await selectContentInstance({ page });
 
-    await measure("text content binding create variable", async () => {
-      await createStringVariable({
-        page,
-        name: staticName,
-        value: staticValue,
-      });
+  await measure("text content binding create variable", async () => {
+    await createStringVariable({
+      page,
+      name: staticName,
+      value: staticValue,
     });
+  });
 
-    await measure("text content binding bind expression", async () => {
-      await bindSelectedTextContentToExpression({
-        page,
-        expression: staticName,
-      });
-      await waitForCanvasText({ page, text: staticValue });
-    });
-
-    await measure("text content binding reload builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
+  await measure("text content binding bind expression", async () => {
+    await bindSelectedTextContentToExpression({
+      page,
+      expression: staticName,
     });
     await waitForCanvasText({ page, text: staticValue });
+  });
 
-    await measure("text content binding generated app renders", async () => {
-      await expectGeneratedAppToRender({
-        projectId: fixture.projectId,
-        expectedText: staticValue,
-      });
+  await measure("text content binding reload builder", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
     });
-  } finally {
-    await close();
-  }
+  });
+  await waitForCanvasText({ page, text: staticValue });
+
+  await measure("text content binding generated app renders", async () => {
+    await expectGeneratedAppToRender({
+      projectId: fixture.projectId,
+      expectedText: staticValue,
+    });
+  });
 });

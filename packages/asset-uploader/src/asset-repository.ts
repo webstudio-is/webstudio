@@ -105,6 +105,7 @@ import {
   type AssetQueryPerformanceObserver,
   type AssetQueryPerformancePhase,
 } from "./query-performance";
+import type { AssetContentRead as SharedAssetContentRead } from "@webstudio-is/content-engine/asset-content-repository";
 
 type CreateId = () => Asset["id"];
 type RepositoryObjectStore = AssetObjectReader & Partial<AssetObjectWriter>;
@@ -189,10 +190,8 @@ export class AssetIndexPreparationError extends Error {
   }
 }
 
-export type AssetContentRead = {
+export type AssetContentRead = Omit<SharedAssetContentRead, "asset"> & {
   asset: Asset;
-  data: AsyncIterable<Uint8Array>;
-  contentLength?: number;
 };
 
 type AssetQueryPreviewOptions = {

@@ -26,7 +26,7 @@ import type {
   InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
 import {
-  findBlockSelector,
+  findBlockContentSelector,
   getBlockTemplateInsertionIndex,
 } from "@webstudio-is/project-build/runtime";
 
@@ -130,10 +130,10 @@ export const insertTemplateAt = async (
     templateSelector[0]
   );
 
-  const parentSelector = findBlockSelector({ anchor, instances });
+  const parentSelector = findBlockContentSelector({ anchor, instances });
 
   if (parentSelector === undefined) {
-    return;
+    return false;
   }
 
   const position = getBlockTemplateInsertionIndex({
@@ -143,7 +143,7 @@ export const insertTemplateAt = async (
   });
 
   if (position === undefined) {
-    return;
+    return false;
   }
 
   const target: DroppableTarget = {
@@ -158,23 +158,26 @@ export const insertTemplateAt = async (
       targetData: getWebstudioData(),
       contentMode,
     });
-    const conflictResolution = await resolveTokenConflicts(conflicts);
+    const conflictResolution =
+      conflicts.length === 0
+        ? "theirs"
+        : await resolveTokenConflicts(conflicts);
     if (conflictResolution === "cancel") {
-      return;
+      return false;
     }
 
-    const didInsert = await insertWebstudioFragmentAt(
+    const didInsert = insertWebstudioFragmentAt(
       fragment,
       target,
       conflictResolution,
       { contentMode }
     );
     if (didInsert === false) {
-      return;
+      return false;
     }
     const selectedInstanceSelector = $selectedInstanceSelector.get();
     if (selectedInstanceSelector === undefined) {
-      return;
+      return false;
     }
     const data = getWebstudioData();
     const editableInstanceSelector = findTextEditorTarget({
@@ -188,8 +191,9 @@ export const insertTemplateAt = async (
         ? { selector: editableInstanceSelector, reason: "new" }
         : undefined
     );
+    return true;
   } catch {
     // User cancelled the operation
-    return;
+    return false;
   }
 };

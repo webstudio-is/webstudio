@@ -1,6 +1,12 @@
-import { Box, Flex, Grid, IconButton } from "@webstudio-is/design-system";
+import {
+  Box,
+  cssVar,
+  Flex,
+  Grid,
+  IconButton,
+  theme,
+} from "@webstudio-is/design-system";
 import { DotIcon } from "@webstudio-is/icons";
-import { theme } from "@webstudio-is/design-system";
 
 // Hide dots where indicator bars overlap to avoid sub-pixel artifacts.
 // Bars have a cross-axis position (from alignItems) and main-axis position
@@ -116,14 +122,14 @@ export const AlignmentUi = ({
       css={{
         padding: theme.spacing[3],
         borderRadius: theme.borderRadius[4],
-        background: theme.colors.backgroundControls,
+        background: cssVar("--background-secondary"),
         alignItems: "center",
         gap: 0,
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
         color,
         "&:focus-within": {
-          outline: `1px solid ${theme.colors.borderLocalFlexUi}`,
+          outline: `1px solid ${cssVar("--border-focus")}`,
         },
       }}
     >
@@ -153,9 +159,9 @@ export const AlignmentUi = ({
                 width: "90%",
                 height: "90%",
                 minWidth: "auto",
-                color: theme.colors.foregroundFlexUiMain,
+                color: cssVar("--foreground-secondary"),
                 "&:hover": {
-                  background: theme.colors.foregroundFlexUiHover,
+                  background: cssVar("--overlay-interaction-hover"),
                 },
                 "&:focus": {
                   background: "none",

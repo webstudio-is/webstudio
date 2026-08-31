@@ -1,5 +1,11 @@
-import { useRef, useState, type ReactNode } from "react";
-import { Kbd, rawTheme, Text } from "@webstudio-is/design-system";
+import { useRef, type ReactNode } from "react";
+import {
+  cssVar,
+  declareCssVar,
+  Kbd,
+  rawTheme,
+  Text,
+} from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import {
   $dragAndDropState,
@@ -48,16 +54,13 @@ import { MarketplacePanel } from "~/builder/features/marketplace";
 import type { SidebarPanelName } from "./types";
 
 const none = { Panel: () => null };
+const sidebarLeftPanelWidth = declareCssVar("--sidebar-left-panel-width");
 
 const HelpTabTrigger = () => {
-  const [helpIsOpen, setHelpIsOpen] = useState(false);
   return (
-    <HelpCenter onOpenChange={setHelpIsOpen}>
+    <HelpCenter>
       <HelpCenter.Trigger asChild>
-        <SidebarButton
-          label="Learn Webstudio or ask for help"
-          data-state={helpIsOpen ? "active" : undefined}
-        >
+        <SidebarButton label="Learn Webstudio or ask for help">
           <HelpIcon size={rawTheme.spacing[10]} />
         </SidebarButton>
       </HelpCenter.Trigger>
@@ -257,7 +260,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         <Flex
           grow
           direction="column"
-          css={{ borderRight: `1px solid ${theme.colors.borderMain}` }}
+          css={{ borderRight: `1px solid ${cssVar("--border-default")}` }}
         >
           <ExternalDragDropMonitor />
           <div ref={tabsWrapperRef} style={{ display: "contents" }}>
@@ -302,8 +305,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         }}
         resizable
         css={{
-          "--sidebar-left-panel-width": `${getSidebarPanelWidth(activePanel)}`,
-          width: "var(--sidebar-left-panel-width)",
+          [sidebarLeftPanelWidth]: `${getSidebarPanelWidth(activePanel)}`,
+          width: cssVar(sidebarLeftPanelWidth),
           minWidth: theme.sizes.sidebarWidth,
           maxWidth: theme.spacing[35],
           // We need the node to be rendered but hidden
@@ -321,7 +324,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             position: "relative",
             height: "100%",
             flexGrow: 1,
-            background: theme.colors.backgroundPanel,
+            background: cssVar("--background-primary"),
           }}
           direction="column"
         >

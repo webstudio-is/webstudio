@@ -20,7 +20,7 @@ Before starting, ensure you have the following:
 
 * **Flotiq account** – [Register here](https://flotiq.com).
 * **Flotiq API Key** – Learn more about [Flotiq API Keys](https://flotiq.com/docs).
-* **Webstudio account** – [Sign up here](https://webstudio.com).
+* **Webstudio account** – [Sign up here](https://webstudio.is).
 
 {% hint style="info" %}
 > Webstudio’s **Pro tier plan** is required to use the Resource feature. Flotiq does not require a paid plan.
@@ -99,7 +99,7 @@ The variable should be configured as shown in the screenshot below:
 
 Test the variable - if it is configured correctly, the fetched Flotiq content will appear in the **Inspect Tool**.
 
-<figure><img src="../../.gitbook/assets/flotiq-inspect-tool.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/flotiq-inspect-tool.png" alt="Browser developer tools showing the Flotiq API response structure"><figcaption></figcaption></figure>
 
 ### **Bind Flotiq data to your page**
 
@@ -119,7 +119,7 @@ To bind data:
 > For images add an **Image Component**, and bind the **Source Property** to the image URL: `"https://api.flotiq.com/" + VariableName.data.data.blogpost.headerImage[0].url`.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/flotiq-bind-data.gif" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/flotiq-bind-data.gif" alt="Binding Flotiq response data to an instance in Webstudio"><figcaption></figcaption></figure>
 
 ### **Create a listing page**
 

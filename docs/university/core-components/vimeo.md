@@ -9,7 +9,7 @@ The Vimeo component for Webstudio allows you to embed Vimeo videos into your sit
 
 ---
 
-### Benefits of Vimeo
+## Benefits of Vimeo
 
 We have picked Vimeo to be Webstudio’s first video component for the following reasons:
 
@@ -21,19 +21,24 @@ We have picked Vimeo to be Webstudio’s first video component for the following
 
 ---
 
-### How to use the Vimeo component in Webstudio
+## How to use the Vimeo component in Webstudio
 
 You can find the Vimeo Component in the Components Panel in the Media Section. Here is how you can add and use the component on your site:
 
-#### Adding the Vimeo component to your canvas
+### Adding the Vimeo component to your canvas
 
-![Vimeo to your canvas](../../.gitbook/assets/vimeo-component-step-1.avif)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/components-panel-dark.png">
+  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with Vimeo in the expanded Media group">
+</picture>
+
 
 1. You can find the Vimeo component in the “Components Panel” in the Media section.
 2. Add the component by dragging and dropping it to the canvas or with a click to put it inside the selected instance.
 3. Once you have the component on your canvas, you can head to Settings on the right to add your video URL and make other changes.
 
-![Vimeo background settings](../../.gitbook/assets/vimeo-component-properties.avif)
+![Vimeo component properties in Settings](../../.gitbook/assets/vimeo-component-properties.avif)
+
 ## Sub-components
 
 The Vimeo component contains three child instances visible in the Navigator:
@@ -43,20 +48,21 @@ The Vimeo component contains three child instances visible in the Navigator:
 | **Preview Image** | The thumbnail shown before playback. Replace it with your own image in Settings. |
 | **Spinner** | The loading indicator shown while the video buffers. Hide it via the **Show** toggle in Settings. |
 | **Play Button** | Contains a Box and a Play Icon. Style the Box (background, border-radius, etc.), swap the icon SVG via the HTML Embed inside, or hide the entire button via the **Show** toggle for background video use. |
-#### Modifying the Preview Image
+### Modifying the preview image
 
 1. Inside the Vimeo Component, you will find three instances- the Preview Image, Spinner and Play Button. These instances define the primary look of the embedded video player.
 2. You can add a preview image to your video by selecting the “Preview Image” instance and choosing an image source in the “Properties” section.
 
 ---
 
-### How to customize the Vimeo instance's properties
+## How to customize the Vimeo instance's properties
 
 The Vimeo component comes with several properties that you can use to customize your video player. These properties appear in the Settings panel to the right of the canvas when your Vimeo component is selected.
 
 Here’s how you can use the following properties:&#x20;
 
-![Vimeo background properties](../../.gitbook/assets/vimeo-instance-properties.avif)
+![Vimeo properties in the Settings panel](../../.gitbook/assets/vimeo-instance-properties.avif)
+
 
 - **Show Preview**\
   Toggle this property on to render the preview image from Vimeo rather than the static image in Webstudio. This property is turned off by default because rendering the Vimeo preview requires making an API call which can slow down the speed of your page.
@@ -79,7 +85,7 @@ Here’s how you can use the following properties:&#x20;
 - **Other Properties**\
   You can customize your Vimeo component further by adding [other properties](https://developer.vimeo.com/player/sdk/embed) that are not listed in the "Properties" section by default.
 
-### Customizing the Play Button and Spinner
+## Customizing the play button and spinner
 
 The Vimeo component includes customizable child instances:
 
@@ -92,7 +98,7 @@ The Vimeo component includes customizable child instances:
    - Change the Play Icon's color via typography color on its parent
    - Hide the Play Button using the "Show" toggle for background video use
 
-### Hiding Player Elements
+## Hiding player elements
 
 For background videos or custom player designs, you may want to hide default elements:
 
